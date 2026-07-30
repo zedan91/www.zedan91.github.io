@@ -35,23 +35,112 @@ service cloud.firestore {
         );
     }
 
-    // AZOBSS 671: explicit food-order access only.
-    // Admin always has access. Every other account must have an active
-    // foodOrderStaffAccess/{Firebase Auth UID} document created by admin.
-    // Staff/semi-admin role alone does NOT grant access.
+    // AZOBSS 640: food order role/access helpers.
+    // Supports:
+    // 1) existing admin emails,
+    // 2) Firebase custom claims,
+    // 3) users/{uid} profiles if available,
+    // 4) foodOrderStaffAccess/{uid} mapping for username-keyed user profiles.
+    function hasFoodOrderStaffClaim() {
+      return request.auth != null
+        && (
+          (
+            request.auth.token.keys().hasAny(["role"])
+            && request.auth.token.role in [
+              "admin", "staff", "semiAdmin", "semiadmin",
+              "semi-admin", "semi_admin"
+            ]
+          )
+          || (
+            request.auth.token.keys().hasAny(["isStaff"])
+            && request.auth.token.isStaff == true
+          )
+          || (
+            request.auth.token.keys().hasAny(["isAdmin"])
+            && request.auth.token.isAdmin == true
+          )
+          || (
+            request.auth.token.keys().hasAny(["canViewFoodOrders"])
+            && request.auth.token.canViewFoodOrders == true
+          )
+        );
+    }
+
+    function hasFoodOrderUidProfile() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (
+          (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAny(["role"])
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [
+              "admin", "staff", "semiAdmin", "semiadmin",
+              "semi-admin", "semi_admin"
+            ]
+          )
+          || (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAny(["isStaff"])
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isStaff == true
+          )
+          || (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAny(["permissions"])
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions is map
+            && (
+              (
+                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.keys().hasAny(["canViewFoodOrders"])
+                && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.canViewFoodOrders == true
+              )
+              || (
+                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.keys().hasAny(["canAccessStaffDashboard"])
+                && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.canAccessStaffDashboard == true
+              )
+              || (
+                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.keys().hasAny(["canViewPayments"])
+                && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.canViewPayments == true
+              )
+            )
+          )
+        );
+    }
+
     function hasFoodOrderAccessDocument() {
       return request.auth != null
         && exists(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid))
         && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.keys().hasAll([
-          "active", "canViewFoodOrders"
+          "active", "role"
         ])
         && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.active == true
-        && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.canViewFoodOrders == true;
+        && (
+          get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.role in [
+            "admin", "staff", "semiAdmin", "semiadmin",
+            "semi-admin", "semi_admin"
+          ]
+          || (
+            get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.keys().hasAny([
+              "canViewFoodOrders"
+            ])
+            && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.canViewFoodOrders == true
+          )
+        );
     }
 
     function isFoodOrderStaff() {
       return isAdmin()
+        || hasFoodOrderStaffClaim()
+        || hasFoodOrderUidProfile()
         || hasFoodOrderAccessDocument();
+    }
+
+
+    // AZOBSS 679: hanya admin atau akaun dengan akses Tempahan Makanan ON
+    // boleh mengurus nama, harga, visibility dan metadata URL Cloudinary menu brownies.
+    function canManageFoodMenu() {
+      return isAdmin()
+        || (
+          request.auth != null
+          && exists(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid))
+          && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.active == true
+          && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.canViewFoodOrders == true
+        );
     }
 
     match /users/{username} {
@@ -368,8 +457,8 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // AZOBSS 671: explicit access mapping managed by Admin Dashboard.
-    // Document ID must be the permitted user's Firebase Authentication UID.
+    // AZOBSS 640: one-time access mapping for staff/semi-admin accounts.
+    // Document ID must be the staff member's Firebase Authentication UID.
     match /foodOrderStaffAccess/{uid} {
       allow get: if isAdmin()
         || (
@@ -380,15 +469,15 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // AZOBSS 678: public brownie menu configuration.
-    // Only Admin or users with explicit active Tempahan Makanan access
-    // may edit names, prices, visibility and gallery metadata.
+    // AZOBSS 640: food order records.
+
+    // AZOBSS 679: konfigurasi awam menu brownies.
+    // Semua pelawat boleh membaca; hanya admin atau pengguna Tempahan Makanan ON boleh mengubahnya.
     match /foodMenuConfig/{configId} {
       allow read: if true;
-      allow create, update, delete: if isFoodOrderStaff();
+      allow create, update, delete: if canManageFoodMenu();
     }
 
-    // AZOBSS 649: reliable food order records with customer phone.
     match /foodOrders/{orderId} {
       // Customers may place an order without logging in.
       // Creation is restricted to the exact fields and safe limits below.
@@ -396,8 +485,6 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly([
           "clientOrderId",
           "customerName",
-          "customerPhone",
-          "customerPhoneDigits",
           "requiredDate",
           "requiredDateLabel",
           "notes",
@@ -420,11 +507,6 @@ service cloud.firestore {
         && request.resource.data.customerName is string
         && request.resource.data.customerName.size() >= 1
         && request.resource.data.customerName.size() <= 100
-        && request.resource.data.customerPhone is string
-        && request.resource.data.customerPhone.size() >= 8
-        && request.resource.data.customerPhone.size() <= 20
-        && request.resource.data.customerPhoneDigits is string
-        && request.resource.data.customerPhoneDigits.matches('^[0-9]{8,15}$')
         && request.resource.data.requiredDate is string
         && request.resource.data.requiredDate.size() >= 8
         && request.resource.data.requiredDate.size() <= 20
@@ -462,10 +544,10 @@ service cloud.firestore {
           )
         );
 
-      // Only admin and accounts explicitly allowed by admin may view the records.
+      // Only admin, semi-admin and staff may view the records.
       allow read: if isFoodOrderStaff();
 
-      // Explicitly allowed accounts may only change status and its audit fields.
+      // Staff may only change the status and its audit fields.
       allow update: if isFoodOrderStaff()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           "status",
@@ -482,7 +564,7 @@ service cloud.firestore {
         && request.resource.data.statusUpdatedByUid == request.auth.uid
         && request.resource.data.statusUpdatedByEmail is string;
 
-      // Keep records protected from accidental deletion. Admin only.
+      // Keep staff records protected from accidental deletion.
       allow delete: if isAdmin();
     }
 

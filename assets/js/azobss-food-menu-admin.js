@@ -3,9 +3,6 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import {
   getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
-import {
-  getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject
-} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -19,7 +16,6 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const CONFIG_REF = doc(db, 'foodMenuConfig', 'brownies');
 const ADMIN_EMAILS = new Set(['zedan91@azobss.local', 'zedan9107@gmail.com']);
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -39,7 +35,7 @@ const menuSection = document.getElementById('menu');
 const gallery = document.querySelector('.brownies-showcase.brownies-original-only');
 const defaultRows = new Map();
 const defaultImages = new Map();
-let currentConfig = { items:{}, uploadedImages:[], hiddenDefaultImages:[] };
+let currentConfig = { items:{}, uploadedImages:[], hiddenDefaultImages:[], cloudinary:{ cloudName:'', uploadPreset:'', folder:'azobss/food-menu' } };
 let currentAccess = { allowed:false, role:'none', user:null };
 let configLoaded = false;
 let managerOpen = false;
@@ -107,9 +103,11 @@ function normalizedConfig(data = {}){
 
   const uploadedImages = Array.isArray(data.uploadedImages)
     ? data.uploadedImages.slice(0, 40).map(image => ({
-        id:clean(image?.id).slice(0, 100),
+        id:clean(image?.id).slice(0, 120),
         url:clean(image?.url).slice(0, 2000),
-        storagePath:clean(image?.storagePath).slice(0, 500),
+        provider:clean(image?.provider || (/res\.cloudinary\.com/i.test(image?.url || '') ? 'cloudinary' : 'legacy')).slice(0, 40),
+        publicId:clean(image?.publicId).slice(0, 500),
+        assetId:clean(image?.assetId).slice(0, 180),
         name:clean(image?.name).slice(0, 140),
         createdAtMs:Number(image?.createdAtMs || 0)
       })).filter(image => image.id && image.url)
@@ -119,7 +117,13 @@ function normalizedConfig(data = {}){
     ? [...new Set(data.hiddenDefaultImages.map(clean).filter(id => defaultImages.has(id)))].slice(0, 30)
     : [];
 
-  return { items, uploadedImages, hiddenDefaultImages };
+  const cloudinary = {
+    cloudName:clean(data?.cloudinary?.cloudName).slice(0, 120),
+    uploadPreset:clean(data?.cloudinary?.uploadPreset).slice(0, 160),
+    folder:clean(data?.cloudinary?.folder || 'azobss/food-menu').slice(0, 240) || 'azobss/food-menu'
+  };
+
+  return { items, uploadedImages, hiddenDefaultImages, cloudinary };
 }
 
 function applyMenuConfig(config){
@@ -196,7 +200,8 @@ function applyGalleryConfig(config){
     img.decoding = 'async';
     img.dataset.uploadedFoodImage = 'true';
     img.dataset.galleryId = image.id;
-    img.dataset.storagePath = image.storagePath || '';
+    img.dataset.imageProvider = image.provider || '';
+    img.dataset.cloudinaryPublicId = image.publicId || '';
     gallery.appendChild(img);
   });
   window.dispatchEvent(new CustomEvent('azobss-food-menu-updated'));
@@ -246,9 +251,9 @@ function injectStyles(){
 .food-menu-admin-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(11,20,36,.96);backdrop-filter:blur(10px)}.food-menu-admin-head h2{margin:0;font-size:21px}.food-menu-admin-close{width:38px;height:38px;border:1px solid #475569;border-radius:10px;background:#172033;color:#fff;font-size:22px;cursor:pointer}
 .food-menu-admin-body{display:grid;gap:22px;padding:18px}.food-menu-admin-section{display:grid;gap:12px}.food-menu-admin-section h3{margin:0;font-size:18px;color:#fde68a}.food-menu-admin-help{margin:0;color:#94a3b8;font-size:12px;line-height:1.5}.food-menu-admin-list{display:grid;gap:10px}.food-menu-admin-item{display:grid;grid-template-columns:minmax(190px,1.7fr) 110px 110px 120px auto;gap:10px;align-items:end;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:#0f1b2e}.food-menu-admin-item.is-deleted{opacity:.58;border-style:dashed}.food-menu-admin-field{display:grid;gap:5px;min-width:0}.food-menu-admin-field label{font-size:11px;font-weight:850;color:#cbd5e1}.food-menu-admin-field input{min-width:0;height:40px;padding:8px 10px;border:1px solid #475569;border-radius:9px;background:#061022;color:#fff;font:inherit}.food-menu-admin-category{font-size:11px;color:#fbbf24;margin-bottom:3px}.food-menu-admin-check{display:flex;align-items:center;gap:7px;min-height:40px;color:#e2e8f0;font-size:12px;font-weight:800}.food-menu-admin-check input{width:17px;height:17px}.food-menu-admin-delete{height:40px;border:1px solid #ef4444;border-radius:9px;background:#7f1d1d;color:#fff;padding:0 11px;font-weight:900;cursor:pointer}.food-menu-admin-delete.restore{border-color:#22c55e;background:#166534}
 .food-menu-admin-actions{display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;padding:13px 18px;border-top:1px solid rgba(255,255,255,.1);background:rgba(11,20,36,.97)}.food-menu-admin-save{border:0;border-radius:11px;background:#16a34a;color:#fff;padding:11px 18px;font:inherit;font-weight:950;cursor:pointer}.food-menu-admin-save:disabled{opacity:.5;cursor:wait}
-.food-menu-image-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.food-menu-image-upload input{max-width:360px}.food-menu-upload-btn{border:1px solid #38bdf8;border-radius:10px;background:#075985;color:#fff;padding:10px 14px;font-weight:900;cursor:pointer}.food-menu-upload-btn:disabled{opacity:.5;cursor:wait}.food-menu-upload-status{font-size:12px;color:#a7f3d0}.food-menu-image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.food-menu-image-card{position:relative;overflow:hidden;border:1px solid rgba(251,191,36,.35);border-radius:13px;background:#061022}.food-menu-image-card img{display:block;width:100%;height:125px;object-fit:cover}.food-menu-image-card.is-hidden img{opacity:.3;filter:grayscale(1)}.food-menu-image-meta{display:grid;gap:7px;padding:9px}.food-menu-image-meta span{font-size:11px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.food-menu-image-delete{border:1px solid #ef4444;border-radius:8px;background:#7f1d1d;color:#fff;padding:7px 8px;font-size:11px;font-weight:900;cursor:pointer}.food-menu-image-delete.restore{border-color:#22c55e;background:#166534}
+.food-menu-cloudinary-settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px;border:1px solid rgba(56,189,248,.28);border-radius:13px;background:rgba(7,89,133,.12)}.food-menu-cloudinary-settings .food-menu-admin-field input{height:42px}.food-menu-cloudinary-link{display:inline-flex;align-items:center;justify-content:center;border:1px solid #38bdf8;border-radius:10px;background:#0c4a6e;color:#fff;padding:10px 14px;text-decoration:none;font-size:12px;font-weight:900}.food-menu-image-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.food-menu-image-upload input{max-width:360px}.food-menu-upload-btn{border:1px solid #38bdf8;border-radius:10px;background:#075985;color:#fff;padding:10px 14px;font-weight:900;cursor:pointer}.food-menu-upload-btn:disabled{opacity:.5;cursor:wait}.food-menu-upload-status{font-size:12px;color:#a7f3d0}.food-menu-image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.food-menu-image-card{position:relative;overflow:hidden;border:1px solid rgba(251,191,36,.35);border-radius:13px;background:#061022}.food-menu-image-card img{display:block;width:100%;height:125px;object-fit:cover}.food-menu-image-card.is-hidden img{opacity:.3;filter:grayscale(1)}.food-menu-image-meta{display:grid;gap:7px;padding:9px}.food-menu-image-meta span{font-size:11px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.food-menu-image-delete{border:1px solid #ef4444;border-radius:8px;background:#7f1d1d;color:#fff;padding:7px 8px;font-size:11px;font-weight:900;cursor:pointer}.food-menu-image-delete.restore{border-color:#22c55e;background:#166534}
 .food-menu-admin-toast{position:fixed;right:20px;bottom:20px;z-index:100001;max-width:min(430px,calc(100vw - 40px));padding:13px 16px;border:1px solid #38bdf8;border-radius:13px;background:#0c4a6e;color:#fff;font-weight:850;box-shadow:0 16px 45px rgba(0,0,0,.42)}.food-menu-admin-toast.success{border-color:#22c55e;background:#14532d}.food-menu-admin-toast.warning{border-color:#f59e0b;background:#78350f}.food-menu-item-deleted{display:none!important}.brownies-showcase.brownies-original-only img[hidden]{display:none!important}
-@media(max-width:820px){.food-menu-admin-item{grid-template-columns:1fr 1fr}.food-menu-admin-field.name{grid-column:1/-1}.food-menu-admin-delete{grid-column:2}.food-menu-admin-toolbar{align-items:flex-start;flex-direction:column}.food-menu-admin-open{width:100%}}
+@media(max-width:820px){.food-menu-cloudinary-settings{grid-template-columns:1fr}.food-menu-admin-item{grid-template-columns:1fr 1fr}.food-menu-admin-field.name{grid-column:1/-1}.food-menu-admin-delete{grid-column:2}.food-menu-admin-toolbar{align-items:flex-start;flex-direction:column}.food-menu-admin-open{width:100%}}
 @media(max-width:520px){.food-menu-admin-modal{padding:0}.food-menu-admin-dialog{height:100vh;max-height:none;border-radius:0}.food-menu-admin-item{grid-template-columns:1fr}.food-menu-admin-field.name,.food-menu-admin-delete{grid-column:auto}.food-menu-admin-actions{flex-direction:column}.food-menu-admin-save{width:100%}}
 `;
   document.head.appendChild(style);
@@ -264,7 +269,7 @@ function ensureManagerUi(){
   toolbar.hidden = true;
   toolbar.innerHTML = `
     <div class="food-menu-admin-toolbar-copy">
-      <strong>Pengurusan Menu & Gambar</strong>
+      <strong>Pengurusan Menu & Gambar Cloudinary</strong>
       <span>Untuk admin dan pengguna yang akses Tempahan Makanan diaktifkan.</span>
     </div>
     <button class="food-menu-admin-open" id="foodMenuAdminOpen" type="button">✎ Edit Menu & Gambar</button>`;
@@ -277,7 +282,7 @@ function ensureManagerUi(){
   modal.innerHTML = `
     <div class="food-menu-admin-dialog" role="dialog" aria-modal="true" aria-labelledby="foodMenuAdminTitle">
       <div class="food-menu-admin-head">
-        <h2 id="foodMenuAdminTitle">Edit Menu & Gambar Brownies</h2>
+        <h2 id="foodMenuAdminTitle">Edit Menu & Gambar Brownies (Cloudinary)</h2>
         <button class="food-menu-admin-close" id="foodMenuAdminClose" type="button" aria-label="Tutup">×</button>
       </div>
       <div class="food-menu-admin-body" id="foodMenuAdminBody"></div>
@@ -353,7 +358,7 @@ function renderManager(){
     <div class="food-menu-image-card" data-image-kind="uploaded" data-image-id="${escapeHtml(image.id)}">
       <img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.name || 'Gambar brownies')}"/>
       <div class="food-menu-image-meta"><span>${escapeHtml(image.name || image.id)}</span>
-        <button class="food-menu-image-delete" data-action="delete-uploaded-image" type="button">Padam gambar</button>
+        <button class="food-menu-image-delete" data-action="delete-uploaded-image" type="button">Padam dari website</button>
       </div>
     </div>`).join('');
 
@@ -364,11 +369,17 @@ function renderManager(){
       <div class="food-menu-admin-list">${itemsHtml}</div>
     </section>
     <section class="food-menu-admin-section">
-      <h3>Gambar brownies</h3>
-      <p class="food-menu-admin-help">Muat naik JPG, PNG atau WebP sehingga 5 MB. Gambar asal boleh dipadam daripada paparan dan dipulihkan semula.</p>
+      <h3>Gambar brownies — Cloudinary</h3>
+      <p class="food-menu-admin-help">Gambar baharu dihantar terus ke Cloudinary, bukan Firebase Storage. Cipta <b>Unsigned Upload Preset</b> dalam Cloudinary Console, kemudian masukkan maklumatnya di bawah. Jangan masukkan API Secret.</p>
+      <div class="food-menu-cloudinary-settings">
+        <div class="food-menu-admin-field"><label>Cloud name</label><input id="foodMenuCloudName" maxlength="120" value="${escapeHtml(currentConfig.cloudinary?.cloudName || '')}" placeholder="Contoh: azobss" /></div>
+        <div class="food-menu-admin-field"><label>Unsigned upload preset</label><input id="foodMenuUploadPreset" maxlength="160" value="${escapeHtml(currentConfig.cloudinary?.uploadPreset || '')}" placeholder="Nama preset Cloudinary" /></div>
+        <div class="food-menu-admin-field"><label>Folder Cloudinary</label><input id="foodMenuCloudFolder" maxlength="240" value="${escapeHtml(currentConfig.cloudinary?.folder || 'azobss/food-menu')}" placeholder="azobss/food-menu" /></div>
+      </div>
       <div class="food-menu-image-upload">
         <input id="foodMenuImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple />
-        <button class="food-menu-upload-btn" id="foodMenuUploadBtn" type="button">⬆ Muat Naik Gambar</button>
+        <button class="food-menu-upload-btn" id="foodMenuUploadBtn" type="button">⬆ Upload ke Cloudinary</button>
+        <a class="food-menu-cloudinary-link" href="https://console.cloudinary.com/" target="_blank" rel="noopener noreferrer">Buka Cloudinary Console ↗</a>
         <span class="food-menu-upload-status" id="foodMenuUploadStatus"></span>
       </div>
       <div class="food-menu-image-grid">${defaultImageHtml}${uploadedHtml}</div>
@@ -435,13 +446,24 @@ function collectEditorItems(){
   return next;
 }
 
+function collectCloudinarySettings(){
+  const old = currentConfig.cloudinary || {};
+  const cloudName = clean(document.getElementById('foodMenuCloudName')?.value ?? old.cloudName).replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  const uploadPreset = clean(document.getElementById('foodMenuUploadPreset')?.value ?? old.uploadPreset);
+  const folder = clean(document.getElementById('foodMenuCloudFolder')?.value ?? old.folder || 'azobss/food-menu').replace(/^\/+|\/+$/g, '') || 'azobss/food-menu';
+  currentConfig.cloudinary = { cloudName:cloudName.slice(0,120), uploadPreset:uploadPreset.slice(0,160), folder:folder.slice(0,240) };
+  return currentConfig.cloudinary;
+}
+
 async function persistConfig(message = 'Perubahan menu berjaya disimpan.'){
   if(!currentAccess.allowed) throw new Error('Akses pengurusan menu tidak dibenarkan.');
   await setDoc(CONFIG_REF, {
-    version:678,
+    version:679,
     items:currentConfig.items,
     uploadedImages:currentConfig.uploadedImages,
     hiddenDefaultImages:currentConfig.hiddenDefaultImages,
+    cloudinary:currentConfig.cloudinary || { cloudName:'', uploadPreset:'', folder:'azobss/food-menu' },
+    imageProvider:'cloudinary',
     updatedAt:serverTimestamp(),
     updatedAtMs:Date.now(),
     updatedByUid:currentAccess.user?.uid || '',
@@ -455,6 +477,7 @@ async function saveManagerChanges(){
   try{
     if(button){ button.disabled = true; button.textContent = 'Menyimpan...'; }
     currentConfig.items = collectEditorItems();
+    collectCloudinarySettings();
     await persistConfig();
     applyConfig(currentConfig);
   }catch(error){
@@ -491,22 +514,34 @@ async function compressImage(file){
 async function uploadOneImage(file, index, total){
   if(!/^image\/(jpeg|png|webp)$/i.test(file.type)) throw new Error(`${file.name}: format tidak disokong.`);
   if(file.size > MAX_UPLOAD_BYTES) throw new Error(`${file.name}: saiz melebihi 5 MB.`);
+  const settings = collectCloudinarySettings();
+  if(!settings.cloudName || !settings.uploadPreset){
+    throw new Error('Masukkan Cloud name dan Unsigned upload preset terlebih dahulu.');
+  }
   const optimized = await compressImage(file);
-  const id = `food-image-${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
-  const path = `food-menu-images/${id}-${safeFileName(optimized.name)}`;
-  const task = uploadBytesResumable(storageRef(storage, path), optimized, {
-    contentType:optimized.type,
-    customMetadata:{ uploadedByUid:currentAccess.user?.uid || '', originalName:file.name }
-  });
+  const form = new FormData();
+  form.append('file', optimized, optimized.name);
+  form.append('upload_preset', settings.uploadPreset);
+  if(settings.folder) form.append('folder', settings.folder);
+  form.append('tags', 'azobss,food-menu,brownies');
+  form.append('context', `original_name=${file.name.replace(/[|=]/g, '-')}`);
   const status = document.getElementById('foodMenuUploadStatus');
-  await new Promise((resolve, reject) => {
-    task.on('state_changed', snapshot => {
-      const percent = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
-      if(status) status.textContent = `Gambar ${index}/${total}: ${percent}%`;
-    }, reject, resolve);
-  });
-  const url = await getDownloadURL(task.snapshot.ref);
-  return { id, url, storagePath:path, name:file.name.slice(0,140), createdAtMs:Date.now() };
+  if(status) status.textContent = `Menghantar gambar ${index}/${total} ke Cloudinary...`;
+  const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(settings.cloudName)}/image/upload`;
+  const response = await fetch(endpoint, { method:'POST', body:form });
+  const data = await response.json().catch(() => ({}));
+  if(!response.ok || !data.secure_url){
+    throw new Error(data?.error?.message || `Cloudinary menolak upload (${response.status}).`);
+  }
+  return {
+    id:`cloudinary-${clean(data.asset_id || data.public_id || Date.now()).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,100)}`,
+    url:clean(data.secure_url),
+    provider:'cloudinary',
+    publicId:clean(data.public_id),
+    assetId:clean(data.asset_id),
+    name:file.name.slice(0,140),
+    createdAtMs:Date.now()
+  };
 }
 
 async function uploadSelectedImages(){
@@ -515,6 +550,7 @@ async function uploadSelectedImages(){
   const status = document.getElementById('foodMenuUploadStatus');
   const files = Array.from(input?.files || []).slice(0, 10);
   currentConfig.items = collectEditorItems();
+  collectCloudinarySettings();
   if(!files.length){ showToast('Pilih sekurang-kurangnya satu gambar.', 'warning'); return; }
   try{
     if(button) button.disabled = true;
@@ -530,9 +566,7 @@ async function uploadSelectedImages(){
   }catch(error){
     console.error('[AZOBSS Food Menu] Upload failed:', error);
     if(status) status.textContent = '';
-    showToast(error?.code === 'storage/unauthorized'
-      ? 'Upload ditolak. Publish Firebase Storage Rules 678 terlebih dahulu.'
-      : `Gagal memuat naik gambar: ${clean(error?.message) || 'ralat tidak diketahui'}`, 'warning');
+    showToast(`Gagal upload ke Cloudinary: ${clean(error?.message) || 'ralat tidak diketahui'}`, 'warning');
   }finally{
     if(button) button.disabled = false;
   }
@@ -540,20 +574,18 @@ async function uploadSelectedImages(){
 
 async function deleteUploadedImage(id){
   currentConfig.items = collectEditorItems();
+  collectCloudinarySettings();
   const image = (currentConfig.uploadedImages || []).find(item => item.id === id);
   if(!image) return;
-  if(!confirm(`Padam gambar “${image.name || id}”?`)) return;
+  const publicIdText = image.publicId ? `\n\nPublic ID Cloudinary: ${image.publicId}` : '';
+  if(!confirm(`Padam gambar “${image.name || id}” daripada website?${publicIdText}\n\nFail asal masih kekal dalam Cloudinary dan boleh dipadam melalui Cloudinary Console.`)) return;
   try{
-    if(image.storagePath){
-      try{ await deleteObject(storageRef(storage, image.storagePath)); }
-      catch(error){ if(error?.code !== 'storage/object-not-found') throw error; }
-    }
     currentConfig.uploadedImages = currentConfig.uploadedImages.filter(item => item.id !== id);
-    await persistConfig('Gambar berjaya dipadam.');
+    await persistConfig('Gambar dikeluarkan daripada website. Fail asal masih berada dalam Cloudinary.');
     applyConfig(currentConfig);
   }catch(error){
-    console.error('[AZOBSS Food Menu] Delete image failed:', error);
-    showToast(`Gagal memadam gambar: ${clean(error?.message) || 'ralat tidak diketahui'}`, 'warning');
+    console.error('[AZOBSS Food Menu] Delete image reference failed:', error);
+    showToast(`Gagal memadam gambar daripada website: ${clean(error?.message) || 'ralat tidak diketahui'}`, 'warning');
   }
 }
 

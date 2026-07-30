@@ -1,0 +1,18 @@
+CLOUDINARY SETUP — AZOBSS FOOD MENU PATCH 679
+
+1. Open https://console.cloudinary.com/
+2. Copy your Cloud name from the dashboard.
+3. Go to Settings > Upload > Upload presets.
+4. Create a dedicated UNSIGNED preset, for example: azobss_food_menu_unsigned
+5. Recommended preset restrictions:
+   - Allowed formats: jpg, jpeg, png, webp
+   - Maximum file size: 5 MB
+   - Disallow custom public ID where available
+6. Upload the website patch and publish the included Firestore Rules.
+7. Login to AZOBSS as admin or a user with Tempahan Makanan access ON.
+8. Open Tempahan Makanan > Edit Menu & Gambar.
+9. Enter Cloud name, Unsigned upload preset and folder azobss/food-menu.
+10. Click Simpan Semua Perubahan, then upload images.
+
+Deleting an uploaded image from the website removes its URL from Firestore.
+To permanently remove the source asset, open Cloudinary Media Library and search for the Public ID shown in the confirmation dialog.
