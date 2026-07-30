@@ -9586,7 +9586,10 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   params.set('success_url', successUrl);
   params.set('cancel_url', cancelUrl);
   params.set('client_reference_id', orderId);
-  params.set('automatic_payment_methods[enabled]', 'true');
+  // Stripe API on this account rejects automatic_payment_methods.
+  // Specify compatible Checkout payment methods explicitly instead.
+  params.append('payment_method_types[]', 'card');
+  params.append('payment_method_types[]', 'fpx');
   params.set('locale', 'auto');
   params.set('metadata[orderId]', orderId);
   params.set('metadata[productId]', productId);
@@ -9808,7 +9811,7 @@ async function handler(req, res) {
         mode:azStripeDigitalMode(),
         scope:['Software','CAD Tools'],
         foodCheckout:false,
-        patch:'674',
+        patch:'675',
         time:new Date().toISOString()
       }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
     }
