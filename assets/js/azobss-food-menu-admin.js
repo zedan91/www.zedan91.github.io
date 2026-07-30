@@ -101,6 +101,12 @@ const menuSection = document.getElementById('menu');
 const gallery = document.querySelector('.brownies-showcase.brownies-original-only');
 const defaultRows = new Map();
 const defaultImages = new Map();
+const categoryLists = new Map();
+const VALID_CATEGORIES = [
+  'Premium Chocolate Brownies',
+  'Red Velvet Brownies',
+  'Pistachio Brownies'
+];
 let currentConfig = { items:{}, uploadedImages:[], hiddenDefaultImages:[], cloudinary:{ cloudName:'', uploadPreset:'', folder:'azobss/food-menu' } };
 let currentAccess = { allowed:false, role:'none', user:null };
 let configLoaded = false;
@@ -114,6 +120,12 @@ function defaultFourPrice(name){
 }
 
 function captureDefaults(){
+  document.querySelectorAll('.menu-card').forEach(card => {
+    const category = clean(card.querySelector('h3')?.textContent);
+    const list = card.querySelector('ul');
+    if(category && list) categoryLists.set(category, { card, list });
+  });
+
   document.querySelectorAll('.brownie-order-item').forEach((row, index) => {
     const stepper = row.querySelector('.brownie-qty-stepper');
     if(!stepper) return;
@@ -142,22 +154,30 @@ function captureDefaults(){
 
 function normalizeItem(id, value = {}){
   const fallback = defaultRows.get(id);
-  if(!fallback) return null;
-  const name = clean(value.name) || fallback.name;
-  const price8 = Number.isFinite(Number(value.price8)) ? roundMoney(value.price8) : fallback.price8;
-  const available4 = typeof value.available4 === 'boolean' ? value.available4 : fallback.available4;
+  const custom = !fallback && (value?.custom === true || /^custom-/.test(clean(id)));
+  if(!fallback && !custom) return null;
+  const category = clean(value.category || fallback?.category);
+  if(!VALID_CATEGORIES.includes(category)) return null;
+  const name = clean(value.name) || fallback?.name || 'Pilihan baharu';
+  const rawPrice8 = Number(value.price8);
+  const price8 = Number.isFinite(rawPrice8) ? roundMoney(rawPrice8) : roundMoney(fallback?.price8 || 0);
+  const available4 = typeof value.available4 === 'boolean' ? value.available4 : Boolean(fallback?.available4);
+  const rawPrice4 = Number(value.price4);
   const price4 = available4
-    ? (Number.isFinite(Number(value.price4)) && Number(value.price4) > 0
-      ? roundMoney(value.price4)
-      : fallback.price4 || defaultFourPrice(name))
+    ? (Number.isFinite(rawPrice4) && rawPrice4 > 0
+      ? roundMoney(rawPrice4)
+      : roundMoney(fallback?.price4 || defaultFourPrice(name)))
     : 0;
   return {
-    id,
+    id:clean(id).slice(0, 120),
+    category,
     name:name.slice(0, 160),
     price8:Math.max(0, price8),
     price4:Math.max(0, price4),
     available4,
-    deleted:value.deleted === true
+    deleted:value.deleted === true,
+    custom,
+    createdAtMs:Number(value.createdAtMs || 0)
   };
 }
 
@@ -165,6 +185,11 @@ function normalizedConfig(data = {}){
   const items = {};
   defaultRows.forEach((fallback, id) => {
     items[id] = normalizeItem(id, data?.items?.[id] || fallback);
+  });
+  Object.entries(data?.items || {}).slice(0, 80).forEach(([id, value]) => {
+    if(defaultRows.has(id)) return;
+    const item = normalizeItem(id, value);
+    if(item) items[id] = item;
   });
 
   const uploadedImages = Array.isArray(data.uploadedImages)
@@ -192,7 +217,49 @@ function normalizedConfig(data = {}){
   return { items, uploadedImages, hiddenDefaultImages, cloudinary };
 }
 
+function customRowElement(item){
+  const row = document.createElement('li');
+  row.className = 'brownie-order-item';
+  row.dataset.foodMenuCustom = 'true';
+  row.dataset.category = item.category;
+  row.dataset.product = item.name;
+  row.dataset.product8 = item.name;
+  row.dataset.product4 = item.name;
+  row.dataset.price = String(item.price8);
+  row.dataset.price4 = String(item.price4 || '');
+  row.dataset.available4 = item.available4 ? 'true' : 'false';
+  row.dataset.enabled = item.deleted ? 'false' : 'true';
+  row.hidden = item.deleted;
+  row.innerHTML = `
+    <div class="brownie-item-info">
+      <span class="brownie-item-name">${escapeHtml(item.name)}</span>
+      <strong class="brownie-item-price">${money(item.price8)}</strong>
+    </div>
+    <div class="brownie-qty-stepper" aria-label="Kuantiti ${escapeHtml(item.category)} ${escapeHtml(item.name)}"
+      data-item-id="${escapeHtml(item.id)}" data-category="${escapeHtml(item.category)}"
+      data-product="${escapeHtml(item.name)}" data-product8="${escapeHtml(item.name)}" data-product4="${escapeHtml(item.name)}"
+      data-price="${escapeHtml(item.price8)}" data-price-4="${escapeHtml(item.price4 || '')}"
+      data-available-4="${item.available4 ? 'true' : 'false'}" data-enabled="${item.deleted ? 'false' : 'true'}">
+      <button aria-label="Tolak kuantiti ${escapeHtml(item.category)} ${escapeHtml(item.name)}" class="qty-btn qty-minus" data-qty-action="minus" disabled type="button">−</button>
+      <output aria-live="polite" class="qty-value" data-qty-value id="${escapeHtml(item.id)}">0</output>
+      <button aria-label="Tambah kuantiti ${escapeHtml(item.category)} ${escapeHtml(item.name)}" class="qty-btn qty-plus" data-qty-action="plus" type="button">+</button>
+    </div>`;
+  return row;
+}
+
+function syncCustomRows(config){
+  document.querySelectorAll('.brownie-order-item[data-food-menu-custom="true"]').forEach(row => row.remove());
+  Object.values(config.items || {})
+    .filter(item => item?.custom === true && !item.deleted)
+    .sort((a,b) => (a.createdAtMs || 0) - (b.createdAtMs || 0))
+    .forEach(item => {
+      const target = categoryLists.get(item.category)?.list;
+      if(target) target.appendChild(customRowElement(item));
+    });
+}
+
 function applyMenuConfig(config){
+  syncCustomRows(config);
   defaultRows.forEach((fallback, id) => {
     const item = normalizeItem(id, config.items?.[id] || fallback);
     if(!item) return;
@@ -335,11 +402,12 @@ function injectStyles(){
 .food-menu-admin-modal{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:18px;background:rgba(2,6,23,.82);backdrop-filter:blur(8px)}.food-menu-admin-modal[hidden]{display:none!important}.food-menu-admin-dialog{width:min(1080px,100%);max-height:92vh;overflow:auto;border:1px solid rgba(34,197,94,.55);border-radius:20px;background:#0b1424;color:#f8fafc;box-shadow:0 28px 90px rgba(0,0,0,.55)}
 .food-menu-admin-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(11,20,36,.96);backdrop-filter:blur(10px)}.food-menu-admin-head h2{margin:0;font-size:21px}.food-menu-admin-close{width:38px;height:38px;border:1px solid #475569;border-radius:10px;background:#172033;color:#fff;font-size:22px;cursor:pointer}
 .food-menu-admin-body{display:grid;gap:22px;padding:18px}.food-menu-admin-section{display:grid;gap:12px}.food-menu-admin-section h3{margin:0;font-size:18px;color:#fde68a}.food-menu-admin-help{margin:0;color:#94a3b8;font-size:12px;line-height:1.5}.food-menu-admin-list{display:grid;gap:10px}.food-menu-admin-item{display:grid;grid-template-columns:minmax(190px,1.7fr) 110px 110px 120px auto;gap:10px;align-items:end;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:#0f1b2e}.food-menu-admin-item.is-deleted{opacity:.58;border-style:dashed}.food-menu-admin-field{display:grid;gap:5px;min-width:0}.food-menu-admin-field label{font-size:11px;font-weight:850;color:#cbd5e1}.food-menu-admin-field input{min-width:0;height:40px;padding:8px 10px;border:1px solid #475569;border-radius:9px;background:#061022;color:#fff;font:inherit}.food-menu-admin-category{font-size:11px;color:#fbbf24;margin-bottom:3px}.food-menu-admin-check{display:flex;align-items:center;gap:7px;min-height:40px;color:#e2e8f0;font-size:12px;font-weight:800}.food-menu-admin-check input{width:17px;height:17px}.food-menu-admin-delete{height:40px;border:1px solid #ef4444;border-radius:9px;background:#7f1d1d;color:#fff;padding:0 11px;font-weight:900;cursor:pointer}.food-menu-admin-delete.restore{border-color:#22c55e;background:#166534}
+.food-menu-add-box{display:grid;grid-template-columns:1.15fr 1.8fr 105px 105px 125px auto;gap:10px;align-items:end;padding:13px;border:1px solid rgba(34,197,94,.45);border-radius:14px;background:linear-gradient(135deg,rgba(20,83,45,.26),rgba(7,89,133,.15))}.food-menu-add-box select,.food-menu-add-box input{min-width:0;height:40px;padding:8px 10px;border:1px solid #475569;border-radius:9px;background:#061022;color:#fff;font:inherit}.food-menu-add-button{height:40px;border:1px solid #22c55e;border-radius:9px;background:#15803d;color:#fff;padding:0 14px;font-weight:950;cursor:pointer;white-space:nowrap}.food-menu-custom-badge{display:inline-flex;margin-left:6px;padding:2px 7px;border:1px solid rgba(56,189,248,.55);border-radius:999px;color:#7dd3fc;font-size:9px;font-weight:900;vertical-align:middle}
 .food-menu-admin-actions{display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;padding:13px 18px;border-top:1px solid rgba(255,255,255,.1);background:rgba(11,20,36,.97)}.food-menu-admin-save{border:0;border-radius:11px;background:#16a34a;color:#fff;padding:11px 18px;font:inherit;font-weight:950;cursor:pointer}.food-menu-admin-save:disabled{opacity:.5;cursor:wait}
 .food-menu-cloudinary-settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px;border:1px solid rgba(56,189,248,.28);border-radius:13px;background:rgba(7,89,133,.12)}.food-menu-cloudinary-settings .food-menu-admin-field input{height:42px}.food-menu-cloudinary-link{display:inline-flex;align-items:center;justify-content:center;border:1px solid #38bdf8;border-radius:10px;background:#0c4a6e;color:#fff;padding:10px 14px;text-decoration:none;font-size:12px;font-weight:900}.food-menu-image-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.food-menu-image-upload input{max-width:360px}.food-menu-upload-btn{border:1px solid #38bdf8;border-radius:10px;background:#075985;color:#fff;padding:10px 14px;font-weight:900;cursor:pointer}.food-menu-upload-btn:disabled{opacity:.5;cursor:wait}.food-menu-upload-status{font-size:12px;color:#a7f3d0}.food-menu-image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.food-menu-image-card{position:relative;overflow:hidden;border:1px solid rgba(251,191,36,.35);border-radius:13px;background:#061022}.food-menu-image-card img{display:block;width:100%;height:125px;object-fit:cover}.food-menu-image-card.is-hidden img{opacity:.3;filter:grayscale(1)}.food-menu-image-meta{display:grid;gap:7px;padding:9px}.food-menu-image-meta span{font-size:11px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.food-menu-image-delete{border:1px solid #ef4444;border-radius:8px;background:#7f1d1d;color:#fff;padding:7px 8px;font-size:11px;font-weight:900;cursor:pointer}.food-menu-image-delete.restore{border-color:#22c55e;background:#166534}
 .food-menu-admin-toast{position:fixed;right:20px;bottom:20px;z-index:100001;max-width:min(430px,calc(100vw - 40px));padding:13px 16px;border:1px solid #38bdf8;border-radius:13px;background:#0c4a6e;color:#fff;font-weight:850;box-shadow:0 16px 45px rgba(0,0,0,.42)}.food-menu-admin-toast.success{border-color:#22c55e;background:#14532d}.food-menu-admin-toast.warning{border-color:#f59e0b;background:#78350f}.food-menu-item-deleted{display:none!important}.brownies-showcase.brownies-original-only img[hidden]{display:none!important}
-@media(max-width:820px){.food-menu-cloudinary-settings{grid-template-columns:1fr}.food-menu-admin-item{grid-template-columns:1fr 1fr}.food-menu-admin-field.name{grid-column:1/-1}.food-menu-admin-delete{grid-column:2}.food-menu-admin-toolbar{align-items:flex-start;flex-direction:column}.food-menu-admin-open{width:100%}}
-@media(max-width:520px){.food-menu-admin-modal{padding:0}.food-menu-admin-dialog{height:100vh;max-height:none;border-radius:0}.food-menu-admin-item{grid-template-columns:1fr}.food-menu-admin-field.name,.food-menu-admin-delete{grid-column:auto}.food-menu-admin-actions{flex-direction:column}.food-menu-admin-save{width:100%}}
+@media(max-width:820px){.food-menu-add-box{grid-template-columns:1fr 1fr}.food-menu-add-box .wide{grid-column:1/-1}.food-menu-cloudinary-settings{grid-template-columns:1fr}.food-menu-admin-item{grid-template-columns:1fr 1fr}.food-menu-admin-field.name{grid-column:1/-1}.food-menu-admin-delete{grid-column:2}.food-menu-admin-toolbar{align-items:flex-start;flex-direction:column}.food-menu-admin-open{width:100%}}
+@media(max-width:520px){.food-menu-add-box{grid-template-columns:1fr}.food-menu-add-box .wide{grid-column:auto}.food-menu-admin-modal{padding:0}.food-menu-admin-dialog{height:100vh;max-height:none;border-radius:0}.food-menu-admin-item{grid-template-columns:1fr}.food-menu-admin-field.name,.food-menu-admin-delete{grid-column:auto}.food-menu-admin-actions{flex-direction:column}.food-menu-admin-save{width:100%}}
 `;
   document.head.appendChild(style);
 }
@@ -402,13 +470,27 @@ function renderManager(){
     return;
   }
 
-  const itemsHtml = [...defaultRows.values()].map(fallback => {
-    const item = currentConfig.items[fallback.id] || normalizeItem(fallback.id, fallback);
+  const categoryOrder = new Map(VALID_CATEGORIES.map((category, index) => [category, index]));
+  const itemValues = Object.values(currentConfig.items || {}).sort((a, b) => {
+    const categoryDiff = (categoryOrder.get(a.category) ?? 99) - (categoryOrder.get(b.category) ?? 99);
+    if(categoryDiff) return categoryDiff;
+    const aDefaultIndex = [...defaultRows.keys()].indexOf(a.id);
+    const bDefaultIndex = [...defaultRows.keys()].indexOf(b.id);
+    if(aDefaultIndex >= 0 || bDefaultIndex >= 0){
+      if(aDefaultIndex < 0) return 1;
+      if(bDefaultIndex < 0) return -1;
+      return aDefaultIndex - bDefaultIndex;
+    }
+    return (a.createdAtMs || 0) - (b.createdAtMs || 0);
+  });
+  const itemsHtml = itemValues.map(itemValue => {
+    const item = normalizeItem(itemValue.id, itemValue);
+    if(!item) return '';
     const deleted = item.deleted === true;
     return `
-      <div class="food-menu-admin-item${deleted ? ' is-deleted' : ''}" data-editor-item="${escapeHtml(fallback.id)}">
+      <div class="food-menu-admin-item${deleted ? ' is-deleted' : ''}" data-editor-item="${escapeHtml(item.id)}">
         <div class="food-menu-admin-field name">
-          <span class="food-menu-admin-category">${escapeHtml(fallback.category)}</span>
+          <span class="food-menu-admin-category">${escapeHtml(item.category)}${item.custom ? '<span class="food-menu-custom-badge">TAMBAHAN</span>' : ''}</span>
           <label>Nama pilihan</label>
           <input maxlength="160" data-field="name" value="${escapeHtml(item.name)}" ${deleted ? 'disabled' : ''} />
         </div>
@@ -450,7 +532,15 @@ function renderManager(){
   body.innerHTML = `
     <section class="food-menu-admin-section">
       <h3>Nama dan harga menu</h3>
-      <p class="food-menu-admin-help">Harga 8 inci dan 4 inci boleh ditetapkan berasingan. Butang Padam menyembunyikan pilihan daripada pelanggan; pilihan itu masih boleh dipulihkan.</p>
+      <p class="food-menu-admin-help">Tambah pilihan baharu ke mana-mana kategori, atau edit menu sedia ada. Harga 8 inci dan 4 inci boleh ditetapkan berasingan.</p>
+      <div class="food-menu-add-box">
+        <div class="food-menu-admin-field"><label>Kategori</label><select id="foodMenuNewCategory">${VALID_CATEGORIES.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('')}</select></div>
+        <div class="food-menu-admin-field wide"><label>Nama menu baharu</label><input id="foodMenuNewName" maxlength="160" placeholder="Contoh: Chocolate Oreo" /></div>
+        <div class="food-menu-admin-field"><label>Harga 8 inci</label><input id="foodMenuNewPrice8" min="0" max="9999" step="0.01" type="number" placeholder="RM" /></div>
+        <div class="food-menu-admin-field"><label>Harga 4 inci</label><input id="foodMenuNewPrice4" min="0" max="9999" step="0.01" type="number" placeholder="RM" disabled /></div>
+        <label class="food-menu-admin-check"><input id="foodMenuNewAvailable4" type="checkbox" /> Ada 4 inci</label>
+        <button class="food-menu-add-button" data-action="add-item" type="button">＋ Tambah Menu</button>
+      </div>
       <div class="food-menu-admin-list">${itemsHtml}</div>
     </section>
     <section class="food-menu-admin-section">
@@ -469,6 +559,10 @@ function renderManager(){
       </div>
       <div class="food-menu-image-grid">${defaultImageHtml}${uploadedHtml}</div>
     </section>`;
+
+  const newAvailable4 = document.getElementById('foodMenuNewAvailable4');
+  const newPrice4 = document.getElementById('foodMenuNewPrice4');
+  newAvailable4?.addEventListener('change', () => { if(newPrice4) newPrice4.disabled = !newAvailable4.checked; });
 
   body.querySelectorAll('[data-editor-item]').forEach(card => {
     const available4 = card.querySelector('[data-field="available4"]');
@@ -490,7 +584,33 @@ function handleManagerAction(event){
   }
   const action = button.dataset.action;
   currentConfig.items = collectEditorItems();
-  if(action === 'toggle-delete'){
+  collectCloudinarySettings();
+  if(action === 'add-item'){
+    const category = clean(document.getElementById('foodMenuNewCategory')?.value);
+    const name = clean(document.getElementById('foodMenuNewName')?.value);
+    const price8 = Number(document.getElementById('foodMenuNewPrice8')?.value);
+    const available4 = Boolean(document.getElementById('foodMenuNewAvailable4')?.checked);
+    const price4 = Number(document.getElementById('foodMenuNewPrice4')?.value);
+    if(!VALID_CATEGORIES.includes(category) || !name || !Number.isFinite(price8) || price8 <= 0){
+      showToast('Pilih kategori, masukkan nama dan harga 8 inci yang sah.', 'warning');
+      renderManager();
+      return;
+    }
+    if(available4 && (!Number.isFinite(price4) || price4 <= 0)){
+      showToast('Masukkan harga 4 inci atau tutup pilihan 4 inci.', 'warning');
+      renderManager();
+      return;
+    }
+    const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    currentConfig.items[id] = normalizeItem(id, {
+      custom:true, category, name, price8, available4,
+      price4:available4 ? price4 : 0,
+      deleted:false, createdAtMs:Date.now()
+    });
+    renderManager();
+    showToast('Menu baharu ditambah. Tekan “Simpan Semua Perubahan” untuk menerbitkannya.', 'success');
+    requestAnimationFrame(() => document.querySelector(`[data-editor-item="${id}"]`)?.scrollIntoView({ behavior:'smooth', block:'center' }));
+  }else if(action === 'toggle-delete'){
     const card = button.closest('[data-editor-item]');
     const id = clean(card?.dataset.editorItem);
     const item = currentConfig.items[id];
@@ -544,7 +664,7 @@ function collectCloudinarySettings(){
 async function persistConfig(message = 'Perubahan menu berjaya disimpan.'){
   if(!currentAccess.allowed) throw new Error('Akses pengurusan menu tidak dibenarkan.');
   await setDoc(CONFIG_REF, {
-    version:681,
+    version:682,
     items:currentConfig.items,
     uploadedImages:currentConfig.uploadedImages,
     hiddenDefaultImages:currentConfig.hiddenDefaultImages,

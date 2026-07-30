@@ -1113,7 +1113,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 </script>
 <script>(function(){
   const form = document.getElementById('orderForm');
-  const steppers = Array.from(document.querySelectorAll('.brownie-qty-stepper'));
+  let steppers = Array.from(document.querySelectorAll('.brownie-qty-stepper'));
   const summaryItems = document.getElementById('orderSummaryItems');
   const summaryEmpty = document.getElementById('orderSummaryEmpty');
   const summaryTotal = document.getElementById('orderSummaryTotal');
@@ -1245,6 +1245,28 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     return 13;
   };
   const keyOf = (el, size = activeSize) => `${el.dataset.itemId || `${el.dataset.category}|||${el.dataset.product}`}|||${size}`;
+  const boundSteppers = new WeakSet();
+
+  function bindStepper(stepper){
+    if(boundSteppers.has(stepper)) return;
+    boundSteppers.add(stepper);
+    stepper.addEventListener('click', event => {
+      const button = event.target.closest('[data-qty-action]');
+      if(!button) return;
+      const key = keyOf(stepper, activeSize);
+      const current = Number(selections.get(key) || 0);
+      const next = button.dataset.qtyAction === 'plus'
+        ? Math.min(99, current + 1)
+        : Math.max(0, current - 1);
+      selections.set(key, next);
+      updateUI();
+    });
+  }
+
+  function refreshSteppers(){
+    steppers = Array.from(document.querySelectorAll('.brownie-qty-stepper'));
+    steppers.forEach(bindStepper);
+  }
 
   function readSelections(){
     return steppers.flatMap(stepper => SIZE_OPTIONS.map(size => {
@@ -1354,19 +1376,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     });
   });
 
-  steppers.forEach(stepper => {
-    stepper.addEventListener('click', event => {
-      const button = event.target.closest('[data-qty-action]');
-      if(!button) return;
-      const key = keyOf(stepper, activeSize);
-      const current = Number(selections.get(key) || 0);
-      const next = button.dataset.qtyAction === 'plus'
-        ? Math.min(99, current + 1)
-        : Math.max(0, current - 1);
-      selections.set(key, next);
-      updateUI();
-    });
-  });
+  refreshSteppers();
 
   form.addEventListener('submit', async function(event){
     event.preventDefault();
@@ -1440,12 +1450,12 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   });
 
   window.AZOBSSBrownieOrder = Object.freeze({
-    refresh:updateUI,
+    refresh(){ refreshSteppers(); updateUI(); },
     getActiveSize:() => activeSize
   });
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=681" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=682" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;
