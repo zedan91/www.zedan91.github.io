@@ -807,6 +807,69 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     font-size:clamp(42px,12vw,68px)!important;
   }
 }
+
+
+/* AZOBSS 683: elegant single-word Brownies hero title */
+.hero h1{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:clamp(12px,2vw,26px)!important;
+  overflow:visible!important;
+  font-size:inherit!important;
+  line-height:1!important;
+}
+.hero h1::before,
+.hero h1::after{
+  content:"";
+  display:block;
+  width:clamp(42px,9vw,128px);
+  height:2px;
+  flex:0 1 auto;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(251,191,36,.92));
+  box-shadow:0 0 12px rgba(251,191,36,.28);
+}
+.hero h1::after{
+  background:linear-gradient(90deg,rgba(251,191,36,.92),transparent);
+}
+.az683-hero-title-word{
+  display:inline-block;
+  padding:.04em .12em .1em;
+  font-family:"Brush Script MT","Segoe Script","Lucida Handwriting",cursive;
+  font-size:clamp(76px,10vw,138px);
+  font-weight:700;
+  line-height:.82;
+  letter-spacing:.015em;
+  color:#fff4d3;
+  background:linear-gradient(180deg,#fff9e9 8%,#ffe8a3 48%,#d89a25 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow:0 8px 30px rgba(0,0,0,.26);
+  filter:drop-shadow(0 3px 0 rgba(92,43,5,.46)) drop-shadow(0 0 16px rgba(251,191,36,.14));
+}
+@media(max-width:760px){
+  .hero h1{
+    gap:10px!important;
+  }
+  .hero h1::before,
+  .hero h1::after{
+    width:clamp(26px,7vw,54px);
+  }
+  .az683-hero-title-word{
+    font-size:clamp(64px,20vw,100px);
+  }
+}
+@media(max-width:420px){
+  .hero h1::before,
+  .hero h1::after{
+    display:none;
+  }
+  .az683-hero-title-word{
+    font-size:clamp(62px,22vw,92px);
+  }
+}
 </style><link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 </head>
 <body>
@@ -874,7 +937,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 </header>
 <main>
 <section class="hero">
-<div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1>Premium Chocolate Brownies</h1><p class="lead">36 keping untuk saiz 8 inci dan 9 keping untuk saiz 4 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM13</span><span>8 inci • 36 pcs</span><span>4 inci • 9 pcs</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
+<div><span class="eyebrow">Tempahan Makanan • Lynn</span><h1 aria-label="Brownies"><span class="az683-hero-title-word">Brownies</span></h1><p class="lead">36 keping untuk saiz 8 inci dan 9 keping untuk saiz 4 inci. Menggunakan coklat Beryl's berkualiti dan bahan terpilih untuk rasa yang lebih rich, sedap dan premium.</p><div class="badges"><span>Harga dari RM13</span><span>8 inci • 36 pcs</span><span>4 inci • 9 pcs</span><span>Premium Quality</span></div><div class="hero-actions"><a class="btn primary" href="#tempah">Tempah Sekarang</a><a class="btn secondary" href="#menu">Lihat Semua Harga</a></div></div>
 </section>
 <div aria-label="Gambar brownies asal daripada flyer Lynn" class="brownies-showcase brownies-original-only">
 <img alt="Brownies asal dengan corak coklat dan karamel" data-gallery-id="default-1" decoding="async" loading="eager" src="/assets/img/tempahan-makanan/brownies-original-crop-1.png"/>

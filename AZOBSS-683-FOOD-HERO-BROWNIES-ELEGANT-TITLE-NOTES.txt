@@ -1,0 +1,7 @@
+AZOBSS Patch 683 — Food Hero Brownies Elegant Title
+
+Changes:
+- Changes the main Tempahan Makanan hero heading from “Premium Chocolate Brownies” to “Brownies”.
+- Applies a more elegant script-style cream-to-gold title treatment.
+- Adds subtle decorative gold lines on desktop and keeps the title responsive on mobile.
+- Does not change menu category names, prices, Cloudinary settings, ordering logic, Stripe, or Firebase Rules.
