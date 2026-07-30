@@ -9647,6 +9647,18 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 .services-grid .az687-brownies-service-card .service-info{color:#fde68a !important;}
 .services-grid .az687-brownies-service-card img{object-position:center !important;}
 </style>
+<style id="az688-home-service-card-independent-height-fix">
+/* AZOBSS 688: expanding one service card must not stretch neighbouring cards.
+   A late global rule changes .services-grid to flex with align-items:stretch. */
+.services-section > .services-grid{
+  align-items:flex-start !important;
+}
+.services-section > .services-grid > .card{
+  align-self:flex-start !important;
+  height:auto !important;
+  min-height:0 !important;
+}
+</style>
 <div class="grid services-grid">
 <div aria-label="Lihat info Format Windows" class="card service-card" role="button" tabindex="0">
 <img alt="Format Windows" src="images/format-windows.jpg"/>
@@ -9700,8 +9712,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p>- Not an official precise survey</p>
 </div>
 </div>
-<a aria-label="Buka menu tempahan Brownies" class="card service-card az687-brownies-service-card" href="/Tempahan-Makanan/?v=687">
-<img alt="Brownies premium dengan taburan kacang serta corak coklat dan kuning" src="/assets/img/tempahan-makanan/premium-brownies-nut-pattern-thumb.webp?v=687" loading="lazy" decoding="async"/>
+<a aria-label="Buka menu tempahan Brownies" class="card service-card az687-brownies-service-card" href="/Tempahan-Makanan/?v=688">
+<img alt="Brownies premium dengan taburan kacang serta corak coklat dan kuning" src="/assets/img/tempahan-makanan/premium-brownies-nut-pattern-thumb.webp?v=688" loading="lazy" decoding="async"/>
 <p>Brownies</p>
 <div class="service-info">
 <p>- Harga dari RM13</p>
