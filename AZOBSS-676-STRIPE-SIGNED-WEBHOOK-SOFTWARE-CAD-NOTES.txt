@@ -1,0 +1,27 @@
+AZOBSS PATCH 676 - STRIPE SIGNED WEBHOOK FOR SOFTWARE / CAD
+Date: 30 July 2026
+Baseline: Patch 675
+
+Changes:
+1. Added POST /api/stripe/webhook for Stripe Checkout events.
+2. Verifies the Stripe-Signature header using STRIPE_WEBHOOK_SECRET (whsec_...).
+3. Handles only:
+   - checkout.session.completed
+   - checkout.session.async_payment_succeeded
+   - checkout.session.async_payment_failed
+4. Paid Software/CAD orders are finalized idempotently using the existing secure premium-order flow.
+5. Validates order ID, Checkout Session ID, MYR currency and amount before unlocking downloads.
+6. Food/brownies checkout remains excluded.
+7. Added GET /api/stripe/webhook-health.
+8. Existing return-page /api/verify-payment fallback remains active.
+
+Required Render environment variable:
+STRIPE_WEBHOOK_SECRET=whsec_... from the matching Stripe Sandbox or Live event destination.
+
+Webhook endpoint URL:
+https://azobss-backend.onrender.com/api/stripe/webhook
+
+Health URL:
+https://azobss-backend.onrender.com/api/stripe/webhook-health
+
+Do not mix Sandbox and Live secrets.

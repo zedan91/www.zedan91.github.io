@@ -9718,6 +9718,143 @@ async function azVerifyDigitalStripeOrder(order = {}) {
 }
 
 
+// AZOBSS 676: STRIPE SIGNED WEBHOOK FOR PREMIUM SOFTWARE / CAD
+function azStripeWebhookSecret() {
+  return String(process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+}
+function azStripeWebhookConfigured() {
+  return /^whsec_/.test(azStripeWebhookSecret());
+}
+function azReadStripeWebhookBody(req, maxBytes = 2 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', (chunk) => {
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      size += buf.length;
+      if (size > maxBytes) {
+        reject(Object.assign(new Error('Webhook body too large.'), { statusCode:413 }));
+        req.destroy();
+        return;
+      }
+      chunks.push(buf);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+function azStripeWebhookSignatureValid(rawBody, signatureHeader, toleranceSeconds = 300) {
+  const secret = azStripeWebhookSecret();
+  if (!/^whsec_/.test(secret)) return { ok:false, reason:'webhook_secret_not_configured' };
+  const header = String(signatureHeader || '').trim();
+  if (!header) return { ok:false, reason:'stripe_signature_missing' };
+  const pairs = header.split(',').map(part => part.trim()).filter(Boolean);
+  let timestamp = 0;
+  const signatures = [];
+  for (const part of pairs) {
+    const idx = part.indexOf('=');
+    if (idx < 1) continue;
+    const key = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    if (key === 't') timestamp = Number(value) || 0;
+    if (key === 'v1' && /^[a-f0-9]{64}$/i.test(value)) signatures.push(value.toLowerCase());
+  }
+  if (!timestamp || !signatures.length) return { ok:false, reason:'stripe_signature_invalid_format' };
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestamp) > Math.max(30, Number(toleranceSeconds) || 300)) {
+    return { ok:false, reason:'stripe_signature_timestamp_outside_tolerance' };
+  }
+  const payload = Buffer.concat([Buffer.from(String(timestamp) + '.', 'utf8'), Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody || '')]);
+  const expectedHex = crypto.createHmac('sha256', secret).update(payload).digest('hex').toLowerCase();
+  const expected = Buffer.from(expectedHex, 'hex');
+  const matched = signatures.some((value) => {
+    try {
+      const received = Buffer.from(value, 'hex');
+      return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+    } catch (_) { return false; }
+  });
+  return matched ? { ok:true, timestamp } : { ok:false, reason:'stripe_signature_mismatch' };
+}
+async function azHandleStripeDigitalWebhookEvent(event = {}, req = null) {
+  const eventType = cleanPremiumText(event.type || '', 120);
+  const session = event && event.data && event.data.object && typeof event.data.object === 'object' ? event.data.object : null;
+  if (!session) return { ok:true, ignored:true, reason:'missing_event_object', eventType };
+  const supported = new Set([
+    'checkout.session.completed',
+    'checkout.session.async_payment_succeeded',
+    'checkout.session.async_payment_failed'
+  ]);
+  if (!supported.has(eventType)) return { ok:true, ignored:true, reason:'event_not_used', eventType };
+
+  const orderId = cleanPremiumText((session.metadata && session.metadata.orderId) || session.client_reference_id || '', 160);
+  if (!orderId) return { ok:true, ignored:true, reason:'order_id_missing', eventType, sessionId:cleanPremiumText(session.id || '', 220) };
+  let order = await findPremiumOrderByAnyDeep({ orderId });
+  if (!order) {
+    console.warn('Stripe webhook order not found:', orderId, cleanPremiumText(session.id || '', 220));
+    return { ok:true, ignored:true, reason:'order_not_found', eventType, orderId };
+  }
+
+  const expectedSessionId = cleanPremiumText(order.stripeCheckoutSessionId || order.stripeSessionId || '', 220);
+  const receivedSessionId = cleanPremiumText(session.id || '', 220);
+  if (expectedSessionId && receivedSessionId && expectedSessionId !== receivedSessionId) {
+    console.warn('Stripe webhook session mismatch:', orderId, expectedSessionId, receivedSessionId);
+    return { ok:true, ignored:true, reason:'session_mismatch', eventType, orderId };
+  }
+
+  const expectedAmountSen = Number(order.amountSen || 0) || 0;
+  const receivedAmountSen = Number(session.amount_total || session.amount_subtotal || 0) || 0;
+  const currency = String(session.currency || '').toLowerCase();
+  if (expectedAmountSen && receivedAmountSen && expectedAmountSen !== receivedAmountSen) {
+    console.warn('Stripe webhook amount mismatch:', orderId, expectedAmountSen, receivedAmountSen);
+    return { ok:true, ignored:true, reason:'amount_mismatch', eventType, orderId };
+  }
+  if (currency && currency !== 'myr') {
+    console.warn('Stripe webhook currency mismatch:', orderId, currency);
+    return { ok:true, ignored:true, reason:'currency_mismatch', eventType, orderId };
+  }
+
+  if (eventType === 'checkout.session.async_payment_failed') {
+    order = upsertPremiumOrder({
+      ...order,
+      status:String(order.status || '').toLowerCase() === 'paid' ? 'paid' : 'pending',
+      stripePaymentFailedAt:new Date().toISOString(),
+      stripePaymentFailureEventId:cleanPremiumText(event.id || '', 220),
+      stripeLastWebhookEventType:eventType,
+      stripeLastWebhookEventId:cleanPremiumText(event.id || '', 220)
+    });
+    return { ok:true, handled:true, paid:false, eventType, orderId:order.orderId || orderId };
+  }
+
+  const paymentStatus = String(session.payment_status || '').toLowerCase();
+  if (paymentStatus !== 'paid') {
+    order = upsertPremiumOrder({
+      ...order,
+      stripeLastWebhookEventType:eventType,
+      stripeLastWebhookEventId:cleanPremiumText(event.id || '', 220),
+      stripeWebhookPendingAt:new Date().toISOString(),
+      stripeWebhookPaymentStatus:paymentStatus || 'unknown'
+    });
+    return { ok:true, handled:true, paid:false, eventType, orderId:order.orderId || orderId, paymentStatus:paymentStatus || 'unknown' };
+  }
+
+  order = await azFinalizePaidOrderOnce(order, req, {
+    verified:true,
+    paymentMethod:'stripe',
+    verificationSource:'stripe-webhook',
+    stripeSession:session,
+    paymentReference:cleanPremiumText(session.payment_intent || session.id || '', 220)
+  });
+  order = upsertPremiumOrder({
+    ...order,
+    stripeWebhookVerifiedAt:order.stripeWebhookVerifiedAt || new Date().toISOString(),
+    stripeLastWebhookEventType:eventType,
+    stripeLastWebhookEventId:cleanPremiumText(event.id || '', 220),
+    stripeWebhookEventId:cleanPremiumText(event.id || '', 220)
+  });
+  return { ok:true, handled:true, paid:true, eventType, orderId:order.orderId || orderId, status:order.status || 'paid' };
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -9811,10 +9948,54 @@ async function handler(req, res) {
         mode:azStripeDigitalMode(),
         scope:['Software','CAD Tools'],
         foodCheckout:false,
-        patch:'675',
+        webhookConfigured:azStripeWebhookConfigured(),
+        webhookEndpoint:'/api/stripe/webhook',
+        patch:'676',
         time:new Date().toISOString()
       }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
     }
+    if (pathname === "/api/stripe/webhook-health" && req.method === "GET") {
+      const configured = azStripeWebhookConfigured();
+      return send(res, configured ? 200 : 503, JSON.stringify({
+        ok:configured,
+        service:'azobss-stripe-webhook',
+        configured,
+        mode:azStripeDigitalMode(),
+        endpoint:'/api/stripe/webhook',
+        events:[
+          'checkout.session.completed',
+          'checkout.session.async_payment_succeeded',
+          'checkout.session.async_payment_failed'
+        ],
+        scope:['Software','CAD Tools'],
+        patch:'676',
+        time:new Date().toISOString()
+      }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+    }
+    if (pathname === "/api/stripe/webhook" && req.method === "POST") {
+      try {
+        if (!azStripeWebhookConfigured()) {
+          return send(res, 503, JSON.stringify({ ok:false, error:'STRIPE_WEBHOOK_SECRET belum dikonfigurasi.' }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+        }
+        const rawBody = await azReadStripeWebhookBody(req);
+        const signatureCheck = azStripeWebhookSignatureValid(rawBody, req.headers['stripe-signature']);
+        if (!signatureCheck.ok) {
+          console.warn('Stripe webhook signature rejected:', signatureCheck.reason);
+          return send(res, 400, JSON.stringify({ ok:false, error:'Invalid Stripe webhook signature.', reason:signatureCheck.reason }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+        }
+        let event;
+        try { event = JSON.parse(rawBody.toString('utf8')); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:'Invalid webhook JSON.' }, null, 2), 'application/json', { 'Cache-Control':'no-store' }); }
+        const result = await azHandleStripeDigitalWebhookEvent(event, req);
+        console.log('Stripe webhook handled:', cleanPremiumText(event && event.id, 220), cleanPremiumText(event && event.type, 120), result && result.reason ? result.reason : (result && result.paid ? 'paid' : 'ok'));
+        return send(res, 200, JSON.stringify({ received:true, ...result }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+      } catch (error) {
+        console.error('Stripe webhook error:', error && (error.stack || error.message || error));
+        const status = Number(error && error.statusCode) || 500;
+        return send(res, status, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || 'Stripe webhook failed.' }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+      }
+    }
+
     if (pathname === "/api/stripe/digital-checkout" && req.method === "POST") {
       try {
         const data = parseRequestBody(await readBody(req));
@@ -13420,6 +13601,8 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("SUBSCRIPTION_HEALTH:", `/api/subscription/health`);
   console.log("AZOBSS_PATCH:", "413-subscription-route-diagnostic");
   console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
+  console.log("STRIPE_WEBHOOK:", `/api/stripe/webhook`);
+  console.log("STRIPE_WEBHOOK_HEALTH:", `/api/stripe/webhook-health`);
   console.log("================================");
   console.log("");
 
