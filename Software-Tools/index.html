@@ -3449,7 +3449,7 @@ html body .downloads-section{
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items use Bank Transfer / FPX via ToyyibPay bill. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
+      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items support Bank Transfer / FPX via ToyyibPay and Stripe Checkout. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -3465,8 +3465,7 @@ html body .downloads-section{
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
     <div class="azobss-pay-options">
       <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer / FPX</button>
-      
-      
+      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe Checkout</button>
     </div>
     <div class="azobss-pay-steps">
       <div class="azobss-pay-step is-active">1. Open Payment</div>
@@ -6273,7 +6272,7 @@ function normalizeItem(item){
 
   function activePaymentLink(){
     if(!currentProduct) return '';
-    if(currentMethod === 'stripe') return toAbsolute(currentProduct.stripeLink || '');
+    if(currentMethod === 'stripe') return 'dynamic-stripe';
     // For Bank Transfer / FPX, payment link is generated dynamically by backend ToyyibPay API.
     // Existing product paymentLink is only used as fallback if API fails.
     return 'dynamic-toyyibpay';
@@ -6290,7 +6289,7 @@ function normalizeItem(item){
       openPaymentBtn.textContent = 'Open ToyyibPay';
     }else if(currentMethod === 'stripe'){
       inst.textContent = 'Pay in the same tab. After payment is completed, you will return to the last visited page and download will be ready once verified.';
-      openPaymentBtn.textContent = 'Open Stripe';
+      openPaymentBtn.textContent = 'Open Stripe Checkout';
     }else{
       inst.textContent = 'Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.';
       openPaymentBtn.textContent = 'Open Payment';
@@ -6308,7 +6307,7 @@ function normalizeItem(item){
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden','false');
     const planHtml = product.subscriptionCodeEnabled ? `<div class="azobss-pay-plan-box"><b>${esc(product.subscriptionPlanLabel || 'Activation Code')}</b><br>${esc(product.subscriptionMonthlyText || '')}${product.subscriptionSaveText ? ' · '+esc(product.subscriptionSaveText) : ''}<br><small>The Pro activation code will be generated after payment is verified.</small></div>` : '';
-    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX for a secure and reliable payment experience.</div>`;
+    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX or Stripe Checkout. The product price is verified by AZOBSS backend.</div>`;
     setActiveMethod('bank');
   }
 
@@ -6349,13 +6348,72 @@ function normalizeItem(item){
     if(!requireBuyerEmail()) return;
     if(!currentProduct){ errorBox.textContent = 'Product not found.'; return; }
 
-    // Stripe/external payment still uses its own link in same tab.
     if(currentMethod === 'stripe'){
-      const url = toAbsolute(currentProduct.stripeLink || '');
-      if(!url){ errorBox.textContent = 'Stripe/payment link is not set for this item.'; return; }
-      localStorage.setItem('azobss_last_checkout_page', window.location.href);
-      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
-      window.location.href = url;
+      const email = buyerEmail();
+      const originalText = openPaymentBtn.textContent;
+      openPaymentBtn.disabled = true;
+      openPaymentBtn.textContent = 'Opening Stripe Checkout...';
+      try{
+        const returnUrl = window.location.href.split('#')[0];
+        const sourcePage = location.pathname.toLowerCase().includes('cad-tools') ? 'CAD Tools' : 'Software';
+        localStorage.setItem('azobss_last_checkout_page', returnUrl);
+        localStorage.setItem('azobss_last_paid_product_id', String(currentProduct.productId || currentProduct.id || currentProduct.sku || ''));
+        localStorage.setItem('azobss_last_paid_product_source', sourcePage);
+        const payload = {
+          product:{
+            ...currentProduct,
+            productId:currentProduct.productId || currentProduct.id || currentProduct.sku,
+            sku:currentProduct.sku || currentProduct.productId || currentProduct.id,
+            staffReferral:azStaffShareReferralForProduct(currentProduct),
+            premiumDownloadFileLink:currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
+            secureDownloadLink:currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
+            downloadLink:currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink
+          },
+          productId:currentProduct.productId || currentProduct.id || currentProduct.sku,
+          cartItems:currentProduct.cartItems || [],
+          isCartCheckout:currentProduct.isCartCheckout === true,
+          staffReferral:azStaffShareReferralForProduct(currentProduct),
+          premiumDownloadFileLink:currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
+          secureDownloadLink:currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
+          downloadLink:currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
+          user:{...storedUser(),email,resolvedBuyerEmail:email},
+          buyerEmail:email,
+          email:email,
+          authEmail:String(storedUser().authEmail || storedUser().loginEmail || '').trim(),
+          contactEmail:String(storedUser().contactEmail || storedUser().realEmail || storedUser().emailAddress || '').trim(),
+          returnUrl,
+          pageUrl:returnUrl,
+          source:sourcePage,
+          sourcePage
+        };
+        const res = await fetch(API_BASE + '/api/stripe/digital-checkout', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
+        });
+        const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+        const paymentUrl = data.paymentUrl || data.url || data.redirectUrl || '';
+        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Stripe Checkout failed to open.');
+        if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
+        try{
+          localStorage.setItem('azobss_pending_payment_checkout', JSON.stringify({
+            orderId:data.orderId || '',
+            billCode:'',
+            stripeSessionId:data.sessionId || data.id || '',
+            source:sourcePage,
+            productId:String(currentProduct.id || currentProduct.productId || ''),
+            provider:'stripe',
+            createdAt:Date.now()
+          }));
+        }catch(_e){}
+        try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:'stripe'}); }catch(_e){}
+        window.location.href = paymentUrl;
+      }catch(err){
+        errorBox.textContent = err && err.message ? err.message : 'Stripe Checkout failed to open.';
+      }finally{
+        openPaymentBtn.disabled = false;
+        openPaymentBtn.textContent = originalText || 'Open Stripe Checkout';
+      }
       return;
     }
 
@@ -7282,18 +7340,18 @@ async function verifyToyyibPayment(billCode){
     try{
       var params = new URLSearchParams(window.location.search || '');
       var pending = null;
-      try{ pending = JSON.parse(localStorage.getItem('azobss_pending_toyyib_checkout') || 'null'); }catch(_e){ pending = null; }
+      try{ pending = JSON.parse(localStorage.getItem('azobss_pending_payment_checkout') || localStorage.getItem('azobss_pending_toyyib_checkout') || 'null'); }catch(_e){ pending = null; }
       var hasReturnSignal = params.has('payment') || params.has('orderId') || params.has('order_id') || params.has('billCode') || params.has('billcode') || params.has('status_id') || params.has('billpaymentStatus');
       var billCode = params.get('billCode') || params.get('billcode') || (pending && pending.billCode) || '';
       var orderId = params.get('orderId') || params.get('order_id') || (pending && pending.orderId) || '';
       var pendingAge = pending && pending.createdAt ? (Date.now() - Number(pending.createdAt || 0)) : 999999999;
 
       // Important: do not use stale azobss_last_* as proof of the current payment.
-      // Only verify a fresh pending checkout or an actual ToyyibPay return URL.
+      // Only verify a fresh pending checkout or an actual payment return URL.
       if(!hasReturnSignal && (!pending || pendingAge > 2 * 60 * 60 * 1000)) return;
       if(!billCode && !orderId) return;
       if(pendingAge > 2 * 60 * 60 * 1000 && !hasReturnSignal){
-        try{ localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
+        try{ localStorage.removeItem('azobss_pending_payment_checkout'); localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
         return;
       }
 
@@ -7308,7 +7366,7 @@ async function verifyToyyibPayment(billCode){
       var confirmed = !!(data && data.paid === true && data.verified === true && data.paymentConfirmed === true);
       if(confirmed){
         sessionStorage.setItem(key, '1');
-        try{ localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
+        try{ localStorage.removeItem('azobss_pending_payment_checkout'); localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
         try{
           var productId = localStorage.getItem('azobss_last_paid_product_id') || '';
           var productSource = localStorage.getItem('azobss_last_paid_product_source') || 'Software';

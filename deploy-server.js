@@ -2885,19 +2885,28 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     const nowIso = new Date().toISOString();
     const paidAt = latest.paidAt || opts.paidAt || nowIso;
     const paymentReference = opts.paymentReference || (tx && (tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno)) || latest.paymentReference || "";
-    const verifiedByToyyib = opts.verified === true || !!tx;
+    const requestedPaymentMethod = cleanPremiumText(opts.paymentMethod || latest.paymentMethod || (tx ? "toyyibpay" : ""), 40).toLowerCase() || "toyyibpay";
+    const verifiedPayment = opts.verified === true || !!tx;
+    const verifiedByToyyib = verifiedPayment && requestedPaymentMethod.includes("toyyib");
+    const verifiedByStripe = verifiedPayment && requestedPaymentMethod.includes("stripe");
+    const stripeSession = opts.stripeSession || latest.stripeSession || null;
     latest = upsertPremiumOrder({
       ...latest,
       status: "paid",
-      paymentMethod: "toyyibpay",
+      paymentMethod: requestedPaymentMethod,
       paymentReference,
       toyyibTransaction: tx || latest.toyyibTransaction || undefined,
       toyyibCallback: callbackData || latest.toyyibCallback || undefined,
+      stripeSession: stripeSession || latest.stripeSession || undefined,
+      stripeCheckoutSessionId: cleanPremiumText((stripeSession && stripeSession.id) || latest.stripeCheckoutSessionId || latest.stripeSessionId || "", 220),
+      stripeSessionId: cleanPremiumText((stripeSession && stripeSession.id) || latest.stripeSessionId || latest.stripeCheckoutSessionId || "", 220),
+      stripePaymentIntentId: cleanPremiumText((stripeSession && stripeSession.payment_intent) || latest.stripePaymentIntentId || "", 220),
+      stripeVerifiedAt: verifiedByStripe ? (latest.stripeVerifiedAt || nowIso) : latest.stripeVerifiedAt || "",
       paidAt,
       paidFinalizedAt: latest.paidFinalizedAt || nowIso,
       toyyibVerifiedAt: verifiedByToyyib ? (latest.toyyibVerifiedAt || nowIso) : latest.toyyibVerifiedAt || "",
-      paymentVerifiedAt: verifiedByToyyib ? (latest.paymentVerifiedAt || nowIso) : latest.paymentVerifiedAt || "",
-      paymentVerificationSource: verifiedByToyyib ? "toyyibpay-api" : (latest.paymentVerificationSource || ""),
+      paymentVerifiedAt: verifiedPayment ? (latest.paymentVerifiedAt || nowIso) : latest.paymentVerifiedAt || "",
+      paymentVerificationSource: verifiedByStripe ? (opts.verificationSource || "stripe-api") : (verifiedByToyyib ? "toyyibpay-api" : (latest.paymentVerificationSource || "")),
       callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
     });
 
@@ -9447,6 +9456,265 @@ async function detectAffiliateProduct(rawUrl) {
 }
 
 
+// =========================
+// AZOBSS 674: STRIPE CHECKOUT FOR PREMIUM SOFTWARE / CAD ONLY
+// The backend resolves the trusted product, price and download target.
+// Brownies / food ordering is intentionally not connected to Stripe.
+// =========================
+function azStripeDigitalSecret() {
+  return String(process.env.STRIPE_SECRET_KEY || '').trim();
+}
+function azStripeDigitalConfigured() {
+  return /^sk_(test|live)_/.test(azStripeDigitalSecret());
+}
+function azStripeDigitalMode() {
+  const secret = azStripeDigitalSecret();
+  return secret.startsWith('sk_test_') ? 'test' : (secret.startsWith('sk_live_') ? 'live' : 'not-configured');
+}
+function azStripeDigitalSource(data = {}) {
+  const joined = [
+    data.source,
+    data.sourcePage,
+    data.pageUrl,
+    data.returnUrl,
+    data.product && data.product.source,
+    data.product && data.product.sourcePage
+  ].map(v => String(v || '').toLowerCase()).join(' ');
+  return joined.includes('cad') ? 'CAD Tools' : 'Software';
+}
+function azStripeDigitalReturnPage(data = {}) {
+  const requested = cleanPremiumUrl(data.returnUrl || data.pageUrl || data.sourceUrl || '');
+  if (requested) {
+    try {
+      const u = new URL(requested);
+      const host = String(u.hostname || '').toLowerCase();
+      const allowed = host === 'azobss.com' || host.endsWith('.azobss.com') || host === 'zedan91.github.io' || host.endsWith('.zedan91.github.io');
+      if (allowed) {
+        u.hash = '';
+        u.search = '';
+        return u.toString();
+      }
+    } catch (_) {}
+  }
+  return azStripeDigitalSource(data) === 'CAD Tools'
+    ? `${FRONTEND_BASE_URL}/CAD-Tools-&-Resources/`
+    : `${FRONTEND_BASE_URL}/Software-Tools/`;
+}
+function azStripeDigitalUrlWithQuery(baseUrl, values = {}) {
+  const u = new URL(baseUrl);
+  Object.entries(values).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value) !== '') u.searchParams.set(key, String(value));
+  });
+  return u.toString().replace(/%7BCHECKOUT_SESSION_ID%7D/gi, '{CHECKOUT_SESSION_ID}');
+}
+async function azStripeDigitalRequest(pathname, options = {}) {
+  const secret = azStripeDigitalSecret();
+  if (!/^sk_(test|live)_/.test(secret)) {
+    const err = new Error('STRIPE_SECRET_KEY belum dikonfigurasi pada Render.');
+    err.statusCode = 503;
+    throw err;
+  }
+  const headers = { Authorization: `Bearer ${secret}`, ...(options.headers || {}) };
+  const response = await fetch(`https://api.stripe.com/v1${pathname}`, { ...options, headers });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = cleanPremiumText(data && data.error && data.error.message, 400) || 'Stripe API request failed.';
+    const err = new Error(message);
+    err.statusCode = response.status >= 400 && response.status < 500 ? 400 : 502;
+    err.stripeResponse = data;
+    throw err;
+  }
+  return data;
+}
+async function azCreateDigitalStripeCheckout(data = {}, req = null) {
+  if (!azStripeDigitalConfigured()) {
+    const err = new Error('STRIPE_SECRET_KEY belum dikonfigurasi pada Render.');
+    err.statusCode = 503;
+    throw err;
+  }
+
+  const requestedProduct = data.product || {};
+  const trustedResolved = await azResolveTrustedPremiumProduct(data, req);
+  const product = trustedResolved.product || {};
+  const activationPlan = trustedResolved.subscriptionPlan || product.subscriptionPlan || product.selectedSubscriptionPlan || null;
+  const baseProductName = cleanPremiumText(product.name || product.productName || data.productName || data.title || 'AZOBSS Digital Product', 130);
+  const productName = cleanPremiumText(activationPlan ? `${baseProductName} (${activationPlan.label || activationPlan.id})` : baseProductName, 160);
+  const productId = cleanPremiumText(product.productId || product.id || data.productId || requestedProduct.productId || requestedProduct.id || productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 160);
+  const baseAmountText = cleanPremiumText(trustedResolved.amountText || product.price || '', 40);
+  const baseAmountSen = Number(trustedResolved.amountSen || parseAmountToSen(baseAmountText));
+  const baseAmount = baseAmountSen / 100;
+  const identity = await azCommissionIdentityFromRequest(req);
+  const priceAdjustmentCategory = azTrustedPremiumPriceCategory(trustedResolved, product);
+  const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity, priceAdjustmentCategory) : 0;
+  const adjustedAmount = identity ? azApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory) : baseAmount;
+  const amountSen = Math.round(adjustedAmount * 100);
+  const amountText = azAdjustedMoneyText(adjustedAmount);
+  const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || '');
+  const submittedUser = getPremiumUser(data);
+  const user = identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
+  const buyerEmail = cleanPremiumText(user.email || data.buyerEmail || data.email || '', 180);
+  const requestedLimit = azobssDownloadLimitFromOrder({ ...data, product });
+  const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
+  if (!productName || !productId || !amountSen) {
+    const err = new Error('Missing backend product name, product ID or valid backend amount.');
+    err.statusCode = 400;
+    throw err;
+  }
+  if (!downloadLink) {
+    const err = new Error('Download link belum diset untuk produk ini.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const source = azStripeDigitalSource(data);
+  const orderId = makeId('stripe');
+  const returnPage = azStripeDigitalReturnPage(data);
+  const successUrl = azStripeDigitalUrlWithQuery(returnPage, {
+    payment:'stripe_return',
+    stripe:'success',
+    orderId,
+    session_id:'{CHECKOUT_SESSION_ID}'
+  });
+  const cancelUrl = azStripeDigitalUrlWithQuery(returnPage, {
+    payment:'stripe_cancelled',
+    stripe:'cancelled',
+    orderId
+  });
+
+  const params = new URLSearchParams();
+  params.set('mode', 'payment');
+  params.set('success_url', successUrl);
+  params.set('cancel_url', cancelUrl);
+  params.set('client_reference_id', orderId);
+  params.set('automatic_payment_methods[enabled]', 'true');
+  params.set('locale', 'auto');
+  params.set('metadata[orderId]', orderId);
+  params.set('metadata[productId]', productId);
+  params.set('metadata[source]', source);
+  params.set('metadata[buyerEmail]', buyerEmail);
+  if (azValidEmailLike(buyerEmail)) params.set('customer_email', buyerEmail);
+  params.set('line_items[0][price_data][currency]', 'myr');
+  params.set('line_items[0][price_data][unit_amount]', String(amountSen));
+  params.set('line_items[0][price_data][product_data][name]', productName);
+  params.set('line_items[0][price_data][product_data][description]', `${source} premium digital purchase`);
+  params.set('line_items[0][quantity]', '1');
+
+  const stripeData = await azStripeDigitalRequest('/checkout/sessions', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/x-www-form-urlencoded',
+      'Idempotency-Key':`azobss-digital-${orderId}`
+    },
+    body:params.toString()
+  });
+  if (!stripeData || !stripeData.id || !stripeData.url) {
+    const err = new Error('Stripe Checkout gagal dicipta.');
+    err.statusCode = 502;
+    throw err;
+  }
+
+  upsertPremiumOrder({
+    orderId,
+    productId,
+    productName,
+    amount:amountText,
+    amountSen,
+    baseAmount,
+    baseAmountSen,
+    saleAmount:adjustedAmount,
+    saleAmountText:amountText,
+    priceAdjustmentPercent,
+    priceAdjustmentCategory,
+    status:'pending',
+    paymentMethod:'stripe',
+    paymentReference:'',
+    stripeCheckoutSessionId:stripeData.id,
+    stripeSessionId:stripeData.id,
+    paymentUrl:stripeData.url,
+    returnUrl:returnPage,
+    sourceUrl:data.sourceUrl || data.pageUrl || returnPage,
+    pageUrl:data.pageUrl || data.sourceUrl || returnPage,
+    source,
+    user,
+    email:buyerEmail,
+    buyerEmail,
+    product:{
+      ...product,
+      id:productId,
+      productId,
+      name:productName,
+      basePrice:baseAmountText,
+      price:amountText,
+      priceAdjustmentPercent,
+      priceAdjustmentCategory,
+      downloadLimit:requestedLimit,
+      maxDownload:requestedLimit,
+      maxDownloads:requestedLimit,
+      expiryHours:requestedExpiryHours,
+      linkExpiryHours:requestedExpiryHours,
+      subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled,
+      activationCodeSale:!!trustedResolved.subscriptionCodeEnabled,
+      subscriptionPlan:activationPlan,
+      subscriptionPlanId:activationPlan && activationPlan.id,
+      activationCodePrefix:azActivationCodePrefix(product)
+    },
+    subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled,
+    activationCodeSale:!!trustedResolved.subscriptionCodeEnabled,
+    subscriptionPlan:activationPlan,
+    subscriptionPlanId:activationPlan && activationPlan.id,
+    subscriptionPlanLabel:activationPlan && (activationPlan.label || activationPlan.id),
+    subscriptionDurationDays:activationPlan && activationPlan.durationDays,
+    subscriptionMonths:activationPlan && activationPlan.months,
+    activationCodePrefix:azActivationCodePrefix(product),
+    trustedProductSource:trustedResolved.trustedSource || 'backend',
+    isAdminTestPurchase:!!trustedResolved.isAdminTestPurchase,
+    clientPriceIgnored:cleanPremiumText(requestedProduct.price || data.amount || data.price || '', 40),
+    shareReferral:azReferralFrom(data, product, { productId, returnUrl:returnPage }),
+    productOwner:azProductOwnerFrom(product, { productId }),
+    premiumDownloadFileLink:downloadLink,
+    downloadLink,
+    downloadLimit:requestedLimit,
+    maxDownload:requestedLimit,
+    maxDownloads:requestedLimit,
+    expiryHours:requestedExpiryHours,
+    linkExpiryHours:requestedExpiryHours,
+    receiptTokenRequired:true,
+    receiptTokenVersion:2,
+    createdAt:new Date().toISOString()
+  });
+
+  return {
+    id:stripeData.id,
+    sessionId:stripeData.id,
+    orderId,
+    paymentUrl:stripeData.url,
+    url:stripeData.url,
+    redirectUrl:stripeData.url,
+    status:'pending',
+    amount:adjustedAmount,
+    amountSen,
+    baseAmount,
+    baseAmountSen,
+    priceAdjustmentPercent,
+    priceAdjustmentCategory,
+    source,
+    mode:azStripeDigitalMode()
+  };
+}
+async function azVerifyDigitalStripeOrder(order = {}) {
+  const sessionId = cleanPremiumText(order.stripeCheckoutSessionId || order.stripeSessionId || '', 220);
+  if (!sessionId) return { paid:false, reason:'stripe_session_missing' };
+  const session = await azStripeDigitalRequest(`/checkout/sessions/${encodeURIComponent(sessionId)}`, { method:'GET' });
+  const paid = String(session.payment_status || '').toLowerCase() === 'paid';
+  return {
+    paid,
+    session,
+    reason:paid ? 'paid' : (session.payment_status || session.status || 'pending'),
+    paymentReference:cleanPremiumText(session.payment_intent || session.id || '', 220)
+  };
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -9493,6 +9761,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
+    if (pathname === "/api/stripe/digital-checkout" && req.method === "POST" && azRateLimitOrSend(req, res, "stripe-digital-checkout", 12, 5 * 60 * 1000)) return;
     if (pathname === "/api/premium/complete-purchase" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-complete-purchase", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
     if (pathname === "/api/commission/retry-order" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-retry", 10, 10 * 60 * 1000)) return;
@@ -9528,6 +9797,36 @@ async function handler(req, res) {
     if (pathname === "/api/admin/payout-request-status" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payout-request-status", 30, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
+
+    // AZOBSS 674: Stripe Checkout for premium Software / CAD only.
+    if (pathname === "/api/stripe/digital-checkout-health" && req.method === "GET") {
+      const configured = azStripeDigitalConfigured();
+      return send(res, configured ? 200 : 503, JSON.stringify({
+        ok:configured,
+        service:'azobss-software-cad-stripe-checkout',
+        configured,
+        mode:azStripeDigitalMode(),
+        scope:['Software','CAD Tools'],
+        foodCheckout:false,
+        patch:'674',
+        time:new Date().toISOString()
+      }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+    }
+    if (pathname === "/api/stripe/digital-checkout" && req.method === "POST") {
+      try {
+        const data = parseRequestBody(await readBody(req));
+        const checkout = await azCreateDigitalStripeCheckout(data, req);
+        return send(res, 200, JSON.stringify({ ok:true, success:true, ...checkout }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+      } catch (error) {
+        console.error('Stripe digital checkout error:', error && (error.message || error));
+        const status = Number(error && error.statusCode) || 500;
+        return send(res, status, JSON.stringify({
+          ok:false,
+          success:false,
+          error:cleanPremiumText(error && error.message, 400) || 'Stripe Checkout gagal dicipta.'
+        }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
+      }
+    }
 
     // =========================
     // TOYYIBPAY DYNAMIC PAYMENT ROUTES (Render deploy-server.js)
@@ -10002,6 +10301,7 @@ async function handler(req, res) {
       if (!order) return send(res, 404, JSON.stringify({ ok:false, paid:false, verified:false, status:"order_not_found", error:"Order not found" }, null, 2), "application/json");
 
       const isToyyibOrder = !!(order.billCode || billCode || String(order.paymentMethod || "").toLowerCase().includes("toyyib"));
+      const isStripeOrder = !isToyyibOrder && !!(order.stripeCheckoutSessionId || order.stripeSessionId || String(order.paymentMethod || "").toLowerCase().includes("stripe"));
       let verified = false;
       let verifyResult = null;
 
@@ -10034,6 +10334,44 @@ async function handler(req, res) {
             paymentUrl:order.paymentUrl,
             reason:(verifyResult && verifyResult.reason) || "not_paid"
           }, null, 2), "application/json");
+        }
+      } else if (isStripeOrder) {
+        try {
+          verifyResult = await azVerifyDigitalStripeOrder(order);
+          if (verifyResult && verifyResult.paid) {
+            verified = true;
+            order = await azFinalizePaidOrderOnce(order, req, {
+              verified:true,
+              paymentMethod:'stripe',
+              verificationSource:'stripe-api',
+              stripeSession:verifyResult.session,
+              paymentReference:verifyResult.paymentReference || order.paymentReference || ''
+            });
+            order = await findPremiumOrderByAnyDeep({ orderId:order.orderId || orderId }) || order;
+          } else {
+            return send(res, 200, JSON.stringify({
+              ok:true,
+              paid:false,
+              verified:false,
+              paymentConfirmed:false,
+              orderId:order.orderId,
+              status:'pending',
+              stripeSessionId:order.stripeCheckoutSessionId || order.stripeSessionId || '',
+              paymentUrl:order.paymentUrl,
+              reason:(verifyResult && verifyResult.reason) || 'not_paid'
+            }, null, 2), 'application/json');
+          }
+        } catch (stripeVerifyError) {
+          console.error('Stripe payment verification failed:', stripeVerifyError && (stripeVerifyError.message || stripeVerifyError));
+          return send(res, 200, JSON.stringify({
+            ok:true,
+            paid:false,
+            verified:false,
+            paymentConfirmed:false,
+            orderId:order.orderId,
+            status:'pending',
+            reason:'stripe_verification_failed'
+          }, null, 2), 'application/json');
         }
       } else if (String(order.status || "").toLowerCase() === "paid") {
         verified = true;
@@ -13078,6 +13416,7 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("HEALTH:", `/api/create-payment`);
   console.log("SUBSCRIPTION_HEALTH:", `/api/subscription/health`);
   console.log("AZOBSS_PATCH:", "413-subscription-route-diagnostic");
+  console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
   console.log("================================");
   console.log("");
 

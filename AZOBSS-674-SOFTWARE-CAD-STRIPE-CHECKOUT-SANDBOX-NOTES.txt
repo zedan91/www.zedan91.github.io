@@ -1,0 +1,30 @@
+AZOBSS PATCH 674 - STRIPE CHECKOUT FOR SOFTWARE & CAD ONLY
+Baseline: (672)-AZOBSS-FOOD-HERO-TITLE-CENTER-FIX_20260730.zip
+
+Scope correction:
+- Stripe is NOT added to brownies / Tempahan Makanan.
+- Stripe Checkout is added only to Premium Software and Premium CAD purchases.
+
+Added:
+1. Stripe Checkout option in the existing Complete Purchase modal on Software Tools and CAD Tools pages.
+2. POST /api/stripe/digital-checkout creates a Stripe-hosted Checkout Session.
+3. GET /api/stripe/digital-checkout-health checks STRIPE_SECRET_KEY safely.
+4. Backend uses the existing trusted Software/CAD product resolver; browser prices and download links are not trusted.
+5. Existing per-user price adjustment, subscription plans, product owner/referral, expiry and download limits are preserved.
+6. Stripe return is verified through /api/verify-payment using Stripe API before download/token/email release.
+7. Existing ToyyibPay flow remains available and unchanged.
+8. Food ordering page remains WhatsApp-only and has no Stripe button or food Stripe endpoint.
+
+Test URL after Render deploy:
+https://azobss-backend.onrender.com/api/stripe/digital-checkout-health
+
+Expected sandbox response includes:
+- ok: true
+- mode: test
+- scope: [Software, CAD Tools]
+- foodCheckout: false
+- patch: 674
+
+Note:
+- This patch verifies a completed Stripe Checkout when the buyer returns to AZOBSS.
+- A signed Stripe webhook should still be added before Live mode for the strongest automatic fulfilment if the buyer closes the tab before returning.

@@ -2096,7 +2096,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         </label>
       </div>
       <div class="cad-admin-media-preview" id="cadAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="cad-admin-note">Best practice: Product ID, file type, version, status, download limit and expiry are saved with each CAD item. Premium items use ToyyibPay / Payment Link or Stripe Link, then a temporary backend token reveals the private download link and receipt.</p>
+      <p class="cad-admin-note">Best practice: Product ID, file type, version, status, download limit and expiry are saved with each CAD item. Premium items support ToyyibPay and dynamic Stripe Checkout; a temporary backend token reveals the private download link and receipt after verified payment.</p>
       <div class="cad-admin-actions">
         <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
         <button class="cad-admin-save" type="submit">Save Item</button>
@@ -2116,8 +2116,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
     <div class="azobss-pay-options">
       <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer / FPX</button>
-      
-      
+      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe Checkout</button>
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab.</p>
     <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address Address <span class="azobss-pay-required">*</span>
@@ -2669,11 +2668,11 @@ function normalizeItem(item){
     completeBtn.style.display=admin?'':'none';
     completeBtn.textContent=admin?'Admin Complete Purchase':'Submit Proof';
   }
-  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); refreshManualCompleteVisibility(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after payment verification.</div>`; updateInstruction();}
+  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); refreshManualCompleteVisibility(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after verified ToyyibPay or Stripe payment.</div>`; updateInstruction();}
   window.azobssOpenPremiumPay = open;
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
-  function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return currentProduct.stripeLink || ''; return 'dynamic-toyyibpay'; }
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe') inst.textContent='Pay in the same tab. After payment is completed, you will return to the last visited page and download will be ready once verified.'; else if(currentMethod==='toyyibpay') inst.textContent='Click Open Payment to pay through Bank Transfer / FPX in the same tab. After payment is completed, you will return to AZOBSS and your download will be ready once payment is verified.'; else if(currentMethod==='bank') inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; else inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
+  function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return 'dynamic-stripe'; return 'dynamic-toyyibpay'; }
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe'){ inst.textContent='Click Open Stripe Checkout. The amount is verified by AZOBSS backend before Stripe opens. After successful payment, you will return here for verification and download delivery.'; openPaymentBtn.textContent='Open Stripe Checkout'; } else if(currentMethod==='toyyibpay') inst.textContent='Click Open Payment to pay through Bank Transfer / FPX in the same tab. After payment is completed, you will return to AZOBSS and your download will be ready once payment is verified.'; else if(currentMethod==='bank') inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; else inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'bank'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
@@ -2704,11 +2703,71 @@ function normalizeItem(item){
     if(!requireBuyerEmail()) return;
     if(!currentProduct){ errorBox.textContent='Product not found.'; return; }
     if(currentMethod === 'stripe'){
-      const link = toAbsolute(currentProduct.stripeLink || '');
-      if(!link){ errorBox.textContent='Stripe/payment link is not set for this item.'; return; }
-      localStorage.setItem('azobss_last_checkout_page', window.location.href);
-      try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
-      window.location.href = link;
+      const email = buyerEmail();
+      const originalText = openPaymentBtn.textContent;
+      openPaymentBtn.disabled = true;
+      openPaymentBtn.textContent = 'Opening Stripe Checkout...';
+      try{
+        const returnUrl = window.location.href.split('#')[0];
+        const sourcePage = location.pathname.toLowerCase().includes('cad-tools') ? 'CAD Tools' : 'Software';
+        localStorage.setItem('azobss_last_checkout_page', returnUrl);
+        localStorage.setItem('azobss_last_paid_product_id', String(currentProduct.productId || currentProduct.id || currentProduct.sku || ''));
+        localStorage.setItem('azobss_last_paid_product_source', sourcePage);
+        const payload = {
+          product:{
+            ...currentProduct,
+            productId:currentProduct.productId || currentProduct.id || currentProduct.sku,
+            sku:currentProduct.sku || currentProduct.productId || currentProduct.id,
+            staffReferral:azStaffShareReferralForProduct(currentProduct),
+            premiumDownloadFileLink:currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
+            secureDownloadLink:currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
+            downloadLink:currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink
+          },
+          productId:currentProduct.productId || currentProduct.id || currentProduct.sku,
+          cartItems:currentProduct.cartItems || [],
+          isCartCheckout:currentProduct.isCartCheckout === true,
+          staffReferral:azStaffShareReferralForProduct(currentProduct),
+          premiumDownloadFileLink:currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
+          secureDownloadLink:currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
+          downloadLink:currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
+          user:{...storedUser(),email,resolvedBuyerEmail:email},
+          buyerEmail:email,
+          email:email,
+          authEmail:String(storedUser().authEmail || storedUser().loginEmail || '').trim(),
+          contactEmail:String(storedUser().contactEmail || storedUser().realEmail || storedUser().emailAddress || '').trim(),
+          returnUrl,
+          pageUrl:returnUrl,
+          source:sourcePage,
+          sourcePage
+        };
+        const res = await fetch(API_BASE + '/api/stripe/digital-checkout', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
+        });
+        const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+        const paymentUrl = data.paymentUrl || data.url || data.redirectUrl || '';
+        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Stripe Checkout failed to open.');
+        if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
+        try{
+          localStorage.setItem('azobss_pending_payment_checkout', JSON.stringify({
+            orderId:data.orderId || '',
+            billCode:'',
+            stripeSessionId:data.sessionId || data.id || '',
+            source:sourcePage,
+            productId:String(currentProduct.id || currentProduct.productId || ''),
+            provider:'stripe',
+            createdAt:Date.now()
+          }));
+        }catch(_e){}
+        try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:'stripe'}); }catch(_e){}
+        window.location.href = paymentUrl;
+      }catch(err){
+        errorBox.textContent = err && err.message ? err.message : 'Stripe Checkout failed to open.';
+      }finally{
+        openPaymentBtn.disabled = false;
+        openPaymentBtn.textContent = originalText || 'Open Stripe Checkout';
+      }
       return;
     }
     const email = buyerEmail();
@@ -2907,18 +2966,18 @@ async function verifyToyyibPayment(billCode){
     try{
       var params = new URLSearchParams(window.location.search || '');
       var pending = null;
-      try{ pending = JSON.parse(localStorage.getItem('azobss_pending_toyyib_checkout') || 'null'); }catch(_e){ pending = null; }
+      try{ pending = JSON.parse(localStorage.getItem('azobss_pending_payment_checkout') || localStorage.getItem('azobss_pending_toyyib_checkout') || 'null'); }catch(_e){ pending = null; }
       var hasReturnSignal = params.has('payment') || params.has('orderId') || params.has('order_id') || params.has('billCode') || params.has('billcode') || params.has('status_id') || params.has('billpaymentStatus');
       var billCode = params.get('billCode') || params.get('billcode') || (pending && pending.billCode) || '';
       var orderId = params.get('orderId') || params.get('order_id') || (pending && pending.orderId) || '';
       var pendingAge = pending && pending.createdAt ? (Date.now() - Number(pending.createdAt || 0)) : 999999999;
 
       // Important: do not use stale azobss_last_* as proof of the current payment.
-      // Only verify a fresh pending checkout or an actual ToyyibPay return URL.
+      // Only verify a fresh pending checkout or an actual payment return URL.
       if(!hasReturnSignal && (!pending || pendingAge > 2 * 60 * 60 * 1000)) return;
       if(!billCode && !orderId) return;
       if(pendingAge > 2 * 60 * 60 * 1000 && !hasReturnSignal){
-        try{ localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
+        try{ localStorage.removeItem('azobss_pending_payment_checkout'); localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
         return;
       }
 
@@ -2933,7 +2992,7 @@ async function verifyToyyibPayment(billCode){
       var confirmed = !!(data && data.paid === true && data.verified === true && data.paymentConfirmed === true);
       if(confirmed){
         sessionStorage.setItem(key, '1');
-        try{ localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
+        try{ localStorage.removeItem('azobss_pending_payment_checkout'); localStorage.removeItem('azobss_pending_toyyib_checkout'); }catch(_e){}
         try{
           var productId = localStorage.getItem('azobss_last_paid_product_id') || '';
           var productSource = localStorage.getItem('azobss_last_paid_product_source') || 'Software';
