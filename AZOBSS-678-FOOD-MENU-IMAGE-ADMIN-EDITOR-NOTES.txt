@@ -1,0 +1,41 @@
+AZOBSS PATCH 678 — FOOD MENU & IMAGE ADMIN EDITOR
+Date: 31 July 2026
+Baseline: (677)-AZOBSS-FOOD-HERO-4-INCH-TEXT-BADGES-FIX_20260730.zip
+
+FUNCTIONS ADDED
+1. Admin and users with active Tempahan Makanan access can open “Edit Menu & Gambar”.
+2. Edit every brownie option name.
+3. Edit 8-inch and 4-inch prices separately.
+4. Enable or disable a 4-inch option.
+5. Delete/hide a menu option and restore it later.
+6. Upload JPG, PNG or WebP images (up to 5 MB; compressed to WebP where possible).
+7. Delete uploaded Firebase Storage images.
+8. Hide or restore the five original built-in images.
+9. Public customers receive live menu/gallery changes from Firestore.
+10. Hero “Harga dari” and 4-inch price guidance update automatically.
+
+ACCESS
+- Admin emails already recognised by the website.
+- Any other user must have:
+  foodOrderStaffAccess/{Firebase Auth UID}
+  active = true
+  canViewFoodOrders = true
+- This is the same “Tempahan Makanan access ON” used for order records.
+
+IMPORTANT — RULES MUST BE PUBLISHED
+A. Firestore Rules
+Publish the full file:
+FIREBASE-RULES-MERGED-FOOD-MENU-678-ADMIN-EDIT.txt
+
+B. Firebase Storage Rules
+Open Firebase Console > Storage > Rules and publish:
+FIREBASE-STORAGE-RULES-FOOD-MENU-678.txt
+
+Without the Firestore rules, menu changes cannot be saved.
+Without the Storage rules, image upload/delete will be rejected.
+
+DATA USED
+Firestore document: foodMenuConfig/brownies
+Storage folder: food-menu-images/
+
+No changes were made to Stripe, ToyyibPay, Software/CAD payment flow, food order records or existing access mappings.
