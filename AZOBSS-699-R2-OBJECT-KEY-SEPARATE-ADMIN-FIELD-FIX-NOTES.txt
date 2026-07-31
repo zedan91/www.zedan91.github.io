@@ -1,0 +1,9 @@
+AZOBSS Patch 699
+
+- Adds a dedicated Cloudflare R2 Private Object Key field to Software Tools admin.
+- Keeps Premium Download File Link only for an optional HTTPS fallback URL.
+- Automatically migrates legacy values such as r2ObjectKey:software/file.exe out of the URL field.
+- Prevents browsers from trying to open r2ObjectKey: as a URL.
+- Saves r2ObjectKey/r2Key to Firestore and carries it into Stripe/ToyyibPay checkout payloads.
+- Backend accepts legacy r2ObjectKey: syntax in existing records.
+- Existing R2 Worker, signed temporary URL, Range/resume and fallback behavior remain unchanged.

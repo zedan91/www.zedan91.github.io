@@ -4698,7 +4698,7 @@ async function azFindPremiumSessionDeep(sessionId) {
 // The backend signs a short-lived HMAC token; Cloudflare Worker validates it and serves
 // the private R2 object with Range/Resume support. Existing backend streaming remains
 // as a fallback for products that have not been migrated to R2.
-const AZOBSS_R2_DOWNLOAD_PATCH = "AZOBSS_R2_PRIVATE_WORKER_DOWNLOAD_20260731";
+const AZOBSS_R2_DOWNLOAD_PATCH = "AZOBSS_R2_PRIVATE_WORKER_DOWNLOAD_ADMIN_KEY_20260731";
 function azR2DownloadBaseUrl() {
   const raw = String(process.env.AZOBSS_R2_DOWNLOAD_BASE_URL || "").trim().replace(/\/+$/, "");
   if (!raw) return "";
@@ -4727,9 +4727,12 @@ function azR2LookupKey(value = "") {
     .replace(/\s+/g, " ");
 }
 function azSafeR2ObjectKey(value = "") {
-  const key = String(value || "").trim().replace(/^\/+/, "");
+  const key = String(value || "").trim()
+    .replace(/^r2\s*object\s*key\s*:\s*/i, "")
+    .replace(/^r2\s*:\s*/i, "")
+    .replace(/^\/+/, "");
   if (!key || key.length > 600 || key.includes("..") || key.includes("\\")) return "";
-  if (!key.startsWith("software/") && !key.startsWith("cad/")) return "";
+  if (!/^software\//i.test(key) && !/^cad\//i.test(key)) return "";
   return key;
 }
 function azR2ObjectMapFromEnv() {
@@ -4757,7 +4760,9 @@ function azResolvePremiumR2Object(saved = {}) {
   const product = saved && typeof saved.product === "object" ? saved.product : {};
   const explicit = [
     saved.r2ObjectKey, saved.r2Key, saved.downloadObjectKey, saved.privateObjectKey,
-    product.r2ObjectKey, product.r2Key, product.downloadObjectKey, product.privateObjectKey
+    product.r2ObjectKey, product.r2Key, product.downloadObjectKey, product.privateObjectKey,
+    saved.secureDownloadLink, saved.privateDownloadLink, saved.premiumDownloadFileLink,
+    product.secureDownloadLink, product.privateDownloadLink, product.premiumDownloadFileLink
   ];
   for (const value of explicit) {
     const valid = azSafeR2ObjectKey(value);
