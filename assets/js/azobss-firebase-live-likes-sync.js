@@ -3356,6 +3356,26 @@ function renderUserPurchaseSummary(records, resetMap){
 function azobssGetBackendBaseUrl(){
   return String(window.AZOBSS_BACKEND_URL || window.API_BASE_URL || localStorage.getItem('azobssPremiumBackendUrl') || localStorage.getItem('azobssSoftwareStatsBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
 }
+async function azobssSendBrandedVerificationEmail(user){
+  if(!user || !user.email || typeof user.getIdToken !== 'function') throw new Error('Firebase user is unavailable.');
+  const token = await user.getIdToken(true);
+  const response = await fetch(azobssGetBackendBaseUrl() + '/api/auth/send-verification-email', {
+    method:'POST',
+    mode:'cors',
+    cache:'no-store',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer ' + token
+    },
+    body:JSON.stringify({ email:user.email })
+  });
+  let payload = null;
+  try{ payload = await response.json(); }catch(_){ payload = null; }
+  if(!response.ok || !payload || payload.ok !== true){
+    throw new Error((payload && payload.error) || ('Verification mail API HTTP ' + response.status));
+  }
+  return payload;
+}
 function azobssPurchasePaymentRows(records, resetMap){
   const current = getSavedUser() || {};
   const key = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
@@ -4645,15 +4665,21 @@ function bindAuth() {
 
       let verificationEmailSent = false;
       try{
-        // Send verification first and never auto-delete the Auth account.
-        // Previous build deleted the Auth user when Firestore was slow/blocked,
-        // causing the user to disappear after ~30 seconds and no Gmail verification.
+        // AZOBSS 694: first use the authenticated AZOBSS transactional sender.
+        // Firebase still creates the secure one-time verification link on the backend.
+        // Fall back to Firebase's built-in sender only when the custom mail service is unavailable.
         if(err){err.style.color='#87ceeb'; err.textContent='📧 Sending verification email...';}
-        await sendEmailVerification(newUser, {
-          url: location.origin + '/?azobssVerified=1',
-          handleCodeInApp: false
-        });
-        verificationEmailSent = true;
+        try{
+          await azobssSendBrandedVerificationEmail(newUser);
+          verificationEmailSent = true;
+        }catch(customVerifyError){
+          console.warn('AZOBSS branded verification sender unavailable; using Firebase fallback:', customVerifyError?.message || customVerifyError);
+          await sendEmailVerification(newUser, {
+            url: location.origin + '/?azobssVerified=1',
+            handleCodeInApp: false
+          });
+          verificationEmailSent = true;
+        }
       }catch(verifyError){
         console.warn('AZOBSS verification email send failed:', verifyError?.code || verifyError?.message || verifyError);
       }
