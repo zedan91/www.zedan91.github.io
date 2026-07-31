@@ -32,6 +32,8 @@ services:
         sync: false
       - key: AZOBSS_DOWNLOAD_SESSION_TTL_MS
         value: "900000"
+      - key: AZOBSS_R2_GATE_TTL_SECONDS
+        value: "604800"
       - key: AZOBSS_PREMIUM_ALLOWED_FILE_HOSTS
         value: files.azobss.com
       - key: TOYYIB_SECRET_KEY

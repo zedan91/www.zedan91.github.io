@@ -1,0 +1,42 @@
+AZOBSS Patch 707 - R2 Worker Direct Gate / No Render Cold Start
+Date: 2026-07-31
+Baseline: Patch 706
+
+Actual cause found:
+- render.yaml uses plan: free.
+- A free Render service can sleep after inactivity.
+- Old email/download URLs entered azobss-backend.onrender.com before Cloudflare R2,
+  so the customer still had to wait for Render to wake before a temporary link was made.
+
+Patch 707 changes:
+- R2-only products now receive a signed Cloudflare Worker /gate/ URL.
+- GET /gate/ shows the confirmation page directly at Cloudflare edge.
+- POST /gate/ counts one download in a tiny private R2 JSON usage record.
+- Worker creates a short 2-hour /dl/ token and redirects directly to R2.
+- Browser/IDM Range requests reuse that delivery token and do not add quota.
+- Worker usage sync to Render runs in the background and never blocks the customer.
+- Existing backend /api/premium/download/ links remain as fallback for old links and non-R2 files.
+- Email, payment-success response, My Purchases and download-status prefer the Worker gate for R2 products.
+
+REQUIRED ONE-TIME CLOUDFLARE STEP:
+1. Open Cloudflare > Workers & Pages > azobss-download-gateway > Edit Code.
+2. Replace the current Worker code with:
+   AZOBSS-Cloudflare-R2-Worker-Patch-707.js
+3. Deploy.
+4. Keep existing binding and secret unchanged:
+   - R2 binding: AZOBSS_FILES -> azobss-private-downloads
+   - Secret: AZOBSS_R2_TOKEN_SECRET
+5. Optional Worker variable:
+   AZOBSS_BACKEND_SYNC_URL=https://azobss-backend.onrender.com/api/premium/r2-usage-sync
+   The code already uses this URL by default, so adding it is optional.
+
+Existing Render ENV remains:
+AZOBSS_R2_TOKEN_SECRET=<same exact secret as Worker>
+AZOBSS_R2_DOWNLOAD_BASE_URL=https://azobss-download-gateway.zedan9107.workers.dev
+AZOBSS_R2_TOKEN_TTL_SECONDS=7200
+AZOBSS_R2_GATE_TTL_SECONDS=604800
+
+Notes:
+- The gate link is limited by the product/order expiry when that expiry is shorter.
+- Never-expire products get a renewable maximum gate lifetime of 30 days per generated link.
+- Worker usage records are stored privately under __azobss_usage/ in the same R2 bucket.

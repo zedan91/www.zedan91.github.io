@@ -4284,9 +4284,30 @@ html body .downloads-section{
     const limit = azPromoFreeLimit(item);
     const claimed = azPromoFreeClaimed(item);
     const remaining = Math.max(0, limit - claimed);
-    const link = String(item?.secureDownloadLink || item?.downloadLink || '').trim();
     const enabled = azPromoFreeEnabled(item);
-    return {enabled, limit, claimed, remaining, link, key: azPromoFreeStatsKey(item), batchId: azPromoFreeBatchId(item), active: enabled && remaining > 0 && !!link};
+    const r2ObjectKey = azNormalizeSoftwareR2ObjectKey(item?.r2ObjectKey || item?.r2Key || item?.downloadObjectKey || item?.privateObjectKey || '');
+    const paymentUrls = new Set([
+      String(item?.paymentLink || '').trim(),
+      String(item?.stripeLink || '').trim(),
+      String(item?.toyyibpayLink || '').trim()
+    ].filter(Boolean));
+    const candidates = [item?.secureDownloadLink, item?.privateDownloadLink, item?.premiumDownloadFileLink, item?.downloadLink];
+    let link = '';
+    for(const raw of candidates){
+      const value = String(raw || '').trim();
+      if(!/^https:\/\//i.test(value) || paymentUrls.has(value)) continue;
+      try{
+        const host = new URL(value).hostname.toLowerCase();
+        if(host === 'toyyibpay.com' || host.endsWith('.toyyibpay.com') || host === 'stripe.com' || host.endsWith('.stripe.com')) continue;
+      }catch(_e){ continue; }
+      link = value;
+      break;
+    }
+    return {
+      enabled, limit, claimed, remaining, link, r2ObjectKey,
+      key: azPromoFreeStatsKey(item), batchId: azPromoFreeBatchId(item),
+      active: enabled && remaining > 0 && (!!r2ObjectKey || !!link)
+    };
   }
   function azPromoFreeCardHtml(item){
     const p = azPromoFreeInfo(item);
@@ -6036,17 +6057,31 @@ function normalizeItem(item){
       return;
     }
 
-    // Do not expose the direct promo file URL in the card HTML. Resolve it only after a valid login.
+    // Patch 708: Free Promo Download must never reuse the Buy Now payment URL.
     const item = softwareDynamicItems.find(x => String(x.productId || x.id) === productId);
     const promoInfo = item ? azPromoFreeInfo(item) : null;
-    const link = String(promoInfo?.link || '').trim();
-    if(!link || link === '#') return alert('Download link promo belum tersedia. Tunggu data selesai dimuatkan atau hubungi admin.');
+    const directLink = String(promoInfo?.link || '').trim();
+    const r2ObjectKey = String(promoInfo?.r2ObjectKey || '').trim();
+    if(!r2ObjectKey && (!directLink || directLink === '#')) return alert('Fail Free Promo belum tersedia. Masukkan Cloudflare R2 Private Object Key dan save semula.');
     if(!key || !limit) return alert('Tetapan unit promo tidak lengkap. Edit item dan save semula.');
 
+    const claimId = ('pfc_' + (globalThis.crypto?.randomUUID?.() || (Date.now() + '_' + Math.random().toString(36).slice(2))))
+      .replace(/[^a-zA-Z0-9_-]/g,'').slice(0,120);
     const oldText = btn.innerHTML;
     btn.setAttribute('aria-disabled','true');
     btn.disabled = true;
-    btn.innerHTML = '<span class="download-text">Claiming...</span>';
+    btn.innerHTML = '<span class="download-text">Preparing...</span>';
+
+    let prepWindow = null;
+    try{
+      prepWindow = window.open('about:blank', '_blank');
+      if(prepWindow){
+        try{ prepWindow.opener = null; }catch(_e){}
+        prepWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Secure Download</title><style>body{font-family:Arial;background:#0f172a;color:#e5e7eb;display:grid;place-items:center;min-height:100vh;margin:0}.box{padding:28px;border:1px solid #334155;border-radius:18px;background:#111827;text-align:center}.spin{font-size:38px}.muted{color:#94a3b8}</style></head><body><div class="box"><div class="spin">⏳</div><h2>Preparing secure download...</h2><p class="muted">Please wait. Do not close this tab.</p></div></body></html>');
+        prepWindow.document.close();
+      }
+    }catch(_e){ prepWindow = null; }
+
     let nextClaimed = null;
     try{
       const statsRef = doc(db, 'settings', 'softwareStats');
@@ -6058,6 +6093,10 @@ function normalizeItem(item){
         const claimed = Math.max(0, Math.floor(Number(current.claimed ?? current.used ?? 0) || 0));
         if(claimed >= limit){ throw new Error('PROMO_FREE_EXHAUSTED'); }
         nextClaimed = claimed + 1;
+        const claims = {...(current.claims || {})};
+        claims[claimId] = { uid:authUser.uid || '', email:authUser.email || '', claimNo:nextClaimed, createdAtMs:Date.now() };
+        const recentClaims = Object.fromEntries(Object.entries(claims)
+          .sort((a,b)=>Number(b[1]?.createdAtMs||0)-Number(a[1]?.createdAtMs||0)).slice(0,100));
         items[key] = {
           ...current,
           claimed: nextClaimed,
@@ -6066,26 +6105,46 @@ function normalizeItem(item){
           productId,
           name,
           batchId,
+          claims: recentClaims,
           updatedAtMs: Date.now(),
+          lastClaimId: claimId,
           lastClaimUid: authUser.uid || '',
           lastClaimEmail: authUser.email || ''
         };
         if(snap.exists()) tx.update(statsRef, {items});
         else tx.set(statsRef, {items});
       });
+
+      let finalLink = directLink;
+      if(r2ObjectKey){
+        const idToken = await authUser.getIdToken();
+        const apiBase = (localStorage.getItem('azobssPremiumBackendUrl') || localStorage.getItem('azobssSoftwareStatsBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
+        const response = await fetch(apiBase + '/api/premium/free-promo-download', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer ' + idToken},
+          body:JSON.stringify({ productId, promoFreeKey:key, promoFreeBatchId:batchId, claimId, claimed:nextClaimed })
+        });
+        const result = await response.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+        if(!response.ok || !result.ok || !result.downloadUrl) throw new Error(result.error || 'Secure Free Promo link could not be generated.');
+        finalLink = String(result.downloadUrl || '').trim();
+      }
+      if(!/^https:\/\//i.test(finalLink)) throw new Error('Secure download URL is invalid.');
+
       const stats = readSoftwareStats();
-      stats[key] = {...(stats[key] || {}), claimed: nextClaimed, used: nextClaimed, limit, productId, name, batchId, updatedAtMs: Date.now()};
+      stats[key] = {...(stats[key] || {}), claimed:nextClaimed, used:nextClaimed, limit, productId, name, batchId, updatedAtMs:Date.now()};
       saveSoftwareStats(stats);
       try{ recordDownload(btn.closest('.download-card'), {source:'promo-free-download'}); }catch(_e){}
-      window.open(link, '_blank', 'noopener');
+      if(prepWindow && !prepWindow.closed) prepWindow.location.replace(finalLink);
+      else window.location.href = finalLink;
       setTimeout(() => loadItems(), 450);
     }catch(err){
+      try{ if(prepWindow && !prepWindow.closed) prepWindow.close(); }catch(_e){}
       console.warn('Promo free claim failed:', err);
       if(String(err?.message || '').includes('PROMO_FREE_EXHAUSTED')){
         alert('Unit percuma promo sudah habis. Button akan kembali kepada harga / Buy Now asal.');
         setTimeout(() => loadItems(), 250);
       }else{
-        alert('Tak berjaya claim free promo download. Pastikan akaun masih login dan cuba semula.');
+        alert(err?.message || 'Tak berjaya menyediakan Free Promo Download. Pastikan akaun masih login dan cuba semula.');
       }
     }finally{
       btn.removeAttribute('aria-disabled');

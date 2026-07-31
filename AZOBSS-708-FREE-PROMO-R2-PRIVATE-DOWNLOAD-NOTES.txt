@@ -1,0 +1,7 @@
+AZOBSS Patch 708 - Free Promo R2 Private Download Fix
+
+- Free Promo Download no longer opens ToyyibPay/Stripe/paymentLink.
+- Free promo R2 products use a signed Cloudflare Worker /gate link.
+- Firebase login and the exact Firestore promo claim ID are verified before signing.
+- Buy Now remains connected to ToyyibPay/Stripe.
+- Existing Patch 707 Cloudflare Worker code is compatible; no Worker update is required.
