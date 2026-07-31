@@ -286,6 +286,36 @@ function azobssMoneyText(amount) {
   return `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
 }
 
+// AZOBSS PATCH 695: Use the actual JUPEM document category in stored order names.
+function azobssJupemPurchaseTypeLabel(rawType) {
+  const type = String(rawType || "").trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if (type === "PA") return "PA";
+  if (type === "BM") return "BM";
+  if (type === "SBM") return "SBM";
+  if (type === "GPS") return "GPS";
+  if (["SYIT_PIAWAI", "SYIT_PIAWAI_(GAMBAR)", "SYIT_PIAWAI_GAMBAR"].includes(type)) return "Syit Piawai";
+  if (["NDCDB", "NDCDB_C3", "LOT_KADASTER_BERDIGIT", "LOT_KADASTER_BERDIGIT_C3"].includes(type)) return "Lot Kadaster Berdigit";
+  return cleanPremiumText(type || "JUPEM", 60);
+}
+function azobssJupemPurchaseProductName(items = []) {
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return "";
+  const counts = new Map();
+  for (const item of rows) {
+    const label = azobssJupemPurchaseTypeLabel(item && (item.productType || item.product || item.type));
+    if (!label) continue;
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+  if (!counts.size) return "";
+  const preferredOrder = ["PA", "BM", "SBM", "GPS", "Syit Piawai", "Lot Kadaster Berdigit"];
+  const labels = [...counts.keys()].sort((a, b) => {
+    const ai = preferredOrder.indexOf(a);
+    const bi = preferredOrder.indexOf(b);
+    return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi) || a.localeCompare(b);
+  });
+  return cleanPremiumText(`JUPEM Document Purchase ${labels.map(label => `${label} (${counts.get(label)} unit)`).join(" + ")}`, 240);
+}
+
 const AZOBSS_JUPEM_PRODUCT_TYPES = new Set(["PA", "BM", "SBM", "GPS", "NDCDB", "NDCDB_C3", "SYIT_PIAWAI"]);
 const AZOBSS_JUPEM_AREA_TYPES = new Set(["NDCDB", "NDCDB_C3"]);
 const AZOBSS_JUPEM_STATES = new Set([
@@ -1810,7 +1840,8 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
     if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName:`JUPEM Document Purchase (${items.length} unit)`, amount:azobssMoneyText(totalAmount), amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), saleAmount:totalAmount, saleAmountText:azobssMoneyText(totalAmount), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+    const productName = azobssJupemPurchaseProductName(items) || `JUPEM Document Purchase (${items.length} unit)`;
+    const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azobssMoneyText(totalAmount), amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), saleAmount:totalAmount, saleAmountText:azobssMoneyText(totalAmount), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
     await azobssSyncJupemPurchaseLogs(order, "pending");
     res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, unit:items.length });
   } catch (err) {
