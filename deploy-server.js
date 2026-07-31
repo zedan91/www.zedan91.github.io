@@ -3137,7 +3137,7 @@ function azobssPaBmRecordCode(record) {
   return type === "NDCDB" || type === "NDCDB_C3" ? value : value.toUpperCase();
 }
 
-// AZOBSS PATCH 695: Use the actual JUPEM document category in orders and admin payment alerts.
+// AZOBSS PATCH 696: Show only the specific JUPEM document category in orders and admin payment alerts.
 function azobssJupemPurchaseTypeLabel(rawType) {
   const type = azobssPaBmRecordType({ productType: rawType });
   if (type === "PA") return "PA";
@@ -3165,12 +3165,12 @@ function azobssJupemPurchaseProductName(items = []) {
     return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi) || a.localeCompare(b);
   });
   const detail = labels.map(label => `${label} (${counts.get(label)} unit)`).join(" + ");
-  return cleanPremiumText(`JUPEM Document Purchase ${detail}`, 240);
+  return cleanPremiumText(detail, 240);
 }
 function azobssShouldUseSpecificJupemProductName(order = {}) {
   const productId = String(order.productId || (order.product && (order.product.productId || order.product.id)) || "").trim().toLowerCase();
   const productName = String(order.productName || order.productTitle || (order.product && (order.product.name || order.product.title)) || "").trim();
-  return productId === "pa-bm-purchase-records" || /^JUPEM Document Purchase(?:\s|\()/i.test(productName);
+  return productId === "pa-bm-purchase-records" || /^JUPEM Document Purchase(?:\s|\()/i.test(productName) || /^(?:PA|BM|SBM|GPS|Syit Piawai|Lot Kadaster Berdigit)\s*\(\d+\s+unit\)/i.test(productName);
 }
 
 function azobssSafeJupemDownloadUrl(rawUrl, productType) {
@@ -4095,7 +4095,7 @@ async function azBackfillAdminPaymentNotificationJupemNames(db, records = []) {
         body: row.body,
         updatedAt: new Date().toISOString(),
         updatedAtMs: Date.now(),
-        nameBackfilledBy: "patch-695"
+        nameBackfilledBy: "patch-696"
       }, { merge:true });
     } catch (error) {
       console.warn("Admin JUPEM alert name backfill failed:", orderId, error && (error.message || error));
@@ -10427,7 +10427,7 @@ async function handler(req, res) {
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
-        const productName = azobssJupemPurchaseProductName(items) || `JUPEM Document Purchase (${items.length} unit)`;
+        const productName = azobssJupemPurchaseProductName(items) || `PA/BM (${items.length} unit)`;
         const billPayload = {
           userSecretKey: TOYYIB_SECRET_KEY,
           categoryCode: TOYYIB_CATEGORY_CODE,

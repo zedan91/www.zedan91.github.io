@@ -286,7 +286,7 @@ function azobssMoneyText(amount) {
   return `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
 }
 
-// AZOBSS PATCH 695: Use the actual JUPEM document category in stored order names.
+// AZOBSS PATCH 696: Store only the specific JUPEM document category in order names.
 function azobssJupemPurchaseTypeLabel(rawType) {
   const type = String(rawType || "").trim().toUpperCase().replace(/[\s-]+/g, "_");
   if (type === "PA") return "PA";
@@ -313,7 +313,7 @@ function azobssJupemPurchaseProductName(items = []) {
     const bi = preferredOrder.indexOf(b);
     return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi) || a.localeCompare(b);
   });
-  return cleanPremiumText(`JUPEM Document Purchase ${labels.map(label => `${label} (${counts.get(label)} unit)`).join(" + ")}`, 240);
+  return cleanPremiumText(labels.map(label => `${label} (${counts.get(label)} unit)`).join(" + "), 240);
 }
 
 const AZOBSS_JUPEM_PRODUCT_TYPES = new Set(["PA", "BM", "SBM", "GPS", "NDCDB", "NDCDB_C3", "SYIT_PIAWAI"]);
@@ -1840,7 +1840,7 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const billCode = Array.isArray(apiResult) ? (apiResult[0]?.BillCode || apiResult[0]?.billCode) : apiResult?.BillCode;
     if (!billCode) return res.status(502).json({ ok:false, error:"ToyyibPay tidak return BillCode.", raw: apiResult });
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    const productName = azobssJupemPurchaseProductName(items) || `JUPEM Document Purchase (${items.length} unit)`;
+    const productName = azobssJupemPurchaseProductName(items) || `PA/BM (${items.length} unit)`;
     const order = await azobssPersistJupemOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azobssMoneyText(totalAmount), amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), saleAmount:totalAmount, saleAmountText:azobssMoneyText(totalAmount), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
     await azobssSyncJupemPurchaseLogs(order, "pending");
     res.json({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:totalAmount, amountSen, baseAmount:checkout.baseTotalAmount, baseAmountSen:Math.round(Number(checkout.baseTotalAmount||0)*100), priceAdjustmentPercent:checkout.priceAdjustmentPercent, priceAdjustmentByCategory:checkout.priceAdjustmentByCategory, unit:items.length });
