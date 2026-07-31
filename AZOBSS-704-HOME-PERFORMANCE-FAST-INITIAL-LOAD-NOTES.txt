@@ -1,0 +1,19 @@
+AZOBSS PATCH 704 - HOMEPAGE FAST INITIAL LOAD
+
+Baseline: Patch 703
+
+Changes:
+1. Removed two inline Base64 hero images from index.html (about 1.37 MB of Base64 text).
+2. Converted them to cached WebP files in /images/.
+3. Replaced the duplicated 294 KB Firebase auth+likes bundle on the homepage with a  likes-only module.
+4. Prevented full admin users/presence/login/guest collection reads on public pages without admin panels.
+5. Added lazy loading and async decoding to images below the hero/services area.
+6. Added content-visibility for below-fold homepage sections.
+7. Delayed the homepage Software Promo Firestore request until browser idle.
+8. Replaced the 900 KB software-directory fallback request with a tiny dedicated promo JSON fallback.
+9. Added Firebase preconnect and hero image preload hints.
+
+Before index.html: 2,015,180 bytes
+After index.html:  644,874 bytes
+
+R2, Stripe, ToyyibPay, payment verification, download e-mail and premium download flow are unchanged.

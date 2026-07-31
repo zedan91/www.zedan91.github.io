@@ -2256,6 +2256,14 @@ async function recordGuestHistory(){
 async function renderFirebaseAdminRecords(){
   const current = getSavedUser();
   if(!isAzobssAdmin(current)) return;
+  // AZOBSS 704: homepage and public pages have no admin record panels.
+  // Avoid downloading full users/presence/history collections when those panels do not exist.
+  const hasAdminRecordsUi = [
+    'registeredUsersList','registeredUserCount','liveUsersList','onlineUserCount',
+    'loginHistoryList','guestHistoryList','registeredUsersPagination',
+    'liveUsersPagination','loginHistoryPagination','guestHistoryPagination'
+  ].some(id => document.getElementById(id));
+  if(!hasAdminRecordsUi) return;
   bindRegisteredUsersControls();
 
   let live = [];
