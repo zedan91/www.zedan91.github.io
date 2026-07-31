@@ -2580,51 +2580,6 @@ async function azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer, 
   });
 }
 
-
-// AZOBSS 694: Send Firebase verification links through AZOBSS's authenticated
-// transactional-email provider instead of relying only on Firebase's shared sender.
-// This allows MAIL_FROM (for example noreply@azobss.com) to align with SPF/DKIM/DMARC.
-function azAuthVerificationContinueUrl() {
-  const explicit = cleanPremiumText(process.env.AUTH_VERIFY_CONTINUE_URL || "", 500);
-  if (explicit) return explicit;
-  const base = cleanPremiumText(process.env.FRONTEND_BASE_URL || process.env.SITE_BASE_URL || "https://www.azobss.com", 420).replace(/\/+$/, "");
-  return `${base}/?azobssVerified=1`;
-}
-function azAuthVerificationEmailHtml(verificationLink) {
-  const safeLink = azHtmlEscape(verificationLink);
-  return `<!doctype html><html><body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#172033">
-  <div style="padding:28px 14px">
-    <div style="max-width:620px;margin:auto;background:#ffffff;border:1px solid #dfe6ef;border-radius:16px;overflow:hidden">
-      <div style="padding:22px 26px;background:#091426;color:#ffffff;border-bottom:3px solid #22c55e">
-        <div style="font-size:23px;font-weight:800;letter-spacing:.3px">AZOBSS</div>
-      </div>
-      <div style="padding:28px 26px;line-height:1.6">
-        <h1 style="font-size:24px;margin:0 0 14px;color:#111827">Sahkan akaun AZOBSS anda</h1>
-        <p style="margin:0 0 18px">Terima kasih kerana mendaftar. Klik butang di bawah untuk mengesahkan alamat e-mel anda.</p>
-        <p style="margin:24px 0"><a href="${safeLink}" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:10px;font-weight:800">Sahkan alamat e-mel</a></p>
-        <p style="margin:0 0 8px;font-size:13px;color:#526071">Sekiranya butang tidak berfungsi, salin pautan ini ke pelayar:</p>
-        <p style="margin:0;word-break:break-all;font-size:12px;color:#2563eb">${safeLink}</p>
-        <hr style="border:0;border-top:1px solid #e5e7eb;margin:24px 0">
-        <p style="margin:0;font-size:12px;color:#6b7280">Jika anda tidak mendaftar di AZOBSS, abaikan e-mel ini. E-mel ini ialah mesej transaksi akaun, bukan promosi.</p>
-      </div>
-    </div>
-  </div></body></html>`;
-}
-function azAuthVerificationEmailText(verificationLink) {
-  return `Sahkan akaun AZOBSS anda\n\nTerima kasih kerana mendaftar. Buka pautan berikut untuk mengesahkan alamat e-mel anda:\n${verificationLink}\n\nJika anda tidak mendaftar di AZOBSS, abaikan e-mel ini.`;
-}
-async function azSendBrandedAuthVerificationEmail(email, verificationLink) {
-  if (!mailReady()) {
-    throw new Error("Transactional email is not configured. Set BREVO_API_KEY + MAIL_FROM, or SMTP settings.");
-  }
-  return azSendEmailWithOptionalPdf({
-    to: email,
-    subject: "Sahkan akaun AZOBSS anda",
-    html: azAuthVerificationEmailHtml(verificationLink),
-    text: azAuthVerificationEmailText(verificationLink)
-  });
-}
-
 async function azHydratePremiumOrderExpiryFromCurrentProduct(order = {}) {
   try {
     if (!order || isPaBmPremiumOrder(order)) return order;
@@ -9941,7 +9896,6 @@ async function handler(req, res) {
 
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
-    if (pathname === "/api/auth/send-verification-email" && req.method === "POST" && azRateLimitOrSend(req, res, "auth-verification-email", 5, 10 * 60 * 1000)) return;
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
@@ -9983,57 +9937,6 @@ async function handler(req, res) {
     if (pathname === "/api/admin/payout-request-status" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payout-request-status", 30, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
-
-    // AZOBSS 694: branded verification email sent by the authenticated AZOBSS sender.
-    if (pathname === "/api/auth/send-verification-email" && req.method === "POST") {
-      try {
-        const identity = await azCommissionIdentityFromRequest(req);
-        if (!identity || !identity.uid || !identity.authEmail) {
-          return send(res, 401, JSON.stringify({ ok:false, error:"A valid Firebase login token is required." }), "application/json");
-        }
-        let body = {};
-        try { body = JSON.parse((await readBody(req)) || "{}"); } catch (_) { body = {}; }
-        const tokenEmail = cleanPremiumText(identity.authEmail || identity.email || "", 180).toLowerCase();
-        const requestedEmail = cleanPremiumText(body.email || tokenEmail, 180).toLowerCase();
-        if (!tokenEmail || requestedEmail !== tokenEmail) {
-          return send(res, 403, JSON.stringify({ ok:false, error:"The requested email does not match the authenticated account." }), "application/json");
-        }
-        if (!mailReady()) {
-          return send(res, 503, JSON.stringify({
-            ok:false,
-            code:"mail_not_configured",
-            error:"Configure BREVO_API_KEY and MAIL_FROM with an authenticated AZOBSS sender domain."
-          }), "application/json");
-        }
-        if (!initFirebaseAdmin() || !firebaseAdmin || !firebaseAdmin.auth) {
-          return send(res, 503, JSON.stringify({ ok:false, code:"firebase_admin_not_ready", error:firebaseAdminInitError || "Firebase Admin is not configured." }), "application/json");
-        }
-        const userRecord = await firebaseAdmin.auth().getUser(identity.uid);
-        const accountEmail = cleanPremiumText(userRecord.email || tokenEmail, 180).toLowerCase();
-        if (accountEmail !== tokenEmail) {
-          return send(res, 403, JSON.stringify({ ok:false, error:"Firebase account email mismatch." }), "application/json");
-        }
-        if (userRecord.emailVerified === true) {
-          return send(res, 200, JSON.stringify({ ok:true, alreadyVerified:true }), "application/json");
-        }
-        const verificationLink = await firebaseAdmin.auth().generateEmailVerificationLink(accountEmail, {
-          url: azAuthVerificationContinueUrl(),
-          handleCodeInApp: false
-        });
-        await azSendBrandedAuthVerificationEmail(accountEmail, verificationLink);
-        return send(res, 200, JSON.stringify({
-          ok:true,
-          sent:true,
-          provider: brevoApiReady() ? "brevo" : "smtp",
-          sender: maskEmail(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || "")
-        }), "application/json");
-      } catch (error) {
-        console.error("AZOBSS branded verification email failed:", error && (error.stack || error.message || error));
-        const code = String(error && error.code || "");
-        const status = /too-many-requests/i.test(code) ? 429 : 500;
-        return send(res, status, JSON.stringify({ ok:false, code:code || "verification_send_failed", error:"Verification email could not be sent by the AZOBSS mail service." }), "application/json");
-      }
-    }
 
     // AZOBSS 674: Stripe Checkout for premium Software / CAD only.
     if (pathname === "/api/stripe/digital-checkout-health" && req.method === "GET") {
