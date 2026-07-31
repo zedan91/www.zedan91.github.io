@@ -1,0 +1,8 @@
+AZOBSS Patch 692
+
+Fix:
+- Menambah fallback terus dalam logik paparan pilihan brownies 4 inci.
+- Jika semua data-available-4 menjadi false akibat konfigurasi Firestore lama/kosong, senarai 4 inci asal dipaparkan semula.
+- Fallback tidak bergantung pada modul admin berjaya dimuatkan.
+- Pilihan 8 inci, harga, kuantiti dan aliran WhatsApp tidak diubah.
+- Cache azobss-food-menu-admin.js dinaikkan ke v692.

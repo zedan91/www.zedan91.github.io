@@ -192,7 +192,7 @@ function normalizedConfig(data = {}){
     if(item) items[id] = item;
   });
 
-  // AZOBSS 691: protect the 4-inch menu from being wiped by an older or
+  // AZOBSS 692: protect the 4-inch menu from being wiped by an older or
   // accidentally saved Firestore configuration. Individual 4-inch choices
   // may still be disabled, but when every active 4-inch choice becomes false,
   // restore the original built-in 4-inch list and its configured prices.
@@ -685,7 +685,7 @@ function collectCloudinarySettings(){
 async function persistConfig(message = 'Perubahan menu berjaya disimpan.'){
   if(!currentAccess.allowed) throw new Error('Akses pengurusan menu tidak dibenarkan.');
   await setDoc(CONFIG_REF, {
-    version:691,
+    version:692,
     items:currentConfig.items,
     uploadedImages:currentConfig.uploadedImages,
     hiddenDefaultImages:currentConfig.hiddenDefaultImages,
