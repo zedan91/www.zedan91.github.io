@@ -4792,6 +4792,13 @@ window.azobssRefreshPaBmPurchasesNow = function(){
 };
 function bindAzobssPurchaseRecordsUI(){
   window.__AZOBSS_PABM_PURCHASE_UI_OWNER__ = 'global-auth';
+  try{
+    const adminSortEl = document.getElementById('purchaseRecordSort');
+    if(adminSortEl && !window.__AZOBSS_PURCHASE_DEFAULT_SORT_APPLIED__){
+      adminSortEl.value = String(adminSortEl.dataset.defaultSort || 'updatedNewest');
+      window.__AZOBSS_PURCHASE_DEFAULT_SORT_APPLIED__ = true;
+    }
+  }catch(e){}
   try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
   ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
     const el = document.getElementById(id);

@@ -4307,6 +4307,13 @@ window.azobssRefreshPaBmPurchasesNow = function(){
   azobssSchedulePurchaseRecordsRefresh('manual');
 };
 function bindAzobssPurchaseRecordsUI(){
+  try{
+    const adminSortEl = document.getElementById('purchaseRecordSort');
+    if(adminSortEl && !window.__AZOBSS_PURCHASE_DEFAULT_SORT_APPLIED__){
+      adminSortEl.value = String(adminSortEl.dataset.defaultSort || 'updatedNewest');
+      window.__AZOBSS_PURCHASE_DEFAULT_SORT_APPLIED__ = true;
+    }
+  }catch(e){}
   // PA/BM page loads both azobss-global-auth.js and this live sync module.
   // Let global-auth own Purchase Records UI to prevent duplicate render races.
   if(document.querySelector('script[src*="azobss-global-auth.js"]')){
