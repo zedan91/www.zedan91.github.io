@@ -1276,12 +1276,22 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     'Pistachio Brownies|||Hazelnut Chocolate + Pistachio Nibs'
   ]);
 
+  // AZOBSS 692: jika konfigurasi Firestore lama menutup SEMUA pilihan 4 inci,
+  // gunakan semula senarai asal terbina dalam. Ini dibuat terus pada logik paparan
+  // supaya pilihan tetap kelihatan walaupun modul pengurusan menu gagal dimuatkan,
+  // masih berada dalam cache lama, atau menerima konfigurasi kosong.
+  const fourInchKey = stepper => `${stepper.dataset.category}|||${stepper.dataset.product}`;
+  const hasConfiguredFourInchChoice = () => steppers.some(stepper =>
+    stepper.dataset.enabled !== 'false' && stepper.dataset.available4 === 'true'
+  );
+
   const isAvailableForSize = (stepper, size) => {
     if(stepper.dataset.enabled === 'false') return false;
     if(size !== '4') return true;
     if(stepper.dataset.available4 === 'true') return true;
+    if(!hasConfiguredFourInchChoice()) return FOUR_INCH_MENU.has(fourInchKey(stepper));
     if(stepper.dataset.available4 === 'false') return false;
-    return FOUR_INCH_MENU.has(`${stepper.dataset.category}|||${stepper.dataset.product}`);
+    return FOUR_INCH_MENU.has(fourInchKey(stepper));
   };
 
   const roundCurrency = value => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
@@ -1518,7 +1528,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   });
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=682" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=647" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=692" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;

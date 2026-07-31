@@ -192,6 +192,27 @@ function normalizedConfig(data = {}){
     if(item) items[id] = item;
   });
 
+  // AZOBSS 692: protect the 4-inch menu from being wiped by an older or
+  // accidentally saved Firestore configuration. Individual 4-inch choices
+  // may still be disabled, but when every active 4-inch choice becomes false,
+  // restore the original built-in 4-inch list and its configured prices.
+  const hasActiveFourInchItem = Object.values(items).some(item =>
+    item && item.deleted !== true && item.available4 === true && Number(item.price4) > 0
+  );
+  if(!hasActiveFourInchItem){
+    let restoredCount = 0;
+    defaultRows.forEach((fallback, id) => {
+      const item = items[id];
+      if(!item || item.deleted === true || fallback.available4 !== true) return;
+      item.available4 = true;
+      item.price4 = roundMoney(item.price4 || fallback.price4 || defaultFourPrice(item.name || fallback.name));
+      restoredCount += 1;
+    });
+    if(restoredCount){
+      console.warn(`[AZOBSS Food Menu] Restored ${restoredCount} built-in 4-inch choices after an empty configuration was detected.`);
+    }
+  }
+
   const uploadedImages = Array.isArray(data.uploadedImages)
     ? data.uploadedImages.slice(0, 40).map(image => ({
         id:clean(image?.id).slice(0, 120),
@@ -664,7 +685,7 @@ function collectCloudinarySettings(){
 async function persistConfig(message = 'Perubahan menu berjaya disimpan.'){
   if(!currentAccess.allowed) throw new Error('Akses pengurusan menu tidak dibenarkan.');
   await setDoc(CONFIG_REF, {
-    version:682,
+    version:692,
     items:currentConfig.items,
     uploadedImages:currentConfig.uploadedImages,
     hiddenDefaultImages:currentConfig.hiddenDefaultImages,

@@ -1,0 +1,14 @@
+AZOBSS PATCH 696
+
+The phrase "JUPEM Document Purchase" has been removed from PA/BM payment product names and admin Payment Alerts.
+
+Examples:
+- PA (1 unit)
+- BM (2 unit)
+- Lot Kadaster Berdigit (1 unit)
+- Mixed cart: PA (1 unit) + BM (1 unit)
+
+Covered categories:
+PA, BM, SBM, GPS, Syit Piawai, and Lot Kadaster Berdigit (NDCDB / NDCDB_C3).
+
+The change is applied in both deploy-server.js and backend/server.js. Existing PA/BM alerts are backfilled automatically from premiumOrders when Payment Alerts is loaded or refreshed.

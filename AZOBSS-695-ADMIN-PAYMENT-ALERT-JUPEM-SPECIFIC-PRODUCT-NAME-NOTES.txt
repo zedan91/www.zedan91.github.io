@@ -1,0 +1,16 @@
+AZOBSS PATCH 695
+
+Admin Payment Alerts now show the specific JUPEM document category instead of the generic label.
+
+Examples:
+- JUPEM Document Purchase PA (1 unit)
+- JUPEM Document Purchase BM (2 unit)
+- JUPEM Document Purchase Lot Kadaster Berdigit (1 unit)
+- Mixed cart: JUPEM Document Purchase PA (1 unit) + BM (1 unit)
+
+Covered categories:
+PA, BM, SBM, GPS, Syit Piawai, and Lot Kadaster Berdigit (NDCDB / NDCDB_C3).
+
+The change is applied in both deploy-server.js and backend/server.js. Public PA product names such as Pelan Akui PA123 are not overwritten.
+
+Existing generic PA/BM alerts are also backfilled automatically from premiumOrders when Payment Alerts is loaded/refreshed.
