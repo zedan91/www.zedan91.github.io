@@ -631,7 +631,9 @@ const db = getFirestore(app);
     clearTimeout(scheduleInject.t);
     scheduleInject.t = setTimeout(injectLikeButtons, 80);
   }
-  document.addEventListener('DOMContentLoaded', ()=>{
+  function initHomeLikesLite705(){
+    if(window.__azobssHomeLikesLiteUi705) return;
+    window.__azobssHomeLikesLiteUi705 = true;
     injectLikeButtons();
     renderLikesPage(false);
     document.getElementById('likesSearchInput')?.addEventListener('input', ()=>renderLikesPage(true));
@@ -664,7 +666,9 @@ const db = getFirestore(app);
     obs.observe(document.body, {childList:true, subtree:true});
     setTimeout(injectLikeButtons, 600);
     setTimeout(injectLikeButtons, 1500);
-  });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHomeLikesLite705, {once:true});
+  else initHomeLikesLite705();
   onAuthStateChanged(auth, ()=>{
     state.loadedFor = '';
     state.ids = new Set();
