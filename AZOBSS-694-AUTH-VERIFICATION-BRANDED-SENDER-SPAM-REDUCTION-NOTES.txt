@@ -1,0 +1,33 @@
+AZOBSS PATCH 694 — BRANDED EMAIL VERIFICATION / SPAM REDUCTION FIX
+Date: 2026-07-31
+Baseline: Patch 693
+
+What changed
+1. Registration no longer depends only on Firebase's shared verification sender.
+2. The frontend requests a secure Firebase ID token and calls:
+   POST /api/auth/send-verification-email
+3. The backend verifies the token, confirms the email belongs to that Firebase user,
+   generates the official one-time Firebase verification link with Firebase Admin,
+   and sends it using the configured AZOBSS transactional sender.
+4. Brevo API is preferred. Existing SMTP is supported as fallback.
+5. Firebase's built-in verification email remains as an emergency fallback if the
+   AZOBSS mail service is not configured or temporarily fails.
+6. The endpoint is protected by Firebase token verification and a rate limit.
+
+Required Render environment variables
+- BREVO_API_KEY = API key from Brevo
+- MAIL_FROM = noreply@azobss.com
+- MAIL_FROM_NAME = AZOBSS
+- AUTH_VERIFY_CONTINUE_URL = https://www.azobss.com/?azobssVerified=1
+- Existing Firebase Admin credentials must remain configured.
+
+Required Brevo / DNS setup
+- Add azobss.com under Brevo sending domains.
+- Copy the SPF/DKIM/DMARC DNS records shown by Brevo into the domain DNS panel.
+- Verify the domain and register noreply@azobss.com as a sender.
+- Use Brevo's exact DNS values; do not invent or combine records blindly.
+
+Important
+The code fix makes verification email use a matching branded sender. DNS authentication
+cannot be embedded inside a ZIP and must be completed once in the domain DNS panel.
+After deploying Render, hard-refresh the website once (Ctrl+F5).
