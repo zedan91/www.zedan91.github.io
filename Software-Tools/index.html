@@ -915,10 +915,6 @@ width:fit-content !important;
 .software-admin-cancel{background:#334155;color:#e2e8f0;}
 .software-admin-save{background:#22c55e;color:#052e16;}
 .software-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
-.software-r2-key-input-wrap{display:flex;align-items:stretch;width:100%;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#020617;overflow:hidden;}
-.software-r2-key-prefix{display:flex;align-items:center;flex:0 0 auto;padding:0 0 0 12px;color:#93c5fd;background:#020617;font:800 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;user-select:none;}
-.software-admin-form .software-r2-key-input-wrap input{min-width:0;border:0!important;border-radius:0!important;padding-left:3px!important;box-shadow:none!important;}
-@media(max-width:640px){.software-r2-key-input-wrap{display:grid}.software-r2-key-prefix{padding:9px 12px 0;font-size:11px}.software-admin-form .software-r2-key-input-wrap input{padding-left:12px!important;}}
 @media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center;flex-wrap:wrap}.software-admin-add-btn,.software-admin-import-btn,.software-admin-export-btn,.software-admin-stats-btn{border:1px solid rgba(245,158,11,.45);background:linear-gradient(135deg,#f59e0b,#eab308);color:#111827;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.20);}
 .software-admin-stats-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
 .software-admin-apply-btn{width:100%;}.software-admin-json-status{max-width:100%;text-align:center;}}
@@ -3409,7 +3405,7 @@ html body .downloads-section{
         <label id="softwareDownloadLinkLabel">Download Link
           <input id="softwareAdminDownloadLink" type="url" placeholder="Free software download link">
         </label>
-        <label id="softwarePaymentLinkLabel">ToyyibPay / Payment Link (Buy Now sahaja)
+        <label id="softwarePaymentLinkLabel">ToyyibPay / Payment Link
           <input id="softwareAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
         </label>
       </div>
@@ -3417,14 +3413,7 @@ html body .downloads-section{
         <input id="softwareAdminStripeLink" type="url" placeholder="International payment: Stripe Checkout / Payment Link">
       </label>
       <label>Premium Download File Link
-        <input id="softwareAdminSecureDownloadLink" type="url" placeholder="Optional HTTPS fallback link used after payment success">
-      </label>
-      <label>Cloudflare R2 Private Object Key (Download Now sahaja)
-        <div class="software-r2-key-input-wrap">
-          <span class="software-r2-key-prefix">r2ObjectKey:software/</span>
-          <input id="softwareAdminR2ObjectKey" type="text" placeholder="Azobss_SolatTime_Setup_v1_0_2.exe" autocomplete="off" spellcheck="false">
-        </div>
-        <small style="display:block;color:#93c5fd;margin-top:5px;font-weight:700">Digunakan hanya selepas pembayaran disahkan apabila customer tekan Download Now. Prefix diisi automatik; tampal nama fail tepat sahaja, contoh: Azobss_SolatTime_Setup_v1_0_2.exe.</small>
+        <input id="softwareAdminSecureDownloadLink" type="url" placeholder="Private file/download link used after payment success">
       </label>
       <div class="az-subscription-admin-box" id="softwareSubscriptionAdminBox">
         <div class="az-subscription-admin-title"><input id="softwareAdminSubscriptionEnabled" type="checkbox"> <span>Sell Subscription Activation Code</span></div>
@@ -3460,7 +3449,7 @@ html body .downloads-section{
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. For private R2 files, use the Cloudflare R2 Private Object Key field—not the Premium Download File Link field. Premium items support Bank Transfer / FPX via ToyyibPay and Stripe Checkout. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
+      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. Premium items support Bank Transfer / FPX via ToyyibPay and Stripe Checkout. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -3572,10 +3561,6 @@ html body .downloads-section{
   const paymentLinkInput = document.getElementById('softwareAdminPaymentLink');
   const stripeLinkInput = document.getElementById('softwareAdminStripeLink');
   const secureDownloadInput = document.getElementById('softwareAdminSecureDownloadLink');
-  const r2ObjectKeyInput = document.getElementById('softwareAdminR2ObjectKey');
-  r2ObjectKeyInput?.addEventListener('blur', () => {
-    r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(r2ObjectKeyInput.value);
-  });
   const subscriptionEnabledInput = document.getElementById('softwareAdminSubscriptionEnabled');
   const activationPrefixInput = document.getElementById('softwareAdminActivationPrefix');
   const downloadLinkLabel = document.getElementById('softwareDownloadLinkLabel');
@@ -3612,7 +3597,7 @@ html body .downloads-section{
   function azSubscriptionPlanButtonsHtml(item){
     if(!azSoftwareSubscriptionEnabled(item)) return '';
     const plans=azSoftwareSubscriptionPlans(item);
-    return `<div class="az-subscription-card-box"><div class="az-subscription-card-title">Choose Pro Activation Code</div><div class="az-subscription-plan-grid">${plans.map(p=>`<a class="download-btn premium az-subscribe-plan-btn" data-azobss-premium-buy="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(p.price)}" data-original-price="" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-r2-object-key="${esc(item.r2ObjectKey || item.r2Key || '')}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" data-subscription-code-enabled="1" data-subscription-plan-id="${esc(p.id)}" data-subscription-plan-label="${esc(p.label)}" data-subscription-months="${esc(p.months)}" data-subscription-duration-days="${esc(p.durationDays)}" data-subscription-monthly-text="${esc(p.monthlyText)}" data-subscription-save-text="${esc(p.saveText)}" data-activation-code-prefix="${esc(item.activationCodePrefix || item.subscriptionCodePrefix || 'AZOBSS')}" href="#"><span class="az-sub-plan-title">${esc(p.label)}</span><span class="az-sub-plan-price">${esc(p.price)}</span><span class="az-sub-plan-save">${esc(p.monthlyText)}${p.saveText ? ' · '+esc(p.saveText) : ''}</span></a>`).join('')}</div></div>`;
+    return `<div class="az-subscription-card-box"><div class="az-subscription-card-title">Choose Pro Activation Code</div><div class="az-subscription-plan-grid">${plans.map(p=>`<a class="download-btn premium az-subscribe-plan-btn" data-azobss-premium-buy="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(p.price)}" data-original-price="" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" data-subscription-code-enabled="1" data-subscription-plan-id="${esc(p.id)}" data-subscription-plan-label="${esc(p.label)}" data-subscription-months="${esc(p.months)}" data-subscription-duration-days="${esc(p.durationDays)}" data-subscription-monthly-text="${esc(p.monthlyText)}" data-subscription-save-text="${esc(p.saveText)}" data-activation-code-prefix="${esc(item.activationCodePrefix || item.subscriptionCodePrefix || 'AZOBSS')}" href="#"><span class="az-sub-plan-title">${esc(p.label)}</span><span class="az-sub-plan-price">${esc(p.price)}</span><span class="az-sub-plan-save">${esc(p.monthlyText)}${p.saveText ? ' · '+esc(p.saveText) : ''}</span></a>`).join('')}</div></div>`;
   }
   function syncSubscriptionAdminDefaults(){
     if(!subscriptionEnabledInput) return;
@@ -4431,49 +4416,7 @@ function azSoftwareFeaturedValue553(item){
     // admin saves the item, the explicit featured field becomes authoritative.
     return clean(source.name || source.title || '') === 'azobss solattime';
   }
-const AZ_SOFTWARE_R2_ADMIN_PREFIX = 'r2ObjectKey:software/';
-function azNormalizeSoftwareR2ObjectKey(value){
-    let key = String(value || '').trim();
-    key = key.replace(/^r2\s*object\s*key\s*:\s*/i, '').replace(/^r2\s*:\s*/i, '').replace(/^\/+/, '');
-    if(!key || key.length > 600 || key.includes('..') || key.includes('\\')) return '';
-    if(!/^software\//i.test(key) && !/^cad\//i.test(key)) return '';
-    return key;
-  }
-  function azSoftwareR2FilenameForAdmin(value){
-    let filename = String(value || '').trim();
-    filename = filename.replace(/^r2\s*object\s*key\s*:\s*/i, '').replace(/^r2\s*:\s*/i, '').replace(/^\/+/, '');
-    filename = filename.replace(/^software\//i, '');
-    if(!filename || filename.length > 500 || filename.includes('..') || filename.includes('\\') || filename.includes('/')) return '';
-    return filename;
-  }
-  function azSoftwareR2ObjectKeyFromAdminFilename(value){
-    const filename = azSoftwareR2FilenameForAdmin(value);
-    return filename ? azNormalizeSoftwareR2ObjectKey(AZ_SOFTWARE_R2_ADMIN_PREFIX + filename) : '';
-  }
-  function azR2ObjectKeyFromSoftwareItem(item){
-    const source = item || {};
-    const direct = [source.r2ObjectKey, source.r2Key, source.downloadObjectKey, source.privateObjectKey];
-    for(const value of direct){
-      const key = azNormalizeSoftwareR2ObjectKey(value);
-      if(key) return key;
-    }
-    const legacy = [source.secureDownloadLink, source.privateDownloadLink, source.premiumDownloadFileLink, source.downloadLink];
-    for(const value of legacy){
-      const text = String(value || '').trim();
-      if(!/^r2\s*(?:object\s*key)?\s*:/i.test(text) && !/^(?:software|cad)\//i.test(text)) continue;
-      const key = azNormalizeSoftwareR2ObjectKey(text);
-      if(key) return key;
-    }
-    return '';
-  }
-  function azCleanSoftwareSecureDownloadLink(value){
-    const text = String(value || '').trim();
-    if(!text) return '';
-    if(/^r2\s*(?:object\s*key)?\s*:/i.test(text) || /^(?:software|cad)\//i.test(text)) return '';
-    return text;
-  }
 function normalizeItem(item){
-    const r2ObjectKey = azR2ObjectKeyFromSoftwareItem(item);
     const type = item.type === 'premium' ? 'premium' : 'free';
     const price = String(item.price || (type === 'free' ? 'FREE' : '')).trim();
     return {
@@ -4505,9 +4448,7 @@ function normalizeItem(item){
       downloadLink: item.downloadLink || item.link || item.url || '',
       paymentLink: item.paymentLink || item.toyyibpayLink || '',
       stripeLink: item.stripeLink || item.stripePaymentLink || '',
-      secureDownloadLink: azCleanSoftwareSecureDownloadLink(item.secureDownloadLink || item.privateDownloadLink || item.premiumDownloadFileLink || ''),
-      r2ObjectKey,
-      r2Key: r2ObjectKey,
+      secureDownloadLink: item.secureDownloadLink || item.privateDownloadLink || '',
       link: item.link || (type === 'premium' ? (item.paymentLink || item.stripeLink) : item.downloadLink) || item.url || '#',
       imageUrl: item.imageUrl || item.image || '',
       gifUrl: item.gifUrl || item.gif || '',
@@ -4574,7 +4515,6 @@ function normalizeItem(item){
       paymentLink: n.paymentLink,
       stripeLink: n.stripeLink,
       secureDownloadLink: n.secureDownloadLink,
-      r2ObjectKey: n.r2ObjectKey || '',
       imageUrl: n.imageUrl,
       gifUrl: n.gifUrl,
       views: 0,
@@ -5123,7 +5063,7 @@ function normalizeItem(item){
     const badgeExtra = (!item.bundledDirectory && item.badge) ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
     const bundledDeleteBtn470 = item.bundledDirectory ? '' : `<button class="software-card-delete-btn" type="button" data-software-delete="${esc(item.productId || item.id)}" title="Delete software" aria-label="Delete">🗑️</button>`;
     const adminEdit = (azIsFullSoftwareAdmin() || (azCanManageOwnSoftware() && azIsOwnSoftwareItemStrict(item))) ? `<div class="software-card-admin-actions" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(item.productId || item.id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(item.productId || item.id)}" title="${item.bundledDirectory ? 'Edit by creating a Firestore override' : 'Edit software'}" aria-label="Edit">✏️</button>${bundledDeleteBtn470}<button class="software-card-id-btn" type="button" data-software-id="${esc(item.productId || item.id)}" title="Copy Product ID" aria-label="Product ID">🆔</button></div>` : '';
-    const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-r2-object-key="${esc(item.r2ObjectKey || item.r2Key || '')}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : `<span class="download-text">${esc(item.buttonText || 'Download Now')}</span>`}</a>`;
+    const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}" href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : (item.secureDownloadLink || item.downloadLink || item.link || '#'))}" rel="noopener" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : `<span class="download-text">${esc(item.buttonText || 'Download Now')}</span>`}</a>`;
     const promoFreeActionBtnHtml = `<button type="button" class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" aria-label="Claim free promotional download after login"><span class="download-text">🎁 Free Promo Download</span></button>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
@@ -5740,8 +5680,7 @@ function normalizeItem(item){
     if(downloadLinkInput) downloadLinkInput.value = item?.downloadLink || '';
     if(paymentLinkInput) paymentLinkInput.value = item?.paymentLink || '';
     if(stripeLinkInput) stripeLinkInput.value = item?.stripeLink || '';
-    if(secureDownloadInput) secureDownloadInput.value = azCleanSoftwareSecureDownloadLink(item?.secureDownloadLink || '');
-    if(r2ObjectKeyInput) r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(item?.r2ObjectKey || azR2ObjectKeyFromSoftwareItem(item) || '');
+    if(secureDownloadInput) secureDownloadInput.value = item?.secureDownloadLink || '';
     if(subscriptionEnabledInput) subscriptionEnabledInput.checked = azSoftwareSubscriptionEnabled(item);
     if(activationPrefixInput) activationPrefixInput.value = item?.activationCodePrefix || item?.subscriptionCodePrefix || 'AZOBSS';
     if(imageUrlInput) imageUrlInput.value = item?.imageUrl || '';
@@ -6116,12 +6055,6 @@ function normalizeItem(item){
     const oldPromoBatchValue = String(promoFreeBatchInput?.value || existingPromoItem?.promoFreeBatchId || '').trim();
     const promoBatchNeedsReset = promoFreeEnabledValue && (!oldPromoBatchValue || !existingPromoItem?.promoFreeEnabled || oldPromoLimitValue !== promoFreeLimitValue);
     const promoFreeBatchValue = promoFreeEnabledValue ? (promoBatchNeedsReset ? String(Date.now()) : oldPromoBatchValue) : '';
-    const rawSecureDownloadValue = String(secureDownloadInput?.value || '').trim();
-    const legacyR2ObjectKeyValue = azNormalizeSoftwareR2ObjectKey(rawSecureDownloadValue);
-    const r2ObjectKeyValue = azSoftwareR2ObjectKeyFromAdminFilename(r2ObjectKeyInput?.value || '') || legacyR2ObjectKeyValue;
-    const secureDownloadUrlValue = azCleanSoftwareSecureDownloadLink(rawSecureDownloadValue);
-    if(r2ObjectKeyInput) r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(r2ObjectKeyValue);
-    if(secureDownloadInput && rawSecureDownloadValue && !secureDownloadUrlValue && r2ObjectKeyValue) secureDownloadInput.value = '';
     let item = azApplySoftwareCommissionOwner(normalizeItem({
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
@@ -6153,9 +6086,7 @@ function normalizeItem(item){
       downloadLink: downloadLinkInput?.value.trim(),
       paymentLink: paymentLinkInput?.value.trim(),
       stripeLink: stripeLinkInput?.value.trim(),
-      secureDownloadLink: secureDownloadUrlValue,
-      r2ObjectKey: r2ObjectKeyValue,
-      r2Key: r2ObjectKeyValue,
+      secureDownloadLink: secureDownloadInput?.value.trim(),
       subscriptionCodeEnabled: !!subscriptionEnabledInput?.checked,
       subscriptionProduct: !!subscriptionEnabledInput?.checked,
       activationCodeSale: !!subscriptionEnabledInput?.checked,
@@ -6434,8 +6365,6 @@ function normalizeItem(item){
             productId:currentProduct.productId || currentProduct.id || currentProduct.sku,
             sku:currentProduct.sku || currentProduct.productId || currentProduct.id,
             staffReferral:azStaffShareReferralForProduct(currentProduct),
-            r2ObjectKey:currentProduct.r2ObjectKey || currentProduct.r2Key || '',
-            r2Key:currentProduct.r2ObjectKey || currentProduct.r2Key || '',
             premiumDownloadFileLink:currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
             secureDownloadLink:currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
             downloadLink:currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink
@@ -6444,8 +6373,6 @@ function normalizeItem(item){
           cartItems:currentProduct.cartItems || [],
           isCartCheckout:currentProduct.isCartCheckout === true,
           staffReferral:azStaffShareReferralForProduct(currentProduct),
-          r2ObjectKey:currentProduct.r2ObjectKey || currentProduct.r2Key || '',
-          r2Key:currentProduct.r2ObjectKey || currentProduct.r2Key || '',
           premiumDownloadFileLink:currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
           secureDownloadLink:currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
           downloadLink:currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
@@ -6501,7 +6428,7 @@ function normalizeItem(item){
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          product: {...currentProduct, productId: currentProduct.productId || currentProduct.id || currentProduct.sku || '', sku: currentProduct.sku || currentProduct.productId || currentProduct.id || '', productName: currentProduct.productName || currentProduct.name || '', staffReferral: azStaffShareReferralForProduct(currentProduct), r2ObjectKey: currentProduct.r2ObjectKey || currentProduct.r2Key || '', r2Key: currentProduct.r2ObjectKey || currentProduct.r2Key || '', premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
+          product: {...currentProduct, productId: currentProduct.productId || currentProduct.id || currentProduct.sku || '', sku: currentProduct.sku || currentProduct.productId || currentProduct.id || '', productName: currentProduct.productName || currentProduct.name || '', staffReferral: azStaffShareReferralForProduct(currentProduct), premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
           productId: currentProduct.productId || currentProduct.id || currentProduct.sku || '',
           cartItems: currentProduct.cartItems || [],
           isCartCheckout: currentProduct.isCartCheckout === true,
@@ -6509,8 +6436,6 @@ function normalizeItem(item){
           subscriptionPlan: currentProduct.subscriptionPlan || null,
           subscriptionCodeEnabled: !!currentProduct.subscriptionCodeEnabled,
           staffReferral: azStaffShareReferralForProduct(currentProduct),
-          r2ObjectKey: currentProduct.r2ObjectKey || currentProduct.r2Key || '',
-          r2Key: currentProduct.r2ObjectKey || currentProduct.r2Key || '',
           premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink,
           secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink,
           downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink,
@@ -6589,8 +6514,6 @@ function normalizeItem(item){
       premiumDownloadFileLink: trigger.dataset.premiumDownloadFileLink || trigger.dataset.downloadLink || '',
       privateDownloadLink: trigger.dataset.premiumDownloadFileLink || trigger.dataset.downloadLink || '',
       downloadLink: trigger.dataset.downloadLink || trigger.dataset.premiumDownloadFileLink || '',
-      r2ObjectKey: trigger.dataset.r2ObjectKey || '',
-      r2Key: trigger.dataset.r2ObjectKey || '',
       downloadLimit: Number(trigger.dataset.downloadLimit || 3),
       expiryHours: azExpiryHoursValue(trigger.dataset.expiryHours ?? 24, 24),
       ownerUid: trigger.dataset.ownerUid || '',

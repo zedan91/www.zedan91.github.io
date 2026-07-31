@@ -1,8 +1,0 @@
-AZOBSS Patch 700
-
-- Uses Patch 699 as baseline.
-- Shows a fixed r2ObjectKey:software/ prefix in the Software Tools admin R2 field.
-- Admin only needs to paste the filename, e.g. Azobss_SolatTime_Setup_v1_0_2.exe.
-- Existing software/... and r2ObjectKey:software/... values are displayed as filename only.
-- Data is still saved safely as software/<filename>; it is never opened as a browser URL.
-- Full paths pasted accidentally are normalized on blur/save.

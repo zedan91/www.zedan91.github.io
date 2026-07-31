@@ -693,7 +693,7 @@ async function azFinalizeCommissionForOrder(order = {}){
   return result;
 }
 function savePremiumOrder(order) { const orders = readPremiumJson(PREMIUM_ORDERS_FILE, []); orders.unshift(order); writePremiumJson(PREMIUM_ORDERS_FILE, orders.slice(0, 200)); }
-function savePremiumToken(tokenData) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const now = Date.now(); const active = tokens.filter(t => t.token !== tokenData.token && Number(t.expiresAt || 0) > now && Number(t.usedCount || 0) < Number(t.maxDownload || 3)); active.unshift(tokenData); writePremiumJson(PREMIUM_TOKENS_FILE, active.slice(0, 200)); }
+function savePremiumToken(tokenData) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const now = Date.now(); const active = tokens.filter(t => Number(t.expiresAt || 0) > now && Number(t.usedCount || 0) < Number(t.maxDownload || 3)); active.unshift(tokenData); writePremiumJson(PREMIUM_TOKENS_FILE, active.slice(0, 200)); }
 function findPremiumToken(token) { return readPremiumJson(PREMIUM_TOKENS_FILE, []).find(t => t.token === token); }
 function updatePremiumToken(token, updater) { const tokens = readPremiumJson(PREMIUM_TOKENS_FILE, []); const index = tokens.findIndex(t => t.token === token); if (index >= 0) { tokens[index] = updater(tokens[index]); writePremiumJson(PREMIUM_TOKENS_FILE, tokens); return tokens[index]; } return null; }
 
@@ -738,12 +738,11 @@ function azSyncPremiumOrderDownloadUsage(saved={}, token="", used=0, sessionId="
 const AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH = "AZOBSS_SECURE_PREMIUM_DOWNLOAD_20260626";
 function azSecureDownloadSecret(){ return String(process.env.AZOBSS_DOWNLOAD_HASH_SECRET || process.env.AZOBSS_RECEIPT_SECRET || process.env.AZOBSS_ADMIN_API_SECRET || process.env.ADMIN_KEY || process.env.TOYYIB_SECRET_KEY || "azobss-secure-download-fallback-change-this-secret"); }
 function azHashDownloadValue(value=""){ return crypto.createHmac("sha256", azSecureDownloadSecret()).update(String(value||"")).digest("hex"); }
-function azPremiumSessionTtlMs(){ const n=Number(process.env.AZOBSS_DOWNLOAD_SESSION_TTL_MS || process.env.AZOBSS_DOWNLOAD_SESSION_TTL || 15*60*1000); return Number.isFinite(n)&&n>=60000?Math.min(n,6*60*60*1000):15*60*1000; }
+function azPremiumSessionTtlMs(){ const n=Number(process.env.AZOBSS_DOWNLOAD_SESSION_TTL_MS || 15*60*1000); return Number.isFinite(n)&&n>=60000?Math.min(n,6*60*60*1000):15*60*1000; }
 function azPremiumClientIp(req){ const fwd=String(req.headers["x-forwarded-for"]||"").split(",")[0].trim(); return fwd || req.ip || req.socket?.remoteAddress || "unknown"; }
 function azPremiumClientKey(req){ return azHashDownloadValue(azPremiumClientIp(req)); } // audit only; IDM handoff may change headers/IP key
 function azSafeDownloadFilename(value="azobss-download.bin"){ return String(value||"azobss-download.bin").replace(new RegExp('[\\\/:*?"<>|\\r\\n\\t]', "g"), "_").replace(/\s+/g," ").slice(0,180) || "azobss-download.bin"; }
 function azPremiumDownloadSource(saved={}){ return cleanPremiumUrl(saved.privateFileUrl || saved.sourceFileUrl || saved.downloadLink || saved.premiumDownloadFileLink || saved.secureDownloadLink || saved.privateDownloadLink || saved.downloadUrl || saved.url || ""); }
-function azPremiumR2ObjectKey(saved={}){ const info=azResolvePremiumR2Object(saved); return info&&info.key?info.key:""; }
 function azPremiumAllowedDownloadHost(hostname=""){ const host=String(hostname||"").toLowerCase(); if(!host||host==="localhost"||host.endsWith(".local")||/^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(host)||/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return false; const raw=String(process.env.AZOBSS_PREMIUM_ALLOWED_FILE_HOSTS||"").trim(); if(!raw) return true; const allowed=raw.split(",").map(x=>x.trim().toLowerCase()).filter(Boolean); return allowed.includes("*") || allowed.some(rule=>host===rule || (rule.startsWith("*.") && host.endsWith(rule.slice(1)))); }
 function azValidatePremiumSource(source=""){ const target=cleanPremiumUrl(source); if(!target) throw Object.assign(new Error("Premium file URL is missing."),{statusCode:404}); if(target.startsWith("/")) return {type:"local",target}; const u=new URL(target); if(u.protocol!=="https:") throw Object.assign(new Error("Premium file source must use HTTPS."),{statusCode:403}); if(!azPremiumAllowedDownloadHost(u.hostname)) throw Object.assign(new Error("Premium file source host is not allowed."),{statusCode:403}); return {type:"remote",target:u.toString()}; }
 function azPremiumDownloadFilename(saved={},source=""){ const direct=saved.filename||saved.fileName||saved.productFilename||saved.softwareFilename||saved.productName||""; if(direct){ try{ const ext=path.extname(String(direct)); if(ext) return azSafeDownloadFilename(direct); const srcExt=path.extname(new URL(source).pathname||""); return azSafeDownloadFilename(srcExt?`${direct}${srcExt}`:direct); }catch{ return azSafeDownloadFilename(direct); } } try{ return azSafeDownloadFilename(decodeURIComponent(path.basename(new URL(source).pathname||""))||"azobss-download.bin"); }catch{ return "azobss-download.bin"; } }
@@ -751,248 +750,13 @@ function readPremiumDownloadSessions(){ const now=Date.now(); const rows=readPre
 function savePremiumDownloadSession(session={}){ const rows=readPremiumDownloadSessions().filter(x=>x.sessionId!==session.sessionId); rows.unshift(session); writePremiumJson(PREMIUM_DOWNLOAD_SESSIONS_FILE, rows.slice(0,500)); return session; }
 function findPremiumDownloadSession(sessionId){ return readPremiumDownloadSessions().find(x=>x.sessionId===sessionId) || null; }
 function updatePremiumDownloadSession(sessionId, patch={}){ const rows=readPremiumDownloadSessions(); const idx=rows.findIndex(x=>x.sessionId===sessionId); if(idx>=0){ rows[idx]={...(rows[idx]||{}),...(patch||{}),updatedAt:new Date().toISOString(),updatedAtMs:Date.now()}; writePremiumJson(PREMIUM_DOWNLOAD_SESSIONS_FILE, rows); return rows[idx]; } return null; }
-
-
-// AZOBSS PATCH 698: Private Cloudflare R2 download gateway.
-// The backend signs a short-lived HMAC token; Cloudflare Worker validates it and serves
-// the private R2 object with Range/Resume support. Existing backend streaming remains
-// as a fallback for products that have not been migrated to R2.
-const AZOBSS_R2_DOWNLOAD_PATCH = "AZOBSS_R2_PRIVATE_WORKER_DOWNLOAD_ADMIN_KEY_20260731";
-function azR2DownloadBaseUrl() {
-  const raw = String(process.env.AZOBSS_R2_DOWNLOAD_BASE_URL || "").trim().replace(/\/+$/, "");
-  if (!raw) return "";
-  try {
-    const parsed = new URL(raw);
-    if (parsed.protocol !== "https:") return "";
-    return parsed.toString().replace(/\/+$/, "");
-  } catch (_) { return ""; }
-}
-function azR2TokenSecret() {
-  return String(process.env.AZOBSS_R2_TOKEN_SECRET || "").trim();
-}
-function azR2TokenTtlSeconds() {
-  const n = Number(process.env.AZOBSS_R2_TOKEN_TTL_SECONDS || 7200);
-  return Number.isFinite(n) ? Math.max(60, Math.min(24 * 60 * 60, Math.floor(n))) : 7200;
-}
-function azR2Configured() {
-  return Boolean(azR2DownloadBaseUrl() && azR2TokenSecret());
-}
-function azR2LookupKey(value = "") {
-  return String(value || "")
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-function azSafeR2ObjectKey(value = "") {
-  const key = String(value || "").trim()
-    .replace(/^r2\s*object\s*key\s*:\s*/i, "")
-    .replace(/^r2\s*:\s*/i, "")
-    .replace(/^\/+/, "");
-  if (!key || key.length > 600 || key.includes("..") || key.includes("\\")) return "";
-  if (!/^software\//i.test(key) && !/^cad\//i.test(key)) return "";
-  return key;
-}
-function azR2ObjectMapFromEnv() {
-  const raw = String(process.env.AZOBSS_R2_OBJECT_MAP || "").trim();
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch (err) {
-    console.warn("AZOBSS_R2_OBJECT_MAP is not valid JSON:", err && (err.message || err));
-    return {};
-  }
-}
-function azBuiltInR2ObjectKey(text = "") {
-  const key = azR2LookupKey(text);
-  if (!key) return "";
-  if (key.includes("connectivity repair")) return "software/AZOBSS-Connectivity-Repair.exe";
-  if (key.includes("windows update oneclick fix") || key.includes("windows update one click fix")) return "software/AZOBSS-Windows-Update-OneClick-Fix.exe";
-  if (key.includes("anydesk ads remover")) return "software/AnyDesk-Ads-Remover-v2.1.0.exe";
-  if (key.includes("solattime") || key.includes("solat time")) return "software/Azobss_SolatTime_Setup_v1_0_2.exe";
-  if (key.includes("printer oneclick fix") || key.includes("printer one click fix")) return "software/Printer-OneClick-Fix.exe";
-  return "";
-}
-function azResolvePremiumR2Object(saved = {}) {
-  const product = saved && typeof saved.product === "object" ? saved.product : {};
-  const explicit = [
-    saved.r2ObjectKey, saved.r2Key, saved.downloadObjectKey, saved.privateObjectKey,
-    product.r2ObjectKey, product.r2Key, product.downloadObjectKey, product.privateObjectKey,
-    saved.secureDownloadLink, saved.privateDownloadLink, saved.premiumDownloadFileLink,
-    product.secureDownloadLink, product.privateDownloadLink, product.premiumDownloadFileLink
-  ];
-  for (const value of explicit) {
-    const valid = azSafeR2ObjectKey(value);
-    if (valid) return { key: valid, source: "explicit" };
-  }
-
-  const source = azPremiumDownloadSource(saved);
-  let sourceFilename = "";
-  try { sourceFilename = decodeURIComponent(path.basename(new URL(source).pathname || "")); } catch (_) {}
-  const directFilename = String(saved.filename || saved.fileName || saved.productFilename || saved.softwareFilename || product.filename || product.fileName || "");
-  const candidates = [
-    saved.productId, saved.softwareId, saved.cadId, saved.id,
-    saved.productName, saved.productTitle, saved.itemName, saved.title,
-    product.productId, product.id, product.name, product.title,
-    directFilename, sourceFilename
-  ].filter(Boolean).map(v => String(v));
-
-  const envMap = azR2ObjectMapFromEnv();
-  for (const candidate of candidates) {
-    const direct = azSafeR2ObjectKey(envMap[candidate]);
-    if (direct) return { key: direct, source: "env-map" };
-    const normalized = azR2LookupKey(candidate);
-    const normalizedValue = azSafeR2ObjectKey(envMap[normalized]);
-    if (normalizedValue) return { key: normalizedValue, source: "env-map-normalized" };
-  }
-  for (const [mapKey, mapValue] of Object.entries(envMap)) {
-    if (!candidates.some(candidate => azR2LookupKey(candidate) === azR2LookupKey(mapKey))) continue;
-    const valid = azSafeR2ObjectKey(mapValue);
-    if (valid) return { key: valid, source: "env-map-scan" };
-  }
-
-  for (const candidate of candidates) {
-    const builtIn = azSafeR2ObjectKey(azBuiltInR2ObjectKey(candidate));
-    if (builtIn) return { key: builtIn, source: "built-in-698" };
-  }
-  return null;
-}
-function azBase64Url(value) {
-  return Buffer.from(value).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-}
-function azCreateR2SignedToken(session = {}) {
-  const secret = azR2TokenSecret();
-  const key = azSafeR2ObjectKey(session.sourceTarget || session.r2ObjectKey || "");
-  const exp = Math.floor(Number(session.expiresAt || 0) / 1000);
-  if (!secret || !key || !Number.isInteger(exp) || exp <= Math.floor(Date.now() / 1000)) return "";
-  const payload = {
-    key,
-    name: azSafeDownloadFilename(session.filename || path.basename(key) || "AZOBSS-Download.bin"),
-    exp,
-    sid: String(session.sessionId || "").slice(0, 160),
-    oid: String(session.orderId || "").slice(0, 180)
-  };
-  const payloadPart = azBase64Url(JSON.stringify(payload));
-  const signaturePart = crypto.createHmac("sha256", secret).update(payloadPart).digest("base64")
-    .replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-  return `${payloadPart}.${signaturePart}`;
-}
-function azR2DownloadUrlForSession(session = {}) {
-  const base = azR2DownloadBaseUrl();
-  const token = azCreateR2SignedToken(session);
-  return base && token ? `${base}/dl/${encodeURIComponent(token)}` : "";
-}
-async function azPreflightR2Session(session = {}) {
-  if (String(process.env.AZOBSS_R2_PREFLIGHT_HEAD || "1") === "0") return true;
-  const target = azR2DownloadUrlForSession(session);
-  if (!target) throw Object.assign(new Error("R2 download gateway is not configured."), { statusCode: 503 });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
-  try {
-    const response = await fetch(target, { method: "HEAD", redirect: "manual", signal: controller.signal });
-    if (response.status === 200 || response.status === 206) return true;
-    if (response.status === 404) throw Object.assign(new Error("The private R2 file for this product was not found."), { statusCode: 404 });
-    if (response.status === 403) throw Object.assign(new Error("R2 token verification failed. Check that the Worker and Render secrets are identical."), { statusCode: 503 });
-    throw Object.assign(new Error(`R2 gateway preflight failed with HTTP ${response.status}.`), { statusCode: 503 });
-  } catch (err) {
-    if (err && err.statusCode) throw err;
-    const message = err && err.name === "AbortError" ? "R2 gateway preflight timed out." : `R2 gateway preflight failed: ${err && err.message ? err.message : err}`;
-    throw Object.assign(new Error(message), { statusCode: 503 });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function azCreatePremiumDownloadSession(req, token, saved = {}) {
-  const now = Date.now();
-  const clientKey = azPremiumClientKey(req);
-  const activeSessionId = String(saved.activeDownloadSessionId || "").replace(/[^a-zA-Z0-9_-]/g, "");
-  const activeExpiresAt = Number(saved.activeDownloadSessionExpiresAt || 0) || 0;
-  if (activeSessionId && activeExpiresAt > now) {
-    const active = findPremiumDownloadSession(activeSessionId);
-    if (active && ["active", "completed"].includes(String(active.status || "active")) && Number(active.expiresAt || 0) > now) {
-      updatePremiumDownloadSession(activeSessionId, {
-        status: "active",
-        lastSeenAt: new Date(now).toISOString(),
-        lastSeenAtMs: now,
-        tokenRouteHits: Number(active.tokenRouteHits || 0) + 1,
-        idmHandoffReuse: true
-      });
-      azSyncPremiumOrderDownloadUsage(saved, token, Math.max(0, Number(saved.usedCount || saved.downloadCount || 0) || 0), activeSessionId, activeExpiresAt, now);
-      return activeSessionId;
-    }
-  }
-  if (azobssTokenIsExpired(saved, now) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
-    throw Object.assign(new Error("Download link expired or already used too many times."), { statusCode: 403 });
-  }
-
-  const r2Info = azResolvePremiumR2Object(saved);
-  let sourceInfo;
-  if (r2Info && azR2Configured()) sourceInfo = { type: "r2", target: r2Info.key, mapSource: r2Info.source };
-  else sourceInfo = azValidatePremiumSource(azPremiumDownloadSource(saved));
-
-  const sessionId = makePremiumId("dls").replace(/[^a-zA-Z0-9_-]/g, "");
-  const ttlMs = sourceInfo.type === "r2"
-    ? Math.min(azPremiumSessionTtlMs(), azR2TokenTtlSeconds() * 1000)
-    : azPremiumSessionTtlMs();
-  const expiresAt = now + ttlMs;
-  const filename = sourceInfo.type === "r2"
-    ? azSafeDownloadFilename(saved.filename || saved.fileName || saved.productFilename || saved.softwareFilename || path.basename(sourceInfo.target))
-    : azPremiumDownloadFilename(saved, sourceInfo.target);
-  const nextUsed = Number(saved.usedCount || 0) + 1;
-  const session = {
-    sessionId,
-    token,
-    orderId: saved.orderId || "",
-    productId: saved.productId || "",
-    productName: saved.productName || "AZOBSS Digital Product",
-    sourceType: sourceInfo.type,
-    sourceTarget: sourceInfo.target,
-    r2ObjectKey: sourceInfo.type === "r2" ? sourceInfo.target : "",
-    r2MapSource: sourceInfo.mapSource || "",
-    filename,
-    status: "active",
-    clientKey,
-    ipHash: azHashDownloadValue(azPremiumClientIp(req)),
-    createdAt: new Date(now).toISOString(),
-    createdAtMs: now,
-    expiresAt,
-    expiresAtIso: new Date(expiresAt).toISOString(),
-    requestCount: 0,
-    rangeRequestCount: 0,
-    tokenRouteHits: 1,
-    deliveryMode: sourceInfo.type === "r2" ? "cloudflare-r2-worker" : "backend-stream",
-    patch: sourceInfo.type === "r2" ? AZOBSS_R2_DOWNLOAD_PATCH : AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
-  };
-
-  // Confirm that the private object exists and that the Worker accepts the signature
-  // before consuming the customer's one-time download quota.
-  if (sourceInfo.type === "r2") await azPreflightR2Session(session);
-
-  savePremiumDownloadSession(session);
-  const lastMethod = sourceInfo.type === "r2" ? "R2_WORKER_SESSION" : "SESSION_STREAM";
-  updatePremiumToken(token, t => ({
-    ...t,
-    usedCount: nextUsed,
-    lastUsedAt: now,
-    lastMethod,
-    activeDownloadSessionId: sessionId,
-    activeDownloadSessionExpiresAt: expiresAt,
-    r2ObjectKey: sourceInfo.type === "r2" ? sourceInfo.target : (t.r2ObjectKey || ""),
-    secureDownloadPatch: sourceInfo.type === "r2" ? AZOBSS_R2_DOWNLOAD_PATCH : AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
-  }));
-  azSyncPremiumOrderDownloadUsage(saved, token, nextUsed, sessionId, expiresAt, now);
-  return sessionId;
-}
-
+function azCreatePremiumDownloadSession(req, token, saved={}){ const now=Date.now(); const clientKey=azPremiumClientKey(req); const activeSessionId=String(saved.activeDownloadSessionId||""); const activeExpiresAt=Number(saved.activeDownloadSessionExpiresAt||0)||0; if(activeSessionId&&activeExpiresAt>now){ const active=findPremiumDownloadSession(activeSessionId); if(active&&["active","completed"].includes(String(active.status||"active"))&&Number(active.expiresAt||0)>now){ updatePremiumDownloadSession(activeSessionId,{status:"active",lastSeenAt:new Date(now).toISOString(),lastSeenAtMs:now,idmHandoffReuse:true}); azSyncPremiumOrderDownloadUsage(saved,token,Math.max(0,Number(saved.usedCount||saved.downloadCount||0)||0),activeSessionId,activeExpiresAt,now); return activeSessionId; } } if(Number(saved.expiresAt||0)<now || Number(saved.usedCount||0)>=Number(saved.maxDownload||1)) throw Object.assign(new Error("Download link expired or already used too many times."),{statusCode:403}); const src=azValidatePremiumSource(azPremiumDownloadSource(saved)); const sessionId=makePremiumId("dls").replace(/[^a-zA-Z0-9_-]/g,""); const expiresAt=now+azPremiumSessionTtlMs(); const filename=azPremiumDownloadFilename(saved, src.target); savePremiumDownloadSession({sessionId,token,orderId:saved.orderId||"",productName:saved.productName||"AZOBSS Digital Product",sourceType:src.type,sourceTarget:src.target,filename,status:"active",clientKey,ipHash:azHashDownloadValue(azPremiumClientIp(req)),createdAt:new Date(now).toISOString(),createdAtMs:now,expiresAt,expiresAtIso:new Date(expiresAt).toISOString(),requestCount:0,rangeRequestCount:0,patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH}); const nextUsed=Number(saved.usedCount||0)+1; updatePremiumToken(token,t=>({...t,usedCount:nextUsed,lastUsedAt:now,lastMethod:"SESSION_STREAM",activeDownloadSessionId:sessionId,activeDownloadSessionExpiresAt:expiresAt,secureDownloadPatch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH})); azSyncPremiumOrderDownloadUsage(saved,token,nextUsed,sessionId,expiresAt,now); return sessionId; }
 function azPremiumContentDisposition(filename="azobss-download.bin"){ const safe=azSafeDownloadFilename(filename); return `attachment; filename="${safe.replace(/"/g,"_")}"; filename*=UTF-8''${encodeURIComponent(safe)}`; }
 function azParseRange(rangeHeader="", size=0){ const m=String(rangeHeader||"").match(/^bytes=(\d*)-(\d*)$/); if(!m||!size) return null; let start=m[1]===""?null:Number(m[1]); let end=m[2]===""?null:Number(m[2]); if(start===null&&end!==null){start=Math.max(0,size-end);end=size-1;} if(start!==null&&end===null) end=size-1; if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<start||start>=size) return null; return {start,end:Math.min(end,size-1)}; }
 function azNoStoreDownloadHeaders(res){ res.set({"Cache-Control":"no-store, no-cache, must-revalidate, private, max-age=0","Pragma":"no-cache","Expires":"0","X-AZOBSS-Secure-Download":"1"}); }
 async function azStreamLocalPremiumSession(req,res,session){ const filePath=path.resolve(path.join(__dirname,"..", session.sourceTarget||"")); if(!fs.existsSync(filePath)||fs.statSync(filePath).isDirectory()) return res.status(404).send("File not found"); const st=fs.statSync(filePath); const range=String(req.headers.range||""); const parsed=range?azParseRange(range,st.size):null; azNoStoreDownloadHeaders(res); res.set({"Content-Type":"application/octet-stream","Content-Disposition":azPremiumContentDisposition(session.filename||path.basename(filePath)),"Accept-Ranges":"bytes"}); if(range&&!parsed){ res.status(416).set("Content-Range",`bytes */${st.size}`).end(); return; } if(parsed){ res.status(206).set({"Content-Range":`bytes ${parsed.start}-${parsed.end}/${st.size}`,"Content-Length":String(parsed.end-parsed.start+1)}); if(req.method==="HEAD") return res.end(); fs.createReadStream(filePath,{start:parsed.start,end:parsed.end}).pipe(res); return; } res.status(200).set("Content-Length",String(st.size)); if(req.method==="HEAD") return res.end(); fs.createReadStream(filePath).pipe(res); }
 async function azStreamRemotePremiumSession(req,res,session){ const range=String(req.headers.range||""); const headers={}; if(range) headers.Range=range; const upstream=await fetch(session.sourceTarget,{method:req.method==="HEAD"?"HEAD":"GET",headers,redirect:"follow"}); if(![200,206].includes(upstream.status)) return res.status(502).send("File source cannot be reached right now."); if(range&&upstream.status!==206) return res.status(502).send("File host does not support resume/Range for this download."); azNoStoreDownloadHeaders(res); res.status(upstream.status); res.set({"Content-Type":upstream.headers.get("content-type")||"application/octet-stream","Content-Disposition":azPremiumContentDisposition(session.filename||"azobss-download.bin"),"Accept-Ranges":upstream.headers.get("accept-ranges")||"bytes"}); for(const h of ["content-length","content-range","etag","last-modified"]){ const v=upstream.headers.get(h); if(v) res.set(h,v); } if(req.method==="HEAD"||!upstream.body) return res.end(); await new Promise((resolve,reject)=>{ const ns=Readable.fromWeb(upstream.body); ns.on("error",reject); res.on("finish",resolve); res.on("close",resolve); ns.pipe(res); }); }
-async function azHandlePremiumDownloadSession(req,res){ const sessionId=String(req.params.sessionId||"").replace(/[^a-zA-Z0-9_-]/g,""); const now=Date.now(); const session=findPremiumDownloadSession(sessionId); if(!session) return res.status(404).send("Download session not found."); const sessionStatus=String(session.status||"active"); if(!["active","completed"].includes(sessionStatus)||Number(session.expiresAt||0)<=now){ updatePremiumDownloadSession(sessionId,{status:"expired",expiredAt:new Date().toISOString(),expiredAtMs:now}); return res.status(410).send("Download session expired."); } if(sessionStatus==="completed") updatePremiumDownloadSession(sessionId,{status:"active",reopenedForIdmAt:new Date(now).toISOString(),reopenedForIdmAtMs:now}); const clientKeyChanged=Boolean(session.clientKey&&session.clientKey!==azPremiumClientKey(req)); updatePremiumDownloadSession(sessionId,{lastSeenAt:new Date().toISOString(),lastSeenAtMs:now,requestCount:Number(session.requestCount||0)+1,rangeRequestCount:Number(session.rangeRequestCount||0)+(req.headers.range?1:0),lastRange:req.headers.range?String(req.headers.range).slice(0,120):"",clientKeyChangedDuringSession:clientKeyChanged}); if(session.sourceType==="r2"){ const r2Location=azR2DownloadUrlForSession(session); if(!r2Location) return res.status(503).send("R2 download gateway is not configured."); updatePremiumDownloadSession(sessionId,{r2RedirectAt:new Date().toISOString(),r2RedirectAtMs:Date.now(),deliveryMode:"cloudflare-r2-worker"}); return res.redirect(302,r2Location); } try{ if(session.sourceType==="local"||String(session.sourceTarget||"").startsWith("/")) await azStreamLocalPremiumSession(req,res,session); else await azStreamRemotePremiumSession(req,res,session); if(!req.headers.range) updatePremiumDownloadSession(sessionId,{lastFullRequestCompletedAt:new Date().toISOString(),lastFullRequestCompletedAtMs:Date.now()}); }catch(err){ console.error("AZOBSS legacy secure download stream failed:",err&&err.stack||err); updatePremiumDownloadSession(sessionId,{lastError:err&&err.message?err.message:String(err),lastErrorAt:new Date().toISOString()}); if(!res.headersSent) res.status(500).send("Download failed. Please contact admin."); else { try{res.destroy(err);}catch{} } } }
+async function azHandlePremiumDownloadSession(req,res){ const sessionId=String(req.params.sessionId||"").replace(/[^a-zA-Z0-9_-]/g,""); const now=Date.now(); const session=findPremiumDownloadSession(sessionId); if(!session) return res.status(404).send("Download session not found."); const sessionStatus=String(session.status||"active"); if(!["active","completed"].includes(sessionStatus)||Number(session.expiresAt||0)<=now){ updatePremiumDownloadSession(sessionId,{status:"expired",expiredAt:new Date().toISOString(),expiredAtMs:now}); return res.status(410).send("Download session expired."); } if(sessionStatus==="completed") updatePremiumDownloadSession(sessionId,{status:"active",reopenedForIdmAt:new Date(now).toISOString(),reopenedForIdmAtMs:now}); const clientKeyChanged=Boolean(session.clientKey&&session.clientKey!==azPremiumClientKey(req)); updatePremiumDownloadSession(sessionId,{lastSeenAt:new Date().toISOString(),lastSeenAtMs:now,requestCount:Number(session.requestCount||0)+1,rangeRequestCount:Number(session.rangeRequestCount||0)+(req.headers.range?1:0),lastRange:req.headers.range?String(req.headers.range).slice(0,120):"",clientKeyChangedDuringSession:clientKeyChanged}); try{ if(session.sourceType==="local"||String(session.sourceTarget||"").startsWith("/")) await azStreamLocalPremiumSession(req,res,session); else await azStreamRemotePremiumSession(req,res,session); if(!req.headers.range) updatePremiumDownloadSession(sessionId,{lastFullRequestCompletedAt:new Date().toISOString(),lastFullRequestCompletedAtMs:Date.now()}); }catch(err){ console.error("AZOBSS legacy secure download stream failed:",err&&err.stack||err); updatePremiumDownloadSession(sessionId,{lastError:err&&err.message?err.message:String(err),lastErrorAt:new Date().toISOString()}); if(!res.headersSent) res.status(500).send("Download failed. Please contact admin."); else { try{res.destroy(err);}catch{} } } }
 function buildReceiptHtml(order) { const rows = [["Receipt No", order.orderId], ["Status", order.status], ["Product", order.productName], ["Amount", order.amount], ["Payment Method", order.paymentMethod], ["Reference", order.paymentReference || "-"], ["Username", order.user?.username || "-"], ["Email", order.user?.email || "-"], ["Date", new Date(order.paidAt || order.createdAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })]].map(([k,v]) => `<tr><th>${k}</th><td>${v || "-"}</td></tr>`).join(""); return `<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Receipt</title><style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111;padding:24px}.receipt{max-width:720px;margin:auto;background:#fff;border:1px solid #ddd;border-radius:14px;padding:24px}h1{margin-top:0}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}th{width:180px;color:#555}.ok{color:#16a34a;font-weight:700}.print{margin-top:20px}</style></head><body><div class="receipt"><h1>AZOBSS Payment Receipt</h1><p class="ok">Payment Successful ✅</p><table>${rows}</table><p class="print"><button onclick="window.print()">Print / Save PDF</button></p></div></body></html>`; }
 
 
@@ -1229,45 +993,25 @@ function findPremiumOrderByAny({ orderId = "", billCode = "" } = {}) {
 }
 function makePremiumDownloadForOrder(order) {
   if (!order || order.status !== "paid") return null;
-  if (order.downloadToken) {
-    const existingR2ObjectKey = azPremiumR2ObjectKey(order);
-    if(existingR2ObjectKey){
-      const existingToken=findPremiumToken(order.downloadToken)||{};
-      const now=Date.now();
-      const maxDownload=azobssDownloadLimitFromOrder(order);
-      const expiryHours=Math.max(0,Math.min(24*30,Number(order.expiryHours??24)));
-      const expiresAtMs=Number(existingToken.expiresAt||order.tokenExpiresAtMs||(order.tokenExpiresAt?Date.parse(order.tokenExpiresAt):0))||(expiryHours===0?now+(100*365*24*60*60*1000):now+expiryHours*60*60*1000);
-      const realDownloadLink=cleanPremiumUrl(order.downloadLink||order.premiumDownloadFileLink||order.secureDownloadLink||order.privateDownloadLink||order.downloadUrl||"");
-      savePremiumToken({...existingToken,token:order.downloadToken,orderId:order.orderId,productId:order.productId,productName:order.productName,user:order.user||{},downloadLink:realDownloadLink,premiumDownloadFileLink:realDownloadLink,r2ObjectKey:existingR2ObjectKey,r2Key:existingR2ObjectKey,product:{...(order.product||{}),r2ObjectKey:existingR2ObjectKey,r2Key:existingR2ObjectKey},createdAt:Number(existingToken.createdAt||now),expiresAt:expiresAtMs,usedCount:Number(existingToken.usedCount||0),maxDownload});
-      return upsertPremiumOrder({...order,r2ObjectKey:existingR2ObjectKey,r2Key:existingR2ObjectKey,product:{...(order.product||{}),r2ObjectKey:existingR2ObjectKey,r2Key:existingR2ObjectKey}});
-    }
-    return order;
-  }
+  if (order.downloadToken) return order;
   const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
   const maxDownload = azobssDownloadLimitFromOrder(order); // secure digital delivery: expire after first download
   const expiryHours = Math.max(0, Math.min(24 * 30, Number(order.expiryHours ?? 24)));
   const expiresAtMs = expiryHours === 0 ? now + (100 * 365 * 24 * 60 * 60 * 1000) : now + expiryHours * 60 * 60 * 1000;
-  const realDownloadLink = cleanPremiumUrl(order.downloadLink || order.premiumDownloadFileLink || order.secureDownloadLink || order.privateDownloadLink || order.downloadUrl || "");
-  const r2ObjectKey = azPremiumR2ObjectKey(order);
-  if(!realDownloadLink && !r2ObjectKey) throw new Error("No premium download source is configured for this paid order.");
   savePremiumToken({
     token,
     orderId: order.orderId,
     productId: order.productId,
     productName: order.productName,
     user: order.user || {},
-    downloadLink: realDownloadLink,
-    premiumDownloadFileLink: realDownloadLink,
-    r2ObjectKey,
-    r2Key:r2ObjectKey,
-    product:{...(order.product||{}),r2ObjectKey,r2Key:r2ObjectKey},
+    downloadLink: order.downloadLink,
     createdAt: now,
     expiresAt: expiresAtMs,
     usedCount: 0,
     maxDownload
   });
-  return upsertPremiumOrder({ ...order, downloadLink:realDownloadLink, premiumDownloadFileLink:realDownloadLink, r2ObjectKey, r2Key:r2ObjectKey, product:{...(order.product||{}),r2ObjectKey,r2Key:r2ObjectKey}, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload });
+  return upsertPremiumOrder({ ...order, downloadToken: token, tokenExpiresAt: new Date(expiresAtMs).toISOString(), maxDownload });
 }
 async function refreshToyyibOrderStatus(order) {
   if (!order?.billCode) return order;
@@ -2124,14 +1868,13 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
     const adjustedAmount = identity ? azobssApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory) : baseAmount;
     const amountSen = Math.round(adjustedAmount * 100);
     const amountText = azobssMoneyText(adjustedAmount);
-    const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || data.downloadLink);
-    const r2ObjectKey = azSafeR2ObjectKey(product.r2ObjectKey || product.r2Key || data.r2ObjectKey || data.r2Key || "");
+    const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
     const submittedUser = getPremiumUser(data);
     const user = identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
     const requestedLimit = 1; // auto-expire after first download
     const requestedExpiryHours = Math.max(0, Math.min(24 * 30, Number(product.expiryHours ?? data.expiryHours ?? 24)));
     if (!productName || !amountSen) return res.status(400).json({ ok:false, error:"Missing product name or valid amount." });
-    if (!downloadLink && !r2ObjectKey && !azSubIsSaleProduct(product, data)) return res.status(400).json({ ok:false, error:"Premium Download File Link atau Cloudflare R2 Private Object Key belum diset untuk produk ini." });
+    if (!downloadLink && !azSubIsSaleProduct(product, data)) return res.status(400).json({ ok:false, error:"Premium download link belum diset untuk produk ini." });
 
     const orderId = makePremiumId("tp");
     const apiBase = publicBaseUrl(req);
@@ -2184,15 +1927,13 @@ app.post("/api/toyyib/create-bill", async (req, res) => {
       billCode,
       paymentUrl,
       user,
-      product: { ...product, id: productId, name: productName, basePrice: submittedAmountText, price: amountText, priceAdjustmentPercent, priceAdjustmentCategory, r2ObjectKey, r2Key:r2ObjectKey },
+      product: { ...product, id: productId, name: productName, basePrice: submittedAmountText, price: amountText, priceAdjustmentPercent, priceAdjustmentCategory },
       ...(azSubIsSaleProduct(product, data) ? azSubPatchFromProduct(product, data) : {}),
       staffReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       shareReferral: azReferralFrom(data, product, { productId, returnUrl: data.returnUrl || '' }),
       productOwner: azProductOwnerFrom(product, { productId }),
       returnUrl: cleanPremiumUrl(data.returnUrl || data.pageUrl || ''),
       downloadLink,
-      r2ObjectKey,
-      r2Key:r2ObjectKey,
       maxDownload: requestedLimit,
       expiryHours: requestedExpiryHours,
       createdAt: new Date(now).toISOString()
@@ -2332,8 +2073,7 @@ app.post("/api/premium/complete-purchase", async (req, res) => {
   const productName = cleanPremiumText(product.name || data.productName, 160);
   const productId = cleanPremiumText(product.productId || product.id || data.productId || productName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), 160);
   const amount = cleanPremiumText(product.price || data.amount || data.price, 40);
-  const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || data.downloadLink);
-  const r2ObjectKey = azSafeR2ObjectKey(product.r2ObjectKey || product.r2Key || data.r2ObjectKey || data.r2Key || "");
+  const downloadLink = cleanPremiumUrl(product.secureDownloadLink || product.downloadLink || data.downloadLink);
   const paymentMethod = cleanPremiumText(data.paymentMethod || "manual", 40);
   const paymentReference = cleanPremiumText(data.paymentReference || data.reference || "", 200);
   const requestedLimit = 1; // auto-expire after first download
@@ -2341,13 +2081,13 @@ app.post("/api/premium/complete-purchase", async (req, res) => {
   const expiresAtMs = requestedExpiryHours === 0 ? Date.now() + (100 * 365 * 24 * 60 * 60 * 1000) : Date.now() + requestedExpiryHours * 60 * 60 * 1000;
   const user = getPremiumUser(data);
   if (!productName || !amount) return res.status(400).json({ ok:false, error:"Missing product name or amount" });
-  if (!downloadLink && !r2ObjectKey) return res.status(400).json({ ok:false, error:"Premium Download File Link atau Cloudflare R2 Private Object Key belum diset untuk produk ini. Sila hubungi admin." });
+  if (!downloadLink) return res.status(400).json({ ok:false, error:"Download link belum diset untuk produk ini. Sila hubungi admin." });
   const orderId = makePremiumId("ord");
   const token = makePremiumId("dl").replace(/[^a-zA-Z0-9_-]/g, "");
   const now = Date.now();
-  const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, product:{...product,id:productId,name:productName,price:amount,r2ObjectKey,r2Key:r2ObjectKey}, r2ObjectKey, r2Key:r2ObjectKey, shareReferral:azReferralFrom(data, product, {productId}), productOwner:azProductOwnerFrom(product, {productId}), createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(expiresAtMs).toISOString(), maxDownload:requestedLimit };
+  const order = { orderId, productId, productName, amount, status:"paid", paymentMethod, paymentReference, user, product:{...product,id:productId,name:productName,price:amount}, shareReferral:azReferralFrom(data, product, {productId}), productOwner:azProductOwnerFrom(product, {productId}), createdAt:new Date(now).toISOString(), paidAt:new Date(now).toISOString(), downloadToken:token, tokenExpiresAt:new Date(expiresAtMs).toISOString(), maxDownload:requestedLimit };
   savePremiumOrder(order);
-  savePremiumToken({ token, orderId, productId, productName, user, downloadLink, r2ObjectKey, r2Key:r2ObjectKey, product:{...product,r2ObjectKey,r2Key:r2ObjectKey}, createdAt:now, expiresAt:expiresAtMs, usedCount:0, maxDownload:requestedLimit });
+  savePremiumToken({ token, orderId, productId, productName, user, downloadLink, createdAt:now, expiresAt:expiresAtMs, usedCount:0, maxDownload:requestedLimit });
   await azFinalizeCommissionForOrder(order);
   await sendDownloadEmailForOrder(order, req);
   res.json({ ok:true, orderId, status:"paid", message:"Purchase completed. A temporary download link has been generated and an email will be sent if SMTP is enabled.", downloadUrl:`/api/premium/download/${encodeURIComponent(token)}`, receiptUrl:`/api/premium/receipt/${encodeURIComponent(orderId)}`, expiresAt:order.tokenExpiresAt, maxDownload:requestedLimit });
@@ -2445,23 +2185,19 @@ app.get("/api/premium/download-status/:token", (req, res) => {
 });
 
 app.get("/api/premium/download-health", (req, res) => {
-  res.json({ ok:true, patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH, mode:azR2Configured()?"private-r2-worker-with-backend-stream-fallback":"backend-stream-fallback", rangeSupport:true, sessionTtlMs:azPremiumSessionTtlMs(), r2Configured:azR2Configured(), r2BaseUrl:azR2DownloadBaseUrl(), r2TokenTtlSeconds:azR2TokenTtlSeconds(), r2PreflightHead:String(process.env.AZOBSS_R2_PREFLIGHT_HEAD||"1")!=="0", r2Patch:AZOBSS_R2_DOWNLOAD_PATCH });
+  res.json({ ok:true, patch:AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH, mode:"one-token-one-session-backend-stream", rangeSupport:true, sessionTtlMs:azPremiumSessionTtlMs() });
 });
 
 app.get("/api/premium/download-session/:sessionId", azHandlePremiumDownloadSession);
 app.head("/api/premium/download-session/:sessionId", azHandlePremiumDownloadSession);
 
-app.post("/api/premium/download/:token", async (req, res) => {
+app.post("/api/premium/download/:token", (req, res) => {
   const token = String(req.params.token || "").replace(/[^a-zA-Z0-9_-]/g, "");
   const saved = findPremiumToken(token);
   if (!saved) return res.status(403).send("Download link expired or already used too many times.");
   try {
-    const sessionId = await azCreatePremiumDownloadSession(req, token, saved);
-    const session = findPremiumDownloadSession(sessionId);
-    const location = session && session.sourceType === "r2" ? azR2DownloadUrlForSession(session) : `/api/premium/download-session/${encodeURIComponent(sessionId)}`;
-    if (!location) throw Object.assign(new Error("R2 download gateway is not configured."), { statusCode: 503 });
-    if (session && session.sourceType === "r2") updatePremiumDownloadSession(sessionId,{r2RedirectAt:new Date().toISOString(),r2RedirectAtMs:Date.now(),deliveryMode:"cloudflare-r2-worker"});
-    return res.redirect(303, location);
+    const sessionId = azCreatePremiumDownloadSession(req, token, saved);
+    return res.redirect(303, `/api/premium/download-session/${encodeURIComponent(sessionId)}`);
   } catch (err) {
     try { if (saved) azSyncPremiumOrderTokenStateLegacy(saved, token); } catch (_) {}
     return res.status(err.statusCode || 500).send(err.statusCode ? err.message : "Download cannot start. Please contact admin.");
@@ -2477,7 +2213,7 @@ app.get("/api/premium/download/:token", (req, res) => {
   }
   const productName = String(saved.productName || "AZOBSS Digital Product").replace(/[<>]/g, "");
   const expires = saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-";
-  res.type("html").send(`<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${productName}</p><p class="muted">This preview page does not use your download quota.</p><form method="POST" action="/api/premium/download/${encodeURIComponent(token)}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Secure temporary session active. R2-enabled products support IDM Range/Resume without exposing the private bucket.</p></div></body></html>`);
+  res.type("html").send(`<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${productName}</p><p class="muted">This preview page does not use your download quota.</p><form method="POST" action="/api/premium/download/${encodeURIComponent(token)}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Backend stream session active. The real file URL is not exposed.</p></div></body></html>`);
 });
 
 app.get("/api/premium/receipt/:orderId", (req, res) => {
