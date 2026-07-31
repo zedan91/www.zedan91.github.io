@@ -3137,42 +3137,6 @@ function azobssPaBmRecordCode(record) {
   return type === "NDCDB" || type === "NDCDB_C3" ? value : value.toUpperCase();
 }
 
-// AZOBSS PATCH 696: Show only the specific JUPEM document category in orders and admin payment alerts.
-function azobssJupemPurchaseTypeLabel(rawType) {
-  const type = azobssPaBmRecordType({ productType: rawType });
-  if (type === "PA") return "PA";
-  if (type === "BM") return "BM";
-  if (type === "SBM") return "SBM";
-  if (type === "GPS") return "GPS";
-  if (type === "SYIT_PIAWAI") return "Syit Piawai";
-  if (type === "NDCDB" || type === "NDCDB_C3") return "Lot Kadaster Berdigit";
-  return cleanPremiumText(type || "JUPEM", 60);
-}
-function azobssJupemPurchaseProductName(items = []) {
-  const rows = Array.isArray(items) ? items : [];
-  if (!rows.length) return "";
-  const counts = new Map();
-  for (const item of rows) {
-    const label = azobssJupemPurchaseTypeLabel(item && (item.productType || item.product || item.type));
-    if (!label) continue;
-    counts.set(label, (counts.get(label) || 0) + 1);
-  }
-  if (!counts.size) return "";
-  const preferredOrder = ["PA", "BM", "SBM", "GPS", "Syit Piawai", "Lot Kadaster Berdigit"];
-  const labels = [...counts.keys()].sort((a, b) => {
-    const ai = preferredOrder.indexOf(a);
-    const bi = preferredOrder.indexOf(b);
-    return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi) || a.localeCompare(b);
-  });
-  const detail = labels.map(label => `${label} (${counts.get(label)} unit)`).join(" + ");
-  return cleanPremiumText(detail, 240);
-}
-function azobssShouldUseSpecificJupemProductName(order = {}) {
-  const productId = String(order.productId || (order.product && (order.product.productId || order.product.id)) || "").trim().toLowerCase();
-  const productName = String(order.productName || order.productTitle || (order.product && (order.product.name || order.product.title)) || "").trim();
-  return productId === "pa-bm-purchase-records" || /^JUPEM Document Purchase(?:\s|\()/i.test(productName) || /^(?:PA|BM|SBM|GPS|Syit Piawai|Lot Kadaster Berdigit)\s*\(\d+\s+unit\)/i.test(productName);
-}
-
 function azobssSafeJupemDownloadUrl(rawUrl, productType) {
   const raw = String(rawUrl || "").trim();
   if (!raw) return "";
@@ -4021,22 +3985,13 @@ async function azCreateAdminPaymentNotification(req, order = {}) {
   const docId = azAdminPaymentNotificationDocId(order);
   const ref = db.collection("adminNotifications").doc(docId);
   const oldSnap = await ref.get();
-  const category = azAdminPaymentNotificationCategory(order);
-  const amountRm = azAdminPaymentNotificationAmountRm(order);
-  const specificJupemName = azobssShouldUseSpecificJupemProductName(order)
-    ? azobssJupemPurchaseProductName(order.paBmItems)
-    : "";
-  const productName = specificJupemName || cleanPremiumText(order.productName || (order.product && (order.product.name || order.product.title)) || "AZOBSS Product", 200);
   if (oldSnap.exists) {
-    const username = cleanPremiumText(order.username || order.usernameKey || (order.user && (order.user.username || order.user.usernameKey)) || "", 100);
-    const updatePayload = { updatedAt: nowIso, updatedAtMs: nowMs, lastSeenOrderStatus: status, active:true };
-    if (specificJupemName) {
-      updatePayload.productName = productName;
-      updatePayload.body = `${productName}${amountRm ? ` • RM${amountRm.toFixed(2)}` : ""}${username ? ` • ${username}` : ""}`;
-    }
-    await ref.set(updatePayload, { merge:true });
+    await ref.set({ updatedAt: nowIso, updatedAtMs: nowMs, lastSeenOrderStatus: status, active:true }, { merge:true });
     return { ok:true, docId, existed:true, created:false };
   }
+  const category = azAdminPaymentNotificationCategory(order);
+  const amountRm = azAdminPaymentNotificationAmountRm(order);
+  const productName = cleanPremiumText(order.productName || (order.product && (order.product.name || order.product.title)) || "AZOBSS Product", 200);
   const categoryLabel = category === "pabm" ? "PA/BM" : (category === "cad" ? "CAD Tools" : "Software");
   const username = cleanPremiumText(order.username || order.usernameKey || (order.user && (order.user.username || order.user.usernameKey)) || "", 100);
   const email = cleanPremiumText(order.email || order.buyerEmail || (order.user && order.user.email) || "", 180);
@@ -4075,35 +4030,6 @@ async function azCreateAdminPaymentNotification(req, order = {}) {
   azFireAndForget(azWriteAdminAuditLog(req, { uid:"system", username:"system", role:"system", isAdmin:true }, "admin_payment_notification_create", "adminNotifications", docId, { category, amountRm, orderId, billCode, productName }, "success"), "Admin payment notification audit log failed");
   return { ok:true, docId, existed:false, created:true };
 }
-async function azBackfillAdminPaymentNotificationJupemNames(db, records = []) {
-  if (!db || !Array.isArray(records) || !records.length) return records;
-  for (const row of records) {
-    if (!row || String(row.category || "").toLowerCase() !== "pabm") continue;
-    if (!azobssShouldUseSpecificJupemProductName(row)) continue;
-    const orderId = cleanPremiumText(row.orderId || "", 160);
-    if (!orderId) continue;
-    try {
-      const orderSnap = await db.collection("premiumOrders").doc(orderId).get();
-      if (!orderSnap.exists) continue;
-      const order = orderSnap.data() || {};
-      const specificName = azobssJupemPurchaseProductName(order.paBmItems);
-      if (!specificName || specificName === row.productName) continue;
-      row.productName = specificName;
-      row.body = `${specificName}${Number(row.amountRm || 0) ? ` • RM${Number(row.amountRm).toFixed(2)}` : ""}${row.username ? ` • ${row.username}` : ""}`;
-      await db.collection("adminNotifications").doc(row.docId || row.id).set({
-        productName: specificName,
-        body: row.body,
-        updatedAt: new Date().toISOString(),
-        updatedAtMs: Date.now(),
-        nameBackfilledBy: "patch-696"
-      }, { merge:true });
-    } catch (error) {
-      console.warn("Admin JUPEM alert name backfill failed:", orderId, error && (error.message || error));
-    }
-  }
-  return records;
-}
-
 async function azLoadAdminPaymentNotifications(options = {}) {
   const db = getAzobssBackendDb();
   const limitRows = Math.max(1, Math.min(500, Number(options.limit || 80) || 80));
@@ -4122,7 +4048,6 @@ async function azLoadAdminPaymentNotifications(options = {}) {
     if (unreadOnly && row.read) return;
     records.push(row);
   });
-  await azBackfillAdminPaymentNotificationJupemNames(db, records);
   records.sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)));
   const unreadCount = records.filter(x => !x.read).length;
   return { ok:true, records, unreadCount, total:records.length };
@@ -9661,11 +9586,10 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   params.set('success_url', successUrl);
   params.set('cancel_url', cancelUrl);
   params.set('client_reference_id', orderId);
-  // AZOBSS 697: Stripe Checkout is reserved for card payments.
-  // FPX is handled by the separate Bank Transfer / FPX flow, and forcing
-  // `fpx` here causes Checkout Session creation to fail when FPX is not
-  // activated or the Stripe account is still awaiting business verification.
+  // Stripe API on this account rejects automatic_payment_methods.
+  // Specify compatible Checkout payment methods explicitly instead.
   params.append('payment_method_types[]', 'card');
+  params.append('payment_method_types[]', 'fpx');
   params.set('locale', 'auto');
   params.set('metadata[orderId]', orderId);
   params.set('metadata[productId]', productId);
@@ -10428,7 +10352,7 @@ async function handler(req, res) {
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
-        const productName = azobssJupemPurchaseProductName(items) || `PA/BM (${items.length} unit)`;
+        const productName = `JUPEM Document Purchase (${items.length} unit)`;
         const billPayload = {
           userSecretKey: TOYYIB_SECRET_KEY,
           categoryCode: TOYYIB_CATEGORY_CODE,
