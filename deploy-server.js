@@ -9661,10 +9661,11 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   params.set('success_url', successUrl);
   params.set('cancel_url', cancelUrl);
   params.set('client_reference_id', orderId);
-  // Stripe API on this account rejects automatic_payment_methods.
-  // Specify compatible Checkout payment methods explicitly instead.
+  // AZOBSS 697: Stripe Checkout is reserved for card payments.
+  // FPX is handled by the separate Bank Transfer / FPX flow, and forcing
+  // `fpx` here causes Checkout Session creation to fail when FPX is not
+  // activated or the Stripe account is still awaiting business verification.
   params.append('payment_method_types[]', 'card');
-  params.append('payment_method_types[]', 'fpx');
   params.set('locale', 'auto');
   params.set('metadata[orderId]', orderId);
   params.set('metadata[productId]', productId);
