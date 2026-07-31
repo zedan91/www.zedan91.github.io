@@ -915,6 +915,10 @@ width:fit-content !important;
 .software-admin-cancel{background:#334155;color:#e2e8f0;}
 .software-admin-save{background:#22c55e;color:#052e16;}
 .software-admin-note{margin:4px 0 0;color:#94a3b8;font-size:12px;line-height:1.45;}
+.software-r2-key-input-wrap{display:flex;align-items:stretch;width:100%;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#020617;overflow:hidden;}
+.software-r2-key-prefix{display:flex;align-items:center;flex:0 0 auto;padding:0 0 0 12px;color:#93c5fd;background:#020617;font:800 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;user-select:none;}
+.software-admin-form .software-r2-key-input-wrap input{min-width:0;border:0!important;border-radius:0!important;padding-left:3px!important;box-shadow:none!important;}
+@media(max-width:640px){.software-r2-key-input-wrap{display:grid}.software-r2-key-prefix{padding:9px 12px 0;font-size:11px}.software-admin-form .software-r2-key-input-wrap input{padding-left:12px!important;}}
 @media(max-width:640px){.software-admin-row,.software-admin-checks{grid-template-columns:1fr}.software-admin-toolbar{justify-content:center;flex-wrap:wrap}.software-admin-add-btn,.software-admin-import-btn,.software-admin-export-btn,.software-admin-stats-btn{border:1px solid rgba(245,158,11,.45);background:linear-gradient(135deg,#f59e0b,#eab308);color:#111827;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.20);}
 .software-admin-stats-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
 .software-admin-apply-btn{width:100%;}.software-admin-json-status{max-width:100%;text-align:center;}}
@@ -3416,8 +3420,11 @@ html body .downloads-section{
         <input id="softwareAdminSecureDownloadLink" type="url" placeholder="Optional HTTPS fallback link used after payment success">
       </label>
       <label>Cloudflare R2 Private Object Key
-        <input id="softwareAdminR2ObjectKey" type="text" placeholder="software/Exact-Filename.exe" autocomplete="off" spellcheck="false">
-        <small style="display:block;color:#93c5fd;margin-top:5px;font-weight:700">Enter the exact private R2 object key only. Example: software/Azobss_SolatTime_Setup_v1_0_2.exe. This is not a browser link.</small>
+        <div class="software-r2-key-input-wrap">
+          <span class="software-r2-key-prefix">r2ObjectKey:software/</span>
+          <input id="softwareAdminR2ObjectKey" type="text" placeholder="Azobss_SolatTime_Setup_v1_0_2.exe" autocomplete="off" spellcheck="false">
+        </div>
+        <small style="display:block;color:#93c5fd;margin-top:5px;font-weight:700">The prefix is filled automatically. Paste or type the exact filename only, for example: Azobss_SolatTime_Setup_v1_0_2.exe.</small>
       </label>
       <div class="az-subscription-admin-box" id="softwareSubscriptionAdminBox">
         <div class="az-subscription-admin-title"><input id="softwareAdminSubscriptionEnabled" type="checkbox"> <span>Sell Subscription Activation Code</span></div>
@@ -3566,6 +3573,9 @@ html body .downloads-section{
   const stripeLinkInput = document.getElementById('softwareAdminStripeLink');
   const secureDownloadInput = document.getElementById('softwareAdminSecureDownloadLink');
   const r2ObjectKeyInput = document.getElementById('softwareAdminR2ObjectKey');
+  r2ObjectKeyInput?.addEventListener('blur', () => {
+    r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(r2ObjectKeyInput.value);
+  });
   const subscriptionEnabledInput = document.getElementById('softwareAdminSubscriptionEnabled');
   const activationPrefixInput = document.getElementById('softwareAdminActivationPrefix');
   const downloadLinkLabel = document.getElementById('softwareDownloadLinkLabel');
@@ -4421,12 +4431,24 @@ function azSoftwareFeaturedValue553(item){
     // admin saves the item, the explicit featured field becomes authoritative.
     return clean(source.name || source.title || '') === 'azobss solattime';
   }
+const AZ_SOFTWARE_R2_ADMIN_PREFIX = 'r2ObjectKey:software/';
 function azNormalizeSoftwareR2ObjectKey(value){
     let key = String(value || '').trim();
     key = key.replace(/^r2\s*object\s*key\s*:\s*/i, '').replace(/^r2\s*:\s*/i, '').replace(/^\/+/, '');
     if(!key || key.length > 600 || key.includes('..') || key.includes('\\')) return '';
     if(!/^software\//i.test(key) && !/^cad\//i.test(key)) return '';
     return key;
+  }
+  function azSoftwareR2FilenameForAdmin(value){
+    let filename = String(value || '').trim();
+    filename = filename.replace(/^r2\s*object\s*key\s*:\s*/i, '').replace(/^r2\s*:\s*/i, '').replace(/^\/+/, '');
+    filename = filename.replace(/^software\//i, '');
+    if(!filename || filename.length > 500 || filename.includes('..') || filename.includes('\\') || filename.includes('/')) return '';
+    return filename;
+  }
+  function azSoftwareR2ObjectKeyFromAdminFilename(value){
+    const filename = azSoftwareR2FilenameForAdmin(value);
+    return filename ? azNormalizeSoftwareR2ObjectKey(AZ_SOFTWARE_R2_ADMIN_PREFIX + filename) : '';
   }
   function azR2ObjectKeyFromSoftwareItem(item){
     const source = item || {};
@@ -5719,7 +5741,7 @@ function normalizeItem(item){
     if(paymentLinkInput) paymentLinkInput.value = item?.paymentLink || '';
     if(stripeLinkInput) stripeLinkInput.value = item?.stripeLink || '';
     if(secureDownloadInput) secureDownloadInput.value = azCleanSoftwareSecureDownloadLink(item?.secureDownloadLink || '');
-    if(r2ObjectKeyInput) r2ObjectKeyInput.value = item?.r2ObjectKey || azR2ObjectKeyFromSoftwareItem(item) || '';
+    if(r2ObjectKeyInput) r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(item?.r2ObjectKey || azR2ObjectKeyFromSoftwareItem(item) || '');
     if(subscriptionEnabledInput) subscriptionEnabledInput.checked = azSoftwareSubscriptionEnabled(item);
     if(activationPrefixInput) activationPrefixInput.value = item?.activationCodePrefix || item?.subscriptionCodePrefix || 'AZOBSS';
     if(imageUrlInput) imageUrlInput.value = item?.imageUrl || '';
@@ -6096,9 +6118,9 @@ function normalizeItem(item){
     const promoFreeBatchValue = promoFreeEnabledValue ? (promoBatchNeedsReset ? String(Date.now()) : oldPromoBatchValue) : '';
     const rawSecureDownloadValue = String(secureDownloadInput?.value || '').trim();
     const legacyR2ObjectKeyValue = azNormalizeSoftwareR2ObjectKey(rawSecureDownloadValue);
-    const r2ObjectKeyValue = azNormalizeSoftwareR2ObjectKey(r2ObjectKeyInput?.value || legacyR2ObjectKeyValue);
+    const r2ObjectKeyValue = azSoftwareR2ObjectKeyFromAdminFilename(r2ObjectKeyInput?.value || '') || legacyR2ObjectKeyValue;
     const secureDownloadUrlValue = azCleanSoftwareSecureDownloadLink(rawSecureDownloadValue);
-    if(r2ObjectKeyInput) r2ObjectKeyInput.value = r2ObjectKeyValue;
+    if(r2ObjectKeyInput) r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(r2ObjectKeyValue);
     if(secureDownloadInput && rawSecureDownloadValue && !secureDownloadUrlValue && r2ObjectKeyValue) secureDownloadInput.value = '';
     let item = azApplySoftwareCommissionOwner(normalizeItem({
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
