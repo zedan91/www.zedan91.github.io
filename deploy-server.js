@@ -4558,7 +4558,7 @@ function azSyncPremiumOrderDownloadUsage(saved = {}, token = "", used = 0, sessi
 // A one-time token creates ONE short-lived backend session; Range/resume requests are allowed only inside that session.
 const AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH = "AZOBSS_SECURE_PREMIUM_DOWNLOAD_IDM_HANDOFF_20260626";
 function azPremiumSessionTtlMs() {
-  const n = Number(process.env.AZOBSS_DOWNLOAD_SESSION_TTL_MS || 15 * 60 * 1000);
+  const n = Number(process.env.AZOBSS_DOWNLOAD_SESSION_TTL_MS || process.env.AZOBSS_DOWNLOAD_SESSION_TTL || 15 * 60 * 1000);
   return Number.isFinite(n) && n >= 60 * 1000 ? Math.min(n, 6 * 60 * 60 * 1000) : 15 * 60 * 1000;
 }
 function azSecureDownloadSecret() {
@@ -4692,6 +4692,155 @@ async function azFindPremiumSessionDeep(sessionId) {
   }
   return null;
 }
+
+
+// AZOBSS PATCH 698: Private Cloudflare R2 download gateway.
+// The backend signs a short-lived HMAC token; Cloudflare Worker validates it and serves
+// the private R2 object with Range/Resume support. Existing backend streaming remains
+// as a fallback for products that have not been migrated to R2.
+const AZOBSS_R2_DOWNLOAD_PATCH = "AZOBSS_R2_PRIVATE_WORKER_DOWNLOAD_20260731";
+function azR2DownloadBaseUrl() {
+  const raw = String(process.env.AZOBSS_R2_DOWNLOAD_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:") return "";
+    return parsed.toString().replace(/\/+$/, "");
+  } catch (_) { return ""; }
+}
+function azR2TokenSecret() {
+  return String(process.env.AZOBSS_R2_TOKEN_SECRET || "").trim();
+}
+function azR2TokenTtlSeconds() {
+  const n = Number(process.env.AZOBSS_R2_TOKEN_TTL_SECONDS || 7200);
+  return Number.isFinite(n) ? Math.max(60, Math.min(24 * 60 * 60, Math.floor(n))) : 7200;
+}
+function azR2Configured() {
+  return Boolean(azR2DownloadBaseUrl() && azR2TokenSecret());
+}
+function azR2LookupKey(value = "") {
+  return String(value || "")
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+function azSafeR2ObjectKey(value = "") {
+  const key = String(value || "").trim().replace(/^\/+/, "");
+  if (!key || key.length > 600 || key.includes("..") || key.includes("\\")) return "";
+  if (!key.startsWith("software/") && !key.startsWith("cad/")) return "";
+  return key;
+}
+function azR2ObjectMapFromEnv() {
+  const raw = String(process.env.AZOBSS_R2_OBJECT_MAP || "").trim();
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (err) {
+    console.warn("AZOBSS_R2_OBJECT_MAP is not valid JSON:", err && (err.message || err));
+    return {};
+  }
+}
+function azBuiltInR2ObjectKey(text = "") {
+  const key = azR2LookupKey(text);
+  if (!key) return "";
+  if (key.includes("connectivity repair")) return "software/AZOBSS-Connectivity-Repair.exe";
+  if (key.includes("windows update oneclick fix") || key.includes("windows update one click fix")) return "software/AZOBSS-Windows-Update-OneClick-Fix.exe";
+  if (key.includes("anydesk ads remover")) return "software/AnyDesk-Ads-Remover-v2.1.0.exe";
+  if (key.includes("solattime") || key.includes("solat time")) return "software/Azobss_SolatTime_Setup_v1_0_2.exe";
+  if (key.includes("printer oneclick fix") || key.includes("printer one click fix")) return "software/Printer-OneClick-Fix.exe";
+  return "";
+}
+function azResolvePremiumR2Object(saved = {}) {
+  const product = saved && typeof saved.product === "object" ? saved.product : {};
+  const explicit = [
+    saved.r2ObjectKey, saved.r2Key, saved.downloadObjectKey, saved.privateObjectKey,
+    product.r2ObjectKey, product.r2Key, product.downloadObjectKey, product.privateObjectKey
+  ];
+  for (const value of explicit) {
+    const valid = azSafeR2ObjectKey(value);
+    if (valid) return { key: valid, source: "explicit" };
+  }
+
+  const source = azPremiumDownloadSource(saved);
+  let sourceFilename = "";
+  try { sourceFilename = decodeURIComponent(path.basename(new URL(source).pathname || "")); } catch (_) {}
+  const directFilename = String(saved.filename || saved.fileName || saved.productFilename || saved.softwareFilename || product.filename || product.fileName || "");
+  const candidates = [
+    saved.productId, saved.softwareId, saved.cadId, saved.id,
+    saved.productName, saved.productTitle, saved.itemName, saved.title,
+    product.productId, product.id, product.name, product.title,
+    directFilename, sourceFilename
+  ].filter(Boolean).map(v => String(v));
+
+  const envMap = azR2ObjectMapFromEnv();
+  for (const candidate of candidates) {
+    const direct = azSafeR2ObjectKey(envMap[candidate]);
+    if (direct) return { key: direct, source: "env-map" };
+    const normalized = azR2LookupKey(candidate);
+    const normalizedValue = azSafeR2ObjectKey(envMap[normalized]);
+    if (normalizedValue) return { key: normalizedValue, source: "env-map-normalized" };
+  }
+  for (const [mapKey, mapValue] of Object.entries(envMap)) {
+    if (!candidates.some(candidate => azR2LookupKey(candidate) === azR2LookupKey(mapKey))) continue;
+    const valid = azSafeR2ObjectKey(mapValue);
+    if (valid) return { key: valid, source: "env-map-scan" };
+  }
+
+  for (const candidate of candidates) {
+    const builtIn = azSafeR2ObjectKey(azBuiltInR2ObjectKey(candidate));
+    if (builtIn) return { key: builtIn, source: "built-in-698" };
+  }
+  return null;
+}
+function azBase64Url(value) {
+  return Buffer.from(value).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+function azCreateR2SignedToken(session = {}) {
+  const secret = azR2TokenSecret();
+  const key = azSafeR2ObjectKey(session.sourceTarget || session.r2ObjectKey || "");
+  const exp = Math.floor(Number(session.expiresAt || 0) / 1000);
+  if (!secret || !key || !Number.isInteger(exp) || exp <= Math.floor(Date.now() / 1000)) return "";
+  const payload = {
+    key,
+    name: azSafeDownloadFilename(session.filename || path.basename(key) || "AZOBSS-Download.bin"),
+    exp,
+    sid: String(session.sessionId || "").slice(0, 160),
+    oid: String(session.orderId || "").slice(0, 180)
+  };
+  const payloadPart = azBase64Url(JSON.stringify(payload));
+  const signaturePart = crypto.createHmac("sha256", secret).update(payloadPart).digest("base64")
+    .replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  return `${payloadPart}.${signaturePart}`;
+}
+function azR2DownloadUrlForSession(session = {}) {
+  const base = azR2DownloadBaseUrl();
+  const token = azCreateR2SignedToken(session);
+  return base && token ? `${base}/dl/${encodeURIComponent(token)}` : "";
+}
+async function azPreflightR2Session(session = {}) {
+  if (String(process.env.AZOBSS_R2_PREFLIGHT_HEAD || "1") === "0") return true;
+  const target = azR2DownloadUrlForSession(session);
+  if (!target) throw Object.assign(new Error("R2 download gateway is not configured."), { statusCode: 503 });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(target, { method: "HEAD", redirect: "manual", signal: controller.signal });
+    if (response.status === 200 || response.status === 206) return true;
+    if (response.status === 404) throw Object.assign(new Error("The private R2 file for this product was not found."), { statusCode: 404 });
+    if (response.status === 403) throw Object.assign(new Error("R2 token verification failed. Check that the Worker and Render secrets are identical."), { statusCode: 503 });
+    throw Object.assign(new Error(`R2 gateway preflight failed with HTTP ${response.status}.`), { statusCode: 503 });
+  } catch (err) {
+    if (err && err.statusCode) throw err;
+    const message = err && err.name === "AbortError" ? "R2 gateway preflight timed out." : `R2 gateway preflight failed: ${err && err.message ? err.message : err}`;
+    throw Object.assign(new Error(message), { statusCode: 503 });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function azCreatePremiumDownloadSession(req, token, saved = {}) {
   const now = Date.now();
   const clientKey = azPremiumClientKey(req);
@@ -4700,8 +4849,6 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
   if (activeSessionId && activeExpiresAt > now) {
     const active = await azFindPremiumSessionDeep(activeSessionId);
     if (active && ["active", "completed"].includes(String(active.status || "active")) && Number(active.expiresAt || 0) > now) {
-      // IDM handoff fix: return/reopen the same session even if the browser's first request marked it completed.
-      // The sessionId itself is a high-entropy temporary secret and expires shortly.
       updatePremiumDownloadSession(activeSessionId, {
         status: "active",
         lastSeenAt: new Date(now).toISOString(),
@@ -4716,10 +4863,20 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
   if (azobssTokenIsExpired(saved, now) || Number(saved.usedCount || 0) >= Number(saved.maxDownload || 1)) {
     throw Object.assign(new Error("Download link expired or already used too many times."), { statusCode: 403 });
   }
-  const sourceInfo = azValidatePremiumSource(azPremiumDownloadSource(saved));
+
+  const r2Info = azResolvePremiumR2Object(saved);
+  let sourceInfo;
+  if (r2Info && azR2Configured()) sourceInfo = { type: "r2", target: r2Info.key, mapSource: r2Info.source };
+  else sourceInfo = azValidatePremiumSource(azPremiumDownloadSource(saved));
+
   const sessionId = makeId("dls").replace(/[^a-zA-Z0-9_-]/g, "");
-  const expiresAt = now + azPremiumSessionTtlMs();
-  const filename = azPremiumDownloadFilename(saved, sourceInfo.target);
+  const ttlMs = sourceInfo.type === "r2"
+    ? Math.min(azPremiumSessionTtlMs(), azR2TokenTtlSeconds() * 1000)
+    : azPremiumSessionTtlMs();
+  const expiresAt = now + ttlMs;
+  const filename = sourceInfo.type === "r2"
+    ? azSafeDownloadFilename(saved.filename || saved.fileName || saved.productFilename || saved.softwareFilename || path.basename(sourceInfo.target))
+    : azPremiumDownloadFilename(saved, sourceInfo.target);
   const nextUsed = Number(saved.usedCount || 0) + 1;
   const session = {
     sessionId,
@@ -4729,6 +4886,8 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
     productName: saved.productName || "AZOBSS Digital Product",
     sourceType: sourceInfo.type,
     sourceTarget: sourceInfo.target,
+    r2ObjectKey: sourceInfo.type === "r2" ? sourceInfo.target : "",
+    r2MapSource: sourceInfo.mapSource || "",
     filename,
     status: "active",
     clientKey,
@@ -4740,26 +4899,35 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
     requestCount: 0,
     rangeRequestCount: 0,
     tokenRouteHits: 1,
-    patch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
+    deliveryMode: sourceInfo.type === "r2" ? "cloudflare-r2-worker" : "backend-stream",
+    patch: sourceInfo.type === "r2" ? AZOBSS_R2_DOWNLOAD_PATCH : AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
   };
+
+  // Confirm that the private object exists and that the Worker accepts the signature
+  // before consuming the customer's one-time download quota.
+  if (sourceInfo.type === "r2") await azPreflightR2Session(session);
+
   savePremiumDownloadSession(session);
+  const lastMethod = sourceInfo.type === "r2" ? "R2_WORKER_SESSION" : "SESSION_STREAM";
   updatePremiumToken(token, t => ({
     ...t,
     usedCount: nextUsed,
     lastUsedAt: now,
-    lastMethod: "SESSION_STREAM",
+    lastMethod,
     activeDownloadSessionId: sessionId,
     activeDownloadSessionExpiresAt: expiresAt,
-    secureDownloadPatch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
+    r2ObjectKey: sourceInfo.type === "r2" ? sourceInfo.target : (t.r2ObjectKey || ""),
+    secureDownloadPatch: sourceInfo.type === "r2" ? AZOBSS_R2_DOWNLOAD_PATCH : AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
   }));
   try {
     await azUpdatePremiumTokenPersistent(token, {
       usedCount: nextUsed,
       lastUsedAt: now,
-      lastMethod: "SESSION_STREAM",
+      lastMethod,
       activeDownloadSessionId: sessionId,
       activeDownloadSessionExpiresAt: expiresAt,
-      secureDownloadPatch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
+      r2ObjectKey: sourceInfo.type === "r2" ? sourceInfo.target : "",
+      secureDownloadPatch: sourceInfo.type === "r2" ? AZOBSS_R2_DOWNLOAD_PATCH : AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH
     });
   } catch (err) {
     console.warn("Premium token Firestore session update failed:", err && (err.message || err));
@@ -4767,6 +4935,7 @@ async function azCreatePremiumDownloadSession(req, token, saved = {}) {
   azSyncPremiumOrderDownloadUsage(saved, token, nextUsed, sessionId, expiresAt, now);
   return sessionId;
 }
+
 function azNoStoreDownloadHeaders(extra = {}) {
   return azSecurityHeaders(Object.assign({
     "Cache-Control": "no-store, no-cache, must-revalidate, private, max-age=0",
@@ -4884,6 +5053,13 @@ async function azHandlePremiumDownloadSession(req, res, sessionId) {
     clientKeyChangedDuringSession: clientKeyChanged
   });
   session = { ...session, requestCount: Number(session.requestCount || 0) + 1 };
+  if (session.sourceType === "r2") {
+    const r2Location = azR2DownloadUrlForSession(session);
+    if (!r2Location) return send(res, 503, "R2 download gateway is not configured.");
+    updatePremiumDownloadSession(cleanSessionId, { r2RedirectAt: new Date().toISOString(), r2RedirectAtMs: Date.now(), deliveryMode: "cloudflare-r2-worker" });
+    res.writeHead(302, azNoStoreDownloadHeaders({ Location: r2Location, "X-AZOBSS-Download-Mode": "r2-worker" }));
+    return res.end();
+  }
   try {
     if (session.sourceType === "local" || String(session.sourceTarget || "").startsWith("/")) await azStreamLocalPremiumSession(req, res, session);
     else await azStreamRemotePremiumSession(req, res, session);
@@ -13384,7 +13560,13 @@ const filePath =
       if (!saved) return send(res, 403, "Download link expired or already used too many times.");
       try {
         const sessionId = await azCreatePremiumDownloadSession(req, token, { ...saved, token });
-        res.writeHead(303, azNoStoreDownloadHeaders({ Location: `/api/premium/download-session/${encodeURIComponent(sessionId)}` }));
+        const session = await azFindPremiumSessionDeep(sessionId);
+        const location = session && session.sourceType === "r2"
+          ? azR2DownloadUrlForSession(session)
+          : `/api/premium/download-session/${encodeURIComponent(sessionId)}`;
+        if (!location) throw Object.assign(new Error("R2 download gateway is not configured."), { statusCode: 503 });
+        if (session && session.sourceType === "r2") updatePremiumDownloadSession(sessionId, { r2RedirectAt: new Date().toISOString(), r2RedirectAtMs: Date.now(), deliveryMode: "cloudflare-r2-worker" });
+        res.writeHead(303, azNoStoreDownloadHeaders({ Location: location, "X-AZOBSS-Download-Mode": session && session.sourceType === "r2" ? "r2-worker" : "backend-stream" }));
         res.end();
         return;
       } catch (err) {
@@ -13413,7 +13595,7 @@ const filePath =
       const expiresNever = saved.expiresNever === true || azobssOrderNeverExpire(order);
       const expires = expiresNever ? "Never expire" : (saved.expiresAt ? new Date(Number(saved.expiresAt)).toLocaleString("en-MY", { timeZone:"Asia/Kuala_Lumpur" }) : "-");
       const actionUrl = `/api/premium/download/${encodeURIComponent(token)}`;
-      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Click the button below to start the actual download. This preview page does not use your download quota.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email previews will not consume the token. POST creates a short secure backend stream session and does not expose the real file URL.</p></div></body></html>`;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>AZOBSS Download Confirm</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}.box{max-width:680px;margin:40px auto;background:#111827;border:1px solid #334155;border-radius:18px;padding:28px}button.btn{border:0;cursor:pointer;background:#16a34a;color:white;text-decoration:none;padding:14px 20px;border-radius:12px;font-weight:800;font-size:16px}.muted{color:#94a3b8}.warn{color:#fbbf24}.small{font-size:12px}</style></head><body><div class="box"><h1>AZOBSS Download Ready ✅</h1><p><b>Product:</b> ${String(order.productName || saved.productName || "AZOBSS Digital Product")}</p><p class="muted">Click the button below to start the actual download. This preview page does not use your download quota.</p><form method="POST" action="${actionUrl}"><button class="btn" type="submit">Start Download</button></form><p class="warn">Download quota is used only once when this secure session starts. IDM/browser Range requests inside the same session will not add extra quota.</p><p class="muted">Used: ${Number(saved.usedCount||0)} / ${Number(saved.maxDownload||1)}<br>Expires: ${expires}</p><p class="muted small">Security: GET/email previews will not consume the token. POST creates a short secure session. Migrated products use a temporary signed private R2 Worker link; the bucket URL and storage credentials are never exposed.</p></div></body></html>`;
       return send(res, 200, html, "text/html; charset=utf-8");
     }
 
@@ -13465,11 +13647,16 @@ const filePath =
       return send(res, 200, JSON.stringify({
         ok: true,
         patch: AZOBSS_SECURE_PREMIUM_DOWNLOAD_PATCH,
-        mode: "one-token-one-session-backend-stream",
+        mode: azR2Configured() ? "private-r2-worker-with-backend-stream-fallback" : "backend-stream-fallback",
         rangeSupport: true,
         sessionTtlMs: azPremiumSessionTtlMs(),
+        r2Configured: azR2Configured(),
+        r2BaseUrl: azR2DownloadBaseUrl(),
+        r2TokenTtlSeconds: azR2TokenTtlSeconds(),
+        r2PreflightHead: String(process.env.AZOBSS_R2_PREFLIGHT_HEAD || "1") !== "0",
+        r2Patch: AZOBSS_R2_DOWNLOAD_PATCH,
         sessionStore: "local-json+firestore-if-configured",
-        note: "Real premium file URL is streamed by backend and is not sent as redirect Location."
+        note: "Migrated products redirect to a temporary signed Cloudflare Worker URL; other products retain the secure backend stream fallback."
       }, null, 2), "application/json");
     }
 
