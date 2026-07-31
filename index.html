@@ -9612,19 +9612,30 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <div class="section services-section" id="Software">
 <h2>Our Services</h2>
 <p class="services-subtitle">PC Service | Info Lot | Digital Tools | CAD Tools &amp; Resources</p>
-<div class="az-home-website-request-wrap">
-<a class="az-home-website-request-btn" href="/Tempah-Website/" aria-label="Tempah website untuk bisnes">
-<span class="az-home-website-request-icon" aria-hidden="true">
-<svg viewBox="0 0 120 120"><rect x="18" y="24" width="84" height="64" rx="8"></rect><path d="M18 42h84M35 34h1M47 34h1M59 34h1M38 99h44M60 88v11"></path><path d="M38 58h20M38 70h42M70 58h12"></path></svg>
-</span>
-<span class="az-home-website-request-copy">
-<strong>Mahukan Website untuk Bisnes?</strong>
-<small>Tempah website satu halaman, katalog produk, WhatsApp atau Telegram, QR pembayaran dan domain sendiri.</small>
-</span>
-<span class="az-home-website-request-action">Request Website →</span>
-</a>
-</div>
 
+<style id="az693-home-website-service-card-beside-troubleshoot-fix">
+/* AZOBSS 693: move the Website for Business CTA into the service grid,
+   immediately beside Troubleshoot Windows Online. */
+.services-grid .az693-website-service-card{
+  color:#e5e7eb !important;
+  text-decoration:none !important;
+  border:1px solid rgba(34,211,238,.62) !important;
+  background:linear-gradient(150deg,rgba(8,47,73,.94),rgba(15,23,42,.98) 58%,rgba(6,78,59,.84)) !important;
+  box-shadow:0 0 0 1px rgba(34,211,238,.06) inset !important;
+}
+.services-grid .az693-website-service-card:hover,
+.services-grid .az693-website-service-card:focus-visible{
+  border-color:#67e8f9 !important;
+  box-shadow:0 14px 30px rgba(6,182,212,.18) !important;
+  outline:none !important;
+}
+.services-grid .az693-website-service-card > p{
+  color:#ecfeff !important;
+  font-weight:700 !important;
+}
+.services-grid .az693-website-service-card .service-info{color:#cffafe !important;}
+.services-grid .az693-website-service-card img{object-position:center !important;}
+</style>
 <style id="az687-brownies-service-card-fix">
 /* AZOBSS 687: Brownies is now a normal service card beside Lot & Boundary Stone Check. */
 .services-grid .az687-brownies-service-card{
@@ -9691,6 +9702,17 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <p>- Handled remotely via AnyDesk</p>
 </div>
 </div>
+<a aria-label="Tempah Website untuk Bisnes" class="card service-card az693-website-service-card" href="/Tempah-Website/">
+<img alt="Perkhidmatan bina website untuk bisnes" src="images/website-business-service.svg?v=693" loading="lazy" decoding="async"/>
+<p>Website untuk Bisnes</p>
+<div class="service-info">
+<p>- Website satu halaman atau katalog produk</p>
+<p>- Butang WhatsApp atau Telegram</p>
+<p>- QR pembayaran</p>
+<p>- Boleh menggunakan domain sendiri</p>
+<p>- Klik untuk membuat permintaan website</p>
+</div>
+</a>
 <div aria-label="View Cadastral Lot Info Check details" class="card service-card" role="button" tabindex="0">
 <img alt="Cadastral Lot Info Check" src="images/info-lot.jpg"/>
 <p>Info Lot Kadaster</p>
