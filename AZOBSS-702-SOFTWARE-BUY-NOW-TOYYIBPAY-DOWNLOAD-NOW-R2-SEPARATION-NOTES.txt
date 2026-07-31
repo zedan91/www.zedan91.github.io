@@ -1,0 +1,17 @@
+AZOBSS Patch 702
+
+Purpose
+- Restore and preserve the intended separation:
+  * Buy Now -> ToyyibPay / Payment Link or Stripe checkout.
+  * Download Now after verified payment -> Cloudflare R2 Private Object Key.
+
+Fixes
+- R2-only premium products no longer require an HTTPS Premium Download File Link.
+- ToyyibPay and Stripe pending orders now store r2ObjectKey separately.
+- Paid-order download tokens now retain r2ObjectKey and the product metadata.
+- Download fulfilment never uses paymentLink as a file source.
+- Legacy backend/server.js receives the same R2 handling.
+- Admin form labels clarify which field belongs to Buy Now and Download Now.
+
+Baseline
+- Built from Patch 700. Patch 701 behavior is not included.
