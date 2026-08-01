@@ -70,7 +70,7 @@
     foodLink.href = '/Tempahan-Makanan/';
     foodLink.setAttribute('role', 'menuitem');
     foodLink.dataset.azFoodOrderLink = '1';
-    foodLink.title = 'Tempahan makanan, kuih, set majlis dan tempahan khas';
+    foodLink.title = 'Food - Brownies';
     if (isFoodSection) {
       foodLink.classList.add('is-active');
       foodLink.setAttribute('aria-current', 'location');
@@ -82,7 +82,7 @@
         '<path d="M12 6V4"></path>' +
         '<path d="M3 18h18"></path>' +
       '</svg>' +
-      '<span>Tempahan Makanan</span>';
+      '<span>Food - Brownies</span>';
 
     dropdown.appendChild(toolsLink);
     dropdown.appendChild(foodLink);
