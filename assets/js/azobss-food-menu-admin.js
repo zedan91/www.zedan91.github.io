@@ -309,28 +309,28 @@ function applyMenuConfig(config){
   });
 
   const activeItems = Object.values(config.items || {}).filter(item => item && !item.deleted);
+
+  // AZOBSS 711: derive the hero minimum from the rendered, currently active
+  // 8-inch and 4-inch prices. This keeps the badge at RM13 for the current
+  // menu and avoids an old Firestore/cache state incorrectly showing RM45.
   const allPrices = [];
-  activeItems.forEach(item => {
-    if(Number(item.price8) > 0) allPrices.push(Number(item.price8));
-    if(item.available4 && Number(item.price4) > 0) allPrices.push(Number(item.price4));
+  document.querySelectorAll('.brownie-qty-stepper').forEach(stepper => {
+    if(stepper.dataset.enabled === 'false') return;
+    const price8 = Number(stepper.dataset.price);
+    const price4 = Number(stepper.dataset.price4);
+    if(Number.isFinite(price8) && price8 > 0) allPrices.push(price8);
+    if(stepper.dataset.available4 === 'true' && Number.isFinite(price4) && price4 > 0){
+      allPrices.push(price4);
+    }
   });
-  const minPrice = allPrices.length ? Math.min(...allPrices) : 0;
+  const minPrice = allPrices.length ? Math.min(...allPrices) : 13;
   const heroPriceBadge = Array.from(document.querySelectorAll('.hero .badges span'))
     .find(node => /harga\s+dari/i.test(node.textContent || ''));
-  if(heroPriceBadge && minPrice > 0) heroPriceBadge.textContent = `Harga dari ${money(minPrice)}`;
+  if(heroPriceBadge) heroPriceBadge.textContent = `Harga dari ${money(minPrice)}`;
 
-  const fourPrices = activeItems
-    .filter(item => item.available4 && Number(item.price4) > 0)
-    .map(item => Number(item.price4));
   const sizeHelp = document.getElementById('brownieSizeHelp');
   if(sizeHelp){
-    if(fourPrices.length){
-      const min4 = Math.min(...fourPrices);
-      const max4 = Math.max(...fourPrices);
-      sizeHelp.dataset.help4 = min4 === max4
-        ? `Saiz 4 inci mengandungi 9 pcs. Semua pilihan berharga ${money(min4)}.`
-        : `Saiz 4 inci mengandungi 9 pcs. Harga ${money(min4)} hingga ${money(max4)} mengikut pilihan.`;
-    }
+    sizeHelp.dataset.help4 = 'Saiz 4 inci menyediakan pilihan brownies yang aktif.';
     sizeHelp.dataset.help8 = 'Saiz 8 inci menyediakan semua pilihan brownies yang aktif.';
   }
 
