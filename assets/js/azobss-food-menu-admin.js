@@ -329,6 +329,14 @@ function applyMenuConfig(config){
   window.AZOBSSBrownieOrder?.refresh?.();
 }
 
+// AZOBSS 714: request lightweight Cloudinary variants for public gallery images.
+function optimizedGalleryUrl(value){
+  const url = clean(value);
+  if(!url || !/res\.cloudinary\.com/i.test(url) || !/\/image\/upload\//i.test(url)) return url;
+  if(/\/image\/upload\/(?:[^/]+,)*(?:f_auto|q_auto|w_640)(?:[,/])/i.test(url)) return url;
+  return url.replace(/\/image\/upload\//i, '/image/upload/f_auto,q_auto:eco,w_640,c_limit/');
+}
+
 function applyGalleryConfig(config){
   if(!gallery) return;
   const hidden = new Set(config.hiddenDefaultImages || []);
@@ -338,12 +346,14 @@ function applyGalleryConfig(config){
   });
 
   gallery.querySelectorAll('[data-uploaded-food-image="true"]').forEach(node => node.remove());
-  (config.uploadedImages || []).forEach(image => {
+  const visibleDefaults = Array.from(defaultImages.values()).filter(({ image }) => !image.hidden).length;
+  (config.uploadedImages || []).forEach((image, index) => {
     const img = document.createElement('img');
-    img.src = image.url;
+    img.src = optimizedGalleryUrl(image.url);
     img.alt = image.name || 'Gambar brownies';
-    img.loading = 'lazy';
+    img.loading = (visibleDefaults + index) < 5 ? 'eager' : 'lazy';
     img.decoding = 'async';
+    if((visibleDefaults + index) < 2) img.fetchPriority = 'high';
     img.dataset.uploadedFoodImage = 'true';
     img.dataset.galleryId = image.id;
     img.dataset.imageProvider = image.provider || '';

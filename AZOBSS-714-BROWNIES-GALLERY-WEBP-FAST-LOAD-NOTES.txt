@@ -1,0 +1,12 @@
+AZOBSS Patch 714 - Brownies Gallery Fast Load
+
+Baseline: Patch 713.
+
+Changes:
+- Converted five built-in brownie gallery PNG files to resized WebP (max 640px, quality 82).
+- Total built-in gallery payload reduced from about 5.87 MB to about 0.37 MB.
+- Added preload/fetch priority for the first visible images.
+- Added image width and height to reduce layout shifting.
+- All five desktop-visible gallery images now start immediately instead of delaying the last two.
+- Cloudinary gallery images are automatically requested with f_auto, q_auto:eco and w_640,c_limit.
+- R2, Stripe, ToyyibPay, PA/BM, ordering and admin pricing logic are unchanged.
