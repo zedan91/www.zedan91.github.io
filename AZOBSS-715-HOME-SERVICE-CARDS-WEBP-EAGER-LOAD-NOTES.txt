@@ -1,0 +1,20 @@
+AZOBSS Patch 715 — Homepage Service Cards WebP + Fast Eager Load
+
+Baseline: Patch 714
+
+Changes:
+- Converted service-card images to WebP:
+  images/format-windows.webp
+  images/pc-repair.webp
+  images/remote-support.webp
+  images/website-business-service.webp
+  images/info-lot.webp
+  images/ukur-tanah.webp
+- Homepage now references the WebP files with cache version v=715.
+- Fixed malformed IMG attributes on the five legacy JPG cards.
+- Added intrinsic width/height to reduce layout shifting.
+- First-row service images are preloaded and use eager/high-priority loading.
+- Remaining visible service cards use eager loading so they do not wait several seconds after scrolling.
+- Brownies card remains WebP and is also eager-loaded.
+- PA/BM service-card image references were updated to the same WebP assets.
+- No pricing, ordering, payment, R2, Stripe, ToyyibPay, authentication or backend logic changed.
