@@ -308,25 +308,17 @@ function applyMenuConfig(config){
     if(nameLabel) nameLabel.textContent = item.name;
   });
 
-  const activeItems = Object.values(config.items || {}).filter(item => item && !item.deleted);
-
-  // AZOBSS 711: derive the hero minimum from the rendered, currently active
-  // 8-inch and 4-inch prices. This keeps the badge at RM13 for the current
-  // menu and avoids an old Firestore/cache state incorrectly showing RM45.
-  const allPrices = [];
-  document.querySelectorAll('.brownie-qty-stepper').forEach(stepper => {
-    if(stepper.dataset.enabled === 'false') return;
-    const price8 = Number(stepper.dataset.price);
-    const price4 = Number(stepper.dataset.price4);
-    if(Number.isFinite(price8) && price8 > 0) allPrices.push(price8);
-    if(stepper.dataset.available4 === 'true' && Number.isFinite(price4) && price4 > 0){
-      allPrices.push(price4);
-    }
-  });
-  const minPrice = allPrices.length ? Math.min(...allPrices) : 13;
-  const heroPriceBadge = Array.from(document.querySelectorAll('.hero .badges span'))
-    .find(node => /harga\s+dari/i.test(node.textContent || ''));
-  if(heroPriceBadge) heroPriceBadge.textContent = `Harga dari ${money(minPrice)}`;
+  // AZOBSS 712: one authoritative writer for the hero starting-price badge.
+  // The old dynamic minimum could be overwritten by an older Firestore menu
+  // state that only contained 8-inch prices, causing RM13 to become RM45.
+  // Keep the advertised starting price fixed at the current 4-inch minimum.
+  const heroPriceBadge = document.getElementById('brownieHeroStartingPrice')
+    || Array.from(document.querySelectorAll('.hero .badges span'))
+      .find(node => /harga\s+dari/i.test(node.textContent || ''));
+  if(heroPriceBadge){
+    heroPriceBadge.dataset.fixedStartingPrice = '13';
+    heroPriceBadge.textContent = 'Harga dari RM13';
+  }
 
   const sizeHelp = document.getElementById('brownieSizeHelp');
   if(sizeHelp){
