@@ -1,0 +1,11 @@
+AZOBSS Patch 716
+
+Baseline: Patch 715
+
+Changes:
+- Converted all 24 Affiliate Shop category icon images from PNG to WebP.
+- Resized category icon assets to 128 x 128 pixels, sufficient for the 56 x 56 display size.
+- Updated affiliate-shop/index.html references from images/category/*.png to *.webp.
+- Added fixed width/height, eager loading, async decoding and high fetch priority to visible category icons.
+- Removed obsolete PNG and duplicate .png.png category assets from this package.
+- Product cards, affiliate links, filters, Firestore data and backend were not changed.
