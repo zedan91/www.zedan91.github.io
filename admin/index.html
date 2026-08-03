@@ -1725,7 +1725,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
 <script defer src="/assets/js/azobss-more-nav.js?v=713"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=731">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=732">
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2345,15 +2345,11 @@ body[data-dashboard-page="admin"] .topbar{
       <h2>🧾 Sales &amp; Receipts</h2>
       <p class="az-section-help">Satu tempat untuk rekod jualan barang fizikal, software, CAD, PA/BM dan servis. Rekod Pending berfungsi sebagai Invoice, manakala rekod Paid bertukar menjadi Receipt dan terus masuk dalam kiraan jualan serta keuntungan.</p>
 
-      <div class="card az-sr-hero">
-        <div class="az-sr-hero-copy">
-          <h3>Unified Sales Ledger</h3>
-          <p>Gross sales dikira daripada rekod Paid sahaja. Net profit menolak modal produk, kos penghantaran, payment fee, komisen dan kos lain. Pending, refunded dan cancelled dipaparkan berasingan supaya jumlah jualan tidak tersalah kira.</p>
-        </div>
+      <div class="card az-sr-hero az-sr-hero-compact">
         <div class="az-sr-hero-actions">
           <button class="btn green" id="salesReceiptNew" type="button">＋ Create Invoice / Receipt</button>
-          <button class="btn" id="salesReceiptRefresh" type="button">Refresh</button>
-          <button class="btn gray" id="salesReceiptExport" type="button">Export CSV</button>
+          <button class="btn" id="salesReceiptRefresh" type="button">↻ Refresh</button>
+          <button class="btn gray" id="salesReceiptExport" type="button">⇩ Export CSV</button>
         </div>
       </div>
 
@@ -7584,7 +7580,7 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
-<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=731"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=731"></script>
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=732"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=732"></script>
 </body>
 </html>

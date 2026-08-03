@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 731: Pending invoice -> paid receipt conversion with recognized-profit accounting */
+/* AZOBSS PATCH 732: compact icon actions + website record deletion */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -158,6 +158,30 @@ function customerName(x={}){const u=x.user||{};return String(x.customerName||x.b
 function customerEmail(x={}){const u=x.user||{};return String(x.customerEmail||x.email||x.buyerEmail||u.email||'')}
 function customerPhone(x={}){const u=x.user||{};return String(x.customerPhone||x.phone||x.phoneNumber||x.buyerPhone||u.phone||u.phoneNumber||'')}
 function automaticReceiptNo(x,id){return String(x.receiptNo||x.invoiceNo||x.orderId||x.paymentOrderId||x.billCode||x.paymentReference||('WEB-'+String(id||'').slice(0,10).toUpperCase()))}
+function websiteDeleteRef(x={},id='',sourceName='purchaseLogs'){
+  const collectionName=sourceName==='premiumOrders'?'premiumOrders':'purchaseLogs';
+  return {
+    source:sourceName,
+    collection:collectionName,
+    docId:String(x.docId||x.firestoreId||(collectionName==='purchaseLogs'?id:'')||''),
+    id:String(x.id||id||''),
+    orderId:String(x.orderId||x.paymentOrderId||''),
+    billCode:String(x.billCode||x.billcode||''),
+    paymentReference:String(x.paymentReference||x.transactionId||x.txnId||''),
+    productId:String(x.productId||x.softwareId||x.cadId||x.itemCode||x.product?.id||''),
+    status:String(x.status||x.paymentStatus||''),
+    category:String(x.category||''),
+    amount:num(x.amount||x.total||x.totalAmount||x.price||0)
+  };
+}
+function mergeDeleteRefs(...groups){
+  const out=[];const seen=new Set();
+  groups.flat().filter(Boolean).forEach(ref=>{
+    const key=[ref.collection,ref.docId,ref.id,ref.orderId,ref.billCode,ref.paymentReference].map(v=>String(v||'').trim()).join('|');
+    if(!key||seen.has(key))return;seen.add(key);out.push(ref);
+  });
+  return out;
+}
 function manualCalc(items=[],extras={}){
   const clean=items.map(i=>({category:String(i.category||'other'),name:String(i.name||'Item'),qty:Math.max(0,num(i.qty)),unitPrice:clampMoney(i.unitPrice),unitCost:clampMoney(i.unitCost)}));
   const subtotal=clean.reduce((s,i)=>s+i.qty*i.unitPrice,0);
@@ -192,7 +216,16 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const commission=extractCost(x,['commission','commissionAmount','staffCommission','affiliateCommission']);
   const otherCost=extractCost(x,['otherCost','cost']);
   const totalCost=paymentFee+commission+otherCost;
-  const baseNo=automaticReceiptNo(x,id);const row={...x,id:`${sourceName}:${id}`,docId:id,source:'website',sourceName,editable:false,invoiceNo:String(x.invoiceNo||deriveInvoiceNo(baseNo)),receiptNo:String(x.receiptNo||deriveReceiptNo(baseNo)),documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),customerName:customerName(x),customerPhone:customerPhone(x),customerEmail:customerEmail(x),status,paymentMethod:method,saleDateMs:rowDateMs(x),items:[{category,name:productName(x),qty:1,unitPrice:gross,unitCost:0}],categories:[category],category,subtotal:gross,discount:0,productCost:0,shippingCost:0,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost};
+  const baseNo=automaticReceiptNo(x,id);
+  const row={
+    ...x,id:`${sourceName}:${id}`,docId:id,source:'website',sourceName,editable:false,
+    deleteRefs:[websiteDeleteRef(x,id,sourceName)],
+    invoiceNo:String(x.invoiceNo||deriveInvoiceNo(baseNo)),receiptNo:String(x.receiptNo||deriveReceiptNo(baseNo)),
+    documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),
+    customerName:customerName(x),customerPhone:customerPhone(x),customerEmail:customerEmail(x),status,paymentMethod:method,
+    saleDateMs:rowDateMs(x),items:[{category,name:productName(x),qty:1,unitPrice:gross,unitCost:0}],categories:[category],category,
+    subtotal:gross,discount:0,productCost:0,shippingCost:0,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
+  };
   row.documentNo=currentDocumentNo(row);row.paidGross=recognizedGross(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=isRecognizedPayment(status)?0:gross;return row;
 }
 function websiteDedupKey(row){
@@ -230,6 +263,7 @@ async function loadData(){
       if(isAdminTestRecord(x))return;
       const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);const existing=map.get(k);
       if(!existing){map.set(k,row);return}
+      existing.deleteRefs=mergeDeleteRefs(existing.deleteRefs,row.deleteRefs);
       const exactName=detailedJupemProductName(x);
       if(exactName){
         existing.items=[{...(existing.items?.[0]||{}),category:'pabm',name:exactName,qty:1,unitPrice:existing.gross,unitCost:0}];
@@ -280,25 +314,40 @@ function applyFilters(){
 }
 function statusPill(status){return `<span class="az-sr-pill ${esc(status)}">${esc(status.toUpperCase())}</span>`}
 function sourcePill(row){return `<span class="az-sr-pill ${row.source==='manual'?'manual':'website'}">${row.source==='manual'?'MANUAL':'WEBSITE'}</span>`}
+function actionIcon(name){
+  const icons={
+    download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>',
+    whatsapp:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg>',
+    telegram:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg>',
+    print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7Z"/></svg>',
+    edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-1 5 5-1L19 9l-4-4L4 16ZM13.5 6.5l4 4"/></svg>',
+    delete:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></svg>'
+  };
+  return icons[name]||'';
+}
+function iconActionButton(kind,title,attrs=''){
+  return `<button class="az-sr-icon-btn ${kind}" ${attrs} type="button" title="${esc(title)}" aria-label="${esc(title)}">${actionIcon(kind)}<span class="az-sr-visually-hidden">${esc(title)}</span></button>`;
+}
 function renderTable(){
   const tbody=el('salesReceiptTableBody');if(!tbody)return;
   const pages=Math.max(1,Math.ceil(visibleRows.length/PAGE_SIZE));const start=(currentPage-1)*PAGE_SIZE;const pageRows=visibleRows.slice(start,start+PAGE_SIZE);
-  const documentMenu=(r,type)=>{
-    const label=type==='invoice'?'Invoice':'Receipt';
-    const rowId=esc(r.id);
-    return `<details class="az-sr-doc-menu ${type}"><summary>${label} ▾</summary><div class="az-sr-doc-menu-body"><button class="btn green" data-sr-doc-download="${type}" data-sr-row="${rowId}" type="button">Download PDF</button><button class="btn az-sr-wa-btn" data-sr-doc-share="whatsapp" data-sr-doc-type="${type}" data-sr-row="${rowId}" type="button">WhatsApp</button><button class="btn az-sr-tg-btn" data-sr-doc-share="telegram" data-sr-doc-type="${type}" data-sr-row="${rowId}" type="button">Telegram</button><button class="btn gray" data-sr-doc-print="${type}" data-sr-row="${rowId}" type="button">Print</button></div></details>`;
-  };
   tbody.innerHTML=pageRows.map(r=>{
     const itemNames=(r.items||[]).map(i=>i.name).filter(Boolean);const itemText=itemNames.slice(0,2).join(', ')+(itemNames.length>2?` +${itemNames.length-2}`:'');
-    const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);
-    const manage=r.editable?`<div class="az-sr-manage-actions"><button class="btn" data-sr-edit="${esc(r.id)}" type="button">Edit</button><button class="btn red" data-sr-delete="${esc(r.id)}" type="button">Delete</button></div>`:'';
-    const actions=`<div class="az-sr-actions">${documentMenu(r,docType)}${manage}</div>`;
+    const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';
+    const actions=[
+      iconActionButton('download',`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton('whatsapp',`Send ${label} PDF by WhatsApp`,`data-sr-doc-share="whatsapp" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton('telegram',`Send ${label} PDF by Telegram`,`data-sr-doc-share="telegram" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
+    ];
+    if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
+    actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
     const grossCell=paid?money(r.gross):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext az-sr-due">Due ${money(r.gross)}</div>`;
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
-    return `<tr><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td>${actions}</td></tr>`;
+    return `<tr><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
   }).join('')||'<tr><td colspan="9"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
   if(el('salesReceiptPageInfo'))el('salesReceiptPageInfo').textContent=`Page ${currentPage} / ${pages} • ${visibleRows.length} record(s)`;
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
@@ -371,6 +420,39 @@ async function saveForm(){
 }
 function findRow(id){return [...manualRows,...websiteRows].find(r=>r.id===id)}
 async function deleteManual(id){const row=manualRows.find(r=>r.id===id);if(!row)return;const label=documentKindForStatus(row.status)==='invoice'?'invoice':'receipt';if(!confirm(`Delete ${label} ${currentDocumentNo(row)}? This cannot be undone.`))return;try{await deleteDoc(doc(db,'receipts',row.docId));notify(`${label[0].toUpperCase()+label.slice(1)} deleted.`);await loadData()}catch(e){notify('Delete failed: '+(e.message||e),true)}}
+async function adminBackendHeaders(){
+  const headers={'Content-Type':'application/json'};const user=await waitForUser();
+  if(user)headers.Authorization='Bearer '+await user.getIdToken();
+  try{const key=sessionStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssLuckyDrawAdminKey')||'';if(key)headers['x-admin-key']=key}catch(_e){}
+  return headers;
+}
+async function deleteWebsiteRecord(id,button=null){
+  const row=websiteRows.find(r=>r.id===id);if(!row)return;
+  const label=documentKindForStatus(row.status)==='invoice'?'invoice':'receipt';const paidWarning=isRecognizedPayment(row.status)?'\n\nWarning: this is a Paid record and deleting it removes it from sales and profit totals.':'';
+  if(!confirm(`Delete website ${label} ${currentDocumentNo(row)}?\n\nThis permanently removes the related website payment record(s).${paidWarning}`))return;
+  const refs=mergeDeleteRefs(row.deleteRefs||[websiteDeleteRef(row,row.docId,row.sourceName)]);
+  if(!refs.length)return notify('No deletable website record reference was found.',true);
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{
+    const res=await fetch(BACKEND+'/api/admin/payment-logs/delete',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({records:refs}),cache:'no-store'});
+    const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){throw new Error('Invalid backend response while deleting the website record.')}if(!res.ok||data.ok===false)throw new Error(data.error||`Delete HTTP ${res.status}`);
+    notify(`Deleted ${data.deleted||refs.length} website payment record(s).`);await loadData();
+  }catch(error){
+    console.warn('Backend website record delete failed:',error);
+    let removed=0;const errors=[];
+    for(const ref of refs){
+      if(ref.collection!=='purchaseLogs'||!ref.docId)continue;
+      try{await deleteDoc(doc(db,'purchaseLogs',ref.docId));removed++}catch(e){errors.push(e?.message||String(e))}
+    }
+    if(removed){notify(`Deleted ${removed} Firestore purchase record(s). Render backend is still required to remove any premium-order backup.`);await loadData()}
+    else notify('Website record delete failed: '+(error?.message||error)+(errors.length?' • '+errors[0]:''),true);
+  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+}
+async function deleteRow(id,button=null){
+  const row=findRow(id);if(!row)return;
+  if(row.source==='manual')return deleteManual(id);
+  return deleteWebsiteRecord(id,button);
+}
 function documentType(value){return String(value||'').toLowerCase()==='invoice'?'invoice':'receipt'}
 function documentNo(row,type){
   const api=pdfApi();if(api?.documentNumber)return api.documentNumber(row,type);
@@ -438,7 +520,7 @@ function bind(){
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('salesReceiptDialog')?.hidden)closeForm()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete]');if(del){deleteManual(del.dataset.srDelete);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
 }
 window.azSalesReceiptsLoad=async function(){bind();return loadData()};
 bind();
