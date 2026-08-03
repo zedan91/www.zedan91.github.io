@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 732: compact icon actions + website record deletion */
+/* AZOBSS PATCH 734: bulk select, ZIP download, share and delete */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -20,6 +20,7 @@ let editingOriginalStatus='';
 let editingInvoiceNo='';
 let editingReceiptNo='';
 let loadingPromise=null;
+const selectedRowIds=new Set();
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -273,6 +274,7 @@ async function loadData(){
       existing.customerName=existing.customerName||row.customerName;existing.customerPhone=existing.customerPhone||row.customerPhone;existing.customerEmail=existing.customerEmail||row.customerEmail;
     });
     websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row));
+    selectedRowIds.clear();
     currentPage=1;applyFilters();
     if(info)info.textContent=`Loaded ${manualRows.length} manual invoice / receipt record(s) and ${websiteRows.length} website sale record(s).`;
   })().catch(e=>{notify(e.message||'Failed to load sales receipts.',true);const info=el('salesReceiptResultInfo');if(info)info.textContent='Load failed: '+(e.message||e);throw e}).finally(()=>{loadingPromise=null});
@@ -309,11 +311,24 @@ function applyFilters(){
     if(f.sort==='az')return String(a.customerName).localeCompare(String(b.customerName));
     return b.saleDateMs-a.saleDateMs;
   });
-  visibleRows=rows;const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));if(currentPage>pages)currentPage=pages;
+  visibleRows=rows;
+  const visibleIds=new Set(rows.map(r=>r.id));for(const id of [...selectedRowIds])if(!visibleIds.has(id))selectedRowIds.delete(id);
+  const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));if(currentPage>pages)currentPage=pages;
   updateKpis(rows);renderTable();
 }
 function statusPill(status){return `<span class="az-sr-pill ${esc(status)}">${esc(status.toUpperCase())}</span>`}
 function sourcePill(row){return `<span class="az-sr-pill ${row.source==='manual'?'manual':'website'}">${row.source==='manual'?'MANUAL':'WEBSITE'}</span>`}
+function currentPageRows(){const start=(currentPage-1)*PAGE_SIZE;return visibleRows.slice(start,start+PAGE_SIZE)}
+function getSelectedRows(){return [...selectedRowIds].map(findRow).filter(Boolean)}
+function updateBulkUI(){
+  const count=selectedRowIds.size;const page=currentPageRows();
+  const countEl=el('salesReceiptSelectedCount');if(countEl)countEl.textContent=`${count} selected`;
+  ['salesReceiptBulkDownload','salesReceiptBulkWhatsApp','salesReceiptBulkTelegram','salesReceiptBulkDelete'].forEach(id=>{const button=el(id);if(button)button.disabled=count===0});
+  const allFiltered=el('salesReceiptSelectAllFiltered');if(allFiltered){const selectedVisible=visibleRows.filter(r=>selectedRowIds.has(r.id)).length;allFiltered.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;allFiltered.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length;allFiltered.disabled=visibleRows.length===0}
+  const selectPage=el('salesReceiptSelectPage');if(selectPage){const selectedPage=page.filter(r=>selectedRowIds.has(r.id)).length;selectPage.checked=page.length>0&&selectedPage===page.length;selectPage.indeterminate=selectedPage>0&&selectedPage<page.length;selectPage.disabled=page.length===0}
+  document.querySelectorAll('[data-sr-select]').forEach(cb=>{cb.checked=selectedRowIds.has(cb.dataset.srSelect||'');cb.closest('tr')?.classList.toggle('az-sr-row-selected',cb.checked)});
+}
+function setRowsSelected(rows,checked){rows.forEach(r=>{if(checked)selectedRowIds.add(r.id);else selectedRowIds.delete(r.id)});updateBulkUI()}
 function actionIcon(name){
   const icons={
     download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>',
@@ -326,14 +341,17 @@ function actionIcon(name){
   return icons[name]||'';
 }
 function iconActionButton(kind,title,attrs=''){
-  return `<button class="az-sr-icon-btn ${kind}" ${attrs} type="button" title="${esc(title)}" aria-label="${esc(title)}">${actionIcon(kind)}<span class="az-sr-visually-hidden">${esc(title)}</span></button>`;
+  // Avoid the global `.whatsapp` floating-button style used elsewhere on the site.
+  // The action still keeps the WhatsApp icon/behaviour, but uses a scoped class.
+  const cssKind=kind==='whatsapp'?'wa':kind;
+  return `<button class="az-sr-icon-btn ${cssKind}" ${attrs} type="button" title="${esc(title)}" aria-label="${esc(title)}">${actionIcon(kind)}<span class="az-sr-visually-hidden">${esc(title)}</span></button>`;
 }
 function renderTable(){
   const tbody=el('salesReceiptTableBody');if(!tbody)return;
   const pages=Math.max(1,Math.ceil(visibleRows.length/PAGE_SIZE));const start=(currentPage-1)*PAGE_SIZE;const pageRows=visibleRows.slice(start,start+PAGE_SIZE);
   tbody.innerHTML=pageRows.map(r=>{
     const itemNames=(r.items||[]).map(i=>i.name).filter(Boolean);const itemText=itemNames.slice(0,2).join(', ')+(itemNames.length>2?` +${itemNames.length-2}`:'');
-    const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';
+    const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';const selected=selectedRowIds.has(r.id);
     const actions=[
       iconActionButton('download',`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('whatsapp',`Send ${label} PDF by WhatsApp`,`data-sr-doc-share="whatsapp" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
@@ -347,10 +365,11 @@ function renderTable(){
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
-    return `<tr><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
-  }).join('')||'<tr><td colspan="9"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
+    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
+  }).join('')||'<tr><td colspan="10"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
   if(el('salesReceiptPageInfo'))el('salesReceiptPageInfo').textContent=`Page ${currentPage} / ${pages} • ${visibleRows.length} record(s)`;
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
+  updateBulkUI();
 }
 function nextDocumentNo(type='receipt'){
   const kind=type==='invoice'?'invoice':'receipt';const prefix=kind==='invoice'?'AZI':'AZR';const date=localDateInput().replaceAll('-','');let max=0;
@@ -505,6 +524,49 @@ async function shareDocumentPdf(row,type,target,button=null){
     try{const name=api.download(row,type);openShareFallback(row,type,target,name)}catch(fallbackError){console.error(fallbackError);notify('Could not share the PDF. Download it and attach it manually.',true)}
   }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
+const AZ_SR_CRC_TABLE=(()=>{const table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0}return table})();
+function crc32(bytes){let crc=0xffffffff;for(const value of bytes)crc=AZ_SR_CRC_TABLE[(crc^value)&0xff]^(crc>>>8);return (crc^0xffffffff)>>>0}
+function zipDosTime(ms=Date.now()){const d=new Date(ms);const year=Math.max(1980,d.getFullYear());return {time:((d.getHours()&31)<<11)|((d.getMinutes()&63)<<5)|((Math.floor(d.getSeconds()/2))&31),date:(((year-1980)&127)<<9)|(((d.getMonth()+1)&15)<<5)|(d.getDate()&31)}}
+function write16(view,offset,value){view.setUint16(offset,value&0xffff,true)}
+function write32(view,offset,value){view.setUint32(offset,value>>>0,true)}
+function concatUint8(parts){const size=parts.reduce((sum,p)=>sum+p.length,0);const out=new Uint8Array(size);let offset=0;for(const part of parts){out.set(part,offset);offset+=part.length}return out}
+function buildStoredZip(entries){
+  const encoder=new TextEncoder();const locals=[];const centrals=[];let offset=0;
+  for(const entry of entries){const nameBytes=encoder.encode(entry.name);const data=entry.bytes instanceof Uint8Array?entry.bytes:new Uint8Array(entry.bytes);const crc=crc32(data);const dt=zipDosTime(entry.lastModified||Date.now());
+    const local=new Uint8Array(30+nameBytes.length);const lv=new DataView(local.buffer);write32(lv,0,0x04034b50);write16(lv,4,20);write16(lv,6,0x0800);write16(lv,8,0);write16(lv,10,dt.time);write16(lv,12,dt.date);write32(lv,14,crc);write32(lv,18,data.length);write32(lv,22,data.length);write16(lv,26,nameBytes.length);write16(lv,28,0);local.set(nameBytes,30);locals.push(local,data);
+    const central=new Uint8Array(46+nameBytes.length);const cv=new DataView(central.buffer);write32(cv,0,0x02014b50);write16(cv,4,20);write16(cv,6,20);write16(cv,8,0x0800);write16(cv,10,0);write16(cv,12,dt.time);write16(cv,14,dt.date);write32(cv,16,crc);write32(cv,20,data.length);write32(cv,24,data.length);write16(cv,28,nameBytes.length);write16(cv,30,0);write16(cv,32,0);write16(cv,34,0);write16(cv,36,0);write32(cv,38,0);write32(cv,42,offset);central.set(nameBytes,46);centrals.push(central);offset+=local.length+data.length;
+  }
+  const centralBytes=concatUint8(centrals);const end=new Uint8Array(22);const ev=new DataView(end.buffer);write32(ev,0,0x06054b50);write16(ev,4,0);write16(ev,6,0);write16(ev,8,entries.length);write16(ev,10,entries.length);write32(ev,12,centralBytes.length);write32(ev,16,offset);write16(ev,20,0);return concatUint8([...locals,centralBytes,end]);
+}
+function uniquePdfEntries(rows){const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable.');const used=new Map();return rows.map(row=>{const type=documentKindForStatus(row.status);let name=api.filename(row,type);const count=(used.get(name)||0)+1;used.set(name,count);if(count>1)name=name.replace(/\.pdf$/i,`-${count}.pdf`);return {name,bytes:api.buildBytes(row,type),row,type,lastModified:Date.now()}})}
+function bulkZipName(count){return `AZOBSS-Invoices-Receipts-${localDateInput()}-${count}-files.zip`}
+function downloadBytes(bytes,name,type='application/octet-stream'){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);return name}
+async function bulkDownloadSelected(button=null){const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}try{const entries=uniquePdfEntries(rows);const zip=buildStoredZip(entries);const name=downloadBytes(zip,bulkZipName(entries.length),'application/zip');notify(`Downloaded ${entries.length} selected PDF(s) in ${name}.`)}catch(e){console.error(e);notify('Bulk download failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}}
+function bulkShareSummary(rows){const docs=rows.slice(0,8).map(r=>`${documentKindForStatus(r.status)==='invoice'?'Invoice':'Receipt'} ${currentDocumentNo(r)} - ${r.customerName}`);return [`AZOBSS selected documents: ${rows.length}`,...docs,rows.length>8?`+${rows.length-8} more document(s)`:'' ].filter(Boolean).join('\n')}
+async function bulkShareSelected(target,button=null){
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
+  if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{
+    const entries=uniquePdfEntries(rows);const files=entries.map(entry=>new File([entry.bytes],entry.name,{type:'application/pdf',lastModified:Date.now()}));const summary=bulkShareSummary(rows);
+    if(files.length<=10&&navigator.share&&(!navigator.canShare||navigator.canShare({files}))){notify(`Choose ${target==='telegram'?'Telegram':'WhatsApp'} from the share menu.`);await navigator.share({title:`AZOBSS ${files.length} document(s)`,text:summary,files});notify(`${files.length} document(s) shared.`);return}
+    const zipBytes=buildStoredZip(entries);const zipName=bulkZipName(entries.length);const zipFile=new File([zipBytes],zipName,{type:'application/zip',lastModified:Date.now()});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[zipFile]}))){notify(`Choose ${target==='telegram'?'Telegram':'WhatsApp'} from the share menu.`);await navigator.share({title:`AZOBSS ${entries.length} document(s)`,text:summary,files:[zipFile]});notify(`${entries.length} document(s) shared as a ZIP bundle.`);return}
+    downloadBytes(zipBytes,zipName,'application/zip');const text=summary+`\n\nThe ZIP bundle has been downloaded. Attach ${zipName} in this chat.`;
+    if(target==='whatsapp'){const samePhone=customers.size===1?normalizeWhatsAppPhone(rows[0]?.customerPhone):'';window.open(samePhone?`https://wa.me/${samePhone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank','noopener');notify('ZIP downloaded. WhatsApp opened; attach the downloaded bundle.')}else{window.open('https://t.me/share/url?url='+encodeURIComponent('https://www.azobss.com')+'&text='+encodeURIComponent(text),'_blank','noopener');notify('ZIP downloaded. Telegram opened; attach the downloaded bundle.')}
+  }catch(e){if(e?.name!=='AbortError'){console.error(e);notify('Bulk share failed: '+(e.message||e),true)}}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
+}
+async function bulkDeleteSelected(button=null){
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const paid=rows.filter(r=>isRecognizedPayment(r.status)).length;const manual=rows.filter(r=>r.source==='manual');const website=rows.filter(r=>r.source==='website');const warning=paid?`\n\nWarning: ${paid} Paid record(s) will be removed from sales and profit totals.`:'';
+  if(!confirm(`Delete ${rows.length} selected record(s)?\n\nManual: ${manual.length}\nWebsite: ${website.length}${warning}\n\nThis cannot be undone.`))return;if(button){button.disabled=true;button.classList.add('busy')}
+  let deleted=0;const errors=[];
+  try{
+    const manualResults=await Promise.allSettled(manual.map(row=>deleteDoc(doc(db,'receipts',row.docId))));manualResults.forEach(result=>{if(result.status==='fulfilled')deleted++;else errors.push(result.reason?.message||String(result.reason))});
+    const refs=mergeDeleteRefs(...website.map(row=>row.deleteRefs||[websiteDeleteRef(row,row.docId,row.sourceName)]));
+    if(refs.length){try{const res=await fetch(BACKEND+'/api/admin/payment-logs/delete',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({records:refs}),cache:'no-store'});const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}if(!res.ok||data.ok===false)throw new Error(data.error||`Delete HTTP ${res.status}`);deleted+=website.length}catch(error){console.warn('Bulk backend website delete failed:',error);let fallbackDeleted=0;for(const ref of refs){if(ref.collection!=='purchaseLogs'||!ref.docId)continue;try{await deleteDoc(doc(db,'purchaseLogs',ref.docId));fallbackDeleted++}catch(e){errors.push(e?.message||String(e))}}const websiteWithPurchaseRef=website.filter(row=>(row.deleteRefs||[]).some(ref=>ref.collection==='purchaseLogs'&&ref.docId)).length;deleted+=Math.min(fallbackDeleted,websiteWithPurchaseRef);if(!fallbackDeleted)errors.push(error?.message||String(error))}}
+    selectedRowIds.clear();await loadData();if(errors.length)notify(`Deleted ${deleted} record(s). ${errors.length} operation(s) could not be completed.`,true);else notify(`Deleted ${rows.length} selected record(s).`)
+  }catch(e){console.error(e);notify('Bulk delete failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
+}
 function csvCell(v){const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
 function exportCsv(){
   const headers=['Document Type','Document No','Invoice No','Receipt No','Date','Source','Status','Customer','Phone','Email','Categories','Items','Payment Method','Invoice Amount / Total','Paid Gross','Product Cost','Shipping Charged','Shipping Cost','Payment Fee','Commission','Other Cost','Recognized Costs','Net Profit'];
@@ -516,10 +578,13 @@ function bind(){
   if(window.__azSalesReceiptsBound)return;window.__azSalesReceiptsBound=true;
   ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
   el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',loadData);el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
+  el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
+  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkWhatsApp')?.addEventListener('click',e=>bulkShareSelected('whatsapp',e.currentTarget));el('salesReceiptBulkTelegram')?.addEventListener('click',e=>bulkShareSelected('telegram',e.currentTarget));el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'physical',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog'))closeForm()});
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('salesReceiptDialog')?.hidden)closeForm()});
+  document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
   document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
 }
 window.azSalesReceiptsLoad=async function(){bind();return loadData()};

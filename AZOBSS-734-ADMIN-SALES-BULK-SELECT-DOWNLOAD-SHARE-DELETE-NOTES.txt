@@ -1,0 +1,15 @@
+AZOBSS Patch 734 - Admin Sales & Receipts Bulk Actions
+Date: 2026-08-04
+Baseline: Patch 733
+
+Changes:
+1. Adds a checkbox to every Sales & Receipts record.
+2. Adds a table-header checkbox to select every record on the current page.
+3. Adds "Select all filtered" to select all records matching the active search/filter, including other pages.
+4. Shows a live selected-record count.
+5. Bulk Download creates one ZIP containing the selected Invoice/Receipt PDF files.
+6. Bulk WhatsApp and Telegram share the selected PDF files together when the browser supports multi-file Web Share. For larger selections or unsupported desktop browsers, a ZIP is generated as a fallback.
+7. Bulk Delete removes selected manual and website records with one confirmation. Paid records show an additional warning because totals will change.
+8. Selection is safely reduced when filters change so hidden non-matching records are not accidentally processed.
+
+No Cloudflare Worker, Firebase Rules, or new Render Environment Variable is required.

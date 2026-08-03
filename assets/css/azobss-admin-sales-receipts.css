@@ -326,7 +326,7 @@
   pointer-events:none!important;
 }
 .az-sr-icon-btn.download{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}
-.az-sr-icon-btn.whatsapp{background:#166534!important;border-color:#22c55e!important;color:#fff!important}
+.az-sr-icon-btn.wa{background:#166534!important;border-color:#22c55e!important;color:#fff!important}
 .az-sr-icon-btn.telegram{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important}
 .az-sr-icon-btn.print{background:#334155!important;border-color:#64748b!important;color:#fff!important}
 .az-sr-icon-btn.edit{background:#0f766e!important;border-color:#2dd4bf!important;color:#fff!important}
@@ -352,4 +352,100 @@
 @media(max-width:480px){
   .az-sr-hero-compact .az-sr-hero-actions{gap:6px!important}
   .az-sr-hero-compact .az-sr-hero-actions .btn{width:auto!important;flex:1 1 auto!important;padding:8px 10px!important}
+}
+
+/* AZOBSS PATCH 734: bulk selection, ZIP download, share and delete */
+.az-sr-bulkbar{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  flex-wrap:wrap!important;
+  padding:8px 10px!important;
+  margin:0 0 8px!important;
+  border:1px solid rgba(56,189,248,.24)!important;
+  border-radius:12px!important;
+  background:rgba(15,23,42,.56)!important;
+}
+.az-sr-bulk-select{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  color:#dbeafe!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  text-transform:none!important;
+  letter-spacing:0!important;
+  cursor:pointer!important;
+}
+.az-sr-bulk-select input,
+.az-sr-select-head input,
+.az-sr-row-select{
+  appearance:auto!important;
+  width:17px!important;
+  height:17px!important;
+  min-width:17px!important;
+  margin:0!important;
+  accent-color:#22c55e!important;
+  cursor:pointer!important;
+}
+.az-sr-bulk-count{
+  color:#94a3b8!important;
+  font-size:11px!important;
+  font-weight:850!important;
+  white-space:nowrap!important;
+}
+.az-sr-bulk-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  margin-left:auto!important;
+}
+.az-sr-bulk-icon{
+  appearance:none!important;
+  width:31px!important;
+  height:31px!important;
+  min-width:31px!important;
+  min-height:31px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  border:1px solid rgba(148,163,184,.36)!important;
+  color:#fff!important;
+  cursor:pointer!important;
+  transition:transform .14s ease,filter .14s ease,opacity .14s ease!important;
+}
+.az-sr-bulk-icon:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.12)}
+.az-sr-bulk-icon:focus-visible{outline:2px solid #7dd3fc!important;outline-offset:2px!important}
+.az-sr-bulk-icon:disabled,.az-sr-bulk-icon.busy{opacity:.38!important;cursor:not-allowed!important;transform:none!important}
+.az-sr-bulk-icon svg{width:15px!important;height:15px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;pointer-events:none!important}
+.az-sr-bulk-icon.download{background:#15803d!important;border-color:#22c55e!important}
+.az-sr-bulk-icon.wa{background:#166534!important;border-color:#22c55e!important}
+.az-sr-bulk-icon.telegram{background:#0369a1!important;border-color:#38bdf8!important}
+.az-sr-bulk-icon.delete{background:#b91c1c!important;border-color:#f87171!important}
+.az-sr-select-head,.az-sr-select-cell{text-align:center!important;vertical-align:middle!important;padding-left:4px!important;padding-right:4px!important;overflow:visible!important}
+.az-sr-table tr.az-sr-row-selected td{background:rgba(34,197,94,.10)!important}
+.az-sr-table tr.az-sr-row-selected:hover td{background:rgba(34,197,94,.15)!important}
+
+/* 10-column fit after adding selection checkboxes */
+.az-sr-table th:nth-child(1),.az-sr-table td:nth-child(1){width:3.5%!important}
+.az-sr-table th:nth-child(2),.az-sr-table td:nth-child(2){width:11.5%!important}
+.az-sr-table th:nth-child(3),.az-sr-table td:nth-child(3){width:11.5%!important}
+.az-sr-table th:nth-child(4),.az-sr-table td:nth-child(4){width:10.5%!important}
+.az-sr-table th:nth-child(5),.az-sr-table td:nth-child(5){width:17%!important}
+.az-sr-table th:nth-child(6),.az-sr-table td:nth-child(6){width:8%!important}
+.az-sr-table th:nth-child(7),.az-sr-table td:nth-child(7){width:8%!important}
+.az-sr-table th:nth-child(8),.az-sr-table td:nth-child(8){width:7%!important}
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){width:7%!important;overflow:hidden!important}
+.az-sr-table th:nth-child(10),.az-sr-table td:nth-child(10){width:16%!important;overflow:visible!important}
+
+@media(max-width:720px){
+  .az-sr-table{min-width:800px!important}
+  .az-sr-bulkbar{gap:8px!important;padding:7px 8px!important}
+  .az-sr-bulk-actions{margin-left:0!important}
+}
+@media(max-width:480px){
+  .az-sr-bulk-select{flex:1 1 auto!important}
+  .az-sr-bulk-actions{width:100%!important;justify-content:flex-start!important}
 }
