@@ -1725,6 +1725,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
 <script defer src="/assets/js/azobss-more-nav.js?v=713"></script>
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=722">
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2118,6 +2119,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="notifications">🔔 Notifications</button>
       <button data-tab="adminalerts">🔔 Payment Alerts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="payments">📊 Sales Overview</button>
+      <button data-tab="salesreceipts">🧾 Sales &amp; Receipts</button>
       <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
@@ -2153,6 +2155,7 @@ body[data-dashboard-page="admin"] .topbar{
           <button class="btn green" data-tab="systemhealth">🩺 Check System</button>
           <button class="btn gray" data-tab="sitereport">📋 Export Report</button>
           <button class="btn gray" data-tab="payments">📊 Sales Overview</button>
+          <button class="btn gray" data-tab="salesreceipts">🧾 Sales &amp; Receipts</button>
           <button class="btn gray" data-tab="support">💬 Support</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
         </div>
@@ -2161,6 +2164,7 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="az-friendly-strip">
         <div class="card az-simple-card"><b>👥 Users</b><span>Pantau user berdaftar, online dan login hari ini.</span></div>
         <div class="card az-simple-card"><b>📊 Sales Overview</b><span>Semak total jualan, pending, paid dan jumlah rekod pembelian.</span></div>
+        <div class="card az-simple-card"><b>🧾 Sales &amp; Receipts</b><span>Gabungkan jualan fizikal, software, servis dan rekod website dengan kiraan untung.</span></div>
         <div class="card az-simple-card"><b>💬 Support</b><span>Lihat mesej user dan balas dari Support Inbox.</span></div>
         <div class="card az-simple-card"><b>🩺 System</b><span>Pastikan backend, Firebase dan ENV berada dalam keadaan OK.</span></div>
       </div>
@@ -2202,6 +2206,7 @@ body[data-dashboard-page="admin"] .topbar{
           <button class="btn gray" data-tab="support">💬 Support Inbox</button>
           <button class="btn gray" data-tab="notifications">🔔 Notifications</button>
           <button class="btn gray" data-tab="adminalerts">🔔 Payment Alerts</button>
+          <button class="btn gray" data-tab="salesreceipts">🧾 Sales &amp; Receipts</button>
           <button class="btn gray" data-tab="purchases">🧾 Payment Logs</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
           <button class="btn gray" data-tab="auditlogs">🧾 Audit Logs</button>
@@ -2332,6 +2337,100 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
         <div id="adminPaymentAlertsNotice" class="tabs-note">Payment alerts will appear after a paid payment is finalized by backend.</div>
         <div id="adminPaymentAlertsList" class="list az-admin-alert-list"></div>
+      </div>
+    </section>
+
+
+    <section id="salesreceipts" class="section">
+      <h2>🧾 Sales &amp; Receipts</h2>
+      <p class="az-section-help">Satu tempat untuk rekod jualan barang fizikal, software, CAD, PA/BM dan servis. Rekod website dibaca secara automatik; resit manual boleh dicipta, diedit dan dipadam oleh admin.</p>
+
+      <div class="card az-sr-hero">
+        <div class="az-sr-hero-copy">
+          <h3>Unified Sales Ledger</h3>
+          <p>Gross sales dikira daripada rekod Paid sahaja. Net profit menolak modal produk, kos penghantaran, payment fee, komisen dan kos lain. Pending, refunded dan cancelled dipaparkan berasingan supaya jumlah jualan tidak tersalah kira.</p>
+        </div>
+        <div class="az-sr-hero-actions">
+          <button class="btn green" id="salesReceiptNew" type="button">＋ Create Manual Receipt</button>
+          <button class="btn" id="salesReceiptRefresh" type="button">Refresh</button>
+          <button class="btn gray" id="salesReceiptExport" type="button">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="grid az-sr-kpis">
+        <div class="card az-kpi-card is-money"><div><div class="stat-label">Paid Gross Sales</div><div id="srGrossSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah dibayar pelanggan selepas diskaun dan termasuk shipping charged.</div></div>
+        <div class="card az-kpi-card"><div><div class="stat-label">Total Costs</div><div id="srTotalCosts" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Modal, shipping cost, fee, komisen dan kos lain.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card"><div><div class="stat-label">Net Profit</div><div id="srNetProfit" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Paid gross sales ditolak semua kos dalaman.</div></div>
+        <div class="card az-kpi-card"><div><div class="stat-label">Physical Sales</div><div id="srPhysicalSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Produk fizikal yang berstatus Paid.</div></div>
+        <div class="card az-kpi-card"><div><div class="stat-label">Software / Digital</div><div id="srSoftwareSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Software, CAD Tools dan PA/BM yang Paid.</div></div>
+        <div class="card az-kpi-card is-alert"><div><div class="stat-label">Pending Records</div><div id="srPendingCount" class="stat-value">0</div></div><div class="az-kpi-note">Belum dimasukkan dalam gross sales atau profit.</div></div>
+      </div>
+
+      <div class="card az-sr-filter-card">
+        <h3 style="margin:0 0 12px">Search &amp; Filter</h3>
+        <div class="az-sr-filter-grid">
+          <label>Search<input id="salesReceiptSearch" placeholder="Receipt / customer / phone / product..."></label>
+          <label>Category<select id="salesReceiptCategory"><option value="all">All Categories</option><option value="physical">Physical</option><option value="digital">Software / Digital</option><option value="software">Software</option><option value="cad">CAD Tools</option><option value="pabm">PA/BM</option><option value="service">Service</option><option value="other">Other</option></select></label>
+          <label>Status<select id="salesReceiptStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option><option value="failed">Failed</option></select></label>
+          <label>Source<select id="salesReceiptSource"><option value="all">All Sources</option><option value="manual">Manual Receipt</option><option value="website">Website Payment</option></select></label>
+          <label>Sort<select id="salesReceiptSort"><option value="newest">Newest First</option><option value="oldest">Oldest First</option><option value="gross-high">Highest Gross</option><option value="profit-high">Highest Profit</option><option value="az">Customer A–Z</option></select></label>
+          <label>Date From<input id="salesReceiptFrom" type="date"></label>
+          <label>Date To<input id="salesReceiptTo" type="date"></label>
+        </div>
+        <div class="az-sr-filter-actions"><button class="btn gray" id="salesReceiptClearFilters" type="button">Clear Filters</button></div>
+        <div id="salesReceiptResultInfo" class="az-sr-result-note">Open this section to load records.</div>
+      </div>
+
+      <div class="card">
+        <div class="az-sr-table-wrap">
+          <table class="az-sr-table">
+            <thead><tr><th>Receipt / Date</th><th>Customer</th><th>Source / Category</th><th>Items / Payment</th><th>Status</th><th>Gross</th><th>Costs</th><th>Profit</th><th>Actions</th></tr></thead>
+            <tbody id="salesReceiptTableBody"><tr><td colspan="9"><div class="az-sr-empty">Open Sales &amp; Receipts to load records.</div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="az-sr-pagination"><button class="btn gray" id="salesReceiptPrev" type="button">◀ Prev</button><span id="salesReceiptPageInfo">Page 1 / 1</span><button class="btn gray" id="salesReceiptNext" type="button">Next ▶</button></div>
+      </div>
+
+      <div id="salesReceiptDialog" class="az-sr-modal" hidden>
+        <div class="az-sr-dialog" role="dialog" aria-modal="true" aria-labelledby="salesReceiptDialogTitle">
+          <div class="az-sr-dialog-head"><h3 id="salesReceiptDialogTitle">Create Manual Receipt</h3><button id="salesReceiptDialogClose" class="az-sr-close" type="button" aria-label="Close">×</button></div>
+          <div class="az-sr-form">
+            <div class="az-sr-form-grid">
+              <label>Receipt No<input id="salesReceiptReceiptNo" readonly></label>
+              <label>Sale Date<input id="salesReceiptSaleDate" type="date"></label>
+              <label>Status<select id="salesReceiptFormStatus"><option value="paid">Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
+              <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option></select></label>
+              <label class="az-sr-span-2">Customer Name<input id="salesReceiptCustomerName" placeholder="Customer name"></label>
+              <label>Phone<input id="salesReceiptCustomerPhone" placeholder="01X-XXXX XXXX"></label>
+              <label>Email<input id="salesReceiptCustomerEmail" type="email" placeholder="customer@email.com"></label>
+            </div>
+
+            <div class="az-sr-items-card">
+              <div class="az-sr-items-head"><h4>Receipt Items</h4><button class="btn gray" id="salesReceiptAddItem" type="button">＋ Add Item</button></div>
+              <div id="salesReceiptItems"></div>
+            </div>
+
+            <div class="az-sr-cost-grid">
+              <label>Discount (RM)<input id="salesReceiptDiscount" type="number" min="0" step="0.01" value="0"></label>
+              <label>Shipping Charged (RM)<input id="salesReceiptShippingCharge" type="number" min="0" step="0.01" value="0"></label>
+              <label>Shipping Cost (RM)<input id="salesReceiptShippingCost" type="number" min="0" step="0.01" value="0"></label>
+              <label>Payment Fee (RM)<input id="salesReceiptPaymentFee" type="number" min="0" step="0.01" value="0"></label>
+              <label>Commission (RM)<input id="salesReceiptCommission" type="number" min="0" step="0.01" value="0"></label>
+              <label>Other Cost (RM)<input id="salesReceiptOtherCost" type="number" min="0" step="0.01" value="0"></label>
+            </div>
+
+            <div class="az-sr-calculation">
+              <div class="az-sr-calc"><span>Subtotal</span><b id="salesReceiptCalcSubtotal">RM0.00</b></div>
+              <div class="az-sr-calc"><span>Product Cost</span><b id="salesReceiptCalcProductCost">RM0.00</b></div>
+              <div class="az-sr-calc"><span>Customer Total</span><b id="salesReceiptCalcGross">RM0.00</b></div>
+              <div class="az-sr-calc"><span>Total Costs</span><b id="salesReceiptCalcCosts">RM0.00</b></div>
+              <div class="az-sr-calc profit"><span>Net Profit</span><b id="salesReceiptCalcProfit">RM0.00</b></div>
+            </div>
+
+            <label style="display:grid;gap:5px;margin-top:13px;color:#bfdbfe;font-size:11px;font-weight:900;text-transform:uppercase">Notes<textarea id="salesReceiptNotes" placeholder="Optional receipt note..."></textarea></label>
+            <div class="az-sr-form-actions"><button class="btn gray" id="salesReceiptCancel" type="button">Cancel</button><button class="btn green" id="salesReceiptSave" type="button">Save Receipt</button></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -5876,6 +5975,7 @@ async function initSection(id){
   if(id==='adminalerts')return loadAdminPaymentAlerts();
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
+  if(id==='salesreceipts')return window.azSalesReceiptsLoad?.();
   if(id==='activity')return loadAdminActivity();
   if(id==='commissions')return Promise.all([loadAdminCommissions(),loadAdminPayoutRequests()]);
   if(id==='auditlogs')return loadAdminAuditLogs();
@@ -7481,5 +7581,7 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=722"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=722"></script>
 </body>
 </html>

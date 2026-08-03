@@ -1,0 +1,17 @@
+AZOBSS Patch 722 - Admin Receipt PDF / WhatsApp / Telegram / Download
+
+Baseline: Patch 721.
+
+Changes:
+1. Added a real client-side A4 PDF generator for Sales & Receipts.
+2. Customer PDF excludes internal product cost, gateway fee, commission and net profit.
+3. Added Download PDF, WhatsApp PDF, Telegram PDF and Print actions.
+4. On browsers supporting Web Share with files, the actual PDF is passed to the native share sheet.
+5. On unsupported desktop browsers, the PDF is downloaded first and WhatsApp/Telegram is opened with receipt text; attach the downloaded PDF manually.
+6. No external PDF library, backend endpoint, Cloudflare Worker or new environment variable is required.
+
+Files:
+- assets/js/azobss-admin-sales-receipt-pdf.js
+- assets/js/azobss-admin-sales-receipts.js
+- assets/css/azobss-admin-sales-receipts.css
+- admin/index.html
