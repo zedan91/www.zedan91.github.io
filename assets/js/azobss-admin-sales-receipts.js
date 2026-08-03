@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 735: direct WhatsApp/Telegram links + copyable PDF URLs */
+/* AZOBSS PATCH 736: reliable Sales & Receipts auto-load after module/auth readiness */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -617,5 +617,34 @@ function bind(){
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
   document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
 }
+let salesReceiptsAutoLoadQueued=false;
+async function autoLoadSalesReceiptsWhenActive(){
+  const section=el('salesreceipts');
+  if(!section?.classList.contains('active'))return;
+  if(salesReceiptsAutoLoadQueued)return loadingPromise||Promise.resolve();
+  salesReceiptsAutoLoadQueued=true;
+  try{
+    bind();
+    return await loadData();
+  }catch(error){
+    console.error('Sales & Receipts automatic load failed:',error);
+  }finally{
+    salesReceiptsAutoLoadQueued=false;
+  }
+}
 window.azSalesReceiptsLoad=async function(){bind();return loadData()};
 bind();
+
+// The admin tab can be opened before this ES module finishes importing Firebase.
+// Load immediately when the section is already active, when auth becomes ready,
+// and whenever the section later receives the active class.
+const queueSalesReceiptsAutoLoad=()=>setTimeout(()=>autoLoadSalesReceiptsWhenActive(),0);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',queueSalesReceiptsAutoLoad,{once:true});
+else queueSalesReceiptsAutoLoad();
+onAuthStateChanged(auth,user=>{if(user)queueSalesReceiptsAutoLoad()});
+const salesReceiptsSection=el('salesreceipts');
+if(salesReceiptsSection){
+  new MutationObserver(()=>{
+    if(salesReceiptsSection.classList.contains('active'))queueSalesReceiptsAutoLoad();
+  }).observe(salesReceiptsSection,{attributes:true,attributeFilter:['class']});
+}

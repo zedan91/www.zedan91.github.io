@@ -5985,7 +5985,17 @@ async function initSection(id){
   if(id==='adminalerts')return loadAdminPaymentAlerts();
   if(id==='purchases')return loadPurchases();
   if(id==='payments')return loadPayments();
-  if(id==='salesreceipts')return window.azSalesReceiptsLoad?.();
+  if(id==='salesreceipts'){
+    const info=$('#salesReceiptResultInfo');
+    if(typeof window.azSalesReceiptsLoad==='function')return window.azSalesReceiptsLoad();
+    if(info)info.textContent='Loading Sales & Receipts module...';
+    for(let attempt=0;attempt<100;attempt++){
+      await new Promise(resolve=>setTimeout(resolve,100));
+      if(typeof window.azSalesReceiptsLoad==='function')return window.azSalesReceiptsLoad();
+    }
+    if(info)info.textContent='Sales & Receipts module failed to load. Press Ctrl + F5 and open this section again.';
+    return;
+  }
   if(id==='activity')return loadAdminActivity();
   if(id==='commissions')return Promise.all([loadAdminCommissions(),loadAdminPayoutRequests()]);
   if(id==='auditlogs')return loadAdminAuditLogs();
@@ -7592,6 +7602,6 @@ document.addEventListener('click', async function(e){
 </script>
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=735"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=735"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=736"></script>
 </body>
 </html>
