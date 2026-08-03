@@ -1,0 +1,10 @@
+AZOBSS Patch 726 - Admin Sales & Receipts Computer & IT Category
+
+Changes:
+- Added Computer & IT to manual receipt item categories.
+- Added Computer & IT to the Sales & Receipts category filter.
+- Computer/PC/laptop/component/accessory website records are detected as Computer & IT.
+- Computer & IT remains included under the Physical Sales KPI because the products are physical goods.
+- PDF, print and CSV display the category as Computer & IT.
+- Existing categories and receipt calculations remain unchanged.
+- No Cloudflare Worker, Render environment variable or Firebase Rules change is required.

@@ -1,0 +1,11 @@
+AZOBSS PATCH 725 — ADMIN RECEIPT BRAND TEXT / LOGO ALIGN
+
+Baseline: Patch 724
+
+Changes:
+- Enlarged the AZOBSS wordmark in generated receipt PDFs so its visible height is balanced with the logo.
+- Adjusted the PDF text baseline for vertical alignment with the logo.
+- Enlarged and vertically aligned the AZOBSS wordmark in browser Print receipts.
+- Preserved the ink-saving grey design and all receipt functions.
+
+No Cloudflare Worker, Render environment variable, or backend configuration change is required.

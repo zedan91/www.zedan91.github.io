@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 724: AZOBSS logo beside brand text in ink-saving receipt PDF (no external library) */
+/* AZOBSS PATCH 726: Add Computer & IT category label to receipt PDF */
 (function(global){
   'use strict';
 
@@ -35,7 +35,7 @@
     return new Intl.DateTimeFormat('en-MY',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date);
   }
   function categoryLabel(value){
-    return ({physical:'Physical',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';
+    return ({physical:'Physical','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';
   }
   function statusLabel(value){ return (clean(value) || 'pending').toUpperCase(); }
   function statusColors(value){
@@ -99,7 +99,7 @@
     fillRect(commands,0,0,PAGE_W,92,[238,241,245]);
     fillRect(commands,0,92,PAGE_W,4,[16,185,129]);
     image(commands,'Logo',MARGIN_X,18,31,31);
-    text(commands,'AZOBSS',MARGIN_X+41,38,{size:23,bold:true,color:[55,65,81]});
+    text(commands,'AZOBSS',MARGIN_X+41,42,{size:31,bold:true,color:[55,65,81]});
     text(commands,'SALES RECEIPT',PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[55,65,81]});
     text(commands,continuation?'Receipt continuation':clean(row.receiptNo||'Receipt'),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
   }
