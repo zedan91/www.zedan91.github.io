@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 722: Customer Sales Receipt PDF generator (no external library) */
+/* AZOBSS PATCH 724: AZOBSS logo beside brand text in ink-saving receipt PDF (no external library) */
 (function(global){
   'use strict';
 
@@ -7,6 +7,9 @@
   const MARGIN_X = 42;
   const CONTENT_W = PAGE_W - (MARGIN_X * 2);
   const BOTTOM_LIMIT = 758;
+  const LOGO_JPEG_BASE64 = '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';
+  const LOGO_PIXEL_W = 128;
+  const LOGO_PIXEL_H = 128;
 
   function clean(value){ return String(value == null ? '' : value).trim(); }
   function ascii(value){
@@ -84,19 +87,21 @@
   function strokeRect(commands,x,yTop,width,height,color,lineWidth){ add(commands,`${rgb(...color)} RG ${(lineWidth||1).toFixed(2)} w ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S`); }
   function line(commands,x1,y1,x2,y2,color,lineWidth){ add(commands,`${rgb(...color)} RG ${(lineWidth||1).toFixed(2)} w ${x1.toFixed(2)} ${(PAGE_H-y1).toFixed(2)} m ${x2.toFixed(2)} ${(PAGE_H-y2).toFixed(2)} l S`); }
   function text(commands,value,x,yTop,options){
-    const opts=options||{}; const size=opts.size||10; const font=opts.bold?'F2':'F1'; const color=opts.color||[15,23,42];
+    const opts=options||{}; const size=opts.size||10; const font=opts.bold?'F2':'F1'; const color=opts.color||[55,65,81];
     let targetX=x; const width=estimateWidth(value,size,opts.bold);
     if(opts.align==='right') targetX=x-width; else if(opts.align==='center') targetX=x-(width/2);
     add(commands,`BT /${font} ${size.toFixed(2)} Tf ${rgb(...color)} rg 1 0 0 1 ${targetX.toFixed(2)} ${(PAGE_H-yTop).toFixed(2)} Tm (${pdfEscape(value)}) Tj ET`);
   }
   function textLines(commands,lines,x,yTop,options){ const opts=options||{}; const lh=opts.lineHeight||((opts.size||10)*1.35); lines.forEach((v,i)=>text(commands,v,x,yTop+(i*lh),opts)); return yTop+(lines.length*lh); }
+  function image(commands,name,x,yTop,width,height){ add(commands,`q ${width.toFixed(2)} 0 0 ${height.toFixed(2)} ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} cm /${name} Do Q`); }
 
   function drawHeader(commands,row,continuation){
-    fillRect(commands,0,0,PAGE_W,92,[8,24,45]);
+    fillRect(commands,0,0,PAGE_W,92,[238,241,245]);
     fillRect(commands,0,92,PAGE_W,4,[16,185,129]);
-    text(commands,'AZOBSS',MARGIN_X,38,{size:23,bold:true,color:[255,255,255]});
-    text(commands,'SALES RECEIPT',PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[255,255,255]});
-    text(commands,continuation?'Receipt continuation':clean(row.receiptNo||'Receipt'),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[167,243,208]});
+    image(commands,'Logo',MARGIN_X,18,31,31);
+    text(commands,'AZOBSS',MARGIN_X+41,38,{size:23,bold:true,color:[55,65,81]});
+    text(commands,'SALES RECEIPT',PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[55,65,81]});
+    text(commands,continuation?'Receipt continuation':clean(row.receiptNo||'Receipt'),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
   }
   function drawStatusBadge(commands,row,x,y){
     const colors=statusColors(row.status); const label=statusLabel(row.status); const w=Math.max(72,estimateWidth(label,8,true)+22);
@@ -106,7 +111,7 @@
   function drawInfoBox(commands,row){
     const x=MARGIN_X,y=116,w=CONTENT_W,h=128,mid=x+(w/2);
     fillRect(commands,x,y,w,h,[248,250,252]); strokeRect(commands,x,y,w,h,[203,213,225],0.8); line(commands,mid,y+14,mid,y+h-14,[226,232,240],0.8);
-    const label=[100,116,139],value=[15,23,42],left=x+16,right=mid+16;
+    const label=[100,116,139],value=[55,65,81],left=x+16,right=mid+16;
     text(commands,'CUSTOMER',left,y+22,{size:7.5,bold:true,color:label});
     text(commands,clean(row.customerName||'Customer'),left,y+40,{size:11,bold:true,color:value});
     text(commands,'PHONE / EMAIL',left,y+64,{size:7.5,bold:true,color:label});
@@ -124,8 +129,8 @@
   const TABLE={x:MARGIN_X,widths:[211,78,48,82,92],headers:['ITEM','CATEGORY','QTY','UNIT PRICE','AMOUNT']};
   function tableX(index){ let x=TABLE.x; for(let i=0;i<index;i+=1)x+=TABLE.widths[i]; return x; }
   function drawTableHeader(commands,y){
-    const h=28; fillRect(commands,TABLE.x,y,CONTENT_W,h,[15,23,42]);
-    TABLE.headers.forEach((header,index)=>{ const cellX=tableX(index),cellW=TABLE.widths[index]; const align=index===0?'left':'center'; text(commands,header,align==='left'?cellX+9:cellX+(cellW/2),y+18,{size:7.5,bold:true,align,color:[255,255,255]}); });
+    const h=28; fillRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240]);
+    TABLE.headers.forEach((header,index)=>{ const cellX=tableX(index),cellW=TABLE.widths[index]; const align=index===0?'left':'center'; text(commands,header,align==='left'?cellX+9:cellX+(cellW/2),y+18,{size:7.5,bold:true,align,color:[51,65,85]}); });
     return y+h;
   }
   function normalizedItems(row){
@@ -138,7 +143,7 @@
     const h=itemRowHeight(item),bg=index%2===0?[255,255,255]:[248,250,252];
     fillRect(commands,TABLE.x,y,CONTENT_W,h,bg); strokeRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240],0.55);
     let dx=TABLE.x; TABLE.widths.slice(0,-1).forEach(width=>{dx+=width;line(commands,dx,y,dx,y+h,[226,232,240],0.55)});
-    const nameLines=wrapText(item.name,TABLE.widths[0]-18,9.1,true); textLines(commands,nameLines,tableX(0)+9,y+16,{size:9.1,bold:true,lineHeight:12,color:[15,23,42]});
+    const nameLines=wrapText(item.name,TABLE.widths[0]-18,9.1,true); textLines(commands,nameLines,tableX(0)+9,y+16,{size:9.1,bold:true,lineHeight:12,color:[55,65,81]});
     text(commands,categoryLabel(item.category),tableX(1)+(TABLE.widths[1]/2),y+22,{size:8,align:'center',color:[51,65,85]});
     text(commands,formatQty(item.qty),tableX(2)+(TABLE.widths[2]/2),y+22,{size:9,bold:true,align:'center'});
     text(commands,money(item.unitPrice),tableX(3)+TABLE.widths[3]-8,y+22,{size:8.3,align:'right'});
@@ -199,15 +204,25 @@
   }
   function stringToBytes(value){ const bytes=new Uint8Array(value.length); for(let i=0;i<value.length;i+=1)bytes[i]=value.charCodeAt(i)&0xff; return bytes; }
   function concatBytes(parts){ const total=parts.reduce((sum,part)=>sum+part.length,0),output=new Uint8Array(total); let offset=0; parts.forEach(part=>{output.set(part,offset);offset+=part.length}); return output; }
+  function base64ToBytes(value){
+    const raw=typeof atob==='function'?atob(value):Buffer.from(value,'base64').toString('binary');
+    const bytes=new Uint8Array(raw.length); for(let i=0;i<raw.length;i+=1)bytes[i]=raw.charCodeAt(i)&0xff; return bytes;
+  }
   function buildBytes(row){
     const pages=buildPages(row||{}),objects=[]; objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
     objects[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
     objects[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+    const logoBytes=base64ToBytes(LOGO_JPEG_BASE64);
+    objects[5]=concatBytes([stringToBytes(`<< /Type /XObject /Subtype /Image /Width ${LOGO_PIXEL_W} /Height ${LOGO_PIXEL_H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logoBytes.length} >>\nstream\n`),logoBytes,stringToBytes('\nendstream')]);
     const kids=[];
-    pages.forEach((commands,index)=>{ const pageObject=5+(index*2),contentObject=pageObject+1,stream=commands.join('\n')+'\n'; kids.push(`${pageObject} 0 R`); objects[pageObject]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObject} 0 R >>`; objects[contentObject]=`<< /Length ${stream.length} >>\nstream\n${stream}endstream`; });
+    pages.forEach((commands,index)=>{ const pageObject=6+(index*2),contentObject=pageObject+1,stream=commands.join('\n')+'\n'; kids.push(`${pageObject} 0 R`); objects[pageObject]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Logo 5 0 R >> >> /Contents ${contentObject} 0 R >>`; objects[contentObject]=`<< /Length ${stream.length} >>\nstream\n${stream}endstream`; });
     objects[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`;
     const parts=[stringToBytes('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')],offsets=[0]; let currentOffset=parts[0].length;
-    for(let index=1;index<objects.length;index+=1){ const objectText=`${index} 0 obj\n${objects[index]}\nendobj\n`; offsets[index]=currentOffset; const bytes=stringToBytes(objectText); parts.push(bytes); currentOffset+=bytes.length; }
+    for(let index=1;index<objects.length;index+=1){
+      const body=objects[index] instanceof Uint8Array?objects[index]:stringToBytes(objects[index]);
+      const bytes=concatBytes([stringToBytes(`${index} 0 obj\n`),body,stringToBytes('\nendobj\n')]);
+      offsets[index]=currentOffset; parts.push(bytes); currentOffset+=bytes.length;
+    }
     const xrefOffset=currentOffset; let xref=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
     for(let index=1;index<objects.length;index+=1)xref+=`${String(offsets[index]).padStart(10,'0')} 00000 n \n`;
     xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`; parts.push(stringToBytes(xref)); return concatBytes(parts);
