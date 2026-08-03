@@ -4792,8 +4792,8 @@ function azR2Configured() {
 }
 
 
-// AZOBSS PATCH 719: Password-protected Tech Vault with bulk R2 deletion and alphabetical sorting.
-const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_BULK_DELETE_ALPHABETICAL_719_20260803";
+// AZOBSS PATCH 720: R2-only Tech Vault. The bundled website copy was removed.
+const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_R2_ONLY_NO_BUILTIN_720_20260803";
 const AZOBSS_TECH_VAULT_LOCAL_DIR = path.join(ROOT, "_private-tech-vault");
 const AZOBSS_TECH_VAULT_META_FILE = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "tech-vault-files.json");
 
@@ -4815,46 +4815,6 @@ function azTechVaultSessionSecret() {
     process.env.ADMIN_KEY ||
     ""
   ).trim();
-}
-function azTechVaultBundledFileKey() {
-  return String(process.env.AZOBSS_TECH_VAULT_BUNDLED_FILE_KEY || "").trim();
-}
-function azTechVaultBundledKeyBuffer() {
-  const raw = azTechVaultBundledFileKey();
-  if (!raw) return null;
-  try {
-    const normalized = raw.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
-    const decoded = Buffer.from(padded, "base64");
-    if (decoded.length === 32) return decoded;
-  } catch (_) {}
-  return crypto.createHash("sha256").update(raw).digest();
-}
-function azTechVaultDecryptBundledInstaller() {
-  const key = azTechVaultBundledKeyBuffer();
-  if (!key) throw Object.assign(new Error("AZOBSS_TECH_VAULT_BUNDLED_FILE_KEY is not configured on Render."), { statusCode:503 });
-  const filePath = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "AZOBSS_Installer.bat.enc");
-  if (!fs.existsSync(filePath)) throw Object.assign(new Error("Encrypted AZOBSS_Installer bundle is missing."), { statusCode:404 });
-  const raw = fs.readFileSync(filePath);
-  if (raw.length < 5 + 12 + 16 || raw.subarray(0,5).toString("ascii") !== "AZTV1") throw Object.assign(new Error("Encrypted installer bundle is invalid."), { statusCode:500 });
-  const iv = raw.subarray(5,17);
-  const body = raw.subarray(17);
-  const tag = body.subarray(body.length - 16);
-  const encrypted = body.subarray(0, body.length - 16);
-  try {
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-    decipher.setAAD(Buffer.from("AZOBSS-Tech-Vault-717"));
-    decipher.setAuthTag(tag);
-    return Buffer.concat([decipher.update(encrypted), decipher.final()]);
-  } catch (_) {
-    throw Object.assign(new Error("Bundled installer key is incorrect."), { statusCode:403 });
-  }
-}
-function azTechVaultBundledMeta() {
-  try {
-    const metaPath = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "AZOBSS_Installer.meta.json");
-    return JSON.parse(fs.readFileSync(metaPath, "utf8"));
-  } catch (_) { return {}; }
 }
 function azTechVaultSessionHours() {
   const n = Number(process.env.AZOBSS_TECH_VAULT_SESSION_HOURS || 12);
@@ -4941,29 +4901,9 @@ function azTechVaultWriteJsonRows(rows = []) {
     return false;
   }
 }
-function azTechVaultBuiltInFile() {
-  const filePath = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "AZOBSS_Installer.bat.enc");
-  const meta = azTechVaultBundledMeta();
-  let updatedAtMs = 0;
-  try { updatedAtMs = Math.floor(fs.statSync(filePath).mtimeMs || Date.now()); } catch (_) {}
-  return {
-    id: "azobss-installer",
-    name: "AZOBSS_Installer.bat",
-    filename: "AZOBSS_Installer.bat",
-    size: Math.max(0, Number(meta.plaintextSize || 0) || 0),
-    sha256: String(meta.sha256 || ""),
-    contentType: "application/x-bat",
-    source: "encrypted-bundled",
-    builtIn: true,
-    ready: Boolean(azTechVaultBundledFileKey()),
-    createdAtMs: updatedAtMs || Date.now(),
-    createdAt: new Date(updatedAtMs || Date.now()).toISOString(),
-    patch: AZOBSS_TECH_VAULT_PATCH
-  };
-}
 async function azTechVaultListFiles() {
-  const output = [azTechVaultBuiltInFile()];
-  const seen = new Set(output.map(row => row.id));
+  const output = [];
+  const seen = new Set();
   const db = getAzobssBackendDb();
   if (db) {
     try {
@@ -4994,7 +4934,6 @@ async function azTechVaultListFiles() {
       const nameB = String(b.filename || b.name || "");
       const byName = nameA.localeCompare(nameB, "en", { numeric:true, sensitivity:"base" });
       if (byName) return byName;
-      if (Boolean(a.builtIn) !== Boolean(b.builtIn)) return a.builtIn ? -1 : 1;
       return Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0);
     });
 }
@@ -5016,7 +4955,6 @@ async function azTechVaultSaveFile(row = {}) {
     size: Math.max(0, Number(row.size || 0) || 0),
     contentType: cleanPremiumText(row.contentType || "application/x-bat", 120),
     source: "cloudflare-r2",
-    builtIn: false,
     createdAtMs: Number(row.createdAtMs || Date.now()) || Date.now(),
     createdAt: row.createdAt || new Date().toISOString(),
     uploadedBy: "password-session",
@@ -5054,7 +4992,7 @@ function azTechVaultUploadToken(filename = "", size = 0, contentType = "") {
     size: safeSize,
     type: cleanPremiumText(contentType || "application/x-bat", 120),
     exp: Math.floor(Date.now()/1000) + 15 * 60,
-    patch: "719"
+    patch: "720"
   };
   const token = azTechVaultSignPayload(payload, azR2TokenSecret());
   if (!token) throw Object.assign(new Error("R2 upload token could not be created."), { statusCode: 503 });
@@ -5093,7 +5031,7 @@ function azTechVaultDeleteUrl(row = {}) {
     key,
     id,
     exp: Math.floor(Date.now()/1000) + 10 * 60,
-    patch: "719"
+    patch: "720"
   }, azR2TokenSecret());
   return token ? `${azR2DownloadBaseUrl()}/vault-delete/${encodeURIComponent(token)}` : "";
 }
@@ -5123,9 +5061,7 @@ async function azTechVaultWriteDeletedRecord(row = {}) {
   return tombstone;
 }
 async function azTechVaultDeleteFile(row = {}) {
-  if (!row || row.builtIn === true || row.source === "encrypted-bundled" || row.source === "local-protected") {
-    throw Object.assign(new Error("Built-in files are protected and cannot be deleted."), { statusCode:400 });
-  }
+  if (!row) throw Object.assign(new Error("File not found."), { statusCode:404 });
   const id = cleanPremiumText(row.id || "", 180).replace(/[^a-zA-Z0-9_-]/g, "");
   const filename = azTechVaultSafeFilename(row.filename || row.name);
   const objectKey = azTechVaultSafeObjectKey(row.objectKey || row.key);
@@ -5148,7 +5084,6 @@ function azTechVaultPublicInfo() {
     service: "azobss-tech-vault",
     patch: AZOBSS_TECH_VAULT_PATCH,
     passwordConfigured: Boolean(azTechVaultPassword()),
-    bundledFileKeyConfigured: Boolean(azTechVaultBundledFileKey()),
     r2Configured: azR2Configured(),
     maxFileMb: Math.floor(azTechVaultMaxFileBytes()/1024/1024),
     allowedExtensions: [".bat"],
@@ -10764,7 +10699,7 @@ async function handler(req, res) {
 
 
     // =========================
-    // AZOBSS TECH VAULT 717
+    // AZOBSS TECH VAULT 720 — R2 ONLY
     // =========================
     if (pathname === "/api/tech-vault/health" && req.method === "GET") {
       return send(res, 200, JSON.stringify(azTechVaultPublicInfo(), null, 2), "application/json", { "Cache-Control":"no-store" });
@@ -10844,9 +10779,6 @@ async function handler(req, res) {
         const data = parseRequestBody(await readBody(req));
         const file = await azTechVaultFindFile(data.id);
         if (!file) return send(res, 404, JSON.stringify({ ok:false, error:"File not found." }, null, 2), "application/json");
-        if (file.builtIn === true || file.source === "local-protected") {
-          return send(res, 200, JSON.stringify({ ok:true, mode:"local", filename:file.filename, downloadPath:`/api/tech-vault/local-download?id=${encodeURIComponent(file.id)}` }, null, 2), "application/json", { "Cache-Control":"no-store" });
-        }
         const downloadUrl = azTechVaultDownloadUrl(file);
         if (!downloadUrl) return send(res, 503, JSON.stringify({ ok:false, error:"Private R2 download is not configured." }, null, 2), "application/json");
         return send(res, 200, JSON.stringify({ ok:true, mode:"r2", filename:file.filename, downloadUrl, expiresIn:3600 }, null, 2), "application/json", { "Cache-Control":"no-store" });
@@ -10854,26 +10786,7 @@ async function handler(req, res) {
         return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "Download token failed." }, null, 2), "application/json");
       }
     }
-    if (pathname === "/api/tech-vault/local-download" && (req.method === "GET" || req.method === "HEAD")) {
-      if (!azTechVaultSessionFromRequest(req)) return send(res, 401, JSON.stringify({ ok:false, error:"Tech Vault session required." }, null, 2), "application/json");
-      const id = cleanPremiumText(parsed.query && parsed.query.id || "", 180);
-      if (id !== "azobss-installer") return send(res, 404, "File not found");
-      try {
-        const data = azTechVaultDecryptBundledInstaller();
-        res.writeHead(200, azSecurityHeaders({
-          "Content-Type":"application/x-bat; charset=utf-8",
-          "Content-Length":String(data.length),
-          "Content-Disposition":`attachment; filename="AZOBSS_Installer.bat"`,
-          "Cache-Control":"private, no-store"
-        }));
-        if (req.method === "HEAD") return res.end();
-        res.end(data);
-        return;
-      } catch (error) {
-        const status = Number(error && error.statusCode) || 500;
-        return send(res, status, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "Bundled installer download failed." }, null, 2), "application/json");
-      }
-    }
+
 
     // AZOBSS 674: Stripe Checkout for premium Software / CAD only.
     if (pathname === "/api/stripe/digital-checkout-health" && req.method === "GET") {

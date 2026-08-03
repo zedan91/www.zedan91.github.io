@@ -110,7 +110,7 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
   async function loadFiles(){
     $('fileList').innerHTML='<div class="empty">Loading files…</div>';
     try{
-      const data=await api('/api/tech-vault/files'); files=Array.isArray(data.files)?data.files:[]; const valid=new Set(files.filter(f=>!f.builtIn).map(f=>String(f.id||''))); [...selectedIds].forEach(id=>{if(!valid.has(id))selectedIds.delete(id);}); $('fileCount').textContent=files.length; $('maxFileMb').textContent=(data.maxFileMb||25)+' MB'; renderFiles();
+      const data=await api('/api/tech-vault/files'); files=Array.isArray(data.files)?data.files:[]; const valid=new Set(files.map(f=>String(f.id||''))); [...selectedIds].forEach(id=>{if(!valid.has(id))selectedIds.delete(id);}); $('fileCount').textContent=files.length; $('maxFileMb').textContent=(data.maxFileMb||25)+' MB'; renderFiles();
     }catch(err){$('fileList').innerHTML=`<div class="error">${escapeHtml(err.message)}</div>`; if(/session|required|unauthor/i.test(err.message)){token='';sessionStorage.removeItem(TOKEN_KEY);setLocked(true);}}
   }
   function visibleRows(){
@@ -128,7 +128,7 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
     return rows;
   }
   function updateBulkState(rows=visibleRows()){
-    const selectable=rows.filter(f=>!f.builtIn&&f.id);
+    const selectable=rows.filter(f=>f.id);
     const selectedVisible=selectable.filter(f=>selectedIds.has(String(f.id))).length;
     $('selectedCount').textContent=`${selectedIds.size} selected`;
     $('deleteSelectedBtn').disabled=!selectedIds.size;
@@ -140,8 +140,8 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
     const rows=visibleRows();
     if(!rows.length){$('fileList').innerHTML='<div class="empty">No BAT files found.</div>';updateBulkState(rows);return;}
     $('fileList').innerHTML=rows.map(f=>{
-      const id=String(f.id||''); const builtIn=Boolean(f.builtIn); const checked=selectedIds.has(id);
-      return `<article class="file ${checked?'selected-row':''}" data-row-id="${escapeHtml(id)}"><input class="check" type="checkbox" data-select="${escapeHtml(id)}" ${checked?'checked':''} ${builtIn?'disabled title="Built-in file is protected"':''}><div class="file-icon">BAT</div><div><h3 title="${escapeHtml(f.filename||f.name)}">${escapeHtml(f.filename||f.name)}</h3><div class="meta"><span>${formatBytes(f.size)}</span><span>${formatDate(f.createdAtMs||f.createdAt)}</span>${builtIn?'<span class="badge badge-lock">🔒 Built-in protected</span>':'<span class="badge">R2 private</span>'}</div></div><button class="btn btn-primary" data-download="${escapeHtml(id)}">⬇ Download</button></article>`;
+      const id=String(f.id||''); const checked=selectedIds.has(id);
+      return `<article class="file ${checked?'selected-row':''}" data-row-id="${escapeHtml(id)}"><input class="check" type="checkbox" data-select="${escapeHtml(id)}" ${checked?'checked':''}><div class="file-icon">BAT</div><div><h3 title="${escapeHtml(f.filename||f.name)}">${escapeHtml(f.filename||f.name)}</h3><div class="meta"><span>${formatBytes(f.size)}</span><span>${formatDate(f.createdAtMs||f.createdAt)}</span><span class="badge">R2 private</span></div></div><button class="btn btn-primary" data-download="${escapeHtml(id)}">⬇ Download</button></article>`;
     }).join('');
     document.querySelectorAll('[data-download]').forEach(btn=>btn.addEventListener('click',()=>downloadFile(btn.dataset.download,btn)));
     document.querySelectorAll('[data-select]').forEach(box=>box.addEventListener('change',()=>{const id=String(box.dataset.select||'');if(box.checked)selectedIds.add(id);else selectedIds.delete(id);renderFiles();}));
@@ -151,7 +151,7 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
   $('searchInput').addEventListener('input',renderFiles);
   $('sortSelect').addEventListener('change',()=>{localStorage.setItem(SORT_KEY,$('sortSelect').value);renderFiles();});
   $('refreshBtn').addEventListener('click',loadFiles);
-  $('selectAll').addEventListener('change',()=>{visibleRows().filter(f=>!f.builtIn&&f.id).forEach(f=>{const id=String(f.id);if($('selectAll').checked)selectedIds.add(id);else selectedIds.delete(id);});renderFiles();});
+  $('selectAll').addEventListener('change',()=>{visibleRows().filter(f=>f.id).forEach(f=>{const id=String(f.id);if($('selectAll').checked)selectedIds.add(id);else selectedIds.delete(id);});renderFiles();});
   $('deleteSelectedBtn').addEventListener('click',async()=>{
     const ids=[...selectedIds]; if(!ids.length)return;
     const names=files.filter(f=>ids.includes(String(f.id))).map(f=>f.filename||f.name);
@@ -172,10 +172,8 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
     const old=button.textContent; button.disabled=true; button.textContent='Preparing…';
     try{
       const data=await api('/api/tech-vault/download-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
-      if(data.mode==='r2'){location.href=data.downloadUrl;return;}
-      const response=await fetch(API+data.downloadPath,{headers:authHeaders()});
-      if(!response.ok)throw new Error(await response.text()||'Download failed.');
-      const blob=await response.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url;a.download=data.filename||'AZOBSS-Tool.bat';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+      if(!data.downloadUrl)throw new Error('Private R2 download URL was not returned.');
+      location.href=data.downloadUrl;return;
     }catch(err){alert(err.message);}finally{button.disabled=false;button.textContent=old;}
   }
 
