@@ -25,3 +25,29 @@
 @media(max-width:1280px){.az-sr-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.az-sr-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.az-sr-filter-grid label:first-child{grid-column:span 2}}
 @media(max-width:860px){.az-sr-hero{flex-direction:column}.az-sr-hero-actions{justify-content:flex-start}.az-sr-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.az-sr-span-4{grid-column:1/-1}.az-sr-item-row{grid-template-columns:1fr 1fr}.az-sr-item-row .az-sr-item-name{grid-column:1/-1}.az-sr-cost-grid,.az-sr-calculation{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.az-sr-kpis,.az-sr-filter-grid,.az-sr-form-grid,.az-sr-cost-grid,.az-sr-calculation{grid-template-columns:1fr}.az-sr-filter-grid label:first-child,.az-sr-span-2,.az-sr-span-4{grid-column:auto}.az-sr-hero-actions .btn,.az-sr-filter-actions .btn{width:100%}.az-sr-item-row{grid-template-columns:1fr}.az-sr-item-row .az-sr-item-name{grid-column:auto}.az-sr-form-actions{flex-direction:column}.az-sr-form-actions .btn{width:100%}}
+
+
+/* AZOBSS PATCH 728: compact horizontal responsive Sales & Receipts filters */
+.az-sr-filter-card{padding:16px 18px}
+.az-sr-filter-head{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:10px}
+.az-sr-filter-head h3{margin:0;font-size:19px;line-height:1.2}
+.az-sr-filter-head .az-sr-result-note{margin:0;text-align:right;line-height:1.35}
+.az-sr-filter-grid{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-end}
+.az-sr-filter-grid>label{flex:1 1 132px;min-width:132px}
+.az-sr-filter-grid>label:first-child{flex:2 1 260px;min-width:220px}
+.az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:0 1 150px;min-width:142px}
+.az-sr-filter-actions{display:flex;flex:0 0 auto;align-items:flex-end;gap:8px;flex-wrap:nowrap;margin:0}
+.az-sr-filter-actions .btn{height:44px;min-width:122px;white-space:nowrap;padding-top:0;padding-bottom:0}
+@media(max-width:760px){
+  .az-sr-filter-head{align-items:flex-start}
+  .az-sr-filter-head .az-sr-result-note{width:100%;text-align:left}
+  .az-sr-filter-grid>label{flex:1 1 calc(50% - 9px);min-width:180px}
+  .az-sr-filter-grid>label:first-child{flex-basis:100%;min-width:100%}
+  .az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:1 1 calc(50% - 9px);min-width:180px}
+}
+@media(max-width:480px){
+  .az-sr-filter-card{padding:14px}
+  .az-sr-filter-grid>label,.az-sr-filter-grid>label:first-child,.az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:1 1 100%;min-width:100%}
+  .az-sr-filter-actions{width:100%}
+  .az-sr-filter-actions .btn{width:100%}
+}

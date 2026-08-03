@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 726: Add Computer & IT category to Admin Sales & Receipts */
+/* AZOBSS PATCH 727: Show exact JUPEM item names and exclude admin-test sales */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -69,7 +69,55 @@ function extractAmount(x={}){
   const sen=num(x.amountSen||x.paymentAmountSen);return sen>0?sen/100:0;
 }
 function extractCost(x,keys){for(const k of keys){const n=num(x?.[k]);if(n>0)return n}return 0}
-function productName(x={}){const p=x.product||{};return String(x.productName||x.productTitle||x.itemName||x.title||x.name||x.filename||x.itemCode||p.name||p.title||x.productId||'Website Purchase')}
+function normalizeJupemType(raw){
+  const value=String(raw||'').trim().toUpperCase().replace(/[\s-]+/g,'_');
+  if(['PA','PELAN_AKUI'].includes(value))return 'PA';
+  if(['BM','BATU_ARAS','BATU_TANDA_ARAS'].includes(value))return 'BM';
+  if(['SBM','STESEN_BATU_ARAS','STESEN_TANDA_ARAS'].includes(value))return 'SBM';
+  if(['GPS','STESEN_GPS'].includes(value))return 'GPS';
+  if(['SYIT_PIAWAI','SYIT_PIAWAI_(GAMBAR)','SYIT_PIAWAI_GAMBAR','LEMBAR_PIAWAI'].includes(value))return 'SYIT_PIAWAI';
+  if(['NDCDB_C3','LOT_KADASTER_BERDIGIT_C3'].includes(value))return 'NDCDB_C3';
+  if(['NDCDB','LOT_KADASTER_BERDIGIT','KADASTER'].includes(value))return 'NDCDB';
+  return '';
+}
+function jupemTypeLabel(type){
+  return ({PA:'Pelan Akui',BM:'BM',SBM:'SBM',GPS:'GPS',SYIT_PIAWAI:'Syit Piawai',NDCDB:'Lot Kadaster Berdigit',NDCDB_C3:'Lot Kadaster Berdigit C3'})[type]||'';
+}
+function detailedJupemProductName(x={}){
+  const p=x.product||{};
+  const arrays=[x.paBmItems,x.items,x.cartItems,x.selectedItems,x.purchaseItems,x.documents,x.orderItems,p.paBmItems,p.items].filter(Array.isArray);
+  const counts=new Map();
+  const add=(rawType,qty=1)=>{const type=normalizeJupemType(rawType);if(!type)return;const amount=Math.max(1,Math.round(num(qty)||1));counts.set(type,(counts.get(type)||0)+amount)};
+  arrays.forEach(rows=>rows.forEach(item=>add(item?.productType||item?.product||item?.type||item?.itemType||item?.documentType||item?.category,item?.qty||item?.quantity||item?.units||1)));
+  if(!counts.size)add(x.productType||x.product||x.type||x.itemType||x.documentType||x.category,1);
+  if(!counts.size){
+    const code=String(x.itemCode||x.code||x.noPA||x.noPa||x.noBM||x.noBm||x.stationNo||'').trim().toUpperCase();
+    if(/^PA[-_\s]?\d/.test(code)||x.noPA||x.noPa)add('PA');
+    else if(/^BM[-_\s]?\d/.test(code)||x.noBM||x.noBm)add('BM');
+  }
+  if(!counts.size){
+    const rawName=String(x.productName||x.productTitle||x.itemName||x.title||x.name||p.name||p.title||'');
+    const lower=rawName.toLowerCase();
+    if(lower.includes('lot kadaster berdigit c3'))add('NDCDB_C3');
+    else if(lower.includes('lot kadaster')||lower.includes('ndcdb'))add('NDCDB');
+    if(lower.includes('pelan akui'))add('PA');
+    if(/(^|[^a-z])sbm([^a-z]|$)/i.test(rawName))add('SBM');
+    else if(/(^|[^a-z])bm([^a-z]|$)/i.test(rawName)&&!lower.includes('pa/bm'))add('BM');
+    if(/(^|[^a-z])gps([^a-z]|$)/i.test(rawName))add('GPS');
+    if(lower.includes('syit piawai')||lower.includes('lembar piawai'))add('SYIT_PIAWAI');
+  }
+  if(!counts.size)return '';
+  const order=['PA','BM','SBM','GPS','SYIT_PIAWAI','NDCDB','NDCDB_C3'];
+  return [...counts.entries()].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([type,count])=>`${jupemTypeLabel(type)} (${count} unit)`).join(' + ');
+}
+function isAdminTestRecord(x={}){
+  if(x.isAdminTestPayment===true||x.testPayment===true||x.isTestPayment===true||x.adminTest===true)return true;
+  const p=x.product||{};
+  const fields=[x.orderId,x.id,x.docId,x.paymentOrderId,x.paymentReference,x.billCode,x.paymentMethod,x.paymentSource,x.paymentVerificationSource,x.source,x.createdBy,x.createdByAdmin,x.commissionSkippedReason,x.productName,x.productTitle,x.itemName,x.title,x.name,p.id,p.name,p.title];
+  const hay=fields.map(v=>String(v||'').trim().toLowerCase()).join(' ');
+  return /(^|[^a-z0-9])admin[-_ ]?test([^a-z0-9]|$)/.test(hay)||/(^|[^a-z0-9])pabmtest[-_a-z0-9]*/.test(hay)||hay.includes('jupem document test purchase');
+}
+function productName(x={}){const exact=detailedJupemProductName(x);if(exact)return exact;const p=x.product||{};return String(x.productName||x.productTitle||x.itemName||x.title||x.name||x.filename||x.itemCode||p.name||p.title||x.productId||'Website Purchase')}
 function customerName(x={}){const u=x.user||{};return String(x.customerName||x.buyerName||x.displayName||x.username||x.usernameKey||u.displayName||u.username||x.email||x.buyerEmail||u.email||'Customer')}
 function customerEmail(x={}){const u=x.user||{};return String(x.customerEmail||x.email||x.buyerEmail||u.email||'')}
 function customerPhone(x={}){const u=x.user||{};return String(x.customerPhone||x.phone||x.phoneNumber||x.buyerPhone||u.phone||u.phoneNumber||'')}
@@ -136,9 +184,20 @@ async function loadData(){
     ]);
     manualRows=[];receiptSnap.forEach(d=>{const x=d.data()||{};if(String(x.source||'')===MANUAL_SOURCE)manualRows.push(normalizeManual(d.id,x))});
     const map=new Map();
-    purchaseSnap.forEach(d=>{const x=d.data()||{};const row=normalizeWebsite(d.id,x,'purchaseLogs');if(!/admin[- ]?test|pabmtest/i.test(JSON.stringify(x)))map.set(websiteDedupKey(row),row)});
-    premium.forEach((x,i)=>{const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);if(!map.has(k))map.set(k,row)});
-    websiteRows=[...map.values()];
+    purchaseSnap.forEach(d=>{const x=d.data()||{};if(isAdminTestRecord(x))return;const row=normalizeWebsite(d.id,x,'purchaseLogs');map.set(websiteDedupKey(row),row)});
+    premium.forEach((x,i)=>{
+      if(isAdminTestRecord(x))return;
+      const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);const existing=map.get(k);
+      if(!existing){map.set(k,row);return}
+      const exactName=detailedJupemProductName(x);
+      if(exactName){
+        existing.items=[{...(existing.items?.[0]||{}),category:'pabm',name:exactName,qty:1,unitPrice:existing.gross,unitCost:0}];
+        existing.categories=['pabm'];existing.category='pabm';
+      }
+      if(existing.status!=='paid'&&row.status==='paid')existing.status='paid';
+      existing.customerName=existing.customerName||row.customerName;existing.customerPhone=existing.customerPhone||row.customerPhone;existing.customerEmail=existing.customerEmail||row.customerEmail;
+    });
+    websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row));
     currentPage=1;applyFilters();
     if(info)info.textContent=`Loaded ${manualRows.length} manual receipt(s) and ${websiteRows.length} website sale record(s).`;
   })().catch(e=>{notify(e.message||'Failed to load sales receipts.',true);const info=el('salesReceiptResultInfo');if(info)info.textContent='Load failed: '+(e.message||e);throw e}).finally(()=>{loadingPromise=null});
