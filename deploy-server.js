@@ -5090,6 +5090,88 @@ function azTechVaultPublicInfo() {
     time: new Date().toISOString()
   };
 }
+
+
+// AZOBSS PATCH 735: Admin Sales PDF/ZIP direct share links via Cloudflare R2.
+// The browser uploads the already-generated document directly to the Worker,
+// then WhatsApp/Telegram receive a normal HTTPS link instead of Windows Share.
+const AZOBSS_SALES_SHARE_PATCH = "AZOBSS_ADMIN_SALES_DIRECT_APP_COPY_PDF_LINK_735_20260804";
+function azSalesShareMaxBytes() {
+  const mb = Number(process.env.AZOBSS_SALES_SHARE_MAX_MB || 20);
+  return Math.floor(Math.max(1, Math.min(50, Number.isFinite(mb) ? mb : 20)) * 1024 * 1024);
+}
+function azSalesShareLinkDays() {
+  const days = Number(process.env.AZOBSS_SALES_SHARE_LINK_DAYS || 365);
+  return Math.max(1, Math.min(730, Number.isFinite(days) ? Math.floor(days) : 365));
+}
+function azSalesShareSafeFilename(value = "", contentType = "application/pdf") {
+  const fallback = /zip/i.test(String(contentType || "")) ? "AZOBSS-Documents.zip" : "AZOBSS-Receipt.pdf";
+  const clean = path.basename(String(value || fallback))
+    .replace(/[\\/:*?"<>|\r\n\t]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180) || fallback;
+  if (/zip/i.test(String(contentType || ""))) return /\.zip$/i.test(clean) ? clean : `${clean.replace(/\.[^.]+$/, "")}.zip`;
+  return /\.pdf$/i.test(clean) ? clean : `${clean.replace(/\.[^.]+$/, "")}.pdf`;
+}
+function azSalesShareSafeObjectKey(value = "") {
+  const key = String(value || "").trim().replace(/^\/+/, "");
+  if (!key || key.length > 600 || key.includes("..") || key.includes("\\")) return "";
+  return /^sales-documents\/[a-zA-Z0-9._/-]+$/i.test(key) ? key : "";
+}
+function azSalesShareSlug(value = "document") {
+  return String(value || "document")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100) || "document";
+}
+function azSalesShareIssue(meta = {}) {
+  if (!azR2Configured()) throw Object.assign(new Error("Cloudflare R2 Worker is not configured on the backend."), { statusCode:503 });
+  const contentType = String(meta.contentType || meta.type || "application/pdf").toLowerCase();
+  const isZip = /application\/zip|application\/x-zip-compressed/.test(contentType) || /\.zip$/i.test(String(meta.filename || meta.name || ""));
+  const normalizedType = isZip ? "application/zip" : "application/pdf";
+  const filename = azSalesShareSafeFilename(meta.filename || meta.name, normalizedType);
+  const size = Math.floor(Number(meta.size || 0));
+  if (!Number.isFinite(size) || size <= 0) throw Object.assign(new Error("Generated document is empty."), { statusCode:400 });
+  if (size > azSalesShareMaxBytes()) throw Object.assign(new Error(`Generated document exceeds the ${Math.floor(azSalesShareMaxBytes()/1024/1024)} MB share limit.`), { statusCode:413 });
+  if (isZip && !/\.zip$/i.test(filename)) throw Object.assign(new Error("Bulk share bundle must be a ZIP file."), { statusCode:400 });
+  if (!isZip && !/\.pdf$/i.test(filename)) throw Object.assign(new Error("Only PDF receipt/invoice links are supported."), { statusCode:400 });
+  const now = new Date();
+  const yyyy = String(now.getUTCFullYear());
+  const mm = String(now.getUTCMonth()+1).padStart(2,"0");
+  const documentNo = cleanPremiumText(meta.documentNo || meta.reference || filename.replace(/\.[^.]+$/, ""), 180);
+  const fingerprint = crypto.createHash("sha256").update(`${documentNo}|${filename}|${normalizedType}`).digest("hex").slice(0,16);
+  const ext = isZip ? "zip" : "pdf";
+  const key = azSalesShareSafeObjectKey(`sales-documents/${yyyy}/${mm}/${azSalesShareSlug(documentNo)}-${fingerprint}.${ext}`);
+  if (!key) throw Object.assign(new Error("Could not create a safe R2 document key."), { statusCode:500 });
+  const uploadPayload = {
+    mode:"sales-file-upload", key, name:filename, size, type:normalizedType,
+    exp:Math.floor(Date.now()/1000)+15*60, patch:"735"
+  };
+  const uploadToken = azTechVaultSignPayload(uploadPayload, azR2TokenSecret());
+  const shareExpiresAt = Math.floor(Date.now()/1000) + azSalesShareLinkDays()*24*60*60;
+  const sharePayload = {
+    mode:"sales-file", key, name:filename, type:normalizedType,
+    exp:shareExpiresAt, patch:"735"
+  };
+  const shareToken = azTechVaultSignPayload(sharePayload, azR2TokenSecret());
+  if (!uploadToken || !shareToken) throw Object.assign(new Error("R2 share token could not be created."), { statusCode:503 });
+  const base = azR2DownloadBaseUrl();
+  return {
+    ok:true,
+    patch:AZOBSS_SALES_SHARE_PATCH,
+    filename,
+    contentType:normalizedType,
+    objectKey:key,
+    uploadUrl:`${base}/sales-file-upload/${encodeURIComponent(uploadToken)}`,
+    shareUrl:`${base}/sales-file/${encodeURIComponent(shareToken)}/${encodeURIComponent(filename)}`,
+    expiresAt:new Date(shareExpiresAt*1000).toISOString(),
+    expiresInDays:azSalesShareLinkDays()
+  };
+}
+
 function azR2LookupKey(value = "") {
   return String(value || "")
     .normalize("NFKD")
@@ -10680,6 +10762,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/pa-bm-purchase-records" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-pabm-records-read", 60, 60 * 1000)) return;
+    if (pathname === "/api/admin/sales-document/share-link" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-sales-document-share-link", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/payment-logs/delete" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payment-logs-delete", 20, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
@@ -12006,6 +12089,24 @@ async function handler(req, res) {
       }
     }
 
+
+
+    if (pathname === "/api/admin/sales-document/share-link" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) {
+          return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to create document share links." }, null, 2), "application/json");
+        }
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        const result = azSalesShareIssue(body);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_sales_document_share_link", "salesDocument", cleanPremiumText(body.documentNo || result.filename, 180), { filename:result.filename, contentType:result.contentType, size:Number(body.size||0), expiresAt:result.expiresAt }, "success"), "Sales document share-link audit log failed");
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        const status = Number(err && err.statusCode || 500);
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"735" }, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/admin/payment-logs/delete" && req.method === "POST") {
       try {

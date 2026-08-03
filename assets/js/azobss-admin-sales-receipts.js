@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 734: bulk select, ZIP download, share and delete */
+/* AZOBSS PATCH 735: direct WhatsApp/Telegram links + copyable PDF URLs */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -323,7 +323,7 @@ function getSelectedRows(){return [...selectedRowIds].map(findRow).filter(Boolea
 function updateBulkUI(){
   const count=selectedRowIds.size;const page=currentPageRows();
   const countEl=el('salesReceiptSelectedCount');if(countEl)countEl.textContent=`${count} selected`;
-  ['salesReceiptBulkDownload','salesReceiptBulkWhatsApp','salesReceiptBulkTelegram','salesReceiptBulkDelete'].forEach(id=>{const button=el(id);if(button)button.disabled=count===0});
+  ['salesReceiptBulkDownload','salesReceiptBulkCopyLink','salesReceiptBulkWhatsApp','salesReceiptBulkTelegram','salesReceiptBulkDelete'].forEach(id=>{const button=el(id);if(button)button.disabled=count===0});
   const allFiltered=el('salesReceiptSelectAllFiltered');if(allFiltered){const selectedVisible=visibleRows.filter(r=>selectedRowIds.has(r.id)).length;allFiltered.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;allFiltered.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length;allFiltered.disabled=visibleRows.length===0}
   const selectPage=el('salesReceiptSelectPage');if(selectPage){const selectedPage=page.filter(r=>selectedRowIds.has(r.id)).length;selectPage.checked=page.length>0&&selectedPage===page.length;selectPage.indeterminate=selectedPage>0&&selectedPage<page.length;selectPage.disabled=page.length===0}
   document.querySelectorAll('[data-sr-select]').forEach(cb=>{cb.checked=selectedRowIds.has(cb.dataset.srSelect||'');cb.closest('tr')?.classList.toggle('az-sr-row-selected',cb.checked)});
@@ -332,6 +332,7 @@ function setRowsSelected(rows,checked){rows.forEach(r=>{if(checked)selectedRowId
 function actionIcon(name){
   const icons={
     download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>',
+    link:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>',
     whatsapp:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg>',
     telegram:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg>',
     print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7Z"/></svg>',
@@ -343,8 +344,8 @@ function actionIcon(name){
 function iconActionButton(kind,title,attrs=''){
   // Avoid the global `.whatsapp` floating-button style used elsewhere on the site.
   // The action still keeps the WhatsApp icon/behaviour, but uses a scoped class.
-  const cssKind=kind==='whatsapp'?'wa':kind;
-  return `<button class="az-sr-icon-btn ${cssKind}" ${attrs} type="button" title="${esc(title)}" aria-label="${esc(title)}">${actionIcon(kind)}<span class="az-sr-visually-hidden">${esc(title)}</span></button>`;
+  const cssKind=kind==='whatsapp'?'wa':(kind==='copylink'?'link':kind);
+  return `<button class="az-sr-icon-btn ${cssKind}" ${attrs} type="button" title="${esc(title)}" aria-label="${esc(title)}">${actionIcon(kind==='copylink'?'link':kind)}<span class="az-sr-visually-hidden">${esc(title)}</span></button>`;
 }
 function renderTable(){
   const tbody=el('salesReceiptTableBody');if(!tbody)return;
@@ -354,6 +355,7 @@ function renderTable(){
     const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';const selected=selectedRowIds.has(r.id);
     const actions=[
       iconActionButton('download',`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton('copylink',`Copy ${label} PDF link`,`data-sr-doc-copy="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('whatsapp',`Send ${label} PDF by WhatsApp`,`data-sr-doc-share="whatsapp" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('telegram',`Send ${label} PDF by Telegram`,`data-sr-doc-share="telegram" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
@@ -499,30 +501,53 @@ function downloadDocumentPdf(row,type='receipt',button=null){
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 function normalizeWhatsAppPhone(value){let phone=String(value||'').replace(/\D/g,'');if(phone.startsWith('0'))phone='60'+phone.slice(1);return phone}
-function openShareFallback(row,type,target,fileName){
-  const label=documentType(type)==='invoice'?'invoice':'receipt';const text=documentShareText(row,type,fileName)+`\n\nThe ${label} PDF has been downloaded. Attach the downloaded file in this chat.`;
+async function copyPlainText(value){
+  const text=String(value||'');if(!text)throw new Error('Nothing to copy.');
+  if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return}
+  const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.position='fixed';area.style.opacity='0';area.style.pointerEvents='none';document.body.appendChild(area);area.select();const ok=document.execCommand('copy');area.remove();if(!ok)throw new Error('Clipboard access was blocked by the browser.');
+}
+async function uploadShareBlob(blob,filename,reference,contentType='application/pdf'){
+  if(!blob||!Number(blob.size))throw new Error('Generated file is empty.');
+  const res=await fetch(BACKEND+'/api/admin/sales-document/share-link',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({filename,size:blob.size,contentType,documentNo:reference}),cache:'no-store'});
+  const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
+  if(!res.ok||data.ok===false||!data.uploadUrl||!data.shareUrl)throw new Error(data.error||`Share-link HTTP ${res.status}`);
+  const upload=await fetch(data.uploadUrl,{method:'PUT',headers:{'Content-Type':contentType},body:blob,cache:'no-store'});
+  const uploadText=await upload.text();if(!upload.ok){let detail=uploadText;try{detail=JSON.parse(uploadText).error||detail}catch(_e){}throw new Error(detail||`R2 upload HTTP ${upload.status}`)}
+  return data;
+}
+async function createDocumentShareLink(row,type='receipt'){
+  const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable. Refresh this page and try again.');
+  const file=api.createFile(row,type);return uploadShareBlob(file,file.name,documentNo(row,type),'application/pdf');
+}
+async function copyDocumentShareLink(row,type='receipt',button=null){
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{const data=await createDocumentShareLink(row,type);await copyPlainText(data.shareUrl);notify(`PDF link copied. Link valid until ${new Date(data.expiresAt).toLocaleDateString('en-MY')}.`);return data.shareUrl}
+  catch(e){console.error(e);notify('Could not create/copy PDF link: '+(e.message||e),true);return ''}
+  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+}
+function setDirectShareWindow(targetWindow,url){
+  if(targetWindow&&!targetWindow.closed){try{targetWindow.location.replace(url);return true}catch(_e){try{targetWindow.location.href=url;return true}catch(__e){}}}
+  const opened=window.open(url,'_blank','noopener');return !!opened;
+}
+function directShareUrl(row,type,target,shareUrl){
+  const label=documentType(type)==='invoice'?'Invoice':'Receipt';
+  const text=[`AZOBSS ${label} ${documentNo(row,type)}`,`Customer: ${row.customerName}`,`${documentType(type)==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,`PDF: ${shareUrl}`].join('\n');
   if(target==='whatsapp'){
-    const phone=normalizeWhatsAppPhone(row.customerPhone);const url=phone?`https://wa.me/${phone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`;
-    const opened=window.open(url,'_blank','noopener');if(!opened)notify(`Popup blocked. The ${label} PDF was downloaded; open WhatsApp and attach it manually.`,true);else notify(`PDF downloaded. WhatsApp opened - attach the ${label} PDF.`);return;
+    const phone=normalizeWhatsAppPhone(row.customerPhone);return phone?`https://wa.me/${phone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`;
   }
-  const url='https://t.me/share/url?url='+encodeURIComponent('https://www.azobss.com')+'&text='+encodeURIComponent(text);
-  const opened=window.open(url,'_blank','noopener');if(!opened)notify(`Popup blocked. The ${label} PDF was downloaded; open Telegram and attach it manually.`,true);else notify(`PDF downloaded. Telegram opened - attach the ${label} PDF.`);
+  return `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text.replace(`PDF: ${shareUrl}`,'').trim())}`;
 }
 async function shareDocumentPdf(row,type,target,button=null){
-  const api=pdfApi();if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
+  // Open a blank window immediately while the click still counts as a user gesture.
+  // After the PDF is uploaded, the same window is redirected straight to WhatsApp/Telegram.
+  const targetWindow=window.open('about:blank','_blank');
+  if(targetWindow){try{targetWindow.document.title='Preparing AZOBSS PDF link...';targetWindow.document.body.innerHTML='<p style="font:16px Arial;padding:24px">Preparing secure PDF link...</p>'}catch(_e){}}
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const file=api.createFile(row,type);const label=documentType(type)==='invoice'?'Invoice':'Receipt';const shareData={title:`AZOBSS ${label} ${documentNo(row,type)}`,text:documentShareText(row,type,file.name),files:[file]};
-    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-      notify(`Choose ${target==='telegram'?'Telegram':'WhatsApp'} from the share menu.`);
-      await navigator.share(shareData);notify(`${label} PDF shared.`);return;
-    }
-    const name=api.download(row,type);openShareFallback(row,type,target,name);
-  }catch(e){
-    if(e?.name==='AbortError')return;
-    console.warn('PDF native share failed:',e);
-    try{const name=api.download(row,type);openShareFallback(row,type,target,name)}catch(fallbackError){console.error(fallbackError);notify('Could not share the PDF. Download it and attach it manually.',true)}
-  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+    const data=await createDocumentShareLink(row,type);const url=directShareUrl(row,type,target,data.shareUrl);
+    const opened=setDirectShareWindow(targetWindow,url);if(!opened){await copyPlainText(data.shareUrl).catch(()=>{});notify(`${target==='telegram'?'Telegram':'WhatsApp'} popup was blocked. PDF link copied instead.`,true)}else notify(`${target==='telegram'?'Telegram':'WhatsApp'} opened directly with the PDF link.`);
+  }catch(e){try{targetWindow?.close()}catch(_e){}console.error(e);notify('Could not open direct share: '+(e.message||e),true)}
+  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 const AZ_SR_CRC_TABLE=(()=>{const table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0}return table})();
 function crc32(bytes){let crc=0xffffffff;for(const value of bytes)crc=AZ_SR_CRC_TABLE[(crc^value)&0xff]^(crc>>>8);return (crc^0xffffffff)>>>0}
@@ -543,18 +568,23 @@ function bulkZipName(count){return `AZOBSS-Invoices-Receipts-${localDateInput()}
 function downloadBytes(bytes,name,type='application/octet-stream'){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);return name}
 async function bulkDownloadSelected(button=null){const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}try{const entries=uniquePdfEntries(rows);const zip=buildStoredZip(entries);const name=downloadBytes(zip,bulkZipName(entries.length),'application/zip');notify(`Downloaded ${entries.length} selected PDF(s) in ${name}.`)}catch(e){console.error(e);notify('Bulk download failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}}
 function bulkShareSummary(rows){const docs=rows.slice(0,8).map(r=>`${documentKindForStatus(r.status)==='invoice'?'Invoice':'Receipt'} ${currentDocumentNo(r)} - ${r.customerName}`);return [`AZOBSS selected documents: ${rows.length}`,...docs,rows.length>8?`+${rows.length-8} more document(s)`:'' ].filter(Boolean).join('\n')}
+async function createSelectedBundleShareLink(rows){
+  const entries=uniquePdfEntries(rows);const zipBytes=buildStoredZip(entries);const zipName=bulkZipName(entries.length);const blob=new Blob([zipBytes],{type:'application/zip'});return uploadShareBlob(blob,zipName,`BULK-${localDateInput()}-${entries.length}`,'application/zip');
+}
+async function bulkCopyLinkSelected(button=null){
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}
+  try{const data=await createSelectedBundleShareLink(rows);await copyPlainText(data.shareUrl);notify(`Bulk ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
+}
 async function bulkShareSelected(target,button=null){
-  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
-  if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase());
+  if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together as one ZIP link. Continue?`))return;
+  const targetWindow=window.open('about:blank','_blank');if(targetWindow){try{targetWindow.document.title='Preparing AZOBSS document link...';targetWindow.document.body.innerHTML='<p style="font:16px Arial;padding:24px">Preparing secure ZIP link...</p>'}catch(_e){}}
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const entries=uniquePdfEntries(rows);const files=entries.map(entry=>new File([entry.bytes],entry.name,{type:'application/pdf',lastModified:Date.now()}));const summary=bulkShareSummary(rows);
-    if(files.length<=10&&navigator.share&&(!navigator.canShare||navigator.canShare({files}))){notify(`Choose ${target==='telegram'?'Telegram':'WhatsApp'} from the share menu.`);await navigator.share({title:`AZOBSS ${files.length} document(s)`,text:summary,files});notify(`${files.length} document(s) shared.`);return}
-    const zipBytes=buildStoredZip(entries);const zipName=bulkZipName(entries.length);const zipFile=new File([zipBytes],zipName,{type:'application/zip',lastModified:Date.now()});
-    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[zipFile]}))){notify(`Choose ${target==='telegram'?'Telegram':'WhatsApp'} from the share menu.`);await navigator.share({title:`AZOBSS ${entries.length} document(s)`,text:summary,files:[zipFile]});notify(`${entries.length} document(s) shared as a ZIP bundle.`);return}
-    downloadBytes(zipBytes,zipName,'application/zip');const text=summary+`\n\nThe ZIP bundle has been downloaded. Attach ${zipName} in this chat.`;
-    if(target==='whatsapp'){const samePhone=customers.size===1?normalizeWhatsAppPhone(rows[0]?.customerPhone):'';window.open(samePhone?`https://wa.me/${samePhone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank','noopener');notify('ZIP downloaded. WhatsApp opened; attach the downloaded bundle.')}else{window.open('https://t.me/share/url?url='+encodeURIComponent('https://www.azobss.com')+'&text='+encodeURIComponent(text),'_blank','noopener');notify('ZIP downloaded. Telegram opened; attach the downloaded bundle.')}
-  }catch(e){if(e?.name!=='AbortError'){console.error(e);notify('Bulk share failed: '+(e.message||e),true)}}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
+    const data=await createSelectedBundleShareLink(rows);const summary=bulkShareSummary(rows);const text=`${summary}\n\nDownload bundle: ${data.shareUrl}`;
+    let url='';if(target==='whatsapp'){const samePhone=customers.size===1?normalizeWhatsAppPhone(rows[0]?.customerPhone):'';url=samePhone?`https://wa.me/${samePhone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`}else url=`https://t.me/share/url?url=${encodeURIComponent(data.shareUrl)}&text=${encodeURIComponent(summary)}`;
+    const opened=setDirectShareWindow(targetWindow,url);if(!opened){await copyPlainText(data.shareUrl).catch(()=>{});notify(`${target==='telegram'?'Telegram':'WhatsApp'} popup was blocked. Bundle link copied instead.`,true)}else notify(`${target==='telegram'?'Telegram':'WhatsApp'} opened directly with the selected-document link.`)
+  }catch(e){try{targetWindow?.close()}catch(_e){}console.error(e);notify('Bulk share failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
 }
 async function bulkDeleteSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const paid=rows.filter(r=>isRecognizedPayment(r.status)).length;const manual=rows.filter(r=>r.source==='manual');const website=rows.filter(r=>r.source==='website');const warning=paid?`\n\nWarning: ${paid} Paid record(s) will be removed from sales and profit totals.`:'';
@@ -579,13 +609,13 @@ function bind(){
   ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
   el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',loadData);el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
   el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
-  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkWhatsApp')?.addEventListener('click',e=>bulkShareSelected('whatsapp',e.currentTarget));el('salesReceiptBulkTelegram')?.addEventListener('click',e=>bulkShareSelected('telegram',e.currentTarget));el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
+  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkWhatsApp')?.addEventListener('click',e=>bulkShareSelected('whatsapp',e.currentTarget));el('salesReceiptBulkTelegram')?.addEventListener('click',e=>bulkShareSelected('telegram',e.currentTarget));el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'physical',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog'))closeForm()});
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('salesReceiptDialog')?.hidden)closeForm()});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
 }
 window.azSalesReceiptsLoad=async function(){bind();return loadData()};
 bind();

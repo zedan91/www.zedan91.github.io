@@ -1,0 +1,49 @@
+AZOBSS PATCH 735 — DIRECT WHATSAPP / TELEGRAM + COPY PDF LINK
+Date: 04 Aug 2026
+Baseline: Patch 734
+
+What changed
+------------
+1. Removed Web Share API / Windows Share Sheet from Receipt and Invoice actions.
+2. WhatsApp button now opens WhatsApp directly using wa.me with a secure PDF link.
+3. Telegram button now opens Telegram directly using t.me/share/url with a secure PDF link.
+4. Added purple chain-link icon on every record:
+   - click once to upload the generated PDF privately to Cloudflare R2;
+   - a signed HTTPS PDF URL is copied directly to clipboard.
+5. Added bulk chain-link button:
+   - selected PDFs are bundled as one ZIP;
+   - a signed ZIP link is copied to clipboard.
+6. Bulk WhatsApp / Telegram now share one signed ZIP URL directly, without Windows Share Sheet.
+7. Signed document links expire after 365 days by default.
+
+Required deployment
+-------------------
+A. Upload this website package and redeploy Render because deploy-server.js has a new endpoint:
+   POST /api/admin/sales-document/share-link
+
+B. Replace the Cloudflare Worker code with:
+   AZOBSS-Cloudflare-R2-Worker-Patch-735.js
+   Then press Deploy.
+
+Existing Cloudflare binding/secret remain the same:
+   R2 binding name: AZOBSS_FILES
+   Worker secret: AZOBSS_R2_TOKEN_SECRET
+
+Existing Render variables remain required:
+   AZOBSS_R2_DOWNLOAD_BASE_URL
+   AZOBSS_R2_TOKEN_SECRET
+
+No new environment variable is required.
+Optional:
+   AZOBSS_SALES_SHARE_LINK_DAYS=365
+   AZOBSS_SALES_SHARE_MAX_MB=20
+
+R2 storage prefix used:
+   sales-documents/
+
+Security
+--------
+- Only an authenticated admin can create a share link.
+- The copied link itself is signed and can be opened by the customer without admin login.
+- The PDF link ends with the PDF filename and opens inline in the browser.
+- Regenerating the same document overwrites its R2 copy rather than creating unlimited duplicates.

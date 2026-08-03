@@ -1,4 +1,4 @@
-// AZOBSS Cloudflare R2 Download + Tech Vault Upload/Delete Gateway - Patch 719
+// AZOBSS Cloudflare R2 Download + Tech Vault + Sales PDF Share Gateway - Patch 735
 // Required existing bindings:
 //   R2 bucket binding: AZOBSS_FILES
 //   Worker secret:     AZOBSS_R2_TOKEN_SECRET
@@ -9,8 +9,9 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const DEFAULT_BACKEND_SYNC_URL = "https://azobss-backend.onrender.com/api/premium/r2-usage-sync";
 const DELIVERY_TTL_SECONDS = 2 * 60 * 60;
-const ALLOWED_PREFIXES = ["software/", "cad/", "tech-vault/"];
+const ALLOWED_PREFIXES = ["software/", "cad/", "tech-vault/", "sales-documents/"];
 const TECH_VAULT_MAX_BYTES = 250 * 1024 * 1024;
+const SALES_SHARE_MAX_BYTES = 50 * 1024 * 1024;
 
 export default {
   async fetch(request, env, ctx) {
@@ -23,17 +24,27 @@ export default {
       if (url.pathname === "/health") {
         return json({
           ok: true,
-          patch: "AZOBSS_R2_WORKER_TECH_VAULT_DELETE_719_20260803",
+          patch: "AZOBSS_R2_WORKER_SALES_PDF_SHARE_735_20260804",
           bucketBinding: Boolean(env.AZOBSS_FILES),
           tokenSecretConfigured: Boolean(env.AZOBSS_R2_TOKEN_SECRET),
           directGate: true,
           rangeSupported: true,
           techVaultUpload: true,
           techVaultDelete: true,
+          salesPdfShare: true,
           allowedPrefixes: ALLOWED_PREFIXES
         });
       }
 
+
+
+      if (url.pathname.startsWith("/sales-file-upload/")) {
+        return await handleSalesFileUpload(request, env, url);
+      }
+
+      if (url.pathname.startsWith("/sales-file/")) {
+        return await handleSalesFile(request, env, url);
+      }
 
       if (url.pathname.startsWith("/vault-upload/")) {
         return await handleVaultUpload(request, env, url);
@@ -53,13 +64,76 @@ export default {
 
       return text("AZOBSS private download gateway", 200);
     } catch (error) {
-      const vaultWriteRequest = (() => { try { const p = new URL(request.url).pathname; return p.startsWith("/vault-upload/") || p.startsWith("/vault-delete/"); } catch (_) { return false; } })();
+      const vaultWriteRequest = (() => { try { const p = new URL(request.url).pathname; return p.startsWith("/vault-upload/") || p.startsWith("/vault-delete/") || p.startsWith("/sales-file-upload/"); } catch (_) { return false; } })();
       const extra = vaultWriteRequest ? Object.fromEntries(corsHeaders()) : {};
       return text(error?.message || "Gateway error", Number(error?.status || 500), extra);
     }
   }
 };
 
+
+
+async function handleSalesFileUpload(request, env, url) {
+  ensureConfigured(env);
+  if (request.method !== "PUT") return text("Method not allowed", 405, { Allow:"PUT, OPTIONS", ...Object.fromEntries(corsHeaders()) });
+  const signed = decodeURIComponent(url.pathname.slice("/sales-file-upload/".length));
+  const payload = await verifySignedToken(signed, env.AZOBSS_R2_TOKEN_SECRET);
+  if (payload.mode !== "sales-file-upload") throw httpError(403, "Invalid sales document upload token.");
+  validateObjectKey(payload.key);
+  if (!String(payload.key || "").toLowerCase().startsWith("sales-documents/")) throw httpError(403, "Sales document object key is required.");
+  const now = Math.floor(Date.now()/1000);
+  if (!Number.isInteger(payload.exp) || payload.exp <= now) throw httpError(410, "Upload token expired.");
+  const expectedSize = Number(payload.size || 0);
+  if (!Number.isFinite(expectedSize) || expectedSize <= 0 || expectedSize > SALES_SHARE_MAX_BYTES) throw httpError(413, "Invalid or excessive document size.");
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength && contentLength !== expectedSize) throw httpError(400, "Uploaded document size does not match the signed request.");
+  if (!request.body) throw httpError(400, "Upload body is empty.");
+  const name = safeFilename(payload.name || "AZOBSS-Receipt.pdf");
+  const signedType = cleanText(payload.type || "application/pdf", 120).toLowerCase();
+  const isZip = signedType === "application/zip" || /\.zip$/i.test(name);
+  const contentType = isZip ? "application/zip" : "application/pdf";
+  if (isZip ? !/\.zip$/i.test(name) : !/\.pdf$/i.test(name)) throw httpError(400, "Only PDF documents or ZIP bundles are allowed.");
+  const stored = await env.AZOBSS_FILES.put(payload.key, request.body, {
+    httpMetadata:{ contentType, cacheControl:"private, no-store" },
+    customMetadata:{ purpose:"azobss-sales-document-share", originalFilename:name, expiresAt:String(payload.exp || ""), patch:"735" }
+  });
+  const storedSize = Number(stored?.size || 0);
+  if (storedSize > SALES_SHARE_MAX_BYTES || (storedSize > 0 && storedSize !== expectedSize)) {
+    await env.AZOBSS_FILES.delete(payload.key);
+    throw httpError(storedSize > SALES_SHARE_MAX_BYTES ? 413 : 400, "Stored document size did not match the signed upload request.");
+  }
+  return json({ ok:true, key:payload.key, name, size:storedSize || expectedSize, contentType, etag:stored?.httpEtag || "", patch:"735" }, 200, corsHeaders());
+}
+
+async function handleSalesFile(request, env, url) {
+  ensureConfigured(env);
+  if (!["GET","HEAD"].includes(request.method)) return text("Method not allowed", 405, { Allow:"GET, HEAD, OPTIONS" });
+  const remainder = url.pathname.slice("/sales-file/".length);
+  const slash = remainder.indexOf("/");
+  const tokenPart = slash >= 0 ? remainder.slice(0, slash) : remainder;
+  const signed = decodeURIComponent(tokenPart);
+  const payload = await verifySignedToken(signed, env.AZOBSS_R2_TOKEN_SECRET);
+  if (payload.mode !== "sales-file") throw httpError(403, "Invalid sales document link.");
+  validateObjectKey(payload.key);
+  if (!String(payload.key || "").toLowerCase().startsWith("sales-documents/")) throw httpError(403, "Sales document object key is required.");
+  const now = Math.floor(Date.now()/1000);
+  if (!Number.isInteger(payload.exp) || payload.exp <= now) throw httpError(410, "This document link has expired.");
+  const object = await env.AZOBSS_FILES.get(payload.key);
+  if (!object) throw httpError(404, "Shared document not found.");
+  const name = safeFilename(payload.name || object.customMetadata?.originalFilename || payload.key.split("/").pop() || "AZOBSS-Receipt.pdf");
+  const type = String(payload.type || object.httpMetadata?.contentType || (/\.zip$/i.test(name)?"application/zip":"application/pdf")).toLowerCase();
+  const isPdf = type.includes("pdf") || /\.pdf$/i.test(name);
+  const headers = noStoreHeaders({
+    "Content-Type": isPdf ? "application/pdf" : "application/zip",
+    "Content-Disposition": `${isPdf ? "inline" : "attachment"}; filename="${name.replace(/"/g,"_")}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+    "Content-Length": String(object.size),
+    "ETag": object.httpEtag,
+    "Accept-Ranges":"bytes",
+    "X-AZOBSS-Share-Mode":"signed-r2-sales-document",
+    "Referrer-Policy":"no-referrer"
+  });
+  return new Response(request.method === "HEAD" ? null : object.body, { status:200, headers });
+}
 
 
 async function handleVaultDelete(request, env, url) {

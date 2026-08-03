@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 731: Admin Sales & Receipts + PDF sharing */
+/* AZOBSS PATCH 735: Admin Sales & Receipts + direct PDF links */
 .az-sr-hero{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
 .az-sr-hero-copy{max-width:760px}.az-sr-hero-copy h3{margin:0 0 7px;font-size:24px}.az-sr-hero-copy p{margin:0;color:#cbd5e1;line-height:1.55}
 .az-sr-hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -284,7 +284,7 @@
 
 .az-sr-actions{
   display:grid!important;
-  grid-template-columns:repeat(3,30px)!important;
+  grid-template-columns:repeat(4,30px)!important;
   grid-auto-rows:30px!important;
   align-content:start!important;
   justify-content:start!important;
@@ -326,6 +326,7 @@
   pointer-events:none!important;
 }
 .az-sr-icon-btn.download{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}
+.az-sr-icon-btn.link{background:#7c3aed!important;border-color:#a78bfa!important;color:#fff!important}
 .az-sr-icon-btn.wa{background:#166534!important;border-color:#22c55e!important;color:#fff!important}
 .az-sr-icon-btn.telegram{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important}
 .az-sr-icon-btn.print{background:#334155!important;border-color:#64748b!important;color:#fff!important}
@@ -345,7 +346,7 @@
 
 @media(max-width:720px){
   .az-sr-table{min-width:760px!important}
-  .az-sr-actions{grid-template-columns:repeat(3,28px)!important;grid-auto-rows:28px!important;gap:5px!important}
+  .az-sr-actions{grid-template-columns:repeat(4,28px)!important;grid-auto-rows:28px!important;gap:5px!important}
   .az-sr-icon-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important}
   .az-sr-icon-btn svg{width:14px!important;height:14px!important}
 }
@@ -421,6 +422,7 @@
 .az-sr-bulk-icon:disabled,.az-sr-bulk-icon.busy{opacity:.38!important;cursor:not-allowed!important;transform:none!important}
 .az-sr-bulk-icon svg{width:15px!important;height:15px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;pointer-events:none!important}
 .az-sr-bulk-icon.download{background:#15803d!important;border-color:#22c55e!important}
+.az-sr-bulk-icon.link{background:#7c3aed!important;border-color:#a78bfa!important}
 .az-sr-bulk-icon.wa{background:#166534!important;border-color:#22c55e!important}
 .az-sr-bulk-icon.telegram{background:#0369a1!important;border-color:#38bdf8!important}
 .az-sr-bulk-icon.delete{background:#b91c1c!important;border-color:#f87171!important}
@@ -449,3 +451,7 @@
   .az-sr-bulk-select{flex:1 1 auto!important}
   .az-sr-bulk-actions{width:100%!important;justify-content:flex-start!important}
 }
+
+
+/* AZOBSS PATCH 735: direct app sharing and copy-link icons */
+.az-sr-icon-btn.link,.az-sr-bulk-icon.link{box-shadow:0 0 0 1px rgba(167,139,250,.08) inset!important}
