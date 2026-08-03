@@ -4792,8 +4792,8 @@ function azR2Configured() {
 }
 
 
-// AZOBSS PATCH 717: Password-protected Tech Vault for private BAT storage.
-const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_SHORT_URL_PASSWORD_R2_UPLOAD_718_20260803";
+// AZOBSS PATCH 719: Password-protected Tech Vault with bulk R2 deletion and alphabetical sorting.
+const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_BULK_DELETE_ALPHABETICAL_719_20260803";
 const AZOBSS_TECH_VAULT_LOCAL_DIR = path.join(ROOT, "_private-tech-vault");
 const AZOBSS_TECH_VAULT_META_FILE = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "tech-vault-files.json");
 
@@ -4971,8 +4971,9 @@ async function azTechVaultListFiles() {
       snap.forEach(doc => {
         const row = doc.data() || {};
         const id = String(row.id || doc.id || "").trim();
-        if (!id || seen.has(id) || row.deleted === true) return;
+        if (!id || seen.has(id)) return;
         seen.add(id);
+        if (row.deleted === true) return;
         output.push({ ...row, id });
       });
     } catch (err) {
@@ -4981,13 +4982,21 @@ async function azTechVaultListFiles() {
   }
   for (const row of azTechVaultJsonRows()) {
     const id = String(row && row.id || "").trim();
-    if (!id || seen.has(id) || row.deleted === true) continue;
+    if (!id || seen.has(id)) continue;
     seen.add(id);
+    if (row.deleted === true) continue;
     output.push(row);
   }
   return output
     .filter(row => row && azTechVaultSafeFilename(row.filename || row.name))
-    .sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
+    .sort((a, b) => {
+      const nameA = String(a.filename || a.name || "");
+      const nameB = String(b.filename || b.name || "");
+      const byName = nameA.localeCompare(nameB, "en", { numeric:true, sensitivity:"base" });
+      if (byName) return byName;
+      if (Boolean(a.builtIn) !== Boolean(b.builtIn)) return a.builtIn ? -1 : 1;
+      return Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0);
+    });
 }
 async function azTechVaultFindFile(id = "") {
   const wanted = cleanPremiumText(id || "", 180);
@@ -5045,7 +5054,7 @@ function azTechVaultUploadToken(filename = "", size = 0, contentType = "") {
     size: safeSize,
     type: cleanPremiumText(contentType || "application/x-bat", 120),
     exp: Math.floor(Date.now()/1000) + 15 * 60,
-    patch: "717"
+    patch: "719"
   };
   const token = azTechVaultSignPayload(payload, azR2TokenSecret());
   if (!token) throw Object.assign(new Error("R2 upload token could not be created."), { statusCode: 503 });
@@ -5073,6 +5082,65 @@ function azTechVaultDownloadUrl(row = {}) {
     oid: cleanPremiumText(row.id || "", 160)
   }, azR2TokenSecret());
   return token ? `${azR2DownloadBaseUrl()}/dl/${encodeURIComponent(token)}` : "";
+}
+
+function azTechVaultDeleteUrl(row = {}) {
+  const key = azTechVaultSafeObjectKey(row.objectKey || row.key);
+  const id = cleanPremiumText(row.id || "", 180).replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!key || !id || !azR2Configured()) return "";
+  const token = azTechVaultSignPayload({
+    mode: "vault-delete",
+    key,
+    id,
+    exp: Math.floor(Date.now()/1000) + 10 * 60,
+    patch: "719"
+  }, azR2TokenSecret());
+  return token ? `${azR2DownloadBaseUrl()}/vault-delete/${encodeURIComponent(token)}` : "";
+}
+async function azTechVaultWriteDeletedRecord(row = {}) {
+  const id = cleanPremiumText(row.id || "", 180).replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!id) throw new Error("Invalid Tech Vault file ID.");
+  const tombstone = {
+    ...row,
+    id,
+    deleted: true,
+    deletedAtMs: Date.now(),
+    deletedAt: new Date().toISOString(),
+    deletedBy: "password-session",
+    patch: AZOBSS_TECH_VAULT_PATCH
+  };
+  const db = getAzobssBackendDb();
+  if (db) {
+    try {
+      await db.collection("techVaultFiles").doc(id).set(tombstone, { merge:true });
+    } catch (err) {
+      console.warn("Tech Vault Firestore delete marker failed:", err && (err.message || err));
+    }
+  }
+  const rows = azTechVaultJsonRows().filter(item => item && String(item.id || "") !== id);
+  rows.unshift(tombstone);
+  azTechVaultWriteJsonRows(rows.slice(0, 500));
+  return tombstone;
+}
+async function azTechVaultDeleteFile(row = {}) {
+  if (!row || row.builtIn === true || row.source === "encrypted-bundled" || row.source === "local-protected") {
+    throw Object.assign(new Error("Built-in files are protected and cannot be deleted."), { statusCode:400 });
+  }
+  const id = cleanPremiumText(row.id || "", 180).replace(/[^a-zA-Z0-9_-]/g, "");
+  const filename = azTechVaultSafeFilename(row.filename || row.name);
+  const objectKey = azTechVaultSafeObjectKey(row.objectKey || row.key);
+  if (!id || !filename || !objectKey) throw Object.assign(new Error("Invalid Tech Vault file record."), { statusCode:400 });
+  const deleteUrl = azTechVaultDeleteUrl(row);
+  if (!deleteUrl) throw Object.assign(new Error("Private R2 delete gateway is not configured."), { statusCode:503 });
+  const response = await fetch(deleteUrl, { method:"DELETE", headers:{ Accept:"application/json" } });
+  const responseText = await response.text();
+  if (!response.ok) {
+    let detail = responseText;
+    try { detail = JSON.parse(responseText).error || detail; } catch (_) {}
+    throw Object.assign(new Error(cleanPremiumText(detail, 300) || `R2 delete failed (HTTP ${response.status}).`), { statusCode:response.status || 502 });
+  }
+  await azTechVaultWriteDeletedRecord({ ...row, id, filename, objectKey });
+  return { id, filename, objectKey, deleted:true };
 }
 function azTechVaultPublicInfo() {
   return {
@@ -10744,6 +10812,30 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({ ok:true, file:saved, patch:AZOBSS_TECH_VAULT_PATCH }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (error) {
         return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "File registration failed." }, null, 2), "application/json");
+      }
+    }
+    if (pathname === "/api/tech-vault/delete" && req.method === "POST") {
+      if (!azTechVaultSessionFromRequest(req)) return send(res, 401, JSON.stringify({ ok:false, error:"Tech Vault session required." }, null, 2), "application/json");
+      try {
+        const data = parseRequestBody(await readBody(req));
+        const ids = Array.from(new Set((Array.isArray(data.ids) ? data.ids : [data.id]).map(value => cleanPremiumText(value || "", 180)).filter(Boolean))).slice(0, 100);
+        if (!ids.length) return send(res, 400, JSON.stringify({ ok:false, error:"Select at least one R2 file to delete." }, null, 2), "application/json");
+        const deleted = [];
+        const failed = [];
+        for (const id of ids) {
+          try {
+            const file = await azTechVaultFindFile(id);
+            if (!file) throw Object.assign(new Error("File not found or already deleted."), { statusCode:404 });
+            const result = await azTechVaultDeleteFile(file);
+            deleted.push(result);
+          } catch (error) {
+            failed.push({ id, error:cleanPremiumText(error && error.message, 300) || "Delete failed." });
+          }
+        }
+        const status = deleted.length ? 200 : 400;
+        return send(res, status, JSON.stringify({ ok:Boolean(deleted.length), error:deleted.length ? "" : (failed[0] && failed[0].error) || "No files were deleted.", deleted, failed, deletedCount:deleted.length, failedCount:failed.length, patch:AZOBSS_TECH_VAULT_PATCH }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "Delete request failed." }, null, 2), "application/json");
       }
     }
     if (pathname === "/api/tech-vault/download-token" && req.method === "POST") {
