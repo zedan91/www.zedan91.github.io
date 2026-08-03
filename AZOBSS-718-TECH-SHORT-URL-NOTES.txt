@@ -1,0 +1,44 @@
+AZOBSS PATCH 718 - TECH SHORT URL
+
+PUBLIC URL
+  https://www.azobss.com/tech/
+
+OLD URL
+  https://www.azobss.com/tech-vault/ redirects automatically to /tech/.
+
+WHAT CHANGED
+  - Public page folder changed from /tech-vault/ to /tech/.
+  - Internal protected API endpoints remain /api/tech-vault/* for compatibility.
+  - Password is still checked only by the Render backend and is never embedded in the webpage.
+  - AZOBSS_Installer.bat remains the first encrypted protected file.
+
+RENDER ENVIRONMENT VARIABLES
+  Required:
+    AZOBSS_TECH_VAULT_PASSWORD=<set the requested private password in Render>
+
+  Required for the bundled AZOBSS_Installer.bat:
+    AZOBSS_TECH_VAULT_BUNDLED_FILE_KEY=<existing Patch 717 key>
+
+  Recommended:
+    AZOBSS_TECH_VAULT_SESSION_SECRET=<existing private session secret>
+
+  Optional:
+    AZOBSS_TECH_VAULT_SESSION_HOURS=12
+    AZOBSS_TECH_VAULT_MAX_FILE_MB=25
+
+CLOUDFLARE WORKER
+  Deploy:
+    AZOBSS-Cloudflare-R2-Worker-Patch-718.js
+
+  Keep existing bindings/secrets:
+    R2 binding: AZOBSS_FILES
+    Secret: AZOBSS_R2_TOKEN_SECRET
+
+SECURITY
+  - Do not place the vault password in GitHub, HTML, JavaScript, or a committed .env file.
+  - Set or change it only in Render Environment Variables.
+  - Browser stores only a signed session token in sessionStorage.
+  - The plaintext bundled BAT is not stored in the website package.
+
+PATCH
+  AZOBSS_TECH_SHORT_URL_PASSWORD_R2_UPLOAD_718_20260803

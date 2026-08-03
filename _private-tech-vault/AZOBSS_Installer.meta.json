@@ -1,0 +1,7 @@
+{
+  "filename": "AZOBSS_Installer.bat",
+  "plaintextSize": 1241715,
+  "sha256": "06ea7893d025631229590831c24c4139f1842e5ab7218c9db44e5fad808b4d4a",
+  "encryptedFormat": "AZTV1-AES-256-GCM",
+  "aad": "AZOBSS-Tech-Vault-717"
+}
