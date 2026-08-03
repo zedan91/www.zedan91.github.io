@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 722: Admin Sales & Receipts + PDF sharing */
+/* AZOBSS PATCH 731: Admin Sales & Receipts + PDF sharing */
 .az-sr-hero{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
 .az-sr-hero-copy{max-width:760px}.az-sr-hero-copy h3{margin:0 0 7px;font-size:24px}.az-sr-hero-copy p{margin:0;color:#cbd5e1;line-height:1.55}
 .az-sr-hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -211,3 +211,40 @@
   .az-sr-filter-grid>label:nth-child(7),
   .az-sr-filter-actions{flex:1 1 100%!important;min-width:100%!important;width:100%!important}
 }
+
+/* AZOBSS PATCH 730: compact separate Receipt / Invoice action menus */
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){overflow:visible!important}
+.az-sr-actions{align-items:start!important}
+.az-sr-doc-menu{min-width:0;width:100%;position:relative}
+.az-sr-doc-menu summary{
+  list-style:none;cursor:pointer;user-select:none;
+  width:100%;padding:8px 5px;border-radius:8px;
+  border:1px solid rgba(56,189,248,.42);
+  background:rgba(3,105,161,.18);color:#bae6fd;
+  font-size:9px;font-weight:950;text-align:center;line-height:1.1;
+}
+.az-sr-doc-menu.invoice summary{border-color:rgba(167,139,250,.48);background:rgba(109,40,217,.16);color:#ddd6fe}
+.az-sr-doc-menu summary::-webkit-details-marker{display:none}
+.az-sr-doc-menu[open] summary{border-bottom-left-radius:5px;border-bottom-right-radius:5px}
+.az-sr-doc-menu-body{display:grid;grid-template-columns:1fr;gap:4px;margin-top:4px}
+.az-sr-doc-menu-body .btn{padding:6px 3px!important;font-size:8px!important}
+.az-sr-manage-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+@media(max-width:720px){
+  .az-sr-actions{min-width:170px!important}
+  .az-sr-doc-menu summary{font-size:8.5px}
+}
+
+/* AZOBSS PATCH 731: status-linked Invoice / Receipt and recognized accounting */
+.az-sr-doc-kind{
+  display:inline-flex;align-items:center;margin:0 0 4px;padding:2px 6px;border-radius:999px;
+  font-size:7.5px;font-weight:950;letter-spacing:.06em;border:1px solid rgba(148,163,184,.32);
+}
+.az-sr-doc-kind.invoice{color:#ddd6fe;border-color:rgba(167,139,250,.48);background:rgba(109,40,217,.16)}
+.az-sr-doc-kind.receipt{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(21,128,61,.16)}
+.az-sr-unrecognized{color:#94a3b8!important;font-weight:800}
+.az-sr-due{color:#fde68a!important;font-weight:850;white-space:normal}
+.az-sr-doc-menu{grid-column:1/-1}
+#salesReceiptReceiptNo[data-mode="invoice"]{border-color:rgba(167,139,250,.58);color:#ddd6fe}
+#salesReceiptReceiptNo[data-mode="receipt"]{border-color:rgba(34,197,94,.52);color:#bbf7d0}
+.az-sr-status-note{margin-top:10px;padding:9px 11px;border:1px solid rgba(125,211,252,.20);border-radius:11px;background:rgba(15,23,42,.52);color:#cbd5e1;font-size:11px;line-height:1.4}
+.az-sr-status-note b:first-child{color:#ddd6fe}.az-sr-status-note b:last-child{color:#bbf7d0}

@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 726: Add Computer & IT category label to receipt PDF */
+/* AZOBSS PATCH 731: Status-linked invoice/receipt PDF numbering and payment conversion */
 (function(global){
   'use strict';
 
@@ -34,9 +34,36 @@
     if(Number.isNaN(date.getTime())) return '-';
     return new Intl.DateTimeFormat('en-MY',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date);
   }
+  function parseTime(value){
+    if(!value)return 0;if(typeof value==='number'&&Number.isFinite(value))return value;
+    if(value&&typeof value.toDate==='function'){const d=value.toDate();return d&&typeof d.getTime==='function'?d.getTime():0}
+    if(typeof value==='object'){if(Number(value.seconds)>0)return Number(value.seconds)*1000;if(Number(value._seconds)>0)return Number(value._seconds)*1000}
+    const parsed=Date.parse(String(value));return Number.isNaN(parsed)?0:parsed;
+  }
+  function documentDateTime(row,type){
+    const docType=normalizeDocumentType(type);
+    if(docType==='receipt')return parseTime(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||parseTime(row.saleDateMs)||Date.now();
+    return parseTime(row.invoiceDateMs)||parseTime(row.saleDateMs)||Date.now();
+  }
   function categoryLabel(value){
     return ({physical:'Physical','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';
   }
+  function normalizeDocumentType(value){ return clean(value).toLowerCase()==='invoice' ? 'invoice' : 'receipt'; }
+  function receiptNumber(row){
+    const explicit=clean(row.receiptNo); if(explicit&&!/^AZI-/i.test(explicit)&&!/^INV-/i.test(explicit)) return explicit;
+    const source=clean(row.documentNo||row.invoiceNo||explicit||'Receipt');
+    if(/^AZI-/i.test(source)) return source.replace(/^AZI-/i,'AZR-');
+    if(/^INV-/i.test(source)) return source.replace(/^INV-/i,'RCP-');
+    return source;
+  }
+  function invoiceNumber(row){
+    const explicit=clean(row.invoiceNo); if(explicit) return explicit;
+    const source=clean(row.documentNo||row.receiptNo||'Invoice');
+    if(/^AZR-/i.test(source)) return source.replace(/^AZR-/i,'AZI-');
+    if(/^INV-/i.test(source)||/^AZI-/i.test(source)) return source;
+    return `INV-${source}`;
+  }
+  function documentNumber(row,type){ return normalizeDocumentType(type)==='invoice' ? invoiceNumber(row) : receiptNumber(row); }
   function statusLabel(value){ return (clean(value) || 'pending').toUpperCase(); }
   function statusColors(value){
     const status=clean(value).toLowerCase();
@@ -58,8 +85,8 @@
     return units*size*(bold?1.035:1);
   }
   function wrapText(value,maxWidth,size,bold){
-    const source=ascii(value)||'-'; const lines=[];
-    source.split(/\r?\n/).forEach((paragraph,pIndex)=>{
+    const source=ascii(value)||'-'; const lines=[]; const paragraphs=source.split(/\r?\n/);
+    paragraphs.forEach((paragraph,pIndex)=>{
       const words=paragraph.split(/\s+/).filter(Boolean);
       if(!words.length){ lines.push(''); return; }
       let current='';
@@ -71,13 +98,12 @@
         let chunk='';
         for(const char of word){
           const next=chunk+char;
-          if(chunk && estimateWidth(next,size,bold)>maxWidth){ lines.push(chunk); chunk=char; }
-          else chunk=next;
+          if(chunk && estimateWidth(next,size,bold)>maxWidth){ lines.push(chunk); chunk=char; } else chunk=next;
         }
         current=chunk;
       });
       if(current) lines.push(current);
-      if(pIndex<source.split(/\r?\n/).length-1) lines.push('');
+      if(pIndex<paragraphs.length-1) lines.push('');
     });
     return lines.length?lines:['-'];
   }
@@ -94,43 +120,47 @@
   }
   function textLines(commands,lines,x,yTop,options){ const opts=options||{}; const lh=opts.lineHeight||((opts.size||10)*1.35); lines.forEach((v,i)=>text(commands,v,x,yTop+(i*lh),opts)); return yTop+(lines.length*lh); }
   function image(commands,name,x,yTop,width,height){ add(commands,`q ${width.toFixed(2)} 0 0 ${height.toFixed(2)} ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} cm /${name} Do Q`); }
+  function centeredBaseline(y,height,size){ return y + ((height-size)/2) + (size*0.78); }
 
-  function drawHeader(commands,row,continuation){
+  function documentTitle(type){ return normalizeDocumentType(type)==='invoice' ? 'INVOICE' : 'RECEIPT'; }
+  function drawHeader(commands,row,continuation,type){
+    const docType=normalizeDocumentType(type);
     fillRect(commands,0,0,PAGE_W,92,[238,241,245]);
     fillRect(commands,0,92,PAGE_W,4,[16,185,129]);
     image(commands,'Logo',MARGIN_X,18,31,31);
     text(commands,'AZOBSS',MARGIN_X+41,42,{size:31,bold:true,color:[55,65,81]});
-    text(commands,'SALES RECEIPT',PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[55,65,81]});
-    text(commands,continuation?'Receipt continuation':clean(row.receiptNo||'Receipt'),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
+    text(commands,documentTitle(docType),PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[55,65,81]});
+    text(commands,continuation?`${docType==='invoice'?'Invoice':'Receipt'} continuation`:documentNumber(row,docType),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
   }
   function drawStatusBadge(commands,row,x,y){
     const colors=statusColors(row.status); const label=statusLabel(row.status); const w=Math.max(72,estimateWidth(label,8,true)+22);
     fillRect(commands,x-w,y,w,23,colors.bg); strokeRect(commands,x-w,y,w,23,colors.border,0.8);
     text(commands,label,x-(w/2),y+15,{size:8,bold:true,align:'center',color:colors.text});
   }
-  function drawInfoBox(commands,row){
-    const x=MARGIN_X,y=116,w=CONTENT_W,h=128,mid=x+(w/2);
+  function drawInfoBox(commands,row,type){
+    const docType=normalizeDocumentType(type); const x=MARGIN_X,y=116,w=CONTENT_W,h=128,mid=x+(w/2);
     fillRect(commands,x,y,w,h,[248,250,252]); strokeRect(commands,x,y,w,h,[203,213,225],0.8); line(commands,mid,y+14,mid,y+h-14,[226,232,240],0.8);
     const label=[100,116,139],value=[55,65,81],left=x+16,right=mid+16;
-    text(commands,'CUSTOMER',left,y+22,{size:7.5,bold:true,color:label});
+    text(commands,docType==='invoice'?'BILL TO':'CUSTOMER',left,y+22,{size:7.5,bold:true,color:label});
     text(commands,clean(row.customerName||'Customer'),left,y+40,{size:11,bold:true,color:value});
     text(commands,'PHONE / EMAIL',left,y+64,{size:7.5,bold:true,color:label});
     const contact=[clean(row.customerPhone),clean(row.customerEmail)].filter(Boolean).join(' / ')||'-';
-    const contactLines=wrapText(contact,(w/2)-32,8.8,false).slice(0,2); textLines(commands,contactLines,left,y+80,{size:8.8,lineHeight:12,color:value});
-    text(commands,'RECEIPT NO.',right,y+22,{size:7.5,bold:true,color:label});
-    text(commands,clean(row.receiptNo||'-'),right,y+40,{size:10.2,bold:true,color:value});
-    text(commands,'DATE',right,y+64,{size:7.5,bold:true,color:label});
-    text(commands,formatDateTime(row.saleDateMs),right,y+80,{size:9.2,bold:true,color:value});
-    text(commands,'PAYMENT METHOD',right,y+104,{size:7.5,bold:true,color:label});
-    text(commands,clean(row.paymentMethod||'-'),right,y+120,{size:9.2,bold:true,color:value});
+    textLines(commands,wrapText(contact,(w/2)-32,8.8,false).slice(0,2),left,y+80,{size:8.8,lineHeight:12,color:value});
+    text(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',right,y+22,{size:7.5,bold:true,color:label});
+    text(commands,documentNumber(row,docType),right,y+40,{size:10.2,bold:true,color:value});
+    text(commands,docType==='invoice'?'ISSUE DATE':'DATE',right,y+64,{size:7.5,bold:true,color:label});
+    text(commands,formatDateTime(documentDateTime(row,docType)),right,y+80,{size:9.2,bold:true,color:value});
+    text(commands,docType==='invoice'?'PAYMENT TERMS':'PAYMENT METHOD',right,y+104,{size:7.5,bold:true,color:label});
+    text(commands,docType==='invoice'?(clean(row.paymentTerms)||'Due upon receipt'):clean(row.paymentMethod||'-'),right,y+120,{size:9.2,bold:true,color:value});
     drawStatusBadge(commands,row,x+w-12,y-10);
   }
 
-  const TABLE={x:MARGIN_X,widths:[211,78,48,82,92],headers:['ITEM','CATEGORY','QTY','UNIT PRICE','AMOUNT']};
+  const TABLE={x:MARGIN_X,widths:[28,190,78,45,78,92],headers:['NO.','DESCRIPTION','CATEGORY','QTY','UNIT PRICE','AMOUNT']};
   function tableX(index){ let x=TABLE.x; for(let i=0;i<index;i+=1)x+=TABLE.widths[i]; return x; }
   function drawTableHeader(commands,y){
-    const h=28; fillRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240]);
-    TABLE.headers.forEach((header,index)=>{ const cellX=tableX(index),cellW=TABLE.widths[index]; const align=index===0?'left':'center'; text(commands,header,align==='left'?cellX+9:cellX+(cellW/2),y+18,{size:7.5,bold:true,align,color:[51,65,85]}); });
+    const h=30; fillRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240]); strokeRect(commands,TABLE.x,y,CONTENT_W,h,[203,213,225],0.6);
+    let dx=TABLE.x; TABLE.widths.slice(0,-1).forEach(width=>{dx+=width;line(commands,dx,y,dx,y+h,[203,213,225],0.55)});
+    TABLE.headers.forEach((header,index)=>{ const cellX=tableX(index),cellW=TABLE.widths[index]; text(commands,header,cellX+(cellW/2),centeredBaseline(y,h,7.3),{size:7.3,bold:true,align:'center',color:[51,65,85]}); });
     return y+h;
   }
   function normalizedItems(row){
@@ -138,27 +168,32 @@
     if(items.length) return items.map(item=>({name:clean(item.name||item.product||'Item'),category:clean(item.category||'other'),qty:number(item.qty)||1,unitPrice:number(item.unitPrice||item.price),amount:(number(item.qty)||1)*number(item.unitPrice||item.price)}));
     return [{name:'Purchase',category:clean(row.category||'other'),qty:1,unitPrice:number(row.gross),amount:number(row.gross)}];
   }
-  function itemRowHeight(item){ const lines=wrapText(item.name,TABLE.widths[0]-18,9.1,true); return Math.max(38,17+(lines.length*12)); }
+  function itemRowHeight(item){ const lines=wrapText(item.name,TABLE.widths[1]-18,8.9,true); return Math.max(40,18+(lines.length*11.5)); }
+  function drawCenteredLines(commands,lines,cellX,cellW,y,h,size,bold,color){
+    const lineHeight=11.5; const total=(lines.length-1)*lineHeight+size; const first=y+((h-total)/2)+(size*0.78);
+    textLines(commands,lines,cellX+(cellW/2),first,{size,bold,lineHeight,align:'center',color});
+  }
   function drawItemRow(commands,item,index,y){
     const h=itemRowHeight(item),bg=index%2===0?[255,255,255]:[248,250,252];
     fillRect(commands,TABLE.x,y,CONTENT_W,h,bg); strokeRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240],0.55);
     let dx=TABLE.x; TABLE.widths.slice(0,-1).forEach(width=>{dx+=width;line(commands,dx,y,dx,y+h,[226,232,240],0.55)});
-    const nameLines=wrapText(item.name,TABLE.widths[0]-18,9.1,true); textLines(commands,nameLines,tableX(0)+9,y+16,{size:9.1,bold:true,lineHeight:12,color:[55,65,81]});
-    text(commands,categoryLabel(item.category),tableX(1)+(TABLE.widths[1]/2),y+22,{size:8,align:'center',color:[51,65,85]});
-    text(commands,formatQty(item.qty),tableX(2)+(TABLE.widths[2]/2),y+22,{size:9,bold:true,align:'center'});
-    text(commands,money(item.unitPrice),tableX(3)+TABLE.widths[3]-8,y+22,{size:8.3,align:'right'});
-    text(commands,money(item.amount),tableX(4)+TABLE.widths[4]-8,y+22,{size:9,bold:true,align:'right',color:[4,120,87]});
+    text(commands,String(index+1),tableX(0)+(TABLE.widths[0]/2),centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'center',color:[55,65,81]});
+    drawCenteredLines(commands,wrapText(item.name,TABLE.widths[1]-18,8.9,true),tableX(1),TABLE.widths[1],y,h,8.9,true,[55,65,81]);
+    text(commands,categoryLabel(item.category),tableX(2)+(TABLE.widths[2]/2),centeredBaseline(y,h,7.8),{size:7.8,align:'center',color:[51,65,85]});
+    text(commands,formatQty(item.qty),tableX(3)+(TABLE.widths[3]/2),centeredBaseline(y,h,8.8),{size:8.8,bold:true,align:'center'});
+    text(commands,money(item.unitPrice),tableX(4)+TABLE.widths[4]-7,centeredBaseline(y,h,8.1),{size:8.1,align:'right'});
+    text(commands,money(item.amount),tableX(5)+TABLE.widths[5]-7,centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'right',color:[4,120,87]});
     return y+h;
   }
-  function totalLines(row){
-    const lines=[['Subtotal',number(row.subtotal||row.gross)]];
+  function totalLines(row,type){
+    const docType=normalizeDocumentType(type); const lines=[['Subtotal',number(row.subtotal||row.gross)]];
     if(number(row.discount)>0) lines.push(['Discount',-number(row.discount)]);
     if(number(row.shippingCharge)>0) lines.push(['Shipping',number(row.shippingCharge)]);
-    lines.push(['TOTAL',number(row.gross)]);
-    return lines;
+    const finalLabel=docType==='invoice'?'TOTAL PAYABLE':(clean(row.status).toLowerCase()==='paid'?'TOTAL PAID':'TOTAL');
+    lines.push([finalLabel,number(row.gross)]); return lines;
   }
-  function drawTotals(commands,row,y){
-    const lines=totalLines(row),boxW=260,boxX=PAGE_W-MARGIN_X-boxW,boxH=22+(lines.length*24);
+  function drawTotals(commands,row,y,type){
+    const lines=totalLines(row,type),boxW=260,boxX=PAGE_W-MARGIN_X-boxW,boxH=22+(lines.length*24);
     fillRect(commands,boxX,y,boxW,boxH,[236,253,245]); strokeRect(commands,boxX,y,boxW,boxH,[16,185,129],0.9);
     lines.forEach((entry,index)=>{
       const last=index===lines.length-1,yy=y+20+(index*24);
@@ -177,30 +212,37 @@
     textLines(commands,lines,MARGIN_X+12,y+36,{size:8.8,lineHeight:12,color:[69,26,3]});
     return y+h;
   }
-  function addFooter(commands,pageNumber,pageCount,row){
+  function addFooter(commands,pageNumber,pageCount,row,type){
+    const docType=normalizeDocumentType(type);
     line(commands,MARGIN_X,786,PAGE_W-MARGIN_X,786,[203,213,225],0.7);
     text(commands,'AZOBSS | www.azobss.com',MARGIN_X,805,{size:7.7,bold:true,color:[71,85,105]});
     text(commands,`Page ${pageNumber} / ${pageCount}`,PAGE_W-MARGIN_X,805,{size:7.5,align:'right',color:[71,85,105]});
-    const note=clean(row.status).toLowerCase()==='paid'?'Payment status: PAID. This is a computer-generated receipt.':'This receipt does not confirm payment until its status is PAID.';
+    let note='';
+    if(docType==='invoice') note='This invoice is a request for payment and is not proof that payment has been received.';
+    else note=clean(row.status).toLowerCase()==='paid'?`Payment status: PAID. Computer-generated receipt${clean(row.invoiceNo)?` converted from invoice ${clean(row.invoiceNo)}`:''}.`:'This receipt does not confirm payment until its status is PAID.';
     text(commands,note,MARGIN_X,821,{size:7.2,color:[100,116,139]});
   }
-  function buildPages(row){
-    const pages=[]; let commands=createPage(); pages.push(commands); drawHeader(commands,row,false); drawInfoBox(commands,row); let y=drawTableHeader(commands,265);
+  function buildPages(row,type){
+    const docType=normalizeDocumentType(type); const pages=[]; let commands=createPage(); pages.push(commands);
+    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,265);
     normalizedItems(row).forEach((item,index)=>{
       const h=itemRowHeight(item);
-      if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true); y=drawTableHeader(commands,120); }
+      if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
       y=drawItemRow(commands,item,index,y);
     });
-    y+=16; const totalsHeight=22+(totalLines(row).length*24);
-    if(y+totalsHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true); y=120; }
-    y=drawTotals(commands,row,y); y+=15;
+    y+=16; const totalsHeight=22+(totalLines(row,docType).length*24);
+    if(y+totalsHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
+    y=drawTotals(commands,row,y,docType); y+=15;
     if(clean(row.notes)){
       const noteHeight=Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12));
-      if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true); y=120; }
+      if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
       y=drawNotes(commands,row,y);
     }
-    if(y+45<BOTTOM_LIMIT){ text(commands,'Thank you for your purchase.',MARGIN_X,y+26,{size:11,bold:true,color:[4,120,87]}); }
-    pages.forEach((page,index)=>addFooter(page,index+1,pages.length,row)); return pages;
+    if(y+45<BOTTOM_LIMIT){
+      const closing=docType==='invoice'?'Thank you. Please use the invoice number as your payment reference.':'Thank you for your purchase.';
+      text(commands,closing,MARGIN_X,y+26,{size:10.5,bold:true,color:[4,120,87]});
+    }
+    pages.forEach((page,index)=>addFooter(page,index+1,pages.length,row,docType)); return pages;
   }
   function stringToBytes(value){ const bytes=new Uint8Array(value.length); for(let i=0;i<value.length;i+=1)bytes[i]=value.charCodeAt(i)&0xff; return bytes; }
   function concatBytes(parts){ const total=parts.reduce((sum,part)=>sum+part.length,0),output=new Uint8Array(total); let offset=0; parts.forEach(part=>{output.set(part,offset);offset+=part.length}); return output; }
@@ -208,8 +250,8 @@
     const raw=typeof atob==='function'?atob(value):Buffer.from(value,'base64').toString('binary');
     const bytes=new Uint8Array(raw.length); for(let i=0;i<raw.length;i+=1)bytes[i]=raw.charCodeAt(i)&0xff; return bytes;
   }
-  function buildBytes(row){
-    const pages=buildPages(row||{}),objects=[]; objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
+  function buildBytes(row,type='receipt'){
+    const pages=buildPages(row||{},type),objects=[]; objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
     objects[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
     objects[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
     const logoBytes=base64ToBytes(LOGO_JPEG_BASE64);
@@ -227,13 +269,13 @@
     for(let index=1;index<objects.length;index+=1)xref+=`${String(offsets[index]).padStart(10,'0')} 00000 n \n`;
     xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`; parts.push(stringToBytes(xref)); return concatBytes(parts);
   }
-  function safeFilename(value){ return ascii(value).replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'Receipt'; }
-  function filename(row){ return `AZOBSS-Receipt-${safeFilename(row?.receiptNo||'Receipt')}-${safeFilename(row?.customerName||'Customer').slice(0,28)}.pdf`; }
-  function createBlob(row){ return new Blob([buildBytes(row)],{type:'application/pdf'}); }
-  function createFile(row){ return new File([buildBytes(row)],filename(row),{type:'application/pdf',lastModified:Date.now()}); }
-  function download(row){
-    const blob=createBlob(row),url=URL.createObjectURL(blob),anchor=document.createElement('a'); anchor.href=url; anchor.download=filename(row); document.body.appendChild(anchor); anchor.click(); anchor.remove(); setTimeout(()=>URL.revokeObjectURL(url),1800); return anchor.download;
+  function safeFilename(value){ return ascii(value).replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'Document'; }
+  function filename(row,type='receipt'){ const docType=normalizeDocumentType(type); const label=docType==='invoice'?'Invoice':'Receipt'; return `AZOBSS-${label}-${safeFilename(documentNumber(row,docType))}-${safeFilename(row?.customerName||'Customer').slice(0,28)}.pdf`; }
+  function createBlob(row,type='receipt'){ return new Blob([buildBytes(row,type)],{type:'application/pdf'}); }
+  function createFile(row,type='receipt'){ return new File([buildBytes(row,type)],filename(row,type),{type:'application/pdf',lastModified:Date.now()}); }
+  function download(row,type='receipt'){
+    const blob=createBlob(row,type),url=URL.createObjectURL(blob),anchor=document.createElement('a'); anchor.href=url; anchor.download=filename(row,type); document.body.appendChild(anchor); anchor.click(); anchor.remove(); setTimeout(()=>URL.revokeObjectURL(url),1800); return anchor.download;
   }
 
-  global.AZOBSSAdminSalesReceiptPDF=Object.freeze({buildBytes,createBlob,createFile,download,filename});
+  global.AZOBSSAdminSalesReceiptPDF=Object.freeze({buildBytes,createBlob,createFile,download,filename,documentNumber});
 })(typeof window!=='undefined'?window:globalThis);
