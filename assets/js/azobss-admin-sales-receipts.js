@@ -350,7 +350,7 @@ function getSelectedRows(){return [...selectedRowIds].map(findRow).filter(Boolea
 function updateBulkUI(){
   const count=selectedRowIds.size;const page=currentPageRows();
   const countEl=el('salesReceiptSelectedCount');if(countEl)countEl.textContent=`${count} selected`;
-  ['salesReceiptBulkDownload','salesReceiptBulkCopyLink','salesReceiptBulkWhatsApp','salesReceiptBulkTelegram','salesReceiptBulkDelete'].forEach(id=>{const button=el(id);if(button)button.disabled=count===0});
+  ['salesReceiptBulkDownload','salesReceiptBulkCopyLink','salesReceiptBulkShare','salesReceiptBulkDelete'].forEach(id=>{const button=el(id);if(button)button.disabled=count===0});
   const allFiltered=el('salesReceiptSelectAllFiltered');if(allFiltered){const selectedVisible=visibleRows.filter(r=>selectedRowIds.has(r.id)).length;allFiltered.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;allFiltered.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length;allFiltered.disabled=visibleRows.length===0}
   const selectPage=el('salesReceiptSelectPage');if(selectPage){const selectedPage=page.filter(r=>selectedRowIds.has(r.id)).length;selectPage.checked=page.length>0&&selectedPage===page.length;selectPage.indeterminate=selectedPage>0&&selectedPage<page.length;selectPage.disabled=page.length===0}
   document.querySelectorAll('[data-sr-select]').forEach(cb=>{cb.checked=selectedRowIds.has(cb.dataset.srSelect||'');cb.closest('tr')?.classList.toggle('az-sr-row-selected',cb.checked)});
@@ -359,7 +359,9 @@ function setRowsSelected(rows,checked){rows.forEach(r=>{if(checked)selectedRowId
 function actionIcon(name){
   const icons={
     download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>',
+    invoice:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6Z"/><path d="M15 3v4h4M9 11h6M9 15h6M9 19h4"/></svg>',
     link:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>',
+    share:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>',
     whatsapp:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg>',
     telegram:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg>',
     print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7Z"/></svg>',
@@ -380,13 +382,16 @@ function renderTable(){
   tbody.innerHTML=pageRows.map(r=>{
     const itemNames=(r.items||[]).map(i=>i.name).filter(Boolean);const itemText=itemNames.slice(0,2).join(', ')+(itemNames.length>2?` +${itemNames.length-2}`:'');
     const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';const selected=selectedRowIds.has(r.id);
-    const actions=[
+    const actions=[];
+    if(isRecognizedPayment(r.status)){
+      actions.push(iconActionButton('invoice','Download original Invoice PDF',`data-sr-doc-download="invoice" data-sr-row="${rowId}"`));
+    }
+    actions.push(
       iconActionButton('download',`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('copylink',`Copy ${label} PDF link`,`data-sr-doc-copy="${docType}" data-sr-row="${rowId}"`),
-      iconActionButton('whatsapp',`Send ${label} PDF by WhatsApp`,`data-sr-doc-share="whatsapp" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
-      iconActionButton('telegram',`Send ${label} PDF by Telegram`,`data-sr-doc-share="telegram" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton('share',`Share ${label} PDF`,`data-sr-doc-share="native" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
-    ];
+    );
     if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
     actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
@@ -611,19 +616,19 @@ function nativeFileShareSupported(files){
   if(!navigator.share)return false;
   try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
 }
-async function shareDocumentPdf(row,type,target,button=null){
+async function shareDocumentPdf(row,type,button=null){
   const api=pdfApi();
   if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const file=api.createFile(row,type);const appName=target==='telegram'?'Telegram':'WhatsApp';
+    const file=api.createFile(row,type);
     if(nativeFileShareSupported([file])){
       await navigator.share({files:[file],title:`AZOBSS ${documentType(type)==='invoice'?'Invoice':'Receipt'} ${documentNo(row,type)}`,text:documentShareText(row,type)});
-      notify(`PDF file sent to the Windows/phone share panel. Choose ${appName} to attach the actual PDF.`);
+      notify('PDF file sent to the Windows/phone share panel. Choose any available app.');
       return;
     }
     api.download(row,type);
-    notify(`This browser cannot attach a PDF directly to ${appName}. The PDF was downloaded; attach it manually.`,true);
+    notify('This browser cannot share the PDF file directly. The PDF was downloaded for manual attachment.',true);
   }catch(e){
     if(e&&e.name==='AbortError')return;
     console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)
@@ -655,21 +660,20 @@ async function bulkCopyLinkSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}
   try{const data=await createSelectedBundleShareLink(rows);await copyPlainText(data.shareUrl);notify(`Bulk ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
 }
-async function bulkShareSelected(target,button=null){
+async function bulkShareSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
   const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
   if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
     const entries=uniquePdfEntries(rows);const files=entries.map(entry=>new File([entry.bytes],entry.name,{type:'application/pdf',lastModified:entry.lastModified||Date.now()}));
-    const appName=target==='telegram'?'Telegram':'WhatsApp';
     if(nativeFileShareSupported(files)){
       await navigator.share({files,title:`AZOBSS ${rows.length} selected document(s)`,text:bulkShareSummary(rows)});
-      notify(`${rows.length} PDF file(s) sent to the share panel. Choose ${appName}.`);
+      notify(`${rows.length} PDF file(s) sent to the share panel. Choose any available app.`);
       return;
     }
     const zipBytes=buildStoredZip(entries);downloadBytes(zipBytes,bulkZipName(entries.length),'application/zip');
-    notify(`This browser cannot attach multiple PDF files directly to ${appName}. A ZIP was downloaded for manual attachment.`,true);
+    notify('This browser cannot share multiple PDF files directly. A ZIP was downloaded for manual attachment.',true);
   }catch(e){
     if(e&&e.name==='AbortError')return;
     console.error(e);notify('Bulk PDF sharing failed: '+(e.message||e),true)
@@ -698,13 +702,13 @@ function bind(){
   ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
   el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',loadData);el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
   el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
-  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkWhatsApp')?.addEventListener('click',e=>bulkShareSelected('whatsapp',e.currentTarget));el('salesReceiptBulkTelegram')?.addEventListener('click',e=>bulkShareSelected('telegram',e.currentTarget));el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
+  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkShare')?.addEventListener('click',e=>bulkShareSelected(e.currentTarget));el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'physical',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog'))closeForm()});
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('salesReceiptDialog')?.hidden)closeForm()});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share.dataset.srDocShare,share)}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share)}});
 }
 let salesReceiptsAutoLoadQueued=false;
 async function autoLoadSalesReceiptsWhenActive(){

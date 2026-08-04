@@ -1,0 +1,8 @@
+AZOBSS PATCH 742 - SINGLE NATIVE SHARE BUTTON
+
+- Baseline: Patch 741.
+- Replaces separate WhatsApp and Telegram actions with one native Share icon.
+- Native Share opens the Windows/phone share panel with the actual PDF file.
+- Bulk selection also uses one Share icon for selected PDF files.
+- Download, Copy Link, Print, Edit, Delete and Original Invoice Download remain unchanged.
+- Telegram availability is controlled by Windows Share targets; Unigram may appear while Telegram Desktop may not register as a share target.
