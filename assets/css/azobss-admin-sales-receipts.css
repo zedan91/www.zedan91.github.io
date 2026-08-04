@@ -325,8 +325,10 @@
   stroke-linejoin:round!important;
   pointer-events:none!important;
 }
+.az-sr-icon-btn svg text{fill:currentColor!important;stroke:none!important;paint-order:normal!important}
 .az-sr-icon-btn.download{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}
 .az-sr-icon-btn.invoice{background:#6d28d9!important;border-color:#a78bfa!important;color:#fff!important}
+.az-sr-icon-btn.receipt{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}
 .az-sr-icon-btn.link{background:#7c3aed!important;border-color:#a78bfa!important;color:#fff!important}
 .az-sr-icon-btn.share{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important}
 .az-sr-icon-btn.wa{background:#166534!important;border-color:#22c55e!important;color:#fff!important}

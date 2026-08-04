@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 750: temporary PDF backend CORS + DELETE support */
+/* AZOBSS PATCH 751: distinct Invoice I and Receipt R document icons */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -365,7 +365,8 @@ function setRowsSelected(rows,checked){rows.forEach(r=>{if(checked)selectedRowId
 function actionIcon(name){
   const icons={
     download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>',
-    invoice:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6Z"/><path d="M15 3v4h4M9 11h6M9 15h6M9 19h4"/></svg>',
+    invoice:'<svg viewBox="0 0 24 24" aria-hidden="true"><path opacity=".34" d="M6 3h9l3 3v18H6Z"/><path opacity=".34" d="M15 3v4h4"/><text x="12" y="16.3" text-anchor="middle" style="fill:currentColor;stroke:none;font:900 12px Arial,sans-serif">I</text></svg>',
+    receipt:'<svg viewBox="0 0 24 24" aria-hidden="true"><path opacity=".34" d="M6 3h9l3 3v18H6Z"/><path opacity=".34" d="M15 3v4h4"/><text x="12" y="16.3" text-anchor="middle" style="fill:currentColor;stroke:none;font:900 11px Arial,sans-serif">R</text></svg>',
     link:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>',
     share:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>',
     whatsapp:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg>',
@@ -394,7 +395,7 @@ function renderTable(){
       actions.push(iconActionButton('invoice','Download original Invoice PDF',`data-sr-doc-download="invoice" data-sr-row="${rowId}"`));
     }
     actions.push(
-      iconActionButton('download',`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton(docType,`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('copylink',`Copy ${label} PDF link`,`data-sr-doc-copy="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
