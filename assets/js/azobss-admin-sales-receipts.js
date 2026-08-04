@@ -600,17 +600,14 @@ function syncManualPaymentFeeDefault(){
   }
 }
 function syncToyyibCustomerRequirements(){
-  const required=normalizeStatus(el('salesReceiptFormStatus')?.value)==='pending';
   const email=el('salesReceiptCustomerEmail');
-  const hint=el('salesReceiptCustomerEmailHint');
   const label=el('salesReceiptCustomerEmailLabelText');
   if(email){
-    email.required=required;
-    email.placeholder=required?'Required for ToyyibPay':'customer@email.com';
-    email.setAttribute('aria-required',required?'true':'false');
+    email.required=false;
+    email.placeholder='customer@email.com';
+    email.removeAttribute('aria-required');
   }
-  if(hint)hint.hidden=!required;
-  if(label)label.textContent=required?'Email *':'Email';
+  if(label)label.textContent='Email (Optional)';
 }
 function recalcForm(){
   const c=manualCalc(collectFormItems(),formExtras());const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const recognized=isRecognizedPayment(status);
@@ -656,9 +653,9 @@ async function saveForm(){
   const customer=String(el('salesReceiptCustomerName')?.value||'').trim();const items=collectFormItems();if(!customer)return notify('Enter customer name.',true);if(!items.length||items.some(i=>!i.name))return notify('Enter a name for every item.',true);if(items.some(i=>i.qty<=0))return notify('Quantity must be more than zero.',true);
   const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const kind=documentKindForStatus(status);const recognized=isRecognizedPayment(status);const numberInput=el('salesReceiptReceiptNo');
   const customerEmail=String(el('salesReceiptCustomerEmail')?.value||'').trim().toLowerCase();
-  if(kind==='invoice'&&status==='pending'&&!validCustomerEmail(customerEmail)){
+  if(customerEmail&&!validCustomerEmail(customerEmail)){
     el('salesReceiptCustomerEmail')?.focus();
-    return notify('Enter a valid customer email. ToyyibPay requires billEmail to prefill the customer name and phone.',true);
+    return notify('Enter a valid customer email or leave the email field blank.',true);
   }
   if(kind==='invoice')editingInvoiceNo=String(numberInput?.value||editingInvoiceNo||(editingReceiptNo?deriveInvoiceNo(editingReceiptNo):nextDocumentNo('invoice'))).trim();else editingReceiptNo=String(numberInput?.value||editingReceiptNo||(editingInvoiceNo?deriveReceiptNo(editingInvoiceNo):nextDocumentNo('receipt'))).trim();
   const c=manualCalc(items,formExtras());const dateRaw=el('salesReceiptSaleDate')?.value||localDateTimeInput();const saleDateMs=parseMalaysiaDateTime(dateRaw);const categories=[...new Set(c.items.map(i=>i.category))];

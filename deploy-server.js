@@ -5272,7 +5272,7 @@ function azSalesShareIssue(meta = {}) {
 // deletes immediately after navigator.share() succeeds. Public links are removed after
 // first access plus a safety window, or at the hard maximum expiry time.
 
-const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_EMAIL_REQUIRED_FIX_766_20260804";
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_OPTIONAL_EMAIL_OPEN_BILL_FIX_767_20260804";
 const AZOBSS_MANUAL_PAYOR_PREFILL_VERSION = 763;
 const AZOBSS_MANUAL_BILL_AMOUNT_VERSION = 765;
 function azManualInvoicePayableAmount(invoice = {}) {
@@ -5353,34 +5353,56 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   const currentCustomerName = cleanToyyibBillText(invoice.customerName || "Customer", 30) || "Customer";
   const currentCustomerEmail = cleanToyyibEmail(invoice.customerEmail || "", 80);
   const currentCustomerPhone = cleanToyyibPhone(invoice.customerPhone || "", 20);
+  // ToyyibPay can only prefill payer details safely when the complete set is present.
+  // If any payer field is missing, create an open bill and leave all payer fields blank
+  // so the customer fills the mandatory details directly on ToyyibPay.
+  const currentPayorInfoMode = (currentCustomerName && currentCustomerEmail && currentCustomerPhone) ? 1 : 0;
+  const currentPrefillName = currentPayorInfoMode ? currentCustomerName : "";
+  const currentPrefillEmail = currentPayorInfoMode ? currentCustomerEmail : "";
+  const currentPrefillPhone = currentPayorInfoMode ? currentCustomerPhone : "";
   const savedOrderUser = order && order.user && typeof order.user === "object" ? order.user : {};
-  const savedCustomerName = cleanToyyibBillText(invoice.toyyibPrefilledCustomerName || savedOrderUser.displayName || savedOrderUser.username || "", 30);
-  const savedCustomerEmail = cleanToyyibEmail(invoice.toyyibPrefilledCustomerEmail || savedOrderUser.email || order && (order.buyerEmail || order.email) || "", 80);
-  const savedCustomerPhone = cleanToyyibPhone(invoice.toyyibPrefilledCustomerPhone || savedOrderUser.phone || order && order.phone || "", 20);
-  const hasSavedCustomerSnapshot = Boolean(savedCustomerName || savedCustomerEmail || savedCustomerPhone);
+  const legacySavedEmail = cleanToyyibEmail(invoice.toyyibPrefilledCustomerEmail || savedOrderUser.email || order && (order.buyerEmail || order.email) || "", 80);
+  const savedPayorInfoModeRaw = invoice.toyyibPayorInfoMode ?? (order && order.manualPayorInfoMode);
+  const savedPayorInfoMode = savedPayorInfoModeRaw === 0 || savedPayorInfoModeRaw === "0"
+    ? 0
+    : (savedPayorInfoModeRaw === 1 || savedPayorInfoModeRaw === "1" ? 1 : (legacySavedEmail ? 1 : 0));
+  // Internal order.user fields keep the customer record even for an open bill. Compare
+  // only details that were actually sent to ToyyibPay, otherwise an open bill would be
+  // incorrectly recreated on every PDF/share request.
+  const savedCustomerName = savedPayorInfoMode
+    ? cleanToyyibBillText(invoice.toyyibPrefilledCustomerName || savedOrderUser.displayName || savedOrderUser.username || "", 30)
+    : "";
+  const savedCustomerEmail = savedPayorInfoMode ? legacySavedEmail : "";
+  const savedCustomerPhone = savedPayorInfoMode
+    ? cleanToyyibPhone(invoice.toyyibPrefilledCustomerPhone || savedOrderUser.phone || order && order.phone || "", 20)
+    : "";
+  const hasSavedCustomerSnapshot = Boolean(savedCustomerName || savedCustomerEmail || savedCustomerPhone || savedPayorInfoModeRaw !== undefined);
+  const payorModeChanged = Boolean((billCode || paymentUrl || order) && savedPayorInfoMode !== currentPayorInfoMode);
   const customerChanged = Boolean((billCode || paymentUrl || order) && hasSavedCustomerSnapshot && (
-    savedCustomerName !== currentCustomerName ||
-    savedCustomerEmail !== currentCustomerEmail ||
-    savedCustomerPhone !== currentCustomerPhone
+    savedCustomerName !== currentPrefillName ||
+    savedCustomerEmail !== currentPrefillEmail ||
+    savedCustomerPhone !== currentPrefillPhone
   ));
   const savedPrefillVersion = Number(invoice.toyyibPayorPrefillVersion || order && order.manualPayorPrefillVersion || 0);
-  const prefillUpgradeRequired = Boolean((billCode || paymentUrl) && savedPrefillVersion < AZOBSS_MANUAL_PAYOR_PREFILL_VERSION);
+  const prefillUpgradeRequired = Boolean((billCode || paymentUrl) && currentPayorInfoMode === 1 && savedPrefillVersion < AZOBSS_MANUAL_PAYOR_PREFILL_VERSION);
   const savedBillAmountVersion = Number(invoice.toyyibBillAmountVersion || order && order.manualBillAmountVersion || 0);
   // Recreate legacy Pending bills once so an old RM250 Bill Code cannot be reused
   // after the invoice total has already become RM270.
   const amountSyncUpgradeRequired = Boolean((billCode || paymentUrl) && savedBillAmountVersion < AZOBSS_MANUAL_BILL_AMOUNT_VERSION);
-  const recreateBill = amountChanged || customerChanged || prefillUpgradeRequired || amountSyncUpgradeRequired;
+  const recreateBill = amountChanged || payorModeChanged || customerChanged || prefillUpgradeRequired || amountSyncUpgradeRequired;
   if (recreateBill) {
     const reason = amountChanged
       ? "manual-invoice-amount-changed"
-      : (customerChanged
-          ? "manual-invoice-customer-changed"
-          : (prefillUpgradeRequired ? "manual-invoice-payor-prefill-upgrade" : "manual-invoice-bill-amount-sync-upgrade"));
+      : (payorModeChanged
+          ? "manual-invoice-payor-mode-changed"
+          : (customerChanged
+              ? "manual-invoice-customer-changed"
+              : (prefillUpgradeRequired ? "manual-invoice-payor-prefill-upgrade" : "manual-invoice-bill-amount-sync-upgrade")));
     if (order) order = upsertPremiumOrder({ ...order, status:"superseded", supersededAt:new Date().toISOString(), supersededReason:reason });
     billCode = ""; paymentUrl = "";
   }
   let orderId = cleanPremiumText(invoice.toyyibOrderId || (order && order.orderId) || `manual-invoice-${record.id}`, 180);
-  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p765-${Date.now().toString(36)}`, 180);
+  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p767-${Date.now().toString(36)}`, 180);
   if (order && billCode && !amountChanged) {
     const refreshed = await refreshToyyibOrder(order, req);
     if (String(refreshed && refreshed.status || "").toLowerCase() === "paid") {
@@ -5396,16 +5418,12 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     const itemText = Array.isArray(invoice.items)
       ? invoice.items.map(x => cleanToyyibBillText(x && x.name || "", 50)).filter(Boolean).slice(0,3).join(" ")
       : "";
-    const customerEmail = currentCustomerEmail;
-    const customerPhone = currentCustomerPhone;
-    const customerName = currentCustomerName;
-    if (!customerEmail) {
-      throw Object.assign(new Error("Enter a valid customer email. ToyyibPay requires billEmail when payer information prefill is enabled."), { statusCode:400 });
-    }
-    // Manual invoices are person-specific. Keep billPayorInfo enabled so ToyyibPay uses
-    // billTo/billPhone/billEmail to prefill the payer form. ToyyibPay requires a
-    // non-empty billEmail when this mode is enabled, so validate it before the API call.
-    const payorInfo = 1;
+    const customerEmail = currentPrefillEmail;
+    const customerPhone = currentPrefillPhone;
+    const customerName = currentPrefillName;
+    // Prefill only when name, phone and a valid email are all available. Otherwise use
+    // an open bill (billPayorInfo=0) and intentionally send blank payer fields.
+    const payorInfo = currentPayorInfoMode;
     const billPayload = {
       userSecretKey:TOYYIB_SECRET_KEY,
       categoryCode:TOYYIB_CATEGORY_CODE,
@@ -5462,6 +5480,7 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     user:{ uid:invoice.uid || invoice.createdByUid || "", username:invoice.customerName || "", email:invoice.customerEmail || "", phone:invoice.customerPhone || "", displayName:invoice.customerName || "" },
     email:invoice.customerEmail || "", buyerEmail:invoice.customerEmail || "", phone:invoice.customerPhone || "",
     manualPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION,
+    manualPayorInfoMode:currentPayorInfoMode,
     manualBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION,
     manualBillAmount:amount, manualBillAmountSen:Math.round(amount*100),
     commissionSkippedReason:"manual-sales-invoice", commissionCheckedAt:(order && order.commissionCheckedAt) || now.toISOString(),
@@ -5472,14 +5491,15 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     paymentUrl, toyyibPaymentUrl:paymentUrl, toyyibBillCreatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),
     toyyibBillCreatedAtMs:Date.now(), toyyibBillExpiryDays:azManualInvoiceExpiryDays(),
     toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION,
+    toyyibPayorInfoMode:currentPayorInfoMode,
     toyyibBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION,
     toyyibBillAmount:amount, toyyibBillAmountSen:Math.round(amount*100),
-    toyyibPrefilledCustomerName:currentCustomerName, toyyibPrefilledCustomerPhone:currentCustomerPhone,
-    toyyibPrefilledCustomerEmail:currentCustomerEmail,
+    toyyibPrefilledCustomerName:currentPrefillName, toyyibPrefilledCustomerPhone:currentPrefillPhone,
+    toyyibPrefilledCustomerEmail:currentPrefillEmail,
     updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:Date.now()
   }, { merge:true });
   const qrJpeg = await azManualInvoiceQrJpeg(paymentUrl);
-  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, amountSen:Math.round(amount*100), orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays(), toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION, toyyibBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION };
+  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, amountSen:Math.round(amount*100), orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays(), toyyibPayorInfoMode:currentPayorInfoMode, toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION, toyyibBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION };
 }
 async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   if (!azIsManualSalesInvoiceOrder(order)) return { ok:false, skipped:true };
