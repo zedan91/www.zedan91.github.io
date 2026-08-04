@@ -11239,13 +11239,17 @@ async function azHandleStripeDigitalWebhookEvent(event = {}, req = null) {
 
 // AZOBSS 770: Public laptop / PC service booking form.
 const AZ_SERVICE_BOOKING_CATALOG = Object.freeze({
-  "format-windows": { name:"Format Windows 10 / 11", price:30, plus:false },
-  "cleaning-thermal": { name:"Pembersihan + Thermal Paste", price:80, plus:false },
-  "lcd-14": { name:"Tukar LCD Laptop 14 inci", price:250, plus:true },
-  "lcd-15": { name:"Tukar LCD Laptop 15 / 15.6 inci", price:300, plus:true },
-  "lcd-16": { name:"Tukar LCD Laptop 16 inci", price:350, plus:true },
-  "keyboard": { name:"Tukar Keyboard Laptop", price:150, plus:true }
+  "format-windows": { name:"Format Windows 10 / 11", price:30, suffix:"" },
+  "cleaning-thermal": { name:"Pembersihan + Thermal Paste", price:80, suffix:"" },
+  "lcd-14": { name:"Tukar LCD Laptop 14 inci", price:250, suffix:"" },
+  "lcd-15": { name:"Tukar LCD Laptop 15 / 15.6 inci", price:300, suffix:"" },
+  "lcd-16": { name:"Tukar LCD Laptop 16 inci", price:350, suffix:"++" },
+  "keyboard": { name:"Tukar Keyboard Laptop", price:150, suffix:"" }
 });
+const AZ_SERVICE_BOOKING_AREAS = new Set([
+  "Batu Caves","Taman Batu Caves","Bandar Baru Selayang","Selayang","Selayang Baru","Taman Selayang","Sri Gombak","Taman Sri Gombak","Taman Samudra","Taman Pinggiran Batu Caves","Greenwood","Taman Greenwood","Gombak Setia","Taman Melati","Kampung Laksamana",
+  "Taman Batu Muda","Kampung Batu","Taman Wahyu","Taman Mastiara","Taman Koperasi Polis","Taman Dato Senu","Sentul","Sentul Pasar","Setapak","Wangsa Maju","Danau Kota","Taman Sri Rampai","Lain-lain sekitar 10 km dari Batu Caves (semakan diperlukan)"
+]);
 function azServiceBookingText(value, max = 300) {
   return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
@@ -11266,21 +11270,22 @@ function azServiceBookingId(clientRequestId) {
 }
 function azServiceBookingEstimate(serviceIds) {
   const ids = Array.isArray(serviceIds) ? [...new Set(serviceIds.map(v => azServiceBookingText(v, 60)).filter(v => AZ_SERVICE_BOOKING_CATALOG[v]))].slice(0, 12) : [];
-  let total = 0, plus = false;
+  let total = 0, suffix = "";
   const services = ids.map(id => {
     const item = AZ_SERVICE_BOOKING_CATALOG[id];
+    const itemSuffix = item.suffix === "++" ? "++" : "";
     total += Number(item.price || 0);
-    plus = plus || item.plus === true;
-    return { id, name:item.name, price:Number(item.price || 0), plus:item.plus === true };
+    if (itemSuffix === "++") suffix = "++";
+    return { id, name:item.name, price:Number(item.price || 0), suffix:itemSuffix, plus:Boolean(itemSuffix) };
   });
-  return { services, total:Math.round(total * 100) / 100, plus };
+  return { services, total:Math.round(total * 100) / 100, suffix, plus:Boolean(suffix) };
 }
 function azServiceBookingWhatsappNumber() {
   const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "60175099983").replace(/\D/g, "");
   return raw || "60175099983";
 }
 function azServiceBookingMessage(row) {
-  const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — RM${Number(item.price || 0).toFixed(0)}${item.plus ? "+" : ""}`);
+  const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — RM${Number(item.price || 0).toFixed(0)}${item.suffix || (item.plus ? "+" : "")}`);
   return [
     "Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.",
     "",
@@ -11301,7 +11306,7 @@ function azServiceBookingMessage(row) {
     ...(serviceLines.length ? serviceLines : ["- Pemeriksaan / harga belum dipilih"]),
     "",
     `Masalah: ${(row.issues || []).join(", ") || "-"}`,
-    `Anggaran awal: ${serviceLines.length ? `RM${Number(row.estimatedMinimum || 0).toFixed(0)}${row.estimateHasPlus ? "+" : ""}` : "Perlu pemeriksaan"}`,
+    `Anggaran awal: ${serviceLines.length ? `RM${Number(row.estimatedMinimum || 0).toFixed(0)}${row.estimateSuffix || (row.estimateHasPlus ? "+" : "")}` : "Perlu pemeriksaan"}`,
     `Tarikh / masa: ${row.preferredDate || "Fleksibel"} • ${row.preferredTime || "Fleksibel"}`,
     `Keutamaan: ${row.urgency || "Biasa"}`,
     `Data / backup: ${row.backupRequirement || "Tidak pasti"}`,
@@ -11328,6 +11333,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   if (phoneDigits.length < 8 || phoneDigits.length > 15) throw Object.assign(new Error("Nombor telefon tidak sah."), { statusCode:400 });
   if (customerEmailRaw && !customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
   if (customerArea.length < 2) throw Object.assign(new Error("Kawasan tempat tinggal diperlukan."), { statusCode:400 });
+  if (!AZ_SERVICE_BOOKING_AREAS.has(customerArea)) throw Object.assign(new Error("Kawasan servis hanya tersedia di Gombak, Batu Caves dan kawasan Kuala Lumpur berhampiran dalam lingkungan sekitar 10 km."), { statusCode:400 });
   if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
   const estimate = azServiceBookingEstimate(body.services);
   const issues = Array.isArray(body.issues) ? [...new Set(body.issues.map(v => azServiceBookingText(v, 140)).filter(Boolean))].slice(0, 25) : [];
@@ -11349,6 +11355,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     services:estimate.services,
     issues,
     estimatedMinimum:estimate.total,
+    estimateSuffix:estimate.suffix,
     estimateHasPlus:estimate.plus,
     estimateFinal:false,
     serviceMethod:azServiceBookingText(body.serviceMethod, 80) || "Bincang melalui WhatsApp",
@@ -11398,7 +11405,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     updatedAtMs:nowMs
   }), { merge:true });
   const whatsappUrl = `https://wa.me/${row.whatsappNumber}?text=${encodeURIComponent(row.whatsappMessage)}`;
-  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.total, estimateHasPlus:estimate.plus, whatsappUrl };
+  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.total, estimateSuffix:estimate.suffix, estimateHasPlus:estimate.plus, whatsappUrl };
 }
 
 

@@ -128,3 +128,7 @@ Pending manual invoices using ToyyibPay now include a QR payment link. Verified 
 
 ## PATCH 747 — ToyyibPay QR for manual invoices
 Pending manual invoices using ToyyibPay now include a payment QR. Verified payment converts the same record into a Paid receipt and activates sales/profit recognition.
+
+
+## Patch 771
+Tempah Servis IT: kawasan servis terhad, autocomplete jenama/model, dan harga LCD 14/15 tanpa + serta LCD 16 RM350++.
