@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 749: fix fatal literal-newline syntax corruption; reliable load */
+/* AZOBSS PATCH 750: temporary PDF backend CORS + DELETE support */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -10,7 +10,7 @@ const db=getFirestore(app);
 const BACKEND='https://azobss-backend.onrender.com';
 const MANUAL_SOURCE='admin-manual-sale';
 const PAGE_SIZE=10;
-window.__azSalesReceiptsModuleVersion=749;
+window.__azSalesReceiptsModuleVersion=750;
 
 let manualRows=[];
 let websiteRows=[];
@@ -653,7 +653,12 @@ async function createTemporaryBlob(blob,filename,reference,contentType='applicat
   headers['Content-Type']=contentType;
   headers['X-AZOBSS-Filename']=encodeURIComponent(filename||'AZOBSS-Document.pdf');
   headers['X-AZOBSS-Document-No']=encodeURIComponent(reference||'AZOBSS-DOCUMENT');
-  const res=await fetch(BACKEND+'/api/admin/sales-document/temp',{method:'POST',headers,body:blob,cache:'no-store'});
+  let res;
+  try{
+    res=await fetch(BACKEND+'/api/admin/sales-document/temp',{method:'POST',headers,body:blob,cache:'no-store'});
+  }catch(error){
+    throw new Error('Temporary PDF backend could not be reached. Wait for Render redeploy, then refresh. '+(error?.message||error));
+  }
   const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
   if(!res.ok||data.ok===false||!data.viewUrl||!data.deleteUrl)throw new Error(data.error||`Temporary document HTTP ${res.status}`);
   return data;

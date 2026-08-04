@@ -5349,7 +5349,7 @@ async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   return { ok:true, receiptId:record.id, invoiceNo, receiptNo, gross, totalCost, profit };
 }
 
-const AZOBSS_SALES_TEMP_PATCH = "AZOBSS_ADMIN_SALES_TEMP_BACKEND_747_20260804";
+const AZOBSS_SALES_TEMP_PATCH = "AZOBSS_ADMIN_SALES_TEMP_BACKEND_CORS_750_20260804";
 const AZOBSS_SALES_TEMP_DIR = path.join(os.tmpdir(), "azobss-sales-temp-documents");
 const azSalesTempFiles = new Map();
 function azSalesTempMaxBytes() {
@@ -6645,8 +6645,8 @@ function azSecurityHeaders(extra = {}) {
   return Object.assign({
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": azCorsOrigin(),
-    "Access-Control-Allow-Methods": "GET, POST, HEAD, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, HEAD, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, X-AZOBSS-Filename, X-AZOBSS-Document-No",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
@@ -12471,7 +12471,7 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
-        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"747" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"750" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
@@ -12485,7 +12485,7 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
-        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"747" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"750" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
@@ -12496,9 +12496,9 @@ async function handler(req, res) {
         const id = azSalesTempSafeId(path.basename(pathname));
         if (!id) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid temporary document ID." }, null, 2), "application/json");
         const existed = azSalesTempDelete(id);
-        return send(res, existed ? 200 : 404, JSON.stringify({ ok:existed, deleted:existed, id, patch:"747" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, existed ? 200 : 404, JSON.stringify({ ok:existed, deleted:existed, id, patch:"750" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
-        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"747" }, null, 2), "application/json");
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"750" }, null, 2), "application/json");
       }
     }
 
