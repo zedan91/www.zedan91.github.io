@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 758: Phone and email separated on invoice/receipt PDF */
+/* AZOBSS PATCH 764: Left-aligned item descriptions in invoice/receipt PDF */
 (function(global){
   'use strict';
 
@@ -185,12 +185,16 @@
     const lineHeight=11.5; const total=(lines.length-1)*lineHeight+size; const first=y+((h-total)/2)+(size*0.78);
     textLines(commands,lines,cellX+(cellW/2),first,{size,bold,lineHeight,align:'center',color});
   }
+  function drawLeftLines(commands,lines,cellX,y,h,size,bold,color){
+    const lineHeight=11.5; const total=(lines.length-1)*lineHeight+size; const first=y+((h-total)/2)+(size*0.78);
+    textLines(commands,lines,cellX+9,first,{size,bold,lineHeight,color});
+  }
   function drawItemRow(commands,item,index,y){
     const h=itemRowHeight(item),bg=index%2===0?[255,255,255]:[248,250,252];
     fillRect(commands,TABLE.x,y,CONTENT_W,h,bg); strokeRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240],0.55);
     let dx=TABLE.x; TABLE.widths.slice(0,-1).forEach(width=>{dx+=width;line(commands,dx,y,dx,y+h,[226,232,240],0.55)});
     text(commands,String(index+1),tableX(0)+(TABLE.widths[0]/2),centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'center',color:[55,65,81]});
-    drawCenteredLines(commands,wrapText(item.name,TABLE.widths[1]-18,8.9,true),tableX(1),TABLE.widths[1],y,h,8.9,true,[55,65,81]);
+    drawLeftLines(commands,wrapText(item.name,TABLE.widths[1]-18,8.9,true),tableX(1),y,h,8.9,true,[55,65,81]);
     text(commands,categoryLabel(item.category),tableX(2)+(TABLE.widths[2]/2),centeredBaseline(y,h,7.8),{size:7.8,align:'center',color:[51,65,85]});
     text(commands,formatQty(item.qty),tableX(3)+(TABLE.widths[3]/2),centeredBaseline(y,h,8.8),{size:8.8,bold:true,align:'center'});
     text(commands,money(item.unitPrice),tableX(4)+TABLE.widths[4]-7,centeredBaseline(y,h,8.1),{size:8.1,align:'right'});

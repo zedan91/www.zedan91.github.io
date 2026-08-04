@@ -5272,7 +5272,8 @@ function azSalesShareIssue(meta = {}) {
 // deletes immediately after navigator.share() succeeds. Public links are removed after
 // first access plus a safety window, or at the hard maximum expiry time.
 
-const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_BILLCODE_FIX_761_20260804";
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_CUSTOMER_PREFILL_FIX_763_20260804";
+const AZOBSS_MANUAL_PAYOR_PREFILL_VERSION = 763;
 function azIsManualSalesInvoiceOrder(order = {}) {
   return order && (order.isManualSalesInvoice === true || String(order.source || "").toLowerCase() === "admin-manual-invoice" || String(order.productId || "").toLowerCase() === "manual-sales-invoice");
 }
@@ -5328,12 +5329,28 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   let paymentUrl = existingPaymentUrl || cleanPremiumUrl(order && order.paymentUrl || "");
   const savedOrderAmount = Number(order && (order.saleAmount || order.amount) || 0);
   const amountChanged = Boolean(order && savedOrderAmount > 0 && Math.abs(savedOrderAmount - amount) > 0.005);
-  if (amountChanged) {
-    order = upsertPremiumOrder({ ...order, status:"superseded", supersededAt:new Date().toISOString(), supersededReason:"manual-invoice-amount-changed" });
+  const currentCustomerName = cleanToyyibBillText(invoice.customerName || "Customer", 30) || "Customer";
+  const currentCustomerEmail = cleanToyyibEmail(invoice.customerEmail || "", 80);
+  const currentCustomerPhone = cleanToyyibPhone(invoice.customerPhone || "", 20);
+  const savedOrderUser = order && order.user && typeof order.user === "object" ? order.user : {};
+  const savedCustomerName = cleanToyyibBillText(savedOrderUser.displayName || savedOrderUser.username || "", 30);
+  const savedCustomerEmail = cleanToyyibEmail(savedOrderUser.email || order && (order.buyerEmail || order.email) || "", 80);
+  const savedCustomerPhone = cleanToyyibPhone(savedOrderUser.phone || order && order.phone || "", 20);
+  const customerChanged = Boolean(order && (
+    savedCustomerName !== currentCustomerName ||
+    savedCustomerEmail !== currentCustomerEmail ||
+    savedCustomerPhone !== currentCustomerPhone
+  ));
+  const savedPrefillVersion = Number(invoice.toyyibPayorPrefillVersion || order && order.manualPayorPrefillVersion || 0);
+  const prefillUpgradeRequired = Boolean((billCode || paymentUrl) && savedPrefillVersion < AZOBSS_MANUAL_PAYOR_PREFILL_VERSION);
+  const recreateBill = amountChanged || customerChanged || prefillUpgradeRequired;
+  if (recreateBill) {
+    const reason = amountChanged ? "manual-invoice-amount-changed" : (customerChanged ? "manual-invoice-customer-changed" : "manual-invoice-payor-prefill-upgrade");
+    if (order) order = upsertPremiumOrder({ ...order, status:"superseded", supersededAt:new Date().toISOString(), supersededReason:reason });
     billCode = ""; paymentUrl = "";
   }
   let orderId = cleanPremiumText(invoice.toyyibOrderId || (order && order.orderId) || `manual-invoice-${record.id}`, 180);
-  if (amountChanged) orderId = cleanPremiumText(`manual-invoice-${record.id}-${Date.now().toString(36)}`, 180);
+  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p763-${Date.now().toString(36)}`, 180);
   if (order && billCode && !amountChanged) {
     const refreshed = await refreshToyyibOrder(order, req);
     if (String(refreshed && refreshed.status || "").toLowerCase() === "paid") {
@@ -5349,12 +5366,13 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     const itemText = Array.isArray(invoice.items)
       ? invoice.items.map(x => cleanToyyibBillText(x && x.name || "", 50)).filter(Boolean).slice(0,3).join(" ")
       : "";
-    const customerEmail = cleanToyyibEmail(invoice.customerEmail || "", 80);
-    const customerPhone = cleanToyyibPhone(invoice.customerPhone || "", 20);
-    const customerName = cleanToyyibBillText(invoice.customerName || "Customer", 30) || "Customer";
-    // Use open-bill mode when either contact field is incomplete. This prevents a blank/invalid
-    // email or formatted phone number from causing createBill to return no BillCode.
-    const payorInfo = customerEmail && customerPhone ? 1 : 0;
+    const customerEmail = currentCustomerEmail;
+    const customerPhone = currentCustomerPhone;
+    const customerName = currentCustomerName;
+    // Manual invoices are person-specific. Keep billPayorInfo enabled so ToyyibPay uses
+    // billTo/billPhone/billEmail to prefill the payer form. A missing email remains editable
+    // and required on ToyyibPay, while the supplied name and phone are still prefilled.
+    const payorInfo = 1;
     const billPayload = {
       userSecretKey:TOYYIB_SECRET_KEY,
       categoryCode:TOYYIB_CATEGORY_CODE,
@@ -5410,6 +5428,7 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     manualInvoiceNo:invoiceNo, manualReceiptNo:invoice.receiptNo || azManualInvoiceReceiptNo(invoiceNo),
     user:{ uid:invoice.uid || invoice.createdByUid || "", username:invoice.customerName || "", email:invoice.customerEmail || "", phone:invoice.customerPhone || "", displayName:invoice.customerName || "" },
     email:invoice.customerEmail || "", buyerEmail:invoice.customerEmail || "", phone:invoice.customerPhone || "",
+    manualPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION,
     commissionSkippedReason:"manual-sales-invoice", commissionCheckedAt:(order && order.commissionCheckedAt) || now.toISOString(),
     createdAt:(order && order.createdAt) || now.toISOString(), createdAtMs:(order && order.createdAtMs) || now.getTime()
   });
@@ -5417,10 +5436,13 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     paymentMethod:"ToyyibPay", toyyibOrderId:orderId, billCode, toyyibBillCode:billCode,
     paymentUrl, toyyibPaymentUrl:paymentUrl, toyyibBillCreatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),
     toyyibBillCreatedAtMs:Date.now(), toyyibBillExpiryDays:azManualInvoiceExpiryDays(),
+    toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION,
+    toyyibPrefilledCustomerName:currentCustomerName, toyyibPrefilledCustomerPhone:currentCustomerPhone,
+    toyyibPrefilledCustomerEmail:currentCustomerEmail,
     updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:Date.now()
   }, { merge:true });
   const qrJpeg = await azManualInvoiceQrJpeg(paymentUrl);
-  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays() };
+  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays(), toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION };
 }
 async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   if (!azIsManualSalesInvoiceOrder(order)) return { ok:false, skipped:true };

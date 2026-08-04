@@ -1,0 +1,18 @@
+AZOBSS PATCH 764 - INVOICE / RECEIPT DESCRIPTION LEFT ALIGN
+Date: 2026-08-04
+Baseline: (763)
+
+Changes:
+- Item descriptions in generated invoice and receipt PDFs are now aligned to the left with consistent inner padding.
+- Multi-line descriptions remain vertically centred inside each row while every line starts from the same left position.
+- The browser print document uses the same left-aligned description layout for consistency.
+- ToyyibPay customer prefill and RM1 automatic payment fee from patches 763 and 762 are preserved.
+
+Files changed:
+- assets/js/azobss-admin-sales-receipt-pdf.js
+- assets/js/azobss-admin-sales-receipts.js
+- admin/index.html (cache version updated to 764)
+
+Deployment:
+- Static website update only. Upload the full ZIP contents and refresh the Admin page with Ctrl + F5.
+- No Render restart or new environment variable is required for this visual alignment patch.
