@@ -1,0 +1,6 @@
+AZOBSS Patch 748
+
+- Removes the optional Firestore onSnapshot import/listener that could stop the Sales & Receipts ES module from registering.
+- Keeps ToyyibPay invoice QR and automatic Pending -> Paid receipt workflow.
+- Uses a lightweight 15-second refresh only while Sales & Receipts is open.
+- Adds a clear module script load error message and cache version 748.

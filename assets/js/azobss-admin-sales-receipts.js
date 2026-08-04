@@ -1,7 +1,7 @@
-/* AZOBSS PATCH 747: ToyyibPay QR manual invoice -> verified Paid receipt */
+/* AZOBSS PATCH 748: reliable Sales & Receipts load; ToyyibPay status polling */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
@@ -22,9 +22,8 @@ let editingReceiptNo='';
 let loadingPromise=null;
 const selectedRowIds=new Set();
 let sharePanelContext=null;
-let manualReceiptWatchUnsubscribe=null;
-let manualReceiptWatchReady=false;
-let manualReceiptReloadTimer=null;
+let manualReceiptPollTimer=null;
+let manualReceiptPollBusy=false;
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -843,17 +842,16 @@ function bind(){
   document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
 function startManualReceiptPaymentWatch(){
-  if(manualReceiptWatchUnsubscribe)return;
-  manualReceiptWatchUnsubscribe=onSnapshot(query(collection(db,'receipts'),limit(1000)),snapshot=>{
-    if(!manualReceiptWatchReady){manualReceiptWatchReady=true;return}
-    const changed=snapshot.docChanges().some(change=>String(change.doc.data()?.source||'')===MANUAL_SOURCE);
-    if(!changed)return;
-    clearTimeout(manualReceiptReloadTimer);
-    manualReceiptReloadTimer=setTimeout(()=>{
-      const section=el('salesreceipts');
-      if(section?.classList.contains('active')&&el('salesReceiptDialog')?.hidden!==false)loadData().catch(error=>console.warn('Automatic ToyyibPay receipt refresh skipped:',error));
-    },650);
-  },error=>console.warn('Manual invoice payment watch unavailable:',error));
+  // Avoid a second live Firestore listener in this optional module. A failed
+  // listener/import must never prevent Sales & Receipts from loading.
+  if(manualReceiptPollTimer)return;
+  manualReceiptPollTimer=setInterval(async()=>{
+    const section=el('salesreceipts');
+    const dialogOpen=el('salesReceiptDialog')?.hidden===false;
+    if(!section?.classList.contains('active')||dialogOpen||manualReceiptPollBusy||loadingPromise)return;
+    manualReceiptPollBusy=true;
+    try{await loadData()}catch(error){console.warn('ToyyibPay receipt status poll skipped:',error)}finally{manualReceiptPollBusy=false}
+  },15000);
 }
 
 let salesReceiptsAutoLoadQueued=false;
