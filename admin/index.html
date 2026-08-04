@@ -2156,7 +2156,8 @@ body[data-dashboard-page="admin"] .topbar{
     <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
     <nav class="nav">
       <div class="nav-group">Main</div>
-      <button data-tab="overview" class="active">📊 Overview</button>
+      <button data-tab="salesreceipts" class="active">🧾 Sales &amp; Receipts</button>
+      <button data-tab="overview">📊 Overview</button>
       <button data-tab="users">👥 Users</button>
       <button data-tab="online">🟢 Online Users</button>
       <button data-tab="activity">📈 Activity</button>
@@ -2165,7 +2166,6 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="notifications">🔔 Notifications</button>
       <button data-tab="adminalerts">🔔 Payment Alerts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="payments">📊 Sales Overview</button>
-      <button data-tab="salesreceipts">🧾 Sales &amp; Receipts</button>
       <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
@@ -2179,7 +2179,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
     </nav>
-    <div class="side-footer">Tip: buka Overview dahulu untuk semak status utama, kemudian masuk section yang perlu sahaja.</div>
+    <div class="side-footer">Sales &amp; Receipts dibuka dahulu. Overview hanya membaca data apabila butang Load Overview Data ditekan.</div>
   </aside>
 
   <main class="main">
@@ -2193,18 +2193,23 @@ body[data-dashboard-page="admin"] .topbar{
 
     <div id="adminQueryAlert" class="az-admin-query-alert" aria-live="polite"></div>
 
-    <section id="overview" class="section active">
+    <section id="overview" class="section">
       <div class="az-admin-hero">
         <h2>📊 Overview Admin</h2>
         <p>Semak keadaan website dengan cepat. Nombor utama dikumpulkan mengikut pengguna, aktiviti, mesej, notifikasi dan pembelian supaya lebih mudah faham.</p>
         <div class="az-admin-hero-actions">
-          <button class="btn green" data-tab="systemhealth">🩺 Check System</button>
+          <button class="btn green" id="loadOverviewData" type="button">📥 Load Overview Data</button>
+          <button class="btn gray" data-tab="systemhealth">🩺 Check System</button>
           <button class="btn gray" data-tab="sitereport">📋 Export Report</button>
           <button class="btn gray" data-tab="payments">📊 Sales Overview</button>
           <button class="btn gray" data-tab="salesreceipts">🧾 Sales &amp; Receipts</button>
           <button class="btn gray" data-tab="support">💬 Support</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
         </div>
+      </div>
+
+      <div class="card" id="overviewManualLoadCard">
+        <div id="overviewLoadNotice" class="tabs-note">Overview data is not loaded. Press <b>Load Overview Data</b> only when you need the latest summary.</div>
       </div>
 
       <div class="az-friendly-strip">
@@ -2225,8 +2230,8 @@ body[data-dashboard-page="admin"] .topbar{
       </details>
 
       <div class="az-overview-net-center-row">
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">Loading…</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj ToyyibPay RM1/transaksi.</div></div>
-        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">Net After Fee</div><div id="statThisMonthNetSales" class="stat-value">Loading…</div></div><div class="az-kpi-note">Jumlah bersih semua paid/verified selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-today-card"><div><div class="stat-label">Today Net Sales</div><div id="statTodayNetSales" class="stat-value">—</div></div><div class="az-kpi-note">Pendapatan bersih hari ini selepas caj ToyyibPay RM1/transaksi.</div></div>
+        <div class="card az-kpi-card is-money az-net-income-card az-overview-net-center-card"><div><div class="stat-label">Net After Fee</div><div id="statThisMonthNetSales" class="stat-value">—</div></div><div class="az-kpi-note">Jumlah bersih semua paid/verified selepas caj ToyyibPay RM1/transaksi.</div></div>
       </div>
       <div class="grid az-kpi-grid">
         <div class="card az-kpi-card"><div><div class="stat-label">Registered Users</div><div id="statUsers" class="stat-value">0</div></div><div class="az-kpi-note">Jumlah akaun user yang direkodkan.</div></div>
@@ -2408,7 +2413,7 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
 
-    <section id="salesreceipts" class="section">
+    <section id="salesreceipts" class="section active">
       <h2>🧾 Sales &amp; Receipts</h2>
       <p class="az-section-help">Satu tempat untuk rekod jualan barang fizikal, software, CAD, PA/BM dan servis. Rekod Pending berfungsi sebagai Invoice, manakala rekod Paid bertukar menjadi Receipt dan terus masuk dalam kiraan jualan serta keuntungan.</p>
 
@@ -4201,7 +4206,31 @@ function azAdminSaveOverviewSalesCache(payload = {}){
   }
 }
 
-async function loadOverview(){
+let azAdminOverviewHasLoaded = false;
+function azAdminPrepareOverviewManualMode(){
+  const notice = $('#overviewLoadNotice');
+  if(notice && !azAdminOverviewHasLoaded){
+    notice.innerHTML = 'Overview data is not loaded. Press <b>Load Overview Data</b> only when you need the latest summary.';
+  }
+  if(!azAdminOverviewHasLoaded){
+    ['statTodayNetSales','statThisMonthNetSales','statThisMonthSales','statUsers','statOnline','statLogins','statVisits','statMonthVisits','statTotalVisits','statSupport','statNotifications','statPurchases','statGuests'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.textContent = '—';
+    });
+    const support = $('#overviewSupport');
+    const activity = $('#overviewActivity');
+    if(support) support.innerHTML = '<div class="item">Overview data has not been loaded.</div>';
+    if(activity) activity.innerHTML = '<div class="item">Overview data has not been loaded.</div>';
+  }
+}
+
+async function loadOverview(forceLoad=false){
+  if(forceLoad !== true){
+    azAdminPrepareOverviewManualMode();
+    return;
+  }
+  const overviewNotice = $('#overviewLoadNotice');
+  if(overviewNotice) overviewNotice.textContent = 'Loading Overview data…';
   try{
     azAdminApplyOverviewSalesCache();
     azAdminSetOverviewSalesLoading(true);
@@ -4363,6 +4392,10 @@ async function loadOverview(){
 
   try{ if(window.azSetRealOnlineCount) window.azSetRealOnlineCount(window.azAdminRealOnlineCount || 0); }catch(e){}
 
+  azAdminOverviewHasLoaded = true;
+  if(overviewNotice){
+    overviewNotice.textContent = 'Overview data loaded at ' + new Date().toLocaleString('en-MY', { timeZone:'Asia/Kuala_Lumpur' }) + '. Press Load Overview Data again to refresh manually.';
+  }
 }
 
 async function loadUsers(){ return; }
@@ -6134,6 +6167,25 @@ async function initSection(id){
 document.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-tab]');
   if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  const overviewLoadButton=e.target.closest('#loadOverviewData');
+  if(overviewLoadButton){
+    if(overviewLoadButton.disabled)return;
+    overviewLoadButton.disabled=true;
+    const oldText=overviewLoadButton.textContent;
+    overviewLoadButton.textContent='⏳ Loading Overview…';
+    try{
+      await loadOverview(true);
+    }catch(error){
+      console.error('Manual Overview load failed:',error);
+      const notice=$('#overviewLoadNotice');
+      if(notice)notice.textContent='Overview could not be loaded. Check quota/backend, then press the button again.';
+      toast('Overview load failed. Check Firestore quota or backend.');
+    }finally{
+      overviewLoadButton.disabled=false;
+      overviewLoadButton.textContent=oldText||'📥 Load Overview Data';
+    }
+    return;
+  }
   const regFoodAccess=e.target.closest('[data-reg-food-access]');
   if(regFoodAccess){await toggleRegisteredFoodOrderAccess(regFoodAccess.getAttribute('data-reg-food-access'));return;}
   const regEdit=e.target.closest('[data-reg-edit]');
@@ -6323,7 +6375,8 @@ onAuthStateChanged(auth, async user => {
     $('#loginCover')?.classList.add('hidden');
     $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
     $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
-    await loadOverview();
+    azAdminPrepareOverviewManualMode();
+    await initSection('salesreceipts');
   }catch(e){
     azAdminAuthResolved = true;
     clearTimeout(azAdminAuthWatchdog);
@@ -7727,6 +7780,7 @@ document.addEventListener('click', async function(e){
 </script>
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=759"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=759" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=760" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 </body>
 </html>
