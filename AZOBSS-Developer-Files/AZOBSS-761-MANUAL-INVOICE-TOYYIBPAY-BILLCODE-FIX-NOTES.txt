@@ -1,0 +1,26 @@
+AZOBSS PATCH 761 — MANUAL INVOICE TOYYIBPAY BILL CODE FIX
+Date: 2026-08-04
+Baseline: Patch 760
+
+PROBLEM FIXED
+- Pending manual invoices were saved successfully in Firestore, but PDF/Share/Print failed with:
+  "ToyyibPay did not return a Bill Code."
+
+WHAT CHANGED
+1. Manual invoice billName and billDescription now follow ToyyibPay's strict allowed format:
+   alphanumeric characters, spaces and underscores only.
+2. Customer phone is normalized to digits and Malaysian +60 format is converted to local 0 format.
+3. Invalid/empty email is no longer sent as payer information.
+4. Open-bill mode is used when complete email + phone details are unavailable.
+5. DuitNow QR is enabled only after the official checkDuitNowQRStatus API confirms activation.
+6. If an activated account returns a QR/DuitNow-specific rejection, createBill retries once without optional DuitNow fields.
+7. Bill Code extraction now supports normal, nested and array ToyyibPay responses.
+8. Backend now returns/logs the actual ToyyibPay error detail instead of only the generic Bill Code message.
+
+DEPLOYMENT
+- deploy-server.js changed. Render must redeploy/restart after uploading this baseline.
+- No new Render ENV variable is required. Existing TOYYIB_SECRET_KEY and TOYYIB_CATEGORY_CODE are reused.
+
+EXPECTED RESULT
+- Existing Pending manual invoices without a Bill Code can generate a fresh ToyyibPay bill on the next PDF/Share/Print/Open Payment action.
+- Once created, the Bill Code, payment URL and QR are stored and reused.

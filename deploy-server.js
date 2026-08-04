@@ -2382,6 +2382,71 @@ function cleanForToyyib(value, max = 100) {
   return String(value || "").replace(/[^a-zA-Z0-9 _.,@+\-()]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
+// ToyyibPay documents billName/billDescription as alphanumeric, spaces and underscores only.
+// Keep this stricter helper separate because email, phone and optional message fields have different formats.
+function cleanToyyibBillText(value, max = 100) {
+  return String(value || "")
+    .replace(/[^a-zA-Z0-9 _]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+function cleanToyyibEmail(value, max = 80) {
+  const email = String(value || "").trim().toLowerCase().slice(0, max);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+function cleanToyyibPhone(value, max = 20) {
+  let digits = String(value || "").replace(/\D/g, "");
+  // ToyyibPay examples use a local Malaysian number (01...). Convert +60/60 format when possible.
+  if (/^60\d{8,10}$/.test(digits)) digits = `0${digits.slice(2)}`;
+  return digits.slice(0, max);
+}
+function azToyyibExtractBillCode(result) {
+  const candidates = [];
+  const push = (value) => {
+    if (value === undefined || value === null) return;
+    if (Array.isArray(value)) return value.forEach(push);
+    if (typeof value === "object") {
+      candidates.push(value.BillCode, value.billCode, value.billcode, value.bill_code);
+      ["data", "result", "response", "bill"].forEach((key) => push(value[key]));
+      return;
+    }
+  };
+  push(result);
+  return cleanPremiumText(candidates.find(Boolean) || "", 120);
+}
+function azToyyibApiMessage(result, fallback = "ToyyibPay did not return a Bill Code.") {
+  const objects = azToyyibResultCandidates(result);
+  for (const item of objects) {
+    const text = item && (item.message || item.Message || item.msg || item.error || item.Error || item.result || item.reason || item.status);
+    if (text && typeof text !== "object") return cleanPremiumText(text, 350);
+  }
+  if (typeof result === "string" && result.trim()) return cleanPremiumText(result, 350);
+  try {
+    const text = JSON.stringify(result);
+    if (text && text !== "[]" && text !== "{}" && text !== "null") return cleanPremiumText(text, 350);
+  } catch (_) {}
+  return fallback;
+}
+let azToyyibDuitNowStatusCache = { checkedAtMs:0, activated:false };
+async function azToyyibDuitNowActivated() {
+  const now = Date.now();
+  if (now - Number(azToyyibDuitNowStatusCache.checkedAtMs || 0) < 15 * 60 * 1000) {
+    return !!azToyyibDuitNowStatusCache.activated;
+  }
+  try {
+    const result = await postToyyib("checkDuitNowQRStatus", { userSecretKey:TOYYIB_SECRET_KEY });
+    const item = Array.isArray(result) ? (result[0] || {}) : (result || {});
+    const activated = item.duitnowqr_activated === true || String(item.duitnowqr_activated || "").toLowerCase() === "true" || String(item.duitnowqr_activated || "") === "1";
+    azToyyibDuitNowStatusCache = { checkedAtMs:now, activated };
+    return activated;
+  } catch (err) {
+    console.warn("ToyyibPay DuitNow QR status check skipped:", err && (err.message || err));
+    azToyyibDuitNowStatusCache = { checkedAtMs:now, activated:false };
+    return false;
+  }
+}
+
 async function postToyyib(endpoint, payload) {
   const body = new URLSearchParams();
   Object.entries(payload || {}).forEach(([k, v]) => body.append(k, String(v ?? "")));
@@ -5207,7 +5272,7 @@ function azSalesShareIssue(meta = {}) {
 // deletes immediately after navigator.share() succeeds. Public links are removed after
 // first access plus a safety window, or at the hard maximum expiry time.
 
-const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_QR_747_20260804";
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_BILLCODE_FIX_761_20260804";
 function azIsManualSalesInvoiceOrder(order = {}) {
   return order && (order.isManualSalesInvoice === true || String(order.source || "").toLowerCase() === "admin-manual-invoice" || String(order.productId || "").toLowerCase() === "manual-sales-invoice");
 }
@@ -5281,35 +5346,57 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   const apiBase = publicBaseUrlFromReq(req);
   const returnUrl = `${apiBase}/payment/manual-invoice-return?orderId=${encodeURIComponent(orderId)}`;
   if (!billCode || !paymentUrl) {
-    const itemText = Array.isArray(invoice.items) ? invoice.items.map(x => cleanPremiumText(x && x.name || "", 50)).filter(Boolean).slice(0,3).join(" ") : "";
-    const payorInfo = cleanPremiumText(invoice.customerEmail || invoice.customerPhone || "", 180) ? 1 : 0;
+    const itemText = Array.isArray(invoice.items)
+      ? invoice.items.map(x => cleanToyyibBillText(x && x.name || "", 50)).filter(Boolean).slice(0,3).join(" ")
+      : "";
+    const customerEmail = cleanToyyibEmail(invoice.customerEmail || "", 80);
+    const customerPhone = cleanToyyibPhone(invoice.customerPhone || "", 20);
+    const customerName = cleanToyyibBillText(invoice.customerName || "Customer", 30) || "Customer";
+    // Use open-bill mode when either contact field is incomplete. This prevents a blank/invalid
+    // email or formatted phone number from causing createBill to return no BillCode.
+    const payorInfo = customerEmail && customerPhone ? 1 : 0;
     const billPayload = {
       userSecretKey:TOYYIB_SECRET_KEY,
       categoryCode:TOYYIB_CATEGORY_CODE,
-      billName:cleanForToyyib(`Invoice ${invoiceNo}`,30),
-      billDescription:cleanForToyyib(`AZOBSS ${invoiceNo} ${itemText || "Customer invoice"}`,100),
+      billName:cleanToyyibBillText(`Invoice ${invoiceNo}`,30) || "AZOBSS Invoice",
+      billDescription:cleanToyyibBillText(`AZOBSS ${invoiceNo} ${itemText || "Customer invoice"}`,100) || "AZOBSS Customer Invoice",
       billPriceSetting:1,
       billPayorInfo:payorInfo,
       billAmount:Math.round(amount * 100),
       billReturnUrl:returnUrl,
       billCallbackUrl:TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`,
       billExternalReferenceNo:orderId,
-      billTo:cleanForToyyib(invoice.customerName || "Customer",30),
-      billEmail:cleanForToyyib(invoice.customerEmail || "",80),
-      billPhone:cleanForToyyib(invoice.customerPhone || "",20),
+      billTo:customerName,
+      billEmail:customerEmail,
+      billPhone:customerPhone,
       billSplitPayment:0,
       billSplitPaymentArgs:"",
       billPaymentChannel:0,
-      billContentEmail:cleanForToyyib(`Payment for AZOBSS invoice ${invoiceNo}.`,200),
+      billContentEmail:cleanPremiumText(`Payment for AZOBSS invoice ${invoiceNo}.`,1000),
       billChargeToCustomer:1,
-      billExpiryDays:azManualInvoiceExpiryDays(),
-      enableDuitNowQR:1,
-      chargeDuitNowQR:0
+      billExpiryDays:azManualInvoiceExpiryDays()
     };
-    const apiResult = await postToyyib("createBill", billPayload);
-    billCode = apiResult && (apiResult.BillCode || apiResult.billCode || apiResult.billcode || (Array.isArray(apiResult) && apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode))) || "";
-    billCode = cleanPremiumText(billCode, 120);
-    if (!billCode) throw new Error("ToyyibPay did not return a Bill Code.");
+    const duitNowActivated = await azToyyibDuitNowActivated();
+    if (duitNowActivated) {
+      billPayload.enableDuitNowQR = 1;
+      billPayload.chargeDuitNowQR = 0;
+    }
+    let apiResult = await postToyyib("createBill", billPayload);
+    billCode = azToyyibExtractBillCode(apiResult);
+    // Some accounts report DuitNow QR as activated but reject it for a specific category/package.
+    // Retry once without the optional DuitNow fields only when the API response points to QR/DuitNow.
+    if (!billCode && duitNowActivated && /duit\s*now|duitnow|qr|activat/i.test(azToyyibApiMessage(apiResult, ""))) {
+      const fallbackPayload = { ...billPayload };
+      delete fallbackPayload.enableDuitNowQR;
+      delete fallbackPayload.chargeDuitNowQR;
+      apiResult = await postToyyib("createBill", fallbackPayload);
+      billCode = azToyyibExtractBillCode(apiResult);
+    }
+    if (!billCode) {
+      const detail = azToyyibApiMessage(apiResult);
+      console.error("Manual invoice ToyyibPay createBill failed:", JSON.stringify({ receiptId:record.id, invoiceNo, detail, response:apiResult }).slice(0, 1800));
+      throw Object.assign(new Error(`ToyyibPay createBill failed: ${detail}`), { statusCode:502 });
+    }
     paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
   }
   const now = new Date();
