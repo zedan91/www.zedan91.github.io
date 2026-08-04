@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 764: Left-aligned item descriptions in invoice/receipt PDF */
+/* AZOBSS PATCH 768: White-only item rows in invoice/receipt PDF; description remains left-aligned */
 (function(global){
   'use strict';
 
@@ -190,7 +190,7 @@
     textLines(commands,lines,cellX+9,first,{size,bold,lineHeight,color});
   }
   function drawItemRow(commands,item,index,y){
-    const h=itemRowHeight(item),bg=index%2===0?[255,255,255]:[248,250,252];
+    const h=itemRowHeight(item),bg=[255,255,255];
     fillRect(commands,TABLE.x,y,CONTENT_W,h,bg); strokeRect(commands,TABLE.x,y,CONTENT_W,h,[226,232,240],0.55);
     let dx=TABLE.x; TABLE.widths.slice(0,-1).forEach(width=>{dx+=width;line(commands,dx,y,dx,y+h,[226,232,240],0.55)});
     text(commands,String(index+1),tableX(0)+(TABLE.widths[0]/2),centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'center',color:[55,65,81]});
