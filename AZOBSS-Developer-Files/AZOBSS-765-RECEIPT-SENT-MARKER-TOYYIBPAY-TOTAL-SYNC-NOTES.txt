@@ -1,0 +1,23 @@
+AZOBSS PATCH 765
+Date: 2026-08-04
+
+1. Paid receipt delivery marker
+- Every Paid row now shows RECEIPT NOT SENT until it is marked/shared.
+- Native/WhatsApp PDF sharing marks the receipt as SENT after the share action succeeds.
+- A circular envelope action lets the admin manually toggle SENT / NOT SENT.
+- The state is stored in Firestore so it survives refresh and can also cover website sales.
+
+2. Manual Invoice ToyyibPay total synchronization
+- Root cause fixed: an older ToyyibPay Bill Code could remain at RM250 after another RM20 item was added and the invoice total became RM270.
+- Backend now recalculates the payable amount from all invoice items, discount and shipping charged.
+- Pending legacy bills are regenerated once under amount-sync version 765.
+- The exact ToyyibPay bill amount and version are stored on the invoice and payment order.
+- Frontend refuses to reuse a cached Bill Code/QR unless its saved amount matches the current invoice total.
+- Paid synchronization also uses the recalculated invoice total, preventing a stale gross value from producing the wrong receipt total.
+
+Deployment
+- Upload all files.
+- Restart / Manual Deploy the Render backend because deploy-server.js changed.
+- Press Ctrl+F5 in the Admin page.
+- Generate/download the Pending invoice PDF again. A new Bill Code and QR will be produced for RM270.00.
+- Do not send/use the older RM250 PDF/QR.

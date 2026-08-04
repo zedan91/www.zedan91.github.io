@@ -559,3 +559,41 @@
   .az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon,
   .az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon{width:20px!important;height:20px!important}
 }
+
+/* AZOBSS PATCH 765: clear Paid receipt delivery marker */
+.az-sr-delivery-badge{
+  display:block!important;
+  width:max-content!important;
+  max-width:78px!important;
+  margin-top:5px!important;
+  padding:3px 5px!important;
+  border-radius:6px!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  font-size:6.8px!important;
+  line-height:1.18!important;
+  font-weight:950!important;
+  letter-spacing:.035em!important;
+  white-space:normal!important;
+  text-align:center!important;
+}
+.az-sr-delivery-badge.not-sent{
+  color:#fecaca!important;
+  background:rgba(153,27,27,.30)!important;
+  border-color:rgba(248,113,113,.68)!important;
+  box-shadow:0 0 0 1px rgba(239,68,68,.08)!important;
+}
+.az-sr-delivery-badge.sent{
+  color:#bbf7d0!important;
+  background:rgba(21,128,61,.24)!important;
+  border-color:rgba(74,222,128,.58)!important;
+}
+.az-sr-icon-btn.delivery{
+  background:#b45309!important;
+  border-color:#fbbf24!important;
+  color:#fff!important;
+}
+.az-sr-icon-btn.deliverysent{
+  background:#15803d!important;
+  border-color:#4ade80!important;
+  color:#fff!important;
+}

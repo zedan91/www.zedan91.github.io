@@ -5272,8 +5272,27 @@ function azSalesShareIssue(meta = {}) {
 // deletes immediately after navigator.share() succeeds. Public links are removed after
 // first access plus a safety window, or at the hard maximum expiry time.
 
-const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_CUSTOMER_PREFILL_FIX_763_20260804";
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_TOTAL_SYNC_FIX_765_20260804";
 const AZOBSS_MANUAL_PAYOR_PREFILL_VERSION = 763;
+const AZOBSS_MANUAL_BILL_AMOUNT_VERSION = 765;
+function azManualInvoicePayableAmount(invoice = {}) {
+  const items = Array.isArray(invoice.items) ? invoice.items : [];
+  const subtotalFromItems = items.reduce((sum, item) => {
+    const qty = Math.max(0, Number(item && (item.qty ?? item.quantity) || 0) || 0);
+    const unitPrice = Math.max(0, Number(item && (item.unitPrice ?? item.price) || 0) || 0);
+    return sum + (qty * unitPrice);
+  }, 0);
+  const discount = Math.max(0, Number(invoice.discount || 0) || 0);
+  const shippingCharge = Math.max(0, Number(invoice.shippingCharge || 0) || 0);
+  const calculatedFromItems = Math.max(0, subtotalFromItems - discount + shippingCharge);
+  const amountDue = Math.max(0, Number(invoice.amountDue || 0) || 0);
+  const gross = Math.max(0, Number(invoice.gross || 0) || 0);
+  // For Pending invoices, the saved item list is the safest source of truth. Older
+  // records may have a stale `gross` value from before another item was added.
+  if (calculatedFromItems > 0) return Math.round(calculatedFromItems * 100) / 100;
+  if (amountDue > 0) return Math.round(amountDue * 100) / 100;
+  return Math.round(gross * 100) / 100;
+}
 function azIsManualSalesInvoiceOrder(order = {}) {
   return order && (order.isManualSalesInvoice === true || String(order.source || "").toLowerCase() === "admin-manual-invoice" || String(order.productId || "").toLowerCase() === "manual-sales-invoice");
 }
@@ -5319,7 +5338,7 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     return { ok:true, alreadyPaid:true, receiptId:record.id, invoiceNo:invoice.invoiceNo || "", receiptNo:invoice.receiptNo || azManualInvoiceReceiptNo(invoice.invoiceNo), status:"paid", billCode:invoice.billCode || invoice.toyyibBillCode || "", paymentUrl:invoice.paymentUrl || invoice.toyyibPaymentUrl || "" };
   }
   if (status !== "pending") throw Object.assign(new Error("ToyyibPay QR is available only for Pending invoices."), { statusCode:409 });
-  const amount = Number(invoice.gross || invoice.amountDue || 0);
+  const amount = azManualInvoicePayableAmount(invoice);
   if (!Number.isFinite(amount) || amount <= 0) throw Object.assign(new Error("Invoice total must be more than RM0.00 before creating a ToyyibPay bill."), { statusCode:400 });
   const invoiceNo = cleanPremiumText(invoice.invoiceNo || invoice.documentNo || `AZI-${record.id.slice(0,10).toUpperCase()}`, 180);
   const existingBillCode = cleanPremiumText(invoice.billCode || invoice.toyyibBillCode || "", 120);
@@ -5327,30 +5346,41 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   let order = findPremiumOrderByAny({ orderId:invoice.toyyibOrderId || `manual-invoice-${record.id}`, billCode:existingBillCode });
   let billCode = existingBillCode || cleanPremiumText(order && order.billCode || "", 120);
   let paymentUrl = existingPaymentUrl || cleanPremiumUrl(order && order.paymentUrl || "");
+  const savedInvoiceBillAmount = Number(invoice.toyyibBillAmount || 0) || (Number(invoice.toyyibBillAmountSen || 0) / 100) || 0;
   const savedOrderAmount = Number(order && (order.saleAmount || order.amount) || 0);
-  const amountChanged = Boolean(order && savedOrderAmount > 0 && Math.abs(savedOrderAmount - amount) > 0.005);
+  const savedBillAmount = savedInvoiceBillAmount > 0 ? savedInvoiceBillAmount : savedOrderAmount;
+  const amountChanged = Boolean((billCode || paymentUrl || order) && savedBillAmount > 0 && Math.abs(savedBillAmount - amount) > 0.005);
   const currentCustomerName = cleanToyyibBillText(invoice.customerName || "Customer", 30) || "Customer";
   const currentCustomerEmail = cleanToyyibEmail(invoice.customerEmail || "", 80);
   const currentCustomerPhone = cleanToyyibPhone(invoice.customerPhone || "", 20);
   const savedOrderUser = order && order.user && typeof order.user === "object" ? order.user : {};
-  const savedCustomerName = cleanToyyibBillText(savedOrderUser.displayName || savedOrderUser.username || "", 30);
-  const savedCustomerEmail = cleanToyyibEmail(savedOrderUser.email || order && (order.buyerEmail || order.email) || "", 80);
-  const savedCustomerPhone = cleanToyyibPhone(savedOrderUser.phone || order && order.phone || "", 20);
-  const customerChanged = Boolean(order && (
+  const savedCustomerName = cleanToyyibBillText(invoice.toyyibPrefilledCustomerName || savedOrderUser.displayName || savedOrderUser.username || "", 30);
+  const savedCustomerEmail = cleanToyyibEmail(invoice.toyyibPrefilledCustomerEmail || savedOrderUser.email || order && (order.buyerEmail || order.email) || "", 80);
+  const savedCustomerPhone = cleanToyyibPhone(invoice.toyyibPrefilledCustomerPhone || savedOrderUser.phone || order && order.phone || "", 20);
+  const hasSavedCustomerSnapshot = Boolean(savedCustomerName || savedCustomerEmail || savedCustomerPhone);
+  const customerChanged = Boolean((billCode || paymentUrl || order) && hasSavedCustomerSnapshot && (
     savedCustomerName !== currentCustomerName ||
     savedCustomerEmail !== currentCustomerEmail ||
     savedCustomerPhone !== currentCustomerPhone
   ));
   const savedPrefillVersion = Number(invoice.toyyibPayorPrefillVersion || order && order.manualPayorPrefillVersion || 0);
   const prefillUpgradeRequired = Boolean((billCode || paymentUrl) && savedPrefillVersion < AZOBSS_MANUAL_PAYOR_PREFILL_VERSION);
-  const recreateBill = amountChanged || customerChanged || prefillUpgradeRequired;
+  const savedBillAmountVersion = Number(invoice.toyyibBillAmountVersion || order && order.manualBillAmountVersion || 0);
+  // Recreate legacy Pending bills once so an old RM250 Bill Code cannot be reused
+  // after the invoice total has already become RM270.
+  const amountSyncUpgradeRequired = Boolean((billCode || paymentUrl) && savedBillAmountVersion < AZOBSS_MANUAL_BILL_AMOUNT_VERSION);
+  const recreateBill = amountChanged || customerChanged || prefillUpgradeRequired || amountSyncUpgradeRequired;
   if (recreateBill) {
-    const reason = amountChanged ? "manual-invoice-amount-changed" : (customerChanged ? "manual-invoice-customer-changed" : "manual-invoice-payor-prefill-upgrade");
+    const reason = amountChanged
+      ? "manual-invoice-amount-changed"
+      : (customerChanged
+          ? "manual-invoice-customer-changed"
+          : (prefillUpgradeRequired ? "manual-invoice-payor-prefill-upgrade" : "manual-invoice-bill-amount-sync-upgrade"));
     if (order) order = upsertPremiumOrder({ ...order, status:"superseded", supersededAt:new Date().toISOString(), supersededReason:reason });
     billCode = ""; paymentUrl = "";
   }
   let orderId = cleanPremiumText(invoice.toyyibOrderId || (order && order.orderId) || `manual-invoice-${record.id}`, 180);
-  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p763-${Date.now().toString(36)}`, 180);
+  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p765-${Date.now().toString(36)}`, 180);
   if (order && billCode && !amountChanged) {
     const refreshed = await refreshToyyibOrder(order, req);
     if (String(refreshed && refreshed.status || "").toLowerCase() === "paid") {
@@ -5429,6 +5459,8 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     user:{ uid:invoice.uid || invoice.createdByUid || "", username:invoice.customerName || "", email:invoice.customerEmail || "", phone:invoice.customerPhone || "", displayName:invoice.customerName || "" },
     email:invoice.customerEmail || "", buyerEmail:invoice.customerEmail || "", phone:invoice.customerPhone || "",
     manualPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION,
+    manualBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION,
+    manualBillAmount:amount, manualBillAmountSen:Math.round(amount*100),
     commissionSkippedReason:"manual-sales-invoice", commissionCheckedAt:(order && order.commissionCheckedAt) || now.toISOString(),
     createdAt:(order && order.createdAt) || now.toISOString(), createdAtMs:(order && order.createdAtMs) || now.getTime()
   });
@@ -5437,12 +5469,14 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     paymentUrl, toyyibPaymentUrl:paymentUrl, toyyibBillCreatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),
     toyyibBillCreatedAtMs:Date.now(), toyyibBillExpiryDays:azManualInvoiceExpiryDays(),
     toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION,
+    toyyibBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION,
+    toyyibBillAmount:amount, toyyibBillAmountSen:Math.round(amount*100),
     toyyibPrefilledCustomerName:currentCustomerName, toyyibPrefilledCustomerPhone:currentCustomerPhone,
     toyyibPrefilledCustomerEmail:currentCustomerEmail,
     updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:Date.now()
   }, { merge:true });
   const qrJpeg = await azManualInvoiceQrJpeg(paymentUrl);
-  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays(), toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION };
+  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, amountSen:Math.round(amount*100), orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays(), toyyibPayorPrefillVersion:AZOBSS_MANUAL_PAYOR_PREFILL_VERSION, toyyibBillAmountVersion:AZOBSS_MANUAL_BILL_AMOUNT_VERSION };
 }
 async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   if (!azIsManualSalesInvoiceOrder(order)) return { ok:false, skipped:true };
@@ -5457,7 +5491,7 @@ async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   }
   const invoiceNo = cleanPremiumText(current.invoiceNo || order.manualInvoiceNo || current.documentNo || "", 180);
   const receiptNo = cleanPremiumText(current.receiptNo || order.manualReceiptNo || azManualInvoiceReceiptNo(invoiceNo), 180);
-  const gross = Number(current.gross || current.amountDue || order.saleAmount || order.amount || 0) || 0;
+  const gross = azManualInvoicePayableAmount(current) || Number(order.saleAmount || order.amount || 0) || 0;
   const gatewayFee = Math.max(Number(current.paymentFee || 0) || 0, Number(process.env.AZOBSS_TOYYIBPAY_FEE_RM || 1) || 1);
   const totalCost = (Number(current.productCost || 0)||0) + (Number(current.shippingCost || 0)||0) + gatewayFee + (Number(current.commission || 0)||0) + (Number(current.otherCost || 0)||0);
   const profit = gross - totalCost;

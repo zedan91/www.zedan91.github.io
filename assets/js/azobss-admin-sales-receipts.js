@@ -1,7 +1,7 @@
-/* AZOBSS PATCH 763: ToyyibPay manual invoice payer name/phone prefill */
+/* AZOBSS PATCH 765: paid receipt sent / not-sent tracking */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
@@ -9,12 +9,13 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 const BACKEND='https://azobss-backend.onrender.com';
 const MANUAL_SOURCE='admin-manual-sale';
+const RECEIPT_DELIVERY_STATE_SOURCE='admin-receipt-delivery-state';
 const PAGE_SIZE=10;
 const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=763;
+window.__azSalesReceiptsModuleVersion=765;
 
 let manualRows=[];
 let websiteRows=[];
@@ -31,6 +32,7 @@ let manualReceiptPollTimer=null;
 let manualReceiptPollBusy=false;
 let lastSuccessfulLoadAt=0;
 const toyyibInvoicePromiseById=new Map();
+const receiptDeliveryStateByKey=new Map();
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -77,6 +79,82 @@ function parseMs(v){
   if(typeof v==='object'){if(Number(v.seconds)>0)return Number(v.seconds)*1000;if(Number(v._seconds)>0)return Number(v._seconds)*1000}
   const t=Date.parse(String(v));return Number.isNaN(t)?0:t;
 }
+function receiptDeliveryKey(row={}){
+  const source=String(row.source||'unknown').trim().toLowerCase();
+  const sourceName=String(row.sourceName||'').trim().toLowerCase();
+  const targetId=String(row.docId||row.id||row.orderId||row.billCode||row.paymentReference||row.receiptNo||row.invoiceNo||'').trim();
+  return `${source}:${sourceName}:${targetId}`;
+}
+function receiptDeliveryStateDocIdFromKey(key=''){
+  const text=String(key||'');let hash=2166136261;
+  for(let i=0;i<text.length;i++){hash^=text.charCodeAt(i);hash=Math.imul(hash,16777619)}
+  const slug=text.replace(/[^a-z0-9_-]+/gi,'_').replace(/^_+|_+$/g,'').slice(0,90)||'receipt';
+  return `delivery-${slug}-${(hash>>>0).toString(36)}`;
+}
+function applyReceiptDeliveryState(row={}){
+  const key=receiptDeliveryKey(row);const state=receiptDeliveryStateByKey.get(key);
+  if(state){
+    row.receiptSent=state.receiptSent===true;
+    row.receiptSentAtMs=parseMs(state.receiptSentAtMs||state.receiptSentAt);
+    row.receiptSentVia=String(state.receiptSentVia||'');
+    row.receiptDeliveryStateDocId=String(state._docId||receiptDeliveryStateDocIdFromKey(key));
+  }else{
+    row.receiptSent=row.receiptSent===true;
+    row.receiptSentAtMs=parseMs(row.receiptSentAtMs||row.receiptSentAt);
+    row.receiptSentVia=String(row.receiptSentVia||'');
+    row.receiptDeliveryStateDocId=receiptDeliveryStateDocIdFromKey(key);
+  }
+  return row;
+}
+function receiptDeliveryBadge(row={}){
+  if(normalizeStatus(row.status)!=='paid')return '';
+  if(row.receiptSent===true){
+    const sentAt=row.receiptSentAtMs?formatDate(row.receiptSentAtMs):'';
+    const title=sentAt?`Receipt sent • ${sentAt}`:'Receipt sent';
+    return `<div class="az-sr-delivery-badge sent" title="${esc(title)}">✓ RECEIPT SENT</div>`;
+  }
+  return '<div class="az-sr-delivery-badge not-sent" title="Paid, but the receipt has not been sent yet">! RECEIPT NOT SENT</div>';
+}
+async function setReceiptDeliveryState(row,sent,via='manual-toggle',button=null,{silent=false}={}){
+  if(!row||normalizeStatus(row.status)!=='paid')return false;
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{
+    const user=await waitForUser();if(!user)throw new Error('Admin login not ready. Please sign in again.');
+    const targetKey=receiptDeliveryKey(row);if(!targetKey)throw new Error('Receipt record ID is missing.');
+    const stateDocId=String(row.receiptDeliveryStateDocId||receiptDeliveryStateDocIdFromKey(targetKey));
+    const now=Date.now();
+    const payload={
+      uid:user.uid,
+      source:RECEIPT_DELIVERY_STATE_SOURCE,
+      targetKey,
+      targetSource:String(row.source||''),
+      targetSourceName:String(row.sourceName||''),
+      targetDocId:String(row.docId||row.id||''),
+      documentNo:currentDocumentNo(row),
+      customerName:String(row.customerName||''),
+      receiptSent:sent===true,
+      receiptSentAt:sent===true?serverTimestamp():null,
+      receiptSentAtMs:sent===true?now:0,
+      receiptSentVia:sent===true?String(via||'manual-toggle'):'',
+      updatedAt:serverTimestamp(),
+      updatedAtMs:now
+    };
+    await setDoc(doc(db,'receipts',stateDocId),payload,{merge:true});
+    const state={...payload,_docId:stateDocId,receiptSentAtMs:payload.receiptSentAtMs};
+    receiptDeliveryStateByKey.set(targetKey,state);
+    row.receiptSent=payload.receiptSent;row.receiptSentAtMs=payload.receiptSentAtMs;row.receiptSentVia=payload.receiptSentVia;row.receiptDeliveryStateDocId=stateDocId;
+    const cached=findRow(row.id);if(cached&&cached!==row){cached.receiptSent=row.receiptSent;cached.receiptSentAtMs=row.receiptSentAtMs;cached.receiptSentVia=row.receiptSentVia;cached.receiptDeliveryStateDocId=stateDocId}
+    renderTable();
+    if(!silent)notify(sent?'Receipt marked as SENT.':'Receipt marked as NOT SENT.');
+    return true;
+  }catch(error){console.error(error);if(!silent)notify('Could not update receipt sent status: '+(error?.message||error),true);return false}
+  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+}
+async function autoMarkSharedReceipt(context,via){
+  if(!context||context.mode!=='single'||documentType(context.type)!=='receipt'||normalizeStatus(context.row?.status)!=='paid'||context.row.receiptSent===true)return false;
+  return setReceiptDeliveryState(context.row,true,via,null,{silent:true});
+}
+
 function rowDateMs(x={}){
   for(const v of [x.saleDateMs,x.paidAtMs,x.paymentPaidAtMs,x.createdAtMs,x.updatedAtMs,x.paidAt,x.paymentDate,x.createdAt,x.date,x.timestamp]){const ms=parseMs(v);if(ms)return ms}
   return 0;
@@ -301,7 +379,10 @@ async function loadData(options={}){
       getDocs(query(collection(db,'purchaseLogs'),limit(FIRESTORE_LIST_LIMIT))),
       loadPremiumOrders(user)
     ]);
-    const nextManual=[];receiptSnap.forEach(d=>{const x=d.data()||{};if(String(x.source||'')===MANUAL_SOURCE)nextManual.push(normalizeManual(d.id,x))});
+    const receiptDocs=[];receiptSnap.forEach(d=>receiptDocs.push({id:d.id,data:d.data()||{}}));
+    receiptDeliveryStateByKey.clear();
+    receiptDocs.forEach(entry=>{const x=entry.data;if(String(x.source||'')===RECEIPT_DELIVERY_STATE_SOURCE&&String(x.targetKey||''))receiptDeliveryStateByKey.set(String(x.targetKey),{...x,_docId:entry.id})});
+    const nextManual=[];receiptDocs.forEach(entry=>{const x=entry.data;if(String(x.source||'')===MANUAL_SOURCE)nextManual.push(applyReceiptDeliveryState(normalizeManual(entry.id,x)))});
     manualRows=nextManual;
     let repairedCount=0;
     try{repairedCount=await repairDuplicateManualNumbers()}catch(repairError){console.warn('Duplicate document number repair skipped:',repairError)}
@@ -321,7 +402,7 @@ async function loadData(options={}){
       if(existing.status!=='paid'&&row.status==='paid')existing.status='paid';
       existing.customerName=existing.customerName||row.customerName;existing.customerPhone=existing.customerPhone||row.customerPhone;existing.customerEmail=existing.customerEmail||row.customerEmail;
     });
-    websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row));
+    websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row)).map(applyReceiptDeliveryState);
     selectedRowIds.clear();
     currentPage=1;lastSuccessfulLoadAt=Date.now();applyFilters();
     if(info)info.textContent=`Loaded ${manualRows.length} manual invoice / receipt record(s) and ${websiteRows.length} website sale record(s).`;
@@ -400,6 +481,8 @@ function actionIcon(name){
     print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7Z"/></svg>',
     edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-1 5 5-1L19 9l-4-4L4 16ZM13.5 6.5l4 4"/></svg>',
     pay:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4Z"/><path d="M7 8h3v3H7Zm7 0h3v3h-3ZM7 14h3v3H7Zm7 0h1m2 0h1m-4 2h4"/></svg>',
+    delivery:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3Z"/><path d="m4 7 8 6 8-6"/><path d="M12 16v.01"/></svg>',
+    deliverysent:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3Z"/><path d="m4 7 8 6 8-6"/><path d="m15.5 15.5 1.5 1.5 3-3"/></svg>',
     delete:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></svg>'
   };
   return icons[name]||'';
@@ -427,6 +510,10 @@ function renderTable(){
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
     if(r.source==='manual'&&docType==='invoice'&&normalizeStatus(r.status)==='pending')actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
+    if(normalizeStatus(r.status)==='paid'){
+      const nextSent=r.receiptSent===true?'0':'1';
+      actions.push(iconActionButton(r.receiptSent===true?'deliverysent':'delivery',r.receiptSent===true?'Mark receipt as NOT SENT':'Mark receipt as SENT',`data-sr-receipt-sent-toggle="${rowId}" data-sr-next-sent="${nextSent}"`));
+    }
     if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
     actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
@@ -434,7 +521,7 @@ function renderTable(){
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
-    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
+    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
   }).join('')||'<tr><td colspan="10"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
   if(el('salesReceiptPageInfo'))el('salesReceiptPageInfo').textContent=`Page ${currentPage} / ${pages} • ${visibleRows.length} record(s)`;
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
@@ -586,7 +673,10 @@ async function adminBackendHeaders(){
 }
 
 function reusableToyyibInvoiceData(row={}){
-  return Number(row.toyyibPayorPrefillVersion||0)>=763&&!!(String(row.paymentUrl||row.toyyibPaymentUrl||'').trim()&&String(row.billCode||row.toyyibBillCode||'').trim()&&String(row.toyyibQrJpegBase64||'').trim());
+  const expectedAmount=Math.round(num(row.gross)*100)/100;
+  const savedAmount=num(row.toyyibBillAmount)||(num(row.toyyibBillAmountSen)/100);
+  const amountMatches=expectedAmount>0&&savedAmount>0&&Math.abs(expectedAmount-savedAmount)<=0.005;
+  return Number(row.toyyibPayorPrefillVersion||0)>=763&&Number(row.toyyibBillAmountVersion||0)>=765&&amountMatches&&!!(String(row.paymentUrl||row.toyyibPaymentUrl||'').trim()&&String(row.billCode||row.toyyibBillCode||'').trim()&&String(row.toyyibQrJpegBase64||'').trim());
 }
 async function ensureToyyibPayInvoice(row,{silent=false}={}){
   if(!row||row.source!=='manual'||documentKindForStatus(row.status)!=='invoice'||normalizeStatus(row.status)!=='pending')return row;
@@ -600,7 +690,7 @@ async function ensureToyyibPayInvoice(row,{silent=false}={}){
       const res=await fetch(BACKEND+'/api/admin/sales-invoice/toyyibpay-bill',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({receiptId:row.docId}),cache:'no-store'});
       const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
       if(!res.ok||data.ok===false)throw new Error(data.error||`ToyyibPay invoice HTTP ${res.status}`);
-      Object.assign(row,{toyyibOrderId:data.orderId||row.toyyibOrderId||'',billCode:data.billCode||row.billCode||'',toyyibBillCode:data.billCode||row.toyyibBillCode||'',paymentUrl:data.paymentUrl||row.paymentUrl||'',toyyibPaymentUrl:data.paymentUrl||row.toyyibPaymentUrl||'',toyyibQrJpegBase64:data.qrJpegBase64||row.toyyibQrJpegBase64||'',toyyibPayorPrefillVersion:Number(data.toyyibPayorPrefillVersion||row.toyyibPayorPrefillVersion||0),paymentMethod:'ToyyibPay'});
+      Object.assign(row,{toyyibOrderId:data.orderId||row.toyyibOrderId||'',billCode:data.billCode||row.billCode||'',toyyibBillCode:data.billCode||row.toyyibBillCode||'',paymentUrl:data.paymentUrl||row.paymentUrl||'',toyyibPaymentUrl:data.paymentUrl||row.toyyibPaymentUrl||'',toyyibQrJpegBase64:data.qrJpegBase64||row.toyyibQrJpegBase64||'',toyyibPayorPrefillVersion:Number(data.toyyibPayorPrefillVersion||row.toyyibPayorPrefillVersion||0),toyyibBillAmountVersion:Number(data.toyyibBillAmountVersion||row.toyyibBillAmountVersion||0),toyyibBillAmount:num(data.amount)||num(row.toyyibBillAmount),toyyibBillAmountSen:num(data.amountSen)||num(row.toyyibBillAmountSen),paymentMethod:'ToyyibPay'});
       if(data.status==='paid'||data.alreadyPaid){row.status='paid';row.documentType='receipt';row.receiptNo=data.receiptNo||row.receiptNo||deriveReceiptNo(row.invoiceNo);row.documentNo=row.receiptNo;row.amountDue=0;row.paymentRecognized=true}
       if(!silent)notify(data.status==='paid'?`Payment verified. ${invoiceNoForRow(row)} is now a Paid receipt.`:`ToyyibPay QR ready for invoice ${invoiceNoForRow(row)}.`);
       return row;
@@ -822,7 +912,8 @@ async function shareTemporaryFile(data,title,text,button=null,{preferredApp=''}=
     if(sharePanelContext?.temp?.id===data.id)sharePanelContext.temp=null;
     const copyNote=copied?' The same message and payment link were copied for quick Paste if the app omitted the caption.':'';
     notify(`Actual PDF file shared successfully.${copyNote}`);
-  }catch(e){if(e&&e.name==='AbortError')return;console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)}
+    return true;
+  }catch(e){if(e&&e.name==='AbortError')return false;console.error(e);notify('PDF file sharing failed: '+(e.message||e),true);return false}
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 async function shareSingleActualPdfWithMessage(context,button=null,preferredApp='WhatsApp'){
@@ -842,6 +933,7 @@ async function shareSingleActualPdfWithMessage(context,button=null,preferredApp=
     if(preferredApp)notify(`Actual PDF and message are ready locally. Choose ${preferredApp} in the Share window.`);
     await navigator.share({files:[file],title,text});
     notify('Actual PDF shared directly from the browser without using backend storage.');
+    return true;
   }
 }
 async function shareDocumentPdf(row,type,button=null){
@@ -885,7 +977,7 @@ async function runSharePanelAction(action,button=null){
   const context=sharePanelContext;if(!context)return;
   if(action==='whatsapp'){
     if(context.mode==='single'){
-      try{return await shareSingleActualPdfWithMessage(context,button,'WhatsApp')}
+      try{const shared=await shareSingleActualPdfWithMessage(context,button,'WhatsApp');if(shared)await autoMarkSharedReceipt(context,'whatsapp-share');return shared}
       catch(e){console.error(e);notify('Could not prepare the actual PDF for WhatsApp: '+(e.message||e),true);return}
     }
     return openTemporaryApp('whatsapp',context,button);
@@ -901,7 +993,7 @@ async function runSharePanelAction(action,button=null){
 ZIP: ${data.shareUrl}`;await copyPlainText(text);notify('Message with temporary document link copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;
   }
   if(action==='native'){
-    try{const data=await ensureSharePanelTemporary(button);const title=context.mode==='single'?`AZOBSS ${documentType(context.type)==='invoice'?'Invoice':'Receipt'} ${documentNo(context.row,context.type)}`:`AZOBSS ${context.rows.length} selected document(s)`;const text=context.mode==='single'?documentShareText(context.row,context.type):bulkShareSummary(context.rows);return shareTemporaryFile(data,title,text,button)}catch(e){notify('Could not prepare temporary share file: '+(e.message||e),true)}return;
+    try{const data=await ensureSharePanelTemporary(button);const title=context.mode==='single'?`AZOBSS ${documentType(context.type)==='invoice'?'Invoice':'Receipt'} ${documentNo(context.row,context.type)}`:`AZOBSS ${context.rows.length} selected document(s)`;const text=context.mode==='single'?documentShareText(context.row,context.type):bulkShareSummary(context.rows);const shared=await shareTemporaryFile(data,title,text,button);if(shared)await autoMarkSharedReceipt(context,'native-share');return shared}catch(e){notify('Could not prepare temporary share file: '+(e.message||e),true)}return;
   }
   if(action==='download'){
     if(context.mode==='single')return downloadDocumentPdf(context.row,context.type,button);
@@ -976,7 +1068,7 @@ function bind(){
   el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
 function startManualReceiptPaymentWatch(){
   // Quota saver: check only every five minutes and only while a Pending manual
