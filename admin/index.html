@@ -2482,7 +2482,7 @@ body[data-dashboard-page="admin"] .topbar{
             </button>
             <button class="az-sr-share-option whatsapp-option" type="button" data-sr-share-action="whatsapp">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg></span>
-              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Invoice + Payment Link</b><small id="salesReceiptShareWhatsAppDesc">Open WhatsApp with the temporary PDF link. Pending invoices also include the ToyyibPay payment link.</small></span>
+              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Actual PDF + Payment Link</b><small id="salesReceiptShareWhatsAppDesc">Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.</small></span>
             </button>
             <button class="az-sr-share-option telegram-option" type="button" data-sr-share-action="telegram">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg></span>
@@ -2505,7 +2505,7 @@ body[data-dashboard-page="admin"] .topbar{
               <span><b>Print PDF</b><small>Load the same temporary backend PDF and open Print Preview.</small></span>
             </button>
           </div>
-          <p class="az-sr-share-note"><b>Actual PDF file:</b> use <b>Share Actual PDF File</b>. Browsers cannot attach a file directly to a specific WhatsApp or Telegram chat without an API, so those two buttons send a temporary PDF link instead. Pending invoice messages also include the ToyyibPay payment link. Temporary files remove themselves automatically.</p>
+          <p class="az-sr-share-note"><b>WhatsApp:</b> the WhatsApp button now shares the <b>actual PDF file</b> together with the invoice message and ToyyibPay payment link. Choose WhatsApp in the Windows/phone Share window. The message is also copied automatically so it can be pasted if the WhatsApp share target accepts the PDF but omits the caption. Telegram direct still uses a temporary link. Temporary backend files remove themselves automatically.</p>
         </div>
       </div>
 
@@ -7727,6 +7727,6 @@ document.addEventListener('click', async function(e){
 </script>
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=747"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=756" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=757" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 </body>
 </html>

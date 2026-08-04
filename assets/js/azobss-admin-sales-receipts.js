@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 756: Clarify actual-file share and include ToyyibPay payment link in invoice messages */
+/* AZOBSS PATCH 757: WhatsApp action shares actual PDF file with invoice message and ToyyibPay payment link */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -728,17 +728,33 @@ function temporaryDirectShareUrl(row,type,target,shareUrl){
 function nativeFileShareSupported(files){
   if(!navigator.share)return false;try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
 }
-async function shareTemporaryFile(data,title,text,button=null){
+async function shareTemporaryFile(data,title,text,button=null,{preferredApp=''}={}){
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
     const file=await fetchTemporaryFile(data);
-    if(!nativeFileShareSupported([file]))throw new Error('This browser cannot share PDF files directly. Use WhatsApp/Telegram temporary link instead.');
+    if(!nativeFileShareSupported([file]))throw new Error('This browser cannot share PDF files directly. Use Copy PDF Link instead.');
+    // Keep the exact message available as a fallback because some desktop share targets
+    // accept the PDF file but may ignore the accompanying text/caption.
+    let copied=false;
+    try{await copyPlainText(text);copied=true}catch(_e){}
+    if(preferredApp)notify(`Actual PDF and message are ready. Choose ${preferredApp} in the Share window.`);
     await navigator.share({files:[file],title,text});
     await deleteTemporaryDocument(data).catch(()=>{});
     if(sharePanelContext?.temp?.id===data.id)sharePanelContext.temp=null;
-    notify('PDF shared successfully. The temporary backend copy was deleted.');
+    const copyNote=copied?' The same message and payment link were copied for quick Paste if the app omitted the caption.':'';
+    notify(`Actual PDF file shared successfully.${copyNote}`);
   }catch(e){if(e&&e.name==='AbortError')return;console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)}
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+}
+async function shareSingleActualPdfWithMessage(context,button=null,preferredApp='WhatsApp'){
+  if(!context||context.mode!=='single')throw new Error('A single invoice or receipt is required.');
+  const data=await ensureSharePanelTemporary(button);
+  const docType=documentType(context.type);
+  const title=`AZOBSS ${docType==='invoice'?'Invoice':'Receipt'} ${documentNo(context.row,docType)}`;
+  // ensureSharePanelTemporary() prepares ToyyibPay first, so context.row now contains
+  // the same payment URL used by the QR inside the generated invoice PDF.
+  const text=documentShareText(context.row,docType);
+  return shareTemporaryFile(data,title,text,button,{preferredApp});
 }
 async function shareDocumentPdf(row,type,button=null){
   try{const temp=await createDocumentTemporary(row,type);return shareTemporaryFile(temp,`AZOBSS ${documentType(type)==='invoice'?'Invoice':'Receipt'} ${documentNo(row,type)}`,documentShareText(row,type),button)}
@@ -751,10 +767,10 @@ function openSharePanel(row,type='receipt'){
   sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
   setSharePanelText('salesReceiptShareNativeLabel','Share Actual PDF File');
-  setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp Invoice + Payment Link':'WhatsApp Receipt Link');
+  setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp Actual PDF + Payment Link':'WhatsApp Actual Receipt PDF');
   setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?'Telegram Invoice + Payment Link':'Telegram Receipt Link');
   setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
-  setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?'Open WhatsApp with the temporary invoice PDF link and ToyyibPay payment link.':'Open WhatsApp with the temporary receipt PDF link.');
+  setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?'Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.':'Share the actual receipt PDF and message. Choose WhatsApp in the Share window.');
   setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':'Open Telegram with the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareLinkDesc',docType==='invoice'?'Copy the temporary invoice PDF link.':'Copy the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareMessageDesc',docType==='invoice'?'Copy invoice details, PDF link and ToyyibPay payment link.':'Copy receipt details and temporary PDF link.');
@@ -779,7 +795,14 @@ ZIP: ${data.shareUrl}`;url=target==='whatsapp'?`https://wa.me/?text=${encodeURIC
 }
 async function runSharePanelAction(action,button=null){
   const context=sharePanelContext;if(!context)return;
-  if(action==='whatsapp'||action==='telegram')return openTemporaryApp(action,context,button);
+  if(action==='whatsapp'){
+    if(context.mode==='single'){
+      try{return await shareSingleActualPdfWithMessage(context,button,'WhatsApp')}
+      catch(e){console.error(e);notify('Could not prepare the actual PDF for WhatsApp: '+(e.message||e),true);return}
+    }
+    return openTemporaryApp('whatsapp',context,button);
+  }
+  if(action==='telegram')return openTemporaryApp('telegram',context,button);
   if(action==='link'){
     if(button){button.disabled=true;button.classList.add('busy')}
     try{const data=await ensureSharePanelTemporary();await copyPlainText(data.shareUrl);notify('Temporary backend link copied. It will delete itself automatically.')}catch(e){notify('Could not copy the temporary link: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;

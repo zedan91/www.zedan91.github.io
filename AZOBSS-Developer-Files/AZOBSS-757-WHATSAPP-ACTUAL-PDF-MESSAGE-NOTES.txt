@@ -1,0 +1,5 @@
+PATCH 757
+- WhatsApp single-document action now uses Web Share with the actual PDF file.
+- Invoice message includes the same ToyyibPay payment URL represented by the QR.
+- The message is copied to clipboard as a fallback if a desktop share target omits captions.
+- User still selects WhatsApp in the operating-system Share window; a website cannot silently force a specific app without an API.
