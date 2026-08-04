@@ -1,0 +1,19 @@
+AZOBSS Patch 749
+
+Sales & Receipts fatal parser repair.
+
+Root cause found in assets/js/azobss-admin-sales-receipts.js:
+1. Two JavaScript string separators contained a real line-feed between single quotes instead of the escaped sequence \n.
+2. The Set used by bulkShareSelected was missing one closing parenthesis.
+
+Because this is an ES module, any one parser error prevents the entire file from executing. window.azSalesReceiptsLoad was therefore never registered and the Admin page displayed the module failed to load message.
+
+Fixes:
+- Replaced both literal line-feeds with escaped \n string separators.
+- Completed new Set(rows.map(...)) closing parentheses.
+- Added runtime module marker window.__azSalesReceiptsModuleVersion=749.
+- Updated Admin cache references to v=749.
+- Parsed every .js/.mjs file with Node module syntax checking via stdin.
+- Parsed all inline Admin script blocks separately.
+
+No Cloudflare Worker, Firebase Rules, or new Render environment variable is required.

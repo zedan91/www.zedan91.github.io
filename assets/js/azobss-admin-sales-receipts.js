@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 748: reliable Sales & Receipts load; ToyyibPay status polling */
+/* AZOBSS PATCH 749: fix fatal literal-newline syntax corruption; reliable load */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -10,6 +10,7 @@ const db=getFirestore(app);
 const BACKEND='https://azobss-backend.onrender.com';
 const MANUAL_SOURCE='admin-manual-sale';
 const PAGE_SIZE=10;
+window.__azSalesReceiptsModuleVersion=749;
 
 let manualRows=[];
 let websiteRows=[];
@@ -698,8 +699,7 @@ function setDirectShareWindow(targetWindow,url){
 }
 function temporaryShareText(row,type,shareUrl){
   const label=documentType(type)==='invoice'?'Invoice':'Receipt';
-  return [`AZOBSS ${label} ${documentNo(row,type)}`,`Customer: ${row.customerName}`,`${documentType(type)==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,`PDF: ${shareUrl}`].join('
-');
+  return [`AZOBSS ${label} ${documentNo(row,type)}`,`Customer: ${row.customerName}`,`${documentType(type)==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,`PDF: ${shareUrl}`].join('\n');
 }
 function temporaryDirectShareUrl(row,type,target,shareUrl){
   const text=temporaryShareText(row,type,shareUrl);
@@ -799,14 +799,13 @@ async function bulkDownloadSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}
   let temp=null;try{temp=await createSelectedBundleTemporary(rows);const file=await fetchTemporaryFile(temp);downloadBlobFile(file,file.name||temp.filename);await deleteTemporaryDocument(temp).catch(()=>{});if(sharePanelContext?.temp?.id===temp.id)sharePanelContext.temp=null;notify(`Downloaded ${rows.length} selected document(s) from the temporary backend ZIP.`)}catch(e){console.error(e);notify('Bulk download failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');button.disabled=false;updateBulkUI()}}
 }
-function bulkShareSummary(rows){const docs=rows.slice(0,8).map(r=>`${documentKindForStatus(r.status)==='invoice'?'Invoice':'Receipt'} ${currentDocumentNo(r)} - ${r.customerName}`);return [`AZOBSS selected documents: ${rows.length}`,...docs,rows.length>8?`+${rows.length-8} more document(s)`:'' ].filter(Boolean).join('
-')}
+function bulkShareSummary(rows){const docs=rows.slice(0,8).map(r=>`${documentKindForStatus(r.status)==='invoice'?'Invoice':'Receipt'} ${currentDocumentNo(r)} - ${r.customerName}`);return [`AZOBSS selected documents: ${rows.length}`,...docs,rows.length>8?`+${rows.length-8} more document(s)`:'' ].filter(Boolean).join('\n')}
 async function bulkCopyLinkSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}
   try{const data=await createSelectedBundleTemporary(rows);await copyPlainText(data.shareUrl);notify(`Temporary ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');button.disabled=false;updateBulkUI()}}
 }
 async function bulkShareSelected(button=null){
-  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase());if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
   let temp=null;try{temp=await createSelectedBundleTemporary(rows);return await shareTemporaryFile(temp,`AZOBSS ${rows.length} selected document(s)`,bulkShareSummary(rows),button)}catch(e){console.error(e);notify('Bulk file sharing failed: '+(e.message||e),true)}finally{updateBulkUI()}
 }
 async function bulkDeleteSelected(button=null){
