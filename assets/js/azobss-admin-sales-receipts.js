@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 736: reliable Sales & Receipts auto-load after module/auth readiness */
+/* AZOBSS PATCH 737: fix fatal bulk-share syntax error and retain reliable auto-load */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -576,7 +576,7 @@ async function bulkCopyLinkSelected(button=null){
   try{const data=await createSelectedBundleShareLink(rows);await copyPlainText(data.shareUrl);notify(`Bulk ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
 }
 async function bulkShareSelected(target,button=null){
-  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase());
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
   if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together as one ZIP link. Continue?`))return;
   const targetWindow=window.open('about:blank','_blank');if(targetWindow){try{targetWindow.document.title='Preparing AZOBSS document link...';targetWindow.document.body.innerHTML='<p style="font:16px Arial;padding:24px">Preparing secure ZIP link...</p>'}catch(_e){}}
   if(button){button.disabled=true;button.classList.add('busy')}
