@@ -1772,6 +1772,10 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
 <script defer src="/assets/js/azobss-more-nav.js?v=713"></script>
 <link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=766">
+
+<style id="az770-admin-service-bookings-style">
+.az770-service-booking-list{display:grid;gap:10px}.az770-service-booking-row{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(220px,1fr) minmax(220px,1.25fr) minmax(170px,.7fr);gap:12px;align-items:start;padding:14px;border:1px solid rgba(148,163,184,.24);border-radius:13px;background:linear-gradient(145deg,rgba(15,31,54,.95),rgba(8,18,34,.98))}.az770-service-booking-row.is-new{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.07) inset}.az770-booking-title{font-weight:950;color:#fff}.az770-booking-meta{margin-top:4px;color:#93a8c2;font-size:12px;line-height:1.45}.az770-booking-services{color:#dbeafe;font-size:12px;line-height:1.5}.az770-booking-price{display:block;margin-top:6px;color:#86efac;font-weight:950}.az770-booking-actions{display:grid;gap:7px}.az770-booking-actions select{width:100%}.az770-booking-actions .btn{width:100%;justify-content:center}.az770-booking-detail{grid-column:1/-1;margin-top:1px;padding:11px;border-radius:10px;background:#071426;border:1px solid rgba(148,163,184,.18);color:#b9c8da;font-size:12px;white-space:pre-wrap}.az770-booking-chip{display:inline-flex;margin-top:6px;padding:4px 7px;border-radius:999px;border:1px solid #365273;color:#bfdbfe;font-size:10px;font-weight:900;text-transform:uppercase}.az770-booking-empty{padding:20px;text-align:center;border:1px dashed #3b516d;border-radius:12px;color:#91a4bd}@media(max-width:1050px){.az770-service-booking-row{grid-template-columns:1fr 1fr}.az770-booking-actions{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.az770-service-booking-row{grid-template-columns:1fr}.az770-booking-actions{grid-column:auto;grid-template-columns:1fr}}
+</style>
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2163,6 +2167,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="activity">📈 Activity</button>
       <div class="nav-group">Support & Sales</div>
       <button data-tab="support">💬 Support Inbox</button>
+      <button data-tab="servicebookings">🛠️ Service Bookings <span id="serviceBookingNavBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="notifications">🔔 Notifications</button>
       <button data-tab="adminalerts">🔔 Payment Alerts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="payments">📊 Sales Overview</button>
@@ -2329,6 +2334,31 @@ body[data-dashboard-page="admin"] .topbar{
       </div>
     </section>
 
+    <section id="servicebookings" class="section">
+      <h2>🛠️ Service Bookings</h2>
+      <p class="az-section-help">Urus tempahan servis laptop dan PC yang dihantar melalui borang website.</p>
+      <div class="card">
+        <div class="toolbar">
+          <input id="serviceBookingSearch" placeholder="Cari ID, nama, telefon, kawasan, model atau masalah..." style="flex:1;min-width:240px">
+          <select id="serviceBookingStatusFilter">
+            <option value="all">Semua status</option>
+            <option value="new">Baharu</option>
+            <option value="contacted">Dihubungi</option>
+            <option value="inspection">Pemeriksaan</option>
+            <option value="quoted">Harga diberi</option>
+            <option value="confirmed">Disahkan</option>
+            <option value="in-progress">Sedang dibaiki</option>
+            <option value="completed">Selesai</option>
+            <option value="cancelled">Dibatalkan</option>
+          </select>
+          <button class="btn" id="refreshServiceBookings" type="button">Refresh</button>
+          <button class="btn gray" id="exportServiceBookings" type="button">Export CSV</button>
+        </div>
+        <div id="serviceBookingNotice" class="tabs-note">Tekan Refresh untuk memuatkan rekod.</div>
+      </div>
+      <div id="serviceBookingList" class="az770-service-booking-list"></div>
+    </section>
+
     <section id="support" class="section">
       <h2>💬 Support Inbox</h2>
       <p class="az-section-help">Balas mesej user dan urus tiket sokongan dengan cepat.</p>
@@ -2402,6 +2432,7 @@ body[data-dashboard-page="admin"] .topbar{
             <option value="pabm">PA/BM</option>
             <option value="software">Software</option>
             <option value="cad">CAD Tools</option>
+            <option value="service">Service Bookings</option>
           </select>
           <button class="btn az-admin-alert-tool" id="refreshAdminPaymentAlerts" type="button">↻ Refresh</button>
           <button class="btn green az-admin-alert-tool" id="markAllAdminPaymentAlertsRead" type="button">✓ Mark All Read</button>
@@ -4439,6 +4470,7 @@ function azPaymentAlertCategoryLabel(cat){
   cat=String(cat||'').toLowerCase();
   if(cat==='pabm'||cat==='pa-bm')return 'PA/BM';
   if(cat==='cad')return 'CAD Tools';
+  if(cat==='service')return 'Service';
   return 'Software';
 }
 function azPaymentAlertSearchText(x){
@@ -4449,7 +4481,7 @@ function azPaymentAlertFilteredRows(){
   const f=String($('#adminPaymentAlertFilter')?.value||'all').toLowerCase();
   return (azAdminPaymentAlertsCache||[]).filter(x=>{
     if(f==='unread' && x.read) return false;
-    if(['pabm','software','cad'].includes(f) && String(x.category||'').toLowerCase()!==f) return false;
+    if(['pabm','software','cad','service'].includes(f) && String(x.category||'').toLowerCase()!==f) return false;
     if(q && !azPaymentAlertSearchText(x).includes(q)) return false;
     return true;
   });
@@ -4470,7 +4502,7 @@ function renderAdminPaymentAlerts(){
     const unread=!x.read;
     const cat=azPaymentAlertCategoryLabel(x.category);
     const catKey=String(x.category||'').toLowerCase();
-    const icon=(catKey==='pabm'||catKey==='pa-bm')?'🗺️':(catKey==='cad'?'📐':'💻');
+    const icon=(catKey==='pabm'||catKey==='pa-bm')?'🗺️':(catKey==='cad'?'📐':(catKey==='service'?'🛠️':'💻'));
     const rm=Number(x.amountRm||x.saleAmount||0)||0;
     const title=esc(x.title||('New '+cat+' payment paid'));
     const product=esc(x.body||x.productName||'Payment received');
@@ -4496,8 +4528,7 @@ function renderAdminPaymentAlerts(){
         <time class="az-payment-alert-time">${esc(when)}</time>
         <div class="az-payment-alert-actions">
           ${unread?`<button class="btn az-payment-alert-action is-read" data-admin-alert-read="${id}" type="button" title="Mark as read" aria-label="Mark as read">✓</button>`:''}
-          <button class="btn az-payment-alert-action is-log" data-tab="purchases" type="button" title="Open Payment Logs" aria-label="Open Payment Logs">🧾</button>
-          <button class="btn az-payment-alert-action is-sales" data-tab="payments" type="button" title="Open Sales Overview" aria-label="Open Sales Overview">▥</button>
+          ${catKey==='service'?`<button class="btn az-payment-alert-action is-log" data-tab="servicebookings" type="button" title="Open Service Bookings" aria-label="Open Service Bookings">🛠️</button>`:`<button class="btn az-payment-alert-action is-log" data-tab="purchases" type="button" title="Open Payment Logs" aria-label="Open Payment Logs">🧾</button><button class="btn az-payment-alert-action is-sales" data-tab="payments" type="button" title="Open Sales Overview" aria-label="Open Sales Overview">▥</button>`}
         </div>
       </div>
     </article>`;
@@ -7776,6 +7807,30 @@ document.addEventListener('click', async function(e){
     if(ev.key==='Enter' && ev.target?.id==='subCodeSearch') loadSubCodes();
   });
   window.loadSubCodes=loadSubCodes;
+})();
+</script>
+
+
+<script id="az770-admin-service-bookings-script">
+(function(){
+  const API='https://azobss-backend.onrender.com';
+  let cache=[];
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function money(v){const n=Number(v||0)||0;return 'RM'+(Number.isInteger(n)?n.toFixed(0):n.toFixed(2));}
+  function date(v){const d=new Date(Number(v||0));return Number.isNaN(d.getTime())?'-':new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium',timeStyle:'short'}).format(d);}
+  function statusLabel(v){return ({new:'Baharu',contacted:'Dihubungi',inspection:'Pemeriksaan',quoted:'Harga diberi',confirmed:'Disahkan','in-progress':'Sedang dibaiki',completed:'Selesai',cancelled:'Dibatalkan'})[v]||v||'Baharu';}
+  function phoneWa(v){let d=String(v||'').replace(/\D/g,'');if(d.startsWith('0'))d='60'+d.slice(1);return d;}
+  async function request(path,opt={}){if(typeof window.azAdminFetchJson==='function')return await window.azAdminFetchJson(API+path,opt);const r=await fetch(API+path,opt),j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Request failed');return j;}
+  function filtered(){const q=String($('serviceBookingSearch')?.value||'').trim().toLowerCase(),f=String($('serviceBookingStatusFilter')?.value||'all');return cache.filter(x=>{if(f!=='all'&&String(x.status||'new')!==f)return false;const hay=[x.bookingId,x.customerName,x.customerPhone,x.customerArea,x.deviceBrand,x.deviceModel,x.problemDetails,(x.issues||[]).join(' '),(x.services||[]).map(s=>s.name).join(' ')].join(' ').toLowerCase();return !q||hay.includes(q);});}
+  function render(){const box=$('serviceBookingList'),rows=filtered();if(!box)return;const badge=$('serviceBookingNavBadge'),newCount=cache.filter(x=>String(x.status||'new')==='new').length;if(badge){badge.textContent=String(newCount);badge.hidden=!newCount;}box.innerHTML=rows.map(x=>{const services=(x.services||[]).map(s=>esc(s.name)+' — RM'+Number(s.price||0).toFixed(0)+(s.plus?'+':'')).join('<br>')||'<span style="color:#facc15">Pemeriksaan diperlukan</span>';const issues=(x.issues||[]).join(', ')||'-';const wa=phoneWa(x.customerPhone);return `<article class="az770-service-booking-row ${String(x.status||'new')==='new'?'is-new':''}"><div><div class="az770-booking-title">${esc(x.bookingId||x.id)}</div><div class="az770-booking-meta">${esc(date(x.createdAtMs))}<br>${esc(x.customerName)}<br>${esc(x.customerPhone)} • ${esc(x.customerArea)}</div><span class="az770-booking-chip">${esc(statusLabel(x.status))}</span></div><div><div class="az770-booking-title">${esc(x.deviceBrand)} ${esc(x.deviceModel)}</div><div class="az770-booking-meta">${esc(x.deviceType)} • ${esc(x.screenSize||'Saiz tidak dinyatakan')}<br>${esc(x.devicePowerState||'-')}<br>Serahan: ${esc(x.serviceMethod||'-')}</div></div><div class="az770-booking-services">${services}<span class="az770-booking-price">Anggaran: ${x.services?.length?money(x.estimatedMinimum)+(x.estimateHasPlus?'+':''):'Perlu pemeriksaan'}</span><div class="az770-booking-meta">Masalah: ${esc(issues)}</div></div><div class="az770-booking-actions"><select data-service-booking-status="${esc(x.bookingId)}"><option value="new" ${x.status==='new'?'selected':''}>Baharu</option><option value="contacted" ${x.status==='contacted'?'selected':''}>Dihubungi</option><option value="inspection" ${x.status==='inspection'?'selected':''}>Pemeriksaan</option><option value="quoted" ${x.status==='quoted'?'selected':''}>Harga diberi</option><option value="confirmed" ${x.status==='confirmed'?'selected':''}>Disahkan</option><option value="in-progress" ${x.status==='in-progress'?'selected':''}>Sedang dibaiki</option><option value="completed" ${x.status==='completed'?'selected':''}>Selesai</option><option value="cancelled" ${x.status==='cancelled'?'selected':''}>Dibatalkan</option></select>${wa?`<a class="btn green" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn red" data-service-booking-delete="${esc(x.bookingId)}" type="button">Delete</button></div><details class="az770-booking-detail"><summary>Detail penuh</summary>Alamat: ${esc(x.fullAddress||'-')}\nTarikh / masa: ${esc(x.preferredDate||'Fleksibel')} • ${esc(x.preferredTime||'Fleksibel')}\nKeutamaan: ${esc(x.urgency||'Biasa')}\nData / backup: ${esc(x.backupRequirement||'Tidak pasti')}\nSerial: ${esc(x.deviceSerial||'-')}\nE-mel: ${esc(x.customerEmail||'-')}\n\nCatatan masalah: ${esc(x.problemDetails||'-')}\nPermintaan tambahan: ${esc(x.extraRequests||'-')}</details></article>`;}).join('')||'<div class="az770-booking-empty">Tiada rekod yang sepadan.</div>';const n=$('serviceBookingNotice');if(n)n.textContent=`${rows.length} dipaparkan daripada ${cache.length} rekod • ${newCount} baharu`;}
+  async function load(){const n=$('serviceBookingNotice');if(n)n.textContent='Loading service bookings...';try{const j=await request('/api/admin/service-bookings?limit=250',{cache:'no-store'});cache=Array.isArray(j.records)?j.records:[];render();}catch(e){cache=[];render();if(n)n.textContent='Gagal memuatkan rekod: '+(e.message||e);}}
+  async function action(bookingId,action,status){await request('/api/admin/service-bookings-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bookingId,action,status})});await load();}
+  function exportCsv(){const rows=filtered();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const head=['Booking ID','Created','Status','Customer','Phone','Email','Area','Device','Services','Estimate','Issues','Method','Preferred Date','Preferred Time','Backup','Problem Details','Extra Requests'];const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.bookingId,date(x.createdAtMs),statusLabel(x.status),x.customerName,x.customerPhone,x.customerEmail,x.customerArea,[x.deviceType,x.deviceBrand,x.deviceModel].join(' '),(x.services||[]).map(s=>s.name).join(' | '),x.services?.length?money(x.estimatedMinimum)+(x.estimateHasPlus?'+':''):'Inspection',(x.issues||[]).join(' | '),x.serviceMethod,x.preferredDate,x.preferredTime,x.backupRequirement,x.problemDetails,x.extraRequests].map(q).join(',')));const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AZOBSS-Service-Bookings.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  document.addEventListener('click',e=>{const tab=e.target.closest('[data-tab="servicebookings"]');if(tab)setTimeout(load,0);if(e.target.id==='refreshServiceBookings')load();if(e.target.id==='exportServiceBookings')exportCsv();const del=e.target.closest('[data-service-booking-delete]');if(del&&confirm('Delete this service booking permanently?'))action(del.dataset.serviceBookingDelete,'delete');});
+  document.addEventListener('change',e=>{if(e.target.id==='serviceBookingStatusFilter')render();if(e.target.matches('[data-service-booking-status]'))action(e.target.dataset.serviceBookingStatus,'status',e.target.value);});
+  document.addEventListener('input',e=>{if(e.target.id==='serviceBookingSearch')render();});
+  window.loadServiceBookings=load;
 })();
 </script>
 

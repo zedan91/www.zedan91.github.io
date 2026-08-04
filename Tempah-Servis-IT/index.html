@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="description" content="Buat tempahan servis laptop dan PC AZOBSS. Pilih kerosakan, lihat anggaran awal dan hantar butiran melalui WhatsApp."/>
+<meta name="theme-color" content="#07101f"/>
+<title>Tempah Servis Laptop & PC | AZOBSS</title>
+<link rel="icon" href="/favicon.ico"/>
+<style>
+:root{--bg:#050b17;--panel:#0c1729;--panel2:#101f36;--line:#263b59;--text:#f2f7ff;--muted:#a9bad1;--cyan:#22d3ee;--blue:#3b82f6;--green:#22c55e;--yellow:#facc15;--red:#fb7185;--shadow:0 22px 70px rgba(0,0,0,.38)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(37,99,235,.18),transparent 32%),radial-gradient(circle at 92% 8%,rgba(34,211,238,.12),transparent 28%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.5}a{color:inherit}.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px clamp(14px,3vw,42px);background:rgba(3,8,18,.94);border-bottom:1px solid rgba(250,204,21,.45);backdrop-filter:blur(15px)}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:19px;font-weight:1000;letter-spacing:.3px}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(145deg,#18345d,#07101f);border:1px solid rgba(34,211,238,.65);color:#67e8f9;font-size:22px}.top-actions{display:flex;gap:8px}.top-link{display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:8px 13px;border:1px solid #334967;border-radius:10px;background:#0d1a2e;text-decoration:none;font-weight:850;font-size:13px}.top-link.primary{border-color:#16a34a;background:#16a34a;color:#04130a}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}.hero{padding:64px 0 28px}.eyebrow{display:inline-flex;padding:7px 12px;border-radius:999px;border:1px solid rgba(34,211,238,.38);background:rgba(34,211,238,.08);color:#a5f3fc;font-size:12px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.hero h1{max-width:900px;margin:17px 0 13px;font-size:clamp(36px,6vw,66px);line-height:1.04}.hero h1 span{color:var(--cyan)}.hero p{max-width:850px;margin:0;color:var(--muted);font-size:clamp(16px,2vw,20px)}.price-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:28px 0 0}.price-chip{padding:13px;border:1px solid #2a4263;border-radius:14px;background:linear-gradient(155deg,rgba(16,31,54,.95),rgba(8,18,34,.98));text-align:center}.price-chip b{display:block;color:#86efac;font-size:17px}.price-chip span{display:block;color:#bdcbe0;font-size:12px;margin-top:3px}.promo{border-color:rgba(34,197,94,.5);box-shadow:0 0 0 1px rgba(34,197,94,.08) inset}.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(310px,.65fr);gap:20px;align-items:start;padding:28px 0 52px}.panel{background:linear-gradient(155deg,rgba(14,28,49,.98),rgba(7,16,31,.99));border:1px solid var(--line);border-radius:21px;box-shadow:var(--shadow)}.form-panel{padding:24px}.summary-panel{position:sticky;top:74px;padding:20px}.section-block{padding:20px 0;border-bottom:1px solid rgba(148,163,184,.16)}.section-block:first-child{padding-top:0}.section-block:last-child{border-bottom:0;padding-bottom:0}.section-title{display:flex;align-items:center;gap:10px;margin:0 0 6px;font-size:20px}.section-no{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#22d3ee);color:#03101e;font-weight:1000}.section-help{margin:0 0 15px;color:var(--muted);font-size:13px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field.full{grid-column:1/-1}.field label,.group-label{display:block;margin:0 0 6px;color:#dbeafe;font-size:13px;font-weight:900}.required{color:#fda4af}.field input,.field select,.field textarea{width:100%;min-height:45px;border:1px solid #344c6d;border-radius:11px;background:#071326;color:#fff;padding:11px 12px;font:inherit;outline:none}.field textarea{min-height:105px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.11)}.field small{display:block;margin-top:5px;color:#8195b0;font-size:11px}.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.choice{position:relative;display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #314867;border-radius:12px;background:#09172a;cursor:pointer;transition:.18s}.choice:hover{border-color:#4d6e98}.choice:has(input:checked){border-color:#22d3ee;background:rgba(8,78,104,.28);box-shadow:0 0 0 2px rgba(34,211,238,.08) inset}.choice input{margin:3px 0 0;accent-color:#22d3ee}.choice-main{min-width:0}.choice-title{display:block;color:#edf7ff;font-weight:900;font-size:14px}.choice-price{display:block;margin-top:3px;color:#86efac;font-weight:900;font-size:13px}.choice-note{display:block;margin-top:3px;color:#91a6c1;font-size:11px}.radio-row{display:flex;flex-wrap:wrap;gap:8px}.radio-pill{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid #334b6c;border-radius:999px;background:#09172a;color:#c9d7e8;font-size:13px;cursor:pointer}.radio-pill:has(input:checked){border-color:#22d3ee;color:#fff;background:rgba(8,78,104,.28)}.radio-pill input{accent-color:#22d3ee}.notice{padding:13px 14px;border-radius:12px;border:1px solid rgba(250,204,21,.34);background:rgba(250,204,21,.075);color:#fde68a;font-size:12px}.privacy-note{margin-top:11px;padding:12px 13px;border:1px solid rgba(34,197,94,.3);border-radius:12px;background:rgba(34,197,94,.07);color:#bbf7d0;font-size:12px}.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}.summary-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.summary-head h2{margin:0;font-size:21px}.estimate-badge{padding:6px 9px;border-radius:999px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:11px;font-weight:950}.estimate-card{margin:15px 0;padding:18px;border:1px solid rgba(34,211,238,.35);border-radius:16px;background:linear-gradient(145deg,rgba(8,47,73,.62),rgba(9,23,43,.92))}.estimate-label{color:#a5f3fc;font-size:12px;font-weight:850}.estimate-value{display:block;margin:4px 0 2px;font-size:34px;line-height:1;color:#fff}.estimate-sub{color:#99abc2;font-size:11px}.summary-list{display:grid;gap:8px;margin:14px 0}.summary-item{display:flex;justify-content:space-between;gap:12px;padding:9px 10px;border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#081427;font-size:12px}.summary-item span:first-child{color:#dbeafe}.summary-item strong{color:#86efac;text-align:right}.summary-empty{padding:16px;border:1px dashed #3a506e;border-radius:12px;color:#8295af;text-align:center;font-size:12px}.summary-warning{margin-top:11px;color:#fde68a;font-size:12px}.action-stack{display:grid;gap:9px;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:47px;border:1px solid transparent;border-radius:12px;padding:11px 15px;font:inherit;font-weight:950;cursor:pointer;text-decoration:none}.btn.primary{background:linear-gradient(135deg,#16a34a,#22c55e);color:#04130a}.btn.secondary{border-color:#345072;background:#0b1a30;color:#eaf4ff}.btn:disabled{opacity:.55;cursor:not-allowed}.form-status{display:none;margin-top:11px;padding:11px 12px;border-radius:11px;font-size:12px;font-weight:800}.form-status.show{display:block}.form-status.ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.09);color:#bbf7d0}.form-status.error{border:1px solid rgba(251,113,133,.38);background:rgba(251,113,133,.09);color:#fecdd3}.fallback-link{display:none;margin-top:9px}.fallback-link.show{display:flex}.seller-card{margin-top:16px;padding:14px;border:1px solid #2d4565;border-radius:14px;background:#081427}.seller-card b{display:block;margin-bottom:5px}.seller-card span{display:block;color:#9eb0c8;font-size:12px}.footer{padding:25px 0 38px;border-top:1px solid rgba(148,163,184,.16);text-align:center;color:#8191a8;font-size:13px}
+@media(max-width:980px){.price-strip{grid-template-columns:repeat(3,1fr)}.layout{grid-template-columns:1fr}.summary-panel{position:static}}
+@media(max-width:650px){.wrap{width:min(100% - 18px,1180px)}.topbar{padding:9px}.brand{font-size:15px}.brand-mark{width:34px;height:34px}.top-link{padding:7px 9px;font-size:11px}.hero{padding-top:42px}.hero h1{font-size:39px}.price-strip{grid-template-columns:repeat(2,1fr)}.price-chip:last-child{grid-column:1/-1}.form-panel,.summary-panel{padding:15px}.fields,.choices{grid-template-columns:1fr}.section-block{padding:17px 0}.btn{width:100%}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark">A</span><span>AZOBSS</span></a>
+  <nav class="top-actions" aria-label="Pautan utama">
+    <a class="top-link" href="/">Home</a>
+    <a class="top-link primary" href="#bookingForm">Tempah Servis</a>
+  </nav>
+</header>
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Servis Laptop & PC • Batu Caves / Gombak</span>
+    <h1>Semak anggaran dan <span>tempah servis</span> dengan mudah</h1>
+    <p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
+    <div class="price-strip" aria-label="Harga servis utama">
+      <div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
+      <div class="price-chip"><b>RM250+</b><span>LCD 14 inci</span></div>
+      <div class="price-chip"><b>RM300+</b><span>LCD 15 inci</span></div>
+      <div class="price-chip"><b>RM350+</b><span>LCD 16 inci</span></div>
+      <div class="price-chip"><b>RM80</b><span>Cleaning + Thermal Paste</span></div>
+    </div>
+  </section>
+
+  <section class="layout">
+    <form class="panel form-panel" id="bookingForm" novalidate>
+      <div class="section-block">
+        <h2 class="section-title"><span class="section-no">1</span>Maklumat pelanggan</h2>
+        <p class="section-help">Maklumat ini digunakan untuk AZOBSS menghubungi kamu mengenai pemeriksaan dan harga akhir.</p>
+        <div class="fields">
+          <div class="field"><label for="customerName">Nama <span class="required">*</span></label><input id="customerName" autocomplete="name" maxlength="100" placeholder="Contoh: Ahmad" required/></div>
+          <div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input id="customerPhone" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="Contoh: 012-345 6789" required/></div>
+          <div class="field"><label for="customerEmail">E-mel (opsyenal)</label><input id="customerEmail" autocomplete="email" maxlength="160" placeholder="Contoh: nama@email.com" type="email"/></div>
+          <div class="field"><label for="customerArea">Kawasan tempat tinggal <span class="required">*</span></label><input id="customerArea" autocomplete="address-level2" maxlength="120" placeholder="Contoh: Batu Caves, Gombak" required/></div>
+          <div class="field full"><label for="fullAddress">Alamat ringkas / lokasi pickup (opsyenal)</label><textarea id="fullAddress" maxlength="400" placeholder="Isi hanya jika perlukan on-site atau pickup. Jangan masukkan maklumat yang tidak diperlukan."></textarea></div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h2 class="section-title"><span class="section-no">2</span>Maklumat peranti</h2>
+        <div class="fields">
+          <div class="field"><label for="deviceType">Jenis peranti <span class="required">*</span></label><select id="deviceType" required><option value="">Pilih jenis</option><option value="Laptop">Laptop</option><option value="Desktop PC">Desktop PC</option><option value="All-in-One PC">All-in-One PC</option><option value="Lain-lain">Lain-lain</option></select></div>
+          <div class="field"><label for="deviceBrand">Jenama <span class="required">*</span></label><input id="deviceBrand" maxlength="80" placeholder="Contoh: Acer, ASUS, HP, Lenovo" required/></div>
+          <div class="field"><label for="deviceModel">Model laptop / PC <span class="required">*</span></label><input id="deviceModel" maxlength="120" placeholder="Contoh: Acer Aspire A514-54" required/><small>Untuk custom PC, tulis “Custom Build” dan spesifikasi ringkas di catatan.</small></div>
+          <div class="field"><label for="screenSize">Saiz skrin (jika berkaitan)</label><select id="screenSize"><option value="">Tidak pasti / tidak berkaitan</option><option value="14 inci">14 inci</option><option value="15 inci">15 inci</option><option value="15.6 inci">15.6 inci</option><option value="16 inci">16 inci</option><option value="17 inci">17 inci</option><option value="Lain-lain">Lain-lain</option></select></div>
+          <div class="field"><label for="deviceSerial">Serial number (opsyenal)</label><input id="deviceSerial" maxlength="120" placeholder="Boleh dibiarkan kosong"/></div>
+          <div class="field"><label for="devicePowerState">Keadaan semasa</label><select id="devicePowerState"><option value="Boleh hidup">Boleh hidup</option><option value="Hidup tetapi tiada display">Hidup tetapi tiada display</option><option value="Tidak boleh hidup">Tidak boleh hidup</option><option value="Kadang-kadang boleh hidup">Kadang-kadang boleh hidup</option></select></div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h2 class="section-title"><span class="section-no">3</span>Pilih servis</h2>
+        <p class="section-help">Tandakan servis yang kamu mahu. Harga bertanda “+” ialah harga minimum dan bergantung pada model serta harga alat ganti.</p>
+        <div class="choices" id="serviceChoices">
+          <label class="choice"><input type="checkbox" name="services" value="format-windows"/><span class="choice-main"><span class="choice-title">Format Windows 10 / 11</span><span class="choice-price">RM30 promosi</span><span class="choice-note">Harga biasa RM50. Lesen dan software berbayar tidak termasuk.</span></span></label>
+          <label class="choice"><input type="checkbox" name="services" value="cleaning-thermal"/><span class="choice-main"><span class="choice-title">Pembersihan + Thermal Paste</span><span class="choice-price">RM80</span><span class="choice-note">Untuk laptop atau PC. Keadaan heatsink/fan akan diperiksa.</span></span></label>
+          <label class="choice"><input type="checkbox" name="services" value="lcd-14" data-exclusive="lcd"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop 14 inci</span><span class="choice-price">RM250+</span><span class="choice-note">Jenis panel dan connector perlu disahkan.</span></span></label>
+          <label class="choice"><input type="checkbox" name="services" value="lcd-15" data-exclusive="lcd"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop 15 / 15.6 inci</span><span class="choice-price">RM300+</span><span class="choice-note">Harga bergantung pada model, resolusi dan refresh rate.</span></span></label>
+          <label class="choice"><input type="checkbox" name="services" value="lcd-16" data-exclusive="lcd"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop 16 inci</span><span class="choice-price">RM350+</span><span class="choice-note">Harga panel premium mungkin lebih tinggi.</span></span></label>
+          <label class="choice"><input type="checkbox" name="services" value="keyboard"/><span class="choice-main"><span class="choice-title">Tukar Keyboard Laptop</span><span class="choice-price">RM150+</span><span class="choice-note">Bergantung pada model, backlight dan jenis top case.</span></span></label>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h2 class="section-title"><span class="section-no">4</span>Apa yang rosak / masalah berlaku?</h2>
+        <p class="section-help">Boleh tanda lebih daripada satu. Pilihan ini membantu pemeriksaan awal tetapi bukan diagnosis muktamad.</p>
+        <div class="choices" id="issueChoices">
+          <label class="choice"><input type="checkbox" name="issues" value="Tidak boleh hidup"/><span class="choice-main"><span class="choice-title">Tidak boleh hidup</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Tiada display"/><span class="choice-main"><span class="choice-title">Tiada display</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Skrin pecah, bergaris atau berkelip"/><span class="choice-main"><span class="choice-title">Skrin pecah / bergaris / berkelip</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Keyboard rosak atau ada butang tidak berfungsi"/><span class="choice-main"><span class="choice-title">Keyboard / butang tidak berfungsi</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Laptop atau PC terlalu panas"/><span class="choice-main"><span class="choice-title">Terlalu panas / fan bising</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Peranti perlahan atau selalu hang"/><span class="choice-main"><span class="choice-title">Perlahan / selalu hang</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Blue screen atau Windows gagal masuk"/><span class="choice-main"><span class="choice-title">Blue screen / Windows gagal masuk</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="SSD atau hard disk bermasalah"/><span class="choice-main"><span class="choice-title">SSD / hard disk bermasalah</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="RAM atau memory bermasalah"/><span class="choice-main"><span class="choice-title">RAM / memory bermasalah</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Bateri cepat habis atau kembung"/><span class="choice-main"><span class="choice-title">Bateri cepat habis / kembung</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Charger atau charging port bermasalah"/><span class="choice-main"><span class="choice-title">Charger / charging port</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="WiFi atau Bluetooth bermasalah"/><span class="choice-main"><span class="choice-title">Wi-Fi / Bluetooth</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Hinge, casing atau body rosak"/><span class="choice-main"><span class="choice-title">Hinge / casing / body</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Pernah jatuh atau terkena air"/><span class="choice-main"><span class="choice-title">Jatuh / terkena air</span></span></label>
+          <label class="choice"><input type="checkbox" name="issues" value="Masalah lain"/><span class="choice-main"><span class="choice-title">Masalah lain</span></span></label>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h2 class="section-title"><span class="section-no">5</span>Keutamaan servis</h2>
+        <div class="fields">
+          <div class="field"><label for="serviceMethod">Cara serahan <span class="required">*</span></label><select id="serviceMethod" required><option value="Hantar sendiri">Hantar sendiri</option><option value="On-site">On-site (kawasan tertentu)</option><option value="Pickup / runner">Pickup / runner</option><option value="Bincang melalui WhatsApp">Bincang melalui WhatsApp</option></select><small>Caj perjalanan, pickup atau runner tidak termasuk dalam anggaran.</small></div>
+          <div class="field"><label for="preferredDate">Tarikh pilihan</label><input id="preferredDate" type="date"/></div>
+          <div class="field"><label for="preferredTime">Masa pilihan</label><select id="preferredTime"><option value="Fleksibel">Fleksibel</option><option value="Pagi (9am–12pm)">Pagi (9am–12pm)</option><option value="Petang (12pm–5pm)">Petang (12pm–5pm)</option><option value="Malam (selepas 5pm)">Malam (selepas 5pm)</option></select></div>
+          <div class="field"><label for="urgency">Keutamaan</label><select id="urgency"><option value="Biasa">Biasa</option><option value="Segera">Segera</option><option value="Boleh tunggu">Boleh tunggu</option></select></div>
+          <div class="field full"><span class="group-label">Data penting / backup diperlukan?</span><div class="radio-row"><label class="radio-pill"><input type="radio" name="backup" value="Ya, ada data penting"/>Ya, ada data penting</label><label class="radio-pill"><input type="radio" name="backup" value="Tidak perlu backup"/>Tidak perlu backup</label><label class="radio-pill"><input type="radio" name="backup" value="Tidak pasti" checked/>Tidak pasti</label></div></div>
+          <div class="field full"><label for="problemDetails">Ceritakan masalah dan bila ia mula berlaku</label><textarea id="problemDetails" maxlength="1200" placeholder="Contoh: Laptop tiba-tiba lag, skrin gelap dan selepas restart terus tiada display. Lampu power masih menyala."></textarea></div>
+          <div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="800" placeholder="Contoh: Perlu Microsoft Office, mahu kekalkan data, atau akan hantar gambar kerosakan selepas WhatsApp dibuka."></textarea></div>
+        </div>
+        <div class="notice">Anggaran di halaman ini bukan harga muktamad. Harga akhir hanya diberikan selepas model, keadaan peranti dan harga alat ganti disahkan.</div>
+        <div class="privacy-note">Jangan masukkan password Windows, PIN bank atau maklumat sulit dalam borang. Password peranti hanya dibincangkan secara terus jika benar-benar diperlukan untuk ujian.</div>
+      </div>
+
+      <div class="section-block">
+        <label class="choice"><input id="consent" type="checkbox" required/><span class="choice-main"><span class="choice-title">Saya mengesahkan maklumat ini betul dan bersetuju dihubungi melalui telefon atau WhatsApp.</span></span></label>
+        <label class="honeypot" aria-hidden="true">Website<input id="companyWebsite" tabindex="-1" autocomplete="off"/></label>
+      </div>
+    </form>
+
+    <aside class="panel summary-panel">
+      <div class="summary-head"><h2>Ringkasan Tempahan</h2><span class="estimate-badge">ANGGARAN AWAL</span></div>
+      <div class="estimate-card">
+        <span class="estimate-label">Anggaran minimum</span>
+        <strong class="estimate-value" id="estimateValue">RM0</strong>
+        <span class="estimate-sub" id="estimateSub">Pilih servis untuk melihat anggaran.</span>
+      </div>
+      <div class="summary-list" id="summaryList"><div class="summary-empty">Belum ada servis dipilih.</div></div>
+      <div class="summary-warning" id="summaryWarning">Komponen yang belum mempunyai harga memerlukan pemeriksaan terlebih dahulu.</div>
+      <div class="action-stack">
+        <button class="btn primary" id="submitBooking" type="submit" form="bookingForm">Hantar Tempahan melalui WhatsApp</button>
+        <button class="btn secondary" id="copySummary" type="button">Salin Ringkasan</button>
+      </div>
+      <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+      <a class="btn secondary fallback-link" id="fallbackWhatsapp" href="#" target="_blank" rel="noopener">Teruskan WhatsApp tanpa rekod</a>
+      <div class="seller-card"><b>Apa berlaku selepas dihantar?</b><span>AZOBSS akan semak model, simptom dan pilihan servis, kemudian mengesahkan ketersediaan, tempoh serta harga akhir melalui WhatsApp.</span></div>
+    </aside>
+  </section>
+</main>
+<footer class="footer">© AZOBSS • Servis laptop dan PC • Anggaran tertakluk kepada pemeriksaan</footer>
+<script>
+(function(){
+  'use strict';
+  const API='https://azobss-backend.onrender.com/api/service-bookings';
+  const FALLBACK_WA='60175099983';
+  const catalog={
+    'format-windows':{name:'Format Windows 10 / 11',price:30,plus:false},
+    'cleaning-thermal':{name:'Pembersihan + Thermal Paste',price:80,plus:false},
+    'lcd-14':{name:'Tukar LCD Laptop 14 inci',price:250,plus:true},
+    'lcd-15':{name:'Tukar LCD Laptop 15 / 15.6 inci',price:300,plus:true},
+    'lcd-16':{name:'Tukar LCD Laptop 16 inci',price:350,plus:true},
+    'keyboard':{name:'Tukar Keyboard Laptop',price:150,plus:true}
+  };
+  const $=id=>document.getElementById(id);
+  let activeRequestId='';
+  const form=$('bookingForm'), status=$('formStatus'), fallback=$('fallbackWhatsapp');
+  const checked=name=>Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el=>el.value);
+  const clean=v=>String(v||'').trim();
+  const money=n=>'RM'+Number(n||0).toFixed(0);
+  function estimate(){
+    const ids=checked('services'); let total=0,plus=false;
+    ids.forEach(id=>{const item=catalog[id];if(item){total+=item.price;plus=plus||item.plus;}});
+    return {ids,total,plus,issues:checked('issues')};
+  }
+  function updateSummary(){
+    const e=estimate();
+    $('estimateValue').textContent=e.ids.length?(money(e.total)+(e.plus?'+':'')):'RM0';
+    $('estimateSub').textContent=e.ids.length?(e.plus?'Harga minimum; alat ganti dan model akan disahkan.':'Anggaran awal sebelum pemeriksaan.'):'Pilih servis untuk melihat anggaran.';
+    const items=e.ids.map(id=>catalog[id]).filter(Boolean);
+    $('summaryList').innerHTML=items.length?items.map(item=>`<div class="summary-item"><span>${escapeHtml(item.name)}</span><strong>${money(item.price)}${item.plus?'+':''}</strong></div>`).join(''):'<div class="summary-empty">Belum ada servis dipilih.</div>';
+    $('summaryWarning').textContent=e.issues.length?'Masalah yang ditanda masih memerlukan pemeriksaan untuk mengesahkan punca dan harga akhir.':'Komponen yang belum mempunyai harga memerlukan pemeriksaan terlebih dahulu.';
+  }
+  function escapeHtml(v){return clean(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  document.querySelectorAll('input[name="services"]').forEach(input=>input.addEventListener('change',()=>{
+    const group=input.dataset.exclusive;
+    if(input.checked&&group){document.querySelectorAll(`input[name="services"][data-exclusive="${group}"]`).forEach(other=>{if(other!==input)other.checked=false;});}
+    updateSummary();
+  }));
+  document.querySelectorAll('input[name="issues"]').forEach(input=>input.addEventListener('change',updateSummary));
+  const phone=$('customerPhone');
+  phone.addEventListener('input',()=>{let d=phone.value.replace(/\D/g,'').slice(0,12);if(d.startsWith('60')){phone.value='+'+d.replace(/^(60)(\d{2})(\d{3})(\d{0,4})$/,'$1 $2-$3 $4').trim();return;}if(d.startsWith('0')){phone.value=d.replace(/^(0\d{2})(\d{3})(\d{0,4})$/,'$1-$2 $3').trim();}});
+  const date=$('preferredDate'); const now=new Date(); date.min=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+  function readRadio(name){return document.querySelector(`input[name="${name}"]:checked`)?.value||'';}
+  function payload(){const e=estimate();return{
+    clientRequestId:(activeRequestId||(activeRequestId=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function'?globalThis.crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)))),
+    customerName:clean($('customerName').value),customerPhone:clean(phone.value),customerEmail:clean($('customerEmail').value),customerArea:clean($('customerArea').value),fullAddress:clean($('fullAddress').value),
+    deviceType:clean($('deviceType').value),deviceBrand:clean($('deviceBrand').value),deviceModel:clean($('deviceModel').value),screenSize:clean($('screenSize').value),deviceSerial:clean($('deviceSerial').value),devicePowerState:clean($('devicePowerState').value),
+    services:e.ids,issues:e.issues,serviceMethod:clean($('serviceMethod').value),preferredDate:clean(date.value),preferredTime:clean($('preferredTime').value),urgency:clean($('urgency').value),backupRequirement:readRadio('backup'),problemDetails:clean($('problemDetails').value),extraRequests:clean($('extraRequests').value),companyWebsite:clean($('companyWebsite').value)
+  };}
+  function localMessage(p){const e=estimate();const serviceLines=e.ids.map((id,i)=>`${i+1}. ${catalog[id].name} — ${money(catalog[id].price)}${catalog[id].plus?'+':''}`);return[
+    'Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.','',`Nama: ${p.customerName}`,`Telefon: ${p.customerPhone}`,`E-mel: ${p.customerEmail||'-'}`,`Kawasan: ${p.customerArea}`,`Cara serahan: ${p.serviceMethod}`,'',`Peranti: ${p.deviceType} — ${p.deviceBrand} ${p.deviceModel}`,`Saiz skrin: ${p.screenSize||'-'}`,`Keadaan: ${p.devicePowerState}`,'','Servis dipilih:',...(serviceLines.length?serviceLines:['- Pemeriksaan / harga belum dipilih']),'',`Masalah: ${p.issues.join(', ')||'-'}`,`Anggaran awal: ${e.ids.length?money(e.total)+(e.plus?'+':''):'Perlu pemeriksaan'}`,`Tarikh / masa: ${p.preferredDate||'Fleksibel'} • ${p.preferredTime}`,`Data / backup: ${p.backupRequirement}`,`Catatan masalah: ${p.problemDetails||'-'}`,`Permintaan tambahan: ${p.extraRequests||'-'}`,'','Harga akhir tertakluk kepada pemeriksaan dan pengesahan AZOBSS.'
+  ].join('\n');}
+  function fallbackUrl(p){return `https://wa.me/${FALLBACK_WA}?text=${encodeURIComponent(localMessage(p))}`;}
+  function showStatus(message,type){status.textContent=message;status.className='form-status show '+type;}
+  function validateSelection(){const e=estimate();if(!e.ids.length&&!e.issues.length){showStatus('Pilih sekurang-kurangnya satu servis atau satu masalah yang berlaku.','error');document.getElementById('serviceChoices').scrollIntoView({behavior:'smooth',block:'center'});return false;}return true;}
+  form.addEventListener('submit',async ev=>{
+    ev.preventDefault();fallback.classList.remove('show');
+    if(!form.reportValidity()||!validateSelection())return;
+    const p=payload();const popup=window.open('','_blank');
+    if(popup){try{popup.document.body.style.cssText='margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial;text-align:center;padding:24px';popup.document.body.textContent='Menyimpan tempahan sebelum WhatsApp dibuka...';}catch(_){}}
+    const button=$('submitBooking');button.disabled=true;button.textContent='Menyimpan tempahan...';showStatus('Sedang menyimpan rekod tempahan dengan selamat...','ok');
+    try{
+      const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.ok)throw new Error(result.error||'Tempahan gagal disimpan.');
+      showStatus(`Tempahan ${result.bookingId} berjaya direkod. WhatsApp sedang dibuka.`,'ok');
+      activeRequestId='';
+      const wa=result.whatsappUrl||fallbackUrl(p);
+      if(popup&&!popup.closed)popup.location.replace(wa);else window.location.href=wa;
+      try{localStorage.setItem('azobss_service_customer',JSON.stringify({name:p.customerName,phone:p.customerPhone,email:p.customerEmail,area:p.customerArea}));}catch(_){ }
+    }catch(error){
+      try{if(popup&&!popup.closed)popup.close();}catch(_){ }
+      const wa=fallbackUrl(p);fallback.href=wa;fallback.classList.add('show');showStatus((error.message||'Rekod gagal disimpan.')+' Kamu masih boleh hantar maklumat terus melalui WhatsApp menggunakan butang di bawah.','error');
+    }finally{button.disabled=false;button.textContent='Hantar Tempahan melalui WhatsApp';}
+  });
+  $('copySummary').addEventListener('click',async()=>{const p=payload();const text=localMessage(p);try{await navigator.clipboard.writeText(text);showStatus('Ringkasan berjaya disalin.','ok');}catch(_){showStatus('Tidak dapat menyalin secara automatik. Sila gunakan butang WhatsApp.','error');}});
+  function firstText(obj,keys){for(const key of keys){const value=obj&&obj[key];if(typeof value==='string'&&value.trim())return value.trim();}return '';}
+  function autofill(){
+    let profile=null;
+    try{profile=JSON.parse(localStorage.getItem('azobss_service_customer')||'null');}catch(_){ }
+    if(!profile){
+      const keys=['azobssCurrentUser','azobssUser','azobss_current_user','azobssSavedUser','azobss_user_profile','azobssProfile','currentUser','userProfile','azobss_auth_user','azobssLoginUser','azobss_logged_user'];
+      for(const key of keys){try{const raw=localStorage.getItem(key)||sessionStorage.getItem(key);if(!raw)continue;const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object'){profile=parsed;break;}}catch(_){ }}
+    }
+    if(!profile)return;
+    $('customerName').value=firstText(profile,['name','displayName','fullName','customerName','username'])||'';
+    phone.value=firstText(profile,['phone','phoneNumber','mobile','customerPhone','noTelefon'])||'';
+    $('customerEmail').value=firstText(profile,['email','customerEmail'])||'';
+    $('customerArea').value=firstText(profile,['area','city','location','customerArea'])||'';
+  }
+  autofill();updateSummary();
+})();
+</script>
+</body>
+</html>

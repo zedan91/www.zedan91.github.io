@@ -11236,6 +11236,172 @@ async function azHandleStripeDigitalWebhookEvent(event = {}, req = null) {
 }
 
 
+
+// AZOBSS 770: Public laptop / PC service booking form.
+const AZ_SERVICE_BOOKING_CATALOG = Object.freeze({
+  "format-windows": { name:"Format Windows 10 / 11", price:30, plus:false },
+  "cleaning-thermal": { name:"Pembersihan + Thermal Paste", price:80, plus:false },
+  "lcd-14": { name:"Tukar LCD Laptop 14 inci", price:250, plus:true },
+  "lcd-15": { name:"Tukar LCD Laptop 15 / 15.6 inci", price:300, plus:true },
+  "lcd-16": { name:"Tukar LCD Laptop 16 inci", price:350, plus:true },
+  "keyboard": { name:"Tukar Keyboard Laptop", price:150, plus:true }
+});
+function azServiceBookingText(value, max = 300) {
+  return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
+function azServiceBookingPhone(value) {
+  return azServiceBookingText(value, 30).replace(/[^0-9+()\-\s]/g, "").slice(0, 24);
+}
+function azServiceBookingEmail(value) {
+  const email = azServiceBookingText(value, 180).toLowerCase();
+  if (!email) return "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+function azServiceBookingId(clientRequestId) {
+  const d = new Date();
+  const date = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  const seed = azServiceBookingText(clientRequestId, 160) || crypto.randomBytes(18).toString("hex");
+  const suffix = crypto.createHash("sha256").update(seed).digest("hex").slice(0, 8).toUpperCase();
+  return `AZS-${date}-${suffix}`;
+}
+function azServiceBookingEstimate(serviceIds) {
+  const ids = Array.isArray(serviceIds) ? [...new Set(serviceIds.map(v => azServiceBookingText(v, 60)).filter(v => AZ_SERVICE_BOOKING_CATALOG[v]))].slice(0, 12) : [];
+  let total = 0, plus = false;
+  const services = ids.map(id => {
+    const item = AZ_SERVICE_BOOKING_CATALOG[id];
+    total += Number(item.price || 0);
+    plus = plus || item.plus === true;
+    return { id, name:item.name, price:Number(item.price || 0), plus:item.plus === true };
+  });
+  return { services, total:Math.round(total * 100) / 100, plus };
+}
+function azServiceBookingWhatsappNumber() {
+  const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "60175099983").replace(/\D/g, "");
+  return raw || "60175099983";
+}
+function azServiceBookingMessage(row) {
+  const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — RM${Number(item.price || 0).toFixed(0)}${item.plus ? "+" : ""}`);
+  return [
+    "Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.",
+    "",
+    `ID Tempahan: ${row.bookingId}`,
+    `Nama: ${row.customerName}`,
+    `Telefon: ${row.customerPhone}`,
+    `E-mel: ${row.customerEmail || "-"}`,
+    `Kawasan: ${row.customerArea}`,
+    `Alamat ringkas: ${row.fullAddress || "-"}`,
+    `Cara serahan: ${row.serviceMethod}`,
+    "",
+    `Peranti: ${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}`,
+    `Saiz skrin: ${row.screenSize || "-"}`,
+    `Serial: ${row.deviceSerial || "-"}`,
+    `Keadaan: ${row.devicePowerState || "-"}`,
+    "",
+    "Servis dipilih:",
+    ...(serviceLines.length ? serviceLines : ["- Pemeriksaan / harga belum dipilih"]),
+    "",
+    `Masalah: ${(row.issues || []).join(", ") || "-"}`,
+    `Anggaran awal: ${serviceLines.length ? `RM${Number(row.estimatedMinimum || 0).toFixed(0)}${row.estimateHasPlus ? "+" : ""}` : "Perlu pemeriksaan"}`,
+    `Tarikh / masa: ${row.preferredDate || "Fleksibel"} • ${row.preferredTime || "Fleksibel"}`,
+    `Keutamaan: ${row.urgency || "Biasa"}`,
+    `Data / backup: ${row.backupRequirement || "Tidak pasti"}`,
+    `Catatan masalah: ${row.problemDetails || "-"}`,
+    `Permintaan tambahan: ${row.extraRequests || "-"}`,
+    "",
+    "Harga akhir tertakluk kepada pemeriksaan dan pengesahan AZOBSS."
+  ].join("\n");
+}
+async function azCreatePublicServiceBooking(req, body = {}) {
+  if (azServiceBookingText(body.companyWebsite, 120)) {
+    return { ok:true, ignored:true, bookingId:"AZS-RECEIVED", whatsappUrl:`https://wa.me/${azServiceBookingWhatsappNumber()}` };
+  }
+  const customerName = azServiceBookingText(body.customerName, 100);
+  const customerPhone = azServiceBookingPhone(body.customerPhone);
+  const phoneDigits = customerPhone.replace(/\D/g, "");
+  const customerEmailRaw = azServiceBookingText(body.customerEmail, 180);
+  const customerEmail = azServiceBookingEmail(customerEmailRaw);
+  const customerArea = azServiceBookingText(body.customerArea, 120);
+  const deviceType = azServiceBookingText(body.deviceType, 60);
+  const deviceBrand = azServiceBookingText(body.deviceBrand, 80);
+  const deviceModel = azServiceBookingText(body.deviceModel, 120);
+  if (customerName.length < 2) throw Object.assign(new Error("Nama pelanggan diperlukan."), { statusCode:400 });
+  if (phoneDigits.length < 8 || phoneDigits.length > 15) throw Object.assign(new Error("Nombor telefon tidak sah."), { statusCode:400 });
+  if (customerEmailRaw && !customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
+  if (customerArea.length < 2) throw Object.assign(new Error("Kawasan tempat tinggal diperlukan."), { statusCode:400 });
+  if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
+  const estimate = azServiceBookingEstimate(body.services);
+  const issues = Array.isArray(body.issues) ? [...new Set(body.issues.map(v => azServiceBookingText(v, 140)).filter(Boolean))].slice(0, 25) : [];
+  if (!estimate.services.length && !issues.length) throw Object.assign(new Error("Pilih sekurang-kurangnya satu servis atau masalah."), { statusCode:400 });
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const bookingId = azServiceBookingId(body.clientRequestId);
+  const row = {
+    bookingId,
+    clientRequestId:azServiceBookingText(body.clientRequestId, 160),
+    status:"new",
+    source:"azobss-service-booking-form",
+    customerName, customerPhone, customerPhoneDigits:phoneDigits, customerEmail, customerArea,
+    fullAddress:azServiceBookingText(body.fullAddress, 400),
+    deviceType, deviceBrand, deviceModel,
+    screenSize:azServiceBookingText(body.screenSize, 60),
+    deviceSerial:azServiceBookingText(body.deviceSerial, 120),
+    devicePowerState:azServiceBookingText(body.devicePowerState, 80),
+    services:estimate.services,
+    issues,
+    estimatedMinimum:estimate.total,
+    estimateHasPlus:estimate.plus,
+    estimateFinal:false,
+    serviceMethod:azServiceBookingText(body.serviceMethod, 80) || "Bincang melalui WhatsApp",
+    preferredDate:azServiceBookingText(body.preferredDate, 30),
+    preferredTime:azServiceBookingText(body.preferredTime, 80),
+    urgency:azServiceBookingText(body.urgency, 40) || "Biasa",
+    backupRequirement:azServiceBookingText(body.backupRequirement, 100),
+    problemDetails:azServiceBookingText(body.problemDetails, 1200),
+    extraRequests:azServiceBookingText(body.extraRequests, 800),
+    createdAt:nowIso, createdAtMs:nowMs, updatedAt:nowIso, updatedAtMs:nowMs,
+    clientIpHash:crypto.createHash("sha256").update(azClientIp(req) + String(process.env.AZOBSS_SERVICE_BOOKING_HASH_SECRET || "azobss-service-booking")).digest("hex").slice(0, 24)
+  };
+  const db = getAzobssBackendDb();
+  if (!db) throw Object.assign(new Error("Sistem rekod servis belum tersedia. Sila cuba semula atau gunakan WhatsApp."), { statusCode:503 });
+  const ref = db.collection("serviceBookings").doc(bookingId);
+  const existing = await ref.get();
+  if (existing.exists) {
+    const old = existing.data() || {};
+    row.createdAt = old.createdAt || row.createdAt;
+    row.createdAtMs = Number(old.createdAtMs || row.createdAtMs) || row.createdAtMs;
+  }
+  row.whatsappMessage = azServiceBookingMessage(row);
+  row.whatsappNumber = azServiceBookingWhatsappNumber();
+  await ref.set(azJsonSafe(row), { merge:true });
+  const notificationId = `service_${bookingId.toLowerCase().replace(/[^a-z0-9_-]+/g, "-")}`;
+  await db.collection("adminNotifications").doc(notificationId).set(azJsonSafe({
+    id:notificationId,
+    docId:notificationId,
+    type:"service_booking",
+    category:"service",
+    title:`Tempahan servis IT baharu • ${bookingId}`,
+    body:`${customerName} • ${customerPhone} • ${customerArea} • ${deviceBrand} ${deviceModel} • ${estimate.services.map(x => x.name).join(", ") || issues.slice(0, 3).join(", ")}`.slice(0, 500),
+    status:"new",
+    severity:"info",
+    active:true,
+    read:false,
+    orderId:bookingId,
+    productName:`${deviceBrand} ${deviceModel}`.trim(),
+    username:customerName,
+    email:customerEmail,
+    targetTab:"servicebookings",
+    targetLabel:"Open Service Bookings",
+    source:"service-booking-form",
+    createdAt:nowIso,
+    createdAtMs:nowMs,
+    updatedAt:nowIso,
+    updatedAtMs:nowMs
+  }), { merge:true });
+  const whatsappUrl = `https://wa.me/${row.whatsappNumber}?text=${encodeURIComponent(row.whatsappMessage)}`;
+  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.total, estimateHasPlus:estimate.plus, whatsappUrl };
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -11277,6 +11443,9 @@ async function handler(req, res) {
 
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
+    if (pathname === "/api/service-bookings" && req.method === "POST" && azRateLimitOrSend(req, res, "public-service-booking", 10, 60 * 60 * 1000)) return;
+    if (pathname === "/api/admin/service-bookings" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-service-bookings-read", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/service-bookings-action" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-service-bookings-action", 50, 10 * 60 * 1000)) return;
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
     if (pathname === "/api/admin/sales-invoice/toyyibpay-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-manual-invoice-toyyib-bill", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
@@ -11327,6 +11496,65 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
 
+
+    if (pathname === "/api/admin/service-bookings" && req.method === "GET") {
+      try {
+        const identity = await azAdminIdentityFromRequest(req, parsed);
+        if (!identity || !identity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) throw new Error("Firebase Admin is not configured.");
+        const maxRows = Math.max(1, Math.min(300, Number(parsed.query.limit || 150) || 150));
+        let snap;
+        try { snap = await db.collection("serviceBookings").orderBy("createdAtMs", "desc").limit(maxRows).get(); }
+        catch (_) { snap = await db.collection("serviceBookings").limit(maxRows).get(); }
+        const records = [];
+        snap.forEach(docSnap => records.push(azJsonSafe(Object.assign({ id:docSnap.id }, docSnap.data() || {}))));
+        records.sort((a,b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
+        return send(res, 200, JSON.stringify({ ok:true, records, count:records.length }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        return send(res, 500, JSON.stringify({ ok:false, error:azServiceBookingText(error && error.message, 300) || "Unable to load service bookings.", records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/service-bookings-action" && req.method === "POST") {
+      try {
+        const identity = await azAdminIdentityFromRequest(req, parsed);
+        if (!identity || !identity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const bookingId = azServiceBookingText(body.bookingId || body.id, 100);
+        const action = azServiceBookingText(body.action, 40).toLowerCase();
+        if (!bookingId) return send(res, 400, JSON.stringify({ ok:false, error:"Booking ID is required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) throw new Error("Firebase Admin is not configured.");
+        const ref = db.collection("serviceBookings").doc(bookingId);
+        if (action === "delete") {
+          await ref.delete();
+          return send(res, 200, JSON.stringify({ ok:true, action, bookingId }, null, 2), "application/json");
+        }
+        if (action === "status") {
+          const allowed = new Set(["new","contacted","inspection","quoted","confirmed","in-progress","completed","cancelled"]);
+          const status = azServiceBookingText(body.status, 40).toLowerCase();
+          if (!allowed.has(status)) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid booking status." }, null, 2), "application/json");
+          const nowMs = Date.now();
+          await ref.set({ status, updatedAt:new Date(nowMs).toISOString(), updatedAtMs:nowMs, updatedBy:azServiceBookingText(identity.email || identity.username || "admin", 120) }, { merge:true });
+          return send(res, 200, JSON.stringify({ ok:true, action, bookingId, status }, null, 2), "application/json");
+        }
+        return send(res, 400, JSON.stringify({ ok:false, error:"Unknown action." }, null, 2), "application/json");
+      } catch (error) {
+        return send(res, Number(error && error.statusCode) || 500, JSON.stringify({ ok:false, error:azServiceBookingText(error && error.message, 300) || "Service booking action failed." }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/service-bookings" && req.method === "POST") {
+      try {
+        const body = parseRequestBody(await readBody(req));
+        const result = await azCreatePublicServiceBooking(req, body || {});
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        const statusCode = Number(error && error.statusCode) || 500;
+        return send(res, statusCode, JSON.stringify({ ok:false, error:azServiceBookingText(error && error.message, 300) || "Tempahan servis gagal disimpan." }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
 
     // =========================
     // AZOBSS TECH VAULT 720 — R2 ONLY

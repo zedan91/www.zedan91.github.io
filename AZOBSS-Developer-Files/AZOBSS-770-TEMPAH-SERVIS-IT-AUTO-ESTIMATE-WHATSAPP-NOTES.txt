@@ -1,0 +1,26 @@
+AZOBSS PATCH 770 — TEMPAH SERVIS IT + AUTO ESTIMATE + WHATSAPP
+
+Baseline: patch 769.
+
+Perubahan utama:
+1. Halaman baharu /Tempah-Servis-IT/ untuk tempahan servis laptop dan PC.
+2. Medan pelanggan: nama, telefon, e-mel opsyenal, kawasan dan alamat ringkas.
+3. Medan peranti: jenis, jenama, model, saiz skrin, serial dan keadaan kuasa.
+4. Pilihan servis bertanda tick dengan anggaran automatik:
+   - Format Windows RM30 promosi (harga biasa RM50)
+   - LCD 14 inci RM250+
+   - LCD 15 / 15.6 inci RM300+
+   - LCD 16 inci RM350+
+   - Keyboard laptop RM150+
+   - Cleaning + thermal paste RM80
+5. Senarai kerosakan/simptom, tarikh, masa, cara serahan, keutamaan, backup dan catatan.
+6. Harga dipaparkan sebagai anggaran minimum, bukan harga final.
+7. POST /api/service-bookings menyemak data, mengira semula anggaran di backend, menyimpan rekod ke Firestore serviceBookings dan mencipta notifikasi admin dalam collection adminNotifications.
+8. Admin Dashboard menerima tab Service Bookings dengan carian, filter status, ubah status, WhatsApp pelanggan, detail penuh, delete dan Export CSV.
+9. Notifikasi tempahan disimpan dalam adminNotifications (bukan notifications awam) supaya nama/telefon pelanggan tidak terdedah kepada user lain.
+10. Selepas rekod berjaya, WhatsApp dibuka dengan ID tempahan dan ringkasan lengkap.
+11. Fallback WhatsApp tersedia jika backend gagal supaya pelanggan masih boleh menghantar tempahan.
+12. Homepage Format Windows dan PC Repair dikemas kini dengan harga baharu serta butang ke halaman tempahan.
+
+WhatsApp default: 60175099983. Boleh ditukar melalui ENV AZOBSS_SERVICE_WHATSAPP.
+Backend berubah: Manual Deploy / Restart Render diperlukan.
