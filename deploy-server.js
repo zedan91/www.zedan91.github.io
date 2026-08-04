@@ -873,8 +873,27 @@ async function azCommissionIdentityFromRequest(req) {
     return null;
   }
 }
+async function azFastTrustedAdminIdentityFromRequest(req) {
+  try {
+    const h = String(req.headers.authorization || "");
+    const token = h.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return null;
+    const decoded = await firebaseAdmin.auth().verifyIdToken(token);
+    const email = String(decoded.email || "").toLowerCase();
+    const identity = { uid:String(decoded.uid || ""), email, authEmail:email, profileEmail:"", username:"", role:"admin", isAdmin:false };
+    if (!azIdentityTrustedForBackendAdmin(identity)) return null;
+    identity.isAdmin = true;
+    identity.authMethod = "firebase-admin-token-fast";
+    return identity;
+  } catch (err) {
+    console.warn("Fast backend admin token verify failed:", err && (err.message || err));
+    return null;
+  }
+}
 async function azAdminIdentityFromRequest(req, parsed) {
   const hasSecret = azRequestHasAdminSecret(req, parsed);
+  const fastIdentity = await azFastTrustedAdminIdentityFromRequest(req);
+  if (fastIdentity) return Object.assign({}, fastIdentity, { role:"admin", isAdmin:true, authMethod:hasSecret ? "firebase-admin-token-fast+api-secret" : "firebase-admin-token-fast" });
   const identity = await azCommissionIdentityFromRequest(req);
 
   // Preferred flow: browser sends Firebase ID token only. Backend verifies the token
@@ -5349,7 +5368,7 @@ async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   return { ok:true, receiptId:record.id, invoiceNo, receiptNo, gross, totalCost, profit };
 }
 
-const AZOBSS_SALES_TEMP_PATCH = "AZOBSS_ADMIN_SALES_TEMP_BACKEND_CORS_750_20260804";
+const AZOBSS_SALES_TEMP_PATCH = "AZOBSS_ADMIN_SALES_TEMP_QUOTA_SAVER_759_20260804";
 const AZOBSS_SALES_TEMP_DIR = path.join(os.tmpdir(), "azobss-sales-temp-documents");
 const azSalesTempFiles = new Map();
 function azSalesTempMaxBytes() {
@@ -12471,7 +12490,7 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
-        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"750" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"759" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
@@ -12481,11 +12500,11 @@ async function handler(req, res) {
         if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to create temporary documents." }, null, 2), "application/json");
         const buffer = await readBinaryBody(req, azSalesTempMaxBytes());
         const result = azSalesTempIssue(req, buffer);
-        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_sales_document_temp_create", "salesDocument", result.documentNo || result.filename, { filename:result.filename, contentType:result.contentType, size:result.size, expiresAt:result.expiresAt }, "success"), "Temporary sales document audit log failed");
+        // Temporary PDF/ZIP files are ephemeral; do not consume a Firestore audit write for every share/download.
         return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
-        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"750" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"759" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
@@ -12496,9 +12515,9 @@ async function handler(req, res) {
         const id = azSalesTempSafeId(path.basename(pathname));
         if (!id) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid temporary document ID." }, null, 2), "application/json");
         const existed = azSalesTempDelete(id);
-        return send(res, existed ? 200 : 404, JSON.stringify({ ok:existed, deleted:existed, id, patch:"750" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, existed ? 200 : 404, JSON.stringify({ ok:existed, deleted:existed, id, patch:"759" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
-        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"750" }, null, 2), "application/json");
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"759" }, null, 2), "application/json");
       }
     }
 

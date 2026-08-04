@@ -1,0 +1,11 @@
+AZOBSS Patch 759 - Firestore Quota Saver
+
+- Removed 15-second full Sales & Receipts polling.
+- Paid-status refresh now runs at most once every 5 minutes and only when a Pending manual invoice exists.
+- Reuses an invoice's stored ToyyibPay bill, payment URL and QR without another backend/Firestore call.
+- Adds 60-second frontend load cache and reduces list queries to 300 rows.
+- Uses fast trusted-admin token verification for temporary PDF endpoints without a Firestore user-profile lookup.
+- Stops writing an admin audit record for every ephemeral temporary PDF/ZIP upload.
+- Keeps cached rows visible when Firestore returns RESOURCE_EXHAUSTED.
+
+Existing exhausted Firebase quota may need time to reset. Existing invoices with a stored QR can still generate PDFs without another bill lookup.

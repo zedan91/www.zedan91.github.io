@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 757: WhatsApp action shares actual PDF file with invoice message and ToyyibPay payment link */
+/* AZOBSS PATCH 759: Firestore quota saver, cached ToyyibPay QR reuse and low-frequency status refresh */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -10,7 +10,10 @@ const db=getFirestore(app);
 const BACKEND='https://azobss-backend.onrender.com';
 const MANUAL_SOURCE='admin-manual-sale';
 const PAGE_SIZE=10;
-window.__azSalesReceiptsModuleVersion=756;
+const FIRESTORE_LIST_LIMIT=300;
+const LOAD_CACHE_MS=60*1000;
+const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
+window.__azSalesReceiptsModuleVersion=759;
 
 let manualRows=[];
 let websiteRows=[];
@@ -25,6 +28,8 @@ const selectedRowIds=new Set();
 let sharePanelContext=null;
 let manualReceiptPollTimer=null;
 let manualReceiptPollBusy=false;
+let lastSuccessfulLoadAt=0;
+const toyyibInvoicePromiseById=new Map();
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -272,22 +277,31 @@ async function loadPremiumOrders(user){
     const headers={};
     if(user){headers.Authorization='Bearer '+await user.getIdToken()}
     try{const key=sessionStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssLuckyDrawAdminKey')||'';if(key)headers['x-admin-key']=key}catch(_e){}
-    const res=await fetch(BACKEND+'/api/admin/export?type=premiumOrders&format=json&limit=500',{headers,cache:'no-store'});
+    const res=await fetch(BACKEND+'/api/admin/export?type=premiumOrders&format=json&limit=300',{headers,cache:'no-store'});
     if(!res.ok)throw new Error('premiumOrders HTTP '+res.status);
     const data=await res.json();return Array.isArray(data.records)?data.records:[];
   }catch(e){console.warn('Sales & Receipts premiumOrders read skipped:',e);return []}
 }
-async function loadData(){
+async function loadData(options={}){
+  const force=options===true||options?.force===true;
+  const info=el('salesReceiptResultInfo');
+  const hasCachedRows=manualRows.length>0||websiteRows.length>0;
+  if(!force&&hasCachedRows&&lastSuccessfulLoadAt&&Date.now()-lastSuccessfulLoadAt<LOAD_CACHE_MS){
+    applyFilters();
+    if(info)info.textContent=`Loaded ${manualRows.length} manual invoice / receipt record(s) and ${websiteRows.length} website sale record(s). Cached to save Firestore quota.`;
+    return;
+  }
   if(loadingPromise)return loadingPromise;
   loadingPromise=(async()=>{
-    const info=el('salesReceiptResultInfo');if(info)info.textContent='Loading manual invoices, receipts and website sales...';
+    if(info)info.textContent='Loading manual invoices, receipts and website sales...';
     const user=await waitForUser();if(!user)throw new Error('Admin login not ready. Please sign in again.');
     const [receiptSnap,purchaseSnap,premium]=await Promise.all([
-      getDocs(query(collection(db,'receipts'),limit(1000))),
-      getDocs(query(collection(db,'purchaseLogs'),limit(1000))),
+      getDocs(query(collection(db,'receipts'),limit(FIRESTORE_LIST_LIMIT))),
+      getDocs(query(collection(db,'purchaseLogs'),limit(FIRESTORE_LIST_LIMIT))),
       loadPremiumOrders(user)
     ]);
-    manualRows=[];receiptSnap.forEach(d=>{const x=d.data()||{};if(String(x.source||'')===MANUAL_SOURCE)manualRows.push(normalizeManual(d.id,x))});
+    const nextManual=[];receiptSnap.forEach(d=>{const x=d.data()||{};if(String(x.source||'')===MANUAL_SOURCE)nextManual.push(normalizeManual(d.id,x))});
+    manualRows=nextManual;
     let repairedCount=0;
     try{repairedCount=await repairDuplicateManualNumbers()}catch(repairError){console.warn('Duplicate document number repair skipped:',repairError)}
     if(repairedCount)manualRows=await freshManualRows();
@@ -308,9 +322,20 @@ async function loadData(){
     });
     websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row));
     selectedRowIds.clear();
-    currentPage=1;applyFilters();
+    currentPage=1;lastSuccessfulLoadAt=Date.now();applyFilters();
     if(info)info.textContent=`Loaded ${manualRows.length} manual invoice / receipt record(s) and ${websiteRows.length} website sale record(s).`;
-  })().catch(e=>{notify(e.message||'Failed to load sales receipts.',true);const info=el('salesReceiptResultInfo');if(info)info.textContent='Load failed: '+(e.message||e);throw e}).finally(()=>{loadingPromise=null});
+  })().catch(e=>{
+    const message=String(e?.message||e||'Failed to load sales receipts.');
+    const quota=/RESOURCE_EXHAUSTED|quota exceeded/i.test(message);
+    if(quota&&(manualRows.length||websiteRows.length)){
+      console.warn('Firestore quota reached; keeping cached Sales & Receipts rows:',e);
+      applyFilters();
+      if(info)info.textContent=`Using cached records because the Firestore quota is temporarily exhausted. Manual Refresh can be tried later.`;
+      notify('Firestore quota is temporarily exhausted. Existing cached records are still available.',true);
+      return;
+    }
+    notify(message,true);if(info)info.textContent='Load failed: '+message;throw e;
+  }).finally(()=>{loadingPromise=null});
   return loadingPromise;
 }
 function categoriesForRow(row){return Array.isArray(row.categories)&&row.categories.length?row.categories:[row.category||'other']}
@@ -435,7 +460,7 @@ function nextDocumentNo(type='receipt',dateMs=Date.now(),rows=manualRows,exclude
   return `${prefix}-${date}-${String(next).padStart(4,'0')}`;
 }
 async function freshManualRows(){
-  const snap=await getDocs(query(collection(db,'receipts'),limit(1000)));const rows=[];
+  const snap=await getDocs(query(collection(db,'receipts'),limit(FIRESTORE_LIST_LIMIT)));const rows=[];
   snap.forEach(d=>{const data=d.data()||{};if(String(data.source||'')===MANUAL_SOURCE)rows.push(normalizeManual(d.id,data))});return rows;
 }
 async function ensureUniqueManualNumbers(kind,dateMs,excludeId=''){
@@ -530,12 +555,12 @@ async function saveForm(){
     closeForm();
     if(transitionedToPaid)notify('Payment marked Paid. Invoice converted to Receipt and included in sales, costs and net profit.');
     else notify(`${label} ${wasEditing?'updated':'created'}${toyyibReady?' with ToyyibPay QR':''}.`);
-    await loadData();
+    await loadData({force:true});
   }
   catch(e){console.error(e);notify('Save failed: '+(e.message||e),true)}finally{btn.disabled=false;btn.textContent='Save '+label}
 }
 function findRow(id){return [...manualRows,...websiteRows].find(r=>r.id===id)}
-async function deleteManual(id){const row=manualRows.find(r=>r.id===id);if(!row)return;const label=documentKindForStatus(row.status)==='invoice'?'invoice':'receipt';if(!confirm(`Delete ${label} ${currentDocumentNo(row)}? This cannot be undone.`))return;try{await deleteDoc(doc(db,'receipts',row.docId));notify(`${label[0].toUpperCase()+label.slice(1)} deleted.`);await loadData()}catch(e){notify('Delete failed: '+(e.message||e),true)}}
+async function deleteManual(id){const row=manualRows.find(r=>r.id===id);if(!row)return;const label=documentKindForStatus(row.status)==='invoice'?'invoice':'receipt';if(!confirm(`Delete ${label} ${currentDocumentNo(row)}? This cannot be undone.`))return;try{await deleteDoc(doc(db,'receipts',row.docId));notify(`${label[0].toUpperCase()+label.slice(1)} deleted.`);await loadData({force:true})}catch(e){notify('Delete failed: '+(e.message||e),true)}}
 async function adminBackendHeaders(){
   const headers={'Content-Type':'application/json'};const user=await waitForUser();
   if(user)headers.Authorization='Bearer '+await user.getIdToken();
@@ -543,17 +568,38 @@ async function adminBackendHeaders(){
   return headers;
 }
 
+function reusableToyyibInvoiceData(row={}){
+  return !!(String(row.paymentUrl||row.toyyibPaymentUrl||'').trim()&&String(row.billCode||row.toyyibBillCode||'').trim()&&String(row.toyyibQrJpegBase64||'').trim());
+}
 async function ensureToyyibPayInvoice(row,{silent=false}={}){
   if(!row||row.source!=='manual'||documentKindForStatus(row.status)!=='invoice'||normalizeStatus(row.status)!=='pending')return row;
   row.paymentMethod='ToyyibPay';
+  if(reusableToyyibInvoiceData(row))return row;
   if(num(row.gross)<=0)throw new Error('Invoice total must be more than RM0.00 before generating ToyyibPay QR.');
-  const res=await fetch(BACKEND+'/api/admin/sales-invoice/toyyibpay-bill',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({receiptId:row.docId}),cache:'no-store'});
-  const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
-  if(!res.ok||data.ok===false)throw new Error(data.error||`ToyyibPay invoice HTTP ${res.status}`);
-  Object.assign(row,{toyyibOrderId:data.orderId||row.toyyibOrderId||'',billCode:data.billCode||row.billCode||'',toyyibBillCode:data.billCode||row.toyyibBillCode||'',paymentUrl:data.paymentUrl||row.paymentUrl||'',toyyibPaymentUrl:data.paymentUrl||row.toyyibPaymentUrl||'',toyyibQrJpegBase64:data.qrJpegBase64||row.toyyibQrJpegBase64||'',paymentMethod:'ToyyibPay'});
-  if(data.status==='paid'||data.alreadyPaid){row.status='paid';row.documentType='receipt';row.receiptNo=data.receiptNo||row.receiptNo||deriveReceiptNo(row.invoiceNo);row.documentNo=row.receiptNo;row.amountDue=0;row.paymentRecognized=true}
-  if(!silent)notify(data.status==='paid'?`Payment verified. ${invoiceNoForRow(row)} is now a Paid receipt.`:`ToyyibPay QR ready for invoice ${invoiceNoForRow(row)}.`);
-  return row;
+  const promiseKey=String(row.docId||row.id||invoiceNoForRow(row)||'manual-invoice');
+  if(toyyibInvoicePromiseById.has(promiseKey))return toyyibInvoicePromiseById.get(promiseKey);
+  const task=(async()=>{
+    try{
+      const res=await fetch(BACKEND+'/api/admin/sales-invoice/toyyibpay-bill',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({receiptId:row.docId}),cache:'no-store'});
+      const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
+      if(!res.ok||data.ok===false)throw new Error(data.error||`ToyyibPay invoice HTTP ${res.status}`);
+      Object.assign(row,{toyyibOrderId:data.orderId||row.toyyibOrderId||'',billCode:data.billCode||row.billCode||'',toyyibBillCode:data.billCode||row.toyyibBillCode||'',paymentUrl:data.paymentUrl||row.paymentUrl||'',toyyibPaymentUrl:data.paymentUrl||row.toyyibPaymentUrl||'',toyyibQrJpegBase64:data.qrJpegBase64||row.toyyibQrJpegBase64||'',paymentMethod:'ToyyibPay'});
+      if(data.status==='paid'||data.alreadyPaid){row.status='paid';row.documentType='receipt';row.receiptNo=data.receiptNo||row.receiptNo||deriveReceiptNo(row.invoiceNo);row.documentNo=row.receiptNo;row.amountDue=0;row.paymentRecognized=true}
+      if(!silent)notify(data.status==='paid'?`Payment verified. ${invoiceNoForRow(row)} is now a Paid receipt.`:`ToyyibPay QR ready for invoice ${invoiceNoForRow(row)}.`);
+      return row;
+    }catch(error){
+      const message=String(error?.message||error||'');
+      if(/RESOURCE_EXHAUSTED|quota exceeded/i.test(message)&&reusableToyyibInvoiceData(row)){
+        console.warn('Firestore quota reached; reusing the ToyyibPay bill already stored on this invoice.');
+        return row;
+      }
+      throw error;
+    }finally{
+      toyyibInvoicePromiseById.delete(promiseKey);
+    }
+  })();
+  toyyibInvoicePromiseById.set(promiseKey,task);
+  return task;
 }
 async function prepareRowForPdf(row,type='receipt'){
   const docType=documentType(type);
@@ -573,7 +619,7 @@ async function deleteWebsiteRecord(id,button=null){
   try{
     const res=await fetch(BACKEND+'/api/admin/payment-logs/delete',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({records:refs}),cache:'no-store'});
     const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){throw new Error('Invalid backend response while deleting the website record.')}if(!res.ok||data.ok===false)throw new Error(data.error||`Delete HTTP ${res.status}`);
-    notify(`Deleted ${data.deleted||refs.length} website payment record(s).`);await loadData();
+    notify(`Deleted ${data.deleted||refs.length} website payment record(s).`);await loadData({force:true});
   }catch(error){
     console.warn('Backend website record delete failed:',error);
     let removed=0;const errors=[];
@@ -581,7 +627,7 @@ async function deleteWebsiteRecord(id,button=null){
       if(ref.collection!=='purchaseLogs'||!ref.docId)continue;
       try{await deleteDoc(doc(db,'purchaseLogs',ref.docId));removed++}catch(e){errors.push(e?.message||String(e))}
     }
-    if(removed){notify(`Deleted ${removed} Firestore purchase record(s). Render backend is still required to remove any premium-order backup.`);await loadData()}
+    if(removed){notify(`Deleted ${removed} Firestore purchase record(s). Render backend is still required to remove any premium-order backup.`);await loadData({force:true})}
     else notify('Website record delete failed: '+(error?.message||error)+(errors.length?' • '+errors[0]:''),true);
   }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
@@ -649,8 +695,19 @@ async function downloadDocumentPdf(row,type='receipt',button=null){
     if(sharePanelContext?.temp?.id===temp.id)sharePanelContext.temp=null;
     notify(`PDF downloaded: ${file.name||temp.filename}`);
     return file.name||temp.filename;
-  }catch(e){console.error(e);notify('PDF download failed: '+(e.message||e),true);return ''}
-  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+  }catch(e){
+    console.error('Temporary backend PDF download failed:',e);
+    try{
+      const localFile=await createDocumentFile(row,type);
+      downloadBlobFile(localFile,localFile.name);
+      notify(`PDF downloaded locally because the temporary backend/quota was unavailable: ${localFile.name}`);
+      return localFile.name;
+    }catch(localError){
+      console.error(localError);
+      const message=String(localError?.message||e?.message||localError||e);
+      notify('PDF download failed: '+message,true);return '';
+    }
+  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 function normalizeWhatsAppPhone(value){let phone=String(value||'').replace(/\D/g,'');if(phone.startsWith('0'))phone='60'+phone.slice(1);return phone}
 async function copyPlainText(value){
@@ -674,9 +731,14 @@ async function createTemporaryBlob(blob,filename,reference,contentType='applicat
   if(!res.ok||data.ok===false||!data.viewUrl||!data.deleteUrl)throw new Error(data.error||`Temporary document HTTP ${res.status}`);
   return data;
 }
-async function createDocumentTemporary(row,type='receipt'){
+async function createDocumentFile(row,type='receipt'){
   const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable. Refresh this page and try again.');
-  const prepared=await prepareRowForPdf(row,type);const file=api.createFile(prepared,type);return createTemporaryBlob(file,file.name,documentNo(prepared,type),'application/pdf');
+  const prepared=await prepareRowForPdf(row,type);
+  return api.createFile(prepared,type);
+}
+async function createDocumentTemporary(row,type='receipt'){
+  const file=await createDocumentFile(row,type);
+  return createTemporaryBlob(file,file.name,documentNo(row,type),'application/pdf');
 }
 function temporaryDataIsValid(data){return !!(data&&data.id&&data.viewUrl&&Date.parse(data.expiresAt||0)>Date.now()+15000)}
 async function ensureSharePanelTemporary(button=null){
@@ -748,13 +810,22 @@ async function shareTemporaryFile(data,title,text,button=null,{preferredApp=''}=
 }
 async function shareSingleActualPdfWithMessage(context,button=null,preferredApp='WhatsApp'){
   if(!context||context.mode!=='single')throw new Error('A single invoice or receipt is required.');
-  const data=await ensureSharePanelTemporary(button);
   const docType=documentType(context.type);
   const title=`AZOBSS ${docType==='invoice'?'Invoice':'Receipt'} ${documentNo(context.row,docType)}`;
-  // ensureSharePanelTemporary() prepares ToyyibPay first, so context.row now contains
-  // the same payment URL used by the QR inside the generated invoice PDF.
-  const text=documentShareText(context.row,docType);
-  return shareTemporaryFile(data,title,text,button,{preferredApp});
+  try{
+    const data=await ensureSharePanelTemporary(button);
+    const text=documentShareText(context.row,docType);
+    return shareTemporaryFile(data,title,text,button,{preferredApp});
+  }catch(backendError){
+    console.warn('Temporary backend share unavailable; using browser-generated PDF directly:',backendError);
+    const file=await createDocumentFile(context.row,docType);
+    const text=documentShareText(context.row,docType);
+    if(!nativeFileShareSupported([file]))throw backendError;
+    try{await copyPlainText(text)}catch(_e){}
+    if(preferredApp)notify(`Actual PDF and message are ready locally. Choose ${preferredApp} in the Share window.`);
+    await navigator.share({files:[file],title,text});
+    notify('Actual PDF shared directly from the browser without using backend storage.');
+  }
 }
 async function shareDocumentPdf(row,type,button=null){
   try{const temp=await createDocumentTemporary(row,type);return shareTemporaryFile(temp,`AZOBSS ${documentType(type)==='invoice'?'Invoice':'Receipt'} ${documentNo(row,type)}`,documentShareText(row,type),button)}
@@ -864,7 +935,7 @@ async function bulkDeleteSelected(button=null){
     const manualResults=await Promise.allSettled(manual.map(row=>deleteDoc(doc(db,'receipts',row.docId))));manualResults.forEach(result=>{if(result.status==='fulfilled')deleted++;else errors.push(result.reason?.message||String(result.reason))});
     const refs=mergeDeleteRefs(...website.map(row=>row.deleteRefs||[websiteDeleteRef(row,row.docId,row.sourceName)]));
     if(refs.length){try{const res=await fetch(BACKEND+'/api/admin/payment-logs/delete',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({records:refs}),cache:'no-store'});const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}if(!res.ok||data.ok===false)throw new Error(data.error||`Delete HTTP ${res.status}`);deleted+=website.length}catch(error){console.warn('Bulk backend website delete failed:',error);let fallbackDeleted=0;for(const ref of refs){if(ref.collection!=='purchaseLogs'||!ref.docId)continue;try{await deleteDoc(doc(db,'purchaseLogs',ref.docId));fallbackDeleted++}catch(e){errors.push(e?.message||String(e))}}const websiteWithPurchaseRef=website.filter(row=>(row.deleteRefs||[]).some(ref=>ref.collection==='purchaseLogs'&&ref.docId)).length;deleted+=Math.min(fallbackDeleted,websiteWithPurchaseRef);if(!fallbackDeleted)errors.push(error?.message||String(error))}}
-    selectedRowIds.clear();await loadData();if(errors.length)notify(`Deleted ${deleted} record(s). ${errors.length} operation(s) could not be completed.`,true);else notify(`Deleted ${rows.length} selected record(s).`)
+    selectedRowIds.clear();await loadData({force:true});if(errors.length)notify(`Deleted ${deleted} record(s). ${errors.length} operation(s) could not be completed.`,true);else notify(`Deleted ${rows.length} selected record(s).`)
   }catch(e){console.error(e);notify('Bulk delete failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
 }
 function csvCell(v){const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
@@ -877,7 +948,7 @@ function clearFilters(){['salesReceiptSearch','salesReceiptFrom','salesReceiptTo
 function bind(){
   if(window.__azSalesReceiptsBound)return;window.__azSalesReceiptsBound=true;
   ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
-  el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',loadData);el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
+  el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',()=>loadData({force:true}));el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
   el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
   el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkShare')?.addEventListener('click',openBulkSharePanel);el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'other',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog')){e.preventDefault();e.stopPropagation()}});
@@ -889,16 +960,19 @@ function bind(){
   document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
 function startManualReceiptPaymentWatch(){
-  // Avoid a second live Firestore listener in this optional module. A failed
-  // listener/import must never prevent Sales & Receipts from loading.
+  // Quota saver: check only every five minutes and only while a Pending manual
+  // invoice exists. The former 15-second full reload could consume the free
+  // Firestore daily read quota very quickly.
   if(manualReceiptPollTimer)return;
   manualReceiptPollTimer=setInterval(async()=>{
     const section=el('salesreceipts');
     const dialogOpen=el('salesReceiptDialog')?.hidden===false;
-    if(!section?.classList.contains('active')||dialogOpen||manualReceiptPollBusy||loadingPromise)return;
+    const hasPendingManual=manualRows.some(row=>row.source==='manual'&&normalizeStatus(row.status)==='pending');
+    if(!section?.classList.contains('active')||document.hidden||dialogOpen||!hasPendingManual||manualReceiptPollBusy||loadingPromise)return;
+    if(lastSuccessfulLoadAt&&Date.now()-lastSuccessfulLoadAt<AUTO_PAYMENT_REFRESH_MS-5000)return;
     manualReceiptPollBusy=true;
-    try{await loadData()}catch(error){console.warn('ToyyibPay receipt status poll skipped:',error)}finally{manualReceiptPollBusy=false}
-  },15000);
+    try{await loadData({force:true})}catch(error){console.warn('ToyyibPay receipt status refresh skipped:',error)}finally{manualReceiptPollBusy=false}
+  },AUTO_PAYMENT_REFRESH_MS);
 }
 
 let salesReceiptsAutoLoadQueued=false;
