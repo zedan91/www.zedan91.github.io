@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 747: Malaysia date/time and corrected legacy noon timestamps */
+/* AZOBSS PATCH 758: Phone and email separated on invoice/receipt PDF */
 (function(global){
   'use strict';
 
@@ -154,9 +154,10 @@
     const label=[100,116,139],value=[55,65,81],left=x+16,right=mid+16;
     text(commands,docType==='invoice'?'BILL TO':'CUSTOMER',left,y+22,{size:7.5,bold:true,color:label});
     text(commands,clean(row.customerName||'Customer'),left,y+40,{size:11,bold:true,color:value});
-    text(commands,'PHONE / EMAIL',left,y+64,{size:7.5,bold:true,color:label});
-    const contact=[clean(row.customerPhone),clean(row.customerEmail)].filter(Boolean).join(' / ')||'-';
-    textLines(commands,wrapText(contact,(w/2)-32,8.8,false).slice(0,2),left,y+80,{size:8.8,lineHeight:12,color:value});
+    text(commands,'PHONE',left,y+64,{size:7.5,bold:true,color:label});
+    text(commands,clean(row.customerPhone)||'-',left,y+80,{size:8.8,color:value});
+    text(commands,'EMAIL',left,y+96,{size:7.5,bold:true,color:label});
+    textLines(commands,wrapText(clean(row.customerEmail)||'-',(w/2)-32,7.8,false).slice(0,2),left,y+112,{size:7.8,lineHeight:9.5,color:value});
     text(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',right,y+22,{size:7.5,bold:true,color:label});
     text(commands,documentNumber(row,docType),right,y+40,{size:10.2,bold:true,color:value});
     text(commands,docType==='invoice'?'ISSUE DATE':'DATE',right,y+64,{size:7.5,bold:true,color:label});
