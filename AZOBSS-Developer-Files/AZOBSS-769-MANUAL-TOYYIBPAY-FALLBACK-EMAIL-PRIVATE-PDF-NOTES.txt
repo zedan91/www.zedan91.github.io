@@ -1,0 +1,23 @@
+AZOBSS PATCH 769
+Manual ToyyibPay Fallback Email — Private from Invoice/Receipt PDF
+Date: 2026-08-04
+
+Changes
+1. If a manual Pending/ToyyibPay invoice has customer name and phone but customer email is blank, createBill uses the AZOBSS fallback email only for ToyyibPay.
+2. Default fallback: zedan9107@gmail.com.
+3. Optional Render ENV override: AZOBSS_TOYYIBPAY_FALLBACK_EMAIL (or TOYYIBPAY_FALLBACK_EMAIL).
+4. The fallback is NOT copied into customerEmail, invoice PDF or receipt PDF. The EMAIL line remains '-' when the customer supplied no email.
+5. Name and phone remain the real customer details and are prefilled on ToyyibPay.
+6. If name or phone is also missing, the system continues to use an open bill so the payer completes the required fields.
+7. Existing Pending bills created under older prefill logic are regenerated once with a new Bill Code/QR when needed.
+
+Preserved
+- Patch 768 white item rows.
+- Patch 765 correct total/Bill Code sync and Receipt Sent marker.
+- RM1 ToyyibPay payment fee default.
+- Description left alignment and all prior fixes.
+
+Deployment
+- Upload website files.
+- Restart/Manual Deploy the Render backend because deploy-server.js changed.
+- Hard refresh Admin (Ctrl+F5).

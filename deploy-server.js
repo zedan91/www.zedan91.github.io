@@ -5272,8 +5272,8 @@ function azSalesShareIssue(meta = {}) {
 // deletes immediately after navigator.share() succeeds. Public links are removed after
 // first access plus a safety window, or at the hard maximum expiry time.
 
-const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_OPTIONAL_EMAIL_OPEN_BILL_FIX_767_20260804";
-const AZOBSS_MANUAL_PAYOR_PREFILL_VERSION = 763;
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_FALLBACK_EMAIL_PRIVATE_PDF_FIX_769_20260804";
+const AZOBSS_MANUAL_PAYOR_PREFILL_VERSION = 769;
 const AZOBSS_MANUAL_BILL_AMOUNT_VERSION = 765;
 function azManualInvoicePayableAmount(invoice = {}) {
   const items = Array.isArray(invoice.items) ? invoice.items : [];
@@ -5305,6 +5305,20 @@ function azManualInvoiceReceiptNo(invoiceNo = "") {
 function azManualInvoiceExpiryDays() {
   const raw = Number(process.env.AZOBSS_MANUAL_INVOICE_EXPIRY_DAYS || 7);
   return Math.max(1, Math.min(100, Number.isFinite(raw) ? Math.round(raw) : 7));
+}
+function azManualInvoiceToyyibFallbackEmail() {
+  // Used only in the ToyyibPay createBill payload when the customer has no email.
+  // It is deliberately never copied into receipt.customerEmail, invoice PDF or receipt PDF.
+  const candidates = [
+    process.env.AZOBSS_TOYYIBPAY_FALLBACK_EMAIL,
+    process.env.TOYYIBPAY_FALLBACK_EMAIL,
+    "zedan9107@gmail.com"
+  ];
+  for (const candidate of candidates) {
+    const email = cleanToyyibEmail(candidate || "", 80);
+    if (email) return email;
+  }
+  return "";
 }
 async function azManualInvoiceQrJpeg(paymentUrl = "") {
   const value = cleanPremiumUrl(paymentUrl || "");
@@ -5350,15 +5364,18 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   const savedOrderAmount = Number(order && (order.saleAmount || order.amount) || 0);
   const savedBillAmount = savedInvoiceBillAmount > 0 ? savedInvoiceBillAmount : savedOrderAmount;
   const amountChanged = Boolean((billCode || paymentUrl || order) && savedBillAmount > 0 && Math.abs(savedBillAmount - amount) > 0.005);
-  const currentCustomerName = cleanToyyibBillText(invoice.customerName || "Customer", 30) || "Customer";
+  const currentCustomerName = cleanToyyibBillText(invoice.customerName || "", 30);
   const currentCustomerEmail = cleanToyyibEmail(invoice.customerEmail || "", 80);
   const currentCustomerPhone = cleanToyyibPhone(invoice.customerPhone || "", 20);
-  // ToyyibPay can only prefill payer details safely when the complete set is present.
-  // If any payer field is missing, create an open bill and leave all payer fields blank
-  // so the customer fills the mandatory details directly on ToyyibPay.
-  const currentPayorInfoMode = (currentCustomerName && currentCustomerEmail && currentCustomerPhone) ? 1 : 0;
+  const fallbackEmail = azManualInvoiceToyyibFallbackEmail();
+  const usingFallbackEmail = Boolean(currentCustomerName && currentCustomerPhone && !currentCustomerEmail && fallbackEmail);
+  const emailSentToToyyib = currentCustomerEmail || (usingFallbackEmail ? fallbackEmail : "");
+  // Name and phone remain the customer's real details. When only customer email is absent,
+  // use AZOBSS' fallback email for ToyyibPay so the payer does not need to type anything.
+  // If name or phone is missing, keep an open bill and let the payer complete all fields.
+  const currentPayorInfoMode = (currentCustomerName && currentCustomerPhone && emailSentToToyyib) ? 1 : 0;
   const currentPrefillName = currentPayorInfoMode ? currentCustomerName : "";
-  const currentPrefillEmail = currentPayorInfoMode ? currentCustomerEmail : "";
+  const currentPrefillEmail = currentPayorInfoMode ? emailSentToToyyib : "";
   const currentPrefillPhone = currentPayorInfoMode ? currentCustomerPhone : "";
   const savedOrderUser = order && order.user && typeof order.user === "object" ? order.user : {};
   const legacySavedEmail = cleanToyyibEmail(invoice.toyyibPrefilledCustomerEmail || savedOrderUser.email || order && (order.buyerEmail || order.email) || "", 80);
@@ -5402,7 +5419,7 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     billCode = ""; paymentUrl = "";
   }
   let orderId = cleanPremiumText(invoice.toyyibOrderId || (order && order.orderId) || `manual-invoice-${record.id}`, 180);
-  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p767-${Date.now().toString(36)}`, 180);
+  if (recreateBill) orderId = cleanPremiumText(`manual-invoice-${record.id}-p769-${Date.now().toString(36)}`, 180);
   if (order && billCode && !amountChanged) {
     const refreshed = await refreshToyyibOrder(order, req);
     if (String(refreshed && refreshed.status || "").toLowerCase() === "paid") {
@@ -5421,8 +5438,9 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     const customerEmail = currentPrefillEmail;
     const customerPhone = currentPrefillPhone;
     const customerName = currentPrefillName;
-    // Prefill only when name, phone and a valid email are all available. Otherwise use
-    // an open bill (billPayorInfo=0) and intentionally send blank payer fields.
+    // Prefill customer name and phone. If customer email is blank, use the private
+    // AZOBSS fallback email only in ToyyibPay; customerEmail in Firestore/PDF stays blank.
+    // If name or phone is absent, use an open bill and send blank payer fields.
     const payorInfo = currentPayorInfoMode;
     const billPayload = {
       userSecretKey:TOYYIB_SECRET_KEY,
@@ -5496,6 +5514,8 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     toyyibBillAmount:amount, toyyibBillAmountSen:Math.round(amount*100),
     toyyibPrefilledCustomerName:currentPrefillName, toyyibPrefilledCustomerPhone:currentPrefillPhone,
     toyyibPrefilledCustomerEmail:currentPrefillEmail,
+    toyyibFallbackEmailUsed:usingFallbackEmail,
+    toyyibPayorEmailSource:currentPayorInfoMode ? (usingFallbackEmail ? "azobss-fallback" : "customer") : "open-bill",
     updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:Date.now()
   }, { merge:true });
   const qrJpeg = await azManualInvoiceQrJpeg(paymentUrl);
