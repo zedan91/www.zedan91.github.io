@@ -1,0 +1,9 @@
+AZOBSS Patch 738 - Actual PDF Native Share
+
+- WhatsApp and Telegram action buttons now pass the generated PDF File object to the browser/OS native share function.
+- No PDF URL is inserted into the message by these buttons.
+- The separate Copy Link button remains available and still uses Cloudflare R2.
+- Browsers cannot force-select WhatsApp or Telegram while also attaching a local file; the operating-system share panel must be used for actual file attachment.
+- If native file sharing is unsupported, the PDF is downloaded for manual attachment.
+- Bulk sharing passes multiple PDF files when supported; otherwise a ZIP is downloaded.
+- Based on Patch 737.

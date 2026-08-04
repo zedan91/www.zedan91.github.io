@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 731: Status-linked invoice/receipt PDF numbering and payment conversion */
+/* AZOBSS PATCH 739: Malaysia date/time and corrected legacy noon timestamps */
 (function(global){
   'use strict';
 
@@ -32,7 +32,7 @@
   function formatDateTime(ms){
     const date = new Date(Number(ms) || Date.now());
     if(Number.isNaN(date.getTime())) return '-';
-    return new Intl.DateTimeFormat('en-MY',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date);
+    return new Intl.DateTimeFormat('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date);
   }
   function parseTime(value){
     if(!value)return 0;if(typeof value==='number'&&Number.isFinite(value))return value;
@@ -40,10 +40,21 @@
     if(typeof value==='object'){if(Number(value.seconds)>0)return Number(value.seconds)*1000;if(Number(value._seconds)>0)return Number(value._seconds)*1000}
     const parsed=Date.parse(String(value));return Number.isNaN(parsed)?0:parsed;
   }
+  function malaysiaParts(ms){
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ms));
+    const out={};parts.forEach(part=>{if(part.type!=='literal')out[part.type]=part.value});return out;
+  }
+  function legacyActualTime(primary,row){
+    const raw=parseTime(primary);if(!raw)return parseTime(row.createdAtMs||row.createdAt||row.updatedAtMs||row.updatedAt)||Date.now();
+    if(number(row.dateTimeVersion)>=739)return raw;
+    const created=parseTime(row.createdAtMs||row.createdAt);if(!created)return raw;
+    const a=malaysiaParts(raw),b=malaysiaParts(created);
+    return a.hour==='12'&&a.minute==='00'&&a.second==='00'&&a.year===b.year&&a.month===b.month&&a.day===b.day?created:raw;
+  }
   function documentDateTime(row,type){
     const docType=normalizeDocumentType(type);
-    if(docType==='receipt')return parseTime(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||parseTime(row.saleDateMs)||Date.now();
-    return parseTime(row.invoiceDateMs)||parseTime(row.saleDateMs)||Date.now();
+    const primary=docType==='receipt'?(parseTime(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||parseTime(row.saleDateMs)):(parseTime(row.invoiceDateMs)||parseTime(row.saleDateMs));
+    return String(row.source||'').toLowerCase()==='manual'?legacyActualTime(primary,row):(primary||Date.now());
   }
   function categoryLabel(value){
     return ({physical:'Physical','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';

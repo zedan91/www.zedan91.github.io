@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 737: fix fatal bulk-share syntax error and retain reliable auto-load */
+/* AZOBSS PATCH 739: unique daily document numbers and Malaysia current date/time */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -34,8 +34,32 @@ function notify(message,error=false){
   n.textContent=message;n.classList.toggle('error',!!error);n.hidden=false;
   clearTimeout(notify._t);notify._t=setTimeout(()=>{n.hidden=true},4200);
 }
+const MY_TIME_ZONE='Asia/Kuala_Lumpur';
+function malaysiaDateParts(ms=Date.now()){
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:MY_TIME_ZONE,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ms));
+  const out={};parts.forEach(part=>{if(part.type!=='literal')out[part.type]=part.value});return out;
+}
 function localDateInput(ms=Date.now()){
-  const d=new Date(ms);const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;
+  const p=malaysiaDateParts(ms);return `${p.year}-${p.month}-${p.day}`;
+}
+function localDateTimeInput(ms=Date.now()){
+  const p=malaysiaDateParts(ms);return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+function malaysiaDateKey(ms=Date.now()){
+  const p=malaysiaDateParts(ms);return `${p.year}${p.month}${p.day}`;
+}
+function parseMalaysiaDateTime(value){
+  const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/);if(!m)return Date.now();
+  const year=Number(m[1]),month=Number(m[2])-1,day=Number(m[3]),hour=Number(m[4]||0),minute=Number(m[5]||0);
+  return Date.UTC(year,month,day,hour-8,minute,0,0);
+}
+function sameMalaysiaDate(a,b){return !!a&&!!b&&malaysiaDateKey(a)===malaysiaDateKey(b)}
+function isLegacyArtificialNoon(ms){if(!ms)return false;const p=malaysiaDateParts(ms);return p.hour==='12'&&p.minute==='00'&&p.second==='00'}
+function actualManualDateMs(primary,row={}){
+  const raw=parseMs(primary);if(!raw)return parseMs(row.createdAtMs||row.createdAt||row.updatedAtMs||row.updatedAt);
+  if(num(row.dateTimeVersion)>=739)return raw;
+  const created=parseMs(row.createdAtMs||row.createdAt);
+  return isLegacyArtificialNoon(raw)&&created&&sameMalaysiaDate(raw,created)?created:raw;
 }
 function parseMs(v){
   if(!v)return 0;if(typeof v==='number'&&Number.isFinite(v))return v;
@@ -47,7 +71,7 @@ function rowDateMs(x={}){
   for(const v of [x.saleDateMs,x.paidAtMs,x.paymentPaidAtMs,x.createdAtMs,x.updatedAtMs,x.paidAt,x.paymentDate,x.createdAt,x.date,x.timestamp]){const ms=parseMs(v);if(ms)return ms}
   return 0;
 }
-function formatDate(ms){if(!ms)return '-';try{return new Date(ms).toLocaleString('en-MY',{dateStyle:'medium',timeStyle:'short'})}catch(_e){return new Date(ms).toLocaleString()}}
+function formatDate(ms){if(!ms)return '-';try{return new Date(ms).toLocaleString('en-MY',{timeZone:MY_TIME_ZONE,dateStyle:'medium',timeStyle:'short'})}catch(_e){return new Date(ms).toLocaleString('en-MY',{timeZone:MY_TIME_ZONE})}}
 function normalizeStatus(v,paidFlag=false){
   const s=String(v||'').trim().toLowerCase();
   if(paidFlag||['paid','verified','success','successful','completed','complete','approved','confirmed','settled'].includes(s))return 'paid';
@@ -85,7 +109,7 @@ function receiptNoForRow(row={}){
   return deriveReceiptNo(row.invoiceNo||explicit||row.orderId||row.paymentOrderId||row.billCode||row.paymentReference||row.id||'');
 }
 function currentDocumentNo(row={}){return documentKindForStatus(row.status)==='receipt'?receiptNoForRow(row):invoiceNoForRow(row)}
-function currentDocumentDateMs(row={}){const receipt=documentKindForStatus(row.status)==='receipt';return receipt?(parseMs(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||num(row.saleDateMs)||rowDateMs(row)):(parseMs(row.invoiceDateMs)||num(row.saleDateMs)||rowDateMs(row))}
+function currentDocumentDateMs(row={}){const receipt=documentKindForStatus(row.status)==='receipt';const primary=receipt?(parseMs(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||num(row.saleDateMs)||rowDateMs(row)):(parseMs(row.invoiceDateMs)||num(row.saleDateMs)||rowDateMs(row));return row.source==='manual'?actualManualDateMs(primary,row):primary}
 function recognizedGross(row={}){return isRecognizedPayment(row.status)?num(row.gross):0}
 function recognizedCosts(row={}){return isRecognizedPayment(row.status)?num(row.totalCost):0}
 function recognizedProfit(row={}){return isRecognizedPayment(row.status)?num(row.profit):0}
@@ -204,7 +228,7 @@ function normalizeManual(id,x={}){
   const status=normalizeStatus(x.status);const legacyNo=String(x.documentNo||x.receiptNo||x.invoiceNo||'').trim();
   const invoiceNo=String(x.invoiceNo||deriveInvoiceNo(legacyNo||('AZR-'+id.slice(0,8).toUpperCase())));
   const receiptNo=String(x.receiptNo||((status==='paid'||status==='refunded')?deriveReceiptNo(legacyNo||invoiceNo):''));
-  const row={...x,...c,id,docId:id,source:'manual',editable:true,invoiceNo,receiptNo,documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),customerName:String(x.customerName||'Customer'),customerPhone:String(x.customerPhone||''),customerEmail:String(x.customerEmail||''),status,paymentMethod:String(x.paymentMethod||'Bank Transfer'),saleDateMs:rowDateMs(x)||Date.now(),categories,category:categories.length===1?categories[0]:'mixed'};
+  const row={...x,...c,id,docId:id,source:'manual',editable:true,invoiceNo,receiptNo,documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),customerName:String(x.customerName||'Customer'),customerPhone:String(x.customerPhone||''),customerEmail:String(x.customerEmail||''),status,paymentMethod:String(x.paymentMethod||'Bank Transfer'),saleDateMs:actualManualDateMs(rowDateMs(x),x)||Date.now(),categories,category:categories.length===1?categories[0]:'mixed'};
   row.documentNo=currentDocumentNo(row);row.paidGross=recognizedGross(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=isRecognizedPayment(status)?0:num(row.gross);return row;
 }
 function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
@@ -258,6 +282,9 @@ async function loadData(){
       loadPremiumOrders(user)
     ]);
     manualRows=[];receiptSnap.forEach(d=>{const x=d.data()||{};if(String(x.source||'')===MANUAL_SOURCE)manualRows.push(normalizeManual(d.id,x))});
+    let repairedCount=0;
+    try{repairedCount=await repairDuplicateManualNumbers()}catch(repairError){console.warn('Duplicate document number repair skipped:',repairError)}
+    if(repairedCount)manualRows=await freshManualRows();
     const map=new Map();
     purchaseSnap.forEach(d=>{const x=d.data()||{};if(isAdminTestRecord(x))return;const row=normalizeWebsite(d.id,x,'purchaseLogs');map.set(websiteDedupKey(row),row)});
     premium.forEach((x,i)=>{
@@ -373,13 +400,54 @@ function renderTable(){
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
   updateBulkUI();
 }
-function nextDocumentNo(type='receipt'){
-  const kind=type==='invoice'?'invoice':'receipt';const prefix=kind==='invoice'?'AZI':'AZR';const date=localDateInput().replaceAll('-','');let max=0;
-  manualRows.forEach(r=>{
-    const values=[kind==='invoice'?r.invoiceNo:r.receiptNo,r.documentNo,currentDocumentNo(r)].filter(Boolean);
-    values.forEach(value=>{const m=String(value||'').match(new RegExp('^'+prefix+'-'+date+'-(\\d{4})$','i'));if(m)max=Math.max(max,Number(m[1])||0)});
+function parseManualDocumentSequence(value){
+  const match=String(value||'').trim().match(/^AZ([IR])-(\d{8})-(\d{4,})$/i);if(!match)return null;
+  return {kind:match[1].toUpperCase()==='I'?'invoice':'receipt',dateKey:match[2],sequence:Number(match[3])||0};
+}
+function sequenceState(rows=manualRows,excludeId=''){
+  const used=new Set();const maxByDate=new Map();
+  rows.forEach(row=>{
+    if(excludeId&&String(row.docId||row.id)===String(excludeId))return;
+    const rowKeys=new Set();
+    [row.invoiceNo,row.receiptNo,row.documentNo,currentDocumentNo(row)].filter(Boolean).forEach(value=>{
+      const parsed=parseManualDocumentSequence(value);if(!parsed)return;const key=`${parsed.dateKey}-${parsed.sequence}`;rowKeys.add(key);maxByDate.set(parsed.dateKey,Math.max(maxByDate.get(parsed.dateKey)||0,parsed.sequence));
+    });
+    rowKeys.forEach(key=>used.add(key));
   });
-  return `${prefix}-${date}-${String(max+1).padStart(4,'0')}`;
+  return {used,maxByDate};
+}
+function nextDocumentNo(type='receipt',dateMs=Date.now(),rows=manualRows,excludeId=''){
+  const kind=type==='invoice'?'invoice':'receipt';const prefix=kind==='invoice'?'AZI':'AZR';const date=malaysiaDateKey(dateMs);const state=sequenceState(rows,excludeId);const next=(state.maxByDate.get(date)||0)+1;
+  return `${prefix}-${date}-${String(next).padStart(4,'0')}`;
+}
+async function freshManualRows(){
+  const snap=await getDocs(query(collection(db,'receipts'),limit(1000)));const rows=[];
+  snap.forEach(d=>{const data=d.data()||{};if(String(data.source||'')===MANUAL_SOURCE)rows.push(normalizeManual(d.id,data))});return rows;
+}
+async function ensureUniqueManualNumbers(kind,dateMs,excludeId=''){
+  const rows=await freshManualRows();const state=sequenceState(rows,excludeId);const dateKey=malaysiaDateKey(dateMs);const current=kind==='invoice'?editingInvoiceNo:editingReceiptNo;const parsed=parseManualDocumentSequence(current);
+  let sequence=parsed&&parsed.dateKey===dateKey?parsed.sequence:0;
+  if(!sequence||state.used.has(`${dateKey}-${sequence}`))sequence=(state.maxByDate.get(dateKey)||0)+1;
+  const suffix=`${dateKey}-${String(sequence).padStart(4,'0')}`;
+  if(kind==='invoice'||editingInvoiceNo)editingInvoiceNo=`AZI-${suffix}`;
+  if(kind==='receipt'||editingReceiptNo)editingReceiptNo=`AZR-${suffix}`;
+  return kind==='invoice'?editingInvoiceNo:editingReceiptNo;
+}
+async function repairDuplicateManualNumbers(){
+  const rows=[...manualRows].sort((a,b)=>(parseMs(a.createdAtMs||a.createdAt)||a.saleDateMs||0)-(parseMs(b.createdAtMs||b.createdAt)||b.saleDateMs||0));
+  const seen=new Set();const maxByDate=new Map();
+  rows.forEach(row=>{const parsed=parseManualDocumentSequence(currentDocumentNo(row));if(parsed)maxByDate.set(parsed.dateKey,Math.max(maxByDate.get(parsed.dateKey)||0,parsed.sequence))});
+  const updates=[];
+  for(const row of rows){
+    const parsed=parseManualDocumentSequence(currentDocumentNo(row));if(!parsed)continue;const key=`${parsed.dateKey}-${parsed.sequence}`;
+    if(!seen.has(key)){seen.add(key);continue}
+    const next=(maxByDate.get(parsed.dateKey)||0)+1;maxByDate.set(parsed.dateKey,next);const suffix=`${parsed.dateKey}-${String(next).padStart(4,'0')}`;const kind=documentKindForStatus(row.status);const payload={documentNo:kind==='invoice'?`AZI-${suffix}`:`AZR-${suffix}`,updatedAt:serverTimestamp(),updatedAtMs:Date.now()};
+    if(row.invoiceNo||kind==='invoice')payload.invoiceNo=`AZI-${suffix}`;
+    if(row.receiptNo||kind==='receipt')payload.receiptNo=`AZR-${suffix}`;
+    updates.push(updateDoc(doc(db,'receipts',row.docId),payload));seen.add(`${parsed.dateKey}-${next}`);
+  }
+  if(updates.length){await Promise.all(updates);notify(`${updates.length} duplicate document number(s) corrected automatically.`);return updates.length}
+  return 0;
 }
 function categoryOptions(selected='physical'){return ['physical','computer-it','software','service','cad','pabm','other'].map(v=>`<option value="${v}"${v===selected?' selected':''}>${categoryLabel(v)}</option>`).join('')}
 function addItemRow(item={}){
@@ -415,7 +483,7 @@ function syncFormDocumentMode(initial=false){
 }
 function openForm(row=null){
   editingDocId=row?.docId||'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
-  el('salesReceiptSaleDate').value=localDateInput(row?.saleDateMs||Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=row?.paymentMethod||'Bank Transfer';el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;el('salesReceiptPaymentFee').value=num(row?.paymentFee)||0;el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
+  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=row?.paymentMethod||'Bank Transfer';el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;el('salesReceiptPaymentFee').value=num(row?.paymentFee)||0;el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
   const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'physical',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
 }
@@ -425,10 +493,12 @@ async function saveForm(){
   const customer=String(el('salesReceiptCustomerName')?.value||'').trim();const items=collectFormItems();if(!customer)return notify('Enter customer name.',true);if(!items.length||items.some(i=>!i.name))return notify('Enter a name for every item.',true);if(items.some(i=>i.qty<=0))return notify('Quantity must be more than zero.',true);
   const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const kind=documentKindForStatus(status);const recognized=isRecognizedPayment(status);const numberInput=el('salesReceiptReceiptNo');
   if(kind==='invoice')editingInvoiceNo=String(numberInput?.value||editingInvoiceNo||(editingReceiptNo?deriveInvoiceNo(editingReceiptNo):nextDocumentNo('invoice'))).trim();else editingReceiptNo=String(numberInput?.value||editingReceiptNo||(editingInvoiceNo?deriveReceiptNo(editingInvoiceNo):nextDocumentNo('receipt'))).trim();
-  const c=manualCalc(items,formExtras());const dateRaw=el('salesReceiptSaleDate')?.value||localDateInput();const saleDateMs=new Date(dateRaw+'T12:00:00').getTime();const categories=[...new Set(c.items.map(i=>i.category))];
-  const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
-  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||num(existing?.saleDateMs)||saleDateMs,customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail:String(el('salesReceiptCustomerEmail')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw,saleDateMs,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
-  if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():(num(existing?.saleDateMs)||saleDateMs));if(transitionedToPaid)payload.paidAt=serverTimestamp()}
+  const c=manualCalc(items,formExtras());const dateRaw=el('salesReceiptSaleDate')?.value||localDateTimeInput();const saleDateMs=parseMalaysiaDateTime(dateRaw);const categories=[...new Set(c.items.map(i=>i.category))];
+  const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
+  await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
+  const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
+  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail:String(el('salesReceiptCustomerEmail')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
     if(wasEditing)await updateDoc(doc(db,'receipts',editId),payload);else await addDoc(collection(db,'receipts'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now()});
@@ -537,17 +607,27 @@ function directShareUrl(row,type,target,shareUrl){
   }
   return `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text.replace(`PDF: ${shareUrl}`,'').trim())}`;
 }
+function nativeFileShareSupported(files){
+  if(!navigator.share)return false;
+  try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
+}
 async function shareDocumentPdf(row,type,target,button=null){
-  // Open a blank window immediately while the click still counts as a user gesture.
-  // After the PDF is uploaded, the same window is redirected straight to WhatsApp/Telegram.
-  const targetWindow=window.open('about:blank','_blank');
-  if(targetWindow){try{targetWindow.document.title='Preparing AZOBSS PDF link...';targetWindow.document.body.innerHTML='<p style="font:16px Arial;padding:24px">Preparing secure PDF link...</p>'}catch(_e){}}
+  const api=pdfApi();
+  if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const data=await createDocumentShareLink(row,type);const url=directShareUrl(row,type,target,data.shareUrl);
-    const opened=setDirectShareWindow(targetWindow,url);if(!opened){await copyPlainText(data.shareUrl).catch(()=>{});notify(`${target==='telegram'?'Telegram':'WhatsApp'} popup was blocked. PDF link copied instead.`,true)}else notify(`${target==='telegram'?'Telegram':'WhatsApp'} opened directly with the PDF link.`);
-  }catch(e){try{targetWindow?.close()}catch(_e){}console.error(e);notify('Could not open direct share: '+(e.message||e),true)}
-  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+    const file=api.createFile(row,type);const appName=target==='telegram'?'Telegram':'WhatsApp';
+    if(nativeFileShareSupported([file])){
+      await navigator.share({files:[file],title:`AZOBSS ${documentType(type)==='invoice'?'Invoice':'Receipt'} ${documentNo(row,type)}`,text:documentShareText(row,type)});
+      notify(`PDF file sent to the Windows/phone share panel. Choose ${appName} to attach the actual PDF.`);
+      return;
+    }
+    api.download(row,type);
+    notify(`This browser cannot attach a PDF directly to ${appName}. The PDF was downloaded; attach it manually.`,true);
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)
+  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 const AZ_SR_CRC_TABLE=(()=>{const table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0}return table})();
 function crc32(bytes){let crc=0xffffffff;for(const value of bytes)crc=AZ_SR_CRC_TABLE[(crc^value)&0xff]^(crc>>>8);return (crc^0xffffffff)>>>0}
@@ -576,15 +656,24 @@ async function bulkCopyLinkSelected(button=null){
   try{const data=await createSelectedBundleShareLink(rows);await copyPlainText(data.shareUrl);notify(`Bulk ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
 }
 async function bulkShareSelected(target,button=null){
-  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
-  if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together as one ZIP link. Continue?`))return;
-  const targetWindow=window.open('about:blank','_blank');if(targetWindow){try{targetWindow.document.title='Preparing AZOBSS document link...';targetWindow.document.body.innerHTML='<p style="font:16px Arial;padding:24px">Preparing secure ZIP link...</p>'}catch(_e){}}
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
+  const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
+  if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const data=await createSelectedBundleShareLink(rows);const summary=bulkShareSummary(rows);const text=`${summary}\n\nDownload bundle: ${data.shareUrl}`;
-    let url='';if(target==='whatsapp'){const samePhone=customers.size===1?normalizeWhatsAppPhone(rows[0]?.customerPhone):'';url=samePhone?`https://wa.me/${samePhone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`}else url=`https://t.me/share/url?url=${encodeURIComponent(data.shareUrl)}&text=${encodeURIComponent(summary)}`;
-    const opened=setDirectShareWindow(targetWindow,url);if(!opened){await copyPlainText(data.shareUrl).catch(()=>{});notify(`${target==='telegram'?'Telegram':'WhatsApp'} popup was blocked. Bundle link copied instead.`,true)}else notify(`${target==='telegram'?'Telegram':'WhatsApp'} opened directly with the selected-document link.`)
-  }catch(e){try{targetWindow?.close()}catch(_e){}console.error(e);notify('Bulk share failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
+    const entries=uniquePdfEntries(rows);const files=entries.map(entry=>new File([entry.bytes],entry.name,{type:'application/pdf',lastModified:entry.lastModified||Date.now()}));
+    const appName=target==='telegram'?'Telegram':'WhatsApp';
+    if(nativeFileShareSupported(files)){
+      await navigator.share({files,title:`AZOBSS ${rows.length} selected document(s)`,text:bulkShareSummary(rows)});
+      notify(`${rows.length} PDF file(s) sent to the share panel. Choose ${appName}.`);
+      return;
+    }
+    const zipBytes=buildStoredZip(entries);downloadBytes(zipBytes,bulkZipName(entries.length),'application/zip');
+    notify(`This browser cannot attach multiple PDF files directly to ${appName}. A ZIP was downloaded for manual attachment.`,true);
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    console.error(e);notify('Bulk PDF sharing failed: '+(e.message||e),true)
+  }finally{if(button){button.disabled=false;button.classList.remove('busy');updateBulkUI()}}
 }
 async function bulkDeleteSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const paid=rows.filter(r=>isRecognizedPayment(r.status)).length;const manual=rows.filter(r=>r.source==='manual');const website=rows.filter(r=>r.source==='website');const warning=paid?`\n\nWarning: ${paid} Paid record(s) will be removed from sales and profit totals.`:'';

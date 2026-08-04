@@ -1,0 +1,16 @@
+AZOBSS PATCH 739 — UNIQUE DOCUMENT NUMBER + MALAYSIA CURRENT TIME FIX
+Date: 2026-08-04
+Baseline: Patch 738
+
+Changes
+1. Manual Invoice/Receipt numbers now use one shared daily sequence across AZI and AZR.
+   Example: AZI-20260804-0001, AZR-20260804-0002, AZI-20260804-0003.
+2. Before save, the latest Firestore receipts are checked again. If the preview number is already used, the next available number is assigned automatically.
+3. Existing duplicate daily sequence numbers across different manual records are detected and renumbered automatically. The original earliest record keeps its number.
+4. Sale Date is upgraded to Sale Date & Time (datetime-local).
+5. New manual records default to the current Malaysia date/time (Asia/Kuala_Lumpur).
+6. Pending -> Paid conversion records the actual payment time and converts Invoice to Receipt.
+7. Legacy records saved at artificial 12:00 pm use their Firestore creation time when available.
+8. PDF, print view, table display, sorting and CSV use the corrected timestamps.
+
+No Cloudflare Worker, Render environment variable, backend endpoint or Firebase Rules change is required.

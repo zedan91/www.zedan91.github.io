@@ -1725,7 +1725,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
 <script defer src="/assets/js/azobss-more-nav.js?v=713"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=737">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=739">
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2406,7 +2406,7 @@ body[data-dashboard-page="admin"] .topbar{
           <div class="az-sr-form">
             <div class="az-sr-form-grid">
               <label><span id="salesReceiptDocumentNoLabel">Receipt No</span><input id="salesReceiptReceiptNo" readonly></label>
-              <label>Sale Date<input id="salesReceiptSaleDate" type="date"></label>
+              <label>Sale Date & Time<input id="salesReceiptSaleDate" type="datetime-local" step="60"></label>
               <label>Status<select id="salesReceiptFormStatus"><option value="paid">Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
               <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option></select></label>
               <label class="az-sr-span-2">Customer Name<input id="salesReceiptCustomerName" placeholder="Customer name"></label>
@@ -7601,7 +7601,7 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
-<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=737"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=737"></script>
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=739"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=739"></script>
 </body>
 </html>
