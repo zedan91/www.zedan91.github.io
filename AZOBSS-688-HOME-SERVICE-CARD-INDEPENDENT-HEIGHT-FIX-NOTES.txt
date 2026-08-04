@@ -1,9 +1,0 @@
-AZOBSS Patch 688
-
-Fix:
-- When the cursor hovers over a service card and its hidden details expand, neighbouring cards no longer stretch to the same height.
-- The homepage service grid now aligns each card to the top with its own independent height.
-- Brownies card position, image, link and other website functions are preserved.
-
-Cause:
-A late global CSS rule changed .services-grid to flex and forced align-items: stretch, so every card in the same flex row followed the tallest hovered card.

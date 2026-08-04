@@ -463,3 +463,69 @@
 .az-sr-icon-btn.invoice{box-shadow:0 0 0 1px rgba(167,139,250,.10) inset!important}
 
 /* AZOBSS PATCH 742: one native Share action replaces separate WhatsApp and Telegram buttons */
+
+
+/* AZOBSS PATCH 745: custom no-API PDF share panel */
+.az-sr-share-modal{
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:grid!important;place-items:center!important;padding:18px!important;
+  background:rgba(2,6,23,.78)!important;backdrop-filter:blur(8px)!important;
+}
+.az-sr-share-modal[hidden]{display:none!important}
+.az-sr-share-dialog{
+  width:min(720px,100%)!important;max-height:min(760px,calc(100vh - 36px))!important;overflow:auto!important;
+  border:1px solid rgba(56,189,248,.36)!important;border-radius:20px!important;
+  background:linear-gradient(145deg,#0b1729,#111f34)!important;color:#e5edf8!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.55)!important;padding:0!important;
+}
+.az-sr-share-head{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;
+  padding:17px 18px!important;border-bottom:1px solid rgba(148,163,184,.18)!important;
+  position:sticky!important;top:0!important;z-index:2!important;background:rgba(11,23,41,.96)!important;backdrop-filter:blur(10px)!important;
+}
+.az-sr-share-heading{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+.az-sr-share-heading h3{margin:0!important;font-size:20px!important;line-height:1.2!important;color:#f8fafc!important}
+.az-sr-share-heading p{margin:4px 0 0!important;color:#9fb0c7!important;font-size:11px!important;line-height:1.35!important;overflow-wrap:anywhere!important}
+.az-sr-share-main-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;border-radius:14px!important;
+  display:grid!important;place-items:center!important;background:linear-gradient(135deg,#0284c7,#2563eb)!important;color:#fff!important;
+  box-shadow:0 10px 28px rgba(2,132,199,.28)!important;
+}
+.az-sr-share-main-icon svg,.az-sr-share-option-icon svg{width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.az-sr-share-close{
+  width:34px!important;height:34px!important;min-width:34px!important;border-radius:11px!important;border:1px solid rgba(148,163,184,.24)!important;
+  background:#26364c!important;color:#fff!important;font-size:23px!important;line-height:1!important;cursor:pointer!important;
+}
+.az-sr-share-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:16px 18px 8px!important}
+.az-sr-share-option{
+  appearance:none!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:15px!important;
+  background:rgba(15,23,42,.70)!important;color:#e5edf8!important;padding:13px!important;min-height:84px!important;
+  display:flex!important;align-items:center!important;gap:12px!important;text-align:left!important;cursor:pointer!important;
+  transition:transform .14s ease,border-color .14s ease,background .14s ease!important;
+}
+.az-sr-share-option:hover{transform:translateY(-1px)!important;border-color:rgba(125,211,252,.56)!important;background:rgba(30,41,59,.94)!important}
+.az-sr-share-option:focus-visible{outline:2px solid #7dd3fc!important;outline-offset:2px!important}
+.az-sr-share-option:disabled,.az-sr-share-option.busy{opacity:.55!important;cursor:wait!important;transform:none!important}
+.az-sr-share-option-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;border-radius:50%!important;display:grid!important;place-items:center!important;
+  background:#334155!important;color:#e2e8f0!important;border:1px solid rgba(148,163,184,.28)!important;
+}
+.az-sr-share-option b{display:block!important;color:#f8fafc!important;font-size:13px!important;line-height:1.2!important;margin-bottom:4px!important}
+.az-sr-share-option small{display:block!important;color:#94a3b8!important;font-size:10px!important;line-height:1.35!important;font-weight:650!important}
+.az-sr-share-option.native .az-sr-share-option-icon{background:#0369a1!important;color:#fff!important;border-color:#38bdf8!important}
+.az-sr-share-option.whatsapp-option .az-sr-share-option-icon{background:#15803d!important;color:#fff!important;border-color:#4ade80!important}
+.az-sr-share-option.telegram-option .az-sr-share-option-icon{background:#0284c7!important;color:#fff!important;border-color:#38bdf8!important}
+.az-sr-share-option.link-option .az-sr-share-option-icon{background:#7c3aed!important;color:#fff!important;border-color:#a78bfa!important}
+.az-sr-share-option.message-option .az-sr-share-option-icon{background:#475569!important;color:#fff!important;border-color:#94a3b8!important}
+.az-sr-share-option.download-option .az-sr-share-option-icon{background:#047857!important;color:#fff!important;border-color:#34d399!important}
+.az-sr-share-option.print-option .az-sr-share-option-icon{background:#334155!important;color:#fff!important;border-color:#94a3b8!important}
+.az-sr-share-note{margin:8px 18px 17px!important;padding:10px 12px!important;border:1px solid rgba(251,191,36,.25)!important;border-radius:12px!important;background:rgba(120,53,15,.14)!important;color:#cbd5e1!important;font-size:10px!important;line-height:1.45!important}
+.az-sr-share-note b{color:#fde68a!important}
+@media(max-width:620px){
+  .az-sr-share-modal{padding:9px!important;place-items:end center!important}
+  .az-sr-share-dialog{width:100%!important;max-height:92vh!important;border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}
+  .az-sr-share-grid{grid-template-columns:1fr!important;padding:12px!important}
+  .az-sr-share-head{padding:14px!important}
+  .az-sr-share-option{min-height:70px!important;padding:11px!important}
+  .az-sr-share-note{margin:6px 12px 13px!important}
+}

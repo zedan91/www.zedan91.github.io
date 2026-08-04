@@ -1,9 +1,0 @@
-Patch 426 - Free Software share text cleanup
-
-- Removes visible Free share / No commission notice card from the share modal.
-- Removes free no-commission subtitle and note text from share modal.
-- Removes no-commission wording from copy/share status messages and share caption.
-- Keeps Free Software share enabled.
-- Keeps internal noCommission marker for logic only; it is not displayed to customers.
-- No Firebase Rules update required.
-- No Render backend deploy required.

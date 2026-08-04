@@ -1,8 +1,0 @@
-AZOBSS 494 - Software dropdown repeated heading removal
-
-- Based on stable baseline 493 / virtual-pagination performance baseline 491.
-- Removed the repeated group title inside every category dropdown.
-- Removed the "x categories" text from every category dropdown.
-- The group name remains visible on the main trigger button.
-- Expanded the dropdown list area to use the freed header space.
-- No Firebase Rules or Render backend update required.

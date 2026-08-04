@@ -1,7 +1,0 @@
-AZOBSS Lucky Draw PC Share Modal Real Logo Fix
-
-- Replaced emoji/text share icons in desktop custom share modal with inline SVG-style platform icons.
-- Fixed Messenger and WhatsApp icons that previously appeared as generic/incorrect emoji symbols.
-- Kept desktop custom share modal behavior and mobile native share behavior unchanged.
-- No changes to Login/Register, My Purchases, PA/BM, or core Software/CAD purchase logic.
-- Firebase Rules update: not required.

@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 739: unique daily document numbers and Malaysia current date/time */
+/* AZOBSS PATCH 745: custom no-API share panel */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -21,6 +21,7 @@ let editingInvoiceNo='';
 let editingReceiptNo='';
 let loadingPromise=null;
 const selectedRowIds=new Set();
+let sharePanelContext=null;
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -389,7 +390,7 @@ function renderTable(){
     actions.push(
       iconActionButton('download',`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('copylink',`Copy ${label} PDF link`,`data-sr-doc-copy="${docType}" data-sr-row="${rowId}"`),
-      iconActionButton('share',`Share ${label} PDF`,`data-sr-doc-share="native" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
+      iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
     if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
@@ -563,7 +564,42 @@ function customerDocumentHtml(row,type='receipt'){
   const footer=isInvoice?'This invoice requests payment and is not proof that payment has been received.':'Thank you for your purchase. This computer-generated receipt records the payment status shown above.';
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(docNo)}</title><style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#4b5563;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #cbd5e1;padding-bottom:14px}.brandline{display:flex;align-items:center;gap:10px}.brand-logo{width:36px;height:36px;display:block;border-radius:7px;object-fit:cover}.brand{font-size:36px;line-height:36px;font-weight:900;letter-spacing:.2px}.muted{color:#64748b;font-size:12px}.doc-title{text-align:right}.doc-title h2{margin:0;font-size:24px;color:#334155}.status{display:inline-block;border:1px solid #94a3b8;border-radius:999px;padding:5px 10px;font-weight:800}.info{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.box{border:1px solid #cbd5e1;border-radius:10px;padding:12px}.box b{display:block;color:#475569;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px;table-layout:fixed}th,td{border:1px solid #d7dee8;padding:9px 7px;font-size:12px;vertical-align:middle;text-align:center}th{background:#e2e8f0;color:#334155;text-transform:uppercase;font-size:10px;letter-spacing:.04em;height:38px}.no{width:6%}.description{width:37%;text-align:center;font-weight:700;line-height:1.35}.amount{text-align:right}.strong{font-weight:900;color:#047857}.totals{width:360px;max-width:100%;margin:18px 0 0 auto;border:1px solid #a7f3d0;padding:10px 14px;background:#ecfdf5}.totals div{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:18px;font-weight:900;border-top:2px solid #94a3b8;margin-top:6px;padding-top:10px!important;color:#047857}.foot{margin-top:34px;text-align:center;color:#64748b;font-size:11px}.note{margin-top:22px;background:#fffbeb;border-color:#fbbf24}@media print{button{display:none}}</style></head><body><div class="head"><div><div class="brandline"><img class="brand-logo" src="/favicon-192x192.png" alt="AZOBSS logo"><div class="brand">AZOBSS</div></div><div class="muted">www.azobss.com</div></div><div class="doc-title"><h2>${title}</h2><div>${esc(docNo)}</div><div class="muted">${formatDate(docType==='receipt'?currentDocumentDateMs(row):(num(row.invoiceDateMs)||row.saleDateMs))}</div></div></div><div class="info"><div class="box"><b>${isInvoice?'Bill To':'Customer'}</b><div>${esc(row.customerName)}</div><div class="muted">${esc(row.customerPhone||'')}</div><div class="muted">${esc(row.customerEmail||'')}</div></div><div class="box"><b>${rightTitle}</b>${rightBody}</div></div><table><thead><tr><th style="width:6%">No.</th><th style="width:37%">Description</th><th style="width:15%">Category</th><th style="width:8%">Qty</th><th style="width:16%">Unit Price</th><th style="width:18%">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${money(row.subtotal)}</b></div>${num(row.discount)>0?`<div><span>Discount</span><b>- ${money(row.discount)}</b></div>`:''}${num(row.shippingCharge)>0?`<div><span>Shipping</span><b>${money(row.shippingCharge)}</b></div>`:''}<div class="grand"><span>${finalLabel}</span><span>${money(row.gross)}</span></div></div>${row.notes?`<div class="box note"><b>Notes</b><div>${esc(row.notes)}</div></div>`:''}<div class="foot">${footer}</div><script>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
 }
-function printDocument(row,type='receipt'){const w=window.open('','_blank','width=900,height=750');if(!w)return notify('Popup blocked. Allow popups to print the document.',true);try{w.opener=null}catch(_e){}w.document.open();w.document.write(customerDocumentHtml(row,type));w.document.close()}
+function printDocument(row,type='receipt',button=null){
+  const api=pdfApi();
+  if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
+  const printWindow=window.open('','_blank','width=980,height=780');
+  if(!printWindow)return notify('Popup blocked. Allow popups to print the PDF.',true);
+  if(button){button.disabled=true;button.classList.add('busy')}
+  let objectUrl='';let printTriggered=false;
+  const triggerPrint=()=>{
+    if(printTriggered||printWindow.closed)return;
+    try{
+      printWindow.focus();
+      printWindow.print();
+      printTriggered=true;
+      notify('Print preview opened from the same PDF used by Download and Share.');
+    }catch(error){
+      console.warn('Automatic PDF print trigger was blocked:',error);
+      notify('The PDF opened in a new window. Use its Print button if the print dialog does not open automatically.',true);
+    }
+  };
+  try{
+    const blob=api.createBlob(row,type);
+    objectUrl=URL.createObjectURL(blob);
+    try{printWindow.opener=null}catch(_e){}
+    try{printWindow.addEventListener('load',()=>setTimeout(triggerPrint,500),{once:true})}catch(_e){}
+    printWindow.location.replace(objectUrl);
+    setTimeout(triggerPrint,1800);
+    setTimeout(()=>{if(objectUrl)URL.revokeObjectURL(objectUrl)},300000);
+  }catch(error){
+    console.error(error);
+    try{printWindow.close()}catch(_e){}
+    if(objectUrl)URL.revokeObjectURL(objectUrl);
+    notify('PDF print generation failed: '+(error.message||error),true);
+  }finally{
+    if(button){button.disabled=false;button.classList.remove('busy')}
+  }
+}
 function pdfApi(){return window.AZOBSSAdminSalesReceiptPDF||null}
 function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
@@ -634,6 +670,103 @@ async function shareDocumentPdf(row,type,button=null){
     console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)
   }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
+
+function closeSharePanel(){
+  const panel=el('salesReceiptSharePanel');if(panel)panel.hidden=true;sharePanelContext=null;
+}
+function setSharePanelText(id,value){const node=el(id);if(node)node.textContent=value}
+function openSharePanel(row,type='receipt'){
+  if(!row)return;
+  const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
+  sharePanelContext={mode:'single',row,type:docType};
+  setSharePanelText('salesReceiptShareTitle',`Share ${label}`);
+  setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
+  setSharePanelText('salesReceiptShareNativeLabel','Share PDF');
+  setSharePanelText('salesReceiptShareWhatsAppLabel','Download + WhatsApp');
+  setSharePanelText('salesReceiptShareTelegramLabel','Download + Telegram');
+  setSharePanelText('salesReceiptShareLinkLabel','Copy PDF Link');
+  setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
+  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;
+  const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
+}
+function openBulkSharePanel(){
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
+  sharePanelContext={mode:'bulk',rows};
+  setSharePanelText('salesReceiptShareTitle','Share Selected Documents');
+  setSharePanelText('salesReceiptShareMeta',`${rows.length} selected invoice / receipt PDF file(s)`);
+  setSharePanelText('salesReceiptShareNativeLabel','Share PDF Files');
+  setSharePanelText('salesReceiptShareWhatsAppLabel','Download ZIP + WhatsApp');
+  setSharePanelText('salesReceiptShareTelegramLabel','Download ZIP + Telegram');
+  setSharePanelText('salesReceiptShareLinkLabel','Copy ZIP Link');
+  setSharePanelText('salesReceiptShareDownloadLabel','Download ZIP');
+  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=true;
+  const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
+}
+function manualAttachText(row,type,fileName){
+  return `${documentShareText(row,type)}\n\nPDF downloaded: ${fileName}\nPlease attach the downloaded PDF file to this chat.`;
+}
+function openManualAttachApp(target,text,phone=''){
+  let url='';
+  if(target==='whatsapp'){
+    const normalized=normalizeWhatsAppPhone(phone);url=normalized?`https://wa.me/${normalized}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`;
+  }else{
+    url=`https://t.me/share/url?url=${encodeURIComponent('https://www.azobss.com')}&text=${encodeURIComponent(text)}`;
+  }
+  return setDirectShareWindow(null,url);
+}
+function downloadAndOpenSingle(target,row,type,button=null){
+  const api=pdfApi();if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{
+    const fileName=api.download(row,type);const message=manualAttachText(row,type,fileName);
+    copyPlainText(message).catch(()=>{});
+    const opened=openManualAttachApp(target,message,row.customerPhone);
+    if(!opened)throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
+    notify(`${fileName} downloaded. The message was copied; attach the downloaded file in ${target==='whatsapp'?'WhatsApp':'Telegram'}.`);
+    closeSharePanel();
+  }catch(e){console.error(e);notify('Could not download and open the app: '+(e.message||e),true)}
+  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+}
+function downloadAndOpenBulk(target,rows,button=null){
+  if(!rows.length)return notify('Select at least one record first.',true);
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{
+    const entries=uniquePdfEntries(rows);const zip=buildStoredZip(entries);const fileName=bulkZipName(entries.length);downloadBytes(zip,fileName,'application/zip');
+    const message=`${bulkShareSummary(rows)}\n\nZIP downloaded: ${fileName}\nPlease attach the downloaded ZIP file to this chat.`;
+    copyPlainText(message).catch(()=>{});
+    const opened=openManualAttachApp(target,message,rows.length===1?rows[0].customerPhone:'');
+    if(!opened)throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
+    notify(`${fileName} downloaded. Attach it in ${target==='whatsapp'?'WhatsApp':'Telegram'}.`);
+    closeSharePanel();
+  }catch(e){console.error(e);notify('Could not prepare the selected documents: '+(e.message||e),true)}
+  finally{if(button){button.disabled=false;button.classList.remove('busy');updateBulkUI()}}
+}
+async function runSharePanelAction(action,button=null){
+  const context=sharePanelContext;if(!context)return;
+  if(context.mode==='single'){
+    const {row,type}=context;
+    if(action==='native')return shareDocumentPdf(row,type,button);
+    if(action==='whatsapp')return downloadAndOpenSingle('whatsapp',row,type,button);
+    if(action==='telegram')return downloadAndOpenSingle('telegram',row,type,button);
+    if(action==='link')return copyDocumentShareLink(row,type,button);
+    if(action==='message'){
+      try{await copyPlainText(documentShareText(row,type));notify('Document message copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}return;
+    }
+    if(action==='download')return downloadDocumentPdf(row,type,button);
+    if(action==='print')return printDocument(row,type,button);
+    return;
+  }
+  const rows=context.rows||[];
+  if(action==='native')return bulkShareSelected(button);
+  if(action==='whatsapp')return downloadAndOpenBulk('whatsapp',rows,button);
+  if(action==='telegram')return downloadAndOpenBulk('telegram',rows,button);
+  if(action==='link')return bulkCopyLinkSelected(button);
+  if(action==='message'){
+    try{await copyPlainText(bulkShareSummary(rows));notify('Selected-document message copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}return;
+  }
+  if(action==='download')return bulkDownloadSelected(button);
+}
+
 const AZ_SR_CRC_TABLE=(()=>{const table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0}return table})();
 function crc32(bytes){let crc=0xffffffff;for(const value of bytes)crc=AZ_SR_CRC_TABLE[(crc^value)&0xff]^(crc>>>8);return (crc^0xffffffff)>>>0}
 function zipDosTime(ms=Date.now()){const d=new Date(ms);const year=Math.max(1980,d.getFullYear());return {time:((d.getHours()&31)<<11)|((d.getMinutes()&63)<<5)|((Math.floor(d.getSeconds()/2))&31),date:(((year-1980)&127)<<9)|(((d.getMonth()+1)&15)<<5)|(d.getDate()&31)}}
@@ -702,13 +835,14 @@ function bind(){
   ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
   el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',loadData);el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
   el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
-  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkShare')?.addEventListener('click',e=>bulkShareSelected(e.currentTarget));el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
+  el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkShare')?.addEventListener('click',openBulkSharePanel);el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'physical',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog'))closeForm()});
+  el('salesReceiptShareClose')?.addEventListener('click',closeSharePanel);el('salesReceiptSharePanel')?.addEventListener('click',e=>{if(e.target===el('salesReceiptSharePanel')){closeSharePanel();return}const action=e.target.closest('[data-sr-share-action]');if(action)runSharePanelAction(action.dataset.srShareAction,action)});
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('salesReceiptDialog')?.hidden)closeForm()});
+  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden)closeForm()});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)shareDocumentPdf(row,share.dataset.srDocType,share)}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType)}});
 }
 let salesReceiptsAutoLoadQueued=false;
 async function autoLoadSalesReceiptsWhenActive(){

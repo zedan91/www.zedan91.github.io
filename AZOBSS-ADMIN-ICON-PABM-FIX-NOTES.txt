@@ -1,9 +1,0 @@
-AZOBSS ADMIN ICON PA/BM FIX
-
-Fixed:
-- Admin icon now works on pages with different sticky bar structure, including PA/BM.
-- Still no MutationObserver.
-- Limited retry only.
-- If Mini Web Tools not found, inserts after Lucky Draw / Affiliate Shop / CAD Tools / Software or nav fallback.
-- Guest/user hidden, admin visible.
-- No login/auth flow changes.

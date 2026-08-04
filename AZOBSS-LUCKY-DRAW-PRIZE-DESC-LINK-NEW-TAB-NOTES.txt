@@ -1,1 +1,0 @@
-Patch 142: Lucky Draw prize description URLs are auto-linkified and open in a new tab. Only lucky-draw/index.html changed.

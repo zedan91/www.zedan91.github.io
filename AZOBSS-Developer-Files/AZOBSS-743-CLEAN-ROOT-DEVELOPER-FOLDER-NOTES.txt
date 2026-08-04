@@ -1,0 +1,19 @@
+AZOBSS PATCH 743 - CLEAN ROOT / DEVELOPER FILES FOLDER
+Date: 04 Aug 2026
+Baseline: Patch 742
+
+Changes:
+1. Removed 626 obsolete root-level TXT audit, patch-note and historical setup files.
+2. Removed obsolete Cloudflare Worker helper files Patch 707 and Patch 718.
+3. Removed unused root main.js after confirming no HTML, package or runtime reference uses it.
+4. Kept required runtime JavaScript in its original location:
+   - deploy-server.js
+   - server.js
+5. Created one dedicated folder for non-runtime developer TXT/JS files:
+   AZOBSS-Developer-Files/
+6. Moved the current Cloudflare R2 Worker Patch 735 and selected active setup/rules notes into that folder.
+7. Updated the Food Orders Firebase Rules error message to point to the new folder path.
+
+Rule for future patches:
+- Runtime JavaScript must stay at its required application path.
+- Non-runtime patch notes, deployment helper JS and setup TXT files must be placed inside AZOBSS-Developer-Files/.

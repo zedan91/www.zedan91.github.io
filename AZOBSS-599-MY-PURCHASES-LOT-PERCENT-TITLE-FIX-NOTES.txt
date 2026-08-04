@@ -1,8 +1,0 @@
-AZOBSS 599 - My Purchases Lot Kadaster Percentage Title Fix
-
-1. Latest Purchase List now displays the exact selected sheet percentage in the item title, for example: Lot Kadaster Berdigit 25%.
-2. Decimal percentages are preserved cleanly, for example 3.14%, without unnecessary trailing zeroes.
-3. The exact trusted areaRatio from the signed JUPEM selection token is now stored in premium orders and purchaseLogs.
-4. Both ToyyibPay checkout and Admin Test Payment preserve the percentage metadata.
-5. Existing records only show a percentage when their stored record already contains percentage metadata; no fake percentage is guessed.
-6. GitHub Pages and Render backend must be updated. Firebase Rules are unchanged.

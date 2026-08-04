@@ -1,8 +1,0 @@
-AZOBSS Patch 526
-Baseline: (525)-AZOBSS-PUBLIC-PA-USER-HEADER-TOOLS-RESTORE-FIX_20260720.zip
-
-Scope:
-- Restore the green Chat shortcut immediately after the AZOBSS logo on /Beli-Pelan-Akui/.
-- Match the main website navbar placement and appearance.
-- Keep the shortcut hidden for the admin role, matching the existing main-page behavior.
-- No payment, PA checking, MyLot, Firebase Rules, or backend changes.

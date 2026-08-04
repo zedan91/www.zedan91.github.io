@@ -1,9 +1,0 @@
-AZOBSS PATCH 713 — MORE DROPDOWN FOOD - BROWNIES LABEL
-
-Baseline: Patch 712
-
-Perubahan:
-1. Label dropdown More ditukar daripada "Tempahan Makanan" kepada "Food - Brownies".
-2. Tooltip pautan turut ditukar kepada "Food - Brownies".
-3. Laluan /Tempahan-Makanan/ dan fungsi halaman tidak diubah.
-4. Cache azobss-more-nav.js dinaikkan kepada v713 pada semua halaman berkaitan.

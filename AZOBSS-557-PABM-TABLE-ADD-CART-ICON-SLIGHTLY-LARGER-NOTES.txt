@@ -1,7 +1,0 @@
-AZOBSS Patch 557
-
-- Baseline: (556)-AZOBSS-PUBLIC-PA-SHORT-LABEL-TITLE-FIX_20260721.zip
-- Enlarged only the BM/SBM table Add to Cart trolley icon from 17px to 20px.
-- Button dimensions and green plus badge remain unchanged.
-- Updated azobss-pabm-storefront.css cache query to v557.
-- No Firebase Rules or Render backend update required.

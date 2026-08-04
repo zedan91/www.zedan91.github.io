@@ -1,1 +1,0 @@
-Patch 164: Fix Lucky Draw folder image auto-sync. Frontend now passes website origin to backend auto sync, backend also falls back to request Origin/Referer, and carousel skips broken image URLs instead of showing blank.

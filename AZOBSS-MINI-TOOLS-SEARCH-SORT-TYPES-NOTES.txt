@@ -1,1 +1,0 @@
-AZOBSS Mini Tools search and type sorting fix. Added visible search/filter controls, type/category filtering, sort options, category support for added links, import/export category fields. No Firebase Rules or Render ENV required.

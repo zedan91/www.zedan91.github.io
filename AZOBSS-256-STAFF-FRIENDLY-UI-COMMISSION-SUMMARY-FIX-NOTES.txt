@@ -1,7 +1,0 @@
-
-AZOBSS-256-STAFF-FRIENDLY-UI-COMMISSION-SUMMARY-FIX
-- Staff Dashboard overview made more user-friendly with clearer cards, notes, and quick actions.
-- PA/BM records are excluded from Staff Overview commission totals, not only Sales View.
-- Staff commission now only counts valid Software/CAD owner/share records for the current staff account.
-- Added visible counts for eligible commission records and excluded PA/BM records.
-- No changes to Cart/Like/Bell/Message, My Purchases, or PA/BM paid/download flow.

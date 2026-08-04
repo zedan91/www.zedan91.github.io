@@ -1,5 +1,0 @@
-AZOBSS Lucky Draw patch 123
-- Lucky Draw mobile UI compact only.
-- Buttons arranged cleaner on small screens.
-- Share/join/check status, referral note, prize panel, participant panel, winner history and admin panels made more phone-friendly.
-- No login/register, My Purchases, Software, CAD, PA/BM or Firebase rules changes.

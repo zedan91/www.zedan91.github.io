@@ -1,9 +1,0 @@
-AZOBSS Patch 610 - JUPEM Process Time Spacing Text Fix
-
-Perubahan:
-1. Membetulkan teks anggaran masa daripada:
-   (Mengambil masa sekitar 1~ 2 minit)
-   kepada:
-   (Mengambil masa sekitar 1~2 minit)
-2. Cache dikemas kini kepada azobss-lot-selection-map.js?v=610.
-3. Patch frontend sahaja. Render backend dan Firebase Rules tidak perlu diubah.

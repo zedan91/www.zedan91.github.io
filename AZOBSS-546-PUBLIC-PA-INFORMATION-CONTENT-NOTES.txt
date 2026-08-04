@@ -1,9 +1,0 @@
-AZOBSS Patch 546 - Public PA Information Content
-
-Base: Patch 545
-
-Changes:
-- Added a new informational section below the Public PA purchase form and price card.
-- Added paraphrased Malay explanations covering what Pelan Akui is, common contents, typical uses, search information, and availability notes.
-- Added responsive styling for desktop and mobile.
-- No payment, PA checking, MyLot, authentication, Firebase, or backend logic was changed.

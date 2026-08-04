@@ -1,6 +1,0 @@
-AZOBSS 477 - Software Category Count Badge Remove
-
-- Removed the top-right "7 groups · 63 categories" pill from Browse by Category.
-- Kept all category group buttons, hover dropdowns, counts inside buttons, and fixed downward arrows.
-- Based on patch 476.
-- No Firebase Rules or Render backend update required.

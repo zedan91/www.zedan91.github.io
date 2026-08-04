@@ -1,1 +1,0 @@
-Patch 235: Mini Web Tools cards reduced back to compact layout after 234 pro card UI became too large. Cards now show icon + title + type only.

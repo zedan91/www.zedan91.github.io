@@ -1,7 +1,0 @@
-AZOBSS Patch 547
-- Baseline: patch 546.
-- Added PA73043 as a web-friendly example image on /Beli-Pelan-Akui/.
-- Added a diagonal "CONTOH PELAN" watermark to the sample.
-- Added responsive sample card below the Pelan Akui information section.
-- Sample image can be opened in full size.
-- No payment, PA checking, Firebase, MyLot, or backend logic changed.

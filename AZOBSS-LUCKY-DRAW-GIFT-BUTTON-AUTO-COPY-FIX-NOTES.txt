@@ -1,6 +1,0 @@
-Patch 128: Lucky Draw paid product share gift button fix.
-- Keep only one floating gift button under the like button on paid Software/CAD cards.
-- Remove/hide old lower duplicate gift button.
-- Align floating gift button slightly with like button.
-- If native share popup fails/cancels or is unavailable, auto-copy the product share link.
-- Does not touch Login/Register, My Purchases, PA/BM, or Firebase Rules.

@@ -1,7 +1,0 @@
-AZOBSS PATCH 455
-
-Software Tools free-promo card visual fix:
-- Hide the normal RM/SAVE discount badge while Free Promo Download is active.
-- The discount badge returns automatically when free promo units finish or promo is disabled.
-- Reduce Free Promo Download button size and force one-line compact text on mobile/desktop.
-- No backend, payment, PA/BM, Lucky Draw, or Firebase Rules changes.

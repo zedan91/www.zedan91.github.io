@@ -1,8 +1,0 @@
-AZOBSS (614) - Payment verification status idle reset fix
-
-- Stops stale ToyyibPay polling before Admin Test Payment.
-- Clears stale order/bill references, callback URL parameters and scheduled retry timers.
-- Resets paBmToyyibStatus to "Pergi ke halaman pembayaran" whenever no real callback/pending checkout exists.
-- Prevents the empty cart from alternating between "Mengesahkan pembayaran..." and "Sedang menyambung semula pengesahan pembayaran...".
-- Normal ToyyibPay return polling and immediate success popup remain unchanged.
-- Frontend only; no Render backend or Firebase Rules change required.

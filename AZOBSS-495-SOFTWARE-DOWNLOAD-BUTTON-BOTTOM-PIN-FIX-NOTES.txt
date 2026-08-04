@@ -1,6 +1,0 @@
-AZOBSS 495 - Software Download Button Bottom Pin Fix
-
-- Based on baseline 494.
-- Keeps Download Now and premium Buy Now/cart action row near the card statistics footer on desktop.
-- Fixes short descriptions causing the action button to appear too high with a large empty area below it.
-- Mobile layout, virtual pagination performance, category dropdowns, payment logic, Firebase rules and backend are unchanged.

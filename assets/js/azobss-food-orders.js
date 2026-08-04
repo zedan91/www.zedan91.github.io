@@ -917,7 +917,7 @@ function startRealtimeTable(){
     console.error('[AZOBSS Food Orders] Realtime load failed:', error);
     liveStatus.textContent = 'Gagal memuatkan rekod';
     tbody.innerHTML = '<tr><td colspan="10" class="food-orders-empty">Rekod tidak dapat dimuatkan.</td></tr>';
-    showError('Akses Firestore ditolak atau Firebase Rules 671 belum diterbitkan. Gunakan FIREBASE-RULES-MERGED-FOOD-ORDERS-671-ACCESS-CONTROL.txt dan Publish.');
+    showError('Akses Firestore ditolak atau Firebase Rules 671 belum diterbitkan. Gunakan AZOBSS-Developer-Files/FIREBASE-RULES-MERGED-FOOD-ORDERS-671-ACCESS-CONTROL.txt dan Publish.');
   });
 }
 

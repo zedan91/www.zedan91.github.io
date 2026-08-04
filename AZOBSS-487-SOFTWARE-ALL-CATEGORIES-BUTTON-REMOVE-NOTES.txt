@@ -1,9 +1,0 @@
-AZOBSS (487) - Software All Categories Button Remove
-Date: 2026-07-17
-Baseline: (486)-AZOBSS-SOFTWARE-THIRD-PARTY-NOTICE-CARD-REMOVE-FIX_20260717.zip
-
-Changes:
-- Removed the standalone "All Categories" button from the Software Tools category group row.
-- Kept all seven grouped hover dropdowns unchanged.
-- Clicking an already-selected nested category now resets the software list back to all categories, so users still have a simple reset action without the removed button.
-- No Firebase Rules or Render backend update is required.

@@ -1,7 +1,0 @@
-AZOBSS 606 - JUPEM Cart Success Text Center Fix
-
-1. The success button now uses equal left and right padding.
-2. "Sudah Masuk Troli" and "(Sila tekan untuk ke Troli)" remain geometrically centred even with the tick icon on the right.
-3. The tick icon remains fixed on the right without pushing the text to the left.
-4. Frontend-only patch. No Render backend or Firebase Rules changes are required.
-5. Cache: azobss-lot-selection-map.js?v=606

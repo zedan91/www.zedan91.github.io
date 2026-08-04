@@ -1,6 +1,0 @@
-AZOBSS 506 - Software title/meta/description visual down fix
-- Baseline: (505)
-- Desktop: title, metadata and description translated down 14px.
-- Mobile: title, metadata and description translated down 12px.
-- More, CTA/cart and statistics footer remain fixed.
-- Edited file: Software-Tools/index.html

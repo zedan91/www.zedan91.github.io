@@ -1,9 +1,0 @@
-AZOBSS Mini Tools Remove Software Type Fix
-
-Patch 227:
-- Removed unintended Software option from Mini Web Tools Type filter.
-- Root cause: shared affiliate-shop software category helper scanned all select elements globally and inserted Software into any select with category in its id/name.
-- Fixed by scoping that helper to /affiliate-shop/ only.
-- Mini Web Tools remains focused on web tools categories: Converter, Calculator, Checker, Guide, Windows, Finance, Health, Hardware, Network / Internet, Hotkeys, Added Links, Other.
-- No Firebase Rules update required.
-- No Render ENV update required.

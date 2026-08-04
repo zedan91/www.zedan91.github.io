@@ -1,6 +1,0 @@
-AZOBSS Patch 479
-
-- Removed the "Browse by Platform" heading from Software Tools.
-- Platform and software type filter buttons remain unchanged.
-- Based on patch 478.
-- No Firebase Rules or Render backend update required.

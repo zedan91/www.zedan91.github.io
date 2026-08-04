@@ -1,3 +1,0 @@
-Patch 230: Removed the "< Back To Homepage" button from /tools/ because the sticky/top navigation already provides homepage/site navigation.
-No Firebase Rules update required.
-No Render ENV update required.

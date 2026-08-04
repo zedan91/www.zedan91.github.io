@@ -1,9 +1,0 @@
-AZOBSS Patch 682 — Tambah Menu Baharu
-
-Perubahan:
-- Menambah panel “+ Tambah Menu” dalam editor brownies.
-- Admin/pengguna Tempahan Makanan ON boleh pilih kategori, nama, harga 8 inci, pilihan 4 inci dan harga 4 inci.
-- Menu tambahan disimpan dalam dokumen Firestore foodMenuConfig/brownies.
-- Menu baharu terus muncul dalam kad kategori dan berfungsi dengan butang kuantiti, ringkasan serta WhatsApp.
-- Menu tambahan boleh dipadam/sembunyikan dan dipulihkan seperti menu asal.
-- Tiada perubahan Firebase Rules diperlukan jika Rules 679 sudah dipublish.

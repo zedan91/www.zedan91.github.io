@@ -1,9 +1,0 @@
-AZOBSS Radio Floating Button Right Align Fix (351)
-
-- Fixed the Radio floating button appearing too far from the right side.
-- Root cause: hidden radio panel width still affected the floating wrapper; the pill was aligned to the left side of the wider panel.
-- Added flex column + align-items:flex-end so the Radio pill and panel both anchor to the right edge.
-- Reduced right gap slightly for desktop and mobile.
-- Cache bust updated to azobss-radio-player.js?v=351.
-- No Firebase Rules update required.
-- No Render backend deploy required.

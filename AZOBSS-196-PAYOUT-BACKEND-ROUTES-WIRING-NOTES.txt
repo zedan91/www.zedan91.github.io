@@ -1,8 +1,0 @@
-AZOBSS 196 - Payout Backend Routes Wiring Fix
-
-- Wired actual protected backend route handlers for staff payout profile, staff payout requests, admin payout requests and admin payout request status update.
-- Staff payout profile can now save/load via backend with Firebase ID token.
-- Staff payout request now creates payoutRequests documents and links approved commissionRecords.
-- Admin payout request status updates now update payoutRequests and related commissionRecords when marked paid/rejected/etc.
-- All routes remain protected by Firebase token/admin secret and existing rate limits.
-- No Firebase Rules update required because writes are done by Firebase Admin SDK.

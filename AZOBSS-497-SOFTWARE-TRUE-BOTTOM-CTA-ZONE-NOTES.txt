@@ -1,7 +1,0 @@
-AZOBSS Patch 497
-
-- Adds a structural bottom action zone to every Software Tools card.
-- Keeps More above the CTA.
-- Keeps Download Now, Buy Now, and Free Promo Download close to the stats footer.
-- Preserves true virtual pagination/performance from baseline 491 and later category UI fixes.
-- No Firebase Rules or Render backend update required.

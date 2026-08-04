@@ -1,9 +1,0 @@
-PATCH 140 - Lucky Draw Prize Bigger Image Card
-
-Scope: lucky-draw/index.html only.
-
-Changes:
-- Increased Lucky Draw prize image area on desktop.
-- Increased mobile prize image height.
-- Kept description scroll inside the same card.
-- Did not change Lucky Draw logic/backend/auth/purchase flows.

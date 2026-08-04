@@ -1,6 +1,0 @@
-AZOBSS Lucky Draw share requirement UI clean
-- Removed the textbox-style display from the paid product share requirement area.
-- Changed it to plain instruction text only.
-- Rearranged buttons neatly: Open Software Tools, Open CAD Tools, Check Product Share, Join Lucky Draw.
-- Kept Lucky Draw paid product share logic unchanged.
-- Did not touch Login/Register, My Purchases, PA/BM, or Software/CAD purchase logic.

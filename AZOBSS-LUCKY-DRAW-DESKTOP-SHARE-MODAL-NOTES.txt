@@ -1,1 +1,0 @@
-Patch 133: Lucky Draw gift share on PC now opens a custom AZOBSS share modal like Carousell-style share dialog instead of using native navigator.share that can hang on desktop. Mobile still uses native share. Popup-block fallback auto-copies link. Only Software/CAD gift share touched.

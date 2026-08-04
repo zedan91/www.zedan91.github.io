@@ -1,7 +1,0 @@
-AZOBSS Patch 545
-Baseline: (544)-AZOBSS-BELI-PELAN-AKUI-NORMAL-ACTIVE-STYLE-FIX_20260720.zip
-
-Perubahan:
-- Buang "Link dihantar ke e-mel pembeli" daripada kad Harga Pengguna Awam.
-- Buang "Maksimum 5 kali download dalam 7 hari" daripada kad Harga Pengguna Awam.
-- Logik e-mel, had muat turun, backend, Firebase Rules dan Render tidak diubah.

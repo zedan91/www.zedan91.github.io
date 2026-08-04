@@ -1,7 +1,0 @@
-AZOBSS Patch 478 — Browse by Category Title Remove
-
-- Removed the "Browse by Category" heading from the category card.
-- Kept All Categories and all 7 grouped hover dropdowns unchanged.
-- Kept category counts, fixed-down arrows, filters, downloads, premium payment flow, and all prior fixes.
-- No Firebase Rules update required.
-- No Render backend deployment required.

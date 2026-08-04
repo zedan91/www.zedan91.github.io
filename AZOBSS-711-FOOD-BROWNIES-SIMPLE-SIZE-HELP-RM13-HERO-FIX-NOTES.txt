@@ -1,7 +1,0 @@
-AZOBSS Patch 711
-
-- Ayat bantuan saiz 4 inci dipendekkan kepada: Saiz 4 inci menyediakan pilihan brownies yang aktif.
-- Badge hero kini mengira harga terendah daripada harga 8 inci dan 4 inci yang sedang aktif/rendered.
-- Harga permulaan semasa dipaparkan sebagai Harga dari RM13, bukan RM45.
-- Cache azobss-food-menu-admin.js dinaikkan daripada v692 kepada v711.
-- Tiada perubahan pada pesanan, pembayaran, R2, Stripe, ToyyibPay atau backend.

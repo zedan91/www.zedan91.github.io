@@ -1,9 +1,0 @@
-AZOBSS Patch 558
-
-- Baseline: (557)-AZOBSS-PABM-TABLE-ADD-CART-ICON-SLIGHTLY-LARGER-FIX_20260721.zip
-- Added persistent visual state for PA/BM/SBM/GPS/Syit Piawai table cart buttons.
-- After an item is successfully added, the button changes from blue to green and the plus badge changes to a check mark.
-- Existing cart items are marked automatically after page load, search result rendering, pagination, screen refresh, and cart updates.
-- When an item is removed from the cart, the button returns to its original blue state.
-- Updated storefront CSS and JS cache queries to v558.
-- No Firebase Rules or Render backend update required.

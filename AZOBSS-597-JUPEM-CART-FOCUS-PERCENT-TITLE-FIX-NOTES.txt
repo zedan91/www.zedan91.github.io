@@ -1,9 +1,0 @@
-AZOBSS 597 - JUPEM Cart Focus and Percent Title Fix
-
-1. The green success button is centred and remains clickable.
-2. Its second line now says: (Sila tekan untuk ke Troli).
-3. Clicking it closes the map modal, scrolls to Troli Anda, focuses the cart panel and highlights it.
-4. The loading status now says: Mendapatkan lot pilihan...
-5. Lot Kadaster cart titles use the selected sheet percentage, for example: Lot Kadaster Berdigit 25%, instead of displaying the internal JUPEM job ID.
-6. Cache versions: lot-selection-map v597 and pabm-storefront v597.
-7. Frontend only. No Render backend or Firebase Rules changes are required.

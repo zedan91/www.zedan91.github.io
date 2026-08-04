@@ -1,8 +1,0 @@
-AZOBSS PATCH 667 — FOOD ORDER DEPOSIT QUANTITY OVER 4 TEXT
-
-Baseline: (666)-AZOBSS-FOOD-ORDER-4-INCH-PISTACHIO-NIBS-RM16-FIX_20260729.zip
-
-Perubahan:
-- Ayat nota deposit ditukar kepada:
-  "Bagi tempahan kuantiti melebihi 4, deposit sebanyak 50% daripada jumlah bayaran diperlukan untuk mengesahkan tempahan."
-- Fungsi, harga, saiz, menu, WhatsApp, rekod dan Firebase tidak diubah.

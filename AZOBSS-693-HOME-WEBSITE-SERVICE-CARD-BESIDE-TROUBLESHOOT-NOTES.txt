@@ -1,9 +1,0 @@
-AZOBSS Patch 693 - Homepage Website Service Card Beside Troubleshoot Fix
-Date: 2026-07-31
-
-Changes:
-1. Removed the wide "Mahukan Website untuk Bisnes?" banner above the service cards.
-2. Added "Website untuk Bisnes" as a normal service card immediately after "Troubleshoot Windows Online".
-3. The card links to /Tempah-Website/ and preserves the original website-request details inside the hover information.
-4. Added images/website-business-service.svg for a matching website-service thumbnail.
-5. Other service cards, Brownies, ordering functions, and Patch 692 food-order fixes remain unchanged.

@@ -1,3 +1,0 @@
-AZOBSS PATCH 264 - Lucky Draw Skeleton Loading UI
-
-Adds small skeleton/loading indicators on /lucky-draw/ while prize image/title/description and participant names are refreshing. No PA/BM, cart, My Purchases, Firebase Rules, or Render ENV changes.

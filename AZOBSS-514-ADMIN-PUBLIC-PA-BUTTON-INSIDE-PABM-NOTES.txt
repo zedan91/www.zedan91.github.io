@@ -1,8 +1,0 @@
-AZOBSS PATCH 514 - ADMIN PUBLIC PA BUTTON INSIDE PA/BM
-
-Changes:
-1. Admin now sees a "Beli Pelan Akui" shortcut inside the PA/BM category tabs.
-2. The public PA shortcut remains hidden from non-admin PA/BM members.
-3. Admin can open the RM50 public PA purchase form for inspection/testing.
-4. The main public navigation behavior remains unchanged: admin still sees PA/BM instead of the public PA button.
-5. No backend, ToyyibPay amount, Firestore Rules, PA/BM member pricing, download limit, or email flow changes.

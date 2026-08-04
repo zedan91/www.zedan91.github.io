@@ -1,1 +1,0 @@
-Patch 357: Add small random channel button (🔀) beside station dropdown. If radio is already playing, random automatically switches and plays the new station. If stopped, it only selects a random station and asks user to press Play. No Firebase Rules or Render deploy required.

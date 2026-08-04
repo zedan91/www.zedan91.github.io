@@ -1,1 +1,0 @@
-Patch 233: Upgraded Quick-Tool.html outputs to provide more complete calculations, formulas, interpretation notes, extra modes, and clearer English details for Mini Web Tools. No Firebase Rules or Render ENV changes required.

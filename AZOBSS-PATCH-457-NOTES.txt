@@ -1,8 +1,0 @@
-AZOBSS Patch 457
-
-Software Tools free-promo card UI fix:
-- Crossed normal price is pinned at top-left and no longer overlaps Preview/Share.
-- Active Free Promo Download is treated as a free action, so the paid cart button is removed during the promo.
-- Free Promo Download CTA is smaller and forced to one line.
-- Original Buy Now + cart behavior returns when the free-promo units are exhausted or promo is disabled.
-- Only Software-Tools/index.html logic/UI was changed. No Firebase Rules update required.

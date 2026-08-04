@@ -1,0 +1,15 @@
+AZOBSS Patch 745 - Custom Share Panel (No API)
+
+Baseline: Patch 744
+
+Changes:
+- One Share icon opens a custom AZOBSS share panel.
+- Share PDF uses the native Windows/phone Share Sheet with the real PDF file.
+- Download + WhatsApp downloads the PDF/ZIP, opens WhatsApp, and copies a ready message.
+- Download + Telegram downloads the PDF/ZIP, opens Telegram sharing, and copies a ready message.
+- Copy PDF/ZIP Link, Copy Message, Download, and Print are included.
+- Bulk share uses the same panel; Print is hidden for bulk selections.
+- No WhatsApp Cloud API or Telegram Bot API is required.
+
+Limitation:
+Web browsers cannot silently attach a local PDF to WhatsApp or Telegram. The downloaded file must be attached manually after the app opens.

@@ -1,6 +1,0 @@
-AZOBSS 287
-- Built from patch 286.
-- Product cards now include first-paint Like/Share/Preview/stats/More controls directly in card HTML.
-- Existing scripts update these controls in place instead of adding them late.
-- Guest Like opens login/register prompt through existing auth modal.
-- PA/BM, My Purchases, Cart storage/payment, Firebase Rules and Render ENV unchanged.

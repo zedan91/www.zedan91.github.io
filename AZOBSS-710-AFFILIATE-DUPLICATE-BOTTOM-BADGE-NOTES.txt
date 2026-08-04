@@ -1,9 +1,0 @@
-AZOBSS Patch 710
-
-Affiliate Shop card cleanup:
-- Removes the lower repeated badge/category pill when it duplicates the badge shown at the top of the card.
-- Keeps the top badge as the only label in that case.
-- Keeps a lower price pill only when a real separate price exists and differs from the top badge.
-- Keeps the Open/Buy Now button aligned to the right when no lower price pill is shown.
-
-Baseline: Patch 709.
