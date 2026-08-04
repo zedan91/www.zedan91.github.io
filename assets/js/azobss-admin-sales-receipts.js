@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 765: paid receipt sent / not-sent tracking */
+/* AZOBSS PATCH 766: ToyyibPay customer email requirement and safe retry */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=765;
+window.__azSalesReceiptsModuleVersion=766;
 
 let manualRows=[];
 let websiteRows=[];
@@ -39,6 +39,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0};
 const money=v=>'RM'+num(v).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
 const clampMoney=v=>Math.round(Math.max(0,num(v))*100)/100;
+const validCustomerEmail=value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value||'').trim().toLowerCase());
 
 function notify(message,error=false){
   let n=el('azSalesReceiptNotice');
@@ -598,6 +599,19 @@ function syncManualPaymentFeeDefault(){
     input.value='0';delete input.dataset.autoToyyibFee;
   }
 }
+function syncToyyibCustomerRequirements(){
+  const required=normalizeStatus(el('salesReceiptFormStatus')?.value)==='pending';
+  const email=el('salesReceiptCustomerEmail');
+  const hint=el('salesReceiptCustomerEmailHint');
+  const label=el('salesReceiptCustomerEmailLabelText');
+  if(email){
+    email.required=required;
+    email.placeholder=required?'Required for ToyyibPay':'customer@email.com';
+    email.setAttribute('aria-required',required?'true':'false');
+  }
+  if(hint)hint.hidden=!required;
+  if(label)label.textContent=required?'Email *':'Email';
+}
 function recalcForm(){
   const c=manualCalc(collectFormItems(),formExtras());const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const recognized=isRecognizedPayment(status);
   const set=(id,v)=>{if(el(id))el(id).textContent=money(v)};
@@ -625,6 +639,7 @@ function syncFormDocumentMode(initial=false){
     else{paymentSelect.disabled=false;paymentSelect.title=''}
   }
   syncManualPaymentFeeDefault();
+  syncToyyibCustomerRequirements();
   recalcForm();
 }
 function openForm(row=null){
@@ -640,17 +655,29 @@ async function saveForm(){
   const user=await waitForUser();if(!user)return notify('Admin login not ready.',true);
   const customer=String(el('salesReceiptCustomerName')?.value||'').trim();const items=collectFormItems();if(!customer)return notify('Enter customer name.',true);if(!items.length||items.some(i=>!i.name))return notify('Enter a name for every item.',true);if(items.some(i=>i.qty<=0))return notify('Quantity must be more than zero.',true);
   const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const kind=documentKindForStatus(status);const recognized=isRecognizedPayment(status);const numberInput=el('salesReceiptReceiptNo');
+  const customerEmail=String(el('salesReceiptCustomerEmail')?.value||'').trim().toLowerCase();
+  if(kind==='invoice'&&status==='pending'&&!validCustomerEmail(customerEmail)){
+    el('salesReceiptCustomerEmail')?.focus();
+    return notify('Enter a valid customer email. ToyyibPay requires billEmail to prefill the customer name and phone.',true);
+  }
   if(kind==='invoice')editingInvoiceNo=String(numberInput?.value||editingInvoiceNo||(editingReceiptNo?deriveInvoiceNo(editingReceiptNo):nextDocumentNo('invoice'))).trim();else editingReceiptNo=String(numberInput?.value||editingReceiptNo||(editingInvoiceNo?deriveReceiptNo(editingInvoiceNo):nextDocumentNo('receipt'))).trim();
   const c=manualCalc(items,formExtras());const dateRaw=el('salesReceiptSaleDate')?.value||localDateTimeInput();const saleDateMs=parseMalaysiaDateTime(dateRaw);const categories=[...new Set(c.items.map(i=>i.category))];
   const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
   const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
-  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail:String(el('salesReceiptCustomerEmail')?.value||'').trim(),status,paymentMethod:status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,status,paymentMethod:status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
     let savedId=editId;
-    if(wasEditing)await updateDoc(doc(db,'receipts',editId),payload);else{const created=await addDoc(collection(db,'receipts'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now()});savedId=created.id}
+    if(wasEditing)await updateDoc(doc(db,'receipts',editId),payload);else{
+      const created=await addDoc(collection(db,'receipts'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now()});
+      savedId=created.id;
+      // Keep the newly created record attached to the open form. If ToyyibPay fails,
+      // the next Save updates this same invoice instead of creating a duplicate.
+      editingDocId=savedId;
+      editingOriginalStatus=status;
+    }
     let toyyibReady=false;
     if(kind==='invoice'&&status==='pending'){
       const draftRow=normalizeManual(savedId,{...(existing||{}),...payload,docId:savedId,id:savedId});
@@ -1065,7 +1092,7 @@ function bind(){
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
   el('salesReceiptPaymentFee')?.addEventListener('input',e=>{delete e.currentTarget.dataset.autoToyyibFee;recalcForm()});
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
-  el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();recalcForm()});
+  el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
   document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});

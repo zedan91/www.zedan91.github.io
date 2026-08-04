@@ -1,0 +1,20 @@
+AZOBSS PATCH 766
+Date: 2026-08-04
+
+Problem
+- The Email field showed customer@email.com only as a placeholder, not as an actual value.
+- Patch 763 enabled billPayorInfo=1 so ToyyibPay can prefill name and phone. In this mode ToyyibPay rejects createBill when billEmail is empty.
+- A failed first Save could leave a Firestore invoice record and a second Save could create a duplicate.
+
+Fix
+- Pending / ToyyibPay manual invoices now require a valid customer email before Firestore save and before createBill.
+- The Email label displays Email * and a clear ToyyibPay requirement hint only while ToyyibPay is in use.
+- Backend validates billEmail and returns a clear HTTP 400 message instead of forwarding an empty field to ToyyibPay.
+- After a new Firestore record is created, the open form keeps its document ID. A ToyyibPay retry updates the same invoice instead of creating a duplicate.
+- All fixes from patches 762-765 are retained.
+
+Deployment
+- Upload all files.
+- Manual Deploy / Restart Render because deploy-server.js changed.
+- Press Ctrl+F5 on the Admin page.
+- Open the failed Pending invoice, enter the real customer email, and Save again.

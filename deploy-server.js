@@ -5272,7 +5272,7 @@ function azSalesShareIssue(meta = {}) {
 // deletes immediately after navigator.share() succeeds. Public links are removed after
 // first access plus a safety window, or at the hard maximum expiry time.
 
-const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_TOTAL_SYNC_FIX_765_20260804";
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_EMAIL_REQUIRED_FIX_766_20260804";
 const AZOBSS_MANUAL_PAYOR_PREFILL_VERSION = 763;
 const AZOBSS_MANUAL_BILL_AMOUNT_VERSION = 765;
 function azManualInvoicePayableAmount(invoice = {}) {
@@ -5399,9 +5399,12 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
     const customerEmail = currentCustomerEmail;
     const customerPhone = currentCustomerPhone;
     const customerName = currentCustomerName;
+    if (!customerEmail) {
+      throw Object.assign(new Error("Enter a valid customer email. ToyyibPay requires billEmail when payer information prefill is enabled."), { statusCode:400 });
+    }
     // Manual invoices are person-specific. Keep billPayorInfo enabled so ToyyibPay uses
-    // billTo/billPhone/billEmail to prefill the payer form. A missing email remains editable
-    // and required on ToyyibPay, while the supplied name and phone are still prefilled.
+    // billTo/billPhone/billEmail to prefill the payer form. ToyyibPay requires a
+    // non-empty billEmail when this mode is enabled, so validate it before the API call.
     const payorInfo = 1;
     const billPayload = {
       userSecretKey:TOYYIB_SECRET_KEY,
@@ -12633,7 +12636,7 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
-        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"759" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"766" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
