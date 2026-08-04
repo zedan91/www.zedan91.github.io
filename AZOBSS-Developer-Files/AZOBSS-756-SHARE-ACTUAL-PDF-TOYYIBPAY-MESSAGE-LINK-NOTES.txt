@@ -1,0 +1,7 @@
+AZOBSS Patch 756
+
+- Share Actual PDF File remains the actual-file native share action.
+- WhatsApp and Telegram direct buttons are clearly labelled as link-based actions because browsers cannot attach files directly to a selected app/chat without an API.
+- Pending invoice messages now include the ToyyibPay payment URL used by the QR code.
+- Copy Message and native share text also include the ToyyibPay payment URL for invoices.
+- Receipt messages do not include a payment URL.

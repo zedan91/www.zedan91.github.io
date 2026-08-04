@@ -1,0 +1,7 @@
+AZOBSS Patch 754
+
+Manual Invoice / Receipt modal protection:
+- Clicking outside the form card no longer closes or cancels the form.
+- Pressing Escape no longer closes the form accidentally.
+- The modal can only be closed using the X button or Cancel button.
+- Sales & Receipts module cache version updated to v=754.

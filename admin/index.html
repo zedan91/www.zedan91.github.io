@@ -2478,23 +2478,23 @@ body[data-dashboard-page="admin"] .topbar{
           <div class="az-sr-share-grid">
             <button class="az-sr-share-option native" type="button" data-sr-share-action="native">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg></span>
-              <span><b id="salesReceiptShareNativeLabel">Share PDF</b><small>Send the real file through Windows or phone Share.</small></span>
+              <span><b id="salesReceiptShareNativeLabel">Share Actual PDF File</b><small>Send the real PDF file through Windows or phone Share.</small></span>
             </button>
             <button class="az-sr-share-option whatsapp-option" type="button" data-sr-share-action="whatsapp">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg></span>
-              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Temporary PDF</b><small>Open WhatsApp with a short temporary PDF link—no download first.</small></span>
+              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Invoice + Payment Link</b><small id="salesReceiptShareWhatsAppDesc">Open WhatsApp with the temporary PDF link. Pending invoices also include the ToyyibPay payment link.</small></span>
             </button>
             <button class="az-sr-share-option telegram-option" type="button" data-sr-share-action="telegram">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg></span>
-              <span><b id="salesReceiptShareTelegramLabel">Telegram Temporary PDF</b><small>Open Telegram with a short temporary PDF link—no download first.</small></span>
+              <span><b id="salesReceiptShareTelegramLabel">Telegram Invoice + Payment Link</b><small id="salesReceiptShareTelegramDesc">Open Telegram with the temporary PDF link. Pending invoices also include the ToyyibPay payment link.</small></span>
             </button>
             <button class="az-sr-share-option link-option" type="button" data-sr-share-action="link">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></span>
-              <span><b id="salesReceiptShareLinkLabel">Copy Temporary Link</b><small>Copy a short backend link that removes itself automatically.</small></span>
+              <span><b id="salesReceiptShareLinkLabel">Copy Temporary Link</b><small id="salesReceiptShareLinkDesc">Copy a short backend link that removes itself automatically.</small></span>
             </button>
             <button class="az-sr-share-option message-option" type="button" data-sr-share-action="message">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4Z"/><path d="M8 9h8M8 12h6"/></svg></span>
-              <span><b>Copy Message</b><small>Copy document number, customer, total and status.</small></span>
+              <span><b>Copy Message</b><small id="salesReceiptShareMessageDesc">Copy document details, PDF link and the ToyyibPay payment link for pending invoices.</small></span>
             </button>
             <button class="az-sr-share-option download-option" type="button" data-sr-share-action="download">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg></span>
@@ -2505,7 +2505,7 @@ body[data-dashboard-page="admin"] .topbar{
               <span><b>Print PDF</b><small>Load the same temporary backend PDF and open Print Preview.</small></span>
             </button>
           </div>
-          <p class="az-sr-share-note"><b>Temporary backend mode.</b> The PDF is stored only briefly on Render. Native Share deletes it after sharing succeeds; link-based actions remove it after first access plus a safety window, or after the maximum expiry time.</p>
+          <p class="az-sr-share-note"><b>Actual PDF file:</b> use <b>Share Actual PDF File</b>. Browsers cannot attach a file directly to a specific WhatsApp or Telegram chat without an API, so those two buttons send a temporary PDF link instead. Pending invoice messages also include the ToyyibPay payment link. Temporary files remove themselves automatically.</p>
         </div>
       </div>
 
@@ -7727,6 +7727,6 @@ document.addEventListener('click', async function(e){
 </script>
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=747"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=753" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=756" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 </body>
 </html>
