@@ -1771,7 +1771,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
 <script defer src="/assets/js/azobss-more-nav.js?v=713"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=745">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=747">
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2482,15 +2482,15 @@ body[data-dashboard-page="admin"] .topbar{
             </button>
             <button class="az-sr-share-option whatsapp-option" type="button" data-sr-share-action="whatsapp">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg></span>
-              <span><b id="salesReceiptShareWhatsAppLabel">Download + WhatsApp</b><small>Download first, then open the customer chat to attach it.</small></span>
+              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Temporary PDF</b><small>Open WhatsApp with a short temporary PDF link—no download first.</small></span>
             </button>
             <button class="az-sr-share-option telegram-option" type="button" data-sr-share-action="telegram">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg></span>
-              <span><b id="salesReceiptShareTelegramLabel">Download + Telegram</b><small>Download first, then choose a Telegram chat and attach it.</small></span>
+              <span><b id="salesReceiptShareTelegramLabel">Telegram Temporary PDF</b><small>Open Telegram with a short temporary PDF link—no download first.</small></span>
             </button>
             <button class="az-sr-share-option link-option" type="button" data-sr-share-action="link">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></span>
-              <span><b id="salesReceiptShareLinkLabel">Copy PDF Link</b><small>Create a private R2 link and copy it to the clipboard.</small></span>
+              <span><b id="salesReceiptShareLinkLabel">Copy Temporary Link</b><small>Copy a short backend link that removes itself automatically.</small></span>
             </button>
             <button class="az-sr-share-option message-option" type="button" data-sr-share-action="message">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4Z"/><path d="M8 9h8M8 12h6"/></svg></span>
@@ -2498,14 +2498,14 @@ body[data-dashboard-page="admin"] .topbar{
             </button>
             <button class="az-sr-share-option download-option" type="button" data-sr-share-action="download">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg></span>
-              <span><b id="salesReceiptShareDownloadLabel">Download PDF</b><small>Save the document for manual attachment or archive.</small></span>
+              <span><b id="salesReceiptShareDownloadLabel">Download PDF</b><small>Download from the temporary backend file, then remove it.</small></span>
             </button>
             <button id="salesReceiptSharePrint" class="az-sr-share-option print-option" type="button" data-sr-share-action="print">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7Z"/></svg></span>
-              <span><b>Print PDF</b><small>Print the exact same PDF used for download and sharing.</small></span>
+              <span><b>Print PDF</b><small>Load the same temporary backend PDF and open Print Preview.</small></span>
             </button>
           </div>
-          <p class="az-sr-share-note"><b>No API required.</b> WhatsApp and Telegram cannot receive an attachment automatically from a website, so those choices download the file and open the app for manual attachment.</p>
+          <p class="az-sr-share-note"><b>Temporary backend mode.</b> The PDF is stored only briefly on Render. Native Share deletes it after sharing succeeds; link-based actions remove it after first access plus a safety window, or after the maximum expiry time.</p>
         </div>
       </div>
 
@@ -2517,7 +2517,7 @@ body[data-dashboard-page="admin"] .topbar{
               <label><span id="salesReceiptDocumentNoLabel">Receipt No</span><input id="salesReceiptReceiptNo" readonly></label>
               <label>Sale Date & Time<input id="salesReceiptSaleDate" type="datetime-local" step="60"></label>
               <label>Status<select id="salesReceiptFormStatus"><option value="paid">Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
-              <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option></select></label>
+              <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option></select></label><div class="az-sr-toyyib-hint">Pending + ToyyibPay creates a payment QR automatically in the invoice. After verified payment, the same record becomes a Paid receipt.</div>
               <label class="az-sr-span-2">Customer Name<input id="salesReceiptCustomerName" placeholder="Customer name"></label>
               <label>Phone<input id="salesReceiptCustomerPhone" placeholder="01X-XXXX XXXX"></label>
               <label>Email<input id="salesReceiptCustomerEmail" type="email" placeholder="customer@email.com"></label>
@@ -7726,7 +7726,7 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
-<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=744"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=745"></script>
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=747"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=747"></script>
 </body>
 </html>

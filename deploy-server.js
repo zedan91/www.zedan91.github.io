@@ -90,6 +90,7 @@ function azobssDownloadLimitFromOrder(order){
 
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const http = require("http");
 const url = require("url");
 const crypto = require("crypto");
@@ -119,6 +120,7 @@ let nodemailer = null;
 try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
 let sharp = null;
 let PDFDocument = null;
+let QRCode = null;
 
 function azobssLoadBackendModule(moduleName) {
   const candidates = [
@@ -2982,12 +2984,12 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
     });
 
-    if (!latest.commissionCheckedAt) {
+    if (!azIsManualSalesInvoiceOrder(latest) && !latest.commissionCheckedAt) {
       try { await azFinalizeCommissionForOrder(latest); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
       latest = findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode }) || latest;
     }
 
-    if (!latest.paBmPaidSyncedAt) {
+    if (!azIsManualSalesInvoiceOrder(latest) && !latest.paBmPaidSyncedAt) {
       try {
         const syncResult = await azobssUpdatePaBmPurchaseLogsForOrder(latest, "paid", { paymentReference: latest.paymentReference, toyyibTransaction: tx, toyyibCallback: callbackData });
         if (syncResult && syncResult.ok) latest = upsertPremiumOrder({ ...latest, paBmPaidSyncedAt: new Date().toISOString(), paBmPaidSyncedCount: syncResult.updated || 0 });
@@ -2995,7 +2997,15 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     }
 
     latest = azEnsureSubscriptionActivation(latest);
-    if (!isPaBmPremiumOrder(latest)) {
+    if (azIsManualSalesInvoiceOrder(latest)) {
+      try {
+        const manualSync = await azSyncManualSalesInvoicePaid(latest, { paymentReference:latest.paymentReference, toyyibTransaction:tx, toyyibCallback:callbackData });
+        latest = upsertPremiumOrder({ ...latest, manualInvoicePaidSyncedAt:new Date().toISOString(), manualReceiptNo:manualSync && manualSync.receiptNo || latest.manualReceiptNo || "" });
+      } catch (manualSyncError) {
+        console.error("Manual sales invoice paid sync failed:", manualSyncError && (manualSyncError.stack || manualSyncError.message || manualSyncError));
+        throw manualSyncError;
+      }
+    } else if (!isPaBmPremiumOrder(latest)) {
       latest = await azHydratePremiumOrderExpiryFromCurrentProduct(latest);
       if (!latest.downloadToken) latest = makeDownloadForOrder(latest);
       if (!latest.emailSentAt) {
@@ -5172,6 +5182,316 @@ function azSalesShareIssue(meta = {}) {
   };
 }
 
+
+// AZOBSS PATCH 746: short-lived backend storage for generated admin PDF/ZIP files.
+// Files live only in the Render temporary directory, not Firestore/R2. Native Share
+// deletes immediately after navigator.share() succeeds. Public links are removed after
+// first access plus a safety window, or at the hard maximum expiry time.
+
+const AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH = "AZOBSS_MANUAL_INVOICE_TOYYIBPAY_QR_747_20260804";
+function azIsManualSalesInvoiceOrder(order = {}) {
+  return order && (order.isManualSalesInvoice === true || String(order.source || "").toLowerCase() === "admin-manual-invoice" || String(order.productId || "").toLowerCase() === "manual-sales-invoice");
+}
+function azManualInvoiceReceiptNo(invoiceNo = "") {
+  const value = cleanPremiumText(invoiceNo || "", 180);
+  if (/^AZI-/i.test(value)) return value.replace(/^AZI-/i, "AZR-");
+  if (/^INV-/i.test(value)) return value.replace(/^INV-/i, "RCP-");
+  return value ? `RCP-${value}` : "";
+}
+function azManualInvoiceExpiryDays() {
+  const raw = Number(process.env.AZOBSS_MANUAL_INVOICE_EXPIRY_DAYS || 7);
+  return Math.max(1, Math.min(100, Number.isFinite(raw) ? Math.round(raw) : 7));
+}
+async function azManualInvoiceQrJpeg(paymentUrl = "") {
+  const value = cleanPremiumUrl(paymentUrl || "");
+  if (!value) throw new Error("ToyyibPay payment URL is missing.");
+  if (!QRCode) QRCode = azobssLoadBackendModule("qrcode");
+  if (!sharp) sharp = azobssLoadBackendModule("sharp");
+  if (!QRCode || !sharp) throw new Error("QR generator dependency is unavailable on the backend.");
+  const svg = await QRCode.toString(value, { type:"svg", errorCorrectionLevel:"M", margin:2, width:300, color:{ dark:"#111827", light:"#FFFFFF" } });
+  const jpeg = await sharp(Buffer.from(svg)).flatten({ background:"#ffffff" }).jpeg({ quality:92, chromaSubsampling:"4:4:4" }).toBuffer();
+  return jpeg;
+}
+async function azLoadManualInvoiceReceipt(receiptId = "") {
+  const id = cleanPremiumText(receiptId || "", 180);
+  if (!id) throw Object.assign(new Error("Manual invoice record ID is required."), { statusCode:400 });
+  if (!initFirebaseAdmin()) throw Object.assign(new Error("Firebase Admin is not configured on the backend."), { statusCode:503 });
+  const db = getAzobssBackendDb();
+  if (!db) throw Object.assign(new Error("Firestore backend is unavailable."), { statusCode:503 });
+  const ref = db.collection("receipts").doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) throw Object.assign(new Error("Manual invoice record was not found."), { statusCode:404 });
+  const data = snap.data() || {};
+  if (String(data.source || "") !== "admin-manual-sale") throw Object.assign(new Error("Only manual Sales & Receipts invoices can use this ToyyibPay bill."), { statusCode:400 });
+  return { id, ref, data };
+}
+async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {}) {
+  if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) throw Object.assign(new Error("ToyyibPay credentials/category are not configured in Render ENV."), { statusCode:503 });
+  const record = await azLoadManualInvoiceReceipt(receiptId);
+  const invoice = record.data;
+  const status = String(invoice.status || "pending").trim().toLowerCase();
+  if (status === "paid") {
+    return { ok:true, alreadyPaid:true, receiptId:record.id, invoiceNo:invoice.invoiceNo || "", receiptNo:invoice.receiptNo || azManualInvoiceReceiptNo(invoice.invoiceNo), status:"paid", billCode:invoice.billCode || invoice.toyyibBillCode || "", paymentUrl:invoice.paymentUrl || invoice.toyyibPaymentUrl || "" };
+  }
+  if (status !== "pending") throw Object.assign(new Error("ToyyibPay QR is available only for Pending invoices."), { statusCode:409 });
+  const amount = Number(invoice.gross || invoice.amountDue || 0);
+  if (!Number.isFinite(amount) || amount <= 0) throw Object.assign(new Error("Invoice total must be more than RM0.00 before creating a ToyyibPay bill."), { statusCode:400 });
+  const invoiceNo = cleanPremiumText(invoice.invoiceNo || invoice.documentNo || `AZI-${record.id.slice(0,10).toUpperCase()}`, 180);
+  const existingBillCode = cleanPremiumText(invoice.billCode || invoice.toyyibBillCode || "", 120);
+  const existingPaymentUrl = cleanPremiumUrl(invoice.paymentUrl || invoice.toyyibPaymentUrl || "");
+  let order = findPremiumOrderByAny({ orderId:invoice.toyyibOrderId || `manual-invoice-${record.id}`, billCode:existingBillCode });
+  let billCode = existingBillCode || cleanPremiumText(order && order.billCode || "", 120);
+  let paymentUrl = existingPaymentUrl || cleanPremiumUrl(order && order.paymentUrl || "");
+  const savedOrderAmount = Number(order && (order.saleAmount || order.amount) || 0);
+  const amountChanged = Boolean(order && savedOrderAmount > 0 && Math.abs(savedOrderAmount - amount) > 0.005);
+  if (amountChanged) {
+    order = upsertPremiumOrder({ ...order, status:"superseded", supersededAt:new Date().toISOString(), supersededReason:"manual-invoice-amount-changed" });
+    billCode = ""; paymentUrl = "";
+  }
+  let orderId = cleanPremiumText(invoice.toyyibOrderId || (order && order.orderId) || `manual-invoice-${record.id}`, 180);
+  if (amountChanged) orderId = cleanPremiumText(`manual-invoice-${record.id}-${Date.now().toString(36)}`, 180);
+  if (order && billCode && !amountChanged) {
+    const refreshed = await refreshToyyibOrder(order, req);
+    if (String(refreshed && refreshed.status || "").toLowerCase() === "paid") {
+      const paidRecord = await azLoadManualInvoiceReceipt(record.id);
+      const paidData = paidRecord.data || {};
+      return { ok:true, alreadyPaid:true, receiptId:record.id, invoiceNo:paidData.invoiceNo || invoiceNo, receiptNo:paidData.receiptNo || azManualInvoiceReceiptNo(invoiceNo), status:"paid", amount, billCode:refreshed.billCode || billCode, paymentUrl:refreshed.paymentUrl || paymentUrl };
+    }
+    order = refreshed || order;
+  }
+  const apiBase = publicBaseUrlFromReq(req);
+  const returnUrl = `${apiBase}/payment/manual-invoice-return?orderId=${encodeURIComponent(orderId)}`;
+  if (!billCode || !paymentUrl) {
+    const itemText = Array.isArray(invoice.items) ? invoice.items.map(x => cleanPremiumText(x && x.name || "", 50)).filter(Boolean).slice(0,3).join(" ") : "";
+    const payorInfo = cleanPremiumText(invoice.customerEmail || invoice.customerPhone || "", 180) ? 1 : 0;
+    const billPayload = {
+      userSecretKey:TOYYIB_SECRET_KEY,
+      categoryCode:TOYYIB_CATEGORY_CODE,
+      billName:cleanForToyyib(`Invoice ${invoiceNo}`,30),
+      billDescription:cleanForToyyib(`AZOBSS ${invoiceNo} ${itemText || "Customer invoice"}`,100),
+      billPriceSetting:1,
+      billPayorInfo:payorInfo,
+      billAmount:Math.round(amount * 100),
+      billReturnUrl:returnUrl,
+      billCallbackUrl:TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`,
+      billExternalReferenceNo:orderId,
+      billTo:cleanForToyyib(invoice.customerName || "Customer",30),
+      billEmail:cleanForToyyib(invoice.customerEmail || "",80),
+      billPhone:cleanForToyyib(invoice.customerPhone || "",20),
+      billSplitPayment:0,
+      billSplitPaymentArgs:"",
+      billPaymentChannel:0,
+      billContentEmail:cleanForToyyib(`Payment for AZOBSS invoice ${invoiceNo}.`,200),
+      billChargeToCustomer:1,
+      billExpiryDays:azManualInvoiceExpiryDays(),
+      enableDuitNowQR:1,
+      chargeDuitNowQR:0
+    };
+    const apiResult = await postToyyib("createBill", billPayload);
+    billCode = apiResult && (apiResult.BillCode || apiResult.billCode || apiResult.billcode || (Array.isArray(apiResult) && apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode))) || "";
+    billCode = cleanPremiumText(billCode, 120);
+    if (!billCode) throw new Error("ToyyibPay did not return a Bill Code.");
+    paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+  }
+  const now = new Date();
+  const amountText = amount.toFixed(2);
+  order = upsertPremiumOrder({
+    ...(order || {}), orderId, billCode, paymentUrl, returnUrl,
+    productId:"manual-sales-invoice", productName:`Invoice ${invoiceNo}`,
+    amount:amountText, amountSen:Math.round(amount*100), saleAmount:amount, saleAmountText:amountText,
+    status:"pending", paymentMethod:"toyyibpay", paymentReference:"",
+    source:"admin-manual-invoice", isManualSalesInvoice:true, manualReceiptDocId:record.id,
+    manualInvoiceNo:invoiceNo, manualReceiptNo:invoice.receiptNo || azManualInvoiceReceiptNo(invoiceNo),
+    user:{ uid:invoice.uid || invoice.createdByUid || "", username:invoice.customerName || "", email:invoice.customerEmail || "", phone:invoice.customerPhone || "", displayName:invoice.customerName || "" },
+    email:invoice.customerEmail || "", buyerEmail:invoice.customerEmail || "", phone:invoice.customerPhone || "",
+    commissionSkippedReason:"manual-sales-invoice", commissionCheckedAt:(order && order.commissionCheckedAt) || now.toISOString(),
+    createdAt:(order && order.createdAt) || now.toISOString(), createdAtMs:(order && order.createdAtMs) || now.getTime()
+  });
+  await record.ref.set({
+    paymentMethod:"ToyyibPay", toyyibOrderId:orderId, billCode, toyyibBillCode:billCode,
+    paymentUrl, toyyibPaymentUrl:paymentUrl, toyyibBillCreatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+    toyyibBillCreatedAtMs:Date.now(), toyyibBillExpiryDays:azManualInvoiceExpiryDays(),
+    updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:Date.now()
+  }, { merge:true });
+  const qrJpeg = await azManualInvoiceQrJpeg(paymentUrl);
+  return { ok:true, patch:AZOBSS_MANUAL_INVOICE_TOYYIB_PATCH, receiptId:record.id, invoiceNo, status:"pending", amount, orderId, billCode, paymentUrl, qrJpegBase64:qrJpeg.toString("base64"), expiryDays:azManualInvoiceExpiryDays() };
+}
+async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
+  if (!azIsManualSalesInvoiceOrder(order)) return { ok:false, skipped:true };
+  const record = await azLoadManualInvoiceReceipt(order.manualReceiptDocId || "");
+  const current = record.data || {};
+  if (String(current.status || "").toLowerCase() === "paid" && current.toyyibPaidSyncedAt) return { ok:true, alreadyPaid:true, receiptId:record.id };
+  const currentBillCode = cleanPremiumText(current.billCode || current.toyyibBillCode || "", 120);
+  const paidBillCode = cleanPremiumText(order.billCode || "", 120);
+  if (currentBillCode && paidBillCode && currentBillCode !== paidBillCode) {
+    console.warn("Manual invoice stale ToyyibPay bill ignored:", JSON.stringify({ receiptId:record.id, currentBillCode, paidBillCode }).slice(0,500));
+    return { ok:false, skipped:true, staleBill:true, receiptId:record.id };
+  }
+  const invoiceNo = cleanPremiumText(current.invoiceNo || order.manualInvoiceNo || current.documentNo || "", 180);
+  const receiptNo = cleanPremiumText(current.receiptNo || order.manualReceiptNo || azManualInvoiceReceiptNo(invoiceNo), 180);
+  const gross = Number(current.gross || current.amountDue || order.saleAmount || order.amount || 0) || 0;
+  const gatewayFee = Math.max(Number(current.paymentFee || 0) || 0, Number(process.env.AZOBSS_TOYYIBPAY_FEE_RM || 1) || 1);
+  const totalCost = (Number(current.productCost || 0)||0) + (Number(current.shippingCost || 0)||0) + gatewayFee + (Number(current.commission || 0)||0) + (Number(current.otherCost || 0)||0);
+  const profit = gross - totalCost;
+  const paidAtMs = Date.now();
+  const paymentReference = cleanPremiumText(opts.paymentReference || order.paymentReference || "", 180);
+  await record.ref.set({
+    status:"paid", documentType:"receipt", documentNo:receiptNo, invoiceNo, receiptNo,
+    paymentMethod:"ToyyibPay", paymentRecognized:true, amountDue:0, paidGross:gross,
+    paymentFee:gatewayFee, totalCost, profit, recognizedTotalCost:totalCost, recognizedProfit:profit,
+    paidAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), paidAtMs,
+    paymentReference, billCode:order.billCode || current.billCode || "", toyyibBillCode:order.billCode || current.toyyibBillCode || "",
+    paymentUrl:order.paymentUrl || current.paymentUrl || "", toyyibPaymentUrl:order.paymentUrl || current.toyyibPaymentUrl || "",
+    toyyibVerifiedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), toyyibVerifiedAtMs:paidAtMs,
+    toyyibPaidSyncedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), toyyibPaidSyncedAtMs:paidAtMs,
+    updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:paidAtMs
+  }, { merge:true });
+  return { ok:true, receiptId:record.id, invoiceNo, receiptNo, gross, totalCost, profit };
+}
+
+const AZOBSS_SALES_TEMP_PATCH = "AZOBSS_ADMIN_SALES_TEMP_BACKEND_747_20260804";
+const AZOBSS_SALES_TEMP_DIR = path.join(os.tmpdir(), "azobss-sales-temp-documents");
+const azSalesTempFiles = new Map();
+function azSalesTempMaxBytes() {
+  const mb = Number(process.env.AZOBSS_SALES_TEMP_MAX_MB || 20);
+  return Math.floor(Math.max(1, Math.min(50, Number.isFinite(mb) ? mb : 20)) * 1024 * 1024);
+}
+function azSalesTempHardTtlMs() {
+  const minutes = Number(process.env.AZOBSS_SALES_TEMP_MAX_MINUTES || 120);
+  return Math.max(10, Math.min(720, Number.isFinite(minutes) ? minutes : 120)) * 60 * 1000;
+}
+function azSalesTempAfterAccessMs() {
+  const minutes = Number(process.env.AZOBSS_SALES_TEMP_AFTER_ACCESS_MINUTES || 30);
+  return Math.max(5, Math.min(120, Number.isFinite(minutes) ? minutes : 30)) * 60 * 1000;
+}
+function azSalesTempEnsureDir() {
+  try { fs.mkdirSync(AZOBSS_SALES_TEMP_DIR, { recursive:true }); } catch (_) {}
+}
+function azSalesTempSafeId(value = "") {
+  const id = String(value || "").trim();
+  return /^[A-Za-z0-9_-]{8,32}$/.test(id) ? id : "";
+}
+function azSalesTempNewId() {
+  return crypto.randomBytes(9).toString("base64url").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 12);
+}
+function azSalesTempDelete(id) {
+  id = azSalesTempSafeId(id);
+  if (!id) return false;
+  const row = azSalesTempFiles.get(id);
+  if (row && row.deleteTimer) clearTimeout(row.deleteTimer);
+  azSalesTempFiles.delete(id);
+  const filePath = row && row.filePath ? row.filePath : path.join(AZOBSS_SALES_TEMP_DIR, id);
+  try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (_) {}
+  return Boolean(row);
+}
+function azSalesTempScheduleDelete(row, delayMs) {
+  if (!row || !row.id) return;
+  if (row.deleteTimer) clearTimeout(row.deleteTimer);
+  const delay = Math.max(1000, Number(delayMs) || azSalesTempAfterAccessMs());
+  row.deleteAt = Date.now() + delay;
+  row.deleteTimer = setTimeout(() => azSalesTempDelete(row.id), delay);
+  if (row.deleteTimer && typeof row.deleteTimer.unref === "function") row.deleteTimer.unref();
+}
+function azSalesTempSweep() {
+  const now = Date.now();
+  for (const row of azSalesTempFiles.values()) {
+    if (!row || Number(row.expiresAt || 0) <= now || (row.deleteAt && row.deleteAt <= now)) azSalesTempDelete(row && row.id);
+  }
+  try {
+    azSalesTempEnsureDir();
+    for (const name of fs.readdirSync(AZOBSS_SALES_TEMP_DIR)) {
+      const filePath = path.join(AZOBSS_SALES_TEMP_DIR, name);
+      try { const stat = fs.statSync(filePath); if (now - stat.mtimeMs > azSalesTempHardTtlMs()) fs.unlinkSync(filePath); } catch (_) {}
+    }
+  } catch (_) {}
+}
+azSalesTempEnsureDir();
+try { azSalesTempSweep(); } catch (_) {}
+const azSalesTempSweepTimer = setInterval(azSalesTempSweep, 5 * 60 * 1000);
+if (azSalesTempSweepTimer && typeof azSalesTempSweepTimer.unref === "function") azSalesTempSweepTimer.unref();
+function azSalesTempFilenameHeader(req, contentType) {
+  let raw = String(req.headers["x-azobss-filename"] || "");
+  try { raw = decodeURIComponent(raw); } catch (_) {}
+  return azSalesShareSafeFilename(raw, contentType);
+}
+function azSalesTempDocumentNoHeader(req, filename) {
+  let raw = String(req.headers["x-azobss-document-no"] || "");
+  try { raw = decodeURIComponent(raw); } catch (_) {}
+  return cleanPremiumText(raw || filename.replace(/\.[^.]+$/, ""), 180);
+}
+function azSalesTempIssue(req, buffer) {
+  const rawType = String(req.headers["content-type"] || "application/pdf").split(";")[0].trim().toLowerCase();
+  const isZip = /application\/zip|application\/x-zip-compressed/.test(rawType);
+  const contentType = isZip ? "application/zip" : "application/pdf";
+  if (!isZip && rawType !== "application/pdf") throw Object.assign(new Error("Only PDF or ZIP temporary files are supported."), { statusCode:415 });
+  if (!buffer || !buffer.length) throw Object.assign(new Error("Generated document is empty."), { statusCode:400 });
+  if (buffer.length > azSalesTempMaxBytes()) throw Object.assign(new Error(`Generated document exceeds the ${Math.floor(azSalesTempMaxBytes()/1024/1024)} MB temporary limit.`), { statusCode:413 });
+  if (isZip && !(buffer[0] === 0x50 && buffer[1] === 0x4b)) throw Object.assign(new Error("Invalid ZIP file."), { statusCode:400 });
+  if (!isZip && buffer.subarray(0,5).toString("ascii") !== "%PDF-") throw Object.assign(new Error("Invalid PDF file."), { statusCode:400 });
+  azSalesTempEnsureDir();
+  let id = azSalesTempNewId(); while (azSalesTempFiles.has(id)) id = azSalesTempNewId();
+  const filename = azSalesTempFilenameHeader(req, contentType);
+  const documentNo = azSalesTempDocumentNoHeader(req, filename);
+  const filePath = path.join(AZOBSS_SALES_TEMP_DIR, id);
+  fs.writeFileSync(filePath, buffer, { mode:0o600 });
+  const now = Date.now();
+  const row = { id, filename, documentNo, contentType, size:buffer.length, filePath, createdAt:now, expiresAt:now + azSalesTempHardTtlMs(), firstAccessAt:0, lastAccessAt:0, accessCount:0, deleteAt:0, deleteTimer:null };
+  azSalesTempFiles.set(id, row);
+  azSalesTempScheduleDelete(row, azSalesTempHardTtlMs());
+  const base = publicBaseUrlFromReq(req);
+  const encodedName = encodeURIComponent(filename);
+  return {
+    ok:true, patch:AZOBSS_SALES_TEMP_PATCH, id, filename, documentNo, contentType, size:buffer.length,
+    viewUrl:`${base}/t/${id}/${encodedName}`,
+    shareUrl:`${base}/t/${id}/${encodedName}`,
+    downloadUrl:`${base}/t/${id}/${encodedName}?download=1`,
+    printUrl:`${base}/t/${id}/${encodedName}`,
+    deleteUrl:`${base}/api/admin/sales-document/temp/${id}`,
+    expiresAt:new Date(row.expiresAt).toISOString(),
+    expiresInMinutes:Math.floor(azSalesTempHardTtlMs()/60000),
+    deleteAfterAccessMinutes:Math.floor(azSalesTempAfterAccessMs()/60000)
+  };
+}
+function azSalesTempPublicRow(id) {
+  id = azSalesTempSafeId(id);
+  const row = id ? azSalesTempFiles.get(id) : null;
+  if (!row || Number(row.expiresAt || 0) <= Date.now() || !fs.existsSync(row.filePath)) {
+    if (id) azSalesTempDelete(id);
+    return null;
+  }
+  return row;
+}
+function azSalesTempServe(req, res, parsed, id) {
+  const row = azSalesTempPublicRow(id);
+  if (!row) return send(res, 404, "Temporary document expired or was deleted.", "text/plain; charset=utf-8", { "Cache-Control":"no-store" });
+  row.accessCount += 1; row.lastAccessAt = Date.now(); if (!row.firstAccessAt) row.firstAccessAt = row.lastAccessAt;
+  azSalesTempScheduleDelete(row, azSalesTempAfterAccessMs());
+  const stat = fs.statSync(row.filePath); const total = stat.size;
+  const disposition = String(parsed.query.download || "") === "1" ? "attachment" : "inline";
+  const headers = azSecurityHeaders({
+    "Content-Type":row.contentType,
+    "Content-Disposition":`${disposition}; filename*=UTF-8''${encodeURIComponent(row.filename)}`,
+    "Accept-Ranges":"bytes",
+    "Cache-Control":"no-store, private, max-age=0",
+    "X-AZOBSS-Temporary-File":"1",
+    "X-AZOBSS-Delete-After-Access-Minutes":String(Math.floor(azSalesTempAfterAccessMs()/60000))
+  });
+  const range = String(req.headers.range || "");
+  if (range) {
+    const match = range.match(/bytes=(\d*)-(\d*)/i);
+    if (!match) { res.writeHead(416, { ...headers, "Content-Range":`bytes */${total}` }); return res.end(); }
+    let start = match[1] ? Number(match[1]) : 0; let end = match[2] ? Number(match[2]) : total - 1;
+    if (!match[1] && match[2]) { const suffix = Number(match[2]); start = Math.max(0, total - suffix); end = total - 1; }
+    start = Math.max(0, Math.min(total - 1, start)); end = Math.max(start, Math.min(total - 1, end));
+    res.writeHead(206, { ...headers, "Content-Range":`bytes ${start}-${end}/${total}`, "Content-Length":String(end-start+1) });
+    if (req.method === "HEAD") return res.end();
+    return fs.createReadStream(row.filePath, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { ...headers, "Content-Length":String(total) });
+  if (req.method === "HEAD") return res.end();
+  return fs.createReadStream(row.filePath).pipe(res);
+}
+
 function azR2LookupKey(value = "") {
   return String(value || "")
     .normalize("NFKD")
@@ -6410,6 +6730,24 @@ function readBody(req) {
     req.on("end", () => resolve(body));
     req.on("error", reject);
 
+  });
+}
+
+function readBinaryBody(req, maxBytes = 20 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", chunk => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        reject(Object.assign(new Error("Body too large"), { statusCode:413 }));
+        req.destroy();
+        return;
+      }
+      chunks.push(Buffer.from(chunk));
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
   });
 }
 
@@ -10735,6 +11073,7 @@ async function handler(req, res) {
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
     if (pathname === "/api/toyyib/create-pa-bm-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-pa-bm-bill", 10, 5 * 60 * 1000)) return;
+    if (pathname === "/api/admin/sales-invoice/toyyibpay-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-manual-invoice-toyyib-bill", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
@@ -10763,6 +11102,9 @@ async function handler(req, res) {
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/pa-bm-purchase-records" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-pabm-records-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/sales-document/share-link" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-sales-document-share-link", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/sales-document/temp" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-sales-document-temp-upload", 100, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/api/admin/sales-document/temp/") && req.method === "DELETE" && azRateLimitOrSend(req, res, "admin-sales-document-temp-delete", 160, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/t/") && (req.method === "GET" || req.method === "HEAD") && azRateLimitOrSend(req, res, "sales-document-temp-public", 600, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/payment-logs/delete" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payment-logs-delete", 20, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/export" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-export", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/system-health" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-system-health", 30, 10 * 60 * 1000)) return;
@@ -11521,6 +11863,23 @@ async function handler(req, res) {
       return send(res, 200, JSON.stringify({ ok:true, paid:false, verified:false, paymentConfirmed:false, orderId:order.orderId, status:order.status || "pending", billCode:order.billCode, paymentUrl:order.paymentUrl }, null, 2), "application/json");
     }
 
+    if (pathname === "/payment/manual-invoice-return" && req.method === "GET") {
+      try {
+        const orderId = cleanPremiumText(parsed.query.orderId || parsed.query.order_id || "", 180);
+        const billCode = cleanPremiumText(parsed.query.billCode || parsed.query.billcode || "", 120);
+        let order = findPremiumOrderByAny({ orderId, billCode }) || await azFindPremiumOrderPersistent({ orderId, billCode });
+        if (order && order.billCode) order = await refreshToyyibOrder(order, req);
+        const paid = String(order && order.status || "").toLowerCase() === "paid";
+        const invoiceNo = cleanPremiumText(order && order.manualInvoiceNo || "Invoice", 180);
+        const receiptNo = cleanPremiumText(order && order.manualReceiptNo || azManualInvoiceReceiptNo(invoiceNo), 180);
+        const title = paid ? "Payment Successful" : "Payment Pending";
+        const message = paid ? `Thank you. Invoice ${invoiceNo} has been converted to receipt ${receiptNo}.` : `Payment for ${invoiceNo} has not been verified yet. Please wait a moment or contact AZOBSS.`;
+        return send(res, 200, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:Arial,sans-serif;background:#07111f;color:#eefdf5;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:20px}.box{max-width:620px;background:#101b2d;border:1px solid ${paid?'#22c55e':'#eab308'};border-radius:20px;padding:30px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35)}h1{color:${paid?'#4ade80':'#fde047'};margin-top:0}.muted{color:#b6c3d6;line-height:1.6}.ref{font-weight:800;color:#fff}</style></head><body><div class="box"><h1>${paid?'Payment Successful ✅':'Payment Pending'}</h1><p class="ref">${invoiceNo}</p><p class="muted">${message}</p><p class="muted">You may close this page.</p></div></body></html>`, "text/html; charset=utf-8", {"Cache-Control":"no-store"});
+      } catch (err) {
+        return send(res, 500, "Payment status could not be checked.", "text/plain; charset=utf-8", {"Cache-Control":"no-store"});
+      }
+    }
+
     if (pathname === "/api/toyyib-callback" && (req.method === "POST" || req.method === "GET")) {
       let data = { ...(parsed.query || {}) };
       if (req.method === "POST") {
@@ -12090,6 +12449,58 @@ async function handler(req, res) {
     }
 
 
+
+    if (pathname.startsWith("/t/") && (req.method === "GET" || req.method === "HEAD")) {
+      try {
+        const parts = pathname.split("/").filter(Boolean);
+        return azSalesTempServe(req, res, parsed, parts[1] || "");
+      } catch (err) {
+        return send(res, 500, "Temporary document could not be opened.", "text/plain; charset=utf-8", { "Cache-Control":"no-store" });
+      }
+    }
+
+    if (pathname === "/api/admin/sales-invoice/toyyibpay-bill" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to create ToyyibPay invoice QR." }, null, 2), "application/json");
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        const receiptId = cleanPremiumText(body.receiptId || body.docId || body.id || "", 180);
+        const result = await azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_manual_invoice_toyyib_bill", "receipts", receiptId, { invoiceNo:result.invoiceNo, billCode:result.billCode, amount:result.amount }, "success"), "Manual invoice ToyyibPay audit log failed");
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        const status = Number(err && err.statusCode || 500);
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"747" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+    if (pathname === "/api/admin/sales-document/temp" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to create temporary documents." }, null, 2), "application/json");
+        const buffer = await readBinaryBody(req, azSalesTempMaxBytes());
+        const result = azSalesTempIssue(req, buffer);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_sales_document_temp_create", "salesDocument", result.documentNo || result.filename, { filename:result.filename, contentType:result.contentType, size:result.size, expiresAt:result.expiresAt }, "success"), "Temporary sales document audit log failed");
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        const status = Number(err && err.statusCode || 500);
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"747" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+    if (pathname.startsWith("/api/admin/sales-document/temp/") && req.method === "DELETE") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to delete temporary documents." }, null, 2), "application/json");
+        const id = azSalesTempSafeId(path.basename(pathname));
+        if (!id) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid temporary document ID." }, null, 2), "application/json");
+        const existed = azSalesTempDelete(id);
+        return send(res, existed ? 200 : 404, JSON.stringify({ ok:existed, deleted:existed, id, patch:"747" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"747" }, null, 2), "application/json");
+      }
+    }
 
     if (pathname === "/api/admin/sales-document/share-link" && req.method === "POST") {
       try {

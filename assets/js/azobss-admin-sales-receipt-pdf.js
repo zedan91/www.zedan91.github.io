@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 739: Malaysia date/time and corrected legacy noon timestamps */
+/* AZOBSS PATCH 747: Malaysia date/time and corrected legacy noon timestamps */
 (function(global){
   'use strict';
 
@@ -215,6 +215,23 @@
     });
     return y+boxH;
   }
+  function hasToyyibPayQr(row,type){
+    return normalizeDocumentType(type)==='invoice' && clean(row.status).toLowerCase()==='pending' && clean(row.paymentUrl||row.toyyibPaymentUrl) && clean(row.toyyibQrJpegBase64);
+  }
+  function drawToyyibPayQr(commands,row,y,type){
+    if(!hasToyyibPayQr(row,type))return y;
+    const h=116,qr=88,x=MARGIN_X;
+    fillRect(commands,x,y,CONTENT_W,h,[248,250,252]);strokeRect(commands,x,y,CONTENT_W,h,[148,163,184],0.8);
+    image(commands,'PayQR',x+14,y+14,qr,qr);
+    const tx=x+118;
+    text(commands,'PAY WITH TOYYIBPAY',tx,y+27,{size:11.5,bold:true,color:[30,64,175]});
+    text(commands,`Amount: ${money(row.gross)}`,tx,y+49,{size:11,bold:true,color:[4,120,87]});
+    text(commands,'Scan the QR code to open the secure payment page.',tx,y+69,{size:8.4,color:[71,85,105]});
+    if(clean(row.billCode||row.toyyibBillCode))text(commands,`Bill Code: ${clean(row.billCode||row.toyyibBillCode)}`,tx,y+87,{size:8.2,bold:true,color:[55,65,81]});
+    text(commands,'Invoice changes to a PAID receipt automatically after verification.',tx,y+103,{size:7.5,color:[100,116,139]});
+    return y+h;
+  }
+
   function drawNotes(commands,row,y){
     const notes=clean(row.notes); if(!notes)return y;
     const lines=wrapText(notes,CONTENT_W-24,8.8,false),h=Math.max(50,32+(lines.length*12));
@@ -244,6 +261,10 @@
     y+=16; const totalsHeight=22+(totalLines(row,docType).length*24);
     if(y+totalsHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
     y=drawTotals(commands,row,y,docType); y+=15;
+    if(hasToyyibPayQr(row,docType)){
+      if(y+116>BOTTOM_LIMIT){commands=createPage();pages.push(commands);drawHeader(commands,row,true,docType);y=120}
+      y=drawToyyibPayQr(commands,row,y,docType);y+=15;
+    }
     if(clean(row.notes)){
       const noteHeight=Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12));
       if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
@@ -267,18 +288,31 @@
     objects[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
     const logoBytes=base64ToBytes(LOGO_JPEG_BASE64);
     objects[5]=concatBytes([stringToBytes(`<< /Type /XObject /Subtype /Image /Width ${LOGO_PIXEL_W} /Height ${LOGO_PIXEL_H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logoBytes.length} >>\nstream\n`),logoBytes,stringToBytes('\nendstream')]);
+    const qrRaw=clean(row&&row.toyyibQrJpegBase64).replace(/^data:image\/jpeg;base64,/i,'');
+    const hasQr=hasToyyibPayQr(row||{},type)&&!!qrRaw;
+    let pageStart=6;let xObjects='/Logo 5 0 R';
+    if(hasQr){
+      const qrBytes=base64ToBytes(qrRaw);
+      objects[6]=concatBytes([stringToBytes(`<< /Type /XObject /Subtype /Image /Width 300 /Height 300 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${qrBytes.length} >>\nstream\n`),qrBytes,stringToBytes('\nendstream')]);
+      pageStart=7;xObjects+=' /PayQR 6 0 R';
+    }
     const kids=[];
-    pages.forEach((commands,index)=>{ const pageObject=6+(index*2),contentObject=pageObject+1,stream=commands.join('\n')+'\n'; kids.push(`${pageObject} 0 R`); objects[pageObject]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Logo 5 0 R >> >> /Contents ${contentObject} 0 R >>`; objects[contentObject]=`<< /Length ${stream.length} >>\nstream\n${stream}endstream`; });
+    pages.forEach((commands,index)=>{
+      const pageObject=pageStart+(index*2),contentObject=pageObject+1,stream=commands.join('\n')+'\n';
+      kids.push(`${pageObject} 0 R`);
+      objects[pageObject]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << ${xObjects} >> >> /Contents ${contentObject} 0 R >>`;
+      objects[contentObject]=`<< /Length ${stream.length} >>\nstream\n${stream}endstream`;
+    });
     objects[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`;
     const parts=[stringToBytes('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')],offsets=[0]; let currentOffset=parts[0].length;
     for(let index=1;index<objects.length;index+=1){
       const body=objects[index] instanceof Uint8Array?objects[index]:stringToBytes(objects[index]);
       const bytes=concatBytes([stringToBytes(`${index} 0 obj\n`),body,stringToBytes('\nendobj\n')]);
-      offsets[index]=currentOffset; parts.push(bytes); currentOffset+=bytes.length;
+      offsets[index]=currentOffset;parts.push(bytes);currentOffset+=bytes.length;
     }
-    const xrefOffset=currentOffset; let xref=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+    const xrefOffset=currentOffset;let xref=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
     for(let index=1;index<objects.length;index+=1)xref+=`${String(offsets[index]).padStart(10,'0')} 00000 n \n`;
-    xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`; parts.push(stringToBytes(xref)); return concatBytes(parts);
+    xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;parts.push(stringToBytes(xref));return concatBytes(parts);
   }
   function safeFilename(value){ return ascii(value).replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'Document'; }
   function filename(row,type='receipt'){ const docType=normalizeDocumentType(type); const label=docType==='invoice'?'Invoice':'Receipt'; return `AZOBSS-${label}-${safeFilename(documentNumber(row,docType))}-${safeFilename(row?.customerName||'Customer').slice(0,28)}.pdf`; }

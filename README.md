@@ -121,3 +121,10 @@ AZOBSS 492
 - Replaced `Salin & Buka WhatsApp` with two independent actions on `/Tempah-Website/`.
 - `Salin Mesej` copies the completed request message only.
 - `Hantar ke WhatsApp` opens AZOBSS WhatsApp only and does not access or modify the clipboard.
+
+
+## Patch 747 — Manual Invoice ToyyibPay QR
+Pending manual invoices using ToyyibPay now include a QR payment link. Verified callback payment converts the same invoice record to a Paid receipt.
+
+## PATCH 747 — ToyyibPay QR for manual invoices
+Pending manual invoices using ToyyibPay now include a payment QR. Verified payment converts the same record into a Paid receipt and activates sales/profit recognition.

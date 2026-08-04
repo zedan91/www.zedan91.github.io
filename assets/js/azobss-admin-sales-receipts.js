@@ -1,7 +1,7 @@
-/* AZOBSS PATCH 745: custom no-API share panel */
+/* AZOBSS PATCH 747: ToyyibPay QR manual invoice -> verified Paid receipt */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
@@ -22,6 +22,9 @@ let editingReceiptNo='';
 let loadingPromise=null;
 const selectedRowIds=new Set();
 let sharePanelContext=null;
+let manualReceiptWatchUnsubscribe=null;
+let manualReceiptWatchReady=false;
+let manualReceiptReloadTimer=null;
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -179,6 +182,8 @@ function isAdminTestRecord(x={}){
   const hay=fields.map(v=>String(v||'').trim().toLowerCase()).join(' ');
   return /(^|[^a-z0-9])admin[-_ ]?test([^a-z0-9]|$)/.test(hay)||/(^|[^a-z0-9])pabmtest[-_a-z0-9]*/.test(hay)||hay.includes('jupem document test purchase');
 }
+function isManualInvoicePaymentOrder(x={}){return x?.isManualSalesInvoice===true||String(x?.source||'').toLowerCase()==='admin-manual-invoice'||String(x?.productId||'').toLowerCase()==='manual-sales-invoice'}
+
 function productName(x={}){const exact=detailedJupemProductName(x);if(exact)return exact;const p=x.product||{};return String(x.productName||x.productTitle||x.itemName||x.title||x.name||x.filename||x.itemCode||p.name||p.title||x.productId||'Website Purchase')}
 function customerName(x={}){const u=x.user||{};return String(x.customerName||x.buyerName||x.displayName||x.username||x.usernameKey||u.displayName||u.username||x.email||x.buyerEmail||u.email||'Customer')}
 function customerEmail(x={}){const u=x.user||{};return String(x.customerEmail||x.email||x.buyerEmail||u.email||'')}
@@ -289,7 +294,7 @@ async function loadData(){
     const map=new Map();
     purchaseSnap.forEach(d=>{const x=d.data()||{};if(isAdminTestRecord(x))return;const row=normalizeWebsite(d.id,x,'purchaseLogs');map.set(websiteDedupKey(row),row)});
     premium.forEach((x,i)=>{
-      if(isAdminTestRecord(x))return;
+      if(isAdminTestRecord(x)||isManualInvoicePaymentOrder(x))return;
       const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);const existing=map.get(k);
       if(!existing){map.set(k,row);return}
       existing.deleteRefs=mergeDeleteRefs(existing.deleteRefs,row.deleteRefs);
@@ -367,6 +372,7 @@ function actionIcon(name){
     telegram:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg>',
     print:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7Z"/></svg>',
     edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-1 5 5-1L19 9l-4-4L4 16ZM13.5 6.5l4 4"/></svg>',
+    pay:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4Z"/><path d="M7 8h3v3H7Zm7 0h3v3h-3ZM7 14h3v3H7Zm7 0h1m2 0h1m-4 2h4"/></svg>',
     delete:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></svg>'
   };
   return icons[name]||'';
@@ -393,6 +399,7 @@ function renderTable(){
       iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
+    if(r.source==='manual'&&docType==='invoice'&&/toyyib/i.test(String(r.paymentMethod||'')))actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
     if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
     actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
@@ -507,10 +514,16 @@ async function saveForm(){
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
-    if(wasEditing)await updateDoc(doc(db,'receipts',editId),payload);else await addDoc(collection(db,'receipts'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now()});
+    let savedId=editId;
+    if(wasEditing)await updateDoc(doc(db,'receipts',editId),payload);else{const created=await addDoc(collection(db,'receipts'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now()});savedId=created.id}
+    let toyyibReady=false;
+    if(kind==='invoice'&&status==='pending'&&/toyyib/i.test(String(payload.paymentMethod||''))){
+      const draftRow=normalizeManual(savedId,{...(existing||{}),...payload,docId:savedId,id:savedId});
+      await ensureToyyibPayInvoice(draftRow,{silent:true});toyyibReady=true;
+    }
     closeForm();
     if(transitionedToPaid)notify('Payment marked Paid. Invoice converted to Receipt and included in sales, costs and net profit.');
-    else notify(`${label} ${wasEditing?'updated':'created'}.`);
+    else notify(`${label} ${wasEditing?'updated':'created'}${toyyibReady?' with ToyyibPay QR':''}.`);
     await loadData();
   }
   catch(e){console.error(e);notify('Save failed: '+(e.message||e),true)}finally{btn.disabled=false;btn.textContent='Save '+label}
@@ -523,6 +536,27 @@ async function adminBackendHeaders(){
   try{const key=sessionStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssLuckyDrawAdminKey')||'';if(key)headers['x-admin-key']=key}catch(_e){}
   return headers;
 }
+
+async function ensureToyyibPayInvoice(row,{silent=false}={}){
+  if(!row||row.source!=='manual'||documentKindForStatus(row.status)!=='invoice')return row;
+  if(!/toyyib/i.test(String(row.paymentMethod||'')))return row;
+  if(num(row.gross)<=0)throw new Error('Invoice total must be more than RM0.00 before generating ToyyibPay QR.');
+  const res=await fetch(BACKEND+'/api/admin/sales-invoice/toyyibpay-bill',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({receiptId:row.docId}),cache:'no-store'});
+  const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
+  if(!res.ok||data.ok===false)throw new Error(data.error||`ToyyibPay invoice HTTP ${res.status}`);
+  Object.assign(row,{toyyibOrderId:data.orderId||row.toyyibOrderId||'',billCode:data.billCode||row.billCode||'',toyyibBillCode:data.billCode||row.toyyibBillCode||'',paymentUrl:data.paymentUrl||row.paymentUrl||'',toyyibPaymentUrl:data.paymentUrl||row.toyyibPaymentUrl||'',toyyibQrJpegBase64:data.qrJpegBase64||row.toyyibQrJpegBase64||'',paymentMethod:'ToyyibPay'});
+  if(data.status==='paid'||data.alreadyPaid){row.status='paid';row.documentType='receipt';row.receiptNo=data.receiptNo||row.receiptNo||deriveReceiptNo(row.invoiceNo);row.documentNo=row.receiptNo;row.amountDue=0;row.paymentRecognized=true}
+  if(!silent)notify(data.status==='paid'?`Payment verified. ${invoiceNoForRow(row)} is now a Paid receipt.`:`ToyyibPay QR ready for invoice ${invoiceNoForRow(row)}.`);
+  return row;
+}
+async function prepareRowForPdf(row,type='receipt'){
+  const docType=documentType(type);
+  if(docType==='invoice'&&row?.source==='manual'&&normalizeStatus(row.status)==='pending'&&/toyyib/i.test(String(row.paymentMethod||''))){
+    return await ensureToyyibPayInvoice(row,{silent:true});
+  }
+  return row;
+}
+
 async function deleteWebsiteRecord(id,button=null){
   const row=websiteRows.find(r=>r.id===id);if(!row)return;
   const label=documentKindForStatus(row.status)==='invoice'?'invoice':'receipt';const paidWarning=isRecognizedPayment(row.status)?'\n\nWarning: this is a Paid record and deleting it removes it from sales and profit totals.':'';
@@ -564,51 +598,47 @@ function customerDocumentHtml(row,type='receipt'){
   const footer=isInvoice?'This invoice requests payment and is not proof that payment has been received.':'Thank you for your purchase. This computer-generated receipt records the payment status shown above.';
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(docNo)}</title><style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#4b5563;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #cbd5e1;padding-bottom:14px}.brandline{display:flex;align-items:center;gap:10px}.brand-logo{width:36px;height:36px;display:block;border-radius:7px;object-fit:cover}.brand{font-size:36px;line-height:36px;font-weight:900;letter-spacing:.2px}.muted{color:#64748b;font-size:12px}.doc-title{text-align:right}.doc-title h2{margin:0;font-size:24px;color:#334155}.status{display:inline-block;border:1px solid #94a3b8;border-radius:999px;padding:5px 10px;font-weight:800}.info{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.box{border:1px solid #cbd5e1;border-radius:10px;padding:12px}.box b{display:block;color:#475569;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px;table-layout:fixed}th,td{border:1px solid #d7dee8;padding:9px 7px;font-size:12px;vertical-align:middle;text-align:center}th{background:#e2e8f0;color:#334155;text-transform:uppercase;font-size:10px;letter-spacing:.04em;height:38px}.no{width:6%}.description{width:37%;text-align:center;font-weight:700;line-height:1.35}.amount{text-align:right}.strong{font-weight:900;color:#047857}.totals{width:360px;max-width:100%;margin:18px 0 0 auto;border:1px solid #a7f3d0;padding:10px 14px;background:#ecfdf5}.totals div{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:18px;font-weight:900;border-top:2px solid #94a3b8;margin-top:6px;padding-top:10px!important;color:#047857}.foot{margin-top:34px;text-align:center;color:#64748b;font-size:11px}.note{margin-top:22px;background:#fffbeb;border-color:#fbbf24}@media print{button{display:none}}</style></head><body><div class="head"><div><div class="brandline"><img class="brand-logo" src="/favicon-192x192.png" alt="AZOBSS logo"><div class="brand">AZOBSS</div></div><div class="muted">www.azobss.com</div></div><div class="doc-title"><h2>${title}</h2><div>${esc(docNo)}</div><div class="muted">${formatDate(docType==='receipt'?currentDocumentDateMs(row):(num(row.invoiceDateMs)||row.saleDateMs))}</div></div></div><div class="info"><div class="box"><b>${isInvoice?'Bill To':'Customer'}</b><div>${esc(row.customerName)}</div><div class="muted">${esc(row.customerPhone||'')}</div><div class="muted">${esc(row.customerEmail||'')}</div></div><div class="box"><b>${rightTitle}</b>${rightBody}</div></div><table><thead><tr><th style="width:6%">No.</th><th style="width:37%">Description</th><th style="width:15%">Category</th><th style="width:8%">Qty</th><th style="width:16%">Unit Price</th><th style="width:18%">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${money(row.subtotal)}</b></div>${num(row.discount)>0?`<div><span>Discount</span><b>- ${money(row.discount)}</b></div>`:''}${num(row.shippingCharge)>0?`<div><span>Shipping</span><b>${money(row.shippingCharge)}</b></div>`:''}<div class="grand"><span>${finalLabel}</span><span>${money(row.gross)}</span></div></div>${row.notes?`<div class="box note"><b>Notes</b><div>${esc(row.notes)}</div></div>`:''}<div class="foot">${footer}</div><script>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
 }
-function printDocument(row,type='receipt',button=null){
-  const api=pdfApi();
-  if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
+async function printDocument(row,type='receipt',button=null){
   const printWindow=window.open('','_blank','width=980,height=780');
   if(!printWindow)return notify('Popup blocked. Allow popups to print the PDF.',true);
   if(button){button.disabled=true;button.classList.add('busy')}
-  let objectUrl='';let printTriggered=false;
+  let objectUrl='';let temp=null;let printTriggered=false;
   const triggerPrint=()=>{
     if(printTriggered||printWindow.closed)return;
-    try{
-      printWindow.focus();
-      printWindow.print();
-      printTriggered=true;
-      notify('Print preview opened from the same PDF used by Download and Share.');
-    }catch(error){
-      console.warn('Automatic PDF print trigger was blocked:',error);
-      notify('The PDF opened in a new window. Use its Print button if the print dialog does not open automatically.',true);
-    }
+    try{printWindow.focus();printWindow.print();printTriggered=true;notify('Print preview opened from the temporary backend PDF.')}catch(error){console.warn('Automatic PDF print trigger was blocked:',error);notify('The PDF opened in a new window. Use its Print button if the dialog does not open automatically.',true)}
   };
   try{
-    const blob=api.createBlob(row,type);
-    objectUrl=URL.createObjectURL(blob);
+    temp=await createDocumentTemporary(row,type);
+    const file=await fetchTemporaryFile(temp);
+    objectUrl=URL.createObjectURL(file);
     try{printWindow.opener=null}catch(_e){}
     try{printWindow.addEventListener('load',()=>setTimeout(triggerPrint,500),{once:true})}catch(_e){}
     printWindow.location.replace(objectUrl);
     setTimeout(triggerPrint,1800);
+    await deleteTemporaryDocument(temp).catch(()=>{});
+    if(sharePanelContext?.temp?.id===temp.id)sharePanelContext.temp=null;
     setTimeout(()=>{if(objectUrl)URL.revokeObjectURL(objectUrl)},300000);
   }catch(error){
-    console.error(error);
-    try{printWindow.close()}catch(_e){}
-    if(objectUrl)URL.revokeObjectURL(objectUrl);
-    notify('PDF print generation failed: '+(error.message||error),true);
-  }finally{
-    if(button){button.disabled=false;button.classList.remove('busy')}
-  }
+    console.error(error);try{printWindow.close()}catch(_e){}if(objectUrl)URL.revokeObjectURL(objectUrl);notify('PDF print generation failed: '+(error.message||error),true)
+  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 function pdfApi(){return window.AZOBSSAdminSalesReceiptPDF||null}
 function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
-function downloadDocumentPdf(row,type='receipt',button=null){
-  const api=pdfApi();if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
-  try{if(button){button.disabled=true;button.classList.add('busy')}const name=api.download(row,type);notify(`PDF downloaded: ${name}`);return name}
-  catch(e){console.error(e);notify('PDF generation failed: '+(e.message||e),true);return ''}
+async function downloadDocumentPdf(row,type='receipt',button=null){
+  if(button){button.disabled=true;button.classList.add('busy')}
+  let temp=null;
+  try{
+    temp=await createDocumentTemporary(row,type);
+    const file=await fetchTemporaryFile(temp);
+    downloadBlobFile(file,file.name||temp.filename);
+    await deleteTemporaryDocument(temp).catch(()=>{});
+    if(sharePanelContext?.temp?.id===temp.id)sharePanelContext.temp=null;
+    notify(`PDF downloaded: ${file.name||temp.filename}`);
+    return file.name||temp.filename;
+  }catch(e){console.error(e);notify('PDF download failed: '+(e.message||e),true);return ''}
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 function normalizeWhatsAppPhone(value){let phone=String(value||'').replace(/\D/g,'');if(phone.startsWith('0'))phone='60'+phone.slice(1);return phone}
@@ -617,154 +647,132 @@ async function copyPlainText(value){
   if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return}
   const area=document.createElement('textarea');area.value=text;area.setAttribute('readonly','');area.style.position='fixed';area.style.opacity='0';area.style.pointerEvents='none';document.body.appendChild(area);area.select();const ok=document.execCommand('copy');area.remove();if(!ok)throw new Error('Clipboard access was blocked by the browser.');
 }
-async function uploadShareBlob(blob,filename,reference,contentType='application/pdf'){
+async function createTemporaryBlob(blob,filename,reference,contentType='application/pdf'){
   if(!blob||!Number(blob.size))throw new Error('Generated file is empty.');
-  const res=await fetch(BACKEND+'/api/admin/sales-document/share-link',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({filename,size:blob.size,contentType,documentNo:reference}),cache:'no-store'});
+  const headers=await adminBackendHeaders();
+  headers['Content-Type']=contentType;
+  headers['X-AZOBSS-Filename']=encodeURIComponent(filename||'AZOBSS-Document.pdf');
+  headers['X-AZOBSS-Document-No']=encodeURIComponent(reference||'AZOBSS-DOCUMENT');
+  const res=await fetch(BACKEND+'/api/admin/sales-document/temp',{method:'POST',headers,body:blob,cache:'no-store'});
   const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
-  if(!res.ok||data.ok===false||!data.uploadUrl||!data.shareUrl)throw new Error(data.error||`Share-link HTTP ${res.status}`);
-  const upload=await fetch(data.uploadUrl,{method:'PUT',headers:{'Content-Type':contentType},body:blob,cache:'no-store'});
-  const uploadText=await upload.text();if(!upload.ok){let detail=uploadText;try{detail=JSON.parse(uploadText).error||detail}catch(_e){}throw new Error(detail||`R2 upload HTTP ${upload.status}`)}
+  if(!res.ok||data.ok===false||!data.viewUrl||!data.deleteUrl)throw new Error(data.error||`Temporary document HTTP ${res.status}`);
   return data;
 }
-async function createDocumentShareLink(row,type='receipt'){
+async function createDocumentTemporary(row,type='receipt'){
   const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable. Refresh this page and try again.');
-  const file=api.createFile(row,type);return uploadShareBlob(file,file.name,documentNo(row,type),'application/pdf');
+  const prepared=await prepareRowForPdf(row,type);const file=api.createFile(prepared,type);return createTemporaryBlob(file,file.name,documentNo(prepared,type),'application/pdf');
+}
+function temporaryDataIsValid(data){return !!(data&&data.id&&data.viewUrl&&Date.parse(data.expiresAt||0)>Date.now()+15000)}
+async function ensureSharePanelTemporary(button=null){
+  const context=sharePanelContext;if(!context)throw new Error('Share panel context is unavailable.');
+  if(temporaryDataIsValid(context.temp))return context.temp;
+  if(context.tempPromise)return context.tempPromise;
+  if(button){button.disabled=true;button.classList.add('busy')}
+  context.tempPromise=(async()=>context.mode==='single'?createDocumentTemporary(context.row,context.type):createSelectedBundleTemporary(context.rows||[]))();
+  try{context.temp=await context.tempPromise;return context.temp}
+  finally{context.tempPromise=null;if(button){button.disabled=false;button.classList.remove('busy')}}
+}
+async function fetchTemporaryFile(data){
+  if(!data?.viewUrl)throw new Error('Temporary document URL is missing.');
+  const res=await fetch(data.viewUrl,{cache:'no-store'});if(!res.ok)throw new Error(`Temporary PDF HTTP ${res.status}`);
+  const blob=await res.blob();return new File([blob],data.filename||'AZOBSS-Document.pdf',{type:data.contentType||blob.type||'application/pdf',lastModified:Date.now()});
+}
+async function deleteTemporaryDocument(data){
+  if(!data?.deleteUrl)return false;
+  const res=await fetch(data.deleteUrl,{method:'DELETE',headers:await adminBackendHeaders(),cache:'no-store'});
+  if(res.status===404)return true;
+  if(!res.ok){const text=await res.text();throw new Error(text||`Temporary cleanup HTTP ${res.status}`)}
+  return true;
+}
+function downloadBlobFile(blob,name){
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name||'AZOBSS-Document.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);return name;
 }
 async function copyDocumentShareLink(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
-  try{const data=await createDocumentShareLink(row,type);await copyPlainText(data.shareUrl);notify(`PDF link copied. Link valid until ${new Date(data.expiresAt).toLocaleDateString('en-MY')}.`);return data.shareUrl}
-  catch(e){console.error(e);notify('Could not create/copy PDF link: '+(e.message||e),true);return ''}
+  try{const data=await createDocumentTemporary(row,type);await copyPlainText(data.shareUrl);notify(`Temporary PDF link copied. It expires automatically at ${new Date(data.expiresAt).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'})}.`);return data.shareUrl}
+  catch(e){console.error(e);notify('Could not create/copy temporary PDF link: '+(e.message||e),true);return ''}
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 function setDirectShareWindow(targetWindow,url){
   if(targetWindow&&!targetWindow.closed){try{targetWindow.location.replace(url);return true}catch(_e){try{targetWindow.location.href=url;return true}catch(__e){}}}
   const opened=window.open(url,'_blank','noopener');return !!opened;
 }
-function directShareUrl(row,type,target,shareUrl){
+function temporaryShareText(row,type,shareUrl){
   const label=documentType(type)==='invoice'?'Invoice':'Receipt';
-  const text=[`AZOBSS ${label} ${documentNo(row,type)}`,`Customer: ${row.customerName}`,`${documentType(type)==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,`PDF: ${shareUrl}`].join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,type)}`,`Customer: ${row.customerName}`,`${documentType(type)==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,`PDF: ${shareUrl}`].join('
+');
+}
+function temporaryDirectShareUrl(row,type,target,shareUrl){
+  const text=temporaryShareText(row,type,shareUrl);
   if(target==='whatsapp'){
     const phone=normalizeWhatsAppPhone(row.customerPhone);return phone?`https://wa.me/${phone}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`;
   }
   return `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text.replace(`PDF: ${shareUrl}`,'').trim())}`;
 }
 function nativeFileShareSupported(files){
-  if(!navigator.share)return false;
-  try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
+  if(!navigator.share)return false;try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
 }
-async function shareDocumentPdf(row,type,button=null){
-  const api=pdfApi();
-  if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
+async function shareTemporaryFile(data,title,text,button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const file=api.createFile(row,type);
-    if(nativeFileShareSupported([file])){
-      await navigator.share({files:[file],title:`AZOBSS ${documentType(type)==='invoice'?'Invoice':'Receipt'} ${documentNo(row,type)}`,text:documentShareText(row,type)});
-      notify('PDF file sent to the Windows/phone share panel. Choose any available app.');
-      return;
-    }
-    api.download(row,type);
-    notify('This browser cannot share the PDF file directly. The PDF was downloaded for manual attachment.',true);
-  }catch(e){
-    if(e&&e.name==='AbortError')return;
-    console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)
-  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+    const file=await fetchTemporaryFile(data);
+    if(!nativeFileShareSupported([file]))throw new Error('This browser cannot share PDF files directly. Use WhatsApp/Telegram temporary link instead.');
+    await navigator.share({files:[file],title,text});
+    await deleteTemporaryDocument(data).catch(()=>{});
+    if(sharePanelContext?.temp?.id===data.id)sharePanelContext.temp=null;
+    notify('PDF shared successfully. The temporary backend copy was deleted.');
+  }catch(e){if(e&&e.name==='AbortError')return;console.error(e);notify('PDF file sharing failed: '+(e.message||e),true)}
+  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
-
-function closeSharePanel(){
-  const panel=el('salesReceiptSharePanel');if(panel)panel.hidden=true;sharePanelContext=null;
+async function shareDocumentPdf(row,type,button=null){
+  try{const temp=await createDocumentTemporary(row,type);return shareTemporaryFile(temp,`AZOBSS ${documentType(type)==='invoice'?'Invoice':'Receipt'} ${documentNo(row,type)}`,documentShareText(row,type),button)}
+  catch(e){console.error(e);notify('Could not prepare the temporary PDF: '+(e.message||e),true)}
 }
+function closeSharePanel(){const panel=el('salesReceiptSharePanel');if(panel)panel.hidden=true;sharePanelContext=null}
 function setSharePanelText(id,value){const node=el(id);if(node)node.textContent=value}
 function openSharePanel(row,type='receipt'){
-  if(!row)return;
-  const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
-  sharePanelContext={mode:'single',row,type:docType};
-  setSharePanelText('salesReceiptShareTitle',`Share ${label}`);
-  setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
-  setSharePanelText('salesReceiptShareNativeLabel','Share PDF');
-  setSharePanelText('salesReceiptShareWhatsAppLabel','Download + WhatsApp');
-  setSharePanelText('salesReceiptShareTelegramLabel','Download + Telegram');
-  setSharePanelText('salesReceiptShareLinkLabel','Copy PDF Link');
-  setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
-  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;
-  const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
+  if(!row)return;const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
+  sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
+  setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
+  setSharePanelText('salesReceiptShareNativeLabel','Share PDF');setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Temporary PDF');setSharePanelText('salesReceiptShareTelegramLabel','Telegram Temporary PDF');setSharePanelText('salesReceiptShareLinkLabel','Copy Temporary Link');setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
+  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
 }
 function openBulkSharePanel(){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
-  sharePanelContext={mode:'bulk',rows};
-  setSharePanelText('salesReceiptShareTitle','Share Selected Documents');
-  setSharePanelText('salesReceiptShareMeta',`${rows.length} selected invoice / receipt PDF file(s)`);
-  setSharePanelText('salesReceiptShareNativeLabel','Share PDF Files');
-  setSharePanelText('salesReceiptShareWhatsAppLabel','Download ZIP + WhatsApp');
-  setSharePanelText('salesReceiptShareTelegramLabel','Download ZIP + Telegram');
-  setSharePanelText('salesReceiptShareLinkLabel','Copy ZIP Link');
-  setSharePanelText('salesReceiptShareDownloadLabel','Download ZIP');
-  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=true;
-  const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
+  sharePanelContext={mode:'bulk',rows,temp:null,tempPromise:null};setSharePanelText('salesReceiptShareTitle','Share Selected Documents');setSharePanelText('salesReceiptShareMeta',`${rows.length} selected document(s) in one temporary ZIP`);setSharePanelText('salesReceiptShareNativeLabel','Share ZIP File');setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Temporary ZIP');setSharePanelText('salesReceiptShareTelegramLabel','Telegram Temporary ZIP');setSharePanelText('salesReceiptShareLinkLabel','Copy Temporary ZIP Link');setSharePanelText('salesReceiptShareDownloadLabel','Download ZIP');if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=true;const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
 }
-function manualAttachText(row,type,fileName){
-  return `${documentShareText(row,type)}\n\nPDF downloaded: ${fileName}\nPlease attach the downloaded PDF file to this chat.`;
-}
-function openManualAttachApp(target,text,phone=''){
-  let url='';
-  if(target==='whatsapp'){
-    const normalized=normalizeWhatsAppPhone(phone);url=normalized?`https://wa.me/${normalized}?text=${encodeURIComponent(text)}`:`https://wa.me/?text=${encodeURIComponent(text)}`;
-  }else{
-    url=`https://t.me/share/url?url=${encodeURIComponent('https://www.azobss.com')}&text=${encodeURIComponent(text)}`;
-  }
-  return setDirectShareWindow(null,url);
-}
-function downloadAndOpenSingle(target,row,type,button=null){
-  const api=pdfApi();if(!api)return notify('PDF generator is unavailable. Refresh this page and try again.',true);
+async function openTemporaryApp(target,context,button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const fileName=api.download(row,type);const message=manualAttachText(row,type,fileName);
-    copyPlainText(message).catch(()=>{});
-    const opened=openManualAttachApp(target,message,row.customerPhone);
-    if(!opened)throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
-    notify(`${fileName} downloaded. The message was copied; attach the downloaded file in ${target==='whatsapp'?'WhatsApp':'Telegram'}.`);
-    closeSharePanel();
-  }catch(e){console.error(e);notify('Could not download and open the app: '+(e.message||e),true)}
+    const data=await ensureSharePanelTemporary();let url='';
+    if(context.mode==='single')url=temporaryDirectShareUrl(context.row,context.type,target,data.shareUrl);
+    else{const text=`${bulkShareSummary(context.rows||[])}
+ZIP: ${data.shareUrl}`;url=target==='whatsapp'?`https://wa.me/?text=${encodeURIComponent(text)}`:`https://t.me/share/url?url=${encodeURIComponent(data.shareUrl)}&text=${encodeURIComponent(bulkShareSummary(context.rows||[]))}`}
+    if(!setDirectShareWindow(null,url))throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
+    notify(`Opened ${target==='whatsapp'?'WhatsApp':'Telegram'} with a temporary backend link. No local download was created.`);
+  }catch(e){console.error(e);notify('Could not open the app with the temporary file: '+(e.message||e),true)}
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
-}
-function downloadAndOpenBulk(target,rows,button=null){
-  if(!rows.length)return notify('Select at least one record first.',true);
-  if(button){button.disabled=true;button.classList.add('busy')}
-  try{
-    const entries=uniquePdfEntries(rows);const zip=buildStoredZip(entries);const fileName=bulkZipName(entries.length);downloadBytes(zip,fileName,'application/zip');
-    const message=`${bulkShareSummary(rows)}\n\nZIP downloaded: ${fileName}\nPlease attach the downloaded ZIP file to this chat.`;
-    copyPlainText(message).catch(()=>{});
-    const opened=openManualAttachApp(target,message,rows.length===1?rows[0].customerPhone:'');
-    if(!opened)throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
-    notify(`${fileName} downloaded. Attach it in ${target==='whatsapp'?'WhatsApp':'Telegram'}.`);
-    closeSharePanel();
-  }catch(e){console.error(e);notify('Could not prepare the selected documents: '+(e.message||e),true)}
-  finally{if(button){button.disabled=false;button.classList.remove('busy');updateBulkUI()}}
 }
 async function runSharePanelAction(action,button=null){
   const context=sharePanelContext;if(!context)return;
-  if(context.mode==='single'){
-    const {row,type}=context;
-    if(action==='native')return shareDocumentPdf(row,type,button);
-    if(action==='whatsapp')return downloadAndOpenSingle('whatsapp',row,type,button);
-    if(action==='telegram')return downloadAndOpenSingle('telegram',row,type,button);
-    if(action==='link')return copyDocumentShareLink(row,type,button);
-    if(action==='message'){
-      try{await copyPlainText(documentShareText(row,type));notify('Document message copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}return;
-    }
-    if(action==='download')return downloadDocumentPdf(row,type,button);
-    if(action==='print')return printDocument(row,type,button);
-    return;
+  if(action==='whatsapp'||action==='telegram')return openTemporaryApp(action,context,button);
+  if(action==='link'){
+    if(button){button.disabled=true;button.classList.add('busy')}
+    try{const data=await ensureSharePanelTemporary();await copyPlainText(data.shareUrl);notify('Temporary backend link copied. It will delete itself automatically.')}catch(e){notify('Could not copy the temporary link: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;
   }
-  const rows=context.rows||[];
-  if(action==='native')return bulkShareSelected(button);
-  if(action==='whatsapp')return downloadAndOpenBulk('whatsapp',rows,button);
-  if(action==='telegram')return downloadAndOpenBulk('telegram',rows,button);
-  if(action==='link')return bulkCopyLinkSelected(button);
   if(action==='message'){
-    try{await copyPlainText(bulkShareSummary(rows));notify('Selected-document message copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}return;
+    if(button){button.disabled=true;button.classList.add('busy')}
+    try{const data=await ensureSharePanelTemporary();const text=context.mode==='single'?temporaryShareText(context.row,context.type,data.shareUrl):`${bulkShareSummary(context.rows||[])}
+ZIP: ${data.shareUrl}`;await copyPlainText(text);notify('Message with temporary document link copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;
   }
-  if(action==='download')return bulkDownloadSelected(button);
+  if(action==='native'){
+    try{const data=await ensureSharePanelTemporary(button);const title=context.mode==='single'?`AZOBSS ${documentType(context.type)==='invoice'?'Invoice':'Receipt'} ${documentNo(context.row,context.type)}`:`AZOBSS ${context.rows.length} selected document(s)`;const text=context.mode==='single'?documentShareText(context.row,context.type):bulkShareSummary(context.rows);return shareTemporaryFile(data,title,text,button)}catch(e){notify('Could not prepare temporary share file: '+(e.message||e),true)}return;
+  }
+  if(action==='download'){
+    if(context.mode==='single')return downloadDocumentPdf(context.row,context.type,button);
+    return bulkDownloadSelected(button);
+  }
+  if(action==='print'&&context.mode==='single')return printDocument(context.row,context.type,button);
 }
 
 const AZ_SR_CRC_TABLE=(()=>{const table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0}return table})();
@@ -781,36 +789,26 @@ function buildStoredZip(entries){
   }
   const centralBytes=concatUint8(centrals);const end=new Uint8Array(22);const ev=new DataView(end.buffer);write32(ev,0,0x06054b50);write16(ev,4,0);write16(ev,6,0);write16(ev,8,entries.length);write16(ev,10,entries.length);write32(ev,12,centralBytes.length);write32(ev,16,offset);write16(ev,20,0);return concatUint8([...locals,centralBytes,end]);
 }
-function uniquePdfEntries(rows){const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable.');const used=new Map();return rows.map(row=>{const type=documentKindForStatus(row.status);let name=api.filename(row,type);const count=(used.get(name)||0)+1;used.set(name,count);if(count>1)name=name.replace(/\.pdf$/i,`-${count}.pdf`);return {name,bytes:api.buildBytes(row,type),row,type,lastModified:Date.now()}})}
+async function uniquePdfEntries(rows){const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable.');const used=new Map();const out=[];for(const original of rows){const type=documentKindForStatus(original.status);const row=await prepareRowForPdf(original,type);let name=api.filename(row,type);const count=(used.get(name)||0)+1;used.set(name,count);if(count>1)name=name.replace(/\.pdf$/i,`-${count}.pdf`);out.push({name,bytes:api.buildBytes(row,type),row,type,lastModified:Date.now()})}return out}
 function bulkZipName(count){return `AZOBSS-Invoices-Receipts-${localDateInput()}-${count}-files.zip`}
 function downloadBytes(bytes,name,type='application/octet-stream'){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);return name}
-async function bulkDownloadSelected(button=null){const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}try{const entries=uniquePdfEntries(rows);const zip=buildStoredZip(entries);const name=downloadBytes(zip,bulkZipName(entries.length),'application/zip');notify(`Downloaded ${entries.length} selected PDF(s) in ${name}.`)}catch(e){console.error(e);notify('Bulk download failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}}
-function bulkShareSummary(rows){const docs=rows.slice(0,8).map(r=>`${documentKindForStatus(r.status)==='invoice'?'Invoice':'Receipt'} ${currentDocumentNo(r)} - ${r.customerName}`);return [`AZOBSS selected documents: ${rows.length}`,...docs,rows.length>8?`+${rows.length-8} more document(s)`:'' ].filter(Boolean).join('\n')}
-async function createSelectedBundleShareLink(rows){
-  const entries=uniquePdfEntries(rows);const zipBytes=buildStoredZip(entries);const zipName=bulkZipName(entries.length);const blob=new Blob([zipBytes],{type:'application/zip'});return uploadShareBlob(blob,zipName,`BULK-${localDateInput()}-${entries.length}`,'application/zip');
+async function createSelectedBundleTemporary(rows){
+  if(!rows.length)throw new Error('Select at least one record first.');
+  const entries=await uniquePdfEntries(rows);const zipBytes=buildStoredZip(entries);const zipName=bulkZipName(entries.length);const blob=new Blob([zipBytes],{type:'application/zip'});return createTemporaryBlob(blob,zipName,`BULK-${localDateInput()}-${entries.length}`,'application/zip');
 }
+async function bulkDownloadSelected(button=null){
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}
+  let temp=null;try{temp=await createSelectedBundleTemporary(rows);const file=await fetchTemporaryFile(temp);downloadBlobFile(file,file.name||temp.filename);await deleteTemporaryDocument(temp).catch(()=>{});if(sharePanelContext?.temp?.id===temp.id)sharePanelContext.temp=null;notify(`Downloaded ${rows.length} selected document(s) from the temporary backend ZIP.`)}catch(e){console.error(e);notify('Bulk download failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');button.disabled=false;updateBulkUI()}}
+}
+function bulkShareSummary(rows){const docs=rows.slice(0,8).map(r=>`${documentKindForStatus(r.status)==='invoice'?'Invoice':'Receipt'} ${currentDocumentNo(r)} - ${r.customerName}`);return [`AZOBSS selected documents: ${rows.length}`,...docs,rows.length>8?`+${rows.length-8} more document(s)`:'' ].filter(Boolean).join('
+')}
 async function bulkCopyLinkSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);if(button){button.disabled=true;button.classList.add('busy')}
-  try{const data=await createSelectedBundleShareLink(rows);await copyPlainText(data.shareUrl);notify(`Bulk ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');updateBulkUI()}}
+  try{const data=await createSelectedBundleTemporary(rows);await copyPlainText(data.shareUrl);notify(`Temporary ZIP link copied for ${rows.length} selected document(s).`)}catch(e){console.error(e);notify('Bulk link failed: '+(e.message||e),true)}finally{if(button){button.classList.remove('busy');button.disabled=false;updateBulkUI()}}
 }
 async function bulkShareSelected(button=null){
-  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
-  const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase()));
-  if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
-  if(button){button.disabled=true;button.classList.add('busy')}
-  try{
-    const entries=uniquePdfEntries(rows);const files=entries.map(entry=>new File([entry.bytes],entry.name,{type:'application/pdf',lastModified:entry.lastModified||Date.now()}));
-    if(nativeFileShareSupported(files)){
-      await navigator.share({files,title:`AZOBSS ${rows.length} selected document(s)`,text:bulkShareSummary(rows)});
-      notify(`${rows.length} PDF file(s) sent to the share panel. Choose any available app.`);
-      return;
-    }
-    const zipBytes=buildStoredZip(entries);downloadBytes(zipBytes,bulkZipName(entries.length),'application/zip');
-    notify('This browser cannot share multiple PDF files directly. A ZIP was downloaded for manual attachment.',true);
-  }catch(e){
-    if(e&&e.name==='AbortError')return;
-    console.error(e);notify('Bulk PDF sharing failed: '+(e.message||e),true)
-  }finally{if(button){button.disabled=false;button.classList.remove('busy');updateBulkUI()}}
+  const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const customers=new Set(rows.map(r=>normalizeWhatsAppPhone(r.customerPhone)||String(r.customerEmail||r.customerName||'').toLowerCase());if(customers.size>1&&!confirm(`${rows.length} selected documents belong to ${customers.size} different customers. They will be shared together. Continue?`))return;
+  let temp=null;try{temp=await createSelectedBundleTemporary(rows);return await shareTemporaryFile(temp,`AZOBSS ${rows.length} selected document(s)`,bulkShareSummary(rows),button)}catch(e){console.error(e);notify('Bulk file sharing failed: '+(e.message||e),true)}finally{updateBulkUI()}
 }
 async function bulkDeleteSelected(button=null){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);const paid=rows.filter(r=>isRecognizedPayment(r.status)).length;const manual=rows.filter(r=>r.source==='manual');const website=rows.filter(r=>r.source==='website');const warning=paid?`\n\nWarning: ${paid} Paid record(s) will be removed from sales and profit totals.`:'';
@@ -842,8 +840,22 @@ function bind(){
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden)closeForm()});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType)}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
+function startManualReceiptPaymentWatch(){
+  if(manualReceiptWatchUnsubscribe)return;
+  manualReceiptWatchUnsubscribe=onSnapshot(query(collection(db,'receipts'),limit(1000)),snapshot=>{
+    if(!manualReceiptWatchReady){manualReceiptWatchReady=true;return}
+    const changed=snapshot.docChanges().some(change=>String(change.doc.data()?.source||'')===MANUAL_SOURCE);
+    if(!changed)return;
+    clearTimeout(manualReceiptReloadTimer);
+    manualReceiptReloadTimer=setTimeout(()=>{
+      const section=el('salesreceipts');
+      if(section?.classList.contains('active')&&el('salesReceiptDialog')?.hidden!==false)loadData().catch(error=>console.warn('Automatic ToyyibPay receipt refresh skipped:',error));
+    },650);
+  },error=>console.warn('Manual invoice payment watch unavailable:',error));
+}
+
 let salesReceiptsAutoLoadQueued=false;
 async function autoLoadSalesReceiptsWhenActive(){
   const section=el('salesreceipts');
@@ -868,7 +880,7 @@ bind();
 const queueSalesReceiptsAutoLoad=()=>setTimeout(()=>autoLoadSalesReceiptsWhenActive(),0);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',queueSalesReceiptsAutoLoad,{once:true});
 else queueSalesReceiptsAutoLoad();
-onAuthStateChanged(auth,user=>{if(user)queueSalesReceiptsAutoLoad()});
+onAuthStateChanged(auth,user=>{if(user){startManualReceiptPaymentWatch();queueSalesReceiptsAutoLoad()}});
 const salesReceiptsSection=el('salesreceipts');
 if(salesReceiptsSection){
   new MutationObserver(()=>{
