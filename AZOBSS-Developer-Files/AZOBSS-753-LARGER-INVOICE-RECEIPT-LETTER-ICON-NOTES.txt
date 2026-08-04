@@ -1,0 +1,7 @@
+AZOBSS Patch 753
+
+- Enlarged the I letter for Invoice actions.
+- Enlarged the R letter for Receipt actions.
+- Enlarged and clarified the faint document/receipt paper silhouette behind each letter.
+- Kept the circular action button size unchanged so the Actions column remains compact.
+- Cache version updated to v=753.

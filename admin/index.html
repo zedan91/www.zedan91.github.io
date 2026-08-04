@@ -1771,7 +1771,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
 <script defer src="/assets/js/azobss-more-nav.js?v=713"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=751">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=753">
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2517,7 +2517,7 @@ body[data-dashboard-page="admin"] .topbar{
               <label><span id="salesReceiptDocumentNoLabel">Receipt No</span><input id="salesReceiptReceiptNo" readonly></label>
               <label>Sale Date & Time<input id="salesReceiptSaleDate" type="datetime-local" step="60"></label>
               <label>Status<select id="salesReceiptFormStatus"><option value="paid">Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
-              <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option></select></label><div class="az-sr-toyyib-hint">Pending + ToyyibPay creates a payment QR automatically in the invoice. After verified payment, the same record becomes a Paid receipt.</div>
+              <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option></select></label><div class="az-sr-toyyib-hint">Pending invoices automatically use ToyyibPay and include a unique payment QR in the PDF. After verified payment, the same record becomes a Paid receipt.</div>
               <label class="az-sr-span-2">Customer Name<input id="salesReceiptCustomerName" placeholder="Customer name"></label>
               <label>Phone<input id="salesReceiptCustomerPhone" placeholder="01X-XXXX XXXX"></label>
               <label>Email<input id="salesReceiptCustomerEmail" type="email" placeholder="customer@email.com"></label>
@@ -7727,6 +7727,6 @@ document.addEventListener('click', async function(e){
 </script>
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=747"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=751" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=753" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 </body>
 </html>

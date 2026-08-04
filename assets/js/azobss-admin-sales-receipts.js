@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 751: distinct Invoice I and Receipt R document icons */
+/* AZOBSS PATCH 753: Larger Invoice I and Receipt R document icons */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -10,7 +10,7 @@ const db=getFirestore(app);
 const BACKEND='https://azobss-backend.onrender.com';
 const MANUAL_SOURCE='admin-manual-sale';
 const PAGE_SIZE=10;
-window.__azSalesReceiptsModuleVersion=750;
+window.__azSalesReceiptsModuleVersion=753;
 
 let manualRows=[];
 let websiteRows=[];
@@ -365,8 +365,8 @@ function setRowsSelected(rows,checked){rows.forEach(r=>{if(checked)selectedRowId
 function actionIcon(name){
   const icons={
     download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>',
-    invoice:'<svg viewBox="0 0 24 24" aria-hidden="true"><path opacity=".34" d="M6 3h9l3 3v18H6Z"/><path opacity=".34" d="M15 3v4h4"/><text x="12" y="16.3" text-anchor="middle" style="fill:currentColor;stroke:none;font:900 12px Arial,sans-serif">I</text></svg>',
-    receipt:'<svg viewBox="0 0 24 24" aria-hidden="true"><path opacity=".34" d="M6 3h9l3 3v18H6Z"/><path opacity=".34" d="M15 3v4h4"/><text x="12" y="16.3" text-anchor="middle" style="fill:currentColor;stroke:none;font:900 11px Arial,sans-serif">R</text></svg>',
+    invoice:'<svg class="az-sr-doc-letter-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="az-sr-doc-paper" opacity=".42" d="M4 1.5h11l5 5V22.5H4Z"/><path class="az-sr-doc-fold" opacity=".42" d="M15 1.5V7h5"/><text x="12" y="18" text-anchor="middle" style="fill:currentColor;stroke:none;font:900 16px Arial,sans-serif">I</text></svg>',
+    receipt:'<svg class="az-sr-doc-letter-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="az-sr-doc-paper" opacity=".42" d="M4.5 1.5h15v21l-2.5-1.8-2.5 1.8-2.5-1.8-2.5 1.8-2.5-1.8-2.5 1.8Z"/><path class="az-sr-doc-fold" opacity=".28" d="M7.5 5h9M7.5 8h9"/><text x="12" y="18" text-anchor="middle" style="fill:currentColor;stroke:none;font:900 15px Arial,sans-serif">R</text></svg>',
     link:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>',
     share:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>',
     whatsapp:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg>',
@@ -400,7 +400,7 @@ function renderTable(){
       iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
-    if(r.source==='manual'&&docType==='invoice'&&/toyyib/i.test(String(r.paymentMethod||'')))actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
+    if(r.source==='manual'&&docType==='invoice'&&normalizeStatus(r.status)==='pending')actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
     if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
     actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
@@ -493,11 +493,16 @@ function syncFormDocumentMode(initial=false){
   if(el('salesReceiptDialogTitle'))el('salesReceiptDialogTitle').textContent=`${editingDocId?'Edit':'Create'} Manual ${label}`;
   if(el('salesReceiptItemsTitle'))el('salesReceiptItemsTitle').textContent=label+' Items';
   if(el('salesReceiptSave'))el('salesReceiptSave').textContent='Save '+label;
+  const paymentSelect=el('salesReceiptPaymentMethod');
+  if(paymentSelect){
+    if(status==='pending'){paymentSelect.value='ToyyibPay';paymentSelect.disabled=true;paymentSelect.title='Pending invoices use ToyyibPay so the PDF can include a unique payment QR.'}
+    else{paymentSelect.disabled=false;paymentSelect.title=''}
+  }
   recalcForm();
 }
 function openForm(row=null){
   editingDocId=row?.docId||'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
-  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=row?.paymentMethod||'Bank Transfer';el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;el('salesReceiptPaymentFee').value=num(row?.paymentFee)||0;el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
+  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;el('salesReceiptPaymentFee').value=num(row?.paymentFee)||0;el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
   const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'physical',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
 }
@@ -511,14 +516,14 @@ async function saveForm(){
   const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
   const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
-  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail:String(el('salesReceiptCustomerEmail')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail:String(el('salesReceiptCustomerEmail')?.value||'').trim(),status,paymentMethod:status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
     let savedId=editId;
     if(wasEditing)await updateDoc(doc(db,'receipts',editId),payload);else{const created=await addDoc(collection(db,'receipts'),{...payload,createdAt:serverTimestamp(),createdAtMs:Date.now()});savedId=created.id}
     let toyyibReady=false;
-    if(kind==='invoice'&&status==='pending'&&/toyyib/i.test(String(payload.paymentMethod||''))){
+    if(kind==='invoice'&&status==='pending'){
       const draftRow=normalizeManual(savedId,{...(existing||{}),...payload,docId:savedId,id:savedId});
       await ensureToyyibPayInvoice(draftRow,{silent:true});toyyibReady=true;
     }
@@ -539,8 +544,8 @@ async function adminBackendHeaders(){
 }
 
 async function ensureToyyibPayInvoice(row,{silent=false}={}){
-  if(!row||row.source!=='manual'||documentKindForStatus(row.status)!=='invoice')return row;
-  if(!/toyyib/i.test(String(row.paymentMethod||'')))return row;
+  if(!row||row.source!=='manual'||documentKindForStatus(row.status)!=='invoice'||normalizeStatus(row.status)!=='pending')return row;
+  row.paymentMethod='ToyyibPay';
   if(num(row.gross)<=0)throw new Error('Invoice total must be more than RM0.00 before generating ToyyibPay QR.');
   const res=await fetch(BACKEND+'/api/admin/sales-invoice/toyyibpay-bill',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({receiptId:row.docId}),cache:'no-store'});
   const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){}
@@ -552,7 +557,7 @@ async function ensureToyyibPayInvoice(row,{silent=false}={}){
 }
 async function prepareRowForPdf(row,type='receipt'){
   const docType=documentType(type);
-  if(docType==='invoice'&&row?.source==='manual'&&normalizeStatus(row.status)==='pending'&&/toyyib/i.test(String(row.paymentMethod||''))){
+  if(docType==='invoice'&&row?.source==='manual'&&normalizeStatus(row.status)==='pending'){
     return await ensureToyyibPayInvoice(row,{silent:true});
   }
   return row;

@@ -534,3 +534,28 @@
 
 /* PATCH 747: ToyyibPay invoice QR */
 .az-sr-toyyib-hint{grid-column:1/-1;margin-top:-4px;padding:9px 12px;border:1px dashed rgba(56,189,248,.42);border-radius:10px;background:rgba(14,116,144,.10);color:#bae6fd;font-size:11px;line-height:1.45}.az-sr-icon-btn.pay{background:#f59e0b;border-color:#fbbf24;color:#111827}.az-sr-icon-btn.pay:hover{filter:brightness(1.08)}
+
+/* AZOBSS PATCH 753: enlarge Invoice/Receipt document glyphs without enlarging the round action button */
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon{
+  width:21px!important;
+  height:21px!important;
+  overflow:visible!important;
+}
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon .az-sr-doc-paper,
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon .az-sr-doc-fold,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon .az-sr-doc-paper,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon .az-sr-doc-fold{
+  fill:currentColor!important;
+  stroke:currentColor!important;
+  stroke-width:1.05!important;
+}
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon text,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon text{
+  fill:#fff!important;
+  stroke:none!important;
+}
+@media(max-width:720px){
+  .az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon,
+  .az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon{width:20px!important;height:20px!important}
+}
