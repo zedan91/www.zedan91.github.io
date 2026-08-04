@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 759: Firestore quota saver, cached ToyyibPay QR reuse and low-frequency status refresh */
+/* AZOBSS PATCH 762: Manual ToyyibPay invoices default to RM1 payment fee */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -13,7 +13,8 @@ const PAGE_SIZE=10;
 const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
-window.__azSalesReceiptsModuleVersion=759;
+const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
+window.__azSalesReceiptsModuleVersion=762;
 
 let manualRows=[];
 let websiteRows=[];
@@ -497,6 +498,19 @@ function addItemRow(item={}){
 }
 function collectFormItems(){return [...document.querySelectorAll('#salesReceiptItems .az-sr-item-row')].map(row=>({category:row.querySelector('[data-sr-item-category]')?.value||'other',name:String(row.querySelector('[data-sr-item-name]')?.value||'').trim(),qty:num(row.querySelector('[data-sr-item-qty]')?.value)||1,unitPrice:num(row.querySelector('[data-sr-item-price]')?.value),unitCost:num(row.querySelector('[data-sr-item-cost]')?.value)}))}
 function formExtras(){return {discount:num(el('salesReceiptDiscount')?.value),shippingCharge:num(el('salesReceiptShippingCharge')?.value),shippingCost:num(el('salesReceiptShippingCost')?.value),paymentFee:num(el('salesReceiptPaymentFee')?.value),commission:num(el('salesReceiptCommission')?.value),otherCost:num(el('salesReceiptOtherCost')?.value)}}
+function manualFormUsesToyyibPay(){
+  const status=normalizeStatus(el('salesReceiptFormStatus')?.value);
+  const method=status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'');
+  return /toyyib/i.test(method);
+}
+function syncManualPaymentFeeDefault(){
+  const input=el('salesReceiptPaymentFee');if(!input)return;
+  if(manualFormUsesToyyibPay()){
+    if(num(input.value)<=0){input.value=String(DEFAULT_MANUAL_TOYYIBPAY_FEE_RM);input.dataset.autoToyyibFee='1'}
+  }else if(input.dataset.autoToyyibFee==='1'){
+    input.value='0';delete input.dataset.autoToyyibFee;
+  }
+}
 function recalcForm(){
   const c=manualCalc(collectFormItems(),formExtras());const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const recognized=isRecognizedPayment(status);
   const set=(id,v)=>{if(el(id))el(id).textContent=money(v)};
@@ -523,11 +537,14 @@ function syncFormDocumentMode(initial=false){
     if(status==='pending'){paymentSelect.value='ToyyibPay';paymentSelect.disabled=true;paymentSelect.title='Pending invoices use ToyyibPay so the PDF can include a unique payment QR.'}
     else{paymentSelect.disabled=false;paymentSelect.title=''}
   }
+  syncManualPaymentFeeDefault();
   recalcForm();
 }
 function openForm(row=null){
   editingDocId=row?.docId||'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
-  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;el('salesReceiptPaymentFee').value=num(row?.paymentFee)||0;el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
+  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
+  const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
+  el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
   const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
 }
@@ -953,8 +970,10 @@ function bind(){
   el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkShare')?.addEventListener('click',openBulkSharePanel);el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'other',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog')){e.preventDefault();e.stopPropagation()}});
   el('salesReceiptShareClose')?.addEventListener('click',closeSharePanel);el('salesReceiptSharePanel')?.addEventListener('click',e=>{if(e.target===el('salesReceiptSharePanel')){closeSharePanel();return}const action=e.target.closest('[data-sr-share-action]');if(action)runSharePanelAction(action.dataset.srShareAction,action)});
-  ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
+  ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));
+  el('salesReceiptPaymentFee')?.addEventListener('input',e=>{delete e.currentTarget.dataset.autoToyyibFee;recalcForm()});
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
+  el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
   document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});

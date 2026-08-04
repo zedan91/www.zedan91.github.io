@@ -2538,7 +2538,7 @@ body[data-dashboard-page="admin"] .topbar{
               <label>Discount (RM)<input id="salesReceiptDiscount" type="number" min="0" step="0.01" value="0"></label>
               <label>Shipping Charged (RM)<input id="salesReceiptShippingCharge" type="number" min="0" step="0.01" value="0"></label>
               <label>Shipping Cost (RM)<input id="salesReceiptShippingCost" type="number" min="0" step="0.01" value="0"></label>
-              <label>Payment Fee (RM)<input id="salesReceiptPaymentFee" type="number" min="0" step="0.01" value="0"></label>
+              <label>Payment Fee (RM)<input id="salesReceiptPaymentFee" type="number" min="0" step="0.01" value="1"></label>
               <label>Commission (RM)<input id="salesReceiptCommission" type="number" min="0" step="0.01" value="0"></label>
               <label>Other Cost (RM)<input id="salesReceiptOtherCost" type="number" min="0" step="0.01" value="0"></label>
             </div>
@@ -7781,6 +7781,6 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=759"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=760" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=762" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 </body>
 </html>
