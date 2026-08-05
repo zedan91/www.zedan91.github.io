@@ -9692,6 +9692,22 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <style id="az770-service-booking-card-link-fix">
 .services-grid .az770-service-booking-link{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:40px!important;margin-top:10px!important;padding:9px 12px!important;border-radius:10px!important;border:1px solid rgba(34,211,238,.48)!important;background:rgba(8,78,104,.28)!important;color:#a5f3fc!important;text-decoration:none!important;font-weight:900!important;font-size:13px!important}.services-grid .az770-service-booking-link:hover{background:rgba(8,145,178,.28)!important;border-color:#67e8f9!important;color:#ecfeff!important}
 </style>
+<style id="az816-home-clickable-service-card-text-decoration-fix">
+/* Linked service cards must look like cards, not underlined text links. */
+.services-grid a.service-card,
+.services-grid a.service-card:link,
+.services-grid a.service-card:visited,
+.services-grid a.service-card:hover,
+.services-grid a.service-card:active {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+.services-grid a.service-card > p,
+.services-grid a.service-card .service-info,
+.services-grid a.service-card .service-info p {
+  text-decoration: none !important;
+}
+</style>
 <div class="grid services-grid">
 <a aria-label="Tempah Format Windows" class="card service-card" href="/Tempah-Servis-IT/">
 <img alt="Format Windows" src="images/format-windows.webp?v=715" width="362" height="328" loading="eager" decoding="async" fetchpriority="high"/>
