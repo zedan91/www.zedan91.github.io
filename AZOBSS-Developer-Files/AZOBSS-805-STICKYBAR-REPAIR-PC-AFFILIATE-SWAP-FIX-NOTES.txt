@@ -1,0 +1,9 @@
+AZOBSS PATCH 805 — STICKYBAR REPAIR PC / AFFILIATE SHOP POSITION SWAP
+Date: 2026-08-05
+Baseline: (804)-AZOBSS-TEMPAH-SERVIS-IT-INVOICE-BOOKING-DATETIME-AUTOFILL-FIX_20260805.zip
+
+Changes:
+- Swapped the sticky navigation order so Repair PC appears immediately before Affiliate Shop.
+- Updated the shared stickybar navigation helper, so the same order is preserved across pages using assets/js/azobss-more-nav.js.
+- Existing Repair PC links are also repositioned before Affiliate Shop, avoiding duplicate links.
+- All features and fixes from baseline (804) are preserved.

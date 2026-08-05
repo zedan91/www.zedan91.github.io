@@ -1,4 +1,4 @@
-/* AZOBSS 780: More menu contains Mini Web Tools, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
+/* AZOBSS 805: More menu contains Mini Web Tools, Bina Website and Food - Brownies; Repair PC is placed before Affiliate Shop. */
 (function () {
   'use strict';
 
@@ -271,6 +271,14 @@
 
     document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
       var existingLink = nav.querySelector('a[data-az-repair-service-link="1"], a[href="/Tempah-Servis-IT/"], a[href="/Tempah-Servis-IT"]');
+      var affiliateLink = Array.prototype.find.call(nav.querySelectorAll('a[href]'), function (candidate) {
+        try {
+          return normalisePath(new URL(candidate.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/affiliate-shop';
+        } catch (error) {
+          return false;
+        }
+      });
+
       if (existingLink) {
         existingLink.dataset.azRepairServiceLink = '1';
         existingLink.textContent = 'Repair PC';
@@ -279,16 +287,14 @@
           existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
           existingLink.setAttribute('aria-current', 'page');
         }
+
+        // Keep the requested desktop/mobile order: Repair PC, then Affiliate Shop.
+        if (affiliateLink && existingLink.nextElementSibling !== affiliateLink) {
+          affiliateLink.insertAdjacentElement('beforebegin', existingLink);
+        }
         return;
       }
 
-      var affiliateLink = Array.prototype.find.call(nav.querySelectorAll('a[href]'), function (candidate) {
-        try {
-          return normalisePath(new URL(candidate.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/affiliate-shop';
-        } catch (error) {
-          return false;
-        }
-      });
       if (!affiliateLink) return;
 
       var repairLink = document.createElement('a');
@@ -304,7 +310,7 @@
         repairLink.setAttribute('aria-current', 'page');
       }
 
-      affiliateLink.insertAdjacentElement('afterend', repairLink);
+      affiliateLink.insertAdjacentElement('beforebegin', repairLink);
     });
   }
 
