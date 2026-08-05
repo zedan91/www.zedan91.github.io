@@ -11263,7 +11263,7 @@ const AZ_SERVICE_LOGISTICS = Object.freeze({
   "On-site": { pickupFee:0, deliveryFee:0 },
   "Bincang melalui WhatsApp": { pickupFee:0, deliveryFee:0 }
 });
-const AZ_SERVICE_BOOKING_CENTER = Object.freeze({ lat:3.2380, lng:101.6820, label:"Batu Caves" });
+const AZ_SERVICE_BOOKING_CENTER = Object.freeze({ lat:3.255511332218502, lng:101.69410874034087, label:"Kedai AZOBSS" });
 const AZ_SERVICE_BOOKING_RADIUS_KM = 10;
 function azServiceBookingCoordinate(value, min, max) {
   const text = String(value == null ? "" : value).trim();
@@ -11357,7 +11357,7 @@ function azServiceBookingMessage(row) {
     `E-mel: ${row.customerEmail || "-"}`,
     `Kawasan: ${row.customerArea}`,
     `WGS84: ${row.locationWgs84 || "-"}`,
-    `Jarak dari Batu Caves: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
+    `Jarak dari kedai AZOBSS: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
     `Peta: ${row.locationMapUrl || "-"}`,
     `Alamat ringkas: ${row.fullAddress || "-"}`,
     `Cara serahan: ${row.serviceMethod}`,
@@ -11409,7 +11409,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   if (customerEmailRaw && !customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
   if (customerArea.length < 2) throw Object.assign(new Error("Nama lokasi diperlukan. Sila pilih lokasi pada peta."), { statusCode:400 });
   if (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude)) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });
-  if (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari Batu Caves.`), { statusCode:400 });
+  if (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari kedai AZOBSS.`), { statusCode:400 });
   if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
   const serviceMethod = azServiceBookingText(body.serviceMethod, 80) || "Bincang melalui WhatsApp";
   const screenSize = azServiceBookingText(body.screenSize, 60);
@@ -11432,6 +11432,9 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     locationWgs84:`${locationLatitude.toFixed(6)}, ${locationLongitude.toFixed(6)}`,
     locationDistanceKm:Number(locationDistanceKm.toFixed(3)),
     locationRadiusKm:AZ_SERVICE_BOOKING_RADIUS_KM,
+    locationCenterLabel:AZ_SERVICE_BOOKING_CENTER.label,
+    locationCenterLatitude:AZ_SERVICE_BOOKING_CENTER.lat,
+    locationCenterLongitude:AZ_SERVICE_BOOKING_CENTER.lng,
     locationMapUrl:`https://www.google.com/maps?q=${locationLatitude.toFixed(7)},${locationLongitude.toFixed(7)}`,
     fullAddress:azServiceBookingText(body.fullAddress, 400),
     deviceType, deviceBrand, deviceModel,
