@@ -1,0 +1,8 @@
+AZOBSS PATCH 801 — SALES & RECEIPTS SERVICE BOOKINGS SHORTCUT
+Date: 2026-08-05
+Baseline: (800)-AZOBSS-TEMPAH-SERVIS-IT-MOBILE-LOCATION-FLOATING-CLEARANCE-FIX_20260805.zip
+
+Changes:
+1. Added a "🛠️ Service Bookings" shortcut button immediately to the right of "＋ Create Invoice / Receipt" in Admin > Sales & Receipts.
+2. The shortcut opens the existing Service Bookings tab through the sidebar navigation, so the correct sidebar item remains highlighted and the normal section initialization still runs.
+3. Existing Refresh, Export CSV, draft invoice, quota saver, floating summary, mobile location modal clearance and all baseline (800) features are retained.

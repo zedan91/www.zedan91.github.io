@@ -2451,6 +2451,7 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="card az-sr-hero az-sr-hero-compact">
         <div class="az-sr-hero-actions">
           <button class="btn green" id="salesReceiptNew" type="button">＋ Create Invoice / Receipt</button>
+          <button class="btn" id="salesReceiptServiceBookingsShortcut" type="button" title="Open Service Bookings">🛠️ Service Bookings</button>
           <button class="btn" id="salesReceiptRefresh" type="button">↻ Refresh</button>
           <button class="btn gray" id="salesReceiptExport" type="button">⇩ Export CSV</button>
         </div>
@@ -3401,6 +3402,14 @@ async function azAdminFetchBlob(url,options={}){
   }
   return {blob:await res.blob(), filename:azFilenameFromDisposition(res.headers.get('content-disposition'))};
 }
+// AZOBSS PATCH 802: Expose the authenticated admin request helpers to later
+// classic scripts. The main admin controller is an ES module, so its function
+// declarations are not automatically attached to window. Service Bookings is
+// a classic script and must use this bridge to include the Firebase ID token.
+window.azAdminAuthHeaders = azAdminAuthHeaders;
+window.azAdminFetchJson = azAdminFetchJson;
+window.azAdminFetchBlob = azAdminFetchBlob;
+
 async function viewAdminPayoutReceipt(requestId){
   try{
     if(!requestId) return toast('Missing payout request ID.');
@@ -6196,6 +6205,12 @@ async function initSection(id){
   if(id==='settings')return loadSettings();
 }
 document.addEventListener('click',async e=>{
+  const serviceBookingsShortcut=e.target.closest('#salesReceiptServiceBookingsShortcut');
+  if(serviceBookingsShortcut){
+    const serviceBookingsNav=document.querySelector('.sidebar .nav [data-tab="servicebookings"]');
+    if(serviceBookingsNav)serviceBookingsNav.click();
+    return;
+  }
   const tab=e.target.closest('[data-tab]');
   if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
   const overviewLoadButton=e.target.closest('#loadOverviewData');
@@ -7830,7 +7845,14 @@ document.addEventListener('click', async function(e){
   function rangeMoney(min,max,plus=false){const a=money(min),b=money(max==null?min:max);return Number(min||0)===Number(max==null?min:max)?a:`${a} – ${b}${plus?'+':''}`;}
   function bookingEstimate(x){return x?.estimateDisplay||rangeMoney(x?.estimatedMinimum,x?.estimatedMaximum??x?.estimatedMinimum,Boolean(x?.estimateHasPlus));}
   function servicePrice(s){return s?.priceLabel||rangeMoney(s?.minPrice??s?.price,s?.maxPrice??s?.price,Boolean(s?.plus));}
-  async function request(path,opt={}){if(typeof window.azAdminFetchJson==='function')return await window.azAdminFetchJson(API+path,opt);const r=await fetch(API+path,opt),j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Request failed');return j;}
+  async function request(path,opt={}){
+    // PATCH 802: Never fall back to an unauthenticated fetch. The authenticated
+    // helper lives in the main ES module and is exposed through window after
+    // Firebase admin initialization. Wait briefly if the module is still starting.
+    for(let i=0;i<40&&typeof window.azAdminFetchJson!=='function';i++)await new Promise(r=>setTimeout(r,50));
+    if(typeof window.azAdminFetchJson!=='function')throw new Error('Admin authentication helper is not ready. Refresh the page and try again.');
+    return await window.azAdminFetchJson(API+path,opt);
+  }
   function filtered(){const q=String($('serviceBookingSearch')?.value||'').trim().toLowerCase(),f=String($('serviceBookingStatusFilter')?.value||'all');return cache.filter(x=>{if(f!=='all'&&String(x.status||'new')!==f)return false;const hay=[x.bookingId,x.customerName,x.customerPhone,x.customerArea,x.locationWgs84,x.fullAddress,x.deviceBrand,x.deviceModel,x.problemDetails,x.invoiceNo,x.receiptNo,x.invoiceStatus,x.paymentStatus,(x.issues||[]).join(' '),(x.services||[]).map(s=>s.name).join(' ')].join(' ').toLowerCase();return !q||hay.includes(q);});}
   const AZOBSS_SHOP_CENTER={lat:3.255511332218502,lng:101.69410874034087};
   function bookingDistanceToShop(x){
