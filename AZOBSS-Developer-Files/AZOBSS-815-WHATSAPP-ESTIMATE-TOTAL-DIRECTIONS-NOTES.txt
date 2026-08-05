@@ -1,0 +1,12 @@
+AZOBSS Patch 815 — WhatsApp Estimate Total & Customer-to-Shop Directions
+
+Baseline: (814)-AZOBSS-TEMPAH-SERVIS-IT-OTHER-ISSUE-TEXTBOX-FORM-CLEANUP-FIX_20260806.zip
+
+Changes:
+1. `Anggaran julat` is now shown immediately below `Kos logistik` so it reads as the combined service + logistics total.
+2. Only the value after `Anggaran julat:` is bold in WhatsApp.
+3. New bookings save `locationMapUrl` as a Google Maps driving-directions URL using the selected customer coordinates as origin and the AZOBSS shop as destination.
+4. The fast frontend fallback message uses the same directions URL and formatting.
+5. The duplicate fallback-only `Lokasi hantar AZOBSS` link was removed because the `Peta` link now already opens the full route.
+6. Admin Service Bookings map-link wording is updated to `Buka Google Maps`.
+7. All functions from patch 814 are retained.

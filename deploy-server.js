@@ -11365,6 +11365,11 @@ function azServiceBookingEstimate(serviceIds, screenSize, screenType, serviceMet
   const onsiteFee = Number(logisticsConfig.onsiteFee || 0);
   return { services, logistics, minimum:Math.round(minimum*100)/100, maximum:Math.round(maximum*100)/100, total:Math.round(minimum*100)/100, suffix:plus?"+":"", plus, pickupFee, deliveryFee, transportFee, onsiteFee, logisticsTotal:pickupFee+deliveryFee+transportFee+onsiteFee, display:azServiceBookingRangeLabel(minimum,maximum,plus) };
 }
+function azServiceBookingDirectionsUrl(originLat, originLng) {
+  const lat = Number(originLat), lng = Number(originLng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return "";
+  return `https://www.google.com/maps/dir/?api=1&origin=${lat.toFixed(7)},${lng.toFixed(7)}&destination=${AZ_SERVICE_BOOKING_CENTER.lat},${AZ_SERVICE_BOOKING_CENTER.lng}&travelmode=driving&dir_action=navigate`;
+}
 function azServiceBookingWhatsappNumber() {
   const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "601135600723").replace(/\D/g, "");
   // Auto-migrate the previous AZOBSS service number if it is still stored in Render ENV.
@@ -11398,9 +11403,9 @@ function azServiceBookingMessage(row) {
     "",
     "Kos logistik:",
     ...(logisticLines.length ? logisticLines : ["*- Tiada caj pickup/penghantaran dipilih*"]),
+    `Anggaran julat: *${(serviceLines.length || logisticLines.length) ? estimateDisplay : "Perlu pemeriksaan"}*`,
     "",
     `Masalah: ${(row.issues || []).join(", ") || "-"}`,
-    `Anggaran julat: ${(serviceLines.length || logisticLines.length) ? estimateDisplay : "Perlu pemeriksaan"}`,
     "",
     `Tarikh / masa : *${row.preferredDate || "Fleksibel"} • ${row.preferredTime || "Fleksibel"}*`,
     `Keutamaan: ${row.urgency || "Biasa"}`,
@@ -11464,7 +11469,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     locationCenterLabel:AZ_SERVICE_BOOKING_CENTER.label,
     locationCenterLatitude:AZ_SERVICE_BOOKING_CENTER.lat,
     locationCenterLongitude:AZ_SERVICE_BOOKING_CENTER.lng,
-    locationMapUrl:`https://www.google.com/maps?q=${locationLatitude.toFixed(7)},${locationLongitude.toFixed(7)}`,
+    locationMapUrl:azServiceBookingDirectionsUrl(locationLatitude, locationLongitude),
     fullAddress:azServiceBookingText(body.fullAddress, 400),
     deviceType, deviceBrand, deviceModel,
     screenSize,
