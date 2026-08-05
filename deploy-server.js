@@ -11526,7 +11526,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   row.whatsappNumber = azServiceBookingWhatsappNumber();
   await ref.set(azJsonSafe(row), { merge:true });
   const notificationId = `service_${bookingId.toLowerCase().replace(/[^a-z0-9_-]+/g, "-")}`;
-  await db.collection("adminNotifications").doc(notificationId).set(azJsonSafe({
+  const notificationPayload = azJsonSafe({
     id:notificationId,
     docId:notificationId,
     type:"service_booking",
@@ -11548,7 +11548,13 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     createdAtMs:nowMs,
     updatedAt:nowIso,
     updatedAtMs:nowMs
-  }), { merge:true });
+  });
+  // The main serviceBookings write is the only operation that blocks the customer.
+  // Admin notification is queued after the response path so WhatsApp can open faster.
+  setImmediate(() => {
+    db.collection("adminNotifications").doc(notificationId).set(notificationPayload, { merge:true })
+      .catch(error => console.warn("AZOBSS service booking notification background save failed:", error && (error.message || error)));
+  });
   const whatsappUrl = `https://wa.me/${row.whatsappNumber}?text=${encodeURIComponent(row.whatsappMessage)}`;
   return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.minimum, estimatedMaximum:estimate.maximum, estimateDisplay:estimate.display, estimateSuffix:estimate.suffix, estimateHasPlus:estimate.plus, pickupFee:estimate.pickupFee, deliveryFee:estimate.deliveryFee, transportFee:estimate.transportFee, onsiteFee:estimate.onsiteFee, logisticsTotal:estimate.logisticsTotal, whatsappUrl };
 }

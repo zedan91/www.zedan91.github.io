@@ -650,21 +650,42 @@ body.is-admin .market-nav a[href="/admin/"]{
   form.addEventListener('submit',async ev=>{
     ev.preventDefault();fallback.classList.remove('show');
     if(!form.reportValidity()||!validateSelection())return;
-    const p=payload();const popup=window.open('','_blank');
-    if(popup){try{popup.document.body.style.cssText='margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial;text-align:center;padding:24px';popup.document.body.textContent='Menyimpan tempahan sebelum WhatsApp dibuka...';}catch(_){}}
-    const button=$('submitBooking');button.disabled=true;button.textContent='Menyimpan tempahan...';showStatus('Sedang menyimpan rekod tempahan dengan selamat...','ok');
+    const p=payload();
+    const localWa=fallbackUrl(p);
+    const popup=window.open('','_blank');
+    let whatsappOpened=false;
+    const openWhatsAppOnce=url=>{
+      if(whatsappOpened)return;
+      whatsappOpened=true;
+      if(popup&&!popup.closed)popup.location.replace(url);
+      else window.location.href=url;
+    };
+    if(popup){try{popup.document.body.style.cssText='margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial;text-align:center;padding:24px';popup.document.body.textContent='Menyimpan tempahan... Jika server lambat, WhatsApp akan dibuka secara automatik.';}catch(_){}}
+    const button=$('submitBooking');button.disabled=true;button.textContent='Menyimpan tempahan...';showStatus('Sedang menyimpan rekod tempahan. WhatsApp akan dibuka sebentar lagi.','ok');
+    const fastOpenTimer=setTimeout(()=>{
+      openWhatsAppOnce(localWa);
+      button.textContent='WhatsApp dibuka • menyimpan rekod...';
+      showStatus('WhatsApp telah dibuka. Rekod tempahan masih disimpan secara selamat di belakang.','ok');
+    },2500);
     try{
-      const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+      const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p),keepalive:true});
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.ok)throw new Error(result.error||'Tempahan gagal disimpan.');
-      showStatus(`Tempahan ${result.bookingId} berjaya direkod. WhatsApp sedang dibuka.`,'ok');
+      clearTimeout(fastOpenTimer);
+      openWhatsAppOnce(result.whatsappUrl||localWa);
+      showStatus(`Tempahan ${result.bookingId} berjaya direkod${whatsappOpened?' dan WhatsApp telah dibuka.':'.'}`,'ok');
       activeRequestId='';
-      const wa=result.whatsappUrl||fallbackUrl(p);
-      if(popup&&!popup.closed)popup.location.replace(wa);else window.location.href=wa;
       try{localStorage.setItem('azobss_service_customer',JSON.stringify({name:p.customerName,phone:p.customerPhone,email:p.customerEmail,area:p.customerArea,fullAddress:p.fullAddress,locationLatitude:p.locationLatitude,locationLongitude:p.locationLongitude,locationWgs84:p.locationWgs84}));}catch(_){ }
     }catch(error){
-      try{if(popup&&!popup.closed)popup.close();}catch(_){ }
-      const wa=fallbackUrl(p);fallback.href=wa;fallback.classList.add('show');showStatus((error.message||'Rekod gagal disimpan.')+' Kamu masih boleh hantar maklumat terus melalui WhatsApp menggunakan butang di bawah.','error');
+      clearTimeout(fastOpenTimer);
+      if(!whatsappOpened){
+        try{if(popup&&!popup.closed)popup.close();}catch(_){ }
+        fallback.href=localWa;fallback.classList.add('show');
+        showStatus((error.message||'Rekod gagal disimpan.')+' Kamu masih boleh hantar maklumat terus melalui WhatsApp menggunakan butang di bawah.','error');
+      }else{
+        fallback.href=localWa;fallback.classList.add('show');
+        showStatus('WhatsApp telah dibuka, tetapi pengesahan simpanan rekod belum berjaya. Gunakan butang di bawah jika perlu membuka mesej sekali lagi.','error');
+      }
     }finally{button.disabled=false;button.textContent='Hantar Tempahan melalui WhatsApp';}
   });
   function firstText(obj,keys){for(const key of keys){const value=obj&&obj[key];if(typeof value==='string'&&value.trim())return value.trim();}return '';}
