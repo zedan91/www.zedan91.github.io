@@ -5551,7 +5551,21 @@ async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
     toyyibPaidSyncedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), toyyibPaidSyncedAtMs:paidAtMs,
     updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAtMs:paidAtMs
   }, { merge:true });
-  return { ok:true, receiptId:record.id, invoiceNo, receiptNo, gross, totalCost, profit };
+  const sourceBookingId = cleanPremiumText(current.sourceBookingId || "", 100);
+  if (sourceBookingId) {
+    try {
+      const db = getAzobssBackendDb();
+      if (db) await db.collection("serviceBookings").doc(sourceBookingId).set({
+        status:"confirmed", documentStage:"invoice_paid", invoiceDocId:record.id, invoiceNo, receiptNo,
+        invoiceStatus:"paid", paymentStatus:"paid", finalPrice:gross, finalPriceConfirmed:true, estimateFinal:true,
+        paymentReference, paidAt:new Date(paidAtMs).toISOString(), paidAtMs,
+        updatedAt:new Date(paidAtMs).toISOString(), updatedAtMs:paidAtMs, updatedBy:"toyyibpay-callback"
+      }, { merge:true });
+    } catch (serviceSyncError) {
+      console.warn("Service booking paid sync failed:", sourceBookingId, serviceSyncError && serviceSyncError.message);
+    }
+  }
+  return { ok:true, receiptId:record.id, invoiceNo, receiptNo, gross, totalCost, profit, sourceBookingId };
 }
 
 const AZOBSS_SALES_TEMP_PATCH = "AZOBSS_ADMIN_SALES_TEMP_QUOTA_SAVER_759_20260804";
@@ -11437,6 +11451,8 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     clientRequestId:azServiceBookingText(body.clientRequestId, 160),
     status:"new",
     source:"azobss-service-booking-form",
+    recordType:"service_order",
+    documentStage:"booking",
     customerName, customerPhone, customerPhoneDigits:phoneDigits, customerEmail, customerArea,
     locationName:customerArea,
     locationLatitude:Number(locationLatitude.toFixed(7)),
@@ -11486,6 +11502,23 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     const old = existing.data() || {};
     row.createdAt = old.createdAt || row.createdAt;
     row.createdAtMs = Number(old.createdAtMs || row.createdAtMs) || row.createdAtMs;
+    row.status = old.status || row.status;
+    row.documentStage = old.documentStage || row.documentStage;
+    row.finalPrice = Number(old.finalPrice || 0) || null;
+    row.finalPriceConfirmed = old.finalPriceConfirmed === true;
+    row.invoiceDocId = azServiceBookingText(old.invoiceDocId, 180);
+    row.invoiceNo = azServiceBookingText(old.invoiceNo, 180);
+    row.receiptNo = azServiceBookingText(old.receiptNo, 180);
+    row.invoiceStatus = azServiceBookingText(old.invoiceStatus, 40) || (row.invoiceDocId ? "pending" : "not_created");
+    row.paymentStatus = azServiceBookingText(old.paymentStatus, 40) || "unpaid";
+  } else {
+    row.finalPrice = null;
+    row.finalPriceConfirmed = false;
+    row.invoiceDocId = "";
+    row.invoiceNo = "";
+    row.receiptNo = "";
+    row.invoiceStatus = "not_created";
+    row.paymentStatus = "unpaid";
   }
   row.whatsappMessage = azServiceBookingMessage(row);
   row.whatsappNumber = azServiceBookingWhatsappNumber();
@@ -11655,6 +11688,28 @@ async function handler(req, res) {
           const nowMs = Date.now();
           await ref.set({ status, updatedAt:new Date(nowMs).toISOString(), updatedAtMs:nowMs, updatedBy:azServiceBookingText(identity.email || identity.username || "admin", 120) }, { merge:true });
           return send(res, 200, JSON.stringify({ ok:true, action, bookingId, status }, null, 2), "application/json");
+        }
+        if (action === "final-price") {
+          const finalPrice = Math.round((Number(body.finalPrice || body.amount || 0) || 0) * 100) / 100;
+          if (!Number.isFinite(finalPrice) || finalPrice <= 0 || finalPrice > 1000000) return send(res, 400, JSON.stringify({ ok:false, error:"Final price must be more than RM0." }, null, 2), "application/json");
+          const nowMs = Date.now();
+          await ref.set({ finalPrice, finalPriceConfirmed:true, estimateFinal:true, status:"quoted", documentStage:"price_confirmed", quotedAt:new Date(nowMs).toISOString(), quotedAtMs:nowMs, updatedAt:new Date(nowMs).toISOString(), updatedAtMs:nowMs, updatedBy:azServiceBookingText(identity.email || identity.username || "admin", 120) }, { merge:true });
+          return send(res, 200, JSON.stringify({ ok:true, action, bookingId, finalPrice, status:"quoted" }, null, 2), "application/json");
+        }
+        if (action === "link-invoice") {
+          const invoiceDocId = azServiceBookingText(body.invoiceDocId, 180);
+          const invoiceNo = azServiceBookingText(body.invoiceNo, 180);
+          const receiptNo = azServiceBookingText(body.receiptNo, 180);
+          const amount = Math.round((Number(body.amount || body.finalPrice || 0) || 0) * 100) / 100;
+          if (!invoiceDocId || !invoiceNo) return send(res, 400, JSON.stringify({ ok:false, error:"Invoice document ID and invoice number are required." }, null, 2), "application/json");
+          const invoiceStatusRaw = azServiceBookingText(body.invoiceStatus, 40).toLowerCase();
+          const paymentStatusRaw = azServiceBookingText(body.paymentStatus, 40).toLowerCase();
+          const invoiceStatus = new Set(["pending","paid","cancelled","refunded"]).has(invoiceStatusRaw) ? invoiceStatusRaw : "pending";
+          const paymentStatus = new Set(["unpaid","paid","cancelled","refunded"]).has(paymentStatusRaw) ? paymentStatusRaw : (invoiceStatus === "paid" ? "paid" : "unpaid");
+          const nowMs = Date.now();
+          const serviceStatus = paymentStatus === "paid" ? "confirmed" : (invoiceStatus === "cancelled" ? "cancelled" : "quoted");
+          await ref.set({ invoiceDocId, invoiceNo, receiptNo, invoiceStatus, paymentStatus, finalPrice:amount > 0 ? amount : null, finalPriceConfirmed:amount > 0, estimateFinal:amount > 0, status:serviceStatus, documentStage:paymentStatus === "paid" ? "invoice_paid" : "invoice_created", invoiceCreatedAt:new Date(nowMs).toISOString(), invoiceCreatedAtMs:nowMs, updatedAt:new Date(nowMs).toISOString(), updatedAtMs:nowMs, updatedBy:azServiceBookingText(identity.email || identity.username || "admin", 120) }, { merge:true });
+          return send(res, 200, JSON.stringify({ ok:true, action, bookingId, invoiceDocId, invoiceNo, receiptNo, invoiceStatus, paymentStatus, amount, status:serviceStatus }, null, 2), "application/json");
         }
         return send(res, 400, JSON.stringify({ ok:false, error:"Unknown action." }, null, 2), "application/json");
       } catch (error) {

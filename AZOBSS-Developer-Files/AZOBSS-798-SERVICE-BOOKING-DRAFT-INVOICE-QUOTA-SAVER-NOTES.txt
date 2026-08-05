@@ -1,0 +1,20 @@
+AZOBSS PATCH 798 — SERVICE BOOKING → DRAFT INVOICE + QUOTA SAVER
+
+Baseline: (797)
+
+Perubahan utama:
+1. Tempahan servis kekal sebagai satu dokumen serviceBookings dan dilabel service_order / booking.
+2. Admin boleh simpan Harga Akhir pada rekod yang sama tanpa mencipta rekod baharu.
+3. Butang Buat Draf Invois membuka modal Sales & Receipts sedia ada dengan nama, telefon, e-mel, servis, logistik, model dan catatan dipraisi.
+4. Tiada invois/Firestore write baharu sehingga admin benar-benar menekan Save Invoice.
+5. Selepas invois disimpan, rekod tempahan yang sama dipautkan dengan invoiceDocId, invoiceNo, harga akhir, status invois dan status bayaran.
+6. Apabila ToyyibPay mengesahkan bayaran, rekod servis diselaraskan kepada paid/confirmed dan receiptNo disimpan.
+7. Senarai Service Bookings menggunakan cache 90 saat dan memuat maksimum 120 rekod untuk mengurangkan Firestore reads.
+8. Butang Buka Invois terus membuka invois berkaitan dalam Sales & Receipts.
+
+Penggunaan biasa bagi satu tempahan:
+- 1 write ketika pelanggan menghantar tempahan.
+- 1 write opsyenal ketika admin menyimpan harga akhir.
+- 1 write mencipta invois + 1 write memautkan tempahan apabila Save Invoice ditekan.
+- 1 write resit + 1 write menyelaraskan tempahan apabila bayaran disahkan.
+Tiada autosave setiap huruf dan tiada PDF/Base64 disimpan dalam serviceBookings.

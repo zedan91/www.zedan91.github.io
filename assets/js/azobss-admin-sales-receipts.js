@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 786: website receipts auto-sent + Paid (Not Sent) filter */
+/* AZOBSS PATCH 798: Service Booking -> Draft Invoice linkage + quota-safe workflow */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=786;
+window.__azSalesReceiptsModuleVersion=798;
 
 let manualRows=[];
 let websiteRows=[];
@@ -25,6 +25,8 @@ let editingDocId='';
 let editingOriginalStatus='';
 let editingInvoiceNo='';
 let editingReceiptNo='';
+let editingSourceBookingId='';
+let editingSourceBookingSnapshot=null;
 let loadingPromise=null;
 const selectedRowIds=new Set();
 let sharePanelContext=null;
@@ -646,13 +648,14 @@ function syncFormDocumentMode(initial=false){
 }
 function openForm(row=null){
   editingDocId=row?.docId||'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
+  editingSourceBookingId=String(row?.sourceBookingId||row?.bookingId||'').trim();editingSourceBookingSnapshot=row?.sourceBookingSnapshot||null;
   el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
   const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
 }
-function closeForm(){el('salesReceiptDialog').hidden=true;document.body.style.overflow='';editingDocId='';editingOriginalStatus='';editingInvoiceNo='';editingReceiptNo=''}
+function closeForm(){el('salesReceiptDialog').hidden=true;document.body.style.overflow='';editingDocId='';editingOriginalStatus='';editingInvoiceNo='';editingReceiptNo='';editingSourceBookingId='';editingSourceBookingSnapshot=null}
 async function saveForm(){
   const user=await waitForUser();if(!user)return notify('Admin login not ready.',true);
   const customer=String(el('salesReceiptCustomerName')?.value||'').trim();const items=collectFormItems();if(!customer)return notify('Enter customer name.',true);if(!items.length||items.some(i=>!i.name))return notify('Enter a name for every item.',true);if(items.some(i=>i.qty<=0))return notify('Quantity must be more than zero.',true);
@@ -667,7 +670,7 @@ async function saveForm(){
   const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
   const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
-  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,status,paymentMethod:status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,status,paymentMethod:status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
@@ -685,10 +688,20 @@ async function saveForm(){
       const draftRow=normalizeManual(savedId,{...(existing||{}),...payload,docId:savedId,id:savedId});
       await ensureToyyibPayInvoice(draftRow,{silent:true});toyyibReady=true;
     }
+    const sourceBookingId=editingSourceBookingId;
+    let bookingLinkWarning='';
+    if(sourceBookingId){
+      try{
+        const headers=await adminBackendHeaders();
+        const response=await fetch(BACKEND+'/api/admin/service-bookings-action',{method:'POST',headers,body:JSON.stringify({bookingId:sourceBookingId,action:'link-invoice',invoiceDocId:savedId,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',amount:c.gross,invoiceStatus:status==='paid'?'paid':status==='cancelled'?'cancelled':'pending',paymentStatus:status==='paid'?'paid':status==='refunded'?'refunded':status==='cancelled'?'cancelled':'unpaid'})});
+        const data=await response.json().catch(()=>({}));if(!response.ok||data.ok===false)throw new Error(data.error||`HTTP ${response.status}`);
+      }catch(error){bookingLinkWarning=' Tempahan asal belum berjaya dipautkan: '+(error.message||error);}
+    }
     closeForm();
-    if(transitionedToPaid)notify('Payment marked Paid. Invoice converted to Receipt and included in sales, costs and net profit.');
-    else notify(`${label} ${wasEditing?'updated':'created'}${toyyibReady?' with ToyyibPay QR':''}.`);
+    if(transitionedToPaid)notify('Payment marked Paid. Invoice converted to Receipt and included in sales, costs and net profit.'+bookingLinkWarning,Boolean(bookingLinkWarning));
+    else notify(`${label} ${wasEditing?'updated':'created'}${toyyibReady?' with ToyyibPay QR':''}.${bookingLinkWarning}`,Boolean(bookingLinkWarning));
     await loadData({force:true});
+    if(sourceBookingId&&typeof window.loadServiceBookings==='function')window.loadServiceBookings(true);
   }
   catch(e){console.error(e);notify('Save failed: '+(e.message||e),true)}finally{btn.disabled=false;btn.textContent='Save '+label}
 }
@@ -1130,6 +1143,32 @@ async function autoLoadSalesReceiptsWhenActive(){
     salesReceiptsAutoLoadQueued=false;
   }
 }
+
+function serviceBookingInvoicePrefill(booking={}){
+  const bookingId=String(booking.bookingId||booking.id||'').trim();
+  const services=Array.isArray(booking.services)?booking.services:[];
+  const logistics=Array.isArray(booking.logistics)?booking.logistics:[];
+  const items=[...services,...logistics].map(item=>({category:'service',name:String(item.name||'Servis IT').trim(),qty:1,unitPrice:clampMoney(item.minPrice??item.price??0),unitCost:0})).filter(item=>item.name);
+  const finalPrice=clampMoney(booking.finalPrice||0);
+  if(!items.length)items.push({category:'service',name:`Pemeriksaan / servis ${booking.deviceBrand||''} ${booking.deviceModel||''}`.trim(),qty:1,unitPrice:finalPrice||clampMoney(booking.estimatedMinimum||0),unitCost:0});
+  let subtotal=items.reduce((sum,item)=>sum+num(item.qty)*num(item.unitPrice),0),discount=0;
+  if(finalPrice>0){
+    if(subtotal<=0){items[0].unitPrice=finalPrice;subtotal=finalPrice}
+    else if(finalPrice>subtotal)items.push({category:'service',name:'Pelarasan harga akhir / komponen',qty:1,unitPrice:clampMoney(finalPrice-subtotal),unitCost:0});
+    else if(finalPrice<subtotal)discount=clampMoney(subtotal-finalPrice);
+  }
+  const device=[booking.deviceType,booking.deviceBrand,booking.deviceModel].filter(Boolean).join(' ');
+  const issueText=(Array.isArray(booking.issues)?booking.issues:[]).join(', ');
+  const notes=[`Draf invois daripada Tempahan Servis ${bookingId}.`,device?`Peranti: ${device}`:'',booking.deviceSerial?`Serial: ${booking.deviceSerial}`:'',issueText?`Masalah: ${issueText}`:'',booking.problemDetails?`Catatan: ${booking.problemDetails}`:'',booking.extraRequests?`Permintaan tambahan: ${booking.extraRequests}`:'',`Anggaran asal: ${booking.estimateDisplay||money(booking.estimatedMinimum||0)}`,booking.serviceMethod?`Cara serahan: ${booking.serviceMethod}`:''].filter(Boolean).join('\n');
+  return {status:'pending',paymentMethod:'ToyyibPay',customerName:booking.customerName||'',customerPhone:booking.customerPhone||'',customerEmail:booking.customerEmail||'',items,discount,shippingCharge:0,shippingCost:0,paymentFee:DEFAULT_MANUAL_TOYYIBPAY_FEE_RM,commission:0,otherCost:0,notes,sourceBookingId:bookingId,sourceBookingSnapshot:{device,estimateDisplay:booking.estimateDisplay||'',finalPrice}};
+}
+window.azSalesReceiptsOpenFromServiceBooking=function(booking={}){bind();openForm(serviceBookingInvoicePrefill(booking));};
+window.azSalesReceiptsOpenServiceInvoice=async function(invoiceDocId=''){
+  bind();await loadData();const id=String(invoiceDocId||'').trim();const row=manualRows.find(item=>String(item.docId||item.id)===id);
+  if(!row){notify('Rekod invois tidak ditemui. Gunakan carian Invoice No dalam Sales & Receipts.',true);return false;}
+  openForm(row);return true;
+};
+
 window.azSalesReceiptsLoad=async function(){bind();return loadData()};
 bind();
 
