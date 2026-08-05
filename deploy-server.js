@@ -11237,19 +11237,48 @@ async function azHandleStripeDigitalWebhookEvent(event = {}, req = null) {
 
 
 
-// AZOBSS 770: Public laptop / PC service booking form.
+// AZOBSS 773: Service booking with LCD price ranges and fixed pickup/delivery charges.
 const AZ_SERVICE_BOOKING_CATALOG = Object.freeze({
-  "format-windows": { name:"Format Windows 10 / 11", price:30, suffix:"" },
-  "cleaning-thermal": { name:"Pembersihan + Thermal Paste", price:80, suffix:"" },
-  "lcd-14": { name:"Tukar LCD Laptop 14 inci", price:250, suffix:"" },
-  "lcd-15": { name:"Tukar LCD Laptop 15 / 15.6 inci", price:300, suffix:"" },
-  "lcd-16": { name:"Tukar LCD Laptop 16 inci", price:350, suffix:"++" },
-  "keyboard": { name:"Tukar Keyboard Laptop", price:150, suffix:"" }
+  "format-windows": { name:"Format Windows 10 / 11", min:30, max:30 },
+  "cleaning-thermal": { name:"Pembersihan + Thermal Paste", min:80, max:80 },
+  "keyboard": { name:"Tukar Keyboard Laptop", min:150, max:150 },
+  "lcd-replacement": { name:"Tukar LCD Laptop", dynamic:true },
+  // Legacy IDs remain accepted for old cached forms.
+  "lcd-14": { name:"Tukar LCD Laptop 14.0 inci", min:260, max:400 },
+  "lcd-15": { name:"Tukar LCD Laptop 15.6 inci", min:270, max:450 },
+  "lcd-16": { name:"Tukar LCD Laptop 16.0 inci", min:400, max:600 }
 });
-const AZ_SERVICE_BOOKING_AREAS = new Set([
-  "Batu Caves","Taman Batu Caves","Bandar Baru Selayang","Selayang","Selayang Baru","Taman Selayang","Sri Gombak","Taman Sri Gombak","Taman Samudra","Taman Pinggiran Batu Caves","Greenwood","Taman Greenwood","Gombak Setia","Taman Melati","Kampung Laksamana",
-  "Taman Batu Muda","Kampung Batu","Taman Wahyu","Taman Mastiara","Taman Koperasi Polis","Taman Dato Senu","Sentul","Sentul Pasar","Setapak","Wangsa Maju","Danau Kota","Taman Sri Rampai","Lain-lain sekitar 10 km dari Batu Caves (semakan diperlukan)"
-]);
+const AZ_SERVICE_LCD_PRICES = Object.freeze({
+  "13.3 / 13.4 inci": { standard:{ min:250,max:380,plus:false }, touch:{ min:550,max:850,plus:false } },
+  "14.0 inci": { standard:{ min:260,max:400,plus:false }, touch:{ min:500,max:750,plus:false } },
+  "15.6 inci": { standard:{ min:270,max:450,plus:false }, touch:{ min:550,max:850,plus:false } },
+  "16.0 inci": { standard:{ min:400,max:600,plus:false }, touch:{ min:700,max:1000,plus:true } },
+  "17.3 inci": { standard:{ min:350,max:650,plus:false }, touch:{ min:850,max:1200,plus:true } }
+});
+const AZ_SERVICE_LOGISTICS = Object.freeze({
+  "Hantar & ambil sendiri": { pickupFee:0, deliveryFee:0 },
+  "Hantar sendiri + penghantaran AZOBSS": { pickupFee:0, deliveryFee:30 },
+  "Pengambilan AZOBSS + ambil sendiri": { pickupFee:30, deliveryFee:0 },
+  "Pengambilan & penghantaran AZOBSS": { pickupFee:30, deliveryFee:30 },
+  "On-site": { pickupFee:0, deliveryFee:0 },
+  "Bincang melalui WhatsApp": { pickupFee:0, deliveryFee:0 }
+});
+const AZ_SERVICE_BOOKING_CENTER = Object.freeze({ lat:3.2380, lng:101.6820, label:"Batu Caves" });
+const AZ_SERVICE_BOOKING_RADIUS_KM = 10;
+function azServiceBookingCoordinate(value, min, max) {
+  const text = String(value == null ? "" : value).trim();
+  if (!text) return NaN;
+  const number = Number(text);
+  return Number.isFinite(number) && number >= min && number <= max ? number : NaN;
+}
+function azServiceBookingDistanceKm(lat1, lng1, lat2, lng2) {
+  const radius = 6371;
+  const toRad = value => value * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * radius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 function azServiceBookingText(value, max = 300) {
   return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
@@ -11268,24 +11297,57 @@ function azServiceBookingId(clientRequestId) {
   const suffix = crypto.createHash("sha256").update(seed).digest("hex").slice(0, 8).toUpperCase();
   return `AZS-${date}-${suffix}`;
 }
-function azServiceBookingEstimate(serviceIds) {
+function azServiceBookingRangeLabel(min, max, plus) {
+  const a = `RM${Number(min || 0).toFixed(0)}`;
+  const b = `RM${Number(max || 0).toFixed(0)}`;
+  return Number(min || 0) === Number(max || 0) ? a : `${a} – ${b}${plus ? "+" : ""}`;
+}
+function azServiceBookingLcdEstimate(screenSize, screenType) {
+  const size = azServiceBookingText(screenSize, 60);
+  const type = azServiceBookingText(screenType, 60);
+  const row = AZ_SERVICE_LCD_PRICES[size];
+  const wantTouch = type === "Touch Screen";
+  const wantStandard = type === "Standard (Non-Touch)";
+  let groups;
+  if (row && wantStandard) groups = [row.standard];
+  else if (row && wantTouch) groups = [row.touch];
+  else if (row) groups = [row.standard, row.touch];
+  else {
+    const rows = Object.values(AZ_SERVICE_LCD_PRICES);
+    groups = wantStandard ? rows.map(x => x.standard) : wantTouch ? rows.map(x => x.touch) : rows.flatMap(x => [x.standard, x.touch]);
+  }
+  const min = Math.min(...groups.map(x => Number(x.min || 0)));
+  const max = Math.max(...groups.map(x => Number(x.max || 0)));
+  const plus = groups.some(x => Boolean(x.plus));
+  const detail = `${size || "Saiz tidak pasti"} • ${type || "Jenis skrin tidak pasti"}`;
+  return { id:"lcd-replacement", name:`Tukar LCD Laptop — ${detail}`, minPrice:min, maxPrice:max, price:min, plus, suffix:plus?"+":"", priceLabel:azServiceBookingRangeLabel(min,max,plus) };
+}
+function azServiceBookingEstimate(serviceIds, screenSize, screenType, serviceMethod) {
   const ids = Array.isArray(serviceIds) ? [...new Set(serviceIds.map(v => azServiceBookingText(v, 60)).filter(v => AZ_SERVICE_BOOKING_CATALOG[v]))].slice(0, 12) : [];
-  let total = 0, suffix = "";
   const services = ids.map(id => {
+    if (id === "lcd-replacement") return azServiceBookingLcdEstimate(screenSize, screenType);
     const item = AZ_SERVICE_BOOKING_CATALOG[id];
-    const itemSuffix = item.suffix === "++" ? "++" : "";
-    total += Number(item.price || 0);
-    if (itemSuffix === "++") suffix = "++";
-    return { id, name:item.name, price:Number(item.price || 0), suffix:itemSuffix, plus:Boolean(itemSuffix) };
+    const min = Number(item.min ?? item.price ?? 0), max = Number(item.max ?? item.price ?? min);
+    return { id, name:item.name, minPrice:min, maxPrice:max, price:min, plus:false, suffix:"", priceLabel:azServiceBookingRangeLabel(min,max,false) };
   });
-  return { services, total:Math.round(total * 100) / 100, suffix, plus:Boolean(suffix) };
+  const logisticsConfig = AZ_SERVICE_LOGISTICS[azServiceBookingText(serviceMethod, 80)] || AZ_SERVICE_LOGISTICS["Bincang melalui WhatsApp"];
+  const logistics = [];
+  if (logisticsConfig.pickupFee) logistics.push({ id:"pickup", name:"Kos pengambilan oleh AZOBSS", price:logisticsConfig.pickupFee, minPrice:logisticsConfig.pickupFee, maxPrice:logisticsConfig.pickupFee, priceLabel:`RM${logisticsConfig.pickupFee}` });
+  if (logisticsConfig.deliveryFee) logistics.push({ id:"delivery", name:"Kos penghantaran semula oleh AZOBSS", price:logisticsConfig.deliveryFee, minPrice:logisticsConfig.deliveryFee, maxPrice:logisticsConfig.deliveryFee, priceLabel:`RM${logisticsConfig.deliveryFee}` });
+  const all = services.concat(logistics);
+  const minimum = all.reduce((sum, item) => sum + Number(item.minPrice || 0), 0);
+  const maximum = all.reduce((sum, item) => sum + Number(item.maxPrice || item.minPrice || 0), 0);
+  const plus = services.some(item => Boolean(item.plus));
+  return { services, logistics, minimum:Math.round(minimum*100)/100, maximum:Math.round(maximum*100)/100, total:Math.round(minimum*100)/100, suffix:plus?"+":"", plus, pickupFee:logisticsConfig.pickupFee, deliveryFee:logisticsConfig.deliveryFee, logisticsTotal:logisticsConfig.pickupFee+logisticsConfig.deliveryFee, display:azServiceBookingRangeLabel(minimum,maximum,plus) };
 }
 function azServiceBookingWhatsappNumber() {
   const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "60175099983").replace(/\D/g, "");
   return raw || "60175099983";
 }
 function azServiceBookingMessage(row) {
-  const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — RM${Number(item.price || 0).toFixed(0)}${item.suffix || (item.plus ? "+" : "")}`);
+  const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}`);
+  const logisticLines = (row.logistics || []).map(item => `- ${item.name} — ${item.priceLabel || `RM${Number(item.price || 0).toFixed(0)}`}`);
+  const estimateDisplay = row.estimateDisplay || azServiceBookingRangeLabel(row.estimatedMinimum, row.estimatedMaximum ?? row.estimatedMinimum, row.estimateHasPlus);
   return [
     "Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.",
     "",
@@ -11294,26 +11356,33 @@ function azServiceBookingMessage(row) {
     `Telefon: ${row.customerPhone}`,
     `E-mel: ${row.customerEmail || "-"}`,
     `Kawasan: ${row.customerArea}`,
+    `WGS84: ${row.locationWgs84 || "-"}`,
+    `Jarak dari Batu Caves: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
+    `Peta: ${row.locationMapUrl || "-"}`,
     `Alamat ringkas: ${row.fullAddress || "-"}`,
     `Cara serahan: ${row.serviceMethod}`,
     "",
     `Peranti: ${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}`,
     `Saiz skrin: ${row.screenSize || "-"}`,
+    `Jenis skrin: ${row.screenType || "-"}`,
     `Serial: ${row.deviceSerial || "-"}`,
     `Keadaan: ${row.devicePowerState || "-"}`,
     "",
     "Servis dipilih:",
     ...(serviceLines.length ? serviceLines : ["- Pemeriksaan / harga belum dipilih"]),
     "",
+    "Kos logistik:",
+    ...(logisticLines.length ? logisticLines : ["- Tiada caj pickup/penghantaran dipilih"]),
+    "",
     `Masalah: ${(row.issues || []).join(", ") || "-"}`,
-    `Anggaran awal: ${serviceLines.length ? `RM${Number(row.estimatedMinimum || 0).toFixed(0)}${row.estimateSuffix || (row.estimateHasPlus ? "+" : "")}` : "Perlu pemeriksaan"}`,
+    `Anggaran julat: ${(serviceLines.length || logisticLines.length) ? estimateDisplay : "Perlu pemeriksaan"}`,
     `Tarikh / masa: ${row.preferredDate || "Fleksibel"} • ${row.preferredTime || "Fleksibel"}`,
     `Keutamaan: ${row.urgency || "Biasa"}`,
     `Data / backup: ${row.backupRequirement || "Tidak pasti"}`,
     `Catatan masalah: ${row.problemDetails || "-"}`,
     `Permintaan tambahan: ${row.extraRequests || "-"}`,
     "",
-    "Harga akhir tertakluk kepada pemeriksaan dan pengesahan AZOBSS."
+    "Anggaran ini bukan harga final. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak model, panel/komponen, stok dan keadaan peranti."
   ].join("\n");
 }
 async function azCreatePublicServiceBooking(req, body = {}) {
@@ -11325,17 +11394,27 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   const phoneDigits = customerPhone.replace(/\D/g, "");
   const customerEmailRaw = azServiceBookingText(body.customerEmail, 180);
   const customerEmail = azServiceBookingEmail(customerEmailRaw);
-  const customerArea = azServiceBookingText(body.customerArea, 120);
+  const locationName = azServiceBookingText(body.locationName || body.customerArea, 180);
+  const locationLatitude = azServiceBookingCoordinate(body.locationLatitude, -90, 90);
+  const locationLongitude = azServiceBookingCoordinate(body.locationLongitude, -180, 180);
+  const locationDistanceKm = Number.isFinite(locationLatitude) && Number.isFinite(locationLongitude)
+    ? azServiceBookingDistanceKm(AZ_SERVICE_BOOKING_CENTER.lat, AZ_SERVICE_BOOKING_CENTER.lng, locationLatitude, locationLongitude)
+    : NaN;
+  const customerArea = locationName;
   const deviceType = azServiceBookingText(body.deviceType, 60);
   const deviceBrand = azServiceBookingText(body.deviceBrand, 80);
   const deviceModel = azServiceBookingText(body.deviceModel, 120);
   if (customerName.length < 2) throw Object.assign(new Error("Nama pelanggan diperlukan."), { statusCode:400 });
   if (phoneDigits.length < 8 || phoneDigits.length > 15) throw Object.assign(new Error("Nombor telefon tidak sah."), { statusCode:400 });
   if (customerEmailRaw && !customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
-  if (customerArea.length < 2) throw Object.assign(new Error("Kawasan tempat tinggal diperlukan."), { statusCode:400 });
-  if (!AZ_SERVICE_BOOKING_AREAS.has(customerArea)) throw Object.assign(new Error("Kawasan servis hanya tersedia di Gombak, Batu Caves dan kawasan Kuala Lumpur berhampiran dalam lingkungan sekitar 10 km."), { statusCode:400 });
+  if (customerArea.length < 2) throw Object.assign(new Error("Nama lokasi diperlukan. Sila pilih lokasi pada peta."), { statusCode:400 });
+  if (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude)) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });
+  if (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari Batu Caves.`), { statusCode:400 });
   if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
-  const estimate = azServiceBookingEstimate(body.services);
+  const serviceMethod = azServiceBookingText(body.serviceMethod, 80) || "Bincang melalui WhatsApp";
+  const screenSize = azServiceBookingText(body.screenSize, 60);
+  const screenType = azServiceBookingText(body.screenType, 60);
+  const estimate = azServiceBookingEstimate(body.services, screenSize, screenType, serviceMethod);
   const issues = Array.isArray(body.issues) ? [...new Set(body.issues.map(v => azServiceBookingText(v, 140)).filter(Boolean))].slice(0, 25) : [];
   if (!estimate.services.length && !issues.length) throw Object.assign(new Error("Pilih sekurang-kurangnya satu servis atau masalah."), { statusCode:400 });
   const nowMs = Date.now();
@@ -11347,18 +11426,32 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     status:"new",
     source:"azobss-service-booking-form",
     customerName, customerPhone, customerPhoneDigits:phoneDigits, customerEmail, customerArea,
+    locationName:customerArea,
+    locationLatitude:Number(locationLatitude.toFixed(7)),
+    locationLongitude:Number(locationLongitude.toFixed(7)),
+    locationWgs84:`${locationLatitude.toFixed(6)}, ${locationLongitude.toFixed(6)}`,
+    locationDistanceKm:Number(locationDistanceKm.toFixed(3)),
+    locationRadiusKm:AZ_SERVICE_BOOKING_RADIUS_KM,
+    locationMapUrl:`https://www.google.com/maps?q=${locationLatitude.toFixed(7)},${locationLongitude.toFixed(7)}`,
     fullAddress:azServiceBookingText(body.fullAddress, 400),
     deviceType, deviceBrand, deviceModel,
-    screenSize:azServiceBookingText(body.screenSize, 60),
+    screenSize,
+    screenType,
     deviceSerial:azServiceBookingText(body.deviceSerial, 120),
     devicePowerState:azServiceBookingText(body.devicePowerState, 80),
     services:estimate.services,
     issues,
-    estimatedMinimum:estimate.total,
+    estimatedMinimum:estimate.minimum,
+    estimatedMaximum:estimate.maximum,
+    estimateDisplay:estimate.display,
     estimateSuffix:estimate.suffix,
     estimateHasPlus:estimate.plus,
     estimateFinal:false,
-    serviceMethod:azServiceBookingText(body.serviceMethod, 80) || "Bincang melalui WhatsApp",
+    logistics:estimate.logistics,
+    pickupFee:estimate.pickupFee,
+    deliveryFee:estimate.deliveryFee,
+    logisticsTotal:estimate.logisticsTotal,
+    serviceMethod,
     preferredDate:azServiceBookingText(body.preferredDate, 30),
     preferredTime:azServiceBookingText(body.preferredTime, 80),
     urgency:azServiceBookingText(body.urgency, 40) || "Biasa",
@@ -11387,7 +11480,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     type:"service_booking",
     category:"service",
     title:`Tempahan servis IT baharu • ${bookingId}`,
-    body:`${customerName} • ${customerPhone} • ${customerArea} • ${deviceBrand} ${deviceModel} • ${estimate.services.map(x => x.name).join(", ") || issues.slice(0, 3).join(", ")}`.slice(0, 500),
+    body:`${customerName} • ${customerPhone} • ${customerArea} (${locationDistanceKm.toFixed(2)} km) • ${deviceBrand} ${deviceModel} • ${estimate.services.map(x => x.name).join(", ") || issues.slice(0, 3).join(", ")}`.slice(0, 500),
     status:"new",
     severity:"info",
     active:true,
@@ -11405,7 +11498,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     updatedAtMs:nowMs
   }), { merge:true });
   const whatsappUrl = `https://wa.me/${row.whatsappNumber}?text=${encodeURIComponent(row.whatsappMessage)}`;
-  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.total, estimateSuffix:estimate.suffix, estimateHasPlus:estimate.plus, whatsappUrl };
+  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.minimum, estimatedMaximum:estimate.maximum, estimateDisplay:estimate.display, estimateSuffix:estimate.suffix, estimateHasPlus:estimate.plus, pickupFee:estimate.pickupFee, deliveryFee:estimate.deliveryFee, whatsappUrl };
 }
 
 
