@@ -1,4 +1,4 @@
-/* AZOBSS 624: Tempahan Makanan page inside More together with Mini Web Tools. */
+/* AZOBSS 780: More menu contains Mini Web Tools, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
 (function () {
   'use strict';
 
@@ -19,6 +19,9 @@
     var isToolsPage = currentPath === toolsPath || currentPath.indexOf(toolsPath + '/') === 0;
     var foodPath = normalisePath('/Tempahan-Makanan/');
     var isFoodSection = currentPath === foodPath || currentPath.indexOf(foodPath + '/') === 0 || (currentPath === '/' && currentHash === '#tempahan-makanan');
+    var websitePath = normalisePath('/Tempah-Website/');
+    var isWebsiteSection = currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0;
+    var websiteSourceLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
       link.classList.contains('market-nav-active');
@@ -34,7 +37,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isFoodSection || inheritedActive) trigger.classList.add('is-active');
+    if (isToolsPage || isWebsiteSection || isFoodSection || inheritedActive) trigger.classList.add('is-active');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -66,6 +69,29 @@
       '</svg>' +
       '<span>Mini Web Tools</span>';
 
+    var websiteLink = document.createElement('a');
+    websiteLink.href = websiteSourceLink ? (websiteSourceLink.getAttribute('href') || '/Tempah-Website/') : '/Tempah-Website/';
+    websiteLink.setAttribute('role', 'menuitem');
+    websiteLink.dataset.azWebsiteOrderLink = '1';
+    websiteLink.title = 'Tempah Website untuk Bisnes';
+    if (isWebsiteSection || (websiteSourceLink && (
+      websiteSourceLink.classList.contains('is-active') ||
+      websiteSourceLink.classList.contains('is-current') ||
+      websiteSourceLink.classList.contains('market-nav-active')
+    ))) {
+      websiteLink.classList.add('is-active');
+      websiteLink.setAttribute('aria-current', 'page');
+    }
+    websiteLink.innerHTML = '' +
+      '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<rect x="3" y="5" width="18" height="13" rx="2"></rect>' +
+        '<path d="M8 21h8"></path>' +
+        '<path d="M12 18v3"></path>' +
+        '<path d="M7 10h4"></path>' +
+        '<path d="M7 13h8"></path>' +
+      '</svg>' +
+      '<span>Bina Website</span>';
+
     var foodLink = document.createElement('a');
     foodLink.href = '/Tempahan-Makanan/';
     foodLink.setAttribute('role', 'menuitem');
@@ -85,12 +111,14 @@
       '<span>Food - Brownies</span>';
 
     dropdown.appendChild(toolsLink);
+    dropdown.appendChild(websiteLink);
     dropdown.appendChild(foodLink);
     wrap.appendChild(trigger);
     wrap.appendChild(dropdown);
 
     link.dataset.azMoreConverted = '1';
     link.replaceWith(wrap);
+    if (websiteSourceLink && websiteSourceLink.isConnected) websiteSourceLink.remove();
     nav.classList.add('az-more-enabled');
 
     function isMobileStickybar() {
@@ -187,6 +215,10 @@
       }
     });
 
+    websiteLink.addEventListener('click', function () {
+      setOpen(false);
+    });
+
     foodLink.addEventListener('click', function () {
       setOpen(false);
     });
@@ -233,8 +265,52 @@
     });
   }
 
+  function ensureRepairServiceLink() {
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var repairPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
+
+    document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
+      var existingLink = nav.querySelector('a[data-az-repair-service-link="1"], a[href="/Tempah-Servis-IT/"], a[href="/Tempah-Servis-IT"]');
+      if (existingLink) {
+        existingLink.dataset.azRepairServiceLink = '1';
+        existingLink.textContent = 'Repair PC';
+        existingLink.title = 'Tempah Servis Laptop / PC';
+        if (currentPath === repairPath || currentPath.indexOf(repairPath + '/') === 0) {
+          existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
+          existingLink.setAttribute('aria-current', 'page');
+        }
+        return;
+      }
+
+      var affiliateLink = Array.prototype.find.call(nav.querySelectorAll('a[href]'), function (candidate) {
+        try {
+          return normalisePath(new URL(candidate.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/affiliate-shop';
+        } catch (error) {
+          return false;
+        }
+      });
+      if (!affiliateLink) return;
+
+      var repairLink = document.createElement('a');
+      repairLink.href = '/Tempah-Servis-IT/';
+      repairLink.textContent = 'Repair PC';
+      repairLink.title = 'Tempah Servis Laptop / PC';
+      repairLink.setAttribute('aria-label', 'Repair PC');
+      repairLink.dataset.azRepairServiceLink = '1';
+      repairLink.className = 'az-repair-service-link';
+
+      if (currentPath === repairPath || currentPath.indexOf(repairPath + '/') === 0) {
+        repairLink.classList.add('market-nav-active', 'is-active', 'is-current');
+        repairLink.setAttribute('aria-current', 'page');
+      }
+
+      affiliateLink.insertAdjacentElement('afterend', repairLink);
+    });
+  }
+
   function initialise() {
     ensureWebsiteOrderLink();
+    ensureRepairServiceLink();
 
     var links = Array.prototype.slice.call(document.querySelectorAll(
       '.market-sticky-bar .market-nav a[href="/tools/"], ' +
