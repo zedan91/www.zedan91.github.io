@@ -11372,7 +11372,7 @@ function azServiceBookingWhatsappNumber() {
   return raw;
 }
 function azServiceBookingMessage(row) {
-  const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}`);
+  const serviceLines = (row.services || []).map((item, index) => `*${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}*`);
   const logisticLines = (row.logistics || []).map(item => `- ${item.name} — ${item.priceLabel || `RM${Number(item.price || 0).toFixed(0)}`}`);
   const estimateDisplay = row.estimateDisplay || azServiceBookingRangeLabel(row.estimatedMinimum, row.estimatedMaximum ?? row.estimatedMinimum, row.estimateHasPlus);
   return [
@@ -11382,18 +11382,16 @@ function azServiceBookingMessage(row) {
     `Nama: ${row.customerName}`,
     `Telefon: ${row.customerPhone}`,
     `E-mel: ${row.customerEmail || "-"}`,
-    `Kawasan: ${row.customerArea}`,
-    `WGS84: ${row.locationWgs84 || "-"}`,
     `Jarak dari kedai AZOBSS: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
     `Peta: ${row.locationMapUrl || "-"}`,
     `Alamat ringkas: ${row.fullAddress || "-"}`,
     `Cara serahan: ${row.serviceMethod}`,
     "",
-    `Peranti: ${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}`,
-    `Saiz skrin: ${row.screenSize || "-"}`,
-    `Jenis skrin: ${row.screenType || "-"}`,
-    `Serial: ${row.deviceSerial || "-"}`,
-    `Keadaan: ${row.devicePowerState || "-"}`,
+    `Peranti : *${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}*`,
+    `Saiz skrin : *${row.screenSize || "-"}*`,
+    `Jenis skrin : *${row.screenType || "-"}*`,
+    `Serial : *${row.deviceSerial || "-"}*`,
+    `Keadaan : *${row.devicePowerState || "-"}*`,
     "",
     "Servis dipilih:",
     ...(serviceLines.length ? serviceLines : ["- Pemeriksaan / harga belum dipilih"]),
