@@ -1,0 +1,12 @@
+AZOBSS PATCH 799 — MODEL FIRST-CLICK + MOBILE SUMMARY CLEARANCE
+
+Baseline: (798)
+
+Perubahan utama:
+1. Autocomplete model kini menjalankan render pada event click, bukan bergantung pada focus/input sahaja.
+2. Selepas jenama dipilih, fokus dan refresh senarai model ditangguhkan sehingga event change selesai supaya senarai tidak ditutup semula secara serta-merta.
+3. Pada telefon, Ringkasan Tempahan collapsed dikecilkan kepada dock 58–62 px yang hanya menunjukkan tajuk, nilai anggaran dan butang buka.
+4. Kandungan penuh termasuk butang WhatsApp hanya dipaparkan apabila pengguna membuka ringkasan.
+5. Ruang bawah halaman diselaraskan dengan safe-area supaya butang terakhir boleh discroll melepasi dock.
+6. Dock disembunyikan sementara ketika input/select/textarea sedang aktif agar tidak menghalang papan kekunci atau kawalan borang.
+7. Fungsi draf invois dan quota saver daripada (798) dikekalkan.

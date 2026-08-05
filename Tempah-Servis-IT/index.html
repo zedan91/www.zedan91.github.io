@@ -166,6 +166,60 @@ body.is-admin .market-nav a[href="/admin/"]{
 }
 @media(max-width:760px){.summary-rail{display:contents}}
 </style>
+<style id="azobss-799-model-first-click-mobile-summary-clearance-fix">
+.summary-mobile-amount{display:none}
+@media(max-width:760px){
+  /* Collapsed summary is now a slim dock, so it cannot cover form buttons. */
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
+  .summary-panel{
+    bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;
+    transition:max-height .2s ease,height .2s ease,transform .2s ease!important;
+  }
+  .summary-panel:not(.mobile-expanded){
+    height:62px!important;
+    max-height:62px!important;
+    min-height:62px!important;
+    padding:9px 11px!important;
+    overflow:hidden!important;
+  }
+  .summary-panel:not(.mobile-expanded)>:not(.summary-head){display:none!important}
+  .summary-panel:not(.mobile-expanded) .summary-head{height:42px;align-items:center}
+  .summary-panel:not(.mobile-expanded) .summary-head h2{font-size:15px!important;line-height:1!important;white-space:nowrap}
+  .summary-panel:not(.mobile-expanded) .estimate-badge{display:none!important}
+  .summary-mobile-amount{
+    display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+    color:#86efac;font-size:17px;line-height:1;font-weight:1000;
+  }
+  .summary-panel.mobile-expanded .summary-mobile-amount{display:none!important}
+  .summary-panel.mobile-expanded{max-height:calc(100dvh - 105px)!important}
+  /* While typing/selecting, hide the dock entirely so the keyboard and controls stay clear. */
+  body.az-summary-input-active{padding-bottom:14px!important}
+  body.az-summary-input-active .summary-panel{
+    transform:translateY(calc(100% + 24px))!important;
+    pointer-events:none!important;
+  }
+}
+@media(max-width:390px){
+  .summary-panel:not(.mobile-expanded){height:58px!important;max-height:58px!important;min-height:58px!important;padding:8px 9px!important}
+  .summary-panel:not(.mobile-expanded) .summary-head{height:40px}
+  .summary-panel:not(.mobile-expanded) .summary-head h2{font-size:14px!important}
+  .summary-mobile-amount{font-size:16px}
+}
+</style>
+<style id="azobss-800-mobile-location-modal-summary-clearance-fix">
+/* The mobile booking summary uses a very high stacking level. Keep the location
+   picker above every floating element and move the summary fully off-screen
+   while the picker is open, so its bottom action buttons remain tappable. */
+.location-modal{z-index:5200!important}
+@media(max-width:760px){
+  body.az-location-picker-open{padding-bottom:0!important}
+  body.az-location-picker-open .summary-panel{
+    transform:translateY(calc(100% + 40px))!important;
+    pointer-events:none!important;
+    visibility:hidden!important;
+  }
+}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -338,7 +392,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 </form>
 <div class="summary-rail" id="summaryRail">
 <aside class="panel summary-panel">
-<div class="summary-head"><h2>Ringkasan Tempahan</h2><div class="summary-head-actions"><span class="estimate-badge">ANGGARAN AWAL</span><button aria-expanded="false" aria-label="Buka ringkasan penuh" class="summary-mobile-toggle" id="summaryMobileToggle" type="button">⌃</button></div></div>
+<div class="summary-head"><h2>Ringkasan Tempahan</h2><div class="summary-head-actions"><strong class="summary-mobile-amount" id="summaryMobileAmount">RM0</strong><span class="estimate-badge">ANGGARAN AWAL</span><button aria-expanded="false" aria-label="Buka ringkasan penuh" class="summary-mobile-toggle" id="summaryMobileToggle" type="button">⌃</button></div></div>
 <div class="estimate-card">
 <span class="estimate-label">Anggaran julat (bukan harga final)</span>
 <strong class="estimate-value" id="estimateValue">RM0</strong>
@@ -452,7 +506,7 @@ body.is-admin .market-nav a[href="/admin/"]{
   function updateSummary(){
     const e=estimate(),hasAny=e.items.length||e.logistics.items.length;
     updateLcdChoice();
-    $('estimateValue').textContent=hasAny?e.display:'RM0';
+    const estimateText=hasAny?e.display:'RM0';$('estimateValue').textContent=estimateText;const mobileAmount=$('summaryMobileAmount');if(mobileAmount)mobileAmount.textContent=estimateText;
     $('estimateSub').textContent=hasAny?'Termasuk caj logistik yang dipilih. Harga sebenar akan disahkan oleh admin.':'Pilih servis untuk melihat anggaran.';
     const rows=[...e.items,...e.logistics.items];
     $('summaryList').innerHTML=rows.length?rows.map(item=>`<div class="summary-item"><span>${escapeHtml(item.name)}</span><strong>${escapeHtml(item.priceLabel||rangeLabel(item.min,item.max,item.plus))}</strong></div>`).join(''):'<div class="summary-empty">Belum ada servis dipilih.</div>';
@@ -469,9 +523,9 @@ body.is-admin .market-nav a[href="/admin/"]{
   function renderPendingLocation(){const p=pendingLocation,confirm=$('confirmLocationPicker');if(!p){$('selectedLocationName').textContent='Belum dipilih';$('selectedLocationCoords').textContent='-';confirm.disabled=true;return;}const d=locationDistance(p.lat,p.lng),inside=d<=SERVICE_RADIUS_KM;$('selectedLocationName').textContent=p.name||'Lokasi dipilih';$('selectedLocationCoords').textContent=`${p.lat.toFixed(6)}, ${p.lng.toFixed(6)} • ${d.toFixed(2)} km dari kedai AZOBSS`;confirm.disabled=!inside;setPickerStatus(inside?'Lokasi berada dalam kawasan servis. Tekan “Gunakan Lokasi Ini”.':`Lokasi ini ${d.toFixed(2)} km dari kedai AZOBSS dan berada di luar radius servis 10 km.` ,inside?'ok':'error');}
   function createMapViewToggle(){const Toggle=L.Control.extend({options:{position:'topright'},onAdd(){const wrap=L.DomUtil.create('div','map-view-toggle leaflet-control');const button=L.DomUtil.create('button','',wrap);button.type='button';button.setAttribute('aria-label','Tukar ke paparan satelit');button.innerHTML='<span class="map-view-icon">🌍</span><span class="map-view-label">Satellite</span>';L.DomEvent.disableClickPropagation(wrap);L.DomEvent.disableScrollPropagation(wrap);L.DomEvent.on(button,'click',event=>{L.DomEvent.stop(event);const showSatellite=currentMapView!=='satellite';if(showSatellite){if(locationMap.hasLayer(streetMapLayer))locationMap.removeLayer(streetMapLayer);satelliteMapLayer.addTo(locationMap);currentMapView='satellite';button.setAttribute('aria-label','Tukar ke paparan peta');button.innerHTML='<span class="map-view-icon">🗺️</span><span class="map-view-label">Map</span>';}else{if(locationMap.hasLayer(satelliteMapLayer))locationMap.removeLayer(satelliteMapLayer);streetMapLayer.addTo(locationMap);currentMapView='map';button.setAttribute('aria-label','Tukar ke paparan satelit');button.innerHTML='<span class="map-view-icon">🌍</span><span class="map-view-label">Satellite</span>';}});return wrap;}});new Toggle().addTo(locationMap);}
   function ensureMap(){if(locationMap)return true;if(!globalThis.L){setPickerStatus('Peta gagal dimuatkan. Semak sambungan internet dan cuba semula.','error');return false;}locationMap=L.map('locationMap',{zoomControl:true}).setView([SHOP_SERVICE_CENTER.lat,SHOP_SERVICE_CENTER.lng],13);streetMapLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(locationMap);const satelliteImagery=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri'});const satelliteLabels=L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Labels © Esri'});satelliteMapLayer=L.layerGroup([satelliteImagery,satelliteLabels]);createMapViewToggle();serviceRadiusCircle=L.circle([SHOP_SERVICE_CENTER.lat,SHOP_SERVICE_CENTER.lng],{radius:SERVICE_RADIUS_KM*1000,weight:2,fillOpacity:.06}).addTo(locationMap);locationMap.on('click',event=>selectMapPoint(event.latlng.lat,event.latlng.lng,true));setTimeout(()=>locationMap.invalidateSize(),60);return true;}
-  function openLocationModal(){const modal=$('locationModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(ensureMap()){setTimeout(()=>{locationMap.invalidateSize();const lat=parseCoordinate($('locationLatitude').value),lng=parseCoordinate($('locationLongitude').value);if(validCoords(lat,lng)){selectMapPoint(lat,lng,false,{name:clean($('customerArea').value),displayName:clean($('fullAddress').value)});locationMap.setView([lat,lng],16);}else locationMap.fitBounds(serviceRadiusCircle.getBounds(),{padding:[18,18]});},80);}}
+  function openLocationModal(){const modal=$('locationModal');document.body.classList.add('az-location-picker-open');modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(ensureMap()){setTimeout(()=>{locationMap.invalidateSize();const lat=parseCoordinate($('locationLatitude').value),lng=parseCoordinate($('locationLongitude').value);if(validCoords(lat,lng)){selectMapPoint(lat,lng,false,{name:clean($('customerArea').value),displayName:clean($('fullAddress').value)});locationMap.setView([lat,lng],16);}else locationMap.fitBounds(serviceRadiusCircle.getBounds(),{padding:[18,18]});},80);}}
   function closeLocationSuggestions(clear=false){const box=$('locationSearchResults'),input=$('locationSearchInput');box.classList.remove('show');input.setAttribute('aria-expanded','false');locationSearchActive=-1;if(clear){box.innerHTML='';locationSearchRows=[];}}
-  function closeLocationModal(){const modal=$('locationModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';clearTimeout(locationSearchTimer);if(locationSearchController)locationSearchController.abort();closeLocationSuggestions(true);}
+  function closeLocationModal(){const modal=$('locationModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.classList.remove('az-location-picker-open');document.body.style.overflow='';clearTimeout(locationSearchTimer);if(locationSearchController)locationSearchController.abort();closeLocationSuggestions(true);}
   async function reverseLocation(lat,lng){const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=18&addressdetails=1&accept-language=ms,en`;const response=await fetch(url,{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('Nama tempat tidak dapat dikenal pasti.');return response.json();}
   async function selectMapPoint(lat,lng,doReverse=true,preset=null){if(!validCoords(Number(lat),Number(lng)))return;lat=Number(lat);lng=Number(lng);if(!locationMarker){locationMarker=L.marker([lat,lng],{draggable:true}).addTo(locationMap);locationMarker.on('dragend',event=>{const pos=event.target.getLatLng();selectMapPoint(pos.lat,pos.lng,true);});}else locationMarker.setLatLng([lat,lng]);pendingLocation={lat,lng,name:preset&&preset.name||'Mengenal pasti lokasi...',displayName:preset&&preset.displayName||''};renderPendingLocation();if(doReverse){setPickerStatus('Sedang mendapatkan nama tempat...');try{const data=await reverseLocation(lat,lng);pendingLocation.name=shortPlaceName(data);pendingLocation.displayName=clean(data.display_name)||pendingLocation.name;}catch(_){pendingLocation.name='Lokasi pin peta';pendingLocation.displayName=`${lat.toFixed(6)}, ${lng.toFixed(6)}`;}renderPendingLocation();}}
   function renderLocationSearchResults(rows,message=''){
@@ -527,6 +581,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     function choose(item){input.value=item.value;close();if(onChoose)onChoose(item);input.dispatchEvent(new Event('change',{bubbles:true}));}
     function render(){const all=getOptions();current=rankedOptions(all,input.value,limit);if(!current.length){close();return;}const countText=current.length===all.length?`${current.length} pilihan`:`${current.length} daripada ${all.length} padanan`;menu.innerHTML=`<div class="autocomplete-count">${escapeHtml(countText)} • skrol untuk melihat lagi</div>`+current.map((item,i)=>`<button class="autocomplete-option${i===active?' active':''}" type="button" role="option" data-autocomplete-index="${i}"><strong>${escapeHtml(item.label||item.value)}</strong>${item.meta?`<span>${escapeHtml(item.meta)}</span>`:''}</button>`).join('');menu.classList.add('show');input.setAttribute('aria-expanded','true');}
     input.addEventListener('focus',render);
+    input.addEventListener('click',()=>{active=-1;render();});
     input.addEventListener('input',()=>{active=-1;render();});
     input.addEventListener('keydown',event=>{if(!menu.classList.contains('show')&&(event.key==='ArrowDown'||event.key==='ArrowUp'))render();if(event.key==='ArrowDown'){event.preventDefault();active=Math.min(active+1,current.length-1);render();}else if(event.key==='ArrowUp'){event.preventDefault();active=Math.max(active-1,0);render();}else if(event.key==='Enter'&&active>=0&&current[active]){event.preventDefault();choose(current[active]);}else if(event.key==='Escape')close();});
     menu.addEventListener('mousedown',event=>{const button=event.target.closest('[data-autocomplete-index]');if(!button)return;event.preventDefault();const item=current[Number(button.dataset.autocompleteIndex)];if(item)choose(item);});
@@ -566,7 +621,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     const currentBrand=brandMatchesInput();if(currentBrand&&type&&type!=='Lain-lain'&&!currentBrand.types.includes(type)){brandInput.value='';modelInput.value='';}
     brandAutocomplete.close();modelAutocomplete.close();updateSummary();
   }
-  const brandAutocomplete=setupAutocomplete(brandInput,$('deviceBrandSuggestions'),availableBrands,item=>{if(modelInput.value&&modelInput.dataset.selectedBrand&&modelInput.dataset.selectedBrand!==item.value)modelInput.value='';modelInput.dataset.selectedBrand=item.value;delete modelInput.dataset.selectedModel;modelInput.focus();},40);
+  const brandAutocomplete=setupAutocomplete(brandInput,$('deviceBrandSuggestions'),availableBrands,item=>{if(modelInput.value&&modelInput.dataset.selectedBrand&&modelInput.dataset.selectedBrand!==item.value)modelInput.value='';modelInput.dataset.selectedBrand=item.value;delete modelInput.dataset.selectedModel;setTimeout(()=>{try{modelInput.focus({preventScroll:true});}catch(_){modelInput.focus();}modelAutocomplete.refresh();},0);},40);
   const modelAutocomplete=setupAutocomplete(modelInput,$('deviceModelSuggestions'),availableModels,item=>{if(item.brand){brandInput.value=item.brand;modelInput.dataset.selectedBrand=item.brand;brandAutocomplete.close();}modelInput.dataset.selectedModel=item.value;applyModelScreenSize(item);},300);
   deviceTypeInput.addEventListener('change',()=>updateDeviceTypeUI(true));
   brandInput.addEventListener('change',()=>{modelInput.dataset.selectedBrand=brandInput.value;modelInput.value='';delete modelInput.dataset.selectedModel;modelAutocomplete.close();applyModelScreenSize(null);updateDeviceTypeUI(false);});
