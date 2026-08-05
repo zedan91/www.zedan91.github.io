@@ -1,13 +1,14 @@
 <!doctype html>
+
 <html lang="ms">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="description" content="Buat tempahan servis laptop dan PC AZOBSS. Pilih kerosakan, lihat anggaran awal dan hantar butiran melalui WhatsApp."/>
-<meta name="theme-color" content="#07101f"/>
-<title>Tempah Servis Laptop & PC | AZOBSS</title>
-<link rel="icon" href="/favicon.ico"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Buat tempahan servis laptop dan PC AZOBSS. Pilih kerosakan, lihat anggaran awal dan hantar butiran melalui WhatsApp." name="description"/>
+<meta content="#07101f" name="theme-color"/>
+<title>Tempah Servis Laptop &amp; PC | AZOBSS</title>
+<link href="/favicon.ico" rel="icon"/>
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
 <style>
 :root{--bg:#050b17;--panel:#0c1729;--panel2:#101f36;--line:#263b59;--text:#f2f7ff;--muted:#a9bad1;--cyan:#22d3ee;--blue:#3b82f6;--green:#22c55e;--yellow:#facc15;--red:#fb7185;--shadow:0 22px 70px rgba(0,0,0,.38)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(37,99,235,.18),transparent 32%),radial-gradient(circle at 92% 8%,rgba(34,211,238,.12),transparent 28%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.5}a{color:inherit}.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px clamp(14px,3vw,42px);background:rgba(3,8,18,.94);border-bottom:1px solid rgba(250,204,21,.45);backdrop-filter:blur(15px)}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:19px;font-weight:1000;letter-spacing:.3px}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(145deg,#18345d,#07101f);border:1px solid rgba(34,211,238,.65);color:#67e8f9;font-size:22px}.top-actions{display:flex;gap:8px}.top-link{display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:8px 13px;border:1px solid #334967;border-radius:10px;background:#0d1a2e;text-decoration:none;font-weight:850;font-size:13px}.top-link.primary{border-color:#16a34a;background:#16a34a;color:#04130a}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}.hero{padding:22px 0 12px}.eyebrow{display:inline-flex;padding:7px 12px;border-radius:999px;border:1px solid rgba(34,211,238,.38);background:rgba(34,211,238,.08);color:#a5f3fc;font-size:12px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.hero h1{max-width:900px;margin:17px 0 13px;font-size:clamp(36px,6vw,66px);line-height:1.04}.hero h1 span{color:var(--cyan)}.hero p{max-width:850px;margin:12px 0 0;color:var(--muted);font-size:clamp(16px,2vw,20px)}.price-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:18px 0 0}.price-chip{padding:13px;border:1px solid #2a4263;border-radius:14px;background:linear-gradient(155deg,rgba(16,31,54,.95),rgba(8,18,34,.98));text-align:center}.price-chip b{display:block;color:#86efac;font-size:17px}.price-chip span{display:block;color:#bdcbe0;font-size:12px;margin-top:3px}.promo{border-color:rgba(34,197,94,.5);box-shadow:0 0 0 1px rgba(34,197,94,.08) inset}.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(310px,.65fr);gap:20px;align-items:start;padding:28px 0 52px}.panel{background:linear-gradient(155deg,rgba(14,28,49,.98),rgba(7,16,31,.99));border:1px solid var(--line);border-radius:21px;box-shadow:var(--shadow)}.form-panel{padding:24px}.summary-panel{position:sticky;top:74px;padding:20px}.section-block{padding:20px 0;border-bottom:1px solid rgba(148,163,184,.16)}.section-block:first-child{padding-top:0}.section-block:last-child{border-bottom:0;padding-bottom:0}.section-title{display:flex;align-items:center;gap:10px;margin:0 0 6px;font-size:20px}.section-no{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#22d3ee);color:#03101e;font-weight:1000}.section-help{margin:0 0 15px;color:var(--muted);font-size:13px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field.full{grid-column:1/-1}.field label,.group-label{display:block;margin:0 0 6px;color:#dbeafe;font-size:13px;font-weight:900}.required{color:#fda4af}.field input,.field select,.field textarea{width:100%;min-height:45px;border:1px solid #344c6d;border-radius:11px;background:#071326;color:#fff;padding:11px 12px;font:inherit;outline:none}.field textarea{min-height:105px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.11)}.field small{display:block;margin-top:5px;color:#8195b0;font-size:11px}.autocomplete-wrap{position:relative}.autocomplete-menu{display:none;position:absolute;z-index:80;left:0;right:0;top:calc(100% + 5px);max-height:270px;overflow:auto;border:1px solid #3b587d;border-radius:11px;background:#061224;box-shadow:0 18px 45px rgba(0,0,0,.45)}.autocomplete-menu.show{display:block}.autocomplete-option{display:block;width:100%;border:0;border-bottom:1px solid rgba(148,163,184,.12);background:transparent;color:#eaf4ff;padding:10px 12px;text-align:left;cursor:pointer;font:inherit}.autocomplete-option:last-child{border-bottom:0}.autocomplete-option:hover,.autocomplete-option.active{background:#123052}.autocomplete-option strong{display:block;font-size:13px}.autocomplete-option span{display:block;margin-top:2px;color:#8fa6c2;font-size:11px}.area-note{color:#fde68a!important}.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.choice{position:relative;display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #314867;border-radius:12px;background:#09172a;cursor:pointer;transition:.18s}.choice:hover{border-color:#4d6e98}.choice:has(input:checked){border-color:#22d3ee;background:rgba(8,78,104,.28);box-shadow:0 0 0 2px rgba(34,211,238,.08) inset}.choice input{margin:3px 0 0;accent-color:#22d3ee}.choice-main{min-width:0}.choice-title{display:block;color:#edf7ff;font-weight:900;font-size:14px}.choice-price{display:block;margin-top:3px;color:#86efac;font-weight:900;font-size:13px}.choice-note{display:block;margin-top:3px;color:#91a6c1;font-size:11px}.radio-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.radio-pill{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) 24px;align-items:center;gap:10px;min-height:78px;padding:12px 13px;border:1px solid #334b6c;border-radius:14px;background:linear-gradient(145deg,#0a192d,#071326);color:#d9e6f5;cursor:pointer;transition:border-color .18s,transform .18s,background .18s,box-shadow .18s}.radio-pill:hover{border-color:#52749d;transform:translateY(-1px)}.radio-pill:has(input:checked){border-color:#22d3ee;background:linear-gradient(145deg,rgba(8,78,104,.58),rgba(7,28,48,.98));box-shadow:0 0 0 2px rgba(34,211,238,.1) inset,0 8px 24px rgba(0,0,0,.18)}.radio-pill input{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;min-height:0!important;pointer-events:none}.radio-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;border:1px solid #36557a;background:#10233d;color:#8de9f7;font-size:19px;font-weight:1000}.radio-pill:has(input:checked) .radio-icon{border-color:#22d3ee;background:#0d4054;color:#dffcff}.radio-copy{min-width:0}.radio-copy strong{display:block;color:#eef7ff;font-size:13px;line-height:1.3}.radio-copy small{display:block;margin-top:3px;color:#8fa6c2;font-size:11px;line-height:1.25}.radio-check{display:grid;place-items:center;width:22px;height:22px;border:1px solid #456182;border-radius:50%;background:#071326;color:#041018;font-size:13px;font-weight:1000}.radio-pill:has(input:checked) .radio-check{border-color:#67e8f9;background:#67e8f9}.radio-pill:has(input:checked) .radio-check::before{content:"✓"}@media(max-width:720px){.radio-row{grid-template-columns:1fr}.radio-pill{min-height:70px}}.notice{padding:13px 14px;border-radius:12px;border:1px solid rgba(250,204,21,.34);background:rgba(250,204,21,.075);color:#fde68a;font-size:12px}.privacy-note{margin-top:11px;padding:12px 13px;border:1px solid rgba(34,197,94,.3);border-radius:12px;background:rgba(34,197,94,.07);color:#bbf7d0;font-size:12px}.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}.summary-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}.summary-head h2{min-width:0;margin:0;font-size:21px;line-height:1.22}.estimate-badge{display:inline-flex;align-items:center;justify-content:center;align-self:start;flex:0 0 auto;white-space:nowrap;padding:7px 11px;border-radius:999px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:10px;line-height:1;font-weight:950;letter-spacing:.025em}.estimate-card{margin:15px 0;padding:18px;border:1px solid rgba(34,211,238,.35);border-radius:16px;background:linear-gradient(145deg,rgba(8,47,73,.62),rgba(9,23,43,.92))}.estimate-label{color:#a5f3fc;font-size:12px;font-weight:850}.estimate-value{display:block;margin:4px 0 2px;font-size:34px;line-height:1;color:#fff}.estimate-sub{color:#99abc2;font-size:11px}.summary-list{display:grid;gap:8px;margin:14px 0}.summary-item{display:flex;justify-content:space-between;gap:12px;padding:9px 10px;border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#081427;font-size:12px}.summary-item span:first-child{color:#dbeafe}.summary-item strong{color:#86efac;text-align:right}.summary-empty{padding:16px;border:1px dashed #3a506e;border-radius:12px;color:#8295af;text-align:center;font-size:12px}.summary-warning{margin-top:11px;color:#fde68a;font-size:12px}.action-stack{display:grid;gap:9px;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:47px;border:1px solid transparent;border-radius:12px;padding:11px 15px;font:inherit;font-weight:950;cursor:pointer;text-decoration:none}.btn.primary{background:linear-gradient(135deg,#16a34a,#22c55e);color:#04130a}.btn.secondary{border-color:#345072;background:#0b1a30;color:#eaf4ff}.btn:disabled{opacity:.55;cursor:not-allowed}.form-status{display:none;margin-top:11px;padding:11px 12px;border-radius:11px;font-size:12px;font-weight:800}.form-status.show{display:block}.form-status.ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.09);color:#bbf7d0}.form-status.error{border:1px solid rgba(251,113,133,.38);background:rgba(251,113,133,.09);color:#fecdd3}.fallback-link{display:none;margin-top:9px}.fallback-link.show{display:flex}.seller-card{margin-top:16px;padding:14px;border:1px solid #2d4565;border-radius:14px;background:#081427}.seller-card b{display:block;margin-bottom:5px}.seller-card span{display:block;color:#9eb0c8;font-size:12px}.shop-location-card{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid rgba(34,211,238,.38);border-radius:14px;background:linear-gradient(145deg,rgba(8,47,73,.5),rgba(9,23,43,.94))}.shop-location-copy{min-width:0}.shop-location-copy b{display:block;color:#eaf7ff;font-size:14px}.shop-location-copy span{display:block;margin-top:3px;color:#a9bad1;font-size:12px}.shop-location-copy code{display:inline-block;margin-top:5px;color:#86efac;font:800 11px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace}.shop-location-card .btn{flex:0 0 auto;min-height:42px;padding:9px 13px;font-size:12px}.footer{padding:25px 0 38px;border-top:1px solid rgba(148,163,184,.16);text-align:center;color:#8191a8;font-size:13px}
@@ -24,38 +25,114 @@
 .field.device-field-disabled{opacity:.52}.field.device-field-disabled select{cursor:not-allowed;background:#111827;color:#7f8da3}.desktop-irrelevant-hidden{display:none!important}.device-auto-note{color:#86efac!important}.device-auto-note.warn{color:#fde68a!important}.autocomplete-count{padding:7px 11px;border-bottom:1px solid rgba(148,163,184,.15);color:#8fa6c2;font-size:10px;background:#08182c;position:sticky;top:0;z-index:1}
 
 </style>
-
 <!-- AZOBSS 793: use the exact homepage stickybar assets and behaviour on Tempah Servis IT. -->
 <link href="/assets/css/azobss-global-compact-font-more-nav.css?v=636" rel="stylesheet"/>
-<script defer src="/assets/js/azobss-more-nav.js?v=780"></script>
+<script defer="" src="/assets/js/azobss-more-nav.js?v=780"></script>
 <link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 <style id="azobss-793-home-stickybar-service-page-offset">
 /* Homepage hides its old marketplace search strip; keep the identical one-row stickybar here too. */
 .market-sticky-bar .market-search-row{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
-body{
-  padding-top:49px;
-  background-color:#050b17;
-  background-image:
-    linear-gradient(180deg,rgba(2,8,23,.40) 0%,rgba(2,8,23,.68) 40%,rgba(2,8,23,.92) 100%),
-    linear-gradient(90deg,rgba(2,8,23,.34),rgba(2,8,23,.12)),
-    url('/images/pc-service-background.webp');
-  background-repeat:no-repeat;
-  background-size:cover;
-  background-position:center top;
-  background-attachment:fixed;
+body{padding-top:49px}
+@media(max-width:760px){body{padding-top:92px}}
+</style><style id="azobss-795-admin-floating-summary-mobile-fix">
+/* Fix role-class mismatch: global auth currently exposes body.is-admin. */
+body.is-admin .market-nav .azAdminDashboardBtn,
+body.is-admin .market-nav .admin-dashboard-btn,
+body.is-admin .market-nav a[href="/admin/"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
 }
-.panel{
-  background:linear-gradient(155deg,rgba(14,28,49,.92),rgba(7,16,31,.96));
-  backdrop-filter:blur(9px);
-  -webkit-backdrop-filter:blur(9px);
+
+/* Keep the booking summary visible while the desktop form scrolls. */
+.summary-panel{
+  position:sticky!important;
+  top:63px!important;
+  align-self:start!important;
+  max-height:calc(100dvh - 78px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  z-index:20;
 }
-.price-chip{
-  background:linear-gradient(155deg,rgba(16,31,54,.88),rgba(8,18,34,.94));
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
+.summary-mobile-toggle{display:none}
+
+@media(max-width:980px) and (min-width:761px){
+  .layout{grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr)!important;gap:14px}
+  .summary-panel{position:sticky!important;top:63px!important;max-height:calc(100dvh - 76px)}
 }
+
 @media(max-width:760px){
-  body{padding-top:92px;background-position:60% top;background-attachment:scroll}
+  body{padding-bottom:190px}
+  .layout{display:block!important;padding-top:18px}
+  .form-panel{width:100%}
+  .summary-panel{
+    position:fixed!important;
+    left:9px!important;
+    right:9px!important;
+    bottom:9px!important;
+    top:auto!important;
+    width:auto!important;
+    max-height:calc(100dvh - 112px);
+    padding:13px!important;
+    border-radius:16px!important;
+    overflow:auto;
+    z-index:3100;
+    box-shadow:0 20px 55px rgba(0,0,0,.58),0 0 0 1px rgba(34,211,238,.08) inset;
+    transition:max-height .2s ease,transform .2s ease;
+  }
+  .summary-head{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+  .summary-head h2{font-size:17px;line-height:1.15}
+  .summary-head-actions{display:flex;align-items:center;gap:7px}
+  .estimate-badge{padding:6px 8px;font-size:9px}
+  .summary-mobile-toggle{
+    display:inline-grid;
+    place-items:center;
+    width:32px;
+    height:32px;
+    flex:0 0 32px;
+    padding:0;
+    border:1px solid #3a587c;
+    border-radius:10px;
+    background:#0a1a30;
+    color:#eaf7ff;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .summary-panel:not(.mobile-expanded){max-height:171px;overflow:hidden}
+  .summary-panel:not(.mobile-expanded) .estimate-card{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    align-items:center;
+    column-gap:10px;
+    margin:8px 0;
+    padding:9px 11px;
+  }
+  .summary-panel:not(.mobile-expanded) .estimate-label{grid-column:1;grid-row:1;font-size:10px}
+  .summary-panel:not(.mobile-expanded) .estimate-value{grid-column:2;grid-row:1/3;margin:0;font-size:27px;white-space:nowrap}
+  .summary-panel:not(.mobile-expanded) .estimate-sub{grid-column:1;grid-row:2;font-size:10px}
+  .summary-panel:not(.mobile-expanded) .summary-list,
+  .summary-panel:not(.mobile-expanded) .summary-warning,
+  .summary-panel:not(.mobile-expanded) #copySummary,
+  .summary-panel:not(.mobile-expanded) .seller-card,
+  .summary-panel:not(.mobile-expanded) .fallback-link:not(.show){display:none!important}
+  .summary-panel:not(.mobile-expanded) .action-stack{margin-top:7px;gap:6px}
+  .summary-panel:not(.mobile-expanded) #submitBooking{min-height:42px;padding:8px 10px;font-size:13px}
+  .summary-panel.mobile-expanded .summary-mobile-toggle{transform:rotate(180deg)}
+  .summary-panel.mobile-expanded{max-height:calc(100dvh - 112px)}
+  body.az-summary-input-active{padding-bottom:68px}
+  body.az-summary-input-active .summary-panel{max-height:49px!important;overflow:hidden!important;padding-top:8px!important;padding-bottom:8px!important}
+  body.az-summary-input-active .summary-panel > :not(.summary-head){display:none!important}
+  body.az-summary-input-active .summary-mobile-toggle{display:none}
+}
+
+@media(max-width:390px){
+  .summary-panel{left:6px!important;right:6px!important;bottom:6px!important;padding:11px!important}
+  .summary-head h2{font-size:16px}
+  .estimate-badge{font-size:8px;padding:5px 7px}
+  .summary-panel:not(.mobile-expanded){max-height:166px}
 }
 </style>
 </head>
@@ -123,152 +200,144 @@ body{
 </div>
 </header>
 <main class="wrap">
-  <section class="hero">
-    <span class="eyebrow">Servis Laptop & PC • Batu Caves / Gombak / KL berdekatan</span>
-    <p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
-    <div class="price-strip" aria-label="Harga servis utama">
-      <div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
-      <div class="price-chip"><b>RM250–RM650</b><span>LCD Standard<br/>ikut saiz</span></div>
-      <div class="price-chip"><b>RM500–RM1,200+</b><span>LCD Touch Screen<br/>ikut saiz</span></div>
-      <div class="price-chip"><b>RM30 / RM30</b><span>Pickup / penghantaran<br/>servis AZOBSS</span></div>
-      <div class="price-chip"><b>RM80</b><span>Cleaning + Thermal Paste</span></div>
-    </div>
-  </section>
-
-  <section class="layout">
-    <form class="panel form-panel" id="bookingForm" novalidate>
-      <div class="section-block">
-        <h2 class="section-title"><span class="section-no">1</span>Maklumat pelanggan</h2>
-        <p class="section-help">Maklumat ini digunakan untuk AZOBSS menghubungi kamu mengenai pemeriksaan dan harga akhir.</p>
-        <div class="fields">
-          <div class="field"><label for="customerName">Nama <span class="required">*</span></label><input id="customerName" autocomplete="name" maxlength="100" placeholder="Contoh: Ahmad" required/></div>
-          <div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input id="customerPhone" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="Contoh: 012-345 6789" required/></div>
-          <div class="field full"><label for="customerEmail">E-mel (opsyenal)</label><input id="customerEmail" autocomplete="email" maxlength="160" placeholder="Contoh: nama@email.com" type="email"/></div>
-          <input id="locationWgs84" type="hidden"/><input id="locationLatitude" type="hidden"/><input id="locationLongitude" type="hidden"/><input id="customerArea" type="hidden"/>
-          <div class="field full location-picker"><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." required></textarea><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
-        </div>
-      </div>
-
-      <div class="section-block">
-        <h2 class="section-title"><span class="section-no">2</span>Maklumat peranti</h2>
-        <div class="fields">
-          <div class="field"><label for="deviceType">Jenis peranti <span class="required">*</span></label><select id="deviceType" required><option value="">Pilih jenis</option><option value="Laptop">Laptop</option><option value="Desktop PC">Desktop PC</option><option value="Lain-lain">Lain-lain</option></select></div>
-          <div class="field"><label for="deviceBrand">Jenama <span class="required">*</span></label><div class="autocomplete-wrap"><input id="deviceBrand" maxlength="80" placeholder="Taip untuk cari: Acer, ASUS, HP, IBM..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="deviceBrandSuggestions" required/><div class="autocomplete-menu" id="deviceBrandSuggestions" role="listbox"></div></div><small>Contoh: taip “IB” untuk memilih IBM — International Business Machines.</small></div>
-          <div class="field"><label for="deviceModel" id="deviceModelLabel">Model peranti <span class="required">*</span></label><div class="autocomplete-wrap"><input id="deviceModel" maxlength="120" placeholder="Pilih jenis peranti dan jenama dahulu" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="deviceModelSuggestions" required/><div class="autocomplete-menu" id="deviceModelSuggestions" role="listbox"></div></div><small id="deviceModelHelp">Model ditapis mengikut jenis peranti dan jenama. Katalog telah diperluas dengan model generasi baharu; model yang masih tiada boleh ditaip secara manual.</small></div>
-          <div class="field" id="screenSizeField"><label for="screenSize" id="screenSizeLabel">Saiz skrin (jika berkaitan)</label><select id="screenSize"><option value="">Tidak pasti / tidak berkaitan</option><option value="13.3 / 13.4 inci">13.3 / 13.4 inci</option><option value="14.0 inci">14.0 inci</option><option value="15.6 inci">15.6 inci</option><option value="16.0 inci">16.0 inci</option><option value="17.3 inci">17.3 inci</option><option value="Lain-lain">Lain-lain / saiz khas</option></select><small id="screenSizeHelp">Pilih model daripada senarai untuk mengesan saiz skrin secara automatik.</small></div>
-          <div class="field" id="screenTypeField"><label for="screenType">Jenis skrin (jika berkaitan)</label><select id="screenType"><option value="">Tidak pasti / tidak berkaitan</option><option value="Standard (Non-Touch)">Standard (Non-Touch)</option><option value="Touch Screen">Skrin Sentuh (Touch Screen)</option></select><small id="screenTypeHelp">Panel gaming ber-refresh rate tinggi, OLED atau spesifikasi khas akan disahkan oleh admin.</small></div>
-          <div class="field"><label for="deviceSerial">Serial number (opsyenal)</label><input id="deviceSerial" maxlength="120" placeholder="Boleh dibiarkan kosong"/></div>
-          <div class="field"><label for="devicePowerState">Keadaan semasa</label><select id="devicePowerState"><option value="Boleh hidup">Boleh hidup</option><option value="Hidup tetapi tiada display">Hidup tetapi tiada display</option><option value="Tidak boleh hidup">Tidak boleh hidup</option><option value="Kadang-kadang boleh hidup">Kadang-kadang boleh hidup</option></select></div>
-        </div>
-      </div>
-
-      <div class="section-block">
-        <h2 class="section-title"><span class="section-no">3</span>Pilih servis</h2>
-        <p class="section-help" id="serviceSectionHelp">Tandakan servis yang kamu mahu. Anggaran LCD dikira mengikut saiz dan jenis skrin yang dipilih pada Maklumat Peranti.</p>
-        <div class="choices" id="serviceChoices">
-          <label class="choice"><input type="checkbox" name="services" value="format-windows"/><span class="choice-main"><span class="choice-title">Format Windows 10 / 11</span><span class="choice-price">RM30 promosi</span><span class="choice-note">Harga biasa RM50. Lesen dan software berbayar tidak termasuk.</span></span></label>
-          <label class="choice"><input type="checkbox" name="services" value="cleaning-thermal"/><span class="choice-main"><span class="choice-title">Pembersihan + Thermal Paste</span><span class="choice-price">RM80</span><span class="choice-note">Untuk laptop atau PC. Keadaan heatsink/fan akan diperiksa.</span></span></label>
-          <label class="choice" id="lcdServiceChoice"><input type="checkbox" name="services" value="lcd-replacement"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop</span><span class="choice-price" id="lcdChoicePrice">RM250 – RM1,200+</span><span class="choice-note" id="lcdChoiceNote">Pilih saiz dan jenis skrin untuk anggaran lebih tepat.</span></span></label>
-          <label class="choice" id="keyboardServiceChoice"><input type="checkbox" name="services" value="keyboard"/><span class="choice-main"><span class="choice-title">Tukar Keyboard Laptop</span><span class="choice-price">RM150</span><span class="choice-note">Bergantung pada model, backlight dan jenis top case.</span></span></label>
-        </div>
-        <div class="lcd-pricing-card" id="lcdPricingCard">
-          <div class="lcd-pricing-title">Rujukan anggaran penukaran LCD laptop</div>
-          <table class="lcd-price-table"><thead><tr><th>Saiz</th><th>Standard (Non-Touch)</th><th>Touch Screen</th><th>Nota</th></tr></thead><tbody>
-            <tr><td><strong>13.3 / 13.4 inci</strong></td><td>RM250 – RM380</td><td>RM550 – RM850</td><td>Ultrabook; bezel biasanya rapat.</td></tr>
-            <tr><td><strong>14.0 inci</strong></td><td>RM260 – RM400</td><td>RM500 – RM750</td><td>Saiz paling popular; stok lebih mudah.</td></tr>
-            <tr><td><strong>15.6 inci</strong></td><td>RM270 – RM450</td><td>RM550 – RM850</td><td>Gaming 120Hz ke atas boleh sekitar RM500 – RM750.</td></tr>
-            <tr><td><strong>16.0 inci</strong></td><td>RM400 – RM600</td><td>RM700 – RM1,000+</td><td>Panel 16:10, IPS premium atau OLED mungkin lebih tinggi.</td></tr>
-            <tr><td><strong>17.3 inci</strong></td><td>RM350 – RM650</td><td>RM850 – RM1,200+</td><td>Laptop gaming/workstation; model khas mungkin berbeza.</td></tr>
-          </tbody></table>
-        </div>
-        <div class="admin-confirm-note" id="lcdAdminConfirmNote">⚠️ Harga di atas ialah anggaran sahaja. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak model penuh, part number, connector, resolusi, refresh rate, fungsi touch dan stok panel.</div>
-      </div>
-
-      <div class="section-block">
-        <h2 class="section-title"><span class="section-no">4</span>Apa yang rosak / masalah berlaku?</h2>
-        <p class="section-help">Boleh tanda lebih daripada satu. Pilihan ini membantu pemeriksaan awal tetapi bukan diagnosis muktamad.</p>
-        <div class="choices" id="issueChoices">
-          <label class="choice"><input type="checkbox" name="issues" value="Tidak boleh hidup"/><span class="choice-main"><span class="choice-title">Tidak boleh hidup</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Tiada display"/><span class="choice-main"><span class="choice-title">Tiada display</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Skrin pecah, bergaris atau berkelip"/><span class="choice-main"><span class="choice-title">Skrin pecah / bergaris / berkelip</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Keyboard rosak atau ada butang tidak berfungsi"/><span class="choice-main"><span class="choice-title">Keyboard / butang tidak berfungsi</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Laptop atau PC terlalu panas"/><span class="choice-main"><span class="choice-title">Terlalu panas / fan bising</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Peranti perlahan atau selalu hang"/><span class="choice-main"><span class="choice-title">Perlahan / selalu hang</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Blue screen atau Windows gagal masuk"/><span class="choice-main"><span class="choice-title">Blue screen / Windows gagal masuk</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="SSD atau hard disk bermasalah"/><span class="choice-main"><span class="choice-title">SSD / hard disk bermasalah</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="RAM atau memory bermasalah"/><span class="choice-main"><span class="choice-title">RAM / memory bermasalah</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Bateri cepat habis atau kembung"/><span class="choice-main"><span class="choice-title">Bateri cepat habis / kembung</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Charger atau charging port bermasalah"/><span class="choice-main"><span class="choice-title">Charger / charging port</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="WiFi atau Bluetooth bermasalah"/><span class="choice-main"><span class="choice-title">Wi-Fi / Bluetooth</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Hinge, casing atau body rosak"/><span class="choice-main"><span class="choice-title">Hinge / casing / body</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Pernah jatuh atau terkena air"/><span class="choice-main"><span class="choice-title">Jatuh / terkena air</span></span></label>
-          <label class="choice"><input type="checkbox" name="issues" value="Masalah lain"/><span class="choice-main"><span class="choice-title">Masalah lain</span></span></label>
-        </div>
-      </div>
-
-      <div class="section-block">
-        <h2 class="section-title"><span class="section-no">5</span>Keutamaan servis</h2>
-        <div class="fields">
-          <div class="field"><label for="serviceMethod">Kaedah serahan <span class="required">*</span></label><select id="serviceMethod" required><option value="Hantar sendiri ke Kedai">Hantar sendiri ke Kedai</option><option value="Pengambilan / Penghantaran">Pengambilan / Penghantaran — RM30</option><option value="Pengambilan & Penghantaran">Pengambilan & Penghantaran — RM60</option><option value="Servis On-site">Servis On-site — RM50</option></select><small class="transport-note">Pengambilan atau penghantaran satu hala RM30. Pengambilan dan penghantaran RM60. Servis On-site RM50.</small></div>
-          <div class="field"><label for="preferredDate">Tarikh pilihan</label><input id="preferredDate" type="date"/></div>
-          <div class="shop-location-card">
-            <div class="shop-location-copy"><b>📍 Hantar ke Kedai AZOBSS</b><span>Tekan untuk lihat arah dan jarak ke kedai.</span></div>
-            <button class="btn secondary" id="openShopDirections" type="button">Lihat Arah ke Kedai</button>
-          </div>
-          <div class="field"><label for="preferredTime">Masa pilihan</label><select id="preferredTime"><option value="Fleksibel">Fleksibel</option><option value="Pagi (9am–12pm)">Pagi (9am–12pm)</option><option value="Petang (12pm–5pm)">Petang (12pm–5pm)</option><option value="Malam (selepas 5pm)">Malam (selepas 5pm)</option></select></div>
-          <div class="field"><label for="urgency">Keutamaan</label><select id="urgency"><option value="Biasa">Biasa</option><option value="Segera">Segera</option><option value="Boleh tunggu">Boleh tunggu</option></select></div>
-          <div class="field full"><span class="group-label">Data penting / backup diperlukan?</span><div class="radio-row">
-            <label class="radio-pill"><input type="radio" name="backup" value="Ya, ada data penting"/><span class="radio-icon">▣</span><span class="radio-copy"><strong>Ada data penting</strong><small>Backup diperlukan</small></span><span class="radio-check" aria-hidden="true"></span></label>
-            <label class="radio-pill"><input type="radio" name="backup" value="Tidak perlu backup"/><span class="radio-icon">✓</span><span class="radio-copy"><strong>Tidak perlu backup</strong><small>Teruskan servis seperti biasa</small></span><span class="radio-check" aria-hidden="true"></span></label>
-            <label class="radio-pill"><input type="radio" name="backup" value="Tidak pasti" checked/><span class="radio-icon">?</span><span class="radio-copy"><strong>Tidak pasti</strong><small>Admin akan semak dahulu</small></span><span class="radio-check" aria-hidden="true"></span></label>
-          </div></div>
-          <div class="field full"><label for="problemDetails">Ceritakan masalah dan bila ia mula berlaku</label><textarea id="problemDetails" maxlength="1200" placeholder="Contoh: Laptop tiba-tiba lag, skrin gelap dan selepas restart terus tiada display. Lampu power masih menyala."></textarea></div>
-          <div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="800" placeholder="Contoh: Perlu Microsoft Office, mahu kekalkan data, atau akan hantar gambar kerosakan selepas WhatsApp dibuka."></textarea></div>
-        </div>
-        <div class="notice"><strong>Harga bukan final.</strong> Admin AZOBSS akan mengesahkan harga sebenar selepas pemeriksaan model, jenis panel/komponen, keadaan peranti, stok alat ganti dan lokasi. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50.</div>
-        <div class="privacy-note">Jangan masukkan password Windows, PIN bank atau maklumat sulit dalam borang. Password peranti hanya dibincangkan secara terus jika benar-benar diperlukan untuk ujian.</div>
-      </div>
-
-      <div class="section-block">
-        <label class="choice"><input id="consent" type="checkbox" required/><span class="choice-main"><span class="choice-title">Saya mengesahkan maklumat ini betul dan bersetuju dihubungi melalui telefon atau WhatsApp.</span></span></label>
-        <label class="honeypot" aria-hidden="true">Website<input id="companyWebsite" tabindex="-1" autocomplete="off"/></label>
-      </div>
-    </form>
-
-    <aside class="panel summary-panel">
-      <div class="summary-head"><h2>Ringkasan Tempahan</h2><span class="estimate-badge">ANGGARAN AWAL</span></div>
-      <div class="estimate-card">
-        <span class="estimate-label">Anggaran julat (bukan harga final)</span>
-        <strong class="estimate-value" id="estimateValue">RM0</strong>
-        <span class="estimate-sub" id="estimateSub">Pilih servis untuk melihat anggaran.</span>
-      </div>
-      <div class="summary-list" id="summaryList"><div class="summary-empty">Belum ada servis dipilih.</div></div>
-      <div class="summary-warning" id="summaryWarning">Komponen yang belum mempunyai harga memerlukan pemeriksaan terlebih dahulu.</div>
-      <div class="action-stack">
-        <button class="btn primary" id="submitBooking" type="submit" form="bookingForm">Hantar Tempahan melalui WhatsApp</button>
-        <button class="btn secondary" id="copySummary" type="button">Salin Ringkasan</button>
-      </div>
-      <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
-      <a class="btn secondary fallback-link" id="fallbackWhatsapp" href="#" target="_blank" rel="noopener">Teruskan WhatsApp tanpa rekod</a>
-      <div class="seller-card"><b>Apa berlaku selepas dihantar?</b><span>AZOBSS akan semak model, simptom dan pilihan servis, kemudian mengesahkan ketersediaan, tempoh serta harga akhir melalui WhatsApp.</span></div>
-    </aside>
-  </section>
+<section class="hero">
+<span class="eyebrow">Servis Laptop &amp; PC • Batu Caves / Gombak / KL berdekatan</span>
+<p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
+<div aria-label="Harga servis utama" class="price-strip">
+<div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
+<div class="price-chip"><b>RM250–RM650</b><span>LCD Standard<br/>ikut saiz</span></div>
+<div class="price-chip"><b>RM500–RM1,200+</b><span>LCD Touch Screen<br/>ikut saiz</span></div>
+<div class="price-chip"><b>RM30 / RM30</b><span>Pickup / penghantaran<br/>servis AZOBSS</span></div>
+<div class="price-chip"><b>RM80</b><span>Cleaning + Thermal Paste</span></div>
+</div>
+</section>
+<section class="layout">
+<form class="panel form-panel" id="bookingForm" novalidate="">
+<div class="section-block">
+<h2 class="section-title"><span class="section-no">1</span>Maklumat pelanggan</h2>
+<p class="section-help">Maklumat ini digunakan untuk AZOBSS menghubungi kamu mengenai pemeriksaan dan harga akhir.</p>
+<div class="fields">
+<div class="field"><label for="customerName">Nama <span class="required">*</span></label><input autocomplete="name" id="customerName" maxlength="100" placeholder="Contoh: Ahmad" required=""/></div>
+<div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input autocomplete="tel" id="customerPhone" inputmode="tel" maxlength="20" placeholder="Contoh: 012-345 6789" required=""/></div>
+<div class="field full"><label for="customerEmail">E-mel (opsyenal)</label><input autocomplete="email" id="customerEmail" maxlength="160" placeholder="Contoh: nama@email.com" type="email"/></div>
+<input id="locationWgs84" type="hidden"/><input id="locationLatitude" type="hidden"/><input id="locationLongitude" type="hidden"/><input id="customerArea" type="hidden"/>
+<div class="field full location-picker"><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." required=""></textarea><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
+</div>
+</div>
+<div class="section-block">
+<h2 class="section-title"><span class="section-no">2</span>Maklumat peranti</h2>
+<div class="fields">
+<div class="field"><label for="deviceType">Jenis peranti <span class="required">*</span></label><select id="deviceType" required=""><option value="">Pilih jenis</option><option value="Laptop">Laptop</option><option value="Desktop PC">Desktop PC</option><option value="Lain-lain">Lain-lain</option></select></div>
+<div class="field"><label for="deviceBrand">Jenama <span class="required">*</span></label><div class="autocomplete-wrap"><input aria-autocomplete="list" aria-controls="deviceBrandSuggestions" aria-expanded="false" autocomplete="off" id="deviceBrand" maxlength="80" placeholder="Taip untuk cari: Acer, ASUS, HP, IBM..." required="" role="combobox"/><div class="autocomplete-menu" id="deviceBrandSuggestions" role="listbox"></div></div><small>Contoh: taip “IB” untuk memilih IBM — International Business Machines.</small></div>
+<div class="field"><label for="deviceModel" id="deviceModelLabel">Model peranti <span class="required">*</span></label><div class="autocomplete-wrap"><input aria-autocomplete="list" aria-controls="deviceModelSuggestions" aria-expanded="false" autocomplete="off" id="deviceModel" maxlength="120" placeholder="Pilih jenis peranti dan jenama dahulu" required="" role="combobox"/><div class="autocomplete-menu" id="deviceModelSuggestions" role="listbox"></div></div><small id="deviceModelHelp">Model ditapis mengikut jenis peranti dan jenama. Katalog telah diperluas dengan model generasi baharu; model yang masih tiada boleh ditaip secara manual.</small></div>
+<div class="field" id="screenSizeField"><label for="screenSize" id="screenSizeLabel">Saiz skrin (jika berkaitan)</label><select id="screenSize"><option value="">Tidak pasti / tidak berkaitan</option><option value="13.3 / 13.4 inci">13.3 / 13.4 inci</option><option value="14.0 inci">14.0 inci</option><option value="15.6 inci">15.6 inci</option><option value="16.0 inci">16.0 inci</option><option value="17.3 inci">17.3 inci</option><option value="Lain-lain">Lain-lain / saiz khas</option></select><small id="screenSizeHelp">Pilih model daripada senarai untuk mengesan saiz skrin secara automatik.</small></div>
+<div class="field" id="screenTypeField"><label for="screenType">Jenis skrin (jika berkaitan)</label><select id="screenType"><option value="">Tidak pasti / tidak berkaitan</option><option value="Standard (Non-Touch)">Standard (Non-Touch)</option><option value="Touch Screen">Skrin Sentuh (Touch Screen)</option></select><small id="screenTypeHelp">Panel gaming ber-refresh rate tinggi, OLED atau spesifikasi khas akan disahkan oleh admin.</small></div>
+<div class="field"><label for="deviceSerial">Serial number (opsyenal)</label><input id="deviceSerial" maxlength="120" placeholder="Boleh dibiarkan kosong"/></div>
+<div class="field"><label for="devicePowerState">Keadaan semasa</label><select id="devicePowerState"><option value="Boleh hidup">Boleh hidup</option><option value="Hidup tetapi tiada display">Hidup tetapi tiada display</option><option value="Tidak boleh hidup">Tidak boleh hidup</option><option value="Kadang-kadang boleh hidup">Kadang-kadang boleh hidup</option></select></div>
+</div>
+</div>
+<div class="section-block">
+<h2 class="section-title"><span class="section-no">3</span>Pilih servis</h2>
+<p class="section-help" id="serviceSectionHelp">Tandakan servis yang kamu mahu. Anggaran LCD dikira mengikut saiz dan jenis skrin yang dipilih pada Maklumat Peranti.</p>
+<div class="choices" id="serviceChoices">
+<label class="choice"><input name="services" type="checkbox" value="format-windows"/><span class="choice-main"><span class="choice-title">Format Windows 10 / 11</span><span class="choice-price">RM30 promosi</span><span class="choice-note">Harga biasa RM50. Lesen dan software berbayar tidak termasuk.</span></span></label>
+<label class="choice"><input name="services" type="checkbox" value="cleaning-thermal"/><span class="choice-main"><span class="choice-title">Pembersihan + Thermal Paste</span><span class="choice-price">RM80</span><span class="choice-note">Untuk laptop atau PC. Keadaan heatsink/fan akan diperiksa.</span></span></label>
+<label class="choice" id="lcdServiceChoice"><input name="services" type="checkbox" value="lcd-replacement"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop</span><span class="choice-price" id="lcdChoicePrice">RM250 – RM1,200+</span><span class="choice-note" id="lcdChoiceNote">Pilih saiz dan jenis skrin untuk anggaran lebih tepat.</span></span></label>
+<label class="choice" id="keyboardServiceChoice"><input name="services" type="checkbox" value="keyboard"/><span class="choice-main"><span class="choice-title">Tukar Keyboard Laptop</span><span class="choice-price">RM150</span><span class="choice-note">Bergantung pada model, backlight dan jenis top case.</span></span></label>
+</div>
+<div class="lcd-pricing-card" id="lcdPricingCard">
+<div class="lcd-pricing-title">Rujukan anggaran penukaran LCD laptop</div>
+<table class="lcd-price-table"><thead><tr><th>Saiz</th><th>Standard (Non-Touch)</th><th>Touch Screen</th><th>Nota</th></tr></thead><tbody>
+<tr><td><strong>13.3 / 13.4 inci</strong></td><td>RM250 – RM380</td><td>RM550 – RM850</td><td>Ultrabook; bezel biasanya rapat.</td></tr>
+<tr><td><strong>14.0 inci</strong></td><td>RM260 – RM400</td><td>RM500 – RM750</td><td>Saiz paling popular; stok lebih mudah.</td></tr>
+<tr><td><strong>15.6 inci</strong></td><td>RM270 – RM450</td><td>RM550 – RM850</td><td>Gaming 120Hz ke atas boleh sekitar RM500 – RM750.</td></tr>
+<tr><td><strong>16.0 inci</strong></td><td>RM400 – RM600</td><td>RM700 – RM1,000+</td><td>Panel 16:10, IPS premium atau OLED mungkin lebih tinggi.</td></tr>
+<tr><td><strong>17.3 inci</strong></td><td>RM350 – RM650</td><td>RM850 – RM1,200+</td><td>Laptop gaming/workstation; model khas mungkin berbeza.</td></tr>
+</tbody></table>
+</div>
+<div class="admin-confirm-note" id="lcdAdminConfirmNote">⚠️ Harga di atas ialah anggaran sahaja. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak model penuh, part number, connector, resolusi, refresh rate, fungsi touch dan stok panel.</div>
+</div>
+<div class="section-block">
+<h2 class="section-title"><span class="section-no">4</span>Apa yang rosak / masalah berlaku?</h2>
+<p class="section-help">Boleh tanda lebih daripada satu. Pilihan ini membantu pemeriksaan awal tetapi bukan diagnosis muktamad.</p>
+<div class="choices" id="issueChoices">
+<label class="choice"><input name="issues" type="checkbox" value="Tidak boleh hidup"/><span class="choice-main"><span class="choice-title">Tidak boleh hidup</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Tiada display"/><span class="choice-main"><span class="choice-title">Tiada display</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Skrin pecah, bergaris atau berkelip"/><span class="choice-main"><span class="choice-title">Skrin pecah / bergaris / berkelip</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Keyboard rosak atau ada butang tidak berfungsi"/><span class="choice-main"><span class="choice-title">Keyboard / butang tidak berfungsi</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Laptop atau PC terlalu panas"/><span class="choice-main"><span class="choice-title">Terlalu panas / fan bising</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Peranti perlahan atau selalu hang"/><span class="choice-main"><span class="choice-title">Perlahan / selalu hang</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Blue screen atau Windows gagal masuk"/><span class="choice-main"><span class="choice-title">Blue screen / Windows gagal masuk</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="SSD atau hard disk bermasalah"/><span class="choice-main"><span class="choice-title">SSD / hard disk bermasalah</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="RAM atau memory bermasalah"/><span class="choice-main"><span class="choice-title">RAM / memory bermasalah</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Bateri cepat habis atau kembung"/><span class="choice-main"><span class="choice-title">Bateri cepat habis / kembung</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Charger atau charging port bermasalah"/><span class="choice-main"><span class="choice-title">Charger / charging port</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="WiFi atau Bluetooth bermasalah"/><span class="choice-main"><span class="choice-title">Wi-Fi / Bluetooth</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Hinge, casing atau body rosak"/><span class="choice-main"><span class="choice-title">Hinge / casing / body</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Pernah jatuh atau terkena air"/><span class="choice-main"><span class="choice-title">Jatuh / terkena air</span></span></label>
+<label class="choice"><input name="issues" type="checkbox" value="Masalah lain"/><span class="choice-main"><span class="choice-title">Masalah lain</span></span></label>
+</div>
+</div>
+<div class="section-block">
+<h2 class="section-title"><span class="section-no">5</span>Keutamaan servis</h2>
+<div class="fields">
+<div class="field"><label for="serviceMethod">Kaedah serahan <span class="required">*</span></label><select id="serviceMethod" required=""><option value="Hantar sendiri ke Kedai">Hantar sendiri ke Kedai</option><option value="Pengambilan / Penghantaran">Pengambilan / Penghantaran — RM30</option><option value="Pengambilan &amp; Penghantaran">Pengambilan &amp; Penghantaran — RM60</option><option value="Servis On-site">Servis On-site — RM50</option></select><small class="transport-note">Pengambilan atau penghantaran satu hala RM30. Pengambilan dan penghantaran RM60. Servis On-site RM50.</small></div>
+<div class="field"><label for="preferredDate">Tarikh pilihan</label><input id="preferredDate" type="date"/></div>
+<div class="shop-location-card">
+<div class="shop-location-copy"><b>📍 Hantar ke Kedai AZOBSS</b><span>Tekan untuk lihat arah dan jarak ke kedai.</span></div>
+<button class="btn secondary" id="openShopDirections" type="button">Lihat Arah ke Kedai</button>
+</div>
+<div class="field"><label for="preferredTime">Masa pilihan</label><select id="preferredTime"><option value="Fleksibel">Fleksibel</option><option value="Pagi (9am–12pm)">Pagi (9am–12pm)</option><option value="Petang (12pm–5pm)">Petang (12pm–5pm)</option><option value="Malam (selepas 5pm)">Malam (selepas 5pm)</option></select></div>
+<div class="field"><label for="urgency">Keutamaan</label><select id="urgency"><option value="Biasa">Biasa</option><option value="Segera">Segera</option><option value="Boleh tunggu">Boleh tunggu</option></select></div>
+<div class="field full"><span class="group-label">Data penting / backup diperlukan?</span><div class="radio-row">
+<label class="radio-pill"><input name="backup" type="radio" value="Ya, ada data penting"/><span class="radio-icon">▣</span><span class="radio-copy"><strong>Ada data penting</strong><small>Backup diperlukan</small></span><span aria-hidden="true" class="radio-check"></span></label>
+<label class="radio-pill"><input name="backup" type="radio" value="Tidak perlu backup"/><span class="radio-icon">✓</span><span class="radio-copy"><strong>Tidak perlu backup</strong><small>Teruskan servis seperti biasa</small></span><span aria-hidden="true" class="radio-check"></span></label>
+<label class="radio-pill"><input checked="" name="backup" type="radio" value="Tidak pasti"/><span class="radio-icon">?</span><span class="radio-copy"><strong>Tidak pasti</strong><small>Admin akan semak dahulu</small></span><span aria-hidden="true" class="radio-check"></span></label>
+</div></div>
+<div class="field full"><label for="problemDetails">Ceritakan masalah dan bila ia mula berlaku</label><textarea id="problemDetails" maxlength="1200" placeholder="Contoh: Laptop tiba-tiba lag, skrin gelap dan selepas restart terus tiada display. Lampu power masih menyala."></textarea></div>
+<div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="800" placeholder="Contoh: Perlu Microsoft Office, mahu kekalkan data, atau akan hantar gambar kerosakan selepas WhatsApp dibuka."></textarea></div>
+</div>
+<div class="notice"><strong>Harga bukan final.</strong> Admin AZOBSS akan mengesahkan harga sebenar selepas pemeriksaan model, jenis panel/komponen, keadaan peranti, stok alat ganti dan lokasi. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50.</div>
+<div class="privacy-note">Jangan masukkan password Windows, PIN bank atau maklumat sulit dalam borang. Password peranti hanya dibincangkan secara terus jika benar-benar diperlukan untuk ujian.</div>
+</div>
+<div class="section-block">
+<label class="choice"><input id="consent" required="" type="checkbox"/><span class="choice-main"><span class="choice-title">Saya mengesahkan maklumat ini betul dan bersetuju dihubungi melalui telefon atau WhatsApp.</span></span></label>
+<label aria-hidden="true" class="honeypot">Website<input autocomplete="off" id="companyWebsite" tabindex="-1"/></label>
+</div>
+</form>
+<aside class="panel summary-panel">
+<div class="summary-head"><h2>Ringkasan Tempahan</h2><div class="summary-head-actions"><span class="estimate-badge">ANGGARAN AWAL</span><button aria-expanded="false" aria-label="Buka ringkasan penuh" class="summary-mobile-toggle" id="summaryMobileToggle" type="button">⌃</button></div></div>
+<div class="estimate-card">
+<span class="estimate-label">Anggaran julat (bukan harga final)</span>
+<strong class="estimate-value" id="estimateValue">RM0</strong>
+<span class="estimate-sub" id="estimateSub">Pilih servis untuk melihat anggaran.</span>
+</div>
+<div class="summary-list" id="summaryList"><div class="summary-empty">Belum ada servis dipilih.</div></div>
+<div class="summary-warning" id="summaryWarning">Komponen yang belum mempunyai harga memerlukan pemeriksaan terlebih dahulu.</div>
+<div class="action-stack">
+<button class="btn primary" form="bookingForm" id="submitBooking" type="submit">Hantar Tempahan melalui WhatsApp</button>
+<button class="btn secondary" id="copySummary" type="button">Salin Ringkasan</button>
+</div>
+<div aria-live="polite" class="form-status" id="formStatus" role="status"></div>
+<a class="btn secondary fallback-link" href="#" id="fallbackWhatsapp" rel="noopener" target="_blank">Teruskan WhatsApp tanpa rekod</a>
+<div class="seller-card"><b>Apa berlaku selepas dihantar?</b><span>AZOBSS akan semak model, simptom dan pilihan servis, kemudian mengesahkan ketersediaan, tempoh serta harga akhir melalui WhatsApp.</span></div>
+</aside>
+</section>
 </main>
-
-<div class="location-modal" id="locationModal" aria-hidden="true">
-  <section class="location-dialog" role="dialog" aria-modal="true" aria-labelledby="locationDialogTitle">
-    <header class="location-dialog-head"><h3 id="locationDialogTitle">Cari dan pin lokasi servis</h3><button class="location-close" id="closeLocationPicker" type="button" aria-label="Tutup">×</button></header>
-    <div class="location-dialog-body">
-      <div class="location-search-shell">
-        <div class="location-search-row"><input id="locationSearchInput" placeholder="Taip nama taman, jalan, bangunan atau kawasan" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="locationSearchResults" aria-expanded="false"/><button class="btn secondary" id="searchLocationButton" type="button">Cari Lokasi</button><button class="btn secondary" id="modalCurrentLocation" type="button">Lokasi Semasa</button></div>
-        <div class="location-search-results" id="locationSearchResults" role="listbox" aria-label="Cadangan lokasi"></div>
-      </div>
-      <div class="location-map" id="locationMap" aria-label="Peta pilihan lokasi"></div>
-      <div class="location-status" id="locationPickerStatus">Cari lokasi, tekan pada peta atau gerakkan pin. Lingkaran menunjukkan radius servis 10 km dari kedai AZOBSS.</div>
-      <div class="location-selected"><div><span>Nama tempat</span><strong id="selectedLocationName">Belum dipilih</strong></div><div><span>WGS84 / jarak</span><strong id="selectedLocationCoords">-</strong></div></div>
-      <div class="location-dialog-actions"><button class="btn secondary" id="cancelLocationPicker" type="button">Batal</button><button class="btn primary" id="confirmLocationPicker" type="button" disabled>Gunakan Lokasi Ini</button></div>
-    </div>
-  </section>
+<div aria-hidden="true" class="location-modal" id="locationModal">
+<section aria-labelledby="locationDialogTitle" aria-modal="true" class="location-dialog" role="dialog">
+<header class="location-dialog-head"><h3 id="locationDialogTitle">Cari dan pin lokasi servis</h3><button aria-label="Tutup" class="location-close" id="closeLocationPicker" type="button">×</button></header>
+<div class="location-dialog-body">
+<div class="location-search-shell">
+<div class="location-search-row"><input aria-autocomplete="list" aria-controls="locationSearchResults" aria-expanded="false" autocomplete="off" id="locationSearchInput" placeholder="Taip nama taman, jalan, bangunan atau kawasan" role="combobox"/><button class="btn secondary" id="searchLocationButton" type="button">Cari Lokasi</button><button class="btn secondary" id="modalCurrentLocation" type="button">Lokasi Semasa</button></div>
+<div aria-label="Cadangan lokasi" class="location-search-results" id="locationSearchResults" role="listbox"></div>
+</div>
+<div aria-label="Peta pilihan lokasi" class="location-map" id="locationMap"></div>
+<div class="location-status" id="locationPickerStatus">Cari lokasi, tekan pada peta atau gerakkan pin. Lingkaran menunjukkan radius servis 10 km dari kedai AZOBSS.</div>
+<div class="location-selected"><div><span>Nama tempat</span><strong id="selectedLocationName">Belum dipilih</strong></div><div><span>WGS84 / jarak</span><strong id="selectedLocationCoords">-</strong></div></div>
+<div class="location-dialog-actions"><button class="btn secondary" id="cancelLocationPicker" type="button">Batal</button><button class="btn primary" disabled="" id="confirmLocationPicker" type="button">Gunakan Lokasi Ini</button></div>
+</div>
+</section>
 </div>
 <footer class="footer">© AZOBSS • Servis laptop dan PC • Anggaran tertakluk kepada pemeriksaan</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -533,9 +602,36 @@ body{
   autofill();updateSummary();
 })();
 </script>
-
-<script src="/assets/js/azobss-global-auth.js?v=704" type="module"></script>
-<script src="/assets/js/azobss-pro-ui.js" defer></script>
-<script src="/assets/js/azobss-radio-player.js?v=370" defer></script>
+<script id="azobss-795-summary-mobile-script">
+(function(){
+  'use strict';
+  const panel=document.querySelector('.summary-panel');
+  const toggle=document.getElementById('summaryMobileToggle');
+  const form=document.getElementById('bookingForm');
+  if(!panel||!toggle)return;
+  const isMobile=()=>window.matchMedia('(max-width:760px)').matches;
+  function setExpanded(expanded){
+    panel.classList.toggle('mobile-expanded',Boolean(expanded));
+    toggle.setAttribute('aria-expanded',expanded?'true':'false');
+    toggle.setAttribute('aria-label',expanded?'Kecilkan ringkasan':'Buka ringkasan penuh');
+  }
+  toggle.addEventListener('click',()=>setExpanded(!panel.classList.contains('mobile-expanded')));
+  window.addEventListener('resize',()=>{if(!isMobile())setExpanded(false);},{passive:true});
+  if(form){
+    form.addEventListener('focusin',event=>{
+      if(!isMobile())return;
+      if(event.target&&event.target.matches('input,select,textarea')){
+        setExpanded(false);
+        document.body.classList.add('az-summary-input-active');
+      }
+    });
+    form.addEventListener('focusout',()=>setTimeout(()=>{
+      if(!form.contains(document.activeElement))document.body.classList.remove('az-summary-input-active');
+    },80));
+  }
+})();
+</script><script src="/assets/js/azobss-global-auth.js?v=704" type="module"></script>
+<script defer="" src="/assets/js/azobss-pro-ui.js"></script>
+<script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script>
 </body>
 </html>
