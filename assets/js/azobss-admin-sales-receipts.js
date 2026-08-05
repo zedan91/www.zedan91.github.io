@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 766: ToyyibPay customer email requirement and safe retry */
+/* AZOBSS PATCH 786: website receipts auto-sent + Paid (Not Sent) filter */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=766;
+window.__azSalesReceiptsModuleVersion=786;
 
 let manualRows=[];
 let websiteRows=[];
@@ -95,14 +95,18 @@ function receiptDeliveryStateDocIdFromKey(key=''){
 function applyReceiptDeliveryState(row={}){
   const key=receiptDeliveryKey(row);const state=receiptDeliveryStateByKey.get(key);
   if(state){
+    // An explicit admin/share state always wins, including Website rows manually marked NOT SENT.
     row.receiptSent=state.receiptSent===true;
     row.receiptSentAtMs=parseMs(state.receiptSentAtMs||state.receiptSentAt);
     row.receiptSentVia=String(state.receiptSentVia||'');
     row.receiptDeliveryStateDocId=String(state._docId||receiptDeliveryStateDocIdFromKey(key));
   }else{
-    row.receiptSent=row.receiptSent===true;
-    row.receiptSentAtMs=parseMs(row.receiptSentAtMs||row.receiptSentAt);
-    row.receiptSentVia=String(row.receiptSentVia||'');
+    // Website purchases deliver their receipt automatically after payment. Manual sales must
+    // remain NOT SENT until the admin shares the receipt or marks it as sent.
+    const websiteAutoSent=row.source==='website'&&normalizeStatus(row.status)==='paid';
+    row.receiptSent=websiteAutoSent;
+    row.receiptSentAtMs=websiteAutoSent?(parseMs(row.paidAtMs||row.paymentPaidAtMs||row.saleDateMs)||0):0;
+    row.receiptSentVia=websiteAutoSent?'website-auto-receipt':'';
     row.receiptDeliveryStateDocId=receiptDeliveryStateDocIdFromKey(key);
   }
   return row;
@@ -443,7 +447,8 @@ function applyFilters(){
   const from=f.from?new Date(f.from+'T00:00:00').getTime():0;const to=f.to?new Date(f.to+'T23:59:59.999').getTime():0;
   rows=rows.filter(r=>{
     const hay=[r.documentNo,r.invoiceNo,r.receiptNo,r.customerName,r.customerEmail,r.customerPhone,r.paymentMethod,r.status,r.sourceName,...(r.items||[]).map(i=>i.name),...categoriesForRow(r)].join(' ').toLowerCase();
-    return (!f.q||hay.includes(f.q))&&(f.status==='all'||r.status===f.status)&&(f.source==='all'||r.source===f.source)&&rowMatchesCategory(r,f.category)&&(!from||r.saleDateMs>=from)&&(!to||r.saleDateMs<=to);
+    const statusMatch=f.status==='all'||(f.status==='paid-not-sent'?r.status==='paid'&&r.receiptSent!==true:r.status===f.status);
+    return (!f.q||hay.includes(f.q))&&statusMatch&&(f.source==='all'||r.source===f.source)&&rowMatchesCategory(r,f.category)&&(!from||r.saleDateMs>=from)&&(!to||r.saleDateMs<=to);
   });
   rows.sort((a,b)=>{
     if(f.sort==='oldest')return a.saleDateMs-b.saleDateMs;
