@@ -316,7 +316,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <div class="field"><label for="preferredDate">Tarikh pilihan</label><input id="preferredDate" type="date"/></div>
 <div class="shop-location-card">
 <div class="shop-location-copy"><b>📍 Hantar ke Kedai AZOBSS</b><span>Tekan untuk lihat arah dan jarak ke kedai.</span></div>
-<button class="btn secondary" id="openShopDirections" type="button">Lihat Arah ke Kedai</button>
+<a class="btn secondary" id="openShopDirections" href="https://www.google.com/maps/dir/?api=1&amp;destination=3.255511332218502%2C101.69410874034087&amp;travelmode=driving&amp;dir_action=navigate" rel="noopener noreferrer" target="_blank">Lihat Arah ke Kedai</a>
 </div>
 <div class="field"><label for="preferredTime">Masa pilihan</label><select id="preferredTime"><option value="Fleksibel">Fleksibel</option><option value="Pagi (9am–12pm)">Pagi (9am–12pm)</option><option value="Petang (12pm–5pm)">Petang (12pm–5pm)</option><option value="Malam (selepas 5pm)">Malam (selepas 5pm)</option></select></div>
 <div class="field"><label for="urgency">Keutamaan</label><select id="urgency"><option value="Biasa">Biasa</option><option value="Segera">Segera</option><option value="Boleh tunggu">Boleh tunggu</option></select></div>
@@ -415,8 +415,6 @@ body.is-admin .market-nav a[href="/admin/"]{
   const locationSearchCache=new Map();
   const checked=name=>Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el=>el.value);
   const clean=v=>String(v||'').trim();
-  function shopDirectionsUrl(origin){const base='https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+encodeURIComponent(SHOP_LOCATION.lat+','+SHOP_LOCATION.lng);return origin&&validCoords(origin.lat,origin.lng)?base+'&origin='+encodeURIComponent(origin.lat+','+origin.lng):base;}
-  function openShopDirections(){const opened=window.open('about:blank','_blank');const go=url=>{if(opened){opened.location.href=url;opened.opener=null;}else window.location.href=url;};const button=$('openShopDirections');const reset=()=>{if(button){button.disabled=false;button.textContent='Lihat Arah ke Kedai';}};if(button){button.disabled=true;button.textContent='Mengesan lokasi...';}if(!navigator.geolocation){go(shopDirectionsUrl());reset();return;}navigator.geolocation.getCurrentPosition(pos=>{go(shopDirectionsUrl({lat:pos.coords.latitude,lng:pos.coords.longitude}));reset();},()=>{go(shopDirectionsUrl());reset();},{enableHighAccuracy:true,timeout:8000,maximumAge:60000});}
   const money=n=>'RM'+Number(n||0).toFixed(0);
   function rangeLabel(min,max,plus=false){min=Number(min||0);max=Number(max||0);return min===max?money(min):`${money(min)} – ${money(max)}${plus?'+':''}`;}
   function lcdEstimate(){
@@ -617,7 +615,6 @@ body.is-admin .market-nav a[href="/admin/"]{
     }finally{button.disabled=false;button.textContent='Hantar Tempahan melalui WhatsApp';}
   });
   $('copySummary').addEventListener('click',async()=>{const p=payload();const text=localMessage(p);try{await navigator.clipboard.writeText(text);showStatus('Ringkasan berjaya disalin.','ok');}catch(_){showStatus('Tidak dapat menyalin secara automatik. Sila gunakan butang WhatsApp.','error');}});
-  $('openShopDirections').addEventListener('click',openShopDirections);
   function firstText(obj,keys){for(const key of keys){const value=obj&&obj[key];if(typeof value==='string'&&value.trim())return value.trim();}return '';}
   function autofill(){
     let profile=null;
