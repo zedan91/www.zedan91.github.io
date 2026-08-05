@@ -57,7 +57,7 @@
     return String(row.source||'').toLowerCase()==='manual'?legacyActualTime(primary,row):(primary||Date.now());
   }
   function categoryLabel(value){
-    return ({physical:'Physical','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';
+    return ({physical:'Hardware','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';
   }
   function normalizeDocumentType(value){ return clean(value).toLowerCase()==='invoice' ? 'invoice' : 'receipt'; }
   function receiptNumber(row){

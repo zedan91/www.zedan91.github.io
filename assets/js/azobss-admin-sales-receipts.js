@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 804: Service Booking submit date/time -> Draft Invoice auto-fill */
+/* AZOBSS PATCH 808: Hardware category label + Service Booking hardware auto-category */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=804;
+window.__azSalesReceiptsModuleVersion=808;
 
 let manualRows=[];
 let websiteRows=[];
@@ -219,7 +219,7 @@ function detectCategory(x={}){
   if(/software|license|lesen|installer|download/.test(hay))return 'software';
   return 'other';
 }
-function categoryLabel(v){return ({physical:'Physical','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[v]||'Other'}
+function categoryLabel(v){return ({physical:'Hardware','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[v]||'Other'}
 function extractAmount(x={}){
   for(const k of ['amount','saleAmount','total','totalAmount','price','paymentAmount','amountValue']){const n=num(x[k]);if(n>0)return n}
   const sen=num(x.amountSen||x.paymentAmountSen);return sen>0?sen/100:0;
@@ -1144,11 +1144,16 @@ async function autoLoadSalesReceiptsWhenActive(){
   }
 }
 
+function serviceBookingDraftCategory(item={}){
+  const name=String(item.name||'').trim().toLowerCase();
+  // LCD/screen panels and keyboards are replacement hardware, not labour-only services.
+  return /(lcd|screen|skrin|display|panel|keyboard|papan\s*kekunci)/i.test(name)?'physical':'service';
+}
 function serviceBookingInvoicePrefill(booking={}){
   const bookingId=String(booking.bookingId||booking.id||'').trim();
   const services=Array.isArray(booking.services)?booking.services:[];
   const logistics=Array.isArray(booking.logistics)?booking.logistics:[];
-  const items=[...services,...logistics].map(item=>({category:'service',name:String(item.name||'Servis IT').trim(),qty:1,unitPrice:clampMoney(item.minPrice??item.price??0),unitCost:0})).filter(item=>item.name);
+  const items=[...services,...logistics].map(item=>({category:serviceBookingDraftCategory(item),name:String(item.name||'Servis IT').trim(),qty:1,unitPrice:clampMoney(item.minPrice??item.price??0),unitCost:0})).filter(item=>item.name);
   const finalPrice=clampMoney(booking.finalPrice||0);
   if(!items.length)items.push({category:'service',name:`Pemeriksaan / servis ${booking.deviceBrand||''} ${booking.deviceModel||''}`.trim(),qty:1,unitPrice:finalPrice||clampMoney(booking.estimatedMinimum||0),unitCost:0});
   let subtotal=items.reduce((sum,item)=>sum+num(item.qty)*num(item.unitPrice),0),discount=0;

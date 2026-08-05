@@ -2461,7 +2461,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card az-kpi-card is-money"><div><div class="stat-label">Paid Gross Sales</div><div id="srGrossSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Jumlah dibayar pelanggan selepas diskaun dan termasuk shipping charged.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Total Costs</div><div id="srTotalCosts" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Modal, shipping cost, fee, komisen dan kos lain.</div></div>
         <div class="card az-kpi-card is-money az-net-income-card"><div><div class="stat-label">Net Profit</div><div id="srNetProfit" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Paid gross sales ditolak semua kos dalaman.</div></div>
-        <div class="card az-kpi-card"><div><div class="stat-label">Physical Sales</div><div id="srPhysicalSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Produk fizikal termasuk Computer &amp; IT yang berstatus Paid.</div></div>
+        <div class="card az-kpi-card"><div><div class="stat-label">Hardware Sales</div><div id="srPhysicalSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Produk hardware termasuk Computer &amp; IT yang berstatus Paid.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Software / Digital</div><div id="srSoftwareSales" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Software, CAD Tools dan PA/BM yang Paid.</div></div>
         <div class="card az-kpi-card is-alert"><div><div class="stat-label">Pending Records</div><div id="srPendingCount" class="stat-value">0</div></div><div class="az-kpi-note">Belum dimasukkan dalam gross sales atau profit.</div></div>
       </div>
@@ -2473,7 +2473,7 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
         <div class="az-sr-filter-grid">
           <label>Search<input id="salesReceiptSearch" placeholder="Document / customer / phone / product..."></label>
-          <label>Category<select id="salesReceiptCategory"><option value="all">All Categories</option><option value="physical">Physical</option><option value="computer-it">Computer &amp; IT</option><option value="digital">Software / Digital</option><option value="software">Software</option><option value="cad">CAD Tools</option><option value="pabm">PA/BM</option><option value="service">Service</option><option value="other">Other</option></select></label>
+          <label>Category<select id="salesReceiptCategory"><option value="all">All Categories</option><option value="physical">Hardware</option><option value="computer-it">Computer &amp; IT</option><option value="digital">Software / Digital</option><option value="software">Software</option><option value="cad">CAD Tools</option><option value="pabm">PA/BM</option><option value="service">Service</option><option value="other">Other</option></select></label>
           <label>Status<select id="salesReceiptStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="paid-not-sent">Paid (Not Sent)</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option><option value="failed">Failed</option></select></label>
           <label>Source<select id="salesReceiptSource"><option value="all">All Sources</option><option value="manual">Manual Sale</option><option value="website">Website Payment</option></select></label>
           <label>Sort<select id="salesReceiptSort"><option value="newest">Newest First</option><option value="oldest">Oldest First</option><option value="gross-high">Highest Gross</option><option value="profit-high">Highest Profit</option><option value="az">Customer A–Z</option></select></label>
@@ -7914,6 +7914,6 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=768"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=804" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=808" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 </body>
 </html>
