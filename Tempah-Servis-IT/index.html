@@ -135,6 +135,37 @@ body.is-admin .market-nav a[href="/admin/"]{
   .summary-panel:not(.mobile-expanded){max-height:166px}
 }
 </style>
+
+<style id="azobss-796-summary-follow-scroll-fix">
+/* Dedicated rail keeps the sidebar column as tall as the booking form.
+   A small JS fallback switches the card to fixed positioning after it reaches
+   the stickybar, then docks it above the end of the form. */
+.summary-rail{min-width:0;align-self:stretch;position:relative}
+.summary-rail .summary-panel{width:100%}
+@media(min-width:761px){
+  .summary-rail{height:100%}
+  .summary-panel.az-follow-fixed{
+    position:fixed!important;
+    top:var(--az-summary-top,63px)!important;
+    left:var(--az-summary-left,auto)!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:var(--az-summary-width,320px)!important;
+    max-height:calc(100dvh - var(--az-summary-top,63px) - 12px)!important;
+    z-index:120!important;
+  }
+  .summary-panel.az-follow-docked{
+    position:absolute!important;
+    top:auto!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    width:100%!important;
+    max-height:calc(100dvh - 76px)!important;
+  }
+}
+@media(max-width:760px){.summary-rail{display:contents}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -305,6 +336,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <label aria-hidden="true" class="honeypot">Website<input autocomplete="off" id="companyWebsite" tabindex="-1"/></label>
 </div>
 </form>
+<div class="summary-rail" id="summaryRail">
 <aside class="panel summary-panel">
 <div class="summary-head"><h2>Ringkasan Tempahan</h2><div class="summary-head-actions"><span class="estimate-badge">ANGGARAN AWAL</span><button aria-expanded="false" aria-label="Buka ringkasan penuh" class="summary-mobile-toggle" id="summaryMobileToggle" type="button">⌃</button></div></div>
 <div class="estimate-card">
@@ -322,6 +354,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <a class="btn secondary fallback-link" href="#" id="fallbackWhatsapp" rel="noopener" target="_blank">Teruskan WhatsApp tanpa rekod</a>
 <div class="seller-card"><b>Apa berlaku selepas dihantar?</b><span>AZOBSS akan semak model, simptom dan pilihan servis, kemudian mengesahkan ketersediaan, tempoh serta harga akhir melalui WhatsApp.</span></div>
 </aside>
+</div>
 </section>
 </main>
 <div aria-hidden="true" class="location-modal" id="locationModal">
@@ -630,7 +663,74 @@ body.is-admin .market-nav a[href="/admin/"]{
     },80));
   }
 })();
-</script><script src="/assets/js/azobss-global-auth.js?v=704" type="module"></script>
+</script>
+<script id="azobss-796-summary-follow-scroll-script">
+(function(){
+  'use strict';
+  const rail=document.getElementById('summaryRail');
+  const panel=rail&&rail.querySelector('.summary-panel');
+  const stickybar=document.querySelector('.market-sticky-bar');
+  if(!rail||!panel)return;
+
+  const desktop=()=>window.matchMedia('(min-width:761px)').matches;
+  let scheduled=false;
+
+  function clearDesktopFloat(){
+    panel.classList.remove('az-follow-fixed','az-follow-docked');
+    panel.style.removeProperty('--az-summary-top');
+    panel.style.removeProperty('--az-summary-left');
+    panel.style.removeProperty('--az-summary-width');
+  }
+
+  function syncSummaryFollow(){
+    scheduled=false;
+    if(!desktop()){clearDesktopFloat();return;}
+
+    /* Measure the reserved sidebar rail, not the fixed card itself. */
+    const railRect=rail.getBoundingClientRect();
+    const pageY=window.scrollY||window.pageYOffset||0;
+    const barHeight=stickybar?Math.max(0,stickybar.getBoundingClientRect().height):49;
+    const topGap=Math.ceil(barHeight+10);
+    const panelHeight=panel.getBoundingClientRect().height;
+    const railTop=railRect.top+pageY;
+    const railBottom=railTop+rail.offsetHeight;
+    const startAt=railTop-topGap;
+    const dockAt=railBottom-panelHeight-topGap;
+
+    panel.style.setProperty('--az-summary-top',topGap+'px');
+    panel.style.setProperty('--az-summary-left',railRect.left+'px');
+    panel.style.setProperty('--az-summary-width',railRect.width+'px');
+
+    if(pageY<=startAt||dockAt<=startAt){
+      panel.classList.remove('az-follow-fixed','az-follow-docked');
+    }else if(pageY>=dockAt){
+      panel.classList.remove('az-follow-fixed');
+      panel.classList.add('az-follow-docked');
+    }else{
+      panel.classList.remove('az-follow-docked');
+      panel.classList.add('az-follow-fixed');
+    }
+  }
+
+  function requestSync(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(syncSummaryFollow);
+  }
+
+  window.addEventListener('scroll',requestSync,{passive:true});
+  window.addEventListener('resize',requestSync,{passive:true});
+  window.addEventListener('orientationchange',requestSync,{passive:true});
+  window.addEventListener('load',requestSync,{once:true});
+  if('ResizeObserver' in window){
+    const observer=new ResizeObserver(requestSync);
+    observer.observe(rail);
+    observer.observe(panel);
+  }
+  requestSync();
+})();
+</script>
+<script src="/assets/js/azobss-global-auth.js?v=704" type="module"></script>
 <script defer="" src="/assets/js/azobss-pro-ui.js"></script>
 <script defer="" src="/assets/js/azobss-radio-player.js?v=370"></script>
 </body>
