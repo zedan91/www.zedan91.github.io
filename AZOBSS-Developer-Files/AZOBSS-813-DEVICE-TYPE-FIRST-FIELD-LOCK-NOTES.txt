@@ -1,0 +1,9 @@
+AZOBSS Patch 813
+
+1. Jenama, Model peranti, Saiz skrin and Jenis skrin start disabled until Jenis peranti is selected.
+2. Native disabled attributes prevent mouse, touch and keyboard interaction before the prerequisite is met.
+3. Disabled field styling now covers both input and select elements, and autocomplete dropdowns are forced closed.
+4. Laptop and Lain-lain enable all four dependent fields after selection.
+5. Desktop PC enables Jenama and Model peranti but keeps screen fields disabled as not applicable.
+6. Clearing or changing Jenis peranti resets dependent model and screen values to avoid inconsistent data.
+7. All patch 812 behavior is retained.
