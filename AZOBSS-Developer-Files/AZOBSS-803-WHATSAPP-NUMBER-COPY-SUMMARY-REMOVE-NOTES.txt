@@ -1,0 +1,11 @@
+AZOBSS PATCH 803 — WHATSAPP NUMBER + COPY SUMMARY REMOVE
+
+Baseline: (802)-AZOBSS-SERVICE-BOOKINGS-ADMIN-AUTH-BRIDGE-FIX_20260805.zip
+
+Perubahan:
+1. Destinasi WhatsApp Tempah Servis IT ditukar kepada +60 11-3560 0723 (601135600723).
+2. Fallback frontend turut menggunakan nombor baharu.
+3. Backend menggunakan nombor baharu sebagai default. Jika Render ENV masih menyimpan nombor lama 60175099983, backend memigrasikannya secara automatik kepada nombor baharu.
+4. Butang “Salin Ringkasan” dibuang daripada Ringkasan Tempahan.
+5. CSS dan JavaScript berkaitan butang tersebut turut dibuang supaya tiada ralat null event listener.
+6. Semua fungsi patch (802) dikekalkan.

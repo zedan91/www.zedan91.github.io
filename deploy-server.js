@@ -11366,8 +11366,10 @@ function azServiceBookingEstimate(serviceIds, screenSize, screenType, serviceMet
   return { services, logistics, minimum:Math.round(minimum*100)/100, maximum:Math.round(maximum*100)/100, total:Math.round(minimum*100)/100, suffix:plus?"+":"", plus, pickupFee, deliveryFee, transportFee, onsiteFee, logisticsTotal:pickupFee+deliveryFee+transportFee+onsiteFee, display:azServiceBookingRangeLabel(minimum,maximum,plus) };
 }
 function azServiceBookingWhatsappNumber() {
-  const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "60175099983").replace(/\D/g, "");
-  return raw || "60175099983";
+  const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "601135600723").replace(/\D/g, "");
+  // Auto-migrate the previous AZOBSS service number if it is still stored in Render ENV.
+  if (!raw || raw === "60175099983") return "601135600723";
+  return raw;
 }
 function azServiceBookingMessage(row) {
   const serviceLines = (row.services || []).map((item, index) => `${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}`);

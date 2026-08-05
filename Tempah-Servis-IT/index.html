@@ -115,7 +115,6 @@ body.is-admin .market-nav a[href="/admin/"]{
   .summary-panel:not(.mobile-expanded) .estimate-sub{grid-column:1;grid-row:2;font-size:10px}
   .summary-panel:not(.mobile-expanded) .summary-list,
   .summary-panel:not(.mobile-expanded) .summary-warning,
-  .summary-panel:not(.mobile-expanded) #copySummary,
   .summary-panel:not(.mobile-expanded) .seller-card,
   .summary-panel:not(.mobile-expanded) .fallback-link:not(.show){display:none!important}
   .summary-panel:not(.mobile-expanded) .action-stack{margin-top:7px;gap:6px}
@@ -402,7 +401,6 @@ body.is-admin .market-nav a[href="/admin/"]{
 <div class="summary-warning" id="summaryWarning">Komponen yang belum mempunyai harga memerlukan pemeriksaan terlebih dahulu.</div>
 <div class="action-stack">
 <button class="btn primary" form="bookingForm" id="submitBooking" type="submit">Hantar Tempahan melalui WhatsApp</button>
-<button class="btn secondary" id="copySummary" type="button">Salin Ringkasan</button>
 </div>
 <div aria-live="polite" class="form-status" id="formStatus" role="status"></div>
 <a class="btn secondary fallback-link" href="#" id="fallbackWhatsapp" rel="noopener" target="_blank">Teruskan WhatsApp tanpa rekod</a>
@@ -432,7 +430,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 (function(){
   'use strict';
   const API='https://azobss-backend.onrender.com/api/service-bookings';
-  const FALLBACK_WA='60175099983';
+  const FALLBACK_WA='601135600723';
   const SHOP_LOCATION={lat:3.255511332218502,lng:101.69410874034087,label:'Lokasi AZOBSS'};
   const catalog={
     'format-windows':{name:'Format Windows 10 / 11',min:30,max:30},
@@ -669,7 +667,6 @@ body.is-admin .market-nav a[href="/admin/"]{
       const wa=fallbackUrl(p);fallback.href=wa;fallback.classList.add('show');showStatus((error.message||'Rekod gagal disimpan.')+' Kamu masih boleh hantar maklumat terus melalui WhatsApp menggunakan butang di bawah.','error');
     }finally{button.disabled=false;button.textContent='Hantar Tempahan melalui WhatsApp';}
   });
-  $('copySummary').addEventListener('click',async()=>{const p=payload();const text=localMessage(p);try{await navigator.clipboard.writeText(text);showStatus('Ringkasan berjaya disalin.','ok');}catch(_){showStatus('Tidak dapat menyalin secara automatik. Sila gunakan butang WhatsApp.','error');}});
   function firstText(obj,keys){for(const key of keys){const value=obj&&obj[key];if(typeof value==='string'&&value.trim())return value.trim();}return '';}
   function autofill(){
     let profile=null;

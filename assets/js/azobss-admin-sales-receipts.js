@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 798: Service Booking -> Draft Invoice linkage + quota-safe workflow */
+/* AZOBSS PATCH 804: Service Booking submit date/time -> Draft Invoice auto-fill */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=798;
+window.__azSalesReceiptsModuleVersion=804;
 
 let manualRows=[];
 let websiteRows=[];
@@ -1159,8 +1159,12 @@ function serviceBookingInvoicePrefill(booking={}){
   }
   const device=[booking.deviceType,booking.deviceBrand,booking.deviceModel].filter(Boolean).join(' ');
   const issueText=(Array.isArray(booking.issues)?booking.issues:[]).join(', ');
+  // Use the server-recorded booking timestamp. This is created when the customer
+  // presses "Hantar Tempahan melalui WhatsApp", so the draft invoice never falls
+  // back to Unix epoch (01/01/1970) when opened from Service Bookings.
+  const bookingCreatedMs=num(booking.createdAtMs)||parseMs(booking.createdAt)||num(booking.updatedAtMs)||parseMs(booking.updatedAt)||Date.now();
   const notes=[`Draf invois daripada Tempahan Servis ${bookingId}.`,device?`Peranti: ${device}`:'',booking.deviceSerial?`Serial: ${booking.deviceSerial}`:'',issueText?`Masalah: ${issueText}`:'',booking.problemDetails?`Catatan: ${booking.problemDetails}`:'',booking.extraRequests?`Permintaan tambahan: ${booking.extraRequests}`:'',`Anggaran asal: ${booking.estimateDisplay||money(booking.estimatedMinimum||0)}`,booking.serviceMethod?`Cara serahan: ${booking.serviceMethod}`:''].filter(Boolean).join('\n');
-  return {status:'pending',paymentMethod:'ToyyibPay',customerName:booking.customerName||'',customerPhone:booking.customerPhone||'',customerEmail:booking.customerEmail||'',items,discount,shippingCharge:0,shippingCost:0,paymentFee:DEFAULT_MANUAL_TOYYIBPAY_FEE_RM,commission:0,otherCost:0,notes,sourceBookingId:bookingId,sourceBookingSnapshot:{device,estimateDisplay:booking.estimateDisplay||'',finalPrice}};
+  return {status:'pending',paymentMethod:'ToyyibPay',saleDateMs:bookingCreatedMs,invoiceDateMs:bookingCreatedMs,saleDateTime:localDateTimeInput(bookingCreatedMs),createdAtMs:bookingCreatedMs,customerName:booking.customerName||'',customerPhone:booking.customerPhone||'',customerEmail:booking.customerEmail||'',items,discount,shippingCharge:0,shippingCost:0,paymentFee:DEFAULT_MANUAL_TOYYIBPAY_FEE_RM,commission:0,otherCost:0,notes,sourceBookingId:bookingId,sourceBookingSnapshot:{device,estimateDisplay:booking.estimateDisplay||'',finalPrice,bookingCreatedMs}};
 }
 window.azSalesReceiptsOpenFromServiceBooking=function(booking={}){bind();openForm(serviceBookingInvoicePrefill(booking));};
 window.azSalesReceiptsOpenServiceInvoice=async function(invoiceDocId=''){

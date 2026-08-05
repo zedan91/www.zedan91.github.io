@@ -22,5 +22,5 @@ Perubahan utama:
 11. Fallback WhatsApp tersedia jika backend gagal supaya pelanggan masih boleh menghantar tempahan.
 12. Homepage Format Windows dan PC Repair dikemas kini dengan harga baharu serta butang ke halaman tempahan.
 
-WhatsApp default: 60175099983. Boleh ditukar melalui ENV AZOBSS_SERVICE_WHATSAPP.
+WhatsApp default terkini: 601135600723. Boleh ditukar melalui ENV AZOBSS_SERVICE_WHATSAPP; nilai lama 60175099983 akan dimigrasi secara automatik kepada nombor terkini.
 Backend berubah: Manual Deploy / Restart Render diperlukan.
