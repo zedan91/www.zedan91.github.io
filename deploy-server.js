@@ -11256,12 +11256,17 @@ const AZ_SERVICE_LCD_PRICES = Object.freeze({
   "17.3 inci": { standard:{ min:350,max:650,plus:false }, touch:{ min:850,max:1200,plus:true } }
 });
 const AZ_SERVICE_LOGISTICS = Object.freeze({
-  "Hantar & ambil sendiri": { pickupFee:0, deliveryFee:0 },
-  "Hantar sendiri + penghantaran AZOBSS": { pickupFee:0, deliveryFee:30 },
-  "Pengambilan AZOBSS + ambil sendiri": { pickupFee:30, deliveryFee:0 },
-  "Pengambilan & penghantaran AZOBSS": { pickupFee:30, deliveryFee:30 },
-  "On-site": { pickupFee:0, deliveryFee:0 },
-  "Bincang melalui WhatsApp": { pickupFee:0, deliveryFee:0 }
+  "Hantar sendiri ke Kedai": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:0 },
+  "Pengambilan / Penghantaran": { pickupFee:0, deliveryFee:0, transportFee:30, onsiteFee:0, itemName:"Kos pengambilan atau penghantaran" },
+  "Pengambilan & Penghantaran": { pickupFee:30, deliveryFee:30, transportFee:0, onsiteFee:0 },
+  "Servis On-site": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:50, itemName:"Caj servis On-site" },
+  // Legacy values remain accepted for old cached forms and existing records.
+  "Hantar & ambil sendiri": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:0 },
+  "Hantar sendiri + penghantaran AZOBSS": { pickupFee:0, deliveryFee:30, transportFee:0, onsiteFee:0 },
+  "Pengambilan AZOBSS + ambil sendiri": { pickupFee:30, deliveryFee:0, transportFee:0, onsiteFee:0 },
+  "Pengambilan & penghantaran AZOBSS": { pickupFee:30, deliveryFee:30, transportFee:0, onsiteFee:0 },
+  "On-site": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:50, itemName:"Caj servis On-site" },
+  "Bincang melalui WhatsApp": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:0 }
 });
 const AZ_SERVICE_BOOKING_CENTER = Object.freeze({ lat:3.255511332218502, lng:101.69410874034087, label:"Kedai AZOBSS" });
 const AZ_SERVICE_BOOKING_RADIUS_KM = 10;
@@ -11330,15 +11335,21 @@ function azServiceBookingEstimate(serviceIds, screenSize, screenType, serviceMet
     const min = Number(item.min ?? item.price ?? 0), max = Number(item.max ?? item.price ?? min);
     return { id, name:item.name, minPrice:min, maxPrice:max, price:min, plus:false, suffix:"", priceLabel:azServiceBookingRangeLabel(min,max,false) };
   });
-  const logisticsConfig = AZ_SERVICE_LOGISTICS[azServiceBookingText(serviceMethod, 80)] || AZ_SERVICE_LOGISTICS["Bincang melalui WhatsApp"];
+  const logisticsConfig = AZ_SERVICE_LOGISTICS[azServiceBookingText(serviceMethod, 80)] || AZ_SERVICE_LOGISTICS["Hantar sendiri ke Kedai"];
   const logistics = [];
   if (logisticsConfig.pickupFee) logistics.push({ id:"pickup", name:"Kos pengambilan oleh AZOBSS", price:logisticsConfig.pickupFee, minPrice:logisticsConfig.pickupFee, maxPrice:logisticsConfig.pickupFee, priceLabel:`RM${logisticsConfig.pickupFee}` });
   if (logisticsConfig.deliveryFee) logistics.push({ id:"delivery", name:"Kos penghantaran semula oleh AZOBSS", price:logisticsConfig.deliveryFee, minPrice:logisticsConfig.deliveryFee, maxPrice:logisticsConfig.deliveryFee, priceLabel:`RM${logisticsConfig.deliveryFee}` });
+  if (logisticsConfig.transportFee) logistics.push({ id:"transport", name:logisticsConfig.itemName || "Kos pengambilan atau penghantaran", price:logisticsConfig.transportFee, minPrice:logisticsConfig.transportFee, maxPrice:logisticsConfig.transportFee, priceLabel:`RM${logisticsConfig.transportFee}` });
+  if (logisticsConfig.onsiteFee) logistics.push({ id:"onsite", name:logisticsConfig.itemName || "Caj servis On-site", price:logisticsConfig.onsiteFee, minPrice:logisticsConfig.onsiteFee, maxPrice:logisticsConfig.onsiteFee, priceLabel:`RM${logisticsConfig.onsiteFee}` });
   const all = services.concat(logistics);
   const minimum = all.reduce((sum, item) => sum + Number(item.minPrice || 0), 0);
   const maximum = all.reduce((sum, item) => sum + Number(item.maxPrice || item.minPrice || 0), 0);
   const plus = services.some(item => Boolean(item.plus));
-  return { services, logistics, minimum:Math.round(minimum*100)/100, maximum:Math.round(maximum*100)/100, total:Math.round(minimum*100)/100, suffix:plus?"+":"", plus, pickupFee:logisticsConfig.pickupFee, deliveryFee:logisticsConfig.deliveryFee, logisticsTotal:logisticsConfig.pickupFee+logisticsConfig.deliveryFee, display:azServiceBookingRangeLabel(minimum,maximum,plus) };
+  const pickupFee = Number(logisticsConfig.pickupFee || 0);
+  const deliveryFee = Number(logisticsConfig.deliveryFee || 0);
+  const transportFee = Number(logisticsConfig.transportFee || 0);
+  const onsiteFee = Number(logisticsConfig.onsiteFee || 0);
+  return { services, logistics, minimum:Math.round(minimum*100)/100, maximum:Math.round(maximum*100)/100, total:Math.round(minimum*100)/100, suffix:plus?"+":"", plus, pickupFee, deliveryFee, transportFee, onsiteFee, logisticsTotal:pickupFee+deliveryFee+transportFee+onsiteFee, display:azServiceBookingRangeLabel(minimum,maximum,plus) };
 }
 function azServiceBookingWhatsappNumber() {
   const raw = String(process.env.AZOBSS_SERVICE_WHATSAPP || "60175099983").replace(/\D/g, "");
@@ -11411,7 +11422,8 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   if (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude)) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });
   if (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari kedai AZOBSS.`), { statusCode:400 });
   if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
-  const serviceMethod = azServiceBookingText(body.serviceMethod, 80) || "Bincang melalui WhatsApp";
+  const requestedServiceMethod = azServiceBookingText(body.serviceMethod, 80);
+  const serviceMethod = AZ_SERVICE_LOGISTICS[requestedServiceMethod] ? requestedServiceMethod : "Hantar sendiri ke Kedai";
   const screenSize = azServiceBookingText(body.screenSize, 60);
   const screenType = azServiceBookingText(body.screenType, 60);
   const estimate = azServiceBookingEstimate(body.services, screenSize, screenType, serviceMethod);
@@ -11453,6 +11465,8 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     logistics:estimate.logistics,
     pickupFee:estimate.pickupFee,
     deliveryFee:estimate.deliveryFee,
+    transportFee:estimate.transportFee,
+    onsiteFee:estimate.onsiteFee,
     logisticsTotal:estimate.logisticsTotal,
     serviceMethod,
     preferredDate:azServiceBookingText(body.preferredDate, 30),
@@ -11501,7 +11515,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     updatedAtMs:nowMs
   }), { merge:true });
   const whatsappUrl = `https://wa.me/${row.whatsappNumber}?text=${encodeURIComponent(row.whatsappMessage)}`;
-  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.minimum, estimatedMaximum:estimate.maximum, estimateDisplay:estimate.display, estimateSuffix:estimate.suffix, estimateHasPlus:estimate.plus, pickupFee:estimate.pickupFee, deliveryFee:estimate.deliveryFee, whatsappUrl };
+  return { ok:true, bookingId, existed:existing.exists, estimatedMinimum:estimate.minimum, estimatedMaximum:estimate.maximum, estimateDisplay:estimate.display, estimateSuffix:estimate.suffix, estimateHasPlus:estimate.plus, pickupFee:estimate.pickupFee, deliveryFee:estimate.deliveryFee, transportFee:estimate.transportFee, onsiteFee:estimate.onsiteFee, logisticsTotal:estimate.logisticsTotal, whatsappUrl };
 }
 
 
