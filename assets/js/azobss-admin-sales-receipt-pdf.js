@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 824: Lower and tighten invoice item table + notes layout */
+/* AZOBSS PATCH 824: Lower payment summary and notes while retaining one-page layout */
 (function(global){
   'use strict';
 
@@ -272,17 +272,25 @@
   }
   function buildPages(row,type){
     const docType=normalizeDocumentType(type); const pages=[]; let commands=createPage(); pages.push(commands);
-    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,275);
+    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,265);
     normalizedItems(row).forEach((item,index)=>{
       const h=itemRowHeight(item);
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
       y=drawItemRow(commands,item,index,y);
     });
-    y+=16; const summaryHeight=paymentSummaryHeight(row,docType);
-    if(y+summaryHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
-    y=drawPaymentSummary(commands,row,y,docType); y+=12;
+    y+=12; const summaryHeight=paymentSummaryHeight(row,docType);
+    const noteHeight=clean(row.notes)?Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12)):0;
+    if(y+summaryHeight>BOTTOM_LIMIT){
+      commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120;
+    }else{
+      // Use some of the spare lower-page space so the QR/total and Notes block
+      // sit lower on compact one-page invoices, without forcing a new page.
+      const reservedAfterBlock=noteHeight?53:45;
+      const availableShift=BOTTOM_LIMIT-(y+summaryHeight+8+noteHeight+reservedAfterBlock);
+      y+=Math.max(0,Math.min(42,availableShift));
+    }
+    y=drawPaymentSummary(commands,row,y,docType); y+=8;
     if(clean(row.notes)){
-      const noteHeight=Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12));
       if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
       y=drawNotes(commands,row,y);
     }

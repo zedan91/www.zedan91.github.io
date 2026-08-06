@@ -1,10 +1,7 @@
-# AZOBSS Patch 824
+# Patch 824 — Invoice QR and Notes Lower Position
 
-## Invoice item table and notes vertical spacing
-
-- Moves the invoice item-column table 10 pt lower for a more balanced A4 layout.
-- Adds a little more separation before the QR/TOTAL PAYABLE row.
-- Moves the NOTES card lower while keeping the compact one-page layout.
-- Keeps automatic pagination for invoices that genuinely exceed one page.
-- Updates the PDF script cache-busting version to `v=824`.
-- All features from patch 823 are retained.
+- Based on Patch 823.
+- Moves the ToyyibPay QR / `TOTAL PAYABLE` row lower on compact one-page invoices.
+- Moves the `NOTES` card together with the payment row so both sit closer to the lower section of the page.
+- Uses only available spare space and will not force a one-page invoice onto a second page.
+- Retains automatic continuation pages for long invoices and all Patch 823 functionality.
