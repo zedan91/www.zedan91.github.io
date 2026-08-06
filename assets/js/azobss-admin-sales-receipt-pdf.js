@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 824: Lower payment summary and notes while retaining one-page layout */
+/* AZOBSS PATCH 826: Center invoice brand lockup and add website below */
 (function(global){
   'use strict';
 
@@ -23,7 +23,7 @@
       .replace(/\u00a0/g, ' ')
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\x20-\x7E]/g, '?');
+      .replace(/[^\x20-\x7E\r\n\t]/g, '');
   }
   function pdfEscape(value){ return ascii(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
   function number(value){ const parsed = Number(value || 0); return Number.isFinite(parsed) ? parsed : 0; }
@@ -118,6 +118,45 @@
     });
     return lines.length?lines:['-'];
   }
+  function wrapStructuredText(value,maxWidth,size,bold){
+    const source=String(value == null ? '' : value).replace(/\r\n?/g,'\n');
+    const lines=[];
+    source.split('\n').forEach(rawLine=>{
+      const lineValue=ascii(rawLine);
+      if(!lineValue.trim()){
+        if(lines.length && lines[lines.length-1] !== '') lines.push('');
+        return;
+      }
+      lines.push(...wrapText(lineValue,maxWidth,size,bold));
+    });
+    while(lines.length && lines[lines.length-1] === '') lines.pop();
+    return lines.length?lines:['-'];
+  }
+  function normalizeNotes(value){
+    let notes=String(value == null ? '' : value).replace(/\r\n?/g,'\n').trim();
+    // Remove the old automatically generated source-booking sentence from both
+    // new and already-saved invoices. Customer-entered question marks remain.
+    notes=notes.replace(/^\s*Draf invois daripada Tempahan Servis[^\n]*(?:\n|$)/i,'').trim();
+    return notes;
+  }
+  function notesLayout(row){
+    const notes=normalizeNotes(row&&row.notes);
+    if(!notes)return null;
+    const innerWidth=CONTENT_W-32;
+    const presets=[
+      {size:8.5,lineHeight:10.8,maxHeight:150},
+      {size:7.9,lineHeight:10.0,maxHeight:160},
+      {size:7.3,lineHeight:9.3,maxHeight:176}
+    ];
+    let layout=null;
+    for(const preset of presets){
+      const lines=wrapStructuredText(notes,innerWidth,preset.size,false);
+      const height=Math.max(54,34+(lines.length*preset.lineHeight));
+      layout={notes,lines,height,size:preset.size,lineHeight:preset.lineHeight};
+      if(height<=preset.maxHeight)break;
+    }
+    return layout;
+  }
   function createPage(){ return []; }
   function add(commands,command){ commands.push(command); }
   function fillRect(commands,x,yTop,width,height,color){ add(commands,`${rgb(...color)} rg ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re f`); }
@@ -138,8 +177,13 @@
     const docType=normalizeDocumentType(type);
     fillRect(commands,0,0,PAGE_W,92,[238,241,245]);
     fillRect(commands,0,92,PAGE_W,4,[16,185,129]);
-    image(commands,'Logo',MARGIN_X,18,31,31);
-    text(commands,'AZOBSS',MARGIN_X+41,42,{size:31,bold:true,color:[55,65,81]});
+    const brandLogoY=18,brandLogoSize=31,brandTextX=MARGIN_X+41;
+    image(commands,'Logo',MARGIN_X,brandLogoY,brandLogoSize,brandLogoSize);
+    // Use the same centering formula as table cells so the AZOBSS wordmark
+    // sits vertically centered with the square logo instead of slightly low.
+    text(commands,'AZOBSS',brandTextX,centeredBaseline(brandLogoY,brandLogoSize,31),{size:31,bold:true,color:[55,65,81]});
+    const brandNameWidth=estimateWidth('AZOBSS',31,true);
+    text(commands,'www.azobss.com',brandTextX+(brandNameWidth/2),61,{size:7.6,bold:true,align:'center',color:[100,116,139]});
     text(commands,documentTitle(docType),PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[55,65,81]});
     text(commands,continuation?`${docType==='invoice'?'Invoice':'Receipt'} continuation`:documentNumber(row,docType),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
   }
@@ -252,12 +296,12 @@
     return y+h;
   }
 
-  function drawNotes(commands,row,y){
-    const notes=clean(row.notes); if(!notes)return y;
-    const lines=wrapText(notes,CONTENT_W-24,8.8,false),h=Math.max(50,32+(lines.length*12));
+  function drawNotes(commands,row,y,preparedLayout){
+    const layout=preparedLayout||notesLayout(row); if(!layout)return y;
+    const h=layout.height;
     fillRect(commands,MARGIN_X,y,CONTENT_W,h,[255,251,235]); strokeRect(commands,MARGIN_X,y,CONTENT_W,h,[245,158,11],0.75);
     text(commands,'NOTES',MARGIN_X+12,y+19,{size:8,bold:true,color:[146,64,14]});
-    textLines(commands,lines,MARGIN_X+12,y+36,{size:8.8,lineHeight:12,color:[69,26,3]});
+    textLines(commands,layout.lines,MARGIN_X+12,y+36,{size:layout.size,lineHeight:layout.lineHeight,color:[69,26,3]});
     return y+h;
   }
   function addFooter(commands,pageNumber,pageCount,row,type){
@@ -279,24 +323,34 @@
       y=drawItemRow(commands,item,index,y);
     });
     y+=12; const summaryHeight=paymentSummaryHeight(row,docType);
-    const noteHeight=clean(row.notes)?Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12)):0;
+    const preparedNotes=notesLayout(row),noteHeight=preparedNotes?preparedNotes.height:0;
     if(y+summaryHeight>BOTTOM_LIMIT){
       commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120;
     }else{
-      // Use some of the spare lower-page space so the QR/total and Notes block
-      // sit lower on compact one-page invoices, without forcing a new page.
+      // Keep the compact payment row lower without sacrificing room required
+      // for a safely wrapped Notes box and the closing line.
       const reservedAfterBlock=noteHeight?53:45;
       const availableShift=BOTTOM_LIMIT-(y+summaryHeight+8+noteHeight+reservedAfterBlock);
       y+=Math.max(0,Math.min(42,availableShift));
     }
     y=drawPaymentSummary(commands,row,y,docType); y+=8;
-    if(clean(row.notes)){
-      if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
-      y=drawNotes(commands,row,y);
+    if(preparedNotes){
+      let notesOnNewPage=false;
+      if(y+noteHeight>BOTTOM_LIMIT){
+        commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; notesOnNewPage=true;
+      }
+      // On a normal one-page invoice, use the free lower area and place Notes
+      // close to the footer while retaining room for the thank-you sentence.
+      if(!notesOnNewPage){
+        const targetNotesY=BOTTOM_LIMIT-noteHeight-38;
+        y=Math.max(y,targetNotesY);
+      }
+      y=drawNotes(commands,row,y,preparedNotes);
     }
-    if(y+45<BOTTOM_LIMIT){
+    if(y+18<BOTTOM_LIMIT){
       const closing=docType==='invoice'?'Thank you. Please use the invoice number as your payment reference.':'Thank you for your purchase.';
-      text(commands,closing,MARGIN_X,y+26,{size:10.5,bold:true,color:[4,120,87]});
+      const closingY=Math.min(BOTTOM_LIMIT-7,y+25);
+      text(commands,closing,MARGIN_X,closingY,{size:10.5,bold:true,color:[4,120,87]});
     }
     pages.forEach((page,index)=>addFooter(page,index+1,pages.length,row,docType)); return pages;
   }
