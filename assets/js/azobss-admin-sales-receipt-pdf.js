@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 768: White-only item rows in invoice/receipt PDF; description remains left-aligned */
+/* AZOBSS PATCH 820: Compact one-page invoice layout with QR aligned beside totals */
 (function(global){
   'use strict';
 
@@ -208,8 +208,10 @@
     const finalLabel=docType==='invoice'?'TOTAL PAYABLE':(clean(row.status).toLowerCase()==='paid'?'TOTAL PAID':'TOTAL');
     lines.push([finalLabel,number(row.gross)]); return lines;
   }
-  function drawTotals(commands,row,y,type){
-    const lines=totalLines(row,type),boxW=260,boxX=PAGE_W-MARGIN_X-boxW,boxH=22+(lines.length*24);
+  function totalsBoxHeight(row,type){ return 22+(totalLines(row,type).length*24); }
+  function drawTotals(commands,row,y,type,options){
+    const opts=options||{};
+    const lines=totalLines(row,type),boxW=Number.isFinite(opts.width)?opts.width:260,boxX=Number.isFinite(opts.x)?opts.x:(PAGE_W-MARGIN_X-boxW),boxH=totalsBoxHeight(row,type);
     fillRect(commands,boxX,y,boxW,boxH,[236,253,245]); strokeRect(commands,boxX,y,boxW,boxH,[16,185,129],0.9);
     lines.forEach((entry,index)=>{
       const last=index===lines.length-1,yy=y+20+(index*24);
@@ -223,17 +225,30 @@
   function hasToyyibPayQr(row,type){
     return normalizeDocumentType(type)==='invoice' && clean(row.status).toLowerCase()==='pending' && clean(row.paymentUrl||row.toyyibPaymentUrl) && clean(row.toyyibQrJpegBase64);
   }
-  function drawToyyibPayQr(commands,row,y,type){
+  function drawToyyibPayQr(commands,row,y,type,options){
     if(!hasToyyibPayQr(row,type))return y;
-    const h=116,qr=88,x=MARGIN_X;
-    fillRect(commands,x,y,CONTENT_W,h,[248,250,252]);strokeRect(commands,x,y,CONTENT_W,h,[148,163,184],0.8);
-    image(commands,'PayQR',x+14,y+14,qr,qr);
-    const tx=x+118;
-    text(commands,'PAY WITH TOYYIBPAY',tx,y+27,{size:11.5,bold:true,color:[30,64,175]});
-    text(commands,`Amount: ${money(row.gross)}`,tx,y+49,{size:11,bold:true,color:[4,120,87]});
-    text(commands,'Scan the QR code to open the secure payment page.',tx,y+69,{size:8.4,color:[71,85,105]});
-    if(clean(row.billCode||row.toyyibBillCode))text(commands,`Bill Code: ${clean(row.billCode||row.toyyibBillCode)}`,tx,y+87,{size:8.2,bold:true,color:[55,65,81]});
-    text(commands,'Invoice changes to a PAID receipt automatically after verification.',tx,y+103,{size:7.5,color:[100,116,139]});
+    const opts=options||{},x=Number.isFinite(opts.x)?opts.x:MARGIN_X,w=Number.isFinite(opts.width)?opts.width:CONTENT_W,h=Number.isFinite(opts.height)?opts.height:88;
+    const qr=Math.min(64,h-20),qrY=y+((h-qr)/2),qrX=x+10;
+    fillRect(commands,x,y,w,h,[248,250,252]);strokeRect(commands,x,y,w,h,[148,163,184],0.8);
+    image(commands,'PayQR',qrX,qrY,qr,qr);
+    const tx=qrX+qr+10,available=Math.max(80,w-(tx-x)-10);
+    text(commands,'PAY WITH TOYYIBPAY',tx,y+18,{size:9.2,bold:true,color:[30,64,175]});
+    text(commands,`Amount: ${money(row.gross)}`,tx,y+35,{size:8.8,bold:true,color:[4,120,87]});
+    const billCode=clean(row.billCode||row.toyyibBillCode);
+    if(billCode)text(commands,`Bill Code: ${billCode}`,tx,y+50,{size:6.9,bold:true,color:[55,65,81]});
+    textLines(commands,wrapText('Scan QR to open the secure payment page.',available,6.7,false).slice(0,2),tx,y+64,{size:6.7,lineHeight:8,color:[71,85,105]});
+    textLines(commands,wrapText('Auto-converts to a PAID receipt after verification.',available,5.9,false).slice(0,2),tx,y+81,{size:5.9,lineHeight:6.5,color:[100,116,139]});
+    return y+h;
+  }
+  function paymentSummaryHeight(row,type){
+    const totalsHeight=totalsBoxHeight(row,type);
+    return hasToyyibPayQr(row,type)?Math.max(88,totalsHeight):totalsHeight;
+  }
+  function drawPaymentSummary(commands,row,y,type){
+    if(!hasToyyibPayQr(row,type))return drawTotals(commands,row,y,type);
+    const gap=12,totalW=260,qrW=CONTENT_W-totalW-gap,h=paymentSummaryHeight(row,type);
+    drawToyyibPayQr(commands,row,y,type,{x:MARGIN_X,width:qrW,height:h});
+    drawTotals(commands,row,y,type,{x:MARGIN_X+qrW+gap,width:totalW});
     return y+h;
   }
 
@@ -263,13 +278,9 @@
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
       y=drawItemRow(commands,item,index,y);
     });
-    y+=16; const totalsHeight=22+(totalLines(row,docType).length*24);
-    if(y+totalsHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
-    y=drawTotals(commands,row,y,docType); y+=15;
-    if(hasToyyibPayQr(row,docType)){
-      if(y+116>BOTTOM_LIMIT){commands=createPage();pages.push(commands);drawHeader(commands,row,true,docType);y=120}
-      y=drawToyyibPayQr(commands,row,y,docType);y+=15;
-    }
+    y+=12; const summaryHeight=paymentSummaryHeight(row,docType);
+    if(y+summaryHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
+    y=drawPaymentSummary(commands,row,y,docType); y+=8;
     if(clean(row.notes)){
       const noteHeight=Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12));
       if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
