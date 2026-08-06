@@ -11390,7 +11390,7 @@ function azServiceBookingMessage(row) {
     `Alamat : *${row.fullAddress || row.customerArea || "-"}*`,
     `Jarak dari kedai AZOBSS: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
     `Lokasi Kedai: ${row.locationMapUrl || "-"}`,
-    `Cara serahan: ${row.serviceMethod}`,
+    `Cara serahan: *${row.serviceMethod || '-'}*`,
     "",
     `Peranti : *${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}*`,
     `Saiz skrin : *${row.screenSize || "-"}*`,
