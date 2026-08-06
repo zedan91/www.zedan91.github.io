@@ -602,3 +602,70 @@
 .az-sr-field-hint[hidden]{display:none!important}
 #salesReceiptCustomerEmail:required:invalid:not(:placeholder-shown){border-color:#ef4444!important;box-shadow:0 0 0 1px rgba(239,68,68,.25)}
 
+
+/* AZOBSS PATCH 821: keep Receipt Sent badge fully visible in the Status column */
+.az-sr-table th:nth-child(4),
+.az-sr-table td:nth-child(4){width:10%!important}
+.az-sr-table th:nth-child(5),
+.az-sr-table td:nth-child(5){width:16%!important}
+.az-sr-table th:nth-child(6),
+.az-sr-table td:nth-child(6){
+  width:9.5%!important;
+  overflow:visible!important;
+}
+.az-sr-delivery-badge{
+  width:100%!important;
+  max-width:78px!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  padding:3px 2px!important;
+  letter-spacing:0!important;
+  overflow:visible!important;
+}
+.az-sr-delivery-badge.sent{
+  white-space:nowrap!important;
+  font-size:6.4px!important;
+}
+.az-sr-delivery-badge.not-sent{
+  white-space:normal!important;
+  font-size:6.2px!important;
+}
+
+/* AZOBSS PATCH 822: keep Receipt Not Sent badge fully inside the Status cell */
+.az-sr-table th:nth-child(6),
+.az-sr-table td:nth-child(6){
+  width:10.5%!important;
+  padding-left:5px!important;
+  padding-right:5px!important;
+  overflow:visible!important;
+}
+.az-sr-table th:nth-child(5),
+.az-sr-table td:nth-child(5){width:15%!important}
+.az-sr-delivery-badge{
+  width:calc(100% - 2px)!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:2px!important;
+  overflow:hidden!important;
+}
+.az-sr-delivery-badge.not-sent{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:0!important;
+  min-height:24px!important;
+  padding:2px 1px!important;
+  font-size:6px!important;
+  line-height:1.05!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+}
+.az-sr-delivery-badge.not-sent .az-sr-delivery-line{
+  display:block!important;
+  width:100%!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  text-align:center!important;
+}

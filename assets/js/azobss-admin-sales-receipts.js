@@ -120,7 +120,7 @@ function receiptDeliveryBadge(row={}){
     const title=sentAt?`Receipt sent • ${sentAt}`:'Receipt sent';
     return `<div class="az-sr-delivery-badge sent" title="${esc(title)}">✓ RECEIPT SENT</div>`;
   }
-  return '<div class="az-sr-delivery-badge not-sent" title="Paid, but the receipt has not been sent yet">! RECEIPT NOT SENT</div>';
+  return '<div class="az-sr-delivery-badge not-sent" title="Paid, but the receipt has not been sent yet"><span class="az-sr-delivery-line">! RECEIPT</span><span class="az-sr-delivery-line">NOT SENT</span></div>';
 }
 async function setReceiptDeliveryState(row,sent,via='manual-toggle',button=null,{silent=false}={}){
   if(!row||normalizeStatus(row.status)!=='paid')return false;
