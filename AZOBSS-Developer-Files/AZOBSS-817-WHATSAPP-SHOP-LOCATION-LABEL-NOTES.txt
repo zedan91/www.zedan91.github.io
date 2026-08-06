@@ -1,0 +1,9 @@
+AZOBSS Patch 817 — WhatsApp Shop Location Label
+
+Baseline: (816)-AZOBSS-HOME-SERVICE-CARD-UNDERLINE-FIX_20260806.zip
+
+Changes:
+1. Changes the WhatsApp message label `Peta:` to `Lokasi Kedai:`.
+2. The Google Maps directions link remains unchanged and still opens the route from the customer-selected location to the AZOBSS shop.
+3. The official backend message and fast frontend fallback message use the same label.
+4. All functions from patch 816 are retained.

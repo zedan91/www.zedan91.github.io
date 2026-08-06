@@ -11378,7 +11378,7 @@ function azServiceBookingWhatsappNumber() {
 }
 function azServiceBookingMessage(row) {
   const serviceLines = (row.services || []).map((item, index) => `*${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}*`);
-  const logisticLines = (row.logistics || []).map(item => `- ${item.name} — ${item.priceLabel || `RM${Number(item.price || 0).toFixed(0)}`}`);
+  const logisticLines = (row.logistics || []).map(item => `*- ${item.name} — ${item.priceLabel || `RM${Number(item.price || 0).toFixed(0)}`}*`);
   const estimateDisplay = row.estimateDisplay || azServiceBookingRangeLabel(row.estimatedMinimum, row.estimatedMaximum ?? row.estimatedMinimum, row.estimateHasPlus);
   return [
     "Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.",
@@ -11389,7 +11389,7 @@ function azServiceBookingMessage(row) {
     `E-mel: ${row.customerEmail || "-"}`,
     `Alamat : *${row.fullAddress || row.customerArea || "-"}*`,
     `Jarak dari kedai AZOBSS: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
-    `Peta: ${row.locationMapUrl || "-"}`,
+    `Lokasi Kedai: ${row.locationMapUrl || "-"}`,
     `Cara serahan: ${row.serviceMethod}`,
     "",
     `Peranti : *${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}*`,
@@ -11403,7 +11403,7 @@ function azServiceBookingMessage(row) {
     "",
     "Kos logistik:",
     ...(logisticLines.length ? logisticLines : ["*- Tiada caj pickup/penghantaran dipilih*"]),
-    `Anggaran julat: *${(serviceLines.length || logisticLines.length) ? estimateDisplay : "Perlu pemeriksaan"}*`,
+    `Anggaran Keseluruhan: *${(serviceLines.length || logisticLines.length) ? estimateDisplay : "Perlu pemeriksaan"}*`,
     "",
     `Masalah: ${(row.issues || []).join(", ") || "-"}`,
     "",
