@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 820: Compact one-page invoice layout with QR aligned beside totals */
+/* AZOBSS PATCH 824: Lower and tighten invoice item table + notes layout */
 (function(global){
   'use strict';
 
@@ -272,15 +272,15 @@
   }
   function buildPages(row,type){
     const docType=normalizeDocumentType(type); const pages=[]; let commands=createPage(); pages.push(commands);
-    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,265);
+    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,275);
     normalizedItems(row).forEach((item,index)=>{
       const h=itemRowHeight(item);
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
       y=drawItemRow(commands,item,index,y);
     });
-    y+=12; const summaryHeight=paymentSummaryHeight(row,docType);
+    y+=16; const summaryHeight=paymentSummaryHeight(row,docType);
     if(y+summaryHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
-    y=drawPaymentSummary(commands,row,y,docType); y+=8;
+    y=drawPaymentSummary(commands,row,y,docType); y+=12;
     if(clean(row.notes)){
       const noteHeight=Math.max(50,32+(wrapText(row.notes,CONTENT_W-24,8.8,false).length*12));
       if(y+noteHeight>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120; }
