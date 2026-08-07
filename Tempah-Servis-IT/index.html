@@ -376,9 +376,9 @@ body.is-admin .market-nav a[href="/admin/"]{
 <div class="field"><label for="preferredTime">Masa pilihan</label><select id="preferredTime"><option value="Fleksibel">Fleksibel</option><option value="Pagi (9am–12pm)">Pagi (9am–12pm)</option><option value="Petang (12pm–5pm)">Petang (12pm–5pm)</option><option value="Malam (selepas 5pm)">Malam (selepas 5pm)</option></select></div>
 <div class="field"><label for="urgency">Keutamaan</label><select id="urgency"><option value="Biasa">Biasa</option><option value="Segera">Segera</option><option value="Boleh tunggu">Boleh tunggu</option></select></div>
 <div class="field full"><span class="group-label">Data penting / backup diperlukan?</span><div class="radio-row">
-<label class="radio-pill"><input name="backup" type="radio" value="Ya, ada data penting"/><span class="radio-icon">▣</span><span class="radio-copy"><strong>Ada data penting</strong><small>Backup diperlukan</small></span><span aria-hidden="true" class="radio-check"></span></label>
+<label class="radio-pill"><input checked="" name="backup" type="radio" value="Ya, ada data penting"/><span class="radio-icon">▣</span><span class="radio-copy"><strong>Ada data penting</strong><small>Backup diperlukan</small></span><span aria-hidden="true" class="radio-check"></span></label>
 <label class="radio-pill"><input name="backup" type="radio" value="Tidak perlu backup"/><span class="radio-icon">✓</span><span class="radio-copy"><strong>Tidak perlu backup</strong><small>Teruskan servis seperti biasa</small></span><span aria-hidden="true" class="radio-check"></span></label>
-<label class="radio-pill"><input checked="" name="backup" type="radio" value="Tidak pasti"/><span class="radio-icon">?</span><span class="radio-copy"><strong>Tidak pasti</strong><small>Admin akan semak dahulu</small></span><span aria-hidden="true" class="radio-check"></span></label>
+<label class="radio-pill"><input name="backup" type="radio" value="Tidak pasti"/><span class="radio-icon">?</span><span class="radio-copy"><strong>Tidak pasti</strong><small>Admin akan semak dahulu</small></span><span aria-hidden="true" class="radio-check"></span></label>
 </div></div>
 <div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="800" placeholder="Contoh: Perlu Microsoft Office, mahu kekalkan data, atau akan hantar gambar kerosakan selepas WhatsApp dibuka."></textarea></div>
 </div>
@@ -710,16 +710,8 @@ body.is-admin .market-nav a[href="/admin/"]{
     }
     function launchWhatsApp(url){
       const links=whatsappLaunchLinks(url);
-      // Desktop/laptop: terus ke WhatsApp Web. Ini mengelakkan dialog Chrome
-      // "Open WhatsApp?" yang muncul apabila whatsapp:// digunakan pada desktop.
-      if(!isMobileWhatsAppDevice()){
-        const webUrl=links.webUrl;
-        if(!popup||popup.closed){window.open(webUrl,'_blank','noopener');return;}
-        try{popup.location.replace(webUrl);}catch(_){popup.location.href=webUrl;}
-        return;
-      }
-      // Telefon/tablet: cuba buka aplikasi WhatsApp terus. Jika aplikasi tiada,
-      // pengguna masih boleh memilih WhatsApp Web daripada launcher kecil ini.
+      // Cara lama: desktop, laptop, telefon dan tablet semuanya cuba membuka
+      // aplikasi WhatsApp melalui whatsapp://. WhatsApp Web hanya fallback manual.
       if(!popup||popup.closed){window.location.href=links.appUrl;return;}
       try{
         const doc=popup.document;
