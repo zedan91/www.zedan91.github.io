@@ -11440,8 +11440,9 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   const deviceBrand = azServiceBookingText(body.deviceBrand, 80);
   const deviceModel = azServiceBookingText(body.deviceModel, 120);
   if (customerName.length < 2) throw Object.assign(new Error("Nama pelanggan diperlukan."), { statusCode:400 });
-  if (phoneDigits.length < 8 || phoneDigits.length > 15) throw Object.assign(new Error("Nombor telefon tidak sah."), { statusCode:400 });
-  if (customerEmailRaw && !customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
+  if (!/^01\d{8,9}$/.test(phoneDigits)) throw Object.assign(new Error("Nombor telefon tidak sah. Gunakan 10 atau 11 digit Malaysia, contoh 011-3560 0723."), { statusCode:400 });
+  if (!customerEmailRaw) throw Object.assign(new Error("E-mel pelanggan diperlukan."), { statusCode:400 });
+  if (!customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
   if (customerArea.length < 2) throw Object.assign(new Error("Nama lokasi diperlukan. Sila pilih lokasi pada peta."), { statusCode:400 });
   if (!floorUnit) throw Object.assign(new Error("Floor or unit number diperlukan."), { statusCode:400 });
   if (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude)) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });

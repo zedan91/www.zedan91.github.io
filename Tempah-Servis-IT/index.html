@@ -303,8 +303,8 @@ body.is-admin .market-nav a[href="/admin/"]{
 <p class="section-help">Maklumat ini digunakan untuk AZOBSS menghubungi kamu mengenai pemeriksaan dan harga akhir.</p>
 <div class="fields">
 <div class="field"><label for="customerName">Nama <span class="required">*</span></label><input autocomplete="name" id="customerName" maxlength="100" placeholder="Contoh: Ahmad" required=""/></div>
-<div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input autocomplete="tel" id="customerPhone" inputmode="tel" maxlength="20" placeholder="Contoh: 012-345 6789" required=""/></div>
-<div class="field full"><label for="customerEmail">E-mel (opsyenal)</label><input autocomplete="email" id="customerEmail" maxlength="160" placeholder="Contoh: nama@email.com" type="email"/></div>
+<div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="13" placeholder="Contoh: 011-3560 0723" pattern="^01[0-9]-?[0-9]{3,4} ?[0-9]{4}$" title="Masukkan nombor telefon Malaysia 10 atau 11 digit, contoh 011-3560 0723." required=""/></div>
+<div class="field full"><label for="customerEmail">E-mel <span class="required">*</span></label><input autocomplete="email" id="customerEmail" maxlength="160" placeholder="Contoh: nama@email.com" type="email" required="" aria-required="true"/></div>
 <input id="locationWgs84" type="hidden"/><input id="locationLatitude" type="hidden"/><input id="locationLongitude" type="hidden"/><input id="customerArea" type="hidden"/>
 <div class="field full location-picker"><div class="location-address-fields"><div class="location-unit-field"><label for="floorUnit">Floor or unit number <span class="required">*</span></label><input aria-required="true" autocomplete="address-line1" id="floorUnit" maxlength="120" placeholder="Contoh: Tingkat 3, Unit A-12-5" required=""/></div><div><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea aria-readonly="true" id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." readonly="" required=""></textarea></div></div><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
 </div>
@@ -663,7 +663,23 @@ body.is-admin .market-nav a[href="/admin/"]{
   $('screenType').addEventListener('change',updateSummary);
   $('serviceMethod').addEventListener('change',updateSummary);
   const phone=$('customerPhone');
-  phone.addEventListener('input',()=>{let d=phone.value.replace(/\D/g,'').slice(0,12);if(d.startsWith('60')){phone.value='+'+d.replace(/^(60)(\d{2})(\d{3})(\d{0,4})$/,'$1 $2-$3 $4').trim();return;}if(d.startsWith('0')){phone.value=d.replace(/^(0\d{2})(\d{3})(\d{0,4})$/,'$1-$2 $3').trim();}});
+  function formatServicePhone(value){
+    let d=String(value||'').replace(/\D/g,'');
+    // Jika nombor tersimpan dalam format +60, tukar semula ke paparan tempatan 0xx.
+    if(d.startsWith('60'))d='0'+d.slice(2);
+    d=d.slice(0,11);
+    if(!d)return '';
+    if(d.length<=3)return d;
+    const prefix=d.slice(0,3),rest=d.slice(3);
+    // Prefix 011/015 lazimnya 11 digit: 011-3560 0723. Prefix lain kekal 3+3+4.
+    const middleLen=(prefix==='011'||prefix==='015'||d.length===11)?4:3;
+    const middle=rest.slice(0,middleLen),last=rest.slice(middleLen,middleLen+4);
+    return prefix+'-'+middle+(last?' '+last:'');
+  }
+  function servicePhoneDigits(){return phone.value.replace(/\D/g,'');}
+  function syncServicePhone(){phone.value=formatServicePhone(phone.value);}
+  phone.addEventListener('input',syncServicePhone);
+  phone.addEventListener('blur',syncServicePhone);
   const date=$('preferredDate'); const now=new Date(); const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-'); date.min=today; if(!date.value)date.value=today;
   function readRadio(name){return document.querySelector(`input[name="${name}"]:checked`)?.value||'';}
   function payload(){const e=estimate();return{
@@ -687,6 +703,8 @@ body.is-admin .market-nav a[href="/admin/"]{
   form.addEventListener('submit',async ev=>{
     ev.preventDefault();fallback.classList.remove('show');
     if(!form.reportValidity()||!validateSelection())return;
+    const phoneDigits=servicePhoneDigits();
+    if(!/^01\d{8,9}$/.test(phoneDigits)){showStatus('Masukkan nombor telefon Malaysia yang sah (10 atau 11 digit), contoh 011-3560 0723.','error');phone.focus();return;}
     const p=payload();
     const localWa=fallbackUrl(p);
     let whatsappOpened=false;
@@ -752,7 +770,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     }
     if(!profile)return;
     $('customerName').value=firstText(profile,['name','displayName','fullName','customerName','username'])||'';
-    phone.value=firstText(profile,['phone','phoneNumber','mobile','customerPhone','noTelefon'])||'';
+    phone.value=formatServicePhone(firstText(profile,['phone','phoneNumber','mobile','customerPhone','noTelefon'])||'');
     $('customerEmail').value=firstText(profile,['email','customerEmail'])||'';
     const savedArea=firstText(profile,['area','city','location','customerArea'])||'';const savedLat=Number(profile.locationLatitude),savedLng=Number(profile.locationLongitude);if(savedArea&&validCoords(savedLat,savedLng)&&locationDistance(savedLat,savedLng)<=SERVICE_RADIUS_KM){$('customerArea').value=savedArea;$('locationLatitude').value=String(savedLat);$('locationLongitude').value=String(savedLng);$('locationWgs84').value=firstText(profile,['locationWgs84'])||`${savedLat.toFixed(6)}, ${savedLng.toFixed(6)}`;$('floorUnit').value=firstText(profile,['floorUnit','unitNumber','floorOrUnit'])||'';$('fullAddress').value=firstText(profile,['fullAddress'])||'';const d=locationDistance(savedLat,savedLng),note=$('locationAreaNote');note.textContent=`Lokasi tersimpan • ${d.toFixed(2)} km dari kedai AZOBSS.`;note.classList.add('location-valid');}
   }
