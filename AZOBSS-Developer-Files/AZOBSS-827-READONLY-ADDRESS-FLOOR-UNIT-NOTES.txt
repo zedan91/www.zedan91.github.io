@@ -1,0 +1,5 @@
+AZOBSS PATCH 827
+
+Selected address is read-only. Customers must use Cari Lokasi or Lokasi Semasa to change it.
+An optional Floor or unit number field is placed above the selected address within the same location block.
+The value is stored separately as floorUnit and prepended to the address in WhatsApp.

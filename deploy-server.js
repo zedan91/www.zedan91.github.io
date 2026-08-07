@@ -11376,6 +11376,9 @@ function azServiceBookingWhatsappNumber() {
   if (!raw || raw === "60175099983") return "601135600723";
   return raw;
 }
+function azServiceBookingDisplayAddress(row = {}) {
+  return [azServiceBookingText(row.floorUnit, 120), azServiceBookingText(row.fullAddress || row.customerArea, 400)].filter(Boolean).join(", ") || "-";
+}
 function azServiceBookingMessage(row) {
   const serviceLines = (row.services || []).map((item, index) => `*${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}*`);
   const logisticLines = (row.logistics || []).map(item => `*- ${item.name} — ${item.priceLabel || `RM${Number(item.price || 0).toFixed(0)}`}*`);
@@ -11387,7 +11390,7 @@ function azServiceBookingMessage(row) {
     `Nama: ${row.customerName}`,
     `Telefon: ${row.customerPhone}`,
     `E-mel: ${row.customerEmail || "-"}`,
-    `Alamat : *${row.fullAddress || row.customerArea || "-"}*`,
+    `Alamat : *${azServiceBookingDisplayAddress(row)}*`,
     `Jarak dari kedai AZOBSS: ${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}`,
     `Lokasi Kedai: ${row.locationMapUrl || "-"}`,
     `Cara serahan: *${row.serviceMethod || '-'}*`,
@@ -11470,6 +11473,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     locationCenterLatitude:AZ_SERVICE_BOOKING_CENTER.lat,
     locationCenterLongitude:AZ_SERVICE_BOOKING_CENTER.lng,
     locationMapUrl:azServiceBookingDirectionsUrl(locationLatitude, locationLongitude),
+    floorUnit:azServiceBookingText(body.floorUnit, 120),
     fullAddress:azServiceBookingText(body.fullAddress, 400),
     deviceType, deviceBrand, deviceModel,
     screenSize,
