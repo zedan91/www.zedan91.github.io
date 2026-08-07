@@ -689,7 +689,6 @@ body.is-admin .market-nav a[href="/admin/"]{
     if(!form.reportValidity()||!validateSelection())return;
     const p=payload();
     const localWa=fallbackUrl(p);
-    const popup=window.open('','_blank');
     let whatsappOpened=false;
     function whatsappLaunchLinks(url){
       try{
@@ -702,53 +701,18 @@ body.is-admin .market-nav a[href="/admin/"]{
         return {appUrl:`whatsapp://send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`,webUrl};
       }catch(_){return {appUrl:url,webUrl:url};}
     }
-    function isMobileWhatsAppDevice(){
-      const ua=navigator.userAgent||'';
-      if(/Android|iPhone|iPod|Mobile/i.test(ua))return true;
-      if(/iPad/i.test(ua))return true;
-      return navigator.maxTouchPoints>1 && Math.min(screen.width||9999,screen.height||9999)<=900;
-    }
     function launchWhatsApp(url){
       const links=whatsappLaunchLinks(url);
-      // Cara lama: desktop, laptop, telefon dan tablet semuanya cuba membuka
-      // aplikasi WhatsApp melalui whatsapp://. WhatsApp Web hanya fallback manual.
-      if(!popup||popup.closed){window.location.href=links.appUrl;return;}
-      try{
-        const doc=popup.document;
-        doc.title='Membuka WhatsApp';
-        doc.documentElement.style.cssText='background:#07101f;color:#fff;font-family:Arial,sans-serif';
-        doc.body.style.cssText='margin:0;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box;text-align:center';
-        doc.body.innerHTML='<main style="width:min(430px,100%);background:#0d1b2e;border:1px solid #274463;border-radius:20px;padding:28px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,.35)"><div style="font-size:42px;margin-bottom:10px">💬</div><h1 style="font-size:22px;margin:0 0 10px">Membuka WhatsApp…</h1><p id="waLaunchStatus" style="color:#b8c7dc;line-height:1.55;margin:0 0 20px">Tekan Open WhatsApp pada dialog browser. Tab ini hanya akan ditutup selepas aplikasi WhatsApp benar-benar dibuka.</p><button id="waWebFallback" type="button" style="width:100%;border:1px solid #3d5d80;background:#132640;color:#fff;border-radius:12px;padding:13px 16px;font-weight:700;cursor:pointer">Teruskan ke WhatsApp Web</button><button id="waCloseLauncher" type="button" style="width:100%;border:0;background:transparent;color:#90a7c4;padding:13px 16px;font-weight:700;cursor:pointer">Tutup tab</button></main>';
-        doc.getElementById('waWebFallback')?.addEventListener('click',()=>popup.location.replace(links.webUrl));
-        doc.getElementById('waCloseLauncher')?.addEventListener('click',()=>popup.close());
-        const statusNode=doc.getElementById('waLaunchStatus');
-        let closeTimer=0;
-        const queueClose=delay=>{
-          clearTimeout(closeTimer);
-          closeTimer=setTimeout(()=>{try{if(!popup.closed)popup.close();}catch(_){}},delay);
-        };
-        // Jangan tutup hanya kerana popup browser "Open WhatsApp?" mengambil fokus.
-        // Event blur berlaku SEBELUM pengguna memilih Open WhatsApp atau Cancel, jadi ia
-        // tidak boleh digunakan sebagai bukti aplikasi telah dibuka. Tutup hanya selepas
-        // halaman launcher benar-benar menjadi hidden, yang biasanya berlaku apabila
-        // pengguna menekan Open WhatsApp dan sistem bertukar ke aplikasi WhatsApp.
-        doc.addEventListener('visibilitychange',()=>{
-          if(doc.hidden) queueClose(650);
-          else clearTimeout(closeTimer);
-        });
-        popup.addEventListener('focus',()=>clearTimeout(closeTimer));
-        setTimeout(()=>{
-          try{popup.location.href=links.appUrl;}
-          catch(_){if(statusNode)statusNode.textContent='Aplikasi tidak dapat dibuka secara automatik. Gunakan butang WhatsApp Web di bawah.';}
-        },25);
-      }catch(_){popup.location.replace(links.webUrl);}
+      // Buka protokol WhatsApp terus daripada halaman Tempah Servis IT.
+      // Chrome/Windows akan memaparkan dialog "Open WhatsApp?" pada tab semasa;
+      // tiada lagi popup / about:blank. Jika pengguna menekan Cancel, borang kekal terbuka.
+      try{window.location.href=links.appUrl;}catch(_){fallback.href=links.webUrl;fallback.classList.add('show');}
     }
     const openWhatsAppOnce=url=>{
       if(whatsappOpened)return;
       whatsappOpened=true;
       launchWhatsApp(url);
     };
-    if(popup){try{popup.document.body.style.cssText='margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial;text-align:center;padding:24px';popup.document.body.textContent='Menyimpan tempahan... Jika server lambat, WhatsApp akan dibuka secara automatik.';}catch(_){}}
     const button=$('submitBooking');button.disabled=true;button.textContent='Menyimpan tempahan...';showStatus('Sedang menyimpan rekod tempahan. WhatsApp akan dibuka sebentar lagi.','ok');
     // Mulakan simpanan serta-merta, tetapi jangan paksa pelanggan menunggu Render/Firestore.
     // Jika respons rasmi belum tiba dalam 250 ms, buka WhatsApp menggunakan mesej tempatan
@@ -770,7 +734,6 @@ body.is-admin .market-nav a[href="/admin/"]{
     }catch(error){
       clearTimeout(fastOpenTimer);
       if(!whatsappOpened){
-        try{if(popup&&!popup.closed)popup.close();}catch(_){ }
         fallback.href=localWa;fallback.classList.add('show');
         showStatus((error.message||'Rekod gagal disimpan.')+' Kamu masih boleh hantar maklumat terus melalui WhatsApp menggunakan butang di bawah.','error');
       }else{
