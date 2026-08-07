@@ -11690,11 +11690,25 @@ async function handler(req, res) {
         const identity = await azAdminIdentityFromRequest(req, parsed);
         if (!identity || !identity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
         const body = parseRequestBody(await readBody(req));
-        const bookingId = azServiceBookingText(body.bookingId || body.id, 100);
         const action = azServiceBookingText(body.action, 40).toLowerCase();
-        if (!bookingId) return send(res, 400, JSON.stringify({ ok:false, error:"Booking ID is required." }, null, 2), "application/json");
         const db = getAzobssBackendDb();
         if (!db) throw new Error("Firebase Admin is not configured.");
+        if (action === "bulk-delete") {
+          const sourceIds = Array.isArray(body.bookingIds) ? body.bookingIds : [];
+          const bookingIds = Array.from(new Set(sourceIds.map(id => azServiceBookingText(id, 100)).filter(Boolean))).slice(0, 300);
+          if (!bookingIds.length) return send(res, 400, JSON.stringify({ ok:false, error:"Select at least one service booking." }, null, 2), "application/json");
+          let deleted = 0;
+          for (let offset = 0; offset < bookingIds.length; offset += 400) {
+            const batch = db.batch();
+            const chunk = bookingIds.slice(offset, offset + 400);
+            chunk.forEach(id => batch.delete(db.collection("serviceBookings").doc(id)));
+            await batch.commit();
+            deleted += chunk.length;
+          }
+          return send(res, 200, JSON.stringify({ ok:true, action, deleted, bookingIds }, null, 2), "application/json");
+        }
+        const bookingId = azServiceBookingText(body.bookingId || body.id, 100);
+        if (!bookingId) return send(res, 400, JSON.stringify({ ok:false, error:"Booking ID is required." }, null, 2), "application/json");
         const ref = db.collection("serviceBookings").doc(bookingId);
         if (action === "delete") {
           await ref.delete();

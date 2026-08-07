@@ -2355,6 +2355,11 @@ body[data-dashboard-page="admin"] .topbar{
           <button class="btn gray" id="exportServiceBookings" type="button">Export CSV</button>
         </div>
         <div id="serviceBookingNotice" class="tabs-note">Tekan Refresh untuk memuatkan rekod.</div>
+        <div class="az840-bulk-toolbar">
+          <label class="az840-select-all"><input id="serviceBookingSelectAll" type="checkbox"> <span>Pilih semua dipaparkan</span></label>
+          <span id="serviceBookingSelectedCount">0 dipilih</span>
+          <button class="btn red" id="deleteSelectedServiceBookings" type="button" disabled>Delete Selected</button>
+        </div>
       </div>
       <div id="serviceBookingList" class="az770-service-booking-list"></div>
     </section>
@@ -7831,11 +7836,28 @@ document.addEventListener('click', async function(e){
 .az798-final-price-label{display:grid;gap:5px;color:#bfdbfe;font-size:10px;font-weight:900;text-transform:uppercase}.az798-final-price-label input{width:100%;min-width:0;background:#071426;color:#fff;border:1px solid #365273;border-radius:9px;padding:9px 10px;font-weight:900}.az798-invoice-state{display:grid;gap:3px;padding:8px 9px;border:1px solid rgba(34,211,238,.28);border-radius:9px;background:rgba(8,47,73,.25);color:#bae6fd;font-size:11px;line-height:1.35}.az798-invoice-state b{color:#fff}.az798-booking-action-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.az798-booking-action-row .btn{min-width:0}.az798-quota-note{color:#86efac;font-size:10px;line-height:1.35}@media(max-width:650px){.az798-booking-action-row{grid-template-columns:1fr}}
 </style>
 
+<style id="az840-service-bookings-compact-bulk-style">
+.az840-bulk-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,.16)}
+.az840-select-all{display:inline-flex;align-items:center;gap:7px;color:#dbeafe;font-size:12px;font-weight:850;cursor:pointer}.az840-select-all input,.az840-booking-check input{width:17px;height:17px;accent-color:#22c55e;cursor:pointer}
+#serviceBookingSelectedCount{color:#93c5fd;font-size:12px;font-weight:900;margin-right:auto}.az840-bulk-toolbar .btn{min-height:36px;padding:8px 13px}.az840-bulk-toolbar .btn:disabled{opacity:.45;cursor:not-allowed}
+.az770-service-booking-row.az840-booking-card{display:block;padding:0;overflow:hidden;border-radius:12px}
+.az840-booking-compact{display:grid;grid-template-columns:34px minmax(220px,1.05fr) minmax(220px,1.1fr) minmax(180px,.8fr) auto;gap:12px;align-items:center;padding:10px 12px;cursor:pointer;min-height:72px;transition:background .15s ease}
+.az840-booking-compact:hover{background:rgba(30,64,105,.28)}.az840-booking-card.is-expanded .az840-booking-compact{background:rgba(13,46,77,.45);border-bottom:1px solid rgba(148,163,184,.2)}
+.az840-booking-check{display:flex;align-items:center;justify-content:center;margin:0}.az840-compact-primary,.az840-compact-device,.az840-compact-price{min-width:0}.az840-compact-id{color:#fff;font-size:15px;font-weight:950;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az840-compact-line{margin-top:3px;color:#93a8c2;font-size:11px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az840-compact-device strong{display:block;color:#fff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az840-compact-price{display:grid;gap:4px}.az840-compact-price .az770-booking-price{margin:0;font-size:12px}.az840-compact-price .az770-booking-chip{margin:0;width:max-content;max-width:100%}
+.az840-toggle-btn{white-space:nowrap;min-width:92px;padding:8px 10px!important;font-size:11px!important}
+.az840-booking-expanded{padding:12px;display:grid;grid-template-columns:minmax(180px,.8fr) minmax(220px,1fr) minmax(220px,1.2fr) minmax(170px,.72fr);gap:12px;align-items:start}.az840-booking-expanded[hidden]{display:none!important}.az840-booking-expanded .az770-booking-detail{grid-column:1/-1;margin-top:0}.az840-booking-expanded .az770-booking-actions{align-self:start}.az840-full-info{grid-column:1/-1;margin-top:0}
+@media(max-width:1120px){.az840-booking-compact{grid-template-columns:34px minmax(180px,1fr) minmax(180px,1fr) minmax(150px,.8fr) auto}.az840-booking-expanded{grid-template-columns:1fr 1fr}.az840-booking-expanded .az770-booking-actions,.az840-booking-expanded .az770-booking-detail{grid-column:1/-1}}
+@media(max-width:760px){.az840-booking-compact{grid-template-columns:30px 1fr auto;gap:8px}.az840-compact-device{grid-column:2/3}.az840-compact-price{grid-column:2/3}.az840-toggle-btn{grid-column:3/4;grid-row:1/4;align-self:stretch;min-width:72px}.az840-booking-expanded{grid-template-columns:1fr}.az840-booking-expanded .az770-booking-actions,.az840-booking-expanded .az770-booking-detail{grid-column:auto}.az840-bulk-toolbar{align-items:stretch}.az840-bulk-toolbar .btn{width:100%}}
+</style>
+
 <script id="az798-admin-service-bookings-invoice-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=90*1000;
   let cache=[],lastLoadedAt=0,loadingPromise=null;
+  const selectedBookings=new Set();
+  const expandedBookings=new Set();
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   function money(v){const n=Number(v||0)||0;return 'RM'+(Number.isInteger(n)?n.toFixed(0):n.toFixed(2));}
@@ -7869,16 +7891,44 @@ document.addEventListener('click', async function(e){
     const paid=String(x.paymentStatus||'').toLowerCase()==='paid'||String(x.invoiceStatus||'').toLowerCase()==='paid';
     return `<div class="az798-invoice-state"><b>${paid?'Resit dibayar':'Invois tersedia'} • ${esc(x.receiptNo||x.invoiceNo||'-')}</b><span>${paid?'Bayaran telah disahkan.':'Status bayaran: '+esc(x.paymentStatus||'belum dibayar')}</span></div>`;
   }
+  function updateBulkUi(rows=filtered()){
+    const visibleIds=rows.map(x=>String(x.bookingId||x.id||'')).filter(Boolean);
+    const visibleSet=new Set(visibleIds);
+    for(const id of [...selectedBookings])if(!visibleSet.has(id))selectedBookings.delete(id);
+    const selectAll=$('serviceBookingSelectAll'),count=$('serviceBookingSelectedCount'),del=$('deleteSelectedServiceBookings');
+    const selectedVisible=visibleIds.filter(id=>selectedBookings.has(id)).length;
+    if(selectAll){selectAll.checked=Boolean(visibleIds.length)&&selectedVisible===visibleIds.length;selectAll.indeterminate=selectedVisible>0&&selectedVisible<visibleIds.length;selectAll.disabled=!visibleIds.length;}
+    if(count)count.textContent=`${selectedVisible} dipilih`;
+    if(del){del.disabled=!selectedVisible;del.textContent=selectedVisible?`Delete Selected (${selectedVisible})`:'Delete Selected';}
+  }
   function render(){
     const box=$('serviceBookingList'),rows=filtered();if(!box)return;
     const badge=$('serviceBookingNavBadge'),newCount=cache.filter(x=>String(x.status||'new')==='new').length;if(badge){badge.textContent=String(newCount);badge.hidden=!newCount;}
     box.innerHTML=rows.map(x=>{
       const services=(x.services||[]).map(s=>esc(s.name)+' — '+esc(servicePrice(s))).join('<br>')||'<span style="color:#facc15">Pemeriksaan diperlukan</span>';
       const logistics=(x.logistics||[]).map(s=>esc(s.name)+' — '+esc(s.priceLabel||money(s.price))).join('<br>');
-      const issues=(x.issues||[]).join(', ')||'-',wa=phoneWa(x.customerPhone),id=esc(x.bookingId||x.id),hasInvoice=Boolean(x.invoiceDocId||x.invoiceNo);
+      const issues=(x.issues||[]).join(', ')||'-',wa=phoneWa(x.customerPhone),rawId=String(x.bookingId||x.id||''),id=esc(rawId),hasInvoice=Boolean(x.invoiceDocId||x.invoiceNo);
       const finalPrice=Number(x.finalPrice)>0?Number(x.finalPrice):'';
-      return `<article class="az770-service-booking-row ${String(x.status||'new')==='new'?'is-new':''}"><div><div class="az770-booking-title">${id}</div><div class="az770-booking-meta">${esc(date(x.createdAtMs))}<br>${esc(x.customerName)}<br>${esc(x.customerPhone)} • ${esc(x.customerArea)}</div><span class="az770-booking-chip">${esc(statusLabel(x.status))}</span></div><div><div class="az770-booking-title">${esc(x.deviceBrand)} ${esc(x.deviceModel)}</div><div class="az770-booking-meta">${esc(x.deviceType)} • ${esc(x.screenSize||'Saiz tidak dinyatakan')}<br>Jenis skrin: ${esc(x.screenType||'Tidak dinyatakan')}<br>${esc(x.devicePowerState||'-')}<br>Serahan: ${esc(x.serviceMethod||'-')}</div></div><div class="az770-booking-services">${services}${logistics?`<br><br><strong>Logistik</strong><br>${logistics}`:''}<span class="az770-booking-price">Anggaran: ${(x.services?.length||x.logistics?.length)?esc(bookingEstimate(x)):'Perlu pemeriksaan'}</span>${Number(x.finalPrice)>0?`<span class="az770-booking-price">Harga akhir: ${money(x.finalPrice)}</span>`:''}<div class="az770-booking-meta">Harga sebenar perlu disahkan admin.<br>Masalah: ${esc(issues)}</div></div><div class="az770-booking-actions"><select data-service-booking-status="${id}"><option value="new" ${x.status==='new'?'selected':''}>Baharu</option><option value="contacted" ${x.status==='contacted'?'selected':''}>Dihubungi</option><option value="inspection" ${x.status==='inspection'?'selected':''}>Pemeriksaan</option><option value="quoted" ${x.status==='quoted'?'selected':''}>Harga diberi</option><option value="confirmed" ${x.status==='confirmed'?'selected':''}>Disahkan</option><option value="in-progress" ${x.status==='in-progress'?'selected':''}>Sedang dibaiki</option><option value="completed" ${x.status==='completed'?'selected':''}>Selesai</option><option value="cancelled" ${x.status==='cancelled'?'selected':''}>Dibatalkan</option></select><label class="az798-final-price-label">Harga akhir (RM)<input data-service-booking-final-price="${id}" min="0" step="0.01" type="number" value="${finalPrice}" placeholder="Contoh: 280"></label><div class="az798-booking-action-row"><button class="btn gray" data-service-booking-save-price="${id}" type="button">Simpan Harga</button>${hasInvoice?`<button class="btn green" data-service-booking-open-invoice="${id}" type="button">Buka Invois</button>`:`<button class="btn green" data-service-booking-create-invoice="${id}" type="button">Buat Draf Invois</button>`}</div>${invoiceState(x)}${wa?`<a class="btn green" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn red" data-service-booking-delete="${id}" type="button">Delete</button><div class="az798-quota-note">Satu rekod tempahan sahaja. Invois hanya dicipta selepas admin menekan Simpan Invois.</div></div><details class="az770-booking-detail"><summary>Detail penuh</summary>Floor / unit: ${esc(x.floorUnit||'-')}\nAlamat: ${esc(x.fullAddress||'-')}\nWGS84: ${esc(x.locationWgs84||'-')}\nJarak dari kedai AZOBSS: ${Number.isFinite(bookingDistanceToShop(x))?bookingDistanceToShop(x).toFixed(2)+' km':'-'}\n${x.locationMapUrl?`Peta: <a href="${esc(x.locationMapUrl)}" target="_blank" rel="noopener">Buka Google Maps</a>`:'Peta: -'}\nTarikh / masa: ${esc(x.preferredDate||'Fleksibel')} • ${esc(x.preferredTime||'Fleksibel')}\nKeutamaan: ${esc(x.urgency||'Biasa')}\nData / backup: ${esc(x.backupRequirement||'Tidak pasti')}\nSerial: ${esc(x.deviceSerial||'-')}\nE-mel: ${esc(x.customerEmail||'-')}\nKos pengambilan: ${money(x.pickupFee||0)}\nKos penghantaran: ${money(x.deliveryFee||0)}\nInvois: ${esc(x.invoiceNo||'-')}\nResit: ${esc(x.receiptNo||'-')}\nStatus bayaran: ${esc(x.paymentStatus||'belum dibayar')}\n\nCatatan masalah: ${esc(x.problemDetails||'-')}\nPermintaan tambahan: ${esc(x.extraRequests||'-')}</details></article>`;
+      const isExpanded=expandedBookings.has(rawId),isSelected=selectedBookings.has(rawId);
+      const compactEstimate=(x.services?.length||x.logistics?.length)?bookingEstimate(x):'Perlu pemeriksaan';
+      return `<article class="az770-service-booking-row az840-booking-card ${String(x.status||'new')==='new'?'is-new':''} ${isExpanded?'is-expanded':''}" data-booking-card="${id}">
+        <div class="az840-booking-compact" data-service-booking-toggle="${id}" role="button" tabindex="0" aria-expanded="${isExpanded?'true':'false'}">
+          <label class="az840-booking-check" title="Pilih untuk delete"><input type="checkbox" data-service-booking-select="${id}" ${isSelected?'checked':''} aria-label="Pilih tempahan ${id}"></label>
+          <div class="az840-compact-primary"><div class="az840-compact-id">${id}</div><div class="az840-compact-line">${esc(date(x.createdAtMs))} • ${esc(x.customerName)} • ${esc(x.customerPhone)}</div><div class="az840-compact-line">${esc(x.customerArea||x.fullAddress||'-')}</div></div>
+          <div class="az840-compact-device"><strong>${esc(x.deviceBrand)} ${esc(x.deviceModel)}</strong><div class="az840-compact-line">${esc(x.deviceType)} • ${esc(x.screenSize||'Saiz tidak dinyatakan')} • ${esc(x.serviceMethod||'-')}</div></div>
+          <div class="az840-compact-price"><span class="az770-booking-chip">${esc(statusLabel(x.status))}</span><span class="az770-booking-price">Anggaran: ${esc(compactEstimate)}</span>${Number(x.finalPrice)>0?`<span class="az770-booking-price">Harga akhir: ${money(x.finalPrice)}</span>`:''}</div>
+          <button class="btn gray az840-toggle-btn" data-service-booking-toggle-button="${id}" type="button">${isExpanded?'Tutup':'Lihat semua'}</button>
+        </div>
+        <div class="az840-booking-expanded" ${isExpanded?'':'hidden'}>
+          <div><div class="az770-booking-title">Pelanggan</div><div class="az770-booking-meta">${esc(x.customerName)}<br>${esc(x.customerPhone)}<br>${esc(x.customerEmail||'-')}<br>${esc(x.customerArea||'-')}</div><span class="az770-booking-chip">${esc(statusLabel(x.status))}</span></div>
+          <div><div class="az770-booking-title">${esc(x.deviceBrand)} ${esc(x.deviceModel)}</div><div class="az770-booking-meta">${esc(x.deviceType)} • ${esc(x.screenSize||'Saiz tidak dinyatakan')}<br>Jenis skrin: ${esc(x.screenType||'Tidak dinyatakan')}<br>${esc(x.devicePowerState||'-')}<br>Serahan: ${esc(x.serviceMethod||'-')}</div></div>
+          <div class="az770-booking-services">${services}${logistics?`<br><br><strong>Logistik</strong><br>${logistics}`:''}<span class="az770-booking-price">Anggaran: ${esc(compactEstimate)}</span>${Number(x.finalPrice)>0?`<span class="az770-booking-price">Harga akhir: ${money(x.finalPrice)}</span>`:''}<div class="az770-booking-meta">Harga sebenar perlu disahkan admin.<br>Masalah: ${esc(issues)}</div></div>
+          <div class="az770-booking-actions"><select data-service-booking-status="${id}"><option value="new" ${x.status==='new'?'selected':''}>Baharu</option><option value="contacted" ${x.status==='contacted'?'selected':''}>Dihubungi</option><option value="inspection" ${x.status==='inspection'?'selected':''}>Pemeriksaan</option><option value="quoted" ${x.status==='quoted'?'selected':''}>Harga diberi</option><option value="confirmed" ${x.status==='confirmed'?'selected':''}>Disahkan</option><option value="in-progress" ${x.status==='in-progress'?'selected':''}>Sedang dibaiki</option><option value="completed" ${x.status==='completed'?'selected':''}>Selesai</option><option value="cancelled" ${x.status==='cancelled'?'selected':''}>Dibatalkan</option></select><label class="az798-final-price-label">Harga akhir (RM)<input data-service-booking-final-price="${id}" min="0" step="0.01" type="number" value="${finalPrice}" placeholder="Contoh: 280"></label><div class="az798-booking-action-row"><button class="btn gray" data-service-booking-save-price="${id}" type="button">Simpan Harga</button>${hasInvoice?`<button class="btn green" data-service-booking-open-invoice="${id}" type="button">Buka Invois</button>`:`<button class="btn green" data-service-booking-create-invoice="${id}" type="button">Buat Draf Invois</button>`}</div>${invoiceState(x)}${wa?`<a class="btn green" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn red" data-service-booking-delete="${id}" type="button">Delete</button><div class="az798-quota-note">Satu rekod tempahan sahaja. Invois hanya dicipta selepas admin menekan Simpan Invois.</div></div>
+          <div class="az770-booking-detail az840-full-info"><strong>Maklumat penuh</strong>\nFloor / unit: ${esc(x.floorUnit||'-')}\nAlamat: ${esc(x.fullAddress||'-')}\nWGS84: ${esc(x.locationWgs84||'-')}\nJarak dari kedai AZOBSS: ${Number.isFinite(bookingDistanceToShop(x))?bookingDistanceToShop(x).toFixed(2)+' km':'-'}\n${x.locationMapUrl?`Peta: <a href="${esc(x.locationMapUrl)}" target="_blank" rel="noopener">Buka Google Maps</a>`:'Peta: -'}\nTarikh / masa: ${esc(x.preferredDate||'Fleksibel')} • ${esc(x.preferredTime||'Fleksibel')}\nKeutamaan: ${esc(x.urgency||'Biasa')}\nData / backup: ${esc(x.backupRequirement||'Tidak pasti')}\nSerial: ${esc(x.deviceSerial||'-')}\nE-mel: ${esc(x.customerEmail||'-')}\nKos pengambilan: ${money(x.pickupFee||0)}\nKos penghantaran: ${money(x.deliveryFee||0)}\nInvois: ${esc(x.invoiceNo||'-')}\nResit: ${esc(x.receiptNo||'-')}\nStatus bayaran: ${esc(x.paymentStatus||'belum dibayar')}\n\nCatatan masalah: ${esc(x.problemDetails||'-')}\nPermintaan tambahan: ${esc(x.extraRequests||'-')}</div>
+        </div>
+      </article>`;
     }).join('')||'<div class="az770-booking-empty">Tiada rekod yang sepadan.</div>';
+    updateBulkUi(rows);
     const n=$('serviceBookingNotice');if(n)n.textContent=`${rows.length} dipaparkan daripada ${cache.length} rekod • ${newCount} baharu • cache 90 saat untuk jimat kuota`;
   }
   async function load({force=false}={}){
@@ -7889,6 +7939,14 @@ document.addEventListener('click', async function(e){
     return loadingPromise;
   }
   async function action(bookingId,action,extra={}){await request('/api/admin/service-bookings-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bookingId,action,...extra})});lastLoadedAt=0;await load({force:true});}
+  async function deleteSelectedBookings(){
+    const ids=[...selectedBookings];if(!ids.length)return;
+    if(!confirm(`Delete ${ids.length} service booking(s) permanently?`))return;
+    const btn=$('deleteSelectedServiceBookings');if(btn)btn.disabled=true;
+    try{await request('/api/admin/service-bookings-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk-delete',bookingIds:ids})});selectedBookings.clear();ids.forEach(id=>expandedBookings.delete(id));lastLoadedAt=0;await load({force:true});}
+    catch(err){alert(err.message||err);updateBulkUi();}
+    finally{if(btn)btn.disabled=false;}
+  }
   async function waitInvoiceModule(){for(let i=0;i<80;i++){if(typeof window.azSalesReceiptsOpenFromServiceBooking==='function')return true;await new Promise(r=>setTimeout(r,75));}return false;}
   async function openInvoiceForBooking(row,existing=false){
     const tab=[...document.querySelectorAll('[data-tab="salesreceipts"]')][0];if(tab)tab.click();
@@ -7901,13 +7959,28 @@ document.addEventListener('click', async function(e){
     const tab=e.target.closest('[data-tab="servicebookings"]');if(tab)setTimeout(()=>load(),0);
     if(e.target.id==='refreshServiceBookings'){load({force:true});return;}
     if(e.target.id==='exportServiceBookings'){exportCsv();return;}
-    const del=e.target.closest('[data-service-booking-delete]');if(del&&confirm('Delete this service booking permanently?')){action(del.dataset.serviceBookingDelete,'delete');return;}
+    if(e.target.id==='deleteSelectedServiceBookings'){await deleteSelectedBookings();return;}
+    const toggleBtn=e.target.closest('[data-service-booking-toggle-button]');
+    const compact=e.target.closest('[data-service-booking-toggle]');
+    if(toggleBtn||compact){
+      if(e.target.closest('input,select,a,label')&&!toggleBtn)return;
+      const id=String((toggleBtn?.dataset.serviceBookingToggleButton)||(compact?.dataset.serviceBookingToggle)||'');
+      if(id){expandedBookings.has(id)?expandedBookings.delete(id):expandedBookings.add(id);render();}
+      return;
+    }
+    const del=e.target.closest('[data-service-booking-delete]');if(del&&confirm('Delete this service booking permanently?')){const id=String(del.dataset.serviceBookingDelete||'');selectedBookings.delete(id);expandedBookings.delete(id);action(id,'delete');return;}
     const save=e.target.closest('[data-service-booking-save-price]');if(save){const input=save.closest('.az770-booking-actions')?.querySelector('[data-service-booking-final-price]'),value=Number(input?.value||0);if(!(value>0)){alert('Masukkan harga akhir yang lebih daripada RM0.');input?.focus();return;}save.disabled=true;try{await action(save.dataset.serviceBookingSavePrice,'final-price',{finalPrice:value});}catch(err){alert(err.message||err);}finally{save.disabled=false;}return;}
     const create=e.target.closest('[data-service-booking-create-invoice]');if(create){const row=cache.find(x=>String(x.bookingId||x.id)===String(create.dataset.serviceBookingCreateInvoice));if(row)openInvoiceForBooking(row,false);return;}
     const open=e.target.closest('[data-service-booking-open-invoice]');if(open){const row=cache.find(x=>String(x.bookingId||x.id)===String(open.dataset.serviceBookingOpenInvoice));if(row)openInvoiceForBooking(row,true);return;}
   });
-  document.addEventListener('change',e=>{if(e.target.id==='serviceBookingStatusFilter')render();if(e.target.matches('[data-service-booking-status]'))action(e.target.dataset.serviceBookingStatus,'status',{status:e.target.value});});
-  document.addEventListener('input',e=>{if(e.target.id==='serviceBookingSearch')render();});
+  document.addEventListener('keydown',e=>{const compact=e.target.closest?.('[data-service-booking-toggle]');if(compact&&(e.key==='Enter'||e.key===' ')){if(e.target.matches('input,select,a,button'))return;e.preventDefault();const id=String(compact.dataset.serviceBookingToggle||'');if(id){expandedBookings.has(id)?expandedBookings.delete(id):expandedBookings.add(id);render();}}});
+  document.addEventListener('change',e=>{
+    if(e.target.id==='serviceBookingStatusFilter'){selectedBookings.clear();render();return;}
+    if(e.target.id==='serviceBookingSelectAll'){const rows=filtered();selectedBookings.clear();if(e.target.checked)rows.forEach(x=>selectedBookings.add(String(x.bookingId||x.id)));render();return;}
+    if(e.target.matches('[data-service-booking-select]')){const id=String(e.target.dataset.serviceBookingSelect||'');if(e.target.checked)selectedBookings.add(id);else selectedBookings.delete(id);updateBulkUi();return;}
+    if(e.target.matches('[data-service-booking-status]'))action(e.target.dataset.serviceBookingStatus,'status',{status:e.target.value});
+  });
+  document.addEventListener('input',e=>{if(e.target.id==='serviceBookingSearch'){selectedBookings.clear();render();}});
   window.loadServiceBookings=(force=false)=>load({force});
 })();
 </script>
