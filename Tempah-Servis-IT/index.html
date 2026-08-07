@@ -306,7 +306,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input autocomplete="tel" id="customerPhone" inputmode="tel" maxlength="20" placeholder="Contoh: 012-345 6789" required=""/></div>
 <div class="field full"><label for="customerEmail">E-mel (opsyenal)</label><input autocomplete="email" id="customerEmail" maxlength="160" placeholder="Contoh: nama@email.com" type="email"/></div>
 <input id="locationWgs84" type="hidden"/><input id="locationLatitude" type="hidden"/><input id="locationLongitude" type="hidden"/><input id="customerArea" type="hidden"/>
-<div class="field full location-picker"><div class="location-address-fields"><div class="location-unit-field"><label for="floorUnit">Floor or unit number (opsyenal)</label><input autocomplete="address-line1" id="floorUnit" maxlength="120" placeholder="Contoh: Tingkat 3, Unit A-12-5"/></div><div><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea aria-readonly="true" id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." readonly="" required=""></textarea></div></div><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
+<div class="field full location-picker"><div class="location-address-fields"><div class="location-unit-field"><label for="floorUnit">Floor or unit number <span class="required">*</span></label><input aria-required="true" autocomplete="address-line1" id="floorUnit" maxlength="120" placeholder="Contoh: Tingkat 3, Unit A-12-5" required=""/></div><div><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea aria-readonly="true" id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." readonly="" required=""></textarea></div></div><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
 </div>
 </div>
 <div class="section-block">
@@ -698,12 +698,29 @@ body.is-admin .market-nav a[href="/admin/"]{
         if(!phone&&/wa\.me$/i.test(parsed.hostname))phone=clean(parsed.pathname.split('/').filter(Boolean).pop()||'').replace(/\D/g,'');
         const text=parsed.searchParams.get('text')||'';
         if(!phone)return {appUrl:url,webUrl:url};
-        return {appUrl:`whatsapp://send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`,webUrl:url};
+        const webUrl=`https://web.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`;
+        return {appUrl:`whatsapp://send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`,webUrl};
       }catch(_){return {appUrl:url,webUrl:url};}
     }
-    function launchWhatsAppApp(url){
-      if(!popup||popup.closed){window.location.href=url;return;}
+    function isMobileWhatsAppDevice(){
+      const ua=navigator.userAgent||'';
+      if(/Android|iPhone|iPod|Mobile/i.test(ua))return true;
+      if(/iPad/i.test(ua))return true;
+      return navigator.maxTouchPoints>1 && Math.min(screen.width||9999,screen.height||9999)<=900;
+    }
+    function launchWhatsApp(url){
       const links=whatsappLaunchLinks(url);
+      // Desktop/laptop: terus ke WhatsApp Web. Ini mengelakkan dialog Chrome
+      // "Open WhatsApp?" yang muncul apabila whatsapp:// digunakan pada desktop.
+      if(!isMobileWhatsAppDevice()){
+        const webUrl=links.webUrl;
+        if(!popup||popup.closed){window.open(webUrl,'_blank','noopener');return;}
+        try{popup.location.replace(webUrl);}catch(_){popup.location.href=webUrl;}
+        return;
+      }
+      // Telefon/tablet: cuba buka aplikasi WhatsApp terus. Jika aplikasi tiada,
+      // pengguna masih boleh memilih WhatsApp Web daripada launcher kecil ini.
+      if(!popup||popup.closed){window.location.href=links.appUrl;return;}
       try{
         const doc=popup.document;
         doc.title='Membuka WhatsApp';
@@ -725,12 +742,12 @@ body.is-admin .market-nav a[href="/admin/"]{
           try{popup.location.href=links.appUrl;}
           catch(_){if(statusNode)statusNode.textContent='Aplikasi tidak dapat dibuka secara automatik. Gunakan butang WhatsApp Web di bawah.';}
         },120);
-      }catch(_){popup.location.replace(url);}
+      }catch(_){popup.location.replace(links.webUrl);}
     }
     const openWhatsAppOnce=url=>{
       if(whatsappOpened)return;
       whatsappOpened=true;
-      launchWhatsAppApp(url);
+      launchWhatsApp(url);
     };
     if(popup){try{popup.document.body.style.cssText='margin:0;display:grid;place-items:center;min-height:100vh;background:#07101f;color:#fff;font:700 16px Arial;text-align:center;padding:24px';popup.document.body.textContent='Menyimpan tempahan... Jika server lambat, WhatsApp akan dibuka secara automatik.';}catch(_){}}
     const button=$('submitBooking');button.disabled=true;button.textContent='Menyimpan tempahan...';showStatus('Sedang menyimpan rekod tempahan. WhatsApp akan dibuka sebentar lagi.','ok');

@@ -1,0 +1,5 @@
+AZOBSS Patch 829 - Mandatory Floor / Unit Number
+
+Floor or unit number is now required before a service booking can be submitted.
+Frontend uses the HTML required attribute and backend validates floorUnit independently.
+Built from patch 828 with all existing functionality preserved.

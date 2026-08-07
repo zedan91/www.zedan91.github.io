@@ -11435,6 +11435,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     ? azServiceBookingDistanceKm(AZ_SERVICE_BOOKING_CENTER.lat, AZ_SERVICE_BOOKING_CENTER.lng, locationLatitude, locationLongitude)
     : NaN;
   const customerArea = locationName;
+  const floorUnit = azServiceBookingText(body.floorUnit, 120);
   const deviceType = azServiceBookingText(body.deviceType, 60);
   const deviceBrand = azServiceBookingText(body.deviceBrand, 80);
   const deviceModel = azServiceBookingText(body.deviceModel, 120);
@@ -11442,6 +11443,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   if (phoneDigits.length < 8 || phoneDigits.length > 15) throw Object.assign(new Error("Nombor telefon tidak sah."), { statusCode:400 });
   if (customerEmailRaw && !customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
   if (customerArea.length < 2) throw Object.assign(new Error("Nama lokasi diperlukan. Sila pilih lokasi pada peta."), { statusCode:400 });
+  if (!floorUnit) throw Object.assign(new Error("Floor or unit number diperlukan."), { statusCode:400 });
   if (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude)) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });
   if (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari kedai AZOBSS.`), { statusCode:400 });
   if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
@@ -11473,7 +11475,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     locationCenterLatitude:AZ_SERVICE_BOOKING_CENTER.lat,
     locationCenterLongitude:AZ_SERVICE_BOOKING_CENTER.lng,
     locationMapUrl:azServiceBookingDirectionsUrl(locationLatitude, locationLongitude),
-    floorUnit:azServiceBookingText(body.floorUnit, 120),
+    floorUnit,
     fullAddress:azServiceBookingText(body.fullAddress, 400),
     deviceType, deviceBrand, deviceModel,
     screenSize,
