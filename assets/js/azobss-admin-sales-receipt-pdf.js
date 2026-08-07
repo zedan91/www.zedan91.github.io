@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 826: Center invoice brand lockup and add website below */
+/* AZOBSS PATCH 836: Compact single-line billing info box for one-page invoices */
 (function(global){
   'use strict';
 
@@ -192,22 +192,34 @@
     fillRect(commands,x-w,y,w,23,colors.bg); strokeRect(commands,x-w,y,w,23,colors.border,0.8);
     text(commands,label,x-(w/2),y+15,{size:8,bold:true,align:'center',color:colors.text});
   }
+  function fitInlineSize(value,maxWidth,baseSize,minSize,bold){
+    let size=baseSize;
+    const textValue=clean(value)||'-';
+    while(size>minSize && estimateWidth(textValue,size,bold)>maxWidth) size-=0.25;
+    return Math.max(minSize,size);
+  }
+  function drawInlineInfoRow(commands,labelText,valueText,x,y,maxWidth){
+    const labelColor=[100,116,139],valueColor=[55,65,81];
+    const label=`${labelText} :`;
+    const labelSize=7.25;
+    text(commands,label,x,y,{size:labelSize,bold:true,color:labelColor});
+    const labelWidth=estimateWidth(label,labelSize,true);
+    const valueX=x+labelWidth+5;
+    const available=Math.max(46,maxWidth-labelWidth-5);
+    const value=clean(valueText)||'-';
+    const valueSize=fitInlineSize(value,available,8.7,6.4,true);
+    text(commands,value,valueX,y,{size:valueSize,bold:true,color:valueColor});
+  }
   function drawInfoBox(commands,row,type){
-    const docType=normalizeDocumentType(type); const x=MARGIN_X,y=116,w=CONTENT_W,h=128,mid=x+(w/2);
-    fillRect(commands,x,y,w,h,[248,250,252]); strokeRect(commands,x,y,w,h,[203,213,225],0.8); line(commands,mid,y+14,mid,y+h-14,[226,232,240],0.8);
-    const label=[100,116,139],value=[55,65,81],left=x+16,right=mid+16;
-    text(commands,docType==='invoice'?'BILL TO':'CUSTOMER',left,y+22,{size:7.5,bold:true,color:label});
-    text(commands,clean(row.customerName||'Customer'),left,y+40,{size:11,bold:true,color:value});
-    text(commands,'PHONE',left,y+64,{size:7.5,bold:true,color:label});
-    text(commands,clean(row.customerPhone)||'-',left,y+80,{size:8.8,color:value});
-    text(commands,'EMAIL',left,y+96,{size:7.5,bold:true,color:label});
-    textLines(commands,wrapText(clean(row.customerEmail)||'-',(w/2)-32,7.8,false).slice(0,2),left,y+112,{size:7.8,lineHeight:9.5,color:value});
-    text(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',right,y+22,{size:7.5,bold:true,color:label});
-    text(commands,documentNumber(row,docType),right,y+40,{size:10.2,bold:true,color:value});
-    text(commands,docType==='invoice'?'ISSUE DATE':'DATE',right,y+64,{size:7.5,bold:true,color:label});
-    text(commands,formatDateTime(documentDateTime(row,docType)),right,y+80,{size:9.2,bold:true,color:value});
-    text(commands,docType==='invoice'?'PAYMENT TERMS':'PAYMENT METHOD',right,y+104,{size:7.5,bold:true,color:label});
-    text(commands,docType==='invoice'?(clean(row.paymentTerms)||'Due upon receipt'):clean(row.paymentMethod||'-'),right,y+120,{size:9.2,bold:true,color:value});
+    const docType=normalizeDocumentType(type); const x=MARGIN_X,y=116,w=CONTENT_W,h=76,mid=x+(w/2);
+    fillRect(commands,x,y,w,h,[248,250,252]); strokeRect(commands,x,y,w,h,[203,213,225],0.8); line(commands,mid,y+10,mid,y+h-10,[226,232,240],0.8);
+    const left=x+14,right=mid+14,colW=(w/2)-28;
+    drawInlineInfoRow(commands,docType==='invoice'?'BILL TO':'CUSTOMER',clean(row.customerName||'Customer'),left,y+22,colW);
+    drawInlineInfoRow(commands,'PHONE',clean(row.customerPhone)||'-',left,y+42,colW);
+    drawInlineInfoRow(commands,'EMAIL',clean(row.customerEmail)||'-',left,y+62,colW);
+    drawInlineInfoRow(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',documentNumber(row,docType),right,y+22,colW);
+    drawInlineInfoRow(commands,docType==='invoice'?'ISSUE DATE':'DATE',formatDateTime(documentDateTime(row,docType)),right,y+42,colW);
+    drawInlineInfoRow(commands,docType==='invoice'?'PAYMENT TERMS':'PAYMENT METHOD',docType==='invoice'?(clean(row.paymentTerms)||'Due upon receipt'):clean(row.paymentMethod||'-'),right,y+62,colW);
     drawStatusBadge(commands,row,x+w-12,y-10);
   }
 
@@ -316,7 +328,7 @@
   }
   function buildPages(row,type){
     const docType=normalizeDocumentType(type); const pages=[]; let commands=createPage(); pages.push(commands);
-    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,265);
+    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,205);
     normalizedItems(row).forEach((item,index)=>{
       const h=itemRowHeight(item);
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
