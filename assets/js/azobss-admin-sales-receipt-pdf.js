@@ -279,26 +279,31 @@
     return y+boxH;
   }
   function hasToyyibPayQr(row,type){
-    return normalizeDocumentType(type)==='invoice' && clean(row.status).toLowerCase()==='pending' && clean(row.paymentUrl||row.toyyibPaymentUrl) && clean(row.toyyibQrJpegBase64);
+    const docType=normalizeDocumentType(type);
+    const status=clean(row.status).toLowerCase();
+    const canPay=!!(clean(row.paymentUrl||row.toyyibPaymentUrl) && clean(row.toyyibQrJpegBase64));
+    // Keep paid receipts clean: the scan instruction is only useful while payment is still due.
+    return canPay && ((docType==='invoice' && status==='pending') || (docType==='receipt' && status!=='paid'));
   }
   function drawToyyibPayQr(commands,row,y,type,options){
     if(!hasToyyibPayQr(row,type))return y;
-    const opts=options||{},x=Number.isFinite(opts.x)?opts.x:MARGIN_X,w=Number.isFinite(opts.width)?opts.width:CONTENT_W,h=Number.isFinite(opts.height)?opts.height:88;
-    const qr=Math.min(64,h-20),qrY=y+((h-qr)/2),qrX=x+10;
+    const opts=options||{},x=Number.isFinite(opts.x)?opts.x:MARGIN_X,w=Number.isFinite(opts.width)?opts.width:CONTENT_W,h=Number.isFinite(opts.height)?opts.height:102;
+    const qr=Math.min(68,h-20),qrY=y+((h-qr)/2),qrX=x+10;
     fillRect(commands,x,y,w,h,[248,250,252]);strokeRect(commands,x,y,w,h,[148,163,184],0.8);
     image(commands,'PayQR',qrX,qrY,qr,qr);
     const tx=qrX+qr+10,available=Math.max(80,w-(tx-x)-10);
-    text(commands,'PAY WITH TOYYIBPAY',tx,y+18,{size:9.2,bold:true,color:[30,64,175]});
-    text(commands,`Amount: ${money(row.gross)}`,tx,y+35,{size:8.8,bold:true,color:[4,120,87]});
+    text(commands,'PAY WITH TOYYIBPAY',tx,y+17,{size:9.2,bold:true,color:[30,64,175]});
+    text(commands,`Amount: ${money(row.gross)}`,tx,y+34,{size:8.8,bold:true,color:[4,120,87]});
     const billCode=clean(row.billCode||row.toyyibBillCode);
-    if(billCode)text(commands,`Bill Code: ${billCode}`,tx,y+50,{size:6.9,bold:true,color:[55,65,81]});
-    textLines(commands,wrapText('Scan QR to open the secure payment page.',available,6.7,false).slice(0,2),tx,y+64,{size:6.7,lineHeight:8,color:[71,85,105]});
-    textLines(commands,wrapText('Auto-converts to a PAID receipt after verification.',available,5.9,false).slice(0,2),tx,y+81,{size:5.9,lineHeight:6.5,color:[100,116,139]});
+    if(billCode)text(commands,`Bill Code: ${billCode}`,tx,y+49,{size:6.9,bold:true,color:[55,65,81]});
+    textLines(commands,wrapText('Scan using your phone camera / QR scanner.',available,6.25,false).slice(0,2),tx,y+64,{size:6.25,lineHeight:7.2,color:[55,65,81]});
+    text(commands,'Do not use a banking app.',tx,y+81,{size:6.45,bold:true,color:[30,64,175]});
+    textLines(commands,wrapText('This QR opens the ToyyibPay payment page.',available,6.15,false).slice(0,2),tx,y+95,{size:6.15,lineHeight:7,color:[55,65,81]});
     return y+h;
   }
   function paymentSummaryHeight(row,type){
     const totalsHeight=totalsBoxHeight(row,type);
-    return hasToyyibPayQr(row,type)?Math.max(88,totalsHeight):totalsHeight;
+    return hasToyyibPayQr(row,type)?Math.max(102,totalsHeight):totalsHeight;
   }
   function drawPaymentSummary(commands,row,y,type){
     if(!hasToyyibPayQr(row,type))return drawTotals(commands,row,y,type);
