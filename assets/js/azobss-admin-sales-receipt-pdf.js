@@ -339,16 +339,12 @@
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
       y=drawItemRow(commands,item,index,y);
     });
-    y+=12; const summaryHeight=paymentSummaryHeight(row,docType);
+    // Keep the payment summary close to the bottom of the item table.
+    // Do not push it down to fill unused page space.
+    y+=8; const summaryHeight=paymentSummaryHeight(row,docType);
     const preparedNotes=notesLayout(row),noteHeight=preparedNotes?preparedNotes.height:0;
     if(y+summaryHeight>BOTTOM_LIMIT){
       commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120;
-    }else{
-      // Keep the compact payment row lower without sacrificing room required
-      // for a safely wrapped Notes box and the closing line.
-      const reservedAfterBlock=noteHeight?53:45;
-      const availableShift=BOTTOM_LIMIT-(y+summaryHeight+8+noteHeight+reservedAfterBlock);
-      y+=Math.max(0,Math.min(42,availableShift));
     }
     y=drawPaymentSummary(commands,row,y,docType); y+=8;
     if(preparedNotes){
