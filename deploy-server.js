@@ -11576,12 +11576,30 @@ async function azCreatePublicServiceBooking(req, body = {}) {
 // endpoint validates the source, fetches it server-side and returns Content-Disposition: attachment.
 function azSoundSafeFilename(value = "sound-effect") {
   const clean = String(value || "sound-effect")
-    .normalize("NFKD")
-    .replace(/[\\/:*?"<>|\x00-\x1F]+/g, " ")
+    .normalize("NFKC")
+    .replace(/[\x00-\x1F\x7F]+/g, " ")
+    .replace(/[\\/:*?"<>|]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 120) || "sound-effect";
   return /\.mp3$/i.test(clean) ? clean : `${clean}.mp3`;
+}
+function azSoundContentDisposition(value = "sound-effect.mp3") {
+  const unicodeName = azSoundSafeFilename(value);
+  const base = unicodeName.replace(/\.mp3$/i, "");
+  let asciiBase = base
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x20-\x7E]+/g, " ")
+    .replace(/[\\/:*?"<>|;=]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
+  if (!asciiBase) asciiBase = "sound-effect";
+  const asciiName = `${asciiBase}.mp3`;
+  const encodedName = encodeURIComponent(unicodeName)
+    .replace(/[\'()*]/g, ch => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `attachment; filename="${asciiName.replace(/["\\]/g, "_")}"; filename*=UTF-8''${encodedName}`;
 }
 function azSoundValidateMyInstantsMedia(raw) {
   try {
@@ -11662,7 +11680,7 @@ async function azSoundHandleMp3Download(req, res, parsed) {
     const contentLength = upstream.headers.get("content-length");
     const headers = azSecurityHeaders({
       "Content-Type":"audio/mpeg",
-      "Content-Disposition":`attachment; filename="${filename.replace(/["\\]/g, "")}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      "Content-Disposition":azSoundContentDisposition(filename),
       "Cache-Control":"private, no-store, max-age=0",
       "X-AZOBSS-Sound-Source":"myinstants"
     });
