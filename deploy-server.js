@@ -11790,14 +11790,72 @@ function azSoundExtractMp3FromHtml(html = "") {
   }
   return "";
 }
+const AZ_SOUND_CATEGORY_CANONICAL = new Map([
+  ["anime and manga", "Anime & Manga"], ["anime manga", "Anime & Manga"],
+  ["games", "Games"], ["memes", "Memes"], ["movies", "Movies"],
+  ["music", "Music"], ["politics", "Politics"], ["pranks", "Pranks"],
+  ["reactions", "Reactions"], ["sound effects", "Sound Effects"],
+  ["sports", "Sports"], ["television", "Television"],
+  ["tiktok trends", "TikTok Trends"], ["tiktok trend", "TikTok Trends"],
+  ["viral", "Viral"], ["whatsapp audios", "WhatsApp Audios"],
+  ["whatsapp audio", "WhatsApp Audios"]
+]);
+function azSoundCategoryKey(value = "") {
+  return azSoundRecentText(azSoundHtmlDecode(value), 100)
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+}
+function azSoundCanonicalCategory(value = "") {
+  const key = azSoundCategoryKey(value);
+  return AZ_SOUND_CATEGORY_CANONICAL.get(key) || "";
+}
 function azSoundExtractCategoryFromHtml(html = "") {
-  const re = /<a\b[^>]*href=["'][^"']*\/categories\/[^"']+["'][^>]*>([\s\S]*?)<\/a>/ig;
-  let m;
-  while ((m = re.exec(String(html || "")))) {
-    const name = azSoundRecentText(azSoundHtmlDecode(m[1]), 80);
-    if (name && !/^categories?$/i.test(name)) return name;
+  const text = String(html || "");
+
+  // Prefer structured BreadcrumbList metadata when MyInstants provides it.
+  const jsonLdRe = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/ig;
+  let sm;
+  while ((sm = jsonLdRe.exec(text))) {
+    try {
+      const parsed = JSON.parse(String(sm[1] || "").trim());
+      const stack = Array.isArray(parsed) ? parsed.slice() : [parsed];
+      while (stack.length) {
+        const obj = stack.shift();
+        if (!obj || typeof obj !== "object") continue;
+        const type = String(obj["@type"] || "").toLowerCase();
+        if (type === "breadcrumblist" && Array.isArray(obj.itemListElement)) {
+          for (const part of obj.itemListElement) {
+            const rawName = part && (part.name || (part.item && part.item.name));
+            const category = azSoundCanonicalCategory(rawName);
+            if (category) return category;
+          }
+        }
+        for (const value of Object.values(obj)) {
+          if (value && typeof value === "object") stack.push(value);
+        }
+      }
+    } catch (_) {}
   }
-  return "";
+
+  // Fallback: isolate the breadcrumb tail after the last exact "Sounds" link
+  // and before the sound H1. This avoids the global Categories dropdown.
+  const h1Index = text.search(/<h1\b/i);
+  const preH1 = h1Index >= 0 ? text.slice(0, h1Index) : text;
+  const soundsLinkRe = /<a\b[^>]*>([\s\S]*?)<\/a>/ig;
+  let lm, lastSoundsEnd = -1;
+  while ((lm = soundsLinkRe.exec(preH1))) {
+    const label = azSoundRecentText(azSoundHtmlDecode(lm[1]), 40);
+    if (/^sounds$/i.test(label)) lastSoundsEnd = soundsLinkRe.lastIndex;
+  }
+  let scope = lastSoundsEnd >= 0 ? preH1.slice(lastSoundsEnd) : preH1.slice(Math.max(0, preH1.length - 3500));
+  if (scope.length > 5000) scope = scope.slice(scope.length - 5000);
+  const re = /<a\b[^>]*href=["'][^"']*\/(?:[a-z]{2}\/)?categories\/[^"']+["'][^>]*>([\s\S]*?)<\/a>/ig;
+  let m, best = "";
+  while ((m = re.exec(scope))) {
+    const category = azSoundCanonicalCategory(m[1]);
+    if (category) best = category;
+  }
+  return best;
 }
 async function azSoundReadRecentFirestore(limit = 3000) {
   const db = getAzobssBackendDb();
@@ -11827,68 +11885,109 @@ async function azSoundUpdateRecentlyAdded(maxPages = 3) {
   const pages = Math.max(1, Math.min(5, Number(maxPages || 3) || 3));
   const baseIds = azSoundBaseCatalogIds();
   const existingSnap = await db.collection(AZ_SOUND_RECENT_COLLECTION).limit(5000).get();
-  const existing = new Set();
-  existingSnap.forEach(docSnap => existing.add(String(docSnap.id || "")));
+  const existing = new Map();
+  existingSnap.forEach(docSnap => existing.set(String(docSnap.id || ""), { id:docSnap.id, ...(docSnap.data() || {}) }));
+
   const candidates = [];
   const candidateSeen = new Set();
   let scannedPages = 0;
-  let skipped = 0;
+  let skippedBase = 0;
+  let skippedRepeated = 0;
+
+  // Scan every requested Recent page. Existing recent rows are deliberately
+  // included so Update Sounds can repair category metadata saved by older builds.
   for (let pageNo = 1; pageNo <= pages; pageNo++) {
     const recentUrl = pageNo === 1 ? "https://www.myinstants.com/en/recent/" : `https://www.myinstants.com/en/recent/?page=${pageNo}`;
     const html = await azSoundFetchHtml(recentUrl);
     const pageRows = azSoundParseRecentLinks(html);
     scannedPages++;
     if (!pageRows.length) break;
-    let pageNew = 0;
     for (const row of pageRows) {
-      if (baseIds.has(row.id) || existing.has(row.id) || candidateSeen.has(row.id)) { skipped++; continue; }
+      if (baseIds.has(row.id)) { skippedBase++; continue; }
+      if (candidateSeen.has(row.id)) { skippedRepeated++; continue; }
       candidateSeen.add(row.id);
       candidates.push(row);
-      pageNew++;
     }
-    // Recently Added is newest-first. Once a full page is already known, older pages can stop.
-    if (pageNew === 0) break;
   }
+
   const nowMs = Date.now();
   const enriched = [];
   let cursor = 0;
+  let added = 0;
+  let refreshed = 0;
+  let unchanged = 0;
+  let failed = 0;
+
+  function sameCategories(a, b) {
+    const aa = (Array.isArray(a) ? a : []).map(v => azSoundCategoryKey(v)).filter(Boolean).sort();
+    const bb = (Array.isArray(b) ? b : []).map(v => azSoundCategoryKey(v)).filter(Boolean).sort();
+    return JSON.stringify(aa) === JSON.stringify(bb);
+  }
+
   const workers = Array.from({length:Math.min(6, Math.max(1, candidates.length))}, async () => {
     while (true) {
       const i = cursor++;
       if (i >= candidates.length) return;
       const item = candidates[i];
+      const old = existing.get(item.id) || null;
       try {
         const html = await azSoundFetchHtml(item.instantUrl);
-        const mp3Url = azSoundExtractMp3FromHtml(html);
-        if (!mp3Url) { skipped++; continue; }
+        const detectedMp3 = azSoundExtractMp3FromHtml(html);
+        const mp3Url = detectedMp3 || azSoundValidateMyInstantsMedia(old && old.mp3Url) || "";
+        if (!mp3Url) { failed++; continue; }
         const category = azSoundExtractCategoryFromHtml(html);
         const cats = ["Recently Added"];
         if (category && !cats.includes(category)) cats.push(category);
-        enriched.push({
+        const record = {
           id:item.id,
-          name:item.name,
+          name:item.name || azSoundRecentText(old && old.name, 160) || item.id,
           categories:cats,
           instantUrl:item.instantUrl,
           mp3Url,
-          syncedAt:new Date(nowMs).toISOString(),
-          syncedAtMs:nowMs,
+          syncedAt:old && old.syncedAt ? old.syncedAt : new Date(nowMs).toISOString(),
+          syncedAtMs:Number(old && old.syncedAtMs || 0) || nowMs,
           source:"myinstants-recent"
-        });
+        };
+        if (!old) {
+          added++;
+        } else {
+          const changed = !sameCategories(old.categories, record.categories)
+            || azSoundValidateMyInstantsMedia(old.mp3Url) !== record.mp3Url
+            || azSoundRecentText(old.name, 160) !== record.name;
+          if (changed) refreshed++; else unchanged++;
+        }
+        enriched.push(record);
       } catch (err) {
-        skipped++;
+        failed++;
         console.warn("AZOBSS recent sound detail failed:", item && item.id, err && (err.message || err));
       }
     }
   });
   await Promise.all(workers);
+
   for (let offset = 0; offset < enriched.length; offset += 400) {
     const batch = db.batch();
     const chunk = enriched.slice(offset, offset + 400);
     chunk.forEach(item => batch.set(db.collection(AZ_SOUND_RECENT_COLLECTION).doc(item.id), item, { merge:true }));
     await batch.commit();
   }
+
   const totalRows = await azSoundReadRecentFirestore(5000);
-  return { ok:true, added:enriched.length, skipped, scannedPages, scannedCandidates:candidates.length, recentStored:totalRows.length, totalCatalog:7210 + totalRows.length, sounds:enriched };
+  return {
+    ok:true,
+    added,
+    refreshed,
+    unchanged,
+    failed,
+    skipped:skippedBase + skippedRepeated,
+    skippedBase,
+    skippedRepeated,
+    scannedPages,
+    scannedCandidates:candidates.length,
+    recentStored:totalRows.length,
+    totalCatalog:7210 + totalRows.length,
+    sounds:enriched.filter(row => !existing.has(row.id))
+  };
 }
 
 
