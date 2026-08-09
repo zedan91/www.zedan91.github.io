@@ -1,4 +1,4 @@
-/* AZOBSS 780: More menu contains Mini Web Tools, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
+/* AZOBSS 852: More menu contains Mini Web Tools, Sound Effects, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
 (function () {
   'use strict';
 
@@ -69,6 +69,24 @@
       '</svg>' +
       '<span>Mini Web Tools</span>';
 
+    var soundLink = document.createElement('a');
+    soundLink.href = 'https://www.myinstants.com/en/instant/chicken-on-tree-screaming-53890/';
+    soundLink.target = '_blank';
+    soundLink.rel = 'noopener noreferrer';
+    soundLink.setAttribute('role', 'menuitem');
+    soundLink.dataset.azSoundEffectsLink = '1';
+    soundLink.title = 'Sound Effects - MyInstants';
+    soundLink.setAttribute('aria-label', 'Sound Effects');
+    soundLink.innerHTML = '' +
+      '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<path d="M4 10v4"></path>' +
+        '<path d="M8 8v8"></path>' +
+        '<path d="M12 5v14"></path>' +
+        '<path d="M16 8v8"></path>' +
+        '<path d="M20 10v4"></path>' +
+      '</svg>' +
+      '<span>Sound Effects</span>';
+
     var websiteLink = document.createElement('a');
     websiteLink.href = websiteSourceLink ? (websiteSourceLink.getAttribute('href') || '/Tempah-Website/') : '/Tempah-Website/';
     websiteLink.setAttribute('role', 'menuitem');
@@ -111,6 +129,7 @@
       '<span>Food - Brownies</span>';
 
     dropdown.appendChild(toolsLink);
+    dropdown.appendChild(soundLink);
     dropdown.appendChild(websiteLink);
     dropdown.appendChild(foodLink);
     wrap.appendChild(trigger);
@@ -213,6 +232,10 @@
         event.preventDefault();
         items[items.length - 1].focus();
       }
+    });
+
+    soundLink.addEventListener('click', function () {
+      setOpen(false);
     });
 
     websiteLink.addEventListener('click', function () {
