@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AZOBSS Sound Effects</title>
+  <meta name="description" content="Quick sound effects board by AZOBSS.">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#07111f">
+  <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=636">
+  <style>
+    :root{--bg:#030914;--panel:#071729;--panel2:#0b2036;--line:#173b5d;--text:#eff7ff;--muted:#91a9bd;--cyan:#42d7ff;--green:#24d38a;--orange:#ff8a3d;--red:#ff4e5e}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:
+      radial-gradient(circle at 18% 0%,rgba(35,116,180,.22),transparent 30%),
+      radial-gradient(circle at 92% 12%,rgba(36,211,138,.12),transparent 24%),
+      linear-gradient(180deg,#07101c 0%,var(--bg) 58%,#02060c 100%);color:var(--text)}
+    body{padding:70px 18px 42px}
+    a{color:inherit}
+    .market-sticky-bar{position:fixed;top:0;left:0;right:0;z-index:3200;background:#000;border-bottom:1px solid rgba(214,185,132,.45);box-shadow:0 10px 28px rgba(0,0,0,.35)}
+    .market-bar-inner{width:100%;padding:4px 8px}.market-main-row{display:flex;align-items:center;gap:8px;min-height:44px}
+    .market-brand{width:154px;height:38px;flex:0 0 auto;display:inline-flex;align-items:center;overflow:hidden;border-radius:999px;border:1px solid rgba(148,163,184,.32);background:#0f172a;text-decoration:none}
+    .market-brand img{width:100%;height:100%;object-fit:cover;display:block}
+    .market-nav{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}.market-nav::-webkit-scrollbar{display:none}
+    .market-nav>a{min-height:32px;padding:0 12px;border:1px solid #243044;border-radius:999px;background:#111827;color:#f8fafc;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;text-decoration:none;font-size:13px;font-weight:900;white-space:nowrap}
+    .market-nav>a:hover{border-color:#22c55e;color:#22c55e}
+    .shell{width:min(1160px,100%);margin:0 auto}
+    .hero{display:flex;align-items:end;justify-content:space-between;gap:26px;padding:34px 2px 22px;border-bottom:1px solid rgba(94,190,255,.14)}
+    .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#65ffc4;font-weight:900;margin-bottom:9px}
+    h1{margin:0;font-size:clamp(34px,5vw,58px);letter-spacing:-.04em;line-height:.96}
+    .hero p{max-width:720px;margin:14px 0 0;color:#a6bdd0;font-size:15px;line-height:1.65}
+    .count-chip{flex:0 0 auto;border:1px solid #245272;background:rgba(7,29,48,.86);padding:12px 16px;border-radius:16px;color:#dff6ff;font-size:13px}.count-chip strong{display:block;font-size:25px;color:white}
+    .controls{display:flex;gap:10px;align-items:center;margin:20px 0 16px}.search{flex:1;max-width:480px;border:1px solid #21415e;background:#061321;border-radius:14px;color:white;padding:12px 14px;outline:none}.search:focus{border-color:#43d5ff;box-shadow:0 0 0 3px rgba(67,213,255,.08)}
+    .tag{border:1px solid #21415e;background:#0a1c2d;border-radius:999px;padding:9px 12px;color:#91b8d2;font-size:12px;font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+    .sound-card{position:relative;overflow:hidden;border:1px solid #1b4969;background:linear-gradient(155deg,rgba(12,38,61,.98),rgba(5,18,31,.98));border-radius:24px;padding:20px;box-shadow:0 18px 48px rgba(0,0,0,.26)}
+    .sound-card:before{content:"";position:absolute;width:190px;height:190px;border-radius:50%;right:-70px;top:-88px;background:radial-gradient(circle,rgba(66,215,255,.23),transparent 67%);pointer-events:none}
+    .card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.pill{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#78e7ff;font-weight:900}.source{font-size:10px;color:#718ba1}
+    .sound-card h2{font-size:20px;margin:0 0 7px;line-height:1.2}.sound-card .desc{color:#95adc1;font-size:13px;line-height:1.55;margin:0 0 14px}
+    .player-zone{display:flex;align-items:center;justify-content:center;min-height:218px;border-radius:20px;background:
+      radial-gradient(circle at center,rgba(255,78,94,.13),transparent 43%),
+      rgba(1,9,17,.65);border:1px solid rgba(255,255,255,.06);position:relative}
+    .player-zone:after{content:"TAP THE BUTTON TO PLAY";position:absolute;bottom:10px;font-size:9px;letter-spacing:.13em;color:#63839c;font-weight:900}
+    .player-zone iframe{width:110px;height:200px;border:0;transform:scale(1.08);transform-origin:center}
+    .actions{display:flex;gap:8px;margin-top:14px}.btn{appearance:none;border:1px solid #27516e;background:#0b2134;color:#eaf8ff;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:850;cursor:pointer}.btn:hover{border-color:#41d6ff;color:#71e4ff}.btn.primary{background:linear-gradient(135deg,#0d6b91,#0f8b78);border-color:#28c9bb}
+    .note{margin-top:18px;border:1px solid rgba(85,197,255,.16);border-radius:16px;padding:12px 14px;color:#7794aa;font-size:11px;line-height:1.55;background:rgba(6,18,31,.65)}
+    .empty{display:none;color:#829caf;padding:30px 0;text-align:center}
+    @media(max-width:760px){body{padding:104px 12px 30px}.market-main-row{flex-wrap:wrap}.market-brand{width:126px;height:31px}.market-nav{width:100%;flex-basis:100%}.hero{align-items:flex-start;flex-direction:column}.count-chip{display:none}.controls{flex-wrap:wrap}.search{max-width:none;width:100%}}
+  </style>
+  <script defer src="/assets/js/azobss-more-nav.js?v=853"></script>
+</head>
+<body>
+<header class="market-sticky-bar" aria-label="AZOBSS navigation">
+  <div class="market-bar-inner"><div class="market-main-row">
+    <a class="market-brand" href="/" aria-label="AZOBSS"><img src="/images/logo-azobss.jpg" alt="AZOBSS"></a>
+    <nav class="market-nav" aria-label="AZOBSS quick actions">
+      <a href="/PA-BM/">PA / BM</a>
+      <a href="/Software-Tools/">Software</a>
+      <a href="/CAD-Tools-&-Resources/">CAD Tools</a>
+      <a href="/affiliate-shop/">Affiliate Shop</a>
+      <a href="/Tempah-Servis-IT/">Repair PC</a>
+      <a href="/lucky-draw/">Lucky Draw</a>
+      <a href="/tools/">Mini Web Tools</a>
+    </nav>
+  </div></div>
+</header>
+
+<main class="shell">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">AZOBSS Soundboard</div>
+      <h1>Sound Effects</h1>
+      <p>Quick sound buttons for reactions, memes and technician-side fun. Play directly here without leaving AZOBSS.</p>
+    </div>
+    <div class="count-chip"><strong id="soundCount">1</strong> sound ready</div>
+  </section>
+
+  <div class="controls">
+    <input id="soundSearch" class="search" type="search" placeholder="Search sound effects..." autocomplete="off">
+    <span class="tag">Memes</span>
+    <span class="tag">Reaction</span>
+  </div>
+
+  <section class="grid" id="soundGrid">
+    <article class="sound-card" data-title="chicken on tree screaming chicken meme reaction">
+      <div class="card-top"><span class="pill">Featured sound</span><span class="source">Embedded player</span></div>
+      <h2>Chicken on Tree Screaming</h2>
+      <p class="desc">A loud reaction sound button. Tap the player below to play it instantly.</p>
+      <div class="player-zone">
+        <iframe title="Chicken on tree screaming sound button" loading="lazy" src="https://www.myinstants.com/instant/chicken-on-tree-screaming-53890/embed/" scrolling="no" allow="autoplay"></iframe>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="shareSound">Share this page</button>
+        <button class="btn" type="button" id="copySound">Copy link</button>
+      </div>
+    </article>
+  </section>
+  <div class="empty" id="emptyState">No sound effects found.</div>
+  <div class="note">Audio playback is provided through the sound provider's official embeddable player. The AZOBSS page uses its own layout and navigation.</div>
+</main>
+<script>
+(function(){
+  var search=document.getElementById('soundSearch');
+  var card=document.querySelector('.sound-card');
+  var empty=document.getElementById('emptyState');
+  if(search&&card){search.addEventListener('input',function(){var q=this.value.trim().toLowerCase();var show=!q||card.dataset.title.indexOf(q)!==-1;card.style.display=show?'':'none';empty.style.display=show?'none':'block';});}
+  var copy=document.getElementById('copySound');
+  if(copy){copy.addEventListener('click',async function(){try{await navigator.clipboard.writeText(location.href);var old=this.textContent;this.textContent='Copied!';setTimeout(()=>this.textContent=old,1200);}catch(e){prompt('Copy this link:',location.href);}});}
+  var share=document.getElementById('shareSound');
+  if(share){share.addEventListener('click',async function(){var data={title:'AZOBSS Sound Effects',text:'Chicken on Tree Screaming',url:location.href};if(navigator.share){try{await navigator.share(data);}catch(e){}}else if(copy){copy.click();}});}
+})();
+</script>
+</body>
+</html>

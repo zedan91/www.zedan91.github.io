@@ -1,4 +1,4 @@
-/* AZOBSS 852: More menu contains Mini Web Tools, Sound Effects, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
+/* AZOBSS 853: More menu contains Mini Web Tools, Sound Effects, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
 (function () {
   'use strict';
 
@@ -18,6 +18,8 @@
     var toolsPath = normalisePath(new URL(href, window.location.href).pathname);
     var isToolsPage = currentPath === toolsPath || currentPath.indexOf(toolsPath + '/') === 0;
     var foodPath = normalisePath('/Tempahan-Makanan/');
+    var soundPath = normalisePath('/Sound-Effects/');
+    var isSoundSection = currentPath === soundPath || currentPath.indexOf(soundPath + '/') === 0;
     var isFoodSection = currentPath === foodPath || currentPath.indexOf(foodPath + '/') === 0 || (currentPath === '/' && currentHash === '#tempahan-makanan');
     var websitePath = normalisePath('/Tempah-Website/');
     var isWebsiteSection = currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0;
@@ -37,7 +39,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isWebsiteSection || isFoodSection || inheritedActive) trigger.classList.add('is-active');
+    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || inheritedActive) trigger.classList.add('is-active');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -70,13 +72,15 @@
       '<span>Mini Web Tools</span>';
 
     var soundLink = document.createElement('a');
-    soundLink.href = 'https://www.myinstants.com/en/instant/chicken-on-tree-screaming-53890/';
-    soundLink.target = '_blank';
-    soundLink.rel = 'noopener noreferrer';
+    soundLink.href = '/Sound-Effects/';
     soundLink.setAttribute('role', 'menuitem');
     soundLink.dataset.azSoundEffectsLink = '1';
-    soundLink.title = 'Sound Effects - MyInstants';
+    soundLink.title = 'AZOBSS Sound Effects';
     soundLink.setAttribute('aria-label', 'Sound Effects');
+    if (isSoundSection) {
+      soundLink.classList.add('is-active');
+      soundLink.setAttribute('aria-current', 'page');
+    }
     soundLink.innerHTML = '' +
       '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<path d="M4 10v4"></path>' +
