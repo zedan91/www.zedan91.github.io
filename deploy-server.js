@@ -11681,6 +11681,217 @@ async function azSoundHandleMp3Download(req, res, parsed) {
 }
 
 
+// AZOBSS PATCH 867: incremental Recently Added sound catalog updater.
+// Base 7,210 records remain static in /Sound-Effects/catalog-7210.json.
+// Admin-triggered updates crawl MyInstants /en/recent/, skip duplicate IDs, resolve the
+// current MP3 URL and persist only new records in Firestore `soundEffectsRecent`.
+const AZ_SOUND_RECENT_COLLECTION = "soundEffectsRecent";
+let AZ_SOUND_BASE_ID_CACHE = null;
+function azSoundRecentText(value = "", max = 180) {
+  return String(value == null ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
+}
+function azSoundHtmlDecode(value = "") {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCodePoint(Number(n)); } catch (_) { return ""; } })
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => { try { return String.fromCodePoint(parseInt(n, 16)); } catch (_) { return ""; } })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function azSoundSlugFromInstantUrl(raw = "") {
+  try {
+    const u = new URL(String(raw || "").trim(), "https://www.myinstants.com/");
+    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (host !== "myinstants.com") return "";
+    const m = u.pathname.match(/\/(?:[a-z]{2}\/)?instant\/([^/?#]+)\/?$/i);
+    if (!m) return "";
+    let slug = String(m[1] || "");
+    try { slug = decodeURIComponent(slug); } catch (_) {}
+    if (!slug || slug.includes("/") || slug.length > 220) return "";
+    return slug;
+  } catch (_) { return ""; }
+}
+function azSoundBaseCatalogIds() {
+  if (AZ_SOUND_BASE_ID_CACHE) return AZ_SOUND_BASE_ID_CACHE;
+  const out = new Set();
+  try {
+    const file = path.join(__dirname, "Sound-Effects", "catalog-7210.json");
+    const rows = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (Array.isArray(rows)) rows.forEach(row => {
+      const id = azSoundRecentText(row && row.id, 220);
+      if (id) out.add(id);
+      const slug = azSoundSlugFromInstantUrl(row && row.instantUrl);
+      if (slug) out.add(slug);
+    });
+  } catch (err) {
+    console.warn("AZOBSS sound base catalog ID load failed:", err && (err.message || err));
+  }
+  AZ_SOUND_BASE_ID_CACHE = out;
+  return out;
+}
+async function azSoundFetchHtml(rawUrl) {
+  const target = new URL(String(rawUrl || ""));
+  if (target.protocol !== "https:" || target.hostname.toLowerCase().replace(/^www\./, "") !== "myinstants.com") {
+    throw new Error("Invalid MyInstants source URL.");
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(target.toString(), {
+      method:"GET",
+      redirect:"follow",
+      signal:controller.signal,
+      headers:{
+        "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+        "Accept":"text/html,application/xhtml+xml;q=0.9,*/*;q=0.5"
+      }
+    });
+    if (!response.ok) throw new Error(`MyInstants returned HTTP ${response.status}.`);
+    return await response.text();
+  } finally { clearTimeout(timer); }
+}
+function azSoundParseRecentLinks(html = "") {
+  const seen = new Set();
+  const rows = [];
+  const re = /<a\b[^>]*href=["']([^"']*\/(?:[a-z]{2}\/)?instant\/[^"'?#]+\/?)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = re.exec(String(html || "")))) {
+    let href = String(m[1] || "").replace(/&amp;/g, "&");
+    try { href = new URL(href, "https://www.myinstants.com/").toString(); } catch (_) { continue; }
+    const slug = azSoundSlugFromInstantUrl(href);
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    const rawTitle = azSoundHtmlDecode(m[2]);
+    const fallback = slug.replace(/-\d+$/, "").replace(/[-_]+/g, " ");
+    rows.push({ id:slug, slug, name:azSoundRecentText(rawTitle || fallback, 160), instantUrl:`https://www.myinstants.com/en/instant/${encodeURIComponent(slug).replace(/%2F/gi, "/")}/` });
+  }
+  return rows;
+}
+function azSoundExtractMp3FromHtml(html = "") {
+  const text = String(html || "");
+  const patterns = [
+    /(?:href|src)=["']([^"']*\/media\/sounds\/[^"'?#]+\.mp3(?:\?[^"']*)?)["']/ig,
+    /["'](https:\/\/www\.myinstants\.com\/media\/sounds\/[^"'?#]+\.mp3(?:\?[^"']*)?)["']/ig
+  ];
+  for (const re of patterns) {
+    let m;
+    while ((m = re.exec(text))) {
+      let candidate = String(m[1] || "").replace(/&amp;/g, "&");
+      if (candidate.startsWith("/")) candidate = "https://www.myinstants.com" + candidate;
+      const valid = azSoundValidateMyInstantsMedia(candidate);
+      if (valid) return valid;
+    }
+  }
+  return "";
+}
+function azSoundExtractCategoryFromHtml(html = "") {
+  const re = /<a\b[^>]*href=["'][^"']*\/categories\/[^"']+["'][^>]*>([\s\S]*?)<\/a>/ig;
+  let m;
+  while ((m = re.exec(String(html || "")))) {
+    const name = azSoundRecentText(azSoundHtmlDecode(m[1]), 80);
+    if (name && !/^categories?$/i.test(name)) return name;
+  }
+  return "";
+}
+async function azSoundReadRecentFirestore(limit = 3000) {
+  const db = getAzobssBackendDb();
+  if (!db) return [];
+  const max = Math.max(1, Math.min(5000, Number(limit || 3000) || 3000));
+  let snap;
+  try { snap = await db.collection(AZ_SOUND_RECENT_COLLECTION).orderBy("syncedAtMs", "desc").limit(max).get(); }
+  catch (_) { snap = await db.collection(AZ_SOUND_RECENT_COLLECTION).limit(max).get(); }
+  const rows = [];
+  snap.forEach(docSnap => rows.push({ id:docSnap.id, ...(docSnap.data() || {}) }));
+  rows.sort((a,b) => Number(b.syncedAtMs || 0) - Number(a.syncedAtMs || 0));
+  return rows.slice(0, max).map((row, idx) => ({
+    no:Number(row.no || 0) || 7211 + idx,
+    name:azSoundRecentText(row.name || row.id, 160),
+    categories:Array.isArray(row.categories) && row.categories.length ? row.categories.map(v => azSoundRecentText(v, 80)).filter(Boolean) : ["Recently Added"],
+    instantUrl:azSoundValidateMyInstantsPage(row.instantUrl) || "",
+    embedUrl:azSoundValidateMyInstantsPage(row.instantUrl) ? (azSoundValidateMyInstantsPage(row.instantUrl).replace(/\/?$/, "/") + "embed/") : "",
+    mp3Url:azSoundValidateMyInstantsMedia(row.mp3Url) || "",
+    id:azSoundRecentText(row.id, 220),
+    syncedAt:row.syncedAt || "",
+    syncedAtMs:Number(row.syncedAtMs || 0) || 0
+  })).filter(row => row.id && row.instantUrl && row.mp3Url);
+}
+async function azSoundUpdateRecentlyAdded(maxPages = 3) {
+  const db = getAzobssBackendDb();
+  if (!db) throw new Error("Firebase Admin is not configured.");
+  const pages = Math.max(1, Math.min(5, Number(maxPages || 3) || 3));
+  const baseIds = azSoundBaseCatalogIds();
+  const existingSnap = await db.collection(AZ_SOUND_RECENT_COLLECTION).limit(5000).get();
+  const existing = new Set();
+  existingSnap.forEach(docSnap => existing.add(String(docSnap.id || "")));
+  const candidates = [];
+  const candidateSeen = new Set();
+  let scannedPages = 0;
+  let skipped = 0;
+  for (let pageNo = 1; pageNo <= pages; pageNo++) {
+    const recentUrl = pageNo === 1 ? "https://www.myinstants.com/en/recent/" : `https://www.myinstants.com/en/recent/?page=${pageNo}`;
+    const html = await azSoundFetchHtml(recentUrl);
+    const pageRows = azSoundParseRecentLinks(html);
+    scannedPages++;
+    if (!pageRows.length) break;
+    let pageNew = 0;
+    for (const row of pageRows) {
+      if (baseIds.has(row.id) || existing.has(row.id) || candidateSeen.has(row.id)) { skipped++; continue; }
+      candidateSeen.add(row.id);
+      candidates.push(row);
+      pageNew++;
+    }
+    // Recently Added is newest-first. Once a full page is already known, older pages can stop.
+    if (pageNew === 0) break;
+  }
+  const nowMs = Date.now();
+  const enriched = [];
+  let cursor = 0;
+  const workers = Array.from({length:Math.min(6, Math.max(1, candidates.length))}, async () => {
+    while (true) {
+      const i = cursor++;
+      if (i >= candidates.length) return;
+      const item = candidates[i];
+      try {
+        const html = await azSoundFetchHtml(item.instantUrl);
+        const mp3Url = azSoundExtractMp3FromHtml(html);
+        if (!mp3Url) { skipped++; continue; }
+        const category = azSoundExtractCategoryFromHtml(html);
+        const cats = ["Recently Added"];
+        if (category && !cats.includes(category)) cats.push(category);
+        enriched.push({
+          id:item.id,
+          name:item.name,
+          categories:cats,
+          instantUrl:item.instantUrl,
+          mp3Url,
+          syncedAt:new Date(nowMs).toISOString(),
+          syncedAtMs:nowMs,
+          source:"myinstants-recent"
+        });
+      } catch (err) {
+        skipped++;
+        console.warn("AZOBSS recent sound detail failed:", item && item.id, err && (err.message || err));
+      }
+    }
+  });
+  await Promise.all(workers);
+  for (let offset = 0; offset < enriched.length; offset += 400) {
+    const batch = db.batch();
+    const chunk = enriched.slice(offset, offset + 400);
+    chunk.forEach(item => batch.set(db.collection(AZ_SOUND_RECENT_COLLECTION).doc(item.id), item, { merge:true }));
+    await batch.commit();
+  }
+  const totalRows = await azSoundReadRecentFirestore(5000);
+  return { ok:true, added:enriched.length, skipped, scannedPages, scannedCandidates:candidates.length, recentStored:totalRows.length, totalCatalog:7210 + totalRows.length, sounds:enriched };
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -11723,6 +11934,8 @@ async function handler(req, res) {
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
     if (pathname === "/api/sound-effects/download" && req.method === "GET" && azRateLimitOrSend(req, res, "sound-effects-download", 180, 10 * 60 * 1000)) return;
+    if (pathname === "/api/sound-effects/recent" && req.method === "GET" && azRateLimitOrSend(req, res, "sound-effects-recent-read", 120, 10 * 60 * 1000)) return;
+    if (pathname === "/api/sound-effects/update-recent" && req.method === "POST" && azRateLimitOrSend(req, res, "sound-effects-recent-update", 8, 60 * 60 * 1000)) return;
     if (pathname === "/api/service-bookings" && req.method === "POST" && azRateLimitOrSend(req, res, "public-service-booking", 10, 60 * 60 * 1000)) return;
     if (pathname === "/api/admin/service-bookings" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-service-bookings-read", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/service-bookings-action" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-service-bookings-action", 50, 10 * 60 * 1000)) return;
@@ -11776,6 +11989,28 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
 
+
+    if (pathname === "/api/sound-effects/recent" && req.method === "GET") {
+      try {
+        const rows = await azSoundReadRecentFirestore(parsed.query && parsed.query.limit);
+        return send(res, 200, JSON.stringify({ ok:true, count:rows.length, baseCount:7210, totalCatalog:7210 + rows.length, sounds:rows }, null, 2), "application/json", { "Cache-Control":"public, max-age=60, stale-while-revalidate=300" });
+      } catch (error) {
+        return send(res, 500, JSON.stringify({ ok:false, error:String(error && error.message || "Unable to load recent sounds."), sounds:[] }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+    if (pathname === "/api/sound-effects/update-recent" && req.method === "POST") {
+      try {
+        const identity = await azAdminIdentityFromRequest(req, parsed);
+        if (!identity || !identity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const result = await azSoundUpdateRecentlyAdded(body && body.maxPages);
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        console.warn("AZOBSS sound recent update failed:", error && (error.message || error));
+        return send(res, 500, JSON.stringify({ ok:false, error:String(error && error.message || "Recently Added update failed.") }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
 
     if (pathname === "/api/sound-effects/download" && req.method === "GET") {
       return await azSoundHandleMp3Download(req, res, parsed);
