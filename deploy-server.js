@@ -4887,7 +4887,7 @@ function azR2Configured() {
 
 
 // AZOBSS PATCH 720: R2-only Tech Vault. The bundled website copy was removed.
-const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_R2_ONLY_NO_BUILTIN_720_20260803";
+const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_ANY_FILE_850_20260809";
 const AZOBSS_TECH_VAULT_LOCAL_DIR = path.join(ROOT, "_private-tech-vault");
 const AZOBSS_TECH_VAULT_META_FILE = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "tech-vault-files.json");
 
@@ -4966,12 +4966,12 @@ function azTechVaultPasswordMatches(value = "") {
   catch (_) { return supplied === expected; }
 }
 function azTechVaultSafeFilename(value = "") {
-  const clean = path.basename(String(value || "AZOBSS-Tool.bat"))
+  const clean = path.basename(String(value || "AZOBSS-Tool.bin"))
     .replace(/[\\/:*?"<>|\r\n\t]/g, "_")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 180);
-  if (!clean || !/\.bat$/i.test(clean)) return "";
+  if (!clean || clean === "." || clean === "..") return "";
   return clean;
 }
 function azTechVaultSafeObjectKey(value = "") {
@@ -5047,7 +5047,7 @@ async function azTechVaultSaveFile(row = {}) {
     filename,
     objectKey,
     size: Math.max(0, Number(row.size || 0) || 0),
-    contentType: cleanPremiumText(row.contentType || "application/x-bat", 120),
+    contentType: cleanPremiumText(row.contentType || "application/octet-stream", 120),
     source: "cloudflare-r2",
     createdAtMs: Number(row.createdAtMs || Date.now()) || Date.now(),
     createdAt: row.createdAt || new Date().toISOString(),
@@ -5070,21 +5070,21 @@ async function azTechVaultSaveFile(row = {}) {
 function azTechVaultUploadToken(filename = "", size = 0, contentType = "") {
   const safeName = azTechVaultSafeFilename(filename);
   const safeSize = Math.floor(Number(size || 0));
-  if (!safeName) throw Object.assign(new Error("Only .bat files are allowed."), { statusCode: 400 });
-  if (!Number.isFinite(safeSize) || safeSize <= 0) throw Object.assign(new Error("The selected BAT file is empty."), { statusCode: 400 });
+  if (!safeName) throw Object.assign(new Error("Invalid file name."), { statusCode: 400 });
+  if (!Number.isFinite(safeSize) || safeSize <= 0) throw Object.assign(new Error("The selected file is empty."), { statusCode: 400 });
   if (safeSize > azTechVaultMaxFileBytes()) throw Object.assign(new Error(`File exceeds the ${Math.floor(azTechVaultMaxFileBytes()/1024/1024)} MB limit.`), { statusCode: 413 });
   if (!azR2Configured()) throw Object.assign(new Error("Cloudflare R2 Worker is not configured on the backend."), { statusCode: 503 });
   const id = makeId("tvf").replace(/[^a-zA-Z0-9_-]/g, "");
   const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
-  const slug = safeName.replace(/\.bat$/i, "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100) || "AZOBSS-Tool";
-  const key = `tech-vault/${stamp}-${id}-${slug}.bat`;
+  const slug = safeName.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "AZOBSS-Tool.bin";
+  const key = `tech-vault/${stamp}-${id}-${slug}`;
   const payload = {
     mode: "vault-upload",
     id,
     key,
     name: safeName,
     size: safeSize,
-    type: cleanPremiumText(contentType || "application/x-bat", 120),
+    type: cleanPremiumText(contentType || "application/octet-stream", 120),
     exp: Math.floor(Date.now()/1000) + 15 * 60,
     patch: "720"
   };
