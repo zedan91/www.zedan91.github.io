@@ -157,7 +157,12 @@
     }
     return layout;
   }
-  function createPage(){ return []; }
+  function createPage(){ const page=[]; page._links=[]; return page; }
+  function addLink(commands,url,x,yTop,width,height){
+    if(!commands || !url || !Number.isFinite(x) || !Number.isFinite(yTop) || !Number.isFinite(width) || width<=0)return;
+    if(!Array.isArray(commands._links))commands._links=[];
+    commands._links.push({url:String(url),x,yTop,width,height:Number.isFinite(height)?height:11});
+  }
   function add(commands,command){ commands.push(command); }
   function fillRect(commands,x,yTop,width,height,color){ add(commands,`${rgb(...color)} rg ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re f`); }
   function strokeRect(commands,x,yTop,width,height,color,lineWidth){ add(commands,`${rgb(...color)} RG ${(lineWidth||1).toFixed(2)} w ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S`); }
@@ -292,13 +297,17 @@
     fillRect(commands,x,y,w,h,[248,250,252]);strokeRect(commands,x,y,w,h,[148,163,184],0.8);
     image(commands,'PayQR',qrX,qrY,qr,qr);
     const tx=qrX+qr+10,available=Math.max(80,w-(tx-x)-10);
-    textLines(commands,wrapText('Scan using your phone camera / QR scanner.',available,7.2,true).slice(0,2),tx,y+15,{size:7.2,bold:true,lineHeight:7.8,color:[30,64,175]});
-    text(commands,'Do not use a banking app.',tx,y+32,{size:7.0,bold:true,color:[30,64,175]});
-    text(commands,`Amount: ${money(row.gross)}`,tx,y+48,{size:8.8,bold:true,color:[4,120,87]});
+    textLines(commands,wrapText('Scan using your phone camera / QR scanner.',available,7.8,true).slice(0,2),tx,y+14,{size:7.8,bold:true,lineHeight:8.4,color:[30,64,175]});
+    text(commands,'Do not use a banking app.',tx,y+34,{size:7.5,bold:true,color:[30,64,175]});
+    text(commands,`Amount: ${money(row.gross)}`,tx,y+50,{size:8.8,bold:true,color:[4,120,87]});
     const billCode=clean(row.billCode||row.toyyibBillCode);
     const paymentUrl=clean(row.paymentUrl||row.toyyibPaymentUrl)||(billCode?`https://toyyibpay.com/${billCode}`:'');
-    if(paymentUrl)text(commands,paymentUrl,tx,y+63,{size:7.2,bold:true,color:[30,64,175]});
-    textLines(commands,wrapText('This QR opens the ToyyibPay payment page.',available,6.15,false).slice(0,2),tx,y+81,{size:6.15,lineHeight:7,color:[55,65,81]});
+    if(paymentUrl){
+      const urlSize=7.8,urlY=y+66;
+      text(commands,paymentUrl,tx,urlY,{size:urlSize,bold:true,color:[30,64,175]});
+      addLink(commands,paymentUrl,tx,urlY-urlSize,Math.min(available,estimateWidth(paymentUrl,urlSize,true)),urlSize+4);
+    }
+    textLines(commands,wrapText('Tap / click the link above to open the payment page.',available,6.4,false).slice(0,2),tx,y+82,{size:6.4,lineHeight:7,color:[55,65,81]});
     return y+h;
   }
   function paymentSummaryHeight(row,type){
@@ -362,7 +371,7 @@
     }
     if(y+18<BOTTOM_LIMIT){
       const closing=docType==='invoice'?'Thank you. Please use the invoice number as your payment reference.':'Thank you for your purchase.';
-      const closingY=Math.min(BOTTOM_LIMIT-7,y+25);
+      const closingY=Math.min(BOTTOM_LIMIT-7,y+19);
       text(commands,closing,MARGIN_X,closingY,{size:10.5,bold:true,color:[4,120,87]});
     }
     pages.forEach((page,index)=>addFooter(page,index+1,pages.length,row,docType)); return pages;
@@ -388,10 +397,21 @@
       pageStart=7;xObjects+=' /PayQR 6 0 R';
     }
     const kids=[];
+    let nextAnnotationObject=pageStart+(pages.length*2);
     pages.forEach((commands,index)=>{
       const pageObject=pageStart+(index*2),contentObject=pageObject+1,stream=commands.join('\n')+'\n';
       kids.push(`${pageObject} 0 R`);
-      objects[pageObject]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << ${xObjects} >> >> /Contents ${contentObject} 0 R >>`;
+      const annotationRefs=[];
+      const links=Array.isArray(commands._links)?commands._links:[];
+      links.forEach((link)=>{
+        const annotationObject=nextAnnotationObject++;
+        annotationRefs.push(`${annotationObject} 0 R`);
+        const x1=Math.max(0,link.x),x2=Math.min(PAGE_W,link.x+link.width);
+        const y1=Math.max(0,PAGE_H-(link.yTop+link.height)),y2=Math.min(PAGE_H,PAGE_H-link.yTop);
+        objects[annotationObject]=`<< /Type /Annot /Subtype /Link /Rect [${x1.toFixed(2)} ${y1.toFixed(2)} ${x2.toFixed(2)} ${y2.toFixed(2)}] /Border [0 0 0] /A << /S /URI /URI (${pdfEscape(link.url)}) >> >>`;
+      });
+      const annots=annotationRefs.length?` /Annots [${annotationRefs.join(' ')}]`:'';
+      objects[pageObject]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << ${xObjects} >> >>${annots} /Contents ${contentObject} 0 R >>`;
       objects[contentObject]=`<< /Length ${stream.length} >>\nstream\n${stream}endstream`;
     });
     objects[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`;
