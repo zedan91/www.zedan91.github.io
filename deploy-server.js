@@ -11571,6 +11571,116 @@ async function azCreatePublicServiceBooking(req, body = {}) {
 }
 
 
+// AZOBSS PATCH 861: force downloadable MyInstants MP3 through the AZOBSS backend.
+// The browser `download` attribute is not reliable for cross-origin media URLs, so this
+// endpoint validates the source, fetches it server-side and returns Content-Disposition: attachment.
+function azSoundSafeFilename(value = "sound-effect") {
+  const clean = String(value || "sound-effect")
+    .normalize("NFKD")
+    .replace(/[\\/:*?"<>|\x00-\x1F]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120) || "sound-effect";
+  return /\.mp3$/i.test(clean) ? clean : `${clean}.mp3`;
+}
+function azSoundValidateMyInstantsMedia(raw) {
+  try {
+    const u = new URL(String(raw || "").trim());
+    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (u.protocol !== "https:" || host !== "myinstants.com") return "";
+    if (!/^\/media\/sounds\/[A-Za-z0-9._~!$&'()*+,;=:@%+\-]+\.mp3$/i.test(u.pathname)) return "";
+    u.search = "";
+    u.hash = "";
+    return u.toString();
+  } catch (_) { return ""; }
+}
+function azSoundValidateMyInstantsPage(raw) {
+  try {
+    const u = new URL(String(raw || "").trim());
+    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (u.protocol !== "https:" || host !== "myinstants.com") return "";
+    if (!/^\/(?:[a-z]{2}\/)?instant\/[^/?#]+\/?$/i.test(u.pathname)) return "";
+    u.search = "";
+    u.hash = "";
+    return u.toString();
+  } catch (_) { return ""; }
+}
+async function azSoundResolveOfficialMp3(mediaUrl, sourcePage) {
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    "Accept": "audio/mpeg,audio/*;q=0.9,*/*;q=0.5",
+    "Referer": sourcePage || "https://www.myinstants.com/"
+  };
+  let direct = azSoundValidateMyInstantsMedia(mediaUrl);
+  const page = azSoundValidateMyInstantsPage(sourcePage);
+
+  async function fetchMedia(urlValue) {
+    if (!urlValue) return null;
+    const response = await fetch(urlValue, { method:"GET", headers, redirect:"manual" });
+    if (response.status >= 300 && response.status < 400) return null;
+    if (!response.ok || !response.body) return null;
+    const length = Number(response.headers.get("content-length") || 0) || 0;
+    if (length > 25 * 1024 * 1024) {
+      try { await response.body.cancel(); } catch (_) {}
+      throw new Error("Sound file is too large.");
+    }
+    return response;
+  }
+
+  let response = direct ? await fetchMedia(direct) : null;
+  if (response) return { response, mediaUrl:direct };
+  if (!page) throw new Error("Official MP3 source is unavailable.");
+
+  const pageResponse = await fetch(page, {
+    method:"GET",
+    redirect:"manual",
+    headers:{
+      "User-Agent":headers["User-Agent"],
+      "Accept":"text/html,application/xhtml+xml;q=0.9,*/*;q=0.5"
+    }
+  });
+  if (!pageResponse.ok) throw new Error(`Sound page returned HTTP ${pageResponse.status}.`);
+  const html = await pageResponse.text();
+  const matches = Array.from(html.matchAll(/(?:href|src)=["']([^"']*\/media\/sounds\/[^"'?#]+\.mp3(?:\?[^"']*)?)["']/ig));
+  for (const match of matches) {
+    let candidate = String(match[1] || "").replace(/&amp;/g, "&");
+    if (candidate.startsWith("/")) candidate = "https://www.myinstants.com" + candidate;
+    candidate = azSoundValidateMyInstantsMedia(candidate);
+    if (!candidate) continue;
+    response = await fetchMedia(candidate);
+    if (response) return { response, mediaUrl:candidate };
+  }
+  throw new Error("Official MP3 file could not be resolved from the sound page.");
+}
+async function azSoundHandleMp3Download(req, res, parsed) {
+  const media = String(parsed.query && (parsed.query.url || parsed.query.src || parsed.query.media) || "").slice(0, 900);
+  const sourcePage = String(parsed.query && (parsed.query.page || parsed.query.source || parsed.query.sourcePage) || "").slice(0, 900);
+  const filename = azSoundSafeFilename(String(parsed.query && (parsed.query.name || parsed.query.filename) || "sound-effect"));
+  try {
+    const resolved = await azSoundResolveOfficialMp3(media, sourcePage);
+    const upstream = resolved.response;
+    const contentLength = upstream.headers.get("content-length");
+    const headers = azSecurityHeaders({
+      "Content-Type":"audio/mpeg",
+      "Content-Disposition":`attachment; filename="${filename.replace(/["\\]/g, "")}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      "Cache-Control":"private, no-store, max-age=0",
+      "X-AZOBSS-Sound-Source":"myinstants"
+    });
+    if (contentLength && /^\d+$/.test(contentLength)) headers["Content-Length"] = contentLength;
+    res.writeHead(200, headers);
+    const stream = Readable.fromWeb(upstream.body);
+    stream.on("error", err => { console.warn("AZOBSS sound MP3 stream error:", err && err.message); try { res.destroy(err); } catch (_) {} });
+    req.on("close", () => { if (!res.writableEnded) try { stream.destroy(); } catch (_) {} });
+    stream.pipe(res);
+  } catch (error) {
+    const message = String(error && error.message || "MP3 download failed.");
+    console.warn("AZOBSS sound MP3 download failed:", message);
+    if (!res.headersSent) return send(res, /unavailable|could not be resolved|HTTP 404|invalid/i.test(message) ? 404 : 502, JSON.stringify({ ok:false, error:message }), "application/json");
+    try { res.end(); } catch (_) {}
+  }
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -11612,6 +11722,7 @@ async function handler(req, res) {
 
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
     // without affecting normal static website browsing. Disable only for emergency debugging with AZOBSS_DISABLE_RATE_LIMIT=1.
+    if (pathname === "/api/sound-effects/download" && req.method === "GET" && azRateLimitOrSend(req, res, "sound-effects-download", 180, 10 * 60 * 1000)) return;
     if (pathname === "/api/service-bookings" && req.method === "POST" && azRateLimitOrSend(req, res, "public-service-booking", 10, 60 * 60 * 1000)) return;
     if (pathname === "/api/admin/service-bookings" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-service-bookings-read", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/service-bookings-action" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-service-bookings-action", 50, 10 * 60 * 1000)) return;
@@ -11665,6 +11776,10 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
 
+
+    if (pathname === "/api/sound-effects/download" && req.method === "GET") {
+      return await azSoundHandleMp3Download(req, res, parsed);
+    }
 
     if (pathname === "/api/admin/service-bookings" && req.method === "GET") {
       try {
