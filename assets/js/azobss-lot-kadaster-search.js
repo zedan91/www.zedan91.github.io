@@ -185,8 +185,13 @@
     function renderResults(page) {
       if (lotSorter) filteredRows = lotSorter.sort(filteredRows);
       if (!filteredRows.length) {
-        resultsBody.innerHTML = '';
-        resultWrap.hidden = true;
+        // Keep the full-width Carian Umum result card visible when an existing
+        // lot result set is filtered down to zero matches. Only hide the table
+        // when the original Cari Lot request itself returned no records.
+        resultsBody.innerHTML = allRows.length
+          ? '<tr class="pabm-no-filter-results"><td colspan="9">Tiada rekod sepadan dengan Carian Umum.</td></tr>'
+          : '';
+        resultWrap.hidden = !allRows.length;
         renderPagination(1);
         return;
       }
