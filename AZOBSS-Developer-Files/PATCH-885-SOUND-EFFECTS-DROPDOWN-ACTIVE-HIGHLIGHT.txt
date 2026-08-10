@@ -1,0 +1,12 @@
+AZOBSS 885
+
+Purpose:
+- Keep Sound Effects visibly highlighted inside the More dropdown while /Sound-Effects/ is open.
+
+Cause:
+- More trigger already received the active class, but another shared navbar script could remove helper classes from anchors after initialization. The dropdown row therefore did not always keep the visible active background.
+
+Fix:
+- Active dropdown CSS now also keys off aria-current="page" / aria-current="location", which is attached by azobss-more-nav.js to the current dropdown destination.
+- Also retains class-based fallbacks: is-active, is-current, market-nav-active.
+- Shared cache query bumped to v=885.

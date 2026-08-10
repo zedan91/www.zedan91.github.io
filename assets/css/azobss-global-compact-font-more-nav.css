@@ -307,3 +307,23 @@ body{
   text-shadow:none!important;
   box-shadow:0 0 15px rgba(34,197,94,.25),inset 0 0 0 1px rgba(255,255,255,.12)!important;
 }
+
+/* AZOBSS 885: robust active state inside More dropdown. Keep current page visibly highlighted even if another shared script removes helper classes after navbar init. */
+.market-sticky-bar .market-nav .az-more-dropdown a[aria-current="page"],
+.market-sticky-bar .market-nav .az-more-dropdown a[aria-current="location"],
+.market-sticky-bar .market-nav .az-more-dropdown a.is-active,
+.market-sticky-bar .market-nav .az-more-dropdown a.is-current,
+.market-sticky-bar .market-nav .az-more-dropdown a.market-nav-active{
+  background:#22c55e!important;
+  color:#052e16!important;
+  border-color:#22c55e!important;
+  text-shadow:none!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 12px rgba(34,197,94,.18)!important;
+}
+.market-sticky-bar .market-nav .az-more-dropdown a[aria-current="page"] .az-more-item-icon,
+.market-sticky-bar .market-nav .az-more-dropdown a[aria-current="location"] .az-more-item-icon,
+.market-sticky-bar .market-nav .az-more-dropdown a.is-active .az-more-item-icon,
+.market-sticky-bar .market-nav .az-more-dropdown a.is-current .az-more-item-icon,
+.market-sticky-bar .market-nav .az-more-dropdown a.market-nav-active .az-more-item-icon{
+  color:#052e16!important;
+}
