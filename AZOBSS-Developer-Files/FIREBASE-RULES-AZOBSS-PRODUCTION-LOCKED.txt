@@ -42,6 +42,13 @@ service cloud.firestore {
         && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
     }
 
+
+    // AZOBSS 875: Sound Effects Favorites - one low-quota state document per user.
+    match /users/{username}/soundFavorites/{docId} {
+      allow read, create, update, delete: if request.auth != null
+        && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+
     match /usernameAuthEmails/{username} {
       allow get: if true;
       allow list: if isAdmin();
