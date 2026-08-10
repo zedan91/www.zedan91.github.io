@@ -292,3 +292,18 @@ body{
   }
 }
 
+
+
+/* AZOBSS 884: consistent active highlight for direct navbar links and More-section trigger. */
+.market-sticky-bar .market-nav > a.is-active:not(.azAdminDashboardBtn):not(.azStaffDashboardBtn):not(.nav-whatsapp-link),
+.market-sticky-bar .market-nav > a.is-current:not(.azAdminDashboardBtn):not(.azStaffDashboardBtn):not(.nav-whatsapp-link),
+.market-sticky-bar .market-nav > a.market-nav-active:not(.azAdminDashboardBtn):not(.azStaffDashboardBtn):not(.nav-whatsapp-link),
+.market-sticky-bar .market-nav .az-more-trigger.is-active,
+.market-sticky-bar .market-nav .az-more-trigger.is-current,
+.market-sticky-bar .market-nav .az-more-trigger.market-nav-active{
+  background:#22c55e!important;
+  border-color:#22c55e!important;
+  color:#052e16!important;
+  text-shadow:none!important;
+  box-shadow:0 0 15px rgba(34,197,94,.25),inset 0 0 0 1px rgba(255,255,255,.12)!important;
+}

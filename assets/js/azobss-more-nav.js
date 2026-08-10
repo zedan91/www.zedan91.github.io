@@ -1,4 +1,4 @@
-/* AZOBSS 853: More menu contains Mini Web Tools, Sound Effects, Bina Website and Food - Brownies; Repair PC stays beside Affiliate Shop. */
+/* AZOBSS 884: More menu + consistent active state. Sound Effects highlights More; Repair PC highlights its direct nav chip. */
 (function () {
   'use strict';
 
@@ -39,7 +39,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || inheritedActive) trigger.classList.add('is-active');
+    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -78,7 +78,7 @@
     soundLink.title = 'AZOBSS Sound Effects';
     soundLink.setAttribute('aria-label', 'Sound Effects');
     if (isSoundSection) {
-      soundLink.classList.add('is-active');
+      soundLink.classList.add('market-nav-active', 'is-active', 'is-current');
       soundLink.setAttribute('aria-current', 'page');
     }
     soundLink.innerHTML = '' +
