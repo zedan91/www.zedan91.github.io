@@ -11594,8 +11594,9 @@ function azSoftwareKeyRecordId(row = {}) {
 function azSoftwareKeyPublicCaptureAllowed(body = {}) {
   return azSoftwareKeyText(body.source, 80) === "AZOBSS_Installer_Software_Key_v1";
 }
-async function azCreateSoftwareKeyRecord(req, body = {}) {
-  if (!azSoftwareKeyPublicCaptureAllowed(body)) throw Object.assign(new Error("Invalid Software Key capture source."), { statusCode:400 });
+async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
+  const adminManual = options && options.adminManual === true;
+  if (!adminManual && !azSoftwareKeyPublicCaptureAllowed(body)) throw Object.assign(new Error("Invalid Software Key capture source."), { statusCode:400 });
   const systemIdDigits = azSoftwareKeyDigits(body.systemId, 24);
   const systemCodeDigits = azSoftwareKeyDigits(body.systemCode, 24);
   const oneTimeDigits = azSoftwareKeyDigits(body.oneTimeCode, 24);
@@ -11610,8 +11611,8 @@ async function azCreateSoftwareKeyRecord(req, body = {}) {
   const nowIso = new Date(nowMs).toISOString();
   const row = {
     recordId:"",
-    source:"AZOBSS_Installer_Software_Key_v1",
-    captureVersion:azSoftwareKeyText(body.captureVersion || "1", 30),
+    source:adminManual ? "AZOBSS_Admin_Manual" : "AZOBSS_Installer_Software_Key_v1",
+    captureVersion:azSoftwareKeyText(body.captureVersion || (adminManual ? "manual-1" : "1"), 30),
     computerName:azSoftwareKeyText(body.computerName, 100),
     systemId:azSoftwareKeyFormatDigits(systemIdDigits),
     systemIdDigits,
@@ -11624,6 +11625,7 @@ async function azCreateSoftwareKeyRecord(req, body = {}) {
     motherboardManufacturer:azSoftwareKeyText(body.motherboardManufacturer, 120),
     motherboardProduct:azSoftwareKeyText(body.motherboardProduct, 120),
     capturedAt:azSoftwareKeyText(body.capturedAt, 80) || nowIso,
+    entryMode:adminManual ? "manual" : "installer",
     updatedAt:nowIso,
     updatedAtMs:nowMs
   };
@@ -12248,6 +12250,10 @@ async function handler(req, res) {
         const action = azSoftwareKeyText(body.action, 40).toLowerCase();
         const db = getAzobssBackendDb();
         if (!db) throw new Error("Firebase Admin is not configured.");
+        if (action === "create-manual") {
+          const result = await azCreateSoftwareKeyRecord(req, body || {}, { adminManual:true });
+          return send(res, 200, JSON.stringify(Object.assign({ action }, result), null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
         if (action === "bulk-delete") {
           const sourceIds = Array.isArray(body.recordIds) ? body.recordIds : [];
           const recordIds = Array.from(new Set(sourceIds.map(id => azSoftwareKeyText(id, 100)).filter(Boolean))).slice(0, 400);

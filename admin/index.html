@@ -1789,6 +1789,15 @@ body[data-dashboard-page="admin"] .topbar{
 <style id="az881-admin-software-key-style">
 .az880-software-key-toolbar-card{margin-bottom:14px}.az880-software-key-toolbar{gap:9px;flex-wrap:wrap}.az880-software-key-summary,.az880-software-key-bulk{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;color:#64748b;font-size:13px}.az880-software-key-summary b{color:#0f172a}.az880-software-key-summary #softwareKeyNotice{margin-left:auto}.az880-software-key-bulk{padding-top:10px;border-top:1px solid #e5e7eb}.az880-software-key-bulk .btn{margin-left:auto}.az880-software-key-list{display:grid;gap:12px}.az880-key-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;box-shadow:0 5px 18px rgba(15,23,42,.045)}.az880-key-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.az880-key-title{display:flex;gap:9px;align-items:flex-start}.az880-key-title input{margin-top:4px}.az880-key-pc{font-weight:900;color:#0f172a;font-size:15px}.az880-key-meta{color:#64748b;font-size:12px;margin-top:2px}.az880-key-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.az880-key-field{border:1px solid #e5e7eb;border-radius:12px;padding:9px 10px;background:#f8fafc;min-width:0}.az880-key-field.is-wide{grid-column:1/-1}.az880-key-label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-weight:800;margin-bottom:4px}.az880-key-value-row{display:flex;align-items:center;gap:7px}.az880-key-value{font-family:Consolas,"Courier New",monospace;font-weight:800;color:#111827;word-break:break-all;flex:1}.az880-key-copy{border:0;background:#e2e8f0;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12px}.az880-key-copy:hover{background:#cbd5e1}.az880-key-actions{display:flex;gap:7px}.az880-key-empty{padding:22px;text-align:center;color:#64748b;background:#fff;border:1px dashed #cbd5e1;border-radius:14px}@media(max-width:760px){.az880-key-grid{grid-template-columns:1fr}.az880-key-field.is-wide{grid-column:auto}.az880-software-key-summary #softwareKeyNotice{margin-left:0;width:100%}.az880-software-key-bulk .btn{width:100%;margin-left:0}}
 </style>
+<style id="az882-admin-software-key-manual-style">
+.az882-add-manual-btn{background:#16a34a!important;white-space:nowrap}.az882-add-manual-btn:hover{background:#15803d!important}
+.az882-key-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.78);backdrop-filter:blur(5px)}
+.az882-key-modal.is-open{display:flex}.az882-key-modal-card{width:min(760px,100%);max-height:min(92vh,820px);overflow:auto;background:linear-gradient(145deg,#101d32,#0a1425);border:1px solid rgba(148,163,184,.32);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.55);color:#e5eefb}
+.az882-key-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px 13px;border-bottom:1px solid rgba(148,163,184,.18)}.az882-key-modal-head h3{margin:0;color:#fff;font-size:21px}.az882-key-modal-head p{margin:5px 0 0;color:#93a8c2;font-size:12px;line-height:1.45}.az882-key-modal-close{border:0;background:#1e293b;color:#fff;width:34px;height:34px;border-radius:10px;font-size:20px;cursor:pointer}
+.az882-key-form{padding:18px 20px 20px}.az882-key-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.az882-key-form-field{display:grid;gap:6px}.az882-key-form-field.is-wide{grid-column:1/-1}.az882-key-form-field label{color:#bfdbfe;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.az882-key-form-field input{width:100%;box-sizing:border-box;background:#071426;color:#fff;border:1px solid #365273;border-radius:10px;padding:11px 12px;font:700 14px Inter,system-ui,Segoe UI,Arial,sans-serif;outline:none}.az882-key-form-field input:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12)}.az882-key-form-field input::placeholder{color:#64748b}.az882-key-form-note{margin-top:11px;padding:10px 12px;border:1px solid rgba(56,189,248,.22);border-radius:10px;background:rgba(8,47,73,.22);color:#bae6fd;font-size:12px;line-height:1.45}.az882-key-form-error{display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(248,113,113,.35);border-radius:10px;background:rgba(127,29,29,.22);color:#fecaca;font-size:12px}.az882-key-form-error.is-show{display:block}.az882-key-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}.az882-key-modal-actions .btn{min-width:120px}.az882-key-modal-actions .btn:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:700px){.az882-key-form-grid{grid-template-columns:1fr}.az882-key-form-field.is-wide{grid-column:auto}.az882-key-modal{padding:10px}.az882-key-modal-actions{flex-direction:column-reverse}.az882-key-modal-actions .btn{width:100%}}
+</style>
+
 
 </head>
 <body data-dashboard-page="admin">
@@ -2385,6 +2394,7 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="card az880-software-key-toolbar-card">
         <div class="toolbar az880-software-key-toolbar">
           <input id="softwareKeySearch" placeholder="Cari PC, System ID, Systemcode, motherboard ID atau key..." style="flex:1;min-width:260px">
+          <button class="btn az882-add-manual-btn" id="addManualSoftwareKey" type="button">＋ Add Manual</button>
           <button class="btn" id="refreshSoftwareKeys" type="button">↻ Refresh</button>
           <button class="btn gray" id="exportSoftwareKeys" type="button">⇩ Export CSV</button>
         </div>
@@ -2401,6 +2411,30 @@ body[data-dashboard-page="admin"] .topbar{
       </div>
       <div id="softwareKeyList" class="az880-software-key-list"></div>
     </section>
+
+    <div id="manualSoftwareKeyModal" class="az882-key-modal" aria-hidden="true">
+      <div class="az882-key-modal-card" role="dialog" aria-modal="true" aria-labelledby="manualSoftwareKeyTitle">
+        <div class="az882-key-modal-head">
+          <div><h3 id="manualSoftwareKeyTitle">🗝️ Add Software Key Manually</h3><p>Masukkan maklumat SurveyCAD secara manual. Rekod akan disimpan ke senarai Software Key yang sama.</p></div>
+          <button class="az882-key-modal-close" id="closeManualSoftwareKey" type="button" aria-label="Close">×</button>
+        </div>
+        <form id="manualSoftwareKeyForm" class="az882-key-form" autocomplete="off">
+          <div class="az882-key-form-grid">
+            <div class="az882-key-form-field"><label for="manualKeyComputerName">Computer Name</label><input id="manualKeyComputerName" maxlength="100" placeholder="Contoh: DESKTOP-AZOBSS"></div>
+            <div class="az882-key-form-field"><label for="manualKeyMotherboardId">Motherboard ID *</label><input id="manualKeyMotherboardId" maxlength="160" required placeholder="Contoh: M80-FC000900389"></div>
+            <div class="az882-key-form-field"><label for="manualKeySystemId">System ID *</label><input id="manualKeySystemId" inputmode="numeric" maxlength="40" required placeholder="9900 0205 1089"></div>
+            <div class="az882-key-form-field"><label for="manualKeySystemCode">Systemcode *</label><input id="manualKeySystemCode" inputmode="numeric" maxlength="40" required placeholder="3506 0811 1696"></div>
+            <div class="az882-key-form-field"><label for="manualKeyOneTimeCode">Onetimecode</label><input id="manualKeyOneTimeCode" inputmode="numeric" maxlength="40" placeholder="3924 5399 5342"></div>
+            <div class="az882-key-form-field"><label for="manualKeySerial">Key Serial</label><input id="manualKeySerial" maxlength="120" placeholder="Masukkan key daripada R.exe"></div>
+            <div class="az882-key-form-field"><label for="manualKeyBoardManufacturer">Motherboard Manufacturer</label><input id="manualKeyBoardManufacturer" maxlength="120" placeholder="Contoh: ASUS"></div>
+            <div class="az882-key-form-field"><label for="manualKeyBoardProduct">Motherboard Product / Model</label><input id="manualKeyBoardProduct" maxlength="120" placeholder="Contoh: PRIME B760M-A"></div>
+          </div>
+          <div class="az882-key-form-note">* Wajib: System ID, Systemcode dan Motherboard ID. Isi sekurang-kurangnya salah satu antara <b>Onetimecode</b> atau <b>Key Serial</b>.</div>
+          <div id="manualSoftwareKeyError" class="az882-key-form-error"></div>
+          <div class="az882-key-modal-actions"><button class="btn gray" id="cancelManualSoftwareKey" type="button">Cancel</button><button class="btn az882-add-manual-btn" id="saveManualSoftwareKey" type="submit">Save Manual</button></div>
+        </form>
+      </div>
+    </div>
 
     <section id="support" class="section">
       <h2>💬 Support Inbox</h2>
@@ -7994,6 +8028,7 @@ document.addEventListener('click', async function(e){
     else window.azSalesReceiptsOpenFromServiceBooking(row);
   }
   function exportCsv(){const rows=filtered();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const head=['Booking ID','Created','Status','Customer','Phone','Email','Area','Floor / Unit','WGS84','Distance from AZOBSS Shop (km)','Map URL','Full Address','Device','Screen Size','Screen Type','Services','Estimate Min','Estimate Max','Estimate Display','Final Price','Invoice No','Receipt No','Invoice Status','Payment Status','Pickup Fee','Delivery Fee','Issues','Method','Preferred Date','Preferred Time','Backup','Problem Details','Extra Requests'];const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.bookingId,date(x.createdAtMs),statusLabel(x.status),x.customerName,x.customerPhone,x.customerEmail,x.customerArea,x.floorUnit,x.locationWgs84,bookingDistanceToShop(x),x.locationMapUrl,x.fullAddress,[x.deviceType,x.deviceBrand,x.deviceModel].join(' '),x.screenSize,x.screenType,(x.services||[]).map(s=>s.name+' ('+servicePrice(s)+')').join(' | '),x.estimatedMinimum,x.estimatedMaximum,bookingEstimate(x),x.finalPrice,x.invoiceNo,x.receiptNo,x.invoiceStatus,x.paymentStatus,x.pickupFee||0,x.deliveryFee||0,(x.issues||[]).join(' | '),x.serviceMethod,x.preferredDate,x.preferredTime,x.backupRequirement,x.problemDetails,x.extraRequests].map(q).join(',')));const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AZOBSS-Service-Bookings-Invoice-Ready.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  document.addEventListener('submit',async e=>{if(e.target?.id==='manualSoftwareKeyForm'){e.preventDefault();await saveManual();}});
   document.addEventListener('click',async e=>{
     const tab=e.target.closest('[data-tab="servicebookings"]');if(tab)setTimeout(()=>load(),0);
     if(e.target.id==='refreshServiceBookings'){load({force:true});return;}
@@ -8095,6 +8130,42 @@ document.addEventListener('click', async function(e){
     await request('/api/admin/software-keys-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     ids.forEach(id=>selected.delete(id));lastLoadedAt=0;await load({force:true});
   }
+  function manualModal(open){
+    const modal=$('manualSoftwareKeyModal');if(!modal)return;
+    modal.classList.toggle('is-open',!!open);modal.setAttribute('aria-hidden',open?'false':'true');
+    if(open){setTimeout(()=>$('manualKeyComputerName')?.focus(),50);}else{$('manualSoftwareKeyError')?.classList.remove('is-show');}
+  }
+  function manualValue(id){return text($(id)?.value);}
+  function manualDigits(v){return text(v).replace(/\D+/g,'');}
+  async function saveManual(){
+    const errorBox=$('manualSoftwareKeyError'),saveBtn=$('saveManualSoftwareKey');
+    const payload={
+      action:'create-manual',
+      computerName:manualValue('manualKeyComputerName'),
+      motherboardId:manualValue('manualKeyMotherboardId'),
+      systemId:manualValue('manualKeySystemId'),
+      systemCode:manualValue('manualKeySystemCode'),
+      oneTimeCode:manualValue('manualKeyOneTimeCode'),
+      serialKey:manualValue('manualKeySerial'),
+      motherboardManufacturer:manualValue('manualKeyBoardManufacturer'),
+      motherboardProduct:manualValue('manualKeyBoardProduct')
+    };
+    const sid=manualDigits(payload.systemId),scode=manualDigits(payload.systemCode),otc=manualDigits(payload.oneTimeCode);
+    let msg='';
+    if(sid.length<8||sid.length>24)msg='System ID tidak sah.';
+    else if(scode.length<8||scode.length>24)msg='Systemcode tidak sah.';
+    else if(!payload.motherboardId||payload.motherboardId.length<2)msg='Motherboard ID wajib diisi.';
+    else if(!payload.serialKey&&!otc)msg='Isi sekurang-kurangnya Onetimecode atau Key Serial.';
+    if(msg){if(errorBox){errorBox.textContent=msg;errorBox.classList.add('is-show');}return;}
+    if(errorBox){errorBox.textContent='';errorBox.classList.remove('is-show');}
+    if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving...';}
+    try{
+      const result=await request('/api/admin/software-keys-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      $('manualSoftwareKeyForm')?.reset();manualModal(false);lastLoadedAt=0;await load({force:true});
+      const notice=$('softwareKeyNotice');if(notice)notice.textContent=(result?.existed?'Rekod sedia ada dikemas kini secara manual.':'Rekod manual berjaya ditambah.');
+    }catch(err){if(errorBox){errorBox.textContent=err.message||String(err);errorBox.classList.add('is-show');}}
+    finally{if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Manual';}}
+  }
   function exportCsv(){
     const rows=filtered(),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
     const head=['Record ID','Updated','Computer Name','System ID','Systemcode','Onetimecode','Key Serial','Motherboard ID','Motherboard Manufacturer','Motherboard Product','Source'];
@@ -8107,12 +8178,16 @@ document.addEventListener('click', async function(e){
     if(e.target?.id==='softwareKeySelectAll'){const rows=filtered();rows.forEach(x=>{const id=x.recordId||x.id;if(id){if(e.target.checked)selected.add(id);else selected.delete(id);}});render();}
   });
   document.addEventListener('click',async e=>{
+    if(e.target.closest('#addManualSoftwareKey')){manualModal(true);return;}
+    if(e.target.closest('#closeManualSoftwareKey')||e.target.closest('#cancelManualSoftwareKey')){manualModal(false);return;}
+    if(e.target?.id==='manualSoftwareKeyModal'){manualModal(false);return;}
     const copy=e.target.closest('[data-copy]');if(copy){try{await navigator.clipboard.writeText(copy.getAttribute('data-copy')||'');copy.textContent='Copied';setTimeout(()=>copy.textContent='Copy',900);}catch(_){alert('Copy failed.');}return;}
     const del=e.target.closest('[data-key-delete]');if(del){try{await remove([del.getAttribute('data-key-delete')]);}catch(err){alert(err.message||err);}return;}
     if(e.target.closest('#refreshSoftwareKeys')){await load({force:true});return;}
     if(e.target.closest('#exportSoftwareKeys')){exportCsv();return;}
     if(e.target.closest('#deleteSelectedSoftwareKeys')){try{await remove([...selected]);}catch(err){alert(err.message||err);}return;}
   });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('manualSoftwareKeyModal')?.classList.contains('is-open'))manualModal(false);});
   window.azSoftwareKeysLoad=load;
 })();
 </script>
