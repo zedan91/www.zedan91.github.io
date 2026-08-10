@@ -1776,6 +1776,11 @@ body[data-dashboard-page="admin"] .topbar{
 <style id="az770-admin-service-bookings-style">
 .az770-service-booking-list{display:grid;gap:10px}.az770-service-booking-row{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(220px,1fr) minmax(220px,1.25fr) minmax(170px,.7fr);gap:12px;align-items:start;padding:14px;border:1px solid rgba(148,163,184,.24);border-radius:13px;background:linear-gradient(145deg,rgba(15,31,54,.95),rgba(8,18,34,.98))}.az770-service-booking-row.is-new{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.07) inset}.az770-booking-title{font-weight:950;color:#fff}.az770-booking-meta{margin-top:4px;color:#93a8c2;font-size:12px;line-height:1.45}.az770-booking-services{color:#dbeafe;font-size:12px;line-height:1.5}.az770-booking-price{display:block;margin-top:6px;color:#86efac;font-weight:950}.az770-booking-actions{display:grid;gap:7px}.az770-booking-actions select{width:100%}.az770-booking-actions .btn{width:100%;justify-content:center}.az770-booking-detail{grid-column:1/-1;margin-top:1px;padding:11px;border-radius:10px;background:#071426;border:1px solid rgba(148,163,184,.18);color:#b9c8da;font-size:12px;white-space:pre-wrap}.az770-booking-chip{display:inline-flex;margin-top:6px;padding:4px 7px;border-radius:999px;border:1px solid #365273;color:#bfdbfe;font-size:10px;font-weight:900;text-transform:uppercase}.az770-booking-empty{padding:20px;text-align:center;border:1px dashed #3b516d;border-radius:12px;color:#91a4bd}@media(max-width:1050px){.az770-service-booking-row{grid-template-columns:1fr 1fr}.az770-booking-actions{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.az770-service-booking-row{grid-template-columns:1fr}.az770-booking-actions{grid-column:auto;grid-template-columns:1fr}}
 </style>
+
+<style id="az880-admin-software-key-style">
+.az880-software-key-toolbar-card{margin-bottom:14px}.az880-software-key-toolbar{gap:9px;flex-wrap:wrap}.az880-software-key-summary,.az880-software-key-bulk{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;color:#64748b;font-size:13px}.az880-software-key-summary b{color:#0f172a}.az880-software-key-summary #softwareKeyNotice{margin-left:auto}.az880-software-key-bulk{padding-top:10px;border-top:1px solid #e5e7eb}.az880-software-key-bulk .btn{margin-left:auto}.az880-software-key-list{display:grid;gap:12px}.az880-key-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;box-shadow:0 5px 18px rgba(15,23,42,.045)}.az880-key-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.az880-key-title{display:flex;gap:9px;align-items:flex-start}.az880-key-title input{margin-top:4px}.az880-key-pc{font-weight:900;color:#0f172a;font-size:15px}.az880-key-meta{color:#64748b;font-size:12px;margin-top:2px}.az880-key-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.az880-key-field{border:1px solid #e5e7eb;border-radius:12px;padding:9px 10px;background:#f8fafc;min-width:0}.az880-key-field.is-wide{grid-column:1/-1}.az880-key-label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-weight:800;margin-bottom:4px}.az880-key-value-row{display:flex;align-items:center;gap:7px}.az880-key-value{font-family:Consolas,"Courier New",monospace;font-weight:800;color:#111827;word-break:break-all;flex:1}.az880-key-copy{border:0;background:#e2e8f0;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12px}.az880-key-copy:hover{background:#cbd5e1}.az880-key-actions{display:flex;gap:7px}.az880-key-empty{padding:22px;text-align:center;color:#64748b;background:#fff;border:1px dashed #cbd5e1;border-radius:14px}@media(max-width:760px){.az880-key-grid{grid-template-columns:1fr}.az880-key-field.is-wide{grid-column:auto}.az880-software-key-summary #softwareKeyNotice{margin-left:0;width:100%}.az880-software-key-bulk .btn{width:100%;margin-left:0}}
+</style>
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2174,6 +2179,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
+      <button data-tab="softwarekeys">🗝️ Software Key</button>
       <div class="nav-group">System</div>
       <button data-tab="auditlogs">🧾 Audit Logs</button>
       <button data-tab="exports">📦 Backup / Export</button>
@@ -2362,6 +2368,29 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
       </div>
       <div id="serviceBookingList" class="az770-service-booking-list"></div>
+    </section>
+
+    <section id="softwarekeys" class="section">
+      <h2>🗝️ Software Key</h2>
+      <p class="az-section-help">Rekod key SurveyCAD yang dihantar oleh AZOBSS Installer. System ID, Systemcode, motherboard ID dan key serial boleh dicari atau disalin dari sini.</p>
+      <div class="card az880-software-key-toolbar-card">
+        <div class="toolbar az880-software-key-toolbar">
+          <input id="softwareKeySearch" placeholder="Cari PC, System ID, Systemcode, motherboard ID atau key..." style="flex:1;min-width:260px">
+          <button class="btn" id="refreshSoftwareKeys" type="button">↻ Refresh</button>
+          <button class="btn gray" id="exportSoftwareKeys" type="button">⇩ Export CSV</button>
+        </div>
+        <div class="az880-software-key-summary">
+          <span><b id="softwareKeyCount">0</b> rekod</span>
+          <span><b id="softwareKeySerialCount">0</b> ada key serial</span>
+          <span id="softwareKeyNotice">Buka tab ini untuk memuatkan rekod.</span>
+        </div>
+        <div class="az880-software-key-bulk">
+          <label><input id="softwareKeySelectAll" type="checkbox"> Pilih semua dipaparkan</label>
+          <span id="softwareKeySelectedCount">0 dipilih</span>
+          <button class="btn red" id="deleteSelectedSoftwareKeys" type="button" disabled>Delete Selected</button>
+        </div>
+      </div>
+      <div id="softwareKeyList" class="az880-software-key-list"></div>
     </section>
 
     <section id="support" class="section">
@@ -6168,7 +6197,97 @@ function printWebsiteReport(){
     pre{font-family:Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
   </style>
 </head>
-<body><pre>${reportText}</pre></body>
+<body><pre>${reportText}</pre>
+<script id="az880-admin-software-key-script">
+(function(){
+  const API='https://azobss-backend.onrender.com';
+  const CACHE_MS=60*1000;
+  let cache=[],lastLoadedAt=0,loadingPromise=null;
+  const selected=new Set();
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const text=v=>String(v??'').trim();
+  function dt(v){const n=Number(v||0);const d=n?new Date(n):new Date(v||0);return Number.isNaN(d.getTime())?'-':new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium',timeStyle:'short'}).format(d);}
+  async function request(path,opt={}){
+    for(let i=0;i<50&&typeof window.azAdminFetchJson!=='function';i++)await new Promise(r=>setTimeout(r,50));
+    if(typeof window.azAdminFetchJson!=='function')throw new Error('Admin authentication helper is not ready. Refresh the page and try again.');
+    return window.azAdminFetchJson(API+path,opt);
+  }
+  function filtered(){
+    const q=text($('softwareKeySearch')?.value).toLowerCase();
+    if(!q)return cache;
+    return cache.filter(x=>[x.recordId,x.computerName,x.systemId,x.systemCode,x.oneTimeCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct].some(v=>text(v).toLowerCase().includes(q)));
+  }
+  function updateBulk(rows=filtered()){
+    const visibleIds=new Set(rows.map(x=>x.recordId||x.id).filter(Boolean));
+    for(const id of [...selected])if(!cache.some(x=>(x.recordId||x.id)===id))selected.delete(id);
+    const chosen=[...visibleIds].filter(id=>selected.has(id)).length;
+    const all=visibleIds.size>0&&chosen===visibleIds.size;
+    const sel=$('softwareKeySelectAll');if(sel){sel.checked=all;sel.indeterminate=chosen>0&&!all;}
+    const n=$('softwareKeySelectedCount');if(n)n.textContent=`${selected.size} dipilih`;
+    const btn=$('deleteSelectedSoftwareKeys');if(btn)btn.disabled=!selected.size;
+  }
+  function field(label,value,wide=false){
+    const v=text(value)||'-';
+    return `<div class="az880-key-field${wide?' is-wide':''}"><div class="az880-key-label">${esc(label)}</div><div class="az880-key-value-row"><div class="az880-key-value">${esc(v)}</div>${v!=='-'?`<button class="az880-key-copy" type="button" data-copy="${esc(v)}">Copy</button>`:''}</div></div>`;
+  }
+  function render(){
+    const rows=filtered();
+    const list=$('softwareKeyList');if(!list)return;
+    $('softwareKeyCount')&&($('softwareKeyCount').textContent=String(cache.length));
+    $('softwareKeySerialCount')&&($('softwareKeySerialCount').textContent=String(cache.filter(x=>text(x.serialKey)).length));
+    list.innerHTML=rows.map(x=>{
+      const id=text(x.recordId||x.id);
+      const board=[text(x.motherboardManufacturer),text(x.motherboardProduct)].filter(Boolean).join(' • ');
+      return `<article class="az880-key-card" data-record="${esc(id)}">
+        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div><div class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</div><div class="az880-key-meta">${esc(id)} • ${esc(dt(x.updatedAtMs||x.createdAtMs))}${board?' • '+esc(board):''}</div></div></div><div class="az880-key-actions"><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
+        <div class="az880-key-grid">
+          ${field('System ID',x.systemId)}${field('Systemcode',x.systemCode)}
+          ${field('Onetimecode',x.oneTimeCode)}${field('Motherboard ID',x.motherboardId)}
+          ${field('Key Serial',x.serialKey,true)}
+        </div>
+      </article>`;
+    }).join('')||'<div class="az880-key-empty">Tiada rekod Software Key yang sepadan.</div>';
+    const n=$('softwareKeyNotice');if(n)n.textContent=`${rows.length} dipaparkan daripada ${cache.length} rekod • cache 60 saat`;
+    updateBulk(rows);
+  }
+  async function load({force=false}={}){
+    if(!force&&cache.length&&Date.now()-lastLoadedAt<CACHE_MS){render();return cache;}
+    if(loadingPromise)return loadingPromise;
+    const n=$('softwareKeyNotice');if(n)n.textContent='Loading Software Key records...';
+    loadingPromise=(async()=>{try{const j=await request('/api/admin/software-keys?limit=300',{cache:'no-store'});cache=Array.isArray(j.records)?j.records:[];lastLoadedAt=Date.now();render();return cache;}catch(e){cache=[];render();if(n)n.textContent='Gagal memuatkan rekod: '+(e.message||e);return [];}finally{loadingPromise=null;}})();
+    return loadingPromise;
+  }
+  async function remove(ids){
+    ids=[...new Set(ids.filter(Boolean))];if(!ids.length)return;
+    if(!confirm(`Delete ${ids.length} Software Key record(s) permanently?`))return;
+    const body=ids.length===1?{action:'delete',recordId:ids[0]}:{action:'bulk-delete',recordIds:ids};
+    await request('/api/admin/software-keys-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    ids.forEach(id=>selected.delete(id));lastLoadedAt=0;await load({force:true});
+  }
+  function exportCsv(){
+    const rows=filtered(),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+    const head=['Record ID','Updated','Computer Name','System ID','Systemcode','Onetimecode','Key Serial','Motherboard ID','Motherboard Manufacturer','Motherboard Product','Source'];
+    const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.recordId||x.id,dt(x.updatedAtMs||x.createdAtMs),x.computerName,x.systemId,x.systemCode,x.oneTimeCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct,x.source].map(q).join(',')));
+    const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`AZOBSS-Software-Keys-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  document.addEventListener('input',e=>{if(e.target?.id==='softwareKeySearch')render();});
+  document.addEventListener('change',e=>{
+    if(e.target?.matches('[data-key-select]')){const id=e.target.getAttribute('data-key-select');if(e.target.checked)selected.add(id);else selected.delete(id);updateBulk();return;}
+    if(e.target?.id==='softwareKeySelectAll'){const rows=filtered();rows.forEach(x=>{const id=x.recordId||x.id;if(id){if(e.target.checked)selected.add(id);else selected.delete(id);}});render();}
+  });
+  document.addEventListener('click',async e=>{
+    const copy=e.target.closest('[data-copy]');if(copy){try{await navigator.clipboard.writeText(copy.getAttribute('data-copy')||'');copy.textContent='Copied';setTimeout(()=>copy.textContent='Copy',900);}catch(_){alert('Copy failed.');}return;}
+    const del=e.target.closest('[data-key-delete]');if(del){try{await remove([del.getAttribute('data-key-delete')]);}catch(err){alert(err.message||err);}return;}
+    if(e.target.closest('#refreshSoftwareKeys')){await load({force:true});return;}
+    if(e.target.closest('#exportSoftwareKeys')){exportCsv();return;}
+    if(e.target.closest('#deleteSelectedSoftwareKeys')){try{await remove([...selected]);}catch(err){alert(err.message||err);}return;}
+  });
+  window.azSoftwareKeysLoad=load;
+})();
+</script>
+
+</body>
 </html>`;
 
   w.document.open();
@@ -6207,6 +6326,7 @@ async function initSection(id){
   if(id==='sitereport')return azAdminInitSiteReport();
   if(id==='maintenance')return loadMaintenanceScan();
   if(id==='staffroles')return loadStaffRoles();
+  if(id==='softwarekeys' && typeof window.azSoftwareKeysLoad==='function')return window.azSoftwareKeysLoad({force:false});
   if(id==='settings')return loadSettings();
 }
 document.addEventListener('click',async e=>{

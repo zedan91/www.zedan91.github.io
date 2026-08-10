@@ -11571,6 +11571,80 @@ async function azCreatePublicServiceBooking(req, body = {}) {
 }
 
 
+// AZOBSS PATCH 880: SurveyCAD Software Key capture + admin records.
+// The installer submits only the requested software/hardware identifiers. Admin read/delete
+// routes remain protected by the existing Firebase-admin authorization layer.
+const AZ_SOFTWARE_KEY_COLLECTION = "softwareKeyRecords";
+function azSoftwareKeyText(value, max = 180) {
+  return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
+function azSoftwareKeyDigits(value, maxDigits = 24) {
+  return String(value == null ? "" : value).replace(/\D+/g, "").slice(0, maxDigits);
+}
+function azSoftwareKeyFormatDigits(value) {
+  const digits = azSoftwareKeyDigits(value, 24);
+  if (digits.length === 12) return `${digits.slice(0,4)} ${digits.slice(4,8)} ${digits.slice(8,12)}`;
+  return azSoftwareKeyText(value, 80);
+}
+function azSoftwareKeyRecordId(row = {}) {
+  const fingerprint = [row.motherboardId, azSoftwareKeyDigits(row.systemId), azSoftwareKeyDigits(row.systemCode)]
+    .map(v => String(v || "").trim().toLowerCase()).join("|");
+  return `SK-${crypto.createHash("sha256").update(fingerprint).digest("hex").slice(0, 20).toUpperCase()}`;
+}
+function azSoftwareKeyPublicCaptureAllowed(body = {}) {
+  return azSoftwareKeyText(body.source, 80) === "AZOBSS_Installer_Software_Key_v1";
+}
+async function azCreateSoftwareKeyRecord(req, body = {}) {
+  if (!azSoftwareKeyPublicCaptureAllowed(body)) throw Object.assign(new Error("Invalid Software Key capture source."), { statusCode:400 });
+  const systemIdDigits = azSoftwareKeyDigits(body.systemId, 24);
+  const systemCodeDigits = azSoftwareKeyDigits(body.systemCode, 24);
+  const oneTimeDigits = azSoftwareKeyDigits(body.oneTimeCode, 24);
+  const serialKey = azSoftwareKeyText(body.serialKey, 120);
+  const motherboardId = azSoftwareKeyText(body.motherboardId, 160);
+  if (systemIdDigits.length < 8 || systemIdDigits.length > 24) throw Object.assign(new Error("System ID is invalid."), { statusCode:400 });
+  if (systemCodeDigits.length < 8 || systemCodeDigits.length > 24) throw Object.assign(new Error("Systemcode is invalid."), { statusCode:400 });
+  if (!motherboardId || motherboardId.length < 2) throw Object.assign(new Error("Motherboard ID is required."), { statusCode:400 });
+  if (!serialKey && !oneTimeDigits) throw Object.assign(new Error("Serial key / Onetimecode is required."), { statusCode:400 });
+
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const row = {
+    recordId:"",
+    source:"AZOBSS_Installer_Software_Key_v1",
+    captureVersion:azSoftwareKeyText(body.captureVersion || "1", 30),
+    computerName:azSoftwareKeyText(body.computerName, 100),
+    systemId:azSoftwareKeyFormatDigits(systemIdDigits),
+    systemIdDigits,
+    systemCode:azSoftwareKeyFormatDigits(systemCodeDigits),
+    systemCodeDigits,
+    oneTimeCode:oneTimeDigits ? azSoftwareKeyFormatDigits(oneTimeDigits) : "",
+    oneTimeCodeDigits:oneTimeDigits,
+    serialKey,
+    motherboardId,
+    motherboardManufacturer:azSoftwareKeyText(body.motherboardManufacturer, 120),
+    motherboardProduct:azSoftwareKeyText(body.motherboardProduct, 120),
+    capturedAt:azSoftwareKeyText(body.capturedAt, 80) || nowIso,
+    updatedAt:nowIso,
+    updatedAtMs:nowMs
+  };
+  row.recordId = azSoftwareKeyRecordId(row);
+  const db = getAzobssBackendDb();
+  if (!db) throw Object.assign(new Error("Firebase Admin is not configured."), { statusCode:503 });
+  const ref = db.collection(AZ_SOFTWARE_KEY_COLLECTION).doc(row.recordId);
+  const existing = await ref.get();
+  if (existing.exists) {
+    const old = existing.data() || {};
+    row.createdAt = azSoftwareKeyText(old.createdAt, 80) || nowIso;
+    row.createdAtMs = Number(old.createdAtMs || nowMs) || nowMs;
+  } else {
+    row.createdAt = nowIso;
+    row.createdAtMs = nowMs;
+  }
+  await ref.set(azJsonSafe(row), { merge:true });
+  return { ok:true, recordId:row.recordId, existed:existing.exists, savedAt:nowIso };
+}
+
+
 // AZOBSS PATCH 861: force downloadable MyInstants MP3 through the AZOBSS backend.
 // The browser `download` attribute is not reliable for cross-origin media URLs, so this
 // endpoint validates the source, fetches it server-side and returns Content-Disposition: attachment.
@@ -12053,6 +12127,9 @@ async function handler(req, res) {
     if (pathname === "/api/sound-effects/download" && req.method === "GET" && azRateLimitOrSend(req, res, "sound-effects-download", 180, 10 * 60 * 1000)) return;
     if (pathname === "/api/sound-effects/recent" && req.method === "GET" && azRateLimitOrSend(req, res, "sound-effects-recent-read", 120, 10 * 60 * 1000)) return;
     if (pathname === "/api/sound-effects/update-recent" && req.method === "POST" && azRateLimitOrSend(req, res, "sound-effects-recent-update", 8, 60 * 60 * 1000)) return;
+    if (pathname === "/api/software-keys/capture" && req.method === "POST" && azRateLimitOrSend(req, res, "software-key-capture", 30, 60 * 60 * 1000)) return;
+    if (pathname === "/api/admin/software-keys" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-software-keys-read", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/software-keys-action" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-software-keys-action", 50, 10 * 60 * 1000)) return;
     if (pathname === "/api/service-bookings" && req.method === "POST" && azRateLimitOrSend(req, res, "public-service-booking", 10, 60 * 60 * 1000)) return;
     if (pathname === "/api/admin/service-bookings" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-service-bookings-read", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/service-bookings-action" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-service-bookings-action", 50, 10 * 60 * 1000)) return;
@@ -12131,6 +12208,70 @@ async function handler(req, res) {
 
     if (pathname === "/api/sound-effects/download" && req.method === "GET") {
       return await azSoundHandleMp3Download(req, res, parsed);
+    }
+
+    if (pathname === "/api/software-keys/capture" && req.method === "POST") {
+      try {
+        const body = parseRequestBody(await readBody(req));
+        const result = await azCreateSoftwareKeyRecord(req, body || {});
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        const statusCode = Number(error && error.statusCode) || 500;
+        return send(res, statusCode, JSON.stringify({ ok:false, error:azSoftwareKeyText(error && error.message, 300) || "Software Key capture failed." }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+    if (pathname === "/api/admin/software-keys" && req.method === "GET") {
+      try {
+        const identity = await azAdminIdentityFromRequest(req, parsed);
+        if (!identity || !identity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) throw new Error("Firebase Admin is not configured.");
+        const maxRows = Math.max(1, Math.min(500, Number(parsed.query.limit || 200) || 200));
+        let snap;
+        try { snap = await db.collection(AZ_SOFTWARE_KEY_COLLECTION).orderBy("updatedAtMs", "desc").limit(maxRows).get(); }
+        catch (_) { snap = await db.collection(AZ_SOFTWARE_KEY_COLLECTION).limit(maxRows).get(); }
+        const records = [];
+        snap.forEach(docSnap => records.push(azJsonSafe(Object.assign({ id:docSnap.id }, docSnap.data() || {}))));
+        records.sort((a,b) => Number(b.updatedAtMs || b.createdAtMs || 0) - Number(a.updatedAtMs || a.createdAtMs || 0));
+        return send(res, 200, JSON.stringify({ ok:true, records, count:records.length }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        return send(res, 500, JSON.stringify({ ok:false, error:azSoftwareKeyText(error && error.message, 300) || "Unable to load Software Key records.", records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/admin/software-keys-action" && req.method === "POST") {
+      try {
+        const identity = await azAdminIdentityFromRequest(req, parsed);
+        if (!identity || !identity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required." }, null, 2), "application/json");
+        const body = parseRequestBody(await readBody(req));
+        const action = azSoftwareKeyText(body.action, 40).toLowerCase();
+        const db = getAzobssBackendDb();
+        if (!db) throw new Error("Firebase Admin is not configured.");
+        if (action === "bulk-delete") {
+          const sourceIds = Array.isArray(body.recordIds) ? body.recordIds : [];
+          const recordIds = Array.from(new Set(sourceIds.map(id => azSoftwareKeyText(id, 100)).filter(Boolean))).slice(0, 400);
+          if (!recordIds.length) return send(res, 400, JSON.stringify({ ok:false, error:"Select at least one Software Key record." }, null, 2), "application/json");
+          let deleted = 0;
+          for (let offset = 0; offset < recordIds.length; offset += 400) {
+            const batch = db.batch();
+            const chunk = recordIds.slice(offset, offset + 400);
+            chunk.forEach(id => batch.delete(db.collection(AZ_SOFTWARE_KEY_COLLECTION).doc(id)));
+            await batch.commit();
+            deleted += chunk.length;
+          }
+          return send(res, 200, JSON.stringify({ ok:true, action, deleted, recordIds }, null, 2), "application/json");
+        }
+        const recordId = azSoftwareKeyText(body.recordId || body.id, 100);
+        if (!recordId) return send(res, 400, JSON.stringify({ ok:false, error:"Software Key record ID is required." }, null, 2), "application/json");
+        if (action === "delete") {
+          await db.collection(AZ_SOFTWARE_KEY_COLLECTION).doc(recordId).delete();
+          return send(res, 200, JSON.stringify({ ok:true, action, recordId }, null, 2), "application/json");
+        }
+        return send(res, 400, JSON.stringify({ ok:false, error:"Unknown action." }, null, 2), "application/json");
+      } catch (error) {
+        return send(res, Number(error && error.statusCode) || 500, JSON.stringify({ ok:false, error:azSoftwareKeyText(error && error.message, 300) || "Software Key action failed." }, null, 2), "application/json");
+      }
     }
 
     if (pathname === "/api/admin/service-bookings" && req.method === "GET") {
