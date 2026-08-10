@@ -7570,63 +7570,191 @@ function azobssWithJupemCartMutationLock(task) {
   return current;
 }
 
+function azobssJupemExtractAuthenticatedUserId(html, url = "") {
+  const source = String(html || "");
+  const targetUrl = String(url || "");
+  const candidates = [
+    targetUrl,
+    source
+  ];
+  const patterns = [
+    /MyTroliDetailXTerhad\/(\d{1,18})/i,
+    /TroliDetailXTerhad\/(\d{1,18})/i,
+    /\/Transaksi\/(?:My)?Troli[A-Za-z0-9_-]*\/(\d{1,18})/i,
+    /data-(?:user|pengguna)-id\s*=\s*["'](\d{1,18})["']/i,
+    /name\s*=\s*["'](?:UserId|UserID|PenggunaId|PenggunaID)["'][^>]*value\s*=\s*["'](\d{1,18})["']/i,
+    /value\s*=\s*["'](\d{1,18})["'][^>]*name\s*=\s*["'](?:UserId|UserID|PenggunaId|PenggunaID)["']/i,
+    /["'](?:userId|userID|penggunaId|penggunaID)["']\s*:\s*["']?(\d{1,18})["']?/i
+  ];
+  for (const candidate of candidates) {
+    for (const pattern of patterns) {
+      const match = String(candidate || "").match(pattern);
+      if (match && match[1]) return match[1];
+    }
+  }
+  return "";
+}
+
+function azobssJupemPageTitle(html) {
+  const match = String(html || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  return cleanPremiumText(match ? decodeHtmlEntities(String(match[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()) : "", 160);
+}
+
+function azobssJupemLoginFailureLooksCredentialRelated(html) {
+  const source = decodeHtmlEntities(String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+  return /(?:kata\s*laluan|password|id\s*pengguna|akaun|pengguna)[^.\r\n]{0,140}(?:salah|tidak\s+sah|gagal|invalid|incorrect|dikunci|disekat)/i.test(source)
+    || /(?:salah|tidak\s+sah|gagal|invalid|incorrect)[^.\r\n]{0,140}(?:kata\s*laluan|password|id\s*pengguna|akaun|pengguna)/i.test(source);
+}
+
 async function azobssGetJupemAuthenticatedSession(force = false) {
   const now = Date.now();
   if (!force && azobssJupemAuthenticatedCache.cookie && azobssJupemAuthenticatedCache.userId && azobssJupemAuthenticatedCache.expiresAt > now) {
     return azobssJupemAuthenticatedCache;
   }
+
   const username = String(process.env.JUPEM_EBIZ_USERNAME || "").trim();
   const password = String(process.env.JUPEM_EBIZ_PASSWORD || "");
   if (!username || !password) throw new Error("JUPEM server login is not configured.");
 
   const loginUrl = "https://ebiz.jupem.gov.my/Home/LogMasuk";
-  const first = await azobssJupemAuthFetch(loginUrl);
-  const firstHtml = await first.response.text();
-  const firstCsrf = (firstHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
-  if (!firstCsrf) throw new Error("JUPEM login verification token is unavailable.");
+  let lastError = null;
 
-  const firstBody = new URLSearchParams({
-    __RequestVerificationToken: decodeHtmlEntities(firstCsrf),
-    IDPengguna: username,
-    controller: "",
-    action: "",
-    returnUrl: ""
-  });
-  const second = await azobssJupemAuthFetch(loginUrl, {
-    method: "POST",
-    contentType: "application/x-www-form-urlencoded",
-    referer: loginUrl,
-    body: firstBody.toString()
-  }, first.cookie);
-  const secondHtml = await second.response.text();
-  const action = decodeHtmlEntities((secondHtml.match(/<form[^>]+action=["']([^"']+)["']/i) || [])[1] || "");
-  const secondCsrf = (secondHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
-  const hiddenId = (secondHtml.match(/name=["']IDPengguna["'][^>]+value=["']([^"']*)["']/i) || [])[1] || username;
-  const phrase = (secondHtml.match(/name=["']FrasaRahsia["'][^>]+value=["']([^"']*)["']/i) || [])[1] || "";
-  if (!action || !secondCsrf) throw new Error("JUPEM password form is unavailable.");
+  // 887: one clean retry is allowed because JUPEM can invalidate an ASP.NET/CSRF
+  // session between the username and password stages. Credentials are never logged.
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const first = await azobssJupemAuthFetch(loginUrl, { timeoutMs: 30000 });
+      const firstHtml = await first.response.text();
+      const firstCsrf = (firstHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
+      if (!firstCsrf) throw new Error("JUPEM login verification token is unavailable.");
 
-  const passwordBody = new URLSearchParams({
-    __RequestVerificationToken: decodeHtmlEntities(secondCsrf),
-    IDPengguna: decodeHtmlEntities(hiddenId),
-    FrasaRahsia: decodeHtmlEntities(phrase),
-    returnUrl: "",
-    KataLaluan: password
-  });
-  const loggedIn = await azobssJupemAuthFetch(action, {
-    method: "POST",
-    contentType: "application/x-www-form-urlencoded",
-    referer: second.url,
-    body: passwordBody.toString()
-  }, second.cookie);
-  const dashboardHtml = await loggedIn.response.text();
-  const userIdMatch = dashboardHtml.match(/MyTroliDetailXTerhad\/(\d+)/i);
-  if (!userIdMatch || /<title>\s*Log Masuk/i.test(dashboardHtml)) throw new Error("JUPEM server login failed.");
-  azobssJupemAuthenticatedCache = {
-    cookie: loggedIn.cookie,
-    userId: userIdMatch[1],
-    expiresAt: now + (15 * 60 * 1000)
-  };
-  return azobssJupemAuthenticatedCache;
+      const firstBody = new URLSearchParams({
+        __RequestVerificationToken: decodeHtmlEntities(firstCsrf),
+        IDPengguna: username,
+        controller: "",
+        action: "",
+        returnUrl: ""
+      });
+      const second = await azobssJupemAuthFetch(loginUrl, {
+        method: "POST",
+        contentType: "application/x-www-form-urlencoded",
+        referer: loginUrl,
+        body: firstBody.toString(),
+        timeoutMs: 30000
+      }, first.cookie);
+
+      const secondHtml = await second.response.text();
+      const action = decodeHtmlEntities((secondHtml.match(/<form[^>]+action=["']([^"']+)["']/i) || [])[1] || "");
+      const secondCsrf = (secondHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
+      const hiddenId = (secondHtml.match(/name=["']IDPengguna["'][^>]+value=["']([^"']*)["']/i) || [])[1] || username;
+      const phrase = (secondHtml.match(/name=["']FrasaRahsia["'][^>]+value=["']([^"']*)["']/i) || [])[1] || "";
+      if (!action || !secondCsrf) {
+        if (azobssJupemLoginFailureLooksCredentialRelated(secondHtml)) {
+          throw Object.assign(new Error("JUPEM eBiz menolak ID pengguna. Sila semak akaun JUPEM eBiz di Render."), { permanent: true });
+        }
+        throw new Error("JUPEM password form is unavailable.");
+      }
+
+      const passwordBody = new URLSearchParams({
+        __RequestVerificationToken: decodeHtmlEntities(secondCsrf),
+        IDPengguna: decodeHtmlEntities(hiddenId),
+        FrasaRahsia: decodeHtmlEntities(phrase),
+        returnUrl: "",
+        KataLaluan: password
+      });
+      const loggedIn = await azobssJupemAuthFetch(action, {
+        method: "POST",
+        contentType: "application/x-www-form-urlencoded",
+        referer: second.url,
+        body: passwordBody.toString(),
+        timeoutMs: 30000
+      }, second.cookie);
+
+      let activeCookie = loggedIn.cookie;
+      let finalHtml = await loggedIn.response.text();
+      let finalUrl = loggedIn.url;
+      let userId = azobssJupemExtractAuthenticatedUserId(finalHtml, finalUrl);
+
+      if (azobssJupemIsLoginPage(finalHtml, finalUrl)) {
+        const credentialMessage = azobssJupemLoginFailureLooksCredentialRelated(finalHtml)
+          ? "JUPEM eBiz menolak log masuk. Sila semak JUPEM_EBIZ_USERNAME / JUPEM_EBIZ_PASSWORD di Render atau status akaun eBiz."
+          : "JUPEM eBiz mengembalikan halaman Log Masuk selepas penghantaran kata laluan.";
+        throw Object.assign(new Error(credentialMessage), { permanent: azobssJupemLoginFailureLooksCredentialRelated(finalHtml) });
+      }
+
+      // The eBiz dashboard markup has changed before. Do not treat a missing
+      // MyTroliDetailXTerhad link as a failed login. Refresh Dashboard first.
+      if (!userId) {
+        const dashboard = await azobssJupemAuthFetch("https://ebiz.jupem.gov.my/Home/Dashboard", {
+          referer: finalUrl || loginUrl,
+          timeoutMs: 30000
+        }, activeCookie);
+        activeCookie = dashboard.cookie;
+        const dashboardHtml = await dashboard.response.text();
+        if (azobssJupemIsLoginPage(dashboardHtml, dashboard.url)) {
+          throw new Error("Sesi JUPEM eBiz tamat sejurus selepas log masuk.");
+        }
+        userId = azobssJupemExtractAuthenticatedUserId(dashboardHtml, dashboard.url);
+        finalHtml = dashboardHtml;
+        finalUrl = dashboard.url;
+      }
+
+      // 887 fallback: probe read-only cart entry routes. JUPEM may redirect these
+      // to a user-specific cart URL containing the numeric user id.
+      if (!userId) {
+        const probes = [
+          "https://ebiz.jupem.gov.my/Transaksi/MyTroli",
+          "https://ebiz.jupem.gov.my/Transaksi/MyTroliDetailXTerhad"
+        ];
+        for (const probeUrl of probes) {
+          try {
+            const probe = await azobssJupemAuthFetch(probeUrl, {
+              referer: "https://ebiz.jupem.gov.my/Home/Dashboard",
+              timeoutMs: 20000
+            }, activeCookie);
+            activeCookie = probe.cookie;
+            const probeHtml = await probe.response.text();
+            if (azobssJupemIsLoginPage(probeHtml, probe.url)) continue;
+            userId = azobssJupemExtractAuthenticatedUserId(probeHtml, probe.url);
+            if (userId) {
+              finalHtml = probeHtml;
+              finalUrl = probe.url;
+              break;
+            }
+          } catch (_probeError) {}
+        }
+      }
+
+      if (!userId) {
+        console.warn("AZOBSS JUPEM login appears authenticated but cart user id was not found.", {
+          attempt,
+          finalUrl: cleanPremiumText(finalUrl, 240),
+          title: azobssJupemPageTitle(finalHtml),
+          status: Number(loggedIn.response && loggedIn.response.status || 0)
+        });
+        throw new Error("JUPEM eBiz login berjaya tetapi ID troli pengguna tidak dapat dikesan. Backend telah cuba refresh Dashboard dan Troli.");
+      }
+
+      azobssJupemAuthenticatedCache = {
+        cookie: activeCookie,
+        userId,
+        expiresAt: Date.now() + (15 * 60 * 1000)
+      };
+      return azobssJupemAuthenticatedCache;
+    } catch (error) {
+      lastError = error;
+      azobssJupemAuthenticatedCache = { cookie: "", userId: "", expiresAt: 0 };
+      console.warn("AZOBSS JUPEM authenticated login attempt failed:", {
+        attempt,
+        message: cleanPremiumText(error && error.message || error, 260),
+        permanent: Boolean(error && error.permanent)
+      });
+      if (error && error.permanent) break;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 700));
+    }
+  }
+
+  throw lastError || new Error("JUPEM server login failed.");
 }
 
 let azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
@@ -14414,7 +14542,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 32,
+          jupemStoreVersion: 33,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
