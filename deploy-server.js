@@ -7602,7 +7602,8 @@ function azobssJupemPageTitle(html) {
 
 function azobssJupemLoginFailureLooksCredentialRelated(html) {
   const source = decodeHtmlEntities(String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
-  return /(?:kata\s*laluan|password|id\s*pengguna|akaun|pengguna)[^.\r\n]{0,140}(?:salah|tidak\s+sah|gagal|invalid|incorrect|dikunci|disekat)/i.test(source)
+  return /salah\s+id\s+pengguna\s+atau\s+kata\s+laluan/i.test(source)
+    || /(?:kata\s*laluan|password|id\s*pengguna|akaun|pengguna)[^.\r\n]{0,140}(?:salah|tidak\s+sah|gagal|invalid|incorrect|dikunci|disekat)/i.test(source)
     || /(?:salah|tidak\s+sah|gagal|invalid|incorrect)[^.\r\n]{0,140}(?:kata\s*laluan|password|id\s*pengguna|akaun|pengguna)/i.test(source);
 }
 
@@ -7703,6 +7704,55 @@ function azobssJupemFindPasswordForm(html) {
   ) || null;
 }
 
+function azobssJupemFindUsernameForm(html) {
+  return azobssJupemExtractForms(html).find((form) =>
+    form.fields.some((field) => /^IDPengguna$/i.test(field.name))
+  ) || null;
+}
+
+function azobssJupemChooseSubmitter(form, intent = "login") {
+  const items = (form && form.submitters) || [];
+  if (!items.length) return null;
+
+  const wanted = intent === "next"
+    ? /(?:seterusnya|next|teruskan|continue|hantar|submit)/i
+    : /(?:log\s*masuk|login|sign\s*in|masuk|hantar|submit)/i;
+
+  return items.find((item) => wanted.test(String(item && (item.text || item.value) || "")))
+    || items.find((item) => String(item && item.name || "").trim())
+    || items[0]
+    || null;
+}
+
+function azobssJupemApplySubmitter(overrides, submitter) {
+  if (!submitter || !submitter.name) return overrides;
+  overrides[submitter.name] = submitter.value || submitter.text || "submit";
+  return overrides;
+}
+
+async function azobssJupemSubmitCurrentLoginForm(first, firstHtml, username, password) {
+  const directPasswordForm = azobssJupemFindPasswordForm(firstHtml);
+  if (!directPasswordForm) return null;
+
+  const idField = (directPasswordForm.fields || []).find((field) => /^IDPengguna$/i.test(field.name));
+  const pwField = (directPasswordForm.fields || []).find((field) => /^KataLaluan$/i.test(field.name));
+  if (!idField || !pwField) return null;
+
+  const overrides = {};
+  overrides[idField.name] = username;
+  overrides[pwField.name] = password;
+  azobssJupemApplySubmitter(overrides, azobssJupemChooseSubmitter(directPasswordForm, "login"));
+
+  const action = directPasswordForm.action || first.url;
+  return await azobssJupemAuthFetch(action, {
+    method: directPasswordForm.method || "POST",
+    contentType: "application/x-www-form-urlencoded",
+    referer: first.url,
+    body: azobssJupemBuildFormBody(directPasswordForm, overrides).toString(),
+    timeoutMs: 30000
+  }, first.cookie);
+}
+
 function azobssJupemFindSecurityPhraseConfirmForm(html) {
   const forms = azobssJupemExtractForms(html);
   const affirmative = /^(?:ya|yes|betul|benar|ya\s*,?\s*betul|teruskan|seterusnya|confirm|sahkan)$/i;
@@ -7795,55 +7845,58 @@ async function azobssGetJupemAuthenticatedSession(force = false) {
     try {
       const first = await azobssJupemAuthFetch(loginUrl, { timeoutMs: 30000 });
       const firstHtml = await first.response.text();
-      const firstCsrf = (firstHtml.match(/name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i) || [])[1];
-      if (!firstCsrf) throw new Error("JUPEM login verification token is unavailable.");
 
-      const firstBody = new URLSearchParams({
-        __RequestVerificationToken: decodeHtmlEntities(firstCsrf),
-        IDPengguna: username,
-        controller: "",
-        action: "",
-        returnUrl: ""
-      });
-      const second = await azobssJupemAuthFetch(loginUrl, {
-        method: "POST",
-        contentType: "application/x-www-form-urlencoded",
-        referer: loginUrl,
-        body: firstBody.toString(),
-        timeoutMs: 30000
-      }, first.cookie);
+      // 889: use the login form JUPEM is actually serving now.
+      // If IDPengguna + KataLaluan are already on the first page, submit both
+      // together to that form's real action, preserving every hidden field,
+      // CSRF token, query token and named submit button.
+      let loggedIn = await azobssJupemSubmitCurrentLoginForm(first, firstHtml, username, password);
 
-      const secondHtml = await second.response.text();
+      // Legacy/multi-step fallback remains for JUPEM variants that first ask
+      // only for ID Pengguna, then security phrase/image, then password.
+      if (!loggedIn) {
+        const usernameForm = azobssJupemFindUsernameForm(firstHtml);
+        if (!usernameForm) throw new Error("Borang Log Masuk JUPEM tidak dapat dikesan.");
 
-      // 888: JUPEM rasmi menggunakan aliran berperingkat:
-      // ID Pengguna -> pengesahan imej/frasa keselamatan (Ya/Tidak) -> Kata Laluan.
-      // Sesetengah respons terus memaparkan borang kata laluan, jadi kedua-dua
-      // variasi disokong dan borang yang betul dipilih berdasarkan field KataLaluan.
-      const passwordStage = await azobssJupemResolvePasswordStage(
-        secondHtml,
-        second.url,
-        second.cookie,
-        username
-      );
+        const idField = (usernameForm.fields || []).find((field) => /^IDPengguna$/i.test(field.name));
+        const usernameOverrides = {};
+        usernameOverrides[idField ? idField.name : "IDPengguna"] = username;
+        azobssJupemApplySubmitter(usernameOverrides, azobssJupemChooseSubmitter(usernameForm, "next"));
 
-      const passwordForm = passwordStage.passwordForm;
-      const passwordOverrides = {};
-      const passwordName = (passwordForm.fields || []).find((field) => /^KataLaluan$/i.test(field.name))?.name || "KataLaluan";
-      const idName = (passwordForm.fields || []).find((field) => /^IDPengguna$/i.test(field.name))?.name;
-      passwordOverrides[passwordName] = password;
-      if (idName) {
-        const currentId = (passwordForm.fields || []).find((field) => field.name === idName)?.value || username;
-        passwordOverrides[idName] = currentId || username;
+        const usernameAction = usernameForm.action || first.url;
+        const second = await azobssJupemAuthFetch(usernameAction, {
+          method: usernameForm.method || "POST",
+          contentType: "application/x-www-form-urlencoded",
+          referer: first.url,
+          body: azobssJupemBuildFormBody(usernameForm, usernameOverrides).toString(),
+          timeoutMs: 30000
+        }, first.cookie);
+
+        const secondHtml = await second.response.text();
+        const passwordStage = await azobssJupemResolvePasswordStage(
+          secondHtml,
+          second.url,
+          second.cookie,
+          username
+        );
+
+        const passwordForm = passwordStage.passwordForm;
+        const passwordOverrides = {};
+        const passwordField = (passwordForm.fields || []).find((field) => /^KataLaluan$/i.test(field.name));
+        const idField2 = (passwordForm.fields || []).find((field) => /^IDPengguna$/i.test(field.name));
+        passwordOverrides[passwordField ? passwordField.name : "KataLaluan"] = password;
+        if (idField2) passwordOverrides[idField2.name] = idField2.value || username;
+        azobssJupemApplySubmitter(passwordOverrides, azobssJupemChooseSubmitter(passwordForm, "login"));
+
+        const passwordAction = passwordForm.action || passwordStage.url;
+        loggedIn = await azobssJupemAuthFetch(passwordAction, {
+          method: passwordForm.method || "POST",
+          contentType: "application/x-www-form-urlencoded",
+          referer: passwordStage.url,
+          body: azobssJupemBuildFormBody(passwordForm, passwordOverrides).toString(),
+          timeoutMs: 30000
+        }, passwordStage.cookie);
       }
-
-      const passwordAction = passwordForm.action || passwordStage.url;
-      const loggedIn = await azobssJupemAuthFetch(passwordAction, {
-        method: passwordForm.method || "POST",
-        contentType: "application/x-www-form-urlencoded",
-        referer: passwordStage.url,
-        body: azobssJupemBuildFormBody(passwordForm, passwordOverrides).toString(),
-        timeoutMs: 30000
-      }, passwordStage.cookie);
 
       let activeCookie = loggedIn.cookie;
       let finalHtml = await loggedIn.response.text();
@@ -7853,7 +7906,7 @@ async function azobssGetJupemAuthenticatedSession(force = false) {
       if (azobssJupemIsLoginPage(finalHtml, finalUrl)) {
         const credentialMessage = azobssJupemLoginFailureLooksCredentialRelated(finalHtml)
           ? "JUPEM eBiz menolak log masuk. Sila semak JUPEM_EBIZ_USERNAME / JUPEM_EBIZ_PASSWORD di Render atau status akaun eBiz."
-          : "JUPEM eBiz kembali ke halaman Log Masuk selepas peringkat kata laluan. Backend sudah melalui pengesahan frasa keselamatan jika dipaparkan.";
+          : "JUPEM eBiz kembali ke halaman Log Masuk. Borang login semasa telah dihantar mengikut action/hidden field JUPEM; jika mesej ini berterusan, semak ID pengguna, kata laluan atau status akaun eBiz.";
         throw Object.assign(new Error(credentialMessage), { permanent: azobssJupemLoginFailureLooksCredentialRelated(finalHtml) });
       }
 
@@ -14717,7 +14770,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 34,
+          jupemStoreVersion: 35,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
