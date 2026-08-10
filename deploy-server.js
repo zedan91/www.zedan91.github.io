@@ -7646,7 +7646,11 @@ function azobssJupemExtractForms(html) {
           name,
           value,
           text: value,
-          formaction: String(attrs.formaction || "")
+          type,
+          id: String(attrs.id || ""),
+          formaction: String(attrs.formaction || ""),
+          onclick: String(attrs.onclick || ""),
+          dataUrl: String(attrs["data-url"] || attrs["data-href"] || "")
         });
         continue;
       }
@@ -7668,7 +7672,11 @@ function azobssJupemExtractForms(html) {
         name,
         value,
         text: buttonText,
-        formaction: String(attrs.formaction || "")
+        type: String(attrs.type || "submit").toLowerCase(),
+        id: String(attrs.id || ""),
+        formaction: String(attrs.formaction || ""),
+        onclick: String(attrs.onclick || ""),
+        dataUrl: String(attrs["data-url"] || attrs["data-href"] || "")
       });
     }
 
@@ -7730,6 +7738,161 @@ function azobssJupemApplySubmitter(overrides, submitter) {
   return overrides;
 }
 
+function azobssJupemExistingSessionDetected(html) {
+  const source = decodeHtmlEntities(String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+  return /sesi\s+sedia\s+ada\s+dikesan/i.test(source)
+    || /akaun\s+ini\s+sedang\s+aktif\s+di\s+tempat\s+lain/i.test(source)
+    || /sesi\s+tersebut\s+akan\s+ditamatkan/i.test(source);
+}
+
+function azobssJupemAutoTakeoverEnabled() {
+  const raw = String(process.env.JUPEM_EBIZ_AUTO_TAKEOVER_SESSION ?? "true").trim().toLowerCase();
+  return !["0", "false", "off", "no", "disabled"].includes(raw);
+}
+
+function azobssJupemExtractUrlFromOnclick(onclick, baseUrl) {
+  const source = decodeHtmlEntities(String(onclick || ""));
+  const patterns = [
+    /(?:window\.)?location(?:\.href)?\s*=\s*["']([^"']+)["']/i,
+    /location\.assign\(\s*["']([^"']+)["']\s*\)/i,
+    /location\.replace\(\s*["']([^"']+)["']\s*\)/i,
+    /(?:fetch|\$\.get|\$\.post)\(\s*["']([^"']+)["']/i,
+    /url\s*:\s*["']([^"']+)["']/i
+  ];
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (!match || !match[1]) continue;
+    try {
+      return new URL(match[1], baseUrl || "https://ebiz.jupem.gov.my/").toString();
+    } catch (_) {}
+  }
+  return "";
+}
+
+function azobssJupemFindExistingSessionContinue(html, currentUrl) {
+  if (!azobssJupemExistingSessionDetected(html)) return null;
+
+  const continueText = /(?:teruskan\s+di\s+sini|continue\s+here|teruskan|continue)/i;
+  const forms = azobssJupemExtractForms(html);
+
+  for (const form of forms) {
+    const submitter = (form.submitters || []).find((item) =>
+      continueText.test(String(item && (item.text || item.value || item.id) || ""))
+    );
+    if (submitter) {
+      return { type: "form", form, submitter };
+    }
+  }
+
+  const anchorPattern = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+  let anchorMatch;
+  while ((anchorMatch = anchorPattern.exec(String(html || "")))) {
+    const attrs = azobssJupemParseHtmlAttributes(anchorMatch[1]);
+    const label = decodeHtmlEntities(String(anchorMatch[2] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    if (!continueText.test(label)) continue;
+
+    const rawTarget = String(attrs.href || attrs["data-url"] || attrs["data-href"] || "");
+    if (rawTarget && rawTarget !== "#" && !/^javascript:/i.test(rawTarget)) {
+      try {
+        return { type: "url", url: new URL(rawTarget, currentUrl).toString(), method: "GET" };
+      } catch (_) {}
+    }
+
+    const onclickUrl = azobssJupemExtractUrlFromOnclick(attrs.onclick || "", currentUrl);
+    if (onclickUrl) {
+      const method = /\$\.post|method\s*:\s*["']POST["']/i.test(String(attrs.onclick || "")) ? "POST" : "GET";
+      return { type: "url", url: onclickUrl, method };
+    }
+  }
+
+  // Fallback for a modal button that is not nested inside a <form>.
+  const buttonPattern = /<button\b([^>]*)>([\s\S]*?)<\/button>/gi;
+  let buttonMatch;
+  while ((buttonMatch = buttonPattern.exec(String(html || "")))) {
+    const attrs = azobssJupemParseHtmlAttributes(buttonMatch[1]);
+    const label = decodeHtmlEntities(String(buttonMatch[2] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    if (!continueText.test(label)) continue;
+
+    const rawTarget = String(attrs.formaction || attrs["data-url"] || attrs["data-href"] || "");
+    if (rawTarget) {
+      try {
+        return {
+          type: "url",
+          url: new URL(rawTarget, currentUrl).toString(),
+          method: String(attrs.formmethod || "POST").toUpperCase()
+        };
+      } catch (_) {}
+    }
+
+    const onclickUrl = azobssJupemExtractUrlFromOnclick(attrs.onclick || "", currentUrl);
+    if (onclickUrl) {
+      const method = /\$\.post|method\s*:\s*["']POST["']/i.test(String(attrs.onclick || "")) ? "POST" : "GET";
+      return { type: "url", url: onclickUrl, method };
+    }
+  }
+
+  return null;
+}
+
+async function azobssJupemContinueExistingSession(html, url, cookie) {
+  if (!azobssJupemExistingSessionDetected(html)) {
+    return { html: String(html || ""), url: String(url || ""), cookie: String(cookie || ""), takeover: false };
+  }
+
+  if (!azobssJupemAutoTakeoverEnabled()) {
+    throw Object.assign(new Error(
+      "JUPEM eBiz mengesan sesi sedia ada pada peranti lain. Auto takeover dimatikan; tamatkan sesi JUPEM lama atau aktifkan JUPEM_EBIZ_AUTO_TAKEOVER_SESSION."
+    ), { permanent: false, code: "JUPEM_EXISTING_SESSION" });
+  }
+
+  const action = azobssJupemFindExistingSessionContinue(html, url);
+  if (!action) {
+    throw Object.assign(new Error(
+      "JUPEM eBiz mengesan sesi sedia ada, tetapi kawalan 'Teruskan di sini' tidak dapat dibaca secara automatik."
+    ), { permanent: false, code: "JUPEM_EXISTING_SESSION_ACTION_NOT_FOUND" });
+  }
+
+  let result;
+  if (action.type === "form") {
+    const overrides = {};
+    azobssJupemApplySubmitter(overrides, action.submitter);
+
+    const target = action.submitter && action.submitter.formaction
+      ? action.submitter.formaction
+      : (action.form.action || url);
+
+    result = await azobssJupemAuthFetch(target, {
+      method: action.form.method || "POST",
+      contentType: "application/x-www-form-urlencoded",
+      referer: url,
+      body: azobssJupemBuildFormBody(action.form, overrides).toString(),
+      timeoutMs: 30000
+    }, cookie);
+  } else {
+    result = await azobssJupemAuthFetch(action.url, {
+      method: action.method || "GET",
+      contentType: action.method === "POST" ? "application/x-www-form-urlencoded" : undefined,
+      referer: url,
+      body: action.method === "POST" ? "" : undefined,
+      timeoutMs: 30000
+    }, cookie);
+  }
+
+  const nextHtml = await result.response.text();
+  if (azobssJupemExistingSessionDetected(nextHtml)) {
+    throw Object.assign(new Error(
+      "JUPEM eBiz masih mengesan sesi lama selepas 'Teruskan di sini'. Cuba tamatkan sesi JUPEM pada browser/peranti lain dahulu."
+    ), { permanent: false, code: "JUPEM_EXISTING_SESSION_STILL_ACTIVE" });
+  }
+
+  return {
+    html: nextHtml,
+    url: result.url,
+    cookie: result.cookie,
+    takeover: true
+  };
+}
+
 async function azobssJupemSubmitCurrentLoginForm(first, firstHtml, username, password) {
   const directPasswordForm = azobssJupemFindPasswordForm(firstHtml);
   if (!directPasswordForm) return null;
@@ -7778,6 +7941,16 @@ async function azobssJupemResolvePasswordStage(secondHtml, secondUrl, secondCook
   let url = String(secondUrl || "https://ebiz.jupem.gov.my/Home/LogMasuk");
   let cookie = String(secondCookie || "");
 
+  // 890: JUPEM now enforces one active login at a time.
+  // If "Sesi Sedia Ada Dikesan" appears, automatically choose
+  // "Teruskan di sini" first, which terminates the older session.
+  if (azobssJupemExistingSessionDetected(html)) {
+    const takeover = await azobssJupemContinueExistingSession(html, url, cookie);
+    html = takeover.html;
+    url = takeover.url;
+    cookie = takeover.cookie;
+  }
+
   let passwordForm = azobssJupemFindPasswordForm(html);
   if (passwordForm) return { html, url, cookie, passwordForm, usedPhraseConfirmation: false };
 
@@ -7814,6 +7987,13 @@ async function azobssJupemResolvePasswordStage(secondHtml, secondUrl, secondCook
   cookie = confirmed.cookie;
   url = confirmed.url;
   html = await confirmed.response.text();
+
+  if (azobssJupemExistingSessionDetected(html)) {
+    const takeover = await azobssJupemContinueExistingSession(html, url, cookie);
+    html = takeover.html;
+    url = takeover.url;
+    cookie = takeover.cookie;
+  }
 
   passwordForm = azobssJupemFindPasswordForm(html);
   if (!passwordForm) {
@@ -7901,12 +8081,20 @@ async function azobssGetJupemAuthenticatedSession(force = false) {
       let activeCookie = loggedIn.cookie;
       let finalHtml = await loggedIn.response.text();
       let finalUrl = loggedIn.url;
+
+      if (azobssJupemExistingSessionDetected(finalHtml)) {
+        const takeover = await azobssJupemContinueExistingSession(finalHtml, finalUrl, activeCookie);
+        finalHtml = takeover.html;
+        finalUrl = takeover.url;
+        activeCookie = takeover.cookie;
+      }
+
       let userId = azobssJupemExtractAuthenticatedUserId(finalHtml, finalUrl);
 
       if (azobssJupemIsLoginPage(finalHtml, finalUrl)) {
         const credentialMessage = azobssJupemLoginFailureLooksCredentialRelated(finalHtml)
           ? "JUPEM eBiz menolak log masuk. Sila semak JUPEM_EBIZ_USERNAME / JUPEM_EBIZ_PASSWORD di Render atau status akaun eBiz."
-          : "JUPEM eBiz kembali ke halaman Log Masuk. Borang login semasa telah dihantar mengikut action/hidden field JUPEM; jika mesej ini berterusan, semak ID pengguna, kata laluan atau status akaun eBiz.";
+          : "JUPEM eBiz kembali ke halaman Log Masuk selepas aliran login. Jika tiada mesej sesi sedia ada, semak ID pengguna, kata laluan atau status akaun eBiz.";
         throw Object.assign(new Error(credentialMessage), { permanent: azobssJupemLoginFailureLooksCredentialRelated(finalHtml) });
       }
 
@@ -14770,7 +14958,7 @@ async function handler(req, res) {
         JSON.stringify({
           ok: true,
           server: "AZOBSS Backend Running",
-          jupemStoreVersion: 35,
+          jupemStoreVersion: 36,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
