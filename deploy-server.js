@@ -12115,7 +12115,8 @@ async function azCreatePublicServiceBooking(req, body = {}) {
 }
 
 
-// AZOBSS PATCH 891: reliable staged SurveyCAD Software Key capture + admin records.
+// AZOBSS PATCH 893: compact/sortable admin cards + searchable customer reference.
+// Patch 892 exact 12-digit mapping and Onetimecode removal remain active.
 // The installer submits only the requested software/hardware identifiers. Admin read/delete
 // routes remain protected by the existing Firebase-admin authorization layer.
 const AZ_SOFTWARE_KEY_COLLECTION = "softwareKeyRecords";
@@ -12129,6 +12130,9 @@ function azSoftwareKeyFormatDigits(value) {
   const digits = azSoftwareKeyDigits(value, 24);
   if (digits.length === 12) return `${digits.slice(0,4)} ${digits.slice(4,8)} ${digits.slice(8,12)}`;
   return azSoftwareKeyText(value, 80);
+}
+function azSoftwareKeyPhone(value) {
+  return azSoftwareKeyText(value, 40).replace(/[^0-9+()\-\s]/g, "").replace(/\s+/g, " ").trim();
 }
 function azSoftwareKeyFirstValue(body = {}, names = []) {
   for (const name of names) {
@@ -12144,9 +12148,10 @@ function azSoftwareKeyNormalizeCapture(body = {}) {
     captureVersion:azSoftwareKeyFirstValue(body, ["captureVersion", "version"]),
     captureStage:azSoftwareKeyFirstValue(body, ["captureStage", "stage"]),
     computerName:azSoftwareKeyFirstValue(body, ["computerName", "pcName", "machineName"]),
+    customerName:azSoftwareKeyFirstValue(body, ["customerName", "clientName", "ownerName"]),
+    customerPhone:azSoftwareKeyFirstValue(body, ["customerPhone", "phone", "phoneNumber", "customerTelephone"]),
     systemId:azSoftwareKeyFirstValue(body, ["systemId", "systemID", "system_id"]),
     systemCode:azSoftwareKeyFirstValue(body, ["systemCode", "systemcode", "system_code"]),
-    oneTimeCode:azSoftwareKeyFirstValue(body, ["oneTimeCode", "onetimeCode", "onetimecode", "one_time_code"]),
     serialKey:azSoftwareKeyFirstValue(body, ["serialKey", "keySerial", "licenseKey", "serial"]),
     motherboardId:azSoftwareKeyFirstValue(body, ["motherboardId", "motherboardID", "motherboard_id", "baseboardSerial"]),
     motherboardManufacturer:azSoftwareKeyFirstValue(body, ["motherboardManufacturer", "boardManufacturer"]),
@@ -12168,13 +12173,18 @@ async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
   if (!adminManual && !azSoftwareKeyPublicCaptureAllowed(input)) throw Object.assign(new Error("Invalid Software Key capture source."), { statusCode:400 });
   const systemIdDigits = azSoftwareKeyDigits(input.systemId, 24);
   const systemCodeDigits = azSoftwareKeyDigits(input.systemCode, 24);
-  const oneTimeDigits = azSoftwareKeyDigits(input.oneTimeCode, 24);
   const serialKey = azSoftwareKeyText(input.serialKey, 120);
   const motherboardId = azSoftwareKeyText(input.motherboardId, 160);
-  if (systemIdDigits.length < 8 || systemIdDigits.length > 24) throw Object.assign(new Error("System ID is invalid."), { statusCode:400 });
-  if (systemCodeDigits.length < 8 || systemCodeDigits.length > 24) throw Object.assign(new Error("Systemcode is invalid."), { statusCode:400 });
+  // Butiran pelanggan hanya boleh dimasukkan melalui tindakan Admin.
+  const customerName = adminManual ? azSoftwareKeyText(input.customerName, 120) : "";
+  const customerPhone = adminManual ? azSoftwareKeyPhone(input.customerPhone) : "";
+  const customerPhoneDigits = azSoftwareKeyDigits(customerPhone, 20);
+  if (systemIdDigits.length !== 12 || /^([0-9])\1{11}$/.test(systemIdDigits)) throw Object.assign(new Error("System ID must contain exactly 12 valid digits."), { statusCode:400 });
+  if (systemCodeDigits.length !== 12 || /^([0-9])\1{11}$/.test(systemCodeDigits)) throw Object.assign(new Error("Systemcode must contain exactly 12 valid digits."), { statusCode:400 });
+  if (systemIdDigits === systemCodeDigits) throw Object.assign(new Error("System ID and Systemcode must be different."), { statusCode:400 });
   if (!motherboardId || motherboardId.length < 2) throw Object.assign(new Error("Motherboard ID is required."), { statusCode:400 });
-  if (adminManual && !serialKey && !oneTimeDigits) throw Object.assign(new Error("Serial key / Onetimecode is required."), { statusCode:400 });
+  if (adminManual && !serialKey) throw Object.assign(new Error("Serial key is required."), { statusCode:400 });
+  if (customerPhone && (customerPhoneDigits.length < 9 || customerPhoneDigits.length > 15)) throw Object.assign(new Error("Customer phone must contain 9 to 15 digits."), { statusCode:400 });
 
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
@@ -12182,14 +12192,15 @@ async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
     recordId:"",
     source:adminManual ? "AZOBSS_Admin_Manual" : "AZOBSS_Installer_Software_Key_v1",
     captureVersion:azSoftwareKeyText(input.captureVersion || (adminManual ? "manual-1" : "2"), 30),
-    captureStage:azSoftwareKeyText(input.captureStage || (serialKey || oneTimeDigits ? "complete" : "identifiers"), 40),
+    captureStage:azSoftwareKeyText(input.captureStage || (serialKey ? "complete" : "identifiers"), 40),
     computerName:azSoftwareKeyText(input.computerName, 100),
+    customerName,
+    customerPhone,
+    customerPhoneDigits,
     systemId:azSoftwareKeyFormatDigits(systemIdDigits),
     systemIdDigits,
     systemCode:azSoftwareKeyFormatDigits(systemCodeDigits),
     systemCodeDigits,
-    oneTimeCode:oneTimeDigits ? azSoftwareKeyFormatDigits(oneTimeDigits) : "",
-    oneTimeCodeDigits:oneTimeDigits,
     serialKey,
     motherboardId,
     motherboardManufacturer:azSoftwareKeyText(input.motherboardManufacturer, 120),
@@ -12209,9 +12220,10 @@ async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
     row.createdAt = azSoftwareKeyText(old.createdAt, 80) || nowIso;
     row.createdAtMs = Number(old.createdAtMs || nowMs) || nowMs;
     row.serialKey = serialKey || azSoftwareKeyText(old.serialKey, 120);
-    row.oneTimeCodeDigits = oneTimeDigits || azSoftwareKeyDigits(old.oneTimeCodeDigits || old.oneTimeCode, 24);
-    row.oneTimeCode = row.oneTimeCodeDigits ? azSoftwareKeyFormatDigits(row.oneTimeCodeDigits) : "";
     row.computerName = row.computerName || azSoftwareKeyText(old.computerName, 100);
+    row.customerName = row.customerName || azSoftwareKeyText(old.customerName, 120);
+    row.customerPhone = row.customerPhone || azSoftwareKeyPhone(old.customerPhone);
+    row.customerPhoneDigits = row.customerPhoneDigits || azSoftwareKeyDigits(old.customerPhoneDigits || old.customerPhone, 20);
     row.motherboardManufacturer = row.motherboardManufacturer || azSoftwareKeyText(old.motherboardManufacturer, 120);
     row.motherboardProduct = row.motherboardProduct || azSoftwareKeyText(old.motherboardProduct, 120);
     row.captureCount = Math.max(0, Number(old.captureCount || 0) || 0) + 1;
@@ -12220,13 +12232,20 @@ async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
     row.createdAtMs = nowMs;
     row.captureCount = 1;
   }
-  row.captureStatus = row.serialKey || row.oneTimeCodeDigits ? "complete" : "pending-key";
+  row.captureStatus = row.serialKey ? "complete" : "pending-key";
   if (!azSoftwareKeyText(input.captureStage, 40)) row.captureStage = row.captureStatus === "complete" ? "complete" : "identifiers";
   if (row.captureStatus === "complete") {
     const oldCompletedAt = existing.exists ? azSoftwareKeyText((existing.data() || {}).completedAt, 80) : "";
     row.completedAt = oldCompletedAt || nowIso;
   }
   await ref.set(azJsonSafe(row), { merge:true });
+  // Bersihkan medan lama supaya Onetimecode benar-benar tiada dalam rekod baharu/kemas kini.
+  try {
+    await ref.update({
+      oneTimeCode:firebaseAdmin.firestore.FieldValue.delete(),
+      oneTimeCodeDigits:firebaseAdmin.firestore.FieldValue.delete()
+    });
+  } catch (_) {}
   return {
     ok:true,
     recordId:row.recordId,
@@ -12825,7 +12844,14 @@ async function handler(req, res) {
         try { snap = await db.collection(AZ_SOFTWARE_KEY_COLLECTION).orderBy("updatedAtMs", "desc").limit(maxRows).get(); }
         catch (_) { snap = await db.collection(AZ_SOFTWARE_KEY_COLLECTION).limit(maxRows).get(); }
         const records = [];
-        snap.forEach(docSnap => records.push(azJsonSafe(Object.assign({ id:docSnap.id }, docSnap.data() || {}))));
+        snap.forEach(docSnap => {
+          const row = azJsonSafe(Object.assign({ id:docSnap.id }, docSnap.data() || {}));
+          // Legacy records may still contain these fields in Firestore. Never
+          // expose them to the current admin page or API response.
+          delete row.oneTimeCode;
+          delete row.oneTimeCodeDigits;
+          records.push(row);
+        });
         records.sort((a,b) => Number(b.updatedAtMs || b.createdAtMs || 0) - Number(a.updatedAtMs || a.createdAtMs || 0));
         return send(res, 200, JSON.stringify({ ok:true, records, count:records.length }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (error) {
@@ -12844,6 +12870,23 @@ async function handler(req, res) {
         if (action === "create-manual") {
           const result = await azCreateSoftwareKeyRecord(req, body || {}, { adminManual:true });
           return send(res, 200, JSON.stringify(Object.assign({ action }, result), null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
+        if (action === "update-customer") {
+          const recordId = azSoftwareKeyText(body.recordId || body.id, 100);
+          if (!recordId) return send(res, 400, JSON.stringify({ ok:false, error:"Software Key record ID is required." }, null, 2), "application/json");
+          const customerName = azSoftwareKeyText(body.customerName, 120);
+          const customerPhone = azSoftwareKeyPhone(body.customerPhone);
+          const customerPhoneDigits = azSoftwareKeyDigits(customerPhone, 20);
+          if (customerPhone && (customerPhoneDigits.length < 9 || customerPhoneDigits.length > 15)) {
+            return send(res, 400, JSON.stringify({ ok:false, error:"Customer phone must contain 9 to 15 digits." }, null, 2), "application/json");
+          }
+          const ref = db.collection(AZ_SOFTWARE_KEY_COLLECTION).doc(recordId);
+          const existing = await ref.get();
+          if (!existing.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Software Key record was not found." }, null, 2), "application/json");
+          const nowMs = Date.now();
+          const nowIso = new Date(nowMs).toISOString();
+          await ref.set({ customerName, customerPhone, customerPhoneDigits, updatedAt:nowIso, updatedAtMs:nowMs }, { merge:true });
+          return send(res, 200, JSON.stringify({ ok:true, action, recordId, customerName, customerPhone, updatedAt:nowIso, updatedAtMs:nowMs }, null, 2), "application/json", { "Cache-Control":"no-store" });
         }
         if (action === "bulk-delete") {
           const sourceIds = Array.isArray(body.recordIds) ? body.recordIds : [];

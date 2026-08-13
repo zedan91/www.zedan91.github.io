@@ -1799,6 +1799,15 @@ body[data-dashboard-page="admin"] .topbar{
 </style>
 
 
+<style id="az893-admin-software-key-compact-style">
+#softwarekeys>h2{margin-bottom:3px}#softwarekeys>.az-section-help{margin:0 0 7px;font-size:12px;line-height:1.35}.az880-software-key-toolbar-card{padding:9px 10px!important;margin-bottom:8px!important}.az880-software-key-toolbar{display:grid!important;grid-template-columns:minmax(210px,1fr) minmax(185px,auto) repeat(3,auto);gap:6px!important;align-items:center}.az880-software-key-toolbar input,.az880-software-key-toolbar select,.az880-software-key-toolbar .btn{min-height:34px!important;height:34px!important;padding:6px 10px!important;font-size:12px!important}.az880-software-key-summary,.az880-software-key-bulk{gap:9px!important;margin-top:6px!important;font-size:11px!important;line-height:1.25}.az880-software-key-bulk{padding-top:6px!important}.az880-software-key-bulk .btn{min-height:30px!important;padding:5px 10px!important;font-size:11px!important}.az880-software-key-list{grid-template-columns:repeat(auto-fit,minmax(410px,1fr));gap:8px!important;align-items:start}.az880-key-card{padding:8px!important;border-radius:11px!important;box-shadow:0 2px 8px rgba(15,23,42,.045)!important}.az880-key-head{gap:7px!important;margin-bottom:6px!important}.az880-key-title{gap:6px!important;min-width:0}.az880-key-title input{margin-top:3px!important}.az893-key-name-line{display:flex;align-items:center;gap:5px;flex-wrap:wrap;line-height:1.15}.az880-key-pc{font-size:13px!important}.az893-customer-name,.az893-customer-phone,.az893-customer-empty{display:inline-flex;align-items:center;max-width:160px;padding:2px 6px;border-radius:999px;font-size:10px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az893-customer-name{background:#dbeafe;color:#1e40af}.az893-customer-phone{background:#ecfdf5;color:#047857}.az893-customer-empty{background:#f1f5f9;color:#64748b}.az880-key-meta{max-width:100%;margin-top:2px!important;font-size:10px!important;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az880-key-actions{gap:4px!important;flex-wrap:wrap;justify-content:flex-end}.az880-key-actions .btn{min-height:27px!important;padding:4px 7px!important;border-radius:7px!important;font-size:10px!important}.az891-key-status{padding:3px 6px!important;font-size:9px!important}.az880-key-grid{gap:5px!important}.az880-key-field{padding:5px 7px!important;border-radius:8px!important}.az880-key-field.is-wide{grid-column:auto!important}.az880-key-label{margin-bottom:1px!important;font-size:9px!important;line-height:1.1}.az880-key-value-row{gap:4px!important}.az880-key-value{font-size:12px!important;line-height:1.2}.az880-key-copy{padding:3px 5px!important;border-radius:6px!important;font-size:9px!important}.az893-customer-edit-btn{background:#2563eb!important}.az893-customer-edit-btn:hover{background:#1d4ed8!important}.az893-key-modal-card{width:min(510px,100%)!important}.az893-customer-record{margin-top:5px;color:#93c5fd;font:700 11px Consolas,"Courier New",monospace;word-break:break-all}.az893-edit-form-grid{grid-template-columns:1fr 1fr!important}
+.az880-key-title{flex:1!important}
+@media(max-width:1180px){.az880-software-key-toolbar{grid-template-columns:minmax(210px,1fr) minmax(180px,auto) repeat(2,auto)}.az880-software-key-toolbar #exportSoftwareKeys{grid-column:auto}.az880-software-key-list{grid-template-columns:1fr}}
+@media(max-width:760px){.az880-software-key-toolbar{grid-template-columns:1fr 1fr}.az880-software-key-toolbar input,.az880-software-key-toolbar select{grid-column:1/-1}.az880-key-grid{grid-template-columns:1fr 1fr!important}.az880-key-actions{width:100%;justify-content:flex-start}.az893-edit-form-grid{grid-template-columns:1fr!important}}
+@media(max-width:460px){.az880-software-key-toolbar{grid-template-columns:1fr}.az880-software-key-toolbar>*{grid-column:1!important}.az880-key-grid{grid-template-columns:1fr!important}.az893-customer-name,.az893-customer-phone{max-width:130px}}
+</style>
+
+
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2390,10 +2399,22 @@ body[data-dashboard-page="admin"] .topbar{
 
     <section id="softwarekeys" class="section">
       <h2>🗝️ Software Key</h2>
-      <p class="az-section-help">Rekod SurveyCAD yang dihantar oleh AZOBSS Installer. System ID, Systemcode dan motherboard ID disimpan dahulu; rekod yang sama dilengkapkan automatik apabila key serial diterima.</p>
+      <p class="az-section-help">Rekod SurveyCAD daripada AZOBSS Installer. Gunakan Edit untuk tambah nama dan telefon pelanggan; semua maklumat boleh dicari, disusun dan dieksport.</p>
       <div class="card az880-software-key-toolbar-card">
         <div class="toolbar az880-software-key-toolbar">
-          <input id="softwareKeySearch" placeholder="Cari PC, System ID, Systemcode, motherboard ID atau key..." style="flex:1;min-width:260px">
+          <input id="softwareKeySearch" placeholder="Cari pelanggan, telefon, PC, System ID atau key..." style="flex:1;min-width:210px">
+          <select id="softwareKeySort" aria-label="Susun Software Key">
+            <option value="updated-desc">Dikemas kini: Terbaharu</option>
+            <option value="updated-asc">Dikemas kini: Terlama</option>
+            <option value="created-desc">Tarikh rekod: Terbaharu</option>
+            <option value="created-asc">Tarikh rekod: Terlama</option>
+            <option value="customer-asc">Pelanggan: A → Z</option>
+            <option value="customer-desc">Pelanggan: Z → A</option>
+            <option value="pc-asc">Nama PC: A → Z</option>
+            <option value="pc-desc">Nama PC: Z → A</option>
+            <option value="status-complete">Status: Lengkap dahulu</option>
+            <option value="status-pending">Status: Menunggu dahulu</option>
+          </select>
           <button class="btn az882-add-manual-btn" id="addManualSoftwareKey" type="button">＋ Add Manual</button>
           <button class="btn" id="refreshSoftwareKeys" type="button">↻ Refresh</button>
           <button class="btn gray" id="exportSoftwareKeys" type="button">⇩ Export CSV</button>
@@ -2422,17 +2443,37 @@ body[data-dashboard-page="admin"] .topbar{
         <form id="manualSoftwareKeyForm" class="az882-key-form" autocomplete="off">
           <div class="az882-key-form-grid">
             <div class="az882-key-form-field"><label for="manualKeyComputerName">Computer Name</label><input id="manualKeyComputerName" maxlength="100" placeholder="Contoh: DESKTOP-AZOBSS"></div>
+            <div class="az882-key-form-field"><label for="manualKeyCustomerName">Nama Pelanggan</label><input id="manualKeyCustomerName" maxlength="120" placeholder="Contoh: Ahmad Zaidan"></div>
+            <div class="az882-key-form-field"><label for="manualKeyCustomerPhone">No. Telefon Pelanggan</label><input id="manualKeyCustomerPhone" type="tel" inputmode="tel" maxlength="40" placeholder="Contoh: 012-345 6789"></div>
             <div class="az882-key-form-field"><label for="manualKeyMotherboardId">Motherboard ID *</label><input id="manualKeyMotherboardId" maxlength="160" required placeholder="Contoh: M80-FC000900389"></div>
             <div class="az882-key-form-field"><label for="manualKeySystemId">System ID *</label><input id="manualKeySystemId" inputmode="numeric" maxlength="40" required placeholder="9900 0205 1089"></div>
             <div class="az882-key-form-field"><label for="manualKeySystemCode">Systemcode *</label><input id="manualKeySystemCode" inputmode="numeric" maxlength="40" required placeholder="3506 0811 1696"></div>
-            <div class="az882-key-form-field"><label for="manualKeyOneTimeCode">Onetimecode</label><input id="manualKeyOneTimeCode" inputmode="numeric" maxlength="40" placeholder="3924 5399 5342"></div>
-            <div class="az882-key-form-field"><label for="manualKeySerial">Key Serial</label><input id="manualKeySerial" maxlength="120" placeholder="Masukkan key daripada R.exe"></div>
+            <div class="az882-key-form-field"><label for="manualKeySerial">Key Serial *</label><input id="manualKeySerial" maxlength="120" required placeholder="Masukkan key daripada R.exe"></div>
             <div class="az882-key-form-field"><label for="manualKeyBoardManufacturer">Motherboard Manufacturer</label><input id="manualKeyBoardManufacturer" maxlength="120" placeholder="Contoh: ASUS"></div>
             <div class="az882-key-form-field"><label for="manualKeyBoardProduct">Motherboard Product / Model</label><input id="manualKeyBoardProduct" maxlength="120" placeholder="Contoh: PRIME B760M-A"></div>
           </div>
-          <div class="az882-key-form-note">* Wajib: System ID, Systemcode dan Motherboard ID. Isi sekurang-kurangnya salah satu antara <b>Onetimecode</b> atau <b>Key Serial</b>.</div>
+          <div class="az882-key-form-note">* Wajib: System ID, Systemcode, Motherboard ID dan Key Serial.</div>
           <div id="manualSoftwareKeyError" class="az882-key-form-error"></div>
           <div class="az882-key-modal-actions"><button class="btn gray" id="cancelManualSoftwareKey" type="button">Cancel</button><button class="btn az882-add-manual-btn" id="saveManualSoftwareKey" type="submit">Save Manual</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div id="softwareKeyCustomerModal" class="az882-key-modal" aria-hidden="true">
+      <div class="az882-key-modal-card az893-key-modal-card" role="dialog" aria-modal="true" aria-labelledby="softwareKeyCustomerTitle">
+        <div class="az882-key-modal-head">
+          <div><h3 id="softwareKeyCustomerTitle">👤 Maklumat Pelanggan</h3><p>Nama dan nombor telefon akan dipaparkan di sebelah nama PC serta boleh digunakan dalam carian.</p><div id="softwareKeyCustomerRecord" class="az893-customer-record"></div></div>
+          <button class="az882-key-modal-close" id="closeSoftwareKeyCustomer" type="button" aria-label="Close">×</button>
+        </div>
+        <form id="softwareKeyCustomerForm" class="az882-key-form" autocomplete="off">
+          <input id="softwareKeyCustomerRecordId" type="hidden">
+          <div class="az882-key-form-grid az893-edit-form-grid">
+            <div class="az882-key-form-field"><label for="softwareKeyCustomerName">Nama Pelanggan</label><input id="softwareKeyCustomerName" maxlength="120" placeholder="Contoh: Ahmad Zaidan"></div>
+            <div class="az882-key-form-field"><label for="softwareKeyCustomerPhone">No. Telefon</label><input id="softwareKeyCustomerPhone" type="tel" inputmode="tel" maxlength="40" placeholder="Contoh: 012-345 6789"></div>
+          </div>
+          <div class="az882-key-form-note">Kedua-dua medan boleh dikosongkan jika maklumat pelanggan mahu dibuang.</div>
+          <div id="softwareKeyCustomerError" class="az882-key-form-error"></div>
+          <div class="az882-key-modal-actions"><button class="btn gray" id="cancelSoftwareKeyCustomer" type="button">Cancel</button><button class="btn az882-add-manual-btn" id="saveSoftwareKeyCustomer" type="submit">Save Customer</button></div>
         </form>
       </div>
     </div>
@@ -8029,7 +8070,6 @@ document.addEventListener('click', async function(e){
     else window.azSalesReceiptsOpenFromServiceBooking(row);
   }
   function exportCsv(){const rows=filtered();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const head=['Booking ID','Created','Status','Customer','Phone','Email','Area','Floor / Unit','WGS84','Distance from AZOBSS Shop (km)','Map URL','Full Address','Device','Screen Size','Screen Type','Services','Estimate Min','Estimate Max','Estimate Display','Final Price','Invoice No','Receipt No','Invoice Status','Payment Status','Pickup Fee','Delivery Fee','Issues','Method','Preferred Date','Preferred Time','Backup','Problem Details','Extra Requests'];const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.bookingId,date(x.createdAtMs),statusLabel(x.status),x.customerName,x.customerPhone,x.customerEmail,x.customerArea,x.floorUnit,x.locationWgs84,bookingDistanceToShop(x),x.locationMapUrl,x.fullAddress,[x.deviceType,x.deviceBrand,x.deviceModel].join(' '),x.screenSize,x.screenType,(x.services||[]).map(s=>s.name+' ('+servicePrice(s)+')').join(' | '),x.estimatedMinimum,x.estimatedMaximum,bookingEstimate(x),x.finalPrice,x.invoiceNo,x.receiptNo,x.invoiceStatus,x.paymentStatus,x.pickupFee||0,x.deliveryFee||0,(x.issues||[]).join(' | '),x.serviceMethod,x.preferredDate,x.preferredTime,x.backupRequirement,x.problemDetails,x.extraRequests].map(q).join(',')));const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='AZOBSS-Service-Bookings-Invoice-Ready.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-  document.addEventListener('submit',async e=>{if(e.target?.id==='manualSoftwareKeyForm'){e.preventDefault();await saveManual();}});
   document.addEventListener('click',async e=>{
     const tab=e.target.closest('[data-tab="servicebookings"]');if(tab)setTimeout(()=>load(),0);
     if(e.target.id==='refreshServiceBookings'){load({force:true});return;}
@@ -8064,7 +8104,7 @@ document.addEventListener('click', async function(e){
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=808" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
-<script id="az891-admin-software-key-script">
+<script id="az893-admin-software-key-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=60*1000;
@@ -8074,16 +8114,57 @@ document.addEventListener('click', async function(e){
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const text=v=>String(v??'').trim();
+  const digits=v=>text(v).replace(/\D+/g,'');
   function dt(v){const n=Number(v||0);const d=n?new Date(n):new Date(v||0);return Number.isNaN(d.getTime())?'-':new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium',timeStyle:'short'}).format(d);}
+  function timeValue(row,kind='updated'){
+    const value=kind==='created'?(row?.createdAtMs||row?.createdAt):(row?.updatedAtMs||row?.updatedAt||row?.createdAtMs||row?.createdAt);
+    const numeric=Number(value||0);if(Number.isFinite(numeric)&&numeric>0)return numeric;
+    const parsed=Date.parse(value||'');return Number.isFinite(parsed)?parsed:0;
+  }
+  function compareText(a,b){return text(a).localeCompare(text(b),'ms',{sensitivity:'base',numeric:true});}
+  function compareOptionalText(a,b,direction=1){
+    const left=text(a),right=text(b);
+    if(!left&&!right)return 0;
+    if(!left)return 1;
+    if(!right)return -1;
+    return direction*compareText(left,right);
+  }
+  function sortRows(rows){
+    const mode=text($('softwareKeySort')?.value)||'updated-desc';
+    const copy=[...rows];
+    const tie=(a,b)=>timeValue(b)-timeValue(a)||compareText(a.recordId||a.id,b.recordId||b.id);
+    copy.sort((a,b)=>{
+      if(mode==='updated-asc')return timeValue(a)-timeValue(b)||tie(a,b);
+      if(mode==='created-desc')return timeValue(b,'created')-timeValue(a,'created')||tie(a,b);
+      if(mode==='created-asc')return timeValue(a,'created')-timeValue(b,'created')||tie(a,b);
+      if(mode==='customer-asc')return compareOptionalText(a.customerName,b.customerName,1)||tie(a,b);
+      if(mode==='customer-desc')return compareOptionalText(a.customerName,b.customerName,-1)||tie(a,b);
+      if(mode==='pc-asc')return compareText(a.computerName,b.computerName)||tie(a,b);
+      if(mode==='pc-desc')return compareText(b.computerName,a.computerName)||tie(a,b);
+      if(mode==='status-complete')return (captureStatus(a)==='complete'?0:1)-(captureStatus(b)==='complete'?0:1)||tie(a,b);
+      if(mode==='status-pending')return (captureStatus(a)==='pending-key'?0:1)-(captureStatus(b)==='pending-key'?0:1)||tie(a,b);
+      return timeValue(b)-timeValue(a)||tie(a,b);
+    });
+    return copy;
+  }
   async function request(path,opt={}){
     for(let i=0;i<50&&typeof window.azAdminFetchJson!=='function';i++)await new Promise(r=>setTimeout(r,50));
     if(typeof window.azAdminFetchJson!=='function')throw new Error('Admin authentication helper is not ready. Refresh the page and try again.');
     return window.azAdminFetchJson(API+path,opt);
   }
+  try{
+    const savedSort=localStorage.getItem('azobssSoftwareKeySort');
+    const sort=$('softwareKeySort');
+    if(sort&&savedSort&&[...sort.options].some(option=>option.value===savedSort))sort.value=savedSort;
+  }catch(_){ }
   function filtered(){
     const q=text($('softwareKeySearch')?.value).toLowerCase();
-    if(!q)return cache;
-    return cache.filter(x=>[x.recordId,x.computerName,x.systemId,x.systemCode,x.oneTimeCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct].some(v=>text(v).toLowerCase().includes(q)));
+    const qDigits=digits(q);
+    const rows=!q?cache:cache.filter(x=>{
+      const values=[x.recordId,x.computerName,x.customerName,x.customerPhone,x.customerPhoneDigits,x.systemId,x.systemCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct];
+      return values.some(v=>text(v).toLowerCase().includes(q))||(qDigits&&values.some(v=>digits(v).includes(qDigits)));
+    });
+    return sortRows(rows);
   }
   function updateBulk(rows=filtered()){
     const visibleIds=new Set(rows.map(x=>x.recordId||x.id).filter(Boolean));
@@ -8098,7 +8179,7 @@ document.addEventListener('click', async function(e){
     const v=text(value)||'-';
     return `<div class="az880-key-field${wide?' is-wide':''}"><div class="az880-key-label">${esc(label)}</div><div class="az880-key-value-row"><div class="az880-key-value">${esc(v)}</div>${v!=='-'?`<button class="az880-key-copy" type="button" data-copy="${esc(v)}">Copy</button>`:''}</div></div>`;
   }
-  function captureStatus(row){return text(row?.captureStatus)||((text(row?.serialKey)||text(row?.oneTimeCode))?'complete':'pending-key');}
+  function captureStatus(row){return text(row?.serialKey)?'complete':'pending-key';}
   function render(){
     const rows=filtered();
     const list=$('softwareKeyList');if(!list)return;
@@ -8109,12 +8190,17 @@ document.addEventListener('click', async function(e){
       const id=text(x.recordId||x.id);
       const board=[text(x.motherboardManufacturer),text(x.motherboardProduct)].filter(Boolean).join(' • ');
       const status=captureStatus(x),pending=status==='pending-key';
+      const customerName=text(x.customerName),customerPhone=text(x.customerPhone);
+      const customerHtml=customerName||customerPhone
+        ? `${customerName?`<span class="az893-customer-name" title="Nama pelanggan">${esc(customerName)}</span>`:''}${customerPhone?`<span class="az893-customer-phone" title="No. telefon pelanggan">☎ ${esc(customerPhone)}</span>`:''}`
+        : '<span class="az893-customer-empty">Pelanggan belum diisi</span>';
+      const meta=[dt(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt),board,id].filter(Boolean).join(' • ');
       return `<article class="az880-key-card${pending?' is-pending':''}" data-record="${esc(id)}">
-        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div><div class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</div><div class="az880-key-meta">${esc(id)} • ${esc(dt(x.updatedAtMs||x.createdAtMs))}${board?' • '+esc(board):''}</div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu key':'Lengkap'}</span><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
+        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div><div class="az893-key-name-line"><span class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</span>${customerHtml}</div><div class="az880-key-meta" title="${esc(meta)}">${esc(meta)}</div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
         <div class="az880-key-grid">
           ${field('System ID',x.systemId)}${field('Systemcode',x.systemCode)}
-          ${field('Onetimecode',x.oneTimeCode)}${field('Motherboard ID',x.motherboardId)}
-          ${field('Key Serial',x.serialKey,true)}
+          ${field('Motherboard ID',x.motherboardId)}
+          ${field('Key Serial',x.serialKey)}
         </div>
       </article>`;
     }).join('')||'<div class="az880-key-empty">Tiada rekod Software Key yang sepadan.</div>';
@@ -8147,20 +8233,23 @@ document.addEventListener('click', async function(e){
     const payload={
       action:'create-manual',
       computerName:manualValue('manualKeyComputerName'),
+      customerName:manualValue('manualKeyCustomerName'),
+      customerPhone:manualValue('manualKeyCustomerPhone'),
       motherboardId:manualValue('manualKeyMotherboardId'),
       systemId:manualValue('manualKeySystemId'),
       systemCode:manualValue('manualKeySystemCode'),
-      oneTimeCode:manualValue('manualKeyOneTimeCode'),
       serialKey:manualValue('manualKeySerial'),
       motherboardManufacturer:manualValue('manualKeyBoardManufacturer'),
       motherboardProduct:manualValue('manualKeyBoardProduct')
     };
-    const sid=manualDigits(payload.systemId),scode=manualDigits(payload.systemCode),otc=manualDigits(payload.oneTimeCode);
+    const sid=manualDigits(payload.systemId),scode=manualDigits(payload.systemCode),phone=manualDigits(payload.customerPhone);
     let msg='';
-    if(sid.length<8||sid.length>24)msg='System ID tidak sah.';
-    else if(scode.length<8||scode.length>24)msg='Systemcode tidak sah.';
+    if(sid.length!==12||/^([0-9])\1{11}$/.test(sid))msg='System ID mesti tepat 12 digit yang sah.';
+    else if(scode.length!==12||/^([0-9])\1{11}$/.test(scode))msg='Systemcode mesti tepat 12 digit yang sah.';
+    else if(sid===scode)msg='System ID dan Systemcode mesti berbeza.';
     else if(!payload.motherboardId||payload.motherboardId.length<2)msg='Motherboard ID wajib diisi.';
-    else if(!payload.serialKey&&!otc)msg='Isi sekurang-kurangnya Onetimecode atau Key Serial.';
+    else if(!payload.serialKey)msg='Key Serial wajib diisi.';
+    else if(payload.customerPhone&&(phone.length<9||phone.length>15))msg='No. telefon pelanggan mesti mengandungi 9 hingga 15 digit.';
     if(msg){if(errorBox){errorBox.textContent=msg;errorBox.classList.add('is-show');}return;}
     if(errorBox){errorBox.textContent='';errorBox.classList.remove('is-show');}
     if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving...';}
@@ -8171,28 +8260,69 @@ document.addEventListener('click', async function(e){
     }catch(err){if(errorBox){errorBox.textContent=err.message||String(err);errorBox.classList.add('is-show');}}
     finally{if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Manual';}}
   }
+  function customerModal(open,row=null){
+    const modal=$('softwareKeyCustomerModal');if(!modal)return;
+    modal.classList.toggle('is-open',!!open);modal.setAttribute('aria-hidden',open?'false':'true');
+    if(open&&row){
+      const id=text(row.recordId||row.id);
+      $('softwareKeyCustomerRecordId').value=id;
+      $('softwareKeyCustomerName').value=text(row.customerName);
+      $('softwareKeyCustomerPhone').value=text(row.customerPhone);
+      $('softwareKeyCustomerRecord').textContent=`${text(row.computerName)||'Unknown PC'} • ${id}`;
+      setTimeout(()=>$('softwareKeyCustomerName')?.focus(),50);
+    }else if(!open){
+      $('softwareKeyCustomerForm')?.reset();
+      if($('softwareKeyCustomerRecord'))$('softwareKeyCustomerRecord').textContent='';
+      $('softwareKeyCustomerError')?.classList.remove('is-show');
+    }
+  }
+  async function saveCustomer(){
+    const errorBox=$('softwareKeyCustomerError'),saveBtn=$('saveSoftwareKeyCustomer');
+    const payload={action:'update-customer',recordId:manualValue('softwareKeyCustomerRecordId'),customerName:manualValue('softwareKeyCustomerName'),customerPhone:manualValue('softwareKeyCustomerPhone')};
+    const phone=manualDigits(payload.customerPhone);
+    let msg='';
+    if(!payload.recordId)msg='Rekod Software Key tidak ditemui.';
+    else if(payload.customerPhone&&(phone.length<9||phone.length>15))msg='No. telefon mesti mengandungi 9 hingga 15 digit.';
+    if(msg){if(errorBox){errorBox.textContent=msg;errorBox.classList.add('is-show');}return;}
+    if(errorBox){errorBox.textContent='';errorBox.classList.remove('is-show');}
+    if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving...';}
+    try{
+      await request('/api/admin/software-keys-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      customerModal(false);lastLoadedAt=0;await load({force:true});
+      const notice=$('softwareKeyNotice');if(notice)notice.textContent='Maklumat pelanggan berjaya dikemas kini.';
+    }catch(err){if(errorBox){errorBox.textContent=err.message||String(err);errorBox.classList.add('is-show');}}
+    finally{if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save Customer';}}
+  }
   function exportCsv(){
     const rows=filtered(),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-    const head=['Record ID','Updated','Status','Computer Name','System ID','Systemcode','Onetimecode','Key Serial','Motherboard ID','Motherboard Manufacturer','Motherboard Product','Source'];
-    const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.recordId||x.id,dt(x.updatedAtMs||x.createdAtMs),captureStatus(x),x.computerName,x.systemId,x.systemCode,x.oneTimeCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct,x.source].map(q).join(',')));
+    const head=['Record ID','Created','Updated','Status','Computer Name','Customer Name','Customer Phone','System ID','Systemcode','Key Serial','Motherboard ID','Motherboard Manufacturer','Motherboard Product','Source'];
+    const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.recordId||x.id,dt(x.createdAtMs||x.createdAt),dt(x.updatedAtMs||x.updatedAt||x.createdAtMs),captureStatus(x),x.computerName,x.customerName,x.customerPhone,x.systemId,x.systemCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct,x.source].map(q).join(',')));
     const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`AZOBSS-Software-Keys-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
+  document.addEventListener('submit',async e=>{
+    if(e.target?.id==='manualSoftwareKeyForm'){e.preventDefault();await saveManual();return;}
+    if(e.target?.id==='softwareKeyCustomerForm'){e.preventDefault();await saveCustomer();}
+  });
   document.addEventListener('input',e=>{if(e.target?.id==='softwareKeySearch')render();});
   document.addEventListener('change',e=>{
     if(e.target?.matches('[data-key-select]')){const id=e.target.getAttribute('data-key-select');if(e.target.checked)selected.add(id);else selected.delete(id);updateBulk();return;}
     if(e.target?.id==='softwareKeySelectAll'){const rows=filtered();rows.forEach(x=>{const id=x.recordId||x.id;if(id){if(e.target.checked)selected.add(id);else selected.delete(id);}});render();}
+    if(e.target?.id==='softwareKeySort'){try{localStorage.setItem('azobssSoftwareKeySort',e.target.value);}catch(_){}render();}
   });
   document.addEventListener('click',async e=>{
     if(e.target.closest('#addManualSoftwareKey')){manualModal(true);return;}
     if(e.target.closest('#closeManualSoftwareKey')||e.target.closest('#cancelManualSoftwareKey')){manualModal(false);return;}
     if(e.target?.id==='manualSoftwareKeyModal'){manualModal(false);return;}
+    if(e.target.closest('#closeSoftwareKeyCustomer')||e.target.closest('#cancelSoftwareKeyCustomer')){customerModal(false);return;}
+    if(e.target?.id==='softwareKeyCustomerModal'){customerModal(false);return;}
     const copy=e.target.closest('[data-copy]');if(copy){try{await navigator.clipboard.writeText(copy.getAttribute('data-copy')||'');copy.textContent='Copied';setTimeout(()=>copy.textContent='Copy',900);}catch(_){alert('Copy failed.');}return;}
+    const edit=e.target.closest('[data-key-customer]');if(edit){const id=edit.getAttribute('data-key-customer');const row=cache.find(x=>text(x.recordId||x.id)===text(id));if(row)customerModal(true,row);return;}
     const del=e.target.closest('[data-key-delete]');if(del){try{await remove([del.getAttribute('data-key-delete')]);}catch(err){alert(err.message||err);}return;}
     if(e.target.closest('#refreshSoftwareKeys')){await load({force:true});return;}
     if(e.target.closest('#exportSoftwareKeys')){exportCsv();return;}
     if(e.target.closest('#deleteSelectedSoftwareKeys')){try{await remove([...selected]);}catch(err){alert(err.message||err);}return;}
   });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('manualSoftwareKeyModal')?.classList.contains('is-open'))manualModal(false);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('manualSoftwareKeyModal')?.classList.contains('is-open'))manualModal(false);if($('softwareKeyCustomerModal')?.classList.contains('is-open'))customerModal(false);}});
   setInterval(()=>{const tab=$('softwarekeys');if(document.visibilityState==='visible'&&tab?.classList.contains('active')&&!loadingPromise)load({force:true});},AUTO_REFRESH_MS);
   document.addEventListener('visibilitychange',()=>{const tab=$('softwarekeys');if(document.visibilityState==='visible'&&tab?.classList.contains('active'))load({force:true});});
   window.azSoftwareKeysLoad=load;
