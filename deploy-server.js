@@ -12115,7 +12115,7 @@ async function azCreatePublicServiceBooking(req, body = {}) {
 }
 
 
-// AZOBSS PATCH 880: SurveyCAD Software Key capture + admin records.
+// AZOBSS PATCH 891: reliable staged SurveyCAD Software Key capture + admin records.
 // The installer submits only the requested software/hardware identifiers. Admin read/delete
 // routes remain protected by the existing Firebase-admin authorization layer.
 const AZ_SOFTWARE_KEY_COLLECTION = "softwareKeyRecords";
@@ -12130,6 +12130,30 @@ function azSoftwareKeyFormatDigits(value) {
   if (digits.length === 12) return `${digits.slice(0,4)} ${digits.slice(4,8)} ${digits.slice(8,12)}`;
   return azSoftwareKeyText(value, 80);
 }
+function azSoftwareKeyFirstValue(body = {}, names = []) {
+  for (const name of names) {
+    if (!Object.prototype.hasOwnProperty.call(body, name)) continue;
+    const value = body[name];
+    if (value !== undefined && value !== null && String(value).trim() !== "") return value;
+  }
+  return "";
+}
+function azSoftwareKeyNormalizeCapture(body = {}) {
+  return {
+    source:azSoftwareKeyFirstValue(body, ["source", "captureSource"]),
+    captureVersion:azSoftwareKeyFirstValue(body, ["captureVersion", "version"]),
+    captureStage:azSoftwareKeyFirstValue(body, ["captureStage", "stage"]),
+    computerName:azSoftwareKeyFirstValue(body, ["computerName", "pcName", "machineName"]),
+    systemId:azSoftwareKeyFirstValue(body, ["systemId", "systemID", "system_id"]),
+    systemCode:azSoftwareKeyFirstValue(body, ["systemCode", "systemcode", "system_code"]),
+    oneTimeCode:azSoftwareKeyFirstValue(body, ["oneTimeCode", "onetimeCode", "onetimecode", "one_time_code"]),
+    serialKey:azSoftwareKeyFirstValue(body, ["serialKey", "keySerial", "licenseKey", "serial"]),
+    motherboardId:azSoftwareKeyFirstValue(body, ["motherboardId", "motherboardID", "motherboard_id", "baseboardSerial"]),
+    motherboardManufacturer:azSoftwareKeyFirstValue(body, ["motherboardManufacturer", "boardManufacturer"]),
+    motherboardProduct:azSoftwareKeyFirstValue(body, ["motherboardProduct", "boardProduct", "motherboardModel"]),
+    capturedAt:azSoftwareKeyFirstValue(body, ["capturedAt", "captureTime"])
+  };
+}
 function azSoftwareKeyRecordId(row = {}) {
   const fingerprint = [row.motherboardId, azSoftwareKeyDigits(row.systemId), azSoftwareKeyDigits(row.systemCode)]
     .map(v => String(v || "").trim().toLowerCase()).join("|");
@@ -12140,24 +12164,26 @@ function azSoftwareKeyPublicCaptureAllowed(body = {}) {
 }
 async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
   const adminManual = options && options.adminManual === true;
-  if (!adminManual && !azSoftwareKeyPublicCaptureAllowed(body)) throw Object.assign(new Error("Invalid Software Key capture source."), { statusCode:400 });
-  const systemIdDigits = azSoftwareKeyDigits(body.systemId, 24);
-  const systemCodeDigits = azSoftwareKeyDigits(body.systemCode, 24);
-  const oneTimeDigits = azSoftwareKeyDigits(body.oneTimeCode, 24);
-  const serialKey = azSoftwareKeyText(body.serialKey, 120);
-  const motherboardId = azSoftwareKeyText(body.motherboardId, 160);
+  const input = azSoftwareKeyNormalizeCapture(body || {});
+  if (!adminManual && !azSoftwareKeyPublicCaptureAllowed(input)) throw Object.assign(new Error("Invalid Software Key capture source."), { statusCode:400 });
+  const systemIdDigits = azSoftwareKeyDigits(input.systemId, 24);
+  const systemCodeDigits = azSoftwareKeyDigits(input.systemCode, 24);
+  const oneTimeDigits = azSoftwareKeyDigits(input.oneTimeCode, 24);
+  const serialKey = azSoftwareKeyText(input.serialKey, 120);
+  const motherboardId = azSoftwareKeyText(input.motherboardId, 160);
   if (systemIdDigits.length < 8 || systemIdDigits.length > 24) throw Object.assign(new Error("System ID is invalid."), { statusCode:400 });
   if (systemCodeDigits.length < 8 || systemCodeDigits.length > 24) throw Object.assign(new Error("Systemcode is invalid."), { statusCode:400 });
   if (!motherboardId || motherboardId.length < 2) throw Object.assign(new Error("Motherboard ID is required."), { statusCode:400 });
-  if (!serialKey && !oneTimeDigits) throw Object.assign(new Error("Serial key / Onetimecode is required."), { statusCode:400 });
+  if (adminManual && !serialKey && !oneTimeDigits) throw Object.assign(new Error("Serial key / Onetimecode is required."), { statusCode:400 });
 
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
   const row = {
     recordId:"",
     source:adminManual ? "AZOBSS_Admin_Manual" : "AZOBSS_Installer_Software_Key_v1",
-    captureVersion:azSoftwareKeyText(body.captureVersion || (adminManual ? "manual-1" : "1"), 30),
-    computerName:azSoftwareKeyText(body.computerName, 100),
+    captureVersion:azSoftwareKeyText(input.captureVersion || (adminManual ? "manual-1" : "2"), 30),
+    captureStage:azSoftwareKeyText(input.captureStage || (serialKey || oneTimeDigits ? "complete" : "identifiers"), 40),
+    computerName:azSoftwareKeyText(input.computerName, 100),
     systemId:azSoftwareKeyFormatDigits(systemIdDigits),
     systemIdDigits,
     systemCode:azSoftwareKeyFormatDigits(systemCodeDigits),
@@ -12166,9 +12192,9 @@ async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
     oneTimeCodeDigits:oneTimeDigits,
     serialKey,
     motherboardId,
-    motherboardManufacturer:azSoftwareKeyText(body.motherboardManufacturer, 120),
-    motherboardProduct:azSoftwareKeyText(body.motherboardProduct, 120),
-    capturedAt:azSoftwareKeyText(body.capturedAt, 80) || nowIso,
+    motherboardManufacturer:azSoftwareKeyText(input.motherboardManufacturer, 120),
+    motherboardProduct:azSoftwareKeyText(input.motherboardProduct, 120),
+    capturedAt:azSoftwareKeyText(input.capturedAt, 80) || nowIso,
     entryMode:adminManual ? "manual" : "installer",
     updatedAt:nowIso,
     updatedAtMs:nowMs
@@ -12182,12 +12208,33 @@ async function azCreateSoftwareKeyRecord(req, body = {}, options = {}) {
     const old = existing.data() || {};
     row.createdAt = azSoftwareKeyText(old.createdAt, 80) || nowIso;
     row.createdAtMs = Number(old.createdAtMs || nowMs) || nowMs;
+    row.serialKey = serialKey || azSoftwareKeyText(old.serialKey, 120);
+    row.oneTimeCodeDigits = oneTimeDigits || azSoftwareKeyDigits(old.oneTimeCodeDigits || old.oneTimeCode, 24);
+    row.oneTimeCode = row.oneTimeCodeDigits ? azSoftwareKeyFormatDigits(row.oneTimeCodeDigits) : "";
+    row.computerName = row.computerName || azSoftwareKeyText(old.computerName, 100);
+    row.motherboardManufacturer = row.motherboardManufacturer || azSoftwareKeyText(old.motherboardManufacturer, 120);
+    row.motherboardProduct = row.motherboardProduct || azSoftwareKeyText(old.motherboardProduct, 120);
+    row.captureCount = Math.max(0, Number(old.captureCount || 0) || 0) + 1;
   } else {
     row.createdAt = nowIso;
     row.createdAtMs = nowMs;
+    row.captureCount = 1;
+  }
+  row.captureStatus = row.serialKey || row.oneTimeCodeDigits ? "complete" : "pending-key";
+  if (!azSoftwareKeyText(input.captureStage, 40)) row.captureStage = row.captureStatus === "complete" ? "complete" : "identifiers";
+  if (row.captureStatus === "complete") {
+    const oldCompletedAt = existing.exists ? azSoftwareKeyText((existing.data() || {}).completedAt, 80) : "";
+    row.completedAt = oldCompletedAt || nowIso;
   }
   await ref.set(azJsonSafe(row), { merge:true });
-  return { ok:true, recordId:row.recordId, existed:existing.exists, savedAt:nowIso };
+  return {
+    ok:true,
+    recordId:row.recordId,
+    existed:existing.exists,
+    captureStatus:row.captureStatus,
+    hasSerialKey:Boolean(row.serialKey),
+    savedAt:nowIso
+  };
 }
 
 
