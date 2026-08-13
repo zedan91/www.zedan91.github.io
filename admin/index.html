@@ -1927,6 +1927,58 @@ body[data-dashboard-page="admin"] .topbar{
 }
 </style>
 
+<style id="az898-admin-software-key-dark-card-style">
+/* (898) Dark navy Software Key cards matching the Admin dashboard tables. */
+.az880-key-card{
+  color:#e5eefb!important;
+  background:linear-gradient(145deg,#223047 0%,#1b273b 100%)!important;
+  border-color:#3a4b65!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.18)!important;
+}
+.az880-key-card.is-pending{
+  background:linear-gradient(145deg,#352e1d 0%,#222b3d 100%)!important;
+  border-color:#a16207!important;
+}
+.az880-key-field{
+  background:#111c2d!important;
+  border-color:#34455e!important;
+}
+.az880-key-label{color:#8fb7df!important}
+.az880-key-value{color:#f1f5f9!important}
+.az880-key-copy{
+  color:#e2e8f0!important;
+  background:#33445c!important;
+}
+.az880-key-copy:hover{background:#40536f!important}
+.az894-key-date-time,.az894-key-spec{color:#9fb0c5!important}
+.az894-key-date-time b{color:#e5eefb!important}
+.az894-key-spec{border-top-color:#3a4b65!important}
+.az894-key-spec .az894-record-id{color:#8da6c4}
+.az880-key-card .az897-pc-info-line .az880-key-pc{
+  color:#f1f5f9!important;
+  border-right-color:#52637c;
+}
+.az880-key-card .az893-customer-name{color:#bfdbfe;background:#1e3a5f}
+.az880-key-card .az893-customer-phone{color:#a7f3d0;background:#064e3b}
+.az880-key-card .az893-customer-empty{color:#d1d5db;background:#334155}
+.az880-key-card .az891-key-status.is-complete{
+  color:#a7f3d0;
+  background:#064e3b;
+  border:1px solid #0f766e;
+}
+.az880-key-card .az891-key-status.is-pending{
+  color:#fde68a;
+  background:#4a3511;
+  border:1px solid #a16207;
+}
+.az880-key-card input[type="checkbox"]{accent-color:#22c55e}
+.az880-key-empty{
+  color:#94a3b8!important;
+  background:#1b273b!important;
+  border-color:#3a4b65!important;
+}
+</style>
+
 
 </head>
 <body data-dashboard-page="admin">
@@ -8225,7 +8277,7 @@ document.addEventListener('click', async function(e){
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=808" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
-<script id="az897-admin-software-key-script">
+<script id="az899-admin-software-key-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=60*1000;
@@ -8238,6 +8290,21 @@ document.addEventListener('click', async function(e){
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const text=v=>String(v??'').trim();
   const digits=v=>text(v).replace(/\D+/g,'');
+  function formatMalaysiaPhone(v){
+    const original=String(v??'').trim();
+    if(!original)return '';
+    const all=original.replace(/\D+/g,'');
+    let local='';
+    if(all.startsWith('60'))local=all.slice(2);
+    else if(all.startsWith('0'))local=all.slice(1);
+    else if(/^1\d{8,9}$/.test(all))local=all;
+    else return original;
+    if(!/^1\d{8,9}$/.test(local))return original;
+    const prefix=local.slice(0,2),subscriber=local.slice(2);
+    if(subscriber.length===8)return `+60 ${prefix}-${subscriber.slice(0,4)} ${subscriber.slice(4)}`;
+    if(subscriber.length===7)return `+60 ${prefix}-${subscriber.slice(0,3)} ${subscriber.slice(3)}`;
+    return original;
+  }
   function formatTimeAmPm(d){return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true}).format(d).replace(/\s+/g,' ').toUpperCase();}
   function dt(v){
     const n=Number(v||0),d=n?new Date(n):new Date(v||0);
@@ -8348,9 +8415,9 @@ document.addEventListener('click', async function(e){
       const id=text(x.recordId||x.id);
       const board=[text(x.motherboardManufacturer),text(x.motherboardProduct)].filter(Boolean).join(' • ');
       const status=captureStatus(x),pending=status==='pending-key';
-      const customerName=text(x.customerName),customerPhone=text(x.customerPhone);
+      const customerName=text(x.customerName),customerPhone=text(x.customerPhone),customerPhoneDisplay=formatMalaysiaPhone(customerPhone);
       const customerHtml=customerName||customerPhone
-        ? `${customerName?`<span class="az893-customer-name" title="Nama pelanggan">${esc(customerName)}</span>`:''}${customerPhone?`<span class="az893-customer-phone" title="No. telefon pelanggan">☎ ${esc(customerPhone)}</span>`:''}`
+        ? `${customerName?`<span class="az893-customer-name" title="Nama pelanggan">${esc(customerName)}</span>`:''}${customerPhone?`<span class="az893-customer-phone" title="No. telefon pelanggan">☎ ${esc(customerPhoneDisplay)}</span>`:''}`
         : '<span class="az893-customer-empty">Pelanggan belum diisi</span>';
       const stamp=dateTimeParts(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt);
       return `<article class="az880-key-card${pending?' is-pending':''}" data-record="${esc(id)}">
@@ -8455,7 +8522,7 @@ document.addEventListener('click', async function(e){
   function exportCsv(){
     const rows=filtered(),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
     const head=['Record ID','Created','Updated','Status','Computer Name','Customer Name','Customer Phone','System ID','Systemcode','Key Serial','Motherboard ID','Motherboard Manufacturer','Motherboard Product','Source'];
-    const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.recordId||x.id,dt(x.createdAtMs||x.createdAt),dt(x.updatedAtMs||x.updatedAt||x.createdAtMs),captureStatus(x),x.computerName,x.customerName,x.customerPhone,x.systemId,x.systemCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct,x.source].map(q).join(',')));
+    const lines=[head.map(q).join(',')];rows.forEach(x=>lines.push([x.recordId||x.id,dt(x.createdAtMs||x.createdAt),dt(x.updatedAtMs||x.updatedAt||x.createdAtMs),captureStatus(x),x.computerName,x.customerName,formatMalaysiaPhone(x.customerPhone),x.systemId,x.systemCode,x.serialKey,x.motherboardId,x.motherboardManufacturer,x.motherboardProduct,x.source].map(q).join(',')));
     const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`AZOBSS-Software-Keys-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   document.addEventListener('submit',async e=>{
