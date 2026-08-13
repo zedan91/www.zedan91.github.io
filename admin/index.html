@@ -1807,6 +1807,85 @@ body[data-dashboard-page="admin"] .topbar{
 @media(max-width:460px){.az880-software-key-toolbar{grid-template-columns:1fr}.az880-software-key-toolbar>*{grid-column:1!important}.az880-key-grid{grid-template-columns:1fr!important}.az893-customer-name,.az893-customer-phone{max-width:130px}}
 </style>
 
+<style id="az894-admin-software-key-hierarchy-pagination-style">
+/* (894) Clear customer hierarchy, separated metadata and 3-record pagination. */
+.az880-key-pc{
+  color:#64748b!important;
+  font-size:10px!important;
+  font-weight:850!important;
+  letter-spacing:.07em;
+  line-height:1.1;
+  text-transform:uppercase;
+}
+.az894-key-identity{display:grid;gap:3px;min-width:0}
+.az894-customer-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.az894-customer-line .az893-customer-name,
+.az894-customer-line .az893-customer-phone,
+.az894-customer-line .az893-customer-empty{
+  max-width:min(100%,260px);
+  padding:3px 8px;
+  font-size:13px;
+  font-weight:950;
+  line-height:1.25;
+}
+.az894-customer-line .az893-customer-name{font-size:14px}
+.az894-key-date-time,.az894-key-spec{
+  display:flex;
+  align-items:center;
+  gap:5px 9px;
+  flex-wrap:wrap;
+  min-width:0;
+  color:#64748b;
+  font-size:10px;
+  line-height:1.25;
+}
+.az894-key-date-time{margin-top:1px}
+.az894-key-date-time span{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  white-space:nowrap;
+}
+.az894-key-date-time b{color:#334155;font-weight:850}
+.az894-key-spec{
+  padding-top:3px;
+  border-top:1px solid #e2e8f0;
+}
+.az894-key-spec .az894-pc-spec{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.az894-key-spec .az894-record-id{font-family:Consolas,"Courier New",monospace;word-break:break-all}
+.az894-software-key-pager{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  margin-top:10px;
+  padding:7px;
+}
+.az894-software-key-pager[hidden]{display:none!important}
+.az894-software-key-pager button{
+  min-width:30px;
+  height:30px;
+  padding:4px 8px;
+  border:1px solid #334155;
+  border-radius:8px;
+  background:#1e293b;
+  color:#e2e8f0;
+  font-size:11px;
+  font-weight:850;
+  cursor:pointer;
+}
+.az894-software-key-pager button:hover:not(:disabled){border-color:#22c55e;background:#0f766e;color:#fff}
+.az894-software-key-pager button.is-current{border-color:#22c55e;background:#16a34a;color:#fff}
+.az894-software-key-pager button:disabled{opacity:.38;cursor:not-allowed}
+.az894-software-key-pager .az894-page-gap{padding:0 2px;color:#64748b}
+.az894-software-key-pager .az894-page-count{margin:0 4px;color:#94a3b8;font-size:10px;white-space:nowrap}
+@media(max-width:460px){
+  .az894-customer-line .az893-customer-name,
+  .az894-customer-line .az893-customer-phone{max-width:100%;font-size:12px}
+  .az894-software-key-pager .az894-page-count{display:none}
+}
+</style>
+
 
 </head>
 <body data-dashboard-page="admin">
@@ -2432,6 +2511,7 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
       </div>
       <div id="softwareKeyList" class="az880-software-key-list"></div>
+      <nav id="softwareKeyPager" class="az894-software-key-pager" aria-label="Halaman Software Key" hidden></nav>
     </section>
 
     <div id="manualSoftwareKeyModal" class="az882-key-modal" aria-hidden="true">
@@ -2462,7 +2542,7 @@ body[data-dashboard-page="admin"] .topbar{
     <div id="softwareKeyCustomerModal" class="az882-key-modal" aria-hidden="true">
       <div class="az882-key-modal-card az893-key-modal-card" role="dialog" aria-modal="true" aria-labelledby="softwareKeyCustomerTitle">
         <div class="az882-key-modal-head">
-          <div><h3 id="softwareKeyCustomerTitle">👤 Maklumat Pelanggan</h3><p>Nama dan nombor telefon akan dipaparkan di sebelah nama PC serta boleh digunakan dalam carian.</p><div id="softwareKeyCustomerRecord" class="az893-customer-record"></div></div>
+          <div><h3 id="softwareKeyCustomerTitle">👤 Maklumat Pelanggan</h3><p>Nama dan nombor telefon akan dipaparkan di bawah nama PC serta boleh digunakan dalam carian.</p><div id="softwareKeyCustomerRecord" class="az893-customer-record"></div></div>
           <button class="az882-key-modal-close" id="closeSoftwareKeyCustomer" type="button" aria-label="Close">×</button>
         </div>
         <form id="softwareKeyCustomerForm" class="az882-key-form" autocomplete="off">
@@ -8104,18 +8184,28 @@ document.addEventListener('click', async function(e){
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=808" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
-<script id="az893-admin-software-key-script">
+<script id="az894-admin-software-key-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=60*1000;
   const AUTO_REFRESH_MS=10*1000;
+  const PAGE_SIZE=3;
   let cache=[],lastLoadedAt=0,loadingPromise=null;
+  let currentPage=1;
   const selected=new Set();
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const text=v=>String(v??'').trim();
   const digits=v=>text(v).replace(/\D+/g,'');
   function dt(v){const n=Number(v||0);const d=n?new Date(n):new Date(v||0);return Number.isNaN(d.getTime())?'-':new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium',timeStyle:'short'}).format(d);}
+  function dateTimeParts(v){
+    const n=Number(v||0),d=n?new Date(n):new Date(v||0);
+    if(Number.isNaN(d.getTime()))return {date:'-',time:'-'};
+    return {
+      date:new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium'}).format(d),
+      time:new Intl.DateTimeFormat('ms-MY',{timeStyle:'short'}).format(d)
+    };
+  }
   function timeValue(row,kind='updated'){
     const value=kind==='created'?(row?.createdAtMs||row?.createdAt):(row?.updatedAtMs||row?.updatedAt||row?.createdAtMs||row?.createdAt);
     const numeric=Number(value||0);if(Number.isFinite(numeric)&&numeric>0)return numeric;
@@ -8166,7 +8256,28 @@ document.addEventListener('click', async function(e){
     });
     return sortRows(rows);
   }
-  function updateBulk(rows=filtered()){
+  function paginate(rows){
+    const totalPages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
+    currentPage=Math.min(Math.max(1,currentPage),totalPages);
+    const start=(currentPage-1)*PAGE_SIZE;
+    return {rows:rows.slice(start,start+PAGE_SIZE),totalPages};
+  }
+  function currentPageRows(){return paginate(filtered()).rows;}
+  function renderPager(totalRows,totalPages){
+    const pager=$('softwareKeyPager');if(!pager)return;
+    if(totalRows<=PAGE_SIZE){pager.hidden=true;pager.innerHTML='';return;}
+    const candidates=[1,currentPage-1,currentPage,currentPage+1,totalPages].filter(page=>page>=1&&page<=totalPages);
+    const pages=[...new Set(candidates)].sort((a,b)=>a-b);
+    let previous=0;
+    const numbered=pages.map(page=>{
+      const gap=previous&&page-previous>1?'<span class="az894-page-gap" aria-hidden="true">…</span>':'';
+      previous=page;
+      return `${gap}<button type="button" class="${page===currentPage?'is-current':''}" data-software-key-page="${page}" ${page===currentPage?'aria-current="page"':''}>${page}</button>`;
+    }).join('');
+    pager.hidden=false;
+    pager.innerHTML=`<button type="button" data-software-key-page="${currentPage-1}" ${currentPage<=1?'disabled':''} aria-label="Halaman sebelumnya">←</button>${numbered}<span class="az894-page-count">Halaman ${currentPage} / ${totalPages}</span><button type="button" data-software-key-page="${currentPage+1}" ${currentPage>=totalPages?'disabled':''} aria-label="Halaman seterusnya">→</button>`;
+  }
+  function updateBulk(rows=currentPageRows()){
     const visibleIds=new Set(rows.map(x=>x.recordId||x.id).filter(Boolean));
     for(const id of [...selected])if(!cache.some(x=>(x.recordId||x.id)===id))selected.delete(id);
     const chosen=[...visibleIds].filter(id=>selected.has(id)).length;
@@ -8181,7 +8292,8 @@ document.addEventListener('click', async function(e){
   }
   function captureStatus(row){return text(row?.serialKey)?'complete':'pending-key';}
   function render(){
-    const rows=filtered();
+    const allRows=filtered();
+    const page=paginate(allRows),rows=page.rows;
     const list=$('softwareKeyList');if(!list)return;
     $('softwareKeyCount')&&($('softwareKeyCount').textContent=String(cache.length));
     $('softwareKeySerialCount')&&($('softwareKeySerialCount').textContent=String(cache.filter(x=>text(x.serialKey)).length));
@@ -8194,9 +8306,9 @@ document.addEventListener('click', async function(e){
       const customerHtml=customerName||customerPhone
         ? `${customerName?`<span class="az893-customer-name" title="Nama pelanggan">${esc(customerName)}</span>`:''}${customerPhone?`<span class="az893-customer-phone" title="No. telefon pelanggan">☎ ${esc(customerPhone)}</span>`:''}`
         : '<span class="az893-customer-empty">Pelanggan belum diisi</span>';
-      const meta=[dt(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt),board,id].filter(Boolean).join(' • ');
+      const stamp=dateTimeParts(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt);
       return `<article class="az880-key-card${pending?' is-pending':''}" data-record="${esc(id)}">
-        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div><div class="az893-key-name-line"><span class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</span>${customerHtml}</div><div class="az880-key-meta" title="${esc(meta)}">${esc(meta)}</div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
+        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div class="az894-key-identity"><div class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</div><div class="az894-customer-line">${customerHtml}</div><div class="az894-key-date-time"><span>Tarikh <b>${esc(stamp.date)}</b></span><span>Masa <b>${esc(stamp.time)}</b></span></div><div class="az894-key-spec"><span class="az894-pc-spec" title="${esc(board||'Spec PC belum direkod')}">PC: ${esc(board||'Spec belum direkod')}</span><span class="az894-record-id">ID: ${esc(id)}</span></div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
         <div class="az880-key-grid">
           ${field('System ID',x.systemId)}${field('Systemcode',x.systemCode)}
           ${field('Motherboard ID',x.motherboardId)}
@@ -8204,7 +8316,8 @@ document.addEventListener('click', async function(e){
         </div>
       </article>`;
     }).join('')||'<div class="az880-key-empty">Tiada rekod Software Key yang sepadan.</div>';
-    const n=$('softwareKeyNotice');if(n)n.textContent=`${rows.length} dipaparkan daripada ${cache.length} rekod • auto refresh 10 saat`;
+    renderPager(allRows.length,page.totalPages);
+    const n=$('softwareKeyNotice');if(n)n.textContent=`${rows.length} dipaparkan • halaman ${currentPage}/${page.totalPages} • ${allRows.length} sepadan daripada ${cache.length} rekod • auto refresh 10 saat`;
     updateBulk(rows);
   }
   async function load({force=false}={}){
@@ -8303,13 +8416,15 @@ document.addEventListener('click', async function(e){
     if(e.target?.id==='manualSoftwareKeyForm'){e.preventDefault();await saveManual();return;}
     if(e.target?.id==='softwareKeyCustomerForm'){e.preventDefault();await saveCustomer();}
   });
-  document.addEventListener('input',e=>{if(e.target?.id==='softwareKeySearch')render();});
+  document.addEventListener('input',e=>{if(e.target?.id==='softwareKeySearch'){currentPage=1;render();}});
   document.addEventListener('change',e=>{
-    if(e.target?.matches('[data-key-select]')){const id=e.target.getAttribute('data-key-select');if(e.target.checked)selected.add(id);else selected.delete(id);updateBulk();return;}
-    if(e.target?.id==='softwareKeySelectAll'){const rows=filtered();rows.forEach(x=>{const id=x.recordId||x.id;if(id){if(e.target.checked)selected.add(id);else selected.delete(id);}});render();}
-    if(e.target?.id==='softwareKeySort'){try{localStorage.setItem('azobssSoftwareKeySort',e.target.value);}catch(_){}render();}
+    if(e.target?.matches('[data-key-select]')){const id=e.target.getAttribute('data-key-select');if(e.target.checked)selected.add(id);else selected.delete(id);updateBulk(currentPageRows());return;}
+    if(e.target?.id==='softwareKeySelectAll'){const rows=currentPageRows();rows.forEach(x=>{const id=x.recordId||x.id;if(id){if(e.target.checked)selected.add(id);else selected.delete(id);}});render();}
+    if(e.target?.id==='softwareKeySort'){currentPage=1;try{localStorage.setItem('azobssSoftwareKeySort',e.target.value);}catch(_){}render();}
   });
   document.addEventListener('click',async e=>{
+    const pageButton=e.target.closest('[data-software-key-page]');
+    if(pageButton&&!pageButton.disabled){const page=Number(pageButton.getAttribute('data-software-key-page'));if(Number.isFinite(page)){currentPage=page;render();$('softwarekeys')?.scrollIntoView({behavior:'smooth',block:'start'});}return;}
     if(e.target.closest('#addManualSoftwareKey')){manualModal(true);return;}
     if(e.target.closest('#closeManualSoftwareKey')||e.target.closest('#cancelManualSoftwareKey')){manualModal(false);return;}
     if(e.target?.id==='manualSoftwareKeyModal'){manualModal(false);return;}
