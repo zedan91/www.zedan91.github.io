@@ -1886,6 +1886,47 @@ body[data-dashboard-page="admin"] .topbar{
 }
 </style>
 
+<style id="az895-admin-software-key-vertical-wide-card-style">
+/* (895) One full-width card per row with all four key fields on one line. */
+.az880-software-key-list{
+  grid-template-columns:1fr!important;
+  align-items:stretch!important;
+}
+.az880-key-card{
+  width:100%;
+  box-sizing:border-box;
+}
+.az880-key-grid{
+  grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) minmax(245px,1.55fr) minmax(165px,1fr)!important;
+}
+@media(max-width:920px){
+  .az880-key-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:560px){
+  .az880-key-grid{grid-template-columns:1fr!important}
+}
+</style>
+
+<style id="az897-admin-software-key-pc-name-spec-line-style">
+/* (897) Keep the computer name on the same metadata row as the PC specification. */
+.az897-pc-info-line{flex-wrap:nowrap!important}
+.az897-pc-info-line .az880-key-pc{
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  padding-right:9px;
+  border-right:1px solid #cbd5e1;
+  color:#334155!important;
+  white-space:nowrap;
+}
+.az897-pc-info-line .az894-pc-spec{flex:1 1 auto}
+.az897-pc-info-line .az894-record-id{flex:0 1 auto}
+@media(max-width:700px){
+  .az897-pc-info-line{flex-wrap:wrap!important}
+  .az897-pc-info-line .az894-pc-spec{flex:1 1 240px}
+}
+</style>
+
 
 </head>
 <body data-dashboard-page="admin">
@@ -8184,7 +8225,7 @@ document.addEventListener('click', async function(e){
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=808" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
-<script id="az894-admin-software-key-script">
+<script id="az897-admin-software-key-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=60*1000;
@@ -8197,13 +8238,18 @@ document.addEventListener('click', async function(e){
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const text=v=>String(v??'').trim();
   const digits=v=>text(v).replace(/\D+/g,'');
-  function dt(v){const n=Number(v||0);const d=n?new Date(n):new Date(v||0);return Number.isNaN(d.getTime())?'-':new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium',timeStyle:'short'}).format(d);}
+  function formatTimeAmPm(d){return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true}).format(d).replace(/\s+/g,' ').toUpperCase();}
+  function dt(v){
+    const n=Number(v||0),d=n?new Date(n):new Date(v||0);
+    if(Number.isNaN(d.getTime()))return '-';
+    return `${new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium'}).format(d)}, ${formatTimeAmPm(d)}`;
+  }
   function dateTimeParts(v){
     const n=Number(v||0),d=n?new Date(n):new Date(v||0);
     if(Number.isNaN(d.getTime()))return {date:'-',time:'-'};
     return {
       date:new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium'}).format(d),
-      time:new Intl.DateTimeFormat('ms-MY',{timeStyle:'short'}).format(d)
+      time:formatTimeAmPm(d)
     };
   }
   function timeValue(row,kind='updated'){
@@ -8308,7 +8354,7 @@ document.addEventListener('click', async function(e){
         : '<span class="az893-customer-empty">Pelanggan belum diisi</span>';
       const stamp=dateTimeParts(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt);
       return `<article class="az880-key-card${pending?' is-pending':''}" data-record="${esc(id)}">
-        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div class="az894-key-identity"><div class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</div><div class="az894-customer-line">${customerHtml}</div><div class="az894-key-date-time"><span>Tarikh <b>${esc(stamp.date)}</b></span><span>Masa <b>${esc(stamp.time)}</b></span></div><div class="az894-key-spec"><span class="az894-pc-spec" title="${esc(board||'Spec PC belum direkod')}">PC: ${esc(board||'Spec belum direkod')}</span><span class="az894-record-id">ID: ${esc(id)}</span></div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
+        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div class="az894-key-identity"><div class="az894-customer-line">${customerHtml}</div><div class="az894-key-date-time"><span>Tarikh <b>${esc(stamp.date)}</b></span><span>Masa <b>${esc(stamp.time)}</b></span></div><div class="az894-key-spec az897-pc-info-line"><span class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</span><span class="az894-pc-spec" title="${esc(board||'Spec PC belum direkod')}">PC: ${esc(board||'Spec belum direkod')}</span><span class="az894-record-id">ID: ${esc(id)}</span></div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
         <div class="az880-key-grid">
           ${field('System ID',x.systemId)}${field('Systemcode',x.systemCode)}
           ${field('Motherboard ID',x.motherboardId)}
