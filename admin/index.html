@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- (900) Prevent an older Admin dashboard/CSS copy from being reused. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <!-- AZOBSS favicon and app icons -->
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
@@ -8277,7 +8281,75 @@ document.addEventListener('click', async function(e){
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=808" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
-<script id="az899-admin-software-key-script">
+<style id="az900-admin-software-key-force-dark-style">
+/*
+ * (900) Final-cascade override.  The unique class is rendered by the current
+ * Software Key script so old white-card rules cannot win through specificity.
+ */
+#softwareKeyList .az880-key-card.az900-key-dark{
+  color:#e6edf7!important;
+  background:linear-gradient(145deg,#18263a 0%,#111c2d 100%)!important;
+  border:1px solid #344761!important;
+  box-shadow:0 7px 20px rgba(0,0,0,.28)!important;
+}
+#softwareKeyList .az880-key-card.az900-key-dark.is-pending{
+  background:linear-gradient(145deg,#2d291d 0%,#111c2d 100%)!important;
+  border-color:#8a6415!important;
+}
+#softwareKeyList .az900-key-dark .az880-key-field{
+  color:#e6edf7!important;
+  background:#0a1525!important;
+  border:1px solid #30435e!important;
+  box-shadow:none!important;
+}
+#softwareKeyList .az900-key-dark .az880-key-label{color:#8fb5df!important}
+#softwareKeyList .az900-key-dark .az880-key-value{color:#f8fafc!important}
+#softwareKeyList .az900-key-dark .az880-key-copy{
+  color:#e5edf7!important;
+  background:#2d405b!important;
+  border-color:#48617f!important;
+}
+#softwareKeyList .az900-key-dark .az880-key-copy:hover{background:#3a5272!important}
+#softwareKeyList .az900-key-dark .az894-key-date-time,
+#softwareKeyList .az900-key-dark .az894-key-spec{color:#a6b6ca!important}
+#softwareKeyList .az900-key-dark .az894-key-date-time b{color:#f1f5f9!important}
+#softwareKeyList .az900-key-dark .az894-key-spec{border-top-color:#344761!important}
+#softwareKeyList .az900-key-dark .az894-record-id{color:#8fa8c5!important}
+#softwareKeyList .az900-key-dark .az897-pc-info-line .az880-key-pc{
+  color:#f1f5f9!important;
+  border-right-color:#50657f!important;
+}
+#softwareKeyList .az900-key-dark .az893-customer-name{
+  color:#dbeafe!important;
+  background:#1d3a60!important;
+}
+#softwareKeyList .az900-key-dark .az893-customer-phone{
+  color:#a7f3d0!important;
+  background:#064e3b!important;
+}
+#softwareKeyList .az900-key-dark .az893-customer-empty{
+  color:#d8e1ec!important;
+  background:#2a3b53!important;
+}
+#softwareKeyList .az900-key-dark .az891-key-status.is-complete{
+  color:#a7f3d0!important;
+  background:#064e3b!important;
+  border-color:#0f766e!important;
+}
+#softwareKeyList .az900-key-dark .az891-key-status.is-pending{
+  color:#fde68a!important;
+  background:#4a3511!important;
+  border-color:#a16207!important;
+}
+#softwareKeyList .az900-key-dark input[type="checkbox"]{accent-color:#22c55e}
+#softwareKeyList .az880-key-empty{
+  color:#9fb0c5!important;
+  background:#111c2d!important;
+  border-color:#344761!important;
+}
+</style>
+
+<script id="az900-admin-software-key-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=60*1000;
@@ -8420,7 +8492,7 @@ document.addEventListener('click', async function(e){
         ? `${customerName?`<span class="az893-customer-name" title="Nama pelanggan">${esc(customerName)}</span>`:''}${customerPhone?`<span class="az893-customer-phone" title="No. telefon pelanggan">☎ ${esc(customerPhoneDisplay)}</span>`:''}`
         : '<span class="az893-customer-empty">Pelanggan belum diisi</span>';
       const stamp=dateTimeParts(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt);
-      return `<article class="az880-key-card${pending?' is-pending':''}" data-record="${esc(id)}">
+      return `<article class="az880-key-card az900-key-dark${pending?' is-pending':''}" data-record="${esc(id)}">
         <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div class="az894-key-identity"><div class="az894-customer-line">${customerHtml}</div><div class="az894-key-date-time"><span>Tarikh <b>${esc(stamp.date)}</b></span><span>Masa <b>${esc(stamp.time)}</b></span></div><div class="az894-key-spec az897-pc-info-line"><span class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</span><span class="az894-pc-spec" title="${esc(board||'Spec PC belum direkod')}">PC: ${esc(board||'Spec belum direkod')}</span><span class="az894-record-id">ID: ${esc(id)}</span></div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
         <div class="az880-key-grid">
           ${field('System ID',x.systemId)}${field('Systemcode',x.systemCode)}
