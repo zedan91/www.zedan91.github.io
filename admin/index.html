@@ -8349,7 +8349,7 @@ document.addEventListener('click', async function(e){
 }
 </style>
 
-<script id="az900-admin-software-key-script">
+<script id="az901-admin-software-key-script">
 (function(){
   const API='https://azobss-backend.onrender.com';
   const CACHE_MS=60*1000;
@@ -8493,7 +8493,7 @@ document.addEventListener('click', async function(e){
         : '<span class="az893-customer-empty">Pelanggan belum diisi</span>';
       const stamp=dateTimeParts(x.updatedAtMs||x.updatedAt||x.createdAtMs||x.createdAt);
       return `<article class="az880-key-card az900-key-dark${pending?' is-pending':''}" data-record="${esc(id)}">
-        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div class="az894-key-identity"><div class="az894-customer-line">${customerHtml}</div><div class="az894-key-date-time"><span>Tarikh <b>${esc(stamp.date)}</b></span><span>Masa <b>${esc(stamp.time)}</b></span></div><div class="az894-key-spec az897-pc-info-line"><span class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</span><span class="az894-pc-spec" title="${esc(board||'Spec PC belum direkod')}">PC: ${esc(board||'Spec belum direkod')}</span><span class="az894-record-id">ID: ${esc(id)}</span></div></div></div><div class="az880-key-actions"><span class="az891-key-status ${pending?'is-pending':'is-complete'}">${pending?'Menunggu':'Lengkap'}</span><button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
+        <div class="az880-key-head"><div class="az880-key-title"><input type="checkbox" data-key-select="${esc(id)}" ${selected.has(id)?'checked':''}><div class="az894-key-identity"><div class="az894-customer-line">${customerHtml}</div><div class="az894-key-date-time"><span>Tarikh <b>${esc(stamp.date)}</b></span><span>Masa <b>${esc(stamp.time)}</b></span></div><div class="az894-key-spec az897-pc-info-line"><span class="az880-key-pc">${esc(text(x.computerName)||'Unknown PC')}</span><span class="az894-pc-spec" title="${esc(board||'Spec PC belum direkod')}">PC: ${esc(board||'Spec belum direkod')}</span><span class="az894-record-id">ID: ${esc(id)}</span></div></div></div><div class="az880-key-actions">${pending?'<span class="az891-key-status is-pending">Menunggu</span>':''}<button class="btn az893-customer-edit-btn" type="button" data-key-customer="${esc(id)}" title="Edit nama dan telefon pelanggan">Edit</button><button class="btn red" type="button" data-key-delete="${esc(id)}">Delete</button></div></div>
         <div class="az880-key-grid">
           ${field('System ID',x.systemId)}${field('Systemcode',x.systemCode)}
           ${field('Motherboard ID',x.motherboardId)}
