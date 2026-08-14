@@ -243,6 +243,18 @@
     if (state) node.classList.add(`is-${state}`);
   }
 
+  async function getJson(path, token, signal) {
+    const response = await fetch(`${BACKEND_BASE}${path}`, {
+      method: 'GET',
+      cache: 'no-store',
+      signal,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Backend tidak dapat disemak.');
+    return data;
+  }
+
   async function postJson(path, payload, token, signal) {
     const response = await fetch(`${BACKEND_BASE}${path}`, {
       method: 'POST',
@@ -1406,11 +1418,18 @@
           operationController = new AbortController();
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
+          const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
+          if (Number(lotCapabilities.version || 0) < 2 || String(lotCapabilities.exportMode || '') !== 'clip-layer-by-aoi-v922') {
+            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v922 sebelum menyediakan drawing.');
+          }
           let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
+          if (String(prepared.exportMode || '') !== 'clip-layer-by-aoi-v922') {
+            throw new Error('Kaedah eksport Lot Kadaster pada backend belum dikemas kini ke v922.');
+          }
           if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
           }

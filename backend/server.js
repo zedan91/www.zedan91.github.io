@@ -2070,8 +2070,9 @@ app.post("/api/admin/payment-logs/delete", requireAdmin, async (req, res) => {
 app.get("/api/pa-bm-checkout-capabilities", (req, res) => {
   res.json({
     ok: true,
-    version: 10,
+    version: 11,
     exactPriceProfileCheckoutSync: true,
+    adminTestDiscountCheckoutSync: true,
     runningFile: "backend/server.js",
     perUserPriceCategories: ["paBm","lotKadaster","publicPa","software","cadTools"],
     productTypes: Array.from(AZOBSS_JUPEM_PRODUCT_TYPES),
@@ -2084,7 +2085,24 @@ app.get("/api/pa-bm-checkout-capabilities", (req, res) => {
 
 app.post("/api/admin/test-pa-bm-payment", requireAdmin, async (req, res) => {
   try {
-    const checkout = azobssBuildJupemCheckout(req.body || {}, req.azobssAdminIdentity || {});
+    const data = req.body || {};
+    const submittedUser = getPremiumUser(data);
+    let adminIdentity = req.azobssAdminIdentity || {};
+    adminIdentity = await azobssHydrateIdentityFromUsernameHint(adminIdentity, data.usernameKey || submittedUser.username, data.priceProfileDocId);
+    adminIdentity.isAdmin = true;
+    const checkout = azobssBuildJupemCheckout(data, adminIdentity);
+    const clientExpectedAmountSen = Number(data.expectedAmountSen || 0);
+    if (Number.isFinite(clientExpectedAmountSen) && clientExpectedAmountSen > 0 && clientExpectedAmountSen !== checkout.amountSen) {
+      return res.status(409).json({
+        ok:false, success:false, pricingSyncRequired:true,
+        error:"Harga Admin Test belum sepadan antara troli dan server. Muat semula halaman selepas backend v11 siap dideploy.",
+        expectedAmountSen:clientExpectedAmountSen,
+        amountSen:checkout.amountSen,
+        priceAdjustmentByCategory:checkout.priceAdjustmentByCategory,
+        priceProfileDocId:String(adminIdentity.userDocId || ""),
+        priceProfileResolvedBy:String(adminIdentity.priceAdjustmentProfileResolvedBy || "")
+      });
+    }
     const nowMs = Date.now();
     const nowIso = new Date(nowMs).toISOString();
     const orderId = makePremiumId("pabmtest");
@@ -2095,6 +2113,12 @@ app.post("/api/admin/test-pa-bm-payment", requireAdmin, async (req, res) => {
       productName: `JUPEM Document Test Purchase (${checkout.items.length} unit)`,
       amount: `RM${checkout.totalAmount}`,
       amountSen: checkout.amountSen,
+      baseAmount: checkout.baseTotalAmount,
+      baseAmountSen: Math.round(Number(checkout.baseTotalAmount || 0) * 100),
+      saleAmount: checkout.totalAmount,
+      saleAmountText: azobssMoneyText(checkout.totalAmount),
+      priceAdjustmentPercent: checkout.priceAdjustmentPercent,
+      priceAdjustmentByCategory: checkout.priceAdjustmentByCategory,
       status: "paid",
       paymentMethod: "admin-test",
       paymentReference,
@@ -2105,7 +2129,7 @@ app.post("/api/admin/test-pa-bm-payment", requireAdmin, async (req, res) => {
       expiryHours: 0,
       isAdminTestPayment: true,
       source: "admin-test-payment",
-      createdByAdmin: req.azobssAdminIdentity?.username || req.azobssAdminIdentity?.email || req.azobssAdminIdentity?.uid || "admin",
+      createdByAdmin: adminIdentity?.username || adminIdentity?.email || adminIdentity?.uid || "admin",
       createdAt: nowIso,
       createdAtMs: nowMs,
       paidAt: nowIso,
@@ -2127,6 +2151,11 @@ app.post("/api/admin/test-pa-bm-payment", requireAdmin, async (req, res) => {
       paymentReference,
       amount: checkout.totalAmount,
       amountSen: checkout.amountSen,
+      baseAmount: checkout.baseTotalAmount,
+      baseAmountSen: Math.round(Number(checkout.baseTotalAmount || 0) * 100),
+      priceAdjustmentPercent: checkout.priceAdjustmentPercent,
+      priceAdjustmentByCategory: checkout.priceAdjustmentByCategory,
+      priceProfileDocId: String(adminIdentity.userDocId || ""),
       unit: checkout.items.length,
       updatedCount: Number(sync.updated || 0)
     });

@@ -1,6 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=920';
+import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=921';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
@@ -8,7 +8,7 @@ const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
     ? window.location.origin
     : 'https://azobss-backend.onrender.com'
 );
-const CHECKOUT_API_VERSION = 10;
+const CHECKOUT_API_VERSION = 11;
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
 const PRODUCT_TYPES = new Set(['PA', 'BM', 'SBM', 'GPS', 'NDCDB', 'NDCDB_C3', 'SYIT_PIAWAI']);
@@ -832,7 +832,11 @@ async function proceedAdminTestPayment() {
       adminTestPaymentButton.disabled = true;
       adminTestPaymentButton.textContent = 'Creating Test Payment...';
     }
-    if (status) status.textContent = 'Creating an admin-only paid test order...';
+    if (status) status.textContent = 'Checking checkout pricing and creating an admin-only paid test order...';
+    // Admin test payment must use the same checkout capability/version gate as
+    // the real ToyyibPay route. This prevents an older Render backend from
+    // accepting the test request with pre-discount Lot Kadaster pricing.
+    await ensureCheckoutBackend(items);
     const sendTestPayment = async (forceTokenRefresh = false) => {
       const token = await auth.currentUser.getIdToken(forceTokenRefresh);
       return fetch(`${BACKEND_BASE}/api/admin/test-pa-bm-payment`, {
