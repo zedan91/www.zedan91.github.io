@@ -11798,6 +11798,7 @@ async function azHandleStripeDigitalWebhookEvent(event = {}, req = null) {
 // AZOBSS 773: Service booking with LCD price ranges and fixed pickup/delivery charges.
 const AZ_SERVICE_BOOKING_CATALOG = Object.freeze({
   "format-windows": { name:"Format Windows 10 / 11", min:30, max:30 },
+  "windows-online": { name:"Bantuan Windows Online", min:30, max:30, plus:true },
   "cleaning-thermal": { name:"Pembersihan + Thermal Paste", min:80, max:80 },
   "keyboard": { name:"Tukar Keyboard Laptop", min:150, max:150 },
   "lcd-replacement": { name:"Tukar LCD Laptop", dynamic:true },
@@ -11815,6 +11816,7 @@ const AZ_SERVICE_LCD_PRICES = Object.freeze({
 });
 const AZ_SERVICE_LOGISTICS = Object.freeze({
   "Hantar sendiri ke Kedai": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:0 },
+  "Bantuan Windows Online": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:0 },
   "Pengambilan / Penghantaran": { pickupFee:0, deliveryFee:0, transportFee:30, onsiteFee:0, itemName:"Kos pengambilan atau penghantaran" },
   "Pengambilan & Penghantaran": { pickupFee:30, deliveryFee:30, transportFee:0, onsiteFee:0 },
   "Servis On-site": { pickupFee:0, deliveryFee:0, transportFee:0, onsiteFee:50, itemName:"Caj servis On-site" },
@@ -11863,7 +11865,7 @@ function azServiceBookingId(clientRequestId) {
 function azServiceBookingRangeLabel(min, max, plus) {
   const a = `RM${Number(min || 0).toFixed(0)}`;
   const b = `RM${Number(max || 0).toFixed(0)}`;
-  return Number(min || 0) === Number(max || 0) ? a : `${a} – ${b}${plus ? "+" : ""}`;
+  return Number(min || 0) === Number(max || 0) ? `${a}${plus ? "+" : ""}` : `${a} – ${b}${plus ? "+" : ""}`;
 }
 function azServiceBookingLcdEstimate(screenSize, screenType) {
   const size = azServiceBookingText(screenSize, 60);
@@ -11890,8 +11892,8 @@ function azServiceBookingEstimate(serviceIds, screenSize, screenType, serviceMet
   const services = ids.map(id => {
     if (id === "lcd-replacement") return azServiceBookingLcdEstimate(screenSize, screenType);
     const item = AZ_SERVICE_BOOKING_CATALOG[id];
-    const min = Number(item.min ?? item.price ?? 0), max = Number(item.max ?? item.price ?? min);
-    return { id, name:item.name, minPrice:min, maxPrice:max, price:min, plus:false, suffix:"", priceLabel:azServiceBookingRangeLabel(min,max,false) };
+    const min = Number(item.min ?? item.price ?? 0), max = Number(item.max ?? item.price ?? min), plus = Boolean(item.plus);
+    return { id, name:item.name, minPrice:min, maxPrice:max, price:min, plus, suffix:plus?"+":"", priceLabel:azServiceBookingRangeLabel(min,max,plus) };
   });
   const logisticsConfig = AZ_SERVICE_LOGISTICS[azServiceBookingText(serviceMethod, 80)] || AZ_SERVICE_LOGISTICS["Hantar sendiri ke Kedai"];
   const logistics = [];
@@ -11927,6 +11929,10 @@ function azServiceBookingMessage(row) {
   const serviceLines = (row.services || []).map((item, index) => `*${index + 1}. ${item.name} — ${item.priceLabel || azServiceBookingRangeLabel(item.minPrice ?? item.price, item.maxPrice ?? item.price, item.plus)}*`);
   const logisticLines = (row.logistics || []).map(item => `*- ${item.name} — ${item.priceLabel || `RM${Number(item.price || 0).toFixed(0)}`}*`);
   const estimateDisplay = row.estimateDisplay || azServiceBookingRangeLabel(row.estimatedMinimum, row.estimatedMaximum ?? row.estimatedMinimum, row.estimateHasPlus);
+  const onlineOnly = row.serviceMode === "online" || ((row.services || []).length === 1 && row.services[0].id === "windows-online");
+  const locationLines = onlineOnly
+    ? ["Mod servis: *Online / remote*", "Alamat: *Tidak diperlukan*"]
+    : [`Alamat : *${azServiceBookingDisplayAddress(row)}*`, `Jarak dari kedai AZOBSS: *${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}*`, `Lokasi Kedai: *${row.locationMapUrl || "-"}*`];
   return [
     "Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.",
     "",
@@ -11934,10 +11940,8 @@ function azServiceBookingMessage(row) {
     `Nama: *${row.customerName}*`,
     `Telefon: *${row.customerPhone}*`,
     `E-mel: *${row.customerEmail || "-"}*`,
-    `Alamat : *${azServiceBookingDisplayAddress(row)}*`,
-    `Jarak dari kedai AZOBSS: *${Number.isFinite(Number(row.locationDistanceKm)) ? Number(row.locationDistanceKm).toFixed(2) + " km" : "-"}*`,
-    `Lokasi Kedai: *${row.locationMapUrl || "-"}*`,
-    `Cara serahan: *${row.serviceMethod || '-'}*`,
+    ...locationLines,
+    `Cara servis: *${row.serviceMethod || '-'}*`,
     "",
     `Peranti : *${row.deviceType} — ${row.deviceBrand} ${row.deviceModel}*`,
     `Saiz skrin : *${row.screenSize || "-"}*`,
@@ -11972,13 +11976,15 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   const phoneDigits = customerPhone.replace(/\D/g, "");
   const customerEmailRaw = azServiceBookingText(body.customerEmail, 180);
   const customerEmail = azServiceBookingEmail(customerEmailRaw);
+  const requestedServiceIds = Array.isArray(body.services) ? [...new Set(body.services.map(value => azServiceBookingText(value, 60)).filter(value => AZ_SERVICE_BOOKING_CATALOG[value]))].slice(0, 12) : [];
+  const onlineOnly = requestedServiceIds.length === 1 && requestedServiceIds[0] === "windows-online";
   const locationName = azServiceBookingText(body.locationName || body.customerArea, 180);
   const locationLatitude = azServiceBookingCoordinate(body.locationLatitude, -90, 90);
   const locationLongitude = azServiceBookingCoordinate(body.locationLongitude, -180, 180);
   const locationDistanceKm = Number.isFinite(locationLatitude) && Number.isFinite(locationLongitude)
     ? azServiceBookingDistanceKm(AZ_SERVICE_BOOKING_CENTER.lat, AZ_SERVICE_BOOKING_CENTER.lng, locationLatitude, locationLongitude)
     : NaN;
-  const customerArea = locationName;
+  const customerArea = onlineOnly ? "Servis Online" : locationName;
   const floorUnit = azServiceBookingText(body.floorUnit, 120);
   const deviceType = azServiceBookingText(body.deviceType, 60);
   const deviceBrand = azServiceBookingText(body.deviceBrand, 80);
@@ -11987,16 +11993,16 @@ async function azCreatePublicServiceBooking(req, body = {}) {
   if (!/^01\d{8,9}$/.test(phoneDigits)) throw Object.assign(new Error("Nombor telefon tidak sah. Gunakan 10 atau 11 digit Malaysia, contoh 011-3560 0723."), { statusCode:400 });
   if (!customerEmailRaw) throw Object.assign(new Error("E-mel pelanggan diperlukan."), { statusCode:400 });
   if (!customerEmail) throw Object.assign(new Error("Format e-mel tidak sah."), { statusCode:400 });
-  if (customerArea.length < 2) throw Object.assign(new Error("Nama lokasi diperlukan. Sila pilih lokasi pada peta."), { statusCode:400 });
-  if (!floorUnit) throw Object.assign(new Error("Floor or unit number diperlukan."), { statusCode:400 });
-  if (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude)) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });
-  if (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari kedai AZOBSS.`), { statusCode:400 });
+  if (!onlineOnly && customerArea.length < 2) throw Object.assign(new Error("Nama lokasi diperlukan. Sila pilih lokasi pada peta."), { statusCode:400 });
+  if (!onlineOnly && !floorUnit) throw Object.assign(new Error("Floor or unit number diperlukan."), { statusCode:400 });
+  if (!onlineOnly && (!Number.isFinite(locationLatitude) || !Number.isFinite(locationLongitude))) throw Object.assign(new Error("Koordinat WGS84 tidak sah. Sila pilih lokasi semula pada peta."), { statusCode:400 });
+  if (!onlineOnly && (!Number.isFinite(locationDistanceKm) || locationDistanceKm > AZ_SERVICE_BOOKING_RADIUS_KM)) throw Object.assign(new Error(`Lokasi berada di luar radius servis ${AZ_SERVICE_BOOKING_RADIUS_KM} km dari kedai AZOBSS.`), { statusCode:400 });
   if (!deviceType || !deviceBrand || !deviceModel) throw Object.assign(new Error("Jenis, jenama dan model peranti diperlukan."), { statusCode:400 });
   const requestedServiceMethod = azServiceBookingText(body.serviceMethod, 80);
-  const serviceMethod = AZ_SERVICE_LOGISTICS[requestedServiceMethod] ? requestedServiceMethod : "Hantar sendiri ke Kedai";
+  const serviceMethod = onlineOnly ? "Bantuan Windows Online" : (AZ_SERVICE_LOGISTICS[requestedServiceMethod] && requestedServiceMethod !== "Bantuan Windows Online" ? requestedServiceMethod : "Hantar sendiri ke Kedai");
   const screenSize = azServiceBookingText(body.screenSize, 60);
   const screenType = azServiceBookingText(body.screenType, 60);
-  const estimate = azServiceBookingEstimate(body.services, screenSize, screenType, serviceMethod);
+  const estimate = azServiceBookingEstimate(requestedServiceIds, screenSize, screenType, serviceMethod);
   const issues = Array.isArray(body.issues) ? [...new Set(body.issues.map(v => azServiceBookingText(v, 140)).filter(Boolean))].slice(0, 25) : [];
   if (!estimate.services.length && !issues.length) throw Object.assign(new Error("Pilih sekurang-kurangnya satu servis atau masalah."), { statusCode:400 });
   const nowMs = Date.now();
@@ -12009,19 +12015,19 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     source:"azobss-service-booking-form",
     recordType:"service_order",
     documentStage:"booking",
-    customerName, customerPhone, customerPhoneDigits:phoneDigits, customerEmail, customerArea,
+    customerName, customerPhone, customerPhoneDigits:phoneDigits, customerEmail, customerArea, serviceMode:onlineOnly?"online":"physical",
     locationName:customerArea,
-    locationLatitude:Number(locationLatitude.toFixed(7)),
-    locationLongitude:Number(locationLongitude.toFixed(7)),
-    locationWgs84:`${locationLatitude.toFixed(6)}, ${locationLongitude.toFixed(6)}`,
-    locationDistanceKm:Number(locationDistanceKm.toFixed(3)),
+    locationLatitude:onlineOnly?null:Number(locationLatitude.toFixed(7)),
+    locationLongitude:onlineOnly?null:Number(locationLongitude.toFixed(7)),
+    locationWgs84:onlineOnly?"":`${locationLatitude.toFixed(6)}, ${locationLongitude.toFixed(6)}`,
+    locationDistanceKm:onlineOnly?null:Number(locationDistanceKm.toFixed(3)),
     locationRadiusKm:AZ_SERVICE_BOOKING_RADIUS_KM,
     locationCenterLabel:AZ_SERVICE_BOOKING_CENTER.label,
     locationCenterLatitude:AZ_SERVICE_BOOKING_CENTER.lat,
     locationCenterLongitude:AZ_SERVICE_BOOKING_CENTER.lng,
-    locationMapUrl:azServiceBookingDirectionsUrl(locationLatitude, locationLongitude),
-    floorUnit,
-    fullAddress:azServiceBookingText(body.fullAddress, 400),
+    locationMapUrl:onlineOnly?"":azServiceBookingDirectionsUrl(locationLatitude, locationLongitude),
+    floorUnit:onlineOnly?"":floorUnit,
+    fullAddress:onlineOnly?"":azServiceBookingText(body.fullAddress, 400),
     deviceType, deviceBrand, deviceModel,
     screenSize,
     screenType,
@@ -12086,8 +12092,8 @@ async function azCreatePublicServiceBooking(req, body = {}) {
     docId:notificationId,
     type:"service_booking",
     category:"service",
-    title:`Tempahan servis IT baharu • ${bookingId}`,
-    body:`${customerName} • ${customerPhone} • ${customerArea} (${locationDistanceKm.toFixed(2)} km) • ${deviceBrand} ${deviceModel} • ${estimate.services.map(x => x.name).join(", ") || issues.slice(0, 3).join(", ")}`.slice(0, 500),
+    title:`${onlineOnly?"Bantuan Windows Online":"Tempahan servis IT"} baharu • ${bookingId}`,
+    body:`${customerName} • ${customerPhone} • ${onlineOnly?"Online / remote":`${customerArea} (${locationDistanceKm.toFixed(2)} km)`} • ${deviceBrand} ${deviceModel} • ${estimate.services.map(x => x.name).join(", ") || issues.slice(0, 3).join(", ")}`.slice(0, 500),
     status:"new",
     severity:"info",
     active:true,

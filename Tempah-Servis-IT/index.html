@@ -220,6 +220,16 @@ body.is-admin .market-nav a[href="/admin/"]{
   }
 }
 </style>
+<style id="azobss-903-windows-online-service">
+@media(min-width:981px){.price-strip{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:650px){.price-chip:last-child{grid-column:auto}}
+.online-service-chip{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.08) inset}
+.choice-online{border-color:rgba(34,211,238,.5);background:linear-gradient(145deg,rgba(8,47,73,.6),rgba(9,23,43,.98))}
+.choice-online .choice-title::after{content:"ONLINE";display:inline-flex;margin-left:7px;padding:2px 6px;border:1px solid rgba(34,211,238,.45);border-radius:999px;color:#a5f3fc;font-size:9px;line-height:1;font-weight:1000;letter-spacing:.06em;vertical-align:2px}
+.online-mode-note{grid-column:1/-1;padding:13px 14px;border:1px solid rgba(34,211,238,.38);border-radius:12px;background:rgba(8,78,104,.24);color:#c8f7ff;font-size:12px;font-weight:800}
+#physicalLocationFields[hidden],#onlineServiceModeNote[hidden],#shopLocationCard[hidden]{display:none!important}
+#serviceMethod:disabled{opacity:1;color:#dffcff;background:#0b2940;border-color:#22d3ee;cursor:default}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -290,6 +300,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
 <div aria-label="Harga servis utama" class="price-strip">
 <div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
+<div class="price-chip online-service-chip"><b>RM30+</b><span>Bantuan Windows Online<br/>secara remote</span></div>
 <div class="price-chip"><b>RM250–RM650</b><span>LCD Standard<br/>ikut saiz</span></div>
 <div class="price-chip"><b>RM500–RM1,200+</b><span>LCD Touch Screen<br/>ikut saiz</span></div>
 <div class="price-chip"><b>RM30 / RM30</b><span>Pickup / penghantaran<br/>servis AZOBSS</span></div>
@@ -306,7 +317,8 @@ body.is-admin .market-nav a[href="/admin/"]{
 <div class="field"><label for="customerPhone">No. telefon <span class="required">*</span></label><input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="13" placeholder="Contoh: 011-3560 0723" pattern="^01[0-9]-?[0-9]{3,4} ?[0-9]{4}$" title="Masukkan nombor telefon Malaysia 10 atau 11 digit, contoh 011-3560 0723." required=""/></div>
 <div class="field full"><label for="customerEmail">E-mel <span class="required">*</span></label><input autocomplete="email" id="customerEmail" maxlength="160" placeholder="Contoh: nama@email.com" type="email" required="" aria-required="true"/></div>
 <input id="locationWgs84" type="hidden"/><input id="locationLatitude" type="hidden"/><input id="locationLongitude" type="hidden"/><input id="customerArea" type="hidden"/>
-<div class="field full location-picker"><div class="location-address-fields"><div class="location-unit-field"><label for="floorUnit">Floor or unit number <span class="required">*</span></label><input aria-required="true" autocomplete="address-line1" id="floorUnit" maxlength="120" placeholder="Contoh: Tingkat 3, Unit A-12-5" required=""/></div><div><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea aria-readonly="true" id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." readonly="" required=""></textarea></div></div><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
+<div class="online-mode-note" hidden="" id="onlineServiceModeNote">✓ Bantuan Windows Online dipilih. Alamat dan penghantaran peranti tidak diperlukan; sesi bantuan dibuat melalui internet.</div>
+<div class="field full location-picker" id="physicalLocationFields"><div class="location-address-fields"><div class="location-unit-field"><label for="floorUnit">Floor or unit number <span class="required">*</span></label><input aria-required="true" autocomplete="address-line1" id="floorUnit" maxlength="120" placeholder="Contoh: Tingkat 3, Unit A-12-5" required=""/></div><div><label for="fullAddress">Nama tempat / alamat dipilih <span class="required">*</span></label><textarea aria-readonly="true" id="fullAddress" maxlength="400" placeholder="Tekan Cari Lokasi atau Lokasi Semasa untuk memilih tempat." readonly="" required=""></textarea></div></div><div class="location-actions"><button class="btn secondary" id="openLocationPicker" type="button">🔎 Cari Lokasi</button><button class="btn secondary" id="useCurrentLocation" type="button">📍 Lokasi Semasa</button></div><small class="area-note" id="locationAreaNote">Lokasi mestilah dalam radius 10 km dari kedai AZOBSS.</small></div>
 </div>
 </div>
 <div class="section-block">
@@ -326,6 +338,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <p class="section-help" id="serviceSectionHelp">Tandakan servis yang kamu mahu. Anggaran LCD dikira mengikut saiz dan jenis skrin yang dipilih pada Maklumat Peranti.</p>
 <div class="choices" id="serviceChoices">
 <label class="choice"><input name="services" type="checkbox" value="format-windows"/><span class="choice-main"><span class="choice-title">Format Windows 10 / 11</span><span class="choice-price">RM30 promosi</span><span class="choice-note">Harga biasa RM50. Lesen dan software berbayar tidak termasuk.</span></span></label>
+<label class="choice choice-online" id="onlineWindowsServiceChoice"><input name="services" type="checkbox" value="windows-online"/><span class="choice-main"><span class="choice-title">Bantuan Windows Online</span><span class="choice-price">Bermula RM30</span><span class="choice-note">Troubleshoot Windows dan software secara remote melalui internet. Tidak termasuk masalah hardware.</span></span></label>
 <label class="choice"><input name="services" type="checkbox" value="cleaning-thermal"/><span class="choice-main"><span class="choice-title">Pembersihan + Thermal Paste</span><span class="choice-price">RM80</span><span class="choice-note">Untuk laptop atau PC. Keadaan heatsink/fan akan diperiksa.</span></span></label>
 <label class="choice" id="lcdServiceChoice"><input name="services" type="checkbox" value="lcd-replacement"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop</span><span class="choice-price" id="lcdChoicePrice">RM250 – RM1,200+</span><span class="choice-note" id="lcdChoiceNote">Pilih saiz dan jenis skrin untuk anggaran lebih tepat.</span></span></label>
 <label class="choice" id="keyboardServiceChoice"><input name="services" type="checkbox" value="keyboard"/><span class="choice-main"><span class="choice-title">Tukar Keyboard Laptop</span><span class="choice-price">RM150</span><span class="choice-note">Bergantung pada model, backlight dan jenis top case.</span></span></label>
@@ -367,9 +380,9 @@ body.is-admin .market-nav a[href="/admin/"]{
 <div class="section-block">
 <h2 class="section-title"><span class="section-no">5</span>Keutamaan servis</h2>
 <div class="fields">
-<div class="field"><label for="serviceMethod">Kaedah serahan <span class="required">*</span></label><select id="serviceMethod" required=""><option value="Hantar sendiri ke Kedai">Hantar sendiri ke Kedai</option><option value="Pengambilan / Penghantaran">Pengambilan / Penghantaran — RM30</option><option value="Pengambilan &amp; Penghantaran">Pengambilan &amp; Penghantaran — RM60</option><option value="Servis On-site">Servis On-site — RM50</option></select><small class="transport-note">Pengambilan atau penghantaran satu hala RM30. Pengambilan dan penghantaran RM60. Servis On-site RM50.</small></div>
+<div class="field" id="serviceMethodField"><label for="serviceMethod">Kaedah servis <span class="required">*</span></label><select id="serviceMethod" required=""><option value="Hantar sendiri ke Kedai">Hantar sendiri ke Kedai</option><option value="Pengambilan / Penghantaran">Pengambilan / Penghantaran — RM30</option><option value="Pengambilan &amp; Penghantaran">Pengambilan &amp; Penghantaran — RM60</option><option value="Servis On-site">Servis On-site — RM50</option><option hidden="" id="onlineServiceMethodOption" value="Bantuan Windows Online">Bantuan Windows Online — melalui internet</option></select><small class="transport-note" id="transportNote">Pengambilan atau penghantaran satu hala RM30. Pengambilan dan penghantaran RM60. Servis On-site RM50.</small></div>
 <div class="field"><label for="preferredDate">Tarikh pilihan</label><input id="preferredDate" type="date"/></div>
-<div class="shop-location-card">
+<div class="shop-location-card" id="shopLocationCard">
 <div class="shop-location-copy"><b>📍 Hantar ke Kedai AZOBSS</b><span>Tekan untuk lihat arah dan jarak ke kedai.</span></div>
 <a class="btn secondary" id="openShopDirections" href="https://www.google.com/maps/dir/?api=1&amp;destination=3.255511332218502%2C101.69410874034087&amp;travelmode=driving&amp;dir_action=navigate" rel="noopener noreferrer" target="_blank">Lihat Arah ke Kedai</a>
 </div>
@@ -382,7 +395,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 </div></div>
 <div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="70" placeholder="Contoh: Perlu Microsoft Office atau mahu kekalkan data."></textarea><small>Maksimum 70 aksara.</small></div>
 </div>
-<div class="notice"><strong>Harga bukan final.</strong> Admin AZOBSS akan mengesahkan harga sebenar selepas pemeriksaan model, jenis panel/komponen, keadaan peranti, stok alat ganti dan lokasi. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50.</div>
+<div class="notice"><strong>Harga bukan final.</strong> Bantuan Windows Online bermula RM30. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak masalah, model, komponen dan kaedah servis. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50.</div>
 </div>
 <div class="section-block">
 <label class="choice"><input id="consent" required="" type="checkbox"/><span class="choice-main"><span class="choice-title">Saya mengesahkan maklumat ini betul dan bersetuju dihubungi melalui telefon atau WhatsApp.</span></span></label>
@@ -434,6 +447,7 @@ body.is-admin .market-nav a[href="/admin/"]{
   const SHOP_LOCATION={lat:3.255511332218502,lng:101.69410874034087,label:'Lokasi AZOBSS'};
   const catalog={
     'format-windows':{name:'Format Windows 10 / 11',min:30,max:30},
+    'windows-online':{name:'Bantuan Windows Online',min:30,max:30,plus:true},
     'cleaning-thermal':{name:'Pembersihan + Thermal Paste',min:80,max:80},
     'keyboard':{name:'Tukar Keyboard Laptop',min:150,max:150}
   };
@@ -446,6 +460,7 @@ body.is-admin .market-nav a[href="/admin/"]{
   };
   const LOGISTICS={
     'Hantar sendiri ke Kedai':{pickup:0,delivery:0,transport:0,onsite:0,label:'Hantar sendiri ke Kedai'},
+    'Bantuan Windows Online':{pickup:0,delivery:0,transport:0,onsite:0,label:'Bantuan Windows Online'},
     'Pengambilan / Penghantaran':{pickup:0,delivery:0,transport:30,onsite:0,label:'Pengambilan / Penghantaran',itemName:'Kos pengambilan atau penghantaran'},
     'Pengambilan & Penghantaran':{pickup:30,delivery:30,transport:0,onsite:0,label:'Pengambilan & Penghantaran'},
     'Servis On-site':{pickup:0,delivery:0,transport:0,onsite:50,label:'Servis On-site',itemName:'Caj servis On-site'},
@@ -468,7 +483,8 @@ body.is-admin .market-nav a[href="/admin/"]{
   const checked=name=>Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el=>el.value);
   const clean=v=>String(v||'').trim();
   const money=n=>'RM'+Number(n||0).toFixed(0);
-  function rangeLabel(min,max,plus=false){min=Number(min||0);max=Number(max||0);return min===max?money(min):`${money(min)} – ${money(max)}${plus?'+':''}`;}
+  function rangeLabel(min,max,plus=false){min=Number(min||0);max=Number(max||0);return min===max?`${money(min)}${plus?'+':''}`:`${money(min)} – ${money(max)}${plus?'+':''}`;}
+  function onlineOnlyServices(ids=checked('services')){return ids.length===1&&ids[0]==='windows-online';}
   function lcdEstimate(){
     const size=clean($('screenSize')?.value),type=clean($('screenType')?.value),row=LCD_PRICES[size];
     const wantTouch=type==='Touch Screen',wantStandard=type==='Standard (Non-Touch)';
@@ -494,7 +510,7 @@ body.is-admin .market-nav a[href="/admin/"]{
   }
   function estimate(){
     const ids=checked('services'),items=[];
-    ids.forEach(id=>{if(id==='lcd-replacement')items.push(lcdEstimate());else if(catalog[id])items.push({id,name:catalog[id].name,min:catalog[id].min,max:catalog[id].max,plus:false,priceLabel:rangeLabel(catalog[id].min,catalog[id].max)});});
+    ids.forEach(id=>{if(id==='lcd-replacement')items.push(lcdEstimate());else if(catalog[id]){const plus=Boolean(catalog[id].plus);items.push({id,name:catalog[id].name,min:catalog[id].min,max:catalog[id].max,plus,priceLabel:rangeLabel(catalog[id].min,catalog[id].max,plus)});}});
     const logistics=logisticsEstimate();
     const allItems=[...items,...logistics.items];
     const minTotal=allItems.reduce((sum,item)=>sum+Number(item.min||0),0),maxTotal=allItems.reduce((sum,item)=>sum+Number(item.max||0),0),plus=allItems.some(item=>item.plus);
@@ -645,7 +661,34 @@ body.is-admin .market-nav a[href="/admin/"]{
   modelInput.addEventListener('change',()=>{const match=exactModelMatch();if(match){modelInput.dataset.selectedModel=match.model;applyModelScreenSize(match);}});
   screenSizeInput.addEventListener('change',()=>{if(!screenSizeInput.disabled){delete screenSizeInput.dataset.auto;setScreenAutoStatus(screenSizeInput.value?'Saiz skrin dipilih secara manual.':'Pilih model daripada senarai untuk mengesan saiz skrin secara automatik.',false);}updateSummary();});
   updateDeviceTypeUI(false);
-  document.querySelectorAll('input[name="services"]').forEach(input=>input.addEventListener('change',updateSummary));
+  const serviceMethodInput=$('serviceMethod'),onlineServiceMethodOption=$('onlineServiceMethodOption');
+  const physicalLocationFields=$('physicalLocationFields'),onlineServiceModeNote=$('onlineServiceModeNote'),shopLocationCard=$('shopLocationCard');
+  const floorUnitInput=$('floorUnit'),fullAddressInput=$('fullAddress'),transportNote=$('transportNote');
+  let lastPhysicalServiceMethod=serviceMethodInput.value||'Hantar sendiri ke Kedai';
+  function syncOnlineServiceMode(){
+    const onlineOnly=onlineOnlyServices();
+    if(onlineOnly){
+      if(serviceMethodInput.value!=='Bantuan Windows Online')lastPhysicalServiceMethod=serviceMethodInput.value||'Hantar sendiri ke Kedai';
+      onlineServiceMethodOption.hidden=false;
+      serviceMethodInput.value='Bantuan Windows Online';
+      serviceMethodInput.disabled=true;
+    }else{
+      serviceMethodInput.disabled=false;
+      if(serviceMethodInput.value==='Bantuan Windows Online')serviceMethodInput.value=lastPhysicalServiceMethod||'Hantar sendiri ke Kedai';
+      onlineServiceMethodOption.hidden=true;
+    }
+    physicalLocationFields.hidden=onlineOnly;
+    onlineServiceModeNote.hidden=!onlineOnly;
+    shopLocationCard.hidden=onlineOnly;
+    floorUnitInput.required=!onlineOnly;
+    fullAddressInput.required=!onlineOnly;
+    floorUnitInput.setAttribute('aria-required',String(!onlineOnly));
+    $('openLocationPicker').disabled=onlineOnly;
+    $('useCurrentLocation').disabled=onlineOnly;
+    transportNote.textContent=onlineOnly?'Sesi bantuan dibuat secara remote melalui internet; penghantaran peranti tidak diperlukan.':'Pengambilan atau penghantaran satu hala RM30. Pengambilan dan penghantaran RM60. Servis On-site RM50.';
+    document.body.classList.toggle('az-online-service-mode',onlineOnly);
+  }
+  document.querySelectorAll('input[name="services"]').forEach(input=>input.addEventListener('change',()=>{syncOnlineServiceMode();updateSummary();}));
   document.querySelectorAll('input[name="issues"]').forEach(input=>input.addEventListener('change',updateSummary));
   const otherIssueCheckbox=$('otherIssueCheckbox');
   const otherIssueField=$('otherIssueField');
@@ -661,7 +704,7 @@ body.is-admin .market-nav a[href="/admin/"]{
   otherIssueCheckbox.addEventListener('change',()=>syncOtherIssueField(otherIssueCheckbox.checked));
   syncOtherIssueField(false);
   $('screenType').addEventListener('change',updateSummary);
-  $('serviceMethod').addEventListener('change',updateSummary);
+  serviceMethodInput.addEventListener('change',()=>{if(serviceMethodInput.value!=='Bantuan Windows Online')lastPhysicalServiceMethod=serviceMethodInput.value;updateSummary();});
   const phone=$('customerPhone');
   function formatServicePhone(value){
     let d=String(value||'').replace(/\D/g,'');
@@ -682,9 +725,9 @@ body.is-admin .market-nav a[href="/admin/"]{
   phone.addEventListener('blur',syncServicePhone);
   const date=$('preferredDate'); const now=new Date(); const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-'); date.min=today; if(!date.value)date.value=today;
   function readRadio(name){return document.querySelector(`input[name="${name}"]:checked`)?.value||'';}
-  function payload(){const e=estimate();return{
+  function payload(){const e=estimate(),onlineOnly=onlineOnlyServices(e.ids),lat=parseCoordinate($('locationLatitude').value),lng=parseCoordinate($('locationLongitude').value);return{
     clientRequestId:(activeRequestId||(activeRequestId=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function'?globalThis.crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)))),
-    customerName:clean($('customerName').value),customerPhone:clean(phone.value),customerEmail:clean($('customerEmail').value),customerArea:clean($('customerArea').value),locationName:clean($('customerArea').value),locationLatitude:parseCoordinate($('locationLatitude').value),locationLongitude:parseCoordinate($('locationLongitude').value),locationWgs84:clean($('locationWgs84').value),floorUnit:clean($('floorUnit').value),fullAddress:clean($('fullAddress').value),
+    customerName:clean($('customerName').value),customerPhone:clean(phone.value),customerEmail:clean($('customerEmail').value),customerArea:onlineOnly?'Servis Online':clean($('customerArea').value),locationName:onlineOnly?'Servis Online':clean($('customerArea').value),locationLatitude:onlineOnly?null:lat,locationLongitude:onlineOnly?null:lng,locationWgs84:onlineOnly?'':clean($('locationWgs84').value),floorUnit:onlineOnly?'':clean($('floorUnit').value),fullAddress:onlineOnly?'':clean($('fullAddress').value),serviceMode:onlineOnly?'online':'physical',
     deviceType:clean($('deviceType').value),deviceBrand:clean($('deviceBrand').value),deviceModel:clean($('deviceModel').value),screenSize:clean($('screenSize').value),screenType:clean($('screenType').value),deviceSerial:clean($('deviceSerial').value),devicePowerState:clean($('devicePowerState').value),
     services:e.ids,issues:e.issues,serviceMethod:clean($('serviceMethod').value),pickupFee:e.logistics.pickupFee,deliveryFee:e.logistics.deliveryFee,transportFee:e.logistics.transportFee,onsiteFee:e.logistics.onsiteFee,logisticsTotal:e.logistics.total,estimatedMinimum:e.minTotal,estimatedMaximum:e.maxTotal,estimateHasPlus:e.plus,preferredDate:clean(date.value),preferredTime:clean($('preferredTime').value),urgency:clean($('urgency').value),backupRequirement:readRadio('backup'),problemDetails:clean($('problemDetails').value),extraRequests:clean($('extraRequests').value).slice(0,70),companyWebsite:clean($('companyWebsite').value)
   };}
@@ -694,12 +737,12 @@ body.is-admin .market-nav a[href="/admin/"]{
     return `https://www.google.com/maps/dir/?api=1&origin=${originLat.toFixed(7)},${originLng.toFixed(7)}&destination=${SHOP_LOCATION.lat},${SHOP_LOCATION.lng}&travelmode=driving&dir_action=navigate`;
   }
   function customerDisplayAddress(p){return [clean(p.floorUnit),clean(p.fullAddress||p.customerArea)].filter(Boolean).join(', ')||'-';}
-  function localMessage(p){const e=estimate();const serviceLines=e.items.map((item,i)=>`*${i+1}. ${item.name} — ${item.priceLabel}*`);const logisticLines=e.logistics.items.map(item=>`*- ${item.name} — ${item.priceLabel}*`);const directionsUrl=customerToShopDirectionsUrl(p.locationLatitude,p.locationLongitude);return[
-    'Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.','',`Nama: *${p.customerName}*`,`Telefon: *${p.customerPhone}*`,`E-mel: *${p.customerEmail||'-'}*`,`Alamat : *${customerDisplayAddress(p)}*`,directionsUrl?`Lokasi Kedai: *${directionsUrl}*`:'Lokasi Kedai: *-*',`Cara serahan: *${p.serviceMethod||'-'}*`,'',`Peranti : *${p.deviceType} — ${p.deviceBrand} ${p.deviceModel}*`,`Saiz skrin : *${p.deviceType==='Desktop PC'?'Tidak berkaitan (desktop)':(p.screenSize||'-')}*`,`Jenis skrin : *${p.deviceType==='Desktop PC'?'Tidak berkaitan (desktop)':(p.screenType||'-')}*`,`Serial : *${p.deviceSerial||'-'}*`,`Keadaan : *${p.devicePowerState||'-'}*`,'','Servis dipilih:',...(serviceLines.length?serviceLines:['- Pemeriksaan / harga belum dipilih']),'','Kos logistik:',...(logisticLines.length?logisticLines:['*- Tiada caj pickup/penghantaran dipilih*']),`Anggaran Keseluruhan: *${(e.items.length||e.logistics.items.length)?e.display:'Perlu pemeriksaan'}*`,'',`Masalah: *${p.issues.join(', ')||'-'}*`,'',`Tarikh / masa : *${p.preferredDate||'Fleksibel'} • ${p.preferredTime||'Fleksibel'}*`,`Data / backup : *${p.backupRequirement||'Tidak pasti'}*`,`Catatan masalah: *${p.problemDetails||'-'}*`,`Permintaan tambahan: *${p.extraRequests||'-'}*`,'','Anggaran ini bukan harga final. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak model, panel/komponen, stok dan keadaan peranti.'
+  function localMessage(p){const e=estimate(),onlineOnly=p.serviceMode==='online';const serviceLines=e.items.map((item,i)=>`*${i+1}. ${item.name} — ${item.priceLabel}*`);const logisticLines=e.logistics.items.map(item=>`*- ${item.name} — ${item.priceLabel}*`);const directionsUrl=customerToShopDirectionsUrl(p.locationLatitude,p.locationLongitude);const locationLines=onlineOnly?['Mod servis: *Online / remote*','Alamat: *Tidak diperlukan*']:[`Alamat : *${customerDisplayAddress(p)}*`,directionsUrl?`Lokasi Kedai: *${directionsUrl}*`:'Lokasi Kedai: *-*'];return[
+    'Salam AZOBSS, saya ingin membuat tempahan servis laptop / PC.','',`Nama: *${p.customerName}*`,`Telefon: *${p.customerPhone}*`,`E-mel: *${p.customerEmail||'-'}*`,...locationLines,`Cara servis: *${p.serviceMethod||'-'}*`,'',`Peranti : *${p.deviceType} — ${p.deviceBrand} ${p.deviceModel}*`,`Saiz skrin : *${p.deviceType==='Desktop PC'?'Tidak berkaitan (desktop)':(p.screenSize||'-')}*`,`Jenis skrin : *${p.deviceType==='Desktop PC'?'Tidak berkaitan (desktop)':(p.screenType||'-')}*`,`Serial : *${p.deviceSerial||'-'}*`,`Keadaan : *${p.devicePowerState||'-'}*`,'','Servis dipilih:',...(serviceLines.length?serviceLines:['- Pemeriksaan / harga belum dipilih']),'','Kos logistik:',...(logisticLines.length?logisticLines:['*- Tiada caj pickup/penghantaran dipilih*']),`Anggaran Keseluruhan: *${(e.items.length||e.logistics.items.length)?e.display:'Perlu pemeriksaan'}*`,'',`Masalah: *${p.issues.join(', ')||'-'}*`,'',`Tarikh / masa : *${p.preferredDate||'Fleksibel'} • ${p.preferredTime||'Fleksibel'}*`,`Data / backup : *${p.backupRequirement||'Tidak pasti'}*`,`Catatan masalah: *${p.problemDetails||'-'}*`,`Permintaan tambahan: *${p.extraRequests||'-'}*`,'','Anggaran ini bukan harga final. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak masalah, model dan kaedah servis.'
   ].join('\n');}
   function fallbackUrl(p){return `https://wa.me/${FALLBACK_WA}?text=${encodeURIComponent(localMessage(p))}`;}
   function showStatus(message,type){status.textContent=message;status.className='form-status show '+type;}
-  function validateSelection(){const lat=parseCoordinate($('locationLatitude').value),lng=parseCoordinate($('locationLongitude').value);if(!validCoords(lat,lng)||!clean($('customerArea').value)){showStatus('Pilih lokasi menggunakan butang Cari Lokasi atau Lokasi Semasa.','error');$('openLocationPicker').focus();return false;}const d=locationDistance(lat,lng);if(d>SERVICE_RADIUS_KM){showStatus(`Lokasi berada ${d.toFixed(2)} km dari kedai AZOBSS dan melebihi radius servis 10 km.`,'error');$('openLocationPicker').focus();return false;}const e=estimate();if(!e.ids.length&&!e.issues.length){showStatus('Pilih sekurang-kurangnya satu servis atau satu masalah yang berlaku.','error');document.getElementById('serviceChoices').scrollIntoView({behavior:'smooth',block:'center'});return false;}return true;}
+  function validateSelection(){const e=estimate();if(!e.ids.length&&!e.issues.length){showStatus('Pilih sekurang-kurangnya satu servis atau satu masalah yang berlaku.','error');document.getElementById('serviceChoices').scrollIntoView({behavior:'smooth',block:'center'});return false;}if(!onlineOnlyServices(e.ids)){const lat=parseCoordinate($('locationLatitude').value),lng=parseCoordinate($('locationLongitude').value);if(!validCoords(lat,lng)||!clean($('customerArea').value)){showStatus('Pilih lokasi menggunakan butang Cari Lokasi atau Lokasi Semasa.','error');$('openLocationPicker').focus();return false;}const d=locationDistance(lat,lng);if(d>SERVICE_RADIUS_KM){showStatus(`Lokasi berada ${d.toFixed(2)} km dari kedai AZOBSS dan melebihi radius servis 10 km.`,'error');$('openLocationPicker').focus();return false;}}return true;}
   form.addEventListener('submit',async ev=>{
     ev.preventDefault();fallback.classList.remove('show');
     if(!form.reportValidity()||!validateSelection())return;
@@ -748,7 +791,7 @@ body.is-admin .market-nav a[href="/admin/"]{
       openWhatsAppOnce(result.whatsappUrl||localWa);
       showStatus(`Tempahan ${result.bookingId} berjaya direkod${whatsappOpened?' dan WhatsApp telah dibuka.':'.'}`,'ok');
       activeRequestId='';
-      try{localStorage.setItem('azobss_service_customer',JSON.stringify({name:p.customerName,phone:p.customerPhone,email:p.customerEmail,area:p.customerArea,floorUnit:p.floorUnit,fullAddress:p.fullAddress,locationLatitude:p.locationLatitude,locationLongitude:p.locationLongitude,locationWgs84:p.locationWgs84}));}catch(_){ }
+      rememberCustomer(p);
     }catch(error){
       clearTimeout(fastOpenTimer);
       if(!whatsappOpened){
@@ -761,6 +804,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     }finally{button.disabled=false;button.textContent='Hantar Tempahan melalui WhatsApp';}
   });
   function firstText(obj,keys){for(const key of keys){const value=obj&&obj[key];if(typeof value==='string'&&value.trim())return value.trim();}return '';}
+  function rememberCustomer(p){try{const previous=JSON.parse(localStorage.getItem('azobss_service_customer')||'null')||{};const next={...previous,name:p.customerName,phone:p.customerPhone,email:p.customerEmail};if(p.serviceMode!=='online')Object.assign(next,{area:p.customerArea,floorUnit:p.floorUnit,fullAddress:p.fullAddress,locationLatitude:p.locationLatitude,locationLongitude:p.locationLongitude,locationWgs84:p.locationWgs84});localStorage.setItem('azobss_service_customer',JSON.stringify(next));}catch(_){ }}
   function autofill(){
     let profile=null;
     try{profile=JSON.parse(localStorage.getItem('azobss_service_customer')||'null');}catch(_){ }
@@ -774,7 +818,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     $('customerEmail').value=firstText(profile,['email','customerEmail'])||'';
     const savedArea=firstText(profile,['area','city','location','customerArea'])||'';const savedLat=Number(profile.locationLatitude),savedLng=Number(profile.locationLongitude);if(savedArea&&validCoords(savedLat,savedLng)&&locationDistance(savedLat,savedLng)<=SERVICE_RADIUS_KM){$('customerArea').value=savedArea;$('locationLatitude').value=String(savedLat);$('locationLongitude').value=String(savedLng);$('locationWgs84').value=firstText(profile,['locationWgs84'])||`${savedLat.toFixed(6)}, ${savedLng.toFixed(6)}`;$('floorUnit').value=firstText(profile,['floorUnit','unitNumber','floorOrUnit'])||'';$('fullAddress').value=firstText(profile,['fullAddress'])||'';const d=locationDistance(savedLat,savedLng),note=$('locationAreaNote');note.textContent=`Lokasi tersimpan • ${d.toFixed(2)} km dari kedai AZOBSS.`;note.classList.add('location-valid');}
   }
-  autofill();updateSummary();
+  autofill();syncOnlineServiceMode();updateSummary();
 })();
 </script>
 <script id="azobss-795-summary-mobile-script">
