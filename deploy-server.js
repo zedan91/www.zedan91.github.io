@@ -873,49 +873,103 @@ async function azCommissionIdentityFromRequest(req) {
     return null;
   }
 }
-async function azHydrateIdentityFromUsernameHint(identity = {}, usernameHint = "") {
+async function azHydrateIdentityFromUsernameHint(identity = {}, usernameHint = "", profileDocHint = "") {
   try {
     const db = getAzobssBackendDb();
     const uid = String(identity.uid || "").trim();
-    const usernameKey = cleanPremiumText(usernameHint, 80).trim().toLowerCase();
-    if (!db || !uid || !usernameKey || !/^[a-z0-9._-]+$/.test(usernameKey)) return identity;
-
-    const snap = await db.collection("users").doc(usernameKey).get();
-    if (!snap.exists) return identity;
-    const x = snap.data() || {};
-    const profileUid = String(x.uid || x.authUid || x.userUid || x.firebaseUid || "").trim();
-    const profileEmail = String(x.authEmail || x.email || "").trim().toLowerCase();
     const authEmail = String(identity.authEmail || identity.email || "").trim().toLowerCase();
-    const uidMatch = !!profileUid && profileUid === uid;
-    const emailMatch = !!profileEmail && !!authEmail && profileEmail === authEmail;
-    const usernameAuthMatch = !!authEmail && authEmail === `${usernameKey}@azobss.local`;
-    if (!uidMatch && !emailMatch && !usernameAuthMatch) return identity;
+    const usernameKey = cleanPremiumText(usernameHint, 80).trim().toLowerCase();
+    const hintedProfileDoc = cleanPremiumText(profileDocHint, 160).trim();
+    if (!db || !uid) return identity;
 
-    identity.username = String(x.usernameKey || x.username || usernameKey).trim().toLowerCase();
-    identity.role = String(x.role || identity.role || "").toLowerCase();
-    identity.profileEmail = profileEmail || identity.profileEmail || "";
-    identity.email = identity.authEmail || identity.profileEmail || identity.email;
-    identity.userDocId = String(snap.id || usernameKey);
-    identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
-    identity.adminPriceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
-    identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
-    identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
-    identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
-    identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
-    identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
-    identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
-    identity.lotKadasterPriceAdjustmentPercent = x.lotKadasterPriceAdjustmentPercent;
-    identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
-    identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
-    identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
-    identity.softwarePriceAdjustmentPercent = x.softwarePriceAdjustmentPercent;
-    identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
-    identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
-    identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
-    identity.priceAdjustmentProfileResolvedBy = "verified-username";
+    const authLocal = /@azobss\.local$/i.test(authEmail) ? authEmail.replace(/@azobss\.local$/i, "").trim().toLowerCase() : "";
+    const isSafeDocId = value => !!value && value.length <= 160 && !/[\\/]/.test(value);
+
+    const applyProfile = (snap, resolvedBy) => {
+      if (!snap || !snap.exists) return false;
+      const x = snap.data() || {};
+      const docId = String(snap.id || "").trim();
+      const profileUid = String(x.uid || x.authUid || x.userUid || x.firebaseUid || "").trim();
+      const profileEmail = String(x.authEmail || x.email || "").trim().toLowerCase();
+      const profileUsername = String(x.usernameKey || x.username || docId || "").trim().toLowerCase();
+      const uidMatch = !!profileUid && profileUid === uid;
+      const emailMatch = !!profileEmail && !!authEmail && profileEmail === authEmail;
+      const usernameAuthMatch = !!authEmail && !!profileUsername && authEmail === `${profileUsername}@azobss.local`;
+      const directUidDocMatch = docId === uid;
+      if (!uidMatch && !emailMatch && !usernameAuthMatch && !directUidDocMatch) return false;
+
+      identity.username = profileUsername || identity.username || usernameKey || authLocal;
+      identity.role = String(x.role || identity.role || "").toLowerCase();
+      identity.profileEmail = profileEmail || identity.profileEmail || "";
+      identity.email = identity.authEmail || identity.profileEmail || identity.email;
+      identity.userDocId = docId || identity.userDocId || identity.username || uid;
+      identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
+      identity.adminPriceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
+      identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
+      identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
+      identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
+      identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
+      identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
+      identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
+      identity.lotKadasterPriceAdjustmentPercent = x.lotKadasterPriceAdjustmentPercent;
+      identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
+      identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
+      identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
+      identity.softwarePriceAdjustmentPercent = x.softwarePriceAdjustmentPercent;
+      identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
+      identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
+      identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
+      identity.priceAdjustmentProfileResolvedBy = resolvedBy;
+      return true;
+    };
+
+    // Mirror the frontend profile resolution order. The frontend now sends the exact
+    // users/<docId> used to display the discounted price, and the backend verifies
+    // that document still belongs to the authenticated Firebase user before trusting it.
+    const directIds = [];
+    for (const candidate of [hintedProfileDoc, usernameKey, authLocal, uid]) {
+      const id = String(candidate || "").trim();
+      if (isSafeDocId(id) && !directIds.includes(id)) directIds.push(id);
+    }
+    for (const id of directIds) {
+      try {
+        const snap = await db.collection("users").doc(id).get();
+        if (applyProfile(snap, id === hintedProfileDoc ? "verified-client-profile-doc" : (id === uid ? "verified-uid-doc" : "verified-username-doc"))) return identity;
+      } catch (readError) {
+        console.warn("Price adjustment direct profile lookup failed:", id, readError && (readError.message || readError));
+      }
+    }
+
+    // Duplicate legacy user documents can share the same UID. Prefer the candidate
+    // carrying an explicit per-category/admin-managed price profile instead of an
+    // arbitrary limit(1) result with the original price.
+    try {
+      const qs = await db.collection("users").where("uid", "==", uid).limit(10).get();
+      let best = null;
+      let bestScore = -1;
+      qs.forEach(docSnap => {
+        const x = docSnap.data() || {};
+        const docId = String(docSnap.id || "");
+        let score = 0;
+        if (docId === hintedProfileDoc) score += 1000;
+        if (docId.toLowerCase() === usernameKey) score += 500;
+        if (docId.toLowerCase() === authLocal) score += 450;
+        if (docId === uid) score += 400;
+        if (x.adminPriceAdjustmentOverride === true || String(x.priceAdjustmentManagedBy || "").toLowerCase() === "admin") score += 100;
+        if ((x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object") || (x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object")) score += 80;
+        if ([x.adminLotKadasterPriceAdjustmentPercent,x.lotKadasterPriceAdjustmentPercent,x.adminPaBmPriceAdjustmentPercent,x.paBmPriceAdjustmentPercent].some(v => v !== undefined && v !== null && v !== "")) score += 40;
+        const updated = Number(x.updatedAtMs || x.lastUpdatedAtMs || x.modifiedAtMs || 0) || 0;
+        score += Math.min(20, Math.floor(updated / 1e12));
+        if (score > bestScore) { bestScore = score; best = docSnap; }
+      });
+      if (best && applyProfile(best, "verified-uid-best-price-profile")) return identity;
+    } catch (queryError) {
+      console.warn("Price adjustment UID fallback lookup failed:", queryError && (queryError.message || queryError));
+    }
+
     return identity;
   } catch (err) {
-    console.warn("Price adjustment username profile lookup failed:", err && (err.message || err));
+    console.warn("Price adjustment verified profile lookup failed:", err && (err.message || err));
     return identity;
   }
 }
@@ -13233,7 +13287,8 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:9,
+        version:10,
+        exactPriceProfileCheckoutSync:true,
         perUserDiscountCheckoutSync:true,
         purchaseLogAreaRatio:true,
         paidDownloadRouting:"category-specific-v1",
@@ -13473,7 +13528,7 @@ async function handler(req, res) {
           return send(res, 401, JSON.stringify({ ok:false, success:false, error:"Please login again before proceeding to payment." }, null, 2), "application/json");
         }
         const submittedUser = getPremiumUser(data);
-        identity = await azHydrateIdentityFromUsernameHint(identity, data.usernameKey || submittedUser.username);
+        identity = await azHydrateIdentityFromUsernameHint(identity, data.usernameKey || submittedUser.username, data.priceProfileDocId);
         const user = {
           uid: cleanPremiumText(identity.uid, 120),
           username: cleanPremiumText(identity.username || data.usernameKey || submittedUser.username || "", 80).toLowerCase(),
@@ -13564,6 +13619,17 @@ async function handler(req, res) {
         const totalAmount = Math.round((items.reduce((sum, item) => sum + item.amount, 0) + Number.EPSILON) * 100) / 100;
         if (totalAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Total bayaran tidak sah." }, null, 2), "application/json");
         const amountSen = Math.round(totalAmount * 100);
+        const clientExpectedAmountSen = Number(data.expectedAmountSen || 0);
+        if (Number.isFinite(clientExpectedAmountSen) && clientExpectedAmountSen > 0 && clientExpectedAmountSen !== amountSen) {
+          return send(res, 409, JSON.stringify({
+            ok:false, success:false, pricingSyncRequired:true,
+            error:`Harga akaun belum sepadan antara paparan dan server. Muat semula halaman selepas backend v10 siap dideploy.`,
+            expectedAmountSen:clientExpectedAmountSen, amountSen,
+            priceAdjustmentByCategory,
+            priceProfileDocId:String(identity.userDocId || ""),
+            priceProfileResolvedBy:String(identity.priceAdjustmentProfileResolvedBy || "")
+          }, null, 2), "application/json");
+        }
         const orderId = makeId("pabm");
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;

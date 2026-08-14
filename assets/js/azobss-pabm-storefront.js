@@ -1,6 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=593';
+import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=920';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
@@ -8,7 +8,7 @@ const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
     ? window.location.origin
     : 'https://azobss-backend.onrender.com'
 );
-const CHECKOUT_API_VERSION = 9;
+const CHECKOUT_API_VERSION = 10;
 const CART_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
 const MAX_CART_ITEMS = 50;
 const PRODUCT_TYPES = new Set(['PA', 'BM', 'SBM', 'GPS', 'NDCDB', 'NDCDB_C3', 'SYIT_PIAWAI']);
@@ -700,9 +700,12 @@ async function openJupemLotMap(button) {
 
 function checkoutPayload(items) {
   const user = savedUser() || {};
+  const pricingProfile = getCachedPriceAdjustment();
   return {
     usernameKey: String(user.usernameKey || user.username || user.displayName || '').trim().toLowerCase(),
     uid: String(user.uid || (auth && auth.currentUser && auth.currentUser.uid) || ''),
+    priceProfileDocId: String(pricingProfile?.profileDocId || '').trim(),
+    expectedAmountSen: Math.round(cartTotal(items) * 100),
     user,
     items: items.map((item) => ({
       productType: item.productType,

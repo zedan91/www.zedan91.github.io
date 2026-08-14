@@ -15,7 +15,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const PRICE_CATEGORIES = Object.freeze(['paBm','lotKadaster','publicPa','software','cadTools']);
 const emptyPercents = () => ({ paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 });
-const state = { ready:false, percent:0, percentByCategory:emptyPercents(), uid:'', username:'', source:'default' };
+const state = { ready:false, percent:0, percentByCategory:emptyPercents(), uid:'', username:'', profileDocId:'', source:'default' };
 let readyResolve;
 let readyPromise = new Promise(resolve => { readyResolve = resolve; });
 
@@ -107,6 +107,7 @@ async function refresh(user = auth.currentUser){
   state.ready = false;
   state.uid = user?.uid || '';
   state.username = '';
+  state.profileDocId = '';
   state.percent = 0;
   state.percentByCategory = emptyPercents();
   state.source = user ? 'profile-unavailable' : 'guest';
@@ -115,6 +116,7 @@ async function refresh(user = auth.currentUser){
     if(profile){
       state.percentByCategory = profilePercents(profile);
       state.username = String(profile.usernameKey || profile.username || profile.docId || '');
+      state.profileDocId = String(profile.docId || '');
       state.source = 'users';
     }
   }
