@@ -1,4 +1,4 @@
-/* AZOBSS 906: More menu + one Repair PC nav chip for physical and online support pages. */
+/* AZOBSS 911: More menu + Repair PC dropdown with clearer customer wording. */
 (function () {
   'use strict';
 
@@ -251,6 +251,187 @@
     });
   }
 
+  function buildRepairMenu(link, index) {
+    if (!link || link.dataset.azRepairConverted === '1') return;
+
+    var nav = link.closest('.market-nav');
+    if (!nav) return;
+
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var physicalPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
+    var onlinePath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
+    var isPhysicalPage = currentPath === physicalPath || currentPath.indexOf(physicalPath + '/') === 0;
+    var isOnlinePage = currentPath === onlinePath || currentPath.indexOf(onlinePath + '/') === 0;
+    var inheritedActive = link.classList.contains('is-active') ||
+      link.classList.contains('is-current') ||
+      link.classList.contains('market-nav-active');
+
+    var wrap = document.createElement('div');
+    wrap.className = 'az-more-nav az-repair-nav';
+    wrap.dataset.azRepairMenu = '1';
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'az-more-trigger az-repair-trigger';
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', 'azRepairDropdown' + index);
+    trigger.setAttribute('aria-label', 'Menu Repair PC');
+    if (isPhysicalPage || isOnlinePage || inheritedActive) {
+      trigger.classList.add('market-nav-active', 'is-active', 'is-current');
+    }
+    trigger.innerHTML = '' +
+      '<span>Repair PC</span>' +
+      '<span class="az-more-chevron" aria-hidden="true">▾</span>';
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'az-more-dropdown az-repair-dropdown';
+    dropdown.id = 'azRepairDropdown' + index;
+    dropdown.setAttribute('role', 'menu');
+    dropdown.setAttribute('aria-label', 'Pilihan servis Repair PC');
+
+    var physicalLink = document.createElement('a');
+    physicalLink.href = '/Tempah-Servis-IT/';
+    physicalLink.setAttribute('role', 'menuitem');
+    physicalLink.dataset.azRepairPhysicalLink = '1';
+    if (isPhysicalPage) {
+      physicalLink.classList.add('is-active');
+      physicalLink.setAttribute('aria-current', 'page');
+    }
+    physicalLink.innerHTML = '' +
+      '<svg class="az-more-item-icon az-repair-physical-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>' +
+      '</svg>' +
+      '<span class="az-repair-item-copy"><strong>Servis PC &amp; Laptop</strong><small>Pembaikan fizikal, format dan servis kedai</small></span>';
+
+    var onlineLink = document.createElement('a');
+    onlineLink.href = '/Troubleshoot-PC-Online/';
+    onlineLink.setAttribute('role', 'menuitem');
+    onlineLink.dataset.azRepairOnlineLink = '1';
+    if (isOnlinePage) {
+      onlineLink.classList.add('is-active');
+      onlineLink.setAttribute('aria-current', 'page');
+    }
+    onlineLink.innerHTML = '' +
+      '<svg class="az-more-item-icon az-repair-online-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<rect x="3" y="4" width="18" height="12" rx="2"></rect>' +
+        '<path d="M8 20h8M12 16v4"></path>' +
+      '</svg>' +
+      '<span class="az-repair-item-copy"><strong>Troubleshoot PC Online</strong><small>Pemeriksaan dan pembaikan PC dari jauh</small></span>';
+
+    dropdown.appendChild(physicalLink);
+    dropdown.appendChild(onlineLink);
+    wrap.appendChild(trigger);
+    wrap.appendChild(dropdown);
+
+    link.dataset.azRepairConverted = '1';
+    link.replaceWith(wrap);
+    nav.classList.add('az-more-enabled');
+
+    function isMobileStickybar() {
+      return window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+    }
+
+    function positionMobileDropdown() {
+      if (!isMobileStickybar()) {
+        dropdown.style.removeProperty('--az-more-mobile-top');
+        dropdown.style.removeProperty('--az-more-mobile-left');
+        dropdown.style.removeProperty('--az-more-mobile-width');
+        return;
+      }
+
+      var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      var triggerRect = trigger.getBoundingClientRect();
+      var dropdownWidth = Math.min(310, Math.max(230, viewportWidth - 16));
+      var halfWidth = dropdownWidth / 2;
+      var centre = triggerRect.left + (triggerRect.width / 2);
+      centre = Math.max(8 + halfWidth, Math.min(viewportWidth - 8 - halfWidth, centre));
+
+      dropdown.style.setProperty('--az-more-mobile-top', Math.round(triggerRect.bottom + 7) + 'px');
+      dropdown.style.setProperty('--az-more-mobile-left', Math.round(centre) + 'px');
+      dropdown.style.setProperty('--az-more-mobile-width', Math.round(dropdownWidth) + 'px');
+    }
+
+    function setOpen(open) {
+      if (open) positionMobileDropdown();
+      wrap.classList.toggle('is-open', open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    var dropdownPositionFrame = 0;
+    function queueDropdownPosition() {
+      if (!wrap.classList.contains('is-open')) return;
+      if (dropdownPositionFrame) cancelAnimationFrame(dropdownPositionFrame);
+      dropdownPositionFrame = requestAnimationFrame(function () {
+        dropdownPositionFrame = 0;
+        positionMobileDropdown();
+      });
+    }
+
+    nav.addEventListener('scroll', queueDropdownPosition, { passive: true });
+    window.addEventListener('resize', queueDropdownPosition, { passive: true });
+    window.addEventListener('orientationchange', queueDropdownPosition, { passive: true });
+
+    function menuItems() {
+      return Array.prototype.slice.call(dropdown.querySelectorAll('a[role="menuitem"]'));
+    }
+
+    trigger.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.az-more-nav.is-open').forEach(function (other) {
+        if (other !== wrap) {
+          other.classList.remove('is-open');
+          var otherTrigger = other.querySelector('.az-more-trigger');
+          if (otherTrigger) otherTrigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+      setOpen(!wrap.classList.contains('is-open'));
+    });
+
+    trigger.addEventListener('keydown', function (event) {
+      var items = menuItems();
+      if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setOpen(true);
+        if (items[0]) items[0].focus();
+      } else if (event.key === 'Escape') {
+        setOpen(false);
+        trigger.focus();
+      }
+    });
+
+    dropdown.addEventListener('keydown', function (event) {
+      var items = menuItems();
+      var currentIndex = items.indexOf(document.activeElement);
+      if (!items.length) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        trigger.focus();
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        items[(currentIndex + 1 + items.length) % items.length].focus();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        items[(currentIndex - 1 + items.length) % items.length].focus();
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        items[0].focus();
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        items[items.length - 1].focus();
+      }
+    });
+
+    physicalLink.addEventListener('click', function () {
+      setOpen(false);
+    });
+    onlineLink.addEventListener('click', function () {
+      setOpen(false);
+    });
+  }
+
   function ensureWebsiteOrderLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
     var websitePath = normalisePath('/Tempah-Website/').toLowerCase();
@@ -344,6 +525,10 @@
   function initialise() {
     ensureWebsiteOrderLink();
     ensureRepairServiceLink();
+
+    Array.prototype.slice.call(document.querySelectorAll(
+      '.market-sticky-bar .market-nav a[data-az-repair-service-link="1"]'
+    )).forEach(buildRepairMenu);
 
     var links = Array.prototype.slice.call(document.querySelectorAll(
       '.market-sticky-bar .market-nav a[href="/tools/"], ' +

@@ -327,3 +327,66 @@ body{
 .market-sticky-bar .market-nav .az-more-dropdown a.market-nav-active .az-more-item-icon{
   color:#052e16!important;
 }
+
+/* AZOBSS 910: Repair PC dropdown with physical and online service choices. */
+.market-sticky-bar .az-repair-dropdown{
+  min-width:310px;
+  padding:8px;
+}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a{
+  min-height:58px!important;
+  align-items:flex-start!important;
+  white-space:normal!important;
+  padding:10px 12px!important;
+}
+
+.az-repair-item-copy{
+  display:grid;
+  gap:3px;
+  min-width:0;
+  line-height:1.18;
+}
+
+.az-repair-item-copy strong{
+  display:block;
+  color:inherit;
+  font-size:13px;
+  font-weight:900;
+}
+
+.az-repair-item-copy small{
+  display:block;
+  color:#94a3b8;
+  font-size:10.5px;
+  font-weight:650;
+  line-height:1.3;
+}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a:hover .az-repair-item-copy small,
+.market-sticky-bar .market-nav .az-repair-dropdown a:focus-visible .az-repair-item-copy small,
+.market-sticky-bar .market-nav .az-repair-dropdown a[aria-current="page"] .az-repair-item-copy small{
+  color:inherit;
+  opacity:.82;
+}
+
+.az-repair-physical-icon{color:#86efac}
+.az-repair-online-icon{color:#67e8f9}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-physical-link="1"]:hover,
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-physical-link="1"]:focus-visible{
+  background:rgba(34,197,94,.14)!important;
+  color:#bbf7d0!important;
+}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-online-link="1"]:hover,
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-online-link="1"]:focus-visible{
+  background:rgba(6,182,212,.14)!important;
+  color:#a5f3fc!important;
+}
+
+@media(max-width:760px){
+  .market-sticky-bar .az-repair-dropdown{
+    min-width:0;
+  }
+}
