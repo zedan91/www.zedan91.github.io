@@ -109,17 +109,26 @@
       .az-lot-map-cart-success-tick{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:2px solid #fff;border-radius:50%;font-size:17px;font-weight:1000;line-height:1}
       .az-lot-map-cart-success-sub{display:block;width:100%;color:#d7fff0;font-size:12px;font-weight:800;text-align:center}
       .az-lot-map-reset{width:100%;min-height:40px;margin-top:9px;border:1px solid #49607e;border-radius:6px;background:#1c2d46;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 2px 0 #07101e}
-      .az-lot-radius-tool{margin:12px 0 0}
+      .az-lot-radius-tool{margin:12px 0 0;padding:10px;border:1px solid #285a78;border-radius:7px;background:#0b2238}
+      .az-lot-reference-title{margin-bottom:7px;color:#e0f2fe;font-size:12px;font-weight:900}
+      .az-lot-reference-shapes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px}
+      .az-lot-reference-shape-btn{min-height:34px;border:1px solid #37556f;border-radius:6px;background:#122b42;color:#b9cde2;font-size:12px;font-weight:900;cursor:pointer}
+      .az-lot-reference-shape-btn:hover,.az-lot-reference-shape-btn:focus-visible{border-color:#38bdf8;color:#e0f2fe}
+      .az-lot-reference-shape-btn.is-active{border-color:#67e8f9;background:#075985;color:#fff;box-shadow:0 0 0 2px rgba(103,232,249,.12)}
       .az-lot-radius-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:42px;padding:8px 12px;border:1px solid #38bdf8;border-radius:6px;background:#0b2b46;color:#e0f2fe;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 2px 0 #061521}
       .az-lot-radius-btn:hover,.az-lot-radius-btn:focus-visible{background:#0c3a5d;box-shadow:0 0 0 3px rgba(56,189,248,.16)}
       .az-lot-radius-btn.is-active{border-color:#67e8f9;background:#075985;color:#fff;box-shadow:0 0 0 3px rgba(103,232,249,.16)}
       .az-lot-radius-icon{font-size:19px;line-height:1}
-      .az-lot-radius-readout{margin-top:7px;padding:8px 10px;border:1px solid #285a78;border-radius:6px;background:#0b2238}
+      .az-lot-radius-select-option{display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:8px;border:1px solid rgba(103,232,249,.22);border-radius:6px;background:rgba(7,89,133,.14);color:#d8efff;font-size:11px;font-weight:800;line-height:1.35;cursor:pointer}
+      .az-lot-radius-select-option input{flex:0 0 auto;width:16px;height:16px;margin:0;accent-color:#22c55e}
+      .az-lot-radius-select-option.is-enabled{border-color:#22c55e;background:rgba(34,197,94,.10);color:#dcfce7}
+      .az-lot-radius-readout{margin-top:7px;padding:8px 10px;border:1px solid #285a78;border-radius:6px;background:#081c2e}
       .az-lot-radius-readout[hidden]{display:none!important}
       .az-lot-radius-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:4px 0;border-bottom:1px solid rgba(148,163,184,.13);font-size:12px}
       .az-lot-radius-row:last-of-type{border-bottom:0}
       .az-lot-radius-row span{color:#9fb3cf}.az-lot-radius-row strong{color:#e0f2fe;text-align:right}
       .az-lot-radius-note{display:block;margin-top:6px;color:#7dd3fc;font-size:10px;line-height:1.35}
+      .az-lot-radius-note.is-selecting{color:#86efac}
       .az-lot-map-canvas.is-radius-mode,.az-lot-map-canvas.is-radius-mode .leaflet-container{cursor:crosshair!important}
       .az-lot-radius-tooltip{border:1px solid #0284c7!important;background:#e0f2fe!important;color:#0c4a6e!important;font-size:11px!important;font-weight:900!important;box-shadow:0 2px 7px rgba(15,23,42,.24)!important}
       .az-lot-radius-tooltip:before{border-top-color:#0284c7!important}
@@ -320,13 +329,22 @@
                 <dt>Nisbah saiz 1 syit</dt><dd data-sheet-ratio>-</dd>
               </dl>
               <div class="az-lot-radius-tool">
-                <button class="az-lot-radius-btn" type="button" aria-pressed="false" title="Lukis bulatan rujukan untuk anggar radius dan keluasan"><span class="az-lot-radius-icon" aria-hidden="true">&#9678;</span><span data-radius-btn-label>Rujukan Radius</span></button>
+                <div class="az-lot-reference-title">Rujukan Kawasan</div>
+                <div class="az-lot-reference-shapes" role="group" aria-label="Pilih bentuk rujukan">
+                  <button class="az-lot-reference-shape-btn is-active" type="button" data-reference-shape="circle" aria-pressed="true">◉ Bulatan</button>
+                  <button class="az-lot-reference-shape-btn" type="button" data-reference-shape="square" aria-pressed="false">□ Petak</button>
+                </div>
+                <button class="az-lot-radius-btn" type="button" aria-pressed="false" title="Lukis kawasan rujukan untuk anggar saiz dan keluasan"><span class="az-lot-radius-icon" aria-hidden="true">&#9678;</span><span data-radius-btn-label>Lukis Rujukan Bulatan</span></button>
+                <label class="az-lot-radius-select-option">
+                  <input type="checkbox" data-radius-select-lots>
+                  <span>Pilih lot dalam kawasan rujukan</span>
+                </label>
                 <div class="az-lot-radius-readout" data-radius-readout hidden>
-                  <div class="az-lot-radius-row"><span>Radius</span><strong data-radius-value>-</strong></div>
-                  <div class="az-lot-radius-row"><span>Diameter</span><strong data-diameter-value>-</strong></div>
-                  <div class="az-lot-radius-row"><span>Luas bulatan</span><strong data-radius-area>-</strong></div>
+                  <div class="az-lot-radius-row"><span data-reference-primary-label>Radius</span><strong data-radius-value>-</strong></div>
+                  <div class="az-lot-radius-row"><span data-reference-secondary-label>Diameter</span><strong data-diameter-value>-</strong></div>
+                  <div class="az-lot-radius-row"><span data-reference-area-label>Luas bulatan</span><strong data-radius-area>-</strong></div>
                   <div class="az-lot-radius-row"><span>Hektar / Ekar</span><strong data-radius-land-area>-</strong></div>
-                  <small class="az-lot-radius-note">Rujukan sahaja — tidak mengubah pilihan lot atau harga.</small>
+                  <small class="az-lot-radius-note" data-radius-note>Rujukan sahaja — tandakan pilihan di atas jika mahu lot dalam kawasan ini dipilih.</small>
                 </div>
               </div>
               <div class="az-lot-map-price" data-lot-price>Harga akan dikira automatik</div>
@@ -349,7 +367,15 @@
       const resetButton = modal.querySelector('.az-lot-map-reset');
       const radiusButton = modal.querySelector('.az-lot-radius-btn');
       const radiusButtonLabel = modal.querySelector('[data-radius-btn-label]');
+      const circleShapeButton = modal.querySelector('[data-reference-shape="circle"]');
+      const squareShapeButton = modal.querySelector('[data-reference-shape="square"]');
+      const referenceSelectCheckbox = modal.querySelector('[data-radius-select-lots]');
+      const referenceSelectOption = modal.querySelector('.az-lot-radius-select-option');
       const radiusReadout = modal.querySelector('[data-radius-readout]');
+      const radiusPrimaryLabel = modal.querySelector('[data-reference-primary-label]');
+      const radiusSecondaryLabel = modal.querySelector('[data-reference-secondary-label]');
+      const radiusAreaLabel = modal.querySelector('[data-reference-area-label]');
+      const radiusNoteNode = modal.querySelector('[data-radius-note]');
       const radiusValueNode = modal.querySelector('[data-radius-value]');
       const diameterValueNode = modal.querySelector('[data-diameter-value]');
       const radiusAreaNode = modal.querySelector('[data-radius-area]');
@@ -377,9 +403,13 @@
       let locationSearchSerial = 0;
       let radiusReferenceMode = false;
       let radiusReferenceCenter = null;
-      let radiusReferenceCircle = null;
+      let radiusReferenceShapeLayer = null;
       let radiusReferenceCenterMarker = null;
       let radiusReferenceFinalized = false;
+      let radiusReferenceSizeMeters = 0;
+      let referenceShape = 'circle';
+      let referenceSelectionEnabled = false;
+      let selectionSource = null;
 
       function formatReferenceDistance(meters) {
         const value = Math.max(0, Number(meters) || 0);
@@ -387,29 +417,114 @@
         return `${formatNumber(value, value >= 100 ? 0 : 1)} m`;
       }
 
-      function radiusReferenceLabel(radiusMeters) {
-        const areaM2 = Math.PI * radiusMeters * radiusMeters;
-        const hectares = areaM2 / 10000;
-        const acres = areaM2 / 4046.8564224;
-        return `R ${formatReferenceDistance(radiusMeters)} · ${formatNumber(hectares, hectares >= 10 ? 1 : 2)} ha · ${formatNumber(acres, acres >= 10 ? 1 : 2)} ekar`;
+      function referenceShapeName() {
+        return referenceShape === 'square' ? 'Petak' : 'Bulatan';
       }
 
-      function updateRadiusReferenceReadout(radiusMeters) {
-        const radius = Math.max(0, Number(radiusMeters) || 0);
-        const areaM2 = Math.PI * radius * radius;
-        const hectares = areaM2 / 10000;
-        const acres = areaM2 / 4046.8564224;
+      function destinationLatLng(center, distanceMeters, bearingDegrees) {
+        const earthRadius = 6378137;
+        const distance = Math.max(0, Number(distanceMeters) || 0) / earthRadius;
+        const bearing = Number(bearingDegrees || 0) * Math.PI / 180;
+        const lat1 = Number(center.lat) * Math.PI / 180;
+        const lon1 = Number(center.lng) * Math.PI / 180;
+        const lat2 = Math.asin(
+          Math.sin(lat1) * Math.cos(distance)
+          + Math.cos(lat1) * Math.sin(distance) * Math.cos(bearing)
+        );
+        const lon2 = lon1 + Math.atan2(
+          Math.sin(bearing) * Math.sin(distance) * Math.cos(lat1),
+          Math.cos(distance) - Math.sin(lat1) * Math.sin(lat2)
+        );
+        return window.L.latLng(lat2 * 180 / Math.PI, lon2 * 180 / Math.PI);
+      }
+
+      function referenceLatLngs(sizeMeters) {
+        if (!radiusReferenceCenter) return [];
+        const size = Math.max(0.5, Number(sizeMeters) || 0.5);
+        if (referenceShape === 'square') {
+          const cornerDistance = size * Math.SQRT2;
+          return [45, 135, 225, 315].map((bearing) => destinationLatLng(radiusReferenceCenter, cornerDistance, bearing));
+        }
+        const points = [];
+        for (let bearing = 0; bearing < 360; bearing += 5) {
+          points.push(destinationLatLng(radiusReferenceCenter, size, bearing));
+        }
+        return points;
+      }
+
+      function referenceGeometry() {
+        const points = referenceLatLngs(radiusReferenceSizeMeters);
+        if (points.length < 3) return null;
+        const ring = points.map((point) => [Number(point.lng), Number(point.lat)]);
+        if (ring.length) ring.push([...ring[0]]);
+        return { rings: [ring], spatialReference: { wkid: 4326 } };
+      }
+
+      function referenceMetrics(sizeMeters) {
+        const size = Math.max(0, Number(sizeMeters) || 0);
+        const areaM2 = referenceShape === 'square'
+          ? Math.pow(size * 2, 2)
+          : Math.PI * size * size;
+        return {
+          size,
+          diameterOrSide: size * 2,
+          areaM2,
+          hectares: areaM2 / 10000,
+          acres: areaM2 / 4046.8564224
+        };
+      }
+
+      function radiusReferenceLabel(sizeMeters) {
+        const metrics = referenceMetrics(sizeMeters);
+        const dimension = referenceShape === 'square'
+          ? `Sisi ${formatReferenceDistance(metrics.diameterOrSide)}`
+          : `R ${formatReferenceDistance(metrics.size)}`;
+        return `${referenceShapeName()} · ${dimension} · ${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha · ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
+      }
+
+      function updateRadiusReferenceReadout(sizeMeters) {
+        const metrics = referenceMetrics(sizeMeters);
         radiusReadout.hidden = false;
-        radiusValueNode.textContent = formatReferenceDistance(radius);
-        diameterValueNode.textContent = formatReferenceDistance(radius * 2);
-        radiusAreaNode.textContent = `${formatNumber(areaM2, areaM2 >= 1000 ? 0 : 1)} m²`;
-        radiusLandAreaNode.textContent = `${formatNumber(hectares, hectares >= 10 ? 1 : 2)} ha / ${formatNumber(acres, acres >= 10 ? 1 : 2)} ekar`;
+        if (referenceShape === 'square') {
+          radiusPrimaryLabel.textContent = 'Pusat → sisi';
+          radiusSecondaryLabel.textContent = 'Panjang sisi';
+          radiusAreaLabel.textContent = 'Luas petak';
+        } else {
+          radiusPrimaryLabel.textContent = 'Radius';
+          radiusSecondaryLabel.textContent = 'Diameter';
+          radiusAreaLabel.textContent = 'Luas bulatan';
+        }
+        radiusValueNode.textContent = formatReferenceDistance(metrics.size);
+        diameterValueNode.textContent = formatReferenceDistance(metrics.diameterOrSide);
+        radiusAreaNode.textContent = `${formatNumber(metrics.areaM2, metrics.areaM2 >= 1000 ? 0 : 1)} m²`;
+        radiusLandAreaNode.textContent = `${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha / ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
+        radiusNoteNode.classList.toggle('is-selecting', referenceSelectionEnabled);
+        radiusNoteNode.textContent = referenceSelectionEnabled
+          ? `Pemilihan lot aktif — lot yang bersilang dengan ${referenceShape === 'square' ? 'petak' : 'bulatan'} ini akan digunakan untuk kiraan.`
+          : 'Rujukan sahaja — tandakan pilihan di atas jika mahu lot dalam kawasan ini dipilih.';
+      }
+
+      function updateReferenceShapeButtons() {
+        [circleShapeButton, squareShapeButton].forEach((button) => {
+          if (!button) return;
+          const active = button.dataset.referenceShape === referenceShape;
+          button.classList.toggle('is-active', active);
+          button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        if (!radiusReferenceMode) radiusButtonLabel.textContent = `Lukis Rujukan ${referenceShapeName()}`;
+        radiusButton.querySelector('.az-lot-radius-icon').textContent = referenceShape === 'square' ? '□' : '◎';
+      }
+
+      function updateReferenceSelectionUi() {
+        referenceSelectionEnabled = Boolean(referenceSelectCheckbox && referenceSelectCheckbox.checked);
+        if (referenceSelectOption) referenceSelectOption.classList.toggle('is-enabled', referenceSelectionEnabled);
+        if (!radiusReadout.hidden) updateRadiusReferenceReadout(radiusReferenceSizeMeters);
       }
 
       function setRadiusButtonState(active, label) {
         radiusButton.classList.toggle('is-active', Boolean(active));
         radiusButton.setAttribute('aria-pressed', active ? 'true' : 'false');
-        radiusButtonLabel.textContent = label || (active ? 'Batal Rujukan Radius' : 'Rujukan Radius');
+        radiusButtonLabel.textContent = label || (active ? 'Batal Rujukan' : `Lukis Rujukan ${referenceShapeName()}`);
         canvas.classList.toggle('is-radius-mode', Boolean(active));
       }
 
@@ -417,15 +532,20 @@
         radiusReferenceMode = false;
         radiusReferenceCenter = null;
         radiusReferenceFinalized = false;
-        if (map && radiusReferenceCircle) {
-          try { map.removeLayer(radiusReferenceCircle); } catch (_) {}
+        radiusReferenceSizeMeters = 0;
+        if (map && radiusReferenceShapeLayer) {
+          try { map.removeLayer(radiusReferenceShapeLayer); } catch (_) {}
         }
         if (map && radiusReferenceCenterMarker) {
           try { map.removeLayer(radiusReferenceCenterMarker); } catch (_) {}
         }
-        radiusReferenceCircle = null;
+        radiusReferenceShapeLayer = null;
         radiusReferenceCenterMarker = null;
-        setRadiusButtonState(false, 'Rujukan Radius');
+        if (selectionSource === 'reference') {
+          if (estimateController) estimateController.abort();
+          clearSummary();
+        }
+        setRadiusButtonState(false, `Lukis Rujukan ${referenceShapeName()}`);
         if (resetReadout) {
           radiusReadout.hidden = true;
           radiusValueNode.textContent = '-';
@@ -435,41 +555,77 @@
         }
       }
 
+      function firstManualSelectionLayer() {
+        let found = null;
+        drawnItems.eachLayer((layer) => { if (!found) found = layer; });
+        return found;
+      }
+
+      async function restoreManualSelectionAfterReference() {
+        const manualLayer = firstManualSelectionLayer();
+        if (!manualLayer) {
+          clearSummary();
+          setStatus(status, 'Pemilihan ikut kawasan rujukan dimatikan. Lukis polygon/segi empat atau tandakan semula pilihan rujukan.', '');
+          return;
+        }
+        await estimateLayer(manualLayer);
+        setStatus(status, 'Pemilihan ikut kawasan rujukan dimatikan. Pilihan polygon/segi empat digunakan semula.', 'success');
+      }
+
+      async function applyReferenceSelection() {
+        if (!referenceSelectionEnabled || !radiusReferenceFinalized) return;
+        const geometry = referenceGeometry();
+        if (!geometry) return;
+        setStatus(status, `Memilih lot dalam ${referenceShape === 'square' ? 'petak' : 'radius bulatan'} rujukan...`, 'loading');
+        await estimateGeometry(geometry, 'reference');
+        if (estimate) {
+          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot dipilih menggunakan ${referenceShape === 'square' ? 'petak' : 'radius bulatan'} rujukan.`, 'success');
+        }
+      }
+
       function startRadiusReference() {
         clearRadiusReference(true);
         radiusReferenceMode = true;
-        setRadiusButtonState(true, 'Batal Rujukan Radius');
-        setStatus(status, 'Rujukan Radius aktif. Klik titik pusat pada peta, kemudian klik titik tepi bulatan.', '');
+        setRadiusButtonState(true, 'Batal Rujukan');
+        setStatus(status, `Rujukan ${referenceShapeName()} aktif. Klik titik pusat pada peta, kemudian klik titik tepi ${referenceShape === 'square' ? 'petak' : 'bulatan'}.`, '');
       }
 
       function updateRadiusReference(edgeLatLng, finalized = false) {
         if (!map || !radiusReferenceCenter || !edgeLatLng) return;
-        const radiusMeters = Math.max(0, map.distance(radiusReferenceCenter, edgeLatLng));
-        if (!radiusReferenceCircle) {
-          radiusReferenceCircle = window.L.circle(radiusReferenceCenter, {
-            radius: Math.max(1, radiusMeters),
-            color: '#0284c7',
-            weight: 2,
-            dashArray: '7 5',
-            fillColor: '#38bdf8',
-            fillOpacity: 0.10,
-            interactive: false
-          }).addTo(map);
+        radiusReferenceSizeMeters = Math.max(0, map.distance(radiusReferenceCenter, edgeLatLng));
+        const shapeOptions = {
+          color: '#0284c7',
+          weight: 2,
+          dashArray: '7 5',
+          fillColor: '#38bdf8',
+          fillOpacity: 0.10,
+          interactive: false
+        };
+        if (!radiusReferenceShapeLayer) {
+          radiusReferenceShapeLayer = referenceShape === 'square'
+            ? window.L.polygon(referenceLatLngs(radiusReferenceSizeMeters), shapeOptions).addTo(map)
+            : window.L.circle(radiusReferenceCenter, { ...shapeOptions, radius: Math.max(1, radiusReferenceSizeMeters) }).addTo(map);
+        } else if (referenceShape === 'square') {
+          radiusReferenceShapeLayer.setLatLngs(referenceLatLngs(radiusReferenceSizeMeters));
         } else {
-          radiusReferenceCircle.setRadius(Math.max(1, radiusMeters));
+          radiusReferenceShapeLayer.setRadius(Math.max(1, radiusReferenceSizeMeters));
         }
-        updateRadiusReferenceReadout(radiusMeters);
+        updateRadiusReferenceReadout(radiusReferenceSizeMeters);
         try {
-          radiusReferenceCircle.unbindTooltip();
-          radiusReferenceCircle.bindTooltip(radiusReferenceLabel(radiusMeters), { permanent: true, direction: 'center', className: 'az-lot-radius-tooltip', opacity: 0.96 });
+          radiusReferenceShapeLayer.unbindTooltip();
+          radiusReferenceShapeLayer.bindTooltip(radiusReferenceLabel(radiusReferenceSizeMeters), { permanent: true, direction: 'center', className: 'az-lot-radius-tooltip', opacity: 0.96 });
         } catch (_) {}
         if (finalized) {
           radiusReferenceFinalized = true;
           radiusReferenceMode = false;
-          setRadiusButtonState(false, 'Rujukan Radius Baru');
-          setStatus(status, `Rujukan radius siap: ${radiusReferenceLabel(radiusMeters)}. Rujukan ini tidak menjejaskan pilihan lot atau harga.`, 'success');
+          setRadiusButtonState(false, `Lukis ${referenceShapeName()} Baru`);
+          if (referenceSelectionEnabled) {
+            void applyReferenceSelection();
+          } else {
+            setStatus(status, `Rujukan siap: ${radiusReferenceLabel(radiusReferenceSizeMeters)}. Tandakan “Pilih lot dalam kawasan rujukan” jika mahu kawasan ini menjadi pilihan lot.`, 'success');
+          }
         } else {
-          radiusButtonLabel.textContent = 'Klik titik tepi bulatan';
+          radiusButtonLabel.textContent = `Klik titik tepi ${referenceShape === 'square' ? 'petak' : 'bulatan'}`;
         }
       }
 
@@ -486,8 +642,8 @@
             interactive: false
           }).addTo(map);
           updateRadiusReferenceReadout(0);
-          radiusButtonLabel.textContent = 'Klik titik tepi bulatan';
-          setStatus(status, 'Pusat radius ditetapkan. Gerakkan tetikus untuk melihat anggaran, kemudian klik titik tepi bulatan.', '');
+          radiusButtonLabel.textContent = `Klik titik tepi ${referenceShape === 'square' ? 'petak' : 'bulatan'}`;
+          setStatus(status, `Pusat ${referenceShapeName().toLowerCase()} ditetapkan. Gerakkan tetikus untuk melihat anggaran, kemudian klik titik tepi.`, '');
           return;
         }
         updateRadiusReference(event.latlng, true);
@@ -930,7 +1086,7 @@
         if (radiusReferenceMode) {
           event.preventDefault();
           clearRadiusReference(true);
-          setStatus(status, 'Rujukan radius dibatalkan. Pilihan lot sedia ada tidak berubah.', '');
+          setStatus(status, 'Lukisan kawasan rujukan dibatalkan. Pilihan lot sedia ada tidak berubah.', '');
           return;
         }
         close();
@@ -971,6 +1127,7 @@
       function clearSummary() {
         selectedGeometry = null;
         estimate = null;
+        selectionSource = null;
         addButton.disabled = true;
         setAddButtonDefault();
         countNode.textContent = '-';
@@ -980,18 +1137,19 @@
         priceNode.textContent = 'Harga akan dikira automatik';
       }
 
-      async function estimateLayer(layer) {
+      async function estimateGeometry(geometry, source = 'manual') {
         clearSummary();
-        selectedGeometry = geometryFromLayer(layer);
+        selectedGeometry = geometry;
+        selectionSource = source;
         if (estimateController) estimateController.abort();
         estimateController = new AbortController();
-        setStatus(status, 'Menyemak polygon, lot dan keluasan syit', 'loading');
+        setStatus(status, source === 'reference' ? 'Menyemak kawasan rujukan, lot dan keluasan syit' : 'Menyemak polygon, lot dan keluasan syit', 'loading');
         try {
           estimate = await postJson('/api/jupem-lot-selection/estimate', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
-          });
+          }, '', estimateController.signal);
           const previousStateCode = activeStateCode;
           activeStateCode = String(estimate.stateCode || activeStateCode).padStart(2, '0');
           activeStateName = String(estimate.negeri || activeStateName).trim();
@@ -1011,11 +1169,19 @@
           const stateNotice = activeStateCode !== previousStateCode
             ? ` Negeri dikesan secara automatik: ${activeStateName}.`
             : '';
-          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan.${stateNotice} Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
+          const sourceNotice = source === 'reference'
+            ? ` Pemilihan menggunakan ${referenceShape === 'square' ? 'petak' : 'radius bulatan'} rujukan.`
+            : '';
+          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan.${stateNotice}${sourceNotice} Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
         } catch (error) {
+          if (error && error.name === 'AbortError') return;
           clearSummary();
           setStatus(status, error.message || 'Kawasan pilihan tidak dapat disemak.', 'error');
         }
+      }
+
+      async function estimateLayer(layer) {
+        return estimateGeometry(geometryFromLayer(layer), 'manual');
       }
 
       try {
@@ -1074,9 +1240,15 @@
         map.on('click', handleRadiusMapClick);
         map.on('mousemove', handleRadiusMouseMove);
         map.on('draw:drawstart', () => {
-          if (!radiusReferenceMode) return;
-          clearRadiusReference(true);
-          setStatus(status, 'Rujukan radius dibatalkan kerana alat pilihan kawasan digunakan.', '');
+          if (radiusReferenceMode) {
+            clearRadiusReference(true);
+          }
+          if (referenceSelectionEnabled) {
+            referenceSelectCheckbox.checked = false;
+            updateReferenceSelectionUi();
+          }
+          if (selectionSource === 'reference') clearSummary();
+          setStatus(status, 'Alat pilihan manual aktif. Polygon atau segi empat yang dilukis akan menjadi pilihan lot.', '');
         });
         map.on(window.L.Draw.Event.CREATED, (event) => {
           drawnItems.clearLayers();
@@ -1089,6 +1261,10 @@
           if (layers[0]) estimateLayer(layers[0]);
         });
         map.on(window.L.Draw.Event.DELETED, () => {
+          if (referenceSelectionEnabled && radiusReferenceFinalized) {
+            void applyReferenceSelection();
+            return;
+          }
           clearSummary();
           setStatus(status, 'Pilihan dipadam. Lukis kawasan baharu.', '');
         });
@@ -1164,16 +1340,46 @@
       modal.addEventListener('pointerdown', (event) => {
         if (!event.target.closest('.az-lot-coordinate-search')) hideLocationSuggestions(false);
       });
+      [circleShapeButton, squareShapeButton].forEach((button) => {
+        if (!button) return;
+        button.addEventListener('click', () => {
+          const nextShape = button.dataset.referenceShape === 'square' ? 'square' : 'circle';
+          if (nextShape === referenceShape) return;
+          clearRadiusReference(true);
+          referenceShape = nextShape;
+          updateReferenceShapeButtons();
+          updateReferenceSelectionUi();
+          setStatus(status, `Bentuk rujukan ${referenceShapeName()} dipilih. Tekan “Lukis Rujukan ${referenceShapeName()}” untuk mula.`, '');
+        });
+      });
+      referenceSelectCheckbox.addEventListener('change', () => {
+        updateReferenceSelectionUi();
+        if (referenceSelectionEnabled) {
+          if (radiusReferenceFinalized) {
+            void applyReferenceSelection();
+          } else {
+            setStatus(status, `Pemilihan lot ikut kawasan rujukan diaktifkan. Lukis ${referenceShapeName().toLowerCase()} rujukan untuk memilih lot secara automatik.`, '');
+          }
+          return;
+        }
+        if (selectionSource === 'reference') {
+          void restoreManualSelectionAfterReference();
+        } else {
+          setStatus(status, 'Pemilihan lot ikut kawasan rujukan dimatikan. Kawasan rujukan kekal sebagai panduan sahaja.', '');
+        }
+      });
       radiusButton.addEventListener('click', () => {
         if (radiusReferenceMode) {
           clearRadiusReference(true);
-          setStatus(status, 'Rujukan radius dibatalkan. Pilihan lot sedia ada tidak berubah.', '');
+          setStatus(status, 'Lukisan kawasan rujukan dibatalkan. Pilihan lot sedia ada tidak berubah.', '');
           return;
         }
         startRadiusReference();
       });
       resetButton.addEventListener('click', () => {
         drawnItems.clearLayers();
+        referenceSelectCheckbox.checked = false;
+        updateReferenceSelectionUi();
         clearRadiusReference(true);
         clearCadastreFocus();
         if (coordinateMarker && map) {
