@@ -390,3 +390,54 @@ body{
     min-width:0;
   }
 }
+
+/* AZOBSS 914: make the Repair PC dropdown arrow unmistakably visible. */
+.market-sticky-bar .market-nav .az-repair-trigger{
+  gap:7px!important;
+  padding-right:7px!important;
+}
+
+.market-sticky-bar .market-nav .az-repair-trigger .az-more-chevron{
+  width:19px;
+  height:19px;
+  flex:0 0 19px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(255,255,255,.34);
+  border-radius:999px;
+  background:rgba(255,255,255,.13);
+  color:#f8fafc;
+  font-size:14px;
+  font-weight:900;
+  line-height:1;
+  text-shadow:0 1px 3px rgba(0,0,0,.35);
+  transform:translateY(0);
+  transition:transform .16s ease,background-color .16s ease,border-color .16s ease;
+}
+
+.market-sticky-bar .market-nav .az-repair-nav:hover .az-repair-trigger .az-more-chevron,
+.market-sticky-bar .market-nav .az-repair-nav:focus-within .az-repair-trigger .az-more-chevron,
+.market-sticky-bar .market-nav .az-repair-nav.is-open .az-repair-trigger .az-more-chevron{
+  transform:rotate(180deg);
+  background:rgba(255,255,255,.20);
+  border-color:rgba(255,255,255,.48);
+}
+
+.market-sticky-bar .market-nav .az-repair-trigger.is-active .az-more-chevron,
+.market-sticky-bar .market-nav .az-repair-trigger.is-current .az-more-chevron,
+.market-sticky-bar .market-nav .az-repair-trigger.market-nav-active .az-more-chevron{
+  background:rgba(5,46,22,.22);
+  border-color:rgba(5,46,22,.34);
+  color:#052e16;
+  text-shadow:none;
+}
+
+@media(max-width:760px){
+  .market-sticky-bar .market-nav .az-repair-trigger .az-more-chevron{
+    width:18px;
+    height:18px;
+    flex-basis:18px;
+    font-size:13px;
+  }
+}

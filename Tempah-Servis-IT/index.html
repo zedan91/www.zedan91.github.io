@@ -220,16 +220,10 @@ body.is-admin .market-nav a[href="/admin/"]{
   }
 }
 </style>
-<style id="azobss-907-troubleshoot-online-button">
-.online-service-cta{margin-top:18px}
-.online-service-button{display:inline-grid;grid-template-columns:46px minmax(0,1fr) 28px;align-items:center;gap:12px;min-width:min(100%,430px);padding:12px 14px;border:1px solid #22d3ee;border-radius:15px;background:linear-gradient(135deg,#0e7490,#16a34a);box-shadow:0 14px 34px rgba(6,182,212,.2);color:#fff;text-decoration:none;transition:transform .18s,box-shadow .18s,filter .18s}
-.online-service-button:hover,.online-service-button:focus-visible{transform:translateY(-2px);box-shadow:0 18px 42px rgba(6,182,212,.3);filter:brightness(1.08);outline:none}
-.online-service-button-icon{display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(255,255,255,.45);border-radius:12px;background:rgba(3,16,24,.24);font-size:22px}
-.online-service-button-copy{min-width:0;text-align:left}.online-service-button-copy strong{display:block;font-size:17px;line-height:1.2}.online-service-button-copy small{display:block;margin-top:3px;color:#dcfce7;font-size:11px}.online-service-button-arrow{font-size:25px;font-weight:1000;text-align:center}
+<style id="azobss-online-service-mode">
 .online-mode-note{grid-column:1/-1;padding:13px 14px;border:1px solid rgba(34,211,238,.38);border-radius:12px;background:rgba(8,78,104,.24);color:#c8f7ff;font-size:12px;font-weight:800}
 #physicalLocationFields[hidden],#onlineServiceModeNote[hidden],#shopLocationCard[hidden]{display:none!important}
 #serviceMethod:disabled{opacity:1;color:#dffcff;background:#0b2940;border-color:#22d3ee;cursor:default}
-@media(max-width:650px){.online-service-button{width:100%;min-width:0}}
 </style>
 </head>
 <body>
@@ -299,7 +293,6 @@ body.is-admin .market-nav a[href="/admin/"]{
 <section class="hero">
 <span class="eyebrow">Servis Laptop &amp; PC • Batu Caves / Gombak / KL berdekatan</span>
 <p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
-<div class="online-service-cta"><a aria-label="Buka halaman Troubleshoot PC Online" class="online-service-button" href="/Troubleshoot-PC-Online/" role="button"><span aria-hidden="true" class="online-service-button-icon">🖥️</span><span class="online-service-button-copy"><strong>Troubleshoot PC Online</strong><small>Bantuan Windows dan software secara remote • bermula RM30</small></span><span aria-hidden="true" class="online-service-button-arrow">→</span></a></div>
 <div aria-label="Harga servis utama" class="price-strip">
 <div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
 <div class="price-chip"><b>RM250–RM650</b><span>LCD Standard<br/>ikut saiz</span></div>
@@ -395,7 +388,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 </div></div>
 <div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="70" placeholder="Contoh: Perlu Microsoft Office atau mahu kekalkan data."></textarea><small>Maksimum 70 aksara.</small></div>
 </div>
-<div class="notice"><strong>Harga bukan final.</strong> Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak masalah, model, komponen dan kaedah servis. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50. Untuk bantuan Windows secara remote, gunakan butang Troubleshoot PC Online di bahagian atas.</div>
+<div class="notice"><strong>Harga bukan final.</strong> Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak masalah, model, komponen dan kaedah servis. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50. Untuk pemeriksaan dan pembaikan PC dari jauh, pilih Troubleshoot PC Online melalui dropdown Repair PC pada sticky bar.</div>
 </div>
 <div class="section-block">
 <label class="choice"><input id="consent" required="" type="checkbox"/><span class="choice-main"><span class="choice-title">Saya mengesahkan maklumat ini betul dan bersetuju dihubungi melalui telefon atau WhatsApp.</span></span></label>
