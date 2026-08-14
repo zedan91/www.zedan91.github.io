@@ -873,6 +873,53 @@ async function azCommissionIdentityFromRequest(req) {
     return null;
   }
 }
+async function azHydrateIdentityFromUsernameHint(identity = {}, usernameHint = "") {
+  try {
+    const db = getAzobssBackendDb();
+    const uid = String(identity.uid || "").trim();
+    const usernameKey = cleanPremiumText(usernameHint, 80).trim().toLowerCase();
+    if (!db || !uid || !usernameKey || !/^[a-z0-9._-]+$/.test(usernameKey)) return identity;
+
+    const snap = await db.collection("users").doc(usernameKey).get();
+    if (!snap.exists) return identity;
+    const x = snap.data() || {};
+    const profileUid = String(x.uid || x.authUid || x.userUid || x.firebaseUid || "").trim();
+    const profileEmail = String(x.authEmail || x.email || "").trim().toLowerCase();
+    const authEmail = String(identity.authEmail || identity.email || "").trim().toLowerCase();
+    const uidMatch = !!profileUid && profileUid === uid;
+    const emailMatch = !!profileEmail && !!authEmail && profileEmail === authEmail;
+    const usernameAuthMatch = !!authEmail && authEmail === `${usernameKey}@azobss.local`;
+    if (!uidMatch && !emailMatch && !usernameAuthMatch) return identity;
+
+    identity.username = String(x.usernameKey || x.username || usernameKey).trim().toLowerCase();
+    identity.role = String(x.role || identity.role || "").toLowerCase();
+    identity.profileEmail = profileEmail || identity.profileEmail || "";
+    identity.email = identity.authEmail || identity.profileEmail || identity.email;
+    identity.userDocId = String(snap.id || usernameKey);
+    identity.adminPriceAdjustmentOverride = x.adminPriceAdjustmentOverride === true;
+    identity.adminPriceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.adminPriceAdjustmentPercent ?? x.priceAdjustmentPercent ?? 0);
+    identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
+    identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
+    identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
+    identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
+    identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
+    identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
+    identity.lotKadasterPriceAdjustmentPercent = x.lotKadasterPriceAdjustmentPercent;
+    identity.adminPublicPaPriceAdjustmentPercent = x.adminPublicPaPriceAdjustmentPercent;
+    identity.publicPaPriceAdjustmentPercent = x.publicPaPriceAdjustmentPercent;
+    identity.adminSoftwarePriceAdjustmentPercent = x.adminSoftwarePriceAdjustmentPercent;
+    identity.softwarePriceAdjustmentPercent = x.softwarePriceAdjustmentPercent;
+    identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
+    identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
+    identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
+    identity.priceAdjustmentProfileResolvedBy = "verified-username";
+    return identity;
+  } catch (err) {
+    console.warn("Price adjustment username profile lookup failed:", err && (err.message || err));
+    return identity;
+  }
+}
+
 async function azFastTrustedAdminIdentityFromRequest(req) {
   try {
     const h = String(req.headers.authorization || "");
@@ -13186,7 +13233,8 @@ async function handler(req, res) {
     if (pathname === "/api/pa-bm-checkout-capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok:true,
-        version:8,
+        version:9,
+        perUserDiscountCheckoutSync:true,
         purchaseLogAreaRatio:true,
         paidDownloadRouting:"category-specific-v1",
         perUserPriceCategories:["paBm","lotKadaster","publicPa","software","cadTools"],
@@ -13420,11 +13468,12 @@ async function handler(req, res) {
         if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
           return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
         }
-        const identity = await azCommissionIdentityFromRequest(req);
+        let identity = await azCommissionIdentityFromRequest(req);
         if (!identity || !identity.uid) {
           return send(res, 401, JSON.stringify({ ok:false, success:false, error:"Please login again before proceeding to payment." }, null, 2), "application/json");
         }
         const submittedUser = getPremiumUser(data);
+        identity = await azHydrateIdentityFromUsernameHint(identity, data.usernameKey || submittedUser.username);
         const user = {
           uid: cleanPremiumText(identity.uid, 120),
           username: cleanPremiumText(identity.username || data.usernameKey || submittedUser.username || "", 80).toLowerCase(),
