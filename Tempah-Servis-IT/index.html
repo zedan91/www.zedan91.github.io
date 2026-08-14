@@ -220,29 +220,16 @@ body.is-admin .market-nav a[href="/admin/"]{
   }
 }
 </style>
-<style id="azobss-903-windows-online-service">
-@media(min-width:981px){.price-strip{grid-template-columns:repeat(6,minmax(0,1fr))}}
-@media(max-width:650px){.price-chip:last-child{grid-column:auto}}
-.online-service-chip{display:block;border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.08) inset;text-decoration:none;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
-.online-service-chip:hover,.online-service-chip:focus-visible{transform:translateY(-2px);border-color:#67e8f9;box-shadow:0 12px 28px rgba(6,182,212,.18);outline:none}
-.online-service-chip span::after{content:"  →";color:#67e8f9;font-weight:1000}
-.choice-online{border-color:rgba(34,211,238,.5);background:linear-gradient(145deg,rgba(8,47,73,.6),rgba(9,23,43,.98))}
-.choice-online .choice-title::after{content:"ONLINE";display:inline-flex;margin-left:7px;padding:2px 6px;border:1px solid rgba(34,211,238,.45);border-radius:999px;color:#a5f3fc;font-size:9px;line-height:1;font-weight:1000;letter-spacing:.06em;vertical-align:2px}
+<style id="azobss-907-troubleshoot-online-button">
+.online-service-cta{margin-top:18px}
+.online-service-button{display:inline-grid;grid-template-columns:46px minmax(0,1fr) 28px;align-items:center;gap:12px;min-width:min(100%,430px);padding:12px 14px;border:1px solid #22d3ee;border-radius:15px;background:linear-gradient(135deg,#0e7490,#16a34a);box-shadow:0 14px 34px rgba(6,182,212,.2);color:#fff;text-decoration:none;transition:transform .18s,box-shadow .18s,filter .18s}
+.online-service-button:hover,.online-service-button:focus-visible{transform:translateY(-2px);box-shadow:0 18px 42px rgba(6,182,212,.3);filter:brightness(1.08);outline:none}
+.online-service-button-icon{display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(255,255,255,.45);border-radius:12px;background:rgba(3,16,24,.24);font-size:22px}
+.online-service-button-copy{min-width:0;text-align:left}.online-service-button-copy strong{display:block;font-size:17px;line-height:1.2}.online-service-button-copy small{display:block;margin-top:3px;color:#dcfce7;font-size:11px}.online-service-button-arrow{font-size:25px;font-weight:1000;text-align:center}
 .online-mode-note{grid-column:1/-1;padding:13px 14px;border:1px solid rgba(34,211,238,.38);border-radius:12px;background:rgba(8,78,104,.24);color:#c8f7ff;font-size:12px;font-weight:800}
 #physicalLocationFields[hidden],#onlineServiceModeNote[hidden],#shopLocationCard[hidden]{display:none!important}
 #serviceMethod:disabled{opacity:1;color:#dffcff;background:#0b2940;border-color:#22d3ee;cursor:default}
-.online-support-download{margin-top:12px;padding:16px;border:1px solid rgba(34,211,238,.45);border-radius:15px;background:linear-gradient(145deg,rgba(8,47,73,.68),rgba(7,22,40,.98));box-shadow:0 12px 28px rgba(0,0,0,.18)}
-.online-support-download[hidden]{display:none!important}
-.online-support-download h3{margin:0;color:#e6fbff;font-size:17px}
-.online-support-download p{margin:5px 0 0;color:#a9bed6;font-size:12px}
-.online-support-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;margin-top:12px}
-.online-support-steps{margin:0;padding-left:20px;color:#dbeafe;font-size:12px}
-.online-support-steps li+li{margin-top:4px}
-.online-support-action{min-width:245px}
-.online-support-action .btn{width:100%;background:linear-gradient(135deg,#06b6d4,#22c55e);color:#031018}
-.online-support-action small{display:block;margin-top:6px;color:#8fa6c2;text-align:center;font-size:10px}
-.online-support-warning{margin-top:11px;padding:9px 10px;border:1px solid rgba(250,204,21,.32);border-radius:10px;background:rgba(250,204,21,.07);color:#fde68a;font-size:11px}
-@media(max-width:720px){.online-support-grid{grid-template-columns:1fr}.online-support-action{min-width:0}}
+@media(max-width:650px){.online-service-button{width:100%;min-width:0}}
 </style>
 </head>
 <body>
@@ -312,9 +299,9 @@ body.is-admin .market-nav a[href="/admin/"]{
 <section class="hero">
 <span class="eyebrow">Servis Laptop &amp; PC • Batu Caves / Gombak / KL berdekatan</span>
 <p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
+<div class="online-service-cta"><a aria-label="Buka halaman Troubleshoot PC Online" class="online-service-button" href="/Troubleshoot-PC-Online/" role="button"><span aria-hidden="true" class="online-service-button-icon">🖥️</span><span class="online-service-button-copy"><strong>Troubleshoot PC Online</strong><small>Bantuan Windows dan software secara remote • bermula RM30</small></span><span aria-hidden="true" class="online-service-button-arrow">→</span></a></div>
 <div aria-label="Harga servis utama" class="price-strip">
 <div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
-<a aria-label="Buka halaman Troubleshoot PC Online" class="price-chip online-service-chip" href="/Troubleshoot-PC-Online/"><b>RM30+</b><span>Troubleshoot PC Online<br/>tekan untuk tempah</span></a>
 <div class="price-chip"><b>RM250–RM650</b><span>LCD Standard<br/>ikut saiz</span></div>
 <div class="price-chip"><b>RM500–RM1,200+</b><span>LCD Touch Screen<br/>ikut saiz</span></div>
 <div class="price-chip"><b>RM30 / RM30</b><span>Pickup / penghantaran<br/>servis AZOBSS</span></div>
