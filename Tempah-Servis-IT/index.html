@@ -229,6 +229,18 @@ body.is-admin .market-nav a[href="/admin/"]{
 .online-mode-note{grid-column:1/-1;padding:13px 14px;border:1px solid rgba(34,211,238,.38);border-radius:12px;background:rgba(8,78,104,.24);color:#c8f7ff;font-size:12px;font-weight:800}
 #physicalLocationFields[hidden],#onlineServiceModeNote[hidden],#shopLocationCard[hidden]{display:none!important}
 #serviceMethod:disabled{opacity:1;color:#dffcff;background:#0b2940;border-color:#22d3ee;cursor:default}
+.online-support-download{margin-top:12px;padding:16px;border:1px solid rgba(34,211,238,.45);border-radius:15px;background:linear-gradient(145deg,rgba(8,47,73,.68),rgba(7,22,40,.98));box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.online-support-download[hidden]{display:none!important}
+.online-support-download h3{margin:0;color:#e6fbff;font-size:17px}
+.online-support-download p{margin:5px 0 0;color:#a9bed6;font-size:12px}
+.online-support-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;margin-top:12px}
+.online-support-steps{margin:0;padding-left:20px;color:#dbeafe;font-size:12px}
+.online-support-steps li+li{margin-top:4px}
+.online-support-action{min-width:245px}
+.online-support-action .btn{width:100%;background:linear-gradient(135deg,#06b6d4,#22c55e);color:#031018}
+.online-support-action small{display:block;margin-top:6px;color:#8fa6c2;text-align:center;font-size:10px}
+.online-support-warning{margin-top:11px;padding:9px 10px;border:1px solid rgba(250,204,21,.32);border-radius:10px;background:rgba(250,204,21,.07);color:#fde68a;font-size:11px}
+@media(max-width:720px){.online-support-grid{grid-template-columns:1fr}.online-support-action{min-width:0}}
 </style>
 </head>
 <body>
@@ -342,6 +354,15 @@ body.is-admin .market-nav a[href="/admin/"]{
 <label class="choice"><input name="services" type="checkbox" value="cleaning-thermal"/><span class="choice-main"><span class="choice-title">Pembersihan + Thermal Paste</span><span class="choice-price">RM80</span><span class="choice-note">Untuk laptop atau PC. Keadaan heatsink/fan akan diperiksa.</span></span></label>
 <label class="choice" id="lcdServiceChoice"><input name="services" type="checkbox" value="lcd-replacement"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop</span><span class="choice-price" id="lcdChoicePrice">RM250 – RM1,200+</span><span class="choice-note" id="lcdChoiceNote">Pilih saiz dan jenis skrin untuk anggaran lebih tepat.</span></span></label>
 <label class="choice" id="keyboardServiceChoice"><input name="services" type="checkbox" value="keyboard"/><span class="choice-main"><span class="choice-title">Tukar Keyboard Laptop</span><span class="choice-price">RM150</span><span class="choice-note">Bergantung pada model, backlight dan jenis top case.</span></span></label>
+</div>
+<div class="online-support-download" hidden="" id="onlineSupportDownloadPanel">
+<h3>🛠️ Sediakan PC untuk Bantuan Online</h3>
+<p>Muat turun alat sokongan AnyDesk selepas membuat tempahan. Kawalan hanya bermula apabila kamu membuka AnyDesk dan menerima permintaan sambungan AZOBSS.</p>
+<div class="online-support-grid">
+<ol class="online-support-steps"><li>Muat turun fail di sebelah.</li><li>Klik kanan fail dan pilih <strong>Run as administrator</strong>, kemudian benarkan UAC.</li><li>Tunggu AnyDesk dibuka dan hantar <strong>This Desk / Address</strong> kepada AZOBSS.</li><li>Tekan <strong>Accept</strong> hanya semasa sesi bantuan yang dipersetujui.</li><li>Selepas sesi selesai, pelanggan boleh menutup atau menyahpasang AnyDesk.</li></ol>
+<div class="online-support-action"><a class="btn primary" download="AZOBSS_AnyDesk_Remote_Support.bat" href="./downloads/AZOBSS_AnyDesk_Remote_Support.bat" id="downloadOnlineSupportTool">↓ Muat Turun AnyDesk Support</a><small>Fail Windows BAT • jalankan sebagai Administrator</small></div>
+</div>
+<div class="online-support-warning"><strong>Perhatian:</strong> Fail ini menutup dan memasang semula AnyDesk supaya bermula bersama Windows, memadam tetapan/ID AnyDesk lama, baki print driver serta kandungan folder TEMP. Jangan jalankan ketika sesi AnyDesk sedang aktif. Hanya teruskan jika kamu sedang berurusan dengan AZOBSS.</div>
 </div>
 <div class="lcd-pricing-card" id="lcdPricingCard">
 <div class="lcd-pricing-title">Rujukan anggaran penukaran LCD laptop</div>
@@ -662,11 +683,11 @@ body.is-admin .market-nav a[href="/admin/"]{
   screenSizeInput.addEventListener('change',()=>{if(!screenSizeInput.disabled){delete screenSizeInput.dataset.auto;setScreenAutoStatus(screenSizeInput.value?'Saiz skrin dipilih secara manual.':'Pilih model daripada senarai untuk mengesan saiz skrin secara automatik.',false);}updateSummary();});
   updateDeviceTypeUI(false);
   const serviceMethodInput=$('serviceMethod'),onlineServiceMethodOption=$('onlineServiceMethodOption');
-  const physicalLocationFields=$('physicalLocationFields'),onlineServiceModeNote=$('onlineServiceModeNote'),shopLocationCard=$('shopLocationCard');
+  const physicalLocationFields=$('physicalLocationFields'),onlineServiceModeNote=$('onlineServiceModeNote'),shopLocationCard=$('shopLocationCard'),onlineSupportDownloadPanel=$('onlineSupportDownloadPanel');
   const floorUnitInput=$('floorUnit'),fullAddressInput=$('fullAddress'),transportNote=$('transportNote');
   let lastPhysicalServiceMethod=serviceMethodInput.value||'Hantar sendiri ke Kedai';
   function syncOnlineServiceMode(){
-    const onlineOnly=onlineOnlyServices();
+    const serviceIds=checked('services'),hasOnline=serviceIds.includes('windows-online'),onlineOnly=onlineOnlyServices(serviceIds);
     if(onlineOnly){
       if(serviceMethodInput.value!=='Bantuan Windows Online')lastPhysicalServiceMethod=serviceMethodInput.value||'Hantar sendiri ke Kedai';
       onlineServiceMethodOption.hidden=false;
@@ -679,6 +700,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     }
     physicalLocationFields.hidden=onlineOnly;
     onlineServiceModeNote.hidden=!onlineOnly;
+    onlineSupportDownloadPanel.hidden=!hasOnline;
     shopLocationCard.hidden=onlineOnly;
     floorUnitInput.required=!onlineOnly;
     fullAddressInput.required=!onlineOnly;
