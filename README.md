@@ -108,7 +108,7 @@ AZOBSS 492
 
 ## Patch 527 - Register/Login Buttons Match Beli Pelan Akui
 - Standardized Register as a green rounded pill and Login as a dark rounded pill across all pages that use the shared auth controls.
-- The /Beli-Pelan-Akui/ page remains the visual reference and was not altered.
+- The /Perkhidmatan-Ukur-Tanah/ page remains the visual reference and was not altered.
 - Frontend CSS only. No Firebase Rules or Render redeploy required.
 
 

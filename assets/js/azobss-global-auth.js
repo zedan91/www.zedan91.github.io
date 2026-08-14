@@ -1487,19 +1487,19 @@ function azobssEnsurePublicPaNavButtons(){
     if(!link){
       link = document.createElement('a');
       link.className = 'nav-public-pa-link';
-      link.href = '/Beli-Pelan-Akui/';
+      link.href = '/Perkhidmatan-Ukur-Tanah/';
       link.textContent = 'Ukur Tanah';
       link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
     }
 
-    // Use a short umbrella label in the navbar while keeping this link
-    // directed to the Pelan Akui purchase/service page.
+    // Keep the navbar destination synchronized with the renamed survey service route.
+    link.href = '/Perkhidmatan-Ukur-Tanah/';
     link.textContent = 'Ukur Tanah';
     link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
 
     // Match the normal storefront tabs: no permanent glow. The button is
     // highlighted only while the public PA page is currently open.
-    const isPublicPaPage = /\/Beli-Pelan-Akui\/?(?:index\.html)?$/i.test(String(location.pathname || ''));
+    const isPublicPaPage = /\/Perkhidmatan-Ukur-Tanah\/?(?:index\.html)?$/i.test(String(location.pathname || ''));
     link.classList.toggle('market-nav-active', isPublicPaPage);
     link.classList.toggle('is-active', isPublicPaPage);
     link.classList.toggle('is-current', isPublicPaPage);

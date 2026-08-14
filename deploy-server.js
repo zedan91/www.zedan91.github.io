@@ -13394,7 +13394,7 @@ async function handler(req, res) {
         const amount = identity ? azApplyUserPriceAdjustment(baseAmount, identity, "publicPa") : baseAmount;
         const amountSen = Math.round(amount * 100);
         const apiBase = publicBaseUrlFromReq(req);
-        const returnUrl = `${FRONTEND_BASE_URL}/Beli-Pelan-Akui/?payment=return&orderId=${encodeURIComponent(orderId)}`;
+        const returnUrl = `${FRONTEND_BASE_URL}/Perkhidmatan-Ukur-Tanah/?payment=return&orderId=${encodeURIComponent(orderId)}`;
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
         const item = { id:recordId, firestoreId:recordId, productType:'PA', itemCode:paNumber, negeri, baseAmount, amount, priceAdjustmentPercent, filename:`PA${paNumber}.pdf`, downloadUrl:`${apiBase}/api/pa-pdf?noPA=PA${encodeURIComponent(paNumber)}.TIF&negeri=${encodeURIComponent(negeri)}`, createdAtMs:Date.now(), publicPaPurchase:true };
         const billPayload = { userSecretKey:TOYYIB_SECRET_KEY, categoryCode:TOYYIB_CATEGORY_CODE, billName:cleanForToyyib(`Pelan Akui PA${paNumber}`,30), billDescription:cleanForToyyib(`AZOBSS Public Pelan Akui PA${paNumber} - ${azAdjustedMoneyText(amount)}`,100), billPriceSetting:1, billPayorInfo:1, billAmount:amountSen, billReturnUrl:returnUrl, billCallbackUrl:callbackUrl, billExternalReferenceNo:orderId, billTo:cleanForToyyib(buyerName,30), billEmail:cleanForToyyib(buyerEmail,80), billPhone:cleanForToyyib(buyerPhone,20), billSplitPayment:0, billSplitPaymentArgs:'', billPaymentChannel:0, billContentEmail:`Terima kasih. Pembelian Pelan Akui PA${paNumber} berjumlah ${azAdjustedMoneyText(amount)}.`, billChargeToCustomer:1, billExpiryDays:3, enableDuitNowQR:1, chargeDuitNowQR:0 };
