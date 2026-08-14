@@ -1,4 +1,4 @@
-/* AZOBSS 884: More menu + consistent active state. Sound Effects highlights More; Repair PC highlights its direct nav chip. */
+/* AZOBSS 906: More menu + one Repair PC nav chip for physical and online support pages. */
 (function () {
   'use strict';
 
@@ -295,6 +295,9 @@
   function ensureRepairServiceLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
     var repairPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
+    var onlineRepairPath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
+    var isRepairSection = currentPath === repairPath || currentPath.indexOf(repairPath + '/') === 0 ||
+      currentPath === onlineRepairPath || currentPath.indexOf(onlineRepairPath + '/') === 0;
 
     document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
       var existingLink = nav.querySelector('a[data-az-repair-service-link="1"], a[href="/Tempah-Servis-IT/"], a[href="/Tempah-Servis-IT"]');
@@ -302,9 +305,12 @@
         existingLink.dataset.azRepairServiceLink = '1';
         existingLink.textContent = 'Repair PC';
         existingLink.title = 'Tempah Servis Laptop / PC';
-        if (currentPath === repairPath || currentPath.indexOf(repairPath + '/') === 0) {
+        if (isRepairSection) {
           existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
           existingLink.setAttribute('aria-current', 'page');
+        } else {
+          existingLink.classList.remove('market-nav-active', 'is-active', 'is-current');
+          existingLink.removeAttribute('aria-current');
         }
         return;
       }
@@ -326,7 +332,7 @@
       repairLink.dataset.azRepairServiceLink = '1';
       repairLink.className = 'az-repair-service-link';
 
-      if (currentPath === repairPath || currentPath.indexOf(repairPath + '/') === 0) {
+      if (isRepairSection) {
         repairLink.classList.add('market-nav-active', 'is-active', 'is-current');
         repairLink.setAttribute('aria-current', 'page');
       }

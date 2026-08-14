@@ -28,7 +28,7 @@
 </style>
 <!-- AZOBSS 793: use the exact homepage stickybar assets and behaviour on Tempah Servis IT. -->
 <link href="/assets/css/azobss-global-compact-font-more-nav.css?v=885" rel="stylesheet"/>
-<script defer="" src="/assets/js/azobss-more-nav.js?v=885"></script>
+<script defer="" src="/assets/js/azobss-more-nav.js?v=906"></script>
 <link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 <style id="azobss-793-home-stickybar-service-page-offset">
 /* Homepage hides its old marketplace search strip; keep the identical one-row stickybar here too. */
@@ -223,7 +223,9 @@ body.is-admin .market-nav a[href="/admin/"]{
 <style id="azobss-903-windows-online-service">
 @media(min-width:981px){.price-strip{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:650px){.price-chip:last-child{grid-column:auto}}
-.online-service-chip{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.08) inset}
+.online-service-chip{display:block;border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.08) inset;text-decoration:none;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.online-service-chip:hover,.online-service-chip:focus-visible{transform:translateY(-2px);border-color:#67e8f9;box-shadow:0 12px 28px rgba(6,182,212,.18);outline:none}
+.online-service-chip span::after{content:"  →";color:#67e8f9;font-weight:1000}
 .choice-online{border-color:rgba(34,211,238,.5);background:linear-gradient(145deg,rgba(8,47,73,.6),rgba(9,23,43,.98))}
 .choice-online .choice-title::after{content:"ONLINE";display:inline-flex;margin-left:7px;padding:2px 6px;border:1px solid rgba(34,211,238,.45);border-radius:999px;color:#a5f3fc;font-size:9px;line-height:1;font-weight:1000;letter-spacing:.06em;vertical-align:2px}
 .online-mode-note{grid-column:1/-1;padding:13px 14px;border:1px solid rgba(34,211,238,.38);border-radius:12px;background:rgba(8,78,104,.24);color:#c8f7ff;font-size:12px;font-weight:800}
@@ -312,7 +314,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 <p>Pilih servis atau tanda masalah yang berlaku. Sistem akan memberi anggaran awal sebelum butiran dihantar kepada AZOBSS melalui WhatsApp.</p>
 <div aria-label="Harga servis utama" class="price-strip">
 <div class="price-chip promo"><b>RM30</b><span>Format Windows<br/>Harga biasa RM50</span></div>
-<div class="price-chip online-service-chip"><b>RM30+</b><span>Bantuan Windows Online<br/>secara remote</span></div>
+<a aria-label="Buka halaman Troubleshoot PC Online" class="price-chip online-service-chip" href="/Troubleshoot-PC-Online/"><b>RM30+</b><span>Troubleshoot PC Online<br/>tekan untuk tempah</span></a>
 <div class="price-chip"><b>RM250–RM650</b><span>LCD Standard<br/>ikut saiz</span></div>
 <div class="price-chip"><b>RM500–RM1,200+</b><span>LCD Touch Screen<br/>ikut saiz</span></div>
 <div class="price-chip"><b>RM30 / RM30</b><span>Pickup / penghantaran<br/>servis AZOBSS</span></div>
@@ -350,19 +352,9 @@ body.is-admin .market-nav a[href="/admin/"]{
 <p class="section-help" id="serviceSectionHelp">Tandakan servis yang kamu mahu. Anggaran LCD dikira mengikut saiz dan jenis skrin yang dipilih pada Maklumat Peranti.</p>
 <div class="choices" id="serviceChoices">
 <label class="choice"><input name="services" type="checkbox" value="format-windows"/><span class="choice-main"><span class="choice-title">Format Windows 10 / 11</span><span class="choice-price">RM30 promosi</span><span class="choice-note">Harga biasa RM50. Lesen dan software berbayar tidak termasuk.</span></span></label>
-<label class="choice choice-online" id="onlineWindowsServiceChoice"><input name="services" type="checkbox" value="windows-online"/><span class="choice-main"><span class="choice-title">Bantuan Windows Online</span><span class="choice-price">Bermula RM30</span><span class="choice-note">Troubleshoot Windows dan software secara remote melalui internet. Tidak termasuk masalah hardware.</span></span></label>
 <label class="choice"><input name="services" type="checkbox" value="cleaning-thermal"/><span class="choice-main"><span class="choice-title">Pembersihan + Thermal Paste</span><span class="choice-price">RM80</span><span class="choice-note">Untuk laptop atau PC. Keadaan heatsink/fan akan diperiksa.</span></span></label>
 <label class="choice" id="lcdServiceChoice"><input name="services" type="checkbox" value="lcd-replacement"/><span class="choice-main"><span class="choice-title">Tukar LCD Laptop</span><span class="choice-price" id="lcdChoicePrice">RM250 – RM1,200+</span><span class="choice-note" id="lcdChoiceNote">Pilih saiz dan jenis skrin untuk anggaran lebih tepat.</span></span></label>
 <label class="choice" id="keyboardServiceChoice"><input name="services" type="checkbox" value="keyboard"/><span class="choice-main"><span class="choice-title">Tukar Keyboard Laptop</span><span class="choice-price">RM150</span><span class="choice-note">Bergantung pada model, backlight dan jenis top case.</span></span></label>
-</div>
-<div class="online-support-download" hidden="" id="onlineSupportDownloadPanel">
-<h3>🛠️ Sediakan PC untuk Bantuan Online</h3>
-<p>Muat turun alat sokongan AnyDesk selepas membuat tempahan. Kawalan hanya bermula apabila kamu membuka AnyDesk dan menerima permintaan sambungan AZOBSS.</p>
-<div class="online-support-grid">
-<ol class="online-support-steps"><li>Muat turun fail di sebelah.</li><li>Klik kanan fail dan pilih <strong>Run as administrator</strong>, kemudian benarkan UAC.</li><li>Tunggu AnyDesk dibuka dan hantar <strong>This Desk / Address</strong> kepada AZOBSS.</li><li>Tekan <strong>Accept</strong> hanya semasa sesi bantuan yang dipersetujui.</li><li>Selepas sesi selesai, pelanggan boleh menutup atau menyahpasang AnyDesk.</li></ol>
-<div class="online-support-action"><a class="btn primary" download="AZOBSS_AnyDesk_Remote_Support.bat" href="./downloads/AZOBSS_AnyDesk_Remote_Support.bat" id="downloadOnlineSupportTool">↓ Muat Turun AnyDesk Support</a><small>Fail Windows BAT • jalankan sebagai Administrator</small></div>
-</div>
-<div class="online-support-warning"><strong>Perhatian:</strong> Fail ini menutup dan memasang semula AnyDesk supaya bermula bersama Windows, memadam tetapan/ID AnyDesk lama, baki print driver serta kandungan folder TEMP. Jangan jalankan ketika sesi AnyDesk sedang aktif. Hanya teruskan jika kamu sedang berurusan dengan AZOBSS.</div>
 </div>
 <div class="lcd-pricing-card" id="lcdPricingCard">
 <div class="lcd-pricing-title">Rujukan anggaran penukaran LCD laptop</div>
@@ -416,7 +408,7 @@ body.is-admin .market-nav a[href="/admin/"]{
 </div></div>
 <div class="field full"><label for="extraRequests">Permintaan tambahan (opsyenal)</label><textarea id="extraRequests" maxlength="70" placeholder="Contoh: Perlu Microsoft Office atau mahu kekalkan data."></textarea><small>Maksimum 70 aksara.</small></div>
 </div>
-<div class="notice"><strong>Harga bukan final.</strong> Bantuan Windows Online bermula RM30. Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak masalah, model, komponen dan kaedah servis. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50.</div>
+<div class="notice"><strong>Harga bukan final.</strong> Admin AZOBSS akan mengesahkan harga sebenar selepas menyemak masalah, model, komponen dan kaedah servis. Pengambilan atau penghantaran satu hala RM30, kedua-duanya RM60, dan servis On-site RM50. Untuk bantuan Windows secara remote, gunakan butang Troubleshoot PC Online di bahagian atas.</div>
 </div>
 <div class="section-block">
 <label class="choice"><input id="consent" required="" type="checkbox"/><span class="choice-main"><span class="choice-title">Saya mengesahkan maklumat ini betul dan bersetuju dihubungi melalui telefon atau WhatsApp.</span></span></label>
@@ -700,7 +692,7 @@ body.is-admin .market-nav a[href="/admin/"]{
     }
     physicalLocationFields.hidden=onlineOnly;
     onlineServiceModeNote.hidden=!onlineOnly;
-    onlineSupportDownloadPanel.hidden=!hasOnline;
+    if(onlineSupportDownloadPanel)onlineSupportDownloadPanel.hidden=!hasOnline;
     shopLocationCard.hidden=onlineOnly;
     floorUnitInput.required=!onlineOnly;
     fullAddressInput.required=!onlineOnly;
