@@ -220,7 +220,7 @@ function saveBlob(blob,filename){var url=URL.createObjectURL(blob),a=document.cr
 fetch(CATALOG_URL,{cache:'force-cache'}).then(function(res){if(!res.ok)throw new Error('HTTP '+res.status);return res.json()}).then(function(raw){if(!Array.isArray(raw))throw new Error('Invalid catalog format');baseBuiltins=raw.map(prepareBuiltIn);rebuildCatalog();soundCount.textContent=baseBuiltins.length.toLocaleString();applyFilter();loadRecentSounds(false)}).catch(function(err){console.error('[AZOBSS Sound Effects] Catalog load failed:',err);soundCount.textContent='0';showingStatus.textContent='Catalog failed to load';empty.textContent='Sound catalog could not be loaded. Refresh the page and try again.';empty.style.display='block';});
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=704" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script>
 <script id="azobss-sound-admin-gate-v879" type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';

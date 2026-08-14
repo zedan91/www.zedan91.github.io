@@ -1488,8 +1488,14 @@ function azobssEnsurePublicPaNavButtons(){
       link = document.createElement('a');
       link.className = 'nav-public-pa-link';
       link.href = '/Beli-Pelan-Akui/';
-      link.textContent = 'Pelan Akui';
+      link.textContent = 'Ukur Tanah';
+      link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
     }
+
+    // Use a short umbrella label in the navbar while keeping this link
+    // directed to the Pelan Akui purchase/service page.
+    link.textContent = 'Ukur Tanah';
+    link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
 
     // Match the normal storefront tabs: no permanent glow. The button is
     // highlighted only while the public PA page is currently open.
