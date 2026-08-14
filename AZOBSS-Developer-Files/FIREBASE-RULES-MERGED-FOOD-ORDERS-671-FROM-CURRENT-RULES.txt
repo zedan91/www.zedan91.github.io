@@ -1,0 +1,344 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && (request.auth.token.email == "zedan91@azobss.local" || request.auth.token.email == "zedan9107@gmail.com");
+    }
+
+    function isThisUser(username) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(username))
+        && request.auth.uid == get(/databases/$(database)/documents/users/$(username)).data.uid;
+    }
+
+
+    // AZOBSS 671: akses rekod Tempahan Makanan diberi secara khusus.
+    // Admin sentiasa dibenarkan. Akaun lain memerlukan dokumen aktif
+    // foodOrderStaffAccess/{Firebase Auth UID}.
+    function hasFoodOrderAccessDocument() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid))
+        && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.keys().hasAll([
+          "active", "canViewFoodOrders"
+        ])
+        && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/foodOrderStaffAccess/$(request.auth.uid)).data.canViewFoodOrders == true;
+    }
+
+    function isFoodOrderStaff() {
+      return isAdmin() || hasFoodOrderAccessDocument();
+    }
+
+    match /users/{username} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update: if isAdmin()
+        || isThisUser(username)
+        || (
+          request.auth != null
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+        );
+
+      allow read, delete: if isAdmin() || isThisUser(username);
+    }
+
+
+    match /users/{username}/likes/{itemId} {
+      allow read, create, update, delete: if request.auth != null
+        && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+
+
+    // AZOBSS 875: Sound Effects Favorites - one low-quota state document per user.
+    match /users/{username}/soundFavorites/{docId} {
+      allow read, create, update, delete: if request.auth != null
+        && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+
+    match /usernameAuthEmails/{username} {
+      allow get: if true;
+      allow list: if isAdmin();
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update: if isAdmin()
+        || (
+          request.auth != null
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+        );
+
+      allow delete: if isAdmin() || (
+        request.auth != null
+        && resource.data.uid == request.auth.uid
+      );
+    }
+
+    match /settings/signupGate {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/softwareStats {
+      // One-document software stats bundle: downloads + ratings persist across deploys.
+      // Public read/write is intentionally allowed for lightweight public counters.
+      // Rating spam is limited in frontend with ratedBy browser token.
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /purchaseSummaries/{username} {
+      allow read: if isAdmin() || isThisUser(username);
+
+      allow create: if isAdmin() || (
+        request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.usernameKey == username
+      );
+
+      allow update: if isAdmin() || (
+        isThisUser(username)
+        && resource.data.uid == request.auth.uid
+        && resource.data.usernameKey == username
+      );
+
+      allow delete: if isAdmin();
+    }
+
+
+    match /purchaseRecords/{purchaseId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /purchaseLogs/{purchaseId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /siteStats/{docId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /sitePresence/{visitorId} {
+      allow read: if isAdmin();
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /userLikes/{likeId} {
+      allow read: if request.auth != null;
+
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    match /onlineUsers/{uid} {
+      allow read: if isAdmin();
+
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow delete: if isAdmin()
+        || (request.auth != null
+        && resource.data.uid == request.auth.uid);
+    }
+
+    match /loginHistory/{docId} {
+      allow read: if isAdmin();
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /guestHistory/{docId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    match /softwareTools/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /cadTools/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /affiliateProducts/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+        || (request.auth != null
+        && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /downloadTokens/{tokenId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /receipts/{receiptId} {
+      allow read: if isAdmin()
+        || (request.auth != null
+        && resource.data.uid == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
+    }
+
+    // AZOBSS 671: pemetaan akses yang diuruskan melalui Admin Dashboard.
+    // ID dokumen mesti sama dengan Firebase Authentication UID pengguna.
+    match /foodOrderStaffAccess/{uid} {
+      allow get: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == uid
+        );
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // AZOBSS 671: rekod Tempahan Makanan dengan kawalan medan dan akses.
+    match /foodOrders/{orderId} {
+      // Pelanggan boleh menghantar tempahan tanpa perlu log masuk.
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          "clientOrderId",
+          "customerName",
+          "customerPhone",
+          "customerPhoneDigits",
+          "requiredDate",
+          "requiredDateLabel",
+          "notes",
+          "items",
+          "totalBoxes",
+          "totalPrice",
+          "whatsappMessage",
+          "whatsappNumber",
+          "status",
+          "source",
+          "createdAt",
+          "createdAtMs",
+          "createdByUid",
+          "createdByEmail"
+        ])
+        && request.resource.data.clientOrderId == orderId
+        && request.resource.data.clientOrderId is string
+        && request.resource.data.clientOrderId.size() >= 10
+        && request.resource.data.clientOrderId.size() <= 100
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() >= 1
+        && request.resource.data.customerName.size() <= 100
+        && request.resource.data.customerPhone is string
+        && request.resource.data.customerPhone.size() >= 8
+        && request.resource.data.customerPhone.size() <= 20
+        && request.resource.data.customerPhoneDigits is string
+        && request.resource.data.customerPhoneDigits.matches('^[0-9]{8,15}$')
+        && request.resource.data.requiredDate is string
+        && request.resource.data.requiredDate.size() >= 8
+        && request.resource.data.requiredDate.size() <= 20
+        && request.resource.data.requiredDateLabel is string
+        && request.resource.data.requiredDateLabel.size() <= 120
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 800
+        && request.resource.data.items is list
+        && request.resource.data.items.size() >= 1
+        && request.resource.data.items.size() <= 30
+        && request.resource.data.totalBoxes is int
+        && request.resource.data.totalBoxes >= 1
+        && request.resource.data.totalBoxes <= 2970
+        && request.resource.data.totalPrice is number
+        && request.resource.data.totalPrice >= 1
+        && request.resource.data.totalPrice <= 100000
+        && request.resource.data.whatsappMessage is string
+        && request.resource.data.whatsappMessage.size() <= 5000
+        && request.resource.data.whatsappNumber == "60178809488"
+        && request.resource.data.status == "new"
+        && request.resource.data.source == "whatsapp"
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdAtMs is int
+        && request.resource.data.createdByUid is string
+        && request.resource.data.createdByEmail is string
+        && (
+          (
+            request.auth == null
+            && request.resource.data.createdByUid == ""
+            && request.resource.data.createdByEmail == ""
+          )
+          || (
+            request.auth != null
+            && request.resource.data.createdByUid == request.auth.uid
+          )
+        );
+
+      // Hanya admin dan akaun yang diberi akses boleh membaca rekod.
+      allow read: if isFoodOrderStaff();
+
+      // Akaun yang dibenarkan hanya boleh mengubah status dan medan auditnya.
+      allow update: if isFoodOrderStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "status",
+          "statusUpdatedAt",
+          "statusUpdatedAtMs",
+          "statusUpdatedByUid",
+          "statusUpdatedByEmail"
+        ])
+        && request.resource.data.status in [
+          "new", "contacted", "confirmed", "completed", "cancelled"
+        ]
+        && request.resource.data.statusUpdatedAt == request.time
+        && request.resource.data.statusUpdatedAtMs is int
+        && request.resource.data.statusUpdatedByUid == request.auth.uid
+        && request.resource.data.statusUpdatedByEmail is string;
+
+      // Rekod hanya boleh dipadam oleh admin.
+      allow delete: if isAdmin();
+    }
+
+  }
+}
+

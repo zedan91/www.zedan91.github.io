@@ -626,7 +626,7 @@ window.azobssAddPreparedLotSelectionToCart = async function (prepared, fallbackS
   });
   const confirmationMessage = item.__azobssAlreadyInCart
     ? 'Pilihan Lot Kadaster ini sudah ada dalam troli anda.'
-    : `Berjaya: ${Number(prepared.lotCount || 0).toLocaleString('ms-MY')} lot telah dimasukkan ke Troli AZOBSS pada harga ${formatMoney(item.amount)}.`;
+    : `Berjaya: ${Number(prepared.lotCount || 0).toLocaleString('ms-MY')} lot telah dimasukkan ke troli anda pada harga ${formatMoney(item.amount)}.`;
   setCartSyncStatus(confirmationMessage);
   if (typeof window.azShowToast === 'function') window.azShowToast(confirmationMessage);
   const cartPanel = document.getElementById('pabmStoreCartPanel');

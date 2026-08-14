@@ -790,8 +790,8 @@
       function setAddButtonSuccess() {
         addButton.classList.add('is-cart-success');
         addButton.disabled = false;
-        addButton.setAttribute('aria-label', 'Sudah masuk troli. Tekan untuk pergi ke Troli Anda.');
-        addButton.title = 'Tekan untuk pergi ke Troli Anda';
+        addButton.setAttribute('aria-label', 'Telah dimasukkan ke troli anda. Tekan untuk pergi ke Troli anda.');
+        addButton.title = 'Tekan untuk pergi ke Troli anda';
         addButton.innerHTML = '<span class="az-lot-map-cart-success-main">Sudah Masuk Troli</span><span class="az-lot-map-cart-success-tick" aria-hidden="true">✓</span><small class="az-lot-map-cart-success-sub">(Sila tekan untuk ke Troli)</small>';
       }
 
@@ -1079,7 +1079,7 @@
             ).trim() || confirmationMessage;
           }
           setAddButtonSuccess();
-          setStatus(status, `✓ ${confirmationMessage} Sudah masuk troli. Sila cek di Troli anda. Peta ini kekal dibuka; tekan X apabila selesai.`, 'success');
+          setStatus(status, `✓ ${confirmationMessage} Sila cek di Troli anda. Tekan X apabila selesai.`, 'success');
           // Resolve the caller after the cart is updated, but keep the Leaflet
           // modal alive. The close button will perform cleanup later.
           resolve(prepared);
