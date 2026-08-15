@@ -512,7 +512,7 @@
         radiusLandAreaNode.textContent = `${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha / ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
         radiusNoteNode.classList.toggle('is-selecting', referenceSelectionEnabled);
         radiusNoteNode.textContent = referenceSelectionEnabled
-          ? `Pemilihan lot aktif — lot yang bersilang dengan ${referenceShape === 'square' ? 'petak' : 'bulatan'} ini akan dikira dan drawing akan dipotong tepat pada garisan rujukan.`
+          ? `Pemilihan lot aktif — lot yang bersilang dengan ${referenceShape === 'square' ? 'petak' : 'bulatan'} ini akan dikira, tetapi drawing mengekalkan sempadan lot asal dan tidak dipotong pada garisan rujukan.`
           : 'Rujukan sahaja — tandakan pilihan di atas jika mahu lot dalam kawasan ini dipilih.';
       }
 
@@ -1419,16 +1419,16 @@
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
-          if (Number(lotCapabilities.version || 0) < 3 || String(lotCapabilities.exportMode || '') !== 'exact-boundary-clip-v923' || !lotCapabilities.exactBoundaryClip) {
-            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v923 sebelum menyediakan drawing tepat ikut garisan.');
+          if (Number(lotCapabilities.version || 0) < 4 || String(lotCapabilities.exportMode || '') !== 'natural-selected-lots-v925' || !lotCapabilities.naturalLotGeometry) {
+            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v925 supaya drawing mengekalkan sempadan lot asal.');
           }
           let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
-          if (String(prepared.exportMode || '') !== 'exact-boundary-clip-v923' || !prepared.exactBoundaryClip) {
-            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemotongan tepat ikut garisan v923.');
+          if (String(prepared.exportMode || '') !== 'natural-selected-lots-v925' || !prepared.naturalLotGeometry) {
+            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan geometri lot natural v925.');
           }
           if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
