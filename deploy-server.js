@@ -9304,75 +9304,50 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
   };
 }
 
-const AZOBSS_LOT_GP_EXPORT_MODE = "clip-layer-by-aoi-v922";
+const AZOBSS_LOT_GP_EXPORT_MODE = "exact-boundary-clip-v923";
 const azobssLotGpClipLayerCache = new Map();
 
-function azobssNormaliseGpStringList(value) {
-  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
-  const text = String(value == null ? "" : value).trim();
-  if (!text) return [];
-  if (text.startsWith("[") && text.endsWith("]")) {
-    try {
-      const parsed = JSON.parse(text);
-      if (Array.isArray(parsed)) return parsed.map((item) => String(item || "").trim()).filter(Boolean);
-    } catch (_) {}
-  }
-  return text.split(/[;,]/).map((item) => item.trim()).filter(Boolean);
+function azobssLotGpFeatureSetValueForType(value, dataType) {
+  return /GPMultiValue/i.test(String(dataType || "")) ? [value] : value;
 }
 
-async function azobssResolveLotGpClipLayers(estimate, auth) {
+async function azobssResolveLotGpClipInput(estimate, auth) {
   const cacheKey = `${estimate.config.gp}|${estimate.config.lotLayer}`;
   const cached = azobssLotGpClipLayerCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now() && Array.isArray(cached.layers) && cached.layers.length) {
-    return cached.layers.slice();
-  }
+  if (cached && cached.expiresAt > Date.now() && cached.input) return { ...cached.input };
 
-  const serviceUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/${estimate.config.gp}`;
-  let layers = [];
+  const gpUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/${estimate.config.gp}`;
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${estimate.config.lotLayer}`;
+  let dataType = "GPFeatureRecordSetLayer";
   try {
-    const taskInfo = await azobssJupemArcGisJson(serviceUrl, {}, auth, 20000);
+    const taskInfo = await azobssJupemArcGisJson(gpUrl, {}, auth, 20000);
     const parameters = Array.isArray(taskInfo && taskInfo.parameters) ? taskInfo.parameters : [];
     const clipParameter = parameters.find((parameter) => /layers?_to_clip/i.test(String(parameter && parameter.name || "")));
-    if (clipParameter) {
-      const candidates = [
-        clipParameter.defaultValue,
-        clipParameter.choiceList,
-        clipParameter.filter && clipParameter.filter.list,
-        clipParameter.filter && clipParameter.filter.choiceList
-      ];
-      for (const candidate of candidates) {
-        const parsed = azobssNormaliseGpStringList(candidate);
-        if (parsed.length) {
-          layers = parsed;
-          break;
-        }
-      }
-    }
+    if (clipParameter && clipParameter.dataType) dataType = String(clipParameter.dataType);
   } catch (error) {
-    console.warn("JUPEM GP layer metadata lookup failed:", error && (error.message || error));
+    console.warn("JUPEM GP Layers_to_Clip metadata lookup failed:", error && (error.message || error));
   }
 
-  if (!layers.length) {
-    try {
-      const layerInfoUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${estimate.config.lotLayer}`;
-      const layerInfo = await azobssJupemArcGisJson(layerInfoUrl, {}, auth, 20000);
-      const layerName = String(layerInfo && layerInfo.name || "").trim();
-      if (layerName) layers = [layerName];
-    } catch (error) {
-      console.warn("JUPEM cadastral layer name lookup failed:", error && (error.message || error));
-    }
-  }
-
-  if (!layers.length) throw new Error("Lapisan Lot Kadaster JUPEM untuk eksport tidak dapat dikenal pasti.");
-  azobssLotGpClipLayerCache.set(cacheKey, { layers: layers.slice(), expiresAt: Date.now() + (30 * 60 * 1000) });
-  return layers;
+  const input = {
+    dataType,
+    layerUrl,
+    value: azobssLotGpFeatureSetValueForType({ url: layerUrl }, dataType)
+  };
+  azobssLotGpClipLayerCache.set(cacheKey, { input: { ...input }, expiresAt: Date.now() + (30 * 60 * 1000) });
+  return input;
 }
 
 function azobssLotGpAreaOfInterest(estimate) {
+  const exactGeometry = {
+    rings: Array.isArray(estimate && estimate.geometry && estimate.geometry.rings) ? estimate.geometry.rings : [],
+    spatialReference: { wkid: 4326 }
+  };
   return {
+    displayFieldName: "",
     geometryType: "esriGeometryPolygon",
     spatialReference: { wkid: 4326 },
-    features: [{ geometry: estimate.geometry, attributes: {} }]
+    fields: [{ name: "OBJECTID", type: "esriFieldTypeOID", alias: "OBJECTID" }],
+    features: [{ geometry: exactGeometry, attributes: { OBJECTID: 1 } }]
   };
 }
 
@@ -9386,45 +9361,64 @@ async function azobssSubmitLotGpJob(estimate) {
       try { auth = await azobssGetJupemMapAuth(true); } catch (_) {}
     }
     try {
-      // 922: ArcGIS Extract Data / Clip-and-Ship expects the cadastral layer in
-      // Layers_to_Clip and the user-drawn circle/square/polygon as Area_of_Interest.
-      // The previous implementation sent thousands of selected lot features as the
-      // AOI while leaving Layers_to_Clip empty, which could produce only a few
-      // dissolved/partial polygons in the downloaded drawing for a large radius.
-      const clipLayers = await azobssResolveLotGpClipLayers(estimate, auth);
+      // 923: Keep the user's circle/square/polygon as the exact clipping boundary.
+      // Layers_to_Clip is a GPFeatureRecordSetLayer input, not a list of display names.
+      // Prefer a direct secured MapServer layer reference so JUPEM clips the cadastral
+      // geometry exactly at the AOI edge. If that input form is rejected by an older
+      // task schema, fall back to the already queried feature set with the same AOI.
+      const clipInput = await azobssResolveLotGpClipInput(estimate, auth);
       const areaOfInterest = azobssLotGpAreaOfInterest(estimate);
-      const submitBody = new URLSearchParams({
-        f: "json",
-        token: auth.token,
-        Layers_to_Clip: JSON.stringify(clipLayers),
-        Area_of_Interest: JSON.stringify(areaOfInterest),
-        Feature_Format: "Shapefile - SHP - .shp"
-      });
-      const submitResponse = await fetch(`${serviceUrl}/submitJob`, azJupemFetchOptions({
-        method: "POST",
-        redirect: "follow",
-        signal: AbortSignal.timeout(60000),
-        headers: azobssJupemBaseHeaders({
-          "Accept": "application/json,*/*",
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "Cookie": auth.cookie,
-          "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
-        }),
-        body: submitBody.toString()
-      }));
-      if (!submitResponse.ok) {
-        const responseError = new Error(`JUPEM GP returned HTTP ${submitResponse.status}.`);
-        responseError.status = submitResponse.status;
-        throw responseError;
+      const featureSetFallback = azobssLotGpFeatureSetValueForType(estimate.featureSet, clipInput.dataType);
+      const candidates = [
+        { kind: 'layer-url', value: clipInput.value },
+        { kind: 'feature-set', value: featureSetFallback }
+      ];
+      let candidateError = null;
+      for (const candidate of candidates) {
+        try {
+          const submitBody = new URLSearchParams({
+            f: "json",
+            token: auth.token,
+            Layers_to_Clip: JSON.stringify(candidate.value),
+            Area_of_Interest: JSON.stringify(areaOfInterest),
+            Feature_Format: "Shapefile - SHP - .shp"
+          });
+          const submitResponse = await fetch(`${serviceUrl}/submitJob`, azJupemFetchOptions({
+            method: "POST",
+            redirect: "follow",
+            signal: AbortSignal.timeout(60000),
+            headers: azobssJupemBaseHeaders({
+              "Accept": "application/json,*/*",
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Cookie": auth.cookie,
+              "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
+            }),
+            body: submitBody.toString()
+          }));
+          if (!submitResponse.ok) {
+            const responseError = new Error(`JUPEM GP returned HTTP ${submitResponse.status}.`);
+            responseError.status = submitResponse.status;
+            throw responseError;
+          }
+          const submitted = await submitResponse.json();
+          if (submitted.error || !submitted.jobId) {
+            const detail = submitted && submitted.error && (submitted.error.message || submitted.error.details && submitted.error.details.join(' '));
+            throw new Error(detail || "JUPEM did not return a job ID.");
+          }
+          return {
+            jobId: String(submitted.jobId),
+            jobStatus: String(submitted.jobStatus || "esriJobSubmitted"),
+            exportMode: AZOBSS_LOT_GP_EXPORT_MODE,
+            clipLayers: [clipInput.layerUrl],
+            clipInputKind: candidate.kind,
+            clipDataType: clipInput.dataType
+          };
+        } catch (error) {
+          candidateError = error;
+          console.warn(`JUPEM exact boundary clip input ${candidate.kind} failed:`, error && (error.message || error));
+        }
       }
-      const submitted = await submitResponse.json();
-      if (submitted.error || !submitted.jobId) throw new Error(submitted.error && submitted.error.message || "JUPEM did not return a job ID.");
-      return {
-        jobId: String(submitted.jobId),
-        jobStatus: String(submitted.jobStatus || "esriJobSubmitted"),
-        exportMode: AZOBSS_LOT_GP_EXPORT_MODE,
-        clipLayers
-      };
+      throw candidateError || new Error("JUPEM exact boundary clip input was rejected.");
     } catch (error) {
       lastError = error;
       const status = Number(error && error.status || 0);
@@ -15654,9 +15648,11 @@ async function handler(req, res) {
     if (pathname === "/api/jupem-lot-selection/capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok: true,
-        version: 2,
+        version: 3,
         exportMode: AZOBSS_LOT_GP_EXPORT_MODE,
         clipLayerAoiExport: true,
+        exactBoundaryClip: true,
+        gpFeatureRecordSetLayerInput: true,
         referenceCircleSquareSelection: true
       }), "application/json", { "Cache-Control": "no-store" });
     }
@@ -15722,6 +15718,9 @@ async function handler(req, res) {
           selectedAreaM2: publicResult.selectedAreaM2,
           exportMode: job.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
           clipLayers: Array.isArray(job.clipLayers) ? job.clipLayers.slice(0, 8) : [],
+          clipInputKind: String(job.clipInputKind || ""),
+          clipDataType: String(job.clipDataType || ""),
+          exactBoundaryClip: true,
           preparedAtMs: Date.now(),
           expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
         };
@@ -15737,6 +15736,9 @@ async function handler(req, res) {
           jobStatus: initialJobStatus,
           exportMode: job.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
           clipLayerCount: Array.isArray(job.clipLayers) ? job.clipLayers.length : 0,
+          clipInputKind: String(job.clipInputKind || ""),
+          clipDataType: String(job.clipDataType || ""),
+          exactBoundaryClip: true,
           downloadUrl: jobReady ? downloadUrl : "",
           selectionToken,
           message: jobReady ? "Fail Lot Kadaster telah berjaya disediakan." : "Tengah Proses...",
@@ -15799,6 +15801,7 @@ async function handler(req, res) {
           variant: readyPayload.variant,
           amount: readyPayload.amount,
           exportMode: readyPayload.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
+          exactBoundaryClip: Boolean(readyPayload.exactBoundaryClip),
           downloadUrl,
           lotCount: readyPayload.lotCount,
           selectedAreaM2: readyPayload.selectedAreaM2,
@@ -15832,6 +15835,7 @@ async function handler(req, res) {
             variant: retryPayload && retryPayload.variant || "",
             amount: retryPayload && retryPayload.amount || 0,
             exportMode: retryPayload && retryPayload.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
+            exactBoundaryClip: Boolean(retryPayload && retryPayload.exactBoundaryClip),
             lotCount: retryPayload && retryPayload.lotCount || 0,
             selectedAreaM2: retryPayload && retryPayload.selectedAreaM2 || 0,
             message: "Tengah Proses..."

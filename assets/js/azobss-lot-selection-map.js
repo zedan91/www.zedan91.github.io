@@ -488,17 +488,17 @@
 
       function radiusReferenceLabel(sizeMeters) {
         const metrics = referenceMetrics(sizeMeters);
-        const dimension = referenceShape === 'square'
-          ? `Sisi ${formatReferenceDistance(metrics.diameterOrSide)}`
-          : `R ${formatReferenceDistance(metrics.size)}`;
-        return `${referenceShapeName()} · ${dimension} · ${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha · ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
+        if (referenceShape === 'square') {
+          return `Petak · Pusat ke sisi ${formatReferenceDistance(metrics.size)} · Sisi ${formatReferenceDistance(metrics.diameterOrSide)} · ${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha · ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
+        }
+        return `Bulatan · Radius ${formatReferenceDistance(metrics.size)} · ${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha · ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
       }
 
       function updateRadiusReferenceReadout(sizeMeters) {
         const metrics = referenceMetrics(sizeMeters);
         radiusReadout.hidden = false;
         if (referenceShape === 'square') {
-          radiusPrimaryLabel.textContent = 'Pusat → sisi';
+          radiusPrimaryLabel.textContent = 'Jarak pusat → sisi';
           radiusSecondaryLabel.textContent = 'Panjang sisi';
           radiusAreaLabel.textContent = 'Luas petak';
         } else {
@@ -512,7 +512,7 @@
         radiusLandAreaNode.textContent = `${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha / ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
         radiusNoteNode.classList.toggle('is-selecting', referenceSelectionEnabled);
         radiusNoteNode.textContent = referenceSelectionEnabled
-          ? `Pemilihan lot aktif — lot yang bersilang dengan ${referenceShape === 'square' ? 'petak' : 'bulatan'} ini akan digunakan untuk kiraan.`
+          ? `Pemilihan lot aktif — lot yang bersilang dengan ${referenceShape === 'square' ? 'petak' : 'bulatan'} ini akan dikira dan drawing akan dipotong tepat pada garisan rujukan.`
           : 'Rujukan sahaja — tandakan pilihan di atas jika mahu lot dalam kawasan ini dipilih.';
       }
 
@@ -1419,16 +1419,16 @@
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
-          if (Number(lotCapabilities.version || 0) < 2 || String(lotCapabilities.exportMode || '') !== 'clip-layer-by-aoi-v922') {
-            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v922 sebelum menyediakan drawing.');
+          if (Number(lotCapabilities.version || 0) < 3 || String(lotCapabilities.exportMode || '') !== 'exact-boundary-clip-v923' || !lotCapabilities.exactBoundaryClip) {
+            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v923 sebelum menyediakan drawing tepat ikut garisan.');
           }
           let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
-          if (String(prepared.exportMode || '') !== 'clip-layer-by-aoi-v922') {
-            throw new Error('Kaedah eksport Lot Kadaster pada backend belum dikemas kini ke v922.');
+          if (String(prepared.exportMode || '') !== 'exact-boundary-clip-v923' || !prepared.exactBoundaryClip) {
+            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemotongan tepat ikut garisan v923.');
           }
           if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
