@@ -9151,10 +9151,28 @@ async function azobssQueryLotObjectIds(config, geometry, auth) {
   const common = {
     geometry: JSON.stringify(geometry),
     geometryType: "esriGeometryPolygon",
-    inSR: "4326",
-    spatialRel: "esriSpatialRelIntersects"
+    inSR: "4326"
   };
-  return await azobssJupemArcGisJson(`${layerUrl}/query`, { ...common, returnIdsOnly: "true" }, auth);
+
+  // 927: Prefer DE-9IM interior/interior overlap so a cadastral lot that only
+  // touches the blue reference at a corner/shared boundary is NOT counted.
+  // ArcGIS MapServer query supports esriSpatialRelRelation + relationParam;
+  // retain Intersects as a compatibility fallback and verify again locally.
+  try {
+    return await azobssJupemArcGisJson(`${layerUrl}/query`, {
+      ...common,
+      spatialRel: "esriSpatialRelRelation",
+      relationParam: "T********",
+      returnIdsOnly: "true"
+    }, auth);
+  } catch (error) {
+    console.warn("JUPEM positive-area relation query unavailable; using exact local fallback:", error && (error.message || error));
+    return await azobssJupemArcGisJson(`${layerUrl}/query`, {
+      ...common,
+      spatialRel: "esriSpatialRelIntersects",
+      returnIdsOnly: "true"
+    }, auth);
+  }
 }
 
 async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult) {
@@ -9285,7 +9303,7 @@ function azobssLotSegmentsIntersect(a1, a2, b1, b2) {
   );
 }
 
-function azobssLotPointInPolygon(point, geometry) {
+function azobssLotPointInPolygon(point, geometry, includeBoundary = true) {
   const x = Number(point && point[0]), y = Number(point && point[1]);
   if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
   const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
@@ -9295,7 +9313,7 @@ function azobssLotPointInPolygon(point, geometry) {
     if (ring.length < 3) continue;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
       const pi = ring[i], pj = ring[j];
-      if (azobssLotPointOnSegment(point, pj, pi)) return true;
+      if (azobssLotPointOnSegment(point, pj, pi)) return Boolean(includeBoundary);
       const xi = Number(pi && pi[0]), yi = Number(pi && pi[1]);
       const xj = Number(pj && pj[0]), yj = Number(pj && pj[1]);
       if (![xi, yi, xj, yj].every(Number.isFinite)) continue;
@@ -9307,6 +9325,52 @@ function azobssLotPointInPolygon(point, geometry) {
   return inside;
 }
 
+function azobssLotSegmentsCrossProperly(a1, a2, b1, b2) {
+  const cross = (p, q, r) =>
+    (Number(q[0]) - Number(p[0])) * (Number(r[1]) - Number(p[1]))
+    - (Number(q[1]) - Number(p[1])) * (Number(r[0]) - Number(p[0]));
+  const c1 = cross(a1, a2, b1);
+  const c2 = cross(a1, a2, b2);
+  const c3 = cross(b1, b2, a1);
+  const c4 = cross(b1, b2, a2);
+  if (![c1, c2, c3, c4].every(Number.isFinite)) return false;
+  const eps = 1e-13;
+  // Strict crossing only. Endpoint/corner touch and collinear shared edges are
+  // deliberately excluded because they have zero overlapping area.
+  return ((c1 > eps && c2 < -eps) || (c1 < -eps && c2 > eps))
+    && ((c3 > eps && c4 < -eps) || (c3 < -eps && c4 > eps));
+}
+
+function azobssLotGeometryRepresentativePoints(geometry) {
+  const samples = [];
+  const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  for (const rawRing of rings) {
+    const ring = Array.isArray(rawRing) ? rawRing : [];
+    const points = ring.filter((point, index) => {
+      if (!Array.isArray(point) || point.length < 2) return false;
+      const x = Number(point[0]), y = Number(point[1]);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      if (index === ring.length - 1 && ring.length > 1) {
+        const first = ring[0];
+        if (Array.isArray(first) && Number(first[0]) === x && Number(first[1]) === y) return false;
+      }
+      return true;
+    });
+    if (points.length < 3) continue;
+    let sx = 0, sy = 0;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const point of points) {
+      const x = Number(point[0]), y = Number(point[1]);
+      sx += x; sy += y;
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    }
+    samples.push([sx / points.length, sy / points.length]);
+    samples.push([(minX + maxX) / 2, (minY + maxY) / 2]);
+  }
+  return samples;
+}
+
 function azobssLotPolygonIntersectsExact(featureGeometry, selectionGeometry) {
   const featureBbox = azobssLotGeometryBbox(featureGeometry);
   const selectionBbox = azobssLotGeometryBbox(selectionGeometry);
@@ -9315,15 +9379,22 @@ function azobssLotPolygonIntersectsExact(featureGeometry, selectionGeometry) {
   const featureRings = featureGeometry && Array.isArray(featureGeometry.rings) ? featureGeometry.rings : [];
   const selectionRings = selectionGeometry && Array.isArray(selectionGeometry.rings) ? selectionGeometry.rings : [];
 
+  // 927 positive-area rule:
+  // 1) A cadastral vertex must lie STRICTLY inside the reference, or
+  // 2) a reference vertex must lie STRICTLY inside the cadastral polygon, or
+  // 3) boundaries must properly cross each other.
+  // Boundary/corner-only touching is not enough. This prevents the adjacent
+  // outside lot (for example a lot sharing only the corner hit by the blue line)
+  // from being selected together with the lot that the line actually crosses.
   for (const ring of featureRings) {
     for (const point of Array.isArray(ring) ? ring : []) {
-      if (azobssLotPointInPolygon(point, selectionGeometry)) return true;
+      if (azobssLotPointInPolygon(point, selectionGeometry, false)) return true;
     }
   }
 
   for (const ring of selectionRings) {
     for (const point of Array.isArray(ring) ? ring : []) {
-      if (azobssLotPointInPolygon(point, featureGeometry)) return true;
+      if (azobssLotPointInPolygon(point, featureGeometry, false)) return true;
     }
   }
 
@@ -9335,11 +9406,23 @@ function azobssLotPolygonIntersectsExact(featureGeometry, selectionGeometry) {
       for (const selectionRingRaw of selectionRings) {
         const selectionRing = Array.isArray(selectionRingRaw) ? selectionRingRaw : [];
         for (let si = 0; si + 1 < selectionRing.length; si += 1) {
-          if (azobssLotSegmentsIntersect(a1, a2, selectionRing[si], selectionRing[si + 1])) return true;
+          if (azobssLotSegmentsCrossProperly(a1, a2, selectionRing[si], selectionRing[si + 1])) return true;
         }
       }
     }
   }
+
+  // Covers the rare identical/enclosing-polygon case where every tested vertex
+  // lies on a boundary but the two polygon interiors still overlap.
+  for (const point of azobssLotGeometryRepresentativePoints(featureGeometry)) {
+    if (azobssLotPointInPolygon(point, featureGeometry, false)
+      && azobssLotPointInPolygon(point, selectionGeometry, false)) return true;
+  }
+  for (const point of azobssLotGeometryRepresentativePoints(selectionGeometry)) {
+    if (azobssLotPointInPolygon(point, selectionGeometry, false)
+      && azobssLotPointInPolygon(point, featureGeometry, false)) return true;
+  }
+
   return false;
 }
 
@@ -9405,9 +9488,9 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     azobssQueryLotFeatureSet(config, geometry, auth, idResult),
     azobssQueryLotSheets(config, geometry, auth)
   ]);
-  // 926: ArcGIS remains the source of cadastral geometry, but run a second exact
-  // polygon-intersection pass locally. This prevents envelope/GP behaviour from
-  // admitting unrelated lots outside the blue circle/square reference.
+  // 927: ArcGIS remains the source of cadastral geometry, but run a second
+  // positive-area intersection pass locally. Pure corner/shared-edge touches
+  // are excluded so only genuinely overlapping lots are selected.
   const featureSet = azobssStrictLotFeatureSet(queriedFeatureSet, geometry);
   if (!Array.isArray(featureSet.features) || !featureSet.features.length) {
     throw new Error("Tiada lot JUPEM yang benar-benar bersilang dengan kawasan rujukan.");
@@ -9454,7 +9537,7 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
   };
 }
 
-const AZOBSS_LOT_GP_EXPORT_MODE = "natural-exact-selected-lots-v926";
+const AZOBSS_LOT_GP_EXPORT_MODE = "natural-positive-area-selected-lots-v927";
 const azobssLotGpClipLayerCache = new Map();
 
 function azobssLotGpFeatureSetValueForType(value, dataType) {
@@ -9585,13 +9668,13 @@ async function azobssSubmitLotGpJob(estimate) {
       try { auth = await azobssGetJupemMapAuth(true); } catch (_) {}
     }
     try {
-      // 926: The blue circle/square/polygon is a SELECTION reference only.
+      // 927: The blue circle/square/polygon is a SELECTION reference only.
       // Lots are chosen using strict exact spatial intersection, but exported cadastral polygons
       // remain natural/full.  Send only the selected lot IDs to Layers_to_Clip and
       // use a padded envelope around those full features as the mandatory AOI.
       const naturalInput = await azobssResolveLotGpNaturalInput(estimate, auth);
       const areaOfInterest = azobssLotGpNaturalAreaOfInterest(estimate);
-      // 926: Do NOT pass a layer URL + filter here. The JUPEM GP service may accept
+      // 927: Do NOT pass a layer URL + filter here. The JUPEM GP service may accept
       // that object while silently ignoring its filter, which causes unrelated lots
       // inside the padded AOI envelope to appear in the final SHP. Send the exact
       // already-filtered cadastral features only, preserving each lot's full geometry.
@@ -15876,13 +15959,15 @@ async function handler(req, res) {
     if (pathname === "/api/jupem-lot-selection/capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok: true,
-        version: 5,
+        version: 6,
         exportMode: AZOBSS_LOT_GP_EXPORT_MODE,
         clipLayerAoiExport: true,
         exactBoundaryClip: false,
         naturalLotGeometry: true,
         selectionByReferenceIntersection: true,
         strictReferenceIntersection: true,
+        positiveAreaReferenceIntersection: true,
+        excludesBoundaryOnlyTouches: true,
         exactSelectedFeatureSetExport: true,
         gpFeatureRecordSetLayerInput: true,
         layerUrlAttributeFilter: false,
@@ -15955,6 +16040,8 @@ async function handler(req, res) {
           clipDataType: String(job.clipDataType || ""),
           exactBoundaryClip: false,
           naturalLotGeometry: true,
+          positiveAreaReferenceIntersection: true,
+          excludesBoundaryOnlyTouches: true,
           preparedAtMs: Date.now(),
           expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
         };
@@ -15974,6 +16061,8 @@ async function handler(req, res) {
           clipDataType: String(job.clipDataType || ""),
           exactBoundaryClip: false,
           naturalLotGeometry: true,
+          positiveAreaReferenceIntersection: true,
+          excludesBoundaryOnlyTouches: true,
           downloadUrl: jobReady ? downloadUrl : "",
           selectionToken,
           message: jobReady ? "Fail Lot Kadaster telah berjaya disediakan." : "Tengah Proses...",

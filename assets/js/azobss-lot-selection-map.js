@@ -512,7 +512,7 @@
         radiusLandAreaNode.textContent = `${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha / ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
         radiusNoteNode.classList.toggle('is-selecting', referenceSelectionEnabled);
         radiusNoteNode.textContent = referenceSelectionEnabled
-          ? `Pemilihan lot aktif — lot yang bersilang dengan ${referenceShape === 'square' ? 'petak' : 'bulatan'} ini akan dikira, tetapi drawing mengekalkan sempadan lot asal dan tidak dipotong pada garisan rujukan.`
+          ? `Pemilihan lot aktif — lot yang berada dalam atau benar-benar dilintasi ${referenceShape === 'square' ? 'petak' : 'bulatan'} akan dikira. Sentuhan bucu/sempadan sahaja tidak dikira. Drawing kekal sempadan lot asal.`
           : 'Rujukan sahaja — tandakan pilihan di atas jika mahu lot dalam kawasan ini dipilih.';
       }
 
@@ -1419,16 +1419,16 @@
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
-          if (Number(lotCapabilities.version || 0) < 5 || String(lotCapabilities.exportMode || '') !== 'natural-exact-selected-lots-v926' || !lotCapabilities.naturalLotGeometry || !lotCapabilities.strictReferenceIntersection || !lotCapabilities.exactSelectedFeatureSetExport) {
-            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v926 supaya hanya lot yang benar-benar berada/bersilang dengan kawasan rujukan dipilih, sambil mengekalkan sempadan lot asal.');
+          if (Number(lotCapabilities.version || 0) < 6 || String(lotCapabilities.exportMode || '') !== 'natural-positive-area-selected-lots-v927' || !lotCapabilities.naturalLotGeometry || !lotCapabilities.strictReferenceIntersection || !lotCapabilities.positiveAreaReferenceIntersection || !lotCapabilities.excludesBoundaryOnlyTouches || !lotCapabilities.exactSelectedFeatureSetExport) {
+            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v927 supaya lot luar yang hanya tersentuh di bucu/sempadan tidak lagi dipilih, sambil mengekalkan sempadan lot asal.');
           }
           let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
-          if (String(prepared.exportMode || '') !== 'natural-exact-selected-lots-v926' || !prepared.naturalLotGeometry) {
-            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemilihan tepat + geometri lot natural v926.');
+          if (String(prepared.exportMode || '') !== 'natural-positive-area-selected-lots-v927' || !prepared.naturalLotGeometry || !prepared.positiveAreaReferenceIntersection || !prepared.excludesBoundaryOnlyTouches) {
+            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemilihan positive-area + geometri lot natural v927.');
           }
           if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
