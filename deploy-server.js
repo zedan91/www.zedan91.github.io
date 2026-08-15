@@ -9371,6 +9371,92 @@ function azobssLotGeometryRepresentativePoints(geometry) {
   return samples;
 }
 
+function azobssLotProperSegmentIntersectionPoint(a1, a2, b1, b2) {
+  const x1 = Number(a1 && a1[0]), y1 = Number(a1 && a1[1]);
+  const x2 = Number(a2 && a2[0]), y2 = Number(a2 && a2[1]);
+  const x3 = Number(b1 && b1[0]), y3 = Number(b1 && b1[1]);
+  const x4 = Number(b2 && b2[0]), y4 = Number(b2 && b2[1]);
+  if (![x1, y1, x2, y2, x3, y3, x4, y4].every(Number.isFinite)) return null;
+  const dx1 = x2 - x1, dy1 = y2 - y1;
+  const dx2 = x4 - x3, dy2 = y4 - y3;
+  const denominator = dx1 * dy2 - dy1 * dx2;
+  if (Math.abs(denominator) < 1e-15) return null;
+  const rx = x3 - x1, ry = y3 - y1;
+  const t = (rx * dy2 - ry * dx2) / denominator;
+  const u = (rx * dy1 - ry * dx1) / denominator;
+  const eps = 1e-9;
+  // Strictly inside both segments: endpoint/corner and collinear touches are ignored.
+  if (!(t > eps && t < 1 - eps && u > eps && u < 1 - eps)) return null;
+  return [x1 + t * dx1, y1 + t * dy1];
+}
+
+function azobssLotDistanceMeters(a, b) {
+  const lon1 = Number(a && a[0]) * Math.PI / 180;
+  const lat1 = Number(a && a[1]) * Math.PI / 180;
+  const lon2 = Number(b && b[0]) * Math.PI / 180;
+  const lat2 = Number(b && b[1]) * Math.PI / 180;
+  if (![lon1, lat1, lon2, lat2].every(Number.isFinite)) return 0;
+  const dLat = lat2 - lat1;
+  const dLon = lon2 - lon1;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6378137 * Math.asin(Math.min(1, Math.sqrt(Math.max(0, h))));
+}
+
+function azobssLotRingValidPoints(rawRing) {
+  const ring = Array.isArray(rawRing) ? rawRing : [];
+  const points = ring.filter((point, index) => {
+    if (!Array.isArray(point) || point.length < 2) return false;
+    const x = Number(point[0]), y = Number(point[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+    if (index === ring.length - 1 && ring.length > 1) {
+      const first = ring[0];
+      if (Array.isArray(first) && Number(first[0]) === x && Number(first[1]) === y) return false;
+    }
+    return true;
+  });
+  return points;
+}
+
+function azobssLotRingFullyInsideGeometry(rawRing, geometry) {
+  const points = azobssLotRingValidPoints(rawRing);
+  if (points.length < 3) return false;
+  // Boundary is allowed here because a lot wholly inside the reference can share
+  // one reference edge and still is a valid selected interior lot.
+  return points.every((point) => azobssLotPointInPolygon(point, geometry, true));
+}
+
+function azobssLotBoundaryCrossingSpanMeters(featureGeometry, selectionGeometry) {
+  const featureRings = featureGeometry && Array.isArray(featureGeometry.rings) ? featureGeometry.rings : [];
+  const selectionRings = selectionGeometry && Array.isArray(selectionGeometry.rings) ? selectionGeometry.rings : [];
+  const intersections = [];
+  for (const featureRingRaw of featureRings) {
+    const featureRing = Array.isArray(featureRingRaw) ? featureRingRaw : [];
+    for (let fi = 0; fi + 1 < featureRing.length; fi += 1) {
+      for (const selectionRingRaw of selectionRings) {
+        const selectionRing = Array.isArray(selectionRingRaw) ? selectionRingRaw : [];
+        for (let si = 0; si + 1 < selectionRing.length; si += 1) {
+          const point = azobssLotProperSegmentIntersectionPoint(
+            featureRing[fi], featureRing[fi + 1], selectionRing[si], selectionRing[si + 1]
+          );
+          if (!point) continue;
+          if (intersections.some((existing) => azobssLotDistanceMeters(existing, point) < 0.05)) continue;
+          intersections.push(point);
+        }
+      }
+    }
+  }
+  if (intersections.length < 2) return 0;
+  let maxSpan = 0;
+  for (let i = 0; i < intersections.length; i += 1) {
+    for (let j = i + 1; j < intersections.length; j += 1) {
+      maxSpan = Math.max(maxSpan, azobssLotDistanceMeters(intersections[i], intersections[j]));
+    }
+  }
+  return maxSpan;
+}
+
+const AZOBSS_REFERENCE_CROSSING_MIN_SPAN_M = 1.0;
+
 function azobssLotPolygonIntersectsExact(featureGeometry, selectionGeometry) {
   const featureBbox = azobssLotGeometryBbox(featureGeometry);
   const selectionBbox = azobssLotGeometryBbox(selectionGeometry);
@@ -9379,51 +9465,40 @@ function azobssLotPolygonIntersectsExact(featureGeometry, selectionGeometry) {
   const featureRings = featureGeometry && Array.isArray(featureGeometry.rings) ? featureGeometry.rings : [];
   const selectionRings = selectionGeometry && Array.isArray(selectionGeometry.rings) ? selectionGeometry.rings : [];
 
-  // 927 positive-area rule:
-  // 1) A cadastral vertex must lie STRICTLY inside the reference, or
-  // 2) a reference vertex must lie STRICTLY inside the cadastral polygon, or
-  // 3) boundaries must properly cross each other.
-  // Boundary/corner-only touching is not enough. This prevents the adjacent
-  // outside lot (for example a lot sharing only the corner hit by the blue line)
-  // from being selected together with the lot that the line actually crosses.
+  // 928 strict visual-line rule.
+  // A lot is selected when it is genuinely INSIDE the reference, when the
+  // reference is inside one large lot, or when the blue reference boundary
+  // properly CROSSES the lot.  A lone cadastral vertex that happens to fall a
+  // tiny distance inside is no longer sufficient; this is what could pull the
+  // next outside lot (e.g. 20075) into the export even though the visible blue
+  // line only crosses the preceding lot.
+
+  // Whole cadastral part inside the reference.
   for (const ring of featureRings) {
-    for (const point of Array.isArray(ring) ? ring : []) {
-      if (azobssLotPointInPolygon(point, selectionGeometry, false)) return true;
-    }
+    if (azobssLotRingFullyInsideGeometry(ring, selectionGeometry)) return true;
   }
 
-  for (const ring of selectionRings) {
-    for (const point of Array.isArray(ring) ? ring : []) {
-      if (azobssLotPointInPolygon(point, featureGeometry, false)) return true;
-    }
-  }
-
-  for (const featureRingRaw of featureRings) {
-    const featureRing = Array.isArray(featureRingRaw) ? featureRingRaw : [];
-    for (let fi = 0; fi + 1 < featureRing.length; fi += 1) {
-      const a1 = featureRing[fi];
-      const a2 = featureRing[fi + 1];
-      for (const selectionRingRaw of selectionRings) {
-        const selectionRing = Array.isArray(selectionRingRaw) ? selectionRingRaw : [];
-        for (let si = 0; si + 1 < selectionRing.length; si += 1) {
-          if (azobssLotSegmentsCrossProperly(a1, a2, selectionRing[si], selectionRing[si + 1])) return true;
-        }
-      }
-    }
-  }
-
-  // Covers the rare identical/enclosing-polygon case where every tested vertex
-  // lies on a boundary but the two polygon interiors still overlap.
+  // Strong interior sample: covers ordinary lots that are mostly inside but
+  // have one/two vertices just outside because the reference cuts them.
   for (const point of azobssLotGeometryRepresentativePoints(featureGeometry)) {
     if (azobssLotPointInPolygon(point, featureGeometry, false)
       && azobssLotPointInPolygon(point, selectionGeometry, false)) return true;
+  }
+
+  // Reference fully/mostly contained by one very large cadastral polygon.
+  for (const ring of selectionRings) {
+    if (azobssLotRingFullyInsideGeometry(ring, featureGeometry)) return true;
   }
   for (const point of azobssLotGeometryRepresentativePoints(selectionGeometry)) {
     if (azobssLotPointInPolygon(point, selectionGeometry, false)
       && azobssLotPointInPolygon(point, featureGeometry, false)) return true;
   }
 
-  return false;
+  // Boundary lots must have TWO real crossings separated by a meaningful span.
+  // This removes corner/shared-edge/tiny topology slivers while retaining a lot
+  // whose natural boundary is actually cut by the visible reference line.
+  return azobssLotBoundaryCrossingSpanMeters(featureGeometry, selectionGeometry)
+    >= AZOBSS_REFERENCE_CROSSING_MIN_SPAN_M;
 }
 
 function azobssStrictLotFeatureSet(featureSet, selectionGeometry) {
@@ -9452,6 +9527,48 @@ function azobssSelectedObjectIdsFromFeatureSet(featureSet) {
   return ids;
 }
 
+
+function azobssLotReferenceSelectionMode(value) {
+  return /^reference$/i.test(String(value || "").trim()) ? "reference" : "manual";
+}
+
+const AZOBSS_REFERENCE_INSET_TOLERANCE_M = 1.0;
+
+function azobssLotInsetReferenceGeometry(geometry, toleranceMeters = AZOBSS_REFERENCE_INSET_TOLERANCE_M) {
+  const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  if (!rings.length) return geometry;
+  const outer = azobssLotRingValidPoints(rings[0]);
+  if (outer.length < 3) return geometry;
+  let centerX = 0, centerY = 0;
+  for (const point of outer) { centerX += Number(point[0]); centerY += Number(point[1]); }
+  centerX /= outer.length;
+  centerY /= outer.length;
+  const areaM2 = Math.max(0, azobssPolygonAreaM2(geometry));
+  const uniqueCount = outer.length;
+  let centerToBoundaryM = 0;
+  if (uniqueCount <= 5 && areaM2 > 0) {
+    // Reference square: area = (2r)^2, where r is center -> side.
+    centerToBoundaryM = Math.sqrt(areaM2) / 2;
+  } else if (areaM2 > 0) {
+    // Reference circle (72-sided approximation): equivalent radius.
+    centerToBoundaryM = Math.sqrt(areaM2 / Math.PI);
+  }
+  const tolerance = Math.max(0, Number(toleranceMeters) || 0);
+  if (!(centerToBoundaryM > tolerance + 0.05)) return geometry;
+  const factor = Math.max(0.5, (centerToBoundaryM - tolerance) / centerToBoundaryM);
+  const insetRings = rings.map((rawRing) => {
+    const valid = azobssLotRingValidPoints(rawRing);
+    if (valid.length < 3) return rawRing;
+    const inset = valid.map((point) => [
+      centerX + (Number(point[0]) - centerX) * factor,
+      centerY + (Number(point[1]) - centerY) * factor
+    ]);
+    inset.push(inset[0].slice());
+    return inset;
+  });
+  return { rings: insetRings, spatialReference: { wkid: 4326 } };
+}
+
 function azobssLotPricingForRatio(value) {
   const areaRatio = Number(value);
   if (!Number.isFinite(areaRatio) || areaRatio <= 0 || areaRatio > 1.1) return null;
@@ -9472,10 +9589,14 @@ function azobssLotSheetName(feature, index) {
   return String(key ? attributes[key] : `Syit ${index + 1}`).trim();
 }
 
-async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
+async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry, options = {}) {
   const requestedConfig = azobssGetLotMapConfig(productCode, stateCode);
   let config = requestedConfig;
   const geometry = azobssNormalizeLotPolygon(rawGeometry);
+  const selectionMode = azobssLotReferenceSelectionMode(options.selectionMode);
+  const strictSelectionGeometry = selectionMode === "reference"
+    ? azobssLotInsetReferenceGeometry(geometry, AZOBSS_REFERENCE_INSET_TOLERANCE_M)
+    : geometry;
   const auth = await azobssGetJupemMapAuth(false);
   let idResult = await azobssQueryLotObjectIds(config, geometry, auth);
   if (!Array.isArray(idResult.objectIds) || !idResult.objectIds.length) {
@@ -9488,10 +9609,10 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     azobssQueryLotFeatureSet(config, geometry, auth, idResult),
     azobssQueryLotSheets(config, geometry, auth)
   ]);
-  // 927: ArcGIS remains the source of cadastral geometry, but run a second
-  // positive-area intersection pass locally. Pure corner/shared-edge touches
-  // are excluded so only genuinely overlapping lots are selected.
-  const featureSet = azobssStrictLotFeatureSet(queriedFeatureSet, geometry);
+  // 928: ArcGIS remains the source of cadastral geometry, then run a stricter
+  // visual-line intersection pass locally. Interior lots remain selected, while
+  // outside lots need a real blue-boundary crossing instead of a tiny sliver.
+  const featureSet = azobssStrictLotFeatureSet(queriedFeatureSet, strictSelectionGeometry);
   if (!Array.isArray(featureSet.features) || !featureSet.features.length) {
     throw new Error("Tiada lot JUPEM yang benar-benar bersilang dengan kawasan rujukan.");
   }
@@ -9521,6 +9642,8 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     config,
     auth,
     geometry,
+    strictSelectionGeometry,
+    selectionMode,
     featureSet,
     selectedObjectIds,
     lotCount: featureSet.features.length,
@@ -9537,7 +9660,7 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
   };
 }
 
-const AZOBSS_LOT_GP_EXPORT_MODE = "natural-positive-area-selected-lots-v927";
+const AZOBSS_LOT_GP_EXPORT_MODE = "natural-exact-aoi-line-selected-lots-v928";
 const azobssLotGpClipLayerCache = new Map();
 
 function azobssLotGpFeatureSetValueForType(value, dataType) {
@@ -9589,72 +9712,51 @@ async function azobssResolveLotGpNaturalInput(estimate, auth) {
 }
 
 function azobssLotGpNaturalAreaOfInterest(estimate) {
-  // The JUPEM GP tool still requires Area_of_Interest.  For natural-lot export,
-  // use a padded envelope around the FULL selected cadastral features, not the
-  // user's blue reference shape.  Therefore every selected lot falls completely
-  // inside the AOI and its original cadastral boundary is not cut at the blue line.
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+  // 928: NEVER use one padded bounding envelope here.  JUPEM's GP tool can
+  // accept the exact Layers_to_Clip feature set yet still behave as if it is
+  // clipping the source cadastral layer by Area_of_Interest.  An envelope then
+  // pulls unrelated neighbouring lots into the final SHP.
+  //
+  // Instead, make the AOI itself from the FULL natural geometries of the exact
+  // selected lots.  If JUPEM clips by AOI, the clip mask is now precisely the
+  // union/multipart footprint of those selected lots, so an unselected adjacent
+  // lot has zero interior area in the AOI and cannot appear.  Selected lots are
+  // not cut because their entire original cadastral geometry is present in AOI.
   const features = Array.isArray(estimate && estimate.featureSet && estimate.featureSet.features)
     ? estimate.featureSet.features
     : [];
+  const rings = [];
+  let pointCount = 0;
   for (const feature of features) {
-    const rings = feature && feature.geometry && Array.isArray(feature.geometry.rings) ? feature.geometry.rings : [];
-    for (const ring of rings) {
-      for (const point of Array.isArray(ring) ? ring : []) {
+    const sourceRings = feature && feature.geometry && Array.isArray(feature.geometry.rings)
+      ? feature.geometry.rings
+      : [];
+    for (const rawRing of sourceRings) {
+      const ring = Array.isArray(rawRing) ? rawRing.filter((point) => {
         const x = Number(point && point[0]);
         const y = Number(point && point[1]);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
+        return Number.isFinite(x) && Number.isFinite(y);
+      }).map((point) => [Number(point[0]), Number(point[1])]) : [];
+      if (ring.length < 3) continue;
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      if (first[0] !== last[0] || first[1] !== last[1]) ring.push(first.slice());
+      pointCount += ring.length;
+      rings.push(ring);
     }
   }
-
-  if (![minX, minY, maxX, maxY].every(Number.isFinite)) {
-    const rings = Array.isArray(estimate && estimate.geometry && estimate.geometry.rings) ? estimate.geometry.rings : [];
-    for (const ring of rings) {
-      for (const point of Array.isArray(ring) ? ring : []) {
-        const x = Number(point && point[0]);
-        const y = Number(point && point[1]);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
+  if (!rings.length || !pointCount) {
+    throw new Error("Geometri lot terpilih tidak tersedia untuk AOI eksport natural.");
   }
-  if (![minX, minY, maxX, maxY].every(Number.isFinite)) {
-    throw new Error("Sempadan lot terpilih tidak dapat ditentukan untuk eksport natural.");
-  }
-
-  const span = Math.max(maxX - minX, maxY - minY, 0);
-  const pad = Math.max(0.00005, span * 0.002);
-  const west = minX - pad;
-  const east = maxX + pad;
-  const south = minY - pad;
-  const north = maxY + pad;
-  const naturalEnvelope = {
-    rings: [[
-      [west, south],
-      [east, south],
-      [east, north],
-      [west, north],
-      [west, south]
-    ]],
-    spatialReference: { wkid: 4326 }
-  };
   return {
     displayFieldName: "",
     geometryType: "esriGeometryPolygon",
     spatialReference: { wkid: 4326 },
     fields: [{ name: "OBJECTID", type: "esriFieldTypeOID", alias: "OBJECTID" }],
-    features: [{ geometry: naturalEnvelope, attributes: { OBJECTID: 1 } }]
+    features: [{
+      geometry: { rings, spatialReference: { wkid: 4326 } },
+      attributes: { OBJECTID: 1 }
+    }]
   };
 }
 
@@ -9668,19 +9770,21 @@ async function azobssSubmitLotGpJob(estimate) {
       try { auth = await azobssGetJupemMapAuth(true); } catch (_) {}
     }
     try {
-      // 927: The blue circle/square/polygon is a SELECTION reference only.
-      // Lots are chosen using strict exact spatial intersection, but exported cadastral polygons
-      // remain natural/full.  Send only the selected lot IDs to Layers_to_Clip and
-      // use a padded envelope around those full features as the mandatory AOI.
+      // 928: The blue circle/square/polygon is a SELECTION reference only.
+      // Lots are chosen with the strict visual-line rule and exported natural/full.
+      // The mandatory AOI is built from the exact selected full lot geometries,
+      // never from one broad envelope.
       const naturalInput = await azobssResolveLotGpNaturalInput(estimate, auth);
       const areaOfInterest = azobssLotGpNaturalAreaOfInterest(estimate);
-      // 927: Do NOT pass a layer URL + filter here. The JUPEM GP service may accept
-      // that object while silently ignoring its filter, which causes unrelated lots
-      // inside the padded AOI envelope to appear in the final SHP. Send the exact
-      // already-filtered cadastral features only, preserving each lot's full geometry.
+      // 928: AOI itself is now the exact multipart footprint of selected full lots.
+      // Therefore a compact layer URL + OBJECTID filter is safe again: even if JUPEM
+      // silently ignores that filter, clipping the source layer by the exact selected-lot
+      // AOI cannot pull in neighbouring lots. Keep the literal selected feature set as
+      // fallback for GP variants that reject a layer-reference input.
       const exactSelectedFeatureSet = azobssLotGpFeatureSetValueForType(estimate.featureSet, naturalInput.dataType);
       const candidates = [
-        { kind: 'exact-selected-feature-set', value: exactSelectedFeatureSet }
+        { kind: 'layer-reference-exact-aoi', value: naturalInput.value },
+        { kind: 'exact-selected-feature-set-exact-aoi', value: exactSelectedFeatureSet }
       ];
       let candidateError = null;
       for (const candidate of candidates) {
@@ -15959,7 +16063,7 @@ async function handler(req, res) {
     if (pathname === "/api/jupem-lot-selection/capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok: true,
-        version: 6,
+        version: 7,
         exportMode: AZOBSS_LOT_GP_EXPORT_MODE,
         clipLayerAoiExport: true,
         exactBoundaryClip: false,
@@ -15968,9 +16072,15 @@ async function handler(req, res) {
         strictReferenceIntersection: true,
         positiveAreaReferenceIntersection: true,
         excludesBoundaryOnlyTouches: true,
+        exactVisibleLineCrossing: true,
+        minimumBoundaryCrossingSpanM: AZOBSS_REFERENCE_CROSSING_MIN_SPAN_M,
+        referenceInsetToleranceM: AZOBSS_REFERENCE_INSET_TOLERANCE_M,
         exactSelectedFeatureSetExport: true,
+        exactSelectedLotAoi: true,
+        envelopeAoiDisabled: true,
         gpFeatureRecordSetLayerInput: true,
-        layerUrlAttributeFilter: false,
+        layerUrlAttributeFilter: true,
+        exactSelectedLotAoiFallbackGuard: true,
         referenceCircleSquareSelection: true
       }), "application/json", { "Cache-Control": "no-store" });
     }
@@ -15990,7 +16100,7 @@ async function handler(req, res) {
         const body = JSON.parse(bodyText || "{}");
         const productCode = cleanLotProduct(body.produk || body.product || body.productCode || body.productType);
         const requestedStateCode = cleanLotStateCode(body.negeri || body.state || body.stateCode);
-        const estimate = await azobssEstimateLotSelection(productCode, requestedStateCode, body.geometry);
+        const estimate = await azobssEstimateLotSelection(productCode, requestedStateCode, body.geometry, { selectionMode: body.selectionMode || body.selectionSource });
         const stateCode = estimate.config.state;
         const publicResult = {
           productCode,
@@ -16042,6 +16152,12 @@ async function handler(req, res) {
           naturalLotGeometry: true,
           positiveAreaReferenceIntersection: true,
           excludesBoundaryOnlyTouches: true,
+          exactVisibleLineCrossing: true,
+          minimumBoundaryCrossingSpanM: AZOBSS_REFERENCE_CROSSING_MIN_SPAN_M,
+          referenceInsetToleranceM: AZOBSS_REFERENCE_INSET_TOLERANCE_M,
+          selectionMode: estimate.selectionMode,
+          exactSelectedLotAoi: true,
+          envelopeAoiDisabled: true,
           preparedAtMs: Date.now(),
           expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
         };
@@ -16063,6 +16179,12 @@ async function handler(req, res) {
           naturalLotGeometry: true,
           positiveAreaReferenceIntersection: true,
           excludesBoundaryOnlyTouches: true,
+          exactVisibleLineCrossing: true,
+          minimumBoundaryCrossingSpanM: AZOBSS_REFERENCE_CROSSING_MIN_SPAN_M,
+          referenceInsetToleranceM: AZOBSS_REFERENCE_INSET_TOLERANCE_M,
+          selectionMode: estimate.selectionMode,
+          exactSelectedLotAoi: true,
+          envelopeAoiDisabled: true,
           downloadUrl: jobReady ? downloadUrl : "",
           selectionToken,
           message: jobReady ? "Fail Lot Kadaster telah berjaya disediakan." : "Tengah Proses...",

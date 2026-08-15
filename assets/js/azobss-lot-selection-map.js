@@ -1160,7 +1160,8 @@
           estimate = await postJson('/api/jupem-lot-selection/estimate', {
             productCode,
             stateCode: activeStateCode,
-            geometry: selectedGeometry
+            geometry: selectedGeometry,
+            selectionMode: source
           }, '', estimateController.signal);
           const previousStateCode = activeStateCode;
           activeStateCode = String(estimate.stateCode || activeStateCode).padStart(2, '0');
@@ -1419,16 +1420,17 @@
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
-          if (Number(lotCapabilities.version || 0) < 6 || String(lotCapabilities.exportMode || '') !== 'natural-positive-area-selected-lots-v927' || !lotCapabilities.naturalLotGeometry || !lotCapabilities.strictReferenceIntersection || !lotCapabilities.positiveAreaReferenceIntersection || !lotCapabilities.excludesBoundaryOnlyTouches || !lotCapabilities.exactSelectedFeatureSetExport) {
-            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v927 supaya lot luar yang hanya tersentuh di bucu/sempadan tidak lagi dipilih, sambil mengekalkan sempadan lot asal.');
+          if (Number(lotCapabilities.version || 0) < 7 || String(lotCapabilities.exportMode || '') !== 'natural-exact-aoi-line-selected-lots-v928' || !lotCapabilities.naturalLotGeometry || !lotCapabilities.strictReferenceIntersection || !lotCapabilities.positiveAreaReferenceIntersection || !lotCapabilities.excludesBoundaryOnlyTouches || (!Number.isFinite(Number(lotCapabilities.referenceInsetToleranceM)) || Number(lotCapabilities.referenceInsetToleranceM) < 0.5) || !lotCapabilities.exactVisibleLineCrossing || !lotCapabilities.exactSelectedFeatureSetExport || !lotCapabilities.exactSelectedLotAoi || !lotCapabilities.envelopeAoiDisabled) {
+            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v928 supaya lot luar hanya dipilih apabila garisan rujukan benar-benar melintasinya dan AOI eksport tidak lagi menarik lot jiran.');
           }
           let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
-            geometry: selectedGeometry
+            geometry: selectedGeometry,
+            selectionMode: selectionSource || 'manual'
           }, token, operationController.signal);
-          if (String(prepared.exportMode || '') !== 'natural-positive-area-selected-lots-v927' || !prepared.naturalLotGeometry || !prepared.positiveAreaReferenceIntersection || !prepared.excludesBoundaryOnlyTouches) {
-            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemilihan positive-area + geometri lot natural v927.');
+          if (String(prepared.exportMode || '') !== 'natural-exact-aoi-line-selected-lots-v928' || !prepared.naturalLotGeometry || !prepared.positiveAreaReferenceIntersection || !prepared.excludesBoundaryOnlyTouches || (!Number.isFinite(Number(prepared.referenceInsetToleranceM)) || Number(prepared.referenceInsetToleranceM) < 0.5) || !prepared.exactVisibleLineCrossing || !prepared.exactSelectedLotAoi || !prepared.envelopeAoiDisabled) {
+            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemilihan garisan tepat + AOI lot terpilih natural v928.');
           }
           if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
