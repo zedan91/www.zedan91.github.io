@@ -1419,16 +1419,16 @@
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
-          if (Number(lotCapabilities.version || 0) < 4 || String(lotCapabilities.exportMode || '') !== 'natural-selected-lots-v925' || !lotCapabilities.naturalLotGeometry) {
-            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v925 supaya drawing mengekalkan sempadan lot asal.');
+          if (Number(lotCapabilities.version || 0) < 5 || String(lotCapabilities.exportMode || '') !== 'natural-exact-selected-lots-v926' || !lotCapabilities.naturalLotGeometry || !lotCapabilities.strictReferenceIntersection || !lotCapabilities.exactSelectedFeatureSetExport) {
+            throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v926 supaya hanya lot yang benar-benar berada/bersilang dengan kawasan rujukan dipilih, sambil mengekalkan sempadan lot asal.');
           }
           let prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry
           }, token, operationController.signal);
-          if (String(prepared.exportMode || '') !== 'natural-selected-lots-v925' || !prepared.naturalLotGeometry) {
-            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan geometri lot natural v925.');
+          if (String(prepared.exportMode || '') !== 'natural-exact-selected-lots-v926' || !prepared.naturalLotGeometry) {
+            throw new Error('Kaedah eksport Lot Kadaster belum menggunakan pemilihan tepat + geometri lot natural v926.');
           }
           if (!prepared.jobId || !prepared.selectionToken) {
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');

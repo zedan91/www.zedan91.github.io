@@ -9231,6 +9231,144 @@ async function azobssQueryLotSheets(config, geometry, auth) {
   return Array.isArray(result.features) ? result.features : [];
 }
 
+
+function azobssLotGeometryBbox(geometry) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  for (const ring of rings) {
+    for (const point of Array.isArray(ring) ? ring : []) {
+      const x = Number(point && point[0]);
+      const y = Number(point && point[1]);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  return [minX, minY, maxX, maxY].every(Number.isFinite) ? { minX, minY, maxX, maxY } : null;
+}
+
+function azobssLotBboxIntersects(a, b) {
+  if (!a || !b) return false;
+  return !(a.maxX < b.minX || a.minX > b.maxX || a.maxY < b.minY || a.minY > b.maxY);
+}
+
+function azobssLotPointOnSegment(point, a, b, epsilon = 1e-10) {
+  const px = Number(point && point[0]), py = Number(point && point[1]);
+  const ax = Number(a && a[0]), ay = Number(a && a[1]);
+  const bx = Number(b && b[0]), by = Number(b && b[1]);
+  if (![px, py, ax, ay, bx, by].every(Number.isFinite)) return false;
+  const cross = (px - ax) * (by - ay) - (py - ay) * (bx - ax);
+  if (Math.abs(cross) > epsilon) return false;
+  const dot = (px - ax) * (px - bx) + (py - ay) * (py - by);
+  return dot <= epsilon;
+}
+
+function azobssLotSegmentsIntersect(a1, a2, b1, b2) {
+  const orient = (p, q, r) => {
+    const value = (Number(q[1]) - Number(p[1])) * (Number(r[0]) - Number(q[0]))
+      - (Number(q[0]) - Number(p[0])) * (Number(r[1]) - Number(q[1]));
+    if (Math.abs(value) < 1e-12) return 0;
+    return value > 0 ? 1 : 2;
+  };
+  const o1 = orient(a1, a2, b1);
+  const o2 = orient(a1, a2, b2);
+  const o3 = orient(b1, b2, a1);
+  const o4 = orient(b1, b2, a2);
+  if (o1 !== o2 && o3 !== o4) return true;
+  return (
+    (o1 === 0 && azobssLotPointOnSegment(b1, a1, a2)) ||
+    (o2 === 0 && azobssLotPointOnSegment(b2, a1, a2)) ||
+    (o3 === 0 && azobssLotPointOnSegment(a1, b1, b2)) ||
+    (o4 === 0 && azobssLotPointOnSegment(a2, b1, b2))
+  );
+}
+
+function azobssLotPointInPolygon(point, geometry) {
+  const x = Number(point && point[0]), y = Number(point && point[1]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  const rings = geometry && Array.isArray(geometry.rings) ? geometry.rings : [];
+  let inside = false;
+  for (const rawRing of rings) {
+    const ring = Array.isArray(rawRing) ? rawRing : [];
+    if (ring.length < 3) continue;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const pi = ring[i], pj = ring[j];
+      if (azobssLotPointOnSegment(point, pj, pi)) return true;
+      const xi = Number(pi && pi[0]), yi = Number(pi && pi[1]);
+      const xj = Number(pj && pj[0]), yj = Number(pj && pj[1]);
+      if (![xi, yi, xj, yj].every(Number.isFinite)) continue;
+      const crosses = ((yi > y) !== (yj > y))
+        && (x < ((xj - xi) * (y - yi)) / ((yj - yi) || Number.EPSILON) + xi);
+      if (crosses) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function azobssLotPolygonIntersectsExact(featureGeometry, selectionGeometry) {
+  const featureBbox = azobssLotGeometryBbox(featureGeometry);
+  const selectionBbox = azobssLotGeometryBbox(selectionGeometry);
+  if (!azobssLotBboxIntersects(featureBbox, selectionBbox)) return false;
+
+  const featureRings = featureGeometry && Array.isArray(featureGeometry.rings) ? featureGeometry.rings : [];
+  const selectionRings = selectionGeometry && Array.isArray(selectionGeometry.rings) ? selectionGeometry.rings : [];
+
+  for (const ring of featureRings) {
+    for (const point of Array.isArray(ring) ? ring : []) {
+      if (azobssLotPointInPolygon(point, selectionGeometry)) return true;
+    }
+  }
+
+  for (const ring of selectionRings) {
+    for (const point of Array.isArray(ring) ? ring : []) {
+      if (azobssLotPointInPolygon(point, featureGeometry)) return true;
+    }
+  }
+
+  for (const featureRingRaw of featureRings) {
+    const featureRing = Array.isArray(featureRingRaw) ? featureRingRaw : [];
+    for (let fi = 0; fi + 1 < featureRing.length; fi += 1) {
+      const a1 = featureRing[fi];
+      const a2 = featureRing[fi + 1];
+      for (const selectionRingRaw of selectionRings) {
+        const selectionRing = Array.isArray(selectionRingRaw) ? selectionRingRaw : [];
+        for (let si = 0; si + 1 < selectionRing.length; si += 1) {
+          if (azobssLotSegmentsIntersect(a1, a2, selectionRing[si], selectionRing[si + 1])) return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function azobssStrictLotFeatureSet(featureSet, selectionGeometry) {
+  const sourceFeatures = Array.isArray(featureSet && featureSet.features) ? featureSet.features : [];
+  const features = sourceFeatures.filter((feature) =>
+    azobssLotPolygonIntersectsExact(feature && feature.geometry, selectionGeometry)
+  );
+  return { ...featureSet, features };
+}
+
+function azobssSelectedObjectIdsFromFeatureSet(featureSet) {
+  const fieldCandidate = String(featureSet && featureSet.objectIdFieldName || "OBJECTID");
+  const objectIdFieldName = /^[A-Za-z_][A-Za-z0-9_]*$/.test(fieldCandidate) ? fieldCandidate : "OBJECTID";
+  const ids = [];
+  const seen = new Set();
+  for (const feature of Array.isArray(featureSet && featureSet.features) ? featureSet.features : []) {
+    const attrs = feature && feature.attributes || {};
+    const raw = attrs[objectIdFieldName];
+    const value = Number(raw);
+    if (!Number.isFinite(value)) continue;
+    const key = String(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    ids.push(value);
+  }
+  return ids;
+}
+
 function azobssLotPricingForRatio(value) {
   const areaRatio = Number(value);
   if (!Number.isFinite(areaRatio) || areaRatio <= 0 || areaRatio > 1.1) return null;
@@ -9263,10 +9401,21 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     config = detected.config;
     idResult = detected.idResult;
   }
-  const [featureSet, sheets] = await Promise.all([
+  const [queriedFeatureSet, sheets] = await Promise.all([
     azobssQueryLotFeatureSet(config, geometry, auth, idResult),
     azobssQueryLotSheets(config, geometry, auth)
   ]);
+  // 926: ArcGIS remains the source of cadastral geometry, but run a second exact
+  // polygon-intersection pass locally. This prevents envelope/GP behaviour from
+  // admitting unrelated lots outside the blue circle/square reference.
+  const featureSet = azobssStrictLotFeatureSet(queriedFeatureSet, geometry);
+  if (!Array.isArray(featureSet.features) || !featureSet.features.length) {
+    throw new Error("Tiada lot JUPEM yang benar-benar bersilang dengan kawasan rujukan.");
+  }
+  const selectedObjectIds = azobssSelectedObjectIdsFromFeatureSet(featureSet);
+  if (!selectedObjectIds.length) {
+    throw new Error("ID lot JUPEM yang tepat tidak dapat dikenal pasti.");
+  }
   const selectedAreaM2 = featureSet.features.reduce((sum, feature) => sum + azobssPolygonAreaM2(feature.geometry), 0);
   const drawnAreaM2 = azobssPolygonAreaM2(geometry);
   const sheetRows = sheets.map((feature, index) => ({
@@ -9290,7 +9439,7 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
     auth,
     geometry,
     featureSet,
-    selectedObjectIds: Array.isArray(idResult.objectIds) ? idResult.objectIds.slice() : [],
+    selectedObjectIds,
     lotCount: featureSet.features.length,
     drawnAreaM2,
     selectedAreaM2,
@@ -9305,7 +9454,7 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry) {
   };
 }
 
-const AZOBSS_LOT_GP_EXPORT_MODE = "natural-selected-lots-v925";
+const AZOBSS_LOT_GP_EXPORT_MODE = "natural-exact-selected-lots-v926";
 const azobssLotGpClipLayerCache = new Map();
 
 function azobssLotGpFeatureSetValueForType(value, dataType) {
@@ -9436,16 +9585,19 @@ async function azobssSubmitLotGpJob(estimate) {
       try { auth = await azobssGetJupemMapAuth(true); } catch (_) {}
     }
     try {
-      // 925: The blue circle/square/polygon is a SELECTION reference only.
-      // Lots are chosen using spatial intersection, but exported cadastral polygons
+      // 926: The blue circle/square/polygon is a SELECTION reference only.
+      // Lots are chosen using strict exact spatial intersection, but exported cadastral polygons
       // remain natural/full.  Send only the selected lot IDs to Layers_to_Clip and
       // use a padded envelope around those full features as the mandatory AOI.
       const naturalInput = await azobssResolveLotGpNaturalInput(estimate, auth);
       const areaOfInterest = azobssLotGpNaturalAreaOfInterest(estimate);
-      const featureSetFallback = azobssLotGpFeatureSetValueForType(estimate.featureSet, naturalInput.dataType);
+      // 926: Do NOT pass a layer URL + filter here. The JUPEM GP service may accept
+      // that object while silently ignoring its filter, which causes unrelated lots
+      // inside the padded AOI envelope to appear in the final SHP. Send the exact
+      // already-filtered cadastral features only, preserving each lot's full geometry.
+      const exactSelectedFeatureSet = azobssLotGpFeatureSetValueForType(estimate.featureSet, naturalInput.dataType);
       const candidates = [
-        { kind: 'layer-url-filter', value: naturalInput.value },
-        { kind: 'feature-set', value: featureSetFallback }
+        { kind: 'exact-selected-feature-set', value: exactSelectedFeatureSet }
       ];
       let candidateError = null;
       for (const candidate of candidates) {
@@ -15724,14 +15876,16 @@ async function handler(req, res) {
     if (pathname === "/api/jupem-lot-selection/capabilities" && req.method === "GET") {
       return send(res, 200, JSON.stringify({
         ok: true,
-        version: 4,
+        version: 5,
         exportMode: AZOBSS_LOT_GP_EXPORT_MODE,
         clipLayerAoiExport: true,
         exactBoundaryClip: false,
         naturalLotGeometry: true,
         selectionByReferenceIntersection: true,
+        strictReferenceIntersection: true,
+        exactSelectedFeatureSetExport: true,
         gpFeatureRecordSetLayerInput: true,
-        layerUrlAttributeFilter: true,
+        layerUrlAttributeFilter: false,
         referenceCircleSquareSelection: true
       }), "application/json", { "Cache-Control": "no-store" });
     }
