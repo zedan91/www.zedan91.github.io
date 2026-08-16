@@ -3891,6 +3891,14 @@ const ROOT = process.cwd();
 const AFFILIATE_JSON = path.join(ROOT, "affiliate-products.json");
 const TEMP_DIR = path.join(ROOT, "temp");
 const AZOBSS_LOT_CACHE_DIR = path.join(TEMP_DIR, "jupem-lot-cache");
+const AZOBSS_LOT_CAD_CACHE_DIR = path.join(TEMP_DIR, "jupem-lot-cad-cache");
+let azobssLotCadConverter = null;
+try {
+  azobssLotCadConverter = require("./lib/azobss-lot-cad-converter");
+} catch (error) {
+  console.warn("AZOBSS Lot CAD converter module unavailable:", error && (error.message || error));
+}
+const azobssLotCadPending = new Map();
 const AZOBSS_LOT_CACHE_TTL_MS = Math.max(
   24 * 60 * 60 * 1000,
   Number(process.env.AZOBSS_LOT_CACHE_TTL_MS || 8 * 24 * 60 * 60 * 1000) || 8 * 24 * 60 * 60 * 1000
@@ -11013,6 +11021,105 @@ async function azobssWaitForLotJobAndCache(record, type) {
   });
 }
 
+function azobssNormalizeLotDownloadFormat(value) {
+  const format = String(value || "original").trim().toLowerCase();
+  if (format === "zip") return "original";
+  return ["original", "dxf", "dwg"].includes(format) ? format : "";
+}
+
+function azobssLotCadCachePath(productCode, stateCode, jobId, format) {
+  const converterVersion = String(azobssLotCadConverter && azobssLotCadConverter.CONVERTER_VERSION || "unknown").replace(/[^A-Za-z0-9._-]/g, "-");
+  const normalizedFormat = String(format || "dxf").toLowerCase() === "dwg" ? "dwg" : "dxf";
+  const hash = crypto.createHash("sha256")
+    .update(`${azobssLotCacheKey(productCode, stateCode, jobId)}|${converterVersion}|${normalizedFormat}`)
+    .digest("hex");
+  return path.join(AZOBSS_LOT_CAD_CACHE_DIR, `${hash}.${normalizedFormat}`);
+}
+
+function azobssReadLotCachedCad(productCode, stateCode, jobId, format) {
+  try {
+    const normalizedFormat = String(format || "dxf").toLowerCase() === "dwg" ? "dwg" : "dxf";
+    const cachePath = azobssLotCadCachePath(productCode, stateCode, jobId, normalizedFormat);
+    if (!fs.existsSync(cachePath)) return null;
+    const buffer = fs.readFileSync(cachePath);
+    const valid = normalizedFormat === "dwg"
+      ? (buffer.length >= 128 && /^AC10\d\d$/.test(buffer.subarray(0, 6).toString("ascii")))
+      : (buffer.length > 100 && /SECTION/.test(buffer.subarray(0, 120).toString("latin1")));
+    if (!valid) {
+      try { fs.unlinkSync(cachePath); } catch (_) {}
+      return null;
+    }
+    return buffer;
+  } catch (error) {
+    console.warn("Lot CAD cache read failed:", error && (error.message || error));
+    return null;
+  }
+}
+
+function azobssWriteLotCachedCad(productCode, stateCode, jobId, format, buffer) {
+  const normalizedFormat = String(format || "dxf").toLowerCase() === "dwg" ? "dwg" : "dxf";
+  if (!Buffer.isBuffer(buffer) || !buffer.length) throw new Error("CAD conversion returned an empty file.");
+  if (normalizedFormat === "dwg" && !/^AC10\d\d$/.test(buffer.subarray(0, 6).toString("ascii"))) throw new Error("Generated DWG signature is invalid.");
+  fs.mkdirSync(AZOBSS_LOT_CAD_CACHE_DIR, { recursive: true });
+  const cachePath = azobssLotCadCachePath(productCode, stateCode, jobId, normalizedFormat);
+  const temporaryPath = `${cachePath}.${process.pid}.${crypto.randomBytes(5).toString("hex")}.tmp`;
+  try {
+    fs.writeFileSync(temporaryPath, buffer);
+    fs.renameSync(temporaryPath, cachePath);
+  } finally {
+    try { if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath); } catch (_) {}
+  }
+  return cachePath;
+}
+
+async function azobssEnsureLotCadBuffer(record, type, format) {
+  const normalizedFormat = String(format || "dxf").toLowerCase();
+  if (!["dxf", "dwg"].includes(normalizedFormat)) throw new Error("Format CAD tidak disokong.");
+  if (!azobssLotCadConverter || typeof azobssLotCadConverter.convertLotZip !== "function") {
+    const error = new Error("AZOBSS CAD converter belum tersedia pada backend. Kuota download tidak digunakan.");
+    error.code = "CAD_CONVERTER_UNAVAILABLE";
+    throw error;
+  }
+  if (normalizedFormat === "dwg" && (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT))) {
+    const error = new Error("DWG converter belum tersedia pada Render. DXF masih boleh dimuat turun. Kuota download tidak digunakan.");
+    error.code = "DWG_CONVERTER_UNAVAILABLE";
+    throw error;
+  }
+
+  const productCode = type === "NDCDB_C3" ? "2" : "1";
+  const jobId = azobssLotRecordJobId(record);
+  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || "");
+  if (!jobId || !stateCode) throw new Error("Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
+
+  const cached = azobssReadLotCachedCad(productCode, stateCode, jobId, normalizedFormat);
+  if (cached) return { buffer: cached, cached: true, report: null };
+
+  const pendingKey = `${azobssLotCacheKey(productCode, stateCode, jobId)}|${normalizedFormat}|${azobssLotCadConverter.CONVERTER_VERSION || ""}`;
+  if (azobssLotCadPending.has(pendingKey)) return await azobssLotCadPending.get(pendingKey);
+
+  const pending = (async () => {
+    let zipBuffer = azobssReadLotCachedZip(productCode, stateCode, jobId);
+    if (!zipBuffer) zipBuffer = await azobssWaitForLotJobAndCache(record, type);
+    if (!azobssBufferIsZip(zipBuffer)) throw new Error("ZIP JUPEM Lot Kadaster belum tersedia untuk conversion.");
+
+    const converted = azobssLotCadConverter.convertLotZip(zipBuffer, normalizedFormat, {
+      root: ROOT,
+      tempDir: path.join(TEMP_DIR, "jupem-lot-cad-work")
+    });
+    if (!converted || !Buffer.isBuffer(converted.buffer) || !converted.buffer.length) throw new Error("CAD conversion tidak menghasilkan fail.");
+    azobssWriteLotCachedCad(productCode, stateCode, jobId, normalizedFormat, converted.buffer);
+    return { buffer: converted.buffer, cached: false, report: converted.report || null };
+  })();
+
+  azobssLotCadPending.set(pendingKey, pending);
+  try {
+    return await pending;
+  } finally {
+    azobssLotCadPending.delete(pendingKey);
+  }
+}
+
+
 function azobssStartLotCacheTask(record, type) {
   const productCode = type === "NDCDB_C3" ? "2" : "1";
   const jobId = azobssLotRecordJobId(record);
@@ -11067,20 +11174,22 @@ function azobssStartLotCacheTask(record, type) {
 }
 
 function cleanupLotCacheFiles() {
-  try {
-    if (!fs.existsSync(AZOBSS_LOT_CACHE_DIR)) return;
-    const now = Date.now();
-    for (const file of fs.readdirSync(AZOBSS_LOT_CACHE_DIR)) {
-      const fullPath = path.join(AZOBSS_LOT_CACHE_DIR, file);
-      try {
-        const stat = fs.statSync(fullPath);
-        if (stat.isFile() && now - stat.mtimeMs > AZOBSS_LOT_CACHE_TTL_MS) fs.unlinkSync(fullPath);
-      } catch (error) {
-        console.warn("Lot ZIP cache cleanup failed:", file, error && (error.message || error));
+  const now = Date.now();
+  for (const cacheDir of [AZOBSS_LOT_CACHE_DIR, AZOBSS_LOT_CAD_CACHE_DIR]) {
+    try {
+      if (!fs.existsSync(cacheDir)) continue;
+      for (const file of fs.readdirSync(cacheDir)) {
+        const fullPath = path.join(cacheDir, file);
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.isFile() && now - stat.mtimeMs > AZOBSS_LOT_CACHE_TTL_MS) fs.unlinkSync(fullPath);
+        } catch (error) {
+          console.warn("Lot cache cleanup failed:", file, error && (error.message || error));
+        }
       }
+    } catch (error) {
+      console.warn("Lot cache directory cleanup failed:", cacheDir, error && (error.message || error));
     }
-  } catch (error) {
-    console.warn("Lot ZIP cache directory cleanup failed:", error && (error.message || error));
   }
 }
 
@@ -16775,12 +16884,24 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
   const type = azobssPaBmRecordType(record);
   const code = azobssPaBmRecordCode(record);
+  const requestedLotFormatRaw = String(parsed.query.format || "original").trim().toLowerCase();
+  const requestedLotFormat = azobssNormalizeLotDownloadFormat(requestedLotFormatRaw);
   const prepareOnly = String(parsed.query.prepare || parsed.query.status || "") === "1";
 
   if (prepareOnly) {
     if (type !== "NDCDB" && type !== "NDCDB_C3") {
       return send(res, 200, JSON.stringify({ ok: true, ready: true, preparing: false }), "application/json");
     }
+    if (!requestedLotFormat) {
+      return azobssPaBmDownloadError(res, 400, "Format download Lot Kadaster tidak disokong.");
+    }
+    if (["dxf", "dwg"].includes(requestedLotFormat) && (!azobssLotCadConverter || typeof azobssLotCadConverter.convertLotZip !== "function")) {
+      return azobssPaBmDownloadError(res, 503, "AZOBSS CAD converter belum tersedia pada backend. ZIP asal masih boleh dimuat turun.");
+    }
+    if (requestedLotFormat === "dwg" && (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT))) {
+      return azobssPaBmDownloadError(res, 503, "DWG converter belum tersedia pada Render. Gunakan DXF sementara atau redeploy backend.");
+    }
+
     const productCode = type === "NDCDB_C3" ? "2" : "1";
     const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
@@ -16789,18 +16910,28 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       const directReady = await azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId);
       const jobStatus = directReady.jobStatus || "esriJobSucceeded";
       const directUrl = directReady.directUrl;
+      if (["dxf", "dwg"].includes(requestedLotFormat)) {
+        try { azobssStartLotCacheTask(record, type); } catch (_) {}
+      }
       return send(res, 200, JSON.stringify({
         ok: true,
         ready: true,
         preparing: false,
-        delivery: "jupem-direct",
+        delivery: requestedLotFormat === "original" ? "jupem-direct" : "azobss-cad",
+        requestedFormat: requestedLotFormat,
+        formats: {
+          zip: true,
+          dxf: !!azobssLotCadConverter,
+          dwg: !!(azobssLotCadConverter && azobssLotCadConverter.dwgAvailable && azobssLotCadConverter.dwgAvailable(ROOT))
+        },
+        cadConverterVersion: azobssLotCadConverter && azobssLotCadConverter.CONVERTER_VERSION || "",
         registered: Boolean(directReady.registered),
         zipVerified: true,
         jobStatus,
         jobId,
         stateCode,
-        directUrl,
-        openUrl: directUrl
+        directUrl: requestedLotFormat === "original" ? directUrl : "",
+        openUrl: requestedLotFormat === "original" ? directUrl : ""
       }), "application/json", { "Cache-Control": "no-store" });
     } catch (error) {
       console.warn("NDCDB readiness check failed:", error && (error.message || error));
@@ -16809,6 +16940,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
         ready: false,
         preparing: true,
         transient: true,
+        requestedFormat: requestedLotFormat,
         message: "Tengah Proses..."
       }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
     }
@@ -16908,14 +17040,17 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   }
 
   if (type === "NDCDB" || type === "NDCDB_C3") {
-    // 569: direct JUPEM delivery is issued only after eBiz registration and public ZIP signature verification.
-    // No quota is consumed while the job is Submitted/Executing or while status checking is unavailable.
+    if (!requestedLotFormat) {
+      return azobssPaBmDownloadError(res, 400, "Format download Lot Kadaster tidak disokong. Kuota download tidak digunakan.");
+    }
+
     const productCode = type === "NDCDB_C3" ? "2" : "1";
     const jobId = azobssLotRecordJobId(record);
     const stateCode = cleanLotStateCode(record.negeri || record.state || "");
     if (!jobId || !stateCode) {
       return azobssPaBmDownloadError(res, 400, "Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
     }
+
     let directReady;
     try {
       directReady = await azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId);
@@ -16927,10 +17062,51 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
         preparing: true,
         transient: true,
         jobStatus: String(error && error.jobStatus || "esriJobUnknown"),
+        requestedFormat: requestedLotFormat,
         message: "Tengah Proses..."
       }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
     }
+
     const jobStatus = directReady.jobStatus || "esriJobSucceeded";
+    const safeJobId = String(jobId || "").replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 80);
+    const fileBase = type === "NDCDB_C3" ? "LotKadasterBerdigit-C3" : "LotKadasterBerdigit";
+
+    if (requestedLotFormat === "dxf" || requestedLotFormat === "dwg") {
+      let converted;
+      try {
+        converted = await azobssEnsureLotCadBuffer(record, type, requestedLotFormat);
+      } catch (error) {
+        console.error(`NDCDB ${requestedLotFormat.toUpperCase()} conversion failed:`, error && (error.stack || error.message || error));
+        const status = error && (error.code === "DWG_CONVERTER_UNAVAILABLE" || error.code === "CAD_CONVERTER_UNAVAILABLE") ? 503 : 500;
+        return azobssPaBmDownloadError(res, status, (error && error.message) || `Conversion ${requestedLotFormat.toUpperCase()} gagal. Kuota download tidak digunakan.`);
+      }
+
+      if (!converted || !Buffer.isBuffer(converted.buffer) || !converted.buffer.length) {
+        return azobssPaBmDownloadError(res, 500, `Conversion ${requestedLotFormat.toUpperCase()} menghasilkan fail kosong. Kuota download tidak digunakan.`);
+      }
+
+      try {
+        await azobssIncrementPurchaseDownload(ref, record, nowMs);
+      } catch (error) {
+        console.error("NDCDB CAD counter update failed:", error && (error.stack || error.message || error));
+        return azobssPaBmDownloadError(res, 500, "Pengesahan kuota download gagal. Sila cuba semula; kuota tidak digunakan.");
+      }
+
+      const filename = `${fileBase}-${safeJobId || "AZOBSS"}.${requestedLotFormat}`;
+      const contentType = requestedLotFormat === "dwg" ? "application/acad" : "application/dxf";
+      res.writeHead(200, azSecurityHeaders({
+        "Content-Type": contentType,
+        "Content-Length": String(converted.buffer.length),
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "private, no-store",
+        "X-AZOBSS-CAD-Format": requestedLotFormat.toUpperCase(),
+        "X-AZOBSS-Converter-Version": String(azobssLotCadConverter && azobssLotCadConverter.CONVERTER_VERSION || ""),
+        "Access-Control-Expose-Headers": "Content-Disposition, X-AZOBSS-CAD-Format, X-AZOBSS-Converter-Version"
+      }));
+      res.end(converted.buffer);
+      return;
+    }
+
     const directUrl = directReady.directUrl;
     try {
       await azobssIncrementPurchaseDownload(ref, record, nowMs);
@@ -16944,6 +17120,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       zipReady: true,
       preparing: false,
       delivery: "jupem-direct",
+      requestedFormat: "original",
       registered: Boolean(directReady.registered),
       jobStatus,
       openUrl: directUrl,

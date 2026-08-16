@@ -8233,7 +8233,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=561"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=932"/>
 
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
@@ -12546,7 +12546,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   color:#e2e8f0 !important;
 }
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=615"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=932" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=932"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -13248,6 +13248,54 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
 @media(max-width:760px){#userPaPurchaseList .user-pa-action-with-count{flex-wrap:wrap!important;justify-content:flex-end!important;gap:4px!important}#userPaPurchaseList .az-admin-reset-download-count{height:20px!important;min-height:20px!important;font-size:9.5px!important;padding:0 7px!important}}
 </style>
 
+
+<style id="azobss-lot-kadaster-format-download-v932">
+/* v932: Lot Kadaster paid download choices — original ZIP + generated DWG/DXF. */
+#userPaPurchaseList .az-lot-download-action{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:7px!important;
+  overflow:visible!important;
+}
+#userPaPurchaseList .az-lot-download-format-group{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:4px!important;
+  flex:0 0 auto!important;
+  overflow:visible!important;
+}
+#userPaPurchaseList .az-lot-download-format-group .az-lot-format-download{
+  width:auto!important;
+  min-width:46px!important;
+  max-width:78px!important;
+  height:28px!important;
+  min-height:28px!important;
+  padding:0 7px!important;
+  border-radius:7px!important;
+  font-size:10.5px!important;
+  font-weight:950!important;
+  letter-spacing:.01em!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  flex:0 0 auto!important;
+}
+#userPaPurchaseList .az-lot-format-original{background:#2563eb!important;border-color:#3b82f6!important;color:#fff!important;}
+#userPaPurchaseList .az-lot-format-dwg{background:#15803d!important;border-color:#22c55e!important;color:#fff!important;}
+#userPaPurchaseList .az-lot-format-dxf{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important;}
+#userPaPurchaseList .az-lot-format-download[data-download-locked="1"]{opacity:.55!important;pointer-events:none!important;}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]{min-width:66px!important;max-width:86px!important;font-size:9.5px!important;}
+@media(max-width:760px){
+  #userPaPurchaseList .az-lot-download-action{gap:4px!important;flex-wrap:wrap!important;max-width:220px!important;}
+  #userPaPurchaseList .az-lot-download-format-group{gap:3px!important;}
+  #userPaPurchaseList .az-lot-download-format-group .az-lot-format-download{
+    min-width:40px!important;max-width:64px!important;height:23px!important;min-height:23px!important;padding:0 5px!important;font-size:9.5px!important;border-radius:6px!important;
+  }
+  #userPaPurchaseList .az-lot-format-download[data-busy="1"]{min-width:54px!important;max-width:70px!important;font-size:8.8px!important;}
+}
+</style>
 
 <script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';

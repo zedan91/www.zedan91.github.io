@@ -2425,14 +2425,20 @@ function azobssCanUncartPurchase(r){
   }catch(e){ return false; }
 }
 
-function azobssBuildPaidPurchaseDownloadUrl(r){
+function azobssBuildPaidPurchaseDownloadUrl(r, format){
   r = r || {};
   const recordId = String(r.firestoreId || r.id || '').trim();
+  const type = String(r.productType || r.product || '').trim().toUpperCase();
+  const isLot = type === 'NDCDB' || type === 'NDCDB_C3';
+  let downloadFormat = String(format || r.downloadFormat || 'original').trim().toLowerCase();
+  if(downloadFormat === 'zip') downloadFormat = 'original';
+  if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
   if(recordId){
-    return 'https://azobss-backend.onrender.com/api/pa-bm-download?recordId=' + encodeURIComponent(recordId);
+    let url = 'https://azobss-backend.onrender.com/api/pa-bm-download?recordId=' + encodeURIComponent(recordId);
+    if(isLot) url += '&format=' + encodeURIComponent(downloadFormat);
+    return url;
   }
   // Fallback only for legacy paid records without Firestore document id.
-  const type = String(r.productType || r.product || '').trim().toUpperCase();
   if(type === 'PA'){
     const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
     const negeri = String(r.negeri || r.state || '').trim();
@@ -2442,16 +2448,22 @@ function azobssBuildPaidPurchaseDownloadUrl(r){
   }
   return String(r.downloadUrl || r.url || '').trim();
 }
-function azobssPaidPurchaseDownloadFilename(r){
+function azobssPaidPurchaseDownloadFilename(r, format){
   r = r || {};
   const type = String(r.productType || r.product || '').trim().toUpperCase();
   if(type === 'PA'){
     const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
     return itemCode ? ('PA' + itemCode + '.pdf') : 'PA.pdf';
   }
-  const sourceCode = type === 'NDCDB' || type === 'NDCDB_C3'
-    ? (r.productId || r.itemCode || '')
-    : (r.itemCode || r.stationNo || r.stesen || r.productId || '');
+  if(type === 'NDCDB' || type === 'NDCDB_C3'){
+    let downloadFormat = String(format || r.downloadFormat || 'original').trim().toLowerCase();
+    if(downloadFormat === 'zip') downloadFormat = 'original';
+    const ext = downloadFormat === 'dwg' ? 'dwg' : (downloadFormat === 'dxf' ? 'dxf' : 'zip');
+    const sourceCode = String(r.productId || r.itemCode || r.id || '').trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
+    const prefix = type === 'NDCDB_C3' ? 'LotKadasterBerdigit-C3' : 'LotKadasterBerdigit';
+    return (prefix + (sourceCode ? '-' + sourceCode : '') + '.' + ext).replace(/-+/g, '-');
+  }
+  const sourceCode = r.itemCode || r.stationNo || r.stesen || r.productId || '';
   const code = String(sourceCode).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
   const prefix = type || (String(r.jenis || '1') === '2' ? 'SBM' : 'BM');
   return (prefix + (code ? '-' + code : '') + '.pdf').replace(/-+/g, '-');
@@ -2495,10 +2507,15 @@ function azobssBuildControlledPurchaseDownloadUrl(r){
   // Actual PA/BM file URL. The 5x / 7-day limit is enforced before opening it.
   return azobssBuildPaidPurchaseDownloadUrl(r);
 }
-function azobssPurchaseDownloadPayload(r){
+function azobssPurchaseDownloadPayload(r, format){
   try{
     const computedPaid = azobssIsPurchasePaidForDownload(r);
     const createdAtMs = purchaseRecordMs ? purchaseRecordMs(r) : Number(r?.createdAtMs || 0);
+    const type = String(r?.productType || r?.product || '').trim().toUpperCase();
+    const isLot = type === 'NDCDB' || type === 'NDCDB_C3';
+    let downloadFormat = String(format || r?.downloadFormat || 'original').trim().toLowerCase();
+    if(downloadFormat === 'zip') downloadFormat = 'original';
+    if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
     return encodeURIComponent(JSON.stringify({
       firestoreId: r?.firestoreId || r?.id || '',
       id: r?.id || '',
@@ -2507,9 +2524,11 @@ function azobssPurchaseDownloadPayload(r){
       displayName: r?.displayName || '',
       productType: r?.productType || r?.product || '',
       itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
+      productId: r?.productId || '',
       negeri: r?.negeri || r?.state || '',
       amount: r?.amount || '',
       downloadUrl: r?.downloadUrl || r?.url || '',
+      downloadFormat: isLot ? downloadFormat : 'original',
       status: computedPaid ? 'paid' : (r?.status || ''),
       createdAtMs: createdAtMs || Number(r?.createdAtMs || 0) || 0,
       createdAtClient: r?.createdAtClient || '',
@@ -2520,6 +2539,7 @@ function azobssPurchaseDownloadPayload(r){
     }));
   }catch(e){ return ''; }
 }
+
 function azobssPurchaseResetPayload(r){
   try{
     return encodeURIComponent(JSON.stringify({
@@ -2657,6 +2677,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
     document.querySelectorAll('.user-pa-download').forEach(function(candidate){
       const candidateKey = String(candidate.getAttribute('data-download-payload') || candidate.getAttribute('data-download-url') || '');
       const isOwner = !!active && (candidate === owner || (!!activeKey && candidateKey === activeKey));
+      const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
       if(isOwner){
         candidate.dataset.busy = '1';
         if(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.phase === 'preparing') candidate.dataset.preparing = '1';
@@ -2676,7 +2697,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
           delete candidate.dataset.busy;
           delete candidate.dataset.preparing;
           candidate.removeAttribute('aria-busy');
-          candidate.textContent = 'Download';
+          candidate.textContent = defaultLabel;
           candidate.style.pointerEvents = '';
         }
       }
@@ -2698,6 +2719,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
   const link = linkEl || (clickEvent && clickEvent.currentTarget) || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
+  const defaultLabel = link ? String(link.getAttribute('data-default-label') || originalText || 'Download') : 'Download';
   const downloadKey = String(encodedPayload || (link && (link.getAttribute('data-download-payload') || link.getAttribute('data-download-url'))) || '');
   const activeDownload = window.__azobssPaBmActiveDownload;
   if(activeDownload){
@@ -2707,31 +2729,34 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     return false;
   }
   if(link && link.dataset && link.dataset.busy === '1') return false;
+
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
   const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
-
   if(Date.now() > expiresAtMs){
     alert('Tempoh download telah tamat.');
     try{ azobssSchedulePurchaseRecordsRefresh('expired download click'); }catch(e){}
     return false;
   }
-
   if(used >= max){
     alert('Had download telah digunakan.');
     try{ azobssSchedulePurchaseRecordsRefresh('limit download click'); }catch(e){}
     return false;
   }
 
-  const directUrl = azobssBuildPaidPurchaseDownloadUrl(r);
+  const recordType = String(r.productType || r.product || '').trim().toUpperCase();
+  const isLotDownload = recordType === 'NDCDB' || recordType === 'NDCDB_C3';
+  let downloadFormat = String(r.downloadFormat || 'original').trim().toLowerCase();
+  if(downloadFormat === 'zip') downloadFormat = 'original';
+  if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
+  if(!isLotDownload) downloadFormat = 'original';
+
+  const directUrl = azobssBuildPaidPurchaseDownloadUrl(r, downloadFormat);
   if(!directUrl){
     alert('Link download tidak tersedia.');
     return false;
   }
 
-  const recordType = String(r.productType || r.product || '').trim().toUpperCase();
-  const isLotDownload = recordType === 'NDCDB' || recordType === 'NDCDB_C3';
-  const lotReadinessMap = window.__azobssLotZipReadiness || (window.__azobssLotZipReadiness = {});
   const downloadOwner = {
     key: downloadKey || directUrl,
     link: link || null,
@@ -2740,10 +2765,11 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     label: isLotDownload ? 'Sedang Proses...' : 'Downloading...'
   };
   window.__azobssPaBmActiveDownload = downloadOwner;
+
   try{
     if(link){
       link.dataset.busy = '1';
-      link.textContent = isLotDownload ? 'Sedang Proses...' : 'Downloading...';
+      link.textContent = downloadOwner.label;
       link.style.pointerEvents = 'none';
       link.setAttribute('aria-busy', 'true');
       link.setAttribute('href', '#');
@@ -2753,25 +2779,29 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
     if(isLotDownload){
-      // 567: never expose the JUPEM direct URL until ArcGIS reports esriJobSucceeded.
       downloadOwner.phase = 'preparing';
-      downloadOwner.label = 'Sedang Proses...';
+      downloadOwner.label = downloadFormat === 'original' ? 'Sedia ZIP...' : ('Sedia ' + downloadFormat.toUpperCase() + '...');
       if(link) link.textContent = downloadOwner.label;
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
       let readiness = null;
       const statusUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'prepare=1';
       for(let attempt = 0; attempt < 160; attempt += 1){
-        const statusResponse = await fetch(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' });
-        readiness = await statusResponse.json().catch(function(){ return {}; });
-        if(statusResponse.ok && readiness && readiness.ready === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+        let statusResponse = null;
+        try{
+          statusResponse = await fetch(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' });
+          readiness = await statusResponse.json().catch(function(){ return {}; });
+        }catch(fetchError){
+          readiness = { ok:true, ready:false, preparing:true };
+        }
+        if(statusResponse && statusResponse.ok && readiness && readiness.ready === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
           break;
         }
-        if(statusResponse.status === 409 || (readiness && readiness.ok === false)){
-          alert((readiness && (readiness.error || readiness.message)) || 'JUPEM gagal menyediakan fail Lot Kadaster.');
+        if(statusResponse && (statusResponse.status === 400 || statusResponse.status === 403 || statusResponse.status === 409 || statusResponse.status === 503 || (readiness && readiness.ok === false))){
+          alert((readiness && (readiness.error || readiness.message)) || 'Backend gagal menyediakan format Lot Kadaster yang dipilih.');
           return false;
         }
-        downloadOwner.label = 'Sedang Proses...';
+        downloadOwner.label = downloadFormat === 'original' ? 'Sedia ZIP...' : ('Sedia ' + downloadFormat.toUpperCase() + '...');
         if(link) link.textContent = downloadOwner.label;
         await new Promise(function(resolve){ window.setTimeout(resolve, attempt < 12 ? 2500 : 5000); });
       }
@@ -2780,51 +2810,51 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         return false;
       }
 
+      if(downloadFormat === 'original'){
+        downloadOwner.phase = 'downloading';
+        downloadOwner.label = 'Buka ZIP...';
+        if(link) link.textContent = downloadOwner.label;
+        const response = await fetch(directUrl, { method:'GET', cache:'no-store' });
+        let data = null;
+        try{ data = await response.json(); }catch(e){ data = null; }
+        if(response.status === 202 || (data && data.ready === false)){
+          alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
+          return false;
+        }
+        if(!response.ok || !data || data.ok === false){
+          alert((data && (data.error || data.message)) || 'Pengesahan download ZIP gagal. Sila cuba lagi.');
+          return false;
+        }
+        const openUrl = String(data.openUrl || data.directUrl || data.url || '').trim();
+        if(!openUrl || !/^https:\/\/ebiz\.jupem\.gov\.my\/MuatTurunPembelian\/MuatTurunLotKadasterBerdigitCrop(?:c3)?\//i.test(openUrl)){
+          alert('Link terus JUPEM tidak tersedia. Kuota download tidak digunakan.');
+          return false;
+        }
+        try{ window.location.href = openUrl; }
+        catch(e){
+          const a = document.createElement('a');
+          a.href = openUrl;
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download'); }catch(e){}
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download delayed'); }catch(e){} }, 1600);
+        return false;
+      }
+
+      // DXF/DWG: after the source ZIP is ready, the AZOBSS backend returns a real binary attachment.
       downloadOwner.phase = 'downloading';
-      downloadOwner.label = 'Opening Download...';
+      downloadOwner.label = 'Muat ' + downloadFormat.toUpperCase() + '...';
       if(link) link.textContent = downloadOwner.label;
-      const response = await fetch(directUrl, { method: 'GET', cache: 'no-store' });
-      let data = null;
-      try{ data = await response.json(); }catch(e){ data = null; }
-      if(response.status === 202 || (data && data.ready === false)){
-        alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
-        return false;
-      }
-      if(!response.ok || !data || data.ok === false){
-        alert((data && (data.error || data.message)) || 'Pengesahan download gagal. Sila cuba lagi.');
-        return false;
-      }
-      const openUrl = String(data.openUrl || data.directUrl || data.url || '').trim();
-      if(!openUrl || !/^https:\/\/ebiz\.jupem\.gov\.my\/MuatTurunPembelian\/MuatTurunLotKadasterBerdigitCrop(?:c3)?\//i.test(openUrl)){
-        alert('Link terus JUPEM tidak tersedia. Kuota download tidak digunakan.');
-        return false;
-      }
-      try{
-        // Same-tab navigation is not blocked after an asynchronous verification call.
-        // A JUPEM attachment response downloads normally without Render proxying the ZIP.
-        window.location.href = openUrl;
-      }catch(e){
-        const a = document.createElement('a');
-        a.href = openUrl;
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
-      try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download'); }catch(e){}
-      setTimeout(function(){
-        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download delayed'); }catch(e){}
-      }, 1600);
-      return false;
+      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
     }
 
     let response = null;
     let lastPreparingData = null;
     for(let attempt = 0; attempt < 225; attempt += 1){
-      response = await fetch(directUrl, {
-        method: 'GET',
-        cache: 'no-store'
-      });
+      response = await fetch(directUrl, { method:'GET', cache:'no-store' });
       const pollType = String(response.headers.get('content-type') || '').toLowerCase();
       if(response.status !== 202 || !pollType.includes('application/json')) break;
 
@@ -2833,20 +2863,18 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       const elapsedSeconds = Math.max(0, Math.floor((Date.now() - downloadOwner.startedAt) / 1000));
       const elapsedMinutes = Math.floor(elapsedSeconds / 60);
       const elapsedRemainder = String(elapsedSeconds % 60).padStart(2, '0');
-      downloadOwner.label = `Downloading... ${elapsedMinutes}:${elapsedRemainder}`;
-      if(link){
-        link.textContent = downloadOwner.label;
-      }
+      downloadOwner.label = (isLotDownload ? ('Muat ' + downloadFormat.toUpperCase()) : 'Downloading') + `... ${elapsedMinutes}:${elapsedRemainder}`;
+      if(link) link.textContent = downloadOwner.label;
       const waitMs = Math.max(1500, Math.min(10000, Number(lastPreparingData.retryAfterMs || 4000)));
       await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
     }
 
     if(response && response.status === 202){
-      alert((lastPreparingData && (lastPreparingData.error || lastPreparingData.message)) || 'JUPEM masih menyediakan fail ZIP. Sila cuba semula sebentar lagi. Kuota muat turun tidak digunakan.');
+      alert((lastPreparingData && (lastPreparingData.error || lastPreparingData.message)) || 'Fail masih disediakan. Sila cuba semula sebentar lagi. Kuota muat turun tidak digunakan.');
       return false;
     }
 
-    const fallbackFlag = String(response.headers.get('x-azobss-browser-fallback') || '').trim();
+    const fallbackFlag = String(response && response.headers.get('x-azobss-browser-fallback') || '').trim();
     if(fallbackFlag === '1'){
       const encodedOpenUrl = response.headers.get('x-azobss-open-url') || '';
       let openUrl = '';
@@ -2871,13 +2899,15 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           a.remove();
         }
       }else{
-        // Last resort: open the AZOBSS fallback HTML page directly instead of downloading it as a PDF/blob.
         try{ window.location.href = directUrl; }catch(e){}
       }
       try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
-      setTimeout(function(){
-        try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){}
-      }, 1600);
+      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
+      return false;
+    }
+
+    if(!response){
+      alert('Download gagal dimulakan. Sila cuba lagi.');
       return false;
     }
 
@@ -2886,12 +2916,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       let data = null;
       try{ data = await response.json(); }catch(e){ data = null; }
       if(data && data.openUrl){
-        try{
-          if(link){
-            link.textContent = 'Opening Download...';
-          }
-          window.location.href = data.openUrl;
-        }catch(e){
+        try{ if(link) link.textContent = 'Opening Download...'; window.location.href = data.openUrl; }
+        catch(e){
           const a = document.createElement('a');
           a.href = data.openUrl;
           a.target = '_blank';
@@ -2901,9 +2927,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           a.remove();
         }
         try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
-        setTimeout(function(){
-          try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){}
-        }, 1600);
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
         return false;
       }
       if(!response.ok || (data && data.ok === false)){
@@ -2916,7 +2940,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       let message = 'Download gagal. Sila cuba lagi.';
       try{
         const data = await response.json();
-        if(data && data.error) message = data.error;
+        if(data && (data.error || data.message)) message = data.error || data.message;
       }catch(e){}
       alert(message);
       return false;
@@ -2928,11 +2952,11 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       return false;
     }
 
-    let filename = azobssPaidPurchaseDownloadFilename(r);
+    let filename = azobssPaidPurchaseDownloadFilename(r, downloadFormat);
     const disposition = response.headers.get('content-disposition') || response.headers.get('Content-Disposition') || '';
     const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
     if(match){
-      filename = decodeURIComponent(match[1] || match[2] || filename);
+      try{ filename = decodeURIComponent(match[1] || match[2] || filename); }catch(e){ filename = match[1] || match[2] || filename; }
     }
 
     const blobUrl = URL.createObjectURL(blob);
@@ -2945,10 +2969,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 15000);
 
     try{ azobssSchedulePurchaseRecordsRefresh('download success'); }catch(e){}
-    setTimeout(function(){
-      try{ azobssSchedulePurchaseRecordsRefresh('download success delayed'); }catch(e){}
-    }, 1200);
-
+    setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download success delayed'); }catch(e){} }, 1200);
     return false;
   }catch(error){
     console.error('Controlled download failed:', error);
@@ -2961,7 +2982,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     }
     if(link){
       link.dataset.busy = '';
-      link.textContent = originalText || 'Download';
+      link.textContent = defaultLabel;
       link.style.pointerEvents = '';
       link.removeAttribute('aria-busy');
     }
@@ -3177,6 +3198,7 @@ function purchaseDetailRowHtml(r){
     : `${itemLabel} ${itemCode}`.trim();
   const amount = Number(r.amount || 0);
   const canUncart = azobssCanUncartPurchase(r);
+  const isLotRecord = itemType === 'NDCDB' || itemType === 'NDCDB_C3';
   const paidDownloadUrl = azobssBuildControlledPurchaseDownloadUrl(r);
   const paidDownloadName = azobssPaidPurchaseDownloadFilename(r);
   const paidDownloadPayload = azobssPurchaseDownloadPayload(r);
@@ -3191,21 +3213,38 @@ function purchaseDetailRowHtml(r){
   const max = azobssPurchaseDownloadMax(r);
   const days = azobssPurchaseDownloadRemainingDays(r);
   let actionHtml = '';
-  const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
+  const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
   const adminResetHtml = (paid && (window.azobssCanShowPaBmAdminReset ? window.azobssCanShowPaBmAdminReset() : isAzobssAdmin(getSavedUser && getSavedUser() || {})))
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
-  const isLotRecord = itemType === 'NDCDB' || itemType === 'NDCDB_C3';
-  // 607: Do not lock a paid Lot Kadaster download button merely because the
-  // background JUPEM readiness probe is temporarily unavailable. The click
-  // handler performs the authoritative readiness check and does not consume
-  // quota until the backend has a verified direct ZIP handoff.
+
+  // Lot Kadaster keeps the original JUPEM ZIP and adds ready-to-use CAD formats.
+  // Every successful ZIP/DWG/DXF download uses one slot from the same existing 5x/7-day quota.
   if(isLotRecord && paid && allowed){
     try{ azobssQueueLotPurchaseReadiness(r); }catch(_error){}
   }
+
   if(paid && paidDownloadUrl && allowed){
-    const readyLabel = 'Download';
-    actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : readyLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
+    if(isLotRecord){
+      const formatDefs = [
+        { key:'original', label:'ZIP', title:'Download data asal JUPEM (.zip)' },
+        { key:'dwg', label:'DWG', title:'Download AutoCAD DWG berlayer' },
+        { key:'dxf', label:'DXF', title:'Download DXF berlayer' }
+      ];
+      const formatButtons = formatDefs.map(function(def){
+        const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);
+        const payload = azobssPurchaseDownloadPayload(r, def.key);
+        const filename = azobssPaidPurchaseDownloadFilename(r, def.key);
+        const active = !!(activeDownload && activeDownload.key === payload);
+        const lockedByOther = !!(activeDownload && !active);
+        const shownLabel = active ? escHtml(activeDownload.label || ('Muat ' + def.label + '...')) : def.label;
+        return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${payload}', this, event); } return false;">${shownLabel}</a>`;
+      }).join('');
+      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
+    }else{
+      const readyLabel = 'Download';
+      actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-default-label="Download" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : readyLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
+    }
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
     actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
@@ -3225,7 +3264,6 @@ function purchaseDetailRowHtml(r){
       <div class="col-action">${actionHtml}</div>
     </div>`;
 }
-
 function azobssPurchaseTableHeaderHtml(){
   return `<div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-header">
     <div class="col-select"><input class="purchase-table-select-all" type="checkbox" aria-label="Select all records on this page"></div>
