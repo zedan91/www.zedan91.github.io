@@ -11081,9 +11081,16 @@ async function azobssEnsureLotCadBuffer(record, type, format) {
     throw error;
   }
   if (normalizedFormat === "dwg" && (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT))) {
-    const error = new Error("DWG converter belum tersedia pada Render. DXF masih boleh dimuat turun. Kuota download tidak digunakan.");
-    error.code = "DWG_CONVERTER_UNAVAILABLE";
-    throw error;
+    let prep = null;
+    if (typeof azobssLotCadConverter.ensureDwgConverterSync === "function") {
+      try { prep = azobssLotCadConverter.ensureDwgConverterSync(ROOT, { timeoutMs: 240000 }); } catch (_) {}
+    }
+    if (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT)) {
+      const detail = String(prep && prep.error || "").slice(0, 700);
+      const error = new Error("DWG converter belum berjaya dipasang pada Render. DXF masih boleh dimuat turun. Kuota download tidak digunakan." + (detail ? ` Detail: ${detail}` : ""));
+      error.code = "DWG_CONVERTER_UNAVAILABLE";
+      throw error;
+    }
   }
 
   const productCode = type === "NDCDB_C3" ? "2" : "1";
@@ -16899,7 +16906,14 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 503, "AZOBSS CAD converter belum tersedia pada backend. ZIP asal masih boleh dimuat turun.");
     }
     if (requestedLotFormat === "dwg" && (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT))) {
-      return azobssPaBmDownloadError(res, 503, "DWG converter belum tersedia pada Render. Gunakan DXF sementara atau redeploy backend.");
+      let prep = null;
+      if (typeof azobssLotCadConverter.ensureDwgConverterSync === "function") {
+        try { prep = azobssLotCadConverter.ensureDwgConverterSync(ROOT, { timeoutMs: 240000 }); } catch (_) {}
+      }
+      if (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT)) {
+        const detail = String(prep && prep.error || "").slice(0, 700);
+        return azobssPaBmDownloadError(res, 503, "DWG converter belum berjaya dipasang pada Render. Gunakan DXF sementara dan semak log AZOBSS LibreDWG." + (detail ? ` Detail: ${detail}` : ""));
+      }
     }
 
     const productCode = type === "NDCDB_C3" ? "2" : "1";
@@ -17808,6 +17822,24 @@ setInterval(
 // RUN ON STARTUP
 cleanupTempFiles();
 cleanupLotCacheFiles();
+
+// v934: prepare LibreDWG before the service starts accepting downloads.
+// This is also attempted by npm prestart/postinstall, but doing it here covers
+// Render services whose Start Command is `node deploy-server.js` directly.
+if (azobssLotCadConverter && typeof azobssLotCadConverter.ensureDwgConverterSync === "function" && String(process.env.AZOBSS_PREPARE_DWG_ON_START || "1") !== "0") {
+  try {
+    const dwgPrep = azobssLotCadConverter.ensureDwgConverterSync(ROOT, { timeoutMs: 240000 });
+    console.log("AZOBSS DWG startup preparation:", JSON.stringify({
+      available: !!(dwgPrep && dwgPrep.available),
+      executable: String(dwgPrep && dwgPrep.executable || ""),
+      exitCode: dwgPrep && dwgPrep.exitCode,
+      timedOut: !!(dwgPrep && dwgPrep.timedOut),
+      error: String(dwgPrep && dwgPrep.error || "").slice(0, 500)
+    }));
+  } catch (error) {
+    console.warn("AZOBSS DWG startup preparation failed; DXF remains available:", error && (error.message || error));
+  }
+}
 
 const HOST = "0.0.0.0";
 const SERVER_PORT = Number(process.env.PORT || PORT || 10000);

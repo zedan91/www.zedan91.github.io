@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -u
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PREFIX="$ROOT/.azobss-libredwg"
@@ -9,44 +9,57 @@ ARCHIVE="libredwg-${VERSION}.tar.gz"
 URL="https://github.com/LibreDWG/libredwg/releases/download/${VERSION}/${ARCHIVE}"
 SHA256="930b2a7caf829fcde32ea40e202d4e5b56e48b482b6db4f7d2295b0342708427"
 WORK="${TMPDIR:-/tmp}/azobss-libredwg-${VERSION}"
+STATUS_DIR="$PREFIX"
+STATUS_FILE="$STATUS_DIR/install-status.log"
 
-log(){ printf '[AZOBSS LibreDWG] %s\n' "$*"; }
+mkdir -p "$STATUS_DIR"
+: > "$STATUS_FILE"
+log(){ printf '[AZOBSS LibreDWG] %s\n' "$*" | tee -a "$STATUS_FILE"; }
 
 if [[ "${AZOBSS_DISABLE_LIBREDWG:-0}" == "1" ]]; then
-  log "Disabled by AZOBSS_DISABLE_LIBREDWG=1; DXF will remain available."
+  log "Disabled by AZOBSS_DISABLE_LIBREDWG=1; DXF remains available."
   exit 0
 fi
 
 if [[ -x "$BIN" ]]; then
-  log "dxf2dwg already installed: $BIN"
+  if "$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/null 2>&1; then
+    log "dxf2dwg already installed and executable: $BIN"
+    exit 0
+  fi
+  log "Existing dxf2dwg failed self-check; rebuilding."
+  rm -f "$BIN"
+fi
+
+missing=0
+for cmd in curl tar make gcc sha256sum; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    log "Required build tool '$cmd' is unavailable."
+    missing=1
+  fi
+done
+if [[ "$missing" == "1" ]]; then
+  log "LibreDWG cannot be built in this environment. DXF remains available."
   exit 0
 fi
 
-for cmd in curl tar make gcc sha256sum; do
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    log "Build tool '$cmd' is unavailable. Skipping DWG helper; DXF remains available."
-    exit 0
-  fi
-done
-
 rm -rf "$WORK"
-mkdir -p "$WORK" "$PREFIX"
-cd "$WORK"
+mkdir -p "$WORK" "$PREFIX" "$PREFIX/bin"
+cd "$WORK" || exit 0
 
-log "Downloading LibreDWG ${VERSION} source..."
-if ! curl -fL --retry 3 --connect-timeout 20 --max-time 180 "$URL" -o "$ARCHIVE"; then
-  log "Download failed. Skipping DWG helper; DXF remains available."
+log "Downloading LibreDWG ${VERSION} source from official GitHub release..."
+if ! curl -fL --retry 4 --retry-all-errors --connect-timeout 20 --max-time 240 "$URL" -o "$ARCHIVE" 2>>"$STATUS_FILE"; then
+  log "Download failed. DXF remains available."
   exit 0
 fi
 
 actual_sha="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
 if [[ "$actual_sha" != "$SHA256" ]]; then
-  log "Checksum mismatch. Refusing to compile unverified source."
+  log "Checksum mismatch. Refusing unverified source."
   exit 0
 fi
 
-if ! tar -xzf "$ARCHIVE"; then
-  log "Could not extract source archive."
+if ! tar -xzf "$ARCHIVE" >>"$STATUS_FILE" 2>&1; then
+  log "Could not extract LibreDWG source."
   exit 0
 fi
 
@@ -56,30 +69,51 @@ if [[ ! -x "$SRC/configure" ]]; then
   exit 0
 fi
 
-cd "$SRC"
-log "Configuring local dxf2dwg build..."
-if ! ./configure --prefix="$PREFIX" --disable-bindings --disable-docs --disable-shared >/tmp/azobss-libredwg-configure.log 2>&1; then
-  log "Configure failed. See /tmp/azobss-libredwg-configure.log during build. DXF remains available."
+cd "$SRC" || exit 0
+log "Configuring local LibreDWG build (write enabled, docs/bindings/shared disabled, Werror disabled)..."
+if ! env CFLAGS="${CFLAGS:-} -O2 -Wno-error" ./configure \
+    --prefix="$PREFIX" \
+    --enable-write \
+    --disable-werror \
+    --disable-bindings \
+    --disable-docs \
+    --disable-shared >>"$STATUS_FILE" 2>&1; then
+  log "Configure failed. See $STATUS_FILE"
   exit 0
 fi
 
 JOBS="${AZOBSS_LIBREDWG_BUILD_JOBS:-2}"
-log "Compiling (jobs=${JOBS})..."
-if ! make -j"$JOBS" >/tmp/azobss-libredwg-make.log 2>&1; then
-  log "Compile failed. See /tmp/azobss-libredwg-make.log during build. DXF remains available."
-  exit 0
+log "Compiling LibreDWG (jobs=${JOBS})..."
+if ! make -j"$JOBS" >>"$STATUS_FILE" 2>&1; then
+  log "Parallel compile failed; retrying single-threaded."
+  if ! make -j1 >>"$STATUS_FILE" 2>&1; then
+    log "Compile failed. See $STATUS_FILE"
+    exit 0
+  fi
 fi
 
-if ! make install >/tmp/azobss-libredwg-install.log 2>&1; then
-  log "Install failed. DXF remains available."
-  exit 0
+if ! make install >>"$STATUS_FILE" 2>&1; then
+  log "make install failed; trying direct dxf2dwg binary copy."
 fi
 
-if [[ -x "$BIN" ]]; then
+# Some builds finish the utility but fail an unrelated install target. Preserve the
+# working converter instead of losing DWG support.
+if [[ ! -x "$BIN" ]]; then
+  for candidate in "$SRC/programs/dxf2dwg" "$SRC/dxf2dwg"; do
+    if [[ -x "$candidate" ]]; then
+      cp "$candidate" "$BIN"
+      chmod +x "$BIN"
+      log "Copied built dxf2dwg directly from $candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -x "$BIN" ]] && ("$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/null 2>&1); then
   log "Installed successfully: $BIN"
-else
-  log "Build completed but dxf2dwg was not found. DXF remains available."
+  rm -rf "$WORK"
+  exit 0
 fi
 
-rm -rf "$WORK"
+log "Build completed but a usable dxf2dwg was not produced. DXF remains available. See $STATUS_FILE"
 exit 0

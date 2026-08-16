@@ -13249,51 +13249,54 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
 </style>
 
 
-<style id="azobss-lot-kadaster-format-download-v932">
-/* v932: Lot Kadaster paid download choices — original ZIP + generated DWG/DXF. */
+<style id="azobss-lot-kadaster-format-download-v933">
+/* v933: compact Lot Kadaster ZIP/DWG/DXF buttons to prevent action-column overlap. */
 #userPaPurchaseList .az-lot-download-action{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:flex-end!important;
-  gap:7px!important;
+  gap:4px!important;
   overflow:visible!important;
 }
 #userPaPurchaseList .az-lot-download-format-group{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:flex-end!important;
-  gap:4px!important;
+  gap:3px!important;
   flex:0 0 auto!important;
   overflow:visible!important;
 }
-#userPaPurchaseList .az-lot-download-format-group .az-lot-format-download{
-  width:auto!important;
-  min-width:46px!important;
-  max-width:78px!important;
-  height:28px!important;
-  min-height:28px!important;
-  padding:0 7px!important;
-  border-radius:7px!important;
-  font-size:10.5px!important;
+#userPaPurchaseList .compact-table-row .az-lot-download-format-group .az-lot-format-download:not(.is-pending-status){
+  width:42px!important;
+  min-width:42px!important;
+  max-width:42px!important;
+  height:24px!important;
+  min-height:24px!important;
+  padding:0 3px!important;
+  border-radius:6px!important;
+  font-size:9.5px!important;
   font-weight:950!important;
-  letter-spacing:.01em!important;
+  letter-spacing:0!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
-  flex:0 0 auto!important;
+  flex:0 0 42px!important;
 }
+#userPaPurchaseList .az-lot-download-action .az-action-download-count{margin:0!important;padding:0 2px!important;min-width:28px!important;font-size:10px!important;}
+#userPaPurchaseList .az-lot-download-action .az-admin-reset-download-count{height:22px!important;min-height:22px!important;min-width:54px!important;padding:0 6px!important;font-size:9px!important;}
 #userPaPurchaseList .az-lot-format-original{background:#2563eb!important;border-color:#3b82f6!important;color:#fff!important;}
 #userPaPurchaseList .az-lot-format-dwg{background:#15803d!important;border-color:#22c55e!important;color:#fff!important;}
 #userPaPurchaseList .az-lot-format-dxf{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important;}
 #userPaPurchaseList .az-lot-format-download[data-download-locked="1"]{opacity:.55!important;pointer-events:none!important;}
-#userPaPurchaseList .az-lot-format-download[data-busy="1"]{min-width:66px!important;max-width:86px!important;font-size:9.5px!important;}
+#userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{width:48px!important;min-width:48px!important;max-width:48px!important;flex-basis:48px!important;font-size:8.7px!important;}
 @media(max-width:760px){
   #userPaPurchaseList .az-lot-download-action{gap:4px!important;flex-wrap:wrap!important;max-width:220px!important;}
   #userPaPurchaseList .az-lot-download-format-group{gap:3px!important;}
-  #userPaPurchaseList .az-lot-download-format-group .az-lot-format-download{
-    min-width:40px!important;max-width:64px!important;height:23px!important;min-height:23px!important;padding:0 5px!important;font-size:9.5px!important;border-radius:6px!important;
+  #userPaPurchaseList .compact-table-row .az-lot-download-format-group .az-lot-format-download:not(.is-pending-status){
+    width:38px!important;min-width:38px!important;max-width:38px!important;flex-basis:38px!important;height:22px!important;min-height:22px!important;padding:0 3px!important;font-size:9px!important;border-radius:6px!important;
   }
-  #userPaPurchaseList .az-lot-format-download[data-busy="1"]{min-width:54px!important;max-width:70px!important;font-size:8.8px!important;}
+  #userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{width:44px!important;min-width:44px!important;max-width:44px!important;flex-basis:44px!important;font-size:8.3px!important;}
+  #userPaPurchaseList .az-lot-download-action .az-admin-reset-download-count{min-width:48px!important;height:20px!important;min-height:20px!important;padding:0 5px!important;font-size:8.5px!important;}
 }
 </style>
 
