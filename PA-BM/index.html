@@ -13300,6 +13300,40 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
 }
 </style>
 
+<style id="azobss-lot-kadaster-table-layout-v935">
+/* v935: move Tempoh into the available middle space and reserve a wider action column. */
+@media (min-width:761px){
+  #userPaPurchaseList .compact-purchase-row.compact-table-header,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row{
+    grid-template-columns:
+      44px
+      minmax(126px,.92fr)
+      minmax(128px,.82fr)
+      80px
+      minmax(154px,.94fr)
+      70px
+      minmax(318px,1.48fr)!important;
+    column-gap:8px!important;
+  }
+  #userPaPurchaseList .col-exp{
+    justify-self:start!important;
+    text-align:left!important;
+    min-width:0!important;
+    padding-left:0!important;
+    transform:none!important;
+  }
+  #userPaPurchaseList .col-action{
+    min-width:300px!important;
+    justify-content:flex-end!important;
+  }
+  #userPaPurchaseList .az-lot-download-action{
+    width:100%!important;
+    justify-content:flex-end!important;
+    flex-wrap:nowrap!important;
+  }
+}
+</style>
+
 <script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';

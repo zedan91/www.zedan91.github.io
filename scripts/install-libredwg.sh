@@ -31,7 +31,7 @@ if [[ -x "$BIN" ]]; then
 fi
 
 missing=0
-for cmd in curl tar make gcc sha256sum; do
+for cmd in curl tar make gcc sha256sum autoconf automake libtool; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     log "Required build tool '$cmd' is unavailable."
     missing=1

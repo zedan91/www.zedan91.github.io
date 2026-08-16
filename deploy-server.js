@@ -11087,7 +11087,7 @@ async function azobssEnsureLotCadBuffer(record, type, format) {
     }
     if (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT)) {
       const detail = String(prep && prep.error || "").slice(0, 700);
-      const error = new Error("DWG converter belum berjaya dipasang pada Render. DXF masih boleh dimuat turun. Kuota download tidak digunakan." + (detail ? ` Detail: ${detail}` : ""));
+      const error = new Error("DWG converter belum aktif pada backend. v935 menggunakan Render Docker runtime supaya LibreDWG dibina dan diuji semasa deploy. DXF masih boleh dimuat turun. Kuota download tidak digunakan." + (detail ? ` Detail: ${detail}` : ""));
       error.code = "DWG_CONVERTER_UNAVAILABLE";
       throw error;
     }
@@ -16861,6 +16861,27 @@ if (pathname === "/api/pa-bm-download/reset-count" && req.method === "POST") {
   }
 }
 
+if (pathname === "/api/lot-cad/health" && req.method === "GET") {
+  let dwgExecutable = "";
+  try {
+    if (azobssLotCadConverter && typeof azobssLotCadConverter.findDxf2Dwg === "function") {
+      dwgExecutable = String(azobssLotCadConverter.findDxf2Dwg(ROOT) || "");
+    }
+  } catch (_) {}
+  return send(res, 200, JSON.stringify({
+    ok: true,
+    converterVersion: azobssLotCadConverter && azobssLotCadConverter.CONVERTER_VERSION || "",
+    formats: {
+      zip: true,
+      dxf: !!azobssLotCadConverter,
+      dwg: !!dwgExecutable
+    },
+    dxfProfile: "AC1027 AutoCAD 2013 + active viewport/extents",
+    dwgConverter: dwgExecutable ? "dxf2dwg-ready" : "not-ready",
+    patch: "935"
+  }, null, 2), "application/json", { "Cache-Control": "no-store" });
+}
+
 if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   const recordId = String(parsed.query.recordId || "").trim();
   if (!recordId) return azobssPaBmDownloadError(res, 400, "Missing recordId");
@@ -16912,7 +16933,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       }
       if (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT)) {
         const detail = String(prep && prep.error || "").slice(0, 700);
-        return azobssPaBmDownloadError(res, 503, "DWG converter belum berjaya dipasang pada Render. Gunakan DXF sementara dan semak log AZOBSS LibreDWG." + (detail ? ` Detail: ${detail}` : ""));
+        return azobssPaBmDownloadError(res, 503, "DWG converter belum aktif pada backend. Pastikan service azobss-backend menggunakan Docker runtime v935 dan redeploy. Gunakan DXF sementara jika deployment Docker belum selesai." + (detail ? ` Detail: ${detail}` : ""));
       }
     }
 
@@ -17823,7 +17844,7 @@ setInterval(
 cleanupTempFiles();
 cleanupLotCacheFiles();
 
-// v934: prepare LibreDWG before the service starts accepting downloads.
+// v935: prepare LibreDWG before the service starts accepting downloads.
 // This is also attempted by npm prestart/postinstall, but doing it here covers
 // Render services whose Start Command is `node deploy-server.js` directly.
 if (azobssLotCadConverter && typeof azobssLotCadConverter.ensureDwgConverterSync === "function" && String(process.env.AZOBSS_PREPARE_DWG_ON_START || "1") !== "0") {
@@ -17873,6 +17894,7 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("HEALTH:", `/api/create-payment`);
   console.log("SUBSCRIPTION_HEALTH:", `/api/subscription/health`);
   console.log("AZOBSS_PATCH:", "413-subscription-route-diagnostic");
+  console.log("LOT_CAD_PATCH:", "935-dxf-autoview-docker-dwg");
   console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
   console.log("STRIPE_WEBHOOK:", `/api/stripe/webhook`);
   console.log("STRIPE_WEBHOOK_HEALTH:", `/api/stripe/webhook-health`);

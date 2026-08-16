@@ -1,0 +1,5 @@
+.git
+node_modules
+.azobss-libredwg
+*.log
+.DS_Store
