@@ -13208,7 +13208,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=946" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
+<script src="/assets/js/azobss-global-auth.js?v=947" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
 /* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList,
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList *{
@@ -18668,5 +18668,45 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
   #userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{animation-duration:1.4s}
 }
 </style>
+
+<style id="azobss-lot-format-two-button-v947">
+/* v947 safety: only ZIP + displayed DWG (actual DXF action) are visible. */
+#userPaPurchaseList .az-lot-format-dwg,
+#userPaPurchaseList [data-download-format="dwg"]{
+  display:none!important;
+}
+</style>
+<script id="azobss-lot-format-two-button-v947-script">
+(function(){
+  function normalizeLotDownloadButtons(root){
+    root = root || document;
+    try{
+      root.querySelectorAll('#userPaPurchaseList .az-lot-format-dwg, #userPaPurchaseList [data-download-format="dwg"]').forEach(function(el){
+        el.remove();
+      });
+      root.querySelectorAll('#userPaPurchaseList .az-lot-format-dxf, #userPaPurchaseList [data-download-format="dxf"]').forEach(function(el){
+        el.setAttribute('data-default-label','DWG');
+        el.setAttribute('title','Download DWG');
+        el.setAttribute('aria-label','Download DWG');
+        if(el.getAttribute('data-busy') !== '1') el.textContent='DWG';
+      });
+    }catch(_e){}
+  }
+  function start(){
+    normalizeLotDownloadButtons(document);
+    var target=document.getElementById('userPaPurchaseList') || document.body;
+    if(!target || typeof MutationObserver==='undefined') return;
+    var queued=false;
+    new MutationObserver(function(){
+      if(queued) return;
+      queued=true;
+      requestAnimationFrame(function(){ queued=false; normalizeLotDownloadButtons(document); });
+    }).observe(target,{childList:true,subtree:true,attributes:true,attributeFilter:['data-busy','data-default-label','data-download-format']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+</script>
+
 </body>
 </html>
