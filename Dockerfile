@@ -1,4 +1,4 @@
-# AZOBSS backend v941
+# AZOBSS backend v942
 # Fast Docker deployment layout:
 # - LibreDWG is built in an early, stable layer.
 # - Normal website/backend edits no longer invalidate the expensive LibreDWG build.
@@ -41,13 +41,14 @@ COPY scripts/dwg-smoke-test.dxf ./scripts/dwg-smoke-test.dxf
 RUN bash -lc 'set -euo pipefail; \
   chmod +x ./scripts/install-libredwg.sh; \
   ./scripts/install-libredwg.sh; \
-  if [ ! -x /app/.azobss-libredwg/bin/dxf2dwg ]; then \
-    echo "[AZOBSS Docker] dxf2dwg binary was not produced."; \
+  if [ ! -x /app/.azobss-libredwg/bin/dxf2dwg ] || [ ! -x /app/.azobss-libredwg/bin/dwgrewrite ]; then \
+    echo "[AZOBSS Docker] dxf2dwg/dwgrewrite pair was not produced."; \
     cat /app/.azobss-libredwg/install-status.log || true; \
     exit 1; \
   fi; \
   (/app/.azobss-libredwg/bin/dxf2dwg --version || /app/.azobss-libredwg/bin/dxf2dwg --help) >/tmp/azobss-dxf2dwg-version.log 2>&1; \
-  echo "[AZOBSS Docker] dxf2dwg executable self-check passed."; \
+  (/app/.azobss-libredwg/bin/dwgrewrite --version || /app/.azobss-libredwg/bin/dwgrewrite --help) >/tmp/azobss-dwgrewrite-version.log 2>&1; \
+  echo "[AZOBSS Docker] dxf2dwg + dwgrewrite self-check passed."; \
   if ! /app/.azobss-libredwg/bin/dxf2dwg -v0 -y --as r2000 -o /tmp/azobss-dwg-smoke.dwg /app/scripts/dwg-smoke-test.dxf >/tmp/azobss-dwg-smoke.log 2>&1; then \
     echo "[AZOBSS Docker] DXF->DWG smoke conversion failed:"; \
     cat /tmp/azobss-dwg-smoke.log || true; \
@@ -55,12 +56,19 @@ RUN bash -lc 'set -euo pipefail; \
     exit 1; \
   fi; \
   test -s /tmp/azobss-dwg-smoke.dwg; \
-  sig="$(head -c 6 /tmp/azobss-dwg-smoke.dwg)"; \
+  if ! /app/.azobss-libredwg/bin/dwgrewrite -v0 --as r2000 /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke-clean.dwg >/tmp/azobss-dwgrewrite-smoke.log 2>&1; then \
+    echo "[AZOBSS Docker] DWG rewrite sanitation smoke test failed:"; \
+    cat /tmp/azobss-dwgrewrite-smoke.log || true; \
+    exit 1; \
+  fi; \
+  test -s /tmp/azobss-dwg-smoke-clean.dwg; \
+  sig="$(head -c 6 /tmp/azobss-dwg-smoke-clean.dwg)"; \
   echo "[AZOBSS Docker] smoke DWG signature=${sig}"; \
   echo "$sig" | grep -Eq "^AC10[0-9][0-9]$"; \
-  rm -f /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke.log /tmp/azobss-dxf2dwg-version.log'
+  rm -f /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke-clean.dwg /tmp/azobss-dwg-smoke.log /tmp/azobss-dwgrewrite-smoke.log /tmp/azobss-dxf2dwg-version.log /tmp/azobss-dwgrewrite-version.log'
 
-ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg
+ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg \
+    AZOBSS_DWGREWRITE_PATH=/app/.azobss-libredwg/bin/dwgrewrite
 
 # Dependency layer: invalidated only when package metadata changes.
 # No LibreDWG postinstall hook here, so changing the AZOBSS package version does

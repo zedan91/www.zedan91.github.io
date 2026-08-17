@@ -4,6 +4,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PREFIX="$ROOT/.azobss-libredwg"
 BIN="$PREFIX/bin/dxf2dwg"
+REWRITE_BIN="$PREFIX/bin/dwgrewrite"
 VERSION="0.14.8531"
 ARCHIVE="libredwg-${VERSION}.tar.gz"
 URL="https://github.com/LibreDWG/libredwg/releases/download/${VERSION}/${ARCHIVE}"
@@ -21,13 +22,14 @@ if [[ "${AZOBSS_DISABLE_LIBREDWG:-0}" == "1" ]]; then
   exit 0
 fi
 
-if [[ -x "$BIN" ]]; then
-  if "$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/null 2>&1; then
-    log "dxf2dwg already installed and executable: $BIN"
+if [[ -x "$BIN" && -x "$REWRITE_BIN" ]]; then
+  if ("$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/null 2>&1) \
+     && ("$REWRITE_BIN" --version >/dev/null 2>&1 || "$REWRITE_BIN" --help >/dev/null 2>&1); then
+    log "dxf2dwg + dwgrewrite already installed and executable."
     exit 0
   fi
-  log "Existing dxf2dwg failed self-check; rebuilding."
-  rm -f "$BIN"
+  log "Existing LibreDWG utilities failed self-check; rebuilding."
+  rm -f "$BIN" "$REWRITE_BIN"
 fi
 
 missing=0
@@ -100,11 +102,11 @@ if ! make -j"$JOBS" >>"$STATUS_FILE" 2>&1; then
 fi
 
 if ! make install >>"$STATUS_FILE" 2>&1; then
-  log "make install failed; trying direct dxf2dwg binary copy."
+  log "make install failed; trying direct utility binary copy."
 fi
 
-# Some builds finish the utility but fail an unrelated install target. Preserve the
-# working converter instead of losing DWG support.
+# Some builds finish the utilities but fail an unrelated install target. Preserve
+# the working binaries instead of losing DWG support.
 if [[ ! -x "$BIN" ]]; then
   for candidate in "$SRC/programs/dxf2dwg" "$SRC/dxf2dwg"; do
     if [[ -x "$candidate" ]]; then
@@ -115,13 +117,25 @@ if [[ ! -x "$BIN" ]]; then
     fi
   done
 fi
+if [[ ! -x "$REWRITE_BIN" ]]; then
+  for candidate in "$SRC/programs/dwgrewrite" "$SRC/dwgrewrite"; do
+    if [[ -x "$candidate" ]]; then
+      cp "$candidate" "$REWRITE_BIN"
+      chmod +x "$REWRITE_BIN"
+      log "Copied built dwgrewrite directly from $candidate"
+      break
+    fi
+  done
+fi
 
-if [[ -x "$BIN" ]] && ("$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/null 2>&1); then
-  log "Installed successfully: $BIN"
+if [[ -x "$BIN" && -x "$REWRITE_BIN" ]] \
+   && ("$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/null 2>&1) \
+   && ("$REWRITE_BIN" --version >/dev/null 2>&1 || "$REWRITE_BIN" --help >/dev/null 2>&1); then
+  log "Installed successfully: $BIN + $REWRITE_BIN"
   rm -rf "$WORK"
   exit 0
 fi
 
-log "Build completed but a usable dxf2dwg was not produced. DXF remains available. Last build log lines:"
+log "Build completed but dxf2dwg/dwgrewrite pair was not usable. DXF remains available. Last build log lines:"
 tail -n 80 "$STATUS_FILE" 2>/dev/null || true
 exit 0

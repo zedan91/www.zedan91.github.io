@@ -16900,17 +16900,24 @@ if (pathname === "/api/lot-cad/health" && req.method === "GET") {
       dwgExecutable = String(azobssLotCadConverter.findDxf2Dwg(ROOT) || "");
     }
   } catch (_) {}
+  let dwgRewriteExecutable = "";
+  try {
+    if (azobssLotCadConverter && typeof azobssLotCadConverter.findDwgRewrite === "function") {
+      dwgRewriteExecutable = String(azobssLotCadConverter.findDwgRewrite(ROOT) || "");
+    }
+  } catch (_) {}
   return send(res, 200, JSON.stringify({
     ok: true,
     converterVersion: azobssLotCadConverter && azobssLotCadConverter.CONVERTER_VERSION || "",
     formats: {
       zip: true,
       dxf: !!azobssLotCadConverter,
-      dwg: !!dwgExecutable
+      dwg: !!dwgExecutable && !!dwgRewriteExecutable
     },
     dxfProfile: "AC1027 AutoCAD 2013 + active viewport/extents",
     dwgConverter: dwgExecutable ? "dxf2dwg-ready" : "not-ready",
-    patch: "941"
+    dwgSanitizer: dwgRewriteExecutable ? "dwgrewrite-ready" : "not-ready",
+    patch: "942"
   }, null, 2), "application/json", { "Cache-Control": "no-store" });
 }
 
@@ -17926,7 +17933,7 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("HEALTH:", `/api/create-payment`);
   console.log("SUBSCRIPTION_HEALTH:", `/api/subscription/health`);
   console.log("AZOBSS_PATCH:", "413-subscription-route-diagnostic");
-  console.log("LOT_CAD_PATCH:", "935-dxf-autoview-docker-dwg");
+  console.log("LOT_CAD_PATCH:", "942-dwg-rewrite-recovery-clean");
   console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
   console.log("STRIPE_WEBHOOK:", `/api/stripe/webhook`);
   console.log("STRIPE_WEBHOOK_HEALTH:", `/api/stripe/webhook-health`);
