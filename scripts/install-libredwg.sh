@@ -77,10 +77,11 @@ if [[ ! -x "$SRC/configure" ]]; then
 fi
 
 cd "$SRC" || exit 0
-log "Configuring local LibreDWG build (write enabled, docs/bindings/shared disabled, Werror disabled)..."
+log "Configuring local LibreDWG build (write enabled; Python/bindings/docs/shared disabled; Werror disabled)..."
 if ! env CFLAGS="${CFLAGS:-} -O2 -Wno-error" ./configure \
     --prefix="$PREFIX" \
     --disable-werror \
+    --disable-python \
     --disable-bindings \
     --disable-docs \
     --disable-shared >>"$STATUS_FILE" 2>&1; then

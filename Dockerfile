@@ -1,4 +1,4 @@
-# AZOBSS backend v937
+# AZOBSS backend v938
 # Docker runtime provides the OS toolchain required by LibreDWG/dxf2dwg.
 FROM node:20-bookworm-slim
 
@@ -37,8 +37,8 @@ RUN chmod +x ./scripts/install-libredwg.sh \
 COPY . .
 
 # Build the converter and verify it with a deliberately lean R2000 smoke DXF.
-# v935/v936 used a full ezdxf document as the smoke input; LibreDWG can reject
-# optional CLASSES/OBJECTS even when its converter binary itself is healthy.
+# v938 keeps the lean R2000 smoke input and explicitly disables optional Python
+# bindings/tests so the slim Node Docker image does not need a Python runtime.
 RUN bash -lc 'set -euo pipefail; \
   chmod +x ./scripts/install-libredwg.sh; \
   ./scripts/install-libredwg.sh; \

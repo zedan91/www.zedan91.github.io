@@ -11087,7 +11087,7 @@ async function azobssEnsureLotCadBuffer(record, type, format) {
     }
     if (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT)) {
       const detail = String(prep && prep.error || "").slice(0, 700);
-      const error = new Error("DWG converter belum aktif pada backend. v937 menggunakan Render Docker runtime supaya LibreDWG dibina dan diuji semasa deploy. DXF masih boleh dimuat turun. Kuota download tidak digunakan." + (detail ? ` Detail: ${detail}` : ""));
+      const error = new Error("DWG converter belum aktif pada backend. v938 menggunakan Render Docker runtime supaya LibreDWG dibina dan diuji semasa deploy. DXF masih boleh dimuat turun. Kuota download tidak digunakan." + (detail ? ` Detail: ${detail}` : ""));
       error.code = "DWG_CONVERTER_UNAVAILABLE";
       throw error;
     }
@@ -16878,7 +16878,7 @@ if (pathname === "/api/lot-cad/health" && req.method === "GET") {
     },
     dxfProfile: "AC1027 AutoCAD 2013 + active viewport/extents",
     dwgConverter: dwgExecutable ? "dxf2dwg-ready" : "not-ready",
-    patch: "937"
+    patch: "938"
   }, null, 2), "application/json", { "Cache-Control": "no-store" });
 }
 
@@ -16933,7 +16933,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       }
       if (!azobssLotCadConverter.dwgAvailable || !azobssLotCadConverter.dwgAvailable(ROOT)) {
         const detail = String(prep && prep.error || "").slice(0, 700);
-        return azobssPaBmDownloadError(res, 503, "DWG converter belum aktif pada backend. Pastikan service azobss-backend menggunakan Docker runtime v937 dan redeploy. Gunakan DXF sementara jika deployment Docker belum selesai." + (detail ? ` Detail: ${detail}` : ""));
+        return azobssPaBmDownloadError(res, 503, "DWG converter belum aktif pada backend. Pastikan service azobss-backend menggunakan Docker runtime v938 dan redeploy. Gunakan DXF sementara jika deployment Docker belum selesai." + (detail ? ` Detail: ${detail}` : ""));
       }
     }
 
