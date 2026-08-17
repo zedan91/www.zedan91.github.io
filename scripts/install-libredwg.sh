@@ -5,10 +5,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PREFIX="$ROOT/.azobss-libredwg"
 BIN="$PREFIX/bin/dxf2dwg"
 REWRITE_BIN="$PREFIX/bin/dwgrewrite"
-VERSION="0.14.8531"
+VERSION="0.14.8580"
 ARCHIVE="libredwg-${VERSION}.tar.gz"
 URL="https://github.com/LibreDWG/libredwg/releases/download/${VERSION}/${ARCHIVE}"
-SHA256="930b2a7caf829fcde32ea40e202d4e5b56e48b482b6db4f7d2295b0342708427"
+SHA256=""
+FALLBACK_VERSION="0.14.8531"
+FALLBACK_SHA256="930b2a7caf829fcde32ea40e202d4e5b56e48b482b6db4f7d2295b0342708427"
 WORK="${TMPDIR:-/tmp}/azobss-libredwg-${VERSION}"
 STATUS_DIR="$PREFIX"
 STATUS_FILE="$STATUS_DIR/install-status.log"
@@ -61,11 +63,47 @@ if ! curl -fL --retry 4 --retry-all-errors --connect-timeout 20 --max-time 240 "
   exit 0
 fi
 
-actual_sha="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
-if [[ "$actual_sha" != "$SHA256" ]]; then
-  log "Checksum mismatch. Refusing unverified source."
-  exit 0
+# GitHub release assets expose a sha256 digest via the official Releases API.
+# Prefer the newest pinned release, but never compile an unverified archive.
+if [[ -z "$SHA256" ]]; then
+  RELEASE_META="$WORK/release-${VERSION}.json"
+  if curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 \
+      "https://api.github.com/repos/LibreDWG/libredwg/releases/tags/${VERSION}" \
+      -o "$RELEASE_META" 2>>"$STATUS_FILE"; then
+    SHA256="$(node - "$RELEASE_META" "$ARCHIVE" <<'NODE'
+const fs = require('fs');
+const meta = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const name = process.argv[3];
+const asset = Array.isArray(meta.assets) ? meta.assets.find(a => a && a.name === name) : null;
+const digest = asset && typeof asset.digest === 'string' ? asset.digest : '';
+if (/^sha256:[0-9a-f]{64}$/i.test(digest)) process.stdout.write(digest.slice(7).toLowerCase());
+NODE
+)"
+  fi
 fi
+
+actual_sha="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
+if [[ -z "$SHA256" || "$actual_sha" != "$SHA256" ]]; then
+  log "Latest release digest unavailable/mismatched; falling back to verified LibreDWG ${FALLBACK_VERSION}."
+  VERSION="$FALLBACK_VERSION"
+  ARCHIVE="libredwg-${VERSION}.tar.gz"
+  URL="https://github.com/LibreDWG/libredwg/releases/download/${VERSION}/${ARCHIVE}"
+  SHA256="$FALLBACK_SHA256"
+  WORK="${TMPDIR:-/tmp}/azobss-libredwg-${VERSION}"
+  rm -rf "$WORK"
+  mkdir -p "$WORK" "$PREFIX" "$PREFIX/bin"
+  cd "$WORK" || exit 0
+  if ! curl -fL --retry 4 --retry-all-errors --connect-timeout 20 --max-time 240 "$URL" -o "$ARCHIVE" 2>>"$STATUS_FILE"; then
+    log "Fallback download failed. DXF remains available."
+    exit 0
+  fi
+  actual_sha="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
+  if [[ "$actual_sha" != "$SHA256" ]]; then
+    log "Fallback checksum mismatch. Refusing unverified source."
+    exit 0
+  fi
+fi
+log "Verified LibreDWG ${VERSION} archive sha256=${actual_sha}."
 
 if ! tar -xzf "$ARCHIVE" >>"$STATUS_FILE" 2>&1; then
   log "Could not extract LibreDWG source."
