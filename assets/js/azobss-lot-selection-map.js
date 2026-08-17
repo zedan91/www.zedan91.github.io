@@ -737,38 +737,62 @@
         if (referenceShape === 'square' && referenceRectangleBounds && referenceRectangleBounds.isValid()) {
           const bounds = referenceRectangleBounds;
           const center = bounds.getCenter();
+          const centerLatLng = window.L.latLng(center.lat, center.lng);
           const west = window.L.latLng(center.lat, bounds.getWest());
           const east = window.L.latLng(center.lat, bounds.getEast());
           const north = window.L.latLng(bounds.getNorth(), center.lng);
           const south = window.L.latLng(bounds.getSouth(), center.lng);
-          const horizontal = window.L.polyline([west, east], lineOptions).addTo(map);
-          const vertical = window.L.polyline([north, south], lineOptions).addTo(map);
-          referenceGuideLayers.push(horizontal, vertical);
-          const width = map.distance(west, east);
-          const height = map.distance(north, south);
-          const centerToHorizontalSide = width / 2;
-          const centerToVerticalSide = height / 2;
-          // Put each value exactly halfway between the centre and its side.
-          // The horizontal value sits above the horizontal guide. The vertical
-          // value sits beside the vertical guide and is rotated as a whole.
+
+          // v962: draw four separate centre-to-edge guide segments instead of
+          // two full side-to-side lines. Each half-line gets its own distance
+          // label so it cannot be mistaken for the total width/height.
+          const westLine = window.L.polyline([centerLatLng, west], lineOptions).addTo(map);
+          const eastLine = window.L.polyline([centerLatLng, east], lineOptions).addTo(map);
+          const northLine = window.L.polyline([centerLatLng, north], lineOptions).addTo(map);
+          const southLine = window.L.polyline([centerLatLng, south], lineOptions).addTo(map);
+          referenceGuideLayers.push(westLine, eastLine, northLine, southLine);
+
+          const centerToWest = map.distance(centerLatLng, west);
+          const centerToEast = map.distance(centerLatLng, east);
+          const centerToNorth = map.distance(centerLatLng, north);
+          const centerToSouth = map.distance(centerLatLng, south);
+
+          // Place every value halfway along its own centre-to-side segment.
+          // Horizontal values sit above the line; vertical values stay rotated
+          // and sit beside the corresponding top/bottom segment.
+          const westMid = window.L.latLng(center.lat, center.lng + (bounds.getWest() - center.lng) * 0.50);
           const eastMid = window.L.latLng(center.lat, center.lng + (bounds.getEast() - center.lng) * 0.50);
           const northMid = window.L.latLng(center.lat + (bounds.getNorth() - center.lat) * 0.50, center.lng);
-          makeReferenceGuideLabel(eastMid, formatReferenceDistance(centerToHorizontalSide), 'top', [0, -11], 'horizontal');
-          makeReferenceGuideLabel(northMid, formatReferenceDistance(centerToVerticalSide), 'right', [11, 0], 'vertical');
+          const southMid = window.L.latLng(center.lat + (bounds.getSouth() - center.lat) * 0.50, center.lng);
+
+          makeReferenceGuideLabel(westMid, formatReferenceDistance(centerToWest), 'top', [0, -11], 'horizontal');
+          makeReferenceGuideLabel(eastMid, formatReferenceDistance(centerToEast), 'top', [0, -11], 'horizontal');
+          makeReferenceGuideLabel(northMid, formatReferenceDistance(centerToNorth), 'right', [11, 0], 'vertical');
+          makeReferenceGuideLabel(southMid, formatReferenceDistance(centerToSouth), 'right', [11, 0], 'vertical');
           return;
         }
         if (referenceShape === 'circle') {
           const radius = Math.max(0, Number(radiusReferenceSizeMeters) || 0);
+          const centerLatLng = window.L.latLng(radiusReferenceCenter.lat, radiusReferenceCenter.lng);
           const east = destinationLatLng(radiusReferenceCenter, radius, 90);
           const west = destinationLatLng(radiusReferenceCenter, radius, 270);
           const north = destinationLatLng(radiusReferenceCenter, radius, 0);
           const south = destinationLatLng(radiusReferenceCenter, radius, 180);
-          referenceGuideLayers.push(window.L.polyline([west, east], lineOptions).addTo(map));
-          referenceGuideLayers.push(window.L.polyline([north, south], lineOptions).addTo(map));
+
+          referenceGuideLayers.push(window.L.polyline([centerLatLng, west], lineOptions).addTo(map));
+          referenceGuideLayers.push(window.L.polyline([centerLatLng, east], lineOptions).addTo(map));
+          referenceGuideLayers.push(window.L.polyline([centerLatLng, north], lineOptions).addTo(map));
+          referenceGuideLayers.push(window.L.polyline([centerLatLng, south], lineOptions).addTo(map));
+
+          const westLabelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.50, 270);
           const eastLabelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.50, 90);
           const northLabelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.50, 0);
-          makeReferenceGuideLabel(eastLabelPoint, formatReferenceDistance(radius), 'top', [0, -11], 'horizontal');
-          makeReferenceGuideLabel(northLabelPoint, formatReferenceDistance(radius), 'right', [11, 0], 'vertical');
+          const southLabelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.50, 180);
+          const radiusText = formatReferenceDistance(radius);
+          makeReferenceGuideLabel(westLabelPoint, radiusText, 'top', [0, -11], 'horizontal');
+          makeReferenceGuideLabel(eastLabelPoint, radiusText, 'top', [0, -11], 'horizontal');
+          makeReferenceGuideLabel(northLabelPoint, radiusText, 'right', [11, 0], 'vertical');
+          makeReferenceGuideLabel(southLabelPoint, radiusText, 'right', [11, 0], 'vertical');
         }
       }
 
