@@ -505,7 +505,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-33
+35
   9
 $SURFTAB1
  70
@@ -885,11 +885,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{E43FD417-F235-4CE7-B6D1-7D8C877811D7}
+{71AB178E-E655-4B37-9188-7BA2E396DF69}
   9
 $VERSIONGUID
   2
-{AF359ED4-E4A8-4CA0-AB21-A14E7546A1D8}
+{D0C704A7-D9D2-4F4B-A563-7735B4277E58}
   9
 $EXTNAMES
 290
@@ -1099,7 +1099,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-2
+5
   0
 LAYER
   5
@@ -1142,6 +1142,72 @@ Defpoints
 Continuous
 290
 0
+370
+-3
+390
+13
+  0
+LAYER
+  5
+2F
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PER NDCDB
+ 70
+0
+ 62
+7
+  6
+Continuous
+370
+-3
+390
+13
+  0
+LAYER
+  5
+30
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+NOLOT
+ 70
+0
+ 62
+7
+  6
+Continuous
+370
+-3
+390
+13
+  0
+LAYER
+  5
+31
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+NOPA
+ 70
+0
+ 62
+2
+  6
+Continuous
 370
 -3
 390
@@ -1247,7 +1313,7 @@ ACAD
   0
 APPID
   5
-30
+32
 330
 3
 100
@@ -1261,7 +1327,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-31
+33
 330
 3
 100
@@ -1552,30 +1618,6 @@ ENDSEC
 SECTION
   2
 ENTITIES
-  0
-LINE
-  5
-2F
-330
-17
-100
-AcDbEntity
-  8
-0
-100
-AcDbLine
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 11
-100.0
- 21
-100.0
- 31
-0.0
   0
 ENDSEC
   0

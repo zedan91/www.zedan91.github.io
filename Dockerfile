@@ -1,5 +1,5 @@
-# AZOBSS backend v936
-# Docker runtime is used so the DWG converter always has the OS-level build tools it needs.
+# AZOBSS backend v937
+# Docker runtime provides the OS toolchain required by LibreDWG/dxf2dwg.
 FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -29,7 +29,6 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Install Node dependencies first for better Docker layer caching.
 COPY package.json .npmrc ./
 COPY scripts/install-libredwg.sh ./scripts/install-libredwg.sh
 RUN chmod +x ./scripts/install-libredwg.sh \
@@ -37,17 +36,30 @@ RUN chmod +x ./scripts/install-libredwg.sh \
 
 COPY . .
 
-# Build and verify the real DXF -> DWG utility while the image is being built.
-# Fail the Docker build if DWG support cannot be produced; this prevents a
-# seemingly-successful deploy whose DWG button can never work.
-RUN chmod +x ./scripts/install-libredwg.sh \
- && ./scripts/install-libredwg.sh \
- && test -x /app/.azobss-libredwg/bin/dxf2dwg \
- && (/app/.azobss-libredwg/bin/dxf2dwg --version >/dev/null 2>&1 || /app/.azobss-libredwg/bin/dxf2dwg --help >/dev/null 2>&1) \
- && /app/.azobss-libredwg/bin/dxf2dwg -v0 -y --as r2000 -o /tmp/azobss-dwg-smoke.dwg /app/scripts/dwg-smoke-test.dxf \
- && test -s /tmp/azobss-dwg-smoke.dwg \
- && head -c 6 /tmp/azobss-dwg-smoke.dwg | grep -Eq '^AC10[0-9][0-9]$' \
- && rm -f /tmp/azobss-dwg-smoke.dwg
+# Build the converter and verify it with a deliberately lean R2000 smoke DXF.
+# v935/v936 used a full ezdxf document as the smoke input; LibreDWG can reject
+# optional CLASSES/OBJECTS even when its converter binary itself is healthy.
+RUN bash -lc 'set -euo pipefail; \
+  chmod +x ./scripts/install-libredwg.sh; \
+  ./scripts/install-libredwg.sh; \
+  if [ ! -x /app/.azobss-libredwg/bin/dxf2dwg ]; then \
+    echo "[AZOBSS Docker] dxf2dwg binary was not produced."; \
+    cat /app/.azobss-libredwg/install-status.log || true; \
+    exit 1; \
+  fi; \
+  (/app/.azobss-libredwg/bin/dxf2dwg --version || /app/.azobss-libredwg/bin/dxf2dwg --help) >/tmp/azobss-dxf2dwg-version.log 2>&1; \
+  echo "[AZOBSS Docker] dxf2dwg executable self-check passed."; \
+  if ! /app/.azobss-libredwg/bin/dxf2dwg -v0 -y --as r2000 -o /tmp/azobss-dwg-smoke.dwg /app/scripts/dwg-smoke-test.dxf >/tmp/azobss-dwg-smoke.log 2>&1; then \
+    echo "[AZOBSS Docker] DXF->DWG smoke conversion failed:"; \
+    cat /tmp/azobss-dwg-smoke.log || true; \
+    cat /app/.azobss-libredwg/install-status.log || true; \
+    exit 1; \
+  fi; \
+  test -s /tmp/azobss-dwg-smoke.dwg; \
+  sig="$(head -c 6 /tmp/azobss-dwg-smoke.dwg)"; \
+  echo "[AZOBSS Docker] smoke DWG signature=${sig}"; \
+  echo "$sig" | grep -Eq "^AC10[0-9][0-9]$"; \
+  rm -f /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke.log /tmp/azobss-dxf2dwg-version.log'
 
 ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg \
     AZOBSS_LIBREDWG_BUILD_JOBS=1

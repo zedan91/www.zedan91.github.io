@@ -80,7 +80,6 @@ cd "$SRC" || exit 0
 log "Configuring local LibreDWG build (write enabled, docs/bindings/shared disabled, Werror disabled)..."
 if ! env CFLAGS="${CFLAGS:-} -O2 -Wno-error" ./configure \
     --prefix="$PREFIX" \
-    --enable-write \
     --disable-werror \
     --disable-bindings \
     --disable-docs \
@@ -122,5 +121,6 @@ if [[ -x "$BIN" ]] && ("$BIN" --version >/dev/null 2>&1 || "$BIN" --help >/dev/n
   exit 0
 fi
 
-log "Build completed but a usable dxf2dwg was not produced. DXF remains available. See $STATUS_FILE"
+log "Build completed but a usable dxf2dwg was not produced. DXF remains available. Last build log lines:"
+tail -n 80 "$STATUS_FILE" 2>/dev/null || true
 exit 0
