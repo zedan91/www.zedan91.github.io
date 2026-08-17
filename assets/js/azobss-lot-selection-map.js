@@ -271,8 +271,10 @@
       .az-lot-reference-resize-icon.is-horizontal{cursor:ns-resize!important}
       .az-lot-reference-resize-icon.is-horizontal span{width:24px;height:7px}
       /* v959: unobtrusive cross dimensions; keep resize handles fully visible. */
-      .az-lot-reference-guide-label{background:rgba(8,47,73,.88)!important;border:1px solid rgba(125,211,252,.9)!important;color:#e0f2fe!important;border-radius:4px!important;box-shadow:none!important;padding:2px 4px!important;font-size:9px!important;font-weight:800!important;line-height:1.05!important;white-space:nowrap!important;pointer-events:none!important}
+      .az-lot-reference-guide-label{background:rgba(8,47,73,.88)!important;border:1px solid rgba(125,211,252,.9)!important;color:#e0f2fe!important;border-radius:4px!important;box-shadow:none!important;padding:3px 6px!important;font-size:12px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;pointer-events:none!important}
       .az-lot-reference-guide-label:before{display:none!important}
+      .az-lot-reference-guide-text{display:inline-block;white-space:nowrap;font-size:12px;font-weight:900;line-height:1}
+      .az-lot-reference-guide-text.is-vertical{transform:rotate(-90deg);transform-origin:center center}
       .az-lot-reference-shape-btn.is-active{box-shadow:inset 0 0 0 1px rgba(125,211,252,.55)!important}
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
@@ -705,9 +707,12 @@
         referenceGuideLayers = [];
       }
 
-      function makeReferenceGuideLabel(latlng, text, direction = 'top', offset = [0, 0]) {
+      function makeReferenceGuideLabel(latlng, text, direction = 'top', offset = [0, 0], orientation = 'horizontal') {
         const marker = window.L.circleMarker(latlng, { radius: 0, opacity: 0, fillOpacity: 0, interactive: false }).addTo(map);
-        marker.bindTooltip(text, { permanent: true, direction, offset, className: 'az-lot-reference-guide-label', opacity: 1 });
+        const vertical = orientation === 'vertical';
+        const safeText = String(text == null ? '' : text).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const html = `<span class="az-lot-reference-guide-text${vertical ? ' is-vertical' : ''}">${safeText}</span>`;
+        marker.bindTooltip(html, { permanent: true, direction, offset, className: 'az-lot-reference-guide-label', opacity: 1 });
         referenceGuideLayers.push(marker);
       }
 
@@ -731,8 +736,8 @@
           const centerToVerticalSide = height / 2;
           const eastMid = window.L.latLng(center.lat, center.lng + (bounds.getEast() - center.lng) * 0.58);
           const northMid = window.L.latLng(center.lat + (bounds.getNorth() - center.lat) * 0.58, center.lng);
-          makeReferenceGuideLabel(eastMid, `Pusat → sisi ${formatReferenceDistance(centerToHorizontalSide)} · Sisi ↔ sisi ${formatReferenceDistance(width)}`, 'top', [0, -2]);
-          makeReferenceGuideLabel(northMid, `Pusat → sisi ${formatReferenceDistance(centerToVerticalSide)} · Sisi ↔ sisi ${formatReferenceDistance(height)}`, 'right', [4, 0]);
+          makeReferenceGuideLabel(eastMid, formatReferenceDistance(centerToHorizontalSide), 'top', [0, -3], 'horizontal');
+          makeReferenceGuideLabel(northMid, formatReferenceDistance(centerToVerticalSide), 'right', [7, 0], 'vertical');
           return;
         }
         if (referenceShape === 'circle') {
@@ -743,8 +748,10 @@
           const south = destinationLatLng(radiusReferenceCenter, radius, 180);
           referenceGuideLayers.push(window.L.polyline([west, east], lineOptions).addTo(map));
           referenceGuideLayers.push(window.L.polyline([north, south], lineOptions).addTo(map));
-          const labelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.58, 90);
-          makeReferenceGuideLabel(labelPoint, `Pusat → sisi ${formatReferenceDistance(radius)} · Sisi ↔ sisi ${formatReferenceDistance(radius * 2)}`, 'top', [0, -2]);
+          const eastLabelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.58, 90);
+          const northLabelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.58, 0);
+          makeReferenceGuideLabel(eastLabelPoint, formatReferenceDistance(radius), 'top', [0, -3], 'horizontal');
+          makeReferenceGuideLabel(northLabelPoint, formatReferenceDistance(radius), 'right', [7, 0], 'vertical');
         }
       }
 
