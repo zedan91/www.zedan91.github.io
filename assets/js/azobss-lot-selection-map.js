@@ -270,6 +270,10 @@
       .az-lot-reference-resize-icon.is-vertical span{width:7px;height:24px}
       .az-lot-reference-resize-icon.is-horizontal{cursor:ns-resize!important}
       .az-lot-reference-resize-icon.is-horizontal span{width:24px;height:7px}
+      /* v959: unobtrusive cross dimensions; keep resize handles fully visible. */
+      .az-lot-reference-guide-label{background:rgba(8,47,73,.88)!important;border:1px solid rgba(125,211,252,.9)!important;color:#e0f2fe!important;border-radius:4px!important;box-shadow:none!important;padding:2px 4px!important;font-size:9px!important;font-weight:800!important;line-height:1.05!important;white-space:nowrap!important;pointer-events:none!important}
+      .az-lot-reference-guide-label:before{display:none!important}
+      .az-lot-reference-shape-btn.is-active{box-shadow:inset 0 0 0 1px rgba(125,211,252,.55)!important}
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
         .az-lot-map-dialog{width:100vw;height:100dvh;border:0;border-radius:0}
@@ -468,8 +472,8 @@
               <div class="az-lot-radius-tool">
                 <div class="az-lot-reference-title">Pilih Kawasan Lot</div>
                 <div class="az-lot-reference-shapes" role="group" aria-label="Pilih bentuk kawasan lot">
-                  <button class="az-lot-reference-shape-btn is-active" type="button" data-reference-shape="circle" aria-pressed="true" title="Klik untuk terus lukis kawasan bulatan">◉ Bulatan</button>
                   <button class="az-lot-reference-shape-btn" type="button" data-reference-shape="square" aria-pressed="false" title="Klik untuk terus lukis kawasan petak">□ Petak</button>
+                  <button class="az-lot-reference-shape-btn" type="button" data-reference-shape="circle" aria-pressed="false" title="Klik untuk terus lukis kawasan bulatan">◉ Bulatan</button>
                 </div>
                 <div class="az-lot-radius-readout" data-radius-readout hidden>
                   <div class="az-lot-radius-row"><span data-reference-primary-label>Radius</span><strong data-radius-value>-</strong></div>
@@ -549,10 +553,11 @@
       let radiusReferenceCenterMarker = null;
       let radiusReferenceFinalized = false;
       let radiusReferenceSizeMeters = 0;
-      let referenceShape = 'circle';
+      let referenceShape = '';
       let referenceSelectionEnabled = true;
       let referenceRectangleBounds = null;
       let referenceResizeHandles = [];
+      let referenceGuideLayers = [];
       let selectionSource = null;
 
       function formatReferenceDistance(meters) {
@@ -562,7 +567,9 @@
       }
 
       function referenceShapeName() {
-        return referenceShape === 'square' ? 'Petak' : 'Bulatan';
+        if (referenceShape === 'square') return 'Petak';
+        if (referenceShape === 'circle') return 'Bulatan';
+        return 'Kawasan';
       }
 
       function destinationLatLng(center, distanceMeters, bearingDegrees) {
@@ -693,6 +700,54 @@
         referenceResizeHandles = [];
       }
 
+      function removeReferenceGuideLayers() {
+        if (map && Array.isArray(referenceGuideLayers)) referenceGuideLayers.forEach((layer) => { try { map.removeLayer(layer); } catch (_) {} });
+        referenceGuideLayers = [];
+      }
+
+      function makeReferenceGuideLabel(latlng, text, direction = 'top', offset = [0, 0]) {
+        const marker = window.L.circleMarker(latlng, { radius: 0, opacity: 0, fillOpacity: 0, interactive: false }).addTo(map);
+        marker.bindTooltip(text, { permanent: true, direction, offset, className: 'az-lot-reference-guide-label', opacity: 1 });
+        referenceGuideLayers.push(marker);
+      }
+
+      function refreshReferenceGuideCross() {
+        removeReferenceGuideLayers();
+        if (!map || !radiusReferenceFinalized || !radiusReferenceCenter) return;
+        const lineOptions = { color: '#0369a1', weight: 2, opacity: 0.9, dashArray: '5 4', interactive: false };
+        if (referenceShape === 'square' && referenceRectangleBounds && referenceRectangleBounds.isValid()) {
+          const bounds = referenceRectangleBounds;
+          const center = bounds.getCenter();
+          const west = window.L.latLng(center.lat, bounds.getWest());
+          const east = window.L.latLng(center.lat, bounds.getEast());
+          const north = window.L.latLng(bounds.getNorth(), center.lng);
+          const south = window.L.latLng(bounds.getSouth(), center.lng);
+          const horizontal = window.L.polyline([west, east], lineOptions).addTo(map);
+          const vertical = window.L.polyline([north, south], lineOptions).addTo(map);
+          referenceGuideLayers.push(horizontal, vertical);
+          const width = map.distance(west, east);
+          const height = map.distance(north, south);
+          const centerToHorizontalSide = width / 2;
+          const centerToVerticalSide = height / 2;
+          const eastMid = window.L.latLng(center.lat, center.lng + (bounds.getEast() - center.lng) * 0.58);
+          const northMid = window.L.latLng(center.lat + (bounds.getNorth() - center.lat) * 0.58, center.lng);
+          makeReferenceGuideLabel(eastMid, `Pusat → sisi ${formatReferenceDistance(centerToHorizontalSide)} · Sisi ↔ sisi ${formatReferenceDistance(width)}`, 'top', [0, -2]);
+          makeReferenceGuideLabel(northMid, `Pusat → sisi ${formatReferenceDistance(centerToVerticalSide)} · Sisi ↔ sisi ${formatReferenceDistance(height)}`, 'right', [4, 0]);
+          return;
+        }
+        if (referenceShape === 'circle') {
+          const radius = Math.max(0, Number(radiusReferenceSizeMeters) || 0);
+          const east = destinationLatLng(radiusReferenceCenter, radius, 90);
+          const west = destinationLatLng(radiusReferenceCenter, radius, 270);
+          const north = destinationLatLng(radiusReferenceCenter, radius, 0);
+          const south = destinationLatLng(radiusReferenceCenter, radius, 180);
+          referenceGuideLayers.push(window.L.polyline([west, east], lineOptions).addTo(map));
+          referenceGuideLayers.push(window.L.polyline([north, south], lineOptions).addTo(map));
+          const labelPoint = destinationLatLng(radiusReferenceCenter, radius * 0.58, 90);
+          makeReferenceGuideLabel(labelPoint, `Pusat → sisi ${formatReferenceDistance(radius)} · Sisi ↔ sisi ${formatReferenceDistance(radius * 2)}`, 'top', [0, -2]);
+        }
+      }
+
       function clearRadiusReference(resetReadout = true) {
         radiusReferenceMode = false;
         radiusReferenceCenter = null;
@@ -700,6 +755,7 @@
         radiusReferenceSizeMeters = 0;
         referenceRectangleBounds = null;
         removeReferenceResizeHandles();
+        removeReferenceGuideLayers();
         if (map && radiusReferenceShapeLayer) { try { map.removeLayer(radiusReferenceShapeLayer); } catch (_) {} }
         if (map && radiusReferenceCenterMarker) { try { map.removeLayer(radiusReferenceCenterMarker); } catch (_) {} }
         radiusReferenceShapeLayer = null;
@@ -743,6 +799,7 @@
       }
 
       function startRadiusReference() {
+        if (referenceShape !== 'square' && referenceShape !== 'circle') return;
         drawnItems.clearLayers();
         if (selectionSource === 'manual') clearSummary();
         clearRadiusReference(true);
@@ -777,10 +834,8 @@
         const center = referenceRectangleBounds.getCenter();
         radiusReferenceSizeMeters = map.distance(center, window.L.latLng(center.lat, referenceRectangleBounds.getEast()));
         updateRadiusReferenceReadout(radiusReferenceSizeMeters);
-        try {
-          radiusReferenceShapeLayer.unbindTooltip();
-          radiusReferenceShapeLayer.bindTooltip(radiusReferenceLabel(radiusReferenceSizeMeters), { permanent: true, direction: 'center', className: 'az-lot-radius-tooltip', opacity: 0.96 });
-        } catch (_) {}
+        try { radiusReferenceShapeLayer.unbindTooltip(); } catch (_) {}
+        refreshReferenceGuideCross();
       }
 
       function updateRectangleEdgeFromDrag(side, latlng) {
@@ -836,17 +891,17 @@
           radiusReferenceShapeLayer.setRadius(Math.max(1, radiusReferenceSizeMeters));
         }
         updateRadiusReferenceReadout(radiusReferenceSizeMeters);
-        try {
-          radiusReferenceShapeLayer.unbindTooltip();
-          radiusReferenceShapeLayer.bindTooltip(radiusReferenceLabel(radiusReferenceSizeMeters), { permanent: true, direction: 'center', className: 'az-lot-radius-tooltip', opacity: 0.96 });
-        } catch (_) {}
+        try { radiusReferenceShapeLayer.unbindTooltip(); } catch (_) {}
         if (finalized) {
           radiusReferenceFinalized = true;
           radiusReferenceMode = false;
           setReferenceDrawingCursor(false);
           if (referenceShape === 'square') createReferenceResizeHandles();
           updateRadiusReferenceReadout(radiusReferenceSizeMeters);
+          refreshReferenceGuideCross();
           void applyReferenceSelection();
+        } else {
+          removeReferenceGuideLayers();
         }
       }
 
@@ -1557,6 +1612,8 @@
       resetButton.addEventListener('click', () => {
         drawnItems.clearLayers();
         clearRadiusReference(true);
+        referenceShape = '';
+        updateReferenceShapeButtons();
         clearCadastreFocus();
         if (coordinateMarker && map) {
           try { map.removeLayer(coordinateMarker); } catch (_) {}
