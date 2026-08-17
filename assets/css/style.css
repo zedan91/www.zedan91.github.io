@@ -4386,9 +4386,13 @@ body.is-admin #purchaseSummaryList .az-purchase-show-btn{background:#2563eb!impo
 @media (prefers-reduced-motion:reduce){#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{animation-duration:1.4s}}
 
 
-/* AZOBSS PATCH 948: spinner-only busy state + Tempoh spacing */
-#userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{width:28px!important;min-width:28px!important;max-width:28px!important;flex-basis:28px!important;padding:0!important;gap:0!important;font-size:0!important}
-#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{width:11px!important;height:11px!important;flex:0 0 11px!important}
-#userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{content:""!important;display:none!important}
-@media(min-width:761px){#userPaPurchaseList .compact-purchase-row.compact-table-header .col-exp,#userPaPurchaseList .compact-purchase-row.compact-table-row .col-exp{transform:translateX(-12px)!important}#userPaPurchaseList .col-action{padding-left:6px!important}}
-@media(max-width:760px){#userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{width:26px!important;min-width:26px!important;max-width:26px!important;flex-basis:26px!important}}
+
+/* AZOBSS PATCH 949: explicit spinner child + non-overlapping Tempoh/action grid */
+@keyframes azobssLotDownloadSpin949{to{transform:rotate(360deg)}}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:28px!important;min-width:28px!important;max-width:28px!important;flex:0 0 28px!important;height:24px!important;min-height:24px!important;padding:0!important;gap:0!important;font-size:0!important;line-height:0!important;overflow:hidden!important}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before,#userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{content:none!important;display:none!important}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]>:not(.az-lot-busy-spinner-v949){display:none!important}
+#userPaPurchaseList .az-lot-busy-spinner-v949{display:block!important;width:12px!important;height:12px!important;min-width:12px!important;box-sizing:border-box!important;border:2px solid rgba(255,255,255,.34)!important;border-top-color:#fff!important;border-radius:50%!important;animation:azobssLotDownloadSpin949 .62s linear infinite!important;pointer-events:none!important}
+@media(min-width:761px){#userPaPurchaseList .compact-purchase-row.compact-table-header,#userPaPurchaseList .compact-purchase-row.compact-table-row{grid-template-columns:44px minmax(118px,.94fr) minmax(120px,.84fr) 72px minmax(132px,.90fr) 82px minmax(205px,1.08fr)!important;column-gap:10px!important}#userPaPurchaseList .compact-purchase-row.compact-table-header .col-exp,#userPaPurchaseList .compact-purchase-row.compact-table-row .col-exp{transform:none!important;position:relative!important;left:-8px!important;margin:0!important;padding:0!important;justify-self:start!important;text-align:left!important;white-space:nowrap!important}#userPaPurchaseList .col-action{min-width:195px!important;padding-left:10px!important;box-sizing:border-box!important;justify-content:flex-end!important;overflow:visible!important}#userPaPurchaseList .az-lot-download-action{gap:4px!important;width:100%!important;justify-content:flex-end!important;flex-wrap:nowrap!important}}
+@media(max-width:760px){#userPaPurchaseList .az-lot-format-download[data-busy="1"]{width:26px!important;min-width:26px!important;max-width:26px!important;flex-basis:26px!important}}
+@media(prefers-reduced-motion:reduce){#userPaPurchaseList .az-lot-busy-spinner-v949{animation-duration:1.2s!important}}

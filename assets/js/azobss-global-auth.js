@@ -3135,6 +3135,15 @@ function azobssCanShowPaBmAdminReset(){
 }
 window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
 
+function azobssSetLotDownloadBusyVisual(candidate){
+  try{
+    if(!candidate || !candidate.classList || !candidate.classList.contains('az-lot-format-download')) return false;
+    candidate.innerHTML = '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>';
+    candidate.setAttribute('aria-label', 'Sedang menyediakan fail');
+    return true;
+  }catch(_){ return false; }
+}
+
 function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
   try{
     if(document.body) document.body.classList.toggle('az-pabm-download-active', !!active);
@@ -3149,7 +3158,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
         delete candidate.dataset.downloadLocked;
         candidate.removeAttribute('aria-disabled');
         candidate.setAttribute('aria-busy', 'true');
-        candidate.textContent = String(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.label || 'Downloading...');
+        if(!azobssSetLotDownloadBusyVisual(candidate)) candidate.textContent = String(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.label || 'Downloading...');
         candidate.style.pointerEvents = 'none';
       }else if(active){
         candidate.dataset.downloadLocked = '1';
@@ -3162,6 +3171,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
           delete candidate.dataset.preparing;
           candidate.removeAttribute('aria-busy');
           candidate.textContent = defaultLabel;
+          candidate.setAttribute('aria-label', defaultLabel);
           candidate.style.pointerEvents = '';
         }
       }
@@ -3233,7 +3243,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   try{
     if(link){
       link.dataset.busy = '1';
-      link.textContent = downloadOwner.label;
+      if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       link.style.pointerEvents = 'none';
       link.setAttribute('aria-busy', 'true');
       link.setAttribute('href', '#');
@@ -3245,7 +3255,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     if(isLotDownload){
       downloadOwner.phase = 'preparing';
       downloadOwner.label = downloadFormat === 'original' ? 'Sedia ZIP...' : ('Sedia ' + downloadFormat.toUpperCase() + '...');
-      if(link) link.textContent = downloadOwner.label;
+      if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
       let readiness = null;
@@ -3266,7 +3276,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           return false;
         }
         downloadOwner.label = downloadFormat === 'original' ? 'Sedia ZIP...' : ('Sedia ' + downloadFormat.toUpperCase() + '...');
-        if(link) link.textContent = downloadOwner.label;
+        if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
         await new Promise(function(resolve){ window.setTimeout(resolve, attempt < 12 ? 2500 : 5000); });
       }
       if(!readiness || readiness.ready !== true || !/^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
@@ -3277,7 +3287,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       if(downloadFormat === 'original'){
         downloadOwner.phase = 'downloading';
         downloadOwner.label = 'Buka ZIP...';
-        if(link) link.textContent = downloadOwner.label;
+        if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
         const response = await fetch(directUrl, { method:'GET', cache:'no-store' });
         let data = null;
         try{ data = await response.json(); }catch(e){ data = null; }
@@ -3311,7 +3321,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       // DXF/DWG: after the source ZIP is ready, the AZOBSS backend returns a real binary attachment.
       downloadOwner.phase = 'downloading';
       downloadOwner.label = 'Muat ' + downloadFormat.toUpperCase() + '...';
-      if(link) link.textContent = downloadOwner.label;
+      if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
     }
 
@@ -3328,7 +3338,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       const elapsedMinutes = Math.floor(elapsedSeconds / 60);
       const elapsedRemainder = String(elapsedSeconds % 60).padStart(2, '0');
       downloadOwner.label = (isLotDownload ? ('Muat ' + downloadFormat.toUpperCase()) : 'Downloading') + `... ${elapsedMinutes}:${elapsedRemainder}`;
-      if(link) link.textContent = downloadOwner.label;
+      if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       const waitMs = Math.max(1500, Math.min(10000, Number(lastPreparingData.retryAfterMs || 4000)));
       await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
     }
@@ -3700,7 +3710,7 @@ function purchaseDetailRowHtml(r){
         const filename = azobssPaidPurchaseDownloadFilename(r, def.key);
         const active = !!(activeDownload && activeDownload.key === payload);
         const lockedByOther = !!(activeDownload && !active);
-        const shownLabel = active ? escHtml(activeDownload.label || ('Muat ' + def.label + '...')) : def.label;
+        const shownLabel = active ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : escHtml(def.label);
         return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${payload}', this, event); } return false;">${shownLabel}</a>`;
       }).join('');
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
