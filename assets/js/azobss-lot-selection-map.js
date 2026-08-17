@@ -145,6 +145,49 @@
       .az-lot-focus-note{margin:12px 0 0;color:#9fb3cf;font-size:12px;line-height:1.45}
       .az-lot-search-tooltip{border:1px solid #b91c1c!important;background:#fff7cc!important;color:#7f1d1d!important;font-weight:900!important;box-shadow:0 2px 8px rgba(15,23,42,.3)!important}
       .az-lot-focus-dialog .az-lot-map-canvas.is-loading:after{content:'Sedang memuatkan lot JUPEM...';position:absolute;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:6px;background:rgba(15,23,42,.9);color:#fff;font-weight:800;white-space:nowrap}
+      /* v950: compact the desktop side panel so all controls fit without an inner scrollbar. */
+      @media (min-width:761px) and (max-height:920px){
+        .az-lot-map-dialog{height:min(840px,calc(100vh - 16px))}
+        .az-lot-map-body{grid-template-columns:minmax(0,1fr) 306px}
+        .az-lot-map-side{overflow:hidden;padding:9px 10px}
+        .az-lot-map-status{min-height:0;margin:0 0 7px;padding:7px 8px;font-size:11.5px;line-height:1.28}
+        .az-lot-map-summary dt,.az-lot-map-summary dd{padding:6px 8px;font-size:12px;line-height:1.2}
+        .az-lot-radius-tool{margin:7px 0 0;padding:7px 8px}
+        .az-lot-reference-title{margin-bottom:5px;font-size:11px}
+        .az-lot-reference-shapes{gap:5px;margin-bottom:5px}
+        .az-lot-reference-shape-btn{min-height:30px;font-size:11px}
+        .az-lot-radius-btn{gap:6px;min-height:34px;padding:5px 9px;font-size:12px}
+        .az-lot-radius-icon{font-size:16px}
+        .az-lot-radius-select-option{gap:6px;margin-top:5px;padding:6px;font-size:10px;line-height:1.2}
+        .az-lot-radius-select-option input{width:14px;height:14px}
+        .az-lot-radius-readout{margin-top:5px;padding:5px 8px}
+        .az-lot-radius-row{gap:8px;padding:2.5px 0;font-size:11px;line-height:1.18}
+        .az-lot-radius-note{margin-top:4px;font-size:9px;line-height:1.18}
+        .az-lot-map-price{margin:7px 0 7px;padding:8px 9px;font-size:14px;line-height:1.15}
+        .az-lot-map-add{min-height:40px;font-size:14px}
+        .az-lot-map-reset{min-height:33px;margin-top:6px;font-size:12px}
+      }
+      @media (min-width:761px) and (max-height:780px){
+        .az-lot-map-dialog{height:calc(100vh - 10px)}
+        .az-lot-map-head{padding:8px 12px}
+        .az-lot-map-head h2{font-size:17px}
+        .az-lot-map-head small{margin-top:2px;font-size:10px}
+        .az-lot-map-close{width:34px;height:34px;flex-basis:34px;font-size:21px}
+        .az-lot-map-side{padding:7px 8px}
+        .az-lot-map-status{margin-bottom:5px;padding:5px 7px;font-size:10.5px;line-height:1.2}
+        .az-lot-map-summary dt,.az-lot-map-summary dd{padding:4.5px 7px;font-size:11px}
+        .az-lot-radius-tool{margin-top:5px;padding:6px 7px}
+        .az-lot-reference-title{margin-bottom:4px}
+        .az-lot-reference-shape-btn{min-height:27px}
+        .az-lot-radius-btn{min-height:31px;padding:4px 8px}
+        .az-lot-radius-select-option{margin-top:4px;padding:5px}
+        .az-lot-radius-readout{margin-top:4px;padding:4px 7px}
+        .az-lot-radius-row{padding:2px 0;font-size:10.5px}
+        .az-lot-radius-note{font-size:8.5px}
+        .az-lot-map-price{margin:5px 0;padding:7px 8px;font-size:13px}
+        .az-lot-map-add{min-height:36px;font-size:13px}
+        .az-lot-map-reset{min-height:30px;margin-top:5px;font-size:11px}
+      }
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
         .az-lot-map-dialog{width:100vw;height:100dvh;border:0;border-radius:0}
