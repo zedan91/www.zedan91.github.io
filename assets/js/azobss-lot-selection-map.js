@@ -232,6 +232,37 @@
         .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-add{min-height:32px!important;font-size:12px!important}
         .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-reset{min-height:27px!important}
       }
+
+      /* v956: slightly larger desktop side panel while keeping the no-scroll compact layout. */
+      @media (min-width:761px){
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-body{grid-template-columns:minmax(0,1fr) 320px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-side{padding:9px 10px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-status{margin-bottom:6px!important;padding:6px 8px!important;font-size:11px!important;line-height:1.2!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-summary dt,
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-summary dd{padding:4.5px 8px!important;font-size:11.5px!important;line-height:1.18!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-radius-tool{margin-top:6px!important;padding:7px 8px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-reference-title{font-size:11px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-reference-shape-btn{min-height:29px!important;padding:4px 6px!important;font-size:11px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-radius-btn{min-height:33px!important;padding:5px 8px!important;font-size:11.5px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-radius-select-option{padding:5px 7px!important;font-size:10px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-radius-readout{padding:5px 8px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-radius-row{padding:2px 0!important;font-size:11px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-radius-note{font-size:9px!important;line-height:1.15!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-price{margin:6px 0!important;padding:8px 9px!important;font-size:14px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-add{min-height:37px!important;padding:6px 8px!important;font-size:14px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956 .az-lot-map-reset{min-height:31px!important;margin-top:5px!important;padding:5px 8px!important;font-size:11.5px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-body{grid-template-columns:minmax(0,1fr) 312px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-side{padding:7px 8px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-status{font-size:10px!important;padding:4px 6px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-summary dt,
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-summary dd{padding:3px 6px!important;font-size:10.5px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-radius-tool{padding:5px 6px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-radius-row{font-size:10.5px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-radius-note{font-size:8.25px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-price{padding:6px!important;font-size:12.5px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-add{min-height:33px!important;font-size:12.5px!important}
+        .az-lot-map-dialog.az-lot-panel-comfort-v956.az-lot-ultra-compact-v951 .az-lot-map-reset{min-height:28px!important;font-size:11px!important}
+      }
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
         .az-lot-map-dialog{width:100vw;height:100dvh;border:0;border-radius:0}
@@ -464,6 +495,7 @@
         const desktop = window.matchMedia('(min-width: 761px)').matches;
         dialogNode.classList.toggle('az-lot-compact-v951', desktop);
         dialogNode.classList.toggle('az-lot-ultra-compact-v951', desktop && window.innerHeight <= 760);
+        dialogNode.classList.toggle('az-lot-panel-comfort-v956', desktop);
       };
       applyV951CompactLayout();
       window.addEventListener('resize', applyV951CompactLayout, { passive: true });
