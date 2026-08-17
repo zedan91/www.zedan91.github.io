@@ -12578,7 +12578,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   color:#e2e8f0 !important;
 }
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=952" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=952"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=953" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=953"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -15619,6 +15619,126 @@ body:not(.pa-bm-page) button{
   #userPaPurchaseList .az-compact-download-action-v952 .az-admin-reset-download-count{height:19px!important;min-height:19px!important;min-width:47px!important;font-size:8px!important;padding:0 4px!important;}
 }
 </style>
+
+
+<style id="azobss-purchase-action-hard-v953">
+/* v953 hard fix: old generic .user-pa-download rules had higher specificity and kept min-width:112px.
+   Force generic PA/BM download action to icon-only and reserve its own action track. */
+@keyframes azobssPurchaseSpin953{to{transform:rotate(360deg)}}
+body #userPaPurchaseList .compact-table-row .user-pa-action-with-count.az-compact-download-action-v953{
+  display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;
+  flex-wrap:nowrap!important;gap:3px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+}
+body #userPaPurchaseList .compact-table-row .user-pa-download.az-compact-download-icon-v953:not(.is-locked):not(.is-pending-status){
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 27px!important;width:27px!important;min-width:27px!important;max-width:27px!important;
+  height:22px!important;min-height:22px!important;max-height:22px!important;
+  padding:0!important;margin:0!important;border-radius:6px!important;
+  font-size:14px!important;font-weight:950!important;line-height:1!important;white-space:nowrap!important;
+  overflow:hidden!important;text-overflow:clip!important;text-indent:0!important;
+}
+body #userPaPurchaseList .compact-table-row .user-pa-download.az-compact-download-icon-v953[data-busy="1"]{
+  flex:0 0 27px!important;width:27px!important;min-width:27px!important;max-width:27px!important;
+  height:22px!important;min-height:22px!important;padding:0!important;font-size:0!important;line-height:0!important;
+}
+body #userPaPurchaseList .compact-table-row .user-pa-download.az-compact-download-icon-v953[data-busy="1"]::before,
+body #userPaPurchaseList .compact-table-row .user-pa-download.az-compact-download-icon-v953[data-busy="1"]::after{
+  content:none!important;display:none!important;
+}
+body #userPaPurchaseList .compact-table-row .user-pa-download.az-compact-download-icon-v953[data-busy="1"] > :not(.az-download-spinner-v953){display:none!important;}
+body #userPaPurchaseList .az-download-spinner-v953{
+  display:block!important;width:11px!important;height:11px!important;min-width:11px!important;max-width:11px!important;
+  box-sizing:border-box!important;border:2px solid rgba(255,255,255,.34)!important;border-top-color:#fff!important;
+  border-radius:50%!important;animation:azobssPurchaseSpin953 .6s linear infinite!important;pointer-events:none!important;
+}
+body #userPaPurchaseList .compact-table-row .az-compact-download-action-v953 .az-action-download-count{
+  flex:0 0 auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-width:24px!important;max-width:28px!important;margin:0!important;padding:0!important;
+  font-size:8px!important;line-height:1!important;font-weight:900!important;white-space:nowrap!important;
+}
+body #userPaPurchaseList .compact-table-row .az-compact-download-action-v953 .az-admin-reset-download-count{
+  flex:0 0 auto!important;height:18px!important;min-height:18px!important;max-height:18px!important;
+  min-width:44px!important;max-width:50px!important;padding:0 4px!important;margin:0!important;
+  border-radius:999px!important;font-size:7.5px!important;line-height:1!important;font-weight:900!important;white-space:nowrap!important;
+}
+@media (min-width:761px){
+  body #userPaPurchaseList .compact-purchase-row.compact-table-header,
+  body #userPaPurchaseList .compact-purchase-row.compact-table-row{
+    grid-template-columns:44px minmax(118px,.98fr) minmax(115px,.82fr) 70px minmax(138px,.95fr) 80px minmax(145px,.88fr)!important;
+    column-gap:7px!important;
+  }
+  body.pabm-owner-admin #userPaPurchaseList .compact-purchase-row.compact-table-header,
+  body.pabm-owner-admin #userPaPurchaseList .compact-purchase-row.compact-table-row{
+    grid-template-columns:32px 40px minmax(150px,1.02fr) minmax(110px,.76fr) 68px minmax(148px,.94fr) 78px minmax(145px,.86fr)!important;
+    column-gap:6px!important;
+  }
+  body #userPaPurchaseList .compact-purchase-row .col-exp{
+    transform:none!important;left:0!important;position:relative!important;padding-left:2px!important;padding-right:2px!important;
+    justify-self:start!important;text-align:left!important;overflow:visible!important;
+  }
+  body #userPaPurchaseList .compact-purchase-row .col-action{
+    display:flex!important;align-items:center!important;justify-content:flex-end!important;
+    min-width:0!important;width:100%!important;padding-left:2px!important;padding-right:2px!important;overflow:visible!important;
+  }
+}
+@media (max-width:760px){
+  body #userPaPurchaseList .compact-table-row .user-pa-download.az-compact-download-icon-v953:not(.is-locked):not(.is-pending-status){
+    flex-basis:26px!important;width:26px!important;min-width:26px!important;max-width:26px!important;height:20px!important;min-height:20px!important;
+  }
+  body #userPaPurchaseList .compact-table-row .az-compact-download-action-v953 .az-action-download-count{font-size:7.5px!important;min-width:22px!important;}
+  body #userPaPurchaseList .compact-table-row .az-compact-download-action-v953 .az-admin-reset-download-count{height:18px!important;min-height:18px!important;min-width:42px!important;font-size:7.2px!important;}
+}
+@media (prefers-reduced-motion:reduce){body #userPaPurchaseList .az-download-spinner-v953{animation-duration:1.2s!important}}
+</style>
+<script id="azobss-purchase-action-hard-v953-script">
+(function(){
+  function spinner(){
+    var s=document.createElement('span');
+    s.className='az-download-spinner-v953';
+    s.setAttribute('aria-hidden','true');
+    return s;
+  }
+  function normalizeRow(row){
+    if(!row || !row.querySelector) return;
+    /* Lot Kadaster has its own ZIP/DWG controls. */
+    if(row.querySelector('.az-lot-download-action,.az-lot-format-download')) return;
+    var btn=row.querySelector('.user-pa-download:not(.is-locked):not(.is-pending-status)');
+    if(!btn) return;
+    var wrap=btn.closest('.user-pa-action-with-count');
+    if(wrap) wrap.classList.add('az-compact-download-action-v953');
+    btn.classList.add('az-compact-download-icon-v953');
+    btn.setAttribute('data-default-label','↓');
+    btn.setAttribute('title','Download');
+    btn.setAttribute('aria-label', btn.getAttribute('data-busy')==='1' ? 'Sedang memproses muat turun' : 'Download');
+    if(btn.getAttribute('data-busy')==='1'){
+      if(!btn.querySelector('.az-download-spinner-v953')){
+        btn.replaceChildren(spinner());
+      }else{
+        Array.from(btn.children).forEach(function(ch){if(!ch.classList.contains('az-download-spinner-v953')) ch.remove();});
+      }
+    }else if(btn.textContent.trim()!=='↓' || btn.children.length){
+      btn.textContent='↓';
+    }
+  }
+  function normalizeAll(){
+    var list=document.getElementById('userPaPurchaseList');
+    if(!list) return;
+    list.querySelectorAll('.compact-table-row').forEach(normalizeRow);
+  }
+  function start(){
+    normalizeAll();
+    var list=document.getElementById('userPaPurchaseList');
+    if(!list || typeof MutationObserver==='undefined') return;
+    var queued=false;
+    new MutationObserver(function(){
+      if(queued) return; queued=true;
+      requestAnimationFrame(function(){queued=false;normalizeAll();});
+    }).observe(list,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-busy','aria-busy','class','data-default-label']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+})();
+</script>
 </body>
 </html>
 <script>
