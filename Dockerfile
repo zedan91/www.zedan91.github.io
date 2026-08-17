@@ -1,4 +1,4 @@
-# AZOBSS backend v942
+# AZOBSS backend v943
 # Fast Docker deployment layout:
 # - LibreDWG is built in an early, stable layer.
 # - Normal website/backend edits no longer invalidate the expensive LibreDWG build.
@@ -56,7 +56,7 @@ RUN bash -lc 'set -euo pipefail; \
     exit 1; \
   fi; \
   test -s /tmp/azobss-dwg-smoke.dwg; \
-  if ! /app/.azobss-libredwg/bin/dwgrewrite -v0 --as r2000 /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke-clean.dwg >/tmp/azobss-dwgrewrite-smoke.log 2>&1; then \
+  if ! /app/.azobss-libredwg/bin/dwgrewrite -v0 --as r14 /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke-clean.dwg >/tmp/azobss-dwgrewrite-smoke.log 2>&1; then \
     echo "[AZOBSS Docker] DWG rewrite sanitation smoke test failed:"; \
     cat /tmp/azobss-dwgrewrite-smoke.log || true; \
     exit 1; \
@@ -64,7 +64,7 @@ RUN bash -lc 'set -euo pipefail; \
   test -s /tmp/azobss-dwg-smoke-clean.dwg; \
   sig="$(head -c 6 /tmp/azobss-dwg-smoke-clean.dwg)"; \
   echo "[AZOBSS Docker] smoke DWG signature=${sig}"; \
-  echo "$sig" | grep -Eq "^AC10[0-9][0-9]$"; \
+  test "$sig" = "AC1014"; \
   rm -f /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke-clean.dwg /tmp/azobss-dwg-smoke.log /tmp/azobss-dwgrewrite-smoke.log /tmp/azobss-dxf2dwg-version.log /tmp/azobss-dwgrewrite-version.log'
 
 ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg \

@@ -16916,8 +16916,10 @@ if (pathname === "/api/lot-cad/health" && req.method === "GET") {
     },
     dxfProfile: "AC1027 AutoCAD 2013 + active viewport/extents",
     dwgConverter: dwgExecutable ? "dxf2dwg-ready" : "not-ready",
-    dwgSanitizer: dwgRewriteExecutable ? "dwgrewrite-ready" : "not-ready",
-    patch: "942"
+    dwgSanitizer: dwgRewriteExecutable ? "dwgrewrite-r14-ready" : "not-ready",
+    dwgOutputVersion: "AutoCAD R14 / AC1014",
+    dwgTextJustification: "Middle Center",
+    patch: "943"
   }, null, 2), "application/json", { "Cache-Control": "no-store" });
 }
 
@@ -17933,7 +17935,7 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("HEALTH:", `/api/create-payment`);
   console.log("SUBSCRIPTION_HEALTH:", `/api/subscription/health`);
   console.log("AZOBSS_PATCH:", "413-subscription-route-diagnostic");
-  console.log("LOT_CAD_PATCH:", "942-dwg-rewrite-recovery-clean");
+  console.log("LOT_CAD_PATCH:", "943-r14-middle-center-dwg");
   console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
   console.log("STRIPE_WEBHOOK:", `/api/stripe/webhook`);
   console.log("STRIPE_WEBHOOK_HEALTH:", `/api/stripe/webhook-health`);
