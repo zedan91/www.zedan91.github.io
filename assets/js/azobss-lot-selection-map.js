@@ -56,9 +56,14 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssLotSelectionStyles')) return;
+    // v951: remove stale map style blocks before injecting the current rules.
+    // This avoids older cached copies of this script leaving the original
+    // overflow:auto / larger spacing rules active in the same page.
+    document.querySelectorAll('#azobssLotSelectionStyles, #azobssLotSelectionStylesV950, #azobssLotSelectionStylesV951').forEach((node) => {
+      try { node.remove(); } catch (_) {}
+    });
     const style = document.createElement('style');
-    style.id = 'azobssLotSelectionStyles';
+    style.id = 'azobssLotSelectionStylesV951';
     style.textContent = `
       .az-lot-map-modal{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.84);backdrop-filter:blur(5px)}
       .az-lot-map-dialog{width:min(1180px,calc(100vw - 24px));height:min(820px,calc(100vh - 24px));display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid #38506f;border-radius:8px;background:#0d1729;color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.65)}
@@ -187,6 +192,45 @@
         .az-lot-map-price{margin:5px 0;padding:7px 8px;font-size:13px}
         .az-lot-map-add{min-height:36px;font-size:13px}
         .az-lot-map-reset{min-height:30px;margin-top:5px;font-size:11px}
+      }
+      /* v951: hard desktop compact profile.
+         Unlike v950, this does not rely only on viewport-height media queries.
+         The dialog gets a runtime class, so stale/overlapping rules cannot
+         leave the side panel scrollable on normal laptop screens. */
+      @media (min-width:761px){
+        .az-lot-map-dialog.az-lot-compact-v951{height:min(840px,calc(100vh - 14px))!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-body{grid-template-columns:minmax(0,1fr) 300px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-side{overflow:hidden!important;padding:7px 8px!important;scrollbar-width:none!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-side::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-status{min-height:0!important;margin:0 0 5px!important;padding:5px 7px!important;font-size:10.5px!important;line-height:1.18!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-summary dt,
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-summary dd{padding:4px 7px!important;font-size:11px!important;line-height:1.16!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-tool{margin:5px 0 0!important;padding:6px 7px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-reference-title{margin-bottom:4px!important;font-size:10.5px!important;line-height:1.1!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-reference-shapes{gap:4px!important;margin-bottom:4px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-reference-shape-btn{min-height:27px!important;padding:3px 5px!important;font-size:10.5px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-btn{gap:5px!important;min-height:31px!important;padding:4px 7px!important;font-size:11px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-icon{font-size:15px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-select-option{gap:5px!important;margin-top:4px!important;padding:5px 6px!important;font-size:9.5px!important;line-height:1.15!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-select-option input{width:13px!important;height:13px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-readout{margin-top:4px!important;padding:4px 7px!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-row{gap:7px!important;padding:1.5px 0!important;font-size:10.5px!important;line-height:1.15!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-radius-note{margin-top:3px!important;font-size:8.5px!important;line-height:1.13!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-price{margin:5px 0!important;padding:7px 8px!important;font-size:13px!important;line-height:1.1!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-add{min-height:35px!important;padding:5px 7px!important;font-size:13px!important;line-height:1.1!important}
+        .az-lot-map-dialog.az-lot-compact-v951 .az-lot-map-reset{min-height:29px!important;margin-top:4px!important;padding:4px 7px!important;font-size:11px!important;line-height:1.1!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-head{padding:7px 11px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-head h2{font-size:16px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-head small{margin-top:1px!important;font-size:9px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-close{width:31px!important;height:31px!important;flex-basis:31px!important;font-size:19px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-status{font-size:9.5px!important;padding:4px 6px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-summary dt,
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-summary dd{padding:3px 6px!important;font-size:10px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-radius-tool{padding:5px 6px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-radius-note{font-size:8px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-price{padding:6px!important;font-size:12px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-add{min-height:32px!important;font-size:12px!important}
+        .az-lot-map-dialog.az-lot-ultra-compact-v951 .az-lot-map-reset{min-height:27px!important}
       }
       @media(max-width:760px){
         .az-lot-map-modal{padding:0;align-items:stretch}
@@ -410,6 +454,19 @@
         </section>`;
       document.body.appendChild(modal);
       document.body.style.overflow = 'hidden';
+
+      // v951: apply compact sizing from the real browser viewport instead of
+      // depending only on CSS max-height matching. This also wins against any
+      // stale v950 style block that may have been injected earlier.
+      const dialogNode = modal.querySelector('.az-lot-map-dialog');
+      const applyV951CompactLayout = () => {
+        if (!dialogNode) return;
+        const desktop = window.matchMedia('(min-width: 761px)').matches;
+        dialogNode.classList.toggle('az-lot-compact-v951', desktop);
+        dialogNode.classList.toggle('az-lot-ultra-compact-v951', desktop && window.innerHeight <= 760);
+      };
+      applyV951CompactLayout();
+      window.addEventListener('resize', applyV951CompactLayout, { passive: true });
 
       const canvas = modal.querySelector('.az-lot-map-canvas');
       const mapTitleNode = modal.querySelector('#azLotMapTitle');
@@ -1122,6 +1179,7 @@
         if (jupemRecoveryTimer) window.clearTimeout(jupemRecoveryTimer);
         locationSearchSerial += 1;
         document.removeEventListener('keydown', onDocumentKeyDown);
+        try { window.removeEventListener('resize', applyV951CompactLayout); } catch (_) {}
         try { if (map) map.remove(); } catch (_) {}
         modal.remove();
         document.body.style.overflow = previousBodyOverflow;
