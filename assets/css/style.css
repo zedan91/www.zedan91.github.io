@@ -4384,3 +4384,11 @@ body.is-admin #purchaseSummaryList .az-purchase-show-btn{background:#2563eb!impo
 #userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{content:"";width:9px;height:9px;flex:0 0 9px;box-sizing:border-box;border:2px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:azobssLotDownloadSpin945 .7s linear infinite}
 #userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{content:attr(data-default-label);font-size:8.8px!important;font-weight:950!important;line-height:1!important;color:inherit}
 @media (prefers-reduced-motion:reduce){#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{animation-duration:1.4s}}
+
+
+/* AZOBSS PATCH 948: spinner-only busy state + Tempoh spacing */
+#userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{width:28px!important;min-width:28px!important;max-width:28px!important;flex-basis:28px!important;padding:0!important;gap:0!important;font-size:0!important}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{width:11px!important;height:11px!important;flex:0 0 11px!important}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{content:""!important;display:none!important}
+@media(min-width:761px){#userPaPurchaseList .compact-purchase-row.compact-table-header .col-exp,#userPaPurchaseList .compact-purchase-row.compact-table-row .col-exp{transform:translateX(-12px)!important}#userPaPurchaseList .col-action{padding-left:6px!important}}
+@media(max-width:760px){#userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{width:26px!important;min-width:26px!important;max-width:26px!important;flex-basis:26px!important}}

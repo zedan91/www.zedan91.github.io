@@ -18708,5 +18708,42 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
 })();
 </script>
 
+
+<style id="azobss-lot-download-spinner-only-v948">
+/* v948: while ZIP/DWG is busy, show only the animated spinner; no loading text. */
+#userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{
+  width:28px!important;
+  min-width:28px!important;
+  max-width:28px!important;
+  flex-basis:28px!important;
+  padding:0!important;
+  gap:0!important;
+  font-size:0!important;
+}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{
+  width:11px!important;
+  height:11px!important;
+  flex:0 0 11px!important;
+}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{
+  content:""!important;
+  display:none!important;
+}
+/* Shift the Tempoh column slightly left so it has clearer separation from ZIP/DWG actions. */
+@media (min-width:761px){
+  #userPaPurchaseList .compact-purchase-row.compact-table-header .col-exp,
+  #userPaPurchaseList .compact-purchase-row.compact-table-row .col-exp{
+    transform:translateX(-12px)!important;
+  }
+  #userPaPurchaseList .col-action{
+    padding-left:6px!important;
+  }
+}
+@media (max-width:760px){
+  #userPaPurchaseList .compact-table-row .az-lot-format-download[data-busy="1"]{
+    width:26px!important;min-width:26px!important;max-width:26px!important;flex-basis:26px!important;
+  }
+}
+</style>
 </body>
 </html>
