@@ -10691,13 +10691,45 @@ function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = false) 
 let azobssStesenRecordsCache = null;
 let azobssStesenRecordsMtime = 0;
 
+function azobssParseRecoverableJsonArray(raw, label = "JSON database") {
+  const source = String(raw || "");
+  try {
+    return JSON.parse(source);
+  } catch (firstError) {
+    let inString = false;
+    let escaped = false;
+    let depth = 0;
+    let lastCompleteObjectEnd = -1;
+    for (let i = 0; i < source.length; i += 1) {
+      const ch = source[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (ch === "\\") escaped = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') inString = true;
+      else if (ch === "[") depth += 1;
+      else if (ch === "{") depth += 1;
+      else if (ch === "}") {
+        depth -= 1;
+        if (depth === 1) lastCompleteObjectEnd = i;
+      } else if (ch === "]") depth -= 1;
+    }
+    if (lastCompleteObjectEnd < 0 || source.trimStart()[0] !== "[") throw firstError;
+    const recovered = JSON.parse(source.slice(0, lastCompleteObjectEnd + 1) + "]");
+    console.warn(`[AZOBSS] ${label} ended incompletely; recovered ${recovered.length} complete records.`);
+    return recovered;
+  }
+}
+
 function azobssReadStesenRecords() {
   const fp = path.join(__dirname, "stesen-tanda-aras-records.json");
   try {
     const st = fs.existsSync(fp) ? fs.statSync(fp) : null;
     if (!st) return [];
     if (azobssStesenRecordsCache && azobssStesenRecordsMtime === st.mtimeMs) return azobssStesenRecordsCache;
-    const parsed = JSON.parse(fs.readFileSync(fp, "utf8"));
+    const parsed = azobssParseRecoverableJsonArray(fs.readFileSync(fp, "utf8"), "stesen-tanda-aras-records.json");
     azobssStesenRecordsCache = Array.isArray(parsed) ? parsed : [];
     azobssStesenRecordsMtime = st.mtimeMs;
     return azobssStesenRecordsCache;
@@ -16878,7 +16910,7 @@ if (pathname === "/api/lot-cad/health" && req.method === "GET") {
     },
     dxfProfile: "AC1027 AutoCAD 2013 + active viewport/extents",
     dwgConverter: dwgExecutable ? "dxf2dwg-ready" : "not-ready",
-    patch: "938"
+    patch: "939"
   }, null, 2), "application/json", { "Cache-Control": "no-store" });
 }
 
