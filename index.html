@@ -13208,7 +13208,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=949" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
+<script src="/assets/js/azobss-global-auth.js?v=952" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
 /* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList,
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList *{
@@ -18751,6 +18751,43 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
   #userPaPurchaseList .az-lot-format-download[data-busy="1"]{width:26px!important;min-width:26px!important;max-width:26px!important;flex-basis:26px!important;}
 }
 @media (prefers-reduced-motion:reduce){#userPaPurchaseList .az-lot-busy-spinner-v949{animation-duration:1.2s!important}}
+</style>
+
+<style id="azobss-purchase-action-compact-v952">
+/* v952: compact generic PA/BM download action so it never overlaps Tempoh. */
+#userPaPurchaseList .az-compact-download-action-v952{
+  display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;
+  flex-wrap:nowrap!important;gap:4px!important;min-width:0!important;width:auto!important;max-width:100%!important;
+}
+#userPaPurchaseList .az-compact-download-icon-v952{
+  width:30px!important;min-width:30px!important;max-width:30px!important;flex:0 0 30px!important;
+  height:22px!important;min-height:22px!important;padding:0!important;border-radius:6px!important;
+  font-size:11px!important;line-height:1!important;font-weight:950!important;overflow:hidden!important;
+}
+#userPaPurchaseList .az-compact-download-icon-v952[data-busy="1"]{
+  width:28px!important;min-width:28px!important;max-width:28px!important;flex-basis:28px!important;
+  height:22px!important;min-height:22px!important;padding:0!important;font-size:0!important;line-height:0!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+}
+#userPaPurchaseList .az-compact-download-icon-v952[data-busy="1"]::before,
+#userPaPurchaseList .az-compact-download-icon-v952[data-busy="1"]::after{content:none!important;display:none!important;}
+#userPaPurchaseList .az-compact-download-icon-v952[data-busy="1"] > :not(.az-lot-busy-spinner-v949){display:none!important;}
+#userPaPurchaseList .az-compact-download-action-v952 .az-action-download-count{
+  margin:0!important;padding:0 1px!important;min-width:27px!important;font-size:9px!important;line-height:1!important;white-space:nowrap!important;
+}
+#userPaPurchaseList .az-compact-download-action-v952 .az-admin-reset-download-count{
+  height:20px!important;min-height:20px!important;min-width:50px!important;padding:0 5px!important;
+  font-size:8.5px!important;line-height:1!important;border-radius:999px!important;white-space:nowrap!important;
+}
+@media (min-width:761px){
+  #userPaPurchaseList .compact-table-row .col-action{overflow:visible!important;}
+  #userPaPurchaseList .az-compact-download-action-v952{margin-left:auto!important;}
+}
+@media (max-width:760px){
+  #userPaPurchaseList .az-compact-download-icon-v952{width:28px!important;min-width:28px!important;max-width:28px!important;flex-basis:28px!important;height:20px!important;min-height:20px!important;}
+  #userPaPurchaseList .az-compact-download-action-v952 .az-action-download-count{font-size:8.5px!important;min-width:25px!important;}
+  #userPaPurchaseList .az-compact-download-action-v952 .az-admin-reset-download-count{height:19px!important;min-height:19px!important;min-width:47px!important;font-size:8px!important;padding:0 4px!important;}
+}
 </style>
 </body>
 </html>

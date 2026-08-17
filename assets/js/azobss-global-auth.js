@@ -3137,7 +3137,7 @@ window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
 
 function azobssSetLotDownloadBusyVisual(candidate){
   try{
-    if(!candidate || !candidate.classList || !candidate.classList.contains('az-lot-format-download')) return false;
+    if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download') || candidate.classList.contains('is-locked')) return false;
     candidate.innerHTML = '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>';
     candidate.setAttribute('aria-label', 'Sedang menyediakan fail');
     return true;
@@ -3361,7 +3361,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         }catch(e){}
       }
       if(openUrl){
-        try{ if(link){ link.textContent = 'Opening Download...'; } }catch(e){}
+        try{ if(link){ if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; } }catch(e){}
         try{ window.location.href = openUrl; }
         catch(e){
           const a = document.createElement('a');
@@ -3390,7 +3390,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       let data = null;
       try{ data = await response.json(); }catch(e){ data = null; }
       if(data && data.openUrl){
-        try{ if(link) link.textContent = 'Opening Download...'; window.location.href = data.openUrl; }
+        try{ if(link && !azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; window.location.href = data.openUrl; }
         catch(e){
           const a = document.createElement('a');
           a.href = data.openUrl;
@@ -3715,8 +3715,9 @@ function purchaseDetailRowHtml(r){
       }).join('');
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }else{
-      const readyLabel = 'Download';
-      actionHtml = `<div class="user-pa-action-with-count"><a class="user-pa-download" href="#" data-default-label="Download" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${isActiveDownload ? escHtml(activeDownload.label || 'Downloading...') : readyLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
+      const readyLabel = '⬇';
+      const shownLabel = isActiveDownload ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : readyLabel;
+      actionHtml = `<div class="user-pa-action-with-count az-compact-download-action-v952"><a class="user-pa-download az-compact-download-icon-v952" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${shownLabel}</a>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else if(paid){
     const reason = limitReached ? 'Digunakan' : (expired ? 'Tamat' : 'Expired');
