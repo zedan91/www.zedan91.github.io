@@ -12578,7 +12578,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   color:#e2e8f0 !important;
 }
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=932" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=932"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=946" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=946"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -15462,6 +15462,42 @@ body:not(.pa-bm-page) button{
 <script src="/assets/js/azobss-gps-search.js?v=18" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=17" defer></script>
 <script src="/assets/js/azobss-radio-player.js?v=370" defer></script>
+
+<style id="azobss-lot-download-spinner-v945">
+/* v945: compact animated loading indicator for ZIP/DWG/DXF while a controlled download is preparing/downloading. */
+@keyframes azobssLotDownloadSpin945{to{transform:rotate(360deg)}}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:3px!important;
+  font-size:0!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{
+  content:"";
+  width:9px;
+  height:9px;
+  flex:0 0 9px;
+  box-sizing:border-box;
+  border:2px solid rgba(255,255,255,.38);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:azobssLotDownloadSpin945 .7s linear infinite;
+}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{
+  content:attr(data-default-label);
+  font-size:8.8px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  color:inherit;
+}
+@media (prefers-reduced-motion:reduce){
+  #userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{animation-duration:1.4s}
+}
+</style>
 </body>
 </html>
 <script>

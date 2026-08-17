@@ -4376,3 +4376,11 @@ body.is-admin #purchaseSummaryList .az-purchase-show-btn{background:#2563eb!impo
   line-height:1.2 !important;
   text-align:left !important;
 }
+
+
+/* AZOBSS PATCH 945: loading spinner for compact Lot Kadaster format downloads */
+@keyframes azobssLotDownloadSpin945{to{transform:rotate(360deg)}}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;font-size:0!important;overflow:hidden!important;text-overflow:clip!important;white-space:nowrap!important}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{content:"";width:9px;height:9px;flex:0 0 9px;box-sizing:border-box;border:2px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:azobssLotDownloadSpin945 .7s linear infinite}
+#userPaPurchaseList .az-lot-format-download[data-busy="1"]::after{content:attr(data-default-label);font-size:8.8px!important;font-weight:950!important;line-height:1!important;color:inherit}
+@media (prefers-reduced-motion:reduce){#userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{animation-duration:1.4s}}

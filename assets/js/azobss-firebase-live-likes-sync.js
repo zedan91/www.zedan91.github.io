@@ -3228,8 +3228,7 @@ function purchaseDetailRowHtml(r){
     if(isLotRecord){
       const formatDefs = [
         { key:'original', label:'ZIP', title:'Download data asal JUPEM (.zip)' },
-        { key:'dwg', label:'DWG', title:'Download AutoCAD DWG berlayer' },
-        { key:'dxf', label:'DXF', title:'Download DXF berlayer' }
+        { key:'dxf', label:'DWG', title:'Download DWG' }
       ];
       const formatButtons = formatDefs.map(function(def){
         const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);
