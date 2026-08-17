@@ -6,6 +6,33 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     dockerCommand: node deploy-server.js
+    # v941: only backend/runtime-relevant changes trigger an automatic Render deploy.
+    # Frontend-only edits (e.g. Tempah-Servis-IT, PA-BM HTML, posters/images) stay on GitHub Pages
+    # and no longer rebuild this Docker service.
+    buildFilter:
+      paths:
+        - Dockerfile
+        - .dockerignore
+        - package.json
+        - .npmrc
+        - deploy-server.js
+        - lib/**
+        - scripts/**
+        - templates/**
+        - backend/**
+        - _private-tech-vault/**
+        - affiliate-products.json
+        - azobss-software-tools-export (5).json
+        - admin-audit-logs.json
+        - premium-orders.json
+        - premium-download-tokens.json
+        - premium-download-sessions.json
+        - commission-records.json
+        - stesen-tanda-aras-records.json
+        - stesen-gps-records.json
+        - lembar-piawai-records.json
+        - Sound-Effects/catalog-7210.json
+      ignoredPaths: []
     envVars:
       - key: ADMIN_KEY
         sync: false

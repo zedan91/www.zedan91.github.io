@@ -1,10 +1,14 @@
-# AZOBSS backend v938
-# Docker runtime provides the OS toolchain required by LibreDWG/dxf2dwg.
+# AZOBSS backend v941
+# Fast Docker deployment layout:
+# - LibreDWG is built in an early, stable layer.
+# - Normal website/backend edits no longer invalidate the expensive LibreDWG build.
+# - npm install is kept separate from application source for better Render layer caching.
 FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     NODE_ENV=production \
-    PORT=10000
+    PORT=10000 \
+    AZOBSS_LIBREDWG_BUILD_JOBS=1
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -29,16 +33,11 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY package.json .npmrc ./
+# IMPORTANT: build the expensive converter BEFORE package.json and application files.
+# Render caches intermediate Docker layers. This layer is rebuilt only when the
+# LibreDWG installer/smoke input or the Docker toolchain above changes.
 COPY scripts/install-libredwg.sh ./scripts/install-libredwg.sh
-RUN chmod +x ./scripts/install-libredwg.sh \
- && npm install --omit=dev --no-audit --no-fund
-
-COPY . .
-
-# Build the converter and verify it with a deliberately lean R2000 smoke DXF.
-# v938 keeps the lean R2000 smoke input and explicitly disables optional Python
-# bindings/tests so the slim Node Docker image does not need a Python runtime.
+COPY scripts/dwg-smoke-test.dxf ./scripts/dwg-smoke-test.dxf
 RUN bash -lc 'set -euo pipefail; \
   chmod +x ./scripts/install-libredwg.sh; \
   ./scripts/install-libredwg.sh; \
@@ -61,8 +60,16 @@ RUN bash -lc 'set -euo pipefail; \
   echo "$sig" | grep -Eq "^AC10[0-9][0-9]$"; \
   rm -f /tmp/azobss-dwg-smoke.dwg /tmp/azobss-dwg-smoke.log /tmp/azobss-dxf2dwg-version.log'
 
-ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg \
-    AZOBSS_LIBREDWG_BUILD_JOBS=1
+ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg
+
+# Dependency layer: invalidated only when package metadata changes.
+# No LibreDWG postinstall hook here, so changing the AZOBSS package version does
+# NOT trigger a second expensive converter compilation.
+COPY package.json .npmrc ./
+RUN npm install --omit=dev --no-audit --no-fund
+
+# Application source comes last. Normal code/data changes should reuse all heavy layers above.
+COPY . .
 
 EXPOSE 10000
 CMD ["node", "deploy-server.js"]

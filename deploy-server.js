@@ -16910,7 +16910,7 @@ if (pathname === "/api/lot-cad/health" && req.method === "GET") {
     },
     dxfProfile: "AC1027 AutoCAD 2013 + active viewport/extents",
     dwgConverter: dwgExecutable ? "dxf2dwg-ready" : "not-ready",
-    patch: "940"
+    patch: "941"
   }, null, 2), "application/json", { "Cache-Control": "no-store" });
 }
 
