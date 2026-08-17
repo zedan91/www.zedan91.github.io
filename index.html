@@ -13208,7 +13208,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=955" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
+<script src="/assets/js/azobss-global-auth.js?v=957" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
 /* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList,
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList *{
@@ -18759,6 +18759,40 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
 #userPaPurchaseList .az-generic-download-button-v955{font-size:15px!important;line-height:1!important;}
 #userPaPurchaseList .az-generic-download-button-v955[data-busy="1"]{font-size:0!important;}
 </style>
+<style id="azobss-download-limit-action-v957">
+/* v957: used-up PA/BM action matches Lot Kadaster action sizing exactly. */
+#userPaPurchaseList .az-download-limit-action-v957{
+  display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;
+  gap:4px!important;width:100%!important;flex-wrap:nowrap!important;
+}
+#userPaPurchaseList .compact-table-row .user-pa-download.az-download-limit-used-v957:not(.is-pending-status){
+  width:42px!important;min-width:42px!important;max-width:42px!important;
+  height:24px!important;min-height:24px!important;flex:0 0 42px!important;
+  padding:0!important;margin:0!important;border-radius:6px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  background:#475569!important;border:1px solid #64748b!important;color:#fff!important;
+  font-size:12px!important;line-height:1!important;overflow:hidden!important;
+  opacity:1!important;pointer-events:none!important;white-space:nowrap!important;
+}
+#userPaPurchaseList .az-download-limit-action-v957 .az-action-download-count{
+  margin:0!important;padding:0 2px!important;min-width:28px!important;
+  font-size:10px!important;font-weight:850!important;line-height:1!important;white-space:nowrap!important;
+}
+#userPaPurchaseList .az-download-limit-action-v957 .az-admin-reset-download-count{
+  height:22px!important;min-height:22px!important;min-width:54px!important;
+  padding:0 6px!important;font-size:9px!important;line-height:1!important;
+}
+@media(max-width:760px){
+  #userPaPurchaseList .compact-table-row .user-pa-download.az-download-limit-used-v957:not(.is-pending-status){
+    width:38px!important;min-width:38px!important;max-width:38px!important;flex-basis:38px!important;
+    height:22px!important;min-height:22px!important;font-size:11px!important;
+  }
+  #userPaPurchaseList .az-download-limit-action-v957 .az-admin-reset-download-count{
+    min-width:48px!important;height:20px!important;min-height:20px!important;padding:0 5px!important;font-size:8.5px!important;
+  }
+}
+</style>
+
 
 </body>
 </html>
