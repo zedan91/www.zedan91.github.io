@@ -17,6 +17,8 @@ services:
         value: Asia/Kuala_Lumpur
       - key: AZOBSS_DISABLE_RUNTIME_NPM
         value: "1"
+      - key: AZOBSS_LIBREDWG_BUILD_JOBS
+        value: "1"
       - key: AZOBSS_STRICT_JUPEM_TLS
         value: "0"
       - key: JUPEM_EBIZ_USERNAME

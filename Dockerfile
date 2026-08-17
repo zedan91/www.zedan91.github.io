@@ -1,4 +1,4 @@
-# AZOBSS backend v935
+# AZOBSS backend v936
 # Docker runtime is used so the DWG converter always has the OS-level build tools it needs.
 FROM node:20-bookworm-slim
 
@@ -19,8 +19,12 @@ RUN apt-get update \
       autoconf \
       automake \
       libtool \
+      libtool-bin \
+      m4 \
       pkg-config \
       perl \
+      gzip \
+      zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -45,7 +49,8 @@ RUN chmod +x ./scripts/install-libredwg.sh \
  && head -c 6 /tmp/azobss-dwg-smoke.dwg | grep -Eq '^AC10[0-9][0-9]$' \
  && rm -f /tmp/azobss-dwg-smoke.dwg
 
-ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg
+ENV AZOBSS_DXF2DWG_PATH=/app/.azobss-libredwg/bin/dxf2dwg \
+    AZOBSS_LIBREDWG_BUILD_JOBS=1
 
 EXPOSE 10000
 CMD ["node", "deploy-server.js"]

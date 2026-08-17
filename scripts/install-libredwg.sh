@@ -31,7 +31,7 @@ if [[ -x "$BIN" ]]; then
 fi
 
 missing=0
-for cmd in curl tar make gcc sha256sum autoconf automake libtool; do
+for cmd in curl tar make gcc sha256sum autoconf automake libtoolize m4; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     log "Required build tool '$cmd' is unavailable."
     missing=1
@@ -41,6 +41,13 @@ if [[ "$missing" == "1" ]]; then
   log "LibreDWG cannot be built in this environment. DXF remains available."
   exit 0
 fi
+
+# Debian/Ubuntu's libtool package reliably provides `libtoolize`. A generic
+# /usr/bin/libtool executable is not required here: ./configure generates the
+# project-local libtool wrapper used by make. v935 incorrectly required
+# `command -v libtool`, which caused Docker builds to stop even though the
+# libtool package was already installed.
+log "Build tool preflight OK (libtoolize=$(command -v libtoolize))."
 
 rm -rf "$WORK"
 mkdir -p "$WORK" "$PREFIX" "$PREFIX/bin"
@@ -82,7 +89,7 @@ if ! env CFLAGS="${CFLAGS:-} -O2 -Wno-error" ./configure \
   exit 0
 fi
 
-JOBS="${AZOBSS_LIBREDWG_BUILD_JOBS:-2}"
+JOBS="${AZOBSS_LIBREDWG_BUILD_JOBS:-1}"
 log "Compiling LibreDWG (jobs=${JOBS})..."
 if ! make -j"$JOBS" >>"$STATUS_FILE" 2>&1; then
   log "Parallel compile failed; retrying single-threaded."
