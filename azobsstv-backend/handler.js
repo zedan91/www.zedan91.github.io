@@ -309,13 +309,15 @@ function createAZOBSSTVHandler(options = {}) {
     try {
       for (let hop = 0; hop <= 4; hop++) {
         const headers = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36 AZOBSSTV/1.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
           'Accept': req.headers.accept || 'application/vnd.apple.mpegurl, application/x-mpegURL, */*'
         };
         // RTM's public HLS CDN is normally requested from the official RTMKlik player.
         // Send the official public page as Referer for compatibility; no token/cookie/credential is added.
         if (current.hostname.toLowerCase() === 'd25tgymtnqzu8s.cloudfront.net') {
           headers.Referer = 'https://rtmklik.rtm.gov.my/';
+          headers.Origin = 'https://rtmklik.rtm.gov.my';
+          headers['Accept-Language'] = 'ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7';
         }
         if (req.headers.range) headers.Range = cleanText(req.headers.range, 200);
         const upstream = await fetch(current.toString(), {
@@ -332,7 +334,10 @@ function createAZOBSSTVHandler(options = {}) {
           continue;
         }
         if (!upstream.ok && upstream.status !== 206) {
-          throw Object.assign(new Error('Upstream stream HTTP ' + upstream.status), { statusCode: upstream.status === 404 ? 404 : 502 });
+          const upstreamStatus = Number(upstream.status) || 502;
+          // Preserve normal 4xx codes so the frontend can distinguish an upstream block from a relay failure.
+          const publicStatus = upstreamStatus >= 400 && upstreamStatus < 500 ? upstreamStatus : 502;
+          throw Object.assign(new Error('Upstream stream HTTP ' + upstreamStatus), { statusCode: publicStatus, publicMessage: 'Upstream stream HTTP ' + upstreamStatus });
         }
         const contentType = upstream.headers.get('content-type') || '';
         const isHls = /mpegurl/i.test(contentType) || /\.m3u8$/i.test(current.pathname);
@@ -440,7 +445,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.969', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.970', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'direct-first-relay-fallback', time: Date.now() });
         return true;
       }
 
@@ -588,7 +593,8 @@ function createAZOBSSTVHandler(options = {}) {
     } catch (err) {
       const status = Number(err && err.statusCode) || (err && err.name === 'AbortError' ? 504 : 500);
       console.warn('AZOBSSTV API error:', pathname, err && (err.stack || err.message || err));
-      sendJson(res, status, { ok: false, error: status >= 500 ? 'AZOBSSTV backend request failed' : cleanText(err && err.message, 300) });
+      const publicError = err && err.publicMessage ? cleanText(err.publicMessage, 300) : (status >= 500 ? 'AZOBSSTV backend request failed' : cleanText(err && err.message, 300));
+      sendJson(res, status, { ok: false, error: publicError });
       return true;
     }
   };
