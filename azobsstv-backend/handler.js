@@ -676,7 +676,7 @@ function createAZOBSSTVHandler(options = {}) {
     return { current_title: currentTitle, schedule, parser: schedule.length ? 'visible-or-nextjs' : 'none' };
   }
 
-  // v981: Mana-Mana's public page is only the presentation layer. The public
+  // v982: Mana-Mana's public page is only the presentation layer. The public
   // WebGrab+Plus siteini for mana2.my documents the Revlet TV-guide service used
   // by Mana-Mana itself. Prefer that structured guide API, then fall back to the
   // v980 HTML/Next.js parser if the upstream guide service changes or is down.
@@ -741,16 +741,23 @@ function createAZOBSSTVHandler(options = {}) {
       device_id: '5',
       display_lang_code: 'ENG',
       device_sub_type: 'Chrome,142.0.0.0,Windows',
-      timezone: 'Asia/Kuala_Lumpur'
+      timezone: 'Atlantic/Reykjavik'
     }).toString();
     let data;
     try {
-      data = await fetchJsonTimed(tokenUrl, { method: 'GET', headers: mana2ApiHeaders() }, 12000);
-    } catch (firstError) {
-      // Older Revlet deployments accepted the same token request as POST.
+      // Public mana2.my WebGrab+Plus definition uses POST_BACK(GET,GET); POST is the
+      // closest first request, with GET retained as a compatibility retry.
       data = await fetchJsonTimed(tokenUrl, { method: 'POST', headers: mana2ApiHeaders() }, 12000);
+    } catch (firstError) {
+      data = await fetchJsonTimed(tokenUrl, { method: 'GET', headers: mana2ApiHeaders() }, 12000);
     }
-    const sessionId = deepFindStringByKeys(data, new Set(['sessionid', 'session_id', 'session']));
+    let sessionId = deepFindStringByKeys(data, new Set(['sessionid', 'session_id', 'session']));
+    if (!sessionId) {
+      try {
+        data = await fetchJsonTimed(tokenUrl, { method: 'GET', headers: mana2ApiHeaders() }, 12000);
+        sessionId = deepFindStringByKeys(data, new Set(['sessionid', 'session_id', 'session']));
+      } catch (_) {}
+    }
     if (!sessionId) {
       const err = new Error('Mana-Mana sessionId not found');
       err.statusCode = 502;
@@ -904,8 +911,9 @@ function createAZOBSSTVHandler(options = {}) {
 
   async function getMana2GuideSchedule(rawUrl, channelName, tvgId) {
     const sessionId = await getMana2SessionId(false);
-    const catalog = await getMana2ChannelCatalog(sessionId, false);
-    const channelId = resolveMana2ChannelId(channelName, rawUrl, tvgId, catalog);
+    const knownOnly = resolveMana2ChannelId(channelName, rawUrl, tvgId, []);
+    const catalog = knownOnly ? [] : await getMana2ChannelCatalog(sessionId, false);
+    const channelId = knownOnly || resolveMana2ChannelId(channelName, rawUrl, tvgId, catalog);
     if (!channelId) {
       const err = new Error('Mana-Mana guide channel id not found');
       err.statusCode = 404;
@@ -996,7 +1004,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.981', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-revlet-tvguide-schedule', manamana_schedule: true, manamana_schedule_parser: 'revlet-tvguide-api-with-html-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.982', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-provider-guide-mirror', manamana_schedule: true, manamana_schedule_parser: 'provider-page-mirror-primary-revlet-legacy-fallback', time: Date.now() });
         return true;
       }
 

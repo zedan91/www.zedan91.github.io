@@ -1,5 +1,5 @@
 #EXTM3U
-# AZOBSSTV v981 - Mana-Mana catalogue with verified channel pages and corrected local channel artwork.
+# AZOBSSTV v982 - Mana-Mana catalogue with verified channel pages and corrected local channel artwork.
 # All 25 bundled entries use their public Mana-Mana page to avoid stale raw HLS 404/403.
 
 #EXTINF:-1 tvg-id="101" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/tv1_bckg.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv1" x-mode="official" x-official-url="https://mana2.my/channel/tv1" x-alt-url="https://rtmklik.rtm.gov.my/live/tv/tv1",TV1

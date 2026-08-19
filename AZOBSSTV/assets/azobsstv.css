@@ -85,7 +85,7 @@
 .channel-rail-logo.fallback{font-size:10px;padding:3px}
 
 
-/* AZOBSSTV v981 inherits v978: remove source-label text and mirror the provider's in-video
+/* AZOBSSTV v982 inherits v978: remove source-label text and mirror the provider's in-video
    wide/fit control with a transparent same-position hotspot owned by AZOBSSTV.
    The provider iframe is cross-origin, so the parent cannot observe its real
    button click. This hotspot toggles the surrounding AZOBSSTV layout instead. */
@@ -98,7 +98,7 @@
 .hero-grid.az-player-wide .video-wrap{aspect-ratio:16/9}
 @media(max-width:800px){.official-expand-hotspot{width:56px;height:56px;top:8px;right:8px}}
 
-/* AZOBSSTV v981:
+/* AZOBSSTV v982:
    - When wide mode is active, the parent-owned fit hotspot becomes a visible
      "restore / fit back" control. In normal mode it remains transparent so the
      provider's own icon stays visually untouched.
@@ -133,7 +133,7 @@
 }
 
 
-/* v981 - Today's Schedule replaces the old service/status card. */
+/* v982 - Today's Schedule replaces the old service/status card. */
 .today-schedule-card{flex:0 0 230px;min-height:0;background:linear-gradient(180deg,#111725ee,#0d111cee);border:1px solid #27314a;border-radius:var(--radius);box-shadow:0 18px 50px #0007;overflow:hidden;display:flex;flex-direction:column}
 .today-schedule-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px 10px;border-bottom:1px solid #222b40}
 .today-schedule-head strong{font-size:14px}.today-schedule-head span{max-width:115px;color:var(--muted);font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
@@ -147,3 +147,18 @@
 .status-compat{display:none!important}
 .today-schedule-card .notice-box{margin:6px 8px 8px;padding:8px;font-size:11px}
 @media(max-width:800px){.today-schedule-card{flex:0 0 auto;max-height:240px;min-height:170px}.today-schedule-list{max-height:190px}}
+
+
+/* AZOBSSTV v982: direct Mana-Mana guide mirrors.
+   No DOM reading is attempted across origins. Two non-autoplay iframes render the
+   same public channel page and AZOBSSTV clips the already-visible ON NOW title
+   and Today's Schedule panel. This avoids duplicate/stale parser races. */
+.now-copy{min-width:0;flex:1}
+.provider-now-crop{position:relative;width:min(620px,70vw);height:38px;overflow:hidden;margin-top:1px;background:#0d111c}
+.provider-now-crop[hidden],.provider-schedule-stage[hidden]{display:none!important}
+.provider-now-crop iframe,.provider-schedule-stage iframe{position:absolute;left:0;top:0;width:1280px;height:1080px;max-width:none;max-height:none;border:0;transform-origin:0 0;background:#101522}
+.provider-now-crop iframe{pointer-events:none}
+.today-schedule-card:has(.provider-schedule-stage:not([hidden])) .today-schedule-list{display:none!important}
+.provider-schedule-stage{position:relative;min-height:0;flex:1 1 auto;overflow:hidden;background:#101522;overscroll-behavior:contain}
+.provider-schedule-stage iframe{pointer-events:auto;overscroll-behavior:contain}
+@media(max-width:800px){.provider-now-crop{width:min(560px,72vw);height:36px}.provider-schedule-stage{min-height:190px;max-height:190px}}

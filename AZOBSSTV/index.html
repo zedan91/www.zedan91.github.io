@@ -7,9 +7,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
   <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
-  <link rel="manifest" href="./manifest.webmanifest?v=981">
+  <link rel="manifest" href="./manifest.webmanifest?v=982">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=981">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=982">
 </head>
 <body>
   <div class="app-shell">
@@ -37,7 +37,7 @@
             <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8 dan MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
           </div>
           <div class="now-playing">
-            <div><span class="eyebrow">NOW PLAYING</span><h1 id="nowTitle">AZOBSSTV</h1><p id="nowMeta">Belum ada channel dipilih.</p></div>
+            <div class="now-copy"><span class="eyebrow">NOW PLAYING</span><h1 id="nowTitle">AZOBSSTV</h1><p id="nowMeta">Belum ada channel dipilih.</p><div id="providerNowCrop" class="provider-now-crop" hidden aria-label="Rancangan semasa daripada Mana-Mana"><iframe id="providerNowFrame" title="Rancangan semasa Mana-Mana" referrerpolicy="strict-origin-when-cross-origin" scrolling="no" tabindex="-1"></iframe></div></div>
             <div class="player-actions"><button id="pipBtn" class="small-round" type="button" aria-label="Picture in Picture">PiP</button><button id="favCurrentBtn" class="icon-btn" type="button" aria-label="Favorite">♡</button></div>
           </div>
         </div>
@@ -52,6 +52,7 @@
             <div id="todayScheduleList" class="today-schedule-list">
               <div class="today-schedule-empty">Pilih channel untuk melihat jadual hari ini.</div>
             </div>
+            <div id="providerScheduleStage" class="provider-schedule-stage" hidden aria-label="Today's Schedule daripada Mana-Mana"><iframe id="providerScheduleFrame" title="Today's Schedule Mana-Mana" referrerpolicy="strict-origin-when-cross-origin" scrolling="no" tabindex="0"></iframe></div>
             <div class="notice-box" id="serverNotice" hidden></div>
             <div class="status-compat" aria-hidden="true">
               <strong id="serviceStatus">Connecting…</strong><strong id="playlistStatus">Loading…</strong><strong id="epgStatus">Waiting</strong><strong id="channelCount">0</strong>
@@ -88,6 +89,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
-  <script src="./assets/azobsstv.js?v=981" defer></script>
+  <script src="./assets/azobsstv.js?v=982" defer></script>
 </body>
 </html>
