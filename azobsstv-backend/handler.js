@@ -467,6 +467,63 @@ function createAZOBSSTVHandler(options = {}) {
     text = decodeHtmlEntities(text).replace(/\r/g, '');
     return text.split('\n').map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
   }
+  function decodeMana2ScriptText(text) {
+    let s = decodeHtmlEntities(String(text || ''));
+    // Next.js / React Server Components frequently serialize the useful page text
+    // inside script strings. Decode only textual escapes; do not execute scripts.
+    s = s.replace(/\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/\\x([0-9a-f]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/\\n|\\r|\\t/g, '\n')
+      .replace(/\\\//g, '/')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'");
+    return s;
+  }
+  function collectJsonStrings(value, out, depth = 0) {
+    if (depth > 14 || value == null) return;
+    if (typeof value === 'string') { if (value.trim()) out.push(value); return; }
+    if (Array.isArray(value)) { for (const x of value) collectJsonStrings(x, out, depth + 1); return; }
+    if (typeof value === 'object') {
+      for (const [k, v] of Object.entries(value)) {
+        if (typeof k === 'string') out.push(k);
+        collectJsonStrings(v, out, depth + 1);
+      }
+    }
+  }
+  function mana2EmbeddedLines(html) {
+    const out = [];
+    const source = String(html || '');
+    const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+    let m;
+    while ((m = scriptRe.exec(source)) && out.length < 12000) {
+      const raw = String(m[1] || '').trim();
+      if (!raw) continue;
+      let handled = false;
+      // __NEXT_DATA__ and other plain JSON scripts.
+      if ((raw[0] === '{' && raw.endsWith('}')) || (raw[0] === '[' && raw.endsWith(']'))) {
+        try {
+          const strings = []; collectJsonStrings(JSON.parse(raw), strings);
+          if (strings.length) { out.push(...strings); handled = true; }
+        } catch (_) {}
+      }
+      // Next.js app-router flight chunks: self.__next_f.push([1,"..."])
+      const flightRe = /self\.__next_f\.push\(\[\s*\d+\s*,\s*("(?:\\.|[^"\\])*")\s*\]\)/g;
+      let f, flightFound = false;
+      while ((f = flightRe.exec(raw))) {
+        flightFound = true;
+        try { out.push(JSON.parse(f[1])); } catch (_) { out.push(f[1].slice(1, -1)); }
+      }
+      handled = handled || flightFound;
+      // Generic textual copy only when the script was not already decoded above.
+      if (!handled) out.push(decodeMana2ScriptText(raw));
+    }
+    const normalized = decodeMana2ScriptText(out.join('\n'))
+      .replace(/[{}\[\],]/g, '\n')
+      .replace(/(?:\\?"\s*:\s*\\?")/g, '\n')
+      .replace(/\\?"/g, ' ')
+      .replace(/\r/g, '');
+    return normalized.split('\n').map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  }
   function scheduleTimeTokens(text) {
     return String(text || '').match(/\b(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)\b/gi) || [];
   }
@@ -495,74 +552,130 @@ function createAZOBSSTVHandler(options = {}) {
     return a <= b ? nowMin >= a && nowMin < b : (nowMin >= a || nowMin < b);
   }
   function cleanProgramTitle(text) {
-    let t = cleanText(decodeHtmlEntities(text), 180).replace(/^[-–—•·\s]+|[-–—•·\s]+$/g, '').trim();
+    let t = cleanText(decodeHtmlEntities(text), 220)
+      .replace(/^[\s:|,;\-–—•·.]+|[\s:|,;\-–—•·]+$/g, '').trim();
     t = t.replace(/\s+(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+\d{1,2}\s+[A-Za-z]{3}.*$/i, '').trim();
-    return t.slice(0, 120);
+    t = t.replace(/^(?:LIVE|ON NOW|UP NEXT|TODAY'?S SCHEDULE|READ MORE)\s*/i, '').trim();
+    return t.slice(0, 140);
   }
-  function extractMana2Schedule(html) {
-    const lines = htmlLinesForSchedule(html);
-    let currentTitle = '';
-    const onNow = lines.findIndex(x => /^on\s*now$/i.test(x));
-    if (onNow >= 0) {
-      for (let i = onNow + 1; i < Math.min(lines.length, onNow + 10); i++) {
-        const line = lines[i];
-        if (scheduleTimeTokens(line).length || /^(live|tv\d?|today'?s schedule)$/i.test(line)) continue;
-        const title = cleanProgramTitle(line.replace(/^CH\s*\d+\s*/i, ''));
-        if (title && title.length > 1) { currentTitle = title; break; }
-      }
-    }
+  function isScheduleNoise(text) {
+    const t = cleanProgramTitle(text);
+    return !t || /^(?:live|on now|up next|today'?s schedule|read more|ch\s*\d+|tv\d?|thu,?\s+\d+\s+aug|mon|tue|wed|thu|fri|sat|sun)$/i.test(t);
+  }
+  function firstTitleFromSegment(text) {
+    let t = cleanProgramTitle(String(text || '').replace(/\s+/g, ' '));
+    if (!t) return '';
+    t = t.replace(/^(?:CH\s*\d+\s*)/i, '').trim();
+    // Search-indexed Mana-Mana text commonly appears as: Title. Description...
+    const sentence = t.match(/^(.{2,120}?)(?:\.\s+(?=[A-Z0-9#])|\s+Live\b|\s+Read more\b|$)/i);
+    if (sentence && sentence[1]) t = sentence[1].trim();
+    return isScheduleNoise(t) ? '' : t.slice(0, 120);
+  }
+  function parseScheduleFromLines(lines) {
     const schedule = [];
     const startIdx = lines.findIndex(x => /today'?s\s+schedule/i.test(x));
-    if (startIdx >= 0) {
-      for (let i = startIdx + 1; i < Math.min(lines.length, startIdx + 260) && schedule.length < 48; i++) {
-        const line = lines[i];
-        let times = scheduleTimeTokens(line);
-        let start = '', end = '', title = '';
-        if (times.length >= 2) {
-          start = normalizeScheduleTime(times[0]); end = normalizeScheduleTime(times[1]);
-          const pos = line.toLowerCase().lastIndexOf(times[1].toLowerCase());
-          title = cleanProgramTitle(pos >= 0 ? line.slice(pos + times[1].length) : '');
-        } else if (times.length === 1) {
-          start = normalizeScheduleTime(times[0]);
-          let j = i + 1;
-          for (; j < Math.min(lines.length, i + 5); j++) {
-            const t2 = scheduleTimeTokens(lines[j]);
-            if (t2.length) { end = normalizeScheduleTime(t2[0]); break; }
-          }
-          if (end) {
-            for (let k = j + 1; k < Math.min(lines.length, j + 5); k++) {
-              if (scheduleTimeTokens(lines[k]).length) break;
-              const candidate = cleanProgramTitle(lines[k]);
-              if (candidate && !/^(today'?s schedule|on now|live)$/i.test(candidate)) { title = candidate; i = k - 1; break; }
-            }
-          }
-        }
-        if (start && end && !title) {
-          for (let k = i + 1; k < Math.min(lines.length, i + 5); k++) {
+    if (startIdx < 0) return schedule;
+    for (let i = startIdx + 1; i < Math.min(lines.length, startIdx + 420) && schedule.length < 64; i++) {
+      const line = lines[i];
+      const times = scheduleTimeTokens(line);
+      let start = '', end = '', title = '';
+      if (times.length >= 2) {
+        start = normalizeScheduleTime(times[0]); end = normalizeScheduleTime(times[1]);
+        const secondPos = line.toLowerCase().indexOf(times[1].toLowerCase(), line.toLowerCase().indexOf(times[0].toLowerCase()) + times[0].length);
+        title = firstTitleFromSegment(secondPos >= 0 ? line.slice(secondPos + times[1].length) : '');
+        if (!title) {
+          for (let k = i + 1; k < Math.min(lines.length, i + 7); k++) {
             if (scheduleTimeTokens(lines[k]).length) break;
-            const candidate = cleanProgramTitle(lines[k]);
-            if (candidate && !/^(today'?s schedule|on now|live)$/i.test(candidate)) { title = candidate; break; }
+            const candidate = firstTitleFromSegment(lines[k]);
+            if (candidate) { title = candidate; break; }
           }
         }
-        if (start && end && title && !schedule.some(x => x.start === start && x.end === end && x.title === title)) schedule.push({ start, end, title });
+      } else if (times.length === 1) {
+        start = normalizeScheduleTime(times[0]);
+        let j = i + 1, between = [];
+        for (; j < Math.min(lines.length, i + 9); j++) {
+          const t2 = scheduleTimeTokens(lines[j]);
+          if (t2.length) { end = normalizeScheduleTime(t2[0]); break; }
+          if (!isScheduleNoise(lines[j])) between.push(lines[j]);
+        }
+        // Support both DOM orders:
+        // start -> end -> title, and start -> title -> end.
+        if (between.length) title = firstTitleFromSegment(between[0]);
+        if (end && !title) {
+          for (let k = j + 1; k < Math.min(lines.length, j + 8); k++) {
+            if (scheduleTimeTokens(lines[k]).length) break;
+            const candidate = firstTitleFromSegment(lines[k]);
+            if (candidate) { title = candidate; break; }
+          }
+        }
+        // The time at lines[j] is the end of this row; do not reuse it as the
+        // start of a duplicate row on the next loop iteration.
+        if (end && j > i) i = j;
+      }
+      if (start && end && title && !schedule.some(x => x.start === start && x.end === end && x.title === title)) {
+        schedule.push({ start, end, title });
       }
     }
-    // Fallback for server-rendered pages where all schedule text collapses into a single line.
-    if (!schedule.length) {
-      const text = lines.slice(Math.max(0, startIdx)).join(' ');
-      const re = /((?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM))\s*((?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM))\s*([^]*?)(?=(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)|$)/gi;
-      let m;
-      while ((m = re.exec(text)) && schedule.length < 48) {
-        let title = cleanProgramTitle(String(m[3] || '').split(/\s[·•]\s|\s{2,}/)[0]);
-        if (title) schedule.push({ start: normalizeScheduleTime(m[1]), end: normalizeScheduleTime(m[2]), title });
+    return schedule;
+  }
+  function parseScheduleFromCorpus(text) {
+    const schedule = [];
+    const src = String(text || '');
+    const marker = src.search(/today'?s\s+schedule/i);
+    const body = marker >= 0 ? src.slice(marker, marker + 180000) : src;
+    const timeRe = /\b(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)\b/gi;
+    const hits = [];
+    let m;
+    while ((m = timeRe.exec(body)) && hits.length < 160) hits.push({ raw: m[0], index: m.index, end: timeRe.lastIndex });
+    // Mana-Mana's public schedule markup/search text exposes start+end as consecutive time tokens.
+    for (let i = 0; i + 1 < hits.length && schedule.length < 64; i += 2) {
+      const a = hits[i], b = hits[i + 1];
+      if (b.index - a.end > 260) { i -= 1; continue; }
+      const nextStart = hits[i + 2]?.index ?? Math.min(body.length, b.end + 900);
+      const segment = body.slice(b.end, nextStart)
+        .replace(/[{}\[\]"']/g, ' ')
+        .replace(/\\[nrt]/g, ' ')
+        .replace(/\s+/g, ' ');
+      const title = firstTitleFromSegment(segment);
+      const start = normalizeScheduleTime(a.raw), end = normalizeScheduleTime(b.raw);
+      if (start && end && title && !schedule.some(x => x.start === start && x.end === end && x.title === title)) {
+        schedule.push({ start, end, title });
       }
+    }
+    return schedule;
+  }
+  function extractMana2Schedule(html) {
+    const visibleLines = htmlLinesForSchedule(html);
+    const embeddedLines = mana2EmbeddedLines(html);
+    let schedule = parseScheduleFromLines(visibleLines);
+    if (schedule.length < 2) {
+      const fromEmbedded = parseScheduleFromLines(embeddedLines);
+      if (fromEmbedded.length > schedule.length) schedule = fromEmbedded;
+    }
+    if (schedule.length < 2) {
+      const corpus = [...visibleLines, ...embeddedLines].join(' ');
+      const fromCorpus = parseScheduleFromCorpus(corpus);
+      if (fromCorpus.length > schedule.length) schedule = fromCorpus;
     }
     const nowMin = malaysiaMinuteNow();
     for (const item of schedule) item.current = scheduleItemCurrent(item, nowMin);
     const active = schedule.find(x => x.current);
-    if (!currentTitle && active) currentTitle = active.title;
-    return { current_title: currentTitle, schedule };
+    let currentTitle = active?.title || '';
+    // Extra ON NOW fallback if schedule timing was incomplete.
+    if (!currentTitle) {
+      const allLines = [...visibleLines, ...embeddedLines];
+      const onNow = allLines.findIndex(x => /^on\s*now$/i.test(x));
+      if (onNow >= 0) {
+        for (let i = onNow + 1; i < Math.min(allLines.length, onNow + 12); i++) {
+          if (scheduleTimeTokens(allLines[i]).length || isScheduleNoise(allLines[i])) continue;
+          const candidate = firstTitleFromSegment(allLines[i]);
+          if (candidate) { currentTitle = candidate; break; }
+        }
+      }
+    }
+    return { current_title: currentTitle, schedule, parser: schedule.length ? 'visible-or-nextjs' : 'none' };
   }
+
   async function getMana2Schedule(rawUrl) {
     const target = mana2ChannelUrl(rawUrl);
     const key = target.toString();
@@ -580,7 +693,7 @@ function createAZOBSSTVHandler(options = {}) {
       const html = await response.text();
       if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode: 413 });
       const parsed = extractMana2Schedule(html);
-      const value = { ok: true, channel_url: key, current_title: parsed.current_title || '', schedule: parsed.schedule || [], fetched_at: Date.now(), time_zone: 'Asia/Kuala_Lumpur' };
+      const value = { ok: true, channel_url: key, current_title: parsed.current_title || '', schedule: parsed.schedule || [], parser: parsed.parser || 'none', fetched_at: Date.now(), time_zone: 'Asia/Kuala_Lumpur' };
       mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
       return value;
     } finally { clearTimeout(timer); }
@@ -596,7 +709,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.979', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-manamana-today-schedule', manamana_schedule: true, time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.980', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-manamana-ssr-nextjs-schedule', manamana_schedule: true, manamana_schedule_parser: 'visible-html-plus-nextjs-flight', time: Date.now() });
         return true;
       }
 
