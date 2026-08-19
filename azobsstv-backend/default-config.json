@@ -2,8 +2,7 @@
   "allow_all_domains": false,
   "allowed_domains": [
     "azobss.com",
-    "test-streams.mux.dev",
-    "devstreaming-cdn.apple.com"
+    "test-streams.mux.dev"
   ],
   "notification_url": "https://azobss-backend.onrender.com/api/azobsstv/notifications",
   "epg_url": "https://azobss-backend.onrender.com/api/azobsstv/epg",

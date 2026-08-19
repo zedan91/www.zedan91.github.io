@@ -1,6 +1,7 @@
 #EXTM3U
-# AZOBSSTV verification channels. These are public developer/test streams, not third-party TV rebroadcasts.
-#EXTINF:-1 tvg-id="azdemo-mux" tvg-logo="/AZOBSSTV/assets/logo.svg" group-title="AZOBSSTV Demo",Demo Channel 1 - Big Buck Bunny
+# AZOBSSTV browser verification channels. Public developer/test streams only.
+# Both entries use H.264/AAC renditions known to work with hls.js/MSE browsers.
+#EXTINF:-1 tvg-id="azdemo-mux-master" tvg-logo="/AZOBSSTV/assets/logo.svg" group-title="AZOBSSTV Demo",Demo Video 1 - Big Buck Bunny (Auto)
 https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-#EXTINF:-1 tvg-id="azdemo-apple" tvg-logo="/AZOBSSTV/assets/logo.svg" group-title="AZOBSSTV Demo",Demo Channel 2 - Apple Bip Bop
-https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8
+#EXTINF:-1 tvg-id="azdemo-mux-ld" tvg-logo="/AZOBSSTV/assets/logo.svg" group-title="AZOBSSTV Demo",Demo Video 2 - Big Buck Bunny (H264/AAC)
+https://test-streams.mux.dev/x36xhzz/url_2/193039199_mp4_h264_aac_ld_7.m3u8
