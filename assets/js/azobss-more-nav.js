@@ -1,4 +1,4 @@
-/* AZOBSS 911: More menu + Repair PC dropdown with clearer customer wording. */
+/* AZOBSS 964: More menu + Repair PC dropdown; AZOBSSTV moved into More. */
 (function () {
   'use strict';
 
@@ -23,7 +23,10 @@
     var isFoodSection = currentPath === foodPath || currentPath.indexOf(foodPath + '/') === 0 || (currentPath === '/' && currentHash === '#tempahan-makanan');
     var websitePath = normalisePath('/Tempah-Website/');
     var isWebsiteSection = currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0;
+    var tvPath = normalisePath('/AZOBSSTV/');
+    var isTvSection = currentPath === tvPath || currentPath.indexOf(tvPath + '/') === 0;
     var websiteSourceLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
+    var tvSourceLink = nav.querySelector('a[data-azobsstv-link="1"], a[href="/AZOBSSTV/"], a[href="/AZOBSSTV"]');
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
       link.classList.contains('market-nav-active');
@@ -39,7 +42,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
+    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isTvSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -53,6 +56,24 @@
     dropdown.className = 'az-more-dropdown';
     dropdown.id = 'azMoreDropdown' + index;
     dropdown.setAttribute('role', 'menu');
+
+    var tvLink = document.createElement('a');
+    tvLink.href = tvSourceLink ? (tvSourceLink.getAttribute('href') || '/AZOBSSTV/') : '/AZOBSSTV/';
+    tvLink.setAttribute('role', 'menuitem');
+    tvLink.dataset.azobsstvLink = '1';
+    tvLink.title = 'AZOBSSTV';
+    if (isTvSection || (tvSourceLink && (tvSourceLink.classList.contains('is-active') || tvSourceLink.classList.contains('is-current') || tvSourceLink.classList.contains('market-nav-active')))) {
+      tvLink.classList.add('is-active');
+      tvLink.setAttribute('aria-current', 'page');
+    }
+    tvLink.innerHTML = '' +
+      '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<rect x="3" y="5" width="18" height="13" rx="2"></rect>' +
+        '<path d="M9 21h6"></path>' +
+        '<path d="M12 18v3"></path>' +
+        '<path d="m10 9 5 3-5 3z"></path>' +
+      '</svg>' +
+      '<span>AZOBSSTV</span>';
 
     var toolsLink = document.createElement('a');
     toolsLink.href = href;
@@ -132,6 +153,7 @@
       '</svg>' +
       '<span>Food - Brownies</span>';
 
+    dropdown.appendChild(tvLink);
     dropdown.appendChild(toolsLink);
     dropdown.appendChild(soundLink);
     dropdown.appendChild(websiteLink);
@@ -142,6 +164,7 @@
     link.dataset.azMoreConverted = '1';
     link.replaceWith(wrap);
     if (websiteSourceLink && websiteSourceLink.isConnected) websiteSourceLink.remove();
+    if (tvSourceLink && tvSourceLink.isConnected) tvSourceLink.remove();
     nav.classList.add('az-more-enabled');
 
     function isMobileStickybar() {
@@ -236,6 +259,10 @@
         event.preventDefault();
         items[items.length - 1].focus();
       }
+    });
+
+    tvLink.addEventListener('click', function () {
+      setOpen(false);
     });
 
     soundLink.addEventListener('click', function () {

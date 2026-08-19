@@ -1,6 +1,10 @@
 {
   "allow_all_domains": false,
-  "allowed_domains": ["azobss.com"],
+  "allowed_domains": [
+    "azobss.com",
+    "test-streams.mux.dev",
+    "devstreaming-cdn.apple.com"
+  ],
   "notification_url": "https://azobss-backend.onrender.com/api/azobsstv/notifications",
   "epg_url": "https://azobss-backend.onrender.com/api/azobsstv/epg",
   "free_playlist_url": "https://azobss-backend.onrender.com/api/azobsstv/playlist/free",

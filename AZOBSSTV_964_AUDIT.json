@@ -1,0 +1,41 @@
+{
+  "source": "(963)-AZOBSS-AZOBSSTV-PERFECTTV-BACKEND-BEHAVIOR-INTEGRATION_20260819.zip",
+  "version": "1.0.964",
+  "scope": "AZOBSSTV non-empty verification playlist + move AZOBSSTV stickybar entry into More",
+  "demo_channels": 2,
+  "demo_sources": [
+    "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+    "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8"
+  ],
+  "top_level_azobsstv_links_removed_from_html": 24,
+  "changed_html": [
+    "index.html",
+    "Tempah-Website/index.html",
+    "staff/index.html",
+    "Sound-Effects/index.html",
+    "Bookmarks/index.html",
+    "affiliate-shop/index.html",
+    "tools/PC-Bottleneck-Checker.html",
+    "tools/Internet-Speed-Converter.html",
+    "tools/SSD-Speed-Checker-guide.html",
+    "tools/index.html",
+    "tools/RAM-Usage-Checker.html",
+    "tools/Windows-Command-Generator.html",
+    "tools/PSU-Calculator.html",
+    "tools/BMI-Calculator.html",
+    "tools/Currency-Converter.html",
+    "lucky-draw/index.html",
+    "PA-BM/index.html",
+    "Tempah-Servis-IT/index.html",
+    "Software-Tools/index.html",
+    "Perkhidmatan-Ukur-Tanah/index.html",
+    "CAD-Tools-&-Resources/index.html",
+    "Tempahan-Makanan/index.html",
+    "admin/index.html",
+    "Troubleshoot-PC-Online/index.html"
+  ],
+  "notes": [
+    "custom playlists are not replaced by demo fallback",
+    "no video-stream proxy added"
+  ]
+}
