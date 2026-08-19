@@ -1,7 +1,58 @@
 #EXTM3U
-# AZOBSSTV browser verification channels. Public developer/test streams only.
-# Both entries use H.264/AAC renditions known to work with hls.js/MSE browsers.
-#EXTINF:-1 tvg-id="azdemo-mux-master" tvg-logo="/AZOBSSTV/assets/logo.svg" group-title="AZOBSSTV Demo",Demo Video 1 - Big Buck Bunny (Auto)
-https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-#EXTINF:-1 tvg-id="azdemo-mux-ld" tvg-logo="/AZOBSSTV/assets/logo.svg" group-title="AZOBSSTV Demo",Demo Video 2 - Big Buck Bunny (H264/AAC)
-https://test-streams.mux.dev/x36xhzz/url_2/193039199_mp4_h264_aac_ld_7.m3u8
+# AZOBSSTV v966 - MYTV Mana-Mana catalogue integration.
+# Direct entries below use publicly exposed broadcaster streams. Entries marked x-web-only="1"
+# open the official mana2.my channel page because no public/portable stream endpoint is bundled.
+
+# --- Direct playback entries ---
+#EXTINF:-1 tvg-id="101" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/tv1_bckg.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv1" x-mode="direct",TV1
+https://d25tgymtnqzu8s.cloudfront.net/smil:tv1/manifest.mpd
+#EXTINF:-1 tvg-id="102" tvg-logo="https://tv2.rtm.gov.my/assets/img/TV2.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv2" x-mode="direct",TV2
+https://d25tgymtnqzu8s.cloudfront.net/smil:tv2/manifest.mpd
+#EXTINF:-1 tvg-id="110" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_TVOKEY.jpg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-okey" x-mode="direct",TV OKEY
+https://d25tgymtnqzu8s.cloudfront.net/smil:okey/manifest.mpd
+#EXTINF:-1 tvg-id="111" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_SUKANRTM.jpg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/sukan-rtm" x-mode="direct",SUKAN+
+https://d25tgymtnqzu8s.cloudfront.net/smil:sukan/manifest.mpd
+#EXTINF:-1 tvg-id="114" tvg-logo="https://tvalhijrah.com/wp-content/uploads/2023/04/TV_Alhijrah_logo-1.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-alhijrah" x-mode="direct",TV ALHIJRAH
+https://172048-castr.akamaized.net/61e0e9a88ecf869e0a595bfa/live_feb292e0f94c11edbc052354c95d3ff1/index.m3u8
+#EXTINF:-1 tvg-id="122" tvg-logo="https://s3.tvstv.my/wp-content/uploads/2024/03/tvs-logo-reduced.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tvs" x-mode="direct",TVS
+https://stream2.smg.my/live/tvs_1080p2628kbs/index.m3u8
+#EXTINF:-1 tvg-id="123" tvg-logo="https://berita.rtm.gov.my/images/01-homepage/logo-berita.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/berita-rtm" x-mode="direct",BERITA RTM
+https://d25tgymtnqzu8s.cloudfront.net/smil:berita/playlist.m3u8?id=5
+
+# --- Current Mana-Mana catalogue entries that open the official source page ---
+#EXTINF:-1 tvg-id="mana-tv5" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv5" x-web-only="1",TV5 ENJOY TV
+https://mana2.my/channel/tv5
+#EXTINF:-1 tvg-id="mana-free-movies" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/free-movies" x-web-only="1",FREE MOVIES
+https://mana2.my/channel/free-movies
+#EXTINF:-1 tvg-id="mana-mysports" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/mysport" x-web-only="1",MySports
+https://mana2.my/channel/mysport
+#EXTINF:-1 tvg-id="121" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/bernama" x-web-only="1",BERNAMA
+https://mana2.my/channel/bernama
+#EXTINF:-1 tvg-id="mana-indonesia-channel" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/the-indonesia-channel" x-web-only="1",The Indonesia Channel
+https://mana2.my/channel/the-indonesia-channel
+#EXTINF:-1 tvg-id="mana-cna" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205" x-web-only="1",CNA
+https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205
+#EXTINF:-1 tvg-id="mana-aje" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753" x-web-only="1",Al JAZEERA ENGLISH HD
+https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753
+#EXTINF:-1 tvg-id="mana-euronews" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094" x-web-only="1",EURONEWS
+https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094
+#EXTINF:-1 tvg-id="mana-arirang" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d" x-web-only="1",ARIRANG
+https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d
+#EXTINF:-1 tvg-id="mana-taiwanplus" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808" x-web-only="1",TaiwanPlus
+https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808
+#EXTINF:-1 tvg-id="mana-nhk" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/nhk-world" x-web-only="1",NHK WORLD
+https://www.mana2.my/channel/nhk-world
+#EXTINF:-1 tvg-id="mana-rt" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/rt-international" x-web-only="1",RT International
+https://www.mana2.my/channel/rt-international
+#EXTINF:-1 tvg-id="mana-aja" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/al-jazeera-arabic-hd" x-web-only="1",Al JAZEERA ARABIC HD
+https://mana2.my/channel/al-jazeera-arabic-hd
+#EXTINF:-1 tvg-id="225" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/selangor-tv" x-web-only="1",SELANGOR TV
+https://mana2.my/channel/selangor-tv
+#EXTINF:-1 tvg-id="mana-tvikim" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-ikim" x-web-only="1",TVIKIM
+https://mana2.my/channel/tv-ikim
+#EXTINF:-1 tvg-id="200" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/siara-tv" x-web-only="1",SIARA TV
+https://mana2.my/channel/siara-tv
+#EXTINF:-1 tvg-id="mana-borneo" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/borneo-tv" x-web-only="1",BORNEO TV
+https://www.mana2.my/channel/borneo-tv
+#EXTINF:-1 tvg-id="mana-usim" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/usim-tv" x-web-only="1",USIM TV
+https://mana2.my/channel/usim-tv

@@ -3,5 +3,5 @@
 /* AZOBSSTV v964 integration refinements */
 .link-btn{display:inline-flex;align-items:center;text-decoration:none}.player-actions{display:flex;align-items:center;gap:8px}.small-round{height:42px;min-width:42px;border:1px solid var(--line);border-radius:999px;background:#1a2132;color:#fff;font-weight:800;cursor:pointer}.small-round:hover{background:#232c42}.notice-box{display:grid;gap:5px}.notice-box strong{color:#fff}.notice-box span{color:#dce3f4}.guide-program{display:grid;gap:4px}.guide-program small{color:var(--muted)}.fav-mini{border:0;background:transparent;cursor:pointer;flex:0 0 auto}.channel-card:focus-within{border-color:#6474a0}@media(max-width:620px){.topbar{height:auto;align-items:flex-start;gap:12px}.top-actions{justify-content:flex-end;flex-wrap:wrap}.top-actions .ghost-btn{font-size:12px}.now-playing{align-items:flex-start}.player-actions{margin-left:8px}}
 
-/* AZOBSSTV v965 video compatibility */
+/* AZOBSSTV v966 Mana-Mana catalogue + DASH support */
 .video-wrap video{object-fit:contain;visibility:visible;opacity:1;transform:translateZ(0)}

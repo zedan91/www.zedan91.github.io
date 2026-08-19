@@ -1,0 +1,26 @@
+{
+  "source": "(965)-AZOBSS-AZOBSSTV-BROWSER-VIDEO-COMPATIBILITY-FIX_20260819.zip",
+  "package_version": "1.0.966",
+  "scope": "AZOBSSTV Mana-Mana catalogue + public direct streams + MPEG-DASH support",
+  "direct_channels": [
+    "TV1",
+    "TV2",
+    "TV OKEY",
+    "SUKAN+",
+    "TV ALHIJRAH",
+    "TVS",
+    "BERITA RTM"
+  ],
+  "protected_or_nonportable_behavior": "open official mana2.my channel page; no expiring auth_key/token copied",
+  "touched_files": [
+    "AZOBSSTV/data/free.m3u",
+    "azobsstv-backend/data/free.m3u",
+    "AZOBSSTV/assets/azobsstv.js",
+    "AZOBSSTV/index.html",
+    "AZOBSSTV/sw.js",
+    "AZOBSSTV/assets/azobsstv.css",
+    "package.json",
+    "azobsstv-backend/handler.js",
+    "README_PATCH_966.md"
+  ]
+}
