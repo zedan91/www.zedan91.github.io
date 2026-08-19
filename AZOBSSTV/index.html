@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#080b14">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>AZOBSSTV | AZOBSS</title>
+  <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
+  <link rel="manifest" href="./manifest.webmanifest?v=963">
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=963">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="AZOBSSTV home"><img src="./assets/logo.svg" alt="" width="36" height="36"><span>AZOBSSTV</span></a>
+      <div class="top-actions">
+        <a class="ghost-btn link-btn" href="/">AZOBSS Home</a>
+        <button id="installBtn" class="ghost-btn" type="button" hidden>Install</button>
+        <button id="refreshBtn" class="ghost-btn" type="button">Refresh</button>
+        <button id="accountBtn" class="ghost-btn" type="button">Playlist</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-grid">
+        <div class="player-card">
+          <div class="video-wrap" id="videoWrap">
+            <video id="tvPlayer" controls playsinline preload="metadata"></video>
+            <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8.</span></div>
+          </div>
+          <div class="now-playing">
+            <div><span class="eyebrow">NOW PLAYING</span><h1 id="nowTitle">AZOBSSTV</h1><p id="nowMeta">Belum ada channel dipilih.</p></div>
+            <div class="player-actions"><button id="pipBtn" class="small-round" type="button" aria-label="Picture in Picture">PiP</button><button id="favCurrentBtn" class="icon-btn" type="button" aria-label="Favorite">♡</button></div>
+          </div>
+        </div>
+
+        <aside class="info-card">
+          <div class="status-row"><span>Service</span><strong id="serviceStatus">Connecting…</strong></div>
+          <div class="status-row"><span>Playlist</span><strong id="playlistStatus">Loading…</strong></div>
+          <div class="status-row"><span>EPG</span><strong id="epgStatus">Waiting</strong></div>
+          <div class="status-row"><span>Channels</span><strong id="channelCount">0</strong></div>
+          <div class="notice-box" id="serverNotice" hidden></div>
+        </aside>
+      </section>
+
+      <section class="browser-card">
+        <div class="tabs" role="tablist" aria-label="AZOBSSTV sections">
+          <button class="tab active" data-tab="live" type="button">Live TV</button>
+          <button class="tab" data-tab="movies" type="button">Movies</button>
+          <button class="tab" data-tab="series" type="button">Series</button>
+          <button class="tab" data-tab="radio" type="button">Radio</button>
+          <button class="tab" data-tab="guide" type="button">TV Guide</button>
+          <button class="tab" data-tab="favorites" type="button">Favorites</button>
+          <button class="tab" data-tab="recent" type="button">Recent</button>
+        </div>
+        <div class="toolbar"><input id="searchInput" type="search" placeholder="Cari channel / kandungan…" autocomplete="off"><select id="groupSelect" aria-label="Category"><option value="">Semua kategori</option></select></div>
+        <div id="contentState" class="content-state">Memuatkan AZOBSSTV…</div><div id="channelGrid" class="channel-grid" hidden></div><div id="guideView" class="guide-view" hidden></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="playlistDialog" class="modal">
+    <form method="dialog" class="modal-card" id="playlistForm">
+      <div class="modal-head"><div><span class="eyebrow">MY PLAYLIST</span><h2>Tambah playlist M3U</h2></div><button class="close-btn" value="cancel" aria-label="Close">×</button></div>
+      <label>Nama playlist<input id="playlistName" maxlength="60" placeholder="Contoh: Rumah"></label>
+      <label>URL M3U / M3U8<input id="playlistUrl" type="url" placeholder="https://example.com/list.m3u"></label>
+      <p class="form-note">URL playlist disimpan dalam browser ini sahaja. AZOBSSTV hanya menghantar username yang dapat dikenal pasti ke Device Ping; password tidak dimasukkan ke payload telemetry. Gunakan hanya stream yang kamu mempunyai hak untuk akses.</p>
+      <div class="modal-actions"><button class="ghost-btn" value="cancel">Batal</button><button class="primary-btn" id="savePlaylistBtn" value="default">Simpan & Muat</button></div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
+  <script src="./assets/azobsstv.js?v=963" defer></script>
+</body>
+</html>

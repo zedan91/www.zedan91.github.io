@@ -1,0 +1,11 @@
+{
+  "allow_all_domains": false,
+  "allowed_domains": ["azobss.com"],
+  "notification_url": "https://azobss-backend.onrender.com/api/azobsstv/notifications",
+  "epg_url": "https://azobss-backend.onrender.com/api/azobsstv/epg",
+  "free_playlist_url": "https://azobss-backend.onrender.com/api/azobsstv/playlist/free",
+  "website_url": "https://www.azobss.com/AZOBSSTV/",
+  "telegram_url": "",
+  "subscribe_url": "https://www.azobss.com/AZOBSSTV/",
+  "device_ping_url": "https://azobss-backend.onrender.com/api/azobsstv/device/ping"
+}

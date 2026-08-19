@@ -6986,8 +6986,8 @@ function azSecurityHeaders(extra = {}) {
   return Object.assign({
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": azCorsOrigin(),
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, HEAD, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, X-AZOBSS-Filename, X-AZOBSS-Document-No",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, HEAD, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, x-azobsstv-admin-token, X-AZOBSS-Filename, X-AZOBSS-Document-No",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
@@ -13453,6 +13453,22 @@ async function azSoundUpdateRecentlyAdded(maxPages = 3) {
 }
 
 
+// AZOBSS PATCH 963: AZOBSSTV backend behavior integration.
+// Uses the existing native Node HTTP server + Firebase Admin identity instead of adding Express.
+let azobsstvApiHandler = null;
+try {
+  const { createAZOBSSTVHandler } = require("./azobsstv-backend/handler");
+  azobsstvApiHandler = createAZOBSSTVHandler({
+    getDb: getAzobssBackendDb,
+    authorizeAdmin: azAdminIdentityFromRequest,
+    send,
+    rateLimitOrSend: azRateLimitOrSend
+  });
+  console.log("AZOBSSTV API handler ready: /api/azobsstv/*");
+} catch (error) {
+  console.warn("AZOBSSTV API handler unavailable:", error && (error.stack || error.message || error));
+}
+
 async function handler(req, res) {
 
   try {
@@ -13490,6 +13506,12 @@ async function handler(req, res) {
 
     if (req.method === "OPTIONS") {
       return send(res, 204, "");
+    }
+
+    // AZOBSS PATCH 963: route AZOBSSTV requests through its isolated handler.
+    if (azobsstvApiHandler && pathname.startsWith("/api/azobsstv")) {
+      const handled = await azobsstvApiHandler(req, res, parsed);
+      if (handled) return;
     }
 
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
@@ -17939,6 +17961,7 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
   console.log("STRIPE_WEBHOOK:", `/api/stripe/webhook`);
   console.log("STRIPE_WEBHOOK_HEALTH:", `/api/stripe/webhook-health`);
+  console.log("AZOBSSTV_HEALTH:", `/api/azobsstv/health`);
   console.log("================================");
   console.log("");
 

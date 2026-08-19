@@ -1,0 +1,11 @@
+{
+  "name":"AZOBSSTV",
+  "short_name":"AZOBSSTV",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#070911",
+  "theme_color":"#080b14",
+  "description":"AZOBSSTV web TV player",
+  "icons":[{"src":"./assets/logo.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
