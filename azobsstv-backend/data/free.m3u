@@ -1,5 +1,5 @@
 #EXTM3U
-# AZOBSSTV v977 - MYTV Mana-Mana catalogue in official-player mode.
+# AZOBSSTV v979 - Mana-Mana catalogue with verified channel pages and corrected local channel artwork.
 # All 25 bundled entries use their public Mana-Mana page to avoid stale raw HLS 404/403.
 
 #EXTINF:-1 tvg-id="101" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/tv1_bckg.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv1" x-mode="official" x-official-url="https://mana2.my/channel/tv1" x-alt-url="https://rtmklik.rtm.gov.my/live/tv/tv1",TV1
@@ -20,59 +20,59 @@ https://mana2.my/channel/tv-alhijrah
 #EXTINF:-1 tvg-id="122" tvg-logo="https://s3.tvstv.my/wp-content/uploads/2024/03/tvs-logo-reduced.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tvs" x-mode="official" x-official-url="https://mana2.my/channel/tvs",TVS
 https://mana2.my/channel/tvs
 
-#EXTINF:-1 tvg-id="123" tvg-logo="https://berita.rtm.gov.my/images/01-homepage/logo-berita.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/berita-rtm" x-mode="official" x-official-url="https://mana2.my/channel/berita-rtm" x-alt-url="https://rtmklik.rtm.gov.my/live/tv/berita",BERITA RTM
-https://mana2.my/channel/berita-rtm
+#EXTINF:-1 tvg-id="123" tvg-logo="https://berita.rtm.gov.my/images/01-homepage/logo-berita.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/6245eaa8-f825-4fef-b1f8-2d44fa8676e9" x-mode="official" x-official-url="https://mana2.my/channel/6245eaa8-f825-4fef-b1f8-2d44fa8676e9" x-alt-url="https://rtmklik.rtm.gov.my/live/tv/berita",BERITA RTM
+https://mana2.my/channel/6245eaa8-f825-4fef-b1f8-2d44fa8676e9
 
-#EXTINF:-1 tvg-id="mana-tv5" tvg-logo="./assets/channel-icons/tv5.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv5" x-mode="official" x-official-url="https://mana2.my/channel/tv5",TV5 ENJOY TV
+#EXTINF:-1 tvg-id="mana-tv5" tvg-logo="./assets/channel-icons/tv5-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv5" x-mode="official" x-official-url="https://mana2.my/channel/tv5",TV5 ENJOY TV
 https://mana2.my/channel/tv5
 
-#EXTINF:-1 tvg-id="mana-free-movies" tvg-logo="./assets/channel-icons/free-movies.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/free-movies" x-mode="official" x-official-url="https://mana2.my/channel/free-movies",FREE MOVIES
+#EXTINF:-1 tvg-id="mana-free-movies" tvg-logo="./assets/channel-icons/free-movies-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/free-movies" x-mode="official" x-official-url="https://mana2.my/channel/free-movies",FREE MOVIES
 https://mana2.my/channel/free-movies
 
-#EXTINF:-1 tvg-id="mana-mysports" tvg-logo="./assets/channel-icons/mysports.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/mysport" x-mode="official" x-official-url="https://mana2.my/channel/mysport",MySports
+#EXTINF:-1 tvg-id="mana-mysports" tvg-logo="./assets/channel-icons/mysports-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/mysport" x-mode="official" x-official-url="https://mana2.my/channel/mysport",MySports
 https://mana2.my/channel/mysport
 
-#EXTINF:-1 tvg-id="121" tvg-logo="./assets/channel-icons/bernama.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/bernama" x-mode="official" x-official-url="https://mana2.my/channel/bernama",BERNAMA
+#EXTINF:-1 tvg-id="121" tvg-logo="./assets/channel-icons/bernama-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/bernama" x-mode="official" x-official-url="https://mana2.my/channel/bernama",BERNAMA
 https://mana2.my/channel/bernama
 
-#EXTINF:-1 tvg-id="mana-indonesia-channel" tvg-logo="./assets/channel-icons/indonesia-channel.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/the-indonesia-channel" x-mode="official" x-official-url="https://mana2.my/channel/the-indonesia-channel",The Indonesia Channel
+#EXTINF:-1 tvg-id="mana-indonesia-channel" tvg-logo="./assets/channel-icons/indonesia-channel-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/the-indonesia-channel" x-mode="official" x-official-url="https://mana2.my/channel/the-indonesia-channel",The Indonesia Channel
 https://mana2.my/channel/the-indonesia-channel
 
-#EXTINF:-1 tvg-id="mana-cna" tvg-logo="./assets/channel-icons/cna.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205" x-mode="official" x-official-url="https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205",CNA
+#EXTINF:-1 tvg-id="mana-cna" tvg-logo="./assets/channel-icons/cna-card.png" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205" x-mode="official" x-official-url="https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205",CNA
 https://www.mana2.my/channel/10792dcd-a26e-441f-95ec-c9c5ba965205
 
-#EXTINF:-1 tvg-id="mana-aje" tvg-logo="./assets/channel-icons/aljazeera-en.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753" x-mode="official" x-official-url="https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753",Al JAZEERA ENGLISH HD
+#EXTINF:-1 tvg-id="mana-aje" tvg-logo="./assets/channel-icons/aljazeera-card.png" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753" x-mode="official" x-official-url="https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753",Al JAZEERA ENGLISH HD
 https://www.mana2.my/channel/c8ae5728-1231-40cf-b7f1-ed6b304bd753
 
-#EXTINF:-1 tvg-id="mana-euronews" tvg-logo="./assets/channel-icons/euronews.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094" x-mode="official" x-official-url="https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094",EURONEWS
+#EXTINF:-1 tvg-id="mana-euronews" tvg-logo="./assets/channel-icons/euronews-card.png" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094" x-mode="official" x-official-url="https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094",EURONEWS
 https://www.mana2.my/channel/8e664047-dc59-43f2-b43a-f99594c75094
 
-#EXTINF:-1 tvg-id="mana-arirang" tvg-logo="./assets/channel-icons/arirang.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d" x-mode="official" x-official-url="https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d",ARIRANG
+#EXTINF:-1 tvg-id="mana-arirang" tvg-logo="./assets/channel-icons/arirang-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d" x-mode="official" x-official-url="https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d",ARIRANG
 https://mana2.my/channel/91a0697b-3d4c-4324-8b56-3fa5d9cba67d
 
-#EXTINF:-1 tvg-id="mana-taiwanplus" tvg-logo="./assets/channel-icons/taiwanplus.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808" x-mode="official" x-official-url="https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808",TaiwanPlus
+#EXTINF:-1 tvg-id="mana-taiwanplus" tvg-logo="./assets/channel-icons/taiwanplus-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808" x-mode="official" x-official-url="https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808",TaiwanPlus
 https://mana2.my/channel/a6de27c9-8a5d-48a7-941f-4511efc94808
 
-#EXTINF:-1 tvg-id="mana-nhk" tvg-logo="./assets/channel-icons/nhk-world.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/nhk-world" x-mode="official" x-official-url="https://www.mana2.my/channel/nhk-world",NHK WORLD
-https://www.mana2.my/channel/nhk-world
+#EXTINF:-1 tvg-id="mana-nhk" tvg-logo="./assets/channel-icons/nhk-world-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/632813f5-d3a7-4e17-a225-14a61b323f32" x-mode="official" x-official-url="https://mana2.my/channel/632813f5-d3a7-4e17-a225-14a61b323f32",NHK WORLD
+https://mana2.my/channel/632813f5-d3a7-4e17-a225-14a61b323f32
 
-#EXTINF:-1 tvg-id="mana-rt" tvg-logo="./assets/channel-icons/rt-international.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/rt-international" x-mode="official" x-official-url="https://www.mana2.my/channel/rt-international",RT International
-https://www.mana2.my/channel/rt-international
+#EXTINF:-1 tvg-id="mana-rt" tvg-logo="./assets/channel-icons/rt-card.png" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/0f03e6f4-7cbf-4f01-9e19-ce48837d3fdb" x-mode="official" x-official-url="https://www.mana2.my/channel/0f03e6f4-7cbf-4f01-9e19-ce48837d3fdb",RT International
+https://www.mana2.my/channel/0f03e6f4-7cbf-4f01-9e19-ce48837d3fdb
 
-#EXTINF:-1 tvg-id="mana-aja" tvg-logo="./assets/channel-icons/aljazeera-ar.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/al-jazeera-arabic-hd" x-mode="official" x-official-url="https://mana2.my/channel/al-jazeera-arabic-hd",Al JAZEERA ARABIC HD
+#EXTINF:-1 tvg-id="mana-aja" tvg-logo="./assets/channel-icons/aljazeera-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/al-jazeera-arabic-hd" x-mode="official" x-official-url="https://mana2.my/channel/al-jazeera-arabic-hd",Al JAZEERA ARABIC HD
 https://mana2.my/channel/al-jazeera-arabic-hd
 
-#EXTINF:-1 tvg-id="225" tvg-logo="./assets/channel-icons/selangor-tv.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/selangor-tv" x-mode="official" x-official-url="https://mana2.my/channel/selangor-tv",SELANGOR TV
-https://mana2.my/channel/selangor-tv
+#EXTINF:-1 tvg-id="225" tvg-logo="./assets/channel-icons/selangor-tv-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/8c00c624-d7aa-4828-8abe-b0665ebf5772" x-mode="official" x-official-url="https://mana2.my/channel/8c00c624-d7aa-4828-8abe-b0665ebf5772",SELANGOR TV
+https://mana2.my/channel/8c00c624-d7aa-4828-8abe-b0665ebf5772
 
-#EXTINF:-1 tvg-id="mana-tvikim" tvg-logo="./assets/channel-icons/tvikim.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-ikim" x-mode="official" x-official-url="https://mana2.my/channel/tv-ikim",TVIKIM
+#EXTINF:-1 tvg-id="mana-tvikim" tvg-logo="./assets/channel-icons/ikim-card.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-ikim" x-mode="official" x-official-url="https://mana2.my/channel/tv-ikim",TVIKIM
 https://mana2.my/channel/tv-ikim
 
-#EXTINF:-1 tvg-id="200" tvg-logo="./assets/channel-icons/siara-tv.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/siara-tv" x-mode="official" x-official-url="https://mana2.my/channel/siara-tv",SIARA TV
-https://mana2.my/channel/siara-tv
+#EXTINF:-1 tvg-id="200" tvg-logo="./assets/channel-icons/siara-tv-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/d2b549cc-218c-4cd2-aab3-e9e479c3f24f" x-mode="official" x-official-url="https://mana2.my/channel/d2b549cc-218c-4cd2-aab3-e9e479c3f24f",SIARA TV
+https://mana2.my/channel/d2b549cc-218c-4cd2-aab3-e9e479c3f24f
 
-#EXTINF:-1 tvg-id="mana-borneo" tvg-logo="./assets/channel-icons/borneo-tv.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/borneo-tv" x-mode="official" x-official-url="https://www.mana2.my/channel/borneo-tv",BORNEO TV
+#EXTINF:-1 tvg-id="mana-borneo" tvg-logo="./assets/channel-icons/borneo-tv-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://www.mana2.my/channel/borneo-tv" x-mode="official" x-official-url="https://www.mana2.my/channel/borneo-tv",BORNEO TV
 https://www.mana2.my/channel/borneo-tv
 
-#EXTINF:-1 tvg-id="mana-usim" tvg-logo="./assets/channel-icons/usim-tv.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/usim-tv" x-mode="official" x-official-url="https://mana2.my/channel/usim-tv",USIM TV
-https://mana2.my/channel/usim-tv
+#EXTINF:-1 tvg-id="mana-usim" tvg-logo="./assets/channel-icons/usim-tv-card.svg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/3d0a1579-dd79-453b-b4f6-3c861f4d35da" x-mode="official" x-official-url="https://mana2.my/channel/3d0a1579-dd79-453b-b4f6-3c861f4d35da",USIM TV
+https://mana2.my/channel/3d0a1579-dd79-453b-b4f6-3c861f4d35da

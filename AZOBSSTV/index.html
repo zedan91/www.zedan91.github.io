@@ -7,9 +7,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
   <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
-  <link rel="manifest" href="./manifest.webmanifest?v=977">
+  <link rel="manifest" href="./manifest.webmanifest?v=979">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=977">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=979">
 </head>
 <body>
   <div class="app-shell">
@@ -47,12 +47,15 @@
             <div class="channel-rail-head"><strong>Channels</strong><span id="railChannelCount">0</span></div>
             <div id="channelRailList" class="channel-rail-list" role="list"></div>
           </section>
-          <section class="info-card info-card-compact">
-            <div class="status-row"><span>Service</span><strong id="serviceStatus">Connecting…</strong></div>
-            <div class="status-row"><span>Playlist</span><strong id="playlistStatus">Loading…</strong></div>
-            <div class="status-row"><span>EPG</span><strong id="epgStatus">Waiting</strong></div>
-            <div class="status-row"><span>Channels</span><strong id="channelCount">0</strong></div>
+          <section class="today-schedule-card" id="todayScheduleCard" aria-live="polite">
+            <div class="today-schedule-head"><strong>Today's Schedule</strong><span id="todayScheduleChannel">—</span></div>
+            <div id="todayScheduleList" class="today-schedule-list">
+              <div class="today-schedule-empty">Pilih channel untuk melihat jadual hari ini.</div>
+            </div>
             <div class="notice-box" id="serverNotice" hidden></div>
+            <div class="status-compat" aria-hidden="true">
+              <strong id="serviceStatus">Connecting…</strong><strong id="playlistStatus">Loading…</strong><strong id="epgStatus">Waiting</strong><strong id="channelCount">0</strong>
+            </div>
           </section>
         </aside>
       </section>
@@ -85,6 +88,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
-  <script src="./assets/azobsstv.js?v=977" defer></script>
+  <script src="./assets/azobsstv.js?v=979" defer></script>
 </body>
 </html>

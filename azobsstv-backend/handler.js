@@ -26,6 +26,7 @@ function createAZOBSSTVHandler(options = {}) {
   const streamProxyHosts = new Set([
     'd25tgymtnqzu8s.cloudfront.net'
   ]);
+  const mana2ScheduleCache = new Map();
 
   fs.mkdirSync(dataDir, { recursive: true });
 
@@ -435,6 +436,156 @@ function createAZOBSSTVHandler(options = {}) {
     writeJsonFile(heartbeatFallbackPath, { items: [payload, ...(Array.isArray(heartbeats.items) ? heartbeats.items : [])].slice(0, 1000) });
   }
 
+  function decodeHtmlEntities(text) {
+    const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+    return String(text || '').replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, code) => {
+      if (code[0] === '#') {
+        const hex = code[1] && code[1].toLowerCase() === 'x';
+        const n = parseInt(code.slice(hex ? 2 : 1), hex ? 16 : 10);
+        return Number.isFinite(n) ? String.fromCodePoint(n) : m;
+      }
+      return Object.prototype.hasOwnProperty.call(named, code.toLowerCase()) ? named[code.toLowerCase()] : m;
+    });
+  }
+  function mana2ChannelUrl(raw) {
+    const cleaned = cleanUrl(raw);
+    if (!cleaned) throw Object.assign(new Error('Valid Mana-Mana channel url required'), { statusCode: 400 });
+    const u = new URL(cleaned);
+    const host = u.hostname.toLowerCase();
+    if (host !== 'mana2.my' && host !== 'www.mana2.my') throw Object.assign(new Error('Only mana2.my channel pages are supported'), { statusCode: 403 });
+    if (!u.pathname.startsWith('/channel/')) throw Object.assign(new Error('Only Mana-Mana channel pages are supported'), { statusCode: 403 });
+    u.protocol = 'https:'; u.username = ''; u.password = ''; u.hash = '';
+    return u;
+  }
+  function htmlLinesForSchedule(html) {
+    let text = String(html || '');
+    text = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<(?:br|hr)\s*\/?\s*>/gi, '\n')
+      .replace(/<\/(?:div|p|li|h[1-6]|section|article|tr|td|th|header|footer|span|strong|b)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ');
+    text = decodeHtmlEntities(text).replace(/\r/g, '');
+    return text.split('\n').map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  }
+  function scheduleTimeTokens(text) {
+    return String(text || '').match(/\b(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)\b/gi) || [];
+  }
+  function normalizeScheduleTime(text) {
+    const m = String(text || '').match(/\b(1[0-2]|0?[1-9]):([0-5]\d)\s*(AM|PM)\b/i);
+    return m ? `${Number(m[1])}:${m[2]} ${m[3].toUpperCase()}` : '';
+  }
+  function minutesFromScheduleTime(text) {
+    const m = normalizeScheduleTime(text).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return null;
+    let h = Number(m[1]) % 12; if (m[3].toUpperCase() === 'PM') h += 12;
+    return h * 60 + Number(m[2]);
+  }
+  function malaysiaMinuteNow() {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kuala_Lumpur', hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(new Date());
+      const h = parts.find(x => x.type === 'hour')?.value || '12';
+      const m = parts.find(x => x.type === 'minute')?.value || '00';
+      const p = parts.find(x => x.type === 'dayPeriod')?.value || 'AM';
+      return minutesFromScheduleTime(`${h}:${m} ${p}`);
+    } catch (_) { const d = new Date(Date.now() + 8 * 3600000); return d.getUTCHours() * 60 + d.getUTCMinutes(); }
+  }
+  function scheduleItemCurrent(item, nowMin) {
+    const a = minutesFromScheduleTime(item.start), b = minutesFromScheduleTime(item.end);
+    if (a == null || b == null || nowMin == null) return false;
+    return a <= b ? nowMin >= a && nowMin < b : (nowMin >= a || nowMin < b);
+  }
+  function cleanProgramTitle(text) {
+    let t = cleanText(decodeHtmlEntities(text), 180).replace(/^[-–—•·\s]+|[-–—•·\s]+$/g, '').trim();
+    t = t.replace(/\s+(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+\d{1,2}\s+[A-Za-z]{3}.*$/i, '').trim();
+    return t.slice(0, 120);
+  }
+  function extractMana2Schedule(html) {
+    const lines = htmlLinesForSchedule(html);
+    let currentTitle = '';
+    const onNow = lines.findIndex(x => /^on\s*now$/i.test(x));
+    if (onNow >= 0) {
+      for (let i = onNow + 1; i < Math.min(lines.length, onNow + 10); i++) {
+        const line = lines[i];
+        if (scheduleTimeTokens(line).length || /^(live|tv\d?|today'?s schedule)$/i.test(line)) continue;
+        const title = cleanProgramTitle(line.replace(/^CH\s*\d+\s*/i, ''));
+        if (title && title.length > 1) { currentTitle = title; break; }
+      }
+    }
+    const schedule = [];
+    const startIdx = lines.findIndex(x => /today'?s\s+schedule/i.test(x));
+    if (startIdx >= 0) {
+      for (let i = startIdx + 1; i < Math.min(lines.length, startIdx + 260) && schedule.length < 48; i++) {
+        const line = lines[i];
+        let times = scheduleTimeTokens(line);
+        let start = '', end = '', title = '';
+        if (times.length >= 2) {
+          start = normalizeScheduleTime(times[0]); end = normalizeScheduleTime(times[1]);
+          const pos = line.toLowerCase().lastIndexOf(times[1].toLowerCase());
+          title = cleanProgramTitle(pos >= 0 ? line.slice(pos + times[1].length) : '');
+        } else if (times.length === 1) {
+          start = normalizeScheduleTime(times[0]);
+          let j = i + 1;
+          for (; j < Math.min(lines.length, i + 5); j++) {
+            const t2 = scheduleTimeTokens(lines[j]);
+            if (t2.length) { end = normalizeScheduleTime(t2[0]); break; }
+          }
+          if (end) {
+            for (let k = j + 1; k < Math.min(lines.length, j + 5); k++) {
+              if (scheduleTimeTokens(lines[k]).length) break;
+              const candidate = cleanProgramTitle(lines[k]);
+              if (candidate && !/^(today'?s schedule|on now|live)$/i.test(candidate)) { title = candidate; i = k - 1; break; }
+            }
+          }
+        }
+        if (start && end && !title) {
+          for (let k = i + 1; k < Math.min(lines.length, i + 5); k++) {
+            if (scheduleTimeTokens(lines[k]).length) break;
+            const candidate = cleanProgramTitle(lines[k]);
+            if (candidate && !/^(today'?s schedule|on now|live)$/i.test(candidate)) { title = candidate; break; }
+          }
+        }
+        if (start && end && title && !schedule.some(x => x.start === start && x.end === end && x.title === title)) schedule.push({ start, end, title });
+      }
+    }
+    // Fallback for server-rendered pages where all schedule text collapses into a single line.
+    if (!schedule.length) {
+      const text = lines.slice(Math.max(0, startIdx)).join(' ');
+      const re = /((?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM))\s*((?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM))\s*([^]*?)(?=(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)|$)/gi;
+      let m;
+      while ((m = re.exec(text)) && schedule.length < 48) {
+        let title = cleanProgramTitle(String(m[3] || '').split(/\s[·•]\s|\s{2,}/)[0]);
+        if (title) schedule.push({ start: normalizeScheduleTime(m[1]), end: normalizeScheduleTime(m[2]), title });
+      }
+    }
+    const nowMin = malaysiaMinuteNow();
+    for (const item of schedule) item.current = scheduleItemCurrent(item, nowMin);
+    const active = schedule.find(x => x.current);
+    if (!currentTitle && active) currentTitle = active.title;
+    return { current_title: currentTitle, schedule };
+  }
+  async function getMana2Schedule(rawUrl) {
+    const target = mana2ChannelUrl(rawUrl);
+    const key = target.toString();
+    const cached = mana2ScheduleCache.get(key);
+    if (cached && Date.now() - cached.savedAt < 60_000) return cached.value;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const response = await fetch(key, { method: 'GET', redirect: 'follow', signal: controller.signal, headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8'
+      }});
+      if (!response.ok) throw Object.assign(new Error('Mana-Mana HTTP ' + response.status), { statusCode: response.status >= 400 && response.status < 500 ? response.status : 502 });
+      const html = await response.text();
+      if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode: 413 });
+      const parsed = extractMana2Schedule(html);
+      const value = { ok: true, channel_url: key, current_title: parsed.current_title || '', schedule: parsed.schedule || [], fetched_at: Date.now(), time_zone: 'Asia/Kuala_Lumpur' };
+      mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
+      return value;
+    } finally { clearTimeout(timer); }
+  }
+
   function limited(req, res, name, maxHits, windowMs) {
     return rateLimitOrSend ? rateLimitOrSend(req, res, name, maxHits, windowMs) : false;
   }
@@ -445,7 +596,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.977', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-for-bundled-manamana-catalogue', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.979', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-manamana-today-schedule', manamana_schedule: true, time: Date.now() });
         return true;
       }
 
@@ -482,6 +633,14 @@ function createAZOBSSTVHandler(options = {}) {
       if (pathname === '/api/azobsstv/notifications' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-notifications', 240, 10 * 60 * 1000)) return true;
         sendJson(res, 200, { items: await readNotifications() });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/mana2/schedule' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-mana2-schedule', 300, 10 * 60 * 1000)) return true;
+        const target = getQueryParam(parsed, 'url');
+        if (!target) { sendJson(res, 400, { ok: false, error: 'Mana-Mana channel url required' }); return true; }
+        sendJson(res, 200, await getMana2Schedule(target), { 'Cache-Control': 'no-store' });
         return true;
       }
 

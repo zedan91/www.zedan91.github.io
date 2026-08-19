@@ -85,7 +85,7 @@
 .channel-rail-logo.fallback{font-size:10px;padding:3px}
 
 
-/* AZOBSSTV v977: remove source-label text and mirror the provider's in-video
+/* AZOBSSTV v979 inherits v978: remove source-label text and mirror the provider's in-video
    wide/fit control with a transparent same-position hotspot owned by AZOBSSTV.
    The provider iframe is cross-origin, so the parent cannot observe its real
    button click. This hotspot toggles the surrounding AZOBSSTV layout instead. */
@@ -97,3 +97,53 @@
 .hero-grid.az-player-wide .player-card{width:100%;max-width:none}
 .hero-grid.az-player-wide .video-wrap{aspect-ratio:16/9}
 @media(max-width:800px){.official-expand-hotspot{width:56px;height:56px;top:8px;right:8px}}
+
+/* AZOBSSTV v979:
+   - When wide mode is active, the parent-owned fit hotspot becomes a visible
+     "restore / fit back" control. In normal mode it remains transparent so the
+     provider's own icon stays visually untouched.
+   - Corrected channel artwork uses a neutral light tile for better logo contrast. */
+.hero-grid.az-player-wide .official-expand-hotspot{
+  opacity:1!important;
+  width:48px;
+  height:48px;
+  top:12px;
+  right:12px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.78);
+  background-color:rgba(10,13,20,.82);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 36'%3E%3Crect x='6' y='7' width='28' height='22' rx='4' fill='none' stroke='white' stroke-width='2.6'/%3E%3Cpath d='M9 18h9m-4-4 4 4-4 4M31 18h-9m4-4-4 4 4 4' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:31px 28px;
+  box-shadow:0 5px 18px rgba(0,0,0,.5);
+}
+.hero-grid.az-player-wide .official-expand-hotspot:hover{
+  background-color:rgba(24,30,43,.94);
+  transform:scale(1.04);
+}
+.hero-grid.az-player-wide .official-expand-hotspot:active{transform:scale(.96)}
+.channel-logo[src*="/channel-icons/"],
+.channel-rail-logo[src*="/channel-icons/"]{
+  background:#f8fafd;
+  padding:3px;
+}
+@media(max-width:800px){
+  .hero-grid.az-player-wide .official-expand-hotspot{width:44px;height:44px;top:10px;right:10px;background-size:28px 25px}
+}
+
+
+/* v979 - Today's Schedule replaces the old service/status card. */
+.today-schedule-card{flex:0 0 230px;min-height:0;background:linear-gradient(180deg,#111725ee,#0d111cee);border:1px solid #27314a;border-radius:var(--radius);box-shadow:0 18px 50px #0007;overflow:hidden;display:flex;flex-direction:column}
+.today-schedule-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px 10px;border-bottom:1px solid #222b40}
+.today-schedule-head strong{font-size:14px}.today-schedule-head span{max-width:115px;color:var(--muted);font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.today-schedule-list{min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:5px 8px 8px;scrollbar-width:thin;scrollbar-color:#39445f transparent}
+.today-schedule-list::-webkit-scrollbar{width:7px}.today-schedule-list::-webkit-scrollbar-thumb{background:#39445f;border-radius:999px}
+.today-schedule-row{display:grid;grid-template-columns:66px minmax(0,1fr);gap:8px;align-items:center;padding:7px 6px;border-bottom:1px solid #1e2638;border-radius:8px}
+.today-schedule-row:last-child{border-bottom:0}.today-schedule-row.current{background:#2a2119;box-shadow:inset 3px 0 0 #ff7a2f}
+.today-schedule-time{font-size:10px;line-height:1.25;color:#8f9bb2;font-weight:800}.today-schedule-row.current .today-schedule-time{color:#ff9a62}
+.today-schedule-title{font-size:11px;line-height:1.25;color:#dfe5f2;font-weight:750;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.today-schedule-row.current .today-schedule-title{color:#fff}
+.today-schedule-empty{padding:18px 8px;text-align:center;color:var(--muted);font-size:11px;line-height:1.45}
+.status-compat{display:none!important}
+.today-schedule-card .notice-box{margin:6px 8px 8px;padding:8px;font-size:11px}
+@media(max-width:800px){.today-schedule-card{flex:0 0 auto;max-height:240px;min-height:170px}.today-schedule-list{max-height:190px}}
