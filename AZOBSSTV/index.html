@@ -7,9 +7,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
   <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
-  <link rel="manifest" href="./manifest.webmanifest?v=974">
+  <link rel="manifest" href="./manifest.webmanifest?v=975">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=974">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=975">
 </head>
 <body>
   <div class="app-shell">
@@ -30,7 +30,7 @@
             <video id="tvPlayer" controls playsinline preload="metadata"></video>
             <div id="officialPlayerPanel" class="official-player" hidden>
               <div id="officialPlayerStage" class="official-player-stage">
-                <iframe id="officialPlayerFrame" title="Official channel player" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" scrolling="yes"></iframe>
+                <iframe id="officialPlayerFrame" title="Official channel player" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" scrolling="no" tabindex="-1"></iframe>
               </div>
             </div>
             <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8 dan MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
@@ -41,12 +41,18 @@
           </div>
         </div>
 
-        <aside class="info-card">
-          <div class="status-row"><span>Service</span><strong id="serviceStatus">Connecting…</strong></div>
-          <div class="status-row"><span>Playlist</span><strong id="playlistStatus">Loading…</strong></div>
-          <div class="status-row"><span>EPG</span><strong id="epgStatus">Waiting</strong></div>
-          <div class="status-row"><span>Channels</span><strong id="channelCount">0</strong></div>
-          <div class="notice-box" id="serverNotice" hidden></div>
+        <aside class="hero-side" id="heroSide">
+          <section class="channel-rail" aria-label="Quick channel list">
+            <div class="channel-rail-head"><strong>Channels</strong><span id="railChannelCount">0</span></div>
+            <div id="channelRailList" class="channel-rail-list" role="list"></div>
+          </section>
+          <section class="info-card info-card-compact">
+            <div class="status-row"><span>Service</span><strong id="serviceStatus">Connecting…</strong></div>
+            <div class="status-row"><span>Playlist</span><strong id="playlistStatus">Loading…</strong></div>
+            <div class="status-row"><span>EPG</span><strong id="epgStatus">Waiting</strong></div>
+            <div class="status-row"><span>Channels</span><strong id="channelCount">0</strong></div>
+            <div class="notice-box" id="serverNotice" hidden></div>
+          </section>
         </aside>
       </section>
 
@@ -78,6 +84,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
-  <script src="./assets/azobsstv.js?v=974" defer></script>
+  <script src="./assets/azobsstv.js?v=975" defer></script>
 </body>
 </html>

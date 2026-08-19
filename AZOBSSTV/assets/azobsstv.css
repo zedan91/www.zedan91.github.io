@@ -35,3 +35,45 @@
    while JS zooms the actual 16:9 video region to fill the AZOBSSTV frame. */
 .official-player-stage{overflow:hidden!important}
 .official-player iframe{width:1280px;height:1080px}
+
+
+/* AZOBSSTV v975: lock the cropped official-provider viewport and use the
+   right column for a vertically scrollable quick-channel rail. */
+.official-player-stage{overflow:hidden!important;overscroll-behavior:none!important}
+.official-player iframe{overflow:hidden!important;overscroll-behavior:none!important;scrollbar-width:none}
+.official-player iframe::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+
+.hero-grid{align-items:stretch}
+.hero-side{min-width:0;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.channel-rail{min-height:0;flex:1 1 auto;background:linear-gradient(180deg,#111725ee,#0d111cee);border:1px solid #27314a;border-radius:var(--radius);box-shadow:0 18px 50px #0007;overflow:hidden;display:flex;flex-direction:column}
+.channel-rail-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:13px 14px 11px;border-bottom:1px solid #222b40}
+.channel-rail-head strong{font-size:14px;letter-spacing:.3px}
+.channel-rail-head span{min-width:30px;text-align:center;padding:4px 8px;border-radius:999px;background:#1d2538;color:var(--good);font-size:12px;font-weight:850}
+.channel-rail-list{min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:8px;scrollbar-width:thin;scrollbar-color:#39445f transparent;overscroll-behavior:contain}
+.channel-rail-list::-webkit-scrollbar{width:8px}
+.channel-rail-list::-webkit-scrollbar-thumb{background:#39445f;border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+.channel-rail-card{width:100%;min-width:0;border:1px solid #252e44;background:#111827;border-radius:13px;padding:8px;display:flex;align-items:center;gap:9px;cursor:pointer;color:#fff;text-align:left;margin-bottom:8px;transition:.16s border-color,.16s background,.16s transform}
+.channel-rail-card:last-child{margin-bottom:0}
+.channel-rail-card:hover{border-color:#4a597e;background:#161f31;transform:translateY(-1px)}
+.channel-rail-card.active{border-color:#6575a2;background:#1a2438;box-shadow:inset 3px 0 0 var(--accent2)}
+.channel-rail-logo{width:42px;height:42px;flex:0 0 42px;border-radius:10px;background:#080c14;object-fit:contain}
+.channel-rail-logo.fallback{display:grid;place-items:center;font-size:12px;font-weight:900;color:#ff6a82}
+.channel-rail-text{min-width:0;flex:1}
+.channel-rail-name{font-size:13px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.channel-rail-group{margin-top:3px;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.channel-rail-fav{flex:0 0 28px;width:28px;height:28px;border:0;border-radius:50%;background:transparent;color:#7180a1;font-size:16px;cursor:pointer}
+.channel-rail-fav.active{color:#ff4967}
+.info-card-compact{flex:0 0 auto;padding:10px 12px;border-radius:16px}
+.info-card-compact .status-row{padding:8px 3px;font-size:13px}
+.info-card-compact .status-row strong{font-size:12px;max-width:150px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info-card-compact .notice-box{margin-top:9px;padding:9px;font-size:12px}
+
+@media(max-width:800px){
+  .hero-side{height:auto!important;max-height:none!important;overflow:visible}
+  .channel-rail{max-height:280px}
+  .info-card-compact{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+}
+@media(max-width:480px){
+  .info-card-compact{grid-template-columns:1fr}
+  .channel-rail{max-height:240px}
+}
