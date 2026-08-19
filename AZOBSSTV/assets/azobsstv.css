@@ -5,3 +5,10 @@
 
 /* AZOBSSTV v966 Mana-Mana catalogue + DASH support */
 .video-wrap video{object-fit:contain;visibility:visible;opacity:1;transform:translateZ(0)}
+
+/* AZOBSSTV v967: hidden player placeholder must never cover active video. */
+.player-empty[hidden]{display:none!important}
+.video-wrap video{position:relative;z-index:1}
+.player-empty{z-index:2}
+.player-error{position:absolute;inset:auto 14px 14px 14px;z-index:3;padding:10px 12px;border:1px solid #6b3040;border-radius:12px;background:#2a1019e8;color:#ffd8df;font-size:13px;line-height:1.4}
+.player-error[hidden]{display:none!important}
