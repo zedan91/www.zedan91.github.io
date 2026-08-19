@@ -685,7 +685,7 @@ function createAZOBSSTVHandler(options = {}) {
   const mana2ChannelCache = { items: [], savedAt: 0 };
 
 
-  // v983: read programme TEXT from the actually rendered public Mana-Mana page.
+  // v983+: read programme TEXT from the actually rendered public Mana-Mana page.
   // Only one browser page is created server-side, media is blocked, and audio is muted.
   // This replaces v982's two extra client iframes (the source of duplicate audio).
   let mana2BrowserPromise = null;
@@ -1072,7 +1072,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.983', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'rendered-dom-headless-primary-revlet-html-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.984', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'rendered-dom-headless-primary-revlet-html-fallback', time: Date.now() });
         return true;
       }
 

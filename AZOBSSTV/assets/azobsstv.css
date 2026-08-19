@@ -150,3 +150,6 @@
 
 
 @media(max-width:800px){.provider-now-crop{width:min(560px,72vw);height:36px}.provider-schedule-stage{min-height:190px;max-height:190px}}
+
+/* v984: Favorites/Recent are account-only. Guest heart controls stay visible but locked. */
+.fav-mini.auth-locked,.channel-rail-fav.auth-locked,#favCurrentBtn.auth-locked{opacity:.42;filter:grayscale(.35);cursor:not-allowed}
