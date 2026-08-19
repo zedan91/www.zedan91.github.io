@@ -69,6 +69,20 @@ function createAZOBSSTVHandler(options = {}) {
       return u.toString();
     } catch (_) { return ''; }
   }
+  function getQueryParam(parsed, name) {
+    try {
+      if (parsed && parsed.searchParams && typeof parsed.searchParams.get === 'function') {
+        const value = parsed.searchParams.get(name);
+        if (value != null) return String(value);
+      }
+      if (parsed && parsed.query && Object.prototype.hasOwnProperty.call(parsed.query, name)) {
+        const value = parsed.query[name];
+        return Array.isArray(value) ? String(value[0] == null ? '' : value[0]) : String(value == null ? '' : value);
+      }
+    } catch (_) {}
+    return '';
+  }
+
   function normalizeDomains(value) {
     const arr = Array.isArray(value) ? value : (typeof value === 'string' ? value.split(/[\n,]/) : []);
     const out = [];
@@ -295,9 +309,14 @@ function createAZOBSSTVHandler(options = {}) {
     try {
       for (let hop = 0; hop <= 4; hop++) {
         const headers = {
-          'User-Agent': 'AZOBSSTV/1.0 (+https://www.azobss.com/AZOBSSTV/)',
-          'Accept': req.headers.accept || '*/*'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36 AZOBSSTV/1.0',
+          'Accept': req.headers.accept || 'application/vnd.apple.mpegurl, application/x-mpegURL, */*'
         };
+        // RTM's public HLS CDN is normally requested from the official RTMKlik player.
+        // Send the official public page as Referer for compatibility; no token/cookie/credential is added.
+        if (current.hostname.toLowerCase() === 'd25tgymtnqzu8s.cloudfront.net') {
+          headers.Referer = 'https://rtmklik.rtm.gov.my/';
+        }
         if (req.headers.range) headers.Range = cleanText(req.headers.range, 200);
         const upstream = await fetch(current.toString(), {
           method: req.method === 'HEAD' ? 'HEAD' : 'GET',
@@ -421,7 +440,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.968', firestore: !!getDb(), time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.969', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, time: Date.now() });
         return true;
       }
 
@@ -463,7 +482,7 @@ function createAZOBSSTVHandler(options = {}) {
 
       if (pathname === '/api/azobsstv/stream' && (req.method === 'GET' || req.method === 'HEAD')) {
         if (limited(req, res, 'azobsstv-stream-relay', 3000, 10 * 60 * 1000)) return true;
-        const target = cleanUrl(parsed && parsed.searchParams ? parsed.searchParams.get('url') : '');
+        const target = cleanUrl(getQueryParam(parsed, 'url'));
         if (!target) { sendJson(res, 400, { ok: false, error: 'Valid stream url required' }); return true; }
         await relayStream(req, res, target);
         return true;

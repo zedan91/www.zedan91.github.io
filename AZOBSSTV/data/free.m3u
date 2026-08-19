@@ -1,5 +1,5 @@
 #EXTM3U
-# AZOBSSTV v968 - MYTV Mana-Mana catalogue + browser-safe RTM HLS relay.
+# AZOBSSTV v969 - MYTV Mana-Mana catalogue + browser-safe RTM HLS relay.
 # Direct entries below use publicly exposed broadcaster streams. Entries marked x-web-only="1"
 # open the official mana2.my channel page because no public/portable stream endpoint is bundled.
 
