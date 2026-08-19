@@ -1,22 +1,22 @@
 #EXTM3U
-# AZOBSSTV v966 - MYTV Mana-Mana catalogue integration.
+# AZOBSSTV v968 - MYTV Mana-Mana catalogue + browser-safe RTM HLS relay.
 # Direct entries below use publicly exposed broadcaster streams. Entries marked x-web-only="1"
 # open the official mana2.my channel page because no public/portable stream endpoint is bundled.
 
 # --- Direct playback entries ---
-#EXTINF:-1 tvg-id="101" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/tv1_bckg.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv1" x-mode="direct",TV1
-https://d25tgymtnqzu8s.cloudfront.net/smil:tv1/manifest.mpd
-#EXTINF:-1 tvg-id="102" tvg-logo="https://tv2.rtm.gov.my/assets/img/TV2.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv2" x-mode="direct",TV2
-https://d25tgymtnqzu8s.cloudfront.net/smil:tv2/manifest.mpd
-#EXTINF:-1 tvg-id="110" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_TVOKEY.jpg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-okey" x-mode="direct",TV OKEY
-https://d25tgymtnqzu8s.cloudfront.net/smil:okey/manifest.mpd
-#EXTINF:-1 tvg-id="111" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_SUKANRTM.jpg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/sukan-rtm" x-mode="direct",SUKAN+
-https://d25tgymtnqzu8s.cloudfront.net/smil:sukan/manifest.mpd
+#EXTINF:-1 tvg-id="101" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/tv1_bckg.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv1" x-mode="proxy",TV1
+https://d25tgymtnqzu8s.cloudfront.net/smil:tv1/playlist.m3u8?id=1
+#EXTINF:-1 tvg-id="102" tvg-logo="https://tv2.rtm.gov.my/assets/img/TV2.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv2" x-mode="proxy",TV2
+https://d25tgymtnqzu8s.cloudfront.net/smil:tv2/playlist.m3u8?id=2
+#EXTINF:-1 tvg-id="110" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_TVOKEY.jpg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-okey" x-mode="proxy",TV OKEY
+https://d25tgymtnqzu8s.cloudfront.net/smil:okey/playlist.m3u8?id=3
+#EXTINF:-1 tvg-id="111" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_SUKANRTM.jpg" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/sukan-rtm" x-mode="proxy",SUKAN+
+https://d25tgymtnqzu8s.cloudfront.net/smil:sukan/playlist.m3u8?id=4
 #EXTINF:-1 tvg-id="114" tvg-logo="https://tvalhijrah.com/wp-content/uploads/2023/04/TV_Alhijrah_logo-1.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tv-alhijrah" x-mode="direct",TV ALHIJRAH
 https://172048-castr.akamaized.net/61e0e9a88ecf869e0a595bfa/live_feb292e0f94c11edbc052354c95d3ff1/index.m3u8
 #EXTINF:-1 tvg-id="122" tvg-logo="https://s3.tvstv.my/wp-content/uploads/2024/03/tvs-logo-reduced.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/tvs" x-mode="direct",TVS
 https://stream2.smg.my/live/tvs_1080p2628kbs/index.m3u8
-#EXTINF:-1 tvg-id="123" tvg-logo="https://berita.rtm.gov.my/images/01-homepage/logo-berita.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/berita-rtm" x-mode="direct",BERITA RTM
+#EXTINF:-1 tvg-id="123" tvg-logo="https://berita.rtm.gov.my/images/01-homepage/logo-berita.png" group-title="MYTV Mana-Mana" x-source-page="https://mana2.my/channel/berita-rtm" x-mode="proxy",BERITA RTM
 https://d25tgymtnqzu8s.cloudfront.net/smil:berita/playlist.m3u8?id=5
 
 # --- Current Mana-Mana catalogue entries that open the official source page ---

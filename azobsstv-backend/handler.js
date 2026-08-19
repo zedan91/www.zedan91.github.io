@@ -22,6 +22,11 @@ function createAZOBSSTVHandler(options = {}) {
   const parentSend = typeof options.send === 'function' ? options.send : null;
   const rateLimitOrSend = typeof options.rateLimitOrSend === 'function' ? options.rateLimitOrSend : null;
 
+  // Curated public broadcaster/CDN hosts only. This is intentionally NOT an open proxy.
+  const streamProxyHosts = new Set([
+    'd25tgymtnqzu8s.cloudfront.net'
+  ]);
+
   fs.mkdirSync(dataDir, { recursive: true });
 
   function send(res, status, body, type = 'application/json; charset=utf-8', extraHeaders = {}) {
@@ -260,6 +265,98 @@ function createAZOBSSTVHandler(options = {}) {
       throw Object.assign(new Error('Unable to fetch upstream content'), { statusCode: 502 });
     } finally { clearTimeout(timer); }
   }
+  function proxyStreamUrl(rawUrl) {
+    return '/api/azobsstv/stream?url=' + encodeURIComponent(String(rawUrl || ''));
+  }
+  async function assertStreamProxyTarget(rawUrl) {
+    const u = await assertPublicHttpUrl(rawUrl);
+    const host = u.hostname.toLowerCase();
+    if (!streamProxyHosts.has(host)) throw Object.assign(new Error('Stream relay host is not allowed'), { statusCode: 403 });
+    return u;
+  }
+  function rewriteHlsForRelay(text, baseUrl) {
+    const lines = String(text || '').replace(/\r/g, '').split('\n');
+    return lines.map(line => {
+      if (!line) return line;
+      if (line.startsWith('#')) {
+        return line.replace(/URI="([^"]+)"/g, (_, raw) => {
+          try { return 'URI="' + proxyStreamUrl(new URL(raw, baseUrl).toString()) + '"'; }
+          catch (_) { return 'URI="' + raw + '"'; }
+        });
+      }
+      try { return proxyStreamUrl(new URL(line.trim(), baseUrl).toString()); }
+      catch (_) { return line; }
+    }).join('\n');
+  }
+  async function relayStream(req, res, rawUrl) {
+    let current = await assertStreamProxyTarget(rawUrl);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45_000);
+    try {
+      for (let hop = 0; hop <= 4; hop++) {
+        const headers = {
+          'User-Agent': 'AZOBSSTV/1.0 (+https://www.azobss.com/AZOBSSTV/)',
+          'Accept': req.headers.accept || '*/*'
+        };
+        if (req.headers.range) headers.Range = cleanText(req.headers.range, 200);
+        const upstream = await fetch(current.toString(), {
+          method: req.method === 'HEAD' ? 'HEAD' : 'GET',
+          redirect: 'manual',
+          signal: controller.signal,
+          headers
+        });
+        if ([301, 302, 303, 307, 308].includes(upstream.status)) {
+          if (hop === 4) throw Object.assign(new Error('Too many stream redirects'), { statusCode: 502 });
+          const location = upstream.headers.get('location');
+          if (!location) throw Object.assign(new Error('Stream redirect missing Location'), { statusCode: 502 });
+          current = await assertStreamProxyTarget(new URL(location, current).toString());
+          continue;
+        }
+        if (!upstream.ok && upstream.status !== 206) {
+          throw Object.assign(new Error('Upstream stream HTTP ' + upstream.status), { statusCode: upstream.status === 404 ? 404 : 502 });
+        }
+        const contentType = upstream.headers.get('content-type') || '';
+        const isHls = /mpegurl/i.test(contentType) || /\.m3u8$/i.test(current.pathname);
+        if (isHls && req.method !== 'HEAD') {
+          const buf = Buffer.from(await upstream.arrayBuffer());
+          if (buf.length > 4 * 1024 * 1024) throw Object.assign(new Error('HLS manifest too large'), { statusCode: 413 });
+          const body = rewriteHlsForRelay(buf.toString('utf8'), current.toString());
+          send(res, 200, body, 'application/vnd.apple.mpegurl; charset=utf-8', {
+            'Cache-Control': 'no-store',
+            'Access-Control-Allow-Origin': '*'
+          });
+          return;
+        }
+        const outHeaders = {
+          'Content-Type': contentType || 'application/octet-stream',
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+          'Access-Control-Allow-Headers': 'Range, Content-Type',
+          'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
+          'X-Content-Type-Options': 'nosniff'
+        };
+        for (const h of ['content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified']) {
+          const v = upstream.headers.get(h);
+          if (v) outHeaders[h.split('-').map(x => x.charAt(0).toUpperCase()+x.slice(1)).join('-')] = v;
+        }
+        res.writeHead(upstream.status, outHeaders);
+        if (req.method === 'HEAD' || !upstream.body) { res.end(); return; }
+        const reader = upstream.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (!res.write(Buffer.from(value))) await new Promise(resolve => res.once('drain', resolve));
+        }
+        res.end();
+        return;
+      }
+      throw Object.assign(new Error('Unable to relay stream'), { statusCode: 502 });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   function maybeGunzip(buffer) {
     if (buffer && buffer.length > 2 && buffer[0] === 0x1f && buffer[1] === 0x8b) {
       try { return zlib.gunzipSync(buffer); } catch (_) {}
@@ -324,7 +421,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.967', firestore: !!getDb(), time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.968', firestore: !!getDb(), time: Date.now() });
         return true;
       }
 
@@ -361,6 +458,14 @@ function createAZOBSSTVHandler(options = {}) {
       if (pathname === '/api/azobsstv/notifications' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-notifications', 240, 10 * 60 * 1000)) return true;
         sendJson(res, 200, { items: await readNotifications() });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/stream' && (req.method === 'GET' || req.method === 'HEAD')) {
+        if (limited(req, res, 'azobsstv-stream-relay', 3000, 10 * 60 * 1000)) return true;
+        const target = cleanUrl(parsed && parsed.searchParams ? parsed.searchParams.get('url') : '');
+        if (!target) { sendJson(res, 400, { ok: false, error: 'Valid stream url required' }); return true; }
+        await relayStream(req, res, target);
         return true;
       }
 
