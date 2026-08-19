@@ -77,3 +77,23 @@
   .info-card-compact{grid-template-columns:1fr}
   .channel-rail{max-height:240px}
 }
+
+
+/* AZOBSSTV v976: channel-specific icon fallback. */
+.channel-logo.fallback,.channel-rail-logo.fallback{background:linear-gradient(145deg,#0a0f1b,#151d30);border:1px solid #2b3652;color:#ff6a82;text-align:center;letter-spacing:.2px;line-height:1}
+.channel-logo.fallback{font-size:12px;padding:4px}
+.channel-rail-logo.fallback{font-size:10px;padding:3px}
+
+
+/* AZOBSSTV v977: remove source-label text and mirror the provider's in-video
+   wide/fit control with a transparent same-position hotspot owned by AZOBSSTV.
+   The provider iframe is cross-origin, so the parent cannot observe its real
+   button click. This hotspot toggles the surrounding AZOBSSTV layout instead. */
+.channel-rail-group{display:none!important}
+.official-expand-hotspot{position:absolute;z-index:9;top:10px;right:10px;width:64px;height:64px;border:0;border-radius:14px;background:transparent;cursor:pointer;padding:0;opacity:.001}
+.official-expand-hotspot:focus-visible{opacity:1;background:#ffffff14;outline:2px solid #fff;outline-offset:-3px}
+.hero-grid.az-player-wide{grid-template-columns:minmax(0,1fr)!important}
+.hero-grid.az-player-wide .hero-side{display:none!important}
+.hero-grid.az-player-wide .player-card{width:100%;max-width:none}
+.hero-grid.az-player-wide .video-wrap{aspect-ratio:16/9}
+@media(max-width:800px){.official-expand-hotspot{width:56px;height:56px;top:8px;right:8px}}

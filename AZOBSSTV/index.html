@@ -7,9 +7,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
   <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
-  <link rel="manifest" href="./manifest.webmanifest?v=975">
+  <link rel="manifest" href="./manifest.webmanifest?v=977">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=975">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=977">
 </head>
 <body>
   <div class="app-shell">
@@ -31,6 +31,7 @@
             <div id="officialPlayerPanel" class="official-player" hidden>
               <div id="officialPlayerStage" class="official-player-stage">
                 <iframe id="officialPlayerFrame" title="Official channel player" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" scrolling="no" tabindex="-1"></iframe>
+                <button id="officialExpandHotspot" class="official-expand-hotspot" type="button" aria-label="Fit / extend player" aria-pressed="false" title="Lebarkan player"></button>
               </div>
             </div>
             <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8 dan MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
@@ -84,6 +85,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
-  <script src="./assets/azobsstv.js?v=975" defer></script>
+  <script src="./assets/azobsstv.js?v=977" defer></script>
 </body>
 </html>
