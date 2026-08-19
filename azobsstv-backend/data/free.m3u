@@ -1,5 +1,5 @@
 #EXTM3U
-# AZOBSSTV v971 - MYTV Mana-Mana catalogue + official-player fallback for protected RTM streams.
+# AZOBSSTV v972 - MYTV Mana-Mana catalogue + official-player fallback for protected RTM streams.
 # Direct entries below use publicly exposed broadcaster streams. Entries marked x-web-only="1"
 # open the official mana2.my channel page because no public/portable stream endpoint is bundled.
 

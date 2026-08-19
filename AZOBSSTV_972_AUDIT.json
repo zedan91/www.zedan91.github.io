@@ -1,0 +1,12 @@
+{
+  "version": "1.0.972",
+  "scope": "AZOBSSTV official player auto-fit + cross-origin-safe cookie best effort",
+  "checks": {
+    "official_stage": true,
+    "fit_function": true,
+    "resize_observer": true,
+    "same_origin_cookie_best_effort": true,
+    "cache_972": true,
+    "health_972": true
+  }
+}
