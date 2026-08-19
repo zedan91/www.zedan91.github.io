@@ -16,17 +16,14 @@
 /* AZOBSSTV v971: official-page mode for sources that protect raw HLS/CDN URLs. */
 .official-player{position:absolute;inset:0;z-index:4;background:#070a12;display:grid;grid-template-rows:auto 1fr}
 .official-player[hidden]{display:none!important}
-.official-player-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#0e1421;border-bottom:1px solid #263049}
-.official-player-head>div:first-child{display:grid;gap:2px;min-width:0}.official-player-head strong{font-size:14px}.official-player-head span{font-size:11px;color:var(--muted)}
-.official-player-links{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.official-player-links a{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;border:1px solid #34415f;background:#151d2c;color:#fff;text-decoration:none;font-size:11px;font-weight:800}.official-player-links a:hover{background:#202a3f}
 .official-player iframe{width:100%;height:100%;border:0;background:#fff}.video-wrap.official-mode video{visibility:hidden}.video-wrap.official-mode .player-error{display:none!important}
-@media(max-width:620px){.official-player-head{align-items:flex-start;flex-direction:column}.official-player-links{justify-content:flex-start}}
 
 
-/* AZOBSSTV v972: official iframe auto-fit. The provider remains cross-origin. */
+/* AZOBSSTV v973: official iframe auto-fit. The provider remains cross-origin. */
 .official-player{display:block;overflow:hidden}
-.official-player-head{position:absolute;z-index:7;top:0;left:0;right:0;min-height:48px;background:linear-gradient(180deg,rgba(14,20,33,.96),rgba(14,20,33,.84));backdrop-filter:blur(6px);border-bottom:1px solid #263049}
 .official-player-stage{position:absolute;inset:0;z-index:4;overflow:hidden;background:#080b12}
 .official-player iframe{position:absolute;left:0;top:0;width:1280px;height:720px;max-width:none;max-height:none;border:0;background:#fff;transform-origin:0 0;will-change:transform}
 .video-wrap.official-mode .official-player-stage{display:block}
-@media(max-width:620px){.official-player-head{min-height:42px;padding:7px 9px;gap:6px}.official-player-head>div:first-child{display:none}.official-player-links{margin-left:auto}.official-player-links a{padding:6px 8px;font-size:10px}}
+
+/* AZOBSSTV v973: top banner removed; official iframe fills the full player area. */
+.official-player-stage{inset:0!important}

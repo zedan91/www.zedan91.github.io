@@ -1,0 +1,12 @@
+{
+  "version": "1.0.973",
+  "scope": "Remove official-player top banner only",
+  "checks": {
+    "official_player_head_html_count": 0,
+    "official_primary_link_count": 0,
+    "official_alt_link_count": 0,
+    "js_title_ref_count": 0,
+    "js_note_ref_count": 0,
+    "version_973_js": 1
+  }
+}
