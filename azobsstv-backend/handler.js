@@ -676,27 +676,314 @@ function createAZOBSSTVHandler(options = {}) {
     return { current_title: currentTitle, schedule, parser: schedule.length ? 'visible-or-nextjs' : 'none' };
   }
 
-  async function getMana2Schedule(rawUrl) {
+  // v981: Mana-Mana's public page is only the presentation layer. The public
+  // WebGrab+Plus siteini for mana2.my documents the Revlet TV-guide service used
+  // by Mana-Mana itself. Prefer that structured guide API, then fall back to the
+  // v980 HTML/Next.js parser if the upstream guide service changes or is down.
+  const MANA2_BOX_ID = '4060504e-85be-09e2-6b03-e55bd34559f1';
+  const mana2SessionCache = { sessionId: '', savedAt: 0 };
+  const mana2ChannelCache = { items: [], savedAt: 0 };
+
+  function mana2ApiHeaders(sessionId = '') {
+    const headers = {
+      'Tenant-Code': 'mytv',
+      'Box-Id': MANA2_BOX_ID,
+      'Accept': 'application/json,text/plain,*/*',
+      'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36'
+    };
+    if (sessionId) headers['Session-Id'] = sessionId;
+    return headers;
+  }
+
+  async function fetchJsonTimed(url, options = {}, timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { redirect: 'follow', ...options, signal: controller.signal });
+      const body = await response.text();
+      if (!response.ok) {
+        const err = new Error(`Mana-Mana API HTTP ${response.status}`);
+        err.statusCode = response.status >= 400 && response.status < 500 ? response.status : 502;
+        err.responseBody = body.slice(0, 400);
+        throw err;
+      }
+      try { return JSON.parse(body); }
+      catch (_) {
+        const err = new Error('Mana-Mana API returned invalid JSON');
+        err.statusCode = 502;
+        throw err;
+      }
+    } finally { clearTimeout(timer); }
+  }
+
+  function deepFindStringByKeys(value, keys, depth = 0) {
+    if (depth > 14 || value == null) return '';
+    if (typeof value !== 'object') return '';
+    for (const [k, v] of Object.entries(value)) {
+      if (keys.has(String(k).toLowerCase()) && typeof v === 'string' && v.trim()) return v.trim();
+    }
+    for (const v of Object.values(value)) {
+      const found = deepFindStringByKeys(v, keys, depth + 1);
+      if (found) return found;
+    }
+    return '';
+  }
+
+  async function getMana2SessionId(force = false) {
+    if (!force && mana2SessionCache.sessionId && Date.now() - mana2SessionCache.savedAt < 10 * 60_000) {
+      return mana2SessionCache.sessionId;
+    }
+    const tokenUrl = 'https://mytv-api.revlet.net/service/api/v1/get/token?' + new URLSearchParams({
+      tenant_code: 'mytv',
+      box_id: MANA2_BOX_ID,
+      product: 'mytv',
+      device_id: '5',
+      display_lang_code: 'ENG',
+      device_sub_type: 'Chrome,142.0.0.0,Windows',
+      timezone: 'Asia/Kuala_Lumpur'
+    }).toString();
+    let data;
+    try {
+      data = await fetchJsonTimed(tokenUrl, { method: 'GET', headers: mana2ApiHeaders() }, 12000);
+    } catch (firstError) {
+      // Older Revlet deployments accepted the same token request as POST.
+      data = await fetchJsonTimed(tokenUrl, { method: 'POST', headers: mana2ApiHeaders() }, 12000);
+    }
+    const sessionId = deepFindStringByKeys(data, new Set(['sessionid', 'session_id', 'session']));
+    if (!sessionId) {
+      const err = new Error('Mana-Mana sessionId not found');
+      err.statusCode = 502;
+      throw err;
+    }
+    mana2SessionCache.sessionId = sessionId;
+    mana2SessionCache.savedAt = Date.now();
+    return sessionId;
+  }
+
+  function normalizeMana2ChannelName(text) {
+    return String(text || '')
+      .toUpperCase()
+      .replace(/\bHD\b/g, '')
+      .replace(/\bMYTV\b/g, '')
+      .replace(/\bENJOY\b/g, '')
+      .replace(/[^A-Z0-9+]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function collectChannelObjects(value, out, depth = 0) {
+    if (depth > 12 || value == null) return;
+    if (Array.isArray(value)) { for (const x of value) collectChannelObjects(x, out, depth + 1); return; }
+    if (typeof value !== 'object') return;
+    const id = Number(value.id ?? value.channelId ?? value.channel_id);
+    const title = String(value.title ?? value.display ?? value.name ?? '').trim();
+    if (Number.isFinite(id) && id > 0 && title) out.push({ id, title, raw: value });
+    for (const v of Object.values(value)) if (v && typeof v === 'object') collectChannelObjects(v, out, depth + 1);
+  }
+
+  async function getMana2ChannelCatalog(sessionId, force = false) {
+    if (!force && mana2ChannelCache.items.length && Date.now() - mana2ChannelCache.savedAt < 10 * 60_000) {
+      return mana2ChannelCache.items;
+    }
+    const endpoint = "https://mytv-api.revlet.net/service/api/v1/tvguide/channels?filter=" + encodeURIComponent("channelType:'subpage'");
+    let data;
+    try {
+      data = await fetchJsonTimed(endpoint, { method: 'GET', headers: mana2ApiHeaders(sessionId) }, 15000);
+    } catch (e) {
+      if (e.statusCode === 401 || e.statusCode === 403) {
+        const fresh = await getMana2SessionId(true);
+        data = await fetchJsonTimed(endpoint, { method: 'GET', headers: mana2ApiHeaders(fresh) }, 15000);
+      } else throw e;
+    }
+    const items = [];
+    collectChannelObjects(data, items);
+    const dedup = [...new Map(items.map(x => [x.id, x])).values()];
+    mana2ChannelCache.items = dedup;
+    mana2ChannelCache.savedAt = Date.now();
+    return dedup;
+  }
+
+  function resolveMana2ChannelId(channelName, rawUrl, tvgId, catalog) {
+    const known = new Map([
+      ['TV1', 1], ['TV 1', 1], ['TV2', 2], ['TV 2', 2],
+      ['BERITA RTM', 4], ['SELANGOR TV', 45]
+    ]);
+    const wanted = normalizeMana2ChannelName(channelName);
+    if (known.has(wanted)) return known.get(wanted);
+
+    // Exact normalized title first, then conservative contains matching.
+    let hit = catalog.find(x => normalizeMana2ChannelName(x.title) === wanted);
+    if (!hit && wanted) hit = catalog.find(x => {
+      const t = normalizeMana2ChannelName(x.title);
+      return t && (t.includes(wanted) || wanted.includes(t)) && Math.min(t.length, wanted.length) >= 3;
+    });
+    if (hit) return hit.id;
+
+    // UUID/slug may be present somewhere in the channel object returned by Revlet.
+    let slug = '';
+    try { slug = new URL(rawUrl).pathname.split('/').filter(Boolean).pop() || ''; } catch (_) {}
+    if (slug) {
+      const low = slug.toLowerCase();
+      hit = catalog.find(x => JSON.stringify(x.raw || {}).toLowerCase().includes(low));
+      if (hit) return hit.id;
+    }
+
+    // tvg-id is retained as a final hint only if it already looks like a small
+    // Revlet guide id (not DVB channel numbers such as 101/102/123).
+    const n = Number(tvgId);
+    if (Number.isFinite(n) && n > 0 && n < 100 && catalog.some(x => x.id === n)) return n;
+    return 0;
+  }
+
+  function malaysiaDayBoundsMs(now = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kuala_Lumpur', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(now);
+    const y = Number(parts.find(x => x.type === 'year')?.value);
+    const m = Number(parts.find(x => x.type === 'month')?.value);
+    const d = Number(parts.find(x => x.type === 'day')?.value);
+    // Midnight Malaysia is previous-day 16:00 UTC (UTC+8).
+    const start = Date.UTC(y, m - 1, d, 0, 0, 0, 0) - 8 * 3600_000;
+    return { start, end: start + 24 * 3600_000 };
+  }
+
+  function findProgramsArray(value, depth = 0) {
+    if (depth > 12 || value == null || typeof value !== 'object') return [];
+    if (Array.isArray(value.programs)) return value.programs;
+    for (const v of Object.values(value)) {
+      if (v && typeof v === 'object') {
+        const found = findProgramsArray(v, depth + 1);
+        if (found.length) return found;
+      }
+    }
+    return [];
+  }
+
+  function asEpochMs(value) {
+    if (value == null || value === '') return NaN;
+    if (typeof value === 'number' || /^\d{10,13}$/.test(String(value))) {
+      let n = Number(value); if (n < 1e12) n *= 1000; return n;
+    }
+    const parsed = Date.parse(String(value));
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
+  function malaysiaTimeLabel(msOrText) {
+    const ms = asEpochMs(msOrText);
+    if (!Number.isFinite(ms)) return normalizeScheduleTime(msOrText);
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kuala_Lumpur', hour: 'numeric', minute: '2-digit', hour12: true
+      }).format(new Date(ms)).replace(/\s+/g, ' ').toUpperCase();
+    } catch (_) { return ''; }
+  }
+
+  function parseMana2GuidePrograms(data) {
+    const rawPrograms = findProgramsArray(data);
+    const now = Date.now();
+    const schedule = [];
+    for (const p of rawPrograms) {
+      if (!p || typeof p !== 'object') continue;
+      const startRaw = p.startTime ?? p.start_time ?? p.start ?? p.beginTime;
+      const endRaw = p.endTime ?? p.end_time ?? p.end ?? p.stopTime;
+      const title = cleanProgramTitle(p.title ?? p.programTitle ?? p.name ?? '');
+      if (!title) continue;
+      const startMs = asEpochMs(startRaw), endMs = asEpochMs(endRaw);
+      const start = malaysiaTimeLabel(startRaw), end = malaysiaTimeLabel(endRaw);
+      if (!start || !end) continue;
+      schedule.push({
+        start, end, title,
+        description: cleanText(p.subtitle2 ?? p.description ?? p.synopsis ?? '', 800),
+        current: Number.isFinite(startMs) && Number.isFinite(endMs) ? now >= startMs && now < endMs : scheduleItemCurrent({ start, end }, malaysiaMinuteNow())
+      });
+    }
+    schedule.sort((a, b) => minutesFromScheduleTime(a.start) - minutesFromScheduleTime(b.start));
+    return schedule;
+  }
+
+  async function getMana2GuideSchedule(rawUrl, channelName, tvgId) {
+    const sessionId = await getMana2SessionId(false);
+    const catalog = await getMana2ChannelCatalog(sessionId, false);
+    const channelId = resolveMana2ChannelId(channelName, rawUrl, tvgId, catalog);
+    if (!channelId) {
+      const err = new Error('Mana-Mana guide channel id not found');
+      err.statusCode = 404;
+      throw err;
+    }
+    const bounds = malaysiaDayBoundsMs();
+    const endpoint = 'https://mytv-tvguide.revlet.net/service/api/v1/static/tvguide?' + new URLSearchParams({
+      channel_ids: String(channelId),
+      start_time: String(bounds.start),
+      end_time: String(bounds.end),
+      page: '0'
+    }).toString();
+    let data;
+    try {
+      data = await fetchJsonTimed(endpoint, { method: 'GET', headers: mana2ApiHeaders(sessionId) }, 15000);
+    } catch (e) {
+      if (e.statusCode === 401 || e.statusCode === 403) {
+        const fresh = await getMana2SessionId(true);
+        data = await fetchJsonTimed(endpoint, { method: 'GET', headers: mana2ApiHeaders(fresh) }, 15000);
+      } else throw e;
+    }
+    const schedule = parseMana2GuidePrograms(data);
+    if (!schedule.length) {
+      const err = new Error('Mana-Mana guide API returned no programmes');
+      err.statusCode = 404;
+      throw err;
+    }
+    return {
+      ok: true,
+      channel_url: mana2ChannelUrl(rawUrl).toString(),
+      channel_id: channelId,
+      current_title: schedule.find(x => x.current)?.title || '',
+      schedule,
+      parser: 'revlet-tvguide-api',
+      fetched_at: Date.now(),
+      time_zone: 'Asia/Kuala_Lumpur'
+    };
+  }
+
+  async function getMana2Schedule(rawUrl, channelName = '', tvgId = '') {
     const target = mana2ChannelUrl(rawUrl);
-    const key = target.toString();
+    const key = `${target.toString()}|${channelName}|${tvgId}`;
     const cached = mana2ScheduleCache.get(key);
     if (cached && Date.now() - cached.savedAt < 60_000) return cached.value;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15_000);
+
+    // Primary: the structured TV-guide service used by Mana-Mana.
     try {
-      const response = await fetch(key, { method: 'GET', redirect: 'follow', signal: controller.signal, headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8'
-      }});
-      if (!response.ok) throw Object.assign(new Error('Mana-Mana HTTP ' + response.status), { statusCode: response.status >= 400 && response.status < 500 ? response.status : 502 });
-      const html = await response.text();
-      if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode: 413 });
-      const parsed = extractMana2Schedule(html);
-      const value = { ok: true, channel_url: key, current_title: parsed.current_title || '', schedule: parsed.schedule || [], parser: parsed.parser || 'none', fetched_at: Date.now(), time_zone: 'Asia/Kuala_Lumpur' };
+      const value = await getMana2GuideSchedule(target.toString(), channelName, tvgId);
       mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
       return value;
-    } finally { clearTimeout(timer); }
+    } catch (apiError) {
+      // Secondary: retain the v980 public page parser for resilience.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15_000);
+      try {
+        const response = await fetch(target.toString(), { method: 'GET', redirect: 'follow', signal: controller.signal, headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8'
+        }});
+        if (!response.ok) throw apiError;
+        const html = await response.text();
+        if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode: 413 });
+        const parsed = extractMana2Schedule(html);
+        const value = {
+          ok: true,
+          channel_url: target.toString(),
+          current_title: parsed.current_title || '',
+          schedule: parsed.schedule || [],
+          parser: parsed.schedule?.length ? 'html-nextjs-fallback' : 'none',
+          guide_api_error: cleanText(apiError?.message || 'guide-api-failed', 160),
+          fetched_at: Date.now(),
+          time_zone: 'Asia/Kuala_Lumpur'
+        };
+        mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
+        return value;
+      } finally { clearTimeout(timer); }
+    }
   }
 
   function limited(req, res, name, maxHits, windowMs) {
@@ -709,7 +996,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.980', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-manamana-ssr-nextjs-schedule', manamana_schedule: true, manamana_schedule_parser: 'visible-html-plus-nextjs-flight', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.981', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-revlet-tvguide-schedule', manamana_schedule: true, manamana_schedule_parser: 'revlet-tvguide-api-with-html-fallback', time: Date.now() });
         return true;
       }
 
@@ -752,8 +1039,10 @@ function createAZOBSSTVHandler(options = {}) {
       if (pathname === '/api/azobsstv/mana2/schedule' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-mana2-schedule', 300, 10 * 60 * 1000)) return true;
         const target = getQueryParam(parsed, 'url');
+        const channelName = cleanText(getQueryParam(parsed, 'name'), 120);
+        const tvgId = cleanText(getQueryParam(parsed, 'tvg_id'), 80);
         if (!target) { sendJson(res, 400, { ok: false, error: 'Mana-Mana channel url required' }); return true; }
-        sendJson(res, 200, await getMana2Schedule(target), { 'Cache-Control': 'no-store' });
+        sendJson(res, 200, await getMana2Schedule(target, channelName, tvgId), { 'Cache-Control': 'no-store' });
         return true;
       }
 
