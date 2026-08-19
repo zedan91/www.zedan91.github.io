@@ -1,0 +1,19 @@
+{
+  "source": "(970)-AZOBSS-AZOBSSTV-RTM-DIRECT-FIRST-RELAY-FALLBACK-FIX_20260820.zip",
+  "version": "1.0.971",
+  "rtm_mode": "official",
+  "rtm_channels": [
+    "TV1",
+    "TV2",
+    "TV OKEY",
+    "SUKAN+",
+    "BERITA RTM"
+  ],
+  "direct_channels": [
+    "TV ALHIJRAH",
+    "TVS"
+  ],
+  "raw_rtm_cdn_bundled_count": 0,
+  "official_frame_panel": true,
+  "token_or_auth_bypass": false
+}
