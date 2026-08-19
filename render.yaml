@@ -16,6 +16,7 @@ services:
         - package.json
         - .npmrc
         - deploy-server.js
+        - azobsstv-backend/**
         - lib/**
         - scripts/**
         - templates/**

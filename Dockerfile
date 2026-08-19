@@ -1,4 +1,4 @@
-# AZOBSS backend v944
+# AZOBSS backend v983
 # Fast Docker deployment layout:
 # - LibreDWG is built in an early, stable layer.
 # - Normal website/backend edits no longer invalidate the expensive LibreDWG build.
@@ -13,6 +13,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates \
+      chromium \
+      fonts-liberation \
       curl \
       tar \
       xz-utils \

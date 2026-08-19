@@ -149,16 +149,4 @@
 @media(max-width:800px){.today-schedule-card{flex:0 0 auto;max-height:240px;min-height:170px}.today-schedule-list{max-height:190px}}
 
 
-/* AZOBSSTV v982: direct Mana-Mana guide mirrors.
-   No DOM reading is attempted across origins. Two non-autoplay iframes render the
-   same public channel page and AZOBSSTV clips the already-visible ON NOW title
-   and Today's Schedule panel. This avoids duplicate/stale parser races. */
-.now-copy{min-width:0;flex:1}
-.provider-now-crop{position:relative;width:min(620px,70vw);height:38px;overflow:hidden;margin-top:1px;background:#0d111c}
-.provider-now-crop[hidden],.provider-schedule-stage[hidden]{display:none!important}
-.provider-now-crop iframe,.provider-schedule-stage iframe{position:absolute;left:0;top:0;width:1280px;height:1080px;max-width:none;max-height:none;border:0;transform-origin:0 0;background:#101522}
-.provider-now-crop iframe{pointer-events:none}
-.today-schedule-card:has(.provider-schedule-stage:not([hidden])) .today-schedule-list{display:none!important}
-.provider-schedule-stage{position:relative;min-height:0;flex:1 1 auto;overflow:hidden;background:#101522;overscroll-behavior:contain}
-.provider-schedule-stage iframe{pointer-events:auto;overscroll-behavior:contain}
 @media(max-width:800px){.provider-now-crop{width:min(560px,72vw);height:36px}.provider-schedule-stage{min-height:190px;max-height:190px}}

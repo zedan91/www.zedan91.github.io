@@ -684,6 +684,76 @@ function createAZOBSSTVHandler(options = {}) {
   const mana2SessionCache = { sessionId: '', savedAt: 0 };
   const mana2ChannelCache = { items: [], savedAt: 0 };
 
+
+  // v983: read programme TEXT from the actually rendered public Mana-Mana page.
+  // Only one browser page is created server-side, media is blocked, and audio is muted.
+  // This replaces v982's two extra client iframes (the source of duplicate audio).
+  let mana2BrowserPromise = null;
+  async function getMana2Browser() {
+    if (mana2BrowserPromise) return mana2BrowserPromise;
+    mana2BrowserPromise = (async () => {
+      const puppeteer = require('puppeteer-core');
+      const executablePath = process.env.AZOBSSTV_CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+      const browser = await puppeteer.launch({
+        executablePath,
+        headless: true,
+        args: ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--disable-gpu','--mute-audio','--autoplay-policy=user-gesture-required','--no-first-run','--no-zygote','--disable-background-networking','--disable-default-apps','--disable-extensions','--disable-sync'],
+        defaultViewport: { width: 1280, height: 1080, deviceScaleFactor: 1 }
+      });
+      browser.on('disconnected', () => { mana2BrowserPromise = null; });
+      return browser;
+    })().catch(err => { mana2BrowserPromise = null; throw err; });
+    return mana2BrowserPromise;
+  }
+
+  function parseRenderedMana2Text(bodyText) {
+    const lines = String(bodyText || '').replace(/\r/g, '').split(/\n+/).map(x => cleanText(x, 1200).replace(/\s+/g, ' ').trim()).filter(Boolean);
+    let schedule = parseScheduleFromLines(lines);
+    if (schedule.length < 2) {
+      const alt = parseScheduleFromCorpus(lines.join(' '));
+      if (alt.length > schedule.length) schedule = alt;
+    }
+    const nowMin = malaysiaMinuteNow();
+    for (const item of schedule) item.current = scheduleItemCurrent(item, nowMin);
+    let currentTitle = schedule.find(x => x.current)?.title || '';
+    if (!currentTitle) {
+      const onNow = lines.findIndex(x => /^ON\s+NOW$/i.test(x));
+      if (onNow >= 0) {
+        for (let i = onNow + 1; i < Math.min(lines.length, onNow + 14); i++) {
+          if (/^CH\s*\d+/i.test(lines[i]) || scheduleTimeTokens(lines[i]).length || isScheduleNoise(lines[i])) continue;
+          const candidate = firstTitleFromSegment(lines[i]);
+          if (candidate) { currentTitle = candidate; break; }
+        }
+      }
+    }
+    return { current_title: currentTitle, schedule };
+  }
+
+  async function getMana2RenderedSchedule(rawUrl) {
+    const target = mana2ChannelUrl(rawUrl);
+    const browser = await getMana2Browser();
+    const page = await browser.newPage();
+    try {
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36');
+      await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8' });
+      await page.setRequestInterception(true);
+      page.on('request', req => {
+        try {
+          const type = req.resourceType(), u = req.url();
+          if (type === 'media' || type === 'image' || type === 'font' || /\.(?:m3u8?|mpd|mp4|m4s|ts|webm|mp3|aac)(?:$|[?#])/i.test(u)) return req.abort();
+          req.continue();
+        } catch (_) { try { req.continue(); } catch (_) {} }
+      });
+      await page.goto(target.toString(), { waitUntil: 'domcontentloaded', timeout: 18000 });
+      try { await page.waitForFunction(() => /TODAY['’]?S\s+SCHEDULE/i.test(document.body?.innerText || ''), { timeout: 9000 }); }
+      catch (_) { await new Promise(r => setTimeout(r, 1800)); }
+      const bodyText = await page.evaluate(() => document.body ? document.body.innerText : '');
+      const parsed = parseRenderedMana2Text(bodyText);
+      if (!parsed.schedule.length && !parsed.current_title) throw Object.assign(new Error('Mana-Mana rendered page returned no programme text'), { statusCode: 404 });
+      return { ok:true, channel_url:target.toString(), current_title:parsed.current_title||'', schedule:parsed.schedule||[], parser:'rendered-dom-headless', fetched_at:Date.now(), time_zone:'Asia/Kuala_Lumpur' };
+    } finally { try { await page.close({ runBeforeUnload:false }); } catch (_) {} }
+  }
+
   function mana2ApiHeaders(sessionId = '') {
     const headers = {
       'Tenant-Code': 'mytv',
@@ -959,39 +1029,37 @@ function createAZOBSSTVHandler(options = {}) {
     const cached = mana2ScheduleCache.get(key);
     if (cached && Date.now() - cached.savedAt < 60_000) return cached.value;
 
-    // Primary: the structured TV-guide service used by Mana-Mana.
+    let renderedError = null;
     try {
-      const value = await getMana2GuideSchedule(target.toString(), channelName, tvgId);
+      const value = await getMana2RenderedSchedule(target.toString());
       mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
       return value;
-    } catch (apiError) {
-      // Secondary: retain the v980 public page parser for resilience.
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 15_000);
-      try {
-        const response = await fetch(target.toString(), { method: 'GET', redirect: 'follow', signal: controller.signal, headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8'
-        }});
-        if (!response.ok) throw apiError;
-        const html = await response.text();
-        if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode: 413 });
-        const parsed = extractMana2Schedule(html);
-        const value = {
-          ok: true,
-          channel_url: target.toString(),
-          current_title: parsed.current_title || '',
-          schedule: parsed.schedule || [],
-          parser: parsed.schedule?.length ? 'html-nextjs-fallback' : 'none',
-          guide_api_error: cleanText(apiError?.message || 'guide-api-failed', 160),
-          fetched_at: Date.now(),
-          time_zone: 'Asia/Kuala_Lumpur'
-        };
-        mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
-        return value;
-      } finally { clearTimeout(timer); }
-    }
+    } catch (e) { renderedError = e; }
+
+    let guideError = null;
+    try {
+      const value = await getMana2GuideSchedule(target.toString(), channelName, tvgId);
+      value.rendered_dom_error = cleanText(renderedError?.message || '', 160);
+      mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
+      return value;
+    } catch (e) { guideError = e; }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const response = await fetch(target.toString(), { method:'GET', redirect:'follow', signal:controller.signal, headers:{
+        'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+        'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language':'en-MY,en;q=0.9,ms;q=0.8'
+      }});
+      if (!response.ok) throw guideError || renderedError || Object.assign(new Error(`Mana-Mana page HTTP ${response.status}`), { statusCode:response.status });
+      const html = await response.text();
+      if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode:413 });
+      const parsed = extractMana2Schedule(html);
+      const value = { ok:true, channel_url:target.toString(), current_title:parsed.current_title||'', schedule:parsed.schedule||[], parser:(parsed.schedule?.length||parsed.current_title)?'html-nextjs-fallback':'none', rendered_dom_error:cleanText(renderedError?.message||'',160), guide_api_error:cleanText(guideError?.message||'',160), fetched_at:Date.now(), time_zone:'Asia/Kuala_Lumpur' };
+      mana2ScheduleCache.set(key, { savedAt:Date.now(), value });
+      return value;
+    } finally { clearTimeout(timer); }
   }
 
   function limited(req, res, name, maxHits, windowMs) {
@@ -1004,7 +1072,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.982', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'official-player-plus-provider-guide-mirror', manamana_schedule: true, manamana_schedule_parser: 'provider-page-mirror-primary-revlet-legacy-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.983', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'rendered-dom-headless-primary-revlet-html-fallback', time: Date.now() });
         return true;
       }
 
