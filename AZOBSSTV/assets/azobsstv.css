@@ -27,3 +27,11 @@
 
 /* AZOBSSTV v973: top banner removed; official iframe fills the full player area. */
 .official-player-stage{inset:0!important}
+
+
+/* AZOBSSTV v974: official Mana-Mana focus mode.
+   Cross-origin controls cannot be clicked from azobss.com. A 1280x1080 virtual
+   viewport pushes the provider's fixed cookie banner below the clipped player,
+   while JS zooms the actual 16:9 video region to fill the AZOBSSTV frame. */
+.official-player-stage{overflow:hidden!important}
+.official-player iframe{width:1280px;height:1080px}
