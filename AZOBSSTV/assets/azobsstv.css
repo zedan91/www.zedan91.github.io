@@ -345,3 +345,71 @@ body{padding-top:49px}
   .anime-player-toolbar-actions{width:100%}
   .anime-source-btn,.anime-close-btn{flex:1;text-align:center}
 }
+
+/* v997 — compact Anime panel when the public episode page cannot be embedded.
+   The normal 16:9 player is restored automatically when embedding is allowed. */
+.video-wrap.anime-embed-compact-mode{
+  aspect-ratio:auto!important;
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible;
+  background:#09111e;
+}
+.video-wrap.anime-embed-compact-mode > video,
+.video-wrap.anime-embed-compact-mode > .player-empty,
+.video-wrap.anime-embed-compact-mode > .player-error{
+  display:none!important;
+}
+.video-wrap.anime-embed-compact-mode .anime-player-panel{
+  position:relative;
+  inset:auto;
+  min-height:0;
+  height:auto;
+  display:block;
+  background:#09111e;
+}
+.video-wrap.anime-embed-compact-mode .anime-player-toolbar{
+  min-height:56px;
+  border-bottom:0;
+}
+.video-wrap.anime-embed-compact-mode .anime-embed-stage{
+  min-height:0;
+  height:auto;
+  background:#0b1322;
+  border-top:1px solid #26344e;
+}
+.video-wrap.anime-embed-compact-mode .anime-embed-stage iframe{
+  display:none!important;
+}
+.video-wrap.anime-embed-compact-mode .anime-embed-blocked{
+  position:relative;
+  inset:auto;
+  min-height:82px;
+  padding:16px 18px 18px;
+  align-items:flex-start;
+  justify-content:center;
+  text-align:left;
+  gap:5px;
+}
+.video-wrap.anime-embed-compact-mode .anime-embed-blocked strong{
+  font-size:14px;
+  line-height:1.35;
+}
+.video-wrap.anime-embed-compact-mode .anime-embed-blocked span{
+  font-size:13px;
+  line-height:1.45;
+  max-width:none;
+}
+@media(max-width:640px){
+  .video-wrap.anime-embed-compact-mode .anime-player-toolbar{
+    align-items:stretch;
+  }
+  .video-wrap.anime-embed-compact-mode .anime-player-toolbar-actions{
+    width:100%;
+  }
+  .video-wrap.anime-embed-compact-mode .anime-source-btn,
+  .video-wrap.anime-embed-compact-mode .anime-close-btn{
+    flex:1;
+    text-align:center;
+  }
+}
