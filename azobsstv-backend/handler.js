@@ -911,7 +911,7 @@ function createAZOBSSTVHandler(options = {}) {
   }
 
 
-  // v987: public EPG API discovered from Mana-Mana's CURRENT public web bundles.
+  // v988: public EPG API discovered from Mana-Mana's CURRENT public web bundles.
   // The site itself exposes:
   //   API base: https://co3y6iwoio.tenbytecdn.com/api/v1
   //   GET /channels/{slug}
@@ -1433,7 +1433,7 @@ function createAZOBSSTVHandler(options = {}) {
     const cached = mana2ScheduleCache.get(key);
     if (cached && Date.now() - cached.savedAt < 60_000) return cached.value;
 
-    // v987 primary: exact public EPG flow used by Mana-Mana's current 2026 web app.
+    // v988 primary: exact public EPG flow used by Mana-Mana's current 2026 web app.
     let publicEpgError = null;
     try {
       const value = await getMana2PublicEpgSchedule(target.toString());
@@ -1497,7 +1497,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.987', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.988', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', time: Date.now() });
         return true;
       }
 
