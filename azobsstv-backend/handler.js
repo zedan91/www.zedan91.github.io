@@ -1742,12 +1742,31 @@ function createAZOBSSTVHandler(options = {}) {
     }
   }
 
+  function isBlockedEmbedAssetUrl(rawUrl) {
+    let u;
+    try { u = new URL(String(rawUrl || '')); } catch (_) { return true; }
+
+    const host = String(u.hostname || '').toLowerCase();
+    const path = String(u.pathname || '').toLowerCase();
+
+    // A player iframe must resolve to an HTML document, never a JS/CSS/image/font/data asset.
+    if (/\.(?:js|mjs|css|map|json|xml|txt|jpg|jpeg|png|gif|webp|svg|ico|woff2?|ttf|otf)(?:$|\/)/i.test(path)) return true;
+    if (/(?:^|\/)(?:embed|count|analytics|gtag|ads?|banner|pixel|tracker)(?:[-_.][^/]*)?\.(?:js|mjs)(?:$|\/)/i.test(path)) return true;
+
+    // Known comment/analytics/ad resources are not video players even if their URL contains "embed".
+    if (/(?:^|\.)disqus\.com$/i.test(host) || /(?:^|\.)disquscdn\.com$/i.test(host)) return true;
+    if (/(?:^|\.)doubleclick\.net$/i.test(host) || /(?:^|\.)googletagmanager\.com$/i.test(host)) return true;
+    if (/(?:^|\.)google-analytics\.com$/i.test(host)) return true;
+
+    return false;
+  }
+
   function extractPublicEmbedCandidates(html, baseUrl) {
     const source = String(html || '');
     const out = [];
     const seen = new Set();
 
-    const add = raw => {
+    const add = (raw, kind) => {
       raw = decodeHtmlAttr(raw);
       if (!raw || /^javascript:/i.test(raw) || /^data:/i.test(raw)) return;
       let u;
@@ -1755,27 +1774,41 @@ function createAZOBSSTVHandler(options = {}) {
       if (!/^https?:$/.test(u.protocol)) return;
       if (/^(?:www\.)?123animehub\.cc$/i.test(u.hostname)) return;
       if (looksLikeDirectMediaUrl(u.toString())) return;
+      if (isBlockedEmbedAssetUrl(u.toString())) return;
       if (/(?:token|signature|sig|expires|auth|key)=/i.test(u.search)) return;
+
       const s = u.toString();
-      if (!seen.has(s)) { seen.add(s); out.push(s); }
+      if (!seen.has(s)) {
+        seen.add(s);
+        out.push({ url:s, kind:String(kind || 'unknown') });
+      }
     };
 
+    // Highest-confidence candidates: actual iframe/data-player attributes.
     const attrs = [
-      /\biframe[^>]+\bsrc\s*=\s*["']([^"']+)["']/gi,
-      /\b(?:data-src|data-embed|data-player|data-video|data-url)\s*=\s*["'](https?:\/\/[^"']+)["']/gi,
-      /\b(?:embed_url|embedUrl|player_url|playerUrl)\s*[:=]\s*["'](https?:\/\/[^"']+)["']/gi
+      { kind:'iframe-src', re:/\biframe[^>]+\bsrc\s*=\s*["']([^"']+)["']/gi },
+      { kind:'data-player', re:/\b(?:data-src|data-embed|data-player|data-video|data-url)\s*=\s*["'](https?:\/\/[^"']+)["']/gi },
+      { kind:'player-var', re:/\b(?:embed_url|embedUrl|player_url|playerUrl)\s*[:=]\s*["'](https?:\/\/[^"']+)["']/gi }
     ];
-    for (const re of attrs) {
+
+    for (const item of attrs) {
       let m;
-      while ((m = re.exec(source)) && out.length < 30) add(m[1]);
+      while ((m = item.re.exec(source)) && out.length < 30) add(m[1], item.kind);
     }
 
-    // Also inspect obvious external player URLs in script strings.
+    // Lower-confidence script-string discovery is intentionally strict.
+    // Only HTML-like player routes are accepted; asset URLs such as /embed.js are rejected.
     const generic = /["'](https?:\/\/[^"'<>\\\s]{8,500})["']/gi;
     let gm;
     while ((gm = generic.exec(source)) && out.length < 30) {
       const value = gm[1];
-      if (/(?:embed|player|stream|watch|video)/i.test(value)) add(value);
+      let u;
+      try { u = new URL(value); } catch (_) { continue; }
+      const path = String(u.pathname || '');
+      const looksLikePlayerRoute =
+        /\/(?:embed|player|watch|video)(?:\/|$)/i.test(path) ||
+        /[?&](?:embed|player|video)=/i.test(u.search);
+      if (looksLikePlayerRoute) add(value, 'script-player-route');
     }
 
     return out.slice(0, 30);
@@ -1787,6 +1820,10 @@ function createAZOBSSTVHandler(options = {}) {
       return { embeddable:false, reason:'invalid-embed-url' };
     }
 
+    if (isBlockedEmbedAssetUrl(current.toString())) {
+      return { embeddable:false, reason:'asset-not-html-player' };
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     try {
@@ -1796,11 +1833,46 @@ function createAZOBSSTVHandler(options = {}) {
         signal:controller.signal,
         headers:{
           'User-Agent':'Mozilla/5.0 (compatible; AZOBSSTV/1.0; +https://www.azobss.com/AZOBSSTV/)',
-          'Accept':'text/html,application/xhtml+xml'
+          'Accept':'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1'
         }
       });
-      try { if (response.body && typeof response.body.cancel === 'function') await response.body.cancel(); } catch (_) {}
-      if (!response.ok) return { embeddable:false, reason:'embed-http-' + response.status };
+
+      if (!response.ok) {
+        try { if (response.body && typeof response.body.cancel === 'function') await response.body.cancel(); } catch (_) {}
+        return { embeddable:false, reason:'embed-http-' + response.status };
+      }
+
+      const finalUrl = response.url || current.toString();
+      if (isBlockedEmbedAssetUrl(finalUrl)) {
+        try { if (response.body && typeof response.body.cancel === 'function') await response.body.cancel(); } catch (_) {}
+        return { embeddable:false, reason:'redirected-to-asset' };
+      }
+
+      // Critical v1004 fix: do not treat JavaScript/text assets as iframe players.
+      const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+      const htmlType = /(?:text\/html|application\/xhtml\+xml)/i.test(contentType);
+
+      let htmlProbe = '';
+      if (!htmlType) {
+        // Some small embed providers omit a useful Content-Type. Probe the body and
+        // accept it only when it clearly looks like HTML, never raw JS/source text.
+        try { htmlProbe = (await response.text()).slice(0, 65536); } catch (_) {}
+        const looksHtml = /<!doctype\s+html|<html[\s>]|<head[\s>]|<body[\s>]|<iframe[\s>]|<video[\s>]/i.test(htmlProbe);
+        const looksJs =
+          /^\s*(?:!function|\(function|function\s*\(|var\s+|let\s+|const\s+|window\.|document\.)/i.test(htmlProbe) ||
+          /\b(?:createElement|appendChild|getElementsByTagName|disqus|disquscdn)\b/i.test(htmlProbe.slice(0, 12000));
+
+        if (!looksHtml || looksJs) {
+          return {
+            embeddable:false,
+            reason: looksJs ? 'javascript-resource-not-player' : 'non-html-player',
+            content_type:contentType
+          };
+        }
+      } else {
+        // We only need headers for real HTML responses.
+        try { if (response.body && typeof response.body.cancel === 'function') await response.body.cancel(); } catch (_) {}
+      }
 
       const xfo = String(response.headers.get('x-frame-options') || '').trim();
       const csp = String(response.headers.get('content-security-policy') || '').trim();
@@ -1816,7 +1888,12 @@ function createAZOBSSTVHandler(options = {}) {
         const allowsAzobss = /https:\/\/(?:www\.)?azobss\.com\b/i.test(policy);
         if (!allowsAll && !allowsAzobss) return { embeddable:false, reason:'csp-frame-ancestors' };
       }
-      return { embeddable:true, final_url: response.url || current.toString() };
+
+      return {
+        embeddable:true,
+        final_url:finalUrl,
+        content_type:contentType || 'html-detected'
+      };
     } catch (err) {
       return { embeddable:false, reason:err && err.name === 'AbortError' ? 'embed-timeout' : 'embed-check-failed' };
     } finally {
@@ -1828,18 +1905,22 @@ function createAZOBSSTVHandler(options = {}) {
     try {
       const page = await fetchPublicHtml123AnimeHub(rawUrl);
       const candidates = extractPublicEmbedCandidates(page.html, page.finalUrl);
+      const rejected = [];
       for (const candidate of candidates) {
-        const check = await checkExternalEmbedAllowed(candidate);
+        const check = await checkExternalEmbedAllowed(candidate.url);
         if (check.embeddable) {
           return {
             ok:true,
             embeddable:true,
             source:'123animehub',
-            embed_url:check.final_url || candidate,
+            embed_url:check.final_url || candidate.url,
+            embed_kind:candidate.kind,
+            content_type:check.content_type || '',
             source_url:page.finalUrl,
             candidate_count:candidates.length
           };
         }
+        rejected.push({ kind:candidate.kind, reason:check.reason || 'rejected' });
       }
       return {
         ok:true,
@@ -1847,7 +1928,8 @@ function createAZOBSSTVHandler(options = {}) {
         source:'123animehub',
         source_url:page.finalUrl,
         candidate_count:candidates.length,
-        reason:candidates.length ? 'external-players-blocked' : 'no-public-external-player-found'
+        reason:candidates.length ? 'no-valid-embeddable-html-player' : 'no-public-external-player-found',
+        rejected:rejected.slice(0, 8)
       };
     } catch (err) {
       return {
@@ -1929,7 +2011,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.1003', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.1004', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
         return true;
       }
 
