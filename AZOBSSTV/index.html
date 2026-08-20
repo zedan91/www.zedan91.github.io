@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="ms">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#080b14">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
-  <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
-  <link rel="manifest" href="./manifest.webmanifest?v=995">
+  <meta name="description" content="AZOBSSTV - Live TV, Movies, Anime, Radio, EPG, Favorites and M3U playlists in one web player.">
+  <link rel="manifest" href="./manifest.webmanifest?v=996">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636">
   <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
   <script src="/assets/js/azobss-more-nav.js?v=911" defer></script>
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=995">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=996">
 </head>
 <body>
   <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -27,7 +27,7 @@
           <a href="/Software-Tools/">Software</a>
           <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
           <a href="/affiliate-shop/">Affiliate Shop</a>
-          <a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+          <a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Website Services for Business">Build Website</a>
           <a href="/lucky-draw/">Lucky Draw</a>
           <a href="/tools/">Mini Web Tools</a>
         </nav>
@@ -75,32 +75,32 @@
                 <div class="official-scroll-bridge official-scroll-bridge-left" data-official-scroll-bridge aria-hidden="true"></div>
                 <div class="official-scroll-bridge official-scroll-bridge-right" data-official-scroll-bridge aria-hidden="true"></div>
                 <div class="official-scroll-bridge official-scroll-bridge-center-bottom" data-official-scroll-bridge aria-hidden="true"></div>
-                <button id="officialExpandHotspot" class="official-expand-hotspot" type="button" aria-label="Fit / extend player" aria-pressed="false" title="Lebarkan player"></button>
+                <button id="officialExpandHotspot" class="official-expand-hotspot" type="button" aria-label="Fit / extend player" aria-pressed="false" title="Expand player"></button>
               </div>
             </div>
             <div id="animePlayerPanel" class="anime-player-panel" hidden>
               <div class="anime-player-toolbar">
                 <div class="anime-player-toolbar-copy">
                   <strong id="animePlayerEpisodeLabel">Anime Episode</strong>
-                  <span id="animePlayerSourceStatus">Menyemak paparan dalam AZOBSSTV…</span>
+                  <span id="animePlayerSourceStatus">Checking whether this source can be displayed in AZOBSSTV…</span>
                 </div>
                 <div class="anime-player-toolbar-actions">
-                  <a id="animeOpenSourceBtn" class="anime-source-btn" href="#" target="_blank" rel="noopener noreferrer">Buka Sumber</a>
-                  <button id="animeClosePlayerBtn" class="anime-close-btn" type="button">Tutup</button>
+                  <a id="animeOpenSourceBtn" class="anime-source-btn" href="#" target="_blank" rel="noopener noreferrer">Open Source</a>
+                  <button id="animeClosePlayerBtn" class="anime-close-btn" type="button">Close</button>
                 </div>
               </div>
               <div id="animeEmbedStage" class="anime-embed-stage">
                 <iframe id="animePlayerFrame" title="Anime episode public page" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>
                 <div id="animeEmbedBlocked" class="anime-embed-blocked" hidden>
-                  <strong>Sumber tidak membenarkan paparan di dalam AZOBSSTV.</strong>
-                  <span>Gunakan butang “Buka Sumber” untuk membuka halaman episod asal.</span>
+                  <strong>This source does not allow embedding in AZOBSSTV.</strong>
+                  <span>Use “Open Source” to open the original episode page.</span>
                 </div>
               </div>
             </div>
-            <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8 dan MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
+            <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Choose a channel to start watching</strong><span>AZOBSSTV supports browser-compatible streams including HLS/M3U8 and MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
           </div>
           <div class="now-playing">
-            <div class="now-copy"><span class="eyebrow">NOW PLAYING</span><h1 id="nowTitle">AZOBSSTV</h1><p id="nowMeta">Belum ada channel dipilih.</p></div>
+            <div class="now-copy"><span class="eyebrow">NOW PLAYING</span><h1 id="nowTitle">AZOBSSTV</h1><p id="nowMeta">No channel selected.</p></div>
             <div class="player-actions"><button id="pipBtn" class="small-round" type="button" aria-label="Picture in Picture">PiP</button><button id="favCurrentBtn" class="icon-btn" type="button" aria-label="Favorite">♡</button></div>
           </div>
         </div>
@@ -113,7 +113,7 @@
           <section class="today-schedule-card" id="todayScheduleCard" aria-live="polite">
             <div class="today-schedule-head"><strong>Today's Schedule</strong><span id="todayScheduleChannel">—</span></div>
             <div id="todayScheduleList" class="today-schedule-list">
-              <div class="today-schedule-empty">Pilih channel untuk melihat jadual hari ini.</div>
+              <div class="today-schedule-empty">Choose a channel to view today&#39;s schedule.</div>
             </div>
             <div class="notice-box" id="serverNotice" hidden></div>
             <div class="status-compat" aria-hidden="true">
@@ -133,19 +133,19 @@
           <button class="tab" data-tab="favorites" type="button">Favorites</button>
           <button class="tab" data-tab="recent" type="button">Recent</button>
         </div>
-        <div class="toolbar" id="browserToolbar"><input id="searchInput" type="search" placeholder="Cari channel / kandungan…" autocomplete="off"><select id="groupSelect" aria-label="Category"><option value="">Semua kategori</option></select></div>
-        <div id="contentState" class="content-state">Memuatkan AZOBSSTV…</div><div id="channelGrid" class="channel-grid" hidden></div><div id="animeDetailView" class="anime-detail-view" hidden></div><div id="guideView" class="guide-view" hidden></div>
+        <div class="toolbar" id="browserToolbar"><input id="searchInput" type="search" placeholder="Search channels / content…" autocomplete="off"><select id="groupSelect" aria-label="Category"><option value="">All categories</option></select></div>
+        <div id="contentState" class="content-state">Loading AZOBSSTV…</div><div id="channelGrid" class="channel-grid" hidden></div><div id="animeDetailView" class="anime-detail-view" hidden></div><div id="guideView" class="guide-view" hidden></div>
       </section>
     </main>
   </div>
 
   <dialog id="playlistDialog" class="modal">
     <form method="dialog" class="modal-card" id="playlistForm">
-      <div class="modal-head"><div><span class="eyebrow">MY PLAYLIST</span><h2>Tambah playlist M3U</h2></div><button class="close-btn" value="cancel" aria-label="Close">×</button></div>
-      <label>Nama playlist<input id="playlistName" maxlength="60" placeholder="Contoh: Rumah"></label>
+      <div class="modal-head"><div><span class="eyebrow">MY PLAYLIST</span><h2>Add M3U Playlist</h2></div><button class="close-btn" value="cancel" aria-label="Close">×</button></div>
+      <label>Playlist Name<input id="playlistName" maxlength="60" placeholder="Example: Home"></label>
       <label>URL M3U / M3U8<input id="playlistUrl" type="url" placeholder="https://example.com/list.m3u"></label>
-      <p class="form-note">URL playlist disimpan dalam browser ini sahaja. AZOBSSTV hanya menghantar username yang dapat dikenal pasti ke Device Ping; password tidak dimasukkan ke payload telemetry. Gunakan hanya stream yang kamu mempunyai hak untuk akses.</p>
-      <div class="modal-actions"><button class="ghost-btn" value="cancel">Batal</button><button class="primary-btn" id="savePlaylistBtn" value="default">Simpan & Muat</button></div>
+      <p class="form-note">The playlist URL is stored only in this browser. AZOBSSTV sends only an identifiable username to Device Ping; the password is never included in telemetry. Use only streams that you have permission to access.</p>
+      <div class="modal-actions"><button class="ghost-btn" value="cancel">Cancel</button><button class="primary-btn" id="savePlaylistBtn" value="default">Save & Load</button></div>
     </form>
   </dialog>
 
@@ -154,6 +154,6 @@
   <script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script>
   <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
   <script src="/assets/js/azobss-pro-ui.js" defer></script>
-  <script src="./assets/azobsstv.js?v=995" defer></script>
+  <script src="./assets/azobsstv.js?v=996" defer></script>
 </body>
 </html>
