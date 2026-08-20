@@ -629,3 +629,146 @@ body{padding-top:49px}
   outline:2px solid #7f8fff;
   outline-offset:2px;
 }
+
+
+/* v1008 — fixed hero geometry and right-side Episodes layout.
+   Root cause of the long blank Live TV player was CSS Grid stretch: the very long
+   Channels rail could stretch the grid row before JS measured the player height.
+   The player now keeps its natural size; the right column is then capped to that
+   exact height and its lists scroll internally. */
+.hero-grid{
+  align-items:start!important;
+}
+.hero-grid .player-card{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+}
+.hero-grid .hero-side{
+  align-self:start!important;
+  min-height:0!important;
+}
+
+/* Anime compact/source-player mode: Episodes stays below Channels, never below
+   the whole hero. Both cards share the exact available player-card height. */
+.hero-grid.anime-compact-hero .hero-side{
+  display:flex!important;
+  flex-direction:column!important;
+  height:var(--az-player-card-height,360px)!important;
+  max-height:var(--az-player-card-height,360px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  gap:10px!important;
+}
+.hero-grid.anime-compact-hero .channel-rail{
+  flex:1 1 48%!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+}
+.hero-grid.anime-compact-hero .today-schedule-card.anime-episode-mode,
+.hero-grid.anime-compact-hero .today-schedule-card.anime-episodes-side{
+  flex:1 1 52%!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+.hero-grid.anime-compact-hero .today-schedule-card .today-schedule-list{
+  display:block!important;
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:5px 8px 8px!important;
+}
+.hero-grid.anime-compact-hero .today-schedule-card .anime-side-episode{
+  display:grid!important;
+  grid-template-columns:55px minmax(0,1fr)!important;
+  width:100%!important;
+  min-height:36px!important;
+  margin:0!important;
+  border:0!important;
+  border-bottom:1px solid #253149!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.hero-grid.anime-compact-hero .today-schedule-card .anime-side-episode.current{
+  background:#33271e!important;
+  box-shadow:inset 3px 0 #ff7a2a!important;
+}
+.hero-grid.anime-compact-hero .today-schedule-card .anime-side-episode strong{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* Source Player description moved from the deleted bottom Anime detail card into
+   the player panel where there is usable space. */
+.video-wrap.anime-embed-compact-mode .anime-embed-blocked{
+  align-items:flex-start!important;
+  text-align:left!important;
+  gap:10px!important;
+}
+.anime-source-summary{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  width:100%;
+  min-width:0;
+}
+.anime-source-summary>strong{
+  font-size:15px!important;
+  color:#fff;
+  overflow-wrap:anywhere;
+}
+.anime-source-summary .anime-source-meta{
+  color:#8fa5c9!important;
+  font-size:12px!important;
+}
+.anime-source-summary>span:last-child{
+  max-width:760px!important;
+  color:#9fb1d2!important;
+  line-height:1.45;
+}
+
+/* The old bottom Anime detail view is no longer used. */
+.anime-detail-view{
+  display:none!important;
+}
+
+/* Live TV / official player: keep right rail at the natural player-card height.
+   Channels and schedule are fixed within that height and scroll internally. */
+.hero-grid:not(.anime-compact-hero) .hero-side{
+  overflow:hidden!important;
+}
+.hero-grid:not(.anime-compact-hero) .channel-rail-list,
+.hero-grid:not(.anime-compact-hero) .today-schedule-list{
+  overflow-y:auto!important;
+  min-height:0!important;
+}
+
+@media(max-width:800px){
+  .hero-grid .hero-side{
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  .hero-grid.anime-compact-hero .hero-side{
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  .hero-grid.anime-compact-hero .channel-rail{
+    flex:0 0 auto!important;
+    max-height:280px!important;
+  }
+  .hero-grid.anime-compact-hero .today-schedule-card.anime-episode-mode,
+  .hero-grid.anime-compact-hero .today-schedule-card.anime-episodes-side{
+    flex:0 0 auto!important;
+    max-height:300px!important;
+  }
+}

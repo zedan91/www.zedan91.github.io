@@ -36,13 +36,15 @@ function proxiedStreamUrl(url){return API_BASE+'/stream?url='+encodeURIComponent
 function playbackUrl(c){return c&&String(c.mode||'').toLowerCase()==='proxy'?proxiedStreamUrl(c.url):c.url}
 async function fetchWithTimeout(url,opts={},timeout=20000){const c=new AbortController();const t=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{cache:'no-store',...opts,signal:c.signal})}finally{clearTimeout(t)}}
 async function jget(url,timeout=20000){const r=await fetchWithTimeout(url,{},timeout);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}
+async function localJget(url,timeout=8000){const r=await fetchWithTimeout(url,{cache:'force-cache'},timeout);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}
+async function localTextGet(url,timeout=5000){const r=await fetchWithTimeout(url,{cache:'force-cache'},timeout);if(!r.ok)throw new Error('HTTP '+r.status);return await r.text()}
 async function textDirect(url,timeout=60000){const r=await fetchWithTimeout(url,{},timeout);if(!r.ok)throw new Error('HTTP '+r.status);return await r.text()}
 async function backendFetchText(kind,url,timeout){const r=await fetchWithTimeout(API_BASE+'/'+kind+'/fetch',{method:'POST',headers:{'Content-Type':'application/json','Accept':'text/plain,*/*'},body:JSON.stringify({url})},timeout);if(!r.ok){let msg='HTTP '+r.status;try{const j=await r.json();if(j.error)msg=j.error}catch{}throw new Error(msg)}return await r.text()}
 async function smartTextGet(url,kind,timeout=60000){if(!url)throw new Error('URL kosong');try{return await textDirect(url,timeout)}catch(directErr){if(url.startsWith(API_BASE))throw directErr;try{return await backendFetchText(kind,url,timeout)}catch(proxyErr){throw new Error(proxyErr.message||directErr.message)}}}
 async function loadConfig(){try{state.config=await jget(API_BASE+'/config');$('#serviceStatus').textContent='Online';$('#serviceStatus').className='ok'}catch(e){state.config={allow_all_domains:false,allowed_domains:['azobss.com'],free_playlist_url:API_BASE+'/playlist/free',epg_url:API_BASE+'/epg',notification_url:API_BASE+'/notifications',device_ping_url:API_BASE+'/device/ping'};$('#serviceStatus').textContent='Fallback';$('#serviceStatus').className='warn'}}
 function parseM3U(raw){const lines=String(raw||'').replace(/\r/g,'').split('\n');const out=[];let meta=null;let opts={};for(const src of lines){const line=src.trim();if(!line)continue;if(line.startsWith('#EXTINF:')){const comma=line.indexOf(',');const name=(comma>=0?line.slice(comma+1):'Unnamed').trim()||'Unnamed';const attrs={};line.replace(/([\w-]+)="([^"]*)"/g,(_,k,v)=>(attrs[k]=v,''));meta={name,logo:attrs['tvg-logo']||'',id:attrs['tvg-id']||attrs['tvg-name']||'',group:attrs['group-title']||'Other',sourcePage:attrs['x-source-page']||attrs['source-page']||'',webOnly:String(attrs['x-web-only']||'')==='1',mode:attrs['x-mode']||'',officialUrl:attrs['x-official-url']||'',altUrl:attrs['x-alt-url']||''};opts={}}else if(line.startsWith('#EXTVLCOPT:')){const p=line.slice(11).split('=');opts[p.shift().trim().toLowerCase()]=p.join('=').trim()}else if(line.startsWith('#KODIPROP:')){const p=line.slice(10).split('=');opts[p.shift().trim().toLowerCase()]=p.join('=').trim()}else if(!line.startsWith('#')&&meta){out.push({...meta,url:line,headers:{userAgent:opts['http-user-agent']||'',referer:opts['http-referrer']||opts['http-referer']||'',origin:opts['http-origin']||'',authorization:opts['http-authorization']||''},drm:{licenseType:opts['inputstream.adaptive.license_type']||opts['license_type']||'',licenseKey:opts['inputstream.adaptive.license_key']||opts['license_key']||''}});meta=null;opts={}}}return out}
 async function loadMana2PublicCatalog(){const data=await jget(API_BASE+'/mana2/channels',25000);const rows=Array.isArray(data?.channels)?data.channels:[];return rows.map((x,index)=>{const url=String(x?.officialUrl||x?.sourcePage||x?.url||'').trim();const name=String(x?.name||x?.title||`Channel ${index+1}`).trim();if(!url||!name)return null;return{name,logo:String(x?.logo||'').trim(),id:String(x?.id||x?.channelId||x?.slug||'').trim(),group:String(x?.group||'Live TV').trim()||'Live TV',kind:String(x?.kind||'live').toLowerCase()==='radio'?'radio':'live',sourcePage:url,webOnly:false,mode:'official',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug:String(x?.slug||'').trim(),channelNumber:x?.channelNumber??null}}).filter(Boolean)}
-async function loadAnimeCatalog(){try{const data=await jget('./data/anime-catalog.json?v=1006',18000);const rows=Array.isArray(data?.items)?data.items:[];return rows.map((x,index)=>{const url=String(x?.sourcePage||x?.url||'').trim();const name=String(x?.name||`Anime ${index+1}`).trim();const slug=String(x?.slug||'').trim();if(!url||!name)return null;const categories=Array.isArray(x?.categories)?x.categories.map(v=>String(v||'').trim()).filter(Boolean):[];const poster=slug?API_BASE+'/anime123/poster?slug='+encodeURIComponent(slug):String(x?.logo||'').trim();return{name,logo:poster,id:String(x?.id||x?.slug||`anime-${index+1}`).trim(),group:'Anime',kind:'series',categories,year:x?.year??null,rating:'',episodeCount:Number(x?.episodeCount||0)||0,episodeBase:String(x?.episodeBase||'').trim(),episodes:[],sourceProvider:String(x?.sourceProvider||'123animehub'),sourcePage:url,webOnly:true,mode:'web',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug,status:String(x?.status||''),animeType:String(x?.type||''),tags:Array.isArray(x?.tags)?x.tags:[]}}).filter(Boolean)}catch(e){console.warn('AZOBSSTV anime catalogue fallback:',e?.message||e);return[]}}
+async function loadAnimeCatalog(){try{const data=await localJget('./data/anime-catalog.json?v=1008',8000);const rows=Array.isArray(data?.items)?data.items:[];return rows.map((x,index)=>{const url=String(x?.sourcePage||x?.url||'').trim();const name=String(x?.name||`Anime ${index+1}`).trim();const slug=String(x?.slug||'').trim();if(!url||!name)return null;const categories=Array.isArray(x?.categories)?x.categories.map(v=>String(v||'').trim()).filter(Boolean):[];const poster=slug?API_BASE+'/anime123/poster?slug='+encodeURIComponent(slug):String(x?.logo||'').trim();return{name,logo:poster,id:String(x?.id||x?.slug||`anime-${index+1}`).trim(),group:'Anime',kind:'series',categories,year:x?.year??null,rating:'',episodeCount:Number(x?.episodeCount||0)||0,episodeBase:String(x?.episodeBase||'').trim(),episodes:[],sourceProvider:String(x?.sourceProvider||'123animehub'),sourcePage:url,webOnly:true,mode:'web',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug,status:String(x?.status||''),animeType:String(x?.type||''),tags:Array.isArray(x?.tags)?x.tags:[]}}).filter(Boolean)}catch(e){console.warn('AZOBSSTV anime catalogue fallback:',e?.message||e);return[]}}
 function contentCategories(c){const own=Array.isArray(c?.categories)?c.categories.map(v=>String(v||'').trim()).filter(Boolean):[];if(own.length)return own;const group=String(c?.group||'').trim();return group?[group]:[]}
 function cardSubline(c){if(mediaType(c)==='series'){const bits=[];if(c?.year)bits.push(String(c.year));bits.push(...contentCategories(c).slice(0,3));return bits.join(' • ')||'Anime'}return String(c?.mode||'').toLowerCase()==='official'?'Official player':c?.webOnly?'Open source':'Direct'}
 function mediaType(c){const explicit=String(c?.kind||'').toLowerCase();if(['live','radio','movies','series'].includes(explicit))return explicit;const text=((c.group||'')+' '+(c.name||'')).toLowerCase();if(/\bradio\b|radio|fm\b/.test(text))return'radio';if(/series|siri|episode|episod|drama/.test(text))return'series';if(/movie|movies|vod|filem|cinema/.test(text))return'movies';return'live'}
@@ -76,7 +78,7 @@ function startHeroSideSync(){
 }
 function fillGroups(){const sel=$('#groupSelect');const groups=[...new Set(state.channels.filter(tabFilter).flatMap(c=>contentCategories(c)))].filter(Boolean).sort((a,b)=>a.localeCompare(b));const old=sel.value;const allLabel=state.tab==='series'?'All anime genres':'All categories';sel.innerHTML=`<option value="">${allLabel}</option>`+groups.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');if(groups.includes(old))sel.value=old}
 function render(){state.animeDetail=null;$('#animeDetailView').hidden=true;$('#browserToolbar').hidden=false;const q=$('#searchInput').value.trim().toLowerCase();const grp=$('#groupSelect').value;if((state.tab==='favorites'||state.tab==='recent')&&!isSignedIn()){state.filtered=[];$('#channelGrid').hidden=false;$('#guideView').hidden=true;$('#channelGrid').innerHTML='';$('#contentState').hidden=false;$('#contentState').textContent=state.tab==='favorites'?'Sign in to save and view Favorites.':'Sign in to save and view Recent.';renderChannelRail([]);updateFavoriteAvailability();return}let list=state.channels.filter(c=>{if(!tabFilter(c))return false;const cats=contentCategories(c);if(grp&&!cats.includes(grp))return false;if(!q)return true;const hay=[c.name,c.group,...cats].join(' ').toLowerCase();return hay.includes(q)});if(state.tab==='favorites')list=list.filter(c=>state.favorites.has(channelKey(c)));if(state.tab==='recent'){const order=new Map(state.recent.map((u,i)=>[u,i]));list=list.filter(c=>order.has(channelKey(c))).sort((a,b)=>order.get(channelKey(a))-order.get(channelKey(b)))}state.filtered=list;$('#channelGrid').hidden=false;$('#guideView').hidden=true;$('#contentState').hidden=!!list.length;$('#contentState').textContent=list.length?'':'No content found.';$('#channelGrid').innerHTML=list.map((c,i)=>{const badge=channelBadgeText(c.name),isAnime=mediaType(c)==='series';return `<article class="channel-card ${isAnime?'anime-card':''}" data-index="${i}">${c.logo?`<img class="channel-logo" loading="lazy" referrerpolicy="no-referrer" src="${esc(c.logo)}" data-fallback="${esc(badge)}" alt="">`:`<div class="channel-logo fallback">${esc(badge)}</div>`}<div class="channel-text"><div class="channel-name">${esc(c.name)}</div><div class="channel-group">${esc(cardSubline(c))}</div></div><button class="fav-mini ${state.favorites.has(channelKey(c))?'active':''}" data-fav="${i}" type="button" aria-label="Favorite">♥</button></article>`}).join('');$$('.channel-logo').filter(x=>x.tagName==='IMG').forEach(img=>img.addEventListener('error',()=>{const d=document.createElement('div');d.className='channel-logo fallback';d.textContent=img.dataset.fallback||'TV';img.replaceWith(d)}));$$('.channel-card').forEach(el=>el.addEventListener('click',e=>{const i=Number(el.dataset.index);if(e.target.closest('[data-fav]')){toggleFav(list[i]);e.stopPropagation();return}play(list[i])}));renderChannelRail(list);updateFavoriteAvailability()}
-function toggleFav(c){if(!c||!requireSignIn('Favorites'))return;const key=channelKey(c);if(!key)return;if(state.favorites.has(key))state.favorites.delete(key);else state.favorites.add(key);saveUserLibrary();$('#favCurrentBtn').classList.toggle('active',!!(state.current&&state.favorites.has(channelKey(state.current))));if(state.animeDetail&&state.tab==='series')showAnimeDetail(state.animeDetail,false);else render()}
+function toggleFav(c){if(!c||!requireSignIn('Favorites'))return;const key=channelKey(c);if(!key)return;if(state.favorites.has(key))state.favorites.delete(key);else state.favorites.add(key);saveUserLibrary();$('#favCurrentBtn').classList.toggle('active',!!(state.current&&state.favorites.has(channelKey(state.current))));if(state.animeDetail&&state.tab==='series'){renderChannelRail();renderAnimeSideEpisodes(state.animeDetail,state.current?.url||'')}else render()}
 function markRecent(c){if(!c||!isSignedIn())return;const key=channelKey(c);if(!key)return;state.recent=[key,...state.recent.filter(x=>x!==key)].slice(0,30);saveUserLibrary()}
 function stopHls(){if(state.hls){state.hls.destroy();state.hls=null}if(state.dash){try{state.dash.reset()}catch{}state.dash=null}}
 function timeToMinutes(value){const m=String(value||'').trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);if(!m)return null;let h=Number(m[1])%12;if(m[3].toUpperCase()==='PM')h+=12;return h*60+Number(m[2])}
@@ -186,19 +188,12 @@ function restoreTodayScheduleHeading(){
   if(head)head.textContent="Today's Schedule";
 }
 function setAnimeEpisodesDocked(on){
-  const card=$('#todayScheduleCard'),side=$('#heroSide'),hero=document.querySelector('.hero-grid');
-  if(!card||!side||!hero)return;
-  if(on){
-    if(!card.classList.contains('anime-episodes-docked')){
-      hero.insertAdjacentElement('afterend',card);
-      card.classList.add('anime-episodes-docked');
-    }
-  }else{
-    if(card.classList.contains('anime-episodes-docked')){
-      side.appendChild(card);
-      card.classList.remove('anime-episodes-docked');
-    }
-  }
+  const card=$('#todayScheduleCard'),side=$('#heroSide');
+  if(!card||!side)return;
+  // v1008: Episodes must always live directly below Channels in the right rail.
+  if(card.parentElement!==side)side.appendChild(card);
+  card.classList.remove('anime-episodes-docked');
+  card.classList.toggle('anime-episodes-side',!!on);
 }
 
 function setAnimeEmbedCompactMode(on){
@@ -264,6 +259,8 @@ function openAnimeSourcePlayer(ep,activate=true){
 }
 function setupAnimeSourceFallback(series,ep,check){
   const blocked=$('#animeEmbedBlocked'),openBtn=$('#animeOpenSourceBtn'),status=$('#animePlayerSourceStatus');
+  const cats=contentCategories(series);
+  const meta=[series?.year?String(series.year):'',series?.episodeCount?`${series.episodeCount} episodes`:'',...cats.slice(0,4)].filter(Boolean).join(' • ');
   if(openBtn){
     openBtn.textContent='Source Player';
     openBtn.href=ep.url;
@@ -281,8 +278,11 @@ function setupAnimeSourceFallback(series,ep,check){
   }
   if(blocked){
     blocked.hidden=false;
-    blocked.innerHTML=`<strong>Source Player mode</strong>
-      <span>This provider blocks in-page embedding. Open the episode in a separate Source Player window; AZOBSSTV will reuse that same window when you choose another episode.</span>
+    blocked.innerHTML=`<div class="anime-source-summary">
+        <strong>${esc(series?.name||'Anime')}</strong>
+        ${meta?`<span class="anime-source-meta">${esc(meta)}</span>`:''}
+        <span>Choose an episode from the Episodes panel. This provider blocks in-page embedding, so AZOBSSTV opens the original episode in one reusable Source Player window.</span>
+      </div>
       <button type="button" class="anime-source-fallback-btn" id="animeSourceFallbackBtn">Watch in Source Player</button>`;
     $('#animeSourceFallbackBtn')?.addEventListener('click',()=>{
       const w=openAnimeSourcePlayer(ep,true);
@@ -414,34 +414,28 @@ function showAnimeDetail(series,scroll=true){
   state.animePage=1;
   state.animeEpisodeSearch='';
   markRecent(series);
-  $('#channelGrid').hidden=true;
+
+  // v1008: no separate Anime detail card at the bottom.
+  // Keep the Anime grid/search visible and use the main player + right rail only.
+  $('#animeDetailView').hidden=true;
+  $('#animeDetailView').innerHTML='';
+  $('#browserToolbar').hidden=false;
+  $('#channelGrid').hidden=false;
   $('#guideView').hidden=true;
   $('#contentState').hidden=true;
-  $('#browserToolbar').hidden=true;
-  const view=$('#animeDetailView');
-  view.hidden=false;
-  const cats=contentCategories(series);
-  const favorite=state.favorites.has(channelKey(series));
-  view.innerHTML=`<div class="anime-detail-head">
-    <button class="anime-back-btn" type="button" id="animeBackBtn">← Back to Anime</button>
-    <a class="anime-source-link" href="${esc(series.sourcePage||series.url)}" target="_blank" rel="noopener noreferrer">Source Page</a>
-  </div>
-  <div class="anime-detail-hero">
-    <img class="anime-detail-poster" src="${esc(series.logo||'')}" alt="" loading="lazy" referrerpolicy="no-referrer">
-    <div class="anime-detail-copy">
-      <div class="anime-detail-title-row"><h2>${esc(series.name)}</h2><button class="anime-detail-fav ${favorite?'active':''}" id="animeDetailFavBtn" type="button" aria-label="Favorite">♥</button></div>
-      <div class="anime-detail-meta">${series.year?`<span>${esc(String(series.year))}</span>`:''}${series.rating?`<span>${esc(series.rating)}</span>`:''}<span>${esc(String(series.episodeCount||series.episodes?.length||0))} episodes</span></div>
-      <div class="anime-genre-chips">${cats.map(g=>`<span>${esc(g)}</span>`).join('')}</div>
-      <p class="anime-detail-note">Choose an episode below. AZOBSSTV will look for a public external player exposed by the source page. If no embeddable player is available, “Open Source” remains available.</p>
-    </div>
-  </div>`;
 
-  $('#animeBackBtn')?.addEventListener('click',()=>{state.animeDetail=null;render()});
-  $('#animeDetailFavBtn')?.addEventListener('click',()=>toggleFav(series));
   renderAnimeSideEpisodes(series);
-  if(scroll)view.scrollIntoView({behavior:'smooth',block:'start'});
+  const eps=ensureAnimeEpisodes(series);
+  if(eps.length){
+    playAnimeEpisode(series,eps[0]);
+  }else{
+    state.current=series;
+    $('#nowTitle').textContent=series.name;
+    $('#nowMeta').textContent='No episodes are available.';
+    renderChannelRail();
+    if(scroll)focusAnimePlayerArea();
+  }
 }
-
 function hideOfficialPlayer(){setOfficialWide(false);const wrap=$('#videoWrap'),panel=$('#officialPlayerPanel'),frame=$('#officialPlayerFrame');if(wrap)wrap.classList.remove('official-mode');if(panel)panel.hidden=true;if(state.officialResizeObserver){try{state.officialResizeObserver.disconnect()}catch{}state.officialResizeObserver=null}if(frame){frame.style.transform='';frame.style.left='0';frame.style.top='0';try{frame.src='about:blank'}catch{}}}
 function showOfficialPlayer(c){hideAnimePlayer();restoreTodayScheduleHeading();const wrap=$('#videoWrap'),panel=$('#officialPlayerPanel'),frame=$('#officialPlayerFrame');const url=c.officialUrl||c.sourcePage||c.url;stopHls();clearTimeout(state.videoCheckTimer);const v=$('#tvPlayer');try{v.pause()}catch{}v.removeAttribute('src');v.load();hidePlayerPlaceholder();hidePlayerError();if(wrap)wrap.classList.add('official-mode');if(panel)panel.hidden=false;if(frame&&url)frame.src=url;startOfficialAutoFit();loadCurrentSchedule(c);$('#pipBtn').disabled=true}
 function play(c){
@@ -510,7 +504,7 @@ async function loadPlaylist(url,name='AZOBSSTV Free'){
 
   if(isDefaultFree&& !parsed.length){
     try{
-      const raw=await textDirect('./data/free.m3u?v=1006',15000);
+      const raw=await localTextGet('./data/free.m3u?v=1008',5000);
       parsed=parseM3U(raw);
       if(parsed.length){
         usedLocalFallback=true;
@@ -560,7 +554,7 @@ async function loadEpg(){const url=state.config?.epg_url;if(!url)return;try{cons
 function renderGuide(){renderChannelRail(state.channels.filter(c=>mediaType(c)==='live'));const rows=state.channels.filter(c=>mediaType(c)==='live').map(c=>({c,e:state.epg.get(c.id)||{}}));$('#channelGrid').hidden=true;$('#contentState').hidden=!!rows.length;$('#guideView').hidden=false;$('#guideView').innerHTML=rows.slice(0,800).map(x=>`<div class="guide-row"><div class="guide-channel">${esc(x.c.name)}</div><div class="guide-program"><strong>${esc(x.e.current?.title||'No EPG information')}</strong>${x.e.next?`<small>Next: ${esc(x.e.next.title)}</small>`:''}</div></div>`).join('')}
 function getInstallId(){let id=localStorage.getItem('azobsstv_install_id');if(!id){id=(crypto.randomUUID?crypto.randomUUID():'web-'+Date.now()+'-'+Math.random().toString(16).slice(2));localStorage.setItem('azobsstv_install_id',id)}return id}
 function extractUsername(raw){try{const u=new URL(raw);for(const k of ['username','user','login']){const v=u.searchParams.get(k);if(v)return v}if(u.username)return decodeURIComponent(u.username);const p=u.pathname;let m=p.match(/\/(?:player_api\.php|get\.php|panel_api\.php)\/([^/?\s]+)\/([^/?\s]+)/i);if(m)return decodeURIComponent(m[1]);m=p.match(/\/(?:live|movie|series)\/([^/?\s]+)\/([^/?\s]+)\//i);if(m)return decodeURIComponent(m[1])}catch{}return''}
-async function ping(reason){if(document.visibilityState==='hidden'&&reason==='heartbeat')return;const url=state.config?.device_ping_url||API_BASE+'/device/ping';const account=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');const source=account?.url||state.config?.free_playlist_url||'';const payload={device_id:getInstallId(),username:account?extractUsername(source):'free',account_name:account?.name||'AZOBSSTV Free',account_id:account?'custom':'free_azobsstv',time:Math.floor(Date.now()/1000),time_ms:Date.now(),reason,app_version:'1.0.1006',app_version_code:1006,device_model:navigator.userAgent.slice(0,180),android_release:''};try{await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),keepalive:true},15000)}catch{}}
+async function ping(reason){if(document.visibilityState==='hidden'&&reason==='heartbeat')return;const url=state.config?.device_ping_url||API_BASE+'/device/ping';const account=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');const source=account?.url||state.config?.free_playlist_url||'';const payload={device_id:getInstallId(),username:account?extractUsername(source):'free',account_name:account?.name||'AZOBSSTV Free',account_id:account?'custom':'free_azobsstv',time:Math.floor(Date.now()/1000),time_ms:Date.now(),reason,app_version:'1.0.1008',app_version_code:1008,device_model:navigator.userAgent.slice(0,180),android_release:''};try{await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),keepalive:true},15000)}catch{}}
 function normalizeNotice(item,index){if(!item||typeof item!=='object')return null;const message=String(item.message??item.body??'').trim();if(!message)return null;return{id:String(item.id??item.uuid??index),title:String(item.title||'AZOBSSTV'),message,timestamp:Number(item.timestamp||item.time||Date.now())||Date.now()}}
 async function loadNotice(){if(document.visibilityState==='hidden')return;try{const data=await jget(state.config?.notification_url||API_BASE+'/notifications',30000);const raw=Array.isArray(data)?data:(Array.isArray(data.items)?data.items:[]);const items=raw.map(normalizeNotice).filter(Boolean);const item=items.at(-1);if(item){const last=localStorage.getItem('azobsstv_notice_last_id');$('#serverNotice').hidden=false;$('#serverNotice').innerHTML=`<strong>${esc(item.title)}</strong><span>${esc(item.message)}</span>`;if(last!==item.id)localStorage.setItem('azobsstv_notice_last_id',item.id)}else $('#serverNotice').hidden=true}catch{}}
 function startForegroundLoops(){if(state.heartbeatTimer)clearInterval(state.heartbeatTimer);if(state.noticeTimer)clearInterval(state.noticeTimer);state.heartbeatTimer=setInterval(()=>ping('heartbeat'),30000);state.noticeTimer=setInterval(loadNotice,60000)}
@@ -631,6 +625,154 @@ function bindOfficialScrollBridge(){
 }
 
 function bind(){[$('#searchInput'),$('#groupSelect')].forEach(el=>el.addEventListener('input',()=>state.tab==='guide'?renderGuide():render()));$$('.tab').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));$('#favCurrentBtn').addEventListener('click',()=>toggleFav(state.current));$('#officialExpandHotspot')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleOfficialWide()});$('#animeClosePlayerBtn')?.addEventListener('click',()=>{hideAnimePlayer();$('#playerEmpty').hidden=false;$('#nowTitle').textContent='AZOBSSTV';$('#nowMeta').textContent='Choose content to start watching.';$('#pipBtn').disabled=true});$('#pipBtn').addEventListener('click',async()=>{const v=$('#tvPlayer');try{if(document.pictureInPictureElement)await document.exitPictureInPicture();else if(document.pictureInPictureEnabled&&!v.paused)await v.requestPictureInPicture()}catch{}});$('#accountBtn').addEventListener('click',()=>$('#playlistDialog').showModal());$('#refreshBtn').addEventListener('click',()=>boot(true));$('#installBtn').addEventListener('click',async()=>{if(!state.deferredInstall)return;state.deferredInstall.prompt();await state.deferredInstall.userChoice;state.deferredInstall=null;$('#installBtn').hidden=true});$('#playlistForm').addEventListener('submit',async e=>{e.preventDefault();const name=$('#playlistName').value.trim()||'My Playlist';const url=$('#playlistUrl').value.trim();if(!url)return;localStorage.setItem('azobsstv_playlist',JSON.stringify({name,url}));$('#playlistDialog').close();try{await loadPlaylist(url,name)}catch(err){alert(err.message)}});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.officialWide)setOfficialWide(false)});bindOfficialScrollBridge();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){ping('heartbeat');loadNotice();startForegroundLoops()}else stopForegroundLoops()});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.deferredInstall=e;$('#installBtn').hidden=false});window.addEventListener('azobss-auth-changed',syncAuthLibrary);window.addEventListener('storage',syncAuthLibrary);window.addEventListener('focus',syncAuthLibrary)}
-async function boot(){loadUserLibrary();updateFavoriteAvailability();$('#channelGrid')?.classList.toggle('anime-grid',state.tab==='series');const s=$('#contentState');s.hidden=false;s.textContent='Loading AZOBSSTV…';await loadConfig();await ping('launch');const custom=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');if(custom){$('#playlistName').value=custom.name||'';$('#playlistUrl').value=custom.url||''}try{await loadPlaylist(custom?.url||state.config.free_playlist_url||API_BASE+'/playlist/free',custom?.name||'AZOBSSTV Free')}catch(e){$('#playlistStatus').textContent='Failed';$('#playlistStatus').className='warn';s.hidden=false;s.textContent='Playlist failed to load: '+e.message}loadEpg().then(()=>{if(state.tab==='guide')renderGuide()});loadNotice();if(state.authUser)setTimeout(()=>loadCloudUserLibrary(false),80)}
-window.addEventListener('DOMContentLoaded',()=>{bindEnglishAZOBSSTVNavigation();bind();startHeroSideSync();boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=1006').catch(()=>{});if(document.visibilityState==='visible')startForegroundLoops()});
+
+function catalogNonAnime(){
+  return state.channels.filter(c=>mediaType(c)!=='series');
+}
+function catalogAnime(){
+  return state.channels.filter(c=>mediaType(c)==='series');
+}
+function refreshCatalogView(statusText=''){
+  $('#channelCount').textContent=String(state.channels.length);
+  if(statusText){
+    $('#playlistStatus').textContent=statusText;
+    $('#playlistStatus').className=state.channels.length?'ok':'warn';
+  }
+  fillGroups();
+
+  // Avoid destroying an Anime detail page that the user has already opened
+  // while a slow background Render request finally completes.
+  if(state.animeDetail&&state.tab==='series'){
+    const q=$('#searchInput').value.trim().toLowerCase();
+    const grp=$('#groupSelect').value;
+    const list=state.channels.filter(c=>{
+      if(mediaType(c)!=='series')return false;
+      const cats=contentCategories(c);
+      if(grp&&!cats.includes(grp))return false;
+      if(!q)return true;
+      return [c.name,c.group,...cats].join(' ').toLowerCase().includes(q);
+    });
+    state.filtered=list;
+    renderChannelRail(list);
+    return;
+  }
+  render();
+}
+function replaceLiveCatalog(live,statusText=''){
+  const rows=Array.isArray(live)?live.filter(Boolean):[];
+  if(!rows.length)return false;
+  rows.filter(c=>!c.webOnly).forEach(c=>state.trustedDemoUrls.add(c.url));
+  state.channels=[...rows,...catalogAnime()];
+  refreshCatalogView(statusText);
+  return true;
+}
+function replaceAnimeCatalog(anime,statusText=''){
+  const rows=Array.isArray(anime)?anime.filter(Boolean):[];
+  if(!rows.length)return false;
+  state.channels=[...catalogNonAnime(),...rows];
+  refreshCatalogView(statusText||$('#playlistStatus').textContent);
+  return true;
+}
+async function loadInstantLocalLive(){
+  const raw=await localTextGet('./data/free.m3u?v=1008',5000);
+  return parseM3U(raw);
+}
+async function refreshDefaultLiveInBackground(){
+  try{
+    const rows=await loadMana2PublicCatalog();
+    if(rows.length){
+      replaceLiveCatalog(rows,'Mana-Mana Live / AZOBSSTV');
+      return true;
+    }
+  }catch(e){
+    console.warn('AZOBSSTV background Live TV sync:',e?.message||e);
+  }
+  return false;
+}
+
+async function boot(){
+  loadUserLibrary();
+  updateFavoriteAvailability();
+  $('#channelGrid')?.classList.toggle('anime-grid',state.tab==='series');
+  const s=$('#contentState');
+  s.hidden=false;
+  s.textContent='Loading AZOBSSTV…';
+
+  const custom=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');
+  if(custom){
+    $('#playlistName').value=custom.name||'';
+    $('#playlistUrl').value=custom.url||'';
+  }
+
+  // Start all potentially slow network work immediately, but NEVER await it
+  // before showing the local catalogue.
+  const configPromise=loadConfig();
+  const remoteLivePromise=custom?Promise.resolve([]):loadMana2PublicCatalog().catch(e=>{
+    console.warn('AZOBSSTV early Mana-Mana sync:',e?.message||e);
+    return[];
+  });
+  const animePromise=loadAnimeCatalog().catch(e=>{
+    console.warn('AZOBSSTV fast Anime load:',e?.message||e);
+    return[];
+  });
+
+  // First paint: tiny local Live TV playlist. This should normally complete
+  // in milliseconds and immediately removes the central loading message.
+  let localLive=[];
+  try{
+    localLive=await loadInstantLocalLive();
+  }catch(e){
+    console.warn('AZOBSSTV instant local Live TV unavailable:',e?.message||e);
+  }
+
+  if(localLive.length){
+    state.channels=localLive;
+    localLive.filter(c=>!c.webOnly).forEach(c=>state.trustedDemoUrls.add(c.url));
+    refreshCatalogView(custom?'Local channels • loading custom playlist…':'Local channels • syncing online…');
+  }
+
+  // Anime catalog is local/static but larger (~1.4 MB), so merge it after
+  // the Live TV first paint instead of blocking Live TV on it.
+  animePromise.then(anime=>{
+    if(anime.length)replaceAnimeCatalog(anime,$('#playlistStatus').textContent||'AZOBSSTV');
+  });
+
+  // If Render/Mana-Mana has already returned, switch to the fresher live list.
+  remoteLivePromise.then(rows=>{
+    if(rows.length)replaceLiveCatalog(rows,'Mana-Mana Live / AZOBSSTV');
+  });
+
+  // Config, telemetry, EPG and notices are background-only startup work.
+  // A sleeping Render instance can no longer hold the whole page at Loading.
+  configPromise.then(()=>{
+    ping('launch'); // fire-and-forget
+    loadEpg().then(()=>{if(state.tab==='guide')renderGuide()});
+    loadNotice();
+
+    if(custom?.url){
+      loadPlaylist(custom.url,custom.name||'Custom Playlist').catch(e=>{
+        console.warn('AZOBSSTV custom playlist background load:',e?.message||e);
+        if(!state.channels.length){
+          s.hidden=false;
+          s.textContent='Playlist failed to load: '+e.message;
+        }
+      });
+    }
+  });
+
+  // If even the tiny local playlist could not load, wait only for whichever
+  // already-started source becomes available first enough to give the UI data.
+  if(!state.channels.length){
+    const [anime,remote]=await Promise.all([animePromise,remoteLivePromise]);
+    state.channels=[...(remote||[]),...(anime||[])];
+    if(state.channels.length)refreshCatalogView(remote?.length?'Mana-Mana Live / AZOBSSTV':'Anime catalog ready');
+    else{
+      s.hidden=false;
+      s.textContent='Unable to load the local catalog. Please refresh.';
+    }
+  }
+
+  if(state.authUser)setTimeout(()=>loadCloudUserLibrary(false),80);
+}
+window.addEventListener('DOMContentLoaded',()=>{bindEnglishAZOBSSTVNavigation();bind();startHeroSideSync();boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=1008').catch(()=>{});if(document.visibilityState==='visible')startForegroundLoops()});
 })();
