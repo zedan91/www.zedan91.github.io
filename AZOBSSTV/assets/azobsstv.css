@@ -453,3 +453,77 @@ body{padding-top:49px}
     max-height:280px!important;
   }
 }
+
+/* v1000 — Anime compact layout:
+   - Channels remains exactly aligned to the player card.
+   - Episodes is moved below the whole hero row.
+   - This removes the large blank gap below NOW PLAYING.
+   - Episode rows use a compact multi-column layout on desktop. */
+.today-schedule-card.anime-episodes-docked{
+  margin-top:12px;
+  width:100%;
+  max-height:220px;
+  min-height:0;
+  overflow:hidden;
+}
+.today-schedule-card.anime-episodes-docked .today-schedule-head{
+  min-height:42px;
+}
+.today-schedule-card.anime-episodes-docked .today-schedule-list{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0 10px;
+  max-height:168px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:0 8px 8px;
+}
+.today-schedule-card.anime-episodes-docked .anime-side-episode{
+  min-width:0;
+  border:1px solid #253149;
+  border-radius:8px;
+  margin-top:7px;
+  background:#0f1828;
+}
+.today-schedule-card.anime-episodes-docked .anime-side-episode:hover{
+  background:#172137;
+}
+.today-schedule-card.anime-episodes-docked .anime-side-episode.current{
+  background:#33271e;
+  border-color:#5f4834;
+  box-shadow:inset 3px 0 #ff7a2a;
+}
+.today-schedule-card.anime-episodes-docked .status-compat,
+.today-schedule-card.anime-episodes-docked #serverNotice{
+  display:none!important;
+}
+
+/* Once Episodes is docked below, the right hero column contains Channels only.
+   Keep Channels pinned to the exact player-card bottom. */
+.hero-grid.anime-compact-hero .hero-side{
+  height:var(--az-player-card-height,320px)!important;
+  max-height:var(--az-player-card-height,320px)!important;
+}
+.hero-grid.anime-compact-hero .channel-rail{
+  height:100%!important;
+  max-height:100%!important;
+}
+
+@media(max-width:1050px){
+  .today-schedule-card.anime-episodes-docked .today-schedule-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:800px){
+  .hero-grid.anime-compact-hero .hero-side{
+    height:auto!important;
+    max-height:none!important;
+  }
+  .today-schedule-card.anime-episodes-docked{
+    max-height:260px;
+  }
+  .today-schedule-card.anime-episodes-docked .today-schedule-list{
+    grid-template-columns:1fr;
+    max-height:205px;
+  }
+}
