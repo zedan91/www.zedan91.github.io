@@ -7,12 +7,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
   <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
-  <link rel="manifest" href="./manifest.webmanifest?v=993">
+  <link rel="manifest" href="./manifest.webmanifest?v=995">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636">
   <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
   <script src="/assets/js/azobss-more-nav.js?v=911" defer></script>
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=993">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=995">
 </head>
 <body>
   <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -78,6 +78,25 @@
                 <button id="officialExpandHotspot" class="official-expand-hotspot" type="button" aria-label="Fit / extend player" aria-pressed="false" title="Lebarkan player"></button>
               </div>
             </div>
+            <div id="animePlayerPanel" class="anime-player-panel" hidden>
+              <div class="anime-player-toolbar">
+                <div class="anime-player-toolbar-copy">
+                  <strong id="animePlayerEpisodeLabel">Anime Episode</strong>
+                  <span id="animePlayerSourceStatus">Menyemak paparan dalam AZOBSSTV…</span>
+                </div>
+                <div class="anime-player-toolbar-actions">
+                  <a id="animeOpenSourceBtn" class="anime-source-btn" href="#" target="_blank" rel="noopener noreferrer">Buka Sumber</a>
+                  <button id="animeClosePlayerBtn" class="anime-close-btn" type="button">Tutup</button>
+                </div>
+              </div>
+              <div id="animeEmbedStage" class="anime-embed-stage">
+                <iframe id="animePlayerFrame" title="Anime episode public page" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                <div id="animeEmbedBlocked" class="anime-embed-blocked" hidden>
+                  <strong>Sumber tidak membenarkan paparan di dalam AZOBSSTV.</strong>
+                  <span>Gunakan butang “Buka Sumber” untuk membuka halaman episod asal.</span>
+                </div>
+              </div>
+            </div>
             <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8 dan MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
           </div>
           <div class="now-playing">
@@ -114,8 +133,8 @@
           <button class="tab" data-tab="favorites" type="button">Favorites</button>
           <button class="tab" data-tab="recent" type="button">Recent</button>
         </div>
-        <div class="toolbar"><input id="searchInput" type="search" placeholder="Cari channel / kandungan…" autocomplete="off"><select id="groupSelect" aria-label="Category"><option value="">Semua kategori</option></select></div>
-        <div id="contentState" class="content-state">Memuatkan AZOBSSTV…</div><div id="channelGrid" class="channel-grid" hidden></div><div id="guideView" class="guide-view" hidden></div>
+        <div class="toolbar" id="browserToolbar"><input id="searchInput" type="search" placeholder="Cari channel / kandungan…" autocomplete="off"><select id="groupSelect" aria-label="Category"><option value="">Semua kategori</option></select></div>
+        <div id="contentState" class="content-state">Memuatkan AZOBSSTV…</div><div id="channelGrid" class="channel-grid" hidden></div><div id="animeDetailView" class="anime-detail-view" hidden></div><div id="guideView" class="guide-view" hidden></div>
       </section>
     </main>
   </div>
@@ -135,6 +154,6 @@
   <script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script>
   <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
   <script src="/assets/js/azobss-pro-ui.js" defer></script>
-  <script src="./assets/azobsstv.js?v=993" defer></script>
+  <script src="./assets/azobsstv.js?v=995" defer></script>
 </body>
 </html>

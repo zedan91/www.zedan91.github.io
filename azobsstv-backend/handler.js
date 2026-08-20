@@ -1683,13 +1683,78 @@ function createAZOBSSTVHandler(options = {}) {
     return rateLimitOrSend ? rateLimitOrSend(req, res, name, maxHits, windowMs) : false;
   }
 
+
+  async function checkAnimeNanaEmbed(rawUrl) {
+    const cleaned = cleanUrl(rawUrl);
+    if (!cleaned) return { ok:false, embeddable:false, reason:'invalid-url' };
+    let current = await assertPublicHttpUrl(cleaned);
+    const allowedHost = host => /^(?:www\.)?animenana\.com$/i.test(String(host || ''));
+    if (!allowedHost(current.hostname) || !/^\/view\/[^/]+/i.test(current.pathname)) {
+      return { ok:false, embeddable:false, reason:'unsupported-source' };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      for (let hop = 0; hop <= 3; hop++) {
+        const response = await fetch(current.toString(), {
+          method: 'GET',
+          redirect: 'manual',
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'AZOBSSTV/1.0 (+https://www.azobss.com/AZOBSSTV/)',
+            'Accept': 'text/html,application/xhtml+xml'
+          }
+        });
+
+        if ([301,302,303,307,308].includes(response.status)) {
+          const location = response.headers.get('location');
+          if (!location || hop === 3) return { ok:false, embeddable:false, reason:'redirect-failed' };
+          const next = await assertPublicHttpUrl(new URL(location, current).toString());
+          if (!allowedHost(next.hostname) || !/^\/view\/[^/]+/i.test(next.pathname)) {
+            return { ok:false, embeddable:false, reason:'redirect-outside-allowed-source' };
+          }
+          current = next;
+          continue;
+        }
+
+        try { if (response.body && typeof response.body.cancel === 'function') await response.body.cancel(); } catch (_) {}
+        if (!response.ok) return { ok:false, embeddable:false, reason:'upstream-http-'+response.status };
+
+        const xfo = String(response.headers.get('x-frame-options') || '').trim();
+        const csp = String(response.headers.get('content-security-policy') || '').trim();
+
+        if (/\bDENY\b/i.test(xfo)) return { ok:true, embeddable:false, reason:'x-frame-options-deny' };
+        if (/\bSAMEORIGIN\b/i.test(xfo)) return { ok:true, embeddable:false, reason:'x-frame-options-sameorigin' };
+
+        const fa = csp.match(/(?:^|;)\s*frame-ancestors\s+([^;]+)/i);
+        if (fa) {
+          const policy = String(fa[1] || '').trim();
+          if (/'none'/i.test(policy)) return { ok:true, embeddable:false, reason:'csp-frame-ancestors-none' };
+          const allowsAll = /(^|\s)\*(\s|$)/.test(policy);
+          const allowsAzobss = /https:\/\/(?:www\.)?azobss\.com\b/i.test(policy);
+          const selfOnly = !allowsAll && !allowsAzobss && /'self'/i.test(policy);
+          if (selfOnly || (!allowsAll && !allowsAzobss)) {
+            return { ok:true, embeddable:false, reason:'csp-frame-ancestors' };
+          }
+        }
+        return { ok:true, embeddable:true, reason:'public-page-allows-frame', final_url:current.toString() };
+      }
+      return { ok:false, embeddable:false, reason:'redirect-limit' };
+    } catch (err) {
+      return { ok:false, embeddable:false, reason:err && err.name === 'AbortError' ? 'timeout' : 'check-failed' };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   return async function handleAZOBSSTV(req, res, parsed) {
     const pathname = (parsed && parsed.pathname) || (() => { try { return new URL(req.url, 'http://localhost').pathname; } catch (_) { return ''; } })();
     if (!pathname.startsWith('/api/azobsstv')) return false;
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.993', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.995', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
         return true;
       }
 
@@ -1742,6 +1807,14 @@ function createAZOBSSTVHandler(options = {}) {
       if (pathname === '/api/azobsstv/notifications' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-notifications', 240, 10 * 60 * 1000)) return true;
         sendJson(res, 200, { items: await readNotifications() });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/anime/embed-check' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-anime-embed-check', 240, 10 * 60 * 1000)) return true;
+        const target = getQueryParam(parsed, 'url');
+        if (!target) { sendJson(res, 400, { ok:false, embeddable:false, reason:'url-required' }); return true; }
+        sendJson(res, 200, await checkAnimeNanaEmbed(target), { 'Cache-Control':'public, max-age=300' });
         return true;
       }
 
