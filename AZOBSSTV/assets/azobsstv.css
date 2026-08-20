@@ -606,3 +606,26 @@ body{padding-top:49px}
 .channel-rail .channel-rail-logo{
   background:#0a0f18;
 }
+
+
+/* v1006 — safe top-level Source Player fallback for providers that block iframe embedding. */
+.anime-source-fallback-btn{
+  margin-top:10px;
+  min-height:38px;
+  padding:0 15px;
+  border:1px solid #41557f;
+  border-radius:10px;
+  background:#17243a;
+  color:#fff;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.anime-source-fallback-btn:hover{
+  background:#213250;
+  border-color:#6277a7;
+}
+.anime-source-fallback-btn:focus-visible{
+  outline:2px solid #7f8fff;
+  outline-offset:2px;
+}
