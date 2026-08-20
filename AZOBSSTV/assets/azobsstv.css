@@ -166,7 +166,15 @@ body{padding-top:49px}
 /* v991 Anime series catalogue */
 .channel-card.anime-card{align-items:flex-start;min-height:126px}
 .channel-card.anime-card .channel-logo{width:72px;height:100px;border-radius:10px;object-fit:cover;background:#090d16}
-.channel-card.anime-card .channel-name{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.28}
+.channel-card.anime-card .channel-name{
+  white-space:normal;
+  display:block;
+  overflow:visible;
+  text-overflow:clip;
+  line-height:1.28;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
 .channel-card.anime-card .channel-group{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.35}
 .channel-card.anime-card .fav-mini{margin-top:2px}
 @media(max-width:480px){.channel-card.anime-card .channel-logo{width:66px;height:92px}}
@@ -219,3 +227,7 @@ body{padding-top:49px}
   .official-scroll-bridge-right{top:calc(50% - 76px);bottom:70px;width:calc(50% - 76px)}
   .official-scroll-bridge-center-bottom{left:calc(50% - 76px);width:152px;top:calc(50% + 76px);bottom:70px}
 }
+/* v993 — show complete Anime titles instead of truncating with ellipsis. */
+.channel-card.anime-card{height:auto}
+.channel-card.anime-card .channel-text{flex:1 1 auto;min-width:0}
+.channel-card.anime-card .channel-name{max-height:none!important;-webkit-line-clamp:unset!important}
