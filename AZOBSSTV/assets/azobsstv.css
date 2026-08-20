@@ -979,3 +979,36 @@ body{padding-top:49px}
     display:none;
   }
 }
+
+
+/* v1010 — blocked Anime center Play never leaves AZOBSSTV. */
+.anime-live-fallback-play-blocked{
+  position:relative;
+}
+.anime-live-fallback-play-blocked::after{
+  content:"";
+  position:absolute;
+  inset:-5px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.14);
+  pointer-events:none;
+}
+.anime-live-fallback-inline-warning{
+  display:block;
+  max-width:620px;
+  margin-top:8px;
+  padding:8px 11px;
+  border:1px solid rgba(255,176,63,.34);
+  border-radius:9px;
+  background:rgba(58,37,9,.78);
+  color:#ffd497!important;
+  font-size:12px!important;
+  line-height:1.4!important;
+  opacity:0;
+  transform:translateY(3px);
+  transition:opacity .16s ease,transform .16s ease;
+}
+.anime-live-fallback-inline-warning.show{
+  opacity:1;
+  transform:translateY(0);
+}
