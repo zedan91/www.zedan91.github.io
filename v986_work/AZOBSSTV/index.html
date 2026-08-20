@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#080b14">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>AZOBSSTV | AZOBSS</title>
+  <meta name="description" content="AZOBSSTV - Live TV, Movies, Series, Radio, EPG, Favorites dan playlist M3U dalam satu player web.">
+  <link rel="manifest" href="./manifest.webmanifest?v=986">
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636">
+  <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+  <script src="/assets/js/azobss-more-nav.js?v=911" defer></script>
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=986">
+</head>
+<body>
+  <header aria-label="Carousell style navigation" class="market-sticky-bar">
+    <div class="market-bar-inner">
+      <div class="market-main-row">
+        <a aria-label="AZOBSS" class="market-brand" href="/"><img alt="AZOBSS" src="/images/logo-azobss.jpg"></a>
+        <nav aria-label="AZOBSS quick actions" class="market-nav">
+          <a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
+          <a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
+          <a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+          <a class="nav-pa-bm-link is-hidden" hidden href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+          <a href="/Software-Tools/">Software</a>
+          <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+          <a href="/affiliate-shop/">Affiliate Shop</a>
+          <a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+          <a href="/lucky-draw/">Lucky Draw</a>
+          <a href="/tools/">Mini Web Tools</a>
+        </nav>
+        <div class="site-auth-actions" id="siteAuthActions">
+          <button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button>
+          <button class="site-auth-btn" data-auth-open="login" id="siteSignInButton" type="button">Login</button>
+        </div>
+        <div class="market-user-tools" id="marketUserTools">
+          <div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0">
+            <div class="user-avatar" id="userAvatar">AZ</div>
+            <div class="user-name"><span id="signedInName"></span></div>
+            <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+              <a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+              <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+              <button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+              <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button>
+            </div>
+          </div>
+          <a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks"><svg aria-hidden="true" class="az-market-bookmark-icon" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></a>
+          <a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle href="#"><span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg></a>
+          <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg></a>
+          <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg></a>
+        </div>
+      </div>
+      <form action="#" class="market-search-row"><label class="market-search-field"><input aria-label="Search for an item" placeholder="Search for an item" type="search"></label></form>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <div class="azobsstv-hidden-top-actions" hidden aria-hidden="true">
+      <button id="installBtn" type="button" hidden>Install</button>
+      <button id="refreshBtn" type="button">Refresh</button>
+      <button id="accountBtn" type="button">Playlist</button>
+    </div>
+
+    <main>
+      <section class="hero-grid">
+        <div class="player-card">
+          <div class="video-wrap" id="videoWrap">
+            <video id="tvPlayer" controls playsinline preload="metadata"></video>
+            <div id="officialPlayerPanel" class="official-player" hidden>
+              <div id="officialPlayerStage" class="official-player-stage">
+                <iframe id="officialPlayerFrame" title="Official channel player" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" scrolling="no" tabindex="-1"></iframe>
+                <button id="officialExpandHotspot" class="official-expand-hotspot" type="button" aria-label="Fit / extend player" aria-pressed="false" title="Lebarkan player"></button>
+              </div>
+            </div>
+            <div id="playerEmpty" class="player-empty"><div class="play-mark">▶</div><strong>Pilih channel untuk mula menonton</strong><span>AZOBSSTV menyokong stream yang serasi dengan browser termasuk HLS/M3U8 dan MPEG-DASH.</span></div><div id="playerError" class="player-error" hidden></div>
+          </div>
+          <div class="now-playing">
+            <div class="now-copy"><span class="eyebrow">NOW PLAYING</span><h1 id="nowTitle">AZOBSSTV</h1><p id="nowMeta">Belum ada channel dipilih.</p></div>
+            <div class="player-actions"><button id="pipBtn" class="small-round" type="button" aria-label="Picture in Picture">PiP</button><button id="favCurrentBtn" class="icon-btn" type="button" aria-label="Favorite">♡</button></div>
+          </div>
+        </div>
+
+        <aside class="hero-side" id="heroSide">
+          <section class="channel-rail" aria-label="Quick channel list">
+            <div class="channel-rail-head"><strong>Channels</strong><span id="railChannelCount">0</span></div>
+            <div id="channelRailList" class="channel-rail-list" role="list"></div>
+          </section>
+          <section class="today-schedule-card" id="todayScheduleCard" aria-live="polite">
+            <div class="today-schedule-head"><strong>Today's Schedule</strong><span id="todayScheduleChannel">—</span></div>
+            <div id="todayScheduleList" class="today-schedule-list">
+              <div class="today-schedule-empty">Pilih channel untuk melihat jadual hari ini.</div>
+            </div>
+            <div class="notice-box" id="serverNotice" hidden></div>
+            <div class="status-compat" aria-hidden="true">
+              <strong id="serviceStatus">Connecting…</strong><strong id="playlistStatus">Loading…</strong><strong id="epgStatus">Waiting</strong><strong id="channelCount">0</strong>
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="browser-card">
+        <div class="tabs" role="tablist" aria-label="AZOBSSTV sections">
+          <button class="tab active" data-tab="live" type="button">Live TV</button>
+          <button class="tab" data-tab="movies" type="button">Movies</button>
+          <button class="tab" data-tab="series" type="button">Series</button>
+          <button class="tab" data-tab="radio" type="button">Radio</button>
+          <button class="tab" data-tab="guide" type="button">TV Guide</button>
+          <button class="tab" data-tab="favorites" type="button">Favorites</button>
+          <button class="tab" data-tab="recent" type="button">Recent</button>
+        </div>
+        <div class="toolbar"><input id="searchInput" type="search" placeholder="Cari channel / kandungan…" autocomplete="off"><select id="groupSelect" aria-label="Category"><option value="">Semua kategori</option></select></div>
+        <div id="contentState" class="content-state">Memuatkan AZOBSSTV…</div><div id="channelGrid" class="channel-grid" hidden></div><div id="guideView" class="guide-view" hidden></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="playlistDialog" class="modal">
+    <form method="dialog" class="modal-card" id="playlistForm">
+      <div class="modal-head"><div><span class="eyebrow">MY PLAYLIST</span><h2>Tambah playlist M3U</h2></div><button class="close-btn" value="cancel" aria-label="Close">×</button></div>
+      <label>Nama playlist<input id="playlistName" maxlength="60" placeholder="Contoh: Rumah"></label>
+      <label>URL M3U / M3U8<input id="playlistUrl" type="url" placeholder="https://example.com/list.m3u"></label>
+      <p class="form-note">URL playlist disimpan dalam browser ini sahaja. AZOBSSTV hanya menghantar username yang dapat dikenal pasti ke Device Ping; password tidak dimasukkan ke payload telemetry. Gunakan hanya stream yang kamu mempunyai hak untuk akses.</p>
+      <div class="modal-actions"><button class="ghost-btn" value="cancel">Batal</button><button class="primary-btn" id="savePlaylistBtn" value="default">Simpan & Muat</button></div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
+  <script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script>
+  <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
+  <script src="/assets/js/azobss-pro-ui.js" defer></script>
+  <script src="./assets/azobsstv.js?v=986" defer></script>
+</body>
+</html>

@@ -153,3 +153,12 @@
 
 /* v984: Favorites/Recent are account-only. Guest heart controls stay visible but locked. */
 .fav-mini.auth-locked,.channel-rail-fav.auth-locked,#favCurrentBtn.auth-locked{opacity:.42;filter:grayscale(.35);cursor:not-allowed}
+
+
+/* AZOBSSTV v986: replace the page-specific AZOBSSTV top header with the exact
+   compact Home stickybar. The Home search row stays hidden on this TV page. */
+body{padding-top:49px}
+.market-sticky-bar .market-search-row{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+.market-sticky-bar{font-family:Inter,Segoe UI,Arial,sans-serif}
+.azobsstv-hidden-top-actions{display:none!important}
+@media(max-width:760px){body{padding-top:92px}}

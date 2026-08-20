@@ -747,10 +747,133 @@ function createAZOBSSTVHandler(options = {}) {
       await page.goto(target.toString(), { waitUntil: 'domcontentloaded', timeout: 18000 });
       try { await page.waitForFunction(() => /TODAY['’]?S\s+SCHEDULE/i.test(document.body?.innerText || ''), { timeout: 9000 }); }
       catch (_) { await new Promise(r => setTimeout(r, 1800)); }
+      // v986: extract the schedule from the rendered DOM structure first instead of
+      // flattening the whole page into innerText.  Mana-Mana renders each programme
+      // title and synopsis as separate styled elements; flattening them was the reason
+      // descriptions could be appended to the title even though the frontend rendered
+      // only item.title.
+      const domParsed = await page.evaluate(() => {
+        const norm = v => String(v || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+        const timeRe = /^(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)$/i;
+        const noiseRe = /^(?:LIVE|ON NOW|UP NEXT|TODAY['’]?S SCHEDULE|READ MORE|CH\s*\d+)$/i;
+        const visible = el => {
+          if (!el || !el.getBoundingClientRect) return false;
+          const st = getComputedStyle(el), r = el.getBoundingClientRect();
+          return st.display !== 'none' && st.visibility !== 'hidden' && Number(st.opacity || 1) !== 0 && r.width > 0 && r.height > 0;
+        };
+        const ownText = el => {
+          let out = '';
+          for (const n of el.childNodes || []) if (n.nodeType === Node.TEXT_NODE) out += ' ' + n.nodeValue;
+          return norm(out);
+        };
+        const exactText = el => norm(el?.textContent || '');
+        const all = Array.from(document.querySelectorAll('body *')).filter(visible);
+        const exactTimes = all.filter(el => timeRe.test(exactText(el)) && exactText(el).length <= 12);
+        const timeCount = el => {
+          let n = 0;
+          for (const d of el.querySelectorAll('*')) {
+            const t = exactText(d);
+            if (t.length <= 12 && timeRe.test(t) && visible(d)) n++;
+          }
+          const self = exactText(el);
+          if (!el.children.length && self.length <= 12 && timeRe.test(self)) n = Math.max(n, 1);
+          return n;
+        };
+        let heading = all.find(el => /^TODAY['’]?S SCHEDULE$/i.test(exactText(el)));
+        let scope = null;
+        if (heading) {
+          let cur = heading;
+          for (let depth = 0; cur && depth < 8; depth++, cur = cur.parentElement) {
+            const c = timeCount(cur);
+            const txt = exactText(cur);
+            if (c >= 4 && txt.length < 12000) { scope = cur; break; }
+          }
+        }
+        if (!scope) scope = document.body;
+
+        const leaves = root => Array.from(root.querySelectorAll('*')).filter(el => {
+          if (!visible(el)) return false;
+          const t = exactText(el);
+          if (!t || t.length > 500) return false;
+          // Prefer true text leaves. If nested, keep only elements that have useful own text.
+          return el.children.length === 0 || !!ownText(el);
+        });
+        const schedule = [];
+        const seenRows = new Set();
+        const times = Array.from(scope.querySelectorAll('*')).filter(el => visible(el) && timeRe.test(exactText(el)) && exactText(el).length <= 12);
+        for (const tEl of times) {
+          let row = tEl;
+          for (let depth = 0; row && row !== scope && depth < 7; depth++, row = row.parentElement) {
+            const txt = exactText(row);
+            const ts = (txt.match(/\b(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)\b/gi) || []);
+            if (ts.length >= 2 && ts.length <= 3 && txt.length < 1400) break;
+          }
+          if (!row || row === scope || seenRows.has(row)) continue;
+          seenRows.add(row);
+          const rowText = exactText(row);
+          const tm = rowText.match(/\b(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)\b/gi) || [];
+          if (tm.length < 2) continue;
+          const candidates = leaves(row).map((el, idx) => {
+            const text = norm(ownText(el) || (el.children.length === 0 ? el.textContent : ''));
+            const st = getComputedStyle(el);
+            const fwRaw = st.fontWeight || '400';
+            const fw = /^bold$/i.test(fwRaw) ? 700 : (parseInt(fwRaw, 10) || 400);
+            const fs = parseFloat(st.fontSize || '0') || 0;
+            return { text, fw, fs, idx };
+          }).filter(x => x.text && !timeRe.test(x.text) && !noiseRe.test(x.text) && !/^THU|^MON|^TUE|^WED|^FRI|^SAT|^SUN/i.test(x.text));
+          // Deduplicate identical nested text snippets while preserving DOM order.
+          const unique = [];
+          const seen = new Set();
+          for (const c of candidates) {
+            const k = c.text.toLowerCase();
+            if (seen.has(k)) continue;
+            seen.add(k); unique.push(c);
+          }
+          // Programme titles on Mana-Mana are visually stronger than their synopsis.
+          // Pick the first high-weight candidate; otherwise the first short candidate.
+          let titleCand = unique.find(x => x.fw >= 600 && x.text.length <= 180);
+          if (!titleCand) titleCand = unique.find(x => x.text.length <= 180);
+          if (!titleCand) continue;
+          const title = titleCand.text.replace(/^[-–—•.:\s]+|[-–—•.:\s]+$/g, '').trim();
+          if (!title || title.length < 2) continue;
+          schedule.push({ start: tm[0].toUpperCase(), end: tm[1].toUpperCase(), title: title.slice(0, 180) });
+        }
+        // Keep DOM order but remove duplicate start/end/title rows.
+        const uniq = [];
+        const keys = new Set();
+        for (const r of schedule) {
+          const k = `${r.start}|${r.end}|${r.title.toLowerCase()}`;
+          if (!keys.has(k)) { keys.add(k); uniq.push(r); }
+        }
+
+        let currentTitle = '';
+        const onNow = all.find(el => /^ON NOW$/i.test(exactText(el)));
+        if (onNow) {
+          let box = onNow;
+          for (let depth = 0; box && depth < 6; depth++, box = box.parentElement) {
+            const txt = exactText(box);
+            if (txt.length > 20 && txt.length < 2500 && /ON NOW/i.test(txt)) break;
+          }
+          if (box) {
+            const cands = leaves(box).map((el, idx) => {
+              const text = norm(ownText(el) || (el.children.length === 0 ? el.textContent : ''));
+              const st = getComputedStyle(el); const raw = st.fontWeight || '400';
+              return { text, fw: /^bold$/i.test(raw) ? 700 : (parseInt(raw,10)||400), idx };
+            }).filter(x => x.text && !noiseRe.test(x.text) && !timeRe.test(x.text) && !/^TV\d?$/i.test(x.text));
+            currentTitle = (cands.find(x => x.fw >= 600 && x.text.length <= 180) || cands.find(x => x.text.length <= 180) || {}).text || '';
+          }
+        }
+        return { current_title: currentTitle, schedule: uniq.slice(0, 64) };
+      });
       const bodyText = await page.evaluate(() => document.body ? document.body.innerText : '');
-      const parsed = parseRenderedMana2Text(bodyText);
+      const textParsed = parseRenderedMana2Text(bodyText);
+      const parsed = (domParsed && Array.isArray(domParsed.schedule) && domParsed.schedule.length >= 2)
+        ? domParsed : textParsed;
+      const nowMin = malaysiaMinuteNow();
+      for (const item of parsed.schedule || []) item.current = scheduleItemCurrent(item, nowMin);
+      if (!parsed.current_title) parsed.current_title = (parsed.schedule || []).find(x => x.current)?.title || '';
       if (!parsed.schedule.length && !parsed.current_title) throw Object.assign(new Error('Mana-Mana rendered page returned no programme text'), { statusCode: 404 });
-      return { ok:true, channel_url:target.toString(), current_title:parsed.current_title||'', schedule:parsed.schedule||[], parser:'rendered-dom-headless', fetched_at:Date.now(), time_zone:'Asia/Kuala_Lumpur' };
+      return { ok:true, channel_url:target.toString(), current_title:parsed.current_title||'', schedule:parsed.schedule||[], parser:(parsed===domParsed?'rendered-dom-structured':'rendered-dom-text-fallback'), fetched_at:Date.now(), time_zone:'Asia/Kuala_Lumpur' };
     } finally { try { await page.close({ runBeforeUnload:false }); } catch (_) {} }
   }
 
@@ -971,7 +1094,6 @@ function createAZOBSSTVHandler(options = {}) {
       if (!start || !end) continue;
       schedule.push({
         start, end, title,
-        description: cleanText(p.subtitle2 ?? p.description ?? p.synopsis ?? '', 800),
         current: Number.isFinite(startMs) && Number.isFinite(endMs) ? now >= startMs && now < endMs : scheduleItemCurrent({ start, end }, malaysiaMinuteNow())
       });
     }
@@ -1072,7 +1194,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.984', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'rendered-dom-headless-primary-revlet-html-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.986', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'rendered-dom-structured-title-only-primary-revlet-html-fallback', time: Date.now() });
         return true;
       }
 
