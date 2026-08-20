@@ -19,6 +19,7 @@ function createAZOBSSTVHandler(options = {}) {
   const adminToken = String(options.adminToken || process.env.AZOBSSTV_ADMIN_TOKEN || '').trim();
   const getDb = typeof options.getDb === 'function' ? options.getDb : () => null;
   const authorizeAdmin = typeof options.authorizeAdmin === 'function' ? options.authorizeAdmin : null;
+  const authorizeUser = typeof options.authorizeUser === 'function' ? options.authorizeUser : null;
   const parentSend = typeof options.send === 'function' ? options.send : null;
   const rateLimitOrSend = typeof options.rateLimitOrSend === 'function' ? options.rateLimitOrSend : null;
 
@@ -155,6 +156,62 @@ function createAZOBSSTVHandler(options = {}) {
     if (adminToken && timingSafeEqualText(fallback, adminToken)) return { isAdmin: true, authMethod: 'azobsstv-admin-token' };
     sendJson(res, 403, { ok: false, error: 'Admin authorization required.' });
     return null;
+  }
+
+  async function ensureUser(req, res, parsed) {
+    if (!authorizeUser) {
+      sendJson(res, 503, { ok:false, error:'User authentication service unavailable.' });
+      return null;
+    }
+    try {
+      const identity = await authorizeUser(req, parsed);
+      if (identity && identity.uid) return identity;
+    } catch (err) {
+      console.warn('AZOBSSTV user identity check failed:', err && (err.message || err));
+    }
+    sendJson(res, 401, { ok:false, error:'Sign in required.' });
+    return null;
+  }
+
+  function cleanLibraryList(value, limit = 500) {
+    const out = [];
+    const seen = new Set();
+    for (const raw of Array.isArray(value) ? value : []) {
+      const v = cleanText(raw, 600).toLowerCase();
+      if (!v || seen.has(v)) continue;
+      if (!/^(?:mana2|url|id|name):/.test(v)) continue;
+      seen.add(v); out.push(v);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  async function getUserLibrary(identity) {
+    const db = getDb();
+    if (!db) return { favorites:[], recent:[] };
+    const ref = db.collection('azobsstv_user_library').doc(String(identity.uid));
+    const snap = await ref.get();
+    if (!snap.exists) return { favorites:[], recent:[] };
+    const data = snap.data() || {};
+    return {
+      favorites: cleanLibraryList(data.favorites, 500),
+      recent: cleanLibraryList(data.recent, 60)
+    };
+  }
+
+  async function saveUserLibraryCloud(identity, input) {
+    const db = getDb();
+    if (!db) throw Object.assign(new Error('Firestore unavailable'), { statusCode:503 });
+    const favorites = cleanLibraryList(input?.favorites, 500);
+    const recent = cleanLibraryList(input?.recent, 60);
+    await db.collection('azobsstv_user_library').doc(String(identity.uid)).set({
+      uid: String(identity.uid),
+      username: cleanText(identity.username || '', 100),
+      favorites,
+      recent,
+      updated_at: Date.now()
+    }, { merge:true });
+    return { favorites, recent };
   }
 
   function readBody(req, maxBytes = 256 * 1024) {
@@ -911,7 +968,7 @@ function createAZOBSSTVHandler(options = {}) {
   }
 
 
-  // v988: public EPG API discovered from Mana-Mana's CURRENT public web bundles.
+  // v989: public EPG/catalogue API discovered from Mana-Mana's CURRENT public web bundles.
   // The site itself exposes:
   //   API base: https://co3y6iwoio.tenbytecdn.com/api/v1
   //   GET /channels/{slug}
@@ -922,6 +979,23 @@ function createAZOBSSTVHandler(options = {}) {
   const MANA2_PUBLIC_API_BASE = 'https://co3y6iwoio.tenbytecdn.com/api/v1';
   const mana2PublicChannelCache = new Map();
   const mana2PublicNowCache = { rows: [], savedAt: 0 };
+  const mana2PublicCatalogCache = { items: [], savedAt: 0, source: '' };
+
+  // Public VIDEO channel slugs observed by the v5 inspector on 2026-08-20.
+  // Used only if Mana-Mana's current /public/channels endpoint is temporarily
+  // unavailable. The live public catalogue remains the primary source.
+  const MANA2_VIDEO_CATALOG_FALLBACK = [
+    ['tv1','TV1'],['tv2','TV2'],['tv-okey','TV OKEY'],['sukan-rtm','SUKAN+'],
+    ['berita-rtm','BERITA RTM'],['tvs','TVS'],['tv-alhijrah','TV ALHIJRAH'],
+    ['sukma-1','SUKMA 1'],['sukma-2','SUKMA 2'],['free-movies','FREE MOVIES'],
+    ['mysport','MySports'],['bernama','BERNAMA'],['cna','CNA'],
+    ['the-indonesia-channel','The Indonesia Channel'],
+    ['al-jazeera-english-hd','Al JAZEERA ENGLISH HD'],['arirang','ARIRANG'],
+    ['euronews','EURONEWS'],['taiwanplus','TaiwanPlus'],['dw','DW'],
+    ['nhk-world','NHK WORLD'],['rt-international','RT International'],
+    ['al-jazeera-arabic-hd','Al JAZEERA ARABIC HD'],['usim-tv','USIM TV'],
+    ['selangor-tv','SELANGOR TV'],['tv-ikim','TVIKIM'],['siara-tv','SIARA TV']
+  ];
 
   function mana2PublicApiHeaders() {
     return {
@@ -1052,6 +1126,124 @@ function createAZOBSSTVHandler(options = {}) {
       const err = new Error(`Mana-Mana public channel lookup failed: ${cleanText(e?.message || detailError?.message || '', 180)}`);
       err.statusCode = Number(e?.statusCode || detailError?.statusCode) || 502;
       throw err;
+    }
+  }
+
+  function mana2PublicAssetUrl(raw) {
+    const value = cleanText(raw, 1200);
+    if (!value) return '';
+    try { return new URL(value, 'https://mana2.my/').toString(); }
+    catch (_) { return value; }
+  }
+
+  function normalizeMana2CatalogObject(o) {
+    if (!o || typeof o !== 'object') return null;
+    const type = cleanText(o.channelType ?? o.channel_type ?? o.type, 40).toLowerCase();
+    // v989 intentionally imports the Live TV catalogue only. Radio remains
+    // separate until its player layout is integrated.
+    if (!['video', 'tv'].includes(type)) return null;
+
+    const id = cleanText(o.id ?? o.channelId ?? o.channel_id, 180);
+    const slug = cleanText(o.slug ?? o.code ?? o.channelSlug ?? o.channel_slug, 180);
+    const name = cleanText(o.name ?? o.title ?? o.channelName ?? o.channel_name, 180);
+    if (!id || !slug || !name) return null;
+    if (o.isLive === false || o.is_live === false) return null;
+
+    const logo = mana2PublicAssetUrl(
+      o.logoUrl ?? o.logo_url ?? o.thumbnailUrl ?? o.thumbnail_url ??
+      o.posterUrl ?? o.poster_url ?? o.bannerUrl ?? o.banner_url
+    );
+    const officialUrl = `https://mana2.my/channel/${encodeURIComponent(slug)}`;
+    return {
+      id,
+      slug,
+      name,
+      channelNumber: o.channelNumber ?? o.channel_number ?? null,
+      logo,
+      group: 'Live TV',
+      kind: 'live',
+      mode: 'official',
+      officialUrl,
+      sourcePage: officialUrl,
+      url: officialUrl
+    };
+  }
+
+  function parseMana2PublicCatalog(data) {
+    const value = unwrapMana2Api(data);
+    const objects = Array.isArray(value) ? value : collectMana2Objects(value, []);
+    const out = [];
+    const seen = new Set();
+    for (const o of objects) {
+      const row = normalizeMana2CatalogObject(o);
+      if (!row) continue;
+      const key = String(row.id || row.slug).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(row);
+    }
+
+    // Preserve Mana-Mana's API order as much as possible, but put numbered
+    // channels before unnumbered channels when channelNumber is present.
+    return out.sort((a, b) => {
+      const an = Number(a.channelNumber), bn = Number(b.channelNumber);
+      const af = Number.isFinite(an), bf = Number.isFinite(bn);
+      if (af && bf && an !== bn) return an - bn;
+      if (af !== bf) return af ? -1 : 1;
+      return 0;
+    });
+  }
+
+  function fallbackMana2VideoCatalog() {
+    return MANA2_VIDEO_CATALOG_FALLBACK.map(([slug, name]) => {
+      const officialUrl = `https://mana2.my/channel/${encodeURIComponent(slug)}`;
+      return {
+        id: slug,
+        slug,
+        name,
+        channelNumber: null,
+        logo: '',
+        group: 'Live TV',
+        kind: 'live',
+        mode: 'official',
+        officialUrl,
+        sourcePage: officialUrl,
+        url: officialUrl
+      };
+    });
+  }
+
+  async function getMana2PublicCatalog(force = false) {
+    if (!force && mana2PublicCatalogCache.items.length &&
+        Date.now() - mana2PublicCatalogCache.savedAt < 10 * 60_000) {
+      return {
+        items: mana2PublicCatalogCache.items,
+        source: mana2PublicCatalogCache.source || 'cache'
+      };
+    }
+
+    try {
+      const data = await fetchJsonTimed(
+        `${MANA2_PUBLIC_API_BASE}/public/channels`,
+        { method: 'GET', headers: mana2PublicApiHeaders() },
+        15000
+      );
+      const items = parseMana2PublicCatalog(data);
+      if (!items.length) throw new Error('Mana-Mana public video catalogue returned no channels');
+      mana2PublicCatalogCache.items = items;
+      mana2PublicCatalogCache.savedAt = Date.now();
+      mana2PublicCatalogCache.source = 'mana2-public-channels-api';
+      return { items, source: mana2PublicCatalogCache.source };
+    } catch (e) {
+      const items = fallbackMana2VideoCatalog();
+      mana2PublicCatalogCache.items = items;
+      mana2PublicCatalogCache.savedAt = Date.now();
+      mana2PublicCatalogCache.source = 'inspector-v5-video-fallback';
+      return {
+        items,
+        source: mana2PublicCatalogCache.source,
+        warning: cleanText(e?.message || 'Mana-Mana public catalogue unavailable', 220)
+      };
     }
   }
 
@@ -1433,7 +1625,7 @@ function createAZOBSSTVHandler(options = {}) {
     const cached = mana2ScheduleCache.get(key);
     if (cached && Date.now() - cached.savedAt < 60_000) return cached.value;
 
-    // v988 primary: exact public EPG flow used by Mana-Mana's current 2026 web app.
+    // v989 primary: exact public EPG flow used by Mana-Mana's current 2026 web app.
     let publicEpgError = null;
     try {
       const value = await getMana2PublicEpgSchedule(target.toString());
@@ -1497,7 +1689,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.988', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.990', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
         return true;
       }
 
@@ -1531,9 +1723,38 @@ function createAZOBSSTVHandler(options = {}) {
         return true;
       }
 
+      if (pathname === '/api/azobsstv/library' && req.method === 'GET') {
+        const identity = await ensureUser(req, res, parsed);
+        if (!identity) return true;
+        const library = await getUserLibrary(identity);
+        sendJson(res, 200, { ok:true, favorites:library.favorites, recent:library.recent, storage:'firestore', uid:String(identity.uid) });
+        return true;
+      }
+      if (pathname === '/api/azobsstv/library' && (req.method === 'PUT' || req.method === 'POST')) {
+        const identity = await ensureUser(req, res, parsed);
+        if (!identity) return true;
+        const input = await readJsonBody(req, 96 * 1024);
+        const library = await saveUserLibraryCloud(identity, input);
+        sendJson(res, 200, { ok:true, favorites:library.favorites, recent:library.recent, storage:'firestore' });
+        return true;
+      }
+
       if (pathname === '/api/azobsstv/notifications' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-notifications', 240, 10 * 60 * 1000)) return true;
         sendJson(res, 200, { items: await readNotifications() });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/mana2/channels' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-mana2-channels', 240, 10 * 60 * 1000)) return true;
+        const catalog = await getMana2PublicCatalog(false);
+        sendJson(res, 200, {
+          ok: true,
+          source: catalog.source,
+          count: catalog.items.length,
+          channels: catalog.items,
+          warning: catalog.warning || ''
+        }, { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' });
         return true;
       }
 

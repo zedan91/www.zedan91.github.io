@@ -6,7 +6,7 @@ services:
     dockerfilePath: ./render-backend.dockerfile
     dockerContext: .
     dockerCommand: node deploy-server.js
-    # v988: only backend/runtime-relevant changes trigger an automatic Render deploy.
+    # v989: only backend/runtime-relevant changes trigger an automatic Render deploy.
     # Frontend-only edits (e.g. Tempah-Servis-IT, PA-BM HTML, posters/images) stay on GitHub Pages
     # and no longer rebuild this Docker service.
     buildFilter:

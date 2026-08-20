@@ -13461,6 +13461,7 @@ try {
   azobsstvApiHandler = createAZOBSSTVHandler({
     getDb: getAzobssBackendDb,
     authorizeAdmin: azAdminIdentityFromRequest,
+    authorizeUser: azCommissionIdentityFromRequest,
     send,
     rateLimitOrSend: azRateLimitOrSend
   });
