@@ -772,3 +772,210 @@ body{padding-top:49px}
     max-height:300px!important;
   }
 }
+
+/* v1009 — blocked Anime sources now look like the normal Live TV display.
+   Important: this is a visual/same-tab fallback; it does not bypass a provider's
+   X-Frame-Options/CSP. */
+.video-wrap.anime-fallback-display-mode{
+  aspect-ratio:16/9!important;
+  min-height:0!important;
+  height:auto!important;
+  overflow:hidden!important;
+  background:#03060c;
+}
+.video-wrap.anime-fallback-display-mode > video,
+.video-wrap.anime-fallback-display-mode > .player-empty,
+.video-wrap.anime-fallback-display-mode > .player-error{
+  display:none!important;
+}
+.video-wrap.anime-fallback-display-mode .anime-player-panel{
+  position:absolute!important;
+  inset:0!important;
+  display:flex!important;
+  min-height:0!important;
+  height:auto!important;
+  background:#050912;
+}
+.video-wrap.anime-fallback-display-mode .anime-player-toolbar{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  z-index:5;
+  min-height:54px;
+  border-bottom:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(180deg,rgba(4,8,16,.92),rgba(4,8,16,.62),transparent);
+}
+.video-wrap.anime-fallback-display-mode .anime-embed-stage{
+  position:absolute!important;
+  inset:0!important;
+  min-height:0!important;
+  height:auto!important;
+  background:#050912;
+}
+.video-wrap.anime-fallback-display-mode .anime-embed-stage iframe{
+  display:none!important;
+}
+.video-wrap.anime-fallback-display-mode .anime-embed-blocked{
+  position:absolute!important;
+  inset:0!important;
+  min-height:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow:hidden!important;
+  text-align:center!important;
+  color:#fff;
+}
+.anime-live-fallback-poster{
+  position:absolute;
+  inset:0;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  filter:blur(7px) saturate(.86);
+  transform:scale(1.04);
+  opacity:.65;
+}
+.anime-live-fallback-shade{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at center,rgba(18,29,48,.16) 0,rgba(5,9,18,.42) 48%,rgba(5,9,18,.92) 100%),
+    linear-gradient(180deg,rgba(3,6,12,.38),rgba(3,6,12,.18) 52%,rgba(3,6,12,.82));
+}
+.anime-live-fallback-content{
+  position:absolute;
+  inset:54px 0 0;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:22px;
+}
+.anime-live-fallback-play{
+  width:76px;
+  height:76px;
+  display:grid;
+  place-items:center;
+  padding-left:5px;
+  margin-bottom:6px;
+  border:0;
+  border-radius:50%;
+  color:#fff;
+  font-size:28px;
+  cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 12px 34px rgba(0,0,0,.42);
+  transition:transform .16s ease,filter .16s ease;
+}
+.anime-live-fallback-play:hover{
+  transform:scale(1.06);
+  filter:brightness(1.08);
+}
+.anime-live-fallback-content>strong{
+  max-width:80%;
+  font-size:20px!important;
+  line-height:1.25!important;
+  text-shadow:0 2px 8px #000;
+}
+.anime-live-fallback-episode{
+  color:#d9e4f7!important;
+  font-size:14px!important;
+}
+.anime-live-fallback-meta{
+  color:#9fb2d2!important;
+  font-size:12px!important;
+}
+.anime-live-fallback-note{
+  max-width:620px!important;
+  margin-top:3px;
+  color:#b0bdd4!important;
+  font-size:12px!important;
+  line-height:1.4!important;
+}
+
+/* Right column remains fixed to the exact player-card height.
+   Channels and Episodes scroll internally just like Live TV. */
+.hero-grid.anime-fallback-hero .hero-side{
+  display:flex!important;
+  flex-direction:column!important;
+  height:var(--az-player-card-height,620px)!important;
+  max-height:var(--az-player-card-height,620px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  gap:10px!important;
+}
+.hero-grid.anime-fallback-hero .channel-rail{
+  flex:1 1 48%!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+}
+.hero-grid.anime-fallback-hero .today-schedule-card.anime-episode-mode,
+.hero-grid.anime-fallback-hero .today-schedule-card.anime-episodes-side{
+  flex:1 1 52%!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+.hero-grid.anime-fallback-hero .channel-rail-list,
+.hero-grid.anime-fallback-hero .today-schedule-list{
+  min-height:0!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+}
+.hero-grid.anime-fallback-hero .today-schedule-card .today-schedule-list{
+  display:block!important;
+  flex:1 1 auto!important;
+  height:auto!important;
+  max-height:none!important;
+  padding:5px 8px 8px!important;
+}
+.hero-grid.anime-fallback-hero .today-schedule-card .anime-side-episode{
+  display:grid!important;
+  grid-template-columns:55px minmax(0,1fr)!important;
+  width:100%!important;
+  min-height:36px!important;
+  margin:0!important;
+  border:0!important;
+  border-bottom:1px solid #253149!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.hero-grid.anime-fallback-hero .today-schedule-card .anime-side-episode.current{
+  background:#33271e!important;
+  box-shadow:inset 3px 0 #ff7a2a!important;
+}
+.hero-grid.anime-fallback-hero .today-schedule-card .anime-side-episode strong{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+@media(max-width:800px){
+  .hero-grid.anime-fallback-hero .hero-side{
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  .hero-grid.anime-fallback-hero .channel-rail{
+    flex:0 0 auto!important;
+    max-height:280px!important;
+  }
+  .hero-grid.anime-fallback-hero .today-schedule-card.anime-episode-mode,
+  .hero-grid.anime-fallback-hero .today-schedule-card.anime-episodes-side{
+    flex:0 0 auto!important;
+    max-height:300px!important;
+  }
+  .anime-live-fallback-content>strong{
+    max-width:92%;
+    font-size:17px!important;
+  }
+  .anime-live-fallback-note{
+    display:none;
+  }
+}
