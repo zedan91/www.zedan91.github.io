@@ -1684,6 +1684,181 @@ function createAZOBSSTVHandler(options = {}) {
   }
 
 
+
+  function decodeHtmlAttr(value) {
+    return String(value || '')
+      .replace(/&amp;/g, '&')
+      .replace(/&#38;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .trim();
+  }
+
+  function looksLikeDirectMediaUrl(raw) {
+    return /\.(?:m3u8|mpd|mp4|m4s|ts|webm|mkv|avi|aac)(?:$|[?#])/i.test(String(raw || ''));
+  }
+
+  async function fetchPublicHtml123AnimeHub(rawUrl) {
+    const cleaned = cleanUrl(rawUrl);
+    if (!cleaned) throw new Error('invalid-url');
+    let current = await assertPublicHttpUrl(cleaned);
+    const allowedHost = host => /^(?:www\.)?123animehub\.cc$/i.test(String(host || ''));
+    if (!allowedHost(current.hostname) || !/^\/anime\/[^/]+\/episode\/\d{3,4}\/?$/i.test(current.pathname)) {
+      throw new Error('unsupported-123animehub-url');
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 14000);
+    try {
+      for (let hop = 0; hop <= 3; hop++) {
+        const response = await fetch(current.toString(), {
+          method: 'GET',
+          redirect: 'manual',
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; AZOBSSTV/1.0; +https://www.azobss.com/AZOBSSTV/)',
+            'Accept': 'text/html,application/xhtml+xml'
+          }
+        });
+
+        if ([301,302,303,307,308].includes(response.status)) {
+          const location = response.headers.get('location');
+          if (!location || hop === 3) throw new Error('redirect-failed');
+          const next = await assertPublicHttpUrl(new URL(location, current).toString());
+          if (!allowedHost(next.hostname)) throw new Error('redirect-outside-source');
+          current = next;
+          continue;
+        }
+
+        if (!response.ok) throw new Error('upstream-http-' + response.status);
+        const type = String(response.headers.get('content-type') || '');
+        if (!/text\/html|application\/xhtml\+xml/i.test(type)) throw new Error('non-html-source');
+        const html = await response.text();
+        return { html: html.slice(0, 1800000), finalUrl: current.toString() };
+      }
+      throw new Error('redirect-limit');
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function extractPublicEmbedCandidates(html, baseUrl) {
+    const source = String(html || '');
+    const out = [];
+    const seen = new Set();
+
+    const add = raw => {
+      raw = decodeHtmlAttr(raw);
+      if (!raw || /^javascript:/i.test(raw) || /^data:/i.test(raw)) return;
+      let u;
+      try { u = new URL(raw, baseUrl); } catch (_) { return; }
+      if (!/^https?:$/.test(u.protocol)) return;
+      if (/^(?:www\.)?123animehub\.cc$/i.test(u.hostname)) return;
+      if (looksLikeDirectMediaUrl(u.toString())) return;
+      if (/(?:token|signature|sig|expires|auth|key)=/i.test(u.search)) return;
+      const s = u.toString();
+      if (!seen.has(s)) { seen.add(s); out.push(s); }
+    };
+
+    const attrs = [
+      /\biframe[^>]+\bsrc\s*=\s*["']([^"']+)["']/gi,
+      /\b(?:data-src|data-embed|data-player|data-video|data-url)\s*=\s*["'](https?:\/\/[^"']+)["']/gi,
+      /\b(?:embed_url|embedUrl|player_url|playerUrl)\s*[:=]\s*["'](https?:\/\/[^"']+)["']/gi
+    ];
+    for (const re of attrs) {
+      let m;
+      while ((m = re.exec(source)) && out.length < 30) add(m[1]);
+    }
+
+    // Also inspect obvious external player URLs in script strings.
+    const generic = /["'](https?:\/\/[^"'<>\\\s]{8,500})["']/gi;
+    let gm;
+    while ((gm = generic.exec(source)) && out.length < 30) {
+      const value = gm[1];
+      if (/(?:embed|player|stream|watch|video)/i.test(value)) add(value);
+    }
+
+    return out.slice(0, 30);
+  }
+
+  async function checkExternalEmbedAllowed(rawUrl) {
+    let current;
+    try { current = await assertPublicHttpUrl(rawUrl); } catch (_) {
+      return { embeddable:false, reason:'invalid-embed-url' };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    try {
+      const response = await fetch(current.toString(), {
+        method:'GET',
+        redirect:'follow',
+        signal:controller.signal,
+        headers:{
+          'User-Agent':'Mozilla/5.0 (compatible; AZOBSSTV/1.0; +https://www.azobss.com/AZOBSSTV/)',
+          'Accept':'text/html,application/xhtml+xml'
+        }
+      });
+      try { if (response.body && typeof response.body.cancel === 'function') await response.body.cancel(); } catch (_) {}
+      if (!response.ok) return { embeddable:false, reason:'embed-http-' + response.status };
+
+      const xfo = String(response.headers.get('x-frame-options') || '').trim();
+      const csp = String(response.headers.get('content-security-policy') || '').trim();
+
+      if (/\bDENY\b/i.test(xfo)) return { embeddable:false, reason:'x-frame-options-deny' };
+      if (/\bSAMEORIGIN\b/i.test(xfo)) return { embeddable:false, reason:'x-frame-options-sameorigin' };
+
+      const fa = csp.match(/(?:^|;)\s*frame-ancestors\s+([^;]+)/i);
+      if (fa) {
+        const policy = String(fa[1] || '').trim();
+        if (/'none'/i.test(policy)) return { embeddable:false, reason:'csp-frame-ancestors-none' };
+        const allowsAll = /(^|\s)\*(\s|$)/.test(policy);
+        const allowsAzobss = /https:\/\/(?:www\.)?azobss\.com\b/i.test(policy);
+        if (!allowsAll && !allowsAzobss) return { embeddable:false, reason:'csp-frame-ancestors' };
+      }
+      return { embeddable:true, final_url: response.url || current.toString() };
+    } catch (err) {
+      return { embeddable:false, reason:err && err.name === 'AbortError' ? 'embed-timeout' : 'embed-check-failed' };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function resolve123AnimeHubPublicPlayer(rawUrl) {
+    try {
+      const page = await fetchPublicHtml123AnimeHub(rawUrl);
+      const candidates = extractPublicEmbedCandidates(page.html, page.finalUrl);
+      for (const candidate of candidates) {
+        const check = await checkExternalEmbedAllowed(candidate);
+        if (check.embeddable) {
+          return {
+            ok:true,
+            embeddable:true,
+            source:'123animehub',
+            embed_url:check.final_url || candidate,
+            source_url:page.finalUrl,
+            candidate_count:candidates.length
+          };
+        }
+      }
+      return {
+        ok:true,
+        embeddable:false,
+        source:'123animehub',
+        source_url:page.finalUrl,
+        candidate_count:candidates.length,
+        reason:candidates.length ? 'external-players-blocked' : 'no-public-external-player-found'
+      };
+    } catch (err) {
+      return {
+        ok:false,
+        embeddable:false,
+        source:'123animehub',
+        reason:String(err && err.message || 'resolve-failed')
+      };
+    }
+  }
+
   async function checkAnimeNanaEmbed(rawUrl) {
     const cleaned = cleanUrl(rawUrl);
     if (!cleaned) return { ok:false, embeddable:false, reason:'invalid-url' };
@@ -1754,7 +1929,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.995', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.1003', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
         return true;
       }
 
@@ -1807,6 +1982,14 @@ function createAZOBSSTVHandler(options = {}) {
       if (pathname === '/api/azobsstv/notifications' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-notifications', 240, 10 * 60 * 1000)) return true;
         sendJson(res, 200, { items: await readNotifications() });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/anime123/resolve' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-anime123-resolve', 180, 10 * 60 * 1000)) return true;
+        const target = getQueryParam(parsed, 'url');
+        if (!target) { sendJson(res, 400, { ok:false, embeddable:false, reason:'url-required' }); return true; }
+        sendJson(res, 200, await resolve123AnimeHubPublicPlayer(target), { 'Cache-Control':'public, max-age=180' });
         return true;
       }
 
