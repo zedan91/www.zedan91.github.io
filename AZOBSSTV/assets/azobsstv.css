@@ -527,3 +527,43 @@ body{padding-top:49px}
     max-height:205px;
   }
 }
+
+/* v1001 — show the complete Anime episode list.
+   No 16/24-item window and no internal Episodes scrollbar. */
+.today-schedule-card.anime-episodes-docked{
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+}
+.today-schedule-card.anime-episodes-docked .today-schedule-list{
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+  grid-auto-rows:minmax(0,auto);
+}
+.today-schedule-card.anime-episodes-docked .anime-side-episode{
+  min-height:36px;
+}
+.today-schedule-card.anime-episodes-docked .anime-side-episode strong{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  line-height:1.25;
+}
+.player-card.anime-player-focus-pulse{
+  animation:azAnimePlayerFocusPulse 1.2s ease-out;
+}
+@keyframes azAnimePlayerFocusPulse{
+  0%{box-shadow:0 0 0 0 rgba(103,85,255,.75)}
+  45%{box-shadow:0 0 0 4px rgba(103,85,255,.42)}
+  100%{box-shadow:0 0 0 0 rgba(103,85,255,0)}
+}
+@media(max-width:800px){
+  .today-schedule-card.anime-episodes-docked{
+    max-height:none!important;
+  }
+  .today-schedule-card.anime-episodes-docked .today-schedule-list{
+    max-height:none!important;
+    overflow:visible!important;
+  }
+}
