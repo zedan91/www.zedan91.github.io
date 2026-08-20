@@ -413,3 +413,21 @@ body{padding-top:49px}
     text-align:center;
   }
 }
+
+/* v998 — when Anime embedding is blocked/checking, do not let the right rail
+   determine the height of the left player card. The left side now collapses
+   naturally to the compact message + Now Playing area, while Channels/Episodes
+   on the right keep their own natural height. */
+.hero-grid.anime-compact-hero{
+  align-items:start!important;
+}
+.hero-grid.anime-compact-hero .player-card{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+}
+.hero-grid.anime-compact-hero .hero-side{
+  height:auto!important;
+  min-height:0;
+  align-self:start!important;
+}
