@@ -170,3 +170,52 @@ body{padding-top:49px}
 .channel-card.anime-card .channel-group{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.35}
 .channel-card.anime-card .fav-mini{margin-top:2px}
 @media(max-width:480px){.channel-card.anime-card .channel-logo{width:66px;height:92px}}
+
+/* v992 — Cross-origin official player page-scroll passthrough.
+   A cross-origin iframe owns wheel/touch input, so wheel events do not bubble
+   into the AZOBSSTV page. These invisible parent-owned zones capture scrolling
+   over the non-control portions of the video while preserving:
+   - bottom provider controls,
+   - the centre play/pause area,
+   - the top-right fit/extend button. */
+.official-player-stage{overscroll-behavior:auto!important}
+.official-player iframe{overscroll-behavior:auto!important}
+.official-scroll-bridge{
+  position:absolute;
+  z-index:8;
+  background:transparent;
+  pointer-events:auto;
+  touch-action:pan-y;
+  cursor:default;
+  -webkit-tap-highlight-color:transparent;
+}
+.official-scroll-bridge-top{
+  left:0;
+  top:0;
+  right:92px;
+  height:calc(50% - 94px);
+}
+.official-scroll-bridge-left{
+  left:0;
+  top:calc(50% - 94px);
+  bottom:82px;
+  width:calc(50% - 94px);
+}
+.official-scroll-bridge-right{
+  right:0;
+  top:calc(50% - 94px);
+  bottom:82px;
+  width:calc(50% - 94px);
+}
+.official-scroll-bridge-center-bottom{
+  left:calc(50% - 94px);
+  width:188px;
+  top:calc(50% + 94px);
+  bottom:82px;
+}
+@media(max-width:800px){
+  .official-scroll-bridge-top{right:76px;height:calc(50% - 76px)}
+  .official-scroll-bridge-left{top:calc(50% - 76px);bottom:70px;width:calc(50% - 76px)}
+  .official-scroll-bridge-right{top:calc(50% - 76px);bottom:70px;width:calc(50% - 76px)}
+  .official-scroll-bridge-center-bottom{left:calc(50% - 76px);width:152px;top:calc(50% + 76px);bottom:70px}
+}
