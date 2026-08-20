@@ -910,6 +910,288 @@ function createAZOBSSTVHandler(options = {}) {
     } finally { clearTimeout(timer); }
   }
 
+
+  // v987: public EPG API discovered from Mana-Mana's CURRENT public web bundles.
+  // The site itself exposes:
+  //   API base: https://co3y6iwoio.tenbytecdn.com/api/v1
+  //   GET /channels/{slug}
+  //   GET /public/epg?channel_id={id}&date=YYYY-MM-DD
+  //   GET /public/epg/now?channelType=video
+  // This is public schedule metadata only. No login cookie, account token, stream
+  // token, DRM key or subscriber credential is copied or required.
+  const MANA2_PUBLIC_API_BASE = 'https://co3y6iwoio.tenbytecdn.com/api/v1';
+  const mana2PublicChannelCache = new Map();
+  const mana2PublicNowCache = { rows: [], savedAt: 0 };
+
+  function mana2PublicApiHeaders() {
+    return {
+      'Accept': 'application/json,text/plain,*/*',
+      'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8',
+      'Origin': 'https://mana2.my',
+      'Referer': 'https://mana2.my/',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
+    };
+  }
+
+  function malaysiaDateIso(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kuala_Lumpur',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+    const get = type => parts.find(x => x.type === type)?.value || '';
+    return `${get('year')}-${get('month')}-${get('day')}`;
+  }
+
+  function malaysiaClockFromIso(value) {
+    const raw = cleanText(value, 80);
+    if (!raw) return '';
+    if (/^(?:1[0-2]|0?[1-9]):[0-5]\d\s*(?:AM|PM)$/i.test(raw)) return normalizeScheduleTime(raw);
+    const ms = Date.parse(raw);
+    if (!Number.isFinite(ms)) return '';
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kuala_Lumpur',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).formatToParts(new Date(ms));
+    const h = parts.find(x => x.type === 'hour')?.value || '';
+    const m = parts.find(x => x.type === 'minute')?.value || '';
+    const p = (parts.find(x => x.type === 'dayPeriod')?.value || '').toUpperCase();
+    return h && m && p ? `${Number(h)}:${m} ${p}` : '';
+  }
+
+  function unwrapMana2Api(value) {
+    let v = value;
+    for (let i = 0; i < 5 && v && typeof v === 'object' && !Array.isArray(v); i++) {
+      if (v.data != null && Object.keys(v).length <= 6) { v = v.data; continue; }
+      if (v.result != null && Object.keys(v).length <= 6) { v = v.result; continue; }
+      break;
+    }
+    return v;
+  }
+
+  function collectMana2Objects(value, out = [], depth = 0) {
+    if (depth > 8 || value == null) return out;
+    if (Array.isArray(value)) {
+      for (const v of value) collectMana2Objects(v, out, depth + 1);
+      return out;
+    }
+    if (typeof value !== 'object') return out;
+    out.push(value);
+    for (const v of Object.values(value)) {
+      if (v && typeof v === 'object') collectMana2Objects(v, out, depth + 1);
+    }
+    return out;
+  }
+
+  function mana2ChannelSlug(rawUrl) {
+    const u = mana2ChannelUrl(rawUrl);
+    const m = u.pathname.match(/^\/channel\/([^/?#]+)/i);
+    return m ? decodeURIComponent(m[1]).trim() : '';
+  }
+
+  function pickMana2ChannelObject(data, slug) {
+    const wanted = normalizeMana2ChannelName(slug);
+    const objects = collectMana2Objects(unwrapMana2Api(data), []);
+    let best = null;
+    let bestScore = -1;
+    for (const o of objects) {
+      const id = cleanText(o.id ?? o.channelId ?? o.channel_id, 180);
+      if (!id) continue;
+      const s = cleanText(o.slug ?? o.code ?? o.channelSlug ?? o.channel_slug, 180);
+      const name = cleanText(o.name ?? o.title ?? o.channelName ?? o.channel_name, 180);
+      let score = 0;
+      if (s && s.toLowerCase() === slug.toLowerCase()) score += 100;
+      if (normalizeMana2ChannelName(s) === wanted) score += 60;
+      if (normalizeMana2ChannelName(name) === wanted) score += 40;
+      if (o.channelType === 'video' || o.channelType === 'tv') score += 2;
+      if (score > bestScore) {
+        best = { id, slug: s || slug, name, channelNumber: o.channelNumber ?? o.channel_number ?? null };
+        bestScore = score;
+      }
+    }
+    return bestScore > 0 ? best : null;
+  }
+
+  async function getMana2PublicChannel(rawUrl) {
+    const slug = mana2ChannelSlug(rawUrl);
+    if (!slug) throw Object.assign(new Error('Mana-Mana channel slug missing'), { statusCode: 400 });
+    const cached = mana2PublicChannelCache.get(slug);
+    if (cached && Date.now() - cached.savedAt < 10 * 60_000) return cached.value;
+
+    let detailError = null;
+    try {
+      const data = await fetchJsonTimed(
+        `${MANA2_PUBLIC_API_BASE}/channels/${encodeURIComponent(slug)}`,
+        { method: 'GET', headers: mana2PublicApiHeaders() },
+        12000
+      );
+      const hit = pickMana2ChannelObject(data, slug);
+      if (hit) {
+        mana2PublicChannelCache.set(slug, { savedAt: Date.now(), value: hit });
+        return hit;
+      }
+      detailError = new Error('Mana-Mana channel detail returned no channel id');
+    } catch (e) { detailError = e; }
+
+    // Public catalogue fallback. The current Mana-Mana bundle declares
+    // channels.list as /public/channels.
+    try {
+      const data = await fetchJsonTimed(
+        `${MANA2_PUBLIC_API_BASE}/public/channels`,
+        { method: 'GET', headers: mana2PublicApiHeaders() },
+        12000
+      );
+      const hit = pickMana2ChannelObject(data, slug);
+      if (!hit) throw new Error('Mana-Mana public channel catalogue could not resolve slug');
+      mana2PublicChannelCache.set(slug, { savedAt: Date.now(), value: hit });
+      return hit;
+    } catch (e) {
+      const err = new Error(`Mana-Mana public channel lookup failed: ${cleanText(e?.message || detailError?.message || '', 180)}`);
+      err.statusCode = Number(e?.statusCode || detailError?.statusCode) || 502;
+      throw err;
+    }
+  }
+
+  function mana2ProgrammeFromObject(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    const p = (obj.programme && typeof obj.programme === 'object') ? obj.programme :
+              (obj.program && typeof obj.program === 'object') ? obj.program : obj;
+    const title = cleanText(p.title ?? p.name ?? p.programmeTitle ?? p.programTitle, 220);
+    const startIso = cleanText(
+      p.startIso ?? p.startTime ?? p.start_time ?? p.startsAt ?? p.start_at ?? p.start,
+      100
+    );
+    const endIso = cleanText(
+      p.endIso ?? p.endTime ?? p.end_time ?? p.endsAt ?? p.end_at ?? p.end,
+      100
+    );
+    if (!title || !startIso || !endIso) return null;
+    const start = malaysiaClockFromIso(startIso);
+    const end = malaysiaClockFromIso(endIso);
+    if (!start || !end) return null;
+    const startMs = Date.parse(startIso);
+    const endMs = Date.parse(endIso);
+    const current = Number.isFinite(startMs) && Number.isFinite(endMs)
+      ? Date.now() >= startMs && Date.now() < endMs
+      : scheduleItemCurrent({ start, end }, malaysiaMinuteNow());
+    return {
+      id: cleanText(p.id ?? p.programmeId ?? p.programId ?? obj.id, 180),
+      title,
+      start,
+      end,
+      start_iso: startIso,
+      end_iso: endIso,
+      current
+    };
+  }
+
+  function parseMana2PublicEpg(data) {
+    const objects = collectMana2Objects(unwrapMana2Api(data), []);
+    const out = [];
+    const seen = new Set();
+    for (const o of objects) {
+      const row = mana2ProgrammeFromObject(o);
+      if (!row) continue;
+      const key = `${row.start_iso}|${row.end_iso}|${row.title.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(row);
+    }
+    out.sort((a, b) => {
+      const am = Date.parse(a.start_iso), bm = Date.parse(b.start_iso);
+      if (Number.isFinite(am) && Number.isFinite(bm)) return am - bm;
+      return minutesFromScheduleTime(a.start) - minutesFromScheduleTime(b.start);
+    });
+    return out.slice(0, 96);
+  }
+
+  function parseMana2NowRows(data) {
+    const value = unwrapMana2Api(data);
+    const roots = Array.isArray(value) ? value : collectMana2Objects(value, []).filter(o => o.programme || o.program);
+    return roots.map(o => {
+      const p = o.programme || o.program;
+      if (!p || typeof p !== 'object') return null;
+      return {
+        channelId: cleanText(o.channelId ?? o.channel_id ?? o.id, 180),
+        channelNumber: o.channelNumber ?? o.channel_number ?? null,
+        title: cleanText(p.title ?? p.name, 220),
+        startIso: cleanText(p.startTime ?? p.startIso ?? p.start_time, 100),
+        endIso: cleanText(p.endTime ?? p.endIso ?? p.end_time, 100)
+      };
+    }).filter(x => x && x.channelId && x.title);
+  }
+
+  async function getMana2PublicNow(channelId) {
+    if (!mana2PublicNowCache.rows.length || Date.now() - mana2PublicNowCache.savedAt >= 30_000) {
+      const data = await fetchJsonTimed(
+        `${MANA2_PUBLIC_API_BASE}/public/epg/now?channelType=video`,
+        { method: 'GET', headers: mana2PublicApiHeaders() },
+        12000
+      );
+      mana2PublicNowCache.rows = parseMana2NowRows(data);
+      mana2PublicNowCache.savedAt = Date.now();
+    }
+    return mana2PublicNowCache.rows.find(x => String(x.channelId) === String(channelId)) || null;
+  }
+
+  async function getMana2PublicEpgSchedule(rawUrl) {
+    const target = mana2ChannelUrl(rawUrl);
+    const channel = await getMana2PublicChannel(target.toString());
+    const date = malaysiaDateIso();
+
+    const data = await fetchJsonTimed(
+      `${MANA2_PUBLIC_API_BASE}/public/epg?channel_id=${encodeURIComponent(channel.id)}&date=${encodeURIComponent(date)}`,
+      { method: 'GET', headers: mana2PublicApiHeaders() },
+      15000
+    );
+    const schedule = parseMana2PublicEpg(data);
+
+    let now = null;
+    try { now = await getMana2PublicNow(channel.id); } catch (_) {}
+
+    if (now?.title) {
+      let matched = false;
+      for (const row of schedule) {
+        const sameTitle = row.title.toLowerCase() === now.title.toLowerCase();
+        const sameStart = now.startIso && row.start_iso && row.start_iso === now.startIso;
+        row.current = !!(sameStart || (sameTitle && row.current));
+        if (row.current) matched = true;
+      }
+      if (!matched) {
+        const hit = schedule.find(row => row.title.toLowerCase() === now.title.toLowerCase());
+        if (hit) hit.current = true;
+      }
+    }
+
+    const currentTitle = now?.title || schedule.find(x => x.current)?.title || '';
+    if (!schedule.length && !currentTitle) {
+      const err = new Error('Mana-Mana public EPG returned no programmes');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    return {
+      ok: true,
+      channel_url: target.toString(),
+      channel_id: channel.id,
+      current_title: currentTitle,
+      schedule: schedule.map(x => ({
+        id: x.id || undefined,
+        start: x.start,
+        end: x.end,
+        title: x.title,
+        current: !!x.current
+      })),
+      parser: 'mana2-current-public-epg-api',
+      api_source: 'co3y6iwoio.tenbytecdn.com/api/v1',
+      fetched_at: Date.now(),
+      time_zone: 'Asia/Kuala_Lumpur'
+    };
+  }
+
   function deepFindStringByKeys(value, keys, depth = 0) {
     if (depth > 14 || value == null) return '';
     if (typeof value !== 'object') return '';
@@ -1151,9 +1433,18 @@ function createAZOBSSTVHandler(options = {}) {
     const cached = mana2ScheduleCache.get(key);
     if (cached && Date.now() - cached.savedAt < 60_000) return cached.value;
 
+    // v987 primary: exact public EPG flow used by Mana-Mana's current 2026 web app.
+    let publicEpgError = null;
+    try {
+      const value = await getMana2PublicEpgSchedule(target.toString());
+      mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
+      return value;
+    } catch (e) { publicEpgError = e; }
+
     let renderedError = null;
     try {
       const value = await getMana2RenderedSchedule(target.toString());
+      value.public_epg_error = cleanText(publicEpgError?.message || '', 180);
       mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
       return value;
     } catch (e) { renderedError = e; }
@@ -1161,6 +1452,7 @@ function createAZOBSSTVHandler(options = {}) {
     let guideError = null;
     try {
       const value = await getMana2GuideSchedule(target.toString(), channelName, tvgId);
+      value.public_epg_error = cleanText(publicEpgError?.message || '', 180);
       value.rendered_dom_error = cleanText(renderedError?.message || '', 160);
       mana2ScheduleCache.set(key, { savedAt: Date.now(), value });
       return value;
@@ -1174,11 +1466,22 @@ function createAZOBSSTVHandler(options = {}) {
         'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language':'en-MY,en;q=0.9,ms;q=0.8'
       }});
-      if (!response.ok) throw guideError || renderedError || Object.assign(new Error(`Mana-Mana page HTTP ${response.status}`), { statusCode:response.status });
+      if (!response.ok) throw guideError || renderedError || publicEpgError || Object.assign(new Error(`Mana-Mana page HTTP ${response.status}`), { statusCode:response.status });
       const html = await response.text();
       if (html.length > 4 * 1024 * 1024) throw Object.assign(new Error('Mana-Mana page too large'), { statusCode:413 });
       const parsed = extractMana2Schedule(html);
-      const value = { ok:true, channel_url:target.toString(), current_title:parsed.current_title||'', schedule:parsed.schedule||[], parser:(parsed.schedule?.length||parsed.current_title)?'html-nextjs-fallback':'none', rendered_dom_error:cleanText(renderedError?.message||'',160), guide_api_error:cleanText(guideError?.message||'',160), fetched_at:Date.now(), time_zone:'Asia/Kuala_Lumpur' };
+      const value = {
+        ok:true,
+        channel_url:target.toString(),
+        current_title:parsed.current_title||'',
+        schedule:parsed.schedule||[],
+        parser:(parsed.schedule?.length||parsed.current_title)?'html-nextjs-fallback':'none',
+        public_epg_error:cleanText(publicEpgError?.message||'',180),
+        rendered_dom_error:cleanText(renderedError?.message||'',160),
+        guide_api_error:cleanText(guideError?.message||'',160),
+        fetched_at:Date.now(),
+        time_zone:'Asia/Kuala_Lumpur'
+      };
       mana2ScheduleCache.set(key, { savedAt:Date.now(), value });
       return value;
     } finally { clearTimeout(timer); }
@@ -1194,7 +1497,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.986', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'rendered-dom-structured-title-only-primary-revlet-html-fallback', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.987', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', time: Date.now() });
         return true;
       }
 
