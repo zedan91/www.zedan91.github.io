@@ -567,3 +567,42 @@ body{padding-top:49px}
     overflow:visible!important;
   }
 }
+
+/* v1005 — Anime Episodes search lives in the single Episodes panel.
+   The old duplicate full Episode List below Anime details is no longer rendered. */
+.anime-side-episode-tools{
+  flex:0 0 auto;
+  padding:8px 9px 7px;
+  border-bottom:1px solid #253149;
+  background:#0c1422;
+}
+.anime-side-episode-tools input{
+  width:100%;
+  height:38px;
+  border:1px solid #2a3855;
+  border-radius:10px;
+  background:#0a111d;
+  color:#fff;
+  padding:0 12px;
+  outline:none;
+  font:inherit;
+  font-size:12px;
+}
+.anime-side-episode-tools input::placeholder{color:#71809d}
+.anime-side-episode-tools input:focus{
+  border-color:#6274a6;
+  box-shadow:0 0 0 2px rgba(98,116,166,.16);
+}
+
+/* Keep the search bar visible while the episode rows scroll. */
+.today-schedule-card.anime-episode-mode .anime-side-episode-tools{
+  position:relative;
+  z-index:2;
+}
+
+/* Poster images from the backend proxy should fill Anime cards naturally. */
+.channel-grid.anime-grid .anime-card .channel-logo,
+.anime-detail-poster,
+.channel-rail .channel-rail-logo{
+  background:#0a0f18;
+}

@@ -1698,6 +1698,55 @@ function createAZOBSSTVHandler(options = {}) {
     return /\.(?:m3u8|mpd|mp4|m4s|ts|webm|mkv|avi|aac)(?:$|[?#])/i.test(String(raw || ''));
   }
 
+
+  async function fetch123AnimePoster(slug) {
+    const cleanSlug = String(slug || '').trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9-]{0,180}$/.test(cleanSlug)) {
+      return { ok:false, status:400, reason:'invalid-slug' };
+    }
+
+    const candidates = ['jpg','png','webp'];
+    for (const ext of candidates) {
+      const target = `https://123animehub.cc/imgs/poster/${cleanSlug}.${ext}`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        const response = await fetch(target, {
+          method:'GET',
+          redirect:'follow',
+          signal:controller.signal,
+          headers:{
+            'User-Agent':'Mozilla/5.0 (compatible; AZOBSSTV/1.0; +https://www.azobss.com/AZOBSSTV/)',
+            'Accept':'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'Referer':'https://123animehub.cc/'
+          }
+        });
+
+        if (!response.ok) continue;
+        const type = String(response.headers.get('content-type') || '').toLowerCase();
+        if (!/^image\/(?:jpeg|jpg|png|webp|avif)/i.test(type)) continue;
+
+        const ab = await response.arrayBuffer();
+        const buf = Buffer.from(ab);
+        if (buf.length < 700 || buf.length > 4 * 1024 * 1024) continue;
+
+        return {
+          ok:true,
+          status:200,
+          body:buf,
+          type:type.split(';')[0] || 'image/jpeg',
+          url:response.url || target
+        };
+      } catch (_) {
+        // Try next extension.
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    return { ok:false, status:404, reason:'poster-not-found' };
+  }
+
   async function fetchPublicHtml123AnimeHub(rawUrl) {
     const cleaned = cleanUrl(rawUrl);
     if (!cleaned) throw new Error('invalid-url');
@@ -2011,7 +2060,7 @@ function createAZOBSSTVHandler(options = {}) {
 
     try {
       if (pathname === '/api/azobsstv/health' && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.1004', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
+        sendJson(res, 200, { ok: true, service: 'AZOBSSTV', version: '1.0.1005', firestore: !!getDb(), stream_query_parser: 'node-url-parse-compatible', rtm_referer: true, rtm_origin: true, playback_strategy: 'single-official-player-plus-text-schedule', manamana_schedule: true, manamana_schedule_parser: 'current-public-epg-api-primary-rendered-revlet-html-fallback', manamana_catalogue: 'current-public-video-channels-api', time: Date.now() });
         return true;
       }
 
@@ -2064,6 +2113,21 @@ function createAZOBSSTVHandler(options = {}) {
       if (pathname === '/api/azobsstv/notifications' && req.method === 'GET') {
         if (limited(req, res, 'azobsstv-notifications', 240, 10 * 60 * 1000)) return true;
         sendJson(res, 200, { items: await readNotifications() });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/anime123/poster' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-anime123-poster', 600, 10 * 60 * 1000)) return true;
+        const slug = getQueryParam(parsed, 'slug');
+        const poster = await fetch123AnimePoster(slug);
+        if (!poster.ok) {
+          sendJson(res, poster.status || 404, { ok:false, error:poster.reason || 'poster-not-found' }, { 'Cache-Control':'public, max-age=300' });
+          return true;
+        }
+        send(res, 200, poster.body, poster.type, {
+          'Cache-Control':'public, max-age=86400, stale-while-revalidate=604800',
+          'Access-Control-Allow-Origin':'*'
+        });
         return true;
       }
 
