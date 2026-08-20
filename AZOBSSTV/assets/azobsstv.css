@@ -162,3 +162,11 @@ body{padding-top:49px}
 .market-sticky-bar{font-family:Inter,Segoe UI,Arial,sans-serif}
 .azobsstv-hidden-top-actions{display:none!important}
 @media(max-width:760px){body{padding-top:92px}}
+
+/* v991 Anime series catalogue */
+.channel-card.anime-card{align-items:flex-start;min-height:126px}
+.channel-card.anime-card .channel-logo{width:72px;height:100px;border-radius:10px;object-fit:cover;background:#090d16}
+.channel-card.anime-card .channel-name{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.28}
+.channel-card.anime-card .channel-group{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.35}
+.channel-card.anime-card .fav-mini{margin-top:2px}
+@media(max-width:480px){.channel-card.anime-card .channel-logo{width:66px;height:92px}}

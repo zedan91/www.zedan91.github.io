@@ -1,0 +1,1746 @@
+{
+  "version": 1,
+  "generatedFrom": "AnimeNana Deep Public Inspector v1",
+  "sourceOrigin": "https://animenana.com",
+  "sourceFinishedAt": "2026-08-20T11:03:40.496Z",
+  "notice": "Public anime metadata only. No stream URL, login data, cookie, DRM key, or private credential is included.",
+  "seriesCount": 82,
+  "genreCount": 37,
+  "genres": [
+    {
+      "name": "Fantasy",
+      "count": 53
+    },
+    {
+      "name": "Action",
+      "count": 50
+    },
+    {
+      "name": "Shounen",
+      "count": 41
+    },
+    {
+      "name": "Adventure",
+      "count": 33
+    },
+    {
+      "name": "Comedy",
+      "count": 30
+    },
+    {
+      "name": "Isekai",
+      "count": 13
+    },
+    {
+      "name": "Martial Arts",
+      "count": 11
+    },
+    {
+      "name": "Reincarnation",
+      "count": 11
+    },
+    {
+      "name": "School",
+      "count": 11
+    },
+    {
+      "name": "Romance",
+      "count": 10
+    },
+    {
+      "name": "Super Power",
+      "count": 10
+    },
+    {
+      "name": "Drama",
+      "count": 9
+    },
+    {
+      "name": "Supernatural",
+      "count": 8
+    },
+    {
+      "name": "Ecchi",
+      "count": 7
+    },
+    {
+      "name": "Historical",
+      "count": 7
+    },
+    {
+      "name": "Harem",
+      "count": 6
+    },
+    {
+      "name": "Seinen",
+      "count": 5
+    },
+    {
+      "name": "Mythology",
+      "count": 4
+    },
+    {
+      "name": "Sci-Fi",
+      "count": 4
+    },
+    {
+      "name": "Slice of Life",
+      "count": 4
+    },
+    {
+      "name": "Time Travel",
+      "count": 4
+    },
+    {
+      "name": "Military",
+      "count": 3
+    },
+    {
+      "name": "Mystery",
+      "count": 3
+    },
+    {
+      "name": "Sports",
+      "count": 3
+    },
+    {
+      "name": "Music",
+      "count": 2
+    },
+    {
+      "name": "Shoujo",
+      "count": 2
+    },
+    {
+      "name": "Chinese",
+      "count": 1
+    },
+    {
+      "name": "Detective",
+      "count": 1
+    },
+    {
+      "name": "Gourmet",
+      "count": 1
+    },
+    {
+      "name": "Kids",
+      "count": 1
+    },
+    {
+      "name": "Parody",
+      "count": 1
+    },
+    {
+      "name": "Racing",
+      "count": 1
+    },
+    {
+      "name": "Shoujo Ai",
+      "count": 1
+    },
+    {
+      "name": "Survival",
+      "count": 1
+    },
+    {
+      "name": "Team Sports",
+      "count": 1
+    },
+    {
+      "name": "Vampire",
+      "count": 1
+    },
+    {
+      "name": "Video Game",
+      "count": 1
+    }
+  ],
+  "items": [
+    {
+      "id": "anime:a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires",
+      "slug": "a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires",
+      "name": "A Livid Lady's Guide to Getting Even: How I Crushed My Homeland with My Mighty Grimoires",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Drama",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: DramaFantasyDescription: Elizabeth Leiston, the daughter of Haldoria's powerful prime m",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires/",
+      "url": "https://animenana.com/animeserie/a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires/"
+    },
+    {
+      "id": "anime:arifureta-from-commonplace-to-world-s-strongest-2",
+      "slug": "arifureta-from-commonplace-to-world-s-strongest-2",
+      "name": "Arifureta: From Commonplace to World's Strongest 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Harem",
+        "Isekai"
+      ],
+      "logo": "https://animenana.com/images/arifureta-from-commonplace-to-world-s-strongest-2.jpg",
+      "year": 2022,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyHaremIsekaiDescription: After rescuing his former classmates from",
+      "episodeCount": 15,
+      "sourcePage": "https://animenana.com/animeserie/arifureta-from-commonplace-to-world-s-strongest-2/",
+      "url": "https://animenana.com/animeserie/arifureta-from-commonplace-to-world-s-strongest-2/"
+    },
+    {
+      "id": "anime:ascendance-of-a-bookworm",
+      "slug": "ascendance-of-a-bookworm",
+      "name": "Ascendance of a Bookworm",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Fantasy",
+        "Slice of Life",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/ascendance-of-a-bookworm.jpg",
+      "year": 2019,
+      "rating": "PG-13 - Teens 13 or olderGenres: FantasySlice of LifeIsekaiReincarnationDescription: Urano Motosu loves books and has an",
+      "episodeCount": 56,
+      "sourcePage": "https://animenana.com/animeserie/ascendance-of-a-bookworm/",
+      "url": "https://animenana.com/animeserie/ascendance-of-a-bookworm/"
+    },
+    {
+      "id": "anime:shingeki-no-kyojin",
+      "slug": "shingeki-no-kyojin",
+      "name": "Attack on Titan",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Drama",
+        "Shounen",
+        "Military",
+        "Survival"
+      ],
+      "logo": "https://animenana.com/images/attack-on-titan.jpg",
+      "year": 2013,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionDramaShounenMilitarySurvivalDescription: Centuries ago, mankind was slaughte",
+      "episodeCount": 96,
+      "sourcePage": "https://animenana.com/animeserie/shingeki-no-kyojin/",
+      "url": "https://animenana.com/animeserie/shingeki-no-kyojin/"
+    },
+    {
+      "id": "anime:azur-lane-slow-ahead-season-2",
+      "slug": "azur-lane-slow-ahead-season-2",
+      "name": "Azur Lane: Slow Ahead! Season 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Sci-Fi",
+        "Military"
+      ],
+      "logo": "https://animenana.com/images/azur-lane-slow-ahead-season-2.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedySci-FiMilitaryDescription: Second season of Azur Lane: Bisoku Zenshin!.Show Descr",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/azur-lane-slow-ahead-season-2/",
+      "url": "https://animenana.com/animeserie/azur-lane-slow-ahead-season-2/"
+    },
+    {
+      "id": "anime:bang-dream-yume-mita",
+      "slug": "bang-dream-yume-mita",
+      "name": "BanG Dream! Yume∞Mita",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Music"
+      ],
+      "logo": "https://animenana.com/images/bang-dream-yume-mita.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: MusicDescription: \"Pyaaaaaahhhh!!!\"",
+      "episodeCount": 9,
+      "sourcePage": "https://animenana.com/animeserie/bang-dream-yume-mita/",
+      "url": "https://animenana.com/animeserie/bang-dream-yume-mita/"
+    },
+    {
+      "id": "anime:beyblade-x",
+      "slug": "beyblade-x",
+      "name": "Beyblade X",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Adventure",
+        "Sports",
+        "Kids"
+      ],
+      "logo": "https://animenana.com/images/beyblade-x.jpg",
+      "year": 2023,
+      "rating": "PG - ChildrenGenres: AdventureSportsKidsDescription: At the heart of X City stands the impressive X Tower, an interconne",
+      "episodeCount": 128,
+      "sourcePage": "https://animenana.com/animeserie/beyblade-x/",
+      "url": "https://animenana.com/animeserie/beyblade-x/"
+    },
+    {
+      "id": "anime:black-clover",
+      "slug": "black-clover",
+      "name": "Black Clover",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/black-clover.jpg",
+      "year": 2017,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionComedyFantasyShounenDescription: Asta and Yuno were abandoned at the same church ",
+      "episodeCount": 172,
+      "sourcePage": "https://animenana.com/animeserie/black-clover/",
+      "url": "https://animenana.com/animeserie/black-clover/"
+    },
+    {
+      "id": "anime:black-torch",
+      "slug": "black-torch",
+      "name": "Black Torch",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Supernatural",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/black-torch.jpg",
+      "year": 2026,
+      "rating": "NoneGenres: ActionSupernaturalShounenDescription: Seventeen-year-old Jirou Azuma lives a quiet life with his grandfather",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/black-torch/",
+      "url": "https://animenana.com/animeserie/black-torch/"
+    },
+    {
+      "id": "anime:bleach",
+      "slug": "bleach",
+      "name": "Bleach",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/bleach.jpg",
+      "year": 2004,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyShounenDescription: Ichigo Kurosaki is an ordinary high schooler—",
+      "episodeCount": 372,
+      "sourcePage": "https://animenana.com/animeserie/bleach/",
+      "url": "https://animenana.com/animeserie/bleach/"
+    },
+    {
+      "id": "anime:bleach-thousand-year-blood-war",
+      "slug": "bleach-thousand-year-blood-war",
+      "name": "Bleach: Thousand-Year Blood War",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/bleach-thousand-year-blood-war.jpg",
+      "year": 2022,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureFantasyShounenDescription: Substitute Soul Reaper Ichigo Kurosaki s",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/bleach-thousand-year-blood-war/",
+      "url": "https://animenana.com/animeserie/bleach-thousand-year-blood-war/"
+    },
+    {
+      "id": "anime:bleach-thousand-year-blood-war-the-calamity",
+      "slug": "bleach-thousand-year-blood-war-the-calamity",
+      "name": "Bleach: Thousand-Year Blood War - The Calamity",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Supernatural",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/bleach-thousand-year-blood-war-the-calamity.jpg",
+      "year": 2026,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureSupernaturalShounenDescription: Final part of Bleach: Sennen Kessen",
+      "episodeCount": 4,
+      "sourcePage": "https://animenana.com/animeserie/bleach-thousand-year-blood-war-the-calamity/",
+      "url": "https://animenana.com/animeserie/bleach-thousand-year-blood-war-the-calamity/"
+    },
+    {
+      "id": "anime:blue-lock",
+      "slug": "blue-lock",
+      "name": "Blue Lock",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Sports",
+        "Shounen",
+        "Team Sports"
+      ],
+      "logo": "https://animenana.com/images/blue-lock.jpg",
+      "year": 2022,
+      "rating": "PG-13 - Teens 13 or olderGenres: SportsShounenTeam SportsDescription: Yoichi Isagi was mere moments away from scoring a ",
+      "episodeCount": 24,
+      "sourcePage": "https://animenana.com/animeserie/blue-lock/",
+      "url": "https://animenana.com/animeserie/blue-lock/"
+    },
+    {
+      "id": "anime:boruto-naruto-next-generations",
+      "slug": "boruto-naruto-next-generations",
+      "name": "Boruto: Naruto Next Generations",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts"
+      ],
+      "logo": "https://animenana.com/images/boruto-naruto-next-generations.jpg",
+      "year": 2017,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyShounenMartial ArtsDescription: Following the successful end of t",
+      "episodeCount": 296,
+      "sourcePage": "https://animenana.com/animeserie/boruto-naruto-next-generations/",
+      "url": "https://animenana.com/animeserie/boruto-naruto-next-generations/"
+    },
+    {
+      "id": "anime:bungo-stray-dogs-wan-2",
+      "slug": "bungo-stray-dogs-wan-2",
+      "name": "Bungo Stray Dogs Wan! 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy"
+      ],
+      "logo": "https://animenana.com/images/bungo-stray-dogs-wan-2.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedyDescription: Second season of Bungou Stray Dogs Wan!.Show DescriptionSecond seaso",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/bungo-stray-dogs-wan-2/",
+      "url": "https://animenana.com/animeserie/bungo-stray-dogs-wan-2/"
+    },
+    {
+      "id": "anime:call-of-the-night",
+      "slug": "call-of-the-night",
+      "name": "Call of the Night",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Romance",
+        "Supernatural",
+        "Shounen",
+        "Vampire"
+      ],
+      "logo": "https://animenana.com/images/call-of-the-night.jpg",
+      "year": 2022,
+      "rating": "PG-13 - Teens 13 or olderGenres: RomanceSupernaturalShounenVampireDescription: Kou Yamori is an average middle school st",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/call-of-the-night/",
+      "url": "https://animenana.com/animeserie/call-of-the-night/"
+    },
+    {
+      "id": "anime:chainsaw-man",
+      "slug": "chainsaw-man",
+      "name": "Chainsaw Man",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/chainsaw-man.jpg",
+      "year": 2022,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureShounenDescription: Denji is robbed of a normal teenage life, left ",
+      "episodeCount": 12,
+      "sourcePage": "https://animenana.com/animeserie/chainsaw-man/",
+      "url": "https://animenana.com/animeserie/chainsaw-man/"
+    },
+    {
+      "id": "anime:chainsmoker-cat",
+      "slug": "chainsmoker-cat",
+      "name": "Chainsmoker Cat",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Seinen"
+      ],
+      "logo": "https://animenana.com/images/yani-neko.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedySeinenDescription: Yani is a catgirl with a seriously bad smoking habit. She smok",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/chainsmoker-cat/",
+      "url": "https://animenana.com/animeserie/chainsmoker-cat/"
+    },
+    {
+      "id": "anime:clevatess-season-2",
+      "slug": "clevatess-season-2",
+      "name": "Clevatess Season 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/clevatess-season-2.jpg",
+      "year": 2026,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyDescription: Second season of Clevatess.Show DescriptionSecond season",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/clevatess-season-2/",
+      "url": "https://animenana.com/animeserie/clevatess-season-2/"
+    },
+    {
+      "id": "anime:daemons-of-the-shadow-realm",
+      "slug": "daemons-of-the-shadow-realm",
+      "name": "Daemons of the Shadow Realm",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/daemons-of-the-shadow-realm.jpg",
+      "year": 2026,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureFantasyShounenDescription: In an isolated village, two twins were b",
+      "episodeCount": 19,
+      "sourcePage": "https://animenana.com/animeserie/daemons-of-the-shadow-realm/",
+      "url": "https://animenana.com/animeserie/daemons-of-the-shadow-realm/"
+    },
+    {
+      "id": "anime:dara-san-of-reiwa",
+      "slug": "dara-san-of-reiwa",
+      "name": "Dara-san of Reiwa",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Ecchi",
+        "Mythology",
+        "Supernatural"
+      ],
+      "logo": "https://animenana.com/images/dara-san-of-reiwa.jpg",
+      "year": 2026,
+      "rating": "R+ - Mild NudityGenres: ComedyEcchiMythologySupernaturalDescription: Clouds blacken the sky and sheets of rain turn the ",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/dara-san-of-reiwa/",
+      "url": "https://animenana.com/animeserie/dara-san-of-reiwa/"
+    },
+    {
+      "id": "anime:demon-slayer-kimetsu-no-yaiba",
+      "slug": "demon-slayer-kimetsu-no-yaiba",
+      "name": "Demon Slayer: Kimetsu no Yaiba",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "Historical"
+      ],
+      "logo": "https://animenana.com/images/demon-slayer-kimetsu-no-yaiba.jpg",
+      "year": 2019,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenHistoricalDescription: Ever since the death of his father, the",
+      "episodeCount": 33,
+      "sourcePage": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba/",
+      "url": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba/"
+    },
+    {
+      "id": "anime:demon-slayer-kimetsu-no-yaiba-entertainment-district-arc",
+      "slug": "demon-slayer-kimetsu-no-yaiba-entertainment-district-arc",
+      "name": "Demon Slayer: Kimetsu no Yaiba Entertainment District Arc",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "Historical"
+      ],
+      "logo": "https://animenana.com/images/demon-slayer-kimetsu-no-yaiba-entertainment-district-arc.jpg",
+      "year": 2021,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenHistoricalDescription: The devastation of the Mugen Train inci",
+      "episodeCount": 11,
+      "sourcePage": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-entertainment-district-arc/",
+      "url": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-entertainment-district-arc/"
+    },
+    {
+      "id": "anime:demon-slayer-kimetsu-no-yaiba-hashira-training-arc",
+      "slug": "demon-slayer-kimetsu-no-yaiba-hashira-training-arc",
+      "name": "Demon Slayer: Kimetsu no Yaiba Hashira Training Arc",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "Historical"
+      ],
+      "logo": "https://animenana.com/images/demon-slayer-kimetsu-no-yaiba-hashira-training-arc.jpg",
+      "year": 2024,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenHistoricalDescription: After a series of mighty clashes with U",
+      "episodeCount": 8,
+      "sourcePage": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-hashira-training-arc/",
+      "url": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-hashira-training-arc/"
+    },
+    {
+      "id": "anime:demon-slayer-kimetsu-no-yaiba-mugen-train-arc",
+      "slug": "demon-slayer-kimetsu-no-yaiba-mugen-train-arc",
+      "name": "Demon Slayer: Kimetsu no Yaiba Mugen Train Arc",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "Historical"
+      ],
+      "logo": "https://animenana.com/images/demon-slayer-kimetsu-no-yaiba-mugen-train-arc.jpg",
+      "year": 2021,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenHistoricalDescription: A mysterious string of disappearances o",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-mugen-train-arc/",
+      "url": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-mugen-train-arc/"
+    },
+    {
+      "id": "anime:demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc",
+      "slug": "demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc",
+      "name": "Demon Slayer: Kimetsu no Yaiba Swordsmith Village Arc",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "Historical"
+      ],
+      "logo": "https://animenana.com/images/demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc.jpg",
+      "year": 2023,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenHistoricalDescription: For centuries, the Demon Slayer Corps h",
+      "episodeCount": 11,
+      "sourcePage": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc/",
+      "url": "https://animenana.com/animeserie/demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc/"
+    },
+    {
+      "id": "anime:detective-conan",
+      "slug": "detective-conan",
+      "name": "Detective Conan",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Adventure",
+        "Comedy",
+        "Mystery",
+        "Shounen",
+        "Detective"
+      ],
+      "logo": "https://animenana.com/images/detective-conan.jpg",
+      "year": 1996,
+      "rating": "PG-13 - Teens 13 or olderGenres: AdventureComedyMysteryShounenDetectiveDescription: Shinichi Kudou, a high school studen",
+      "episodeCount": 1234,
+      "sourcePage": "https://animenana.com/animeserie/detective-conan/",
+      "url": "https://animenana.com/animeserie/detective-conan/"
+    },
+    {
+      "id": "anime:digimon-beatbreak",
+      "slug": "digimon-beatbreak",
+      "name": "Digimon Beatbreak",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Sci-Fi"
+      ],
+      "logo": "https://animenana.com/images/digimon-beatbreak.jpg",
+      "year": 2025,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasySci-FiDescription: \"e-Pulse,\" which is generated by human t",
+      "episodeCount": 43,
+      "sourcePage": "https://animenana.com/animeserie/digimon-beatbreak/",
+      "url": "https://animenana.com/animeserie/digimon-beatbreak/"
+    },
+    {
+      "id": "anime:dragon-ball",
+      "slug": "dragon-ball",
+      "name": "Dragon Ball",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball.jpg",
+      "year": 1986,
+      "rating": "PG-13 - Teens 13 or olderGenres: AdventureComedyFantasyShounenMartial ArtsSuper PowerDescription: Gokuu Son is a young b",
+      "episodeCount": 157,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball/",
+      "url": "https://animenana.com/animeserie/dragon-ball/"
+    },
+    {
+      "id": "anime:dragon-ball-daima",
+      "slug": "dragon-ball-daima",
+      "name": "Dragon Ball DAIMA",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-daima.jpg",
+      "year": 2024,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasyShounenMartial ArtsSuper PowerDescription: After saving the",
+      "episodeCount": 20,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-daima/",
+      "url": "https://animenana.com/animeserie/dragon-ball-daima/"
+    },
+    {
+      "id": "anime:dragon-ball-gt",
+      "slug": "dragon-ball-gt",
+      "name": "Dragon Ball GT",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Sci-Fi",
+        "Shounen",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-gt.jpg",
+      "year": 1996,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasySci-FiShounenSuper PowerDescription: Emperor Pilaf finally ",
+      "episodeCount": 64,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-gt/",
+      "url": "https://animenana.com/animeserie/dragon-ball-gt/"
+    },
+    {
+      "id": "anime:dragon-ball-heroes",
+      "slug": "dragon-ball-heroes",
+      "name": "Dragon Ball Heroes",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-heroes.jpg",
+      "year": 2018,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionComedyFantasyShounenMartial ArtsSuper PowerDescription: In May 2018, V-Jump annou",
+      "episodeCount": 56,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-heroes/",
+      "url": "https://animenana.com/animeserie/dragon-ball-heroes/"
+    },
+    {
+      "id": "anime:dragon-ball-kai",
+      "slug": "dragon-ball-kai",
+      "name": "Dragon Ball Kai",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-kai.jpg",
+      "year": 2009,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasyShounenMartial ArtsSuper PowerDescription: Five years after",
+      "episodeCount": 98,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-kai/",
+      "url": "https://animenana.com/animeserie/dragon-ball-kai/"
+    },
+    {
+      "id": "anime:dragonball-super",
+      "slug": "dragonball-super",
+      "name": "Dragon Ball Super",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragonball-super.jpg",
+      "year": 2017,
+      "rating": "PG-13 - Teens 13 or older",
+      "episodeCount": 133,
+      "sourcePage": "https://animenana.com/animeserie/dragonball-super/",
+      "url": "https://animenana.com/animeserie/dragonball-super/"
+    },
+    {
+      "id": "anime:dragon-ball-z",
+      "slug": "dragon-ball-z",
+      "name": "Dragon Ball Z",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-z.jpg",
+      "year": 1989,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasyShounenMartial ArtsSuper PowerDescription: Five years after",
+      "episodeCount": 296,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-z/",
+      "url": "https://animenana.com/animeserie/dragon-ball-z/"
+    },
+    {
+      "id": "anime:dragon-ball-z-kai-the-final-chapters",
+      "slug": "dragon-ball-z-kai-the-final-chapters",
+      "name": "Dragon Ball Z Kai: The Final Chapters",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-z-kai-the-final-chapters.jpg",
+      "year": 2014,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasyShounenMartial ArtsSuper PowerDescription: Remastered versi",
+      "episodeCount": 69,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-z-kai-the-final-chapters/",
+      "url": "https://animenana.com/animeserie/dragon-ball-z-kai-the-final-chapters/"
+    },
+    {
+      "id": "anime:dragon-ball-z-movies",
+      "slug": "dragon-ball-z-movies",
+      "name": "Dragon Ball Z Movies",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Martial Arts",
+        "Shounen",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/dragon-ball-z-movies.jpg",
+      "year": 1989,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasyMartial ArtsShounenSuper PowerDescription: A Collection of ",
+      "episodeCount": 15,
+      "sourcePage": "https://animenana.com/animeserie/dragon-ball-z-movies/",
+      "url": "https://animenana.com/animeserie/dragon-ball-z-movies/"
+    },
+    {
+      "id": "anime:draw-this-then-die",
+      "slug": "draw-this-then-die",
+      "name": "Draw This, Then Die!",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/draw-this-then-die.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedyShounenDescription: Ai Yasumi, a first-year high school student living on Izu-Osh",
+      "episodeCount": 6,
+      "sourcePage": "https://animenana.com/animeserie/draw-this-then-die/",
+      "url": "https://animenana.com/animeserie/draw-this-then-die/"
+    },
+    {
+      "id": "anime:dropkick-on-my-devil-x",
+      "slug": "dropkick-on-my-devil-x",
+      "name": "Dropkick On My Devil!! X",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Supernatural"
+      ],
+      "logo": "https://animenana.com/images/dropkick-on-my-devil-x.jpg",
+      "year": 2022,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedySupernaturalDescription: Ever since she was summoned from Hell by the witch Yurin",
+      "episodeCount": 12,
+      "sourcePage": "https://animenana.com/animeserie/dropkick-on-my-devil-x/",
+      "url": "https://animenana.com/animeserie/dropkick-on-my-devil-x/"
+    },
+    {
+      "id": "anime:everyday-host",
+      "slug": "everyday-host",
+      "name": "Everyday Host",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy"
+      ],
+      "logo": "https://animenana.com/images/everyday-host.jpg",
+      "year": 2025,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedyDescription: The story follows Hajime Sekiguchi, a former life insurance salesman",
+      "episodeCount": 23,
+      "sourcePage": "https://animenana.com/animeserie/everyday-host/",
+      "url": "https://animenana.com/animeserie/everyday-host/"
+    },
+    {
+      "id": "anime:flaming-dodgeball-girl-danko",
+      "slug": "flaming-dodgeball-girl-danko",
+      "name": "Flaming Dodgeball Girl Danko",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Sports",
+        "School",
+        "Time Travel"
+      ],
+      "logo": "https://animenana.com/images/honoo-no-toukyuujo-dodge-danko.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedySportsSchoolTime TravelDescription: It centers on Danpei's daughter Danko and her",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/flaming-dodgeball-girl-danko/",
+      "url": "https://animenana.com/animeserie/flaming-dodgeball-girl-danko/"
+    },
+    {
+      "id": "anime:from-old-country-bumpkin-to-master-swordsman-season-2",
+      "slug": "from-old-country-bumpkin-to-master-swordsman-season-2",
+      "name": "From Old Country Bumpkin to Master Swordsman Season 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/from-old-country-bumpkin-to-master-swordsman-season-2.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionFantasyDescription: Second season of Katainaka no Ossan, Kensei ni Naru.Show Desc",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/from-old-country-bumpkin-to-master-swordsman-season-2/",
+      "url": "https://animenana.com/animeserie/from-old-country-bumpkin-to-master-swordsman-season-2/"
+    },
+    {
+      "id": "anime:from-overshadowed-to-overpowered-second-reincarnation-of-a-talentless-sage",
+      "slug": "from-overshadowed-to-overpowered-second-reincarnation-of-a-talentless-sage",
+      "name": "From Overshadowed to Overpowered: Second Reincarnation of a Talentless Sage",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/from-overshadowed-to-overpowered-second-reincarnation-of-a-talentless-sage.jpg",
+      "year": 2026,
+      "rating": "NoneGenres: ActionAdventureFantasyReincarnationDescription: The Sage of Wind, Ephtal is a reincarnated human, coming fro",
+      "episodeCount": 8,
+      "sourcePage": "https://animenana.com/animeserie/from-overshadowed-to-overpowered-second-reincarnation-of-a-talentless-sage/",
+      "url": "https://animenana.com/animeserie/from-overshadowed-to-overpowered-second-reincarnation-of-a-talentless-sage/"
+    },
+    {
+      "id": "anime:goodbye-lara",
+      "slug": "goodbye-lara",
+      "name": "Goodbye, Lara",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Fantasy",
+        "Romance",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/goodbye-lara.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: FantasyRomanceReincarnationDescription: Long, long ago, there lived a mermaid princess ",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/goodbye-lara/",
+      "url": "https://animenana.com/animeserie/goodbye-lara/"
+    },
+    {
+      "id": "anime:grand-blue-dreaming-season-3",
+      "slug": "grand-blue-dreaming-season-3",
+      "name": "Grand Blue Dreaming Season 3",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Seinen"
+      ],
+      "logo": "https://animenana.com/images/grand-blue-dreaming-season-3.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedySeinenDescription: Third season of Grand Blue.Show DescriptionThird season of Gra",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/grand-blue-dreaming-season-3/",
+      "url": "https://animenana.com/animeserie/grand-blue-dreaming-season-3/"
+    },
+    {
+      "id": "anime:hana-kimi-season-2",
+      "slug": "hana-kimi-season-2",
+      "name": "Hana-Kimi Season 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Romance",
+        "Shoujo",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/hana-kimi-season-2.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: RomanceShoujoSchoolDescription: Second season of Hanazakari no Kimitachi e.Show Descrip",
+      "episodeCount": 9,
+      "sourcePage": "https://animenana.com/animeserie/hana-kimi-season-2/",
+      "url": "https://animenana.com/animeserie/hana-kimi-season-2/"
+    },
+    {
+      "id": "anime:hanaori-san-still-wants-to-fight-in-the-next-life",
+      "slug": "hanaori-san-still-wants-to-fight-in-the-next-life",
+      "name": "Hanaori-san Still Wants to Fight in the Next Life",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Fantasy",
+        "Romance",
+        "Seinen",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/hanaori-san-still-wants-to-fight-in-the-next-life.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ComedyFantasyRomanceSeinenReincarnationDescription: Narukami Ryusei is your typical NEE",
+      "episodeCount": 6,
+      "sourcePage": "https://animenana.com/animeserie/hanaori-san-still-wants-to-fight-in-the-next-life/",
+      "url": "https://animenana.com/animeserie/hanaori-san-still-wants-to-fight-in-the-next-life/"
+    },
+    {
+      "id": "anime:harem-in-the-labyrinth-of-another-world",
+      "slug": "harem-in-the-labyrinth-of-another-world",
+      "name": "Harem in the Labyrinth of Another World",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Romance",
+        "Ecchi",
+        "Harem",
+        "Isekai"
+      ],
+      "logo": "https://animenana.com/images/harem-in-the-labyrinth-of-another-world.jpg",
+      "year": 2022,
+      "rating": "R+ - Mild NudityGenres: ActionAdventureFantasyRomanceEcchiHaremIsekaiDescription: One day, high school student Michio Ka",
+      "episodeCount": 14,
+      "sourcePage": "https://animenana.com/animeserie/harem-in-the-labyrinth-of-another-world/",
+      "url": "https://animenana.com/animeserie/harem-in-the-labyrinth-of-another-world/"
+    },
+    {
+      "id": "anime:hell-mode-the-hardcore-gamer-dominates-in-another-world-with-garbage-balancing-season-2",
+      "slug": "hell-mode-the-hardcore-gamer-dominates-in-another-world-with-garbage-balancing-season-2",
+      "name": "Hell Mode: The Hardcore Gamer Dominates in Another World with Garbage Balancing Season 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/hell-mode-the-hardcore-gamer-dominates-in-another-world-with-garbage-balancing-season-2.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyIsekaiReincarnationDescription: Second season of Hell Mode: Yarik",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/hell-mode-the-hardcore-gamer-dominates-in-another-world-with-garbage-balancing-season-2/",
+      "url": "https://animenana.com/animeserie/hell-mode-the-hardcore-gamer-dominates-in-another-world-with-garbage-balancing-season-2/"
+    },
+    {
+      "id": "anime:heroine-saint-no-im-an-all-works-maid-and-proud-of-it",
+      "slug": "heroine-saint-no-im-an-all-works-maid-and-proud-of-it",
+      "name": "Heroine? Saint? No, I'm an All-Works Maid (And Proud of It)!",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Fantasy",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/heroine-saint-no-im-an-all-works-maid-and-proud-of-it.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: FantasyIsekaiReincarnationDescription: \"I will become the world's most wonderful maid!\"",
+      "episodeCount": 9,
+      "sourcePage": "https://animenana.com/animeserie/heroine-saint-no-im-an-all-works-maid-and-proud-of-it/",
+      "url": "https://animenana.com/animeserie/heroine-saint-no-im-an-all-works-maid-and-proud-of-it/"
+    },
+    {
+      "id": "anime:high-school-dxd",
+      "slug": "high-school-dxd",
+      "name": "High School DxD",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Comedy",
+        "Romance",
+        "Ecchi",
+        "Harem",
+        "Mythology",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/high-school-dxd.jpg",
+      "year": 2011,
+      "rating": "R+ - Mild NudityGenres: ComedyRomanceEcchiHaremMythologySchoolDescription: High school student Issei Hyoudou is your run",
+      "episodeCount": 20,
+      "sourcePage": "https://animenana.com/animeserie/high-school-dxd/",
+      "url": "https://animenana.com/animeserie/high-school-dxd/"
+    },
+    {
+      "id": "anime:how-a-realist-hero-rebuilt-the-kingdom",
+      "slug": "how-a-realist-hero-rebuilt-the-kingdom",
+      "name": "How a Realist Hero Rebuilt the Kingdom",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Romance",
+        "Harem",
+        "Isekai",
+        "Military"
+      ],
+      "logo": "https://animenana.com/images/how-a-realist-hero-rebuilt-the-kingdom.jpg",
+      "year": 2021,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionFantasyRomanceHaremIsekaiMilitaryDescription: After the death of his grandfather,",
+      "episodeCount": 26,
+      "sourcePage": "https://animenana.com/animeserie/how-a-realist-hero-rebuilt-the-kingdom/",
+      "url": "https://animenana.com/animeserie/how-a-realist-hero-rebuilt-the-kingdom/"
+    },
+    {
+      "id": "anime:hunter-x-hunter",
+      "slug": "hunter-x-hunter",
+      "name": "Hunter x Hunter (2011)",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/hunter-x-hunter.jpg",
+      "year": 2011,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyShounenDescription: Hunters devote themselves to accomplishing ha",
+      "episodeCount": 150,
+      "sourcePage": "https://animenana.com/animeserie/hunter-x-hunter/",
+      "url": "https://animenana.com/animeserie/hunter-x-hunter/"
+    },
+    {
+      "id": "anime:i-became-a-legend-after-my-10-year-long-last-stand",
+      "slug": "i-became-a-legend-after-my-10-year-long-last-stand",
+      "name": "I Became a Legend After My 10 Year-Long Last Stand.",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/i-became-a-legend-after-my-10-year-long-last-stand.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyDescription: The sorcerer Luck believes this to be the end. Besie",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/i-became-a-legend-after-my-10-year-long-last-stand/",
+      "url": "https://animenana.com/animeserie/i-became-a-legend-after-my-10-year-long-last-stand/"
+    },
+    {
+      "id": "anime:i-want-to-love-you-till-your-dying-day",
+      "slug": "i-want-to-love-you-till-your-dying-day",
+      "name": "I Want to Love You Till Your Dying Day",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Fantasy",
+        "Shoujo Ai",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/i-want-to-love-you-till-your-dying-day.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: FantasyShoujo AiSchoolDescription: The death of Sheena Totsuki's roommate is casually a",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/i-want-to-love-you-till-your-dying-day/",
+      "url": "https://animenana.com/animeserie/i-want-to-love-you-till-your-dying-day/"
+    },
+    {
+      "id": "anime:iron-wok-jan",
+      "slug": "iron-wok-jan",
+      "name": "Iron Wok Jan",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Gourmet",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/iron-wok-jan.jpg",
+      "year": 2026,
+      "rating": "NoneGenres: ActionComedyGourmetShounenDescription: The original Iron Wok Jan! manga centers on a brilliant young chef na",
+      "episodeCount": 7,
+      "sourcePage": "https://animenana.com/animeserie/iron-wok-jan/",
+      "url": "https://animenana.com/animeserie/iron-wok-jan/"
+    },
+    {
+      "id": "anime:jaadugar-a-witch-in-mongolia",
+      "slug": "jaadugar-a-witch-in-mongolia",
+      "name": "Jaadugar: A Witch in Mongolia",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Drama",
+        "Historical"
+      ],
+      "logo": "https://animenana.com/images/jaadugar-a-witch-in-mongolia.jpg",
+      "year": 2026,
+      "rating": "NoneGenres: DramaHistoricalDescription: In the harem of the Khan, wisdom is beauty. The time: the thirteenth century. Th",
+      "episodeCount": 8,
+      "sourcePage": "https://animenana.com/animeserie/jaadugar-a-witch-in-mongolia/",
+      "url": "https://animenana.com/animeserie/jaadugar-a-witch-in-mongolia/"
+    },
+    {
+      "id": "anime:jojo-s-bizarre-adventure-steel-ball-run",
+      "slug": "jojo-s-bizarre-adventure-steel-ball-run",
+      "name": "JoJo's Bizarre Adventure: Steel Ball Run",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Mystery",
+        "Supernatural",
+        "Seinen",
+        "Shounen",
+        "Historical",
+        "Racing"
+      ],
+      "logo": "https://animenana.com/images/jojo-s-bizarre-adventure-steel-ball-run.jpg",
+      "year": 2026,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureMysterySupernaturalSeinenShounenHistoricalRacingDescription: In the",
+      "episodeCount": 1,
+      "sourcePage": "https://animenana.com/animeserie/jojo-s-bizarre-adventure-steel-ball-run/",
+      "url": "https://animenana.com/animeserie/jojo-s-bizarre-adventure-steel-ball-run/"
+    },
+    {
+      "id": "anime:jujutsu-kaisen",
+      "slug": "jujutsu-kaisen",
+      "name": "Jujutsu Kaisen",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/jujutsu-kaisen.jpg",
+      "year": 2020,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenSchoolDescription: Idly indulging in baseless paranormal activ",
+      "episodeCount": 24,
+      "sourcePage": "https://animenana.com/animeserie/jujutsu-kaisen/",
+      "url": "https://animenana.com/animeserie/jujutsu-kaisen/"
+    },
+    {
+      "id": "anime:jujutsu-kaisen-2nd-season",
+      "slug": "jujutsu-kaisen-2nd-season",
+      "name": "Jujutsu Kaisen 2nd Season",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Shounen",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/jujutsu-kaisen-2nd-season.jpg",
+      "year": 2023,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasyShounenSchoolDescription: The year is 2006, and the halls of Tokyo Pr",
+      "episodeCount": 23,
+      "sourcePage": "https://animenana.com/animeserie/jujutsu-kaisen-2nd-season/",
+      "url": "https://animenana.com/animeserie/jujutsu-kaisen-2nd-season/"
+    },
+    {
+      "id": "anime:mashle-magic-and-muscles",
+      "slug": "mashle-magic-and-muscles",
+      "name": "Mashle: Magic and Muscles",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Parody",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/mashle-magic-and-muscles.jpg",
+      "year": 2023,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionComedyFantasyShounenParodySchoolDescription: In this magical world, one is easily",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/mashle-magic-and-muscles/",
+      "url": "https://animenana.com/animeserie/mashle-magic-and-muscles/"
+    },
+    {
+      "id": "anime:mushoku-tensei-jobless-reincarnation",
+      "slug": "mushoku-tensei-jobless-reincarnation",
+      "name": "Mushoku Tensei: Jobless Reincarnation",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Drama",
+        "Fantasy",
+        "Ecchi",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/mushoku-tensei-jobless-reincarnation.jpg",
+      "year": 2021,
+      "rating": "R - 17+ (violence & profanity)Genres: DramaFantasyEcchiIsekaiReincarnationDescription: Despite being bullied, scorned, a",
+      "episodeCount": 11,
+      "sourcePage": "https://animenana.com/animeserie/mushoku-tensei-jobless-reincarnation/",
+      "url": "https://animenana.com/animeserie/mushoku-tensei-jobless-reincarnation/"
+    },
+    {
+      "id": "anime:mushoku-tensei-jobless-reincarnation-part-2",
+      "slug": "mushoku-tensei-jobless-reincarnation-part-2",
+      "name": "Mushoku Tensei: Jobless Reincarnation Part 2",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Drama",
+        "Fantasy",
+        "Ecchi",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/mushoku-tensei-jobless-reincarnation-2nd-season.jpg",
+      "year": 2021,
+      "rating": "R - 17+ (violence & profanity)Genres: DramaFantasyEcchiIsekaiReincarnationDescription: After the mysterious mana calamit",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/mushoku-tensei-jobless-reincarnation-part-2/",
+      "url": "https://animenana.com/animeserie/mushoku-tensei-jobless-reincarnation-part-2/"
+    },
+    {
+      "id": "anime:my-dress-up-darling",
+      "slug": "my-dress-up-darling",
+      "name": "My Dress-Up Darling",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Romance",
+        "Slice of Life",
+        "Seinen",
+        "School"
+      ],
+      "logo": "https://animenana.com/images/my-dress-up-darling.jpg",
+      "year": 2022,
+      "rating": "PG-13 - Teens 13 or olderGenres: RomanceSlice of LifeSeinenSchoolDescription: High school student Wakana Gojou spends hi",
+      "episodeCount": 12,
+      "sourcePage": "https://animenana.com/animeserie/my-dress-up-darling/",
+      "url": "https://animenana.com/animeserie/my-dress-up-darling/"
+    },
+    {
+      "id": "anime:my-hero-academia",
+      "slug": "my-hero-academia",
+      "name": "My Hero Academia",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Shounen",
+        "School",
+        "Super Power"
+      ],
+      "logo": "https://animenana.com/images/my-hero-academia.jpg",
+      "year": 2016,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionShounenSchoolSuper PowerDescription: The appearance of \"quirks,\" newly discovered",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/my-hero-academia/",
+      "url": "https://animenana.com/animeserie/my-hero-academia/"
+    },
+    {
+      "id": "anime:nana",
+      "slug": "nana",
+      "name": "Nana",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Drama",
+        "Romance",
+        "Slice of Life",
+        "Shoujo",
+        "Music"
+      ],
+      "logo": "https://animenana.com/images/nana.jpg",
+      "year": 2006,
+      "rating": "R+ - Mild NudityGenres: DramaRomanceSlice of LifeShoujoMusicDescription: Departing from their respective hometowns, two ",
+      "episodeCount": 50,
+      "sourcePage": "https://animenana.com/animeserie/nana/",
+      "url": "https://animenana.com/animeserie/nana/"
+    },
+    {
+      "id": "anime:naruto",
+      "slug": "naruto",
+      "name": "Naruto",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts"
+      ],
+      "logo": "https://animenana.com/images/naruto.jpg",
+      "year": 2002,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyShounenMartial ArtsDescription: Twelve years ago, a colossal demo",
+      "episodeCount": 223,
+      "sourcePage": "https://animenana.com/animeserie/naruto/",
+      "url": "https://animenana.com/animeserie/naruto/"
+    },
+    {
+      "id": "anime:naruto-shippuden",
+      "slug": "naruto-shippuden",
+      "name": "Naruto Shippuden",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen",
+        "Martial Arts"
+      ],
+      "logo": "https://animenana.com/images/naruto-shippuden.jpg",
+      "year": 2007,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyShounenMartial ArtsDescription: It has been two and a half years ",
+      "episodeCount": 518,
+      "sourcePage": "https://animenana.com/animeserie/naruto-shippuden/",
+      "url": "https://animenana.com/animeserie/naruto-shippuden/"
+    },
+    {
+      "id": "anime:one-piece",
+      "slug": "one-piece",
+      "name": "One Piece",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/one-piece.jpg",
+      "year": 1999,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureFantasyShounenDescription: Gol D. Roger was known as the \"Pirate King,\" ",
+      "episodeCount": 1205,
+      "sourcePage": "https://animenana.com/animeserie/one-piece/",
+      "url": "https://animenana.com/animeserie/one-piece/"
+    },
+    {
+      "id": "anime:overlord-iv",
+      "slug": "overlord-iv",
+      "name": "Overlord IV",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Fantasy",
+        "Supernatural",
+        "Isekai",
+        "Video Game"
+      ],
+      "logo": "https://animenana.com/images/overlord-iv.jpg",
+      "year": 2022,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionFantasySupernaturalIsekaiVideo GameDescription: E-Rantel, the capital city o",
+      "episodeCount": 26,
+      "sourcePage": "https://animenana.com/animeserie/overlord-iv/",
+      "url": "https://animenana.com/animeserie/overlord-iv/"
+    },
+    {
+      "id": "anime:ranking-of-kings",
+      "slug": "ranking-of-kings",
+      "name": "Ranking of Kings",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Adventure",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/ranking-of-kings.jpg",
+      "year": 2021,
+      "rating": "PG-13 - Teens 13 or olderGenres: AdventureFantasyDescription: The people of the kingdom look down on the young Prince Bo",
+      "episodeCount": 23,
+      "sourcePage": "https://animenana.com/animeserie/ranking-of-kings/",
+      "url": "https://animenana.com/animeserie/ranking-of-kings/"
+    },
+    {
+      "id": "anime:redo-of-healer",
+      "slug": "redo-of-healer",
+      "name": "Redo of Healer",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Adventure",
+        "Drama",
+        "Fantasy",
+        "Ecchi",
+        "Harem",
+        "Time Travel"
+      ],
+      "logo": "https://animenana.com/images/redo-of-healer.jpg",
+      "year": 2021,
+      "rating": "R+ - Mild NudityGenres: AdventureDramaFantasyEcchiHaremTime TravelDescription: When Keyaru acquired his powers as a Hero",
+      "episodeCount": 12,
+      "sourcePage": "https://animenana.com/animeserie/redo-of-healer/",
+      "url": "https://animenana.com/animeserie/redo-of-healer/"
+    },
+    {
+      "id": "anime:solo-leveling",
+      "slug": "solo-leveling",
+      "name": "Solo Leveling",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/solo-leveling.jpg",
+      "year": 2024,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureFantasyDescription: Humanity was caught at a precipice a decade ago",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/solo-leveling/",
+      "url": "https://animenana.com/animeserie/solo-leveling/"
+    },
+    {
+      "id": "anime:solo-leveling-season-2-arise-from-the-shadow",
+      "slug": "solo-leveling-season-2-arise-from-the-shadow",
+      "name": "Solo Leveling Season 2: Arise from the Shadow",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "logo": "https://animenana.com/images/solo-leveling-season-2-arise-from-the-shadow.jpg",
+      "year": 2025,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionAdventureFantasyDescription: Sung Jin-Woo, dubbed the weakest hunter of all ",
+      "episodeCount": 13,
+      "sourcePage": "https://animenana.com/animeserie/solo-leveling-season-2-arise-from-the-shadow/",
+      "url": "https://animenana.com/animeserie/solo-leveling-season-2-arise-from-the-shadow/"
+    },
+    {
+      "id": "anime:spy-x-family",
+      "slug": "spy-x-family",
+      "name": "Spy x Family",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Shounen"
+      ],
+      "logo": "https://animenana.com/images/spy-x-family.jpg",
+      "year": 2022,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionComedyShounenDescription: Corrupt politicians, frenzied nationalists, and other w",
+      "episodeCount": 25,
+      "sourcePage": "https://animenana.com/animeserie/spy-x-family/",
+      "url": "https://animenana.com/animeserie/spy-x-family/"
+    },
+    {
+      "id": "anime:that-time-i-got-reincarnated-as-a-slime",
+      "slug": "that-time-i-got-reincarnated-as-a-slime",
+      "name": "That Time I Got Reincarnated as a Slime",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Isekai",
+        "Mythology",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/that-time-i-got-reincarnated-as-a-slime.jpg",
+      "year": 2018,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionAdventureComedyFantasyIsekaiMythologyReincarnationDescription: Thirty-seven-year-",
+      "episodeCount": 26,
+      "sourcePage": "https://animenana.com/animeserie/that-time-i-got-reincarnated-as-a-slime/",
+      "url": "https://animenana.com/animeserie/that-time-i-got-reincarnated-as-a-slime/"
+    },
+    {
+      "id": "anime:that-time-i-got-reincarnated-as-a-slime-season-4",
+      "slug": "that-time-i-got-reincarnated-as-a-slime-season-4",
+      "name": "That Time I Got Reincarnated as a Slime Season 4",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Shounen",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/that-time-i-got-reincarnated-as-a-slime-season-4.jpg",
+      "year": 2026,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionComedyFantasyShounenIsekaiReincarnationDescription: Demon Lord Rimuru's dream of ",
+      "episodeCount": 18,
+      "sourcePage": "https://animenana.com/animeserie/that-time-i-got-reincarnated-as-a-slime-season-4/",
+      "url": "https://animenana.com/animeserie/that-time-i-got-reincarnated-as-a-slime-season-4/"
+    },
+    {
+      "id": "anime:the-daily-life-of-the-immortal-king",
+      "slug": "the-daily-life-of-the-immortal-king",
+      "name": "The Daily Life of the Immortal King",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Slice of Life",
+        "Mythology",
+        "School",
+        "Chinese"
+      ],
+      "logo": "https://animenana.com/images/the-daily-life-of-the-immortal-king.jpg",
+      "year": 2019,
+      "rating": "PG-13 - Teens 13 or olderGenres: AdventureComedyFantasySlice of LifeMythologySchoolChineseDescription: Wang Ling is a hi",
+      "episodeCount": 15,
+      "sourcePage": "https://animenana.com/animeserie/the-daily-life-of-the-immortal-king/",
+      "url": "https://animenana.com/animeserie/the-daily-life-of-the-immortal-king/"
+    },
+    {
+      "id": "anime:the-eminence-in-shadow",
+      "slug": "the-eminence-in-shadow",
+      "name": "The Eminence in Shadow",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Comedy",
+        "Fantasy",
+        "Isekai"
+      ],
+      "logo": "https://animenana.com/images/the-eminence-in-shadow.jpg",
+      "year": 2022,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionComedyFantasyIsekaiDescription: For as long as he can remember, Minoru Kagen",
+      "episodeCount": 20,
+      "sourcePage": "https://animenana.com/animeserie/the-eminence-in-shadow/",
+      "url": "https://animenana.com/animeserie/the-eminence-in-shadow/"
+    },
+    {
+      "id": "anime:the-world-s-finest-assassin-gets-reincarnated-in-another-world-as-an-aristocrat",
+      "slug": "the-world-s-finest-assassin-gets-reincarnated-in-another-world-as-an-aristocrat",
+      "name": "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery",
+        "Romance",
+        "Isekai",
+        "Reincarnation"
+      ],
+      "logo": "https://animenana.com/images/sekai-saikou-no-ansatsusha.jpg",
+      "year": 2021,
+      "rating": "PG-13 - Teens 13 or olderGenres: ActionDramaFantasyMysteryRomanceIsekaiReincarnationDescription: The world's greatest as",
+      "episodeCount": 12,
+      "sourcePage": "https://animenana.com/animeserie/the-world-s-finest-assassin-gets-reincarnated-in-another-world-as-an-aristocrat/",
+      "url": "https://animenana.com/animeserie/the-world-s-finest-assassin-gets-reincarnated-in-another-world-as-an-aristocrat/"
+    },
+    {
+      "id": "anime:tokyo-revengers",
+      "slug": "tokyo-revengers",
+      "name": "Tokyo Revengers",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Action",
+        "Drama",
+        "Supernatural",
+        "Shounen",
+        "School",
+        "Time Travel"
+      ],
+      "logo": "https://animenana.com/images/tokyo-revengers.jpg",
+      "year": 2021,
+      "rating": "R - 17+ (violence & profanity)Genres: ActionDramaSupernaturalShounenSchoolTime TravelDescription: Takemichi Hanagaki’s s",
+      "episodeCount": 24,
+      "sourcePage": "https://animenana.com/animeserie/tokyo-revengers/",
+      "url": "https://animenana.com/animeserie/tokyo-revengers/"
+    },
+    {
+      "id": "anime:world-s-end-harem",
+      "slug": "world-s-end-harem",
+      "name": "World's End Harem",
+      "kind": "series",
+      "group": "Anime",
+      "categories": [
+        "Sci-Fi",
+        "Ecchi",
+        "Shounen",
+        "Harem",
+        "Time Travel"
+      ],
+      "logo": "https://animenana.com/images/world-s-end-harem.jpg",
+      "year": 2021,
+      "rating": "R+ - Mild NudityGenres: Sci-FiEcchiShounenHaremTime TravelDescription: Reito Mizuhara is a medical student at the Nation",
+      "episodeCount": 11,
+      "sourcePage": "https://animenana.com/animeserie/world-s-end-harem/",
+      "url": "https://animenana.com/animeserie/world-s-end-harem/"
+    }
+  ]
+}
