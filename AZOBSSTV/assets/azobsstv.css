@@ -431,3 +431,25 @@ body{padding-top:49px}
   min-height:0;
   align-self:start!important;
 }
+
+/* v999 — keep the Channels panel from growing down the whole page.
+   In Anime compact mode its bottom edge follows the bottom edge of the
+   left display/player card. The channel list scrolls inside the panel.
+   The Episodes card remains below it as a separate panel. */
+.hero-grid.anime-compact-hero .channel-rail{
+  flex:0 0 auto!important;
+  height:var(--az-player-card-height,320px)!important;
+  max-height:var(--az-player-card-height,320px)!important;
+  min-height:0!important;
+}
+.hero-grid.anime-compact-hero .channel-rail-list{
+  min-height:0!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+}
+@media(max-width:800px){
+  .hero-grid.anime-compact-hero .channel-rail{
+    height:auto!important;
+    max-height:280px!important;
+  }
+}

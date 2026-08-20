@@ -1,5 +1,5 @@
-const CACHE='azobsstv-v998';
-const CORE=['./','./index.html','./assets/azobsstv.css?v=998','./assets/azobsstv.js?v=998','./assets/logo.svg','./manifest.webmanifest?v=998','./data/free.m3u?v=998','./data/anime-catalog.json?v=998'];
+const CACHE='azobsstv-v999';
+const CORE=['./','./index.html','./assets/azobsstv.css?v=999','./assets/azobsstv.js?v=999','./assets/logo.svg','./manifest.webmanifest?v=999','./data/free.m3u?v=999','./data/anime-catalog.json?v=999'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
