@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const API_BASE=(window.AZOBSSTV_API_BASE||'https://azobss-backend.onrender.com/api/azobsstv').replace(/\/$/,'');
 const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];
-const state={config:null,channels:[],filtered:[],trustedDemoUrls:new Set(),favorites:new Set(),recent:[],authUser:null,current:null,tab:'live',hls:null,dash:null,epg:new Map(),heartbeatTimer:null,noticeTimer:null,deferredInstall:null,videoCheckTimer:null,officialResizeObserver:null,heroSideResizeObserver:null,officialWide:false,scheduleRequestId:0,scheduleCache:new Map(),animeDetail:null,movieDetail:null,animePage:1,animeEpisodeSearch:'',animeEmbedRequestId:0,animeFrameTimer:null,avSyncTimer:null,avSyncCooldown:0,avStallTimer:null,hiddenAt:0,avOfficialReloadId:0};
+const state={config:null,channels:[],filtered:[],trustedDemoUrls:new Set(),favorites:new Set(),recent:[],authUser:null,current:null,tab:'live',hls:null,dash:null,epg:new Map(),heartbeatTimer:null,noticeTimer:null,deferredInstall:null,videoCheckTimer:null,officialResizeObserver:null,heroSideResizeObserver:null,officialWide:false,scheduleRequestId:0,scheduleCache:new Map(),animeDetail:null,movieDetail:null,animePage:1,animeEpisodeSearch:'',animeEmbedRequestId:0,animeFrameTimer:null,avSyncTimer:null,avSyncCooldown:0,avStallTimer:null,hiddenAt:0,avOfficialReloadId:0,radioResolveId:0,radioHls:null};
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function readJsonStorage(key){for(const store of [sessionStorage,localStorage]){try{const raw=store.getItem(key);if(raw){const v=JSON.parse(raw);if(v&&typeof v==='object')return v}}catch{}}return null}
 function getSignedInUser(){try{const live=typeof window.getSavedUser==='function'?window.getSavedUser():null;if(live&&String(live.uid||live.usernameKey||live.username||live.name||live.email||'').trim())return live}catch{}const u=readJsonStorage('azobssCurrentUser')||readJsonStorage('azobssUser')||readJsonStorage('azobss_user')||readJsonStorage('currentUser');if(!u)return null;const key=String(u.uid||u.usernameKey||u.username||u.name||u.email||'').trim();if(!key)return null;let flag=false;for(const store of [sessionStorage,localStorage]){try{if(store.getItem('azobssLoggedIn')==='1')flag=true}catch{}}return flag?u:null}
@@ -105,7 +105,7 @@ function applyLocalLiveArtwork(c){
   if(!c)return c;
   const local=String(c.fallbackLogo||LOCAL_LIVE_ARTWORK[liveChannelSlug(c)]||'').trim();
   const remote=String(c.logo||'').trim();
-  // v1028: Radio-Online.my/provider artwork is always preferred. A local
+  // v1029: Radio-Online.my/provider artwork is always preferred. A local
   // station card is only used if the real/provider logo fails to load.
   // Live TV keeps the v1013 local-artwork persistence behaviour.
   if(String(c.kind||'').toLowerCase()==='radio'){
@@ -130,6 +130,143 @@ async function backendFetchText(kind,url,timeout){const r=await fetchWithTimeout
 async function smartTextGet(url,kind,timeout=60000){if(!url)throw new Error('URL kosong');try{return await textDirect(url,timeout)}catch(directErr){if(url.startsWith(API_BASE))throw directErr;try{return await backendFetchText(kind,url,timeout)}catch(proxyErr){throw new Error(proxyErr.message||directErr.message)}}}
 async function loadConfig(){try{state.config=await jget(API_BASE+'/config');$('#serviceStatus').textContent='Online';$('#serviceStatus').className='ok'}catch(e){state.config={allow_all_domains:false,allowed_domains:['azobss.com'],free_playlist_url:API_BASE+'/playlist/free',epg_url:API_BASE+'/epg',notification_url:API_BASE+'/notifications',device_ping_url:API_BASE+'/device/ping'};$('#serviceStatus').textContent='Fallback';$('#serviceStatus').className='warn'}}
 function parseM3U(raw){const lines=String(raw||'').replace(/\r/g,'').split('\n');const out=[];let meta=null;let opts={};for(const src of lines){const line=src.trim();if(!line)continue;if(line.startsWith('#EXTINF:')){const comma=line.indexOf(',');const name=(comma>=0?line.slice(comma+1):'Unnamed').trim()||'Unnamed';const attrs={};line.replace(/([\w-]+)="([^"]*)"/g,(_,k,v)=>(attrs[k]=v,''));meta={name,logo:attrs['tvg-logo']||'',id:attrs['tvg-id']||attrs['tvg-name']||'',group:attrs['group-title']||'Other',sourcePage:attrs['x-source-page']||attrs['source-page']||'',webOnly:String(attrs['x-web-only']||'')==='1',mode:attrs['x-mode']||'',officialUrl:attrs['x-official-url']||'',altUrl:attrs['x-alt-url']||''};opts={}}else if(line.startsWith('#EXTVLCOPT:')){const p=line.slice(11).split('=');opts[p.shift().trim().toLowerCase()]=p.join('=').trim()}else if(line.startsWith('#KODIPROP:')){const p=line.slice(10).split('=');opts[p.shift().trim().toLowerCase()]=p.join('=').trim()}else if(!line.startsWith('#')&&meta){out.push({...meta,url:line,headers:{userAgent:opts['http-user-agent']||'',referer:opts['http-referrer']||opts['http-referer']||'',origin:opts['http-origin']||'',authorization:opts['http-authorization']||''},drm:{licenseType:opts['inputstream.adaptive.license_type']||opts['license_type']||'',licenseKey:opts['inputstream.adaptive.license_key']||opts['license_key']||''}});meta=null;opts={}}}return out}
+
+
+// v1029 — Radio-Online.my supplies catalogue/artwork only. Actual listening is
+// performed by the native AZOBSSTV <audio> engine. Stream candidates are
+// resolved from the public Radio Browser directory so the hidden third-party
+// page no longer needs to autoplay inside an iframe.
+const RADIO_BROWSER_API_BASES=[
+  'https://de1.api.radio-browser.info/json/stations/search',
+  'https://nl1.api.radio-browser.info/json/stations/search',
+  'https://at1.api.radio-browser.info/json/stations/search'
+];
+const RADIO_STREAM_CACHE_PREFIX='azobsstv_radio_stream_v1029:';
+const RADIO_STREAM_CACHE_TTL=12*60*60*1000;
+function radioNormalizeName(v){return String(v||'').toLowerCase().replace(/&/g,' and ').replace(/\b(?:radio|malaysia|online)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ')}
+function radioSearchTerms(c){
+  const name=String(c?.name||'').trim(),slug=String(c?.slug||'').replace(/-/g,' ').trim();
+  const raw=[name,slug,name.replace(/\bfm\b/ig,'').trim(),name.replace(/\bthr\b/ig,'').trim()];
+  const special={
+    'my fm':['MY Malaysia','MY FM Malaysia'],
+    'traxx':['TraXX FM','TraXXfm'],
+    'thr gegar':['Gegar FM','THR Gegar'],
+    'thr raaga':['Raaga FM','THR Raaga'],
+    'ai fm':['Ai FM RTM'],
+    'radio klasik':['Radio Klasik RTM'],
+    'nasional fm':['Nasional FM RTM'],
+    'suria':['Suria FM'],
+    'hitz':['Hitz FM'],
+    'era':['Era FM'],
+    'lite':['Lite FM']
+  };
+  const key=radioNormalizeName(name);
+  if(special[key])raw.push(...special[key]);
+  return [...new Set(raw.map(v=>String(v||'').trim()).filter(v=>v.length>=2))].slice(0,6);
+}
+function radioCacheKey(c){return RADIO_STREAM_CACHE_PREFIX+String(c?.slug||c?.id||radioNormalizeName(c?.name)||'radio').toLowerCase()}
+function readRadioStreamCache(c){try{const x=JSON.parse(localStorage.getItem(radioCacheKey(c))||'null');if(!x||!x.url||!x.t||Date.now()-Number(x.t)>RADIO_STREAM_CACHE_TTL)return'';return String(x.url)}catch{return''}}
+function writeRadioStreamCache(c,url){try{localStorage.setItem(radioCacheKey(c),JSON.stringify({url:String(url||''),t:Date.now()}))}catch{}}
+function clearRadioStreamCache(c){try{localStorage.removeItem(radioCacheKey(c))}catch{}}
+function radioRowScore(row,c,term){
+  const stream=String(row?.url_resolved||row?.url||'').trim();if(!/^https?:\/\//i.test(stream))return-9999;
+  const country=String(row?.countrycode||'').toUpperCase();if(country&&country!=='MY')return-9999;
+  const rn=radioNormalizeName(row?.name),cn=radioNormalizeName(c?.name),tn=radioNormalizeName(term);
+  let score=0;
+  if(country==='MY')score+=24;
+  if(row?.lastcheckok===1||row?.lastcheckok===true)score+=18;
+  if(/^https:\/\//i.test(stream))score+=12;else score-=10;
+  if(/\.(?:m3u8)(?:$|[?#])/i.test(stream))score-=3;
+  if(/mp3|aac|ogg|opus/i.test(String(row?.codec||'')))score+=5;
+  if(rn&&cn&&rn===cn)score+=34;else if(rn&&cn&&(rn.includes(cn)||cn.includes(rn)))score+=18;
+  if(rn&&tn&&rn===tn)score+=24;else if(rn&&tn&&rn.includes(tn))score+=10;
+  score+=Math.min(8,Math.max(0,Number(row?.clickcount||0))/3000);
+  return score;
+}
+async function radioFetchJson(url,timeout=6500){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{signal:ctrl.signal,cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(timer)}}
+async function resolveRadioCandidates(c,force=false){
+  const out=[],seen=new Set();
+  const cached=!force?readRadioStreamCache(c):'';
+  if(cached){seen.add(cached);out.push({url:cached,score:9999,cached:true})}
+  for(const term of radioSearchTerms(c)){
+    const variants=[
+      {countrycode:'MY',name:term,hidebroken:'true',order:'clickcount',reverse:'true',limit:'20'},
+      {country:'Malaysia',name:term,hidebroken:'true',order:'clickcount',reverse:'true',limit:'20'},
+      {name:term,hidebroken:'true',order:'clickcount',reverse:'true',limit:'20'}
+    ];
+    for(const paramsObj of variants){
+      let gotResponse=false;
+      for(const base of RADIO_BROWSER_API_BASES){
+        try{
+          const rows=await radioFetchJson(base+'?'+new URLSearchParams(paramsObj).toString(),6500);gotResponse=true;
+          for(const row of Array.isArray(rows)?rows:[]){
+            const url=String(row?.url_resolved||row?.url||'').trim();if(!/^https?:\/\//i.test(url)||seen.has(url))continue;
+            const score=radioRowScore(row,c,term);if(score<=-9999)continue;seen.add(url);out.push({url,score,row});
+          }
+          if(out.length>=8)break;
+        }catch(e){console.debug('AZOBSSTV radio directory mirror fallback:',e?.message||e)}
+      }
+      if(out.length>=8||gotResponse&&out.length>=4)break;
+    }
+    if(out.length>=8)break;
+  }
+  out.sort((a,b)=>b.score-a.score);
+  return out.slice(0,10);
+}
+function getRadioAudioEngine(){
+  let a=$('#azobsstvRadioAudio');if(a)return a;
+  a=document.createElement('audio');a.id='azobsstvRadioAudio';a.preload='none';a.setAttribute('playsinline','');a.hidden=true;document.body.appendChild(a);return a;
+}
+function stopRadioHls(){if(state.radioHls){try{state.radioHls.destroy()}catch{}state.radioHls=null}}
+function setRadioPlayingUi(on,text=''){
+  $('#radioPlayerPanel')?.classList.toggle('is-playing',!!on);
+  if(text){const p=$('#radioPlayerProgram');if(p)p.textContent=text;const meta=$('#nowMeta');if(meta)meta.textContent=text}
+}
+function stopRadioAudioPlayback(clear=true,message=''){
+  state.radioResolveId++;stopRadioHls();const a=$('#azobsstvRadioAudio');if(a){try{a.pause()}catch{}if(clear){try{a.removeAttribute('src');a.load()}catch{}}}
+  setRadioPlayingUi(false,message||'Radio stopped. Press Restart Radio to listen again.');
+}
+async function playRadioCandidate(c,url,requestId){
+  if(requestId!==state.radioResolveId||state.current!==c)return false;
+  const a=getRadioAudioEngine();stopRadioHls();try{a.pause()}catch{}
+  const isHls=/\.m3u8(?:$|[?#])/i.test(url);
+  if(isHls&&window.Hls&&window.Hls.isSupported()){
+    const h=new window.Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:20,backBufferLength:5});state.radioHls=h;
+    await new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>{if(!done){done=true;reject(new Error('HLS timeout'))}},7000);h.on(window.Hls.Events.MANIFEST_PARSED,()=>{if(done)return;done=true;clearTimeout(timer);resolve()});h.on(window.Hls.Events.ERROR,(_,data)=>{if(done||!data?.fatal)return;done=true;clearTimeout(timer);reject(new Error(data?.details||'HLS error'))});h.loadSource(url);h.attachMedia(a)});
+  }else{a.src=url}
+  if(requestId!==state.radioResolveId||state.current!==c)return false;
+  const playPromise=a.play();if(playPromise&&typeof playPromise.then==='function')await playPromise;
+  await new Promise((resolve,reject)=>{if(!a.paused&&a.readyState>=2)return resolve();let done=false;const timer=setTimeout(()=>{cleanup();reject(new Error('Playback timeout'))},6500);const ok=()=>{cleanup();resolve()};const fail=()=>{cleanup();reject(new Error('Audio stream failed'))};function cleanup(){if(done)return;done=true;clearTimeout(timer);a.removeEventListener('playing',ok);a.removeEventListener('canplay',ok);a.removeEventListener('error',fail)}a.addEventListener('playing',ok,{once:true});a.addEventListener('canplay',ok,{once:true});a.addEventListener('error',fail,{once:true})});
+  return !a.paused;
+}
+async function startRadioAudio(c,{force=false}={}){
+  if(!c)return false;const requestId=++state.radioResolveId;const p=$('#radioPlayerProgram');
+  stopRadioHls();const existing=getRadioAudioEngine();try{existing.pause();existing.removeAttribute('src');existing.load()}catch{}
+  c.__radioPlaybackFailed=false;
+  setRadioPlayingUi(false,force?'Finding a fresh radio stream…':'Connecting to live radio…');
+  let candidates=[];try{candidates=await resolveRadioCandidates(c,force)}catch(e){console.warn('AZOBSSTV radio resolve:',e?.message||e)}
+  if(requestId!==state.radioResolveId||state.current!==c)return false;
+  if(!candidates.length){setRadioPlayingUi(false,'Live stream not found. Press Restart Radio to try again.');return false}
+  let last='';
+  for(const candidate of candidates){
+    if(requestId!==state.radioResolveId||state.current!==c)return false;
+    try{
+      if(p)p.textContent='Connecting to '+String(c.name||'radio')+'…';
+      // Cache the selected directory result before play(). If autoplay policy
+      // blocks this first asynchronous attempt, the Restart button can retry
+      // instantly inside a fresh user gesture without another directory lookup.
+      writeRadioStreamCache(c,candidate.url);
+      const ok=await playRadioCandidate(c,candidate.url,requestId);
+      if(ok){c.__radioPlaybackFailed=false;const label=radioProgramFallback(c);setRadioPlayingUi(true,label);return true}
+    }catch(e){
+      last=e?.message||String(e);
+      if(String(e?.name||'')==='NotAllowedError'){c.__radioPlaybackFailed=false;setRadioPlayingUi(false,'Audio is ready. Press Restart Radio once to start playback.');return false}
+      clearRadioStreamCache(c);stopRadioHls();const a=$('#azobsstvRadioAudio');if(a){try{a.pause();a.removeAttribute('src');a.load()}catch{}}
+    }
+  }
+  clearRadioStreamCache(c);c.__radioPlaybackFailed=true;console.warn('AZOBSSTV radio playback failed:',last);setRadioPlayingUi(false,'This station is unavailable right now. Try Restart Radio or another station.');return false;
+}
+
 function normalizeRadioOnlineRow(x,index=0){
   const slug=String(x?.slug||'').trim().replace(/^\/+|\/+$/g,'');
   const source=String(x?.officialUrl||x?.sourcePage||x?.url||'').trim();
@@ -156,7 +293,7 @@ function normalizeRadioOnlineRow(x,index=0){
 }
 async function loadRadioOnlineFallback(){
   try{
-    const data=await localJget('./data/radio-online-my-catalog.json?v=1028',8000);
+    const data=await localJget('./data/radio-online-my-catalog.json?v=1029',8000);
     const rows=Array.isArray(data?.items)?data.items:[];
     return rows.map(normalizeRadioOnlineRow).filter(Boolean).map(applyLocalLiveArtwork);
   }catch(e){console.warn('AZOBSSTV Radio-Online.my local fallback:',e?.message||e);return[]}
@@ -173,7 +310,7 @@ async function loadRadioOnlineCatalog(){
 async function loadMana2PublicCatalog(){
   const data=await jget(API_BASE+'/mana2/channels',25000);
   const rows=Array.isArray(data?.channels)?data.channels:[];
-  // v1028: Mana-Mana is now Live TV only inside AZOBSSTV. Radio is replaced by
+  // v1029: Mana-Mana is now Live TV only inside AZOBSSTV. Radio is replaced by
   // Radio-Online.my and is loaded independently.
   return rows.map((x,index)=>{
     const kind=String(x?.kind||'live').toLowerCase()==='radio'?'radio':'live';
@@ -186,14 +323,14 @@ async function loadMana2PublicCatalog(){
 }
 async function loadMovieCatalog(){
   let data=null;
-  // v1028: prefer live 1Tube movie metadata, but reject nested studio/company
+  // v1029: prefer live 1Tube movie metadata, but reject nested studio/company
   // objects that an older backend may have accidentally exposed as movies.
   try{
     const remote=await jget(API_BASE+'/1tube/movies?pages=4',25000);
     if(Array.isArray(remote?.movies)&&remote.movies.length)data={items:remote.movies,source:'1tube-live'};
   }catch(e){console.warn('AZOBSSTV 1Tube live catalogue fallback:',e?.message||e)}
   if(!data){
-    try{data=await localJget('./data/movies-1tube-catalog.json?v=1028',8000)}
+    try{data=await localJget('./data/movies-1tube-catalog.json?v=1029',8000)}
     catch(e){console.warn('AZOBSSTV Movies local catalogue fallback:',e?.message||e);return[]}
   }
   const rows=Array.isArray(data?.items)?data.items:[];
@@ -225,7 +362,7 @@ async function loadMovieCatalog(){
     };
   }).filter(Boolean);
 }
-async function loadAnimeCatalog(){try{const data=await localJget('./data/anime-catalog.json?v=1028',8000);const rows=Array.isArray(data?.items)?data.items:[];return rows.map((x,index)=>{const url=String(x?.sourcePage||x?.url||'').trim();const name=String(x?.name||`Anime ${index+1}`).trim();const slug=String(x?.slug||'').trim();if(!url||!name)return null;const categories=Array.isArray(x?.categories)?x.categories.map(v=>String(v||'').trim()).filter(Boolean):[];const poster=slug?API_BASE+'/anime123/poster?slug='+encodeURIComponent(slug):String(x?.logo||'').trim();return{name,logo:poster,id:String(x?.id||x?.slug||`anime-${index+1}`).trim(),group:'Anime',kind:'series',categories,year:x?.year??null,rating:'',episodeCount:Number(x?.episodeCount||0)||0,episodeBase:String(x?.episodeBase||'').trim(),episodes:[],sourceProvider:String(x?.sourceProvider||'123animehub'),sourcePage:url,webOnly:true,mode:'web',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug,status:String(x?.status||''),animeType:String(x?.type||''),tags:Array.isArray(x?.tags)?x.tags:[]}}).filter(Boolean)}catch(e){console.warn('AZOBSSTV anime catalogue fallback:',e?.message||e);return[]}}
+async function loadAnimeCatalog(){try{const data=await localJget('./data/anime-catalog.json?v=1029',8000);const rows=Array.isArray(data?.items)?data.items:[];return rows.map((x,index)=>{const url=String(x?.sourcePage||x?.url||'').trim();const name=String(x?.name||`Anime ${index+1}`).trim();const slug=String(x?.slug||'').trim();if(!url||!name)return null;const categories=Array.isArray(x?.categories)?x.categories.map(v=>String(v||'').trim()).filter(Boolean):[];const poster=slug?API_BASE+'/anime123/poster?slug='+encodeURIComponent(slug):String(x?.logo||'').trim();return{name,logo:poster,id:String(x?.id||x?.slug||`anime-${index+1}`).trim(),group:'Anime',kind:'series',categories,year:x?.year??null,rating:'',episodeCount:Number(x?.episodeCount||0)||0,episodeBase:String(x?.episodeBase||'').trim(),episodes:[],sourceProvider:String(x?.sourceProvider||'123animehub'),sourcePage:url,webOnly:true,mode:'web',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug,status:String(x?.status||''),animeType:String(x?.type||''),tags:Array.isArray(x?.tags)?x.tags:[]}}).filter(Boolean)}catch(e){console.warn('AZOBSSTV anime catalogue fallback:',e?.message||e);return[]}}
 function contentCategories(c){const own=Array.isArray(c?.categories)?c.categories.map(v=>String(v||'').trim()).filter(Boolean):[];if(own.length)return own;const group=String(c?.group||'').trim();return group?[group]:[]}
 function cardSubline(c){if(mediaType(c)==='series'){const bits=[];if(c?.year)bits.push(String(c.year));bits.push(...contentCategories(c).slice(0,3));return bits.join(' • ')||'Anime'}if(mediaType(c)==='movies'){const bits=[];if(c?.year)bits.push(String(c.year));if(c?.rating)bits.push('★ '+String(c.rating));return bits.join(' • ')||'Movie'}if(mediaType(c)==='radio'){const freq=String(c?.frequency||'').trim();return freq||'Radio Online Malaysia'}return String(c?.mode||'').toLowerCase()==='official'?'Official player':c?.webOnly?'Open source':'Direct'}
 function mediaType(c){const explicit=String(c?.kind||'').toLowerCase();if(['live','radio','movies','series'].includes(explicit))return explicit;const text=((c.group||'')+' '+(c.name||'')).toLowerCase();if(/\bradio\b|radio|fm\b/.test(text))return'radio';if(/series|siri|episode|episod|drama/.test(text))return'series';if(/movie|movies|vod|filem|cinema/.test(text))return'movies';return'live'}
@@ -900,30 +1037,30 @@ function renderRadioNativePlayer(c){
   }else setBack(artwork||fallback);
 }
 function restartRadioEngine(c){
-  const frame=$('#officialPlayerFrame');const url=String(c?.officialUrl||c?.sourcePage||c?.url||'').trim();if(!frame||!url)return;
-  try{frame.src='about:blank'}catch{}
-  setTimeout(()=>{if(state.current===c){try{frame.src=url}catch{}}},90);
-  const p=$('#radioPlayerProgram');if(p)p.textContent='Restarting live radio…';
-  setTimeout(()=>{if(state.current===c&&p)p.textContent=radioProgramFallback(c)},1400);
+  if(!c||state.current!==c)return;
+  startRadioAudio(c,{force:!!c.__radioPlaybackFailed});
 }
 function hideOfficialPlayer(){setOfficialWide(false);hideRadioNativePlayer();const wrap=$('#videoWrap'),panel=$('#officialPlayerPanel'),frame=$('#officialPlayerFrame');if(wrap){wrap.classList.remove('official-mode');wrap.classList.remove('portal-mode');wrap.classList.remove('radio-mode');wrap.classList.remove('radio-native-mode')}if(panel)panel.hidden=true;if(state.officialResizeObserver){try{state.officialResizeObserver.disconnect()}catch{}state.officialResizeObserver=null}if(frame){frame.style.transform='';frame.style.left='0';frame.style.top='0';frame.style.width='';frame.style.height='';frame.setAttribute('scrolling','no');try{frame.src='about:blank'}catch{}}}
 function showRadioPlayer(c){
   hideAnimePlayer();restoreTodayScheduleHeading();setRadioScheduleHidden(true);
-  const wrap=$('#videoWrap'),panel=$('#officialPlayerPanel'),frame=$('#officialPlayerFrame');const url=c.officialUrl||c.sourcePage||c.url;
+  const wrap=$('#videoWrap'),panel=$('#officialPlayerPanel'),frame=$('#officialPlayerFrame');
   stopHls();clearTimeout(state.videoCheckTimer);const v=$('#tvPlayer');try{v.pause()}catch{}v.removeAttribute('src');v.load();hidePlayerPlaceholder();hidePlayerError();
   if(state.officialResizeObserver){try{state.officialResizeObserver.disconnect()}catch{}state.officialResizeObserver=null}
-  if(wrap){wrap.classList.add('official-mode');wrap.classList.add('radio-native-mode')}
-  if(panel)panel.hidden=false;
-  if(frame&&url){frame.style.transform='none';frame.style.left='0';frame.style.top='0';frame.style.width='100%';frame.style.height='100%';frame.setAttribute('scrolling','no');frame.src=url}
-  renderRadioNativePlayer(c);
+  // v1029: do not load the Radio-Online.my page in a hidden iframe. That page
+  // needs its own Play interaction and cannot be controlled cross-origin.
+  if(panel)panel.hidden=true;if(frame){try{frame.src='about:blank'}catch{}}
+  if(wrap){wrap.classList.remove('official-mode');wrap.classList.add('radio-native-mode')}
+  renderRadioNativePlayer(c);setRadioPlayingUi(false,'Connecting to live radio…');
   const restart=$('#radioRestartBtn'),stop=$('#radioStopBtn');
   if(restart)restart.onclick=()=>restartRadioEngine(c);
-  if(stop)stop.onclick=()=>{if(state.current!==c)return;try{frame.src='about:blank'}catch{}const p=$('#radioPlayerProgram');if(p)p.textContent='Radio stopped. Press Restart Radio to listen again.'};
+  if(stop)stop.onclick=()=>{if(state.current!==c)return;stopRadioAudioPlayback(true,'Radio stopped. Press Restart Radio to listen again.')};
   $('#pipBtn').disabled=true;syncButtonState();
+  startRadioAudio(c,{force:false});
 }
 function showOfficialPlayer(c){if(mediaType(c)==='radio'){showRadioPlayer(c);return}hideAnimePlayer();restoreTodayScheduleHeading();setRadioScheduleHidden(false);const wrap=$('#videoWrap'),panel=$('#officialPlayerPanel'),frame=$('#officialPlayerFrame');const url=c.officialUrl||c.sourcePage||c.url;stopHls();clearTimeout(state.videoCheckTimer);const v=$('#tvPlayer');try{v.pause()}catch{}v.removeAttribute('src');v.load();hidePlayerPlaceholder();hidePlayerError();if(wrap)wrap.classList.add('official-mode');if(panel)panel.hidden=false;if(frame&&url)frame.src=url;startOfficialAutoFit();loadCurrentSchedule(c);$('#pipBtn').disabled=true;syncButtonState()}
 function play(c){
   if(!c)return;
+  if(mediaType(c)!=='radio'&&state.current&&mediaType(state.current)==='radio')stopRadioAudioPlayback(true,'');
   if(mediaType(c)==='movies'&&String(c.mode||'').toLowerCase()==='movie-detail'){showMovieDetail(c);return}
   hideMoviePlayer();
   if(mediaType(c)==='series'&&c.webOnly){showAnimeDetail(c);return}
@@ -993,7 +1130,7 @@ async function loadPlaylist(url,name='AZOBSSTV Free'){
 
   if(isDefaultFree&& !parsed.length){
     try{
-      const raw=await localTextGet('./data/free.m3u?v=1028',5000);
+      const raw=await localTextGet('./data/free.m3u?v=1029',5000);
       parsed=parseM3U(raw).map(applyLocalLiveArtwork);
       if(parsed.length){
         usedLocalFallback=true;
@@ -1015,7 +1152,7 @@ async function loadPlaylist(url,name='AZOBSSTV Free'){
     }catch(e){
       console.warn('Mana-Mana dynamic Live TV catalogue unavailable; keeping local fallback:',e?.message||e);
     }
-    // v1028: built-in Radio is sourced exclusively from Radio-Online.my.
+    // v1029: built-in Radio is sourced exclusively from Radio-Online.my.
     parsed=parsed.filter(c=>mediaType(c)!=='radio');
     try{
       const radioCatalog=await loadRadioOnlineCatalog();
@@ -1060,7 +1197,7 @@ async function loadEpg(){const url=state.config?.epg_url;if(!url)return;try{cons
 function renderGuide(){renderChannelRail(state.channels.filter(c=>mediaType(c)==='live'));const rows=state.channels.filter(c=>mediaType(c)==='live').map(c=>({c,e:state.epg.get(c.id)||{}}));$('#channelGrid').hidden=true;$('#contentState').hidden=!!rows.length;$('#guideView').hidden=false;$('#guideView').innerHTML=rows.slice(0,800).map(x=>`<div class="guide-row"><div class="guide-channel">${esc(x.c.name)}</div><div class="guide-program"><strong>${esc(x.e.current?.title||'No EPG information')}</strong>${x.e.next?`<small>Next: ${esc(x.e.next.title)}</small>`:''}</div></div>`).join('')}
 function getInstallId(){let id=localStorage.getItem('azobsstv_install_id');if(!id){id=(crypto.randomUUID?crypto.randomUUID():'web-'+Date.now()+'-'+Math.random().toString(16).slice(2));localStorage.setItem('azobsstv_install_id',id)}return id}
 function extractUsername(raw){try{const u=new URL(raw);for(const k of ['username','user','login']){const v=u.searchParams.get(k);if(v)return v}if(u.username)return decodeURIComponent(u.username);const p=u.pathname;let m=p.match(/\/(?:player_api\.php|get\.php|panel_api\.php)\/([^/?\s]+)\/([^/?\s]+)/i);if(m)return decodeURIComponent(m[1]);m=p.match(/\/(?:live|movie|series)\/([^/?\s]+)\/([^/?\s]+)\//i);if(m)return decodeURIComponent(m[1])}catch{}return''}
-async function ping(reason){if(document.visibilityState==='hidden'&&reason==='heartbeat')return;const url=state.config?.device_ping_url||API_BASE+'/device/ping';const account=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');const source=account?.url||state.config?.free_playlist_url||'';const payload={device_id:getInstallId(),username:account?extractUsername(source):'free',account_name:account?.name||'AZOBSSTV Free',account_id:account?'custom':'free_azobsstv',time:Math.floor(Date.now()/1000),time_ms:Date.now(),reason,app_version:'1.0.1028',app_version_code:1028,device_model:navigator.userAgent.slice(0,180),android_release:''};try{await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),keepalive:true},15000)}catch{}}
+async function ping(reason){if(document.visibilityState==='hidden'&&reason==='heartbeat')return;const url=state.config?.device_ping_url||API_BASE+'/device/ping';const account=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');const source=account?.url||state.config?.free_playlist_url||'';const payload={device_id:getInstallId(),username:account?extractUsername(source):'free',account_name:account?.name||'AZOBSSTV Free',account_id:account?'custom':'free_azobsstv',time:Math.floor(Date.now()/1000),time_ms:Date.now(),reason,app_version:'1.0.1029',app_version_code:1029,device_model:navigator.userAgent.slice(0,180),android_release:''};try{await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),keepalive:true},15000)}catch{}}
 function normalizeNotice(item,index){if(!item||typeof item!=='object')return null;const message=String(item.message??item.body??'').trim();if(!message)return null;return{id:String(item.id??item.uuid??index),title:String(item.title||'AZOBSSTV'),message,timestamp:Number(item.timestamp||item.time||Date.now())||Date.now()}}
 async function loadNotice(){if(document.visibilityState==='hidden')return;try{const data=await jget(state.config?.notification_url||API_BASE+'/notifications',30000);const raw=Array.isArray(data)?data:(Array.isArray(data.items)?data.items:[]);const items=raw.map(normalizeNotice).filter(Boolean);const item=items.at(-1);if(item){const last=localStorage.getItem('azobsstv_notice_last_id');$('#serverNotice').hidden=false;$('#serverNotice').innerHTML=`<strong>${esc(item.title)}</strong><span>${esc(item.message)}</span>`;if(last!==item.id)localStorage.setItem('azobsstv_notice_last_id',item.id)}else $('#serverNotice').hidden=true}catch{}}
 function startForegroundLoops(){if(state.heartbeatTimer)clearInterval(state.heartbeatTimer);if(state.noticeTimer)clearInterval(state.noticeTimer);state.heartbeatTimer=setInterval(()=>ping('heartbeat'),30000);state.noticeTimer=setInterval(loadNotice,60000)}
@@ -1206,7 +1343,7 @@ function replaceAnimeCatalog(anime,statusText=''){
   return true;
 }
 async function loadInstantLocalLive(){
-  const raw=await localTextGet('./data/free.m3u?v=1028',5000);
+  const raw=await localTextGet('./data/free.m3u?v=1029',5000);
   return parseM3U(raw).map(applyLocalLiveArtwork);
 }
 async function refreshDefaultLiveInBackground(){
@@ -1331,5 +1468,5 @@ async function boot(){
 
   if(state.authUser)setTimeout(()=>loadCloudUserLibrary(false),80);
 }
-window.addEventListener('DOMContentLoaded',()=>{bindEnglishAZOBSSTVNavigation();bind();startHeroSideSync();boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=1028').catch(()=>{});if(document.visibilityState==='visible')startForegroundLoops()});
+window.addEventListener('DOMContentLoaded',()=>{bindEnglishAZOBSSTVNavigation();bind();startHeroSideSync();boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=1029').catch(()=>{});if(document.visibilityState==='visible')startForegroundLoops()});
 })();
