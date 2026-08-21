@@ -270,6 +270,9 @@
       .az-lot-reference-resize-icon.is-vertical span{width:7px;height:24px}
       .az-lot-reference-resize-icon.is-horizontal{cursor:ns-resize!important}
       .az-lot-reference-resize-icon.is-horizontal span{width:24px;height:7px}
+      /* v1017: finalized Petak can be dragged from anywhere inside its fill. */
+      .az-lot-reference-movable{cursor:move!important}
+      .az-lot-reference-movable.is-moving{cursor:grabbing!important}
       /* v961: dimension labels sit above/beside the guide line and exactly
          halfway between centre and edge. DivIcon prevents vertical text clipping. */
       .az-lot-reference-guide-icon{background:transparent!important;border:0!important;pointer-events:none!important;overflow:visible!important;width:1px!important;height:1px!important}
@@ -560,6 +563,8 @@
       let referenceRectangleBounds = null;
       let referenceResizeHandles = [];
       let referenceGuideLayers = [];
+      let referenceGuideFrame = 0;
+      let referenceMoveCleanup = null;
       let selectionSource = null;
 
       function formatReferenceDistance(meters) {
@@ -675,7 +680,7 @@
         radiusLandAreaNode.textContent = `${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha / ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
         radiusNoteNode.classList.add('is-selecting');
         radiusNoteNode.textContent = referenceShape === 'square' && radiusReferenceFinalized
-          ? 'Lot dipilih automatik. Seret pemegang tepi kiri, kanan, atas atau bawah untuk laras petak; hanya tepi yang diseret akan bergerak.'
+          ? 'Lot dipilih automatik. Seret dalam petak untuk alihkan seluruh kotak. Seret pemegang tepi kiri, kanan, atas atau bawah untuk laras saiz.'
           : `Lot dipilih automatik — lot yang berada dalam atau benar-benar dilintasi ${referenceShape === 'square' ? 'petak' : 'bulatan'} akan dikira. Sentuhan bucu/sempadan sahaja tidak dikira.`;
       }
 
@@ -707,6 +712,27 @@
         referenceGuideLayers = [];
       }
 
+      function disableReferenceRectangleMove() {
+        if (typeof referenceMoveCleanup === 'function') {
+          try { referenceMoveCleanup(); } catch (_) {}
+        }
+        referenceMoveCleanup = null;
+      }
+
+      function cancelReferenceGuideFrame() {
+        if (!referenceGuideFrame) return;
+        try { window.cancelAnimationFrame(referenceGuideFrame); } catch (_) {}
+        referenceGuideFrame = 0;
+      }
+
+      function scheduleReferenceGuideCross() {
+        if (referenceGuideFrame) return;
+        referenceGuideFrame = window.requestAnimationFrame(() => {
+          referenceGuideFrame = 0;
+          refreshReferenceGuideCross();
+        });
+      }
+
       function makeReferenceGuideLabel(latlng, text, direction = 'top', offset = [0, 0], orientation = 'horizontal') {
         // v961: use a DivIcon instead of a Leaflet tooltip. Rotating a tooltip's
         // inner text could clip vertical dimension values (for example showing
@@ -732,7 +758,9 @@
 
       function refreshReferenceGuideCross() {
         removeReferenceGuideLayers();
-        if (!map || !radiusReferenceFinalized || !radiusReferenceCenter) return;
+        // v1016: dimensions are useful while sizing too. Do not wait for the
+        // second click/finalization; render against the latest preview bounds.
+        if (!map || !radiusReferenceCenter) return;
         const lineOptions = { color: '#0369a1', weight: 2, opacity: 0.9, dashArray: '5 4', interactive: false };
         if (referenceShape === 'square' && referenceRectangleBounds && referenceRectangleBounds.isValid()) {
           const bounds = referenceRectangleBounds;
@@ -802,12 +830,14 @@
         radiusReferenceFinalized = false;
         radiusReferenceSizeMeters = 0;
         referenceRectangleBounds = null;
+        disableReferenceRectangleMove();
         removeReferenceResizeHandles();
         removeReferenceGuideLayers();
         if (map && radiusReferenceShapeLayer) { try { map.removeLayer(radiusReferenceShapeLayer); } catch (_) {} }
         if (map && radiusReferenceCenterMarker) { try { map.removeLayer(radiusReferenceCenterMarker); } catch (_) {} }
         radiusReferenceShapeLayer = null;
         radiusReferenceCenterMarker = null;
+        cancelReferenceGuideFrame();
         if (selectionSource === 'reference') {
           if (estimateController) estimateController.abort();
           clearSummary();
@@ -841,7 +871,7 @@
         setStatus(status, `Memilih lot dalam ${referenceShape === 'square' ? 'petak' : 'bulatan'}...`, 'loading');
         await estimateGeometry(geometry, 'reference');
         if (estimate) {
-          const resizeHint = referenceShape === 'square' ? ' Seret pemegang tepi untuk laras petak.' : '';
+          const resizeHint = referenceShape === 'square' ? ' Seret dalam petak untuk alihkan atau seret pemegang tepi untuk laras saiz.' : '';
           setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot dipilih menggunakan ${referenceShape === 'square' ? 'petak' : 'bulatan'}.${resizeHint}`, 'success');
         }
       }
@@ -855,7 +885,7 @@
         updateReferenceShapeButtons();
         setReferenceDrawingCursor(true);
         setStatus(status, referenceShape === 'square'
-          ? 'Petak aktif. Klik titik pusat, kemudian klik titik tepi untuk saiz awal. Selepas siap, seret tepi kiri/kanan/atas/bawah untuk laras saiz.'
+          ? 'Petak aktif. Klik titik pusat, kemudian klik titik tepi untuk saiz awal. Selepas siap, seret dalam petak untuk alihkan; seret pemegang tepi untuk laras saiz.'
           : 'Bulatan aktif. Klik titik pusat, kemudian klik titik tepi bulatan.', '');
       }
 
@@ -868,7 +898,7 @@
         return window.L.latLng(referenceRectangleBounds.getSouth(), center.lng);
       }
 
-      function refreshReferenceRectangleVisual(skipHandleSide = '') {
+      function refreshReferenceRectangleVisual(skipHandleSide = '', deferGuide = false) {
         if (!map || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
         radiusReferenceCenter = referenceRectangleBounds.getCenter();
         if (radiusReferenceShapeLayer && typeof radiusReferenceShapeLayer.setBounds === 'function') radiusReferenceShapeLayer.setBounds(referenceRectangleBounds);
@@ -883,7 +913,102 @@
         radiusReferenceSizeMeters = map.distance(center, window.L.latLng(center.lat, referenceRectangleBounds.getEast()));
         updateRadiusReferenceReadout(radiusReferenceSizeMeters);
         try { radiusReferenceShapeLayer.unbindTooltip(); } catch (_) {}
-        refreshReferenceGuideCross();
+        if (deferGuide) scheduleReferenceGuideCross();
+        else refreshReferenceGuideCross();
+      }
+
+      function enableReferenceRectangleMove() {
+        disableReferenceRectangleMove();
+        if (!map || referenceShape !== 'square' || !radiusReferenceFinalized || !radiusReferenceShapeLayer || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
+        const element = typeof radiusReferenceShapeLayer.getElement === 'function' ? radiusReferenceShapeLayer.getElement() : null;
+        if (!element) return;
+        element.classList.add('az-lot-reference-movable');
+        element.setAttribute('aria-label', 'Seret untuk alihkan petak');
+
+        let dragging = false;
+        let pointerId = null;
+        let startLatLng = null;
+        let startBounds = null;
+        let mapDraggingWasEnabled = false;
+
+        const finish = (cancelled = false) => {
+          if (!dragging) return;
+          dragging = false;
+          element.classList.remove('is-moving');
+          window.removeEventListener('pointermove', onPointerMove, true);
+          window.removeEventListener('pointerup', onPointerUp, true);
+          window.removeEventListener('pointercancel', onPointerCancel, true);
+          try { if (mapDraggingWasEnabled && map && map.dragging) map.dragging.enable(); } catch (_) {}
+          try { window.L.DomUtil.enableTextSelection(); } catch (_) {}
+          pointerId = null;
+          if (cancelled && startBounds) {
+            referenceRectangleBounds = window.L.latLngBounds(
+              window.L.latLng(startBounds.south, startBounds.west),
+              window.L.latLng(startBounds.north, startBounds.east)
+            );
+          }
+          refreshReferenceRectangleVisual('');
+          if (!cancelled) {
+            setStatus(status, 'Petak dialihkan. Mengemas kini pilihan lot...', 'loading');
+            void applyReferenceSelection();
+          }
+        };
+
+        const onPointerMove = (event) => {
+          if (!dragging || !startLatLng || !startBounds) return;
+          if (pointerId != null && event.pointerId !== pointerId) return;
+          let current;
+          try { current = map.mouseEventToLatLng(event); } catch (_) { return; }
+          const dLat = Number(current.lat) - Number(startLatLng.lat);
+          const dLng = Number(current.lng) - Number(startLatLng.lng);
+          referenceRectangleBounds = window.L.latLngBounds(
+            window.L.latLng(startBounds.south + dLat, startBounds.west + dLng),
+            window.L.latLng(startBounds.north + dLat, startBounds.east + dLng)
+          );
+          refreshReferenceRectangleVisual('', true);
+          try { event.preventDefault(); } catch (_) {}
+        };
+
+        const onPointerUp = (event) => {
+          if (pointerId != null && event.pointerId !== pointerId) return;
+          finish(false);
+        };
+        const onPointerCancel = (event) => {
+          if (pointerId != null && event.pointerId !== pointerId) return;
+          finish(true);
+        };
+
+        const onPointerDown = (event) => {
+          if (!radiusReferenceFinalized || referenceShape !== 'square') return;
+          if (event.pointerType !== 'touch' && Number(event.button) !== 0) return;
+          let latlng;
+          try { latlng = map.mouseEventToLatLng(event); } catch (_) { return; }
+          const b = referenceRectangleBounds;
+          if (!b || !b.isValid()) return;
+          dragging = true;
+          pointerId = event.pointerId;
+          startLatLng = latlng;
+          startBounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
+          element.classList.add('is-moving');
+          try { mapDraggingWasEnabled = Boolean(map.dragging && map.dragging.enabled()); } catch (_) { mapDraggingWasEnabled = false; }
+          try { if (mapDraggingWasEnabled) map.dragging.disable(); } catch (_) {}
+          try { window.L.DomUtil.disableTextSelection(); } catch (_) {}
+          try { event.preventDefault(); event.stopPropagation(); } catch (_) {}
+          window.addEventListener('pointermove', onPointerMove, true);
+          window.addEventListener('pointerup', onPointerUp, true);
+          window.addEventListener('pointercancel', onPointerCancel, true);
+        };
+
+        element.addEventListener('pointerdown', onPointerDown, true);
+        referenceMoveCleanup = () => {
+          try { element.removeEventListener('pointerdown', onPointerDown, true); } catch (_) {}
+          try { window.removeEventListener('pointermove', onPointerMove, true); } catch (_) {}
+          try { window.removeEventListener('pointerup', onPointerUp, true); } catch (_) {}
+          try { window.removeEventListener('pointercancel', onPointerCancel, true); } catch (_) {}
+          try { element.classList.remove('az-lot-reference-movable', 'is-moving'); } catch (_) {}
+          try { if (dragging && mapDraggingWasEnabled && map && map.dragging) map.dragging.enable(); } catch (_) {}
+          dragging = false;
+        };
       }
 
       function updateRectangleEdgeFromDrag(side, latlng) {
@@ -928,7 +1053,7 @@
       function updateRadiusReference(edgeLatLng, finalized = false) {
         if (!map || !radiusReferenceCenter || !edgeLatLng) return;
         radiusReferenceSizeMeters = Math.max(0, map.distance(radiusReferenceCenter, edgeLatLng));
-        const shapeOptions = { color: '#0284c7', weight: 2, dashArray: '7 5', fillColor: '#38bdf8', fillOpacity: 0.10, interactive: false };
+        const shapeOptions = { color: '#0284c7', weight: 2, dashArray: '7 5', fillColor: '#38bdf8', fillOpacity: 0.10, interactive: referenceShape === 'square', bubblingMouseEvents: true, className: referenceShape === 'square' ? 'az-lot-reference-shape' : '' };
         if (referenceShape === 'square') {
           referenceRectangleBounds = squareBoundsFromCenterSize(radiusReferenceCenter, radiusReferenceSizeMeters);
           if (!radiusReferenceShapeLayer) radiusReferenceShapeLayer = window.L.rectangle(referenceRectangleBounds, shapeOptions).addTo(map);
@@ -944,12 +1069,18 @@
           radiusReferenceFinalized = true;
           radiusReferenceMode = false;
           setReferenceDrawingCursor(false);
-          if (referenceShape === 'square') createReferenceResizeHandles();
+          if (referenceShape === 'square') {
+            createReferenceResizeHandles();
+            enableReferenceRectangleMove();
+          }
           updateRadiusReferenceReadout(radiusReferenceSizeMeters);
+          cancelReferenceGuideFrame();
           refreshReferenceGuideCross();
           void applyReferenceSelection();
         } else {
-          removeReferenceGuideLayers();
+          // v1016: show centre-to-side/radius dimensions live while the mouse
+          // moves. RAF throttling keeps Leaflet DOM work to once per frame.
+          scheduleReferenceGuideCross();
         }
       }
 
@@ -1384,6 +1515,7 @@
         locationSearchSerial += 1;
         document.removeEventListener('keydown', onDocumentKeyDown);
         try { window.removeEventListener('resize', applyV951CompactLayout); } catch (_) {}
+        disableReferenceRectangleMove();
         try { if (map) map.remove(); } catch (_) {}
         modal.remove();
         document.body.style.overflow = previousBodyOverflow;
