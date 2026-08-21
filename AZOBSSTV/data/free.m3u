@@ -1,5 +1,5 @@
 #EXTM3U
-# AZOBSSTV v1014 - current Mana-Mana VIDEO catalogue fallback with local artwork.
+# AZOBSSTV v1015 - current Mana-Mana VIDEO catalogue fallback with local artwork.
 # Primary catalogue is fetched dynamically from Mana-Mana /public/channels.
 # This static list mirrors the 26 public video slugs found by Deep Inspector v5.
 
