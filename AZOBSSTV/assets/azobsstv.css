@@ -1012,3 +1012,18 @@ body{padding-top:49px}
   opacity:1;
   transform:translateY(0);
 }
+
+
+/* v1011 — reliable Anime embed watchdog + explicit new-tab source fallback. */
+.anime-live-fallback-play-blocked{
+  font-size:34px!important;
+  line-height:1!important;
+}
+.anime-live-fallback-note{
+  display:block;
+  max-width:680px;
+  opacity:.86;
+}
+@media (max-width:800px){
+  .anime-live-fallback-note{font-size:11px!important;line-height:1.35!important;}
+}

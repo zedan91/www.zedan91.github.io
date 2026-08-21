@@ -1,0 +1,28 @@
+{
+  "baseline": "(1010)-AZOBSS-AZOBSSTV-ANIME-BLOCKED-PLAY-STAY-IN-PAGE-FIX_20260821.zip",
+  "version": "1.0.1011",
+  "scope": "AZOBSSTV Anime reliable embed watchdog and explicit new-tab source fallback; no frame-policy bypass.",
+  "touched_files": [
+    "AZOBSSTV/assets/azobsstv.js",
+    "AZOBSSTV/assets/azobsstv.css",
+    "AZOBSSTV/index.html",
+    "AZOBSSTV/sw.js",
+    "package.json",
+    "README_PATCH_1011.md"
+  ],
+  "behavior": [
+    "Verified embed candidate gets a 12-second browser-side iframe watchdog.",
+    "Iframe error/timeout returns to AZOBSSTV 16:9 fallback instead of a blank player.",
+    "Blocked fallback uses an external-link icon, not a misleading Play icon.",
+    "Fallback source opens in a new tab and keeps AZOBSSTV open.",
+    "No X-Frame-Options/CSP bypass and no nested WCOFun iframe added."
+  ],
+  "checks": {
+    "azobsstv_js_node_check": "pass",
+    "backend_handler_node_check": "pass",
+    "deploy_server_node_check": "pass",
+    "runtime_stale_1010_refs": 0,
+    "package_version": "1.0.1011",
+    "service_worker_cache": "azobsstv-v1011"
+  }
+}
