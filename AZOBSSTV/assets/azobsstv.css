@@ -1165,3 +1165,16 @@ body{padding-top:49px}
 .video-wrap.movie-detail-mode>video{visibility:hidden}
 .video-wrap.movie-detail-mode>.player-empty,.video-wrap.movie-detail-mode>.player-error{display:none!important}
 @media(max-width:620px){.movie-player-content{left:18px;right:18px;bottom:20px}.movie-player-content p{display:none}.movie-player-content h2{font-size:30px}.movie-player-actions{margin-top:12px}}
+
+/* v1022 — Movies autoplay Watch button. */
+.movie-player-panel{position:absolute;inset:0;overflow:hidden}
+.movie-player-center-play{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:72px;height:72px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#ff3864,#9347e8);color:#fff;text-decoration:none;
+  font-size:30px;font-weight:900;box-shadow:0 12px 34px rgba(0,0,0,.38);
+  border:1px solid rgba(255,255,255,.22);z-index:3;transition:.18s ease;
+}
+.movie-player-center-play:hover{transform:translate(-50%,-50%) scale(1.08);filter:brightness(1.06)}
+.movie-watch-btn{display:inline-flex;align-items:center;gap:8px}
+@media (max-width:760px){.movie-player-center-play{width:58px;height:58px;font-size:24px;top:42%}}
