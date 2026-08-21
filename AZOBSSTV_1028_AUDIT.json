@@ -1,0 +1,27 @@
+{
+  "patch": 1028,
+  "packageVersion": "1.0.1028",
+  "sourceInspector": "radio-online-my-inspector-2026-08-21T17-54-47-003Z.json",
+  "rawInspectorEntries": 236,
+  "scannedPages": 10,
+  "inspectorEntriesWithLogo": 236,
+  "filteredStationEntries": 191,
+  "directProviderLogoUrlsInSnapshot": 136,
+  "providerLogoResolverNeeded": 55,
+  "localFallbackArtworkCount": 191,
+  "radioProvider": "https://radio-online.my/",
+  "backendEndpoints": [
+    "/api/azobsstv/radio-online/radios",
+    "/api/azobsstv/radio-online/logo?slug={slug}"
+  ],
+  "mana2RadioFrontendEnabled": false,
+  "todayScheduleForRadio": false,
+  "tests": [
+    "node --check frontend",
+    "node --check backend handler",
+    "node --check deploy-server",
+    "catalog JSON parse",
+    "fallback icon existence",
+    "active Mana-Mana radio loader absence"
+  ]
+}

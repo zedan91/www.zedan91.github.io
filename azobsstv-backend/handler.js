@@ -1085,6 +1085,192 @@ function createAZOBSSTVHandler(options = {}) {
   }
 
 
+  // v1028: Radio-Online.my public station catalogue metadata.
+  // This integration intentionally handles station metadata and station page/logo
+  // URLs only. It does not extract, relay or expose audio stream URLs.
+  const RADIO_ONLINE_BASE = 'https://radio-online.my';
+  const RADIO_ONLINE_API = RADIO_ONLINE_BASE + '/api/countries/36/radios';
+  const radioOnlineCatalogCache = { items: [], savedAt: 0 };
+  const radioOnlineLogoCache = new Map();
+
+  function radioOnlineHeaders(accept = 'application/json,text/plain,*/*') {
+    return {
+      'Accept': accept,
+      'Accept-Language': 'en-MY,en;q=0.9,ms;q=0.8',
+      'Referer': RADIO_ONLINE_BASE + '/',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36'
+    };
+  }
+
+  function radioOnlineAssetUrl(raw) {
+    let value = cleanText(raw, 1800);
+    if (!value) return '';
+    value = value.replace(/\\u002F/gi, '/').replace(/\\\//g, '/').replace(/&amp;/g, '&');
+    try {
+      const u = new URL(value, RADIO_ONLINE_BASE + '/');
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
+      // Prefer the provider's own artwork CDN/path. External presenter images
+      // are not required for station cards.
+      if (u.hostname !== 'radio-online.my' && !u.hostname.endsWith('.radio-online.my')) return '';
+      return u.toString();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function radioOnlineSlug(raw) {
+    const value = cleanText(raw, 500);
+    if (!value) return '';
+    let path = value;
+    try { path = new URL(value, RADIO_ONLINE_BASE + '/').pathname; } catch (_) {}
+    path = String(path || '').split(/[?#]/)[0].replace(/^\/+|\/+$/g, '');
+    if (!path || path.includes('/')) return '';
+    if (!/^[a-z0-9][a-z0-9-]*$/i.test(path)) return '';
+    return path.toLowerCase();
+  }
+
+  function radioOnlineNonStation(slug, name) {
+    const s = String(slug || '').toLowerCase();
+    const n = String(name || '').trim().toLowerCase();
+    const exact = new Set([
+      'terms-of-service','about-us','contact-us','privacy-policy','dmca','help',
+      'radio-televisyen-malaysia','indonesia','thailand','singapore','brunei',
+      'states','cities','genres','language','by-countries','search','add-radio',
+      'alor-setar','cyberjaya','georgetown','ipoh','johor','johor-bahru','kedah',
+      'state-kelantan','kota-bharu','kota-kinabalu','kuala-lumpur','kuala-selangor',
+      'kuala-terengganu','kuantan','kuching','labuan','langkawi','klang','malacca',
+      'miri','negeri-sembilan','pahang','penang','perak','state-perlis','petaling-jaya',
+      'putrajaya','sabah','sandakan','sarawak','selangor','seremban','taiping','tawau',
+      'terengganu','astro-malaysia-holdings'
+    ]);
+    if (exact.has(s)) return true;
+    if (/^(?:radio stations? in |radio stations? of |malaysian radio stations|list radio stations|about us$|contact us$|privacy policy$)/i.test(n)) return true;
+    if (/terms of service$/i.test(n)) return true;
+    return false;
+  }
+
+  function radioOnlineStationFromObject(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    const name = cleanText(
+      obj.name ?? obj.title ?? obj.radioName ?? obj.radio_name ?? obj.stationName ?? obj.station_name,
+      220
+    );
+    const rawPage = obj.url ?? obj.slug ?? obj.path ?? obj.link ?? obj.alias ?? obj.code;
+    const slug = radioOnlineSlug(rawPage);
+    if (!name || !slug || radioOnlineNonStation(slug, name)) return null;
+
+    const logo = radioOnlineAssetUrl(
+      obj.image ?? obj.logo ?? obj.logoUrl ?? obj.logo_url ?? obj.imageUrl ?? obj.image_url ??
+      obj.picture ?? obj.thumbnail ?? obj.icon
+    );
+    const frequency = cleanText(obj.frequency ?? obj.freq ?? obj.fm ?? '', 80);
+    const rating = cleanText(obj.rating ?? obj.rate ?? obj.votes ?? obj.popularity ?? '', 50);
+    const description = cleanText(obj.description ?? obj.about ?? obj.summary ?? '', 420);
+    const officialUrl = RADIO_ONLINE_BASE + '/' + encodeURIComponent(slug);
+    return {
+      id: 'radio-online-' + slug,
+      slug,
+      name,
+      logo: /\/logo\.webp(?:\?|$)/i.test(logo) ? '' : logo,
+      frequency,
+      rating,
+      description,
+      group: 'Radio',
+      kind: 'radio',
+      mode: 'official',
+      sourceProvider: 'radio-online.my',
+      officialUrl,
+      sourcePage: officialUrl,
+      url: officialUrl
+    };
+  }
+
+  function collectRadioOnlineStations(payload) {
+    const out = [];
+    const seenObjects = new Set();
+    const seenSlugs = new Set();
+    function walk(value, depth = 0) {
+      if (value == null || depth > 5) return;
+      if (Array.isArray(value)) {
+        for (const row of value.slice(0, 2000)) walk(row, depth + 1);
+        return;
+      }
+      if (typeof value !== 'object' || seenObjects.has(value)) return;
+      seenObjects.add(value);
+      const station = radioOnlineStationFromObject(value);
+      if (station && !seenSlugs.has(station.slug)) {
+        seenSlugs.add(station.slug);
+        out.push(station);
+      }
+      for (const child of Object.values(value)) {
+        if (child && (Array.isArray(child) || typeof child === 'object')) walk(child, depth + 1);
+      }
+    }
+    walk(payload, 0);
+    return out.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity:'base' }));
+  }
+
+  async function getRadioOnlineCatalog(force = false) {
+    if (!force && radioOnlineCatalogCache.items.length &&
+        Date.now() - radioOnlineCatalogCache.savedAt < 15 * 60_000) {
+      return { items: radioOnlineCatalogCache.items, source: 'cache' };
+    }
+    const payload = await fetchJsonTimed(
+      RADIO_ONLINE_API,
+      { method:'GET', headers:radioOnlineHeaders() },
+      18000
+    );
+    const items = collectRadioOnlineStations(payload);
+    if (!items.length) throw Object.assign(new Error('Radio-Online.my metadata returned no stations'), { statusCode:502 });
+    radioOnlineCatalogCache.items = items;
+    radioOnlineCatalogCache.savedAt = Date.now();
+    return { items, source:'radio-online.my-country-api' };
+  }
+
+  async function resolveRadioOnlineLogo(slugRaw) {
+    const slug = radioOnlineSlug(slugRaw);
+    if (!slug || radioOnlineNonStation(slug, '')) return '';
+    const cached = radioOnlineLogoCache.get(slug);
+    if (cached && Date.now() - cached.savedAt < 24 * 60 * 60_000) return cached.url;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(RADIO_ONLINE_BASE + '/' + encodeURIComponent(slug), {
+        method:'GET',
+        redirect:'follow',
+        signal:controller.signal,
+        headers:radioOnlineHeaders('text/html,application/xhtml+xml')
+      });
+      if (!response.ok) return '';
+      let html = await response.text();
+      html = html.replace(/\\u002F/gi, '/').replace(/\\\//g, '/').replace(/&amp;/g, '&');
+
+      const candidates = [];
+      const metaRe = /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["'][^>]*>/ig;
+      let m;
+      while ((m = metaRe.exec(html)) && candidates.length < 8) candidates.push(m[1]);
+      const metaRevRe = /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*>/ig;
+      while ((m = metaRevRe.exec(html)) && candidates.length < 12) candidates.push(m[1]);
+
+      const storageRe = /(?:https?:\/\/radio-online\.my)?\/storage\/radios\/[^"'<>\\\s]+?\.(?:webp|png|jpe?g)(?:\?[^"'<>\\\s]*)?/ig;
+      while ((m = storageRe.exec(html)) && candidates.length < 30) candidates.push(m[0]);
+
+      for (const raw of candidates) {
+        const url = radioOnlineAssetUrl(raw);
+        if (!url || /\/logo\.webp(?:\?|$)/i.test(url)) continue;
+        radioOnlineLogoCache.set(slug, { url, savedAt:Date.now() });
+        return url;
+      }
+      return '';
+    } catch (_) {
+      return '';
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+
   // v989: public EPG/catalogue API discovered from Mana-Mana's CURRENT public web bundles.
   // The site itself exposes:
   //   API base: https://co3y6iwoio.tenbytecdn.com/api/v1
@@ -2281,6 +2467,34 @@ function createAZOBSSTVHandler(options = {}) {
           movies: catalog.items,
           warning: Array.isArray(catalog.warnings) ? catalog.warnings.join('; ') : ''
         }, { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=600' });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/radio-online/radios' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-radio-online-radios', 180, 10 * 60 * 1000)) return true;
+        const force = getQueryParam(parsed, 'refresh') === '1';
+        const catalog = await getRadioOnlineCatalog(force);
+        sendJson(res, 200, {
+          ok: true,
+          source: catalog.source,
+          count: catalog.items.length,
+          radios: catalog.items
+        }, { 'Cache-Control': 'public, max-age=300, stale-while-revalidate=1800' });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/radio-online/logo' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-radio-online-logo', 900, 10 * 60 * 1000)) return true;
+        const slug = getQueryParam(parsed, 'slug');
+        const logo = await resolveRadioOnlineLogo(slug);
+        if (!logo) {
+          sendJson(res, 404, { ok:false, error:'station-logo-not-found' }, { 'Cache-Control':'public, max-age=300' });
+          return true;
+        }
+        res.statusCode = 302;
+        res.setHeader('Location', logo);
+        res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+        res.end();
         return true;
       }
 

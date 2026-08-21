@@ -1225,3 +1225,17 @@ body{padding-top:49px}
 @keyframes radioPulse{50%{opacity:.45;transform:scale(.82)}}
 @media(max-width:760px){.radio-player-content{padding:22px;gap:20px}.radio-player-art-shell{width:38vw;max-width:190px;border-radius:24px}.radio-player-artwork{border-radius:18px}.radio-player-copy{width:auto;flex:1}.radio-player-copy h2{font-size:clamp(27px,7vw,40px)}.radio-equalizer{height:44px;margin-bottom:12px}.radio-equalizer i{width:5px}.radio-player-note{display:none}}
 @media(max-width:520px){.radio-player-content{align-items:center;gap:14px;padding:17px}.radio-player-art-shell{width:34vw;padding:6px;border-radius:18px}.radio-player-artwork{border-radius:13px}.radio-live-pill{left:11px;bottom:11px;font-size:9px;padding:5px 7px}.radio-player-copy p{font-size:12px;margin:8px 0}.radio-equalizer{display:none}.radio-action{padding:8px 9px;font-size:11px}}
+
+
+/* v1028 — Radio-Online.my catalogue, provider logos first, readable station names, no Radio schedule card. */
+.channel-grid.radio-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.channel-grid.radio-grid .radio-card{min-height:132px}
+.channel-grid.radio-grid .radio-card .channel-text{flex:1 1 auto;min-width:0}
+.channel-grid.radio-grid .radio-card .channel-name{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.22;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;max-height:2.44em}
+.channel-grid.radio-grid .radio-card .channel-group{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}
+.hero-side.radio-schedule-hidden .channel-rail{height:100%;max-height:none}
+#todayScheduleCard[hidden]{display:none!important}
+@media(max-width:1100px){.channel-grid.radio-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:800px){.channel-grid.radio-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.channel-grid.radio-grid{grid-template-columns:1fr}}
+.hero-side.radio-schedule-hidden .channel-rail-name{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.18;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
