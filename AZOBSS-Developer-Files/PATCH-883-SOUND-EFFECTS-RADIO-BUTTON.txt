@@ -1,5 +1,5 @@
 Patch 883
 - Baseline: 882
-- Sound-Effects/index.html now loads /assets/js/azobss-radio-player.js?v=371
+- Sound-Effects/index.html now loads /assets/js/azobss-radio-player.js?v=372
 - Restores AZOBSS Radio button/widget in the navbar on /Sound-Effects/.
 - No backend/Render redeploy required.

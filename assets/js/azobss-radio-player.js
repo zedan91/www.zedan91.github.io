@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 371: Auto-play on station selection + multi-source stream failover.
+   Patch 372: Remove confirmed unavailable stations from the mini-player list.
 */
 (function(){
   'use strict';
@@ -1237,8 +1237,12 @@
   const STORE_KEY = 'azobss_radio_player_v1';
   const CACHE_PREFIX = 'azobss_radio_stream_cache_';
   const CACHE_TTL = 24 * 60 * 60 * 1000;
-  const BROKEN_KEY = 'azobss_radio_broken_station_v1';
-  const BROKEN_TTL = 12 * 60 * 60 * 1000;
+  const BROKEN_KEY = 'azobss_radio_unavailable_station_v2';
+  // v1033: once a station is confirmed unavailable, remove it from the visible
+  // mini-player catalogue for 7 days. This avoids repeatedly showing channels
+  // that resolve to no stream or whose complete failover set cannot play.
+  // The expiry still lets a station return automatically if its stream comes back.
+  const BROKEN_TTL = 7 * 24 * 60 * 60 * 1000;
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -1296,7 +1300,7 @@
       return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
     if(!groups.length){
-      return '<option value="custom">No station found - Custom URL</option>';
+      return '<option value="custom">No matching channel - Custom URL</option>';
     }
     return groups.map(g => `<optgroup label="${esc(g.group)}">${g.items.map(st => `<option value="${esc(st.id)}" ${st.id===selected?'selected':''}>${esc(st.label)}</option>`).join('')}</optgroup>`).join('');
   }
@@ -1544,7 +1548,7 @@
     if(out.length){ clearStationBroken(station.id); return out.slice(0, 5); }
     markStationBroken(station.id);
     refreshBrokenStationUi();
-    throw new Error('Stream stesen ini tidak aktif sekarang. Stesen itu telah disorok sementara. Pilih channel lain.');
+    throw new Error('Stream stesen ini tidak ditemui. Channel telah dibuang daripada senarai. Pilih channel lain.');
   }
 
   async function resolveStream(station, status){
@@ -1577,18 +1581,18 @@
     }
     function updateStationOptions(){
       const current = select.value || readStore().station || 'sinar';
+      const activeTotal = STATIONS.filter(st => st.id !== 'custom' && !isStationBroken(st.id)).length;
       select.innerHTML = renderStationOptions(current, search ? search.value : '');
       if([...select.options].some(o => o.value === current)) select.value = current;
       else if(select.options.length) select.value = select.options[0].value;
       const visible = Math.max(0, [...select.options].filter(o => o.value !== 'custom').length);
-      const total = Math.max(0, STATIONS.length - 1);
       const q = String(search ? search.value : '').trim();
-      if(count) count.textContent = q ? `Showing ${visible} / ${total} channels + Custom URL` : `${total} Radio-Online.My channels + Custom URL`;
+      if(count) count.textContent = q ? `Showing ${visible} / ${activeTotal} channels + Custom URL` : `${activeTotal} Radio-Online.My channels + Custom URL`;
       syncCustom();
     }
     function getRandomStationId(){
       const opts = [...select.options].map(o => o.value).filter(v => v && v !== 'custom');
-      const pool = (opts.length ? opts : STATIONS.map(st => st.id).filter(id => id !== 'custom'));
+      const pool = (opts.length ? opts : STATIONS.filter(st => st.id !== 'custom' && !isStationBroken(st.id)).map(st => st.id));
       if(!pool.length) return 'sinar';
       let pick = pool[Math.floor(Math.random() * pool.length)];
       if(pool.length > 1 && pick === select.value){
@@ -1659,7 +1663,7 @@
         clearCache(station.id);
         markStationBroken(station.id);
         refreshBrokenStationUi();
-        throw lastErr || new Error('Semua sumber stream untuk stesen ini gagal.');
+        throw lastErr || new Error('Semua sumber stream gagal. Channel telah dibuang daripada senarai.');
       }catch(e){
         root.classList.remove('is-playing');
         setStatus(e?.message || 'Radio gagal dimainkan.', 'err');
