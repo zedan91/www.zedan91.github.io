@@ -1181,3 +1181,7 @@ body{padding-top:49px}
 
 
 /* v1023 — Movies provider switched to 1Tube metadata/watch routes. */
+
+/* v1024 — Mana-Mana Radio uses a full-page official iframe, not the TV crop. */
+#videoWrap.radio-mode #officialPlayerStage{background:#07101d}
+#videoWrap.radio-mode #officialPlayerFrame{border:0}

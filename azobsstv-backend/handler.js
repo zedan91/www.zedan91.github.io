@@ -968,7 +968,7 @@ function createAZOBSSTVHandler(options = {}) {
   }
 
 
-  // v1023: 1Tube public Movies discovery metadata.
+  // v1024: 1Tube public Movies discovery metadata.
   // Metadata only: no player URL, media manifest, DRM token, cookie or account
   // credential is fetched or returned by this integration.
   const oneTubeMovieCache = { items: [], savedAt: 0, pages: 0 };
@@ -996,7 +996,10 @@ function createAZOBSSTVHandler(options = {}) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
     const rawId = obj.id ?? obj.tmdbId ?? obj.tmdb_id ?? obj.movieId ?? obj.movie_id;
     const id = cleanText(rawId, 40).replace(/[^0-9]/g, '');
-    const name = cleanText(obj.title ?? obj.name ?? obj.original_title ?? obj.originalTitle, 220);
+    // v1024: TMDB movie rows expose title/original_title. Never accept a
+    // generic `name` here: nested production companies also have id+name and
+    // were the source of false Movies such as Marvel Studios/Universal Pictures.
+    const name = cleanText(obj.title ?? obj.original_title ?? obj.originalTitle, 220);
     if (!id || !name) return null;
     const date = cleanText(obj.release_date ?? obj.releaseDate ?? obj.year ?? obj.first_air_date, 40);
     const yearMatch = date.match(/(?:19|20)\d{2}/);
@@ -1007,6 +1010,9 @@ function createAZOBSSTVHandler(options = {}) {
       if (Number.isFinite(n)) rating = n.toFixed(1).replace(/\.0$/, '.0');
     }
     const artwork = oneTubeArtwork(obj.backdrop_path ?? obj.backdropPath ?? obj.poster_path ?? obj.posterPath ?? obj.backdrop ?? obj.poster ?? obj.image ?? obj.thumbnail);
+    // AZOBSSTV Movies is visual; skip incomplete upstream rows instead of
+    // showing a blank initials card in the catalogue.
+    if (!artwork) return null;
     const genres = [];
     const rawGenres = Array.isArray(obj.genres) ? obj.genres : (Array.isArray(obj.genre_ids) ? obj.genre_ids : []);
     for (const g of rawGenres) {
@@ -1106,6 +1112,17 @@ function createAZOBSSTVHandler(options = {}) {
     ['nhk-world','NHK WORLD'],['rt-international','RT International'],
     ['al-jazeera-arabic-hd','Al JAZEERA ARABIC HD'],['usim-tv','USIM TV'],
     ['selangor-tv','SELANGOR TV'],['tv-ikim','TVIKIM'],['siara-tv','SIARA TV']
+  ];
+  // v1024: public Live Radio names visible on mana2.my/radio / homepage.
+  // The live /public/channels API is primary; this list is only a static
+  // fallback so the Radio tab remains usable during upstream/API outages.
+  const MANA2_RADIO_CATALOG_FALLBACK = [
+    ['manis-fm','MANIS FM'],['suria-fm','SURIA FM'],['fly-fm','FLY FM'],['rakita-fm','RAKITA FM'],
+    ['hot-fm','HOT FM'],['ikim-fm','IKIMfm'],['988-fm','988 FM'],['molek-fm','MOLEK FM'],
+    ['eight-fm','EIGHT FM'],['kool-fm','KOOL FM'],['nasional-fm','NASIONAL FM'],['traxx-fm','TRAXX FM'],
+    ['minnal-fm','MINNAL FM'],['ai-fm','AI FM'],['radio-klasik','RADIO KLASIK'],['sabah-fm','SABAH FM'],
+    ['sabahv-fm','SABAHV FM'],['sarawak-fm','SARAWAK FM'],['bernama-radio','BERNAMA RADIO'],
+    ['wai-fm','WAI FM'],['asyik-fm','ASYIK FM'],['best-fm','BEST FM']
   ];
 
   function mana2PublicApiHeaders() {
@@ -1250,9 +1267,9 @@ function createAZOBSSTVHandler(options = {}) {
   function normalizeMana2CatalogObject(o) {
     if (!o || typeof o !== 'object') return null;
     const type = cleanText(o.channelType ?? o.channel_type ?? o.type, 40).toLowerCase();
-    // v989 intentionally imports the Live TV catalogue only. Radio remains
-    // separate until its player layout is integrated.
-    if (!['video', 'tv'].includes(type)) return null;
+    const isRadio = ['radio', 'audio'].includes(type);
+    const isVideo = ['video', 'tv'].includes(type);
+    if (!isVideo && !isRadio) return null;
 
     const id = cleanText(o.id ?? o.channelId ?? o.channel_id, 180);
     const slug = cleanText(o.slug ?? o.code ?? o.channelSlug ?? o.channel_slug, 180);
@@ -1271,8 +1288,8 @@ function createAZOBSSTVHandler(options = {}) {
       name,
       channelNumber: o.channelNumber ?? o.channel_number ?? null,
       logo,
-      group: 'Live TV',
-      kind: 'live',
+      group: isRadio ? 'Radio' : 'Live TV',
+      kind: isRadio ? 'radio' : 'live',
       mode: 'official',
       officialUrl,
       sourcePage: officialUrl,
@@ -1305,23 +1322,16 @@ function createAZOBSSTVHandler(options = {}) {
     });
   }
 
-  function fallbackMana2VideoCatalog() {
-    return MANA2_VIDEO_CATALOG_FALLBACK.map(([slug, name]) => {
+  function fallbackMana2Catalog() {
+    const video = MANA2_VIDEO_CATALOG_FALLBACK.map(([slug, name]) => {
       const officialUrl = `https://mana2.my/channel/${encodeURIComponent(slug)}`;
-      return {
-        id: slug,
-        slug,
-        name,
-        channelNumber: null,
-        logo: '',
-        group: 'Live TV',
-        kind: 'live',
-        mode: 'official',
-        officialUrl,
-        sourcePage: officialUrl,
-        url: officialUrl
-      };
+      return { id:slug, slug, name, channelNumber:null, logo:'', group:'Live TV', kind:'live', mode:'official', officialUrl, sourcePage:officialUrl, url:officialUrl };
     });
+    const radio = MANA2_RADIO_CATALOG_FALLBACK.map(([slug, name]) => {
+      const officialUrl = `https://mana2.my/channel/${encodeURIComponent(slug)}`;
+      return { id:'radio-'+slug, slug, name, channelNumber:null, logo:'', group:'Radio', kind:'radio', mode:'official', officialUrl, sourcePage:officialUrl, url:officialUrl };
+    });
+    return [...video, ...radio];
   }
 
   async function getMana2PublicCatalog(force = false) {
@@ -1340,16 +1350,16 @@ function createAZOBSSTVHandler(options = {}) {
         15000
       );
       const items = parseMana2PublicCatalog(data);
-      if (!items.length) throw new Error('Mana-Mana public video catalogue returned no channels');
+      if (!items.length) throw new Error('Mana-Mana public TV/Radio catalogue returned no channels');
       mana2PublicCatalogCache.items = items;
       mana2PublicCatalogCache.savedAt = Date.now();
       mana2PublicCatalogCache.source = 'mana2-public-channels-api';
       return { items, source: mana2PublicCatalogCache.source };
     } catch (e) {
-      const items = fallbackMana2VideoCatalog();
+      const items = fallbackMana2Catalog();
       mana2PublicCatalogCache.items = items;
       mana2PublicCatalogCache.savedAt = Date.now();
-      mana2PublicCatalogCache.source = 'inspector-v5-video-fallback';
+      mana2PublicCatalogCache.source = 'v1024-tv-radio-fallback';
       return {
         items,
         source: mana2PublicCatalogCache.source,
