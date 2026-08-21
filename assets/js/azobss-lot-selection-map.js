@@ -270,9 +270,11 @@
       .az-lot-reference-resize-icon.is-vertical span{width:7px;height:24px}
       .az-lot-reference-resize-icon.is-horizontal{cursor:ns-resize!important}
       .az-lot-reference-resize-icon.is-horizontal span{width:24px;height:7px}
-      /* v1017: finalized Petak can be dragged from anywhere inside its fill. */
-      .az-lot-reference-movable{cursor:move!important}
-      .az-lot-reference-movable.is-moving{cursor:grabbing!important}
+      /* v1018: finalized Petak uses an SVG capture layer so move works on preferCanvas maps. */
+      /* v1018: dedicated SVG capture path sits above the Canvas lot/shape layer. */
+      .az-lot-reference-movable,.az-lot-reference-move-capture{cursor:grab!important;pointer-events:auto!important}
+      .az-lot-reference-movable.is-moving,.az-lot-reference-move-capture.is-moving{cursor:grabbing!important}
+      .az-lot-reference-move-capture{fill:rgba(255,255,255,.001)!important;fill-opacity:.001!important;stroke:none!important}
       /* v961: dimension labels sit above/beside the guide line and exactly
          halfway between centre and edge. DivIcon prevents vertical text clipping. */
       .az-lot-reference-guide-icon{background:transparent!important;border:0!important;pointer-events:none!important;overflow:visible!important;width:1px!important;height:1px!important}
@@ -565,6 +567,8 @@
       let referenceGuideLayers = [];
       let referenceGuideFrame = 0;
       let referenceMoveCleanup = null;
+      let referenceMoveCaptureLayer = null;
+      let referenceMoveRenderer = null;
       let selectionSource = null;
 
       function formatReferenceDistance(meters) {
@@ -902,6 +906,7 @@
         if (!map || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
         radiusReferenceCenter = referenceRectangleBounds.getCenter();
         if (radiusReferenceShapeLayer && typeof radiusReferenceShapeLayer.setBounds === 'function') radiusReferenceShapeLayer.setBounds(referenceRectangleBounds);
+        if (referenceMoveCaptureLayer && typeof referenceMoveCaptureLayer.setBounds === 'function') referenceMoveCaptureLayer.setBounds(referenceRectangleBounds);
         if (radiusReferenceCenterMarker && typeof radiusReferenceCenterMarker.setLatLng === 'function') radiusReferenceCenterMarker.setLatLng(radiusReferenceCenter);
         referenceResizeHandles.forEach((marker) => {
           const side = marker && marker.options ? marker.options.azReferenceSide : '';
@@ -919,9 +924,39 @@
 
       function enableReferenceRectangleMove() {
         disableReferenceRectangleMove();
-        if (!map || referenceShape !== 'square' || !radiusReferenceFinalized || !radiusReferenceShapeLayer || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
-        const element = typeof radiusReferenceShapeLayer.getElement === 'function' ? radiusReferenceShapeLayer.getElement() : null;
-        if (!element) return;
+        if (!map || referenceShape !== 'square' || !radiusReferenceFinalized || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
+
+        // v1018 root-cause fix: the map uses preferCanvas:true, so the visible
+        // Leaflet rectangle has no DOM/SVG element for pointerdown listeners.
+        // Create a transparent SVG rectangle in its own pane above Canvas lots,
+        // but below marker resize handles, and use that as the drag hit-area.
+        const paneName = 'azLotReferenceMovePane';
+        let movePane = map.getPane(paneName);
+        if (!movePane) movePane = map.createPane(paneName);
+        if (movePane) {
+          movePane.style.zIndex = '590';
+        }
+        if (!referenceMoveRenderer) referenceMoveRenderer = window.L.svg({ pane: paneName, padding: 0.5 });
+        referenceMoveCaptureLayer = window.L.rectangle(referenceRectangleBounds, {
+          pane: paneName,
+          renderer: referenceMoveRenderer,
+          color: 'transparent',
+          weight: 0,
+          opacity: 0,
+          fill: true,
+          fillColor: '#ffffff',
+          fillOpacity: 0.001,
+          interactive: true,
+          bubblingMouseEvents: false,
+          className: 'az-lot-reference-move-capture'
+        }).addTo(map);
+
+        const element = typeof referenceMoveCaptureLayer.getElement === 'function' ? referenceMoveCaptureLayer.getElement() : null;
+        if (!element) {
+          try { map.removeLayer(referenceMoveCaptureLayer); } catch (_) {}
+          referenceMoveCaptureLayer = null;
+          return;
+        }
         element.classList.add('az-lot-reference-movable');
         element.setAttribute('aria-label', 'Seret untuk alihkan petak');
 
@@ -938,6 +973,7 @@
           window.removeEventListener('pointermove', onPointerMove, true);
           window.removeEventListener('pointerup', onPointerUp, true);
           window.removeEventListener('pointercancel', onPointerCancel, true);
+          try { if (pointerId != null && element.hasPointerCapture && element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId); } catch (_) {}
           try { if (mapDraggingWasEnabled && map && map.dragging) map.dragging.enable(); } catch (_) {}
           try { window.L.DomUtil.enableTextSelection(); } catch (_) {}
           pointerId = null;
@@ -966,7 +1002,7 @@
             window.L.latLng(startBounds.north + dLat, startBounds.east + dLng)
           );
           refreshReferenceRectangleVisual('', true);
-          try { event.preventDefault(); } catch (_) {}
+          try { event.preventDefault(); event.stopPropagation(); } catch (_) {}
         };
 
         const onPointerUp = (event) => {
@@ -980,7 +1016,7 @@
 
         const onPointerDown = (event) => {
           if (!radiusReferenceFinalized || referenceShape !== 'square') return;
-          if (event.pointerType !== 'touch' && Number(event.button) !== 0) return;
+          if (event.pointerType !== 'touch' && event.pointerType !== 'pen' && Number(event.button) !== 0) return;
           let latlng;
           try { latlng = map.mouseEventToLatLng(event); } catch (_) { return; }
           const b = referenceRectangleBounds;
@@ -990,6 +1026,7 @@
           startLatLng = latlng;
           startBounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
           element.classList.add('is-moving');
+          try { if (element.setPointerCapture && pointerId != null) element.setPointerCapture(pointerId); } catch (_) {}
           try { mapDraggingWasEnabled = Boolean(map.dragging && map.dragging.enabled()); } catch (_) { mapDraggingWasEnabled = false; }
           try { if (mapDraggingWasEnabled) map.dragging.disable(); } catch (_) {}
           try { window.L.DomUtil.disableTextSelection(); } catch (_) {}
@@ -1007,6 +1044,8 @@
           try { window.removeEventListener('pointercancel', onPointerCancel, true); } catch (_) {}
           try { element.classList.remove('az-lot-reference-movable', 'is-moving'); } catch (_) {}
           try { if (dragging && mapDraggingWasEnabled && map && map.dragging) map.dragging.enable(); } catch (_) {}
+          try { if (map && referenceMoveCaptureLayer) map.removeLayer(referenceMoveCaptureLayer); } catch (_) {}
+          referenceMoveCaptureLayer = null;
           dragging = false;
         };
       }
