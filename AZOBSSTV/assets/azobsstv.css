@@ -1055,3 +1055,6 @@ body{padding-top:49px}
   animation:animeCheckingSpin .75s linear infinite;
 }
 @keyframes animeCheckingSpin{to{transform:rotate(360deg)}}
+
+/* v1013 — known Live TV artwork is served locally; keep the logo tile clean and fully visible. */
+.channel-card:not(.anime-card) .channel-logo,.channel-rail-logo{object-fit:contain}
