@@ -1227,7 +1227,7 @@ body{padding-top:49px}
 @media(max-width:520px){.radio-player-content{align-items:center;gap:14px;padding:17px}.radio-player-art-shell{width:34vw;padding:6px;border-radius:18px}.radio-player-artwork{border-radius:13px}.radio-live-pill{left:11px;bottom:11px;font-size:9px;padding:5px 7px}.radio-player-copy p{font-size:12px;margin:8px 0}.radio-equalizer{display:none}.radio-action{padding:8px 9px;font-size:11px}}
 
 
-/* v1029 — Radio-Online.my catalogue, provider logos first, readable station names, no Radio schedule card. */
+/* v1030 — Radio-Online.my catalogue, provider logos first, readable station names, no Radio schedule card. */
 .channel-grid.radio-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 .channel-grid.radio-grid .radio-card{min-height:132px}
 .channel-grid.radio-grid .radio-card .channel-text{flex:1 1 auto;min-width:0}
@@ -1240,6 +1240,19 @@ body{padding-top:49px}
 @media(max-width:480px){.channel-grid.radio-grid{grid-template-columns:1fr}}
 .hero-side.radio-schedule-hidden .channel-rail-name{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.18;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 
-/* v1029 — equalizer reflects actual native audio playback state. */
+/* v1030 — equalizer reflects actual native audio playback state. */
 .radio-player-panel:not(.is-playing) .radio-equalizer i{animation-play-state:paused!important;height:12px!important;opacity:.42}
 .radio-player-panel.is-playing .radio-equalizer i{opacity:1}
+
+
+/* v1030 — REAL audio-reactive radio spectrum. All keyframe/random motion is
+   disabled; JavaScript sets each bar height from AnalyserNode frequency bins. */
+.radio-equalizer i{
+  animation:none!important;
+  height:10px;
+  transition:height 54ms linear,opacity 70ms linear,filter 70ms linear;
+  will-change:height,opacity;
+}
+.radio-player-panel:not(.is-playing) .radio-equalizer i{height:10px!important;opacity:.42!important}
+.radio-player-panel.is-playing .radio-equalizer i{opacity:.7}
+.radio-equalizer.meter-unavailable i{height:8px!important;opacity:.24!important;filter:none!important}
