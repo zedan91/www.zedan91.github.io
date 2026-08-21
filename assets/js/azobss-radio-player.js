@@ -1,5 +1,5 @@
 /* AZOBSS Radio Player - compact floating radio widget
-   Patch 368: Restore compact channel search and minimize radio panel when clicking outside the card.
+   Patch 371: Auto-play on station selection + multi-source stream failover.
 */
 (function(){
   'use strict';
@@ -1414,7 +1414,7 @@
         </div>
         <div class="az-radio-vol"><span>Volume</span><input id="azRadioVolume" type="range" min="0" max="1" step="0.05" value="${Math.min(1,Math.max(0,volume))}"></div>
         <div class="az-radio-status" id="azRadioStatus">Pilih stesen dan tekan Play.</div>
-        <div class="az-radio-note">Jika tukar page, radio akan cuba sambung semula. Jika browser block autoplay, tekan Play sekali.</div>
+        <div class="az-radio-note">Pilih stesen dan radio akan terus cuba main. Jika browser block autoplay, tekan Play sekali.</div>
         <audio id="azRadioAudio" preload="none" crossorigin="anonymous"></audio>
       </div>`;
     const tools = document.getElementById('marketUserTools') || document.querySelector('.market-user-tools');
@@ -1463,71 +1463,93 @@
     }
     return score;
   }
-  function pickBest(rows, station){
+  function pickCandidates(rows, station, limit){
+    const seen = new Set();
     const list = (Array.isArray(rows)?rows:[])
       .filter(r => r && (r.url_resolved || r.url))
       .map(r => ({...r, stream:String(r.url_resolved || r.url || '').trim()}))
       .filter(r => /^https?:\/\//i.test(r.stream))
-      .filter(r => String(r.countrycode || '').toUpperCase() === 'MY' || !r.countrycode);
-    list.sort((a,b)=>stationScore(b, station)-stationScore(a, station));
-    return list[0]?.stream || '';
+      .filter(r => String(r.countrycode || '').toUpperCase() === 'MY' || !r.countrycode)
+      .sort((a,b)=>stationScore(b, station)-stationScore(a, station))
+      .filter(r => {
+        const key = r.stream.replace(/\/$/, '');
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    return list.slice(0, Math.max(1, Number(limit)||8)).map(r => r.stream);
   }
-  async function tryDirectStreams(station){
-    const direct = Array.isArray(station.streams) ? station.streams : [];
-    for(const url of direct){
-      const clean = String(url || '').trim();
-      if(/^https?:\/\//i.test(clean)){ clearStationBroken(station.id); writeCache(station.id, clean); return clean; }
-    }
-    return '';
+  function clearCache(id){ try{ localStorage.removeItem(CACHE_PREFIX + id); }catch(e){} }
+  function directStreamCandidates(station){
+    return [...new Set((Array.isArray(station.streams) ? station.streams : [])
+      .map(url => String(url || '').trim())
+      .filter(url => /^https?:\/\//i.test(url)))];
   }
-  async function queryRadioBrowser(station, term){
+  async function queryRadioBrowserCandidates(station, term){
     const variants = [
-      {countrycode: station.country || 'MY', name: term, hidebroken:'true', order:'clickcount', reverse:'true', limit:'16'},
-      {country: 'Malaysia', name: term, hidebroken:'true', order:'clickcount', reverse:'true', limit:'16'},
-      {name: term, hidebroken:'true', order:'clickcount', reverse:'true', limit:'16'}
+      {countrycode: station.country || 'MY', name: term, hidebroken:'true', order:'clickcount', reverse:'true', limit:'24'},
+      {country: 'Malaysia', name: term, hidebroken:'true', order:'clickcount', reverse:'true', limit:'24'},
+      {name: term, hidebroken:'true', order:'clickcount', reverse:'true', limit:'24'}
     ];
+    const found = [];
+    const seen = new Set();
     let lastErr = '';
     for(const paramsObj of variants){
       const params = new URLSearchParams(paramsObj);
+      let mirrorWorked = false;
       for(const base of API_BASES){
         try{
           const res = await fetchWithTimeout(base + '?' + params.toString(), 6500);
           if(!res.ok){ lastErr = 'HTTP '+res.status; continue; }
           const rows = await res.json();
-          const url = pickBest(rows, station);
-          if(url){ clearStationBroken(station.id); writeCache(station.id,url); return url; }
+          mirrorWorked = true;
+          for(const url of pickCandidates(rows, station, 8)){
+            const key = url.replace(/\/$/, '');
+            if(seen.has(key)) continue;
+            seen.add(key); found.push(url);
+          }
+          break; // mirrors contain the same directory; use the next mirror only if this one fails.
         }catch(e){ lastErr = e?.message || String(e); }
       }
+      if(found.length >= 8) break;
+      if(!mirrorWorked && lastErr) station.__lastLookupError = lastErr;
     }
-    if(lastErr) station.__lastLookupError = lastErr;
-    return '';
+    return found;
   }
 
-  async function resolveStream(station, status){
+  async function resolveStreamCandidates(station, status, force){
     if(station.id === 'custom'){
       const url = String(document.getElementById('azRadioCustom')?.value || '').trim();
       if(!url) throw new Error('Sila paste direct stream URL dahulu.');
-      return url;
+      return [url];
     }
-    const cached = readCache(station.id);
-    if(cached) return cached;
+    const out = [];
+    const seen = new Set();
+    const add = url => {
+      const clean = String(url || '').trim();
+      if(!/^https?:\/\//i.test(clean)) return;
+      const key = clean.replace(/\/$/, '');
+      if(seen.has(key)) return;
+      seen.add(key); out.push(clean);
+    };
+    if(!force) add(readCache(station.id));
+    directStreamCandidates(station).forEach(add);
     if(status) status.textContent = 'Mencari stream radio...';
-
-    // 1) Use direct vetted URL if provided in future edits.
-    const direct = await tryDirectStreams(station);
-    if(direct) return direct;
-
-    // 2) Try several station aliases against RadioBrowser instead of one rigid name only.
-    const terms = stationSearchTerms(station);
+    const terms = stationSearchTerms(station).slice(0, 5);
     for(const term of terms){
-      const url = await queryRadioBrowser(station, term);
-      if(url) return url;
+      const rows = await queryRadioBrowserCandidates(station, term);
+      rows.forEach(add);
+      if(out.length >= 5) break;
     }
-
-    // 3) If a station fails, mark it locally so the dropdown can hide it on the same browser.
+    if(out.length){ clearStationBroken(station.id); return out.slice(0, 5); }
     markStationBroken(station.id);
     refreshBrokenStationUi();
     throw new Error('Stream stesen ini tidak aktif sekarang. Stesen itu telah disorok sementara. Pilih channel lain.');
+  }
+
+  async function resolveStream(station, status){
+    const rows = await resolveStreamCandidates(station, status, false);
+    return rows[0] || '';
   }
 
   function wire(root){
@@ -1575,23 +1597,73 @@
       }
       return pick;
     }
-    async function playCurrentStation(){
+    async function startCandidate(url, station, index, total){
+      return await new Promise(async (resolve, reject)=>{
+        let done=false;
+        const finish=(ok,err)=>{
+          if(done) return; done=true;
+          clearTimeout(timer);
+          audio.removeEventListener('playing', onPlaying);
+          audio.removeEventListener('error', onError);
+          audio.removeEventListener('abort', onAbort);
+          ok ? resolve(true) : reject(err || new Error('Stream tidak memberi audio.'));
+        };
+        const onPlaying=()=>finish(true);
+        const onError=()=>finish(false,new Error('Stream gagal dimainkan.'));
+        const onAbort=()=>finish(false,new Error('Stream dibatalkan.'));
+        const timer=setTimeout(()=>finish(false,new Error('Stream terlalu lambat / tiada audio.')), 6000);
+        audio.addEventListener('playing', onPlaying);
+        audio.addEventListener('error', onError);
+        audio.addEventListener('abort', onAbort);
+        try{
+          setStatus((total>1 ? `Cuba sumber ${index+1}/${total}: ` : 'Loading ') + station.label + '...', '');
+          if(audio.src !== url){ audio.pause(); audio.src=url; audio.load(); }
+          audio.volume=Number(vol.value)||0.7;
+          const result=audio.play();
+          if(result && typeof result.catch==='function') result.catch(err=>finish(false,err));
+        }catch(e){ finish(false,e); }
+      });
+    }
+    async function playCurrentStation(opts){
+      const options=opts && typeof opts==='object' ? opts : {};
       const station=getStation(select.value);
+      if(station.id==='custom' && !String(custom.value||'').trim()){
+        syncCustom(); setStatus('Paste Custom URL dan tekan Play.', 'err'); return false;
+      }
       try{
         save();
         play.disabled=true;
         if(random) random.disabled=true;
-        setStatus('Loading ' + station.label + '...', '');
-        const url=await resolveStream(station, status);
-        if(audio.src !== url) audio.src=url;
-        audio.volume=Number(vol.value)||0.7;
-        await audio.play();
-        root.classList.add('is-playing');
-        markPlaying(url);
-        setStatus('Playing: ' + station.label, 'ok');
+        const candidates=await resolveStreamCandidates(station, status, !!options.forceLookup);
+        let lastErr=null;
+        for(let i=0;i<candidates.length;i++){
+          const url=candidates[i];
+          try{
+            await startCandidate(url, station, i, candidates.length);
+            writeCache(station.id,url);
+            clearStationBroken(station.id);
+            root.classList.add('is-playing');
+            markPlaying(url);
+            setStatus('Playing: ' + station.label, 'ok');
+            return true;
+          }catch(e){
+            lastErr=e;
+            if(String(e?.name||'')==='NotAllowedError'){
+              writeCache(station.id,url);
+              setStatus('Stream sudah sedia. Tekan ▶ Play sekali untuk benarkan audio.', 'err');
+              return false;
+            }
+            if(i===0 && readCache(station.id)===url) clearCache(station.id);
+          }
+        }
+        clearCache(station.id);
+        markStationBroken(station.id);
+        refreshBrokenStationUi();
+        throw lastErr || new Error('Semua sumber stream untuk stesen ini gagal.');
       }catch(e){
         root.classList.remove('is-playing');
         setStatus(e?.message || 'Radio gagal dimainkan.', 'err');
+        return false;
       }finally{
         play.disabled=false;
         if(random) random.disabled=false;
@@ -1633,7 +1705,19 @@
       if(target && root.contains(target)) return;
       setOpen(false);
     }, true);
-    select.addEventListener('change', ()=>{ syncCustom(); setStatus('Pilih stesen dan tekan Play.'); });
+    select.addEventListener('change', async ()=>{
+      syncCustom();
+      try{ audio.pause(); audio.removeAttribute('src'); audio.load(); }catch(e){}
+      root.classList.remove('is-playing');
+      markStopped();
+      if(select.value==='custom'){
+        setStatus('Paste Custom URL dan tekan Play.');
+        return;
+      }
+      // A station selection is already a user action, so immediately resolve
+      // and start it instead of forcing a second click on Play.
+      await playCurrentStation();
+    });
     if(search) search.addEventListener('input', ()=>{ updateStationOptions(); });
     window.addEventListener('azobss-radio-broken-list-changed', ()=>{ updateStationOptions(); });
     custom.addEventListener('change', save);

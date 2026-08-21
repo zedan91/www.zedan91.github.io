@@ -24,7 +24,7 @@
     if(jobs.has('radio')) return jobs.get('radio');
     const p = new Promise((resolve,reject)=>{
       const s=document.createElement('script');
-      s.src='/assets/js/azobss-radio-player.js?v=705';
+      s.src='/assets/js/azobss-radio-player.js?v=371';
       s.async=true;
       s.onload=()=>{ready.add('radio');resolve();};
       s.onerror=(err)=>{jobs.delete('radio');reject(err);};
