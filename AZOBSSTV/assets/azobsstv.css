@@ -1178,3 +1178,6 @@ body{padding-top:49px}
 .movie-player-center-play:hover{transform:translate(-50%,-50%) scale(1.08);filter:brightness(1.06)}
 .movie-watch-btn{display:inline-flex;align-items:center;gap:8px}
 @media (max-width:760px){.movie-player-center-play{width:58px;height:58px;font-size:24px;top:42%}}
+
+
+/* v1023 — Movies provider switched to 1Tube metadata/watch routes. */

@@ -1,0 +1,52 @@
+{
+  "version": "1.0.1023",
+  "sourceInspector": "1tube-movies-inspector-2026-08-21T16-15-52-688Z.json",
+  "inspectorGeneratedAt": "2026-08-21T16:15:52.686Z",
+  "inspectorStats": {
+    "allLinks": 39,
+    "movieLinks": 0,
+    "uniqueMovies": 0,
+    "possibleCards": 281,
+    "images": 536,
+    "apiRequests": 27,
+    "iframes": 0
+  },
+  "observedDiscoveryApis": [
+    "https://www.1tube.org/api/discover/movies?page=1",
+    "https://www.1tube.org/api/discover/movies?page=2",
+    "https://www.1tube.org/api/discover/movies?page=3",
+    "https://www.1tube.org/api/discover/movies?page=4"
+  ],
+  "observedViewIdRequests": [
+    "https://db.1tube.org/views/movies/1375646",
+    "https://db.1tube.org/views/movies/1368337",
+    "https://db.1tube.org/views/movies/1084244",
+    "https://db.1tube.org/views/movies/634649",
+    "https://db.1tube.org/views/movies/969681",
+    "https://db.1tube.org/views/movies/1339713",
+    "https://db.1tube.org/views/movies/1284041",
+    "https://db.1tube.org/views/movies/1275779",
+    "https://db.1tube.org/views/movies/1315772",
+    "https://db.1tube.org/views/movies/1101383",
+    "https://db.1tube.org/views/movies/1284465",
+    "https://db.1tube.org/views/movies/1108427",
+    "https://db.1tube.org/views/movies/1083381",
+    "https://db.1tube.org/views/movies/1212763",
+    "https://db.1tube.org/views/movies/82023",
+    "https://db.1tube.org/views/movies/1081003",
+    "https://db.1tube.org/views/movies/687163",
+    "https://db.1tube.org/views/movies/1307118",
+    "https://db.1tube.org/views/movies/315635",
+    "https://db.1tube.org/views/movies/1273221"
+  ],
+  "localFallbackCount": 22,
+  "runtimeEndpoint": "/api/azobsstv/1tube/movies?pages=4",
+  "movieWatchPattern": "https://www.1tube.org/watch/{tmdbId}",
+  "safety": [
+    "metadata only",
+    "no media manifest extraction",
+    "no stream proxy",
+    "no DRM/token bypass",
+    "no login cookie reuse"
+  ]
+}

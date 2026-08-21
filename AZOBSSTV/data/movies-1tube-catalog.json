@@ -1,0 +1,372 @@
+{
+  "generatedFrom": "1tube-movies-inspector-2026-08-21T16-15-52-688Z.json",
+  "generatedAt": "2026-08-21T16:15:52.686Z",
+  "source": "https://www.1tube.org/movies",
+  "note": "Local fallback catalogue. Runtime prefers the AZOBSSTV backend 1Tube metadata endpoint when deployed.",
+  "items": [
+    {
+      "id": "1tube-movie-969681",
+      "tmdbId": "969681",
+      "name": "Spider-Man: Brand New Day",
+      "year": 2026,
+      "rating": "7.9",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2F63JYqhefGrbVg0YqZ3xWqn0pwT2.jpg",
+      "sourcePage": "https://www.1tube.org/watch/969681",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "21:15",
+      "views": "138K"
+    },
+    {
+      "id": "1tube-movie-1084244",
+      "tmdbId": "1084244",
+      "name": "Toy Story 5",
+      "year": 2026,
+      "rating": "8.0",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FowUcU7WcM42uPXIVJHglDQceY5R.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1084244",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:42:00",
+      "studio": "Pixar",
+      "views": "14.7K"
+    },
+    {
+      "id": "1tube-movie-1368337",
+      "tmdbId": "1368337",
+      "name": "The Odyssey",
+      "year": 2026,
+      "rating": "8.0",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FqaWgqQdJwohmc4XK4iXAiZiPOKH.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1368337",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:53:00",
+      "studio": "Universal Pictures",
+      "views": "55.3K"
+    },
+    {
+      "id": "1tube-movie-1315772",
+      "tmdbId": "1315772",
+      "name": "Minions & Monsters",
+      "year": 2026,
+      "rating": "7.5",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FsfGdosEmaYJQha8esMcP8YuCpaj.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1315772",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:30:00",
+      "studio": "Universal Pictures",
+      "views": "21.4K"
+    },
+    {
+      "id": "1tube-movie-1101383",
+      "tmdbId": "1101383",
+      "name": "The End of Oak Street",
+      "year": 2026,
+      "rating": "6.5",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2F3bq3Jy5cnE2FjngeRVvkJawquVf.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1101383",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:39:00",
+      "studio": "Warner Bros. Pictures",
+      "views": "34.3K"
+    },
+    {
+      "id": "1tube-movie-102382",
+      "tmdbId": "102382",
+      "name": "The Amazing Spider-Man 2",
+      "year": 2014,
+      "rating": "6.6",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FdPj9RAHYhcmUQfLR7HKgthOzxgZ.jpg",
+      "sourcePage": "https://www.1tube.org/watch/102382",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:21:00",
+      "studio": "Columbia Pictures",
+      "views": "4K"
+    },
+    {
+      "id": "1tube-movie-980431",
+      "tmdbId": "980431",
+      "name": "Avatar Aang: The Last Airbender",
+      "year": 2026,
+      "rating": "9.2",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2F74iiUwzqe2BnRZl7QD4LVQUQKHb.jpg",
+      "sourcePage": "https://www.1tube.org/watch/980431",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:39:00",
+      "studio": "Nickelodeon Movies",
+      "views": "7K"
+    },
+    {
+      "id": "1tube-movie-1391021",
+      "tmdbId": "1391021",
+      "name": "Once Upon a Time in the Middle East",
+      "year": 2026,
+      "rating": "9.2",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2Fzr7om0GOLOcLo7SXMmNEG5rz6de.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1391021",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube"
+    },
+    {
+      "id": "1tube-movie-1632181",
+      "tmdbId": "1632181",
+      "name": "Accidental Partners",
+      "year": 2026,
+      "rating": "8.9",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2Fh19ZHvxGnpqSzm2JyHEwMhl7zRs.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1632181",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:50:00",
+      "studio": "Videocine",
+      "views": "0"
+    },
+    {
+      "id": "1tube-movie-1007757",
+      "tmdbId": "1007757",
+      "name": "Swapped",
+      "year": 2026,
+      "rating": "8.9",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FidSpi0uC5d1eulFxMrKI9iY2Qg8.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1007757",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:42:00",
+      "studio": "Skydance Animation",
+      "views": "1.1K"
+    },
+    {
+      "id": "1tube-movie-936075",
+      "tmdbId": "936075",
+      "name": "Michael",
+      "year": 2026,
+      "rating": "8.7",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FjoPZFstfdjpsuzlrnGeCbY0FuPS.jpg",
+      "sourcePage": "https://www.1tube.org/watch/936075",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:08:00",
+      "studio": "Lionsgate",
+      "views": "3.4K"
+    },
+    {
+      "id": "1tube-movie-687163",
+      "tmdbId": "687163",
+      "name": "Project Hail Mary",
+      "year": 2026,
+      "rating": "8.7",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FwLWvHcQz7N13DvSOTV7bHgwGXpT.jpg",
+      "sourcePage": "https://www.1tube.org/watch/687163",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:37:00",
+      "studio": "Lord Miller",
+      "views": "6.2K"
+    },
+    {
+      "id": "1tube-movie-1408162",
+      "tmdbId": "1408162",
+      "name": "Vishwanath & Sons",
+      "year": 2026,
+      "rating": "8.4",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2Fsd0RKOpnqESIWxU3sZwZhBsgAHl.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1408162",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube"
+    },
+    {
+      "id": "1tube-movie-278",
+      "tmdbId": "278",
+      "name": "The Shawshank Redemption",
+      "year": 1994,
+      "rating": "8.7",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FxXXFdqV965crlxCO3dj3PhtcCAf.jpg",
+      "sourcePage": "https://www.1tube.org/watch/278",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:22:00",
+      "studio": "Castle Rock Entertainment",
+      "views": "1.4K"
+    },
+    {
+      "id": "1tube-movie-238",
+      "tmdbId": "238",
+      "name": "The Godfather",
+      "year": 1972,
+      "rating": "8.7",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FAbgEQO2mneCSOc8CSnOMa8pBS8I.jpg",
+      "sourcePage": "https://www.1tube.org/watch/238",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:55:00",
+      "studio": "Paramount Pictures",
+      "views": "1.4K"
+    },
+    {
+      "id": "1tube-movie-1323244",
+      "tmdbId": "1323244",
+      "name": "Rage of Stars",
+      "year": 2026,
+      "rating": "4.8",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2Fz7lZgL5tzefTfhyRtouThFhsuUS.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1323244",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube"
+    },
+    {
+      "id": "1tube-movie-1375646",
+      "tmdbId": "1375646",
+      "name": "Colony",
+      "year": 2026,
+      "rating": "8.1",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FmXhgb6WzczIJPOJSlY2hhUZuwc7.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1375646",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:03:00",
+      "studio": "Wow Point",
+      "views": "9.6K"
+    },
+    {
+      "id": "1tube-movie-1284041",
+      "tmdbId": "1284041",
+      "name": "The Last House",
+      "year": 2026,
+      "rating": "6.9",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2F9wCrNgVcaOhS5jPK9B5reFIWvxh.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1284041",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:50:00",
+      "studio": "Chernin Entertainment",
+      "views": "11.4K"
+    },
+    {
+      "id": "1tube-movie-1339713",
+      "tmdbId": "1339713",
+      "name": "Obsession",
+      "year": 2026,
+      "rating": "8.2",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2Fe1qJyp8AE5ejXAaQjxWPTsWeTb.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1339713",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:49:00",
+      "studio": "Tea Shop Productions",
+      "views": "28.1K"
+    },
+    {
+      "id": "1tube-movie-1284465",
+      "tmdbId": "1284465",
+      "name": "The Death of Robin Hood",
+      "year": 2026,
+      "rating": "6.3",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FugOolHi7NNSoSclURMEcuMAIAl7.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1284465",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "2:03:00",
+      "studio": "Lyrical Media",
+      "views": "3.7K"
+    },
+    {
+      "id": "1tube-movie-1108427",
+      "tmdbId": "1108427",
+      "name": "Moana",
+      "year": 2026,
+      "rating": "6.1",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2F7gidpHWeWlnjJOgQQsQIxwJs2Pp.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1108427",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:55:00",
+      "studio": "Walt Disney Pictures",
+      "views": "4.5K"
+    },
+    {
+      "id": "1tube-movie-1212763",
+      "tmdbId": "1212763",
+      "name": "Evil Dead Burn",
+      "year": 2026,
+      "rating": "7.9",
+      "logo": "https://wsrv.nl/?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw780%2FviHFZ7GlzMcmPbADvP4Vd6Ema0g.jpg",
+      "sourcePage": "https://www.1tube.org/watch/1212763",
+      "categories": [
+        "Movies",
+        "1Tube"
+      ],
+      "sourceProvider": "1tube",
+      "duration": "1:50:00",
+      "studio": "New Line Cinema",
+      "views": "8.6K"
+    }
+  ]
+}

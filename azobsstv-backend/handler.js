@@ -953,18 +953,129 @@ function createAZOBSSTVHandler(options = {}) {
       const response = await fetch(url, { redirect: 'follow', ...options, signal: controller.signal });
       const body = await response.text();
       if (!response.ok) {
-        const err = new Error(`Mana-Mana API HTTP ${response.status}`);
+        const err = new Error(`Upstream API HTTP ${response.status}`);
         err.statusCode = response.status >= 400 && response.status < 500 ? response.status : 502;
         err.responseBody = body.slice(0, 400);
         throw err;
       }
       try { return JSON.parse(body); }
       catch (_) {
-        const err = new Error('Mana-Mana API returned invalid JSON');
+        const err = new Error('Upstream API returned invalid JSON');
         err.statusCode = 502;
         throw err;
       }
     } finally { clearTimeout(timer); }
+  }
+
+
+  // v1023: 1Tube public Movies discovery metadata.
+  // Metadata only: no player URL, media manifest, DRM token, cookie or account
+  // credential is fetched or returned by this integration.
+  const oneTubeMovieCache = { items: [], savedAt: 0, pages: 0 };
+  function oneTubeHeaders() {
+    return {
+      'Accept': 'application/json,text/plain,*/*',
+      'Accept-Language': 'en-MY,en;q=0.9',
+      'Referer': 'https://www.1tube.org/movies',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36'
+    };
+  }
+  function oneTubeArtwork(raw) {
+    const value = cleanText(raw, 1500);
+    if (!value) return '';
+    let target = value;
+    if (target.startsWith('/')) target = 'https://image.tmdb.org/t/p/w780' + target;
+    else if (!/^https?:\/\//i.test(target) && /\.(?:jpe?g|png|webp)(?:\?|$)/i.test(target)) target = 'https://image.tmdb.org/t/p/w780/' + target.replace(/^\/+/, '');
+    if (!/^https?:\/\//i.test(target)) return '';
+    // Mirror 1Tube's observed metadata-card image style via wsrv.nl.
+    if (/^https?:\/\/wsrv\.nl\//i.test(target)) return target;
+    if (/image\.tmdb\.org\//i.test(target)) return 'https://wsrv.nl/?url=' + encodeURIComponent(target);
+    return target;
+  }
+  function oneTubeMovieFromObject(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    const rawId = obj.id ?? obj.tmdbId ?? obj.tmdb_id ?? obj.movieId ?? obj.movie_id;
+    const id = cleanText(rawId, 40).replace(/[^0-9]/g, '');
+    const name = cleanText(obj.title ?? obj.name ?? obj.original_title ?? obj.originalTitle, 220);
+    if (!id || !name) return null;
+    const date = cleanText(obj.release_date ?? obj.releaseDate ?? obj.year ?? obj.first_air_date, 40);
+    const yearMatch = date.match(/(?:19|20)\d{2}/);
+    const ratingRaw = obj.vote_average ?? obj.voteAverage ?? obj.rating ?? obj.score ?? '';
+    let rating = cleanText(ratingRaw, 20);
+    if (rating) {
+      const n = Number(rating);
+      if (Number.isFinite(n)) rating = n.toFixed(1).replace(/\.0$/, '.0');
+    }
+    const artwork = oneTubeArtwork(obj.backdrop_path ?? obj.backdropPath ?? obj.poster_path ?? obj.posterPath ?? obj.backdrop ?? obj.poster ?? obj.image ?? obj.thumbnail);
+    const genres = [];
+    const rawGenres = Array.isArray(obj.genres) ? obj.genres : (Array.isArray(obj.genre_ids) ? obj.genre_ids : []);
+    for (const g of rawGenres) {
+      const label = cleanText(g && typeof g === 'object' ? (g.name ?? g.title ?? g.id) : g, 60);
+      if (label && !genres.includes(label)) genres.push(label);
+      if (genres.length >= 8) break;
+    }
+    return {
+      id: '1tube-movie-' + id,
+      tmdbId: id,
+      name,
+      year: yearMatch ? Number(yearMatch[0]) : null,
+      rating,
+      logo: artwork,
+      sourcePage: 'https://www.1tube.org/watch/' + encodeURIComponent(id),
+      categories: ['Movies', '1Tube', ...genres].slice(0, 10),
+      sourceProvider: '1tube'
+    };
+  }
+  function collectOneTubeMovies(payload) {
+    const out = [];
+    const seenObjects = new Set();
+    const seenIds = new Set();
+    function walk(value, depth = 0) {
+      if (value == null || depth > 5) return;
+      if (Array.isArray(value)) {
+        for (const row of value.slice(0, 1000)) walk(row, depth + 1);
+        return;
+      }
+      if (typeof value !== 'object' || seenObjects.has(value)) return;
+      seenObjects.add(value);
+      const movie = oneTubeMovieFromObject(value);
+      if (movie && !seenIds.has(movie.tmdbId)) { seenIds.add(movie.tmdbId); out.push(movie); }
+      for (const [key, child] of Object.entries(value)) {
+        if (['videos','streams','sources','servers','embeds','player','manifest','playback'].includes(String(key).toLowerCase())) continue;
+        if (child && (Array.isArray(child) || typeof child === 'object')) walk(child, depth + 1);
+      }
+    }
+    walk(payload, 0);
+    return out;
+  }
+  async function getOneTubeMovies(pageCount = 4, force = false) {
+    const pages = Math.max(1, Math.min(8, Number(pageCount) || 4));
+    if (!force && oneTubeMovieCache.items.length && oneTubeMovieCache.pages >= pages && Date.now() - oneTubeMovieCache.savedAt < 10 * 60_000) {
+      return { items: oneTubeMovieCache.items, pages: oneTubeMovieCache.pages, source: 'cache' };
+    }
+    const merged = [];
+    const seen = new Set();
+    const warnings = [];
+    for (let page = 1; page <= pages; page++) {
+      try {
+        const payload = await fetchJsonTimed('https://www.1tube.org/api/discover/movies?page=' + page, { method:'GET', headers:oneTubeHeaders() }, 15000);
+        const rows = collectOneTubeMovies(payload);
+        if (!rows.length) { warnings.push('page-' + page + '-empty'); break; }
+        for (const row of rows) {
+          if (!row.tmdbId || seen.has(row.tmdbId)) continue;
+          seen.add(row.tmdbId); merged.push(row);
+        }
+      } catch (err) {
+        warnings.push('page-' + page + ':' + cleanText(err && err.message, 120));
+        if (!merged.length) throw err;
+        break;
+      }
+    }
+    if (!merged.length) throw Object.assign(new Error('1Tube Movies metadata returned no catalogue items'), { statusCode: 502 });
+    oneTubeMovieCache.items = merged;
+    oneTubeMovieCache.savedAt = Date.now();
+    oneTubeMovieCache.pages = pages;
+    return { items: merged, pages, source: '1tube-discover-api', warnings };
   }
 
 
@@ -2144,6 +2255,22 @@ function createAZOBSSTVHandler(options = {}) {
         const target = getQueryParam(parsed, 'url');
         if (!target) { sendJson(res, 400, { ok:false, embeddable:false, reason:'url-required' }); return true; }
         sendJson(res, 200, await checkAnimeNanaEmbed(target), { 'Cache-Control':'public, max-age=300' });
+        return true;
+      }
+
+      if (pathname === '/api/azobsstv/1tube/movies' && req.method === 'GET') {
+        if (limited(req, res, 'azobsstv-1tube-movies', 180, 10 * 60 * 1000)) return true;
+        const pages = Math.max(1, Math.min(8, Number(getQueryParam(parsed, 'pages') || 4) || 4));
+        const force = getQueryParam(parsed, 'refresh') === '1';
+        const catalog = await getOneTubeMovies(pages, force);
+        sendJson(res, 200, {
+          ok: true,
+          source: catalog.source,
+          pages: catalog.pages,
+          count: catalog.items.length,
+          movies: catalog.items,
+          warning: Array.isArray(catalog.warnings) ? catalog.warnings.join('; ') : ''
+        }, { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=600' });
         return true;
       }
 
