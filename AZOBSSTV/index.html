@@ -7,12 +7,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AZOBSSTV | AZOBSS</title>
   <meta name="description" content="AZOBSSTV - Live TV, Movies, Anime, Radio, EPG, Favorites and M3U playlists in one web player.">
-  <link rel="manifest" href="./manifest.webmanifest?v=1025">
+  <link rel="manifest" href="./manifest.webmanifest?v=1026">
   <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636">
   <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
   <script src="/assets/js/azobss-more-nav.js?v=911" defer></script>
-  <link rel="stylesheet" href="./assets/azobsstv.css?v=1025">
+  <link rel="stylesheet" href="./assets/azobsstv.css?v=1026">
 </head>
 <body>
   <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -76,6 +76,31 @@
                 <div class="official-scroll-bridge official-scroll-bridge-right" data-official-scroll-bridge aria-hidden="true"></div>
                 <div class="official-scroll-bridge official-scroll-bridge-center-bottom" data-official-scroll-bridge aria-hidden="true"></div>
                 <button id="officialExpandHotspot" class="official-expand-hotspot" type="button" aria-label="Fit / extend player" aria-pressed="false" title="Expand player"></button>
+              </div>
+            </div>
+
+            <div id="radioPlayerPanel" class="radio-player-panel" hidden aria-live="polite">
+              <div id="radioPlayerBackdrop" class="radio-player-backdrop"></div>
+              <div class="radio-player-glow radio-player-glow-a"></div>
+              <div class="radio-player-glow radio-player-glow-b"></div>
+              <div class="radio-player-content">
+                <div class="radio-player-art-shell">
+                  <img id="radioPlayerArtwork" class="radio-player-artwork" alt="">
+                  <span class="radio-live-pill"><i></i> LIVE RADIO</span>
+                </div>
+                <div class="radio-player-copy">
+                  <span class="radio-player-kicker">AZOBSSTV RADIO</span>
+                  <h2 id="radioPlayerTitle">Radio</h2>
+                  <p id="radioPlayerProgram">Live broadcast</p>
+                  <div class="radio-equalizer" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                  </div>
+                  <div class="radio-player-actions">
+                    <button id="radioRestartBtn" class="radio-action radio-action-primary" type="button">↻ Restart Radio</button>
+                    <button id="radioStopBtn" class="radio-action" type="button">■ Stop</button>
+                  </div>
+                  <span class="radio-player-note">Today's Schedule is shown on the right.</span>
+                </div>
               </div>
             </div>
             <div id="animePlayerPanel" class="anime-player-panel" hidden>
@@ -153,6 +178,6 @@
   <script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script>
   <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
   <script src="/assets/js/azobss-pro-ui.js" defer></script>
-  <script src="./assets/azobsstv.js?v=1025" defer></script>
+  <script src="./assets/azobsstv.js?v=1026" defer></script>
 </body>
 </html>

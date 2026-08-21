@@ -1185,3 +1185,43 @@ body{padding-top:49px}
 /* v1024 — Mana-Mana Radio uses a full-page official iframe, not the TV crop. */
 #videoWrap.radio-mode #officialPlayerStage{background:#07101d}
 #videoWrap.radio-mode #officialPlayerFrame{border:0}
+
+
+/* v1026 — native AZOBSSTV Radio visual player + distinct station artwork. */
+.channel-card.radio-card{min-height:126px;padding:10px;background:linear-gradient(150deg,#111827,#0d1422)}
+.channel-card.radio-card .channel-logo{width:78px;height:78px;border-radius:18px;object-fit:cover;background:#07101c;box-shadow:0 9px 22px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08)}
+.channel-card.radio-card .channel-group{color:#86bfff}
+.channel-card.radio-card:hover .channel-logo{transform:scale(1.03)}
+@media(max-width:620px){.channel-card.radio-card .channel-logo{width:66px;height:66px;border-radius:16px}}
+
+/* Keep the provider page as a tiny cross-origin audio engine only. It is no longer
+   the visible Radio UI. The user sees the native panel below. */
+#videoWrap.radio-native-mode #officialPlayerPanel{display:block!important;position:absolute!important;inset:auto!important;left:-9999px!important;top:0!important;width:2px!important;height:2px!important;opacity:.001!important;overflow:hidden!important;pointer-events:none!important;z-index:1!important}
+#videoWrap.radio-native-mode #officialPlayerStage,#videoWrap.radio-native-mode #officialPlayerFrame{width:2px!important;height:2px!important;min-width:0!important;min-height:0!important;transform:none!important;overflow:hidden!important}
+
+.radio-player-panel{position:absolute;inset:0;z-index:7;overflow:hidden;background:radial-gradient(circle at 72% 20%,#1d2b55 0,#0b1020 38%,#050812 80%);isolation:isolate}
+.radio-player-panel[hidden]{display:none!important}
+.radio-player-backdrop{position:absolute;inset:-8%;background-size:cover;background-position:center;filter:blur(34px) saturate(1.35);opacity:.34;transform:scale(1.14);z-index:-3}
+.radio-player-panel:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,7,15,.92),rgba(5,10,21,.65) 53%,rgba(3,7,15,.82));z-index:-2}
+.radio-player-glow{position:absolute;width:34vw;height:34vw;min-width:280px;min-height:280px;border-radius:50%;filter:blur(55px);opacity:.20;z-index:-1;pointer-events:none}
+.radio-player-glow-a{right:-8%;top:-25%;background:#7c5cff}.radio-player-glow-b{left:18%;bottom:-48%;background:#ff2f61}
+.radio-player-content{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:44px;padding:34px 48px}
+.radio-player-art-shell{position:relative;width:min(31vw,290px);aspect-ratio:1;flex:none;border-radius:32px;padding:10px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.035));box-shadow:0 28px 60px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.16);backdrop-filter:blur(10px)}
+.radio-player-artwork{width:100%;height:100%;display:block;object-fit:cover;border-radius:24px;background:#08101d}
+.radio-live-pill{position:absolute;left:22px;bottom:22px;display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:rgba(6,10,19,.82);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:900;letter-spacing:.8px;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+.radio-live-pill i{width:8px;height:8px;border-radius:50%;background:#38e889;box-shadow:0 0 0 5px rgba(56,232,137,.12);animation:radioPulse 1.4s ease-in-out infinite}
+.radio-player-copy{min-width:0;width:min(520px,52%)}
+.radio-player-kicker{display:block;color:#ff7891;font-size:12px;font-weight:900;letter-spacing:2.2px;margin-bottom:8px}
+.radio-player-copy h2{margin:0;color:#fff;font-size:clamp(34px,4.1vw,62px);line-height:1.02;letter-spacing:-1.4px;text-shadow:0 10px 30px rgba(0,0,0,.35)}
+.radio-player-copy p{margin:13px 0 17px;color:#c7d4ec;font-size:15px;line-height:1.5;min-height:23px}
+.radio-equalizer{height:64px;display:flex;align-items:flex-end;gap:6px;margin:6px 0 19px}
+.radio-equalizer i{display:block;width:7px;height:18px;border-radius:8px;background:linear-gradient(180deg,#ff5b79,#9a5bff 55%,#4db5ff);box-shadow:0 0 15px rgba(124,92,255,.28);transform-origin:bottom;animation:radioBars .9s ease-in-out infinite alternate}
+.radio-equalizer i:nth-child(2n){animation-duration:.62s}.radio-equalizer i:nth-child(3n){animation-duration:1.05s}.radio-equalizer i:nth-child(4n){animation-delay:-.34s}.radio-equalizer i:nth-child(5n){animation-delay:-.58s}
+.radio-player-actions{display:flex;gap:10px;flex-wrap:wrap}
+.radio-action{border:1px solid #465875;background:rgba(10,17,31,.72);color:#fff;border-radius:11px;padding:10px 14px;font:inherit;font-size:13px;font-weight:850;cursor:pointer;backdrop-filter:blur(8px)}
+.radio-action:hover{background:#17243a}.radio-action-primary{background:#eef3fa;color:#08111f;border-color:#fff}.radio-action-primary:hover{background:#fff}
+.radio-player-note{display:block;margin-top:13px;color:#8290aa;font-size:11px}
+@keyframes radioBars{0%{height:13px}100%{height:59px}}
+@keyframes radioPulse{50%{opacity:.45;transform:scale(.82)}}
+@media(max-width:760px){.radio-player-content{padding:22px;gap:20px}.radio-player-art-shell{width:38vw;max-width:190px;border-radius:24px}.radio-player-artwork{border-radius:18px}.radio-player-copy{width:auto;flex:1}.radio-player-copy h2{font-size:clamp(27px,7vw,40px)}.radio-equalizer{height:44px;margin-bottom:12px}.radio-equalizer i{width:5px}.radio-player-note{display:none}}
+@media(max-width:520px){.radio-player-content{align-items:center;gap:14px;padding:17px}.radio-player-art-shell{width:34vw;padding:6px;border-radius:18px}.radio-player-artwork{border-radius:13px}.radio-live-pill{left:11px;bottom:11px;font-size:9px;padding:5px 7px}.radio-player-copy p{font-size:12px;margin:8px 0}.radio-equalizer{display:none}.radio-action{padding:8px 9px;font-size:11px}}
