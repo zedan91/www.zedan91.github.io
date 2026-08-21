@@ -1062,3 +1062,84 @@ body{padding-top:49px}
 /* v1015 Live TV A/V sync repair */
 .av-sync-btn{font-size:11px;font-weight:800;letter-spacing:-.2px}.av-sync-btn:disabled{opacity:.38;cursor:not-allowed}.av-sync-btn:not(:disabled):hover{transform:translateY(-1px)}
 \n/* v1019: full-page Movies portal inside the AZOBSSTV player. Unlike the Mana-Mana\n   Live TV crop, portal mode shows the provider page at 1:1 responsive size. */\n.video-wrap.portal-mode .official-player-stage{overflow:auto!important;background:#070a12}\n.video-wrap.portal-mode .official-player iframe{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;transform:none!important;overflow:auto!important;scrollbar-width:auto!important;background:#070a12}\n.video-wrap.portal-mode .official-player iframe::-webkit-scrollbar{display:auto!important;width:auto!important;height:auto!important}\n.video-wrap.portal-mode .official-scroll-bridge,.video-wrap.portal-mode #officialExpandHotspot{display:none!important}\n.portal-open-external{position:absolute;z-index:20;right:12px;top:12px;padding:8px 11px;border-radius:9px;border:1px solid #31435f;background:rgba(7,12,23,.86);color:#fff;text-decoration:none;font-size:12px;font-weight:700;backdrop-filter:blur(7px)}\n.portal-open-external:hover{background:#17233a}\n
+/* v1020 — native Movies catalogue. Third-party movie pages are not framed;
+   AZOBSSTV renders metadata/artwork cards and an in-app detail page. */
+.channel-grid.movie-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+.channel-grid.movie-grid .movie-card{
+  position:relative;
+  min-height:0;
+  padding:0;
+  display:block;
+  overflow:hidden;
+  background:#0e1625;
+}
+.channel-grid.movie-grid .movie-card .channel-logo{
+  width:100%;
+  height:auto;
+  aspect-ratio:16/9;
+  display:block;
+  border-radius:0;
+  object-fit:cover;
+  background:#080d17;
+}
+.channel-grid.movie-grid .movie-card .channel-logo.fallback{
+  aspect-ratio:16/9;
+  height:auto;
+  border:0;
+  border-radius:0;
+  font-size:24px;
+}
+.channel-grid.movie-grid .movie-card .channel-text{
+  padding:12px 42px 13px 13px;
+}
+.channel-grid.movie-grid .movie-card .channel-name{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  line-height:1.28;
+  min-height:2.56em;
+}
+.channel-grid.movie-grid .movie-card .channel-group{
+  white-space:normal;
+  color:#9fb1d2;
+  font-size:12px;
+}
+.channel-grid.movie-grid .movie-card .fav-mini{
+  position:absolute;
+  right:9px;
+  bottom:11px;
+  margin:0;
+  z-index:2;
+}
+.movie-detail-view{display:block}
+.movie-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 16px}
+.movie-source-link,.movie-watch-source{
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid #34425f;background:#172137;color:#fff;border-radius:10px;
+  padding:9px 13px;font:inherit;font-weight:800;text-decoration:none
+}
+.movie-source-link:hover,.movie-watch-source:hover{background:#22304b}
+.movie-detail-hero{
+  display:grid;grid-template-columns:minmax(280px,46%) minmax(0,1fr);gap:24px;
+  align-items:center;border:1px solid #293650;border-radius:18px;overflow:hidden;
+  background:linear-gradient(135deg,#0b1322,#111a2b);padding:18px
+}
+.movie-detail-art{min-width:0;border-radius:14px;overflow:hidden;background:#080d17;box-shadow:0 18px 45px #0008}
+.movie-detail-art img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.movie-detail-art-fallback{display:grid;place-items:center;aspect-ratio:16/9;background:#080d17;color:#ff6a82;font-size:30px;font-weight:900}
+.movie-detail-copy{min-width:0}
+.movie-detail-copy h2{font-size:clamp(26px,3vw,42px);line-height:1.12;margin:7px 0 12px}
+.movie-detail-copy p{color:#9fb1d2;line-height:1.6;max-width:720px}
+.movie-detail-meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.movie-detail-meta span{padding:6px 10px;border:1px solid #2d3a56;background:#151f32;border-radius:999px;color:#c7d5ef}
+.movie-detail-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.movie-watch-source{background:#e8edf7;color:#0a1020;border-color:#e8edf7}
+.movie-watch-source:hover{background:#fff}
+.movie-fav-btn{border:1px solid #34425f;background:#172137;color:#fff;border-radius:10px;padding:9px 13px;font:inherit;font-weight:800;cursor:pointer}
+.movie-fav-btn.active{color:#ff4967;border-color:#ff4967}
+@media(max-width:1100px){.channel-grid.movie-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:800px){.channel-grid.movie-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.movie-detail-hero{grid-template-columns:1fr}.movie-detail-art{max-width:720px}}
+@media(max-width:520px){.channel-grid.movie-grid{grid-template-columns:1fr}.movie-detail-head{align-items:stretch;flex-direction:column}.movie-source-link{width:100%}}

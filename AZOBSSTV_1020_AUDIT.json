@@ -1,0 +1,13 @@
+{
+  "version": "1.0.1020",
+  "scope": "AZOBSSTV Movies native catalogue",
+  "source": "user-supplied 7movies-inspector-homepage-1787324555993.json",
+  "movie_count": 22,
+  "playback_policy": "metadata/detail navigation only; no direct media extraction or framing bypass",
+  "checks": {
+    "javascript_syntax": "pass",
+    "catalog_json": "pass",
+    "service_worker_core": "pass",
+    "zip_integrity": "pass"
+  }
+}
