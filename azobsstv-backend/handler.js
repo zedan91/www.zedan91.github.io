@@ -992,6 +992,12 @@ function createAZOBSSTVHandler(options = {}) {
     if (/image\.tmdb\.org\//i.test(target)) return 'https://wsrv.nl/?url=' + encodeURIComponent(target);
     return target;
   }
+  const TMDB_MOVIE_GENRES = Object.freeze({
+    '28':'Action','12':'Adventure','16':'Animation','35':'Comedy','80':'Crime','99':'Documentary',
+    '18':'Drama','10751':'Family','14':'Fantasy','36':'History','27':'Horror','10402':'Music',
+    '9648':'Mystery','10749':'Romance','878':'Science Fiction','10770':'TV Movie','53':'Thriller',
+    '10752':'War','37':'Western'
+  });
   function oneTubeMovieFromObject(obj) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
     const rawId = obj.id ?? obj.tmdbId ?? obj.tmdb_id ?? obj.movieId ?? obj.movie_id;
@@ -1016,7 +1022,8 @@ function createAZOBSSTVHandler(options = {}) {
     const genres = [];
     const rawGenres = Array.isArray(obj.genres) ? obj.genres : (Array.isArray(obj.genre_ids) ? obj.genre_ids : []);
     for (const g of rawGenres) {
-      const label = cleanText(g && typeof g === 'object' ? (g.name ?? g.title ?? g.id) : g, 60);
+      const rawLabel = cleanText(g && typeof g === 'object' ? (g.name ?? g.title ?? g.id) : g, 60);
+      const label = /^\d+$/.test(rawLabel) ? (TMDB_MOVIE_GENRES[rawLabel] || '') : rawLabel;
       if (label && !genres.includes(label)) genres.push(label);
       if (genres.length >= 8) break;
     }
@@ -1028,7 +1035,7 @@ function createAZOBSSTVHandler(options = {}) {
       rating,
       logo: artwork,
       sourcePage: 'https://www.1tube.org/watch/' + encodeURIComponent(id),
-      categories: ['Movies', '1Tube', ...genres].slice(0, 10),
+      categories: genres.slice(0, 8),
       sourceProvider: '1tube'
     };
   }
