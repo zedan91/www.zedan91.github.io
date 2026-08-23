@@ -109,7 +109,15 @@ function applyLocalLiveArtwork(c){
   // station card is only used if the real/provider logo fails to load.
   // Live TV keeps the v1013 local-artwork persistence behaviour.
   if(String(c.kind||'').toLowerCase()==='radio'){
-    if(remote)return {...c,remoteLogo:remote,logo:remote,fallbackLogo:local};
+    const upgrade=String(c.remoteLogo||'').trim();
+    // v1037: preserve a background provider-logo resolver while the bundled
+    // station artwork is used for immediate first paint.
+    if(upgrade){
+      const primary=remote||local||artworkFallbackData(c.name,'LIVE RADIO','radio');
+      const failover=local&&local!==primary?local:'';
+      return {...c,logo:primary,remoteLogo:upgrade,fallbackLogo:failover};
+    }
+    if(remote)return {...c,remoteLogo:'',logo:remote,fallbackLogo:local&&local!==remote?local:''};
     if(local)return {...c,remoteLogo:'',logo:local,fallbackLogo:''};
     return c;
   }
@@ -339,18 +347,49 @@ async function startRadioAudio(c,{force=false}={}){
   clearRadioStreamCache(c);c.__radioPlaybackFailed=true;console.warn('AZOBSSTV radio playback failed:',last);setRadioPlayingUi(false,'This station is unavailable right now. Try Restart Radio or another station.');return false;
 }
 
+// v1037 — Artwork must never hold the UI hostage while a remote resolver is
+// sleeping. Cards get an immediate local/generated image and real provider
+// artwork is upgraded in the background when it becomes available.
+function artworkFallbackData(name='',subtitle='',kind='media'){
+  const label=String(name||'AZ').trim();
+  const words=label.split(/\s+/).filter(Boolean);
+  const initials=(words.slice(0,2).map(w=>w[0]).join('')||label.slice(0,2)||'AZ').toUpperCase().slice(0,3);
+  const hue=[...label].reduce((n,ch)=>(n*33+ch.charCodeAt(0))%360,215);
+  const h2=(hue+58)%360;
+  const safe=(v)=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+  const title=safe(initials),sub=safe(String(subtitle||kind||'').slice(0,26));
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="360" height="480" viewBox="0 0 360 480"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="hsl(${hue} 72% 42%)"/><stop offset="1" stop-color="hsl(${h2} 70% 24%)"/></linearGradient><radialGradient id="r" cx="70%" cy="20%" r="75%"><stop stop-color="rgba(255,255,255,.22)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect width="360" height="480" rx="34" fill="url(#g)"/><rect width="360" height="480" rx="34" fill="url(#r)"/><circle cx="180" cy="205" r="92" fill="rgba(5,10,24,.30)" stroke="rgba(255,255,255,.20)" stroke-width="3"/><text x="180" y="230" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="74" font-weight="900">${title}</text><text x="180" y="405" text-anchor="middle" fill="rgba(255,255,255,.9)" font-family="Arial,sans-serif" font-size="22" font-weight="700">${sub}</text></svg>`;
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
+function usableArtworkUrl(v){const s=String(v||'').trim();return s&&!/\/imgs\/poster\/no_poster\.jpg(?:\?|$)/i.test(s)?s:''}
+function hydrateRemoteArtwork(selector){
+  $$(selector).filter(x=>x.tagName==='IMG').forEach(img=>{
+    const remote=String(img.dataset.remoteLogo||'').trim();
+    if(!remote||remote===img.getAttribute('src')||img.dataset.azRemoteTried)return;
+    img.dataset.azRemoteTried='1';
+    const probe=new Image();probe.referrerPolicy='no-referrer';
+    let done=false;const timer=setTimeout(()=>{done=true;probe.src=''},6500);
+    probe.onload=()=>{if(done)return;done=true;clearTimeout(timer);if((probe.naturalWidth||0)>=24&&(probe.naturalHeight||0)>=24)img.src=remote};
+    probe.onerror=()=>{if(done)return;done=true;clearTimeout(timer)};
+    probe.src=remote;
+  });
+}
 function normalizeRadioOnlineRow(x,index=0){
   const slug=String(x?.slug||'').trim().replace(/^\/+|\/+$/g,'');
   const source=String(x?.officialUrl||x?.sourcePage||x?.url||'').trim();
   const url=source||((slug&&/^[a-z0-9][a-z0-9-]*$/i.test(slug))?`https://radio-online.my/${encodeURIComponent(slug)}`:'');
   const name=String(x?.name||x?.title||`Radio ${index+1}`).trim();
   if(!url||!name||!slug)return null;
-  const rawLogo=String(x?.logo||x?.image||'').trim();
+  const rawLogo=usableArtworkUrl(x?.logo||x?.image||'');
   const resolver=API_BASE+'/radio-online/logo?slug='+encodeURIComponent(slug);
-  const logo=rawLogo&&!/\/logo\.webp(?:\?|$)/i.test(rawLogo)?rawLogo:resolver;
   const fallbackLogo=String(x?.fallbackLogo||LOCAL_LIVE_ARTWORK[slug]||'').trim();
+  const directProviderLogo=rawLogo&&!/\/logo\.webp(?:\?|$)/i.test(rawLogo)?rawLogo:'';
+  // Use bundled station artwork immediately. The resolver is only an upgrade,
+  // never the first blocking image request.
+  const logo=directProviderLogo||fallbackLogo||artworkFallbackData(name,'LIVE RADIO','radio');
+  const remoteLogo=directProviderLogo?'':resolver;
   return{
-    name,logo,fallbackLogo,
+    name,logo,remoteLogo,fallbackLogo:directProviderLogo?fallbackLogo:'',
     id:String(x?.id||`radio-online-${slug}`).trim(),
     group:'Radio',kind:'radio',
     sourcePage:url,webOnly:false,mode:'official',officialUrl:url,altUrl:'',url,
@@ -365,7 +404,7 @@ function normalizeRadioOnlineRow(x,index=0){
 }
 async function loadRadioOnlineFallback(){
   try{
-    const data=await localJget('./data/radio-online-my-catalog.json?v=1036',8000);
+    const data=await localJget('./data/radio-online-my-catalog.json?v=1037',8000);
     const rows=Array.isArray(data?.items)?data.items:[];
     return rows.map(normalizeRadioOnlineRow).filter(Boolean).map(applyLocalLiveArtwork);
   }catch(e){console.warn('AZOBSSTV Radio-Online.my local fallback:',e?.message||e);return[]}
@@ -468,7 +507,7 @@ function ensureMovieCatalogPresent(){
 async function loadLocalMovieCatalog(){
   const embedded=embeddedMovieCatalog();
   try{
-    const data=await localJget('./data/movies-1tube-catalog.json?v=1036',3500);
+    const data=await localJget('./data/movies-1tube-catalog.json?v=1037',3500);
     const rows=normalizeMovieRows(data);
     return rememberMovieCatalog(rows.length?rows:embedded);
   }catch(e){
@@ -487,7 +526,26 @@ async function loadMovieCatalog(){
   const remote=await loadRemoteMovieCatalog();
   return remote.length?remote:await loadLocalMovieCatalog();
 }
-async function loadAnimeCatalog(){try{const data=await localJget('./data/anime-catalog.json?v=1036',8000);const rows=Array.isArray(data?.items)?data.items:[];return rows.map((x,index)=>{const url=String(x?.sourcePage||x?.url||'').trim();const name=String(x?.name||`Anime ${index+1}`).trim();const slug=String(x?.slug||'').trim();if(!url||!name)return null;const categories=Array.isArray(x?.categories)?x.categories.map(v=>String(v||'').trim()).filter(Boolean):[];const poster=slug?API_BASE+'/anime123/poster?slug='+encodeURIComponent(slug):String(x?.logo||'').trim();return{name,logo:poster,id:String(x?.id||x?.slug||`anime-${index+1}`).trim(),group:'Anime',kind:'series',categories,year:x?.year??null,rating:'',episodeCount:Number(x?.episodeCount||0)||0,episodeBase:String(x?.episodeBase||'').trim(),episodes:[],sourceProvider:String(x?.sourceProvider||'123animehub'),sourcePage:url,webOnly:true,mode:'web',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug,status:String(x?.status||''),animeType:String(x?.type||''),tags:Array.isArray(x?.tags)?x.tags:[]}}).filter(Boolean)}catch(e){console.warn('AZOBSSTV anime catalogue fallback:',e?.message||e);return[]}}
+async function loadAnimeCatalog(){
+  try{
+    const data=await localJget('./data/anime-catalog.json?v=1037',8000);
+    const rows=Array.isArray(data?.items)?data.items:[];
+    return rows.map((x,index)=>{
+      const url=String(x?.sourcePage||x?.url||'').trim();
+      const name=String(x?.name||`Anime ${index+1}`).trim();
+      const slug=String(x?.slug||'').trim();
+      if(!url||!name)return null;
+      const categories=Array.isArray(x?.categories)?x.categories.map(v=>String(v||'').trim()).filter(Boolean):[];
+      const bundled=usableArtworkUrl(x?.logo||'');
+      const generated=artworkFallbackData(name,x?.year?String(x.year):'ANIME','anime');
+      const posterResolver=slug?API_BASE+'/anime123/poster?slug='+encodeURIComponent(slug):'';
+      // Never start with a sleeping Render poster endpoint. Show bundled or
+      // generated artwork instantly, then upgrade to the real poster in background.
+      const logo=bundled||generated;
+      return{name,logo,remoteLogo:posterResolver,fallbackLogo:generated,id:String(x?.id||x?.slug||`anime-${index+1}`).trim(),group:'Anime',kind:'series',categories,year:x?.year??null,rating:'',episodeCount:Number(x?.episodeCount||0)||0,episodeBase:String(x?.episodeBase||'').trim(),episodes:[],sourceProvider:String(x?.sourceProvider||'123animehub'),sourcePage:url,webOnly:true,mode:'web',officialUrl:url,altUrl:'',url,headers:{userAgent:'',referer:'',origin:'',authorization:''},drm:{licenseType:'',licenseKey:''},slug,status:String(x?.status||''),animeType:String(x?.type||''),tags:Array.isArray(x?.tags)?x.tags:[]};
+    }).filter(Boolean);
+  }catch(e){console.warn('AZOBSSTV anime catalogue fallback:',e?.message||e);return[]}
+}
 function contentCategories(c){const own=Array.isArray(c?.categories)?c.categories.map(v=>String(v||'').trim()).filter(Boolean):[];if(own.length)return own;const group=String(c?.group||'').trim();return group?[group]:[]}
 function cardSubline(c){if(mediaType(c)==='series'){const bits=[];if(c?.year)bits.push(String(c.year));bits.push(...contentCategories(c).slice(0,3));return bits.join(' • ')||'Anime'}if(mediaType(c)==='movies'){const bits=[];if(c?.year)bits.push(String(c.year));if(c?.rating)bits.push('★ '+String(c.rating));return bits.join(' • ')||'Movie'}if(mediaType(c)==='radio'){const freq=String(c?.frequency||'').trim();return freq||'Radio Online Malaysia'}return String(c?.mode||'').toLowerCase()==='official'?'Official player':c?.webOnly?'Open source':'Direct'}
 function mediaType(c){const explicit=String(c?.kind||'').toLowerCase();if(['live','radio','movies','series'].includes(explicit))return explicit;const text=((c.group||'')+' '+(c.name||'')).toLowerCase();if(/\bradio\b|radio|fm\b/.test(text))return'radio';if(/series|siri|episode|episod|drama/.test(text))return'series';if(/movie|movies|vod|filem|cinema/.test(text))return'movies';return'live'}
@@ -500,8 +558,9 @@ function imageMarkup(c,cls,alt=''){
   const badge=channelBadgeText(c?.name);
   const src=String(c?.logo||'').trim();
   const fallbackLogo=String(c?.fallbackLogo||'').trim();
+  const remoteLogo=String(c?.remoteLogo||'').trim();
   if(!src)return `<div class="${cls} fallback">${esc(badge)}</div>`;
-  return `<img class="${cls}" loading="lazy" referrerpolicy="no-referrer" src="${esc(src)}" data-fallback-logo="${esc(fallbackLogo)}" data-fallback="${esc(badge)}" alt="${esc(alt)}">`;
+  return `<img class="${cls}" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="${esc(src)}" data-remote-logo="${esc(remoteLogo)}" data-fallback-logo="${esc(fallbackLogo)}" data-fallback="${esc(badge)}" alt="${esc(alt)}">`;
 }
 function bindImageFallbacks(selector){
   $$(selector).filter(x=>x.tagName==='IMG').forEach(img=>img.addEventListener('error',()=>{
@@ -521,6 +580,7 @@ function renderChannelRail(list=railListForCurrentView()){
   const items=Array.isArray(list)?list:[];if(count)count.textContent=String(items.length);
   rail.innerHTML=items.map((c,i)=>`<div class="channel-rail-card ${state.current&&state.current.url===c.url?'active':''}" role="listitem" data-rail-index="${i}" title="${esc(c.name)}">${imageMarkup(c,'channel-rail-logo','')}<div class="channel-rail-text"><div class="channel-rail-name">${esc(c.name)}</div></div><button class="channel-rail-fav ${state.favorites.has(channelKey(c))?'active':''}" type="button" data-rail-fav="${i}" aria-label="Favorite">♥</button></div>`).join('');
   bindImageFallbacks('#channelRailList img.channel-rail-logo');
+  hydrateRemoteArtwork('#channelRailList img.channel-rail-logo');
   [...rail.querySelectorAll('.channel-rail-card')].forEach(el=>el.addEventListener('click',e=>{const i=Number(el.dataset.railIndex),c=items[i];if(!c)return;if(e.target.closest('[data-rail-fav]')){toggleFav(c);e.stopPropagation();return}play(c)}));updateFavoriteAvailability();
 }
 function syncHeroSideHeight(){
@@ -581,6 +641,7 @@ function render(){
     return `<article class="${classes}" data-index="${i}">${img}<div class="channel-text"><div class="channel-name">${esc(c.name)}</div><div class="channel-group">${esc(cardSubline(c))}</div></div><button class="fav-mini ${state.favorites.has(channelKey(c))?'active':''}" data-fav="${i}" type="button" aria-label="Favorite">♥</button></article>`;
   }).join('');
   bindImageFallbacks('#channelGrid img.channel-logo');
+  hydrateRemoteArtwork('#channelGrid img.channel-logo');
   $$('.channel-card').forEach(el=>el.addEventListener('click',e=>{const i=Number(el.dataset.index);if(e.target.closest('[data-fav]')){toggleFav(list[i]);e.stopPropagation();return}play(list[i])}));
   renderChannelRail(list);updateFavoriteAvailability();
 }
@@ -1259,7 +1320,7 @@ async function loadPlaylist(url,name='AZOBSSTV Free'){
 
   if(isDefaultFree&& !parsed.length){
     try{
-      const raw=await localTextGet('./data/free.m3u?v=1036',5000);
+      const raw=await localTextGet('./data/free.m3u?v=1037',5000);
       parsed=parseM3U(raw).map(applyLocalLiveArtwork).map(c=>({...c,kind:'live'}));
       if(parsed.length){
         usedLocalFallback=true;
@@ -1326,7 +1387,7 @@ async function loadEpg(){const url=state.config?.epg_url;if(!url)return;try{cons
 function renderGuide(){renderChannelRail(state.channels.filter(c=>mediaType(c)==='live'));const rows=state.channels.filter(c=>mediaType(c)==='live').map(c=>({c,e:state.epg.get(c.id)||{}}));$('#channelGrid').hidden=true;$('#contentState').hidden=!!rows.length;$('#guideView').hidden=false;$('#guideView').innerHTML=rows.slice(0,800).map(x=>`<div class="guide-row"><div class="guide-channel">${esc(x.c.name)}</div><div class="guide-program"><strong>${esc(x.e.current?.title||'No EPG information')}</strong>${x.e.next?`<small>Next: ${esc(x.e.next.title)}</small>`:''}</div></div>`).join('')}
 function getInstallId(){let id=localStorage.getItem('azobsstv_install_id');if(!id){id=(crypto.randomUUID?crypto.randomUUID():'web-'+Date.now()+'-'+Math.random().toString(16).slice(2));localStorage.setItem('azobsstv_install_id',id)}return id}
 function extractUsername(raw){try{const u=new URL(raw);for(const k of ['username','user','login']){const v=u.searchParams.get(k);if(v)return v}if(u.username)return decodeURIComponent(u.username);const p=u.pathname;let m=p.match(/\/(?:player_api\.php|get\.php|panel_api\.php)\/([^/?\s]+)\/([^/?\s]+)/i);if(m)return decodeURIComponent(m[1]);m=p.match(/\/(?:live|movie|series)\/([^/?\s]+)\/([^/?\s]+)\//i);if(m)return decodeURIComponent(m[1])}catch{}return''}
-async function ping(reason){if(document.visibilityState==='hidden'&&reason==='heartbeat')return;const url=state.config?.device_ping_url||API_BASE+'/device/ping';const account=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');const source=account?.url||state.config?.free_playlist_url||'';const payload={device_id:getInstallId(),username:account?extractUsername(source):'free',account_name:account?.name||'AZOBSSTV Free',account_id:account?'custom':'free_azobsstv',time:Math.floor(Date.now()/1000),time_ms:Date.now(),reason,app_version:'1.0.1036',app_version_code:1036,device_model:navigator.userAgent.slice(0,180),android_release:''};try{await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),keepalive:true},15000)}catch{}}
+async function ping(reason){if(document.visibilityState==='hidden'&&reason==='heartbeat')return;const url=state.config?.device_ping_url||API_BASE+'/device/ping';const account=JSON.parse(localStorage.getItem('azobsstv_playlist')||'null');const source=account?.url||state.config?.free_playlist_url||'';const payload={device_id:getInstallId(),username:account?extractUsername(source):'free',account_name:account?.name||'AZOBSSTV Free',account_id:account?'custom':'free_azobsstv',time:Math.floor(Date.now()/1000),time_ms:Date.now(),reason,app_version:'1.0.1037',app_version_code:1037,device_model:navigator.userAgent.slice(0,180),android_release:''};try{await fetchWithTimeout(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload),keepalive:true},15000)}catch{}}
 function normalizeNotice(item,index){if(!item||typeof item!=='object')return null;const message=String(item.message??item.body??'').trim();if(!message)return null;return{id:String(item.id??item.uuid??index),title:String(item.title||'AZOBSSTV'),message,timestamp:Number(item.timestamp||item.time||Date.now())||Date.now()}}
 async function loadNotice(){if(document.visibilityState==='hidden')return;try{const data=await jget(state.config?.notification_url||API_BASE+'/notifications',30000);const raw=Array.isArray(data)?data:(Array.isArray(data.items)?data.items:[]);const items=raw.map(normalizeNotice).filter(Boolean);const item=items.at(-1);if(item){const last=localStorage.getItem('azobsstv_notice_last_id');$('#serverNotice').hidden=false;$('#serverNotice').innerHTML=`<strong>${esc(item.title)}</strong><span>${esc(item.message)}</span>`;if(last!==item.id)localStorage.setItem('azobsstv_notice_last_id',item.id)}else $('#serverNotice').hidden=true}catch{}}
 function startForegroundLoops(){if(state.heartbeatTimer)clearInterval(state.heartbeatTimer);if(state.noticeTimer)clearInterval(state.noticeTimer);state.heartbeatTimer=setInterval(()=>ping('heartbeat'),30000);state.noticeTimer=setInterval(loadNotice,60000)}
@@ -1475,7 +1536,7 @@ function replaceAnimeCatalog(anime,statusText=''){
   return true;
 }
 async function loadInstantLocalLive(){
-  const raw=await localTextGet('./data/free.m3u?v=1036',5000);
+  const raw=await localTextGet('./data/free.m3u?v=1037',5000);
   return parseM3U(raw).map(applyLocalLiveArtwork).map(c=>({...c,kind:'live'}));
 }
 
@@ -1619,5 +1680,5 @@ async function boot(){
 
   if(state.authUser)setTimeout(()=>loadCloudUserLibrary(false),80);
 }
-window.addEventListener('DOMContentLoaded',()=>{bindEnglishAZOBSSTVNavigation();bind();startHeroSideSync();boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=1036').catch(()=>{});if(document.visibilityState==='visible')startForegroundLoops()});
+window.addEventListener('DOMContentLoaded',()=>{bindEnglishAZOBSSTVNavigation();bind();startHeroSideSync();boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=1037').catch(()=>{});if(document.visibilityState==='visible')startForegroundLoops()});
 })();
