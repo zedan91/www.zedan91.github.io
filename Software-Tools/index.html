@@ -2,6 +2,8 @@
 
 <html>
 <head>
+<link rel="preconnect" href="https://azobss-backend.onrender.com" crossorigin>
+<link rel="dns-prefetch" href="//azobss-backend.onrender.com">
 <!-- AZOBSS favicon and app icons -->
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
@@ -6082,6 +6084,138 @@ function normalizeItem(item){
     return false;
   }
 
+  // v1039: pre-warm the Render backend before a Free Promo click.
+  // This is intentionally fire-and-forget: it must never delay page rendering.
+  const AZ_PROMO_WAKE_COOLDOWN_1039 = 45000;
+  let azPromoWakeLastAt1039 = 0;
+  let azPromoWakePromise1039 = null;
+
+  function azPromoApiBase1039(){
+    return (localStorage.getItem('azobssPremiumBackendUrl') || localStorage.getItem('azobssSoftwareStatsBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
+  }
+
+  function azWakePromoRender1039(reason, force){
+    const now = Date.now();
+    if(!force && (now - azPromoWakeLastAt1039) < AZ_PROMO_WAKE_COOLDOWN_1039){
+      return azPromoWakePromise1039 || Promise.resolve(false);
+    }
+    azPromoWakeLastAt1039 = now;
+    const apiBase = azPromoApiBase1039();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    azPromoWakePromise1039 = fetch(apiBase + '/health?azobssWake=1039&reason=' + encodeURIComponent(String(reason || 'warmup')) + '&t=' + now, {
+      method:'GET',
+      cache:'no-store',
+      credentials:'omit',
+      signal:controller.signal
+    }).then(() => true).catch(() => false).finally(() => {
+      clearTimeout(timer);
+      azPromoWakePromise1039 = null;
+    });
+    return azPromoWakePromise1039;
+  }
+
+  // Module scripts run after parsing, so this starts waking Render almost as soon as Software Tools opens.
+  setTimeout(() => { azWakePromoRender1039('software-tools-page-load', true); }, 120);
+
+  // If the visitor spends time browsing before downloading, refresh the warm state on intent.
+  document.addEventListener('pointerover', e => {
+    if(e.target?.closest?.('[data-azobss-promo-free="1"]')) azWakePromoRender1039('promo-hover', false);
+  }, {passive:true});
+  document.addEventListener('focusin', e => {
+    if(e.target?.closest?.('[data-azobss-promo-free="1"]')) azWakePromoRender1039('promo-focus', false);
+  });
+  document.addEventListener('touchstart', e => {
+    if(e.target?.closest?.('[data-azobss-promo-free="1"]')) azWakePromoRender1039('promo-touch', false);
+  }, {passive:true});
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') azWakePromoRender1039('tab-visible', false);
+  });
+
+  function azPromoPrepStatus1038(prepWindow, title, detail){
+    if(!prepWindow || prepWindow.closed) return;
+    try{
+      const d = prepWindow.document;
+      const t = d.getElementById('azPromoPrepTitle');
+      const m = d.getElementById('azPromoPrepDetail');
+      if(t && title) t.textContent = title;
+      if(m && detail) m.textContent = detail;
+    }catch(_e){}
+  }
+
+  async function azPromoFetchJson1038(url, options, timeoutMs){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), Math.max(1000, Number(timeoutMs || 20000)));
+    try{
+      const response = await fetch(url, {...(options || {}), signal:controller.signal, cache:'no-store'});
+      const raw = await response.text();
+      let result = {};
+      try{ result = raw ? JSON.parse(raw) : {}; }
+      catch(_e){ result = {ok:false,error:'Invalid backend response'}; }
+      return {response, result};
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  async function azPromoSecureLinkWithRetry1038(apiBase, requestOptions, prepWindow){
+    const endpoint = apiBase + '/api/premium/free-promo-download';
+    const timeouts = [20000, 30000];
+    let lastError = null;
+    for(let i=0;i<timeouts.length;i++){
+      azPromoPrepStatus1038(
+        prepWindow,
+        i === 0 ? 'Preparing secure download...' : 'Server is waking up...',
+        i === 0 ? 'Generating your private download link.' : 'Retrying automatically. Please wait...'
+      );
+      try{
+        const {response, result} = await azPromoFetchJson1038(endpoint, requestOptions, timeouts[i]);
+        if(!response.ok || !result.ok || !result.downloadUrl){
+          const error = new Error(result.error || ('Secure server returned HTTP ' + response.status));
+          error.noRetry = response.status >= 400 && response.status < 500 && response.status !== 408 && response.status !== 429;
+          throw error;
+        }
+        return result;
+      }catch(err){
+        lastError = err;
+        if(err?.noRetry) break;
+        if(i < timeouts.length - 1) await new Promise(resolve => setTimeout(resolve, 900));
+      }
+    }
+    if(lastError?.name === 'AbortError') throw new Error('Secure download server mengambil masa terlalu lama. Sila cuba semula selepas beberapa saat.');
+    throw lastError || new Error('Secure Free Promo link could not be generated.');
+  }
+
+  async function azRollbackPromoClaim1038(key, claimId){
+    if(!key || !claimId) return;
+    try{
+      const statsRef = doc(db, 'settings', 'softwareStats');
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(statsRef);
+        if(!snap.exists()) return;
+        const data = snap.data() || {};
+        const items = {...(data.items || {})};
+        const current = {...(items[key] || {})};
+        const claims = {...(current.claims || {})};
+        if(!claims[claimId]) return;
+        delete claims[claimId];
+        const nextCount = Math.max(0, Math.floor(Number(current.claimed ?? current.used ?? 0) || 0) - 1);
+        const remaining = Object.entries(claims).sort((a,b)=>Number(b[1]?.createdAtMs||0)-Number(a[1]?.createdAtMs||0));
+        const latest = remaining[0] || null;
+        const patch = {...current, claimed:nextCount, used:nextCount, claims, updatedAtMs:Date.now()};
+        if(String(current.lastClaimId || '') === claimId){
+          patch.lastClaimId = latest ? latest[0] : '';
+          patch.lastClaimUid = latest ? String(latest[1]?.uid || '') : '';
+          patch.lastClaimEmail = latest ? String(latest[1]?.email || '') : '';
+        }
+        items[key] = patch;
+        tx.update(statsRef, {items});
+      });
+    }catch(err){
+      console.warn('Promo free rollback failed:', err);
+    }
+  }
+
   async function azClaimPromoFreeDownload464(btn){
     if(!btn || btn.getAttribute('aria-disabled') === 'true') return;
     const productId = String(btn.dataset.productId || '').trim();
@@ -6116,13 +6250,17 @@ function normalizeItem(item){
       prepWindow = window.open('about:blank', '_blank');
       if(prepWindow){
         try{ prepWindow.opener = null; }catch(_e){}
-        prepWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Secure Download</title><style>body{font-family:Arial;background:#0f172a;color:#e5e7eb;display:grid;place-items:center;min-height:100vh;margin:0}.box{padding:28px;border:1px solid #334155;border-radius:18px;background:#111827;text-align:center}.spin{font-size:38px}.muted{color:#94a3b8}</style></head><body><div class="box"><div class="spin">⏳</div><h2>Preparing secure download...</h2><p class="muted">Please wait. Do not close this tab.</p></div></body></html>');
+        prepWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>AZOBSS Secure Download</title><style>body{font-family:Arial;background:#0f172a;color:#e5e7eb;display:grid;place-items:center;min-height:100vh;margin:0}.box{width:min(520px,84vw);padding:28px;border:1px solid #334155;border-radius:18px;background:#111827;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25)}.spin{font-size:38px}.muted{color:#94a3b8;line-height:1.5}.hint{margin-top:16px;color:#64748b;font-size:13px}</style></head><body><div class="box"><div class="spin">⏳</div><h2 id="azPromoPrepTitle">Preparing secure download...</h2><p class="muted" id="azPromoPrepDetail">Checking your promotional download...</p><p class="hint">If the secure server was asleep, AZOBSS will retry automatically.</p></div></body></html>');
         prepWindow.document.close();
       }
     }catch(_e){ prepWindow = null; }
 
     let nextClaimed = null;
+    const apiBase = azPromoApiBase1039();
+    // v1039: keep the click-time wake as a final safety net, but reuse the shared warm-up helper.
+    if(r2ObjectKey) azWakePromoRender1039('promo-click', true);
     try{
+      azPromoPrepStatus1038(prepWindow, 'Checking promo availability...', 'Verifying the remaining promotional unit.');
       const statsRef = doc(db, 'settings', 'softwareStats');
       await runTransaction(db, async tx => {
         const snap = await tx.get(statsRef);
@@ -6156,15 +6294,13 @@ function normalizeItem(item){
 
       let finalLink = directLink;
       if(r2ObjectKey){
+        azPromoPrepStatus1038(prepWindow, 'Preparing secure download...', 'Generating your private Cloudflare R2 download link.');
         const idToken = await authUser.getIdToken();
-        const apiBase = (localStorage.getItem('azobssPremiumBackendUrl') || localStorage.getItem('azobssSoftwareStatsBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
-        const response = await fetch(apiBase + '/api/premium/free-promo-download', {
+        const result = await azPromoSecureLinkWithRetry1038(apiBase, {
           method:'POST',
           headers:{'Content-Type':'application/json','Authorization':'Bearer ' + idToken},
           body:JSON.stringify({ productId, promoFreeKey:key, promoFreeBatchId:batchId, claimId, claimed:nextClaimed })
-        });
-        const result = await response.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-        if(!response.ok || !result.ok || !result.downloadUrl) throw new Error(result.error || 'Secure Free Promo link could not be generated.');
+        }, prepWindow);
         finalLink = String(result.downloadUrl || '').trim();
       }
       if(!/^https:\/\//i.test(finalLink)) throw new Error('Secure download URL is invalid.');
@@ -6177,6 +6313,9 @@ function normalizeItem(item){
       else window.location.href = finalLink;
       setTimeout(() => loadItems(), 450);
     }catch(err){
+      if(nextClaimed !== null && !String(err?.message || '').includes('PROMO_FREE_EXHAUSTED')){
+        await azRollbackPromoClaim1038(key, claimId);
+      }
       try{ if(prepWindow && !prepWindow.closed) prepWindow.close(); }catch(_e){}
       console.warn('Promo free claim failed:', err);
       if(String(err?.message || '').includes('PROMO_FREE_EXHAUSTED')){
