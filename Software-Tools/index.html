@@ -6095,28 +6095,49 @@ function normalizeItem(item){
   }
 
   function azWakePromoRender1039(reason, force){
+    // v1040: reuse the global cross-page wake helper when available.
+    // This prevents Home -> Software navigation from sending duplicate /health requests.
+    if(typeof window.azobssWakeRenderSmart1040 === 'function'){
+      return window.azobssWakeRenderSmart1040(String(reason || 'software-tools'), !!force);
+    }
     const now = Date.now();
-    if(!force && (now - azPromoWakeLastAt1039) < AZ_PROMO_WAKE_COOLDOWN_1039){
-      return azPromoWakePromise1039 || Promise.resolve(false);
+    const globalAttemptKey = 'azobssRenderWakeLastAttemptV1040';
+    const globalSuccessKey = 'azobssRenderWakeLastSuccessV1040';
+    if(!force){
+      let globalAttempt = 0, globalSuccess = 0;
+      try{
+        globalAttempt = Number(localStorage.getItem(globalAttemptKey) || 0) || 0;
+        globalSuccess = Number(localStorage.getItem(globalSuccessKey) || 0) || 0;
+      }catch(_e){}
+      if(globalSuccess && (now - globalSuccess) < (15 * 60 * 1000)) return Promise.resolve(false);
+      if(globalAttempt && (now - globalAttempt) < 45000) return Promise.resolve(false);
+      if((now - azPromoWakeLastAt1039) < AZ_PROMO_WAKE_COOLDOWN_1039){
+        return azPromoWakePromise1039 || Promise.resolve(false);
+      }
     }
     azPromoWakeLastAt1039 = now;
+    try{ localStorage.setItem(globalAttemptKey, String(now)); }catch(_e){}
     const apiBase = azPromoApiBase1039();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
-    azPromoWakePromise1039 = fetch(apiBase + '/health?azobssWake=1039&reason=' + encodeURIComponent(String(reason || 'warmup')) + '&t=' + now, {
+    azPromoWakePromise1039 = fetch(apiBase + '/health?azobssWake=1040&reason=' + encodeURIComponent(String(reason || 'warmup')) + '&t=' + now, {
       method:'GET',
       cache:'no-store',
       credentials:'omit',
       signal:controller.signal
-    }).then(() => true).catch(() => false).finally(() => {
+    }).then((res) => {
+      if(res && res.ok){ try{ localStorage.setItem(globalSuccessKey, String(Date.now())); }catch(_e){} return true; }
+      return false;
+    }).catch(() => false).finally(() => {
       clearTimeout(timer);
       azPromoWakePromise1039 = null;
     });
     return azPromoWakePromise1039;
   }
 
-  // Module scripts run after parsing, so this starts waking Render almost as soon as Software Tools opens.
-  setTimeout(() => { azWakePromoRender1039('software-tools-page-load', true); }, 120);
+  // v1040: page-load wake remains, but respects the global cross-page cooldown.
+  // If Home already woke Render, Software Tools will not immediately hit /health again.
+  setTimeout(() => { azWakePromoRender1039('software-tools-page-load', false); }, 120);
 
   // If the visitor spends time browsing before downloading, refresh the warm state on intent.
   document.addEventListener('pointerover', e => {
@@ -17101,5 +17122,6 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
 </style>
 
 <script type="module" src="/assets/js/azobss-price-display-global.js?v=593"></script>
+<script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body>
 </html>
