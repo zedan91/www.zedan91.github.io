@@ -4,6 +4,16 @@
 <head>
 <link rel="preconnect" href="https://azobss-backend.onrender.com" crossorigin>
 <link rel="dns-prefetch" href="//azobss-backend.onrender.com">
+<!-- AZOBSS v1043: start Firebase/CDN handshakes while the static shell is parsing -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+<link rel="dns-prefetch" href="//www.gstatic.com">
+<link rel="dns-prefetch" href="//firestore.googleapis.com">
+<link rel="dns-prefetch" href="//res.cloudinary.com">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js" crossorigin>
 <!-- AZOBSS favicon and app icons -->
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
@@ -15,6 +25,7 @@
 
 <meta charset="utf-8"/>
 <title>Software Tools | AZOBSS</title>
+<!-- AZOBSS v1043: Software Tools instant first-paint + staged catalogue hydration -->
 
 
 
@@ -3256,37 +3267,58 @@ html body .downloads-section{
 </div>
 <div class="software-category-card" aria-label="Software categories card">
 <div class="software-category-filter" id="softwareCategoryFilter" aria-label="Software category filter">
-  <div class="software-category-loading-473">Loading categories…</div>
+  <!-- AZOBSS v1043: static first-paint shell; module replaces it with live category data -->
+  <div class="software-category-group-nav-475" data-az-firstpaint-categories="1043">
+    <button type="button" class="software-category-all-btn-475 is-active" data-software-category="all" aria-pressed="true"><span class="software-category-group-label-475"><span aria-hidden="true">▦</span>All</span></button>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">⚙️</span>System &amp; Maintenance</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🌐</span>Internet &amp; Communication</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🎨</span>Creative &amp; Media</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">📚</span>Business &amp; Productivity</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🧑‍💻</span>Developer &amp; Technical</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🔐</span>Security &amp; Privacy</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+    <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🧭</span>Engineering &amp; Specialist</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
+  </div>
 </div>
 </div>
 
 <div class="downloads-grid" id="softwareDownloadsGrid">
 
 </div>
-<script id="az-software-fast-first-paint-cache-464">
+<style id="az-software-first-paint-skeleton-1043">
+.az-software-skeleton-1043{min-height:410px;border:1px solid rgba(34,197,94,.18);border-radius:19px;background:linear-gradient(110deg,rgba(15,23,42,.96) 8%,rgba(30,41,59,.96) 18%,rgba(15,23,42,.96) 33%);background-size:220% 100%;animation:azSoftwareSkeleton1043 1.15s linear infinite;padding:18px;box-sizing:border-box}
+.az-software-skeleton-1043:before,.az-software-skeleton-1043:after{content:"";display:block;background:rgba(148,163,184,.14);border-radius:12px}
+.az-software-skeleton-1043:before{width:74px;height:74px;margin:0 auto 25px}
+.az-software-skeleton-1043:after{width:82%;height:18px;margin:0 auto;box-shadow:0 38px 0 rgba(148,163,184,.11),0 76px 0 rgba(148,163,184,.09),0 114px 0 rgba(148,163,184,.08),0 190px 0 8px rgba(34,197,94,.08)}
+@keyframes azSoftwareSkeleton1043{to{background-position:-220% 0}}
+@media(max-width:640px){.az-software-skeleton-1043{min-height:360px}}
+@media(prefers-reduced-motion:reduce){.az-software-skeleton-1043{animation:none}}
+</style>
+<script id="az-software-fast-first-paint-cache-1043">
 (function(){
-  var CACHE_KEY='azobss_software_fast_card_html_v464';
+  var CACHE_KEY='azobss_software_fast_card_html_v1043';
   var MAX_AGE=48*60*60*1000;
   var grid=document.getElementById('softwareDownloadsGrid');
   if(!grid) return;
-  /* AZOBSS 530: a shared-product URL must never display an older cached card.
-     Wait for the current renderItem() template so shared and normal links match. */
+  var sharedProduct='';
   try{
-    var sharedParams530=new URLSearchParams(location.search||'');
-    var sharedProduct530=String(sharedParams530.get('p')||sharedParams530.get('product')||sharedParams530.get('productId')||sharedParams530.get('id')||'').trim();
-    if(sharedProduct530){
-      try{ localStorage.removeItem(CACHE_KEY); }catch(_cacheRemoveErr530){}
-      return;
-    }
-  }catch(_sharedCacheErr530){}
-  try{
-    var raw=localStorage.getItem(CACHE_KEY);
-    if(!raw) return;
-    var saved=JSON.parse(raw);
-    if(!saved || !saved.html || !saved.savedAt || (Date.now()-Number(saved.savedAt)>MAX_AGE)) return;
-    grid.innerHTML=String(saved.html);
-    grid.setAttribute('data-az-fast-cache','1');
+    var params=new URLSearchParams(location.search||'');
+    sharedProduct=String(params.get('p')||params.get('product')||params.get('productId')||params.get('id')||'').trim();
   }catch(_e){}
+  if(!sharedProduct){
+    try{
+      var raw=localStorage.getItem(CACHE_KEY);
+      if(raw){
+        var saved=JSON.parse(raw);
+        if(saved && saved.html && saved.savedAt && (Date.now()-Number(saved.savedAt)<=MAX_AGE)){
+          grid.innerHTML=String(saved.html);
+          grid.setAttribute('data-az-fast-cache','1');
+          return;
+        }
+      }
+    }catch(_cacheErr){}
+  }
+  grid.innerHTML='<div class="az-software-skeleton-1043" aria-hidden="true"></div>'.repeat(4);
+  grid.setAttribute('data-az-skeleton','1');
 })();
 </script>
 </div>
@@ -3572,7 +3604,7 @@ html body .downloads-section{
 
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-  import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+  import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, limit, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
   import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
   const firebaseConfig = {
@@ -3591,8 +3623,8 @@ html body .downloads-section{
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v555';
-  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=491';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v1043';
+  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=1043';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -5211,7 +5243,7 @@ function normalizeItem(item){
   function loadLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]').map(normalizeItem); } catch(e){ return []; } }
   async function loadBundledSoftwareDirectory470(){
     try{
-      const response=await fetch(SOFTWARE_BUNDLED_DIRECTORY_URL_470,{cache:'no-store'});
+      const response=await fetch(SOFTWARE_BUNDLED_DIRECTORY_URL_470,{cache:'force-cache'});
       if(!response.ok) throw new Error('HTTP '+response.status);
       const payload=await response.json();
       return normalizeImportedSoftwarePayload(payload).map(item=>normalizeItem({...item,bundledDirectory:true,directorySource:'AZOBSS bundled official directory'}));
@@ -5239,9 +5271,12 @@ function normalizeItem(item){
     });
     return dedupeSoftwareItems([...live,...additions]);
   }
-  async function loadFirestore(){
+  async function loadFirestore(maxItems=0){
     try{
-      const snap = await getDocs(query(collection(db, SOFTWARE_COLLECTION), orderBy('createdAt','desc')));
+      const baseQuery = maxItems > 0
+        ? query(collection(db, SOFTWARE_COLLECTION), orderBy('createdAt','desc'), limit(maxItems))
+        : query(collection(db, SOFTWARE_COLLECTION), orderBy('createdAt','desc'));
+      const snap = await getDocs(baseQuery);
       return snap.docs.map(d => normalizeItem({__docId:d.id, ...d.data()}));
     }catch(err){
       console.warn('Software items Firestore load skipped:', err);
@@ -5253,6 +5288,12 @@ function normalizeItem(item){
   function saveFastSoftwareCardHtml464(){
     if(!grid) return;
     try{
+      const sharedTarget = azSharedSoftwareTarget530();
+      const isDefaultBrowse = !sharedTarget &&
+        selectedSoftwareCategory === 'all' && selectedSoftwarePlatform === 'all' && selectedSoftwareType === 'all' &&
+        selectedSoftwareOwnerFilter !== 'mine' && !String(searchInput?.value || '').trim() &&
+        String(sortSelect?.value || 'newest') === 'newest';
+      if(!isDefaultBrowse) return;
       const cards = Array.from(grid.querySelectorAll(':scope > .download-card'))
         .filter(card => String(card.dataset.status || 'active').toLowerCase() !== 'draft')
         .slice(0, 8)
@@ -5631,17 +5672,10 @@ function normalizeItem(item){
     }
   }
   let azSoftwareLoadSequence463 = 0;
-  async function loadItems(){
-    if(!grid) return;
-    const loadSequence = ++azSoftwareLoadSequence463;
-
-    // Start both requests together, but do not block the first real card paint on stats.
-    const statsPromise = azPrefetchSoftwareStatsForFirstPaint290();
-    const [remoteItems,bundledItems470] = await Promise.all([loadFirestore(),loadBundledSoftwareDirectory470()]);
-    if(loadSequence !== azSoftwareLoadSequence463) return;
-
-    softwareBundledDirectoryItems470 = bundledItems470;
-    softwareDynamicItems = mergeSoftwareDirectorySources470(remoteItems,loadLocal(),bundledItems470);
+  function azApplySoftwareData1043(remoteItems,bundledItems470,loadSequence,saveFastCache=false){
+    if(loadSequence !== azSoftwareLoadSequence463) return false;
+    softwareBundledDirectoryItems470 = bundledItems470 || [];
+    softwareDynamicItems = mergeSoftwareDirectorySources470(remoteItems || [],loadLocal(),bundledItems470 || []);
     softwareDynamicDataRevision482++;
     softwareVirtualSignature491='';
     softwareVirtualPage491=1;
@@ -5649,13 +5683,48 @@ function normalizeItem(item){
     softwareCategoryStatsCache482 = null;
     syncSoftwareDirectoryCategories470();
     applySoftwareFilters();
+    grid.removeAttribute('data-az-skeleton');
     try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
+    if(saveFastCache){
+      requestAnimationFrame(()=>{
+        if(loadSequence === azSoftwareLoadSequence463) saveFastSoftwareCardHtml464();
+      });
+    }
+    return true;
+  }
+  async function loadItems(){
+    if(!grid) return;
+    const loadSequence = ++azSoftwareLoadSequence463;
+
+    // v1043: statistics start in parallel, but the first 12 newest Firestore
+    // records are the only network dependency for the first real card paint.
+    const statsPromise = azPrefetchSoftwareStatsForFirstPaint290();
+    const firstRemoteItems = await loadFirestore(12);
+    if(loadSequence !== azSoftwareLoadSequence463) return;
+
+    const hasFastItems = firstRemoteItems.length || loadLocal().length;
+    if(hasFastItems){
+      azApplySoftwareData1043(firstRemoteItems,[],loadSequence,true);
+    }
+
+    // Load the complete catalogue only after the first useful paint. This keeps
+    // the ~900 KB bundled directory and full Firestore query off the critical path.
+    const hydrateFullCatalogue1043 = async () => {
+      const [remoteItems,bundledItems470] = await Promise.all([loadFirestore(),loadBundledSoftwareDirectory470()]);
+      if(loadSequence !== azSoftwareLoadSequence463) return;
+      azApplySoftwareData1043(remoteItems,bundledItems470,loadSequence,true);
+    };
+    if(typeof window.requestIdleCallback === 'function'){
+      window.requestIdleCallback(()=>hydrateFullCatalogue1043().catch(()=>{}),{timeout:650});
+    }else{
+      setTimeout(()=>hydrateFullCatalogue1043().catch(()=>{}),0);
+    }
 
     // Refresh counts/rating/promo quota after stats arrive without delaying cards.
     statsPromise.then(() => {
       if(loadSequence !== azSoftwareLoadSequence463) return;
       softwareStatsDomRefreshNeeded483 = true;
-      applySoftwareFilters();
+      if(hasFastItems) applySoftwareFilters();
       try{ window.azobssSoftwareStatsSingleSync290 && window.azobssSoftwareStatsSingleSync290(); }catch(e){}
     }).catch(() => {});
   }
