@@ -10406,6 +10406,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 
 
   const BM_SBM_BACKEND_BASE = 'https://azobss-backend.onrender.com/api/download-stesen-tanda-aras';
+  const BM_SBM_LIVE_SEARCH_API = 'https://azobss-backend.onrender.com/api/stesen-tanda-aras';
 
   function buildBenchmarkDownloadUrl(productId, jenis){
     productId = String(productId || '').trim();
@@ -10508,7 +10509,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       url: item.downloadUrl || '',
       downloadUrl: item.downloadUrl || '',
       azobssCartValidated: true,
-      azobssCartValidatedBy: 'local-stesen-tanda-aras-json'
+      azobssCartValidatedBy: item.source === 'jupem-live' ? 'jupem-live-fallback' : 'full-local-stesen-tanda-aras-json'
     }));
   }
 
@@ -10740,7 +10741,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 
   async function loadBenchmarkDb(){
     if (benchmarkDbCache) return benchmarkDbCache;
-    const response = await fetch('/stesen-tanda-aras-records.json?v=20260817-json-repair-939', { cache: 'no-store' });
+    const response = await fetch('/stesen-tanda-aras-records.json?v=20260826-full-bm-sbm-live-fallback-1041', { cache: 'no-store' });
     if (!response.ok) {
       throw new Error('Database BM/SBM tidak dijumpai. Pastikan /stesen-tanda-aras-records.json ada dalam GitHub root.');
     }
@@ -10772,6 +10773,46 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       locationUrl: item.locationUrl || buildBenchmarkLocationUrl(productId, jenis),
       downloadUrl: productId ? buildBenchmarkDownloadUrl(productId, jenis) : ''
     };
+  }
+
+  function normalizeBenchmarkLiveRow(item){
+    item = item || {};
+    const productId = String(item.productId || item.id || '').trim();
+    const jenis = String(item.jenis || (item.product === 'SBM' ? '2' : wantedJenis())) === '2' ? '2' : '1';
+    return {
+      id: productId, productId, jenis, product: jenis === '2' ? 'SBM' : 'BM',
+      stationNo: item.stationNo || item.stesen || '', stesen: item.stesen || item.stationNo || '',
+      negeri: item.negeri || stateEl.value || '', daerah: item.daerah || '', bandar: item.bandar || '', huraian: item.huraian || '',
+      harga: 'RM3', latitude:item.latitude, longitude:item.longitude,
+      locationUrl: item.locationUrl || '',
+      downloadUrl: productId ? buildBenchmarkDownloadUrl(productId, jenis) : '',
+      source: 'jupem-live'
+    };
+  }
+  async function searchBenchmarkLiveFallback(options){
+    options = options || {};
+    const product = wantedJenis() === '2' ? 'SBM' : 'BM';
+    const state = String(stateEl.value || '').trim();
+    const query = String(options.query != null ? options.query : searchEl.value || '').trim();
+    if (!state) return [];
+    const params = new URLSearchParams({ produk:product, negeri:state });
+    if (query) params.set('q',query);
+    const controller = new AbortController();
+    const timer = setTimeout(function(){ controller.abort(); }, 18000);
+    try {
+      const response = await fetch(`${BM_SBM_LIVE_SEARCH_API}?${params.toString()}`, { cache:'no-store', signal:controller.signal });
+      if (!response.ok) throw new Error(`JUPEM live HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data || data.ok !== true || !Array.isArray(data.results)) return [];
+      return data.results.map(normalizeBenchmarkLiveRow).filter(function(row){ return row.stationNo || row.productId; });
+    } finally { clearTimeout(timer); }
+  }
+  function exactBenchmarkFromRows(rows, raw){
+    const plain=normalizeBenchmarkText(raw), normalized=normalizeBenchmarkQuery(raw), state=normalizeBenchmarkText(stateEl.value), jenis=wantedJenis();
+    return (Array.isArray(rows)?rows:[]).find(function(row){
+      const station=normalizeBenchmarkText(row.stationNo || row.stesen), rowState=normalizeBenchmarkText(row.negeri), rowJenis=String(row.jenis || (row.product==='SBM'?'2':'1'));
+      return rowJenis===jenis && (!state || !rowState || rowState===state) && (station===plain || station===normalized);
+    }) || null;
   }
 
   function searchBenchmarkDb(data){
@@ -10835,8 +10876,13 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       if (label) label.textContent = `Checking ${product}...`;
       setBenchmarkQuickStatus(`Checking ${product} ${raw.toUpperCase()} availability. Please wait...`, 'checking');
       const db = await loadBenchmarkDb();
-      const row = findExactBenchmarkRow(db);
-      if (!row) {
+      let row = findExactBenchmarkRow(db);
+      if (!row || !row.productId) {
+        setBenchmarkQuickStatus(`${product} tidak ditemui dalam database tempatan. Sedang semak JUPEM live...`, 'checking');
+        const liveRows = await searchBenchmarkLiveFallback({ query:raw });
+        row = exactBenchmarkFromRows(liveRows, raw) || row;
+      }
+      if (!row || !row.productId) {
         const unavailable = new Error(`${product} station ${raw.toUpperCase()} is not available in ${stateEl.value}.`);
         unavailable.isUnavailable = true;
         throw unavailable;
@@ -10903,9 +10949,20 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     if (searchBtn) searchBtn.disabled = true;
     try {
       const db = await loadBenchmarkDb();
-      const rows = searchBenchmarkDb(db).map(function(row, index){
-        return { ...row, _sourceIndex: index };
-      });
+      let rows = searchBenchmarkDb(db);
+      let usedLiveFallback = false;
+      if (!rows.length) {
+        if (statusEl) statusEl.textContent = 'Tiada rekod dalam database tempatan. Sedang semak JUPEM live...';
+        try { rows = await searchBenchmarkLiveFallback(); usedLiveFallback = rows.length > 0; }
+        catch (liveError) { console.warn('[AZOBSS BM/SBM] JUPEM live fallback failed:', liveError); }
+      } else if (String(searchEl.value || '').trim() && rows.some(function(row){ return !row.productId; })) {
+        try {
+          const liveRows = await searchBenchmarkLiveFallback();
+          const liveMap = new Map(liveRows.map(function(row){ return [normalizeBenchmarkText(row.stationNo || row.stesen)+'|'+normalizeBenchmarkText(row.negeri),row]; }));
+          rows = rows.map(function(row){ return row.productId ? row : (liveMap.get(normalizeBenchmarkText(row.stationNo || row.stesen)+'|'+normalizeBenchmarkText(row.negeri)) || row); });
+        } catch (liveError) {}
+      }
+      rows = rows.map(function(row,index){ return { ...row, _sourceIndex:index }; });
       benchmarkAllRows = rows.slice();
       if (generalSearchEl) {
         generalSearchEl.value = '';
@@ -10914,8 +10971,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
       renderResults(rows, 1);
       if (statusEl) {
         statusEl.textContent = rows.length
-          ? `${rows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui`
-          : 'Tiada rekod BM/SBM ditemui';
+          ? `${rows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui${usedLiveFallback ? ' (JUPEM live)' : ''}`
+          : 'Tiada rekod BM/SBM ditemui dalam database tempatan atau JUPEM live';
       }
     } catch (error) {
       resetBenchmarkResults();

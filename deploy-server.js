@@ -7292,35 +7292,66 @@ function absolutizeJupemUrl(rawUrl) {
   return 'https://ebiz.jupem.gov.my/' + rawUrl.replace(/^\/+/, '');
 }
 
-function parseBenchmarkRows(html, produkFallback, negeriFallback) {
+function azobssBenchmarkProductIdFromRowHtml(rowHtml) {
+  const source = String(rowHtml || "");
+  const patterns = [
+    /MuatTurunStesenTandaAras\/(\d{1,20})/i,
+    /PetaInteraktif\?[^"'<>]*\bno=(\d{1,20})/i,
+    /(?:data-product-id|data-productid|productId|productid|data-id)\s*=\s*["']?(\d{1,20})/i,
+    /(?:Tambah|Troli|Cart)[^(]{0,80}\([^)]{0,300}?["']?(\d{1,20})["']?/i
+  ];
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (match && match[1]) return String(match[1]);
+  }
+  return "";
+}
+function azobssBenchmarkTextKey(value) {
+  return String(value || "").trim().toUpperCase().replace(/\s+/g, "");
+}
+function parseBenchmarkRows(html, produkFallback, negeriFallback, searchFallback = "") {
   const rows = [];
+  const seen = new Set();
+  const wantedJenis = String(produkFallback || "").toUpperCase() === "SBM" ? "2" : "1";
+  const wantedProduct = wantedJenis === "2" ? "SBM" : "BM";
+  const wantedState = azobssBenchmarkTextKey(negeriFallback);
+  const wantedSearch = azobssBenchmarkTextKey(searchFallback);
   const tableRowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   let rowMatch;
-  while ((rowMatch = tableRowPattern.exec(html))) {
+  while ((rowMatch = tableRowPattern.exec(String(html || "")))) {
     const rowHtml = rowMatch[1];
-    const cellMatches = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)];
-    if (cellMatches.length < 5) continue;
-    const cells = cellMatches.map(item => stripHtml(item[1]));
-    const joined = cells.join(' ').toLowerCase();
-    if (joined.includes('no. stesen') || joined.includes('tambah ke troli')) continue;
-
-    const linkMatch = rowHtml.match(/href=["']([^"']*(?:Lokasi|Peta|Map|Koordinat|location)[^"']*)["']/i) || rowHtml.match(/href=["']([^"']*)["']/i);
-    const stationNo = cells[1] || cells[0] || '';
-    if (!stationNo || /^no\.?$/i.test(stationNo)) continue;
-
-    rows.push({
-      product: produkFallback,
-      stationNo,
-      negeri: cells[2] || negeriFallback,
-      daerah: cells[3] || '',
-      bandar: cells[4] || '',
-      huraian: cells[5] || '',
-      harga: cells[6] || '',
-      locationUrl: linkMatch ? absolutizeJupemUrl(linkMatch[1]) : '',
-      raw: cells
-    });
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(item => stripHtml(item[1]));
+    if (cells.length < 3) continue;
+    const joinedPlain = cells.join(" ").trim();
+    const joinedKey = azobssBenchmarkTextKey(joinedPlain);
+    if (!joinedPlain || /NO\.?\s*STESEN|TAMBAH\s+KE\s+TROLI/i.test(joinedPlain)) continue;
+    let stationNo = cells[1] || cells[0] || "";
+    if (/^\d+\.?$/.test(String(stationNo).trim()) && cells[2]) stationNo = cells[2];
+    if (!stationNo || /^NO\.?$/i.test(stationNo)) continue;
+    const productId = azobssBenchmarkProductIdFromRowHtml(rowHtml);
+    let stateCandidate = cells[2] || negeriFallback || "";
+    if (azobssBenchmarkTextKey(stateCandidate) === azobssBenchmarkTextKey(stationNo) && cells[3]) stateCandidate = cells[3];
+    const stateKey = azobssBenchmarkTextKey(stateCandidate);
+    if (wantedState && stateKey && stateKey !== wantedState && !joinedKey.includes(wantedState)) continue;
+    if (wantedSearch && !joinedKey.includes(wantedSearch)) continue;
+    const hrefMatch = rowHtml.match(/href=["']([^"']*(?:PetaInteraktif|Lokasi|Peta|Map|Koordinat|location)[^"']*)["']/i);
+    const locationUrl = productId
+      ? `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(productId)}&type=${wantedJenis === "2" ? "bmpiawai" : "bm"}&c=pt`
+      : (hrefMatch ? absolutizeJupemUrl(hrefMatch[1]) : "");
+    const row = {
+      product:wantedProduct, jenis:wantedJenis, productId, id:productId,
+      stationNo, stesen:stationNo, negeri:stateCandidate || negeriFallback || "",
+      daerah:cells[3] || "", bandar:cells[4] || "", huraian:cells[5] || "", harga:"3",
+      locationUrl,
+      downloadUrl: productId ? `https://azobss-backend.onrender.com/api/download-stesen-tanda-aras?productId=${encodeURIComponent(productId)}&jenis=${wantedJenis}` : "",
+      source:"jupem-live"
+    };
+    const key=[wantedJenis,productId || azobssBenchmarkTextKey(stationNo),azobssBenchmarkTextKey(row.negeri)].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key); rows.push(row);
+    if (rows.length >= 1000) break;
   }
-  return rows.slice(0, 60);
+  return rows;
 }
 
 const AZOBSS_JUPEM_LOT_STATE_CODES = Object.freeze({
@@ -16512,6 +16543,7 @@ async function handler(req, res) {
       pathname === "/api/stesen-tanda-aras" &&
       req.method === "GET"
     ) {
+      if (azRateLimitOrSend(req, res, "jupem-benchmark-live-search", 60, 60 * 1000)) return;
       const produk = cleanBenchmarkProduct(parsed.query.produk);
       const negeri = cleanState(parsed.query.negeri);
       const q = cleanSearch(parsed.query.q || parsed.query.carian);
@@ -16555,7 +16587,7 @@ async function handler(req, res) {
           }
 
           const html = await response.text();
-          const results = parseBenchmarkRows(html, produk, negeri);
+          const results = parseBenchmarkRows(html, produk, negeri, q);
 
           if (results.length || targetUrl === candidates[candidates.length - 1]) {
             return send(
@@ -16568,7 +16600,8 @@ async function handler(req, res) {
                 q,
                 sourceUrl,
                 results,
-                note: results.length ? "Results parsed from JUPEM eBiz page." : "No parsable table returned. Open sourceUrl to continue in eBiz JUPEM."
+                note: results.length ? "Live results parsed from JUPEM eBiz." : "No live JUPEM result was returned for this search.",
+                source: "jupem-live"
               }, null, 2),
               "application/json"
             );

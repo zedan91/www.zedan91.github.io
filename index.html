@@ -11225,6 +11225,7 @@ normalizeCategory(category)===normalizeCategory(filter);
 
 
   const BM_SBM_BACKEND_BASE = 'https://azobss-backend.onrender.com/api/download-stesen-tanda-aras';
+  const BM_SBM_LIVE_SEARCH_API = 'https://azobss-backend.onrender.com/api/stesen-tanda-aras';
 
   function buildBenchmarkDownloadUrl(productId, jenis){
     productId = String(productId || '').trim();
@@ -11311,11 +11312,16 @@ normalizeCategory(category)===normalizeCategory(filter);
       productType: item.product || (String(item.jenis || '1') === '2' ? 'SBM' : 'BM'),
       itemCode: item.stationNo || item.stesen || item.productId || item.id || '',
       stationNo: item.stationNo || item.stesen || '',
+      productId: item.productId || item.id || '',
+      jenis: String(item.jenis || (item.product === 'SBM' ? '2' : '1')) === '2' ? '2' : '1',
       negeri: item.negeri || '',
       daerah: item.daerah || '',
       bandar: item.bandar || '',
       amount: 3,
-      url: item.downloadUrl || ''
+      url: item.downloadUrl || '',
+      downloadUrl: item.downloadUrl || '',
+      azobssCartValidated: true,
+      azobssCartValidatedBy: item.source === 'jupem-live' ? 'jupem-live-fallback' : 'full-local-stesen-tanda-aras-json'
     }));
   }
 
@@ -11521,7 +11527,7 @@ normalizeCategory(category)===normalizeCategory(filter);
 
   async function loadBenchmarkDb(){
     if (benchmarkDbCache) return benchmarkDbCache;
-    const response = await fetch('/stesen-tanda-aras-records.json?v=20260817-json-repair-939', { cache: 'no-store' });
+    const response = await fetch('/stesen-tanda-aras-records.json?v=20260826-full-bm-sbm-live-fallback-1041', { cache: 'no-store' });
     if (!response.ok) {
       throw new Error('Database BM/SBM tidak dijumpai. Pastikan /stesen-tanda-aras-records.json ada dalam GitHub root.');
     }
@@ -11553,6 +11559,46 @@ normalizeCategory(category)===normalizeCategory(filter);
     };
   }
 
+  function normalizeBenchmarkLiveRow(item){
+    item = item || {};
+    const productId = String(item.productId || item.id || '').trim();
+    const jenis = String(item.jenis || (item.product === 'SBM' ? '2' : wantedJenis())) === '2' ? '2' : '1';
+    return {
+      id: productId, productId, jenis, product: jenis === '2' ? 'SBM' : 'BM',
+      stationNo: item.stationNo || item.stesen || '', stesen: item.stesen || item.stationNo || '',
+      negeri: item.negeri || stateEl.value || '', daerah: item.daerah || '', bandar: item.bandar || '', huraian: item.huraian || '',
+      harga: 'RM3', latitude:item.latitude, longitude:item.longitude,
+      locationUrl: item.locationUrl || '',
+      downloadUrl: productId ? buildBenchmarkDownloadUrl(productId, jenis) : '',
+      source: 'jupem-live'
+    };
+  }
+  async function searchBenchmarkLiveFallback(options){
+    options = options || {};
+    const product = wantedJenis() === '2' ? 'SBM' : 'BM';
+    const state = String(stateEl.value || '').trim();
+    const query = String(options.query != null ? options.query : searchEl.value || '').trim();
+    if (!state) return [];
+    const params = new URLSearchParams({ produk:product, negeri:state });
+    if (query) params.set('q',query);
+    const controller = new AbortController();
+    const timer = setTimeout(function(){ controller.abort(); }, 18000);
+    try {
+      const response = await fetch(`${BM_SBM_LIVE_SEARCH_API}?${params.toString()}`, { cache:'no-store', signal:controller.signal });
+      if (!response.ok) throw new Error(`JUPEM live HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data || data.ok !== true || !Array.isArray(data.results)) return [];
+      return data.results.map(normalizeBenchmarkLiveRow).filter(function(row){ return row.stationNo || row.productId; });
+    } finally { clearTimeout(timer); }
+  }
+  function exactBenchmarkFromRows(rows, raw){
+    const plain=normalizeBenchmarkText(raw), normalized=normalizeBenchmarkQuery(raw), state=normalizeBenchmarkText(stateEl.value), jenis=wantedJenis();
+    return (Array.isArray(rows)?rows:[]).find(function(row){
+      const station=normalizeBenchmarkText(row.stationNo || row.stesen), rowState=normalizeBenchmarkText(row.negeri), rowJenis=String(row.jenis || (row.product==='SBM'?'2':'1'));
+      return rowJenis===jenis && (!state || !rowState || rowState===state) && (station===plain || station===normalized);
+    }) || null;
+  }
+
   function searchBenchmarkDb(data){
     const qRaw = searchEl.value.trim();
     const qNorm = normalizeBenchmarkQuery(qRaw);
@@ -11572,7 +11618,7 @@ normalizeCategory(category)===normalizeCategory(filter);
       const matchQuery = !qPlain || itemStation === qNorm || itemStation.includes(qNorm) || itemText.includes(qPlain) || itemText.includes(qNorm);
 
       return matchProduct && matchState && matchQuery;
-    }).slice(0, 50).map(toBenchmarkRow);
+    }).map(toBenchmarkRow);
   }
 
   form.addEventListener('submit', async function(event){
@@ -11586,12 +11632,18 @@ normalizeCategory(category)===normalizeCategory(filter);
     if (searchBtn) searchBtn.disabled = true;
     try {
       const db = await loadBenchmarkDb();
-      const rows = searchBenchmarkDb(db);
+      let rows = searchBenchmarkDb(db);
+      let usedLiveFallback = false;
+      if (!rows.length) {
+        if (statusEl) statusEl.textContent = 'No local BM/SBM match. Checking JUPEM live...';
+        try { rows = await searchBenchmarkLiveFallback(); usedLiveFallback = rows.length > 0; }
+        catch (liveError) { console.warn('[AZOBSS BM/SBM] JUPEM live fallback failed:', liveError); }
+      }
       renderResults(rows, 1);
       if (statusEl) {
         statusEl.textContent = rows.length
-          ? `${rows.length} BM/SBM record found`
-          : 'No BM/SBM record found';
+          ? `${rows.length.toLocaleString('en-MY')} BM/SBM record found${usedLiveFallback ? ' (JUPEM live)' : ''}`
+          : 'No BM/SBM record found locally or from JUPEM live';
       }
     } catch (error) {
       renderResults([]);

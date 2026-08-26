@@ -1,0 +1,58 @@
+{
+  "patch": 1041,
+  "packageVersion": "1.0.1041",
+  "source": "Recovered from archived AZOBSS stesen-tanda-aras-records-merged dataset; v1040 coordinates overlaid where productId matched.",
+  "recordsTotal": 27845,
+  "bmRecords": 26844,
+  "sbmRecords": 1001,
+  "coordinatePairs": 14701,
+  "recordsWithProductId": 27836,
+  "recordsWithoutProductId": 9,
+  "priceValues": {
+    "3": 27845
+  },
+  "bmStates": {
+    "SABAH": 3108,
+    "WILAYAH PERSEKUTUAN LABUAN": 105,
+    "PERAK": 3079,
+    "KELANTAN": 1540,
+    "SARAWAK": 2680,
+    "WILAYAH PERSEKUTUAN KUALA LUMPUR": 290,
+    "SELANGOR": 2163,
+    "WILAYAH PERSEKUTUAN PUTRAJAYA": 20,
+    "PAHANG": 2972,
+    "TERENGGANU": 1773,
+    "NEGERI SEMBILAN": 1814,
+    "JOHOR": 3204,
+    "KEDAH": 2249,
+    "MELAKA": 955,
+    "PULAU PINANG": 460,
+    "PERLIS": 432
+  },
+  "sbmStates": {
+    "SARAWAK": 223,
+    "SELANGOR": 57,
+    "JOHOR": 74,
+    "PAHANG": 96,
+    "WILAYAH PERSEKUTUAN KUALA LUMPUR": 8,
+    "TERENGGANU": 67,
+    "KELANTAN": 60,
+    "NEGERI SEMBILAN": 36,
+    "MELAKA": 21,
+    "PERAK": 112,
+    "KEDAH": 79,
+    "PULAU PINANG": 14,
+    "PERLIS": 13,
+    "SABAH": 136,
+    "WILAYAH PERSEKUTUAN LABUAN": 5
+  },
+  "sha256": "78cd8d6816f8ba1ad8811011c45356e8054fa0d3740421b64ed20cc69fb83dc1",
+  "features": [
+    "full-local-db",
+    "home-no-50-limit",
+    "jupem-live-fallback",
+    "quick-add-live-fallback",
+    "product-id-parser",
+    "rate-limit"
+  ]
+}
