@@ -7354,6 +7354,149 @@ function parseBenchmarkRows(html, produkFallback, negeriFallback, searchFallback
   return rows;
 }
 
+
+const azobssGpsLiveCache = new Map();
+const azobssSyitLiveCache = new Map();
+
+function azobssCanonicalStateName(value) {
+  const raw = cleanState(value).replace(/\s+/g, " ").trim();
+  const aliases = {
+    "KUALA LUMPUR": "WILAYAH PERSEKUTUAN KUALA LUMPUR",
+    "W.P KUALA LUMPUR": "WILAYAH PERSEKUTUAN KUALA LUMPUR",
+    "WP KUALA LUMPUR": "WILAYAH PERSEKUTUAN KUALA LUMPUR",
+    "LABUAN": "WILAYAH PERSEKUTUAN LABUAN",
+    "W.P LABUAN": "WILAYAH PERSEKUTUAN LABUAN",
+    "WP LABUAN": "WILAYAH PERSEKUTUAN LABUAN",
+    "PUTRAJAYA": "WILAYAH PERSEKUTUAN PUTRAJAYA",
+    "W.P PUTRAJAYA": "WILAYAH PERSEKUTUAN PUTRAJAYA",
+    "WP PUTRAJAYA": "WILAYAH PERSEKUTUAN PUTRAJAYA"
+  };
+  return aliases[raw] || raw;
+}
+function azobssGpsRequestBody(negeri, searchText = "") {
+  const body = new URLSearchParams({
+    draw: "1", start: "0", length: "2000", negeri,
+    carian: searchText, "search[value]": searchText, "search[regex]": "false",
+    "order[0][column]": "1", "order[0][dir]": "asc"
+  });
+  const columns = [
+    ["IdStn", false, false], ["NoStn", true, true], ["Negeri", true, true], ["Daerah", true, true],
+    ["Tempat", true, true], ["Harga", true, true], ["", false, false], ["", false, false]
+  ];
+  columns.forEach(([data, searchable, orderable], index) => {
+    body.set(`columns[${index}][data]`, String(data)); body.set(`columns[${index}][name]`, "");
+    body.set(`columns[${index}][searchable]`, String(searchable)); body.set(`columns[${index}][orderable]`, String(orderable));
+    body.set(`columns[${index}][search][value]`, ""); body.set(`columns[${index}][search][regex]`, "false");
+  });
+  return body.toString();
+}
+async function azobssSearchJupemGps(negeri, q = "") {
+  const canonical = azobssCanonicalStateName(negeri);
+  const cacheKey = `${canonical}|${String(q || "").trim().toUpperCase()}`;
+  const cached = azobssGpsLiveCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const sourceUrl = "https://ebiz.jupem.gov.my/Produk/StesenGPS";
+  const response = await fetch("https://ebiz.jupem.gov.my/Produk/StesenGPSDataTable", azJupemFetchOptions({
+    method: "POST", redirect: "follow", signal: AbortSignal.timeout(25000),
+    headers: azobssJupemBaseHeaders({
+      "Accept": "application/json,text/javascript,*/*;q=0.8",
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "Referer": sourceUrl, "Origin": "https://ebiz.jupem.gov.my", "X-Requested-With": "XMLHttpRequest"
+    }),
+    body: azobssGpsRequestBody(canonical, String(q || "").trim())
+  }));
+  if (!response.ok) throw new Error(`JUPEM GPS live search returned HTTP ${response.status}.`);
+  const payload = await response.json();
+  const data = Array.isArray(payload && payload.data) ? payload.data : [];
+  const wanted = String(q || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const results = data.map((row) => {
+    const stationNo = String(row && row.NoStn || "").trim().toUpperCase();
+    const productId = String(row && row.IdStn || "").trim();
+    const returnedState = azobssCanonicalStateName(row && row.Negeri || canonical) || canonical;
+    return {
+      productType: "GPS", stationNo, itemCode: stationNo, productId,
+      negeri: returnedState, daerah: String(row && row.Daerah || "").trim(), tempat: String(row && row.Tempat || "").trim(),
+      mapUrl: productId ? `https://ebiz.jupem.gov.my/PetaInteraktif?no=${encodeURIComponent(productId)}&type=gps&c=pt` : "",
+      googleMapsUrl: productId ? `https://azobss-backend.onrender.com/api/stesen-gps/maps?productId=${encodeURIComponent(productId)}` : "",
+      downloadUrl: stationNo ? `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenGPS/${encodeURIComponent(stationNo)}` : "",
+      sourceUrl, source: "jupem-live", harga: "9"
+    };
+  }).filter((row) => {
+    if (!row.stationNo || !row.productId) return false;
+    if (azobssCanonicalStateName(row.negeri) !== canonical) return false;
+    if (!wanted) return true;
+    return [row.stationNo, row.productId, row.daerah, row.tempat].some((v) => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").includes(wanted));
+  });
+  const value = { sourceUrl, results };
+  if (azobssGpsLiveCache.size > 160) azobssGpsLiveCache.clear();
+  azobssGpsLiveCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return value;
+}
+function azobssParseSyitRows(html, stateCode, negeri, q = "") {
+  const wanted = String(q || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const rows = String(html || "").match(/<tr\s+class=["']gardex["'][\s\S]*?<\/tr>/gi) || [];
+  const results = [];
+  const seen = new Set();
+  for (const row of rows) {
+    const product = row.match(/GetLembarPiawaiDigital\/(\d+)\?Negeri=(\d+)&amp;type=1&amp;name=([^'"&<)]+)/i);
+    if (!product) continue;
+    const productId = String(product[1] || "").trim();
+    const returnedCode = String(product[2] || "").padStart(2, "0");
+    if (Number(returnedCode) !== Number(stateCode)) continue;
+    const sheetName = decodeHtmlEntities(product[3] || "").trim().toUpperCase();
+    if (!sheetName || !productId) continue;
+    if (wanted && ![sheetName, productId].some((v) => String(v).toUpperCase().replace(/[^A-Z0-9]/g, "").includes(wanted))) continue;
+    const mapMatch = row.match(/href=["']([^"']*PetaInteraktif[^"']*)["']/i);
+    const detailMatch = row.match(/createModal\(["']([^"']*SyitPiawaiDetail[^"']*)["']\)/i);
+    const key = `${productId}|${returnedCode}|${sheetName}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push({
+      productType: "SYIT_PIAWAI", sheetName, itemCode: sheetName, productId, negeri,
+      stateCode: String(stateCode).padStart(2, "0"),
+      mapUrl: mapMatch ? absolutizeJupemUrl(decodeHtmlEntities(mapMatch[1])) : "",
+      detailUrl: detailMatch ? absolutizeJupemUrl(decodeHtmlEntities(detailMatch[1])) : "",
+      downloadUrl: `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunLembarPiawai/${encodeURIComponent(productId)}?piawai=${encodeURIComponent(sheetName + "_20200904")}&negeri=${encodeURIComponent(negeri)}`,
+      sourceUrl: "https://ebiz.jupem.gov.my/Produk/LembarPiawai", source: "jupem-live", harga: "7"
+    });
+  }
+  return results;
+}
+async function azobssSearchJupemSyit(negeri, q = "") {
+  const canonical = azobssCanonicalStateName(negeri);
+  const stateCode = cleanLotStateCode(canonical);
+  if (!stateCode) throw new Error("Unsupported JUPEM state.");
+  const cacheKey = `${stateCode}|${String(q || "").trim().toUpperCase()}`;
+  const cached = azobssSyitLiveCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const sourceUrl = "https://ebiz.jupem.gov.my/Produk/LembarPiawai";
+  const landing = await fetch(sourceUrl, azJupemFetchOptions({
+    redirect: "follow", signal: AbortSignal.timeout(20000),
+    headers: azobssJupemBaseHeaders({ "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Referer": sourceUrl })
+  }));
+  if (!landing.ok) throw new Error(`JUPEM Syit landing returned HTTP ${landing.status}.`);
+  const cookie = azobssExtractCookieHeader(landing.headers);
+  const html = await landing.text();
+  const token = html.match(/name=["']__RequestVerificationToken["'][^>]*value=["']([^"']+)["']/i)?.[1] || "";
+  if (!token) throw new Error("JUPEM Syit verification token is unavailable.");
+  const headers = azobssJupemBaseHeaders({
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Content-Type": "application/x-www-form-urlencoded", "Referer": sourceUrl, "Origin": "https://ebiz.jupem.gov.my"
+  });
+  if (cookie) headers.Cookie = cookie;
+  const response = await fetch(sourceUrl, azJupemFetchOptions({
+    method: "POST", redirect: "follow", signal: AbortSignal.timeout(25000), headers,
+    body: new URLSearchParams({ __RequestVerificationToken: decodeHtmlEntities(token), negeri: String(Number(stateCode)) }).toString()
+  }));
+  if (!response.ok) throw new Error(`JUPEM Syit live search returned HTTP ${response.status}.`);
+  const resultHtml = await response.text();
+  const results = azobssParseSyitRows(resultHtml, stateCode, canonical, q);
+  const value = { sourceUrl, stateCode, results };
+  if (azobssSyitLiveCache.size > 100) azobssSyitLiveCache.clear();
+  azobssSyitLiveCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return value;
+}
+
 const AZOBSS_JUPEM_LOT_STATE_CODES = Object.freeze({
   JOHOR: "01",
   KEDAH: "02",
@@ -16617,6 +16760,44 @@ async function handler(req, res) {
         JSON.stringify({ ok: false, error: lastError || "Benchmark search failed", sourceUrl }),
         "application/json"
       );
+    }
+
+    // =========================
+    // JUPEM STESEN GPS LIVE FALLBACK
+    // =========================
+    if (pathname === "/api/stesen-gps" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "jupem-gps-live-search", 60, 60 * 1000)) return;
+      const negeri = azobssCanonicalStateName(parsed.query.negeri);
+      const q = cleanSearch(parsed.query.q || parsed.query.carian);
+      if (!negeri || !cleanLotStateCode(negeri)) {
+        return send(res, 400, JSON.stringify({ ok: false, error: "Missing or unsupported negeri" }), "application/json");
+      }
+      try {
+        const found = await azobssSearchJupemGps(negeri, q);
+        return send(res, 200, JSON.stringify({ ok: true, negeri, q, source: "jupem-live", sourceUrl: found.sourceUrl, results: found.results }), "application/json", { "Cache-Control": "no-store" });
+      } catch (error) {
+        console.error("JUPEM GPS live search failed:", error && (error.stack || error.message || error));
+        return send(res, 502, JSON.stringify({ ok: false, error: "JUPEM GPS live search is temporarily unavailable." }), "application/json", { "Cache-Control": "no-store" });
+      }
+    }
+
+    // =========================
+    // JUPEM SYIT PIAWAI LIVE FALLBACK
+    // =========================
+    if (pathname === "/api/syit-piawai" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "jupem-syit-live-search", 60, 60 * 1000)) return;
+      const negeri = azobssCanonicalStateName(parsed.query.negeri);
+      const q = cleanSearch(parsed.query.q || parsed.query.carian);
+      if (!negeri || !cleanLotStateCode(negeri)) {
+        return send(res, 400, JSON.stringify({ ok: false, error: "Missing or unsupported negeri" }), "application/json");
+      }
+      try {
+        const found = await azobssSearchJupemSyit(negeri, q);
+        return send(res, 200, JSON.stringify({ ok: true, negeri, stateCode: found.stateCode, q, source: "jupem-live", sourceUrl: found.sourceUrl, results: found.results }), "application/json", { "Cache-Control": "no-store" });
+      } catch (error) {
+        console.error("JUPEM Syit Piawai live search failed:", error && (error.stack || error.message || error));
+        return send(res, 502, JSON.stringify({ ok: false, error: "JUPEM Syit Piawai live search is temporarily unavailable." }), "application/json", { "Cache-Control": "no-store" });
+      }
     }
 
     if (pathname === "/api/stesen-tanda-aras/maps" && req.method === "GET") {

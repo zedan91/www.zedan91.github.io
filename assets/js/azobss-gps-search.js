@@ -2,7 +2,8 @@
   'use strict';
 
   const ROWS_PER_PAGE = 5;
-  const DATA_URL = '/stesen-gps-records.json?v=20260715-maps-1';
+  const DATA_URL = '/stesen-gps-records.json?v=20260826-gps-live-fallback-1042';
+  const LIVE_URL = 'https://azobss-backend.onrender.com/api/stesen-gps';
   const stateEl = document.getElementById('gpsState');
   const inputEl = document.getElementById('gpsStation');
   const generalEl = document.getElementById('gpsGeneralSearch');
@@ -57,8 +58,10 @@
   function buildGoogleMapsUrl(record) {
     const latitude = Number(record && record.latitude);
     const longitude = Number(record && record.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return '';
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`;
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`;
+    }
+    return String(record && (record.googleMapsUrl || record.mapsUrl) || '').trim();
   }
 
   function setQuickStatus(message, state) {
@@ -77,6 +80,27 @@
     if (!Array.isArray(data)) throw new Error('Format pangkalan data stesen GPS tidak sah.');
     recordsCache = data;
     return recordsCache;
+  }
+
+  async function fetchLiveRecords(negeri, query) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 28000);
+    try {
+      const url = `${LIVE_URL}?negeri=${encodeURIComponent(negeri)}&q=${encodeURIComponent(String(query || '').trim())}`;
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) throw new Error(`JUPEM live GPS returned ${response.status}.`);
+      const data = await response.json();
+      return Array.isArray(data && data.results) ? data.results : [];
+    } finally { clearTimeout(timer); }
+  }
+
+  function uniqueGpsRows(rows) {
+    const seen = new Set();
+    return (rows || []).filter((record) => {
+      const key = [String(record.productId || ''), normalize(record.stationNo), String(record.negeri || '').trim().toUpperCase()].join('|');
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
   }
 
   function renderPagination(totalPages) {
@@ -192,12 +216,18 @@
     if (statusEl) statusEl.textContent = 'Sedang mencari dalam pangkalan data stesen GPS...';
     try {
       const records = await loadRecords();
-      allRows = records.filter((record) => {
+      let localRows = records.filter((record) => {
         if (String(record.negeri || '').trim().toUpperCase() !== selectedState) return false;
         if (!query) return true;
-        return [record.stationNo, record.daerah, record.tempat]
+        return [record.stationNo, record.daerah, record.tempat, record.productId]
           .some((value) => normalize(value).includes(query));
-      }).map((record, index) => ({ ...record, _sourceIndex: index, harga: 9 }));
+      });
+      let liveRows = [];
+      if (!localRows.length) {
+        if (statusEl) statusEl.textContent = 'Rekod tempatan tidak dijumpai. Sedang menyemak JUPEM live...';
+        try { liveRows = await fetchLiveRecords(selectedState, inputEl.value); } catch (_) { liveRows = []; }
+      }
+      allRows = uniqueGpsRows([...localRows, ...liveRows]).map((record, index) => ({ ...record, _sourceIndex: index, harga: 9 }));
       matchingRows = allRows.slice();
       generalEl.disabled = !allRows.length;
       renderResults(1);
@@ -236,10 +266,14 @@
       const requestedCode = String(inputEl.value || '').trim().toUpperCase();
       setQuickStatus(`Sedang menyemak ketersediaan GPS ${requestedCode}. Sila tunggu...`, 'checking');
       const records = await loadRecords();
-      const exact = records.find((record) =>
+      let exact = records.find((record) =>
         String(record.negeri || '').trim().toUpperCase() === selectedState
         && (normalize(record.stationNo) === query || normalize(record.productId) === query)
       );
+      if (!exact) {
+        const liveRows = await fetchLiveRecords(selectedState, requestedCode);
+        exact = liveRows.find((record) => normalize(record.stationNo) === query || normalize(record.productId) === query) || null;
+      }
       if (!exact) {
         const unavailable = new Error(`Stesen GPS ${requestedCode} tidak tersedia di ${selectedState}.`);
         unavailable.isUnavailable = true;

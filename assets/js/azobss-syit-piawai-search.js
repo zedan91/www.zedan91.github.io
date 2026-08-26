@@ -2,7 +2,8 @@
   'use strict';
 
   const ROWS_PER_PAGE = 5;
-  const DATA_URL = '/lembar-piawai-records.json';
+  const DATA_URL = '/lembar-piawai-records.json?v=20260826-syit-live-fallback-1042';
+  const LIVE_URL = 'https://azobss-backend.onrender.com/api/syit-piawai';
   const stateEl = document.getElementById('syitPiawaiState');
   const inputEl = document.getElementById('syitPiawaiReference');
   const generalEl = document.getElementById('syitPiawaiGeneralSearch');
@@ -42,8 +43,8 @@
     const sheetName = String(record.sheetName || '').trim().toUpperCase();
     const productId = String(record.productId || '').trim();
     const negeri = String(record.negeri || stateEl.value || '').trim().toUpperCase();
-    const downloadUrl = 'https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunLembarPiawai/' +
-      encodeURIComponent(productId) + '?piawai=' + encodeURIComponent(sheetName + '_20200904') + '&negeri=' + encodeURIComponent(negeri);
+    const downloadUrl = String(record.downloadUrl || '').trim() || ('https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunLembarPiawai/' +
+      encodeURIComponent(productId) + '?piawai=' + encodeURIComponent(sheetName + '_20200904') + '&negeri=' + encodeURIComponent(negeri));
     return encodeURIComponent(JSON.stringify({
       productType: 'SYIT_PIAWAI',
       itemCode: sheetName,
@@ -136,6 +137,27 @@
     if (!Array.isArray(data)) throw new Error('Format pangkalan data Syit Piawai tidak sah.');
     recordsCache = data;
     return recordsCache;
+  }
+
+  async function fetchLiveRecords(negeri, query) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 28000);
+    try {
+      const url = `${LIVE_URL}?negeri=${encodeURIComponent(negeri)}&q=${encodeURIComponent(String(query || '').trim())}`;
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) throw new Error(`JUPEM live Syit Piawai returned ${response.status}.`);
+      const data = await response.json();
+      return Array.isArray(data && data.results) ? data.results : [];
+    } finally { clearTimeout(timer); }
+  }
+
+  function uniqueSyitRows(rows) {
+    const seen = new Set();
+    return (rows || []).filter((record) => {
+      const key = [String(record.productId || ''), normalize(record.sheetName), String(record.stateCode || '')].join('|');
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
   }
 
   function renderPagination(totalPages) {
@@ -245,11 +267,17 @@
     if (statusEl) statusEl.textContent = 'Sedang mencari dalam pangkalan data Syit Piawai...';
     try {
       const records = await loadRecords();
-      allRows = records.filter((record) => {
+      let localRows = records.filter((record) => {
         if (String(record.negeri || '').trim().toUpperCase() !== selectedState) return false;
         if (!query) return true;
         return normalize(record.sheetName).includes(query) || normalize(record.productId).includes(query);
-      }).map((record, index) => ({ ...record, _sourceIndex: index, harga: 7 }));
+      });
+      let liveRows = [];
+      if (!localRows.length) {
+        if (statusEl) statusEl.textContent = 'Rekod tempatan tidak dijumpai. Sedang menyemak JUPEM live...';
+        try { liveRows = await fetchLiveRecords(selectedState, inputEl.value); } catch (_) { liveRows = []; }
+      }
+      allRows = uniqueSyitRows([...localRows, ...liveRows]).map((record, index) => ({ ...record, _sourceIndex: index, harga: 7 }));
       matchingRows = allRows.slice();
       generalEl.disabled = !allRows.length;
       renderResults(1);
@@ -288,10 +316,14 @@
       const requestedCode = String(inputEl.value || '').trim().toUpperCase();
       setQuickStatus(`Sedang menyemak ketersediaan ${requestedCode}. Sila tunggu...`, 'checking');
       const records = await loadRecords();
-      const exact = records.find((record) =>
+      let exact = records.find((record) =>
         String(record.negeri || '').trim().toUpperCase() === selectedState
         && (normalize(record.sheetName) === query || normalize(record.productId) === query)
       );
+      if (!exact) {
+        const liveRows = await fetchLiveRecords(selectedState, requestedCode);
+        exact = liveRows.find((record) => normalize(record.sheetName) === query || normalize(record.productId) === query) || null;
+      }
       if (!exact) {
         const unavailable = new Error(`${requestedCode} tidak tersedia di ${selectedState}.`);
         unavailable.isUnavailable = true;
