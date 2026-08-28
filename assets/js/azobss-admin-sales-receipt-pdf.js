@@ -216,8 +216,10 @@
     text(commands,value,valueX,y,{size:valueSize,bold:true,color:valueColor});
   }
   function drawInfoBox(commands,row,type){
-    const docType=normalizeDocumentType(type); const x=MARGIN_X,y=116,w=CONTENT_W,h=76,mid=x+(w/2);
-    fillRect(commands,x,y,w,h,[248,250,252]); strokeRect(commands,x,y,w,h,[203,213,225],0.8); line(commands,mid,y+10,mid,y+h-10,[226,232,240],0.8);
+    const docType=normalizeDocumentType(type); const x=MARGIN_X,y=116,w=CONTENT_W,h=100,mid=x+(w/2);
+    fillRect(commands,x,y,w,h,[248,250,252]); strokeRect(commands,x,y,w,h,[203,213,225],0.8);
+    line(commands,mid,y+10,mid,y+70,[226,232,240],0.8);
+    line(commands,x+10,y+74,x+w-10,y+74,[226,232,240],0.8);
     const left=x+14,right=mid+14,colW=(w/2)-28;
     drawInlineInfoRow(commands,docType==='invoice'?'BILL TO':'CUSTOMER',clean(row.customerName||'Customer'),left,y+22,colW);
     drawInlineInfoRow(commands,'PHONE',clean(row.customerPhone)||'-',left,y+42,colW);
@@ -225,6 +227,7 @@
     drawInlineInfoRow(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',documentNumber(row,docType),right,y+22,colW);
     drawInlineInfoRow(commands,docType==='invoice'?'ISSUE DATE':'DATE',formatDateTime(documentDateTime(row,docType)),right,y+42,colW);
     drawInlineInfoRow(commands,docType==='invoice'?'PAYMENT TERMS':'PAYMENT METHOD',docType==='invoice'?(clean(row.paymentTerms)||'Due upon receipt'):clean(row.paymentMethod||'-'),right,y+62,colW);
+    drawInlineInfoRow(commands,'ADDRESS',clean(row.customerAddress)||'-',x+14,y+91,w-28);
     drawStatusBadge(commands,row,x+w-12,y-10);
   }
 
@@ -342,7 +345,7 @@
   }
   function buildPages(row,type){
     const docType=normalizeDocumentType(type); const pages=[]; let commands=createPage(); pages.push(commands);
-    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,205);
+    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,229);
     normalizedItems(row).forEach((item,index)=>{
       const h=itemRowHeight(item);
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
