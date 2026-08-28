@@ -1,0 +1,48 @@
+{
+  "baseline": "(1045)-AZOBSS-INVOICE-RECEIPT-CUSTOMER-ADDRESS-FIX_20260828.zip",
+  "version": "1.0.1046",
+  "scope": "Admin Software Key full-edit fields + protected backend update-record action",
+  "changed_files": [
+    "admin/index.html",
+    "deploy-server.js",
+    "package.json",
+    "AZOBSS-Developer-Files/AZOBSS-1046-SOFTWARE-KEY-FULL-EDIT-FIX-NOTES.txt"
+  ],
+  "checks": {
+    "edit_modal_title": true,
+    "edit_computer_name": true,
+    "edit_system_id": true,
+    "edit_system_code": true,
+    "edit_motherboard_id": true,
+    "edit_serial": true,
+    "edit_board_manufacturer": true,
+    "edit_board_product": true,
+    "frontend_update_record": true,
+    "backend_update_record": true,
+    "legacy_update_customer_kept": true,
+    "record_id_recalculation": true,
+    "collision_guard": true,
+    "package_1046": true
+  },
+  "backend_behavior": {
+    "record_id_fingerprint_recomputed": true,
+    "atomic_firestore_migration_on_identifier_change": true,
+    "collision_returns_http_409": true,
+    "key_serial_can_be_empty_for_pending": true,
+    "legacy_update_customer_preserved": true
+  },
+  "unchanged": [
+    "Copy buttons",
+    "search",
+    "sort",
+    "pagination",
+    "CSV export",
+    "delete/bulk delete",
+    "installer capture",
+    "Sales & Receipts",
+    "PA/BM access",
+    "payments",
+    "downloads",
+    "pricing"
+  ]
+}

@@ -13826,6 +13826,48 @@ async function handler(req, res) {
           const result = await azCreateSoftwareKeyRecord(req, body || {}, { adminManual:true });
           return send(res, 200, JSON.stringify(Object.assign({ action }, result), null, 2), "application/json", { "Cache-Control":"no-store" });
         }
+        if (action === "update-record") {
+          const recordId = azSoftwareKeyText(body.recordId || body.id, 100);
+          if (!recordId) return send(res, 400, JSON.stringify({ ok:false, error:"Software Key record ID is required." }, null, 2), "application/json");
+          const ref = db.collection(AZ_SOFTWARE_KEY_COLLECTION).doc(recordId);
+          const existingSnap = await ref.get();
+          if (!existingSnap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Software Key record was not found." }, null, 2), "application/json");
+          const existing = existingSnap.data() || {};
+          const customerName = azSoftwareKeyText(body.customerName, 120);
+          const customerPhone = azSoftwareKeyPhone(body.customerPhone);
+          const customerPhoneDigits = azSoftwareKeyDigits(customerPhone, 20);
+          const systemIdDigits = azSoftwareKeyDigits(body.systemId, 24);
+          const systemCodeDigits = azSoftwareKeyDigits(body.systemCode, 24);
+          const motherboardId = azSoftwareKeyText(body.motherboardId, 160);
+          const serialKey = azSoftwareKeyText(body.serialKey, 120);
+          if (systemIdDigits.length !== 12 || /^([0-9])\1{11}$/.test(systemIdDigits)) return send(res, 400, JSON.stringify({ ok:false, error:"System ID must contain exactly 12 valid digits." }, null, 2), "application/json");
+          if (systemCodeDigits.length !== 12 || /^([0-9])\1{11}$/.test(systemCodeDigits)) return send(res, 400, JSON.stringify({ ok:false, error:"Systemcode must contain exactly 12 valid digits." }, null, 2), "application/json");
+          if (systemIdDigits === systemCodeDigits) return send(res, 400, JSON.stringify({ ok:false, error:"System ID and Systemcode must be different." }, null, 2), "application/json");
+          if (!motherboardId || motherboardId.length < 2) return send(res, 400, JSON.stringify({ ok:false, error:"Motherboard ID is required." }, null, 2), "application/json");
+          if (customerPhone && (customerPhoneDigits.length < 9 || customerPhoneDigits.length > 15)) return send(res, 400, JSON.stringify({ ok:false, error:"Customer phone must contain 9 to 15 digits." }, null, 2), "application/json");
+          const nowMs = Date.now();
+          const nowIso = new Date(nowMs).toISOString();
+          const updated = Object.assign({}, existing, {
+            computerName:azSoftwareKeyText(body.computerName, 100), customerName, customerPhone, customerPhoneDigits,
+            systemId:azSoftwareKeyFormatDigits(systemIdDigits), systemIdDigits,
+            systemCode:azSoftwareKeyFormatDigits(systemCodeDigits), systemCodeDigits,
+            serialKey, motherboardId,
+            motherboardManufacturer:azSoftwareKeyText(body.motherboardManufacturer, 120),
+            motherboardProduct:azSoftwareKeyText(body.motherboardProduct, 120),
+            captureStage:serialKey ? "complete" : "identifiers", updatedAt:nowIso, updatedAtMs:nowMs
+          });
+          const newRecordId = azSoftwareKeyRecordId(updated);
+          updated.recordId = newRecordId;
+          const recordIdChanged = newRecordId !== recordId;
+          if (recordIdChanged) {
+            const targetRef = db.collection(AZ_SOFTWARE_KEY_COLLECTION).doc(newRecordId);
+            const targetSnap = await targetRef.get();
+            if (targetSnap.exists) return send(res, 409, JSON.stringify({ ok:false, error:"Another Software Key record already uses these System ID / Systemcode / Motherboard ID values." }, null, 2), "application/json", { "Cache-Control":"no-store" });
+            const batch = db.batch(); batch.set(targetRef, updated, { merge:false }); batch.delete(ref); await batch.commit();
+          } else await ref.set(updated, { merge:true });
+          return send(res, 200, JSON.stringify({ ok:true, action, oldRecordId:recordId, recordId:newRecordId, recordIdChanged, updatedAt:nowIso, updatedAtMs:nowMs }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
+
         if (action === "update-customer") {
           const recordId = azSoftwareKeyText(body.recordId || body.id, 100);
           if (!recordId) return send(res, 400, JSON.stringify({ ok:false, error:"Software Key record ID is required." }, null, 2), "application/json");
