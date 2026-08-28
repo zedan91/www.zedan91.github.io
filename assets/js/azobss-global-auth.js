@@ -1456,13 +1456,37 @@ function showMemberLoginRequired(){
   if(location.pathname !== '/') location.replace('/#login');
   else setTimeout(()=>openSiteAuth('signin'), 80);
 }
+function markPaBmAccessGranted(){
+  try{
+    window.__AZOBSS_PABM_ACCESS_GRANTED__ = true;
+    document.documentElement.classList.remove('azobss-pabm-guard-pending');
+    document.documentElement.classList.add('azobss-pabm-access-granted');
+    if(document.body){
+      document.body.classList.remove('azobss-pabm-guard-pending');
+      document.body.classList.add('azobss-pabm-access-granted');
+    }
+    document.dispatchEvent(new CustomEvent('azobss:pabm-access-granted'));
+  }catch(e){}
+}
 function enforcePaBmPageAccess(user, settled){
   if(isAzobssMemberProtectedPage() && !user){
     if(settled) showMemberLoginRequired();
     return;
   }
-  // The storefront may still be opened from a direct purchase link. The
-  // PA/BM navigation button itself remains limited by hasPaBmTabAccess().
+  if(!isPaBmProtectedPage()) return;
+  // Strict PA/BM page gate: wait until Firebase auth/profile restoration has
+  // settled, then fail closed unless this signed-in account is explicitly
+  // allowed (or is the AZOBSS admin). Direct URL entry is not a bypass.
+  if(!settled) return;
+  if(!user){
+    showMemberLoginRequired();
+    return;
+  }
+  if(!hasPaBmTabAccess(user)){
+    showPaBmDeniedAndRedirect();
+    return;
+  }
+  markPaBmAccessGranted();
 }
 function showAccessDeniedMessage(){
   let msg = '';
@@ -5339,7 +5363,7 @@ function bindAuth() {
       const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
     }
-    catch{ const fallback=getSavedUser(); syncHeader(fallback); enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
+    catch{ const fallback=getSavedUser(); syncHeader(fallback); if(isPaBmProtectedPage() && !window.__AZOBSS_PABM_ACCESS_GRANTED__){ enforcePaBmPageAccess(null, true); return; } enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });
 
   const params = new URLSearchParams(location.search || '');

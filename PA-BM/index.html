@@ -8295,6 +8295,28 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     font-weight:700;
   }
 </style>
+<style id="azobss-pabm-strict-access-first-paint-v1044">
+html.azobss-pabm-guard-pending body{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+</style>
+<script id="azobss-pabm-strict-access-first-paint-v1044-script">
+(function(){
+  try{
+    if(/\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname)){
+      document.documentElement.classList.add('azobss-pabm-guard-pending');
+      // Fail closed if auth scripts fail to settle at all.
+      setTimeout(function(){
+        if(document.documentElement.classList.contains('azobss-pabm-guard-pending') && !window.__AZOBSS_PABM_ACCESS_GRANTED__){
+          location.replace('/#login');
+        }
+      },12000);
+    }
+  }catch(e){}
+})();
+</script>
+
 </head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -12635,7 +12657,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   color:#e2e8f0 !important;
 }
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=957" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=957"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1044" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1044"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
