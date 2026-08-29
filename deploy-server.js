@@ -1732,6 +1732,10 @@ function azExportSafePremiumOrder(x = {}, docId = "") {
     status: azExportSafeText(x.status || "", 60),
     paymentMethod: azExportSafeText(x.paymentMethod || "", 80),
     paymentReference: azExportSafeText(x.paymentReference || "", 160),
+    invoiceNo: azExportSafeText(x.invoiceNo || "", 180),
+    receiptNo: azExportSafeText(x.receiptNo || "", 180),
+    documentSequence: Number(x.documentSequence || 0) || 0,
+    autoDocumentNumberVersion: Number(x.autoDocumentNumberVersion || 0) || 0,
     productId: azExportSafeText(x.productId || (x.product && x.product.productId) || "", 180),
     productName: azExportSafeText(x.productName || x.productTitle || (x.product && (x.product.productName || x.product.name || x.product.title)) || "", 220),
     category: azExportSafeText(x.category || x.productCategory || "", 80),
@@ -1785,6 +1789,10 @@ function azExportSafePurchaseLog(x = {}, docId = "") {
     orderId: azExportSafeText(x.orderId || "", 160),
     billCode: azExportSafeText(x.billCode || "", 120),
     paymentReference: azExportSafeText(x.paymentReference || "", 160),
+    invoiceNo: azExportSafeText(x.invoiceNo || "", 180),
+    receiptNo: azExportSafeText(x.receiptNo || "", 180),
+    documentSequence: Number(x.documentSequence || 0) || 0,
+    autoDocumentNumberVersion: Number(x.autoDocumentNumberVersion || 0) || 0,
     createdAt: azExportSafeText(x.createdAt || "", 120),
     createdAtMs: Number(x.createdAtMs || 0) || 0,
     updatedAt: azExportSafeText(x.updatedAt || "", 120),
@@ -3168,6 +3176,14 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       paymentVerificationSource: verifiedByStripe ? (opts.verificationSource || "stripe-api") : (verifiedByToyyib ? "toyyibpay-api" : (latest.paymentVerificationSource || "")),
       callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
     });
+    if (!azIsManualSalesInvoiceOrder(latest)) {
+      try {
+        await azPersistPremiumOrder(latest);
+        latest = findPremiumOrderByAny({ orderId:latest.orderId, billCode:latest.billCode }) || latest;
+      } catch (numberPersistError) {
+        console.warn("Paid automatic document numbering persist skipped:", numberPersistError && (numberPersistError.message || numberPersistError));
+      }
+    }
 
     if (!azIsManualSalesInvoiceOrder(latest) && !latest.commissionCheckedAt) {
       try { await azFinalizeCommissionForOrder(latest); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
@@ -3748,6 +3764,10 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     isAdminTestPayment: order.isAdminTestPayment === true,
     testPayment: order.isAdminTestPayment === true,
     paymentSource: String(order.source || ""),
+    invoiceNo: String(order.invoiceNo || ""),
+    receiptNo: String(order.receiptNo || ""),
+    documentSequence: Number(order.documentSequence || 0) || undefined,
+    autoDocumentNumberVersion: Number(order.autoDocumentNumberVersion || 0) || undefined,
     updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
   };
 
@@ -4168,6 +4188,273 @@ function getAzobssBackendDb() {
   return firebaseAdmin.firestore();
 }
 
+// AZOBSS 1049: one shared 6-digit running sequence for Manual + NEW Automatic Invoice / Receipt. Historical automatic IDs are preserved.
+const AZOBSS_SALES_SEQUENCE_COLLECTION = "systemCounters";
+const AZOBSS_SALES_SEQUENCE_DOC = "salesDocuments";
+let azSalesSequenceSeedReady = false;
+let azSalesSequenceSeedPromise = null;
+const azAutomaticDocumentNumberPromises = new Map();
+
+function azSalesMalaysiaDateKey(ms = Date.now()) {
+  const value = Number(ms || 0) || Date.now();
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone:"Asia/Kuala_Lumpur", year:"numeric", month:"2-digit", day:"2-digit"
+    }).formatToParts(new Date(value));
+    const out = {};
+    parts.forEach(p => { if (p.type !== "literal") out[p.type] = p.value; });
+    if (out.year && out.month && out.day) return `${out.year}${out.month}${out.day}`;
+  } catch (_) {}
+  const d = new Date(value + (8 * 60 * 60 * 1000));
+  return `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,"0")}${String(d.getUTCDate()).padStart(2,"0")}`;
+}
+function azParseSalesDocumentNo(value = "") {
+  const match = String(value || "").trim().match(/^AZ([IR])-(\d{8})-(\d{4,})$/i);
+  if (!match) return null;
+  return { kind:match[1].toUpperCase()==="I" ? "invoice" : "receipt", dateKey:match[2], sequence:Number(match[3]) || 0 };
+}
+function azSalesDocumentNo(kind = "invoice", sequence = 0, dateMs = Date.now()) {
+  const prefix = String(kind).toLowerCase() === "receipt" ? "AZR" : "AZI";
+  return `${prefix}-${azSalesMalaysiaDateKey(dateMs)}-${String(Math.max(0, Number(sequence)||0)).padStart(6,"0")}`;
+}
+function azSalesRecordMaxSequence(row = {}) {
+  let max = 0;
+  [
+    row.invoiceNo,row.receiptNo,row.documentNo,row.manualInvoiceNo,row.manualReceiptNo,
+    row.originalInvoiceNo,row.originalReceiptNo
+  ].forEach(value => {
+    const parsed = azParseSalesDocumentNo(value);
+    if (parsed) max = Math.max(max, parsed.sequence);
+  });
+  return max;
+}
+async function azScanMaxSalesDocumentSequence(db) {
+  if (!db) return 0;
+  let max = 0;
+  for (const collectionName of ["receipts","premiumOrders","purchaseLogs"]) {
+    try {
+      let snap;
+      try { snap = await db.collection(collectionName).orderBy("updatedAtMs","desc").limit(500).get(); }
+      catch (_) { snap = await db.collection(collectionName).limit(500).get(); }
+      snap.forEach(docSnap => { max = Math.max(max, azSalesRecordMaxSequence(docSnap.data() || {})); });
+    } catch (err) {
+      console.warn("Sales sequence seed scan skipped:", collectionName, err && (err.message || err));
+    }
+  }
+  try {
+    (readPremiumOrders() || []).slice(0,500).forEach(row => { max = Math.max(max, azSalesRecordMaxSequence(row || {})); });
+  } catch (_) {}
+  return max;
+}
+async function azEnsureSalesSequenceSeed(db) {
+  if (azSalesSequenceSeedReady) return true;
+  if (azSalesSequenceSeedPromise) return azSalesSequenceSeedPromise;
+  azSalesSequenceSeedPromise = (async () => {
+    const observedMax = await azScanMaxSalesDocumentSequence(db);
+    const ref = db.collection(AZOBSS_SALES_SEQUENCE_COLLECTION).doc(AZOBSS_SALES_SEQUENCE_DOC);
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      const current = snap.exists ? Number((snap.data() || {}).value || 0) || 0 : 0;
+      const nextValue = Math.max(current, observedMax);
+      tx.set(ref, {
+        value:nextValue,
+        format:"AZI/AZR-YYYYMMDD-######",
+        sequenceScope:"global-never-reset-daily",
+        seededMax:observedMax,
+        updatedAt:new Date().toISOString(),
+        updatedAtMs:Date.now(),
+        patch:1049
+      }, { merge:true });
+    });
+    azSalesSequenceSeedReady = true;
+    return true;
+  })().finally(() => { azSalesSequenceSeedPromise = null; });
+  return azSalesSequenceSeedPromise;
+}
+async function azReserveSalesDocumentSequence(db) {
+  if (!db) throw new Error("Firebase Admin is not configured.");
+  await azEnsureSalesSequenceSeed(db);
+  const ref = db.collection(AZOBSS_SALES_SEQUENCE_COLLECTION).doc(AZOBSS_SALES_SEQUENCE_DOC);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? Number((snap.data() || {}).value || 0) || 0 : 0;
+    const next = current + 1;
+    tx.set(ref, {
+      value:next,
+      lastIssuedAt:new Date().toISOString(),
+      lastIssuedAtMs:Date.now(),
+      patch:1049
+    }, { merge:true });
+    return next;
+  });
+}
+function azAutomaticOrderIssueMs(order = {}) {
+  return Number(order.invoiceDateMs || order.createdAtMs || 0)
+    || Date.parse(order.createdAt || order.createdAtClient || "")
+    || Number(order.updatedAtMs || 0)
+    || Date.now();
+}
+function azAutomaticOrderPaidMs(order = {}) {
+  return Number(order.paidAtMs || order.paymentPaidAtMs || 0)
+    || Date.parse(order.paidAt || order.paymentVerifiedAt || order.verifiedAt || "")
+    || azAutomaticOrderIssueMs(order);
+}
+function azAutomaticOrderHasReceipt(order = {}) {
+  const status = String(order.status || order.paymentStatus || "").trim().toLowerCase();
+  return ["paid","verified","success","successful","completed","complete","settled","approved","confirmed","refunded"].includes(status);
+}
+function azAutomaticOrderAlreadyNumbered(order = {}) {
+  return Number(order.documentSequence || 0) > 0
+    || !!azParseSalesDocumentNo(order.invoiceNo)
+    || !!azParseSalesDocumentNo(order.receiptNo)
+    || Number(order.autoDocumentNumberVersion || 0) >= 1048;
+}
+async function azEnsureAutomaticSalesDocumentNumbers(order = {}, options = {}) {
+  if (!order || azIsManualSalesInvoiceOrder(order)) return order || {};
+  const db = options.db || getAzobssBackendDb();
+  if (!db) return order;
+
+  const existingInvoice = azParseSalesDocumentNo(order.invoiceNo);
+  const existingReceipt = azParseSalesDocumentNo(order.receiptNo);
+  const existingSequence = Number(order.documentSequence || 0) || (existingInvoice && existingInvoice.sequence) || (existingReceipt && existingReceipt.sequence) || 0;
+  const buildNumbered = (sequence) => {
+    const issueMs = azAutomaticOrderIssueMs(order);
+    const paidMs = azAutomaticOrderPaidMs(order);
+    const invoiceNo = existingInvoice && existingInvoice.sequence === sequence
+      ? String(order.invoiceNo)
+      : azSalesDocumentNo("invoice", sequence, issueMs);
+    let receiptNo = existingReceipt && existingReceipt.sequence === sequence ? String(order.receiptNo) : "";
+    if (azAutomaticOrderHasReceipt(order) && !receiptNo) receiptNo = azSalesDocumentNo("receipt", sequence, paidMs);
+    return {
+      ...order,
+      invoiceNo,
+      receiptNo,
+      documentSequence:sequence,
+      autoDocumentNumberVersion:1049,
+      autoDocumentNumberAssignedAt:order.autoDocumentNumberAssignedAt || new Date().toISOString(),
+      autoDocumentNumberAssignedAtMs:Number(order.autoDocumentNumberAssignedAtMs || 0) || Date.now()
+    };
+  };
+  if (existingSequence) return buildNumbered(existingSequence);
+
+  const promiseKey = cleanPremiumText(
+    order.orderId || order.paymentOrderId || order.billCode || order.paymentReference || order.docId || order.id || "",
+    220
+  ) || `anonymous:${azAutomaticOrderIssueMs(order)}:${cleanPremiumText(order.productId || order.productName || "",80)}`;
+  if (azAutomaticDocumentNumberPromises.has(promiseKey)) {
+    const shared = await azAutomaticDocumentNumberPromises.get(promiseKey);
+    return { ...order, ...shared };
+  }
+  const task = (async () => buildNumbered(await azReserveSalesDocumentSequence(db)))();
+  azAutomaticDocumentNumberPromises.set(promiseKey, task);
+  try {
+    const numbered = await task;
+    return { ...order, ...numbered };
+  } finally {
+    if (azAutomaticDocumentNumberPromises.get(promiseKey) === task) azAutomaticDocumentNumberPromises.delete(promiseKey);
+  }
+}
+function azPatchLocalPremiumOrderDocumentNumbers(order = {}) {
+  try {
+    const orders = readPremiumOrders();
+    const idx = orders.findIndex(o =>
+      (order.orderId && o.orderId === order.orderId) ||
+      (order.billCode && o.billCode === order.billCode)
+    );
+    if (idx < 0) return;
+    orders[idx] = {
+      ...(orders[idx] || {}),
+      invoiceNo:order.invoiceNo || orders[idx].invoiceNo || "",
+      receiptNo:order.receiptNo || orders[idx].receiptNo || "",
+      documentSequence:Number(order.documentSequence || orders[idx].documentSequence || 0) || 0,
+      autoDocumentNumberVersion:Number(order.autoDocumentNumberVersion || 1049),
+      autoDocumentNumberAssignedAt:order.autoDocumentNumberAssignedAt || orders[idx].autoDocumentNumberAssignedAt || "",
+      autoDocumentNumberAssignedAtMs:Number(order.autoDocumentNumberAssignedAtMs || orders[idx].autoDocumentNumberAssignedAtMs || 0) || 0
+    };
+    writePremiumOrders(orders);
+  } catch (err) {
+    console.warn("Local premium order document-number sync skipped:", err && (err.message || err));
+  }
+}
+async function azBackfillAutomaticSalesDocumentNumbers(options = {}) {
+  // v1049 deliberately preserves historical automatic document IDs.
+  // Kept as a no-op for compatibility with a cached v1048 Admin page.
+  return {
+    ok:true,
+    disabled:true,
+    historicalPreserved:true,
+    premiumChanged:0,
+    purchaseChanged:0,
+    groupsChanged:0,
+    patch:1049,
+    note:"Historical automatic Invoice / Receipt records are not renumbered. Only new transactions receive AZI/AZR numbers."
+  };
+}
+
+async function azEnsureReceiptRecordDocumentNumbers(order = {}, source = "", recordId = "") {
+  if (!order || azIsManualSalesInvoiceOrder(order)) return order || {};
+  const db = getAzobssBackendDb();
+  if (!db) return order;
+  const src = String(source || order._azSource || order.__source || "").toLowerCase();
+
+  // Historical automatic records intentionally keep their old INV-/RCP-/internal IDs.
+  // A receipt/PDF view must never create a new AZI/AZR number for an old transaction.
+  if (src.includes("purchase")) {
+    const orderId = cleanPremiumText(order.orderId || order.paymentOrderId || "", 160);
+    const billCode = cleanPremiumText(order.billCode || "", 120);
+    let premium = null;
+    if (orderId || billCode) {
+      try { premium = await azFindPremiumOrderPersistent({ orderId, billCode }); } catch (_) {}
+    }
+
+    if (premium && !azIsManualSalesInvoiceOrder(premium) && azAutomaticOrderAlreadyNumbered(premium)) {
+      const numberedPremium = await azEnsureAutomaticSalesDocumentNumbers(premium, { db });
+      Object.assign(premium, numberedPremium);
+      try { await azPersistPremiumOrder(premium); } catch (_) {}
+      const numbered = {
+        ...order,
+        invoiceNo:numberedPremium.invoiceNo,
+        receiptNo:numberedPremium.receiptNo || azSalesDocumentNo("receipt", numberedPremium.documentSequence, azAutomaticOrderPaidMs(order)),
+        documentSequence:numberedPremium.documentSequence,
+        autoDocumentNumberVersion:1049
+      };
+      const docId = cleanPremiumText(order.docId || order.firestoreId || recordId || "", 180);
+      if (docId) {
+        await db.collection("purchaseLogs").doc(docId).set({
+          invoiceNo:numbered.invoiceNo || "",
+          receiptNo:numbered.receiptNo || "",
+          documentSequence:Number(numbered.documentSequence || 0) || 0,
+          autoDocumentNumberVersion:1049,
+          updatedAt:new Date().toISOString(),
+          updatedAtMs:Date.now()
+        }, { merge:true });
+      }
+      return numbered;
+    }
+
+    if (!azAutomaticOrderAlreadyNumbered(order)) return order;
+    const numbered = await azEnsureAutomaticSalesDocumentNumbers(order, { db });
+    const docId = cleanPremiumText(order.docId || order.firestoreId || recordId || "", 180);
+    if (docId) {
+      await db.collection("purchaseLogs").doc(docId).set({
+        invoiceNo:numbered.invoiceNo || "",
+        receiptNo:numbered.receiptNo || "",
+        documentSequence:Number(numbered.documentSequence || 0) || 0,
+        autoDocumentNumberVersion:1049,
+        updatedAt:new Date().toISOString(),
+        updatedAtMs:Date.now()
+      }, { merge:true });
+    }
+    return { ...order, ...numbered };
+  }
+
+  if (!azAutomaticOrderAlreadyNumbered(order)) return order;
+  const numbered = await azEnsureAutomaticSalesDocumentNumbers(order, { db });
+  Object.assign(order, numbered);
+  try { await azPersistPremiumOrder(order); } catch (_) {}
+  return order;
+}
+
 function azJsonSafe(value) {
   try { return JSON.parse(JSON.stringify(value || {})); } catch (_e) { return value || {}; }
 }
@@ -4448,11 +4735,35 @@ async function azPersistPremiumOrder(order = {}) {
   if (!order) return { ok:false, reason:"missing-order" };
   const db = getAzobssBackendDb();
   if (!db) return { ok:false, reason:"firebase-not-ready" };
-  const safe = azNormalizePremiumOrderForFirestore(order);
-  const docId = azPremiumOrderFirestoreDocId(safe);
+
+  // Resolve the persistent ID before numbering. Existing unnumbered records are historical
+  // and must keep their original automatic invoice/receipt identifiers.
+  const initialSafe = azNormalizePremiumOrderForFirestore(order);
+  const docId = azPremiumOrderFirestoreDocId(initialSafe);
   if (!docId) return { ok:false, reason:"missing-order-id-or-bill-code" };
-  await db.collection("premiumOrders").doc(String(docId)).set(safe, { merge:true });
-  return { ok:true, docId, orderId:safe.orderId || "", billCode:safe.billCode || "" };
+  const ref = db.collection("premiumOrders").doc(String(docId));
+  let exists = false;
+  try { exists = (await ref.get()).exists; } catch (_) {}
+
+  let numbered = order;
+  if (!azIsManualSalesInvoiceOrder(order)) {
+    const alreadyNumbered = azAutomaticOrderAlreadyNumbered(order);
+    // Only a genuinely NEW Firestore transaction receives its first AZI/AZR number.
+    // Existing numbered transactions may still add the paired AZR when payment becomes Paid.
+    if (alreadyNumbered || !exists) {
+      try {
+        numbered = await azEnsureAutomaticSalesDocumentNumbers(order, { db });
+        Object.assign(order, numbered);
+        azPatchLocalPremiumOrderDocumentNumbers(numbered);
+      } catch (numberError) {
+        console.warn("Automatic Invoice / Receipt numbering skipped:", numberError && (numberError.message || numberError));
+      }
+    }
+  }
+
+  const safe = azNormalizePremiumOrderForFirestore(numbered);
+  await ref.set(safe, { merge:true });
+  return { ok:true, docId, orderId:safe.orderId || "", billCode:safe.billCode || "", invoiceNo:safe.invoiceNo || "", receiptNo:safe.receiptNo || "", documentSequence:Number(safe.documentSequence||0)||0, historicalPreserved:exists && !azAutomaticOrderAlreadyNumbered(order) };
 }
 async function azFindPremiumOrderPersistent(ref = {}) {
   const db = getAzobssBackendDb();
@@ -15198,9 +15509,11 @@ async function handler(req, res) {
         const receiptId = decodeURIComponent(path.basename(pathname));
         const source = cleanPremiumText(parsed.query.source || "", 80);
         const format = String(parsed.query.format || "html").toLowerCase();
-        const order = await azFindMyPurchaseReceiptRecord(receiptId, source, identity);
+        let order = await azFindMyPurchaseReceiptRecord(receiptId, source, identity);
         if (!order) return send(res, 404, JSON.stringify({ ok:false, error:"Receipt not found for this account." }, null, 2), "application/json");
         if (azReceiptStatusBucket(order) !== "paid") return send(res, 403, JSON.stringify({ ok:false, error:"Receipt locked until payment is verified." }, null, 2), "application/json");
+        try { order = await azEnsureReceiptRecordDocumentNumbers(order, source, receiptId); }
+        catch (numberError) { console.warn("My Purchases receipt numbering fallback:", numberError && (numberError.message || numberError)); }
         if (format === "json") return send(res, 200, JSON.stringify({ ok:true, receipt:order }, null, 2), "application/json");
         if (format === "pdf") {
           const pdf = await buildReceiptPdfBuffer(order);
@@ -15398,6 +15711,32 @@ async function handler(req, res) {
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
         return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:"766" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+
+    if (pathname === "/api/admin/sales-document-sequence" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required for sales document numbering." }, null, 2), "application/json");
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
+        const action = cleanPremiumText(body.action || "reserve", 40).toLowerCase();
+        if (action === "backfill") {
+          const result = await azBackfillAutomaticSalesDocumentNumbers({ limit:Number(body.limit || 300) || 300 });
+          return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
+        if (action !== "reserve") return send(res, 400, JSON.stringify({ ok:false, error:"Unsupported sales document sequence action." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 503, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        const dateMs = Number(body.dateMs || 0) || Date.now();
+        const sequence = await azReserveSalesDocumentSequence(db);
+        const invoiceNo = azSalesDocumentNo("invoice", sequence, dateMs);
+        const receiptNo = azSalesDocumentNo("receipt", sequence, dateMs);
+        return send(res, 200, JSON.stringify({ ok:true, sequence, invoiceNo, receiptNo, dateKey:azSalesMalaysiaDateKey(dateMs), format:"AZI/AZR-YYYYMMDD-######", patch:1049 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        const status = Number(err && err.statusCode || 500);
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:1049 }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
@@ -17995,9 +18334,11 @@ const filePath =
 
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET") {
       const orderId = decodeURIComponent(path.basename(pathname));
-      const order = await azFindReceiptOrder(orderId);
+      let order = await azFindReceiptOrder(orderId);
       if (!order) return send(res, 404, "Receipt not found");
       if (azReceiptStatusBucket(order) !== "paid") return send(res, 403, "Receipt locked until payment is verified.");
+      try { order = await azEnsureReceiptRecordDocumentNumbers(order, "premiumOrders", orderId); }
+      catch (numberError) { console.warn("Premium receipt numbering fallback:", numberError && (numberError.message || numberError)); }
       const rt = cleanPremiumText(parsed.query.rt || parsed.query.token || "", 80);
       if (!azReceiptTokenOk(order, rt)) return send(res, 403, "Receipt token required or invalid.");
       if ((order.billCode || String(order.paymentMethod || "").toLowerCase().includes("toyyib")) && !isPaBmPremiumOrder(order) && !(order.toyyibVerifiedAt || order.paymentVerificationSource === "toyyibpay-api")) {

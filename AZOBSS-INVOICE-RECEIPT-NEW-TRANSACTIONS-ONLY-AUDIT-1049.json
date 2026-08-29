@@ -1,0 +1,36 @@
+{
+  "patch": 1049,
+  "packageVersion": "1.0.1049",
+  "baseline": "1048",
+  "policy": "new automatic transactions only; historical automatic records preserved",
+  "format": {
+    "invoice": "AZI-YYYYMMDD-000001",
+    "receipt": "AZR-YYYYMMDD-000001",
+    "sequenceDigits": 6,
+    "dailyReset": false,
+    "pairedTransactionSequence": true
+  },
+  "historical": {
+    "backfill": false,
+    "renumberOnAdminLoad": false,
+    "renumberOnReceiptOpen": false,
+    "renumberOnExistingOrderUpdate": false
+  },
+  "newAutomaticSources": [
+    "premiumOrders",
+    "purchaseLogs via newly-numbered parent",
+    "PA/BM/JUPEM",
+    "ToyyibPay Software/CAD",
+    "Stripe"
+  ],
+  "internalPaymentIdsPreserved": true,
+  "backendCounter": "systemCounters/salesDocuments",
+  "backfillEndpointBehavior": "compatibility no-op; zero records changed",
+  "modifiedFiles": [
+    "assets/js/azobss-admin-sales-receipts.js",
+    "admin/index.html",
+    "deploy-server.js",
+    "package.json"
+  ],
+  "requiresRenderRedeploy": true
+}

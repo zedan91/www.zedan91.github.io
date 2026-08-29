@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 808: Hardware category label + Service Booking hardware auto-category */
+/* AZOBSS PATCH 1049: 6-digit Manual + NEW Automatic Invoice / Receipt running sequence; historical auto IDs preserved */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=808;
+window.__azSalesReceiptsModuleVersion=1049;
 
 let manualRows=[];
 let websiteRows=[];
@@ -537,47 +537,82 @@ function renderTable(){
   updateBulkUI();
 }
 function parseManualDocumentSequence(value){
+  // Legacy 4-digit document numbers remain readable. New numbers use 6 digits.
   const match=String(value||'').trim().match(/^AZ([IR])-(\d{8})-(\d{4,})$/i);if(!match)return null;
   return {kind:match[1].toUpperCase()==='I'?'invoice':'receipt',dateKey:match[2],sequence:Number(match[3])||0};
 }
-function sequenceState(rows=manualRows,excludeId=''){
-  const used=new Set();const maxByDate=new Map();
+function sequenceState(rows=[...manualRows,...websiteRows],excludeId=''){
+  // v1049: the numeric sequence is global across Manual + NEW Automatic sales. Historical automatic IDs are preserved. The YYYYMMDD part
+  // remains in the document number for quick human-readable date reference.
+  const usedExact=new Set();let maxGlobal=0;
   rows.forEach(row=>{
     if(excludeId&&String(row.docId||row.id)===String(excludeId))return;
     const rowKeys=new Set();
     [row.invoiceNo,row.receiptNo,row.documentNo,currentDocumentNo(row)].filter(Boolean).forEach(value=>{
-      const parsed=parseManualDocumentSequence(value);if(!parsed)return;const key=`${parsed.dateKey}-${parsed.sequence}`;rowKeys.add(key);maxByDate.set(parsed.dateKey,Math.max(maxByDate.get(parsed.dateKey)||0,parsed.sequence));
+      const parsed=parseManualDocumentSequence(value);if(!parsed)return;
+      rowKeys.add(`${parsed.dateKey}-${parsed.sequence}`);
+      maxGlobal=Math.max(maxGlobal,parsed.sequence);
     });
-    rowKeys.forEach(key=>used.add(key));
+    rowKeys.forEach(key=>usedExact.add(key));
   });
-  return {used,maxByDate};
+  return {usedExact,maxGlobal};
 }
 function nextDocumentNo(type='receipt',dateMs=Date.now(),rows=manualRows,excludeId=''){
-  const kind=type==='invoice'?'invoice':'receipt';const prefix=kind==='invoice'?'AZI':'AZR';const date=malaysiaDateKey(dateMs);const state=sequenceState(rows,excludeId);const next=(state.maxByDate.get(date)||0)+1;
-  return `${prefix}-${date}-${String(next).padStart(4,'0')}`;
+  const kind=type==='invoice'?'invoice':'receipt';const prefix=kind==='invoice'?'AZI':'AZR';const date=malaysiaDateKey(dateMs);const state=sequenceState(rows,excludeId);const next=state.maxGlobal+1;
+  return `${prefix}-${date}-${String(next).padStart(6,'0')}`;
 }
 async function freshManualRows(){
   const snap=await getDocs(query(collection(db,'receipts'),limit(FIRESTORE_LIST_LIMIT)));const rows=[];
   snap.forEach(d=>{const data=d.data()||{};if(String(data.source||'')===MANUAL_SOURCE)rows.push(normalizeManual(d.id,data))});return rows;
 }
+async function reserveGlobalDocumentPair(dateMs=Date.now()){
+  const response=await fetch(BACKEND+'/api/admin/sales-document-sequence',{
+    method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({action:'reserve',dateMs:Number(dateMs||Date.now())}),cache:'no-store'
+  });
+  const text=await response.text();let data={};try{data=JSON.parse(text)}catch(_e){}
+  if(!response.ok||data.ok===false||!data.invoiceNo||!data.receiptNo)throw new Error(data.error||`Sales sequence HTTP ${response.status}`);
+  return data;
+}
 async function ensureUniqueManualNumbers(kind,dateMs,excludeId=''){
-  const rows=await freshManualRows();const state=sequenceState(rows,excludeId);const dateKey=malaysiaDateKey(dateMs);const current=kind==='invoice'?editingInvoiceNo:editingReceiptNo;const parsed=parseManualDocumentSequence(current);
-  let sequence=parsed&&parsed.dateKey===dateKey?parsed.sequence:0;
-  if(!sequence||state.used.has(`${dateKey}-${sequence}`))sequence=(state.maxByDate.get(dateKey)||0)+1;
-  const suffix=`${dateKey}-${String(sequence).padStart(4,'0')}`;
-  if(kind==='invoice'||editingInvoiceNo)editingInvoiceNo=`AZI-${suffix}`;
-  if(kind==='receipt'||editingReceiptNo)editingReceiptNo=`AZR-${suffix}`;
+  const current=kind==='invoice'?editingInvoiceNo:editingReceiptNo;const parsed=parseManualDocumentSequence(current);
+  // Existing documents keep their number. When a Pending invoice becomes Paid,
+  // AZR is derived from the same AZI sequence instead of consuming a second sequence.
+  if(excludeId&&parsed)return current;
+  if(excludeId&&kind==='receipt'&&editingInvoiceNo){
+    const invoiceParsed=parseManualDocumentSequence(editingInvoiceNo);
+    if(invoiceParsed){
+      editingReceiptNo=`AZR-${malaysiaDateKey(dateMs)}-${String(invoiceParsed.sequence).padStart(6,'0')}`;
+      return editingReceiptNo;
+    }
+  }
+  try{
+    const reserved=await reserveGlobalDocumentPair(dateMs);
+    editingInvoiceNo=String(reserved.invoiceNo||'').trim();
+    if(kind==='receipt')editingReceiptNo=String(reserved.receiptNo||'').trim();
+    else if(!editingReceiptNo)editingReceiptNo='';
+    return kind==='invoice'?editingInvoiceNo:editingReceiptNo;
+  }catch(error){
+    console.warn('Central sales sequence unavailable; using local compatibility fallback:',error);
+  }
+  const rows=await freshManualRows();const state=sequenceState([...rows,...websiteRows],excludeId);const dateKey=malaysiaDateKey(dateMs);
+  const currentFallback=kind==='invoice'?editingInvoiceNo:editingReceiptNo;const parsedFallback=parseManualDocumentSequence(currentFallback);
+  const exactFree=parsedFallback&&parsedFallback.dateKey===dateKey&&!state.usedExact.has(`${dateKey}-${parsedFallback.sequence}`);
+  if(exactFree&&!excludeId&&parsedFallback.sequence>state.maxGlobal)return currentFallback;
+  const sequence=state.maxGlobal+1;
+  const suffix=`${dateKey}-${String(sequence).padStart(6,'0')}`;
+  editingInvoiceNo=`AZI-${suffix}`;
+  if(kind==='receipt')editingReceiptNo=`AZR-${suffix}`;
   return kind==='invoice'?editingInvoiceNo:editingReceiptNo;
 }
 async function repairDuplicateManualNumbers(){
   const rows=[...manualRows].sort((a,b)=>(parseMs(a.createdAtMs||a.createdAt)||a.saleDateMs||0)-(parseMs(b.createdAtMs||b.createdAt)||b.saleDateMs||0));
-  const seen=new Set();const maxByDate=new Map();
-  rows.forEach(row=>{const parsed=parseManualDocumentSequence(currentDocumentNo(row));if(parsed)maxByDate.set(parsed.dateKey,Math.max(maxByDate.get(parsed.dateKey)||0,parsed.sequence))});
+  const seen=new Set();let maxGlobal=0;
+  rows.forEach(row=>{const parsed=parseManualDocumentSequence(currentDocumentNo(row));if(parsed)maxGlobal=Math.max(maxGlobal,parsed.sequence)});
   const updates=[];
   for(const row of rows){
     const parsed=parseManualDocumentSequence(currentDocumentNo(row));if(!parsed)continue;const key=`${parsed.dateKey}-${parsed.sequence}`;
     if(!seen.has(key)){seen.add(key);continue}
-    const next=(maxByDate.get(parsed.dateKey)||0)+1;maxByDate.set(parsed.dateKey,next);const suffix=`${parsed.dateKey}-${String(next).padStart(4,'0')}`;const kind=documentKindForStatus(row.status);const payload={documentNo:kind==='invoice'?`AZI-${suffix}`:`AZR-${suffix}`,updatedAt:serverTimestamp(),updatedAtMs:Date.now()};
+    const next=++maxGlobal;const suffix=`${parsed.dateKey}-${String(next).padStart(6,'0')}`;const kind=documentKindForStatus(row.status);const payload={documentNo:kind==='invoice'?`AZI-${suffix}`:`AZR-${suffix}`,updatedAt:serverTimestamp(),updatedAtMs:Date.now()};
     if(row.invoiceNo||kind==='invoice')payload.invoiceNo=`AZI-${suffix}`;
     if(row.receiptNo||kind==='receipt')payload.receiptNo=`AZR-${suffix}`;
     updates.push(updateDoc(doc(db,'receipts',row.docId),payload));seen.add(`${parsed.dateKey}-${next}`);
