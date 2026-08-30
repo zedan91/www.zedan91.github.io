@@ -3183,6 +3183,12 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       } catch (numberPersistError) {
         console.warn("Paid automatic document numbering persist skipped:", numberPersistError && (numberPersistError.message || numberPersistError));
       }
+      try {
+        const supersedeResult = await azSupersedeDuplicatePendingAutomaticOrders(latest);
+        if (supersedeResult && supersedeResult.changed) console.log("Automatic duplicate checkout cleanup:", JSON.stringify({ orderId:latest.orderId || "", changed:supersedeResult.changed }));
+      } catch (supersedeError) {
+        console.warn("Automatic duplicate checkout cleanup skipped:", supersedeError && (supersedeError.message || supersedeError));
+      }
     }
 
     if (!azIsManualSalesInvoiceOrder(latest) && !latest.commissionCheckedAt) {
@@ -3768,6 +3774,8 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     receiptNo: String(order.receiptNo || ""),
     documentSequence: Number(order.documentSequence || 0) || undefined,
     autoDocumentNumberVersion: Number(order.autoDocumentNumberVersion || 0) || undefined,
+    checkoutFingerprint: cleanPremiumText(order.checkoutFingerprint || azAutomaticCheckoutFingerprintForOrder(order) || "", 100) || undefined,
+    checkoutFingerprintVersion: Number(order.checkoutFingerprintVersion || 0) || ((order.checkoutFingerprint || azAutomaticCheckoutFingerprintForOrder(order)) ? 1050 : undefined),
     updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
   };
 
@@ -3796,6 +3804,34 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
     const variant = String(item && (item.variant || item.areaSize) || "").trim().toUpperCase();
     const uid = String(order.user && order.user.uid || order.uid || "").trim();
     const usernameKey = String(order.user && (order.user.username || order.user.usernameKey) || order.usernameKey || "").trim().toLowerCase();
+
+    // v1050: always update the purchaseLog that belongs to THIS payment order first.
+    // This is what makes the same Pending INVOICE row become the PAID RECEIPT row.
+    const paymentOrderId = String(order.orderId || order.paymentOrderId || "").trim();
+    if (paymentOrderId) {
+      try {
+        let orderSnap = await db.collection("purchaseLogs").where("paymentOrderId", "==", paymentOrderId).limit(50).get();
+        if (orderSnap.empty) orderSnap = await db.collection("purchaseLogs").where("orderId", "==", paymentOrderId).limit(50).get();
+        const exact = [];
+        orderSnap.forEach((docSnap) => {
+          const x = docSnap.data() || {};
+          const xType = String(x.productType || x.product || "").trim().toUpperCase();
+          const xCodeRaw = String(x.itemCode || x.stesen || x.stationNo || x.productId || "").trim();
+          const xCode = (xType === "NDCDB" || xType === "NDCDB_C3") ? xCodeRaw : xCodeRaw.toUpperCase();
+          const xNegeri = String(x.negeri || x.state || "").trim().toUpperCase();
+          const xVariant = String(x.variant || x.areaSize || "").trim().toUpperCase();
+          const typeOk = !productType || !xType || xType === productType;
+          const codeOk = !itemCode || !xCode || xCode === itemCode;
+          const negeriOk = !negeri || !xNegeri || xNegeri === negeri;
+          const variantOk = !variant || !xVariant || xVariant === variant;
+          if (typeOk && codeOk && negeriOk && variantOk) exact.push(docSnap.ref);
+        });
+        if (exact.length) return exact.slice(0,1);
+      } catch (err) {
+        console.warn("PA/BM purchaseLogs exact paymentOrderId lookup failed:", err && (err.message || err));
+      }
+    }
+
     try {
       const snap = await db.collection("purchaseLogs").where("itemCode", "==", itemCode).limit(30).get();
       const matches = [];
@@ -4188,7 +4224,7 @@ function getAzobssBackendDb() {
   return firebaseAdmin.firestore();
 }
 
-// AZOBSS 1049: one shared 6-digit running sequence for Manual + NEW Automatic Invoice / Receipt. Historical automatic IDs are preserved.
+// AZOBSS 1050: one shared 6-digit running sequence for Manual + NEW Automatic Invoice / Receipt. Historical automatic IDs are preserved.
 const AZOBSS_SALES_SEQUENCE_COLLECTION = "systemCounters";
 const AZOBSS_SALES_SEQUENCE_DOC = "salesDocuments";
 let azSalesSequenceSeedReady = false;
@@ -4263,7 +4299,7 @@ async function azEnsureSalesSequenceSeed(db) {
         seededMax:observedMax,
         updatedAt:new Date().toISOString(),
         updatedAtMs:Date.now(),
-        patch:1049
+        patch:1050
       }, { merge:true });
     });
     azSalesSequenceSeedReady = true;
@@ -4283,7 +4319,7 @@ async function azReserveSalesDocumentSequence(db) {
       value:next,
       lastIssuedAt:new Date().toISOString(),
       lastIssuedAtMs:Date.now(),
-      patch:1049
+      patch:1050
     }, { merge:true });
     return next;
   });
@@ -4330,7 +4366,7 @@ async function azEnsureAutomaticSalesDocumentNumbers(order = {}, options = {}) {
       invoiceNo,
       receiptNo,
       documentSequence:sequence,
-      autoDocumentNumberVersion:1049,
+      autoDocumentNumberVersion:1050,
       autoDocumentNumberAssignedAt:order.autoDocumentNumberAssignedAt || new Date().toISOString(),
       autoDocumentNumberAssignedAtMs:Number(order.autoDocumentNumberAssignedAtMs || 0) || Date.now()
     };
@@ -4367,7 +4403,7 @@ function azPatchLocalPremiumOrderDocumentNumbers(order = {}) {
       invoiceNo:order.invoiceNo || orders[idx].invoiceNo || "",
       receiptNo:order.receiptNo || orders[idx].receiptNo || "",
       documentSequence:Number(order.documentSequence || orders[idx].documentSequence || 0) || 0,
-      autoDocumentNumberVersion:Number(order.autoDocumentNumberVersion || 1049),
+      autoDocumentNumberVersion:Number(order.autoDocumentNumberVersion || 1050),
       autoDocumentNumberAssignedAt:order.autoDocumentNumberAssignedAt || orders[idx].autoDocumentNumberAssignedAt || "",
       autoDocumentNumberAssignedAtMs:Number(order.autoDocumentNumberAssignedAtMs || orders[idx].autoDocumentNumberAssignedAtMs || 0) || 0
     };
@@ -4377,7 +4413,7 @@ function azPatchLocalPremiumOrderDocumentNumbers(order = {}) {
   }
 }
 async function azBackfillAutomaticSalesDocumentNumbers(options = {}) {
-  // v1049 deliberately preserves historical automatic document IDs.
+  // v1050 deliberately preserves historical automatic document IDs.
   // Kept as a no-op for compatibility with a cached v1048 Admin page.
   return {
     ok:true,
@@ -4386,7 +4422,7 @@ async function azBackfillAutomaticSalesDocumentNumbers(options = {}) {
     premiumChanged:0,
     purchaseChanged:0,
     groupsChanged:0,
-    patch:1049,
+    patch:1050,
     note:"Historical automatic Invoice / Receipt records are not renumbered. Only new transactions receive AZI/AZR numbers."
   };
 }
@@ -4416,7 +4452,7 @@ async function azEnsureReceiptRecordDocumentNumbers(order = {}, source = "", rec
         invoiceNo:numberedPremium.invoiceNo,
         receiptNo:numberedPremium.receiptNo || azSalesDocumentNo("receipt", numberedPremium.documentSequence, azAutomaticOrderPaidMs(order)),
         documentSequence:numberedPremium.documentSequence,
-        autoDocumentNumberVersion:1049
+        autoDocumentNumberVersion:1050
       };
       const docId = cleanPremiumText(order.docId || order.firestoreId || recordId || "", 180);
       if (docId) {
@@ -4424,7 +4460,7 @@ async function azEnsureReceiptRecordDocumentNumbers(order = {}, source = "", rec
           invoiceNo:numbered.invoiceNo || "",
           receiptNo:numbered.receiptNo || "",
           documentSequence:Number(numbered.documentSequence || 0) || 0,
-          autoDocumentNumberVersion:1049,
+          autoDocumentNumberVersion:1050,
           updatedAt:new Date().toISOString(),
           updatedAtMs:Date.now()
         }, { merge:true });
@@ -4440,7 +4476,7 @@ async function azEnsureReceiptRecordDocumentNumbers(order = {}, source = "", rec
         invoiceNo:numbered.invoiceNo || "",
         receiptNo:numbered.receiptNo || "",
         documentSequence:Number(numbered.documentSequence || 0) || 0,
-        autoDocumentNumberVersion:1049,
+        autoDocumentNumberVersion:1050,
         updatedAt:new Date().toISOString(),
         updatedAtMs:Date.now()
       }, { merge:true });
@@ -4453,6 +4489,200 @@ async function azEnsureReceiptRecordDocumentNumbers(order = {}, source = "", rec
   Object.assign(order, numbered);
   try { await azPersistPremiumOrder(order); } catch (_) {}
   return order;
+}
+
+
+// AZOBSS 1050: automatic ToyyibPay checkout idempotency + exact PA/BM order sync.
+// Prevents the same cart/customer from creating a second pending invoice when the user
+// double-clicks, retries, refreshes, or re-enters the same payment flow while the
+// original ToyyibPay bill is still active.
+const AZOBSS_AUTO_CHECKOUT_PATCH = 1050;
+const AZOBSS_AUTO_CHECKOUT_REUSE_MS = 72 * 60 * 60 * 1000; // ToyyibPay billExpiryDays = 3
+const AZOBSS_AUTO_CHECKOUT_CREATE_LOCKS = new Map();
+
+function azAutoCheckoutUserKey(user = {}, fallback = {}) {
+  const u = user || {};
+  return cleanPremiumText(
+    u.uid || fallback.uid || u.email || fallback.email || u.username || u.usernameKey || fallback.username || fallback.usernameKey || "",
+    180
+  ).trim().toLowerCase();
+}
+function azAutoCheckoutItemKey(item = {}) {
+  const productType = cleanPremiumText(item.productType || item.product || "", 30).toUpperCase();
+  const rawCode = cleanPremiumText(item.itemCode || item.code || item.stationNo || item.productId || "", 160);
+  const code = (productType === "NDCDB" || productType === "NDCDB_C3") ? rawCode : rawCode.toUpperCase();
+  const negeri = cleanPremiumText(item.negeri || item.state || "", 100).toUpperCase();
+  const variant = cleanPremiumText(item.variant || item.areaSize || "", 60).toUpperCase();
+  const productId = cleanPremiumText(item.productId || "", 160);
+  const amountSen = Math.round(Number(item.amount || 0) * 100);
+  return `${productType}|${code}|${negeri}|${variant}|${productId}|${amountSen}`;
+}
+function azAutomaticCheckoutFingerprint(kind = "digital", payload = {}) {
+  const userKey = azAutoCheckoutUserKey(payload.user || {}, payload);
+  const amountSen = Math.max(0, Math.round(Number(payload.amountSen || 0) || 0));
+  const productId = cleanPremiumText(payload.productId || "", 180).toLowerCase();
+  const planId = cleanPremiumText(payload.subscriptionPlanId || payload.planId || "", 100).toLowerCase();
+  const items = (Array.isArray(payload.items) ? payload.items : Array.isArray(payload.paBmItems) ? payload.paBmItems : [])
+    .map(azAutoCheckoutItemKey).filter(Boolean).sort();
+  const canonical = [
+    "azobss-auto-checkout-v1050",
+    cleanPremiumText(kind || "digital", 40).toLowerCase(),
+    userKey,
+    String(amountSen),
+    productId,
+    planId,
+    items.join(";;")
+  ].join("|");
+  return crypto.createHash("sha256").update(canonical).digest("hex");
+}
+function azAutomaticCheckoutKindForOrder(order = {}) {
+  if (order.publicPaPurchase === true || String(order.source || "").toLowerCase().includes("public-pa")) return "public-pa";
+  if (isPaBmPremiumOrder(order) || String(order.productId || "") === "pa-bm-purchase-records") return "pa-bm";
+  return "digital";
+}
+function azAutomaticCheckoutFingerprintForOrder(order = {}) {
+  const stored = cleanPremiumText(order.checkoutFingerprint || "", 100).toLowerCase();
+  if (/^[a-f0-9]{64}$/.test(stored)) return stored;
+  if (!order || azIsManualSalesInvoiceOrder(order)) return "";
+  return azAutomaticCheckoutFingerprint(azAutomaticCheckoutKindForOrder(order), {
+    user:order.user || {},
+    uid:order.uid,
+    email:order.email || order.buyerEmail,
+    username:order.usernameKey,
+    amountSen:Number(order.amountSen || 0),
+    productId:order.productId || (order.product && (order.product.productId || order.product.id)) || "",
+    subscriptionPlanId:order.subscriptionPlanId || (order.subscriptionPlan && order.subscriptionPlan.id) || "",
+    items:order.paBmItems || []
+  });
+}
+function azAutomaticCheckoutCreatedMs(order = {}) {
+  return Number(order.createdAtMs || 0) || Date.parse(order.createdAt || order.createdAtClient || "") || Number(order.updatedAtMs || 0) || 0;
+}
+function azAutomaticCheckoutPending(order = {}) {
+  const status = String(order.status || order.paymentStatus || "").trim().toLowerCase();
+  return ["pending","unpaid","new","created","processing"].includes(status);
+}
+function azAutomaticCheckoutReusable(order = {}, nowMs = Date.now()) {
+  if (!order || azIsManualSalesInvoiceOrder(order) || order.superseded === true || order.autoDuplicateSuperseded === true) return false;
+  if (!azAutomaticCheckoutPending(order)) return false;
+  if (!String(order.paymentMethod || "").toLowerCase().includes("toyyib")) return false;
+  if (!cleanPremiumText(order.billCode || "",120) || !cleanPremiumUrl(order.paymentUrl || "")) return false;
+  const createdMs = azAutomaticCheckoutCreatedMs(order);
+  if (createdMs && nowMs - createdMs > AZOBSS_AUTO_CHECKOUT_REUSE_MS) return false;
+  return true;
+}
+async function azLoadRecentAutomaticOrdersForFingerprint(limitRows = 250) {
+  const merged = [];
+  const seen = new Set();
+  const push = row => {
+    if (!row) return;
+    const key = String(row.orderId || row.billCode || row.docId || row.id || "").trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key); merged.push(row);
+  };
+  try { (readPremiumOrders() || []).slice(0, limitRows).forEach(push); } catch (_) {}
+  const db = getAzobssBackendDb();
+  if (db) {
+    try {
+      let snap;
+      try { snap = await db.collection("premiumOrders").orderBy("createdAtMs","desc").limit(limitRows).get(); }
+      catch (_) { snap = await db.collection("premiumOrders").limit(limitRows).get(); }
+      snap.forEach(doc => push({ docId:doc.id, ...(doc.data() || {}) }));
+    } catch (err) { console.warn("Automatic checkout recent-order scan skipped:", err && (err.message || err)); }
+  }
+  return merged;
+}
+async function azFindReusablePendingAutomaticCheckout(fingerprint = "") {
+  const fp = cleanPremiumText(fingerprint,100).toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(fp)) return null;
+  const nowMs = Date.now();
+  const rows = await azLoadRecentAutomaticOrdersForFingerprint(300);
+  const matches = rows.filter(row => {
+    if (!azAutomaticCheckoutReusable(row, nowMs)) return false;
+    return azAutomaticCheckoutFingerprintForOrder(row) === fp;
+  });
+  matches.sort((a,b)=>azAutomaticCheckoutCreatedMs(b)-azAutomaticCheckoutCreatedMs(a));
+  return matches[0] || null;
+}
+async function azAcquireAutomaticCheckoutCreateLock(fingerprint = "") {
+  const key = cleanPremiumText(fingerprint,100).toLowerCase() || makeId("checkout-lock");
+  const previous = AZOBSS_AUTO_CHECKOUT_CREATE_LOCKS.get(key) || Promise.resolve();
+  let releaseCurrent;
+  const current = new Promise(resolve => { releaseCurrent = resolve; });
+  const chained = previous.then(() => current).catch(() => current);
+  AZOBSS_AUTO_CHECKOUT_CREATE_LOCKS.set(key, chained);
+  await previous.catch(() => {});
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    releaseCurrent();
+    setTimeout(() => {
+      if (AZOBSS_AUTO_CHECKOUT_CREATE_LOCKS.get(key) === chained) AZOBSS_AUTO_CHECKOUT_CREATE_LOCKS.delete(key);
+    }, 1000).unref?.();
+  };
+}
+async function azSupersedeDuplicatePendingAutomaticOrders(paidOrder = {}) {
+  if (!paidOrder || azIsManualSalesInvoiceOrder(paidOrder)) return { ok:true, changed:0 };
+  const fingerprint = azAutomaticCheckoutFingerprintForOrder(paidOrder);
+  if (!fingerprint) return { ok:true, changed:0 };
+  const currentOrderId = cleanPremiumText(paidOrder.orderId || "",180);
+  const currentBillCode = cleanPremiumText(paidOrder.billCode || "",120);
+  const rows = await azLoadRecentAutomaticOrdersForFingerprint(350);
+  const duplicates = rows.filter(row => {
+    const sameIdentity = (currentOrderId && String(row.orderId || "") === currentOrderId) || (currentBillCode && String(row.billCode || "") === currentBillCode);
+    if (sameIdentity) return false;
+    if (!azAutomaticCheckoutPending(row)) return false;
+    if (azIsManualSalesInvoiceOrder(row)) return false;
+    return azAutomaticCheckoutFingerprintForOrder(row) === fingerprint;
+  });
+  if (!duplicates.length) return { ok:true, changed:0 };
+  const db = getAzobssBackendDb();
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  let changed = 0;
+  for (const duplicate of duplicates) {
+    const patched = upsertPremiumOrder({
+      ...duplicate,
+      status:"cancelled",
+      superseded:true,
+      autoDuplicateSuperseded:true,
+      autoDuplicateSupersededAt:nowIso,
+      autoDuplicateSupersededAtMs:nowMs,
+      supersededByOrderId:currentOrderId,
+      supersededByBillCode:currentBillCode,
+      supersededByInvoiceNo:paidOrder.invoiceNo || "",
+      supersededByReceiptNo:paidOrder.receiptNo || "",
+      checkoutFingerprint:fingerprint,
+      checkoutFingerprintVersion:1050,
+      cancelReason:"duplicate-auto-checkout-paid"
+    });
+    try { await azPersistPremiumOrder(patched); } catch (err) { console.warn("Duplicate automatic premium order supersede persist skipped:", err && (err.message || err)); }
+    if (db && duplicate.orderId) {
+      try {
+        let snap = await db.collection("purchaseLogs").where("paymentOrderId","==",String(duplicate.orderId)).limit(50).get();
+        if (snap.empty) snap = await db.collection("purchaseLogs").where("orderId","==",String(duplicate.orderId)).limit(50).get();
+        if (!snap.empty) {
+          const batch = db.batch();
+          snap.forEach(doc => batch.set(doc.ref, {
+            status:"cancelled",
+            superseded:true,
+            autoDuplicateSuperseded:true,
+            autoDuplicateSupersededAt:nowIso,
+            autoDuplicateSupersededAtMs:nowMs,
+            supersededByOrderId:currentOrderId,
+            supersededByInvoiceNo:paidOrder.invoiceNo || "",
+            supersededByReceiptNo:paidOrder.receiptNo || "",
+            cancelReason:"duplicate-auto-checkout-paid",
+            updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp()
+          }, { merge:true }));
+          await batch.commit();
+        }
+      } catch (err) { console.warn("Duplicate PA/BM purchaseLogs supersede skipped:", err && (err.message || err)); }
+    }
+    changed += 1;
+  }
+  return { ok:true, changed };
 }
 
 function azJsonSafe(value) {
@@ -14720,12 +14950,27 @@ async function handler(req, res) {
         const emailHash = crypto.createHash('sha256').update(buyerEmail).digest('hex').slice(0,18);
         const usernameKey = cleanPremiumText(identity?.username || submitted.username || `publicpa_${emailHash}`, 80).toLowerCase();
         const uid = cleanPremiumText(identity?.uid || `guest_${emailHash}`, 120);
-        const orderId = makeId('publicpa');
-        const recordId = `${orderId}-1`;
         const baseAmount = 30;
         const priceAdjustmentPercent = identity ? azIdentityPriceAdjustment(identity, "publicPa") : 0;
         const amount = identity ? azApplyUserPriceAdjustment(baseAmount, identity, "publicPa") : baseAmount;
         const amountSen = Math.round(amount * 100);
+        const checkoutFingerprint = azAutomaticCheckoutFingerprint("public-pa", {
+          user:{uid,username:usernameKey,email:buyerEmail}, amountSen, productId:"public-pa-rm30",
+          items:[{productType:"PA",itemCode:paNumber,negeri,amount}]
+        });
+        const releaseCheckoutLock = await azAcquireAutomaticCheckoutCreateLock(checkoutFingerprint);
+        try {
+          const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
+          if (reusableOrder) {
+            return send(res, 200, JSON.stringify({
+              ok:true,success:true,reused:true,idempotent:true,patch:1050,
+              orderId:reusableOrder.orderId,billCode:reusableOrder.billCode,paymentUrl:reusableOrder.paymentUrl,
+              url:reusableOrder.paymentUrl,redirectUrl:reusableOrder.paymentUrl,invoiceNo:reusableOrder.invoiceNo || "",
+              status:"pending",amount,amountSen,unit:1,productId:"public-pa-rm30"
+            }), "application/json");
+          }
+        const orderId = makeId('publicpa');
+        const recordId = `${orderId}-1`;
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = `${FRONTEND_BASE_URL}/Perkhidmatan-Ukur-Tanah/?payment=return&orderId=${encodeURIComponent(orderId)}`;
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
@@ -14735,10 +14980,13 @@ async function handler(req, res) {
         const billCode = Array.isArray(apiResult) ? (apiResult[0] && (apiResult[0].BillCode || apiResult[0].billCode)) : (apiResult && (apiResult.BillCode || apiResult.billCode));
         if (!billCode) return send(res, 502, JSON.stringify({ok:false,error:"ToyyibPay tidak return BillCode.",raw:apiResult}), "application/json");
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        let order = upsertPremiumOrder({ orderId, productId:'public-pa-rm30', productName:`Pelan Akui PA${paNumber}`, amount:azAdjustedMoneyText(amount), amountSen, baseAmount, baseAmountSen:3000, saleAmount:amount, saleAmountText:azAdjustedMoneyText(amount), priceAdjustmentPercent, status:'pending', paymentMethod:'toyyibpay', paymentReference:'', billCode, paymentUrl, returnUrl, user:{uid,username:usernameKey,usernameKey,email:buyerEmail,authEmail:identity?.authEmail||'',phone:buyerPhone,displayName:buyerName}, email:buyerEmail, buyerEmail, phone:buyerPhone, paBmItems:[item], publicPaPurchase:true, publicPaRecordId:recordId, publicPaPriceRm:amount, source:'public-pa-rm30', maxDownload:5, maxDownloads:5, expiryHours:168, createdAt:new Date().toISOString(), createdAtMs:Date.now(), commissionSkippedReason:'public-pa-service' });
+        let order = upsertPremiumOrder({ orderId, productId:'public-pa-rm30', productName:`Pelan Akui PA${paNumber}`, amount:azAdjustedMoneyText(amount), amountSen, baseAmount, baseAmountSen:3000, saleAmount:amount, saleAmountText:azAdjustedMoneyText(amount), priceAdjustmentPercent, status:'pending', paymentMethod:'toyyibpay', paymentReference:'', billCode, paymentUrl, returnUrl, user:{uid,username:usernameKey,usernameKey,email:buyerEmail,authEmail:identity?.authEmail||'',phone:buyerPhone,displayName:buyerName}, email:buyerEmail, buyerEmail, phone:buyerPhone, paBmItems:[item], publicPaPurchase:true, publicPaRecordId:recordId, publicPaPriceRm:amount, source:'public-pa-rm30', maxDownload:5, maxDownloads:5, expiryHours:168, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:'public-pa', createdAt:new Date().toISOString(), createdAtMs:Date.now(), commissionSkippedReason:'public-pa-service' });
         try { await azPersistPremiumOrder(order); } catch (e) { console.warn('Public PA order persist skipped:',e&&e.message); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(order,'pending'); } catch (e) { console.warn('Public PA pending log sync skipped:',e&&e.message); }
-        return send(res, 200, JSON.stringify({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:'pending',amount,amountSen,unit:1,productId:'public-pa-rm30'}), "application/json");
+        return send(res, 200, JSON.stringify({ok:true,success:true,reused:false,idempotent:true,patch:1050,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,invoiceNo:order.invoiceNo || "",status:'pending',amount,amountSen,unit:1,productId:'public-pa-rm30'}), "application/json");
+        } finally {
+          releaseCheckoutLock();
+        }
       } catch (e) {
         console.error('Create public PA bill failed:', e && (e.stack || e.message || e));
         return send(res, 500, JSON.stringify({ok:false,error:e&&e.message?e.message:'Failed create public PA bill'}), "application/json");
@@ -14860,6 +15108,22 @@ async function handler(req, res) {
             priceProfileResolvedBy:String(identity.priceAdjustmentProfileResolvedBy || "")
           }, null, 2), "application/json");
         }
+        const checkoutFingerprint = azAutomaticCheckoutFingerprint("pa-bm", { user, amountSen, items });
+        const releaseCheckoutLock = await azAcquireAutomaticCheckoutCreateLock(checkoutFingerprint);
+        try {
+          const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
+          if (reusableOrder) {
+            return send(res, 200, JSON.stringify({
+              ok:true, success:true, reused:true, idempotent:true, patch:1050,
+              orderId:reusableOrder.orderId, billCode:reusableOrder.billCode,
+              paymentUrl:reusableOrder.paymentUrl, url:reusableOrder.paymentUrl, redirectUrl:reusableOrder.paymentUrl,
+              invoiceNo:reusableOrder.invoiceNo || "", status:"pending",
+              amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100),
+              priceAdjustmentPercent:Number(reusableOrder.priceAdjustmentPercent || 0),
+              priceAdjustmentByCategory:reusableOrder.priceAdjustmentByCategory || priceAdjustmentByCategory, unit:items.length
+            }, null, 2), "application/json");
+          }
+
         const orderId = makeId("pabm");
         const apiBase = publicBaseUrlFromReq(req);
         const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
@@ -14898,10 +15162,13 @@ async function handler(req, res) {
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
         const usedPercents = [...new Set(items.map(item => Number(item.priceAdjustmentPercent || 0)))];
         const priceAdjustmentPercent = usedPercents.length === 1 ? usedPercents[0] : 0;
-        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, createdAt:new Date().toISOString() });
+        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"pa-bm", createdAt:new Date().toISOString(), createdAtMs:Date.now() });
         try { await azPersistPremiumOrder(paBmOrder); } catch (persistError) { console.warn("PA/BM premium order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1050, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
+        } finally {
+          releaseCheckoutLock();
+        }
       } catch (e) {
         console.error("Create PA/BM ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create PA/BM ToyyibPay bill" }, null, 2), "application/json");
@@ -14945,6 +15212,20 @@ async function handler(req, res) {
         const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
         if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing backend product name or valid backend amount." }, null, 2), "application/json");
         if (!downloadLink && !r2ObjectKey) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Premium Download File Link atau Cloudflare R2 Private Object Key belum diset untuk produk ini." }, null, 2), "application/json");
+        const checkoutFingerprint = azAutomaticCheckoutFingerprint("digital", {
+          user, amountSen, productId, subscriptionPlanId:activationPlan && activationPlan.id || ""
+        });
+        const releaseCheckoutLock = await azAcquireAutomaticCheckoutCreateLock(checkoutFingerprint);
+        try {
+          const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
+          if (reusableOrder) {
+            return send(res, 200, JSON.stringify({
+              ok:true,success:true,reused:true,idempotent:true,patch:1050,
+              orderId:reusableOrder.orderId,billCode:reusableOrder.billCode,paymentUrl:reusableOrder.paymentUrl,
+              url:reusableOrder.paymentUrl,redirectUrl:reusableOrder.paymentUrl,invoiceNo:reusableOrder.invoiceNo || "",
+              status:"pending",amount:adjustedAmount,amountSen,baseAmount,baseAmountSen,priceAdjustmentPercent,priceAdjustmentCategory
+            }, null, 2), "application/json");
+          }
         const orderId = makeId("tp");
         const apiBase = publicBaseUrlFromReq(req);
         const requestedReturnUrl = cleanPremiumUrl(data.returnUrl || data.redirectUrl || data.successUrl || "");
@@ -14983,8 +15264,12 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, priceAdjustmentCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, priceAdjustmentCategory, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product), r2ObjectKey, r2Key:r2ObjectKey }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, r2ObjectKey, r2Key:r2ObjectKey, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, createdAt:new Date().toISOString() });
-        return send(res, 200, JSON.stringify({ ok:true, success:true, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent, priceAdjustmentCategory }, null, 2), "application/json");
+        const digitalOrder = upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, priceAdjustmentCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, priceAdjustmentCategory, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product), r2ObjectKey, r2Key:r2ObjectKey }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, r2ObjectKey, r2Key:r2ObjectKey, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"digital", createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+        try { await azPersistPremiumOrder(digitalOrder); } catch (persistError) { console.warn("Digital ToyyibPay order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
+        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1050, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, invoiceNo:digitalOrder.invoiceNo || "", status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent, priceAdjustmentCategory }, null, 2), "application/json");
+        } finally {
+          releaseCheckoutLock();
+        }
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");
@@ -15733,10 +16018,10 @@ async function handler(req, res) {
         const sequence = await azReserveSalesDocumentSequence(db);
         const invoiceNo = azSalesDocumentNo("invoice", sequence, dateMs);
         const receiptNo = azSalesDocumentNo("receipt", sequence, dateMs);
-        return send(res, 200, JSON.stringify({ ok:true, sequence, invoiceNo, receiptNo, dateKey:azSalesMalaysiaDateKey(dateMs), format:"AZI/AZR-YYYYMMDD-######", patch:1049 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, 200, JSON.stringify({ ok:true, sequence, invoiceNo, receiptNo, dateKey:azSalesMalaysiaDateKey(dateMs), format:"AZI/AZR-YYYYMMDD-######", patch:1050 }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         const status = Number(err && err.statusCode || 500);
-        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:1049 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, status, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err), patch:1050 }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 

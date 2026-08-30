@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 1049: 6-digit Manual + NEW Automatic Invoice / Receipt running sequence; historical auto IDs preserved */
+/* AZOBSS PATCH 1050: 6-digit Invoice / Receipt + automatic ToyyibPay idempotency; historical auto IDs preserved */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -15,7 +15,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1049;
+window.__azSalesReceiptsModuleVersion=1050;
 
 let manualRows=[];
 let websiteRows=[];
@@ -542,7 +542,7 @@ function parseManualDocumentSequence(value){
   return {kind:match[1].toUpperCase()==='I'?'invoice':'receipt',dateKey:match[2],sequence:Number(match[3])||0};
 }
 function sequenceState(rows=[...manualRows,...websiteRows],excludeId=''){
-  // v1049: the numeric sequence is global across Manual + NEW Automatic sales. Historical automatic IDs are preserved. The YYYYMMDD part
+  // v1050: the numeric sequence is global across Manual + NEW Automatic sales. Historical automatic IDs are preserved. The YYYYMMDD part
   // remains in the document number for quick human-readable date reference.
   const usedExact=new Set();let maxGlobal=0;
   rows.forEach(row=>{

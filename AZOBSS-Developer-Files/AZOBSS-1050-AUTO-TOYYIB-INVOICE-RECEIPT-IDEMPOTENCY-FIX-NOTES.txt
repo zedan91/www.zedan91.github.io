@@ -1,0 +1,10 @@
+AZOBSS 1050
+
+Automatic ToyyibPay checkout duplicate protection.
+- Same buyer + same cart/product + same amount => same checkout fingerprint.
+- Repeated click/retry reuses existing Pending ToyyibPay bill instead of creating a new order.
+- PA/BM paid sync matches purchaseLogs by exact paymentOrderId/orderId first.
+- Paid order keeps its 6-digit sequence for Receipt: AZI ... 000007 => AZR ... 000007.
+- Duplicate pending auto orders are cancelled/superseded after the matching order is paid.
+- Historical automatic IDs are not renumbered.
+- Render redeploy required.
