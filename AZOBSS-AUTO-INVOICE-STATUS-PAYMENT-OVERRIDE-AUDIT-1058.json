@@ -1,0 +1,26 @@
+{
+  "version": "1.0.1058",
+  "baseline": "1.0.1057",
+  "scope": "Admin Sales & Receipts website-auto safe status/payment method override",
+  "touched_files": [
+    "admin/index.html",
+    "assets/js/azobss-admin-sales-receipts.js",
+    "assets/js/azobss-admin-sales-receipt-pdf.js",
+    "package.json",
+    "README_PATCH_1058.md"
+  ],
+  "checks": {
+    "sales_receipts_js_syntax": "node --check PASS",
+    "pdf_js_syntax": "node --check PASS",
+    "backend_unchanged": true,
+    "admin_cachebuster_1058": true,
+    "pdf_cachebuster_1058": true
+  },
+  "safety": {
+    "original_gateway_record_rewritten": false,
+    "customer_download_unlock_on_manual_paid": false,
+    "verified_status_snapshot_saved": true,
+    "verified_payment_method_snapshot_saved": true,
+    "receipt_auto_sent_uses_verified_status": true
+  }
+}

@@ -75,7 +75,16 @@
     return `INV-${source}`;
   }
   function documentNumber(row,type){ return normalizeDocumentType(type)==='invoice' ? invoiceNumber(row) : receiptNumber(row); }
-  function statusLabel(value){ return (clean(value) || 'pending').toUpperCase(); }
+  function statusLabel(value){
+    const row=(value&&typeof value==='object')?value:null;
+    const status=clean(row?row.status:value)||'pending';
+    if(row&&row.source==='website'&&row.adminStatusOverride) return `${status.toUpperCase()} - MANUAL OVERRIDE`;
+    return status.toUpperCase();
+  }
+  function paymentMethodLabel(row){
+    const method=clean(row?.paymentMethod)||'-';
+    return row?.source==='website'&&row?.adminPaymentMethodOverride?`${method} (Admin Override)`:method;
+  }
   function statusColors(value){
     const status=clean(value).toLowerCase();
     if(status==='paid') return {bg:[220,252,231],border:[34,197,94],text:[22,101,52]};
@@ -193,7 +202,7 @@
     text(commands,continuation?`${docType==='invoice'?'Invoice':'Receipt'} continuation`:documentNumber(row,docType),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
   }
   function drawStatusBadge(commands,row,x,y){
-    const colors=statusColors(row.status); const label=statusLabel(row.status); const w=Math.max(72,estimateWidth(label,8,true)+22);
+    const colors=statusColors(row.status); const label=statusLabel(row); const w=Math.max(72,estimateWidth(label,8,true)+22);
     fillRect(commands,x-w,y,w,23,colors.bg); strokeRect(commands,x-w,y,w,23,colors.border,0.8);
     text(commands,label,x-(w/2),y+15,{size:8,bold:true,align:'center',color:colors.text});
   }
@@ -226,7 +235,7 @@
     drawInlineInfoRow(commands,'EMAIL',clean(row.customerEmail)||'-',left,y+62,colW);
     drawInlineInfoRow(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',documentNumber(row,docType),right,y+22,colW);
     drawInlineInfoRow(commands,docType==='invoice'?'ISSUE DATE':'DATE',formatDateTime(documentDateTime(row,docType)),right,y+42,colW);
-    drawInlineInfoRow(commands,docType==='invoice'?'PAYMENT TERMS':'PAYMENT METHOD',docType==='invoice'?(clean(row.paymentTerms)||'Due upon receipt'):clean(row.paymentMethod||'-'),right,y+62,colW);
+    drawInlineInfoRow(commands,docType==='invoice'?'PAYMENT TERMS':'PAYMENT METHOD',docType==='invoice'?(clean(row.paymentTerms)||'Due upon receipt'):paymentMethodLabel(row),right,y+62,colW);
     drawInlineInfoRow(commands,'ADDRESS',clean(row.customerAddress)||'-',x+14,y+91,w-28);
     drawStatusBadge(commands,row,x+w-12,y-10);
   }

@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 1057: automatic website invoices/receipts are editable through safe display-only overrides; payment-critical fields remain locked */
+/* AZOBSS PATCH 1058: website auto invoice/receipt safe admin status + payment-method overrides; verified gateway state is preserved separately */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1057;
+window.__azSalesReceiptsModuleVersion=1058;
 
 let manualRows=[];
 let websiteRows=[];
@@ -111,7 +111,7 @@ function applyReceiptDeliveryState(row={}){
   }else{
     // Website purchases deliver their receipt automatically after payment. Manual sales must
     // remain NOT SENT until the admin shares the receipt or marks it as sent.
-    const websiteAutoSent=row.source==='website'&&normalizeStatus(row.status)==='paid';
+    const websiteAutoSent=row.source==='website'&&normalizeStatus(row.verifiedStatus||row.status)==='paid';
     row.receiptSent=websiteAutoSent;
     row.receiptSentAtMs=websiteAutoSent?(parseMs(row.paidAtMs||row.paymentPaidAtMs||row.saleDateMs)||0):0;
     row.receiptSentVia=websiteAutoSent?'website-auto-receipt':'';
@@ -131,6 +131,10 @@ function autoInvoiceEditDocIdFromKey(key=''){
 }
 function applyAutoInvoiceEdit(row={}){
   if(row.source!=='website')return row;
+  // Preserve the actual payment gateway state before any admin-facing override is applied.
+  // These verified fields are display/audit metadata only; the original purchaseLogs/premiumOrders record is never rewritten here.
+  row.verifiedStatus=normalizeStatus(row.verifiedStatus||row.status);
+  row.verifiedPaymentMethod=String(row.verifiedPaymentMethod||row.paymentMethod||'');
   const key=autoInvoiceEditKey(row);const state=autoInvoiceEditByKey.get(key);if(!state)return row;
   row.autoInvoiceEdited=true;row.autoInvoiceEditDocId=String(state._docId||autoInvoiceEditDocIdFromKey(key));
   row.customerName=String(state.customerName??row.customerName??'Customer');
@@ -141,6 +145,15 @@ function applyAutoInvoiceEdit(row={}){
   if(Array.isArray(state.itemNames)&&state.itemNames.length){
     row.items=(row.items||[]).map((item,index)=>({...item,name:String(state.itemNames[index]??item.name??'Purchase')}));
   }
+  const overrideStatus=String(state.statusOverride||'').trim();
+  if(overrideStatus){
+    const normalizedOverride=normalizeStatus(overrideStatus);
+    if(['pending','paid','refunded','cancelled'].includes(normalizedOverride))row.status=normalizedOverride;
+  }
+  const overrideMethod=String(state.paymentMethodOverride||'').trim();
+  if(overrideMethod)row.paymentMethod=overrideMethod;
+  row.adminStatusOverride=normalizeStatus(row.status)!==normalizeStatus(row.verifiedStatus);
+  row.adminPaymentMethodOverride=String(row.paymentMethod||'').trim().toLowerCase()!==String(row.verifiedPaymentMethod||'').trim().toLowerCase();
   return row;
 }
 function receiptDeliveryBadge(row={}){
@@ -495,7 +508,9 @@ function applyFilters(){
   const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));if(currentPage>pages)currentPage=pages;
   updateKpis(rows);renderTable();
 }
-function statusPill(status){return `<span class="az-sr-pill ${esc(status)}">${esc(status.toUpperCase())}</span>`}
+function statusDisplayLabel(row={}){const status=normalizeStatus(row.status);return row.source==='website'&&row.adminStatusOverride?`${status.toUpperCase()} · MANUAL OVERRIDE`:status.toUpperCase()}
+function statusPill(status,row=null){const normalized=normalizeStatus(status);const label=row?statusDisplayLabel(row):normalized.toUpperCase();return `<span class="az-sr-pill ${esc(normalized)}">${esc(label)}</span>`}
+function paymentMethodDisplay(row={}){const method=String(row.paymentMethod||'-');return row.source==='website'&&row.adminPaymentMethodOverride?`${method} · Admin override`:method}
 function sourcePill(row){return `<span class="az-sr-pill ${row.source==='manual'?'manual':'website'}">${row.source==='manual'?'MANUAL':'WEBSITE'}</span>`}
 function currentPageRows(){const start=(currentPage-1)*PAGE_SIZE;return visibleRows.slice(start,start+PAGE_SIZE)}
 function getSelectedRows(){return [...selectedRowIds].map(findRow).filter(Boolean)}
@@ -560,7 +575,7 @@ function renderTable(){
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
-    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(r.paymentMethod||'-')}</div></td><td>${statusPill(r.status)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
+    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(paymentMethodDisplay(r))}</div></td><td>${statusPill(r.status,r)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
   }).join('')||'<tr><td colspan="10"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
   if(el('salesReceiptPageInfo'))el('salesReceiptPageInfo').textContent=`Page ${currentPage} / ${pages} • ${visibleRows.length} record(s)`;
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
@@ -696,9 +711,16 @@ function setFormControlLocked(id,locked,title=''){
 }
 function configureFormMode(row=null){
   const website=editingMode==='website';
-  const lockedTitle='Automatic website purchase: payment, amount, date, status and accounting values are locked to the verified transaction.';
-  ['salesReceiptSaleDate','salesReceiptFormStatus','salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>setFormControlLocked(id,website,lockedTitle));
-  if(website)setFormControlLocked('salesReceiptPaymentMethod',true,lockedTitle);else{const pending=normalizeStatus(el('salesReceiptFormStatus')?.value)==='pending';setFormControlLocked('salesReceiptPaymentMethod',pending,pending?'Pending manual invoices use ToyyibPay so the PDF can include a unique payment QR.':'')}
+  const lockedTitle='Automatic website purchase: document number, amount, date, quantity, price and accounting values stay locked to the original transaction.';
+  ['salesReceiptSaleDate','salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>setFormControlLocked(id,website,lockedTitle));
+  if(website){
+    setFormControlLocked('salesReceiptFormStatus',false);
+    setFormControlLocked('salesReceiptPaymentMethod',false);
+  }else{
+    setFormControlLocked('salesReceiptFormStatus',false);
+    const pending=normalizeStatus(el('salesReceiptFormStatus')?.value)==='pending';
+    setFormControlLocked('salesReceiptPaymentMethod',pending,pending?'Pending manual invoices use ToyyibPay so the PDF can include a unique payment QR.':'');
+  }
   const add=el('salesReceiptAddItem');if(add){add.hidden=website;add.disabled=website}
   document.querySelectorAll('#salesReceiptItems .az-sr-item-row').forEach(itemRow=>{
     itemRow.querySelectorAll('[data-sr-item-category],[data-sr-item-qty],[data-sr-item-price],[data-sr-item-cost]').forEach(node=>{node.disabled=website;node.title=website?lockedTitle:''});
@@ -706,7 +728,12 @@ function configureFormMode(row=null){
     const remove=itemRow.querySelector('.az-sr-remove-item');if(remove){remove.hidden=website;remove.disabled=website}
   });
   const note=document.querySelector('.az-sr-status-note');if(note){
-    note.innerHTML=website?'<b>Website Auto Invoice / Receipt</b> — customer details, item description and Notes can be edited. Document number, date, status, payment method, quantity, price and payment/accounting values stay locked to the original verified transaction.':'<b>Pending = Invoice</b> (belum dikira sebagai jualan) &nbsp;•&nbsp; <b>Paid = Receipt</b> (terus masuk Gross, Costs dan Net Profit).';
+    if(website){
+      const sourceRow=row||findRow(editingWebsiteRowId)||{};
+      const verifiedStatus=normalizeStatus(sourceRow.verifiedStatus||sourceRow.status);
+      const verifiedMethod=String(sourceRow.verifiedPaymentMethod||sourceRow.paymentMethod||'-');
+      note.innerHTML=`<b>Website Auto Invoice / Receipt</b> — Status and Payment Method may be changed by Admin as a <b>manual override</b>. Verified transaction: <b>${esc(verifiedStatus.toUpperCase())}</b> • <b>${esc(verifiedMethod)}</b>. Original gateway IDs, amount and order references remain untouched. <b>Manual Paid does not unlock customer downloads or become a ToyyibPay verified payment.</b>`;
+    }else note.innerHTML='<b>Pending = Invoice</b> (belum dikira sebagai jualan) &nbsp;•&nbsp; <b>Paid = Receipt</b> (terus masuk Gross, Costs dan Net Profit).';
   }
 }
 function syncFormDocumentMode(initial=false){
@@ -744,7 +771,7 @@ function openForm(row=null){
   editingAutoOverrideDocId=editingMode==='website'?String(row?.autoInvoiceEditDocId||autoInvoiceEditDocIdFromKey(editingAutoTargetKey)):'';
   editingDocId=editingMode==='manual'?(row?.docId||''):'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
   editingSourceBookingId=editingMode==='manual'?String(row?.sourceBookingId||row?.bookingId||'').trim():'';editingSourceBookingSnapshot=editingMode==='manual'?(row?.sourceBookingSnapshot||null):null;
-  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
+  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=editingMode==='website'?(row?.paymentMethod||row?.verifiedPaymentMethod||'Other'):(normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer'));el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
@@ -760,10 +787,19 @@ async function saveWebsiteEditForm(){
   if(!customer)return notify('Enter customer name.',true);if(customerEmail&&!validCustomerEmail(customerEmail)){el('salesReceiptCustomerEmail')?.focus();return notify('Enter a valid email address or leave it blank.',true)}if(!items.length||items.some(i=>!i.name))return notify('Enter a description for every item.',true);
   const targetKey=editingAutoTargetKey||autoInvoiceEditKey(row);if(!targetKey)return notify('Automatic transaction key is missing. Refresh and try again.',true);
   const overrideId=editingAutoOverrideDocId||autoInvoiceEditDocIdFromKey(targetKey);const now=Date.now();
-  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
-  const btn=el('salesReceiptSave');const label=documentKindForStatus(row.status)==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
+  const verifiedStatus=normalizeStatus(row.verifiedStatus||row.status);
+  const verifiedPaymentMethod=String(row.verifiedPaymentMethod||row.paymentMethod||'').trim();
+  const desiredStatus=normalizeStatus(el('salesReceiptFormStatus')?.value||row.status);
+  const desiredPaymentMethod=String(el('salesReceiptPaymentMethod')?.value||row.paymentMethod||'Other').trim()||'Other';
+  if(!['pending','paid','refunded','cancelled'].includes(desiredStatus))return notify('Choose a valid status: Pending, Paid, Refunded or Cancelled.',true);
+  const statusOverride=desiredStatus!==verifiedStatus?desiredStatus:'';
+  const paymentMethodOverride=desiredPaymentMethod.toLowerCase()!==verifiedPaymentMethod.toLowerCase()?desiredPaymentMethod:'';
+  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),statusOverride,paymentMethodOverride,verifiedStatusSnapshot:verifiedStatus,verifiedPaymentMethodSnapshot:verifiedPaymentMethod,overrideUpdatedAtMs:now,updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
+  const btn=el('salesReceiptSave');const label=documentKindForStatus(desiredStatus)==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
-    await setDoc(doc(db,'receipts',overrideId),payload,{merge:true});autoInvoiceEditByKey.set(targetKey.toLowerCase(),{...payload,_docId:overrideId});applyAutoInvoiceEdit(row);closeForm();notify(`Website ${label.toLowerCase()} updated. Payment/order IDs and verified amount were not changed.`);await loadData({force:true});
+    await setDoc(doc(db,'receipts',overrideId),payload,{merge:true});autoInvoiceEditByKey.set(targetKey.toLowerCase(),{...payload,_docId:overrideId});applyAutoInvoiceEdit(row);closeForm();
+    const overrideNotes=[];if(statusOverride)overrideNotes.push(`${verifiedStatus.toUpperCase()} → ${desiredStatus.toUpperCase()} (Manual Override)`);if(paymentMethodOverride)overrideNotes.push(`${verifiedPaymentMethod||'-'} → ${desiredPaymentMethod}`);
+    notify(`Website ${label.toLowerCase()} updated.${overrideNotes.length?' '+overrideNotes.join(' • ')+'.':''} Verified payment/order data was not changed.`);await loadData({force:true});
   }catch(e){console.error(e);notify('Save failed: '+(e.message||e),true)}finally{btn.disabled=false;btn.textContent='Save '+label+' Changes'}
 }
 async function saveForm(){
@@ -907,9 +943,9 @@ function documentNo(row,type){
 function customerDocumentHtml(row,type='receipt'){
   const docType=documentType(type);const isInvoice=docType==='invoice';const title=isInvoice?'INVOICE':'RECEIPT';const docNo=documentNo(row,docType);
   const itemRows=(row.items||[]).map((i,index)=>`<tr><td class="no">${index+1}</td><td class="description">${esc(i.name)}</td><td>${esc(categoryLabel(i.category))}</td><td>${num(i.qty)}</td><td class="amount">${money(i.unitPrice)}</td><td class="amount strong">${money(num(i.qty)*num(i.unitPrice))}</td></tr>`).join('');
-  const finalLabel=isInvoice?'Total Payable':(String(row.status||'').toLowerCase()==='paid'?'Total Paid':'Total');
+  const finalLabel=isInvoice?'Total Payable':(normalizeStatus(row.status)==='paid'?'Total Paid':'Total');
   const rightTitle=isInvoice?'Billing Details':'Payment Details';
-  const rightBody=isInvoice?`<div><b>Payment Terms</b><div>${esc(row.paymentTerms||'Due upon receipt')}</div></div><div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(String(row.status||'pending').toUpperCase())}</span></div></div>`:`<div><b>Payment Method</b><div>${esc(row.paymentMethod||'-')}</div></div>${row.invoiceNo?`<div style="margin-top:8px"><b>Invoice Reference</b><div>${esc(row.invoiceNo)}</div></div>`:''}<div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(String(row.status||'pending').toUpperCase())}</span></div></div>`;
+  const rightBody=isInvoice?`<div><b>Payment Terms</b><div>${esc(row.paymentTerms||'Due upon receipt')}</div></div><div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(statusDisplayLabel(row))}</span></div></div>`:`<div><b>Payment Method</b><div>${esc(paymentMethodDisplay(row))}</div></div>${row.invoiceNo?`<div style="margin-top:8px"><b>Invoice Reference</b><div>${esc(row.invoiceNo)}</div></div>`:''}<div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(statusDisplayLabel(row))}</span></div></div>`;
   const footer=isInvoice?'This invoice requests payment and is not proof that payment has been received.':'Thank you for your purchase. This computer-generated receipt records the payment status shown above.';
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(docNo)}</title><style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#4b5563;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #cbd5e1;padding-bottom:14px}.brandline{display:flex;align-items:center;gap:10px}.brand-logo{width:36px;height:36px;display:block;border-radius:7px;object-fit:cover}.brand{font-size:36px;line-height:36px;font-weight:900;letter-spacing:.2px}.muted{color:#64748b;font-size:12px}.doc-title{text-align:right}.doc-title h2{margin:0;font-size:24px;color:#334155}.status{display:inline-block;border:1px solid #94a3b8;border-radius:999px;padding:5px 10px;font-weight:800}.info{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.box{border:1px solid #cbd5e1;border-radius:10px;padding:12px}.box b{display:block;color:#475569;margin-bottom:4px}.customer-address{white-space:pre-line;margin-top:6px;line-height:1.35}table{width:100%;border-collapse:collapse;margin-top:16px;table-layout:fixed}th,td{border:1px solid #d7dee8;padding:9px 7px;font-size:12px;vertical-align:middle;text-align:center}th{background:#e2e8f0;color:#334155;text-transform:uppercase;font-size:10px;letter-spacing:.04em;height:38px}.no{width:6%}.description{width:37%;text-align:left;font-weight:700;line-height:1.35}.amount{text-align:right}.strong{font-weight:900;color:#047857}.totals{width:360px;max-width:100%;margin:18px 0 0 auto;border:1px solid #a7f3d0;padding:10px 14px;background:#ecfdf5}.totals div{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:18px;font-weight:900;border-top:2px solid #94a3b8;margin-top:6px;padding-top:10px!important;color:#047857}.foot{margin-top:34px;text-align:center;color:#64748b;font-size:11px}.note{margin-top:22px;background:#fffbeb;border-color:#fbbf24}@media print{button{display:none}}</style></head><body><div class="head"><div><div class="brandline"><img class="brand-logo" src="/favicon-192x192.png" alt="AZOBSS logo"><div class="brand">AZOBSS</div></div><div class="muted">www.azobss.com</div></div><div class="doc-title"><h2>${title}</h2><div>${esc(docNo)}</div><div class="muted">${formatDate(docType==='receipt'?currentDocumentDateMs(row):(num(row.invoiceDateMs)||row.saleDateMs))}</div></div></div><div class="info"><div class="box"><b>${isInvoice?'Bill To':'Customer'}</b><div>${esc(row.customerName)}</div><div class="muted">${esc(row.customerPhone||'')}</div><div class="muted">${esc(row.customerEmail||'')}</div>${row.customerAddress?`<div class="muted customer-address"><b>Address</b>${esc(row.customerAddress)}</div>`:''}</div><div class="box"><b>${rightTitle}</b>${rightBody}</div></div><table><thead><tr><th style="width:6%">No.</th><th style="width:37%">Description</th><th style="width:15%">Category</th><th style="width:8%">Qty</th><th style="width:16%">Unit Price</th><th style="width:18%">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${money(row.subtotal)}</b></div>${num(row.discount)>0?`<div><span>Discount</span><b>- ${money(row.discount)}</b></div>`:''}${num(row.shippingCharge)>0?`<div><span>Shipping</span><b>${money(row.shippingCharge)}</b></div>`:''}<div class="grand"><span>${finalLabel}</span><span>${money(row.gross)}</span></div></div>${row.notes?`<div class="box note"><b>Notes</b><div>${esc(row.notes)}</div></div>`:''}<div class="foot">${footer}</div><script>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
 }
@@ -945,7 +981,7 @@ function toyyibPayPaymentUrl(row,type='invoice'){
 function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
 async function downloadDocumentPdf(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1041,7 +1077,7 @@ function setDirectShareWindow(targetWindow,url){
 function temporaryShareText(row,type,shareUrl){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${String(row.status||'pending').toUpperCase()}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',`PDF: ${shareUrl}`].filter(Boolean).join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',`PDF: ${shareUrl}`].filter(Boolean).join('\n');
 }
 function temporaryDirectShareUrl(row,type,target,shareUrl){
   const text=temporaryShareText(row,type,shareUrl);
