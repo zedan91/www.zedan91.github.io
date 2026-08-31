@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <!-- AZOBSS favicon and app icons -->
-<link href="/favicon.ico" rel="icon" type="image/x-icon"/>
-<link href="/favicon-48x48.png" rel="icon" sizes="48x48" type="image/png"/>
-<link href="/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
-<link href="/favicon-192x192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link href="/site.webmanifest" rel="manifest"/>
-<meta content="#0f1927" name="theme-color"/>
-<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0f1927">
+
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>AZOBSS Staff Dashboard</title>
 <style>
 body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial,sans-serif}.shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 50px)}.side{background:#050b14;border-right:1px solid #223;padding:18px}.brand{font-size:22px;font-weight:900;margin-bottom:18px}.nav{display:grid;gap:8px}.nav button,.nav a{padding:12px;border-radius:12px;border:1px solid transparent;background:#101827;color:#dbeafe;text-align:left;text-decoration:none;font-weight:800;cursor:pointer}.nav button.active{background:#14532d;border-color:#22c55e}.main{padding:22px}.section{display:none}.section.active{display:block}.card{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:15px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{font-size:28px;color:#5cff9d;font-weight:900}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}input,select,textarea{background:#020617;border:1px solid #334155;color:#fff;border-radius:10px;padding:10px}textarea{width:100%;min-height:90px}.btn{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer}.green{background:#22c55e;color:#052e16}.list{display:grid;gap:8px}.item{background:#111827;border:1px solid #334155;border-radius:12px;padding:10px}.muted{color:#94a3b8;font-size:13px}.cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:99999}.box{background:#0f172a;border:1px solid #334155;border-radius:18px;padding:24px;text-align:center;width:min(440px,92vw)}body.staff-ok .cover{display:none}body:not(.staff-ok) .shell{display:none}@media(max-width:800px){.shell{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.side{position:relative}}
@@ -25,8 +25,11 @@ body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial
 @media(max-width:620px){.az-friendly-grid,.az-friendly-grid.compact,.az-status-strip{grid-template-columns:1fr}.az-staff-hero h2{font-size:24px}.az-stat-value{font-size:25px}}
 
 </style>
-<link href="/assets/css/azobss-pro-reference.css" rel="stylesheet"/>
-<link href="/assets/css/style.css" rel="stylesheet"/>
+
+
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+<link rel="stylesheet" href="/assets/css/style.css">
+
 <style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -61,6 +64,9 @@ body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
   }catch(e){}
 })();
 </script>
+
+
+
 <style id="azobss-hide-whatsapp-admin-only-safe-final">
 html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -112,6 +118,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   overflow:visible!important;
 }
 </style>
+
+
 <style id="azobss-market-nav-clean-structure-034">
 .market-nav{
   display:flex!important;
@@ -168,11 +176,13 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   justify-content:center!important;
 }
 </style>
+
 <style id="azobss-admin-staff-badge-restore-039-css">
 .market-icon-btn{position:relative!important}
 #azBellUnreadBadge,#supportBadge{position:absolute!important;top:-7px!important;right:-7px!important;min-width:18px!important;height:18px!important;padding:0 5px!important;border-radius:999px!important;background:#ef4444!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:18px!important;display:none;align-items:center!important;justify-content:center!important;text-align:center!important;z-index:99999!important;box-shadow:0 0 0 2px rgba(15,23,42,.95)!important}
 #azBellUnreadBadge.is-show,#supportBadge.is-show{display:inline-flex!important}
 </style>
+
 <style id="azobss-role-hardening-041-css">
 /* (041) Role Hardening - dashboard button visibility */
 .azAdminDashboardBtn,
@@ -242,6 +252,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
+
 <style id="azobss-staff-message-badge-copy-bell-pattern-057-css">
 /* 057: Staff chat/message badge follows Bell/Cart badge pattern */
 a[aria-label="Chat"],
@@ -280,6 +291,8 @@ button[data-az-open-support] [data-az-message-badge].is-show{
   display:inline-flex!important;
 }
 </style>
+
+
 <style id="azobss-staff-mobile-overview-width-fix-221">
 /* (221) Staff Dashboard mobile overview width fix
    Prevent overview cards/text/pre blocks from forcing a wider-than-phone layout. */
@@ -431,6 +444,9 @@ body[data-dashboard-page="staff"] code{
   }
 }
 </style>
+
+
+
 <style id="azobss-staff-dashboard-header-compact-fix-318">
 /* (318) Staff/Semi-admin dashboard header compact fix
    Rapatkan bahagian atas staff dashboard supaya tidak makan ruang. */
@@ -525,6 +541,8 @@ body[data-dashboard-page="staff"] .card{
   }
 }
 </style>
+
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -574,9 +592,9 @@ body[data-dashboard-page="staff"] .card{
   .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
 }
 </style>
-<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=910" rel="stylesheet"/>
-<script defer="" src="/assets/js/azobss-more-nav.js?v=911"></script>
-<link href="/assets/css/azobss-stickybar-global-stable.css?v=1052" rel="stylesheet"/></head>
+<link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+<script defer src="/assets/js/azobss-more-nav.js?v=911"></script>
+</head>
 <body data-dashboard-page="staff">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -586,15 +604,15 @@ body[data-dashboard-page="staff"] .card{
 <img alt="AZOBSS" src="/images/logo-azobss.jpg"/>
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
-<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
-<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
-<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+<a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a class="nav-public-pa-link is-hidden" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a><a href="/Software-Tools/">Software</a>
+<a href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
-<a href="/affiliate-shop/">Affiliate Shop</a><a aria-label="Repair PC" class="az-repair-source-link" data-az-repair-service-link="1" href="/Tempah-Servis-IT/" title="Tempah Servis Laptop / PC">Repair PC</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a aria-label="More menu" data-az-more-source-link="1" href="/tools/" title="More">More</a>
+<a href="/tools/">Mini Web Tools</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
@@ -605,78 +623,81 @@ body[data-dashboard-page="staff"] .card{
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
-<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
-<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
 </div>
-<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks">
-<svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#">
-<span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span>
+<a aria-label="Cart" data-az-shop-cart-toggle class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
-<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><span class="az-notification-badge" data-az-notification-badge="">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><span class="az-notification-badge" data-az-notification-badge>0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
-<a aria-label="Chat" class="market-icon-btn" data-az-open-support="1" href="#"><span class="az-message-badge" data-az-message-badge="" style="display:none">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+<a aria-label="Chat" class="market-icon-btn" href="#" data-az-open-support="1"><span class="az-message-badge" data-az-message-badge style="display:none">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
 </a>
 </div>
 </div>
-</div></header>
+</header>
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_END -->
+
+
 <div class="cover"><div class="box"><h2>🔐 Staff Only</h2><p id="accessMsg">Checking access...</p></div></div>
 <div class="shell">
 <aside class="side"><div class="brand" id="staffDashboardBrand">🧑‍💼 AZOBSS Staff</div><nav class="nav">
-<button class="active" data-tab="overview">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="sales">💳 Sales View</button><button data-tab="share">🔗 Share Link</button><button data-tab="payout">💸 Payout</button>
+<button data-tab="overview" class="active">📊 Overview</button><button data-tab="software">💻 Software</button><button data-tab="cad">📐 CAD Tools</button><button data-tab="sales">💳 Sales View</button><button data-tab="share">🔗 Share Link</button><button data-tab="payout">💸 Payout</button>
 </nav></aside>
 <main class="main">
 <h1 id="staffDashboardTitle">Staff Dashboard</h1><p class="muted" id="staffDashboardSubtitle">Ringkasan jualan dan komisen untuk akaun staff/semi-admin anda sahaja.</p>
-<section class="section active" id="overview">
+<section id="overview" class="section active">
 <div class="az-staff-hero">
-<div class="az-small" id="staffDashboardAreaLabel">AZOBSS Staff Area</div>
-<h2 id="staffDashboardHeroTitle">Dashboard ringkas untuk staff</h2>
-<p id="staffDashboardHeroText">Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.</p>
-<div class="az-quick-actions">
-<button data-tab-jump="sales" type="button">💳 Lihat Sales</button>
-<button data-tab-jump="share" type="button">🔗 Share Link</button>
-<button data-tab-jump="payout" type="button">💸 Payout</button>
-</div>
+  <div class="az-small" id="staffDashboardAreaLabel">AZOBSS Staff Area</div>
+  <h2 id="staffDashboardHeroTitle">Dashboard ringkas untuk staff</h2>
+  <p id="staffDashboardHeroText">Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.</p>
+  <div class="az-quick-actions">
+    <button type="button" data-tab-jump="sales">💳 Lihat Sales</button>
+    <button type="button" data-tab-jump="share">🔗 Share Link</button>
+    <button type="button" data-tab-jump="payout">💸 Payout</button>
+  </div>
 </div>
 <div class="az-status-strip">
-<div class="az-status-card"><b>Akaun</b><span id="staffAccountStatus">Checking...</span></div>
-<div class="az-status-card"><b>Data dipapar</b><span>Milik anda sahaja</span></div>
+  <div class="az-status-card"><b>Akaun</b><span id="staffAccountStatus">Checking...</span></div>
+  <div class="az-status-card"><b>Data dipapar</b><span>Milik anda sahaja</span></div>
 </div>
-<div class="card az-zero-note" id="staffOverviewNote"><b>ℹ️ Nota</b><div class="muted">Semua angka di bawah akan jadi RM0.00 jika tiada jualan Software/CAD atau share link yang sah untuk akaun ini.</div></div>
+<div id="staffOverviewNote" class="card az-zero-note"><b>ℹ️ Nota</b><div class="muted">Semua angka di bawah akan jadi RM0.00 jika tiada jualan Software/CAD atau share link yang sah untuk akaun ini.</div></div>
 <div class="az-friendly-grid">
-<div class="az-stat-card"><div class="az-stat-label">💻 Software Saya</div><div class="az-stat-value" id="statSw">0</div><div class="az-stat-help">Produk software yang dikaitkan dengan akaun ini.</div></div>
-<div class="az-stat-card"><div class="az-stat-label">📐 CAD Saya</div><div class="az-stat-value" id="statCad">0</div><div class="az-stat-help">CAD tools/LISP/VLX milik akaun ini.</div></div>
-<div class="az-stat-card primary"><div class="az-stat-label">💳 Sales Sah</div><div class="az-stat-value" id="statSales">0</div><div class="az-stat-help">Jualan produk yang layak untuk akaun ini.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">💻 Software Saya</div><div id="statSw" class="az-stat-value">0</div><div class="az-stat-help">Produk software yang dikaitkan dengan akaun ini.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">📐 CAD Saya</div><div id="statCad" class="az-stat-value">0</div><div class="az-stat-help">CAD tools/LISP/VLX milik akaun ini.</div></div>
+  <div class="az-stat-card primary"><div class="az-stat-label">💳 Sales Sah</div><div id="statSales" class="az-stat-value">0</div><div class="az-stat-help">Jualan produk yang layak untuk akaun ini.</div></div>
 </div>
 <div class="az-friendly-grid compact">
-<div class="az-stat-card primary"><div class="az-stat-label">💰 Komisen Saya</div><div class="az-stat-value" id="statCom">RM0.00</div><div class="az-stat-help" id="statComHelp">Jumlah komisen yang layak untuk akaun ini.</div></div>
-<div class="az-stat-card"><div class="az-stat-label">🔗 Share Link</div><div class="az-stat-value" id="statShareCom">RM0.00</div><div class="az-stat-help">Komisen daripada link referral/share.</div></div>
-<div class="az-stat-card"><div class="az-stat-label">⏳ Pending</div><div class="az-stat-value" id="statComPending">RM0.00</div><div class="az-stat-help">Belum dibayar / belum selesai payout.</div></div>
-<div class="az-stat-card"><div class="az-stat-label">✅ Paid</div><div class="az-stat-value" id="statComPaid">RM0.00</div><div class="az-stat-help">Komisen yang sudah dibayar.</div></div>
+  <div class="az-stat-card primary"><div class="az-stat-label">💰 Komisen Saya</div><div id="statCom" class="az-stat-value">RM0.00</div><div class="az-stat-help" id="statComHelp">Jumlah komisen yang layak untuk akaun ini.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">🔗 Share Link</div><div id="statShareCom" class="az-stat-value">RM0.00</div><div class="az-stat-help">Komisen daripada link referral/share.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">⏳ Pending</div><div id="statComPending" class="az-stat-value">RM0.00</div><div class="az-stat-help">Belum dibayar / belum selesai payout.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">✅ Paid</div><div id="statComPaid" class="az-stat-value">RM0.00</div><div class="az-stat-help">Komisen yang sudah dibayar.</div></div>
 </div>
 <div class="az-friendly-grid compact">
-<div class="az-stat-card"><div class="az-stat-label">🏢 AZOBSS Share</div><div class="az-stat-value" id="statPlatformShare">RM0.00</div><div class="az-stat-help">Bahagian platform untuk jualan yang layak.</div></div>
-<div class="az-stat-card"><div class="az-stat-label">👤 Owner Share</div><div class="az-stat-value" id="statOwnerShare">RM0.00</div><div class="az-stat-help">Bahagian owner produk jika berkaitan.</div></div>
-<div class="az-stat-card"><div class="az-stat-label">🧾 Rekod Layak</div><div class="az-stat-value" id="statEligibleRecords">0</div><div class="az-stat-help">Rekod komisen yang benar-benar dikira.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">🏢 AZOBSS Share</div><div id="statPlatformShare" class="az-stat-value">RM0.00</div><div class="az-stat-help">Bahagian platform untuk jualan yang layak.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">👤 Owner Share</div><div id="statOwnerShare" class="az-stat-value">RM0.00</div><div class="az-stat-help">Bahagian owner produk jika berkaitan.</div></div>
+  <div class="az-stat-card"><div class="az-stat-label">🧾 Rekod Layak</div><div id="statEligibleRecords" class="az-stat-value">0</div><div class="az-stat-help">Rekod komisen yang benar-benar dikira.</div></div>
 </div>
 <div class="card az-safe-note" id="azStaffCommissionPolicyBox">
-<h2>📢 Cara kiraan komisen</h2>
-<div class="az-info-list" id="azStaffCommissionPolicyLines">
-<div>Checking commission policy...</div>
+  <h2>📢 Cara kiraan komisen</h2>
+  <div class="az-info-list" id="azStaffCommissionPolicyLines">
+    <div>Checking commission policy...</div>
+  </div>
 </div>
-</div>
-<details class="card"><summary style="cursor:pointer;font-weight:900">🔐 Lihat akses akaun / permission</summary><pre class="az-readable-json" id="permBox"></pre></details>
+<details class="card"><summary style="cursor:pointer;font-weight:900">🔐 Lihat akses akaun / permission</summary><pre id="permBox" class="az-readable-json"></pre></details>
 </section>
-<section class="section" id="software"><h2>💻 Software Manager</h2><div class="card"><div class="toolbar"><input id="swTitle" placeholder="Software title"/><input id="swPrice" placeholder="RM" type="number"/><select id="swType"><option>free</option><option>premium</option><option>affiliate</option></select></div><input id="swUrl" placeholder="URL" style="width:100%"/><textarea id="swDesc" placeholder="Description"></textarea><button class="btn green" id="submitSw">Submit Software</button></div><div class="card"><h2>Latest</h2><div class="list" id="swList"></div></div></section>
-<section class="section" id="cad"><h2>📐 CAD Tools Manager</h2><div class="card"><div class="toolbar"><input id="cadTitle" placeholder="CAD/LISP title"/><input id="cadPrice" placeholder="RM" type="number"/><select id="cadType"><option>lisp</option><option>vlx</option><option>plugin</option><option>template</option></select></div><input id="cadUrl" placeholder="URL" style="width:100%"/><textarea id="cadDesc" placeholder="Description"></textarea><button class="btn green" id="submitCad">Submit CAD</button></div><div class="card"><h2>Latest</h2><div class="list" id="cadList"></div></div></section>
-<section class="section" id="sales"><div class="az-section-head"><div><h2>💳 Sales View</h2><div class="muted">Jualan yang layak untuk komisen staff akaun ini.</div></div><button class="btn green" id="refreshSales">Refresh Sales</button></div><div class="list" id="salesList"></div></section>
-<section class="section" id="share"><h2>🔗 Share Link Commission</h2><div class="card az-share-note"><b>Share link punya paparan</b><div class="muted">Senarai ini baca rekod <b>commissionRecords</b> jenis share/referral. Ia termasuk share produk admin/AZOBSS 20%, share produk staff lain 10%, dan owner split jika berkaitan.</div><div class="muted">Buka produk berbayar → tekan button Share for Lucky Draw → link pendek mengandungi <code>?p=ID&amp;r=username</code>.</div></div><button class="btn" id="refreshShareCom">Refresh Share Link Records</button><div class="list" id="shareComList"></div></section>
-<section class="section" id="payout"><h2>💸 My Payout</h2><div class="card az-share-note"><b>Commission payout view</b><div class="muted">This page shows your own commission records by payout status. Admin can still manage payout approval from Admin Dashboard.</div><div class="muted">New: save payout details and submit a payout request after commission is approved.</div></div><div class="card"><div class="az-payout-tools"><select id="payoutFilter"><option value="all">All payout status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="btn" id="refreshPayout">Refresh Payout</button><button class="btn green" id="exportPayoutCsv">Export My CSV</button></div><div class="az-payout-summary" id="payoutSummary"></div></div><div class="card"><h2>🏦 Payout Profile</h2><div class="muted">Save your payout details once. Account number is only shown as masked after save.</div><div class="toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><input id="payoutBankName" placeholder="Bank name / wallet name" style="flex:1;min-width:180px"/><input id="payoutAccountName" placeholder="Account holder name" style="flex:1;min-width:180px"/></div><div class="toolbar"><input id="payoutAccountNo" placeholder="Account no / DuitNow ID / wallet phone" style="flex:1;min-width:220px"/><input id="payoutPhone" placeholder="Phone optional" style="flex:1;min-width:160px"/><input id="payoutEmail" placeholder="Payout email optional" style="flex:1;min-width:180px"/></div><textarea id="payoutProfileNote" placeholder="Payout note optional" style="width:100%;min-height:70px"></textarea><div class="toolbar"><button class="btn green" id="savePayoutProfile" type="button">Save Payout Profile</button><button class="btn" id="loadPayoutProfile" type="button">Reload Profile</button><span class="muted" id="payoutProfileNotice"></span></div></div><div class="card"><h2>📨 Request Payout</h2><div class="muted">You can request payout for approved unpaid commission. Admin will review and mark it as paid after transfer.</div><div class="toolbar"><input id="payoutRequestAmount" min="0" placeholder="Amount RM, leave blank for all approved" step="0.01" style="min-width:230px" type="number"/><input id="payoutRequestNote" placeholder="Request note optional" style="flex:1;min-width:220px"/><button class="btn green" id="submitPayoutRequest" type="button">Submit Payout Request</button><button class="btn" id="refreshPayoutRequests" type="button">Refresh Requests</button></div><div class="muted" id="payoutRequestNotice"></div><div class="list" id="payoutRequestList"></div></div><div class="list" id="payoutList"></div></section>
+<section id="software" class="section"><h2>💻 Software Manager</h2><div class="card"><div class="toolbar"><input id="swTitle" placeholder="Software title"><input id="swPrice" type="number" placeholder="RM"><select id="swType"><option>free</option><option>premium</option><option>affiliate</option></select></div><input id="swUrl" placeholder="URL" style="width:100%"><textarea id="swDesc" placeholder="Description"></textarea><button class="btn green" id="submitSw">Submit Software</button></div><div class="card"><h2>Latest</h2><div id="swList" class="list"></div></div></section>
+<section id="cad" class="section"><h2>📐 CAD Tools Manager</h2><div class="card"><div class="toolbar"><input id="cadTitle" placeholder="CAD/LISP title"><input id="cadPrice" type="number" placeholder="RM"><select id="cadType"><option>lisp</option><option>vlx</option><option>plugin</option><option>template</option></select></div><input id="cadUrl" placeholder="URL" style="width:100%"><textarea id="cadDesc" placeholder="Description"></textarea><button class="btn green" id="submitCad">Submit CAD</button></div><div class="card"><h2>Latest</h2><div id="cadList" class="list"></div></div></section>
+<section id="sales" class="section"><div class="az-section-head"><div><h2>💳 Sales View</h2><div class="muted">Jualan yang layak untuk komisen staff akaun ini.</div></div><button class="btn green" id="refreshSales">Refresh Sales</button></div><div id="salesList" class="list"></div></section>
+<section id="share" class="section"><h2>🔗 Share Link Commission</h2><div class="card az-share-note"><b>Share link punya paparan</b><div class="muted">Senarai ini baca rekod <b>commissionRecords</b> jenis share/referral. Ia termasuk share produk admin/AZOBSS 20%, share produk staff lain 10%, dan owner split jika berkaitan.</div><div class="muted">Buka produk berbayar → tekan button Share for Lucky Draw → link pendek mengandungi <code>?p=ID&amp;r=username</code>.</div></div><button class="btn" id="refreshShareCom">Refresh Share Link Records</button><div id="shareComList" class="list"></div></section>
+<section id="payout" class="section"><h2>💸 My Payout</h2><div class="card az-share-note"><b>Commission payout view</b><div class="muted">This page shows your own commission records by payout status. Admin can still manage payout approval from Admin Dashboard.</div><div class="muted">New: save payout details and submit a payout request after commission is approved.</div></div><div class="card"><div class="az-payout-tools"><select id="payoutFilter"><option value="all">All payout status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="btn" id="refreshPayout">Refresh Payout</button><button class="btn green" id="exportPayoutCsv">Export My CSV</button></div><div id="payoutSummary" class="az-payout-summary"></div></div><div class="card"><h2>🏦 Payout Profile</h2><div class="muted">Save your payout details once. Account number is only shown as masked after save.</div><div class="toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><input id="payoutBankName" placeholder="Bank name / wallet name" style="flex:1;min-width:180px"><input id="payoutAccountName" placeholder="Account holder name" style="flex:1;min-width:180px"></div><div class="toolbar"><input id="payoutAccountNo" placeholder="Account no / DuitNow ID / wallet phone" style="flex:1;min-width:220px"><input id="payoutPhone" placeholder="Phone optional" style="flex:1;min-width:160px"><input id="payoutEmail" placeholder="Payout email optional" style="flex:1;min-width:180px"></div><textarea id="payoutProfileNote" placeholder="Payout note optional" style="width:100%;min-height:70px"></textarea><div class="toolbar"><button class="btn green" id="savePayoutProfile" type="button">Save Payout Profile</button><button class="btn" id="loadPayoutProfile" type="button">Reload Profile</button><span id="payoutProfileNotice" class="muted"></span></div></div><div class="card"><h2>📨 Request Payout</h2><div class="muted">You can request payout for approved unpaid commission. Admin will review and mark it as paid after transfer.</div><div class="toolbar"><input id="payoutRequestAmount" type="number" min="0" step="0.01" placeholder="Amount RM, leave blank for all approved" style="min-width:230px"><input id="payoutRequestNote" placeholder="Request note optional" style="flex:1;min-width:220px"><button class="btn green" id="submitPayoutRequest" type="button">Submit Payout Request</button><button class="btn" id="refreshPayoutRequests" type="button">Refresh Requests</button></div><div id="payoutRequestNotice" class="muted"></div><div id="payoutRequestList" class="list"></div></div><div id="payoutList" class="list"></div></section>
 </main></div>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
@@ -1263,10 +1284,13 @@ onAuthStateChanged(auth,async u=>{
  overview();
 });
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script>
-<script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=915"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=614"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
-<script src="/assets/js/azobss-cart-bell-global.js" type="module"></script>
+
+<script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>
+
+
 <style id="azobss-staff-dropdown-zero-spacing-final">
 /* STAFF ONLY: exact Mini Web dropdown, no extra spacing */
 body[data-dashboard-page="staff"] #userMenu{
@@ -1368,7 +1392,9 @@ body[data-dashboard-page="staff"] #userDropdown button.user-dropdown-item:hover{
   }
 }
 </style>
-<script id="azobss-clean-support-notification-final" type="module">
+
+
+<script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -1593,6 +1619,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
 <style id="azobss-admin-staff-support-popup-position-fix">
 /* Admin/Staff only: make Contact Admin / Support behave like top-right panel, not center modal */
 body[data-dashboard-page="admin"] #azSupportModal,
@@ -1651,6 +1678,9 @@ body[data-dashboard-page="staff"] #azSupportModal .azobss-lite-textarea{
   }
 }
 </style>
+
+
+
 <script id="azobss-admin-staff-chat-toggle-final-fix">
 (function(){
   if(window.__azobssAdminStaffChatToggleFinalFix) return;
@@ -1717,6 +1747,9 @@ body[data-dashboard-page="staff"] #azSupportModal .azobss-lite-textarea{
   setTimeout(bind, 1000);
 })();
 </script>
+
+
+
 <style id="azobss-admin-staff-notification-badge-strong-visible-fix">
 body[data-dashboard-page="admin"] a[aria-label="Notifications"],
 body[data-dashboard-page="staff"] a[aria-label="Notifications"]{
@@ -1749,7 +1782,9 @@ body[data-dashboard-page="staff"] [data-az-notification-badge].is-visible{
   display:inline-flex!important;
 }
 </style>
-<script id="azobss-admin-staff-notification-badge-firestore-fix" type="module">
+
+
+<script type="module" id="azobss-admin-staff-notification-badge-firestore-fix">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
@@ -1832,6 +1867,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   }, true);
 })();
 </script>
+
+
+
 <style id="azobss-admin-staff-cart-badge-flicker-stop">
 body[data-dashboard-page="admin"] .az-shop-cart-badge,
 body[data-dashboard-page="staff"] .az-shop-cart-badge{
@@ -1844,6 +1882,10 @@ body[data-dashboard-page="staff"] .az-shop-cart-badge.is-show{
   display:inline-flex!important;
 }
 </style>
+
+
+
+
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -1906,6 +1948,9 @@ body[data-dashboard-page="staff"] .az-shop-cart-badge.is-show{
   setTimeout(apply,1200);
 })();
 </script>
+
+
+
 <script id="azobss-hide-whatsapp-admin-only-safe-final-script">
 (function(){
   if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
@@ -1984,6 +2029,9 @@ body[data-dashboard-page="staff"] .az-shop-cart-badge.is-show{
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <style id="azobss-admin-chat-use-normal-icon-flow-fix">
 /* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
 body[data-dashboard-page="admin"] .market-user-tools{
@@ -2022,6 +2070,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   margin:0!important;
 }
 </style>
+
+
 <script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
 (function(){
   if(window.__azobssAdminChatUseNormalIconFlowFix) return;
@@ -2082,6 +2132,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(apply,1500);
 })();
 </script>
+
+
 <script id="azobss-role-hardening-041-js">
 (function(){
   if(window.__azobssRoleHardening041) return;
@@ -2165,10 +2217,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
   function hardHide(el){
     if(!el) return;
-    var inMarketNav = !!(el.closest && el.closest('.market-nav'));
-    el.style.setProperty('display', inMarketNav ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('display','none','important');
     el.style.setProperty('visibility','hidden','important');
-    el.style.setProperty('opacity','0','important');
     el.style.setProperty('pointer-events','none','important');
     el.setAttribute('aria-hidden','true');
     el.tabIndex = -1;
@@ -2178,7 +2228,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(!el) return;
     el.style.setProperty('display','inline-flex','important');
     el.style.setProperty('visibility','visible','important');
-    el.style.setProperty('opacity','1','important');
     el.style.setProperty('pointer-events','auto','important');
     el.removeAttribute('aria-hidden');
     el.tabIndex = 0;
@@ -2249,6 +2298,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(run, 2500);
 })();
 </script>
+
 <script id="azobss-staff-message-badge-copy-bell-pattern-057-js">
 (function(){
   if(window.__azobssStaffMessageBadgeBellPattern057) return;
@@ -2398,6 +2448,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   }
 })();
 </script>
+
+
 <style id="azobss-staff-mobile-overview-width-fix-221-final">
 /* (221) Staff Dashboard mobile overview width fix
    Prevent overview cards/text/pre blocks from forcing a wider-than-phone layout. */
@@ -2549,5 +2601,7 @@ body[data-dashboard-page="staff"] code{
   }
 }
 </style>
-<script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script>
+
+
+<script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
 </body></html>

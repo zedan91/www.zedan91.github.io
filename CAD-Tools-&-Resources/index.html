@@ -3,14 +3,15 @@
 <html lang="en">
 <head>
 <!-- AZOBSS favicon and app icons -->
-<link href="/favicon.ico" rel="icon" type="image/x-icon"/>
-<link href="/favicon-48x48.png" rel="icon" sizes="48x48" type="image/png"/>
-<link href="/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
-<link href="/favicon-192x192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link href="/site.webmanifest" rel="manifest"/>
-<meta content="#0f1927" name="theme-color"/>
-<meta charset="utf-8">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0f1927">
+
+<meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>CAD Tools &amp; Resources | AZOBSS</title>
 <meta content="CAD tools, AutoCAD LISP resources, drafting checklist and survey workflow references by AZOBSS." name="description"/>
@@ -991,7 +992,9 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style>
-<link href="/assets/css/azobss-pro-reference.css" rel="stylesheet"/>
+
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
 <style id="azobss-pa-bm-access-lock-final">
 /* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
 .market-nav .nav-pa-bm-link[hidden],
@@ -999,6 +1002,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
 #registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
@@ -1066,12 +1070,15 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   #registeredUsersList .az-admin-user-row-actions{justify-content:flex-start!important;}
 }
 </style>
+
 <style id="azobss-hide-old-lisp-form">
   #lispForm { display: none !important; }
 </style>
+
 <style id="azobss-premium-flow-style">
 .azobss-pay-modal{position:fixed;inset:0;background:rgba(2,6,23,.76);z-index:99999;display:none;align-items:center;justify-content:center;padding:18px}.azobss-pay-modal.is-open{display:flex}.azobss-pay-panel{width:min(560px,96vw);max-height:92vh;overflow:auto;background:#172235;border:1px solid rgba(34,197,94,.45);border-radius:20px;padding:22px;color:#fff;box-shadow:0 24px 70px rgba(0,0,0,.45)}.azobss-pay-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.azobss-pay-head h2{margin:0;font-size:22px}.azobss-pay-close{width:38px;height:38px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:#263449;color:#fff;font-weight:900;font-size:20px;cursor:pointer}.azobss-pay-product{margin:16px 0;padding:14px;border:1px solid rgba(148,163,184,.28);border-radius:14px;background:#0b1222}.azobss-pay-product b,.azobss-pay-success b{color:#22c55e}.azobss-pay-options{display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0}.azobss-pay-option{border:1px solid rgba(59,130,246,.45);background:#111b2c;color:#fff;border-radius:12px;padding:12px 8px;font-weight:800;cursor:pointer}.azobss-pay-option.is-active{background:#16a34a;border-color:#22c55e}.azobss-pay-field{display:block;margin:12px 0;font-weight:800;color:#dbeafe}.azobss-pay-field input,.azobss-pay-field textarea{display:block;width:100%;margin-top:7px;border-radius:12px;border:1px solid #475569;background:#0b1222;color:#fff;padding:13px;font:inherit;box-sizing:border-box}.azobss-pay-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}.azobss-pay-btn{border:0;border-radius:13px;padding:13px 18px;font-weight:900;cursor:pointer}.azobss-pay-primary{background:#22c55e;color:#03120b}.azobss-pay-blue{background:#2563eb;color:#fff}.azobss-pay-muted{background:#334155;color:#fff}.azobss-pay-success{display:none;margin-top:16px;padding:14px;border:1px solid rgba(34,197,94,.45);border-radius:14px;background:rgba(34,197,94,.08)}.azobss-pay-success.is-open{display:block}.azobss-pay-success a{display:inline-flex;margin:8px 8px 0 0;background:#2563eb;color:#fff;text-decoration:none;border-radius:12px;padding:12px 14px;font-weight:900}.azobss-pay-error{color:#fecaca;margin-top:10px;min-height:20px}.azobss-pay-note{font-size:13px;color:#bfdbfe;line-height:1.45}@media(max-width:560px){.azobss-pay-options{grid-template-columns:1fr}.azobss-pay-actions{justify-content:stretch}.azobss-pay-btn{width:100%}}
 </style>
+
 <style>
 
 /* AZOBSS HARD FIX: center Software/CAD/Affiliate cards consistently */
@@ -1256,6 +1263,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 
 .azobss-pay-field-hidden{display:none!important}.azobss-pay-required{color:#fb7185}.azobss-pay-helper{display:block;margin-top:6px;color:#93c5fd;font-size:12px;font-weight:600;line-height:1.35}.azobss-pay-field.is-invalid input{border-color:#fb7185!important;box-shadow:0 0 0 3px rgba(251,113,133,.22),0 0 18px rgba(251,113,133,.22)!important;animation:azobssPayShake .28s ease-in-out}.azobss-pay-field.is-invalid{color:#fecaca!important}.azobss-pay-btn.is-blocked{filter:saturate(.7) brightness(.9)}@keyframes azobssPayShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 </style>
+
+
 <style id="azobss-shop-card-cart-button-css">
 /* AZOBSS patch: card cart button for Software + CAD only. Does not touch PA/BM cart. */
 .az-card-cart-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid rgba(96,165,250,.48)!important;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.96))!important;color:#eaf2ff!important;border-radius:999px!important;padding:9px 13px!important;min-height:38px!important;font-size:13px!important;font-weight:950!important;line-height:1!important;cursor:pointer!important;text-decoration:none!important;box-shadow:0 10px 22px rgba(37,99,235,.18), inset 0 1px 0 rgba(255,255,255,.08)!important;transition:transform .16s ease,filter .16s ease,border-color .16s ease!important;margin:8px auto 0!important;white-space:nowrap!important;}
@@ -1265,6 +1274,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .az-card-cart-slot{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;order:99!important;margin-top:auto!important;}
 @media(max-width:760px){.az-card-cart-btn{min-height:34px!important;padding:8px 11px!important;font-size:12px!important}.az-card-cart-btn .az-card-cart-text{font-size:12px!important}}
 </style>
+
 <style id="azobss-shop-cart-css">
 .market-icon-btn{position:relative;}
 .az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
@@ -1291,6 +1301,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
 @media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
 </style>
+
+
 <style id="azobss-support-notification-css">
 .azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
 .azobss-mini-action-btn:hover{transform:translateY(-1px);border-color:#22c55e!important;box-shadow:0 0 18px rgba(34,197,94,.22)!important}
@@ -1316,6 +1328,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 body.azobss-support-admin .azobss-admin-only-lite{display:block}
 @media(max-width:760px){.azobss-mini-action-btn{width:34px!important;height:34px!important;font-size:16px!important;margin-left:4px!important}.azobss-modal-card{padding:15px}}
 </style>
+
+
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
 #azBellModal.azobss-modal-lite,
@@ -1461,6 +1475,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 }
 </style>
+
+
+
+
 <style id="az-my-cad-owner-style">
 [data-cad-owner-filter="mine"],.my-cad-filter-btn{display:none!important}
 body.az-cad-staff-role-ok [data-cad-owner-filter="mine"],
@@ -1478,6 +1496,8 @@ body.az-cad-staff-role-ok .my-cad-filter-btn{display:inline-flex!important}
   color:#d1fae5;font-weight:800
 }
 </style>
+
+
 <style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -1512,6 +1532,9 @@ body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
   }catch(e){}
 })();
 </script>
+
+
+
 <style id="azobss-hide-whatsapp-admin-only-safe-final">
 html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -1563,6 +1586,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   overflow:visible!important;
 }
 </style>
+
+
 <style id="azobss-market-nav-clean-structure-034">
 .market-nav{
   display:flex!important;
@@ -1619,6 +1644,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   justify-content:center!important;
 }
 </style>
+
+
 <style id="azobss-role-hardening-041-css">
 /* (041) Role Hardening - dashboard button visibility */
 .azAdminDashboardBtn,
@@ -1688,6 +1715,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
+
+
 <style id="azobss-mobile-one-card-real-fix-153">
 /* AZOBSS 153 REAL FIX
    Punca lama: ada beberapa CSS mobile lama paksa Software card repeat(2,...).
@@ -1754,6 +1783,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   }
 }
 </style>
+
+
 <style id="azobss-gif-hover-preview-154-css">
 .azobss-gif-preview-link{position:relative;cursor:pointer;user-select:none;}
 .azobss-gif-preview-link::after{content:'Hover / tap to preview';position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%);white-space:nowrap;font-size:10px;line-height:1;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.92);color:#cbd5e1;border-radius:999px;padding:5px 8px;opacity:0;pointer-events:none;transition:opacity .15s ease;}
@@ -1773,6 +1804,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azobssGifMobileModal277 .az-gif-mobile-hint{margin-top:8px;text-align:center;color:#93c5fd;font-size:12px;font-weight:700;}
 @media(min-width:769px){#azobssGifMobileModal277{display:none!important;}}
 </style>
+
 <style id="azobss-cad-promo-price-ui-fix-265">
 .az-promo-price-block{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto 10px;line-height:1.2}
 .az-promo-price-block .az-price-old{color:#94a3b8;text-decoration:line-through;text-decoration-thickness:2px;font-size:13px;font-weight:800}
@@ -1781,6 +1813,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .cad-admin-form small{font-size:11px}
 @media(max-width:620px){.az-promo-price-block .az-price-new{font-size:17px}.az-promo-price-block{gap:6px}}
 </style>
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -1830,9 +1863,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
 }
 </style>
-<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=910" rel="stylesheet"/>
-<script defer="" src="/assets/js/azobss-more-nav.js?v=911"></script>
-</meta><link href="/assets/css/azobss-stickybar-global-stable.css?v=1052" rel="stylesheet"/></head>
+<link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+<script defer src="/assets/js/azobss-more-nav.js?v=911"></script>
+</head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -1841,14 +1874,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
-<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
-<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
-<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+<a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a class="nav-public-pa-link is-hidden" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a><a href="/Software-Tools/">Software</a><a class="market-nav-active is-active" href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
-<a href="/affiliate-shop/">Affiliate Shop</a><a aria-label="Repair PC" class="az-repair-source-link" data-az-repair-service-link="1" href="/Tempah-Servis-IT/" title="Tempah Servis Laptop / PC">Repair PC</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+<a href="/Software-Tools/">Software</a><a class="market-nav-active is-active" href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a aria-label="More menu" data-az-more-source-link="1" href="/tools/" title="More">More</a>
+<a href="/tools/">Mini Web Tools</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
@@ -1859,239 +1892,248 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
-<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
-<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
 </div>
-<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks">
-<svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#">
-<span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span>
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
 </a>
 </div>
 </div>
 </div>
-
+</div>
 </header>
 <main class="page">
+
 <section aria-labelledby="cad-tools-shop-title" class="cad-tools-shop">
-<div class="cad-tools-head">
-<div>
-<h2 class="section-title" id="cad-tools-shop-title">CAD Tools &amp; Resources</h2>
-<p>Free CAD resources and premium AutoCAD tools. Premium items can use ToyyibPay, Stripe, QR payment or bank transaction links.</p>
-</div>
-<div aria-label="CAD admin item tools" class="cad-admin-toolbar">
-<button class="cad-admin-add-btn admin-only inline-admin" hidden="" id="cadAdminAddButton" type="button">+ Add CAD Item</button>
-<button class="cad-admin-import-btn admin-only inline-admin" hidden="" id="cadImportJsonButton" type="button">Import JSON</button>
-<button class="cad-admin-export-btn admin-only inline-admin" hidden="" id="cadExportJsonButton" type="button">Export JSON</button>
-<button class="cad-admin-apply-btn admin-only inline-admin" disabled="" hidden="" id="cadApplyJsonButton" type="button">Apply Import</button>
-<input accept="application/json,.json" hidden="" id="cadImportJsonInput" type="file"/>
-<span class="cad-admin-json-status" hidden="" id="cadJsonStatus"></span><div class="software-admin-json-status" id="azStaffCommissionNoteCADTools" style="display:none;margin-top:8px">📢 Staff/Semi-admin commission: 70% owner / 30% AZOBSS. Staff hanya boleh lihat jualan dan komisen produk sendiri.</div><span class="cad-admin-json-status" hidden="" id="az-cad-staff-direct-note">Staff/Semi-admin mode</span>
-</div>
-</div>
-<div aria-label="CAD tools search and sorting controls" class="cad-shop-controls">
-<label>Search
-      <input id="cadToolSearch" placeholder="Search CAD tool, LISP, ebook or resource..." type="search"/>
-</label>
-<label>Sort by
+  <div class="cad-tools-head">
+    <div>
+      <h2 class="section-title" id="cad-tools-shop-title">CAD Tools &amp; Resources</h2>
+      <p>Free CAD resources and premium AutoCAD tools. Premium items can use ToyyibPay, Stripe, QR payment or bank transaction links.</p>
+    </div>
+    <div class="cad-admin-toolbar" aria-label="CAD admin item tools">
+      <button class="cad-admin-add-btn admin-only inline-admin" id="cadAdminAddButton" type="button" hidden>+ Add CAD Item</button>
+      <button class="cad-admin-import-btn admin-only inline-admin" id="cadImportJsonButton" type="button" hidden>Import JSON</button>
+      <button class="cad-admin-export-btn admin-only inline-admin" id="cadExportJsonButton" type="button" hidden>Export JSON</button>
+      <button class="cad-admin-apply-btn admin-only inline-admin" id="cadApplyJsonButton" type="button" hidden disabled>Apply Import</button>
+      <input id="cadImportJsonInput" type="file" accept="application/json,.json" hidden>
+      <span class="cad-admin-json-status" id="cadJsonStatus" hidden></span><div id="azStaffCommissionNoteCADTools" class="software-admin-json-status" style="display:none;margin-top:8px">📢 Staff/Semi-admin commission: 70% owner / 30% AZOBSS. Staff hanya boleh lihat jualan dan komisen produk sendiri.</div><span class="cad-admin-json-status" id="az-cad-staff-direct-note" hidden>Staff/Semi-admin mode</span>
+    </div>
+  </div>
+  <div class="cad-shop-controls" aria-label="CAD tools search and sorting controls">
+    <label>Search
+      <input id="cadToolSearch" type="search" placeholder="Search CAD tool, LISP, ebook or resource...">
+    </label>
+    <label>Sort by
       <select id="cadToolSort">
-<option value="newest">Newest first</option>
-<option value="freeFirst">Free CAD Resource first</option>
-<option value="premiumFirst">Premium CAD Tool first</option>
-<option value="nameAZ">Name A-Z</option>
-<option value="nameZA">Name Z-A</option>
-</select>
-</label>
-</div>
-<div aria-label="CAD file type filter card" class="cad-filter-card cad-filetype-card">
-<div class="cad-filter-title">🧩 Browse by File Type</div>
-<div aria-label="CAD file type filter" class="cad-filter-buttons" id="cadCategoryFilter">
-<button class="cad-filter-btn is-active" data-cad-category="all" type="button">▦ All File Types</button>
-<button class="cad-filter-btn" data-cad-category="LISP (.lsp)" type="button">⚙️ LISP (.lsp)</button>
-<button class="cad-filter-btn" data-cad-category="VLX" type="button">🧩 VLX</button>
-<button class="cad-filter-btn" data-cad-category="Script" type="button">📜 Script</button>
-<button class="cad-filter-btn" data-cad-category="Block" type="button">🔣 Block</button>
-<button class="cad-filter-btn" data-cad-category="Hatch" type="button">▧ Hatch</button>
-<button class="cad-filter-btn" data-cad-category="Template" type="button">📄 Template</button>
-<button class="cad-filter-btn" data-cad-category="Plugin" type="button">🔌 Plugin</button>
-<button class="cad-filter-btn" data-cad-category="Ebook" type="button">📘 Ebook</button>
-</div>
-</div>
-<div class="cad-card-grid" id="cadToolGrid">
-</div>
+        <option value="newest">Newest first</option>
+        <option value="freeFirst">Free CAD Resource first</option>
+        <option value="premiumFirst">Premium CAD Tool first</option>
+        <option value="nameAZ">Name A-Z</option>
+        <option value="nameZA">Name Z-A</option>
+      </select>
+    </label>
+  </div>
+  <div class="cad-filter-card cad-filetype-card" aria-label="CAD file type filter card">
+    <div class="cad-filter-title">🧩 Browse by File Type</div>
+    <div class="cad-filter-buttons" id="cadCategoryFilter" aria-label="CAD file type filter">
+      <button class="cad-filter-btn is-active" type="button" data-cad-category="all">▦ All File Types</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="LISP (.lsp)">⚙️ LISP (.lsp)</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="VLX">🧩 VLX</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Script">📜 Script</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Block">🔣 Block</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Hatch">▧ Hatch</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Template">📄 Template</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Plugin">🔌 Plugin</button>
+      <button class="cad-filter-btn" type="button" data-cad-category="Ebook">📘 Ebook</button>
+    </div>
+  </div>
+  <div class="cad-card-grid" id="cadToolGrid">
+  </div>
 </section>
-<div aria-hidden="true" class="cad-admin-modal" id="cadAdminModal">
-<div aria-labelledby="cadAdminTitle" aria-modal="true" class="cad-admin-panel" role="dialog">
-<div class="cad-admin-head">
-<h2 id="cadAdminTitle">Add CAD Item</h2>
-<button aria-label="Close" class="cad-admin-close" id="cadAdminClose" type="button">×</button>
-</div>
-<form class="cad-admin-form" id="cadAdminForm">
-<label>Item Name
-        <input id="cadAdminName" maxlength="80" placeholder="Example: AZ Text Calculator LISP" required="" type="text"/>
-</label>
-<label>Description
-        <textarea id="cadAdminDescription" maxlength="500" placeholder="Explain tool function, command name, workflow or access details." required=""></textarea>
-</label>
-<div class="cad-admin-row">
-<label>CAD Type
+<div class="cad-admin-modal" id="cadAdminModal" aria-hidden="true">
+  <div class="cad-admin-panel" role="dialog" aria-modal="true" aria-labelledby="cadAdminTitle">
+    <div class="cad-admin-head">
+      <h2 id="cadAdminTitle">Add CAD Item</h2>
+      <button class="cad-admin-close" id="cadAdminClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="cad-admin-form" id="cadAdminForm">
+      <label>Item Name
+        <input id="cadAdminName" type="text" maxlength="80" placeholder="Example: AZ Text Calculator LISP" required>
+      </label>
+      <label>Description
+        <textarea id="cadAdminDescription" maxlength="500" placeholder="Explain tool function, command name, workflow or access details." required></textarea>
+      </label>
+      <div class="cad-admin-row">
+        <label>CAD Type
           <select id="cadAdminType">
-<option value="free">Free CAD Resource</option>
-<option value="premium">Premium CAD Tool</option>
-</select>
-</label>
-<label>Selling Price / Final Price
-          <input id="cadAdminPrice" placeholder="FREE or RM20" type="text"/>
-</label>
-<label>Promo Original Price <small style="display:block;color:#94a3b8;font-weight:700">Optional: contoh RM30 → RM20</small>
-<input id="cadAdminOriginalPrice" placeholder="Optional old price, e.g. RM30" type="text"/>
-</label>
-</div>
-<label>File Type
+            <option value="free">Free CAD Resource</option>
+            <option value="premium">Premium CAD Tool</option>
+          </select>
+        </label>
+        <label>Selling Price / Final Price
+          <input id="cadAdminPrice" type="text" placeholder="FREE or RM20">
+        </label>
+        <label>Promo Original Price <small style="display:block;color:#94a3b8;font-weight:700">Optional: contoh RM30 → RM20</small>
+          <input id="cadAdminOriginalPrice" type="text" placeholder="Optional old price, e.g. RM30">
+        </label>
+      </div>
+      <label>File Type
         <select id="cadAdminCategory">
-<option value="LISP (.lsp)">LISP (.lsp)</option>
-<option value="VLX">VLX</option>
-<option value="Script">Script</option>
-<option value="Block">Block</option>
-<option value="Hatch">Hatch</option>
-<option value="Template">Template</option>
-<option value="Plugin">Plugin</option>
-<option value="Ebook">Ebook</option>
-</select>
-</label>
-<div class="cad-admin-row">
-<label>Product ID / SKU
-          <input id="cadAdminProductId" placeholder="Auto: AZCAD-0001" type="text"/>
-</label>
-<label>Status
+          <option value="LISP (.lsp)">LISP (.lsp)</option>
+          <option value="VLX">VLX</option>
+          <option value="Script">Script</option>
+          <option value="Block">Block</option>
+          <option value="Hatch">Hatch</option>
+          <option value="Template">Template</option>
+          <option value="Plugin">Plugin</option>
+          <option value="Ebook">Ebook</option>
+        </select>
+      </label>
+      <div class="cad-admin-row">
+        <label>Product ID / SKU
+          <input id="cadAdminProductId" type="text" placeholder="Auto: AZCAD-0001">
+        </label>
+        <label>Status
           <select id="cadAdminStatus">
-<option value="active">Active - publish now</option>
-<option value="draft">Draft - admin only</option>
-<option value="hidden"> - hide from public</option>
-</select>
-</label>
-</div>
-<div class="cad-admin-row">
-<label>Version
-          <input id="cadAdminVersion" placeholder="v1.0.0" type="text"/>
-</label>
-<label>File Size
-          <input id="cadAdminFileSize" placeholder="Example: 80 KB / 2 MB" type="text"/>
-</label>
-</div>
-<div class="cad-admin-row">
-<label>Download Limit
-          <input id="cadAdminDownloadLimit" max="20" min="1" type="number" value="3"/>
-</label>
-<label>Link Expiry
+            <option value="active">Active - publish now</option>
+            <option value="draft">Draft - admin only</option>
+            <option value="hidden"> - hide from public</option>
+          </select>
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Version
+          <input id="cadAdminVersion" type="text" placeholder="v1.0.0">
+        </label>
+        <label>File Size
+          <input id="cadAdminFileSize" type="text" placeholder="Example: 80 KB / 2 MB">
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Download Limit
+          <input id="cadAdminDownloadLimit" type="number" min="1" max="20" value="3">
+        </label>
+        <label>Link Expiry
           <select id="cadAdminExpiryHours">
-<option value="24">24 hours</option>
-<option value="72">3 days</option>
-<option value="168">7 days</option>
-<option value="0">Never expire</option>
-</select>
-</label>
-</div>
-<label>Demo Video Link
-        <input id="demoVideoUrl" placeholder="https://youtube.com/..." type="url"/>
-</label>
-<label>CAD Compatibility
+            <option value="24">24 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+            <option value="0">Never expire</option>
+          </select>
+        </label>
+      </div>
+
+      <label>Demo Video Link
+        <input id="demoVideoUrl" type="url" placeholder="https://youtube.com/...">
+      </label>
+      <label>CAD Compatibility
         <div class="cad-admin-checks" id="cadAdminPlatforms">
-<label><input checked="" type="checkbox" value="AutoCAD"/> AutoCAD</label>
-<label><input type="checkbox" value="BricsCAD"/> BricsCAD</label>
-<label><input checked="" type="checkbox" value="All CAD"/> All CAD</label>
-</div>
-</label>
-<label>Marketing Badge
+          <label><input type="checkbox" value="AutoCAD" checked> AutoCAD</label>
+          <label><input type="checkbox" value="BricsCAD"> BricsCAD</label>
+          <label><input type="checkbox" value="All CAD" checked> All CAD</label>
+        </div>
+      </label>
+      <label>Marketing Badge
         <select id="cadAdminBadge">
-<option value="">None</option>
-<option value="🔥 Hot">🔥 Hot</option>
-<option value="⭐ Recommended">⭐ Recommended</option>
-<option value="🆕 New">🆕 New</option>
-<option value="🧩 LISP">🧩 LISP</option>
-</select>
-</label>
-<div class="cad-admin-row">
-<label>Icon / Short Text
-          <input id="cadAdminIcon" maxlength="3" placeholder="L" type="text"/>
-</label>
-<label>Button Text
-          <input id="cadAdminButtonText" placeholder="Auto: Open / Buy Now" type="text"/>
-</label>
+          <option value="">None</option>
+          <option value="🔥 Hot">🔥 Hot</option>
+          <option value="⭐ Recommended">⭐ Recommended</option>
+          <option value="🆕 New">🆕 New</option>
+          <option value="🧩 LISP">🧩 LISP</option>
+        </select>
+      </label>
+      <div class="cad-admin-row">
+        <label>Icon / Short Text
+          <input id="cadAdminIcon" type="text" maxlength="3" placeholder="L">
+        </label>
+        <label>Button Text
+          <input id="cadAdminButtonText" type="text" placeholder="Auto: Open / Buy Now">
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label id="cadDownloadLinkLabel">Download / Resource Link
+          <input id="cadAdminDownloadLink" type="url" placeholder="Free CAD resource or download link">
+        </label>
+        <label id="cadPaymentLinkLabel">ToyyibPay / Payment Link
+          <input id="cadAdminPaymentLink" type="url" placeholder="Premium: ToyyibPay, QR or bank transaction link">
+        </label>
+        <label id="cadStripeLinkLabel">Stripe Link
+          <input id="cadAdminStripeLink" type="url" placeholder="International payment: Stripe Checkout / Payment Link">
+        </label>
+      </div>
+      <label>Premium Download File Link
+        <input id="cadAdminSecureDownloadLink" type="url" placeholder="Private CAD file/download link used after payment success">
+      </label>
+      <div class="cad-admin-row">
+        <label>Image URL
+          <input id="cadAdminImageUrl" type="url" placeholder="Optional product/card image URL">
+        </label>
+        <label>GIF Demo URL
+          <input id="cadAdminGifUrl" type="url" placeholder="Optional GIF demo URL">
+        </label>
+      </div>
+      <div class="cad-admin-row">
+        <label>Upload Image
+          <input id="cadAdminImageFile" type="file" accept="image/*">
+        </label>
+        <label>Upload GIF
+          <input id="cadAdminGifFile" type="file" accept="image/gif,image/*">
+        </label>
+      </div>
+      <div class="cad-admin-media-preview" id="cadAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
+      <p class="cad-admin-note">Best practice: Product ID, file type, version, status, download limit and expiry are saved with each CAD item. Premium items support ToyyibPay and dynamic Stripe Checkout; a temporary backend token reveals the private download link and receipt after verified payment.</p>
+      <div class="cad-admin-actions">
+        <button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
+        <button class="cad-admin-save" type="submit">Save Item</button>
+      </div>
+    </form>
+  </div>
 </div>
-<div class="cad-admin-row">
-<label id="cadDownloadLinkLabel">Download / Resource Link
-          <input id="cadAdminDownloadLink" placeholder="Free CAD resource or download link" type="url"/>
-</label>
-<label id="cadPaymentLinkLabel">ToyyibPay / Payment Link
-          <input id="cadAdminPaymentLink" placeholder="Premium: ToyyibPay, QR or bank transaction link" type="url"/>
-</label>
-<label id="cadStripeLinkLabel">Stripe Link
-          <input id="cadAdminStripeLink" placeholder="International payment: Stripe Checkout / Payment Link" type="url"/>
-</label>
-</div>
-<label>Premium Download File Link
-        <input id="cadAdminSecureDownloadLink" placeholder="Private CAD file/download link used after payment success" type="url"/>
-</label>
-<div class="cad-admin-row">
-<label>Image URL
-          <input id="cadAdminImageUrl" placeholder="Optional product/card image URL" type="url"/>
-</label>
-<label>GIF Demo URL
-          <input id="cadAdminGifUrl" placeholder="Optional GIF demo URL" type="url"/>
-</label>
-</div>
-<div class="cad-admin-row">
-<label>Upload Image
-          <input accept="image/*" id="cadAdminImageFile" type="file"/>
-</label>
-<label>Upload GIF
-          <input accept="image/gif,image/*" id="cadAdminGifFile" type="file"/>
-</label>
-</div>
-<div class="cad-admin-media-preview" id="cadAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-<p class="cad-admin-note">Best practice: Product ID, file type, version, status, download limit and expiry are saved with each CAD item. Premium items support ToyyibPay and dynamic Stripe Checkout; a temporary backend token reveals the private download link and receipt after verified payment.</p>
-<div class="cad-admin-actions">
-<button class="cad-admin-cancel" id="cadAdminCancel" type="button">Cancel</button>
-<button class="cad-admin-save" type="submit">Save Item</button>
-</div>
-</form>
-</div>
-</div>
+
+
 <!-- Old LISP Program Showcase merged into CAD Tools & Resources list. -->
+
 </main>
-<div aria-hidden="true" class="azobss-pay-modal" id="azobssPremiumPayModal">
-<div aria-labelledby="azobssPayTitle" aria-modal="true" class="azobss-pay-panel" role="dialog">
-<div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
-<div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
-<div class="azobss-pay-options">
-<button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer / FPX</button>
-<button class="azobss-pay-option" data-method="stripe" type="button">Stripe Checkout</button>
+
+<div class="azobss-pay-modal" id="azobssPremiumPayModal" aria-hidden="true">
+  <div class="azobss-pay-panel" role="dialog" aria-modal="true" aria-labelledby="azobssPayTitle">
+    <div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
+    <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
+    <div class="azobss-pay-options">
+      <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer / FPX</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe Checkout</button>
+    </div>
+    <p class="azobss-pay-note" id="azobssPayInstruction">Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab.</p>
+    <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address Address <span class="azobss-pay-required">*</span>
+      <input id="azobssPayReference" type="email" autocomplete="email" inputmode="email" placeholder="Enter buyer email address" required>
+      <small class="azobss-pay-helper">Guest buyers must enter an email address before opening payment. The download link and payment receipt will be sent to this email address.</small>
+    </label>
+    <div class="azobss-pay-actions">
+      <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
+    </div>
+    <div class="azobss-pay-error" id="azobssPayError"></div>
+    <div class="azobss-pay-success" id="azobssPaySuccess"></div>
+  </div>
 </div>
-<p class="azobss-pay-note" id="azobssPayInstruction">Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab.</p>
-<label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address Address <span class="azobss-pay-required">*</span>
-<input autocomplete="email" id="azobssPayReference" inputmode="email" placeholder="Enter buyer email address" required="" type="email"/>
-<small class="azobss-pay-helper">Guest buyers must enter an email address before opening payment. The download link and payment receipt will be sent to this email address.</small>
-</label>
-<div class="azobss-pay-actions">
-<button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
-</div>
-<div class="azobss-pay-error" id="azobssPayError"></div>
-<div class="azobss-pay-success" id="azobssPaySuccess"></div>
-</div>
-</div>
+
 <footer>
     © 2026 AZOBSS. All rights reserved.
   </footer>
+
 <script>
 (function(){
   const STORAGE_KEY = 'azobss_cad_tools_items';
@@ -2459,8 +2501,13 @@ function normalizeItem(item){
   applyAdminButton(); applyFilters();
 })();
 </script>
+
+
 <!-- Old LISP table script removed. CAD Tools search now controls all CAD/LISP items. -->
-<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script>
+
+<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=614"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+
+
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
 <script id="azobss-expiry-hours-global-helper-fix-374">
 (function(){
@@ -2482,6 +2529,7 @@ function normalizeItem(item){
   }
 })();
 </script>
+
 <script id="az-lucky-draw-correct-api-url-migration-408">
 (function(){
   var GOOD='https://azobss-lucky-draw-api.onrender.com';
@@ -2509,6 +2557,7 @@ function normalizeItem(item){
   }
 })();
 </script>
+
 <script id="azobss-premium-flow-script">
 (function(){
   const API_BASE = (localStorage.getItem('azobssPremiumBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
@@ -2775,6 +2824,7 @@ function normalizeItem(item){
   });
 })();
 </script>
+
 <script>
 async function verifyToyyibPayment(billCode){
   try{
@@ -2802,6 +2852,7 @@ async function verifyToyyibPayment(billCode){
   }
 }
 </script>
+
 <script id="azobss-payment-hidden-tabs-cleaner">
 (function(){
   function cleanPaymentPopupHiddenTabs(){
@@ -2839,6 +2890,8 @@ async function verifyToyyibPayment(billCode){
   new MutationObserver(cleanPaymentPopupHiddenTabs).observe(document.documentElement, {childList:true, subtree:true});
 })();
 </script>
+
+
 <script id="azobss-payment-success-popup-hook">
 (function(){
   if (window.__azobssPaymentSuccessPopupHook) return;
@@ -2962,6 +3015,8 @@ async function verifyToyyibPayment(billCode){
   else setTimeout(autoVerifyAfterReturn, 1200);
 })();
 </script>
+
+
 <script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
@@ -3042,6 +3097,7 @@ return;
   window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
 })();
 </script>
+
 <script id="azobss-card-cart-button-js">
 (function(){
   if(window.__azobssCardCartButtonPatch) return;
@@ -3153,7 +3209,8 @@ return;
   new MutationObserver(schedule).observe(document.documentElement, {childList:true, subtree:true});
 })();
 </script>
-<script id="azobss-cart-firestore-sync-js" type="module">
+
+<script type="module" id="azobss-cart-firestore-sync-js">
 /* AZOBSS cart persistence:
    - Guest buyers: localStorage only.
    - Logged-in Firebase users: localStorage + Firestore sync.
@@ -3329,7 +3386,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   });
 })();
 </script>
-<script id="azobss-clean-support-notification-final" type="module">
+
+
+<script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -3555,7 +3614,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<script id="azobss-bell-badge-firestore-final" type="module">
+
+
+
+<script type="module" id="azobss-bell-badge-firestore-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -3669,6 +3731,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   setTimeout(updateBadge,5000);
 })();
 </script>
+
+
+
 <style id="az-chat-badge-style-v2">
 #azChatUnreadBadge{
 position:absolute;top:-7px;right:-8px;z-index:999999999;
@@ -3678,7 +3743,7 @@ font-size:11px;font-weight:900;line-height:18px;text-align:center;
 box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;
 }
 </style>
-<script id="az-chat-badge-admin-user-final" type="module">
+<script type="module" id="az-chat-badge-admin-user-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -3799,7 +3864,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  setInterval(update,15000);
 })();
 </script>
-<script id="azobss-admin-clear-notifications-final" type="module">
+
+
+<script type="module" id="azobss-admin-clear-notifications-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -3910,6 +3977,9 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssClearNotifications = clearNotifications;
 })();
 </script>
+
+
+
 <script id="azobss-exclusive-topbar-panels-final">
 (function(){
   if(window.__azExclusiveTopbarPanelsFinal) return;
@@ -4017,7 +4087,10 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssCloseTopbarPanels=function(){closeBell();closeChat();closeCart();};
 })();
 </script>
-<script id="azobss-support-delete-message-user-admin-final" type="module">
+
+
+
+<script type="module" id="azobss-support-delete-message-user-admin-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -4127,6 +4200,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setInterval(addDeleteButtons, 1200);
 })();
 </script>
+
+
 <script id="azobss-affiliate-admin-software-category-runtime">
 (function(){
   if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
@@ -4169,6 +4244,13 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+
+
+
+
+
 <script id="az-staff-owner-commission-metadata-patch">
 (function(){
   if(window.__azStaffOwnerCommissionMetadataPatch) return;
@@ -4219,6 +4301,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   window.azobssGetCurrentStaffOwner = userIdentity;
 })();
 </script>
+
+
 <script id="az-staff-commission-note-show-cadtools">
 (function(){
   function show(){
@@ -4233,7 +4317,10 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   document.addEventListener('DOMContentLoaded',show); if(document.readyState!=='loading')show(); window.addEventListener('storage',show); window.addEventListener('focus',show); setTimeout(show,1000);
 })();
 </script>
-<button class="cad-filter-btn my-cad-filter-btn" data-cad-owner-filter="mine" hidden="" type="button">👤 My CAD Tools</button>
+
+
+<button class="cad-filter-btn my-cad-filter-btn" type="button" data-cad-owner-filter="mine" hidden>👤 My CAD Tools</button>
+
 <script id="az-cad-owner-tracking-script">
 (function(){
   if(window.__azCadOwnerTracking)return; window.__azCadOwnerTracking=true;
@@ -4332,6 +4419,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(()=>{refreshRole();filter();},2200);
 })();
 </script>
+
+
 <script id="azobss-premium-order-settings-helper">
 (function(){
   if(window.__azPremiumOrderSettingsHelper) return;
@@ -4359,6 +4448,10 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   };
 })();
 </script>
+
+
+
+
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -4421,6 +4514,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,1200);
 })();
 </script>
+
+
+
 <script id="azobss-hide-whatsapp-admin-only-safe-final-script">
 (function(){
   if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
@@ -4499,6 +4595,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <style id="azobss-admin-chat-use-normal-icon-flow-fix">
 /* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
 body[data-dashboard-page="admin"] .market-user-tools{
@@ -4537,6 +4636,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   margin:0!important;
 }
 </style>
+
+
 <script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
 (function(){
   if(window.__azobssAdminChatUseNormalIconFlowFix) return;
@@ -4597,6 +4698,9 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <script id="azobss-role-hardening-041-js">
 (function(){
   if(window.__azobssRoleHardening041) return;
@@ -4680,10 +4784,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
   function hardHide(el){
     if(!el) return;
-    var inMarketNav = !!(el.closest && el.closest('.market-nav'));
-    el.style.setProperty('display', inMarketNav ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('display','none','important');
     el.style.setProperty('visibility','hidden','important');
-    el.style.setProperty('opacity','0','important');
     el.style.setProperty('pointer-events','none','important');
     el.setAttribute('aria-hidden','true');
     el.tabIndex = -1;
@@ -4693,7 +4795,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(!el) return;
     el.style.setProperty('display','inline-flex','important');
     el.style.setProperty('visibility','visible','important');
-    el.style.setProperty('opacity','1','important');
     el.style.setProperty('pointer-events','auto','important');
     el.removeAttribute('aria-hidden');
     el.tabIndex = 0;
@@ -4764,6 +4865,12 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(run, 2500);
 })();
 </script>
+
+
+
+
+
+
 <style id="azobss-lucky-product-share-single-133-css">
 /* AZOBSS 133: desktop custom share modal, mobile native share */
 .download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{position:relative!important;}
@@ -5092,6 +5199,10 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   recordOpen();
 })();
 </script>
+
+
+
+
 <style id="azobss-shared-product-filter-147-css">
 .az-shared-product-filter-note{
   margin:10px 0 14px!important;
@@ -5348,6 +5459,10 @@ html.azobss-shared-product-mode-332 .cad-item{
   window.addEventListener('azobss-shared-product-filtered', function(){ setTimeout(applyFilter, 120); });
 })();
 </script>
+
+
+
+
 <script id="azobss-mobile-one-card-real-fix-js-153">
 (function(){
   'use strict';
@@ -5417,6 +5532,8 @@ html.azobss-shared-product-mode-332 .cad-item{
   setInterval(forceOneCardRow, 1200);
 })();
 </script>
+
+
 <script id="azobss-gif-hover-preview-154">
 (function(){
   'use strict';
@@ -5517,6 +5634,9 @@ html.azobss-shared-product-mode-332 .cad-item{
   }, true);
 })();
 </script>
+
+
+
 <style id="azobss-preview-float-155-css">
 .download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{position:relative!important;}
 .software-media-links:has(.azobss-gif-preview-link),.cad-media-links:has(.azobss-gif-preview-link){display:none!important;}
@@ -5594,6 +5714,9 @@ html.azobss-shared-product-mode-332 .cad-item{
   try{new MutationObserver(function(){clearTimeout(window.__azPreviewFloatTimer155);window.__azPreviewFloatTimer155=setTimeout(run,140)}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 })();
 </script>
+
+
+
 <style id="azobss-cad-promo-mobile-card-layout-fix-266">
 /* AZOBSS 266: keep CAD promo price + action button clear on phone. */
 @media(max-width:760px){
@@ -5663,6 +5786,9 @@ html.azobss-shared-product-mode-332 .cad-item{
   }
 }
 </style>
+
+
+
 <style id="azobss-cad-promo-mobile-final-stack-fix-267">
 /* AZOBSS 267: keep CAD promo price and action button in normal mobile flow. */
 @media(max-width:760px){
@@ -5710,6 +5836,9 @@ html.azobss-shared-product-mode-332 .cad-item{
   }
 }
 </style>
+
+
+
 <style id="azobss-promo-price-button-only-fix-268">
 /* AZOBSS 268: final promo price is shown only inside the Buy Now button.
    Promo block keeps old price + save badge only, preventing duplicate RM text above the button. */
@@ -5729,6 +5858,8 @@ html.azobss-shared-product-mode-332 .cad-item{
   .az-promo-price-block.az-promo-no-sale-text{margin:5px auto 7px!important;gap:6px!important;}
 }
 </style>
+
+
 <style id="azobss-promo-badge-top-left-fix-269">
 /* AZOBSS 269: show promo old price + save badge at top-left with a clean highlight effect.
    Final selling price stays only inside the Buy Now button. */
@@ -5839,6 +5970,8 @@ html.azobss-shared-product-mode-332 .cad-item{
   html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:8.5px!important;padding:3px 5px!important;}
 }
 </style>
+
+
 <style id="azobss-promo-badge-compact-no-overlap-fix-270">
 /* AZOBSS 270: compact top-left promo badge so it keeps the requested top-left position without covering the product logo/image. */
 html body .download-card,
@@ -5919,6 +6052,8 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
   html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:7.4px!important;padding:2px 0!important;}
 }
 </style>
+
+
 <style id="azobss-promo-badge-readable-text-fix-271">
 /* AZOBSS 271: make top-left promo badge text easier to read without touching card/payment logic. */
 html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
@@ -5980,6 +6115,8 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
   html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:9.2px!important;}
 }
 </style>
+
+
 <style id="azobss-promo-badge-narrow-left-no-logo-overlap-fix-272">
 /* AZOBSS 272: keep promo badge readable but narrow enough so it does not touch the centered product logo on mobile cards. */
 html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
@@ -6053,6 +6190,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
   html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:8.4px!important;}
 }
 </style>
+
+
+
 <style id="azobss-promo-badge-high-contrast-readable-fix-273">
 /* AZOBSS 273: keep promo badge top-left but make RM old price and Save % text clearly readable on mobile. */
 html body #softwareGrid > .download-card .az-promo-price-block.az-promo-no-sale-text,
@@ -6140,6 +6280,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{
   html body .az-promo-price-block.az-promo-no-sale-text .az-promo-chip{font-size:9.8px!important;}
 }
 </style>
+
+
+
 <style id="azobss-promo-badge-old-price-bigger-fix-274">
 /* AZOBSS 274: make the crossed original price (RM old price) clearer while keeping the compact top-left badge. */
 html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
@@ -6183,6 +6326,9 @@ html body .az-promo-price-block.az-promo-no-sale-text{
   }
 }
 </style>
+
+
+
 <style id="azobss-promo-badge-strikeline-transparent-readable-fix-275">
 /* AZOBSS 275: make the old price strike line lighter/transparent so RM value remains readable. */
 html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
@@ -6205,6 +6351,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
   }
 }
 </style>
+
+
+
 <style id="azobss-promo-badge-diagonal-strike-fix-276">
 /* AZOBSS 276: diagonal strikethrough for old promo price, lighter so the RM value stays readable. */
 html body .az-promo-price-block.az-promo-no-sale-text .az-price-old{
@@ -6241,6 +6390,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   }
 }
 </style>
+
+
+
 <style id="azobss-card-controls-no-blink-286-css">
 /* AZOBSS 286: visible, stable product controls. No hide/show during auth/stat refresh. */
 .download-card,.software-card,.software-product-card,.software-item,.cad-card,.cad-item,.cad-resource-card,.cad-tool-card{contain:layout paint;}
@@ -6248,12 +6400,16 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
 .az-item-like-btn,.az-lucky-product-share-btn,.azobss-preview-float-155{will-change:transform;backface-visibility:hidden;}
 .azobss-sw-desc-more-097{visibility:visible!important;opacity:1!important;}
 </style>
+
+
 <style id="azobss-cad-first-paint-controls-287-css">
 .cad-card > .az-item-like-btn,.cad-item > .az-item-like-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:14px!important;right:14px!important;z-index:65!important;}
 .cad-card > .az-lucky-product-share-btn,.cad-item > .az-lucky-product-share-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:62px!important;right:16px!important;z-index:64!important;}
 .cad-card > .azobss-preview-float-155,.cad-item > .azobss-preview-float-155{display:inline-flex!important;visibility:visible!important;opacity:1!important;top:110px!important;right:16px!important;z-index:63!important;}
 @media(max-width:700px){.cad-card > .az-lucky-product-share-btn,.cad-item > .az-lucky-product-share-btn{top:60px!important;right:14px!important}.cad-card > .azobss-preview-float-155,.cad-item > .azobss-preview-float-155{top:106px!important;right:14px!important}}
 </style>
+
+
 <!-- AZOBSS 291: mobile card footer visible fix - keep first paint controls, but let the card grow naturally on mobile. -->
 <style id="azobss-mobile-card-footer-visible-291-css">
 @media (max-width: 760px){
@@ -6443,6 +6599,9 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
   }
 }
 </style>
+
+
+
 <style id="azobss-shop-card-stable-controls-292-css">
 /* AZOBSS 292: final anti-blink positions. Buttons are rendered in first paint; late scripts must not visually move them. */
 html body .download-card > .az-lucky-product-share-btn,
@@ -6466,6 +6625,8 @@ html body .download-card .azobss-sw-desc-more-097{display:inline-flex!important;
   html body .cad-item > .azobss-preview-float-155{top:106px!important;right:14px!important;}
 }
 </style>
+
+
 <style id="azobss-shop-card-no-reflow-293-css">
 /* AZOBSS 293: keep first-paint share/GIF controls stable. */
 html body .cad-card > .az-share-stable-293,
@@ -6474,6 +6635,9 @@ html body .cad-card > .az-preview-stable-293,
 html body .cad-item > .az-preview-stable-293{transition:filter .16s ease!important;}
 html body .cad-media-links:empty{display:none!important;}
 </style>
+
+
+
 <style id="azobss-software-card-meta-ribbon-fix-320">
 /* AZOBSS 320: move card meta labels into a thin ribbon so description area stays wider/taller. */
 html body #softwareGrid > .download-card,
@@ -6679,6 +6843,9 @@ html body .downloads-grid > .download-card > .download-btn{
   }
 }
 </style>
+
+
+
 <style id="azobss-software-card-desc-center-fix-321">
 /* AZOBSS 321: keep Software/CAD description visually centered in the card after compact meta ribbon.
    Previous right padding reserved space for the More chip and made the text look off-center. */
@@ -6751,6 +6918,8 @@ html body .downloads-grid > .download-card > .azobss-sw-desc-target-097 > .azobs
   }
 }
 </style>
+
+
 <style id="azobss-software-card-desc-true-center-fix-322">
 /* AZOBSS 322: true visual center for Software/CAD description.
    Root cause: the inline More chip lives inside the description box / old CSS reserves right padding,
@@ -7228,6 +7397,8 @@ html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
 <!-- AZOBSS PATCH 327: stop Software/CAD description blinking
      Root cause: patch 326 MutationObserver watched style/class attributes while the same script was setting inline styles, causing a self-trigger loop.
      Fix: observer now watches new cards only (childList), so More/description no longer flickers. -->
+
+
 <!-- AZOBSS PATCH 328: stable CSS-only description clamp + no blinking -->
 <style id="azobss-software-cad-desc-stable-css-only-fix-328">
 /*
@@ -7404,6 +7575,9 @@ html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
   if(document.readyState !== 'loading') addTitles();
 })();
 </script>
+
+
+
 <!-- AZOBSS 330: true 4-line description height fix
      Root cause: patch 329 changed line-clamp to 4, but the desc box was still fixed at 58px/56px,
      which only has enough visual height for about 3 lines. This override gives the clamp real 4-line space. -->
@@ -7501,6 +7675,8 @@ html body .cad-card-grid > .cad-card > .azobss-sw-desc-target-097 > .az-desc-cop
   }
 }
 </style>
+
+
 <!-- AZOBSS PATCH 335: Staff/Admin only product owner source label under discount badge -->
 <style id="az-owner-source-label-style-335">
 /* AZOBSS PATCH 345 OWNER LABEL SLIGHTLY BIGGER */
@@ -7683,7 +7859,10 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
 })();
 </script>
 <!-- /AZOBSS PATCH 335 -->
-<script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script>
+
+<script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
+
+
 <!-- AZOBSS 448: align preview button with bookmark and share controls -->
 <style id="azobss-bookmark-share-preview-align-448-css">
 /* Keep card action rail aligned: Bookmark -> Share -> Preview. */
@@ -7736,6 +7915,9 @@ html body .cad-tool-card > .azobss-preview-float-155{
   }
 }
 </style>
+
+
+
 <!-- AZOBSS 450: compact Bookmark + Preview-left-of-Share card controls -->
 <style id="azobss-compact-bookmark-preview-share-450-css">
 /* AZOBSS 450: keep Bookmark top-right; place Preview directly on the left side of Share; slightly smaller controls. */
@@ -7920,6 +8102,9 @@ html body .azobss-gif-preview-link.azobss-preview-float-155::after{
   html body .azobss-gif-preview-link.azobss-preview-float-155::after{display:none!important;}
 }
 </style>
+
+
+
 <!-- AZOBSS 451: equal-size Preview + Share + Bookmark control boxes -->
 <style id="azobss-equal-preview-share-box-451-css">
 /* AZOBSS 451: force Preview anchor to use the same real border-box size as Share and Bookmark buttons. */
@@ -8071,7 +8256,9 @@ html body .az-item-like-btn .az-bookmark-icon{
   }
 }
 </style>
-<script src="/assets/js/azobss-price-display-global.js?v=593" type="module"></script>
-<script defer="" id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js"></script>
+<script type="module" src="/assets/js/azobss-price-display-global.js?v=593"></script>
+<script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body>
 </html>
+
+

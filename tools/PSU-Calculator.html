@@ -3,14 +3,15 @@
 <html lang="en">
 <head>
 <!-- AZOBSS favicon and app icons -->
-<link href="/favicon.ico" rel="icon" type="image/x-icon"/>
-<link href="/favicon-48x48.png" rel="icon" sizes="48x48" type="image/png"/>
-<link href="/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
-<link href="/favicon-192x192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link href="/site.webmanifest" rel="manifest"/>
-<meta content="#0f1927" name="theme-color"/>
-<meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0f1927">
+
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>PSU Calculator - AZOBSS Tools</title>
 <style>
 :root{--bg:#07111f;--card:#101c2d;--card2:#13243a;--text:#eef5ff;--muted:#9fb2c8;--accent:#25d366;--blue:#3b82f6;--warn:#facc15;--danger:#ef4444;--line:rgba(255,255,255,.1)}
@@ -94,7 +95,9 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style>
-<link href="/assets/css/azobss-pro-reference.css" rel="stylesheet"/>
+
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
 <style id="azobss-pa-bm-access-lock-final">
 /* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
 .market-nav .nav-pa-bm-link[hidden],
@@ -102,6 +105,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
 #registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
@@ -246,6 +250,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
 @media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
 </style>
+
 <style id="azobss-support-notification-css">
 .azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
 .azobss-mini-action-btn:hover{transform:translateY(-1px);border-color:#22c55e!important;box-shadow:0 0 18px rgba(34,197,94,.22)!important}
@@ -271,6 +276,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 body.azobss-support-admin .azobss-admin-only-lite{display:block}
 @media(max-width:760px){.azobss-mini-action-btn{width:34px!important;height:34px!important;font-size:16px!important;margin-left:4px!important}.azobss-modal-card{padding:15px}}
 </style>
+
+
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
 #azBellModal.azobss-modal-lite,
@@ -416,6 +423,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 }
 </style>
+
+
+
+
 <style id="azobss-tools-profile-dropdown-spacing-match-fix">
 /* Tools pages: keep profile dropdown spacing consistent */
 #userMenu{
@@ -500,6 +511,9 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 }
 </style>
+
+
+
 <style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -534,6 +548,9 @@ body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
   }catch(e){}
 })();
 </script>
+
+
+
 <style id="azobss-hide-whatsapp-admin-only-safe-final">
 html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -585,6 +602,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   overflow:visible!important;
 }
 </style>
+
+
 <style id="azobss-market-nav-clean-structure-034">
 .market-nav{
   display:flex!important;
@@ -641,6 +660,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   justify-content:center!important;
 }
 </style>
+
+
 <style id="azobss-role-hardening-041-css">
 /* (041) Role Hardening - dashboard button visibility */
 .azAdminDashboardBtn,
@@ -710,10 +731,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
+
+
 <style id="azobss-standalone-tools-pro-ui-234">
 body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent 30%),radial-gradient(circle at 88% 5%,rgba(37,99,235,.16),transparent 30%),linear-gradient(180deg,#06111f,#020617 72%)!important;}
 .header{position:relative!important;overflow:hidden!important;padding:34px 18px!important;background:linear-gradient(135deg,rgba(15,23,42,.86),rgba(2,6,23,.62))!important;border-bottom:1px solid rgba(148,163,184,.16)!important;box-shadow:0 16px 50px rgba(0,0,0,.26)!important;}.header::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(34,197,94,.18),transparent 45%,rgba(59,130,246,.14));pointer-events:none}.header>*{position:relative;z-index:1}.header h1{margin-bottom:8px!important;font-size:clamp(28px,4vw,46px)!important;line-height:1.05!important;background:linear-gradient(90deg,#f8fafc,#86efac,#93c5fd)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;letter-spacing:-.03em!important}.header p,.header .muted{color:#cbd5e1!important}.wrap{max-width:1160px!important}.card{border-radius:24px!important;background:linear-gradient(180deg,rgba(19,36,58,.94),rgba(8,14,27,.96))!important;border:1px solid rgba(148,163,184,.14)!important;box-shadow:0 24px 70px rgba(0,0,0,.32)!important}.card h2,.card h3{color:#f8fafc!important;letter-spacing:-.01em}.grid{gap:16px!important}.kpi{border-radius:18px!important;background:linear-gradient(180deg,rgba(2,6,23,.70),rgba(15,23,42,.45))!important;border-color:rgba(148,163,184,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important}.kpi strong{font-size:clamp(22px,3vw,32px)!important;color:#86efac!important}input,select,textarea{background:rgba(2,6,23,.76)!important;border-color:rgba(148,163,184,.20)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}input:focus,select:focus,textarea:focus{border-color:rgba(34,197,94,.62)!important;box-shadow:0 0 0 3px rgba(34,197,94,.10)!important}button,.btn{border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;box-shadow:0 12px 26px rgba(37,99,235,.18)!important}.result{border-radius:18px!important;background:linear-gradient(180deg,rgba(2,6,23,.72),rgba(15,23,42,.42))!important;border-color:rgba(148,163,184,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)!important}.table th{background:rgba(34,197,94,.10)!important;color:#bbf7d0!important}.badge,.pill{border:1px solid rgba(34,197,94,.28)!important}.az-tool-pro-note{margin:16px 0;padding:14px 16px;border:1px solid rgba(34,197,94,.22);border-radius:18px;background:rgba(34,197,94,.07);color:#cbd5e1;font-size:13px;line-height:1.5}.az-tool-pro-note b{color:#bbf7d0}@media(max-width:700px){.header{padding:26px 14px!important}.card{padding:16px!important}}
 </style>
+
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -763,9 +788,9 @@ body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent
   .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
 }
 </style>
-<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=910" rel="stylesheet"/>
-<script defer="" src="/assets/js/azobss-more-nav.js?v=911"></script>
-</meta><link href="/assets/css/azobss-stickybar-global-stable.css?v=1052" rel="stylesheet"/></head>
+<link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+<script defer src="/assets/js/azobss-more-nav.js?v=911"></script>
+</head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -774,15 +799,15 @@ body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent
 <img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
-<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
-<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
-<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+<a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a class="nav-public-pa-link is-hidden" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a><a href="/Software-Tools/">Software</a>
+<a href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
-<a href="/affiliate-shop/">Affiliate Shop</a><a aria-label="Repair PC" class="az-repair-source-link" data-az-repair-service-link="1" href="/Tempah-Servis-IT/" title="Tempah Servis Laptop / PC">Repair PC</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a aria-label="More menu" class="market-nav-active is-active" data-az-more-source-link="1" href="/tools/" title="More">More</a>
+<a class="market-nav-active is-active" href="/tools/">Mini Web Tools</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
@@ -793,28 +818,29 @@ body{background:radial-gradient(circle at 12% 0%,rgba(34,197,94,.16),transparent
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
-<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
-<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
 </div>
-<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks">
-<svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#">
-<span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span>
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
 </a>
 </div>
 </div>
 </div>
-
+</div>
 </header>
 <div class="header"><h1>PSU Calculator</h1><p class="muted">AZOBSS Mini Web Tools</p><a href="/tools/">&lt; Back to Tools</a>   |   <a href="/">Home</a></div>
 <div class="wrap">
@@ -833,7 +859,7 @@ function roundPSU(w){let sizes=[450,500,550,650,750,850,1000,1200,1300,1500,1600
 function calc(){let total=(+cpu.value||0)+(+gpu.value||0)+(+other.value||0)+((+storage.value||0)*8);let rec=roundPSU(total*(+head.value));result.innerHTML=`Estimated system load: <b>${total}W</b>\nRecommended PSU: <b>${rec}W</b>\n\nSuggestion:\n- Choose good brand PSU.\n- For gaming PC, avoid using PSU too close to maximum load.\n- For high-end GPU, check official GPU recommended PSU and connector requirement.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=614"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
@@ -894,7 +920,7 @@ return;
   window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
 })();
 </script>
-<script id="azobss-cart-firestore-sync-js" type="module">
+<script type="module" id="azobss-cart-firestore-sync-js">
 /* AZOBSS cart persistence:
    - Guest buyers: localStorage only.
    - Logged-in Firebase users: localStorage + Firestore sync.
@@ -1071,7 +1097,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   });
 })();
 </script>
-<script id="azobss-clean-support-notification-final" type="module">
+
+
+<script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -1296,7 +1324,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<script id="azobss-bell-badge-firestore-final" type="module">
+
+
+
+<script type="module" id="azobss-bell-badge-firestore-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -1410,6 +1441,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   setTimeout(updateBadge,5000);
 })();
 </script>
+
+
+
 <style id="az-chat-badge-style-v2">
 #azChatUnreadBadge{
 position:absolute;top:-7px;right:-8px;z-index:999999999;
@@ -1419,7 +1453,7 @@ font-size:11px;font-weight:900;line-height:18px;text-align:center;
 box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;
 }
 </style>
-<script id="az-chat-badge-admin-user-final" type="module">
+<script type="module" id="az-chat-badge-admin-user-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -1540,7 +1574,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  setInterval(update,15000);
 })();
 </script>
-<script id="azobss-admin-clear-notifications-final" type="module">
+
+
+<script type="module" id="azobss-admin-clear-notifications-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -1651,6 +1687,9 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssClearNotifications = clearNotifications;
 })();
 </script>
+
+
+
 <script id="azobss-exclusive-topbar-panels-final">
 (function(){
   if(window.__azExclusiveTopbarPanelsFinal) return;
@@ -1758,7 +1797,10 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssCloseTopbarPanels=function(){closeBell();closeChat();closeCart();};
 })();
 </script>
-<script id="azobss-support-delete-message-user-admin-final" type="module">
+
+
+
+<script type="module" id="azobss-support-delete-message-user-admin-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -1868,6 +1910,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setInterval(addDeleteButtons, 1200);
 })();
 </script>
+
+
 <script id="azobss-affiliate-admin-software-category-runtime">
 (function(){
   if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
@@ -1910,6 +1954,13 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+
+
+
+
+
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -1972,6 +2023,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,1200);
 })();
 </script>
+
+
+
 <script id="azobss-hide-whatsapp-admin-only-safe-final-script">
 (function(){
   if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
@@ -2050,6 +2104,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <style id="azobss-admin-chat-use-normal-icon-flow-fix">
 /* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
 body[data-dashboard-page="admin"] .market-user-tools{
@@ -2088,6 +2145,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   margin:0!important;
 }
 </style>
+
+
 <script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
 (function(){
   if(window.__azobssAdminChatUseNormalIconFlowFix) return;
@@ -2148,6 +2207,9 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <script id="azobss-role-hardening-041-js">
 (function(){
   if(window.__azobssRoleHardening041) return;
@@ -2231,10 +2293,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
   function hardHide(el){
     if(!el) return;
-    var inMarketNav = !!(el.closest && el.closest('.market-nav'));
-    el.style.setProperty('display', inMarketNav ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('display','none','important');
     el.style.setProperty('visibility','hidden','important');
-    el.style.setProperty('opacity','0','important');
     el.style.setProperty('pointer-events','none','important');
     el.setAttribute('aria-hidden','true');
     el.tabIndex = -1;
@@ -2244,7 +2304,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(!el) return;
     el.style.setProperty('display','inline-flex','important');
     el.style.setProperty('visibility','visible','important');
-    el.style.setProperty('opacity','1','important');
     el.style.setProperty('pointer-events','auto','important');
     el.removeAttribute('aria-hidden');
     el.tabIndex = 0;
@@ -2315,6 +2374,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(run, 2500);
 })();
 </script>
+
+
 <script id="azobss-standalone-tools-pro-helper-234">
 (function(){
   function ready(fn){document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn):fn();}
@@ -2326,6 +2387,10 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   });
 })();
 </script>
-<script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script>
-<script defer="" id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js"></script>
+
+
+<script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
+<script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body></html>
+
+

@@ -2,14 +2,14 @@
 
 <html lang="en"><head>
 <!-- AZOBSS favicon and app icons -->
-<link href="/favicon.ico" rel="icon" type="image/x-icon"/>
-<link href="/favicon-48x48.png" rel="icon" sizes="48x48" type="image/png"/>
-<link href="/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
-<link href="/favicon-192x192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link href="/site.webmanifest" rel="manifest"/>
-<meta content="#0f1927" name="theme-color"/>
-<meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0f1927">
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>AZOBSS Mini Web Tools</title><style>
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:radial-gradient(circle at top,#102544,#020617 55%);color:white;padding:54px 18px 34px}.container{max-width:1200px;margin:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:32px}.title{font-size:42px;color:#22c55e;font-weight:bold}.subtitle{color:#94a3b8;margin-top:8px}.search-box input{width:330px;max-width:100%;padding:14px 18px;border-radius:14px;border:1px solid #1e293b;background:#0f172a;color:white;outline:none}.search-box input:focus{border-color:#22c55e;box-shadow:0 0 18px rgba(34,197,94,.25)}.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px}.tool-card{background:linear-gradient(180deg,#13243a,#0f172a);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:24px;color:white;text-decoration:none;transition:.25s;position:relative;overflow:hidden}.tool-card:hover{transform:translateY(-7px);border-color:#22c55e;box-shadow:0 0 26px rgba(34,197,94,.18)}.tool-icon{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;margin-bottom:15px;border-radius:16px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:16px;font-weight:900;letter-spacing:0}.tool-title{font-size:20px;font-weight:bold;margin-bottom:10px}.tool-desc{color:#cbd5e1;font-size:14px;line-height:1.55;margin-bottom:14px}.tool-list{color:#94a3b8;font-size:13px;line-height:1.55;padding-left:18px}.badge{position:absolute;top:15px;right:15px;background:#22c55e;color:#03130a;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold}.back-home{display:inline-block;margin-top:36px;padding:14px 22px;background:#22c55e;color:#03130a;border-radius:12px;text-decoration:none;font-weight:bold}.footer{text-align:center;color:#64748b;margin-top:55px}.market-sticky-bar{position:fixed;top:0;left:0;right:0;z-index:3200;background:#000;border-bottom:1px solid rgba(214,185,132,.45);box-shadow:0 10px 28px rgba(0,0,0,.35)}.market-bar-inner{width:100%;padding:4px 8px}.market-main-row{display:flex;align-items:center;gap:8px;min-height:44px}.market-brand{width:154px;height:38px;flex:0 0 auto;display:inline-flex;align-items:center;overflow:visible;border-radius:999px;border:1px solid rgba(148,163,184,.32);background:#0f172a;text-decoration:none}.market-brand img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}.market-nav{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}.market-nav::-webkit-scrollbar{display:none}.market-nav a{min-height:32px;padding:0 12px;border:1px solid #243044;border-radius:999px;background:#111827;color:#f8fafc;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;text-decoration:none;font-size:13px;font-weight:900;white-space:normal;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}.market-nav a.is-active{background:#22c55e;border-color:#22c55e;color:#052e16}.market-nav a:hover{border-color:#22c55e;color:#22c55e}@media(max-width:700px){body{padding-top:92px}.title{font-size:32px}.search-box input{width:100%}.market-main-row{flex-wrap:wrap}.market-brand{width:126px;height:31px}.market-nav{width:100%;flex-basis:100%}.market-nav a{min-height:30px;padding:0 9px;font-size:12px}}
 </style>
@@ -235,7 +235,9 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 .whatsapp::before{content:"" !important;display:block !important;width:25px !important;height:19px !important;border-radius:999px !important;background:#fff !important;}
 .whatsapp::after{content:"" !important;position:absolute !important;left:31px !important;top:34px !important;width:10px !important;height:10px !important;background:#fff !important;clip-path:polygon(0 0,100% 0,0 100%) !important;transform:rotate(-12deg) !important;}
 </style>
-<link href="/assets/css/azobss-pro-reference.css" rel="stylesheet"/>
+
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
 <style id="azobss-pa-bm-access-lock-final">
 /* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
 .market-nav .nav-pa-bm-link[hidden],
@@ -243,6 +245,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
 #registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
@@ -387,6 +390,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 .az-shop-cart-note{font-size:12px;color:#94a3b8;margin-top:9px;line-height:1.45;}
 @media(max-width:760px){.az-shop-cart-panel{top:66px;right:10px;width:calc(100vw - 20px);max-height:78vh;border-radius:16px;padding:14px}.az-shop-cart-item{grid-template-columns:46px 1fr;}.az-shop-cart-thumb{width:46px;height:46px}.az-shop-cart-actions{grid-column:2;justify-content:flex-start}.az-shop-cart-head h3{font-size:18px}}
 </style>
+
 <style id="azobss-support-notification-css">
 .azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
 .azobss-mini-action-btn:hover{transform:translateY(-1px);border-color:#22c55e!important;box-shadow:0 0 18px rgba(34,197,94,.22)!important}
@@ -412,6 +416,8 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
 body.azobss-support-admin .azobss-admin-only-lite{display:block}
 @media(max-width:760px){.azobss-mini-action-btn{width:34px!important;height:34px!important;font-size:16px!important;margin-left:4px!important}.azobss-modal-card{padding:15px}}
 </style>
+
+
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
 #azBellModal.azobss-modal-lite,
@@ -557,6 +563,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 }
 </style>
+
+
+
+
 <style id="azobss-tools-profile-dropdown-spacing-match-fix">
 /* Tools pages: keep profile dropdown spacing consistent */
 #userMenu{
@@ -641,6 +651,9 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 }
 </style>
+
+
+
 <style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -675,6 +688,9 @@ body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
   }catch(e){}
 })();
 </script>
+
+
+
 <style id="azobss-hide-whatsapp-admin-only-safe-final">
 html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -726,6 +742,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   overflow:visible!important;
 }
 </style>
+
+
 <style id="azobss-market-nav-clean-structure-034">
 .market-nav{
   display:flex!important;
@@ -782,6 +800,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   justify-content:center!important;
 }
 </style>
+
+
 <style id="azobss-role-hardening-041-css">
 /* (041) Role Hardening - dashboard button visibility */
 .azAdminDashboardBtn,
@@ -851,6 +871,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
+
+
 <style id="azobss-mini-tools-manager-css">
 .mini-tools-admin-panel{display:none;margin:-14px 0 24px;padding:18px;border:1px solid rgba(34,197,94,.25);border-radius:20px;background:rgba(15,23,42,.72);box-shadow:0 18px 40px rgba(0,0,0,.20)}
 .mini-tools-admin-panel.is-visible{display:block}
@@ -880,6 +902,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 @media(max-width:900px){.mini-tools-controls{grid-template-columns:1fr 1fr}.mini-tools-control-search{grid-column:1/-1}.mini-tools-reset-filter{width:100%}}
 @media(max-width:700px){.mini-tools-admin-panel{margin-top:0;padding:14px}.mini-tools-form{grid-template-columns:1fr}.mini-tools-admin-actions{width:100%}.mini-tools-btn{flex:1 1 auto}.topbar{align-items:stretch}.search-box{width:100%}}
 </style>
+
 <style id="azobss-mini-tools-compact-cards-fix">
 /* AZOBSS Mini Tools compact card mode: icon + tool name + type only */
 .tools-grid{
@@ -955,11 +978,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   .tools-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))!important}
 }
 </style>
+
 <style id="azobss-mini-tools-search-filter-final-fix">
 /* Search/type filter must be able to hide cards even when compact card CSS uses display:flex!important. */
 #toolsGrid .tool-card.mini-tool-hidden{display:none!important;}
 #miniToolsControls .mini-tools-control-field{color:#dbeafe;}
 </style>
+
 <style id="azobss-mini-tools-pro-ui-234">
 /* AZOBSS 234: premium, more detailed and user-friendly Mini Tools UI */
 body{background:
@@ -1000,6 +1025,8 @@ body{background:
 @media(max-width:900px){.mini-tools-dashboard{grid-template-columns:repeat(2,minmax(0,1fr));}.mini-tools-controls{position:relative!important;top:auto!important}.tools-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))!important}}
 @media(max-width:700px){.topbar{padding:18px!important;border-radius:22px!important}.mini-tools-dashboard{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.mini-tools-stat{padding:12px}.mini-tools-stat b{font-size:17px}.tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}.tool-card{min-height:202px!important;padding:13px!important;border-radius:19px!important}.tool-icon{width:47px!important;height:47px!important;font-size:25px!important}.tool-title{font-size:13.5px!important}.tool-desc{font-size:11.7px!important;min-height:34px!important}.tool-list{gap:4px!important}.tool-list li{font-size:10px!important;padding:4px 6px!important}.tool-action-row{font-size:11px!important}.subtitle::after{display:block;margin-top:4px;}}
 </style>
+
+
 <style id="azobss-mini-tools-ringkas-card-235">
 /* AZOBSS 235: keep the premium look, but make Mini Tools cards compact again. */
 .tools-grid{
@@ -1088,6 +1115,8 @@ body{background:
   .tools-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;}
 }
 </style>
+
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -1137,24 +1166,24 @@ body{background:
   .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
 }
 </style>
-<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=910" rel="stylesheet"/>
-<script defer="" src="/assets/js/azobss-more-nav.js?v=911"></script>
-</meta><link href="/assets/css/azobss-stickybar-global-stable.css?v=1052" rel="stylesheet"/></head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
+<link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+<script defer src="/assets/js/azobss-more-nav.js?v=911"></script>
+</head><body><header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
 <a aria-label="AZOBSS" class="market-brand" href="/">
 <img alt="AZOBSS" src="../images/logo-azobss.jpg"/>
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
-<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
-<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
-<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+<a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a class="nav-public-pa-link is-hidden" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a><a href="/Software-Tools/">Software</a>
+<a href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
-<a href="/affiliate-shop/">Affiliate Shop</a><a aria-label="Repair PC" class="az-repair-source-link" data-az-repair-service-link="1" href="/Tempah-Servis-IT/" title="Tempah Servis Laptop / PC">Repair PC</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a aria-label="More menu" class="market-nav-active is-active" data-az-more-source-link="1" href="/tools/" title="More">More</a>
+<a class="market-nav-active is-active" href="/tools/">Mini Web Tools</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <a class="site-auth-btn primary" data-auth-open="register" href="#" id="siteSignUpButton">Register</a>
@@ -1165,120 +1194,121 @@ body{background:
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
-<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
-<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
 </div>
-<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks">
-<svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#">
-<span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span>
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>
 </a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank">
-<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg>
 </a>
 </div>
 </div>
 </div>
-
-</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div></div><div aria-label="Mini tools search and filter" class="mini-tools-controls" id="miniToolsControls">
-<label class="mini-tools-control-field mini-tools-control-search">Search
-    <input autocomplete="off" id="searchInput" placeholder="Search tools, keywords, URL... example: SSD, RAM, Mbps, hotkeys" type="search"/>
-</label>
-<label class="mini-tools-control-field">Type
+</div>
+</header><div class="container"><div class="topbar"><div><div class="title">Mini Web Tools</div><div class="subtitle">Useful PC, Windows, Internet &amp; Utility Tools by AZOBSS</div></div></div><div class="mini-tools-controls" id="miniToolsControls" aria-label="Mini tools search and filter">
+  <label class="mini-tools-control-field mini-tools-control-search">Search
+    <input id="searchInput" placeholder="Search tools, keywords, URL... example: SSD, RAM, Mbps, hotkeys" type="search" autocomplete="off"/>
+  </label>
+  <label class="mini-tools-control-field">Type
     <select id="miniToolsCategoryFilter">
-<option value="all">All types</option>
-<option value="converter">Converter</option>
-<option value="calculator">Calculator</option>
-<option value="checker">Checker</option>
-<option value="guide">Guide</option>
-<option value="windows">Windows</option>
-<option value="finance">Finance</option>
-<option value="health">Health</option>
-<option value="hardware">Hardware</option>
-<option value="network">Network / Internet</option>
-<option value="hotkeys">Hotkeys</option>
-<option value="text">Text Tools</option>
-<option value="developer">Developer</option>
-<option value="security">Security</option>
-<option value="image">Image / Design</option>
-<option value="links">Added Links</option>
-<option value="other">Other</option>
-</select>
-</label>
-<label class="mini-tools-control-field">Sort by
+      <option value="all">All types</option>
+      <option value="converter">Converter</option>
+      <option value="calculator">Calculator</option>
+      <option value="checker">Checker</option>
+      <option value="guide">Guide</option>
+      <option value="windows">Windows</option>
+      <option value="finance">Finance</option>
+      <option value="health">Health</option>
+      <option value="hardware">Hardware</option>
+      <option value="network">Network / Internet</option>
+      <option value="hotkeys">Hotkeys</option>
+      <option value="text">Text Tools</option>
+      <option value="developer">Developer</option>
+      <option value="security">Security</option>
+      <option value="image">Image / Design</option>
+      <option value="links">Added Links</option>
+      <option value="other">Other</option>
+    </select>
+  </label>
+  <label class="mini-tools-control-field">Sort by
     <select id="miniToolsSortBy">
-<option value="default">Default order</option>
-<option value="title-az">Title A-Z</option>
-<option value="type-az">Type A-Z</option>
-<option value="added-new">Added links newest</option>
-</select>
-</label>
-<button class="mini-tools-btn secondary mini-tools-reset-filter" id="miniToolsClearFilters" type="button">Reset</button>
-</div><div aria-label="Mini tools admin panel" class="mini-tools-admin-panel" id="miniToolsAdminPanel">
-<div class="mini-tools-admin-head">
-<div>
-<div class="mini-tools-admin-title">🧰 Mini Tools Link Manager</div>
-<div class="mini-tools-admin-note">Admin only. Add external/internal tool links, search them on this page, and export the list as JSON.</div>
-</div>
-<div class="mini-tools-admin-actions">
-<button class="mini-tools-btn" id="miniToolsToggleForm" type="button">+ Add Link</button>
-<button class="mini-tools-btn secondary" id="miniToolsExportJson" type="button">Export .json</button>
-<button class="mini-tools-btn secondary" id="miniToolsImportJsonBtn" type="button">Import .json</button>
-<input accept="application/json,.json" hidden="" id="miniToolsImportJson" type="file"/>
-</div>
-</div>
-<form class="mini-tools-form" id="miniToolsAddForm">
-<label>Title<input id="miniToolTitle" placeholder="Example: VirusTotal" required=""/></label>
-<label>Link URL<input id="miniToolUrl" placeholder="https://example.com or /tools/example.html" required=""/></label>
-<label>Icon (optional)<input id="miniToolIcon" maxlength="6" placeholder="Auto icon by type"/></label>
-<label>Badge<input id="miniToolBadge" placeholder="Online / Useful / New"/></label>
-<label>Type / Category<select id="miniToolCategory">
-<option value="links">Added Links</option>
-<option value="converter">Converter</option>
-<option value="calculator">Calculator</option>
-<option value="checker">Checker</option>
-<option value="guide">Guide</option>
-<option value="windows">Windows</option>
-<option value="finance">Finance</option>
-<option value="health">Health</option>
-<option value="hardware">Hardware</option>
-<option value="network">Network / Internet</option>
-<option value="hotkeys">Hotkeys</option>
-<option value="text">Text Tools</option>
-<option value="developer">Developer</option>
-<option value="security">Security</option>
-<option value="image">Image / Design</option>
-<option value="other">Other</option>
-</select></label>
-<label class="full">Description<input id="miniToolDesc" placeholder="Short description for this link"/></label>
-<label class="full">List / Keywords<textarea id="miniToolList" placeholder="One point per line. Example:
+      <option value="default">Default order</option>
+      <option value="title-az">Title A-Z</option>
+      <option value="type-az">Type A-Z</option>
+      <option value="added-new">Added links newest</option>
+    </select>
+  </label>
+  <button class="mini-tools-btn secondary mini-tools-reset-filter" id="miniToolsClearFilters" type="button">Reset</button>
+</div><div class="mini-tools-admin-panel" id="miniToolsAdminPanel" aria-label="Mini tools admin panel">
+  <div class="mini-tools-admin-head">
+    <div>
+      <div class="mini-tools-admin-title">🧰 Mini Tools Link Manager</div>
+      <div class="mini-tools-admin-note">Admin only. Add external/internal tool links, search them on this page, and export the list as JSON.</div>
+    </div>
+    <div class="mini-tools-admin-actions">
+      <button class="mini-tools-btn" id="miniToolsToggleForm" type="button">+ Add Link</button>
+      <button class="mini-tools-btn secondary" id="miniToolsExportJson" type="button">Export .json</button>
+      <button class="mini-tools-btn secondary" id="miniToolsImportJsonBtn" type="button">Import .json</button>
+      <input id="miniToolsImportJson" type="file" accept="application/json,.json" hidden>
+    </div>
+  </div>
+  <form class="mini-tools-form" id="miniToolsAddForm">
+    <label>Title<input id="miniToolTitle" placeholder="Example: VirusTotal" required></label>
+    <label>Link URL<input id="miniToolUrl" placeholder="https://example.com or /tools/example.html" required></label>
+    <label>Icon (optional)<input id="miniToolIcon" maxlength="6" placeholder="Auto icon by type"></label>
+    <label>Badge<input id="miniToolBadge" placeholder="Online / Useful / New"></label>
+    <label>Type / Category<select id="miniToolCategory">
+      <option value="links">Added Links</option>
+      <option value="converter">Converter</option>
+      <option value="calculator">Calculator</option>
+      <option value="checker">Checker</option>
+      <option value="guide">Guide</option>
+      <option value="windows">Windows</option>
+      <option value="finance">Finance</option>
+      <option value="health">Health</option>
+      <option value="hardware">Hardware</option>
+      <option value="network">Network / Internet</option>
+      <option value="hotkeys">Hotkeys</option>
+      <option value="text">Text Tools</option>
+      <option value="developer">Developer</option>
+      <option value="security">Security</option>
+      <option value="image">Image / Design</option>
+      <option value="other">Other</option>
+    </select></label>
+    <label class="full">Description<input id="miniToolDesc" placeholder="Short description for this link"></label>
+    <label class="full">List / Keywords<textarea id="miniToolList" placeholder="One point per line. Example:
 Online scanner
 Free tool
 Useful for technicians"></textarea></label>
-<div class="mini-tools-admin-actions full">
-<button class="mini-tools-btn" type="submit">Save Link</button>
-<button class="mini-tools-btn secondary" id="miniToolsCancelForm" type="button">Cancel</button>
-<button class="mini-tools-btn danger" id="miniToolsClearCustom" type="button">Clear Added Links</button>
-</div>
-</form>
+    <div class="mini-tools-admin-actions full">
+      <button class="mini-tools-btn" type="submit">Save Link</button>
+      <button class="mini-tools-btn secondary" id="miniToolsCancelForm" type="button">Cancel</button>
+      <button class="mini-tools-btn danger" id="miniToolsClearCustom" type="button">Clear Added Links</button>
+    </div>
+  </form>
 </div><div class="mini-tools-search-meta" id="miniToolsSearchMeta"></div><div class="tools-grid" id="toolsGrid">
-<a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div aria-hidden="true" class="tool-icon">🌐</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
-<a class="tool-card" href="SSD-Speed-Checker-guide.html"><div aria-hidden="true" class="tool-icon">💽</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
-<a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div aria-hidden="true" class="tool-icon">⚖️</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric &amp; imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
-<a class="tool-card" href="PC-Bottleneck-Checker.html"><div aria-hidden="true" class="tool-icon">🖥️</div><div class="tool-title">PC Bottleneck Checker</div><div class="tool-desc">Quick PC balance guide for CPU, GPU and RAM.</div><ul class="tool-list"><li>Gaming / editing / office</li><li>RAM &amp; storage warning</li><li>Upgrade suggestion</li></ul></a>
-<a class="tool-card" href="PSU-Calculator.html"><div class="badge">Gaming</div><div aria-hidden="true" class="tool-icon">⚡</div><div class="tool-title">PSU Calculator</div><div class="tool-desc">Estimate recommended PSU wattage.</div><ul class="tool-list"><li>CPU + GPU + parts</li><li>Headroom calculation</li><li>80+ efficiency guide</li></ul></a>
-<a class="tool-card" href="RAM-Usage-Checker.html"><div aria-hidden="true" class="tool-icon">🧠</div><div class="tool-title">RAM Usage Checker</div><div class="tool-desc">Check RAM usage and upgrade need.</div><ul class="tool-list"><li>Usage percentage</li><li>Available RAM</li><li>Workload guide</li></ul></a>
-<a class="tool-card" href="Windows-Command-Generator.html"><div class="badge">Windows</div><div aria-hidden="true" class="tool-icon">⌨️</div><div class="tool-title">Windows Command Generator</div><div class="tool-desc">Generate common Windows repair commands.</div><ul class="tool-list"><li>SFC, DISM, CHKDSK</li><li>Network reset</li><li>Flush DNS &amp; system info</li></ul></a>
+<a class="tool-card" href="Internet-Speed-Converter.html"><div class="badge">Popular</div><div class="tool-icon" aria-hidden="true">🌐</div><div class="tool-title">Internet Speed Converter</div><div class="tool-desc">Convert speed units and estimate download time.</div><ul class="tool-list"><li>bps, Kbps, Mbps, Gbps, Tbps</li><li>B/s, KB/s, MB/s, GB/s, TB/s</li><li>Download time estimator</li></ul></a>
+<a class="tool-card" href="SSD-Speed-Checker-guide.html"><div class="tool-icon" aria-hidden="true">💽</div><div class="tool-title">SSD / HDD Speed Guide</div><div class="tool-desc">Compare disk speed and identify slow storage.</div><ul class="tool-list"><li>HDD, SATA SSD, NVMe Gen3/4/5</li><li>Read/write speed guide</li><li>Health warning checklist</li></ul></a>
+<a class="tool-card" href="BMI-Calculator.html"><div class="badge">Health</div><div class="tool-icon" aria-hidden="true">⚖️</div><div class="tool-title">BMI Calculator</div><div class="tool-desc">BMI, healthy weight range and daily calorie estimate.</div><ul class="tool-list"><li>Metric &amp; imperial</li><li>BMI category</li><li>Ideal weight range</li></ul></a>
+<a class="tool-card" href="PC-Bottleneck-Checker.html"><div class="tool-icon" aria-hidden="true">🖥️</div><div class="tool-title">PC Bottleneck Checker</div><div class="tool-desc">Quick PC balance guide for CPU, GPU and RAM.</div><ul class="tool-list"><li>Gaming / editing / office</li><li>RAM &amp; storage warning</li><li>Upgrade suggestion</li></ul></a>
+<a class="tool-card" href="PSU-Calculator.html"><div class="badge">Gaming</div><div class="tool-icon" aria-hidden="true">⚡</div><div class="tool-title">PSU Calculator</div><div class="tool-desc">Estimate recommended PSU wattage.</div><ul class="tool-list"><li>CPU + GPU + parts</li><li>Headroom calculation</li><li>80+ efficiency guide</li></ul></a>
+<a class="tool-card" href="RAM-Usage-Checker.html"><div class="tool-icon" aria-hidden="true">🧠</div><div class="tool-title">RAM Usage Checker</div><div class="tool-desc">Check RAM usage and upgrade need.</div><ul class="tool-list"><li>Usage percentage</li><li>Available RAM</li><li>Workload guide</li></ul></a>
+<a class="tool-card" href="Windows-Command-Generator.html"><div class="badge">Windows</div><div class="tool-icon" aria-hidden="true">⌨️</div><div class="tool-title">Windows Command Generator</div><div class="tool-desc">Generate common Windows repair commands.</div><ul class="tool-list"><li>SFC, DISM, CHKDSK</li><li>Network reset</li><li>Flush DNS &amp; system info</li></ul></a>
 <a class="tool-card" href="Currency-Converter.html">
 <div class="badge">Finance</div>
-<div aria-hidden="true" class="tool-icon">💱</div>
+<div class="tool-icon" aria-hidden="true">💱</div>
 <div class="tool-title">
         Currency Converter
     </div>
@@ -1291,26 +1321,27 @@ Useful for technicians"></textarea></label>
 <li>Quick exchange calculator</li>
 </ul>
 </a>
-<a class="tool-card" data-mini-tool-category="converter" href="Quick-Tool.html?tool=unit-converter"><div class="badge">Useful</div><div aria-hidden="true" class="tool-icon">📏</div><div class="tool-title">Unit Converter</div><div class="tool-desc">Convert length, weight and temperature units quickly.</div><ul class="tool-list"><li>Length, weight, temperature</li><li>Metric and imperial</li><li>Fast technician reference</li></ul></a>
-<a class="tool-card" data-mini-tool-category="converter" href="Quick-Tool.html?tool=file-size-converter"><div aria-hidden="true" class="tool-icon">🗂️</div><div class="tool-title">File Size Converter</div><div class="tool-desc">Convert KB, MB, GB and TB for files and storage.</div><ul class="tool-list"><li>KB, MB, GB, TB</li><li>Binary style estimate</li><li>Storage planning</li></ul></a>
-<a class="tool-card" data-mini-tool-category="calculator" href="Quick-Tool.html?tool=percentage-calculator"><div aria-hidden="true" class="tool-icon">📊</div><div class="tool-title">Percentage Calculator</div><div class="tool-desc">Calculate percentage, discount and increase/decrease.</div><ul class="tool-list"><li>Percent of number</li><li>Discount</li><li>Increase/decrease</li></ul></a>
-<a class="tool-card" data-mini-tool-category="finance" href="Quick-Tool.html?tool=loan-calculator"><div aria-hidden="true" class="tool-icon">🏦</div><div class="tool-title">Loan Calculator</div><div class="tool-desc">Estimate monthly payment for loan or instalment.</div><ul class="tool-list"><li>Monthly instalment</li><li>Interest estimate</li><li>Total payment</li></ul></a>
-<a class="tool-card" data-mini-tool-category="finance" href="Quick-Tool.html?tool=sst-calculator"><div aria-hidden="true" class="tool-icon">🧾</div><div class="tool-title">SST Calculator</div><div class="tool-desc">Calculate SST/tax add-on or remove tax from total.</div><ul class="tool-list"><li>6%, 8%, 10% presets</li><li>Inclusive/exclusive</li><li>Invoice helper</li></ul></a>
-<a class="tool-card" data-mini-tool-category="security" href="Quick-Tool.html?tool=password-generator"><div class="badge">Security</div><div aria-hidden="true" class="tool-icon">🔐</div><div class="tool-title">Password Generator</div><div class="tool-desc">Generate strong random passwords.</div><ul class="tool-list"><li>Length control</li><li>Symbols/numbers</li><li>Copy quickly</li></ul></a>
-<a class="tool-card" data-mini-tool-category="security" href="Quick-Tool.html?tool=password-strength-checker"><div aria-hidden="true" class="tool-icon">🛡️</div><div class="tool-title">Password Strength Checker</div><div class="tool-desc">Check password length, variety and strength score.</div><ul class="tool-list"><li>Strength score</li><li>Weakness hints</li><li>Local browser only</li></ul></a>
-<a class="tool-card" data-mini-tool-category="converter" href="Quick-Tool.html?tool=qr-code-generator"><div aria-hidden="true" class="tool-icon">▦</div><div class="tool-title">QR Code Generator</div><div class="tool-desc">Create QR code for text, URL or WhatsApp link.</div><ul class="tool-list"><li>URL to QR</li><li>Text QR</li><li>Download image</li></ul></a>
-<a class="tool-card" data-mini-tool-category="text" href="Quick-Tool.html?tool=text-case-converter"><div aria-hidden="true" class="tool-icon">📝</div><div class="tool-title">Text Case Converter</div><div class="tool-desc">Convert text to upper, lower, title and slug case.</div><ul class="tool-list"><li>Upper/lower/title</li><li>Slug maker</li><li>Clean spacing</li></ul></a>
-<a class="tool-card" data-mini-tool-category="text" href="Quick-Tool.html?tool=word-counter"><div aria-hidden="true" class="tool-icon">🔢</div><div class="tool-title">Word Counter</div><div class="tool-desc">Count words, characters, lines and reading time.</div><ul class="tool-list"><li>Words and chars</li><li>Line count</li><li>Reading time</li></ul></a>
-<a class="tool-card" data-mini-tool-category="developer" href="Quick-Tool.html?tool=json-formatter"><div class="badge">Dev</div><div aria-hidden="true" class="tool-icon">🧩</div><div class="tool-title">JSON Formatter</div><div class="tool-desc">Format, validate and minify JSON text.</div><ul class="tool-list"><li>Pretty print</li><li>Minify</li><li>Error check</li></ul></a>
-<a class="tool-card" data-mini-tool-category="developer" href="Quick-Tool.html?tool=url-encoder-decoder"><div aria-hidden="true" class="tool-icon">🔗</div><div class="tool-title">URL Encoder / Decoder</div><div class="tool-desc">Encode or decode URL strings safely.</div><ul class="tool-list"><li>Encode URI</li><li>Decode URI</li><li>Query helper</li></ul></a>
-<a class="tool-card" data-mini-tool-category="developer" href="Quick-Tool.html?tool=base64-encoder-decoder"><div aria-hidden="true" class="tool-icon">🧬</div><div class="tool-title">Base64 Encoder / Decoder</div><div class="tool-desc">Convert text to Base64 or decode Base64 back.</div><ul class="tool-list"><li>Encode</li><li>Decode</li><li>Local browser only</li></ul></a>
-<a class="tool-card" data-mini-tool-category="developer" href="Quick-Tool.html?tool=sha256-hash-generator"><div aria-hidden="true" class="tool-icon">🔏</div><div class="tool-title">SHA-256 Hash Generator</div><div class="tool-desc">Generate SHA-256 hash from text locally.</div><ul class="tool-list"><li>SHA-256</li><li>Copy hash</li><li>Browser crypto</li></ul></a>
-<a class="tool-card" data-mini-tool-category="image" href="Quick-Tool.html?tool=color-converter"><div aria-hidden="true" class="tool-icon">🎨</div><div class="tool-title">Color Converter</div><div class="tool-desc">Convert HEX to RGB and preview colors.</div><ul class="tool-list"><li>HEX</li><li>RGB</li><li>Color preview</li></ul></a>
-<a class="tool-card" data-mini-tool-category="developer" href="Quick-Tool.html?tool=timestamp-converter"><div aria-hidden="true" class="tool-icon">🕒</div><div class="tool-title">Timestamp Converter</div><div class="tool-desc">Convert Unix timestamp to readable date and back.</div><ul class="tool-list"><li>Unix seconds</li><li>Local date</li><li>Current timestamp</li></ul></a>
-<a class="tool-card" data-mini-tool-category="calculator" href="Quick-Tool.html?tool=age-calculator"><div aria-hidden="true" class="tool-icon">🎂</div><div class="tool-title">Age Calculator</div><div class="tool-desc">Calculate age from birth date.</div><ul class="tool-list"><li>Years/months/days</li><li>Next birthday</li><li>Date based</li></ul></a>
-<a class="tool-card" data-mini-tool-category="calculator" href="Quick-Tool.html?tool=date-difference-calculator"><div aria-hidden="true" class="tool-icon">📅</div><div class="tool-title">Date Difference Calculator</div><div class="tool-desc">Count days between two dates.</div><ul class="tool-list"><li>Days difference</li><li>Weeks estimate</li><li>Date planning</li></ul></a>
-<a class="tool-card" data-mini-tool-category="image" href="Quick-Tool.html?tool=aspect-ratio-calculator"><div aria-hidden="true" class="tool-icon">🖼️</div><div class="tool-title">Aspect Ratio Calculator</div><div class="tool-desc">Resize width/height while keeping ratio.</div><ul class="tool-list"><li>Image/video ratio</li><li>Auto width</li><li>Auto height</li></ul></a>
-<a class="tool-card" data-mini-tool-category="hardware" href="Quick-Tool.html?tool=screen-ppi-calculator"><div aria-hidden="true" class="tool-icon">🔎</div><div class="tool-title">Screen PPI Calculator</div><div class="tool-desc">Calculate screen pixel density from size and resolution.</div><ul class="tool-list"><li>PPI</li><li>Resolution</li><li>Display check</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=unit-converter" data-mini-tool-category="converter"><div class="badge">Useful</div><div class="tool-icon" aria-hidden="true">📏</div><div class="tool-title">Unit Converter</div><div class="tool-desc">Convert length, weight and temperature units quickly.</div><ul class="tool-list"><li>Length, weight, temperature</li><li>Metric and imperial</li><li>Fast technician reference</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=file-size-converter" data-mini-tool-category="converter"><div class="tool-icon" aria-hidden="true">🗂️</div><div class="tool-title">File Size Converter</div><div class="tool-desc">Convert KB, MB, GB and TB for files and storage.</div><ul class="tool-list"><li>KB, MB, GB, TB</li><li>Binary style estimate</li><li>Storage planning</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=percentage-calculator" data-mini-tool-category="calculator"><div class="tool-icon" aria-hidden="true">📊</div><div class="tool-title">Percentage Calculator</div><div class="tool-desc">Calculate percentage, discount and increase/decrease.</div><ul class="tool-list"><li>Percent of number</li><li>Discount</li><li>Increase/decrease</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=loan-calculator" data-mini-tool-category="finance"><div class="tool-icon" aria-hidden="true">🏦</div><div class="tool-title">Loan Calculator</div><div class="tool-desc">Estimate monthly payment for loan or instalment.</div><ul class="tool-list"><li>Monthly instalment</li><li>Interest estimate</li><li>Total payment</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=sst-calculator" data-mini-tool-category="finance"><div class="tool-icon" aria-hidden="true">🧾</div><div class="tool-title">SST Calculator</div><div class="tool-desc">Calculate SST/tax add-on or remove tax from total.</div><ul class="tool-list"><li>6%, 8%, 10% presets</li><li>Inclusive/exclusive</li><li>Invoice helper</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=password-generator" data-mini-tool-category="security"><div class="badge">Security</div><div class="tool-icon" aria-hidden="true">🔐</div><div class="tool-title">Password Generator</div><div class="tool-desc">Generate strong random passwords.</div><ul class="tool-list"><li>Length control</li><li>Symbols/numbers</li><li>Copy quickly</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=password-strength-checker" data-mini-tool-category="security"><div class="tool-icon" aria-hidden="true">🛡️</div><div class="tool-title">Password Strength Checker</div><div class="tool-desc">Check password length, variety and strength score.</div><ul class="tool-list"><li>Strength score</li><li>Weakness hints</li><li>Local browser only</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=qr-code-generator" data-mini-tool-category="converter"><div class="tool-icon" aria-hidden="true">▦</div><div class="tool-title">QR Code Generator</div><div class="tool-desc">Create QR code for text, URL or WhatsApp link.</div><ul class="tool-list"><li>URL to QR</li><li>Text QR</li><li>Download image</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=text-case-converter" data-mini-tool-category="text"><div class="tool-icon" aria-hidden="true">📝</div><div class="tool-title">Text Case Converter</div><div class="tool-desc">Convert text to upper, lower, title and slug case.</div><ul class="tool-list"><li>Upper/lower/title</li><li>Slug maker</li><li>Clean spacing</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=word-counter" data-mini-tool-category="text"><div class="tool-icon" aria-hidden="true">🔢</div><div class="tool-title">Word Counter</div><div class="tool-desc">Count words, characters, lines and reading time.</div><ul class="tool-list"><li>Words and chars</li><li>Line count</li><li>Reading time</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=json-formatter" data-mini-tool-category="developer"><div class="badge">Dev</div><div class="tool-icon" aria-hidden="true">🧩</div><div class="tool-title">JSON Formatter</div><div class="tool-desc">Format, validate and minify JSON text.</div><ul class="tool-list"><li>Pretty print</li><li>Minify</li><li>Error check</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=url-encoder-decoder" data-mini-tool-category="developer"><div class="tool-icon" aria-hidden="true">🔗</div><div class="tool-title">URL Encoder / Decoder</div><div class="tool-desc">Encode or decode URL strings safely.</div><ul class="tool-list"><li>Encode URI</li><li>Decode URI</li><li>Query helper</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=base64-encoder-decoder" data-mini-tool-category="developer"><div class="tool-icon" aria-hidden="true">🧬</div><div class="tool-title">Base64 Encoder / Decoder</div><div class="tool-desc">Convert text to Base64 or decode Base64 back.</div><ul class="tool-list"><li>Encode</li><li>Decode</li><li>Local browser only</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=sha256-hash-generator" data-mini-tool-category="developer"><div class="tool-icon" aria-hidden="true">🔏</div><div class="tool-title">SHA-256 Hash Generator</div><div class="tool-desc">Generate SHA-256 hash from text locally.</div><ul class="tool-list"><li>SHA-256</li><li>Copy hash</li><li>Browser crypto</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=color-converter" data-mini-tool-category="image"><div class="tool-icon" aria-hidden="true">🎨</div><div class="tool-title">Color Converter</div><div class="tool-desc">Convert HEX to RGB and preview colors.</div><ul class="tool-list"><li>HEX</li><li>RGB</li><li>Color preview</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=timestamp-converter" data-mini-tool-category="developer"><div class="tool-icon" aria-hidden="true">🕒</div><div class="tool-title">Timestamp Converter</div><div class="tool-desc">Convert Unix timestamp to readable date and back.</div><ul class="tool-list"><li>Unix seconds</li><li>Local date</li><li>Current timestamp</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=age-calculator" data-mini-tool-category="calculator"><div class="tool-icon" aria-hidden="true">🎂</div><div class="tool-title">Age Calculator</div><div class="tool-desc">Calculate age from birth date.</div><ul class="tool-list"><li>Years/months/days</li><li>Next birthday</li><li>Date based</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=date-difference-calculator" data-mini-tool-category="calculator"><div class="tool-icon" aria-hidden="true">📅</div><div class="tool-title">Date Difference Calculator</div><div class="tool-desc">Count days between two dates.</div><ul class="tool-list"><li>Days difference</li><li>Weeks estimate</li><li>Date planning</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=aspect-ratio-calculator" data-mini-tool-category="image"><div class="tool-icon" aria-hidden="true">🖼️</div><div class="tool-title">Aspect Ratio Calculator</div><div class="tool-desc">Resize width/height while keeping ratio.</div><ul class="tool-list"><li>Image/video ratio</li><li>Auto width</li><li>Auto height</li></ul></a>
+<a class="tool-card" href="Quick-Tool.html?tool=screen-ppi-calculator" data-mini-tool-category="hardware"><div class="tool-icon" aria-hidden="true">🔎</div><div class="tool-title">Screen PPI Calculator</div><div class="tool-desc">Calculate screen pixel density from size and resolution.</div><ul class="tool-list"><li>PPI</li><li>Resolution</li><li>Display check</li></ul></a>
+
 </div><div class="footer">(c) 2026 AZOBSS.COM - Mini Utility Tools</div></div><script id="azobss-mini-tools-manager-js">
 (function(){
   const STORE_KEY='azobss_mini_tools_custom_links_v1';
@@ -1628,7 +1659,7 @@ Useful for technicians"></textarea></label>
   window.azobssMiniToolsRefresh=function(){try{old&&old.apply(this,arguments)}catch(e){} runLater();};
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=614" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=915" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=614"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
@@ -1689,7 +1720,7 @@ return;
   window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
 })();
 </script>
-<script id="azobss-cart-firestore-sync-js" type="module">
+<script type="module" id="azobss-cart-firestore-sync-js">
 /* AZOBSS cart persistence:
    - Guest buyers: localStorage only.
    - Logged-in Firebase users: localStorage + Firestore sync.
@@ -1866,7 +1897,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   });
 })();
 </script>
-<script id="azobss-clean-support-notification-final" type="module">
+
+
+<script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -2091,7 +2124,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<script id="azobss-bell-badge-firestore-final" type="module">
+
+
+
+<script type="module" id="azobss-bell-badge-firestore-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -2205,6 +2241,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   setTimeout(updateBadge,5000);
 })();
 </script>
+
+
+
 <style id="az-chat-badge-style-v2">
 #azChatUnreadBadge{
 position:absolute;top:-7px;right:-8px;z-index:999999999;
@@ -2214,7 +2253,7 @@ font-size:11px;font-weight:900;line-height:18px;text-align:center;
 box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;
 }
 </style>
-<script id="az-chat-badge-admin-user-final" type="module">
+<script type="module" id="az-chat-badge-admin-user-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -2335,7 +2374,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  setInterval(update,15000);
 })();
 </script>
-<script id="azobss-admin-clear-notifications-final" type="module">
+
+
+<script type="module" id="azobss-admin-clear-notifications-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -2446,6 +2487,9 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssClearNotifications = clearNotifications;
 })();
 </script>
+
+
+
 <script id="azobss-exclusive-topbar-panels-final">
 (function(){
   if(window.__azExclusiveTopbarPanelsFinal) return;
@@ -2553,7 +2597,10 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssCloseTopbarPanels=function(){closeBell();closeChat();closeCart();};
 })();
 </script>
-<script id="azobss-support-delete-message-user-admin-final" type="module">
+
+
+
+<script type="module" id="azobss-support-delete-message-user-admin-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -2663,6 +2710,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setInterval(addDeleteButtons, 1200);
 })();
 </script>
+
+
 <script id="azobss-affiliate-admin-software-category-runtime">
 (function(){
   if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
@@ -2705,6 +2754,13 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+
+
+
+
+
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -2767,6 +2823,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,1200);
 })();
 </script>
+
+
+
 <script id="azobss-hide-whatsapp-admin-only-safe-final-script">
 (function(){
   if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
@@ -2845,6 +2904,9 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <style id="azobss-admin-chat-use-normal-icon-flow-fix">
 /* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
 body[data-dashboard-page="admin"] .market-user-tools{
@@ -2883,6 +2945,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   margin:0!important;
 }
 </style>
+
+
 <script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
 (function(){
   if(window.__azobssAdminChatUseNormalIconFlowFix) return;
@@ -2943,6 +3007,9 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <script id="azobss-role-hardening-041-js">
 (function(){
   if(window.__azobssRoleHardening041) return;
@@ -3026,10 +3093,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
   function hardHide(el){
     if(!el) return;
-    var inMarketNav = !!(el.closest && el.closest('.market-nav'));
-    el.style.setProperty('display', inMarketNav ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('display','none','important');
     el.style.setProperty('visibility','hidden','important');
-    el.style.setProperty('opacity','0','important');
     el.style.setProperty('pointer-events','none','important');
     el.setAttribute('aria-hidden','true');
     el.tabIndex = -1;
@@ -3039,7 +3104,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     if(!el) return;
     el.style.setProperty('display','inline-flex','important');
     el.style.setProperty('visibility','visible','important');
-    el.style.setProperty('opacity','1','important');
     el.style.setProperty('pointer-events','auto','important');
     el.removeAttribute('aria-hidden');
     el.tabIndex = 0;
@@ -3110,6 +3174,10 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(run, 2500);
 })();
 </script>
-<script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script>
-<script defer="" id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js"></script>
+
+
+<script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
+<script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body></html>
+
+

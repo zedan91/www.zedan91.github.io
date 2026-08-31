@@ -3,15 +3,16 @@
 <html>
 <head>
 <!-- AZOBSS favicon and app icons -->
-<link href="/favicon.ico" rel="icon" type="image/x-icon"/>
-<link href="/favicon-48x48.png" rel="icon" sizes="48x48" type="image/png"/>
-<link href="/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
-<link href="/favicon-192x192.png" rel="icon" sizes="192x192" type="image/png"/>
-<link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-<link href="/site.webmanifest" rel="manifest"/>
-<meta content="#0f1927" name="theme-color"/>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0f1927">
+
 <base href="../"/>
-<meta charset="utf-8">
+<meta charset="utf-8"/>
 <title>AZOBSS | PC Service, Info Lot &amp; Digital Tools</title>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/>
@@ -7050,7 +7051,8 @@ body.pa-bm-page #request .card {
   margin-top: 0 !important;
 }
 </style>
-<link href="/assets/css/azobss-pro-reference.css" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+
 <style id="azobss-pa-bm-access-lock-final">
 /* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
 .market-nav .nav-pa-bm-link[hidden],
@@ -7058,6 +7060,7 @@ body.pa-bm-page #request .card {
 a#paBmNavButton[hidden],
 a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
 </style>
+
 <style>
 /* AZOBSS FIX: Purchase Records pagination style like reference screenshot */
 #purchaseRecordsPagination,
@@ -7105,6 +7108,7 @@ a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;poi
   cursor:not-allowed !important;
 }
 </style>
+
 <style id="azobss-pa-bm-page-access-guard">
 body:not(.has-pa-access) main,
 body:not(.has-pa-access) .pa-section,
@@ -7249,6 +7253,7 @@ body.is-admin .az-purchase-mini-details[hidden]{display:none!important;}
 }
 
 </style>
+
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */
 #registeredUsersList, #liveUsersList, #loginHistoryList, #guestHistoryList{gap:6px!important;}
@@ -7408,6 +7413,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
   body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-actions{margin-left:0!important;}
 }
 </style>
+
 <style>
 /* AZOBSS PREMIUM CTA CARDS UPGRADE */
 .az-hero-grid, .az-feature-grid, .az-main-cards, .az-card-grid, .home-cards, .promo-grid, .quick-cards{
@@ -7494,6 +7500,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
   }
 }
 </style>
+
 <style>
 
 /* Performance fix: remove heavy shining/glow effect on service cards */
@@ -7545,6 +7552,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
 }
 
 </style>
+
 <style id="azobss-pa-bm-payment-top-final-fix">
 /* AZOBSS PA/BM payment card compact final: Payment title above Total, method logos below status */
 .payment-cta-wrap.toyyibpay-payment-top{
@@ -7699,6 +7707,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
   .payment-cta-wrap.toyyibpay-payment-top .toyyibpay-method-divider{height:22px!important;}
 }
 </style>
+
 <style id="azobss-pa-bm-add-cart-lock-css">
 .user-pa-download.is-locked{background:#334155!important;color:#cbd5e1!important;cursor:not-allowed!important;box-shadow:none!important;text-decoration:none!important;}
 
@@ -7708,6 +7717,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
 @media(max-width:700px){.user-pa-pending-action{justify-content:flex-start;}}
 .bm-record-download{cursor:pointer!important;}
 </style>
+
 <style>
 .compact-table-row{display:grid;grid-template-columns:40px 1.4fr 1fr 80px 180px 70px 80px 170px;align-items:center;padding:6px 10px!important;min-height:42px!important;gap:8px}
 .compact-table-row .user-pa-download-wrap{display:flex;justify-content:flex-end;align-items:center;gap:6px}
@@ -7715,6 +7725,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
 .col-item,.col-state{font-weight:600}
 @media(max-width:900px){.compact-table-row{grid-template-columns:30px 1fr 1fr 60px 120px 60px 60px 120px;font-size:12px}}
 </style>
+
 <style id="azobss-support-notification-css">
 .azobss-mini-action-btn{position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border-radius:999px!important;border:1px solid rgba(148,163,184,.32)!important;background:rgba(15,23,42,.76)!important;color:#e5f7ff!important;text-decoration:none!important;font-size:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important;cursor:pointer!important;margin-left:6px!important}
 .azobss-mini-action-btn:hover{transform:translateY(-1px);border-color:#22c55e!important;box-shadow:0 0 18px rgba(34,197,94,.22)!important}
@@ -7740,6 +7751,8 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-details[
 body.azobss-support-admin .azobss-admin-only-lite{display:block}
 @media(max-width:760px){.azobss-mini-action-btn{width:34px!important;height:34px!important;font-size:16px!important;margin-left:4px!important}.azobss-modal-card{padding:15px}}
 </style>
+
+
 <style id="azobss-support-notification-panel-style">
 /* AZOBSS: Make Notifications and Support open like My Cart / FB / Carousell dropdown panel */
 #azBellModal.azobss-modal-lite,
@@ -7885,9 +7898,14 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   }
 }
 </style>
+
+
+
+
 <style id="azobss-pabm-admin-panels-hide">
 #registeredUsersPanel,#liveUsersPanel,#loginHistoryPanel,#guestHistoryPanel{display:none!important;}
 </style>
+
 <style id="azobss-pabm-cart-badge-visible-fix">
 #paBmPage a[aria-label="Cart"],
 body.pabm-page a[aria-label="Cart"],
@@ -7920,6 +7938,8 @@ a[aria-label="Cart"].market-icon-btn{
   display:inline-flex!important;
 }
 </style>
+
+
 <style id="azobss-admin-whatsapp-clean-hide-css">
 html.azobss-admin-cache .market-nav a[href*="alvo.chat"],
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -7954,6 +7974,9 @@ body[data-role="admin"] .market-nav a:has(.nav-whatsapp-circle){
   }catch(e){}
 })();
 </script>
+
+
+
 <style id="azobss-hide-whatsapp-admin-only-safe-final">
 html.azobss-admin-cache .market-nav .nav-whatsapp-circle,
 html.azobss-admin-cache .market-nav a:has(.nav-whatsapp-circle),
@@ -8005,6 +8028,8 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   overflow:visible!important;
 }
 </style>
+
+
 <style id="azobss-market-nav-clean-structure-034">
 .market-nav{
   display:flex!important;
@@ -8061,6 +8086,7 @@ body[data-role="admin"] .market-user-tools a[aria-label="Chat"]{
   justify-content:center!important;
 }
 </style>
+
 <style id="azobss-pabm-cart-css-037">
 .market-icon-btn{position:relative;}
 .az-shop-cart-badge{position:absolute;right:-7px;top:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(2,6,23,.95);display:none;}
@@ -8102,6 +8128,7 @@ line-height:1.6;
 .commission-policy-card .title{font-weight:800;color:#facc15;margin-bottom:8px}
 .commission-policy-card .row{margin:4px 0}
 </style>
+
 <style id="azobss-role-hardening-041-css">
 /* (041) Role Hardening - dashboard button visibility */
 .azAdminDashboardBtn,
@@ -8171,6 +8198,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 #azRoleDenyOverlay041 p{margin:0 0 16px;color:#cbd5e1}
 #azRoleDenyOverlay041 a{color:#facc15;font-weight:800;text-decoration:none}
 </style>
+
+
 <style id="azobss-pabm-owner-admin-records-visibility-fix">
 /* AZOBSS PATCH 214: PA/BM Purchase Records Users is owner-admin only.
    Normal members must only see their own Latest Purchase List, even if an old script/cache toggles body.is-admin. */
@@ -8203,7 +8232,9 @@ body.pa-bm-page.pabm-owner-admin .purchase-record-actions{display:block!importan
 body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;pointer-events:auto!important;}
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
-<link href="/assets/css/azobss-pabm-storefront.css?v=932" rel="stylesheet">
+
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=932"/>
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -8253,8 +8284,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   .site-auth-actions .site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:12px!important;}
 }
 </style>
-<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=910" rel="stylesheet"/>
-<script defer="" src="/assets/js/azobss-more-nav.js?v=911"></script>
+<link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+<script defer src="/assets/js/azobss-more-nav.js?v=911"></script>
+
 <style id="azobss-lot-zero-filter-visible-886">
   .pabm-no-filter-results td{
     text-align:center;
@@ -8284,7 +8316,8 @@ html.azobss-pabm-guard-pending body{
   }catch(e){}
 })();
 </script>
-</link></meta><link href="/assets/css/azobss-stickybar-global-stable.css?v=1052" rel="stylesheet"/></head>
+
+</head>
 <body class="pa-bm-page" id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
 <div class="azobss-topbar-inner">
@@ -8295,7 +8328,7 @@ html.azobss-pabm-guard-pending body{
 <button aria-label="Scroll menu left" class="azobss-nav-arrow azobss-nav-left" type="button">‹</button>
 <div class="azobss-nav-scroll" id="azobssNavScroll">
 <a class="azobss-nav-chip" href="/Software-Tools/">Software</a>
-<a class="azobss-nav-chip" href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a class="azobss-nav-chip" href="/CAD-Tools-&-Resources/">CAD Tools</a>
 <a class="azobss-nav-chip" href="/tools/">Mini Web Tools</a><a class="azobss-nav-chip" href="/affiliate-shop/">Affiliate Shop</a>
 <a class="azobss-nav-chip" href="/lucky-draw/">Lucky Draw</a>
 <a class="azobss-nav-chip" href="/PA-BM/#pa">Request PA</a>
@@ -8554,15 +8587,15 @@ html.azobss-pabm-guard-pending body{
 <img alt="AZOBSS" src="/images/logo-azobss.jpg"/>
 </a>
 <nav aria-label="AZOBSS quick actions" class="market-nav">
-<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
-<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
-<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+<a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+<a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
 <a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
-<a class="nav-public-pa-link is-hidden" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a><a href="/Software-Tools/">Software</a>
+<a href="/Software-Tools/">Software</a>
 <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
-<a href="/affiliate-shop/">Affiliate Shop</a><a aria-label="Repair PC" class="az-repair-source-link" data-az-repair-service-link="1" href="/Tempah-Servis-IT/" title="Tempah Servis Laptop / PC">Repair PC</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><a class="az-website-order-link" data-az-website-order-link="1" href="/Tempah-Website/" title="Tempah Website untuk Bisnes">Bina Website</a>
 <a href="/lucky-draw/">Lucky Draw</a>
-<a aria-label="More menu" data-az-more-source-link="1" href="/tools/" title="More">More</a>
+<a href="/tools/">Mini Web Tools</a>
 </nav>
 <div class="site-auth-actions" id="siteAuthActions">
 <button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button>
@@ -8573,16 +8606,17 @@ html.azobss-pabm-guard-pending body{
 <div class="user-avatar" id="userAvatar">AZ</div>
 <div class="user-name"><span id="signedInName"></span></div>
 <div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
-<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
-<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
-<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
-<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button></div>
 </div>
-<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks">
-<svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
+<a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
+<svg class="az-market-bookmark-icon" aria-hidden="true" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#">
-<span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span>
+<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/#request">
@@ -8727,7 +8761,7 @@ html.azobss-pabm-guard-pending body{
 <div class="card">
 <h3>🛠 Software Tools</h3>
 <p>Useful tools and downloads for Windows optimization, PC repair, troubleshooting and productivity.</p>
-<div class="price">Windows Utilities &amp; Downloads</div>
+<div class="price">Windows Utilities & Downloads</div>
 <a class="btn" href="https://www.azobss.com/Software-Tools/">Open Software Tools →</a>
 </div>
 <div class="card">
@@ -8750,7 +8784,7 @@ html.azobss-pabm-guard-pending body{
 </div>
 <div class="section" id="request">
 <p class="pabm-store-note">Pilih kategori, negeri dan masukkan rujukan dokumen yang diperlukan.</p>
-<div aria-label="PA BM storage tabs" class="pa-bm-tabs">
+<div class="pa-bm-tabs" aria-label="PA BM storage tabs">
 <a class="pa-bm-tab is-active" data-pa-bm-tab="pa" href="/PA-BM/#pa">PA</a>
 <a class="pa-bm-admin-public-pa-btn" href="/Perkhidmatan-Ukur-Tanah/" title="Buka pembelian Pelan Akui pengguna awam RM30">Beli Pelan Akui</a>
 <a class="pa-bm-tab" data-pa-bm-tab="bm" href="/PA-BM/#bm">BM</a>
@@ -8767,8 +8801,8 @@ html.azobss-pabm-guard-pending body{
 <p class="login-info" id="loginInfo"></p>
 <form class="request-form" id="paSearchForm">
 <label for="negeri">
-<span class="pabm-field-title"><span class="pabm-step">1</span>Pilih Negeri</span>
-<select id="negeri" required="">
+          <span class="pabm-field-title"><span class="pabm-step">1</span>Pilih Negeri</span>
+          <select id="negeri" required="">
 <option value="">-- Pilih Negeri --</option>
 <option value="JOHOR">JOHOR</option>
 <option value="KEDAH">KEDAH</option>
@@ -8790,8 +8824,8 @@ html.azobss-pabm-guard-pending body{
 <span class="pabm-state-grid" data-state-picker-for="negeri"></span>
 </label>
 <label for="paNumber">
-<span class="pabm-field-title"><span class="pabm-step">2</span>Nombor PA</span>
-<input aria-required="true" autocapitalize="characters" id="paNumber" inputmode="text" placeholder="Contoh: 2131 / PA2131" spellcheck="false" type="search"/>
+          <span class="pabm-field-title"><span class="pabm-step">2</span>Nombor PA</span>
+          <input aria-required="true" autocapitalize="characters" id="paNumber" inputmode="text" placeholder="Contoh: 2131 / PA2131" spellcheck="false" type="search"/>
 </label>
 <p class="request-error" id="paError"></p>
 <div class="pabm-primary-actions">
@@ -8800,21 +8834,21 @@ html.azobss-pabm-guard-pending body{
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="paStatus" role="status"></p>
 <label for="paGeneralSearch">
-<span class="pabm-field-title">Carian Umum</span>
-<input disabled="" id="paGeneralSearch" placeholder="No. PA / Negeri / Daerah / Mukim / Seksyen" type="search"/>
+          <span class="pabm-field-title">Carian Umum</span>
+          <input disabled="" id="paGeneralSearch" placeholder="No. PA / Negeri / Daerah / Mukim / Seksyen" type="search"/>
 </label>
 <p class="request-note" hidden="" id="paLinkPreview"></p>
 <div class="benchmark-result-wrap" hidden="" id="paResultWrap">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
-<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-pa-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">🛒</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-pa-sort="paNo" type="button"><span>NOMBOR PA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-pa-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-district-data-col"><button class="pa-sort-button" data-pa-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-area-data-col"><button class="pa-sort-button" data-pa-sort="mukim" type="button"><span>MUKIM</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="seksyen" type="button"><span>SEKSYEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-pa-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">&#128722;</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-pa-sort="paNo" type="button"><span>NOMBOR PA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-pa-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-district-data-col"><button class="pa-sort-button" data-pa-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-area-data-col"><button class="pa-sort-button" data-pa-sort="mukim" type="button"><span>MUKIM</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-pa-sort="seksyen" type="button"><span>SEKSYEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-preview-action-col">LIHAT PA</th>
 </tr>
 </thead>
@@ -8837,8 +8871,8 @@ html.azobss-pabm-guard-pending body{
 <span class="pabm-product-switch" data-product-picker-for="benchmarkProduct"></span>
 </label>
 <label for="benchmarkState">
-<span class="pabm-field-title"><span class="pabm-step">1</span>Pilih Negeri</span>
-<select id="benchmarkState" required="">
+            <span class="pabm-field-title"><span class="pabm-step">1</span>Pilih Negeri</span>
+            <select id="benchmarkState" required="">
 <option value="">-- Pilih Negeri --</option>
 <option value="JOHOR">JOHOR</option>
 <option value="KEDAH">KEDAH</option>
@@ -8860,8 +8894,8 @@ html.azobss-pabm-guard-pending body{
 <span class="pabm-state-grid" data-state-picker-for="benchmarkState"></span>
 </label>
 <label for="benchmarkSearch">
-<span class="pabm-field-title"><span class="pabm-step">2</span>Nombor Stesen</span>
-<input id="benchmarkSearch" placeholder="Contoh: 0109 / H 0109 / Kosongkan untuk lihat semua" type="search"/>
+            <span class="pabm-field-title"><span class="pabm-step">2</span>Nombor Stesen</span>
+            <input id="benchmarkSearch" placeholder="Contoh: 0109 / H 0109 / Kosongkan untuk lihat semua" type="search"/>
 </label>
 <div class="pabm-primary-actions">
 <button class="btn blue pabm-add-product-button" id="benchmarkSearchButton" type="submit"><span id="benchmarkSearchButtonLabel">Cari BM</span></button>
@@ -8869,8 +8903,8 @@ html.azobss-pabm-guard-pending body{
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="benchmarkStatus" role="status"></p>
 <label for="benchmarkGeneralSearch">
-<span class="pabm-field-title">Carian Umum</span>
-<input disabled="" id="benchmarkGeneralSearch" placeholder="No. Stesen / Negeri / Daerah / Bandar / Huraian" type="search"/>
+            <span class="pabm-field-title">Carian Umum</span>
+            <input disabled="" id="benchmarkGeneralSearch" placeholder="No. Stesen / Negeri / Daerah / Bandar / Huraian" type="search"/>
 </label>
 </form>
 <p class="request-error" id="benchmarkError"></p>
@@ -8879,15 +8913,15 @@ html.azobss-pabm-guard-pending body{
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
-<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-benchmark-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">🛒</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-benchmark-sort="stationNo" type="button"><span>NO. STESEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-benchmark-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-district-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-benchmark-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">&#128722;</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-benchmark-sort="stationNo" type="button"><span>NO. STESEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-benchmark-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-district-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-benchmark-sort="bandar" type="button"><span>BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-location-text-col">eBiz</th>
 <th class="pabm-location-text-col">Maps</th>
-<th aria-sort="none" class="pabm-description-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="none" class="pabm-description-data-col pabm-benchmark-sbm-hidden-col"><button class="pa-sort-button" data-benchmark-sort="huraian" type="button"><span>HURAIAN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 </tr>
 </thead>
 <tbody id="benchmarkResultsBody"></tbody>
@@ -8901,8 +8935,8 @@ html.azobss-pabm-guard-pending body{
 <div class="pabm-product-heading"><div><h3>Lot Kadaster Berdigit</h3></div><strong class="pabm-heading-price is-range">25% = RM15 | 90%+ = RM50</strong></div>
 <div class="benchmark-form">
 <label for="lotKadasterState">
-<span class="pabm-field-title"><span class="pabm-step">1</span>Pilih Negeri</span>
-<select data-copy-states="" data-lot-state="" id="lotKadasterState"><option value="">-- Pilih Negeri --</option></select>
+            <span class="pabm-field-title"><span class="pabm-step">1</span>Pilih Negeri</span>
+            <select data-copy-states="" data-lot-state="" id="lotKadasterState"><option value="">-- Pilih Negeri --</option></select>
 <span class="pabm-state-grid" data-state-picker-for="lotKadasterState"></span>
 </label>
 <label><span class="pabm-field-title"><span class="pabm-step">2</span>Nombor Lot <small>(untuk carian sahaja)</small></span>
@@ -8918,13 +8952,13 @@ html.azobss-pabm-guard-pending body{
 <div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead><tr>
-<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-lot-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="lotNo" type="button"><span>NO. LOT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="paNo" type="button"><span>NO. PA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="mukim" type="button"><span>MUKIM / BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="seksyen" type="button"><span>SEKSYEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-lot-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="lotNo" type="button"><span>NO. LOT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="paNo" type="button"><span>NO. PA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="mukim" type="button"><span>MUKIM / BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="seksyen" type="button"><span>SEKSYEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-preview-action-col">LIHAT PA</th><th class="pabm-preview-action-col">LIHAT PETA</th></tr></thead>
 <tbody data-lot-results=""></tbody>
 </table>
@@ -8957,12 +8991,12 @@ html.azobss-pabm-guard-pending body{
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
-<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-gps-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">🛒</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-gps-sort="stationNo" type="button"><span>NO. STESEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-district-data-col"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>TEMPAT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-gps-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">&#128722;</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-gps-sort="stationNo" type="button"><span>NO. STESEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-state-data-col"><button class="pa-sort-button" data-gps-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-district-data-col"><button class="pa-sort-button" data-gps-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-place-data-col"><button class="pa-sort-button" data-gps-sort="tempat" type="button"><span>TEMPAT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-location-text-col">eBiz</th>
 <th class="pabm-location-text-col">Maps</th>
 </tr>
@@ -8992,13 +9026,13 @@ html.azobss-pabm-guard-pending body{
 <div class="benchmark-result-wrap" data-lot-result-wrap="" hidden="">
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead><tr>
-<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-lot-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="lotNo" type="button"><span>NO. LOT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="paNo" type="button"><span>NO. PA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="mukim" type="button"><span>MUKIM / BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="seksyen" type="button"><span>SEKSYEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-lot-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="lotNo" type="button"><span>NO. LOT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-lot-sort="paNo" type="button"><span>NO. PA</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="daerah" type="button"><span>DAERAH</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="mukim" type="button"><span>MUKIM / BANDAR</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-lot-sort="seksyen" type="button"><span>SEKSYEN</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-preview-action-col">LIHAT PA</th><th class="pabm-preview-action-col">LIHAT PETA</th></tr></thead>
 <tbody data-lot-results=""></tbody>
 </table>
@@ -9031,10 +9065,10 @@ html.azobss-pabm-guard-pending body{
 <table class="benchmark-table pabm-results-table pabm-wide-results-table">
 <thead>
 <tr>
-<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-sort-direction="asc" data-syit-sort="_sourceIndex" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">🛒</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
-<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-syit-sort="sheetName" type="button"><span>NAMA SYIT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
-<th aria-sort="none"><button class="pa-sort-button" data-syit-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">▲</span><span class="pa-sort-down">▼</span></span></button></th>
+<th aria-sort="ascending" class="pabm-index-col"><button class="pa-sort-button" data-syit-sort="_sourceIndex" data-sort-direction="asc" type="button"><span>NO.</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th class="pabm-action-col pabm-cart-action-col"><span aria-hidden="true" class="pabm-cart-glyph">&#128722;</span><span class="pabm-visually-hidden">Tambah ke Troli</span></th>
+<th aria-sort="none" class="pabm-code-col"><button class="pa-sort-button" data-syit-sort="sheetName" type="button"><span>NAMA SYIT</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
+<th aria-sort="none"><button class="pa-sort-button" data-syit-sort="negeri" type="button"><span>NEGERI</span><span aria-hidden="true" class="pa-sort-indicator"><span class="pa-sort-up">&#9650;</span><span class="pa-sort-down">&#9660;</span></span></button></th>
 <th class="pabm-preview-action-col">LIHAT SYIT</th>
 <th class="pabm-location-text-col">eBiz</th>
 </tr>
@@ -9045,9 +9079,9 @@ html.azobss-pabm-guard-pending body{
 <div class="benchmark-pagination" hidden="" id="syitPiawaiPagination"></div>
 </div>
 </div>
-<aside aria-labelledby="pabmCartTitle" class="pabm-cart-panel" id="pabmStoreCartPanel">
+<aside class="pabm-cart-panel" id="pabmStoreCartPanel" aria-labelledby="pabmCartTitle">
 <div class="pabm-cart-head">
-<div><span class="pabm-step" id="pabmCartStep">3</span><span aria-hidden="true" class="pabm-cart-title-icon">🛒</span><h3 id="pabmCartTitle">Troli Anda</h3></div>
+<div><span class="pabm-step" id="pabmCartStep">3</span><span aria-hidden="true" class="pabm-cart-title-icon">&#128722;</span><h3 id="pabmCartTitle">Troli Anda</h3></div>
 <span class="pabm-cart-count" id="pabmStoreCartCount">0 item</span>
 </div>
 <div class="pabm-cart-items" id="pabmStoreCartItems">
@@ -9058,22 +9092,22 @@ html.azobss-pabm-guard-pending body{
 <strong id="pabmStoreCartTotal">RM0.00</strong>
 </div>
 <div class="payment-cta-wrap login-only toyyibpay-payment-top" id="paymentCtaWrap">
-<div class="payment-qr-card toyyibpay-payment-card toyyibpay-payment-card-top">
-<h3 class="toyyibpay-payment-title">Pembayaran</h3>
-<p aria-hidden="true" class="toyyibpay-payment-subtitle">FPX / Online Banking</p>
-<p class="toyyibpay-payment-amount">Jumlah:<br/><strong id="paBmToyyibTotal">RM0.00</strong></p>
-<button class="qr-action-btn green toyyibpay-pay-btn" id="payPaBmToyyibButton" type="button">
+        <div class="payment-qr-card toyyibpay-payment-card toyyibpay-payment-card-top">
+          <h3 class="toyyibpay-payment-title">Pembayaran</h3>
+          <p class="toyyibpay-payment-subtitle" aria-hidden="true">FPX / Online Banking</p>
+          <p class="toyyibpay-payment-amount">Jumlah:<br><strong id="paBmToyyibTotal">RM0.00</strong></p>
+          <button class="qr-action-btn green toyyibpay-pay-btn" id="payPaBmToyyibButton" type="button">
             Teruskan Pembayaran
           </button>
-<button id="adminTestPaBmPaymentButton" type="button">Test Payment (Admin)</button>
-<p class="qr-copy-status toyyibpay-payment-status" id="paBmToyyibStatus">Pergi ke halaman pembayaran</p>
-<div aria-label="FPX Online Banking" class="toyyibpay-method-logos">
-<span class="toyyibpay-method-fpx">FPX</span>
-<span aria-hidden="true" class="toyyibpay-method-divider"></span>
-<span class="toyyibpay-method-bank">Online Banking</span>
-</div>
-</div>
-</div>
+          <button id="adminTestPaBmPaymentButton" type="button">Test Payment (Admin)</button>
+          <p class="qr-copy-status toyyibpay-payment-status" id="paBmToyyibStatus">Pergi ke halaman pembayaran</p>
+          <div class="toyyibpay-method-logos" aria-label="FPX Online Banking">
+            <span class="toyyibpay-method-fpx">FPX</span>
+            <span class="toyyibpay-method-divider" aria-hidden="true"></span>
+            <span class="toyyibpay-method-bank">Online Banking</span>
+          </div>
+        </div>
+      </div>
 </aside>
 </div>
 <div class="admin-purchase-panel" id="adminPurchasePanel">
@@ -9098,8 +9132,8 @@ html.azobss-pabm-guard-pending body{
 </label>
 <label for="purchaseRecordSort">
                 Susun mengikut
-                <select data-default-sort="updatedNewest" id="purchaseRecordSort">
-<option selected="" value="updatedNewest">Kemas kini terbaharu</option>
+                <select id="purchaseRecordSort" data-default-sort="updatedNewest">
+<option value="updatedNewest" selected>Kemas kini terbaharu</option>
 <option value="amountDesc">Jumlah: tertinggi</option>
 <option value="amountAsc">Jumlah: terendah</option>
 <option value="unitsDesc">Unit: tertinggi</option>
@@ -9118,12 +9152,12 @@ html.azobss-pabm-guard-pending body{
 <div class="user-pa-purchase-panel" id="userPaPurchasePanel">
 <h4>Senarai Pembelian Terkini</h4>
 <p class="az-download-limit-note">Setiap dokumen berbayar boleh dimuat turun sehingga 5 kali dan tamat tempoh selepas 7 hari.</p>
-<div class="az-purchase-bulk-tools" hidden="" id="userPaBulkDeleteTools">
+<div class="az-purchase-bulk-tools" id="userPaBulkDeleteTools" hidden>
 <label class="az-purchase-select-all-label" for="userPaSelectAllRecords">
 <input id="userPaSelectAllRecords" type="checkbox"/>
 <span>Pilih Semua</span>
 </label>
-<button disabled="" id="userPaDeleteSelectedRecords" type="button">Padam Dipilih (0)</button>
+<button id="userPaDeleteSelectedRecords" type="button" disabled>Padam Dipilih (0)</button>
 </div>
 <div class="user-pa-tools" id="userPaPurchaseTools">
 <label for="userPaPurchaseSearch">
@@ -9147,6 +9181,7 @@ html.azobss-pabm-guard-pending body{
 <div class="guest-history-pagination" id="userPaPurchasePagination"></div>
 </div>
 </div>
+
 </div>
 </div>
 <div class="registered-users-panel" id="registeredUsersPanel">
@@ -9175,7 +9210,7 @@ html.azobss-pabm-guard-pending body{
 <option value="username">Username / Email A-Z</option>
 <option value="onlineOnly">Online users only</option>
 <option value="paAllowed">PA Access Allowed</option>
-<option selected="" value="dateNewest">Date registered: newest</option>
+<option value="dateNewest" selected>Date registered: newest</option>
 <option value="dateOldest">Date registered: oldest</option>
 </select>
 </label>
@@ -11436,6 +11471,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
+
 <script>
 /* =========================================================
    AZOBSS LUCKY DRAW RENDER BACKEND BRIDGE
@@ -12621,7 +12657,8 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   color:#e2e8f0 !important;
 }
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=1044" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=1044" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1044" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1044"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+
 <script>
 (function(){
   function getPaymentTarget(){
@@ -12702,6 +12739,8 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-line s
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete-btn{background:#ef4444!important;color:#fff!important;border:0!important;border-radius:7px!important;height:24px!important;padding:0 9px!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;flex:0 0 auto!important;}
 @media(max-width:900px){body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-mini-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important;flex-wrap:wrap!important;}}
 </style>
+
+
 <style id="azobss-pa-bm-payment-success-popup-real-fix">
 .azobss-payment-success-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2147483000;padding:18px;font-family:inherit;}
 .azobss-payment-success-modal.show{display:flex!important;}
@@ -12884,6 +12923,8 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
   else run();
 })();
 </script>
+
+
 <script id="azobss-pa-bm-purchase-sync-perfect-fix">
 (function(){
   'use strict';
@@ -12911,6 +12952,8 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
   window.addEventListener('focus', refreshPurchases);
 })();
 </script>
+
+
 <style id="azobss-pa-bm-compact-table-final-fix">
 /* AZOBSS Latest Purchase List compact table final */
 #userPaPurchaseList.user-pa-list{display:block!important;overflow-x:auto!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:12px!important;background:rgba(10,20,36,.50)!important;}
@@ -12988,6 +13031,9 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
 }
 @media(max-width:760px){#userPaPurchaseList.user-pa-list{border-radius:10px!important;}#userPaPurchaseList .compact-purchase-row{min-width:860px!important;grid-template-columns:38px 130px 140px 75px 170px 110px 95px 115px!important;min-height:36px!important;padding:0 8px!important;}#userPaPurchaseList .compact-purchase-row>div{padding:4px 6px!important;font-size:11px!important;}#userPaPurchaseList .user-pa-download{height:26px!important;min-height:26px!important;min-width:86px!important;font-size:11px!important;}}
 </style>
+
+
+
 <style id="azobss-pa-bm-mobile-card-exact-fix">
 /* Mobile-only purchase list: compact cards, no horizontal slide. Desktop table is untouched. */
 @media (max-width: 760px){
@@ -13098,6 +13144,9 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
   }
 }
 </style>
+
+
+
 <style id="azobss-pa-bm-gold-white-action-final-override">
 /* AZOBSS final: highlight only BM/PA + RM in gold, keep other details white, and keep pending action in one row. */
 :root{--azobss-pa-gold:#facc15;--azobss-pa-white:#ffffff;}
@@ -13151,6 +13200,8 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
   #userPaPurchaseList .compact-table-row .user-pa-uncart-btn.is-cart-remove-btn{width:32px!important;min-width:32px!important;height:24px!important;min-height:24px!important;border-radius:7px!important;}
 }
 </style>
+
+
 <style id="azobss-pa-bm-action-count-final-audit-fix">
 /* Final audited Latest Purchase List layout:
    - Remove Muat Turun column
@@ -13300,12 +13351,15 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
   }
 }
 </style>
+
 <style id="azobss-pa-bm-admin-reset-visible-fix">
 #userPaPurchaseList .az-admin-reset-download-count{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:24px!important;min-height:24px!important;padding:0 8px!important;border-radius:999px!important;border:1px solid rgba(56,189,248,.75)!important;background:rgba(14,165,233,.16)!important;color:#7dd3fc!important;font-size:10.5px!important;font-weight:950!important;line-height:1!important;cursor:pointer!important;white-space:nowrap!important;flex:0 0 auto!important}
 #userPaPurchaseList .az-admin-reset-download-count:hover{background:rgba(14,165,233,.26)!important;color:#e0f2fe!important}
 #userPaPurchaseList .az-admin-reset-download-count:disabled{opacity:.55!important;cursor:wait!important}
 @media(max-width:760px){#userPaPurchaseList .user-pa-action-with-count{flex-wrap:wrap!important;justify-content:flex-end!important;gap:4px!important}#userPaPurchaseList .az-admin-reset-download-count{height:20px!important;min-height:20px!important;font-size:9.5px!important;padding:0 7px!important}}
 </style>
+
+
 <style id="azobss-lot-kadaster-format-download-v933">
 /* v933: compact Lot Kadaster ZIP/DWG/DXF buttons to prevent action-column overlap. */
 #userPaPurchaseList .az-lot-download-action{
@@ -13356,6 +13410,7 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
   #userPaPurchaseList .az-lot-download-action .az-admin-reset-download-count{min-width:48px!important;height:20px!important;min-height:20px!important;padding:0 5px!important;font-size:8.5px!important;}
 }
 </style>
+
 <style id="azobss-lot-kadaster-table-layout-v935">
 /* v935: move Tempoh into the available middle space and reserve a wider action column. */
 @media (min-width:761px){
@@ -13389,7 +13444,8 @@ body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
   }
 }
 </style>
-<script id="azobss-clean-support-notification-final" type="module">
+
+<script type="module" id="azobss-clean-support-notification-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -13614,7 +13670,10 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<script id="azobss-bell-badge-firestore-final" type="module">
+
+
+
+<script type="module" id="azobss-bell-badge-firestore-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -13731,6 +13790,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   setTimeout(updateBadge,5000);
 })();
 </script>
+
+
+
 <style id="az-chat-badge-style-v2">
 #azChatUnreadBadge{
 position:absolute;top:-7px;right:-8px;z-index:999999999;
@@ -13740,7 +13802,7 @@ font-size:11px;font-weight:900;line-height:18px;text-align:center;
 box-shadow:0 0 0 2px rgba(2,6,23,.95);pointer-events:none;
 }
 </style>
-<script id="az-chat-badge-admin-user-final" type="module">
+<script type="module" id="az-chat-badge-admin-user-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -13861,7 +13923,9 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  setInterval(update,60000);
 })();
 </script>
-<script id="azobss-admin-clear-notifications-final" type="module">
+
+
+<script type="module" id="azobss-admin-clear-notifications-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -13972,6 +14036,9 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssClearNotifications = clearNotifications;
 })();
 </script>
+
+
+
 <script id="azobss-exclusive-topbar-panels-final">
 (function(){
   if(window.__azExclusiveTopbarPanelsFinal) return;
@@ -14079,7 +14146,10 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   window.azobssCloseTopbarPanels=function(){closeBell();closeChat();closeCart();};
 })();
 </script>
-<script id="azobss-support-delete-message-user-admin-final" type="module">
+
+
+
+<script type="module" id="azobss-support-delete-message-user-admin-final">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -14189,6 +14259,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   setInterval(addDeleteButtons, 30000);
 })();
 </script>
+
+
 <script id="azobss-affiliate-admin-software-category-runtime">
 (function(){
   if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
@@ -14231,6 +14303,13 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+
+
+
+
+
 <!-- AZOBSS FINAL PATCH: Hide admin user/history panels only on PA-BM page. Admin Dashboard remains unchanged. -->
 <style id="azobss-pabm-hide-admin-panels-final">
 body #registeredUsersPanel,
@@ -14275,6 +14354,8 @@ body #guestHistoryPanel{
   setTimeout(hidePanels, 1000);
 })();
 </script>
+
+
 <style id="azobss-profile-dropdown-exact-miniweb-final">
 /* Exact Mini Web profile dropdown: page-local final override */
 body #userMenu{
@@ -14376,6 +14457,8 @@ body #userDropdown button.user-dropdown-item:hover{
   }
 }
 </style>
+
+
 <script id="azobss-admin-whatsapp-clean-updater">
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
@@ -14438,6 +14521,9 @@ body #userDropdown button.user-dropdown-item:hover{
   setTimeout(apply,30000);
 })();
 </script>
+
+
+
 <script id="azobss-hide-whatsapp-admin-only-safe-final-script">
 (function(){
   if(window.__azobssHideWhatsappAdminOnlySafeFinal) return;
@@ -14516,6 +14602,9 @@ body #userDropdown button.user-dropdown-item:hover{
   setTimeout(apply,1500);
 })();
 </script>
+
+
+
 <style id="azobss-admin-chat-use-normal-icon-flow-fix">
 /* Admin Chat icon: use normal market-icon-btn flow like normal user pages */
 body[data-dashboard-page="admin"] .market-user-tools{
@@ -14554,6 +14643,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   margin:0!important;
 }
 </style>
+
+
 <script id="azobss-admin-chat-use-normal-icon-flow-fix-script">
 (function(){
   if(window.__azobssAdminChatUseNormalIconFlowFix) return;
@@ -14614,7 +14705,9 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   setTimeout(apply,1500);
 })();
 </script>
-<script id="azobss-pabm-cart-auth-key-sync-037" type="module">
+
+
+<script type="module" id="azobss-pabm-cart-auth-key-sync-037">
 /* AZOBSS cart persistence:
    - Guest buyers: localStorage only.
    - Logged-in Firebase users: localStorage + Firestore sync.
@@ -14871,6 +14964,7 @@ return;
 <script id="azobss-pabm-cart-key-refresh-037">
 (function(){if(window.__azobssPabmCartKeyRefresh037)return;window.__azobssPabmCartKeyRefresh037=true;function refresh(){try{if(typeof window.azobssRefreshShopCart==='function')window.azobssRefreshShopCart();window.dispatchEvent(new Event('azobss-shop-cart-updated'));}catch(e){}}window.addEventListener('focus',refresh);window.addEventListener('storage',refresh);setTimeout(refresh,500);setTimeout(refresh,1500);setTimeout(refresh,3000);})();
 </script>
+
 <script id="azobss-role-hardening-041-js">
 (function(){
   if(window.__azobssRoleHardening041) return;
@@ -14954,10 +15048,8 @@ return;
 
   function hardHide(el){
     if(!el) return;
-    var inMarketNav = !!(el.closest && el.closest('.market-nav'));
-    el.style.setProperty('display', inMarketNav ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('display','none','important');
     el.style.setProperty('visibility','hidden','important');
-    el.style.setProperty('opacity','0','important');
     el.style.setProperty('pointer-events','none','important');
     el.setAttribute('aria-hidden','true');
     el.tabIndex = -1;
@@ -14967,7 +15059,6 @@ return;
     if(!el) return;
     el.style.setProperty('display','inline-flex','important');
     el.style.setProperty('visibility','visible','important');
-    el.style.setProperty('opacity','1','important');
     el.style.setProperty('pointer-events','auto','important');
     el.removeAttribute('aria-hidden');
     el.tabIndex = 0;
@@ -15038,6 +15129,7 @@ return;
   setTimeout(run, 2500);
 })();
 </script>
+
 <script id="azobss-pabm-paid-logic-debug-095-js">
 (function(){
   if(window.__azobssPabmPaidLogicDebug095) return;
@@ -15062,6 +15154,8 @@ return;
   };
 })();
 </script>
+
+
 <!-- AZOBSS PATCH 211: admin PA/BM purchase action buttons visible -->
 <style id="azobss-admin-pabm-purchase-actions-visible-fix-211">
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList{
@@ -15167,6 +15261,8 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-delete-all-bt
   }
 }
 </style>
+
+
 <!-- AZOBSS PATCH 213: PA/BM admin purchase records stable owner + no flicker -->
 <style id="azobss-admin-pabm-stable-layout-fix-213">
 body.pa-bm-page.pabm-owner-admin #adminPurchasePanel{display:block!important;visibility:visible!important;opacity:1!important;}
@@ -15189,6 +15285,8 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-delete-all-bt
    Reason: it was global and could fight the final owner-admin guard, causing page lock/flicker. */
 (function(){ window.__azobssPabmOldAdminForceDisabled216 = true; })();
 </script>
+
+
 <script id="azobss-pabm-owner-admin-records-visibility-guard">
 (function(){
   var OWNER_ADMIN_KEYS = ['zedan91','zedan9107'];
@@ -15265,6 +15363,9 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-delete-all-bt
   /* AZOBSS PATCH 216: removed self-triggering MutationObserver; events/timers above are enough. */
 })();
 </script>
+
+
+
 <!-- AZOBSS PATCH 215: final PA/BM user/admin panel separation guard -->
 <style id="azobss-pabm-final-owner-only-admin-panel-guard-215">
 /* Final cascade guard: PA/BM Purchase Records Users is ONLY for owner admin.
@@ -15391,6 +15492,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{
   setInterval(apply, 4000);
 })();
 </script>
+
+
 <!-- AZOBSS PATCH 216: Homepage unlock / PA-BM guard scoping -->
 <style id="azobss-homepage-unlock-pabm-scope-216">
 body:not(.pa-bm-page) #adminPurchasePanel,
@@ -15428,14 +15531,17 @@ body:not(.pa-bm-page) button{
   setTimeout(apply, 50); setTimeout(apply, 300); setTimeout(apply, 1000);
 })();
 </script>
-<script defer="" src="/assets/js/azobss-lot-selection-map.js?v=1018"></script>
-<script src="/assets/js/azobss-pabm-storefront.js?v=921" type="module"></script>
-<script defer="" src="/assets/js/azobss-pabm-result-layout.js?v=3"></script>
-<script defer="" src="/assets/js/azobss-pa-search.js?v=28"></script>
-<script defer="" src="/assets/js/azobss-lot-kadaster-search.js?v=12"></script>
-<script defer="" src="/assets/js/azobss-gps-search.js?v=1042"></script>
-<script defer="" src="/assets/js/azobss-syit-piawai-search.js?v=1042"></script>
-<script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script>
+
+
+<script src="/assets/js/azobss-lot-selection-map.js?v=1018" defer></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=921"></script>
+<script src="/assets/js/azobss-pabm-result-layout.js?v=3" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=28" defer></script>
+<script src="/assets/js/azobss-lot-kadaster-search.js?v=12" defer></script>
+<script src="/assets/js/azobss-gps-search.js?v=1042" defer></script>
+<script src="/assets/js/azobss-syit-piawai-search.js?v=1042" defer></script>
+<script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
+
 <style id="azobss-lot-download-spinner-v945">
 /* v945: compact animated loading indicator for ZIP/DWG/DXF while a controlled download is preparing/downloading. */
 @keyframes azobssLotDownloadSpin945{to{transform:rotate(360deg)}}
@@ -15471,6 +15577,7 @@ body:not(.pa-bm-page) button{
   #userPaPurchaseList .az-lot-format-download[data-busy="1"]::before{animation-duration:1.4s}
 }
 </style>
+
 <style id="azobss-lot-format-two-button-v947">
 /* v947 safety: only ZIP + displayed DWG (actual DXF action) are visible. */
 #userPaPurchaseList .az-lot-format-dwg,
@@ -15509,6 +15616,9 @@ body:not(.pa-bm-page) button{
   else start();
 })();
 </script>
+
+
+
 <style id="azobss-lot-download-spinner-tempoh-v949">
 /* v949: real child spinner only. This avoids collisions with older pseudo-element loading rules. */
 @keyframes azobssLotDownloadSpin949{to{transform:rotate(360deg)}}
@@ -15551,6 +15661,7 @@ body:not(.pa-bm-page) button{
 }
 @media (prefers-reduced-motion:reduce){#userPaPurchaseList .az-lot-busy-spinner-v949{animation-duration:1.2s!important}}
 </style>
+
 <style id="azobss-purchase-action-unified-v955">
 /* v955: generic PA/BM download uses the exact same action structure/classes as Lot Kadaster. */
 #userPaPurchaseList .az-generic-download-action-v955{display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;}
@@ -15590,7 +15701,9 @@ body:not(.pa-bm-page) button{
   }
 }
 </style>
-<script defer="" id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js"></script>
+
+
+<script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body>
 </html>
 <script>
