@@ -1,0 +1,32 @@
+{
+  "baseline": "1.0.1054",
+  "version": "1.0.1055",
+  "scope": [
+    "deploy-server.js",
+    "PA-BM/index.html",
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-firebase-live-likes-sync.js",
+    "package.json"
+  ],
+  "backend": {
+    "canonicalPaBmReturnUrl": true,
+    "authenticatedRecoveryEndpoint": "/api/pa-bm/payment-recovery",
+    "orphanCallbackStore": "paymentRecoveryEvents",
+    "orderNotFoundCallbackHttp": "503 when orderId/billCode exists",
+    "toyyibApiVerificationRequired": true
+  },
+  "frontend": {
+    "serverRecoveryAfterLogin": true,
+    "serverRecoveryOnResume": true,
+    "crossBrowserRecoveryAfterLogin": true,
+    "cacheBuster": "1055"
+  },
+  "unchanged": [
+    "stickybar layout",
+    "CAD Tools",
+    "Affiliate Shop",
+    "manual invoice numbering",
+    "v1050 checkout fingerprint semantics",
+    "historical auto numbering"
+  ]
+}

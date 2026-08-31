@@ -4685,6 +4685,205 @@ async function azSupersedeDuplicatePendingAutomaticOrders(paidOrder = {}) {
   return { ok:true, changed };
 }
 
+// AZOBSS 1055: PA/BM ToyyibPay return + server-side payment recovery.
+// This is intentionally independent of browser localStorage/sessionStorage so a customer
+// can login again in a different tab/browser and still recover a verified paid purchase.
+function azToyyibRecoverySafeCallback(data = {}) {
+  const safe = {};
+  const allow = [
+    "billcode","billCode","BillCode","order_id","orderId","externalReferenceNo","billExternalReferenceNo",
+    "transaction_id","transactionId","refno","referenceNo","billpaymentInvoiceNo",
+    "status","status_id","billpaymentStatus","billPaymentStatus","paymentStatus","payment_status",
+    "transaction_status","transactionStatus","transaction_status_id"
+  ];
+  allow.forEach(key => {
+    if (data && data[key] !== undefined && data[key] !== null) safe[key] = cleanPremiumText(data[key], 240);
+  });
+  return safe;
+}
+function azToyyibRecoveryEventDocId(data = {}, refs = {}) {
+  const orderId = cleanPremiumText(refs.orderId || getToyyibOrderId(data) || "", 160);
+  const billCode = cleanPremiumText(refs.billCode || getToyyibBillCode(data) || "", 120);
+  const tx = cleanPremiumText(data.transaction_id || data.transactionId || data.billpaymentInvoiceNo || data.refno || "", 180);
+  const seed = ["azobss-toyyib-recovery-v1055", billCode, orderId, tx].join("|");
+  return "tpr_" + crypto.createHash("sha256").update(seed).digest("hex").slice(0, 40);
+}
+async function azStoreToyyibRecoveryEvent(data = {}, refs = {}, reason = "order_not_found") {
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, stored:false, reason:"firebase_admin_not_configured" };
+  const orderId = cleanPremiumText(refs.orderId || getToyyibOrderId(data) || "", 160);
+  const billCode = cleanPremiumText(refs.billCode || getToyyibBillCode(data) || "", 120);
+  const id = azToyyibRecoveryEventDocId(data, { orderId, billCode });
+  const nowMs = Date.now();
+  try {
+    await db.collection("paymentRecoveryEvents").doc(id).set({
+      kind:"toyyibpay-callback",
+      recoveryVersion:1055,
+      reason:cleanPremiumText(reason, 80),
+      orderId,
+      billCode,
+      transactionId:cleanPremiumText(data.transaction_id || data.transactionId || data.billpaymentInvoiceNo || data.refno || "", 180),
+      callbackStatus:cleanPremiumText(data.billpaymentStatus || data.billPaymentStatus || data.paymentStatus || data.payment_status || data.transaction_status || data.transactionStatus || data.status || data.status_id || "", 80),
+      callback:azToyyibRecoverySafeCallback(data),
+      resolved:false,
+      lastSeenAtMs:nowMs,
+      lastSeenAt:new Date(nowMs).toISOString(),
+      updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+      createdAt:firebaseAdmin.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+    return { ok:true, stored:true, id };
+  } catch (err) {
+    console.warn("ToyyibPay recovery event store failed:", err && (err.message || err));
+    return { ok:false, stored:false, error:err && err.message ? err.message : String(err) };
+  }
+}
+async function azResolveToyyibRecoveryEventsForOrder(order = {}) {
+  const db = getAzobssBackendDb();
+  if (!db || !order) return { ok:false, updated:0 };
+  const orderId = cleanPremiumText(order.orderId || order.paymentOrderId || "", 160);
+  const billCode = cleanPremiumText(order.billCode || "", 120);
+  if (!orderId && !billCode) return { ok:true, updated:0 };
+  const refs = new Map();
+  const collect = snap => snap && snap.forEach(doc => refs.set(doc.ref.path, doc.ref));
+  try {
+    if (orderId) collect(await db.collection("paymentRecoveryEvents").where("orderId","==",orderId).limit(20).get());
+    if (billCode) collect(await db.collection("paymentRecoveryEvents").where("billCode","==",billCode).limit(20).get());
+    if (!refs.size) return { ok:true, updated:0 };
+    const nowMs = Date.now();
+    const batch = db.batch();
+    refs.forEach(ref => batch.set(ref, {
+      resolved:true,
+      resolvedAtMs:nowMs,
+      resolvedAt:new Date(nowMs).toISOString(),
+      resolvedOrderId:orderId,
+      resolvedBillCode:billCode,
+      resolvedReceiptNo:cleanPremiumText(order.receiptNo || "",180),
+      updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp()
+    }, { merge:true }));
+    await batch.commit();
+    return { ok:true, updated:refs.size };
+  } catch (err) {
+    console.warn("ToyyibPay recovery event resolve skipped:", err && (err.message || err));
+    return { ok:false, updated:0, error:err && err.message ? err.message : String(err) };
+  }
+}
+async function azLoadRecentPaBmOrdersForIdentity(identity = {}, limitRows = 120) {
+  if (!identity || !identity.uid) return [];
+  const rows = [];
+  const seen = new Set();
+  const push = row => {
+    if (!row || !isPaBmPremiumOrder(row) || azIsManualSalesInvoiceOrder(row)) return;
+    if (!azMyPurchasesBelongsToIdentity(row, identity)) return;
+    if (row.superseded === true || row.autoDuplicateSuperseded === true) return;
+    const status = String(row.status || row.paymentStatus || "").trim().toLowerCase();
+    if (["cancelled","canceled","deleted","failed","rejected"].includes(status)) return;
+    const key = String(row.orderId || row.billCode || row.docId || row.id || "").trim();
+    if (!key || seen.has(key)) return;
+    const createdMs = azAutomaticCheckoutCreatedMs(row);
+    if (createdMs && (Date.now() - createdMs) > 10 * 24 * 60 * 60 * 1000) return;
+    seen.add(key);
+    rows.push(row);
+  };
+  try { (readPremiumOrders() || []).slice(0, Math.max(limitRows, 120)).forEach(push); } catch (_) {}
+  const db = getAzobssBackendDb();
+  if (db) {
+    try {
+      let snap;
+      try { snap = await db.collection("premiumOrders").orderBy("createdAtMs","desc").limit(Math.max(40, limitRows)).get(); }
+      catch (_) { snap = await db.collection("premiumOrders").limit(Math.max(40, limitRows)).get(); }
+      snap.forEach(doc => push({ docId:doc.id, ...(doc.data() || {}) }));
+    } catch (err) {
+      console.warn("PA/BM payment recovery order scan skipped:", err && (err.message || err));
+    }
+  }
+  rows.sort((a,b) => azAutomaticCheckoutCreatedMs(b) - azAutomaticCheckoutCreatedMs(a));
+  return rows.slice(0, limitRows);
+}
+async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
+  const rows = await azLoadRecentPaBmOrdersForIdentity(identity, 120);
+  if (!rows.length) return { ok:true, recovered:false, paid:false, status:"no_recent_order", recoveryVersion:1055 };
+
+  let latestPending = null;
+  let verificationAttempts = 0;
+  for (const original of rows.slice(0, 12)) {
+    let order = await azReloadPremiumOrder(original);
+    const status = String(order.status || order.paymentStatus || "").trim().toLowerCase();
+    const verifiedAlready = !!(order.toyyibVerifiedAt || order.paymentVerificationSource === "toyyibpay-api" || order.paymentVerificationSource === "toyyibpay-api-recovery");
+
+    if (status === "paid" && verifiedAlready) {
+      const wasSynced = !!order.paBmPaidSyncedAt;
+      if (!wasSynced) {
+        order = await azFinalizePaidOrderOnce(order, req, {
+          verified:true,
+          paymentMethod:"toyyibpay",
+          verificationSource:"toyyibpay-api-recovery"
+        });
+      }
+      await azResolveToyyibRecoveryEventsForOrder(order);
+      return {
+        ok:true,
+        recovered:!wasSynced && !!order.paBmPaidSyncedAt,
+        paid:true,
+        status:"paid",
+        orderId:cleanPremiumText(order.orderId || "",160),
+        billCode:cleanPremiumText(order.billCode || "",120),
+        invoiceNo:cleanPremiumText(order.invoiceNo || "",180),
+        receiptNo:cleanPremiumText(order.receiptNo || "",180),
+        purchaseUpdated:Number(order.paBmPaidSyncedCount || 0),
+        recoveryVersion:1055,
+        recoverySource:"server-user-lookup"
+      };
+    }
+
+    const canVerify = !!cleanPremiumText(order.billCode || "", 120) && String(order.paymentMethod || "toyyibpay").toLowerCase().includes("toyyib");
+    if (canVerify && verificationAttempts < 3 && (["pending","unpaid","new","created","processing"].includes(status) || (status === "paid" && !verifiedAlready))) {
+      verificationAttempts += 1;
+      const verified = await azVerifyToyyibPaidTransaction(order);
+      if (verified && verified.paid) {
+        order = await azFinalizePaidOrderOnce(order, req, {
+          verified:true,
+          paymentMethod:"toyyibpay",
+          verificationSource:"toyyibpay-api-recovery",
+          toyyibTransaction:verified.tx,
+          paymentReference:verified.paymentReference || order.paymentReference || ""
+        });
+        await azResolveToyyibRecoveryEventsForOrder(order);
+        return {
+          ok:true,
+          recovered:true,
+          paid:true,
+          status:"paid",
+          orderId:cleanPremiumText(order.orderId || "",160),
+          billCode:cleanPremiumText(order.billCode || "",120),
+          invoiceNo:cleanPremiumText(order.invoiceNo || "",180),
+          receiptNo:cleanPremiumText(order.receiptNo || "",180),
+          purchaseUpdated:Number(order.paBmPaidSyncedCount || 0),
+          recoveryVersion:1055,
+          recoverySource:"toyyibpay-api-recovery"
+        };
+      }
+      if (!latestPending && ["pending","unpaid","new","created","processing"].includes(status)) latestPending = order;
+    } else if (!latestPending && ["pending","unpaid","new","created","processing"].includes(status)) {
+      latestPending = order;
+    }
+  }
+
+  if (latestPending) {
+    return {
+      ok:true,
+      recovered:false,
+      paid:false,
+      status:"pending",
+      orderId:cleanPremiumText(latestPending.orderId || "",160),
+      billCode:cleanPremiumText(latestPending.billCode || "",120),
+      invoiceNo:cleanPremiumText(latestPending.invoiceNo || "",180),
+      recoveryVersion:1055,
+      recoverySource:"server-user-lookup"
+    };
+  }
+  return { ok:true, recovered:false, paid:false, status:"no_unresolved_payment", recoveryVersion:1055 };
+}
+
 function azJsonSafe(value) {
   try { return JSON.parse(JSON.stringify(value || {})); } catch (_e) { return value || {}; }
 }
@@ -15114,7 +15313,7 @@ async function handler(req, res) {
           const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
           if (reusableOrder) {
             return send(res, 200, JSON.stringify({
-              ok:true, success:true, reused:true, idempotent:true, patch:1050,
+              ok:true, success:true, reused:true, idempotent:true, patch:1055,
               orderId:reusableOrder.orderId, billCode:reusableOrder.billCode,
               paymentUrl:reusableOrder.paymentUrl, url:reusableOrder.paymentUrl, redirectUrl:reusableOrder.paymentUrl,
               invoiceNo:reusableOrder.invoiceNo || "", status:"pending",
@@ -15126,7 +15325,7 @@ async function handler(req, res) {
 
         const orderId = makeId("pabm");
         const apiBase = publicBaseUrlFromReq(req);
-        const returnUrl = TOYYIB_RETURN_URL || `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`;
+        const returnUrl = `${FRONTEND_BASE_URL}/PA-BM/?payment=return&orderId=${encodeURIComponent(orderId)}`; // v1055: PA/BM return must never be overridden by a global TOYYIB_RETURN_URL
         const callbackUrl = TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`;
         const productName = azobssJupemPurchaseProductName(items) || `PA/BM (${items.length} unit)`;
         const billPayload = {
@@ -15162,10 +15361,10 @@ async function handler(req, res) {
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
         const usedPercents = [...new Set(items.map(item => Number(item.priceAdjustmentPercent || 0)))];
         const priceAdjustmentPercent = usedPercents.length === 1 ? usedPercents[0] : 0;
-        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"pa-bm", createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+        const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"pa-bm", paymentRecoveryVersion:1055, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
         try { await azPersistPremiumOrder(paBmOrder); } catch (persistError) { console.warn("PA/BM premium order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1050, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1055, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
         } finally {
           releaseCheckoutLock();
         }
@@ -15273,6 +15472,21 @@ async function handler(req, res) {
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/pa-bm/payment-recovery" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "pa-bm-payment-recovery-1055", 30, 60 * 1000)) return;
+      const identity = await azCommissionIdentityFromRequest(req);
+      if (!identity || !identity.uid) {
+        return send(res, 401, JSON.stringify({ ok:false, recovered:false, error:"Login session required for payment recovery.", recoveryVersion:1055 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+      try {
+        const result = await azRecoverPaBmPaymentForIdentity(req, identity);
+        return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        console.error("PA/BM payment recovery failed:", err && (err.stack || err.message || err));
+        return send(res, 500, JSON.stringify({ ok:false, recovered:false, error:"Payment recovery check failed. Please try again.", recoveryVersion:1055 }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
@@ -15417,7 +15631,12 @@ async function handler(req, res) {
 
       if (!order) {
         console.warn("ToyyibPay callback order not found:", JSON.stringify({ orderId, billCode }).slice(0, 500));
-        return send(res, 200, JSON.stringify({ ok:true, status:"received", note:"order_not_found" }), "application/json");
+        const stored = await azStoreToyyibRecoveryEvent(data, { orderId, billCode }, "order_not_found");
+        const retryable = !!(orderId || billCode);
+        return send(res, retryable ? 503 : 400, JSON.stringify({
+          ok:false, status:retryable ? "retry" : "invalid_callback", note:"order_not_found",
+          recoveryStored:!!(stored && stored.stored), recoveryVersion:1055
+        }, null, 2), "application/json", retryable ? { "Retry-After":"30", "Cache-Control":"no-store" } : { "Cache-Control":"no-store" });
       }
 
       if (toyyibStatusIsPaid(data)) {

@@ -4238,6 +4238,89 @@ async function azobssCheckPaBmToyyibReturn(){
   }
 }
 
+
+// AZOBSS 1055: PA/BM payment recovery does not depend on the ToyyibPay return tab.
+// After Firebase login is ready, ask the backend to find this user's recent PA/BM order
+// and verify it directly with ToyyibPay. This also recovers payments after browser/app switches.
+async function azobssRecoverPaBmPaymentFromServer1055(force){
+  try{
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return null;
+    if(!auth || !auth.currentUser) return null;
+    const now = Date.now();
+    const last = Number(window.__azobssPaBmServerRecoveryLast1055 || 0);
+    if(!force && last && (now - last) < 30000) return null;
+    if(window.__azobssPaBmServerRecoveryBusy1055) return null;
+    window.__azobssPaBmServerRecoveryBusy1055 = true;
+    window.__azobssPaBmServerRecoveryLast1055 = now;
+
+    const call = async(refreshToken) => {
+      const token = await auth.currentUser.getIdToken(!!refreshToken);
+      return fetch(azobssGetBackendBaseUrl() + '/api/pa-bm/payment-recovery?_=' + Date.now(), {
+        method:'GET',
+        cache:'no-store',
+        headers:{ Authorization:'Bearer ' + token, 'Cache-Control':'no-cache' }
+      });
+    };
+    let res = await call(false);
+    if(res.status === 401 || res.status === 403) res = await call(true);
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data || data.ok !== true) return data || null;
+
+    if(data.status === 'pending' && (data.orderId || data.billCode)){
+      // Keep a durable browser hint too, but recovery itself remains server-side.
+      azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+    }
+
+    if(data.paid){
+      const verifiedKey = String(data.orderId || data.billCode || data.receiptNo || '').trim();
+      if(verifiedKey){
+        window.__azobssPaBmPaymentVerifiedKey = verifiedKey;
+        window.__azobssPaBmPaymentVerifiedAt = Date.now();
+      }
+      try{ await azobssResetCurrentPurchaseTotalAfterPaid(data.orderId || verifiedKey); }catch(e){}
+      azobssClearPaBmPendingReturn();
+      try{ azobssCleanPaBmPaymentReturnUrl(); }catch(e){}
+      try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
+      try{ azobssSchedulePurchaseRecordsRefresh(data.recovered ? 'server payment recovery 1055' : 'server paid sync 1055'); }catch(e){}
+      [250,700,1500,3000].forEach(function(ms){
+        setTimeout(function(){
+          try{ if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords(); }catch(e){}
+          try{ if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow(); }catch(e){}
+          try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
+        }, ms);
+      });
+      if(data.recovered && verifiedKey){
+        const status = document.getElementById('paBmToyyibStatus');
+        if(status) status.textContent = 'Pembayaran berjaya dipulihkan. Senarai pembelian dikemaskini.';
+        azobssShowPaBmPaymentSuccessPopup(verifiedKey);
+        window.dispatchEvent(new CustomEvent('azobss:pabm-payment-verified', { detail:{ key:verifiedKey, orderId:String(data.orderId || ''), recovered:true, version:1055 } }));
+      }
+    }
+    return data;
+  }catch(e){
+    console.warn('PA/BM server payment recovery 1055 failed:', e);
+    return null;
+  }finally{
+    window.__azobssPaBmServerRecoveryBusy1055 = false;
+  }
+}
+window.azobssRecoverPaBmPaymentNow = function(){ return azobssRecoverPaBmPaymentFromServer1055(true); };
+function azobssInstallPaBmServerRecovery1055(){
+  if(window.__azobssPaBmServerRecoveryInstalled1055) return;
+  window.__azobssPaBmServerRecoveryInstalled1055 = true;
+  const run = function(force){
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+    setTimeout(function(){ azobssRecoverPaBmPaymentFromServer1055(!!force); }, 350);
+  };
+  window.addEventListener('azobss-auth-changed', function(){ run(true); });
+  window.addEventListener('pageshow', function(){ run(false); });
+  window.addEventListener('focus', function(){ run(false); });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) run(false); });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ run(true); });
+  else run(true);
+}
+azobssInstallPaBmServerRecovery1055();
+
 function azobssInstallPaBmPaymentReturnResumeWatch(){
   if(window.__azobssPaBmPaymentReturnResumeWatchInstalled) return;
   window.__azobssPaBmPaymentReturnResumeWatchInstalled = true;
