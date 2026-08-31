@@ -1,0 +1,19 @@
+{
+  "source": "(1050)-AZOBSS-TOYYIBPAY-AUTO-INVOICE-RECEIPT-IDEMPOTENCY-FIX_20260830.zip",
+  "version": "1.0.1052",
+  "scope": "Global stickybar first-paint/layout-shift fix only; v1050 payment/idempotency behavior retained.",
+  "changes": [
+    "Added static /assets/css/azobss-stickybar-global-stable.css and loaded it last on all stickybar pages.",
+    "Standardized stickybar/bar/brand/nav/auth dimensions before JavaScript runs.",
+    "Pre-added Public PA and Repair PC source slots; changed Mini Web Tools source to same-width More source.",
+    "Bina Website top-level source is hidden from first paint because it belongs inside More.",
+    "Admin/Staff share one permanent role slot; PA/BM/Public PA share one permanent access slot.",
+    "Auth role/access changes use visibility instead of removing layout slots.",
+    "Disabled delayed stickybar CSS injection in global auth/live-likes/pro-ui bundles.",
+    "More/Repair JS upgrades existing source slots instead of inserting new top-level links."
+  ],
+  "touched_stickybar_pages": 25,
+  "embedded_role_guard_pages_patched": 20,
+  "backend_changed": false,
+  "render_redeploy_required": false
+}

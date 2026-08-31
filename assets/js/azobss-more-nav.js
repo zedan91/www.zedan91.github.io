@@ -1,4 +1,4 @@
-/* AZOBSS 964: More menu + Repair PC dropdown; AZOBSSTV moved into More. */
+/* AZOBSS 1052: stable first-paint More/Repair dropdowns; no top-level insertion layout shift. */
 (function () {
   'use strict';
 
@@ -550,21 +550,18 @@
   }
 
   function initialise() {
-    ensureWebsiteOrderLink();
-    ensureRepairServiceLink();
-
     Array.prototype.slice.call(document.querySelectorAll(
-      '.market-sticky-bar .market-nav a[data-az-repair-service-link="1"]'
+      '.market-sticky-bar .market-nav > a[data-az-repair-service-link="1"]'
     )).forEach(buildRepairMenu);
 
     var links = Array.prototype.slice.call(document.querySelectorAll(
-      '.market-sticky-bar .market-nav a[href="/tools/"], ' +
-      '.market-sticky-bar .market-nav a[href="/tools"], ' +
-      '.market-sticky-bar .market-nav a[href$="/tools/"]'
+      '.market-sticky-bar .market-nav > a[data-az-more-source-link="1"], ' +
+      '.market-sticky-bar .market-nav > a[href="/tools/"], ' +
+      '.market-sticky-bar .market-nav > a[href="/tools"]'
     ));
 
     links.filter(function (candidate) {
-      return /mini\s*web\s*tools/i.test((candidate.textContent || '').trim());
+      return candidate.dataset.azMoreSourceLink === '1' || /mini\s*web\s*tools/i.test((candidate.textContent || '').trim());
     }).forEach(buildMoreMenu);
   }
 

@@ -1,0 +1,245 @@
+/* AZOBSS v1052 - global stickybar first-paint/layout-lock fix.
+   Goal: the stickybar has the same geometry before and after auth/menu JS runs. */
+:root{
+  --az-stickybar-h:58px;
+  --az-stickybar-mobile-h:98px;
+  --az-stickybar-gap:7px;
+  --az-stickybar-brand-w:154px;
+  --az-stickybar-brand-h:38px;
+}
+html{scrollbar-gutter:stable;}
+html,body{overflow-x:hidden!important;}
+body{padding-top:var(--az-stickybar-h)!important;}
+
+.market-sticky-bar{
+  position:fixed!important;
+  top:0!important;left:0!important;right:0!important;
+  width:100%!important;
+  height:var(--az-stickybar-h)!important;
+  min-height:var(--az-stickybar-h)!important;
+  max-height:var(--az-stickybar-h)!important;
+  z-index:5000!important;
+  box-sizing:border-box!important;
+  background:#050807!important;
+  border-bottom:1px solid rgba(234,179,8,.55)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.28)!important;
+  overflow:visible!important;
+  contain:layout style;
+}
+.market-bar-inner{
+  width:100%!important;max-width:none!important;
+  height:100%!important;
+  margin:0!important;padding:0 8px!important;
+  box-sizing:border-box!important;
+}
+.market-main-row{
+  display:flex!important;align-items:center!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;height:100%!important;min-height:0!important;
+  gap:var(--az-stickybar-gap)!important;
+  margin:0!important;padding:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+.market-brand{
+  flex:0 0 var(--az-stickybar-brand-w)!important;
+  width:var(--az-stickybar-brand-w)!important;
+  min-width:var(--az-stickybar-brand-w)!important;
+  max-width:var(--az-stickybar-brand-w)!important;
+  height:var(--az-stickybar-brand-h)!important;
+  min-height:var(--az-stickybar-brand-h)!important;
+  max-height:var(--az-stickybar-brand-h)!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  margin:0!important;padding:0!important;
+  border:0!important;border-radius:999px!important;
+  background:transparent!important;overflow:hidden!important;
+  box-sizing:border-box!important;text-decoration:none!important;
+}
+.market-brand img{
+  display:block!important;width:100%!important;height:100%!important;
+  margin:0!important;padding:0!important;object-fit:contain!important;object-position:center!important;
+}
+.market-nav{
+  display:flex!important;align-items:center!important;
+  flex:1 1 auto!important;min-width:0!important;
+  gap:var(--az-stickybar-gap)!important;column-gap:var(--az-stickybar-gap)!important;
+  margin:0!important;padding:0 2px!important;
+  white-space:nowrap!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  scrollbar-width:none!important;
+  -webkit-overflow-scrolling:touch!important;
+  box-sizing:border-box!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+
+/* All top-level navigation items keep identical geometry in active/inactive states. */
+.market-nav > a,
+.market-nav > button,
+.market-nav > .az-more-nav > .az-more-trigger{
+  flex:0 0 auto!important;
+  height:34px!important;min-height:34px!important;max-height:34px!important;
+  margin:0!important;padding:0 12px!important;
+  border-radius:999px!important;
+  box-sizing:border-box!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:13px!important;font-weight:900!important;line-height:1!important;
+  white-space:nowrap!important;text-decoration:none!important;
+  background:#0e1729!important;border:1px solid rgba(148,163,184,.28)!important;
+  color:#e5e7eb!important;text-shadow:0 1px 8px rgba(0,0,0,.45)!important;
+  transform:none!important;
+}
+.market-nav > a:hover,
+.market-nav > button:hover,
+.market-nav > .az-more-nav > .az-more-trigger:hover{color:#14b8a6!important;}
+.market-nav > a.market-nav-active,
+.market-nav > a.is-active,
+.market-nav > a.is-current,
+.market-nav > .az-more-nav > .az-more-trigger.market-nav-active,
+.market-nav > .az-more-nav > .az-more-trigger.is-active,
+.market-nav > .az-more-nav > .az-more-trigger.is-current{
+  background:#22c55e!important;border-color:#22c55e!important;color:#052e16!important;text-shadow:none!important;
+}
+
+/* Source items occupy the same width as the JS-upgraded dropdown trigger. */
+.market-nav > a[data-az-more-source-link="1"],
+.market-nav > .az-more-nav[data-az-more-menu="1"] > .az-more-trigger{
+  width:82px!important;min-width:82px!important;max-width:82px!important;padding:0 8px!important;
+}
+.market-nav > a[data-az-repair-service-link="1"],
+.market-nav > .az-repair-nav > .az-repair-trigger{
+  width:96px!important;min-width:96px!important;max-width:96px!important;padding:0 8px!important;
+}
+.market-nav > a[data-az-more-source-link="1"]::after,
+.market-nav > a[data-az-repair-service-link="1"]::after{
+  content:"▾";font-size:10px;line-height:1;margin-left:5px;transform:translateY(-1px);
+}
+
+/* Bina Website is already inside More. Hide its temporary source link from first paint. */
+.market-nav > a.az-website-order-link,
+.market-nav > a[data-az-website-order-link="1"]{
+  display:none!important;width:0!important;min-width:0!important;max-width:0!important;
+  margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;
+}
+
+/* One permanent 34px role slot: Admin and Staff overlap, so role resolution never shifts nav. */
+.market-nav > .azAdminDashboardBtn,
+.market-nav > .azStaffDashboardBtn,
+.market-nav > a[href="/admin/"].azobss-nav-chip,
+.market-nav > a[href="/staff/"].azobss-nav-chip{
+  display:inline-flex!important;
+  width:34px!important;min-width:34px!important;max-width:34px!important;
+  height:34px!important;min-height:34px!important;max-height:34px!important;
+  padding:0!important;
+  visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+  overflow:hidden!important;
+}
+.market-nav > .azStaffDashboardBtn,
+.market-nav > a[href="/staff/"].azobss-nav-chip{margin-left:-41px!important;}
+body.az-role-is-admin .market-nav > .azAdminDashboardBtn,
+body.is-admin .market-nav > .azAdminDashboardBtn,
+body[data-dashboard-page="admin"] .market-nav > .azAdminDashboardBtn{
+  visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+body.az-role-is-staff:not(.az-role-is-admin) .market-nav > .azStaffDashboardBtn,
+body[data-dashboard-page="staff"] .market-nav > .azStaffDashboardBtn{
+  visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+
+/* PA/BM and Public PA use the same permanent slot. Hidden state uses visibility, not display:none. */
+.market-nav > .nav-pa-bm-link,
+.market-nav > .nav-public-pa-link{
+  display:inline-flex!important;
+  width:86px!important;min-width:86px!important;max-width:86px!important;
+  height:34px!important;min-height:34px!important;max-height:34px!important;
+  padding:0 8px!important;
+  visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+.market-nav > .nav-public-pa-link{margin-left:-93px!important;}
+body.has-pa-access .market-nav > .nav-pa-bm-link{
+  visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+body.can-buy-public-pa .market-nav > .nav-public-pa-link{
+  visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+
+/* Keep WhatsApp slot width even when admin policy hides the action. */
+.market-nav > .nav-whatsapp-link,
+.market-nav > a:has(.nav-whatsapp-circle){
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:42px!important;min-width:42px!important;max-width:42px!important;
+  height:42px!important;min-height:42px!important;max-height:42px!important;
+  padding:0!important;margin:0!important;border:0!important;background:transparent!important;
+  box-shadow:none!important;text-shadow:none!important;
+}
+body.az-role-is-admin .market-nav > .nav-whatsapp-link,
+body.is-admin .market-nav > .nav-whatsapp-link,
+body[data-dashboard-page="admin"] .market-nav > .nav-whatsapp-link{
+  display:inline-flex!important;width:42px!important;min-width:42px!important;max-width:42px!important;
+  height:42px!important;min-height:42px!important;max-height:42px!important;
+  visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+.nav-whatsapp-circle{
+  position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;
+  border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  background:#22c55e!important;color:#fff!important;font-size:0!important;overflow:visible!important;
+  box-shadow:0 8px 20px rgba(34,197,94,.25)!important;
+}
+.nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important;}
+.nav-whatsapp-circle::after{content:""!important;position:absolute!important;left:21px!important;top:23px!important;width:7px!important;height:7px!important;background:#fff!important;clip-path:polygon(0 0,100% 0,0 100%)!important;transform:rotate(-12deg)!important;}
+
+/* Right-side auth/user area reserves a stable footprint. */
+.site-auth-actions,
+.market-user-tools{
+  flex:0 0 188px!important;min-width:188px!important;max-width:188px!important;
+  height:42px!important;min-height:42px!important;
+  align-items:center!important;justify-content:flex-end!important;
+  margin-left:auto!important;margin-right:0!important;
+  box-sizing:border-box!important;
+}
+.site-auth-actions{gap:8px!important;}
+.market-user-tools{gap:9px!important;overflow:visible!important;white-space:nowrap!important;}
+.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:13px!important;font-weight:900!important;line-height:1!important;border-radius:999px!important;}
+.user-menu{height:34px!important;min-height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;position:relative!important;overflow:visible!important;}
+.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;border-radius:999px!important;}
+.user-name{max-width:92px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+.market-icon-btn{flex:0 0 24px!important;width:24px!important;min-width:24px!important;height:34px!important;min-height:34px!important;padding:0!important;margin:0!important;}
+
+/* Dropdown styles are static in the head now; no post-load CSS injection is needed. */
+.market-sticky-bar,.market-bar-inner,.market-main-row,.market-user-tools,.user-menu{overflow:visible!important;}
+.user-menu .user-dropdown,#userDropdown{
+  position:absolute!important;top:calc(100% + 10px)!important;right:0!important;left:auto!important;
+  width:220px!important;min-width:220px!important;max-width:calc(100vw - 16px)!important;
+  padding:8px!important;border-radius:14px!important;background:#08111f!important;
+  border:1px solid rgba(148,163,184,.28)!important;box-shadow:0 18px 50px rgba(0,0,0,.58)!important;
+  z-index:100001!important;transform:none!important;
+}
+.user-menu:not(.is-open) .user-dropdown{display:none!important;}
+.user-menu.is-open .user-dropdown{display:block!important;}
+
+/* Keep generated More/Repair wrappers dimension-neutral. */
+.market-nav > .az-more-nav{height:34px!important;min-height:34px!important;display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;margin:0!important;}
+.market-nav.az-more-enabled{overflow-x:auto!important;overflow-y:hidden!important;}
+.az-more-dropdown{z-index:10050!important;}
+
+@media(max-width:980px){
+  :root{--az-stickybar-brand-w:132px;--az-stickybar-brand-h:34px;}
+  body{padding-top:var(--az-stickybar-mobile-h)!important;}
+  .market-sticky-bar{height:var(--az-stickybar-mobile-h)!important;min-height:var(--az-stickybar-mobile-h)!important;max-height:var(--az-stickybar-mobile-h)!important;}
+  .market-bar-inner{padding:0 6px!important;}
+  .market-main-row{height:100%!important;display:grid!important;grid-template-columns:auto 1fr auto!important;grid-template-rows:52px 46px!important;gap:0 7px!important;align-items:center!important;}
+  .market-brand{grid-column:1;grid-row:1;}
+  .site-auth-actions,.market-user-tools{grid-column:3;grid-row:1;min-width:150px!important;max-width:150px!important;flex-basis:150px!important;}
+  .market-nav{grid-column:1 / -1;grid-row:2;width:100%!important;height:46px!important;min-height:46px!important;padding:5px 0!important;}
+  .market-nav > a,.market-nav > button,.market-nav > .az-more-nav > .az-more-trigger{height:32px!important;min-height:32px!important;max-height:32px!important;font-size:12px!important;padding:0 10px!important;}
+  .market-nav > a[data-az-more-source-link="1"],.market-nav > .az-more-nav[data-az-more-menu="1"] > .az-more-trigger{width:76px!important;min-width:76px!important;max-width:76px!important;}
+  .market-nav > a[data-az-repair-service-link="1"],.market-nav > .az-repair-nav > .az-repair-trigger{width:90px!important;min-width:90px!important;max-width:90px!important;}
+  .user-name{max-width:72px!important;font-size:12px!important;}
+  .user-menu .user-dropdown,#userDropdown{position:fixed!important;top:98px!important;right:8px!important;left:auto!important;max-height:68vh!important;overflow-y:auto!important;}
+}
+@media(max-width:560px){
+  .site-auth-actions,.market-user-tools{min-width:118px!important;max-width:118px!important;flex-basis:118px!important;}
+  .user-name{display:none!important;}
+  .market-nav > .nav-pa-bm-link,.market-nav > .nav-public-pa-link{width:78px!important;min-width:78px!important;max-width:78px!important;}
+  .market-nav > .nav-public-pa-link{margin-left:-85px!important;}
+  .market-nav > .azStaffDashboardBtn{margin-left:-39px!important;}
+}

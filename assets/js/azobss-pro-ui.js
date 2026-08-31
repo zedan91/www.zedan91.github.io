@@ -144,21 +144,8 @@
 })();
 
 
-// AZOBSS_FINAL_MOBILE_DROPDOWN_FIX_PRO_UI
-(function(){
-  try{
-    var css='\n/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */\n.market-sticky-bar,\n.market-bar-inner,\n.market-main-row,\n.market-user-tools,\n.user-menu{\n  overflow:visible !important;\n}\n.user-menu{\n  position:relative !important;\n  z-index:100000 !important;\n}\n.user-menu .user-dropdown,\n#userDropdown{\n  position:absolute !important;\n  top:calc(100% + 10px) !important;\n  right:0 !important;\n  left:auto !important;\n  width:220px !important;\n  min-width:220px !important;\n  max-width:calc(100vw - 16px) !important;\n  padding:8px !important;\n  border-radius:14px !important;\n  background:#08111f !important;\n  border:1px solid rgba(148,163,184,.28) !important;\n  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;\n  z-index:100001 !important;\n  transform:none !important;\n}\n.user-menu:not(.is-open) .user-dropdown{display:none !important;}\n.user-menu.is-open .user-dropdown{display:block !important;}\n.user-dropdown-section{\n  padding:7px 10px 4px !important;\n  font-size:11px !important;\n  line-height:1.1 !important;\n}\n.user-dropdown-item{\n  min-height:38px !important;\n  padding:9px 10px !important;\n  font-size:13px !important;\n  line-height:1.15 !important;\n  border-radius:10px !important;\n}\n@media (max-width:768px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    position:fixed !important;\n    top:92px !important;\n    right:8px !important;\n    left:auto !important;\n    width:210px !important;\n    min-width:210px !important;\n    max-width:calc(100vw - 16px) !important;\n    max-height:68vh !important;\n    overflow-y:auto !important;\n    border-radius:14px !important;\n  }\n  .user-dropdown-section{\n    padding:7px 10px 4px !important;\n    font-size:10.5px !important;\n  }\n  .user-dropdown-item{\n    padding:9px 10px !important;\n    font-size:13px !important;\n    min-height:36px !important;\n  }\n}\n@media (max-width:420px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    top:88px !important;\n    right:6px !important;\n    width:196px !important;\n    min-width:196px !important;\n  }\n}\n';
-    function apply(){
-      if(document.getElementById('azobss-final-mobile-dropdown-fix-pro-ui')) return;
-      var style=document.createElement('style');
-      style.id='azobss-final-mobile-dropdown-fix-pro-ui';
-      style.textContent=css;
-      document.head.appendChild(style);
-    }
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
-    else apply();
-  }catch(e){}
-})();
+// AZOBSS 1052: delayed PRO UI dropdown CSS injection disabled; static stable CSS is loaded in <head>.
+
 
 
 

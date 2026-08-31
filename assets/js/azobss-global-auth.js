@@ -1560,16 +1560,16 @@ function syncHeader(user){
   document.body.classList.toggle('is-admin', !!isAdminUser);
   document.body.classList.toggle('has-pa-access', !!canShowPaBm);
   paBmButtons.forEach((paBm) => {
-    paBm.hidden = !canShowPaBm;
+    paBm.hidden = false;
     paBm.classList.toggle('is-hidden', !canShowPaBm);
-    paBm.style.setProperty('display', canShowPaBm ? 'inline-flex' : 'none', 'important');
+    paBm.style.setProperty('display', 'inline-flex', 'important');
     paBm.style.setProperty('visibility', canShowPaBm ? 'visible' : 'hidden', 'important');
     paBm.style.setProperty('pointer-events', canShowPaBm ? 'auto' : 'none', 'important');
   });
   publicPaButtons.forEach((publicPa) => {
-    publicPa.hidden = !canShowPublicPa;
+    publicPa.hidden = false;
     publicPa.classList.toggle('is-hidden', !canShowPublicPa);
-    publicPa.style.setProperty('display', canShowPublicPa ? 'inline-flex' : 'none', 'important');
+    publicPa.style.setProperty('display', 'inline-flex', 'important');
     publicPa.style.setProperty('visibility', canShowPublicPa ? 'visible' : 'hidden', 'important');
     publicPa.style.setProperty('pointer-events', canShowPublicPa ? 'auto' : 'none', 'important');
   });
@@ -5381,119 +5381,9 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else bindAuth();
 
 
-// AZOBSS_FINAL_MOBILE_DROPDOWN_FIX_JS
-(function injectAzobssFinalMobileDropdownFix(){
-  try{
-    var css = '\n/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */\n.market-sticky-bar,\n.market-bar-inner,\n.market-main-row,\n.market-user-tools,\n.user-menu{\n  overflow:visible !important;\n}\n.user-menu{\n  position:relative !important;\n  z-index:100000 !important;\n}\n.user-menu .user-dropdown,\n#userDropdown{\n  position:absolute !important;\n  top:calc(100% + 10px) !important;\n  right:0 !important;\n  left:auto !important;\n  width:220px !important;\n  min-width:220px !important;\n  max-width:calc(100vw - 16px) !important;\n  padding:8px !important;\n  border-radius:14px !important;\n  background:#08111f !important;\n  border:1px solid rgba(148,163,184,.28) !important;\n  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;\n  z-index:100001 !important;\n  transform:none !important;\n}\n.user-menu:not(.is-open) .user-dropdown{display:none !important;}\n.user-menu.is-open .user-dropdown{display:block !important;}\n.user-dropdown-section{\n  padding:7px 10px 4px !important;\n  font-size:11px !important;\n  line-height:1.1 !important;\n}\n.user-dropdown-item{\n  min-height:38px !important;\n  padding:9px 10px !important;\n  font-size:13px !important;\n  line-height:1.15 !important;\n  border-radius:10px !important;\n}\n@media (max-width:768px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    position:fixed !important;\n    top:92px !important;\n    right:8px !important;\n    left:auto !important;\n    width:210px !important;\n    min-width:210px !important;\n    max-width:calc(100vw - 16px) !important;\n    max-height:68vh !important;\n    overflow-y:auto !important;\n    border-radius:14px !important;\n  }\n  .user-dropdown-section{\n    padding:7px 10px 4px !important;\n    font-size:10.5px !important;\n  }\n  .user-dropdown-item{\n    padding:9px 10px !important;\n    font-size:13px !important;\n    min-height:36px !important;\n  }\n}\n@media (max-width:420px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    top:88px !important;\n    right:6px !important;\n    width:196px !important;\n    min-width:196px !important;\n  }\n}\n';
-    function apply(){
-      if(document.getElementById('azobss-final-mobile-dropdown-fix-js')) return;
-      var style=document.createElement('style');
-      style.id='azobss-final-mobile-dropdown-fix-js';
-      style.textContent=css;
-      document.head.appendChild(style);
-    }
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
-    else apply();
-  }catch(e){}
-})();
+// AZOBSS 1052: delayed mobile dropdown CSS injection disabled; static stable CSS is loaded in <head>.
 
-
-// AZOBSS_HOME_STICKBAR_1TO1_GLOBAL_FIX
-(function injectAzobssHomeStickbarOneToOne(){
-  try{
-    var css = `
-/* AZOBSS HOME STICKBAR 1:1 GLOBAL FIX - source: Home navbar */
-html,body{overflow-x:hidden!important;}
-body{padding-top:58px!important;}
-.market-sticky-bar{
-  position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;
-  min-height:49px!important;height:auto!important;z-index:5000!important;
-  background:#050807!important;border-bottom:1px solid rgba(234,179,8,.55)!important;
-  overflow:visible!important;box-sizing:border-box!important;
-  box-shadow:0 10px 24px rgba(0,0,0,.28)!important;
-}
-.market-bar-inner{width:100%!important;max-width:none!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;}
-.market-main-row{
-  display:flex!important;align-items:center!important;gap:7px!important;min-height:48px!important;height:48px!important;
-  flex-wrap:nowrap!important;overflow:visible!important;width:100%!important;box-sizing:border-box!important;
-}
-.market-brand{
-  flex:0 0 auto!important;width:154px!important;min-width:154px!important;max-width:154px!important;height:38px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  padding:0!important;border-radius:999px!important;overflow:hidden!important;text-decoration:none!important;
-  background:transparent!important;border:0!important;margin:0!important;box-sizing:border-box!important;
-}
-.market-brand img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;display:block!important;margin:0!important;padding:0!important;}
-.market-nav{
-  flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:center!important;gap:7px!important;
-  white-space:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
-  -webkit-overflow-scrolling:touch!important;padding:0 2px!important;
-}
-.market-nav::-webkit-scrollbar{display:none!important;}
-.market-nav a,.market-nav button{
-  flex:0 0 auto!important;height:34px!important;min-height:34px!important;max-height:34px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  padding:0 12px!important;border-radius:999px!important;box-sizing:border-box!important;
-  font-size:13px!important;font-weight:900!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;
-  background:#0e1729!important;border:1px solid rgba(148,163,184,.28)!important;color:#e5e7eb!important;text-shadow:0 1px 8px rgba(0,0,0,.45)!important;
-}
-.market-nav a:hover,.market-icon-btn:hover{color:#14b8a6!important;}
-body:not(.has-pa-access) .market-nav .nav-pa-bm-link,body:not(.has-pa-access) a#paBmNavButton,.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-body:not(.can-buy-public-pa) .market-nav .nav-public-pa-link,.market-nav .nav-public-pa-link[hidden],.market-nav .nav-public-pa-link.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-.market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
-.nav-whatsapp-circle{position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;box-shadow:0 8px 20px rgba(34,197,94,.25)!important;overflow:visible!important;}
-.nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important;line-height:1!important;}
-.nav-whatsapp-circle::after{content:""!important;position:absolute!important;left:21px!important;top:23px!important;width:7px!important;height:7px!important;background:#fff!important;clip-path:polygon(0 0,100% 0,0 100%)!important;transform:rotate(-12deg)!important;}
-.site-auth-actions{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;margin-right:0!important;flex:0 0 auto!important;z-index:auto!important;}
-.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 12px!important;font-size:13px!important;font-weight:900!important;line-height:1!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;}
-.market-user-tools{
-  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:11px!important;margin-left:auto!important;
-  min-width:max-content!important;white-space:nowrap!important;overflow:visible!important;color:#fff!important;
-}
-.user-menu{height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;position:relative!important;top:auto!important;right:auto!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;z-index:100000!important;transform:none!important;cursor:pointer!important;}
-.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#020617!important;border:1px solid rgba(20,184,166,.38)!important;color:#d1d5db!important;font-size:12px!important;font-weight:900!important;line-height:1!important;}
-.user-name{font-size:14px!important;font-weight:900!important;line-height:1!important;color:#fff!important;white-space:nowrap!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.user-menu::after{content:""!important;width:7px!important;height:7px!important;border-right:2px solid currentColor!important;border-bottom:2px solid currentColor!important;color:#9ca3af!important;transform:rotate(45deg)!important;transition:transform .18s ease!important;}
-.user-menu.is-open::after{transform:rotate(225deg)!important;}
-.market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;color:#e5e7eb!important;background:transparent!important;border:0!important;margin:0!important;text-decoration:none!important;border-radius:999px!important;}
-.market-icon-btn svg{width:23px!important;height:23px!important;stroke:currentColor!important;fill:none!important;stroke-width:2.2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
-.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
-.market-icon-btn.is-likes-active svg path{fill:#facc15!important;stroke:#facc15!important;}
-
-@media(max-width:980px){
-  body{padding-top:92px!important;}
-  .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}
-  .market-brand{width:132px!important;min-width:132px!important;max-width:132px!important;height:34px!important;}
-  .market-user-tools{margin-left:auto!important;gap:9px!important;}
-  .user-name{max-width:115px!important;font-size:13px!important;}
-  .market-nav{order:3!important;flex:0 0 100%!important;width:100%!important;padding:4px 0 2px!important;}
-  .market-nav a,.market-nav button{height:32px!important;min-height:32px!important;padding:0 10px!important;font-size:12px!important;}
-  .market-nav a:has(.nav-whatsapp-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;}
-  .nav-whatsapp-circle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;}
-}
-@media(max-width:560px){
-  body{padding-top:96px!important;}
-  .market-bar-inner{padding:0 6px!important;}
-  .market-brand{width:120px!important;min-width:120px!important;max-width:120px!important;height:32px!important;}
-  .market-user-tools{gap:7px!important;}
-  .user-name{display:none!important;}
-  .market-icon-btn{width:22px!important;min-width:22px!important;}
-  .market-icon-btn svg{width:21px!important;height:21px!important;}
-  .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
-}
-`;
-    function apply(){
-      if(document.getElementById('azobss-home-stickbar-1to1-global-fix')) return;
-      var style=document.createElement('style');
-      style.id='azobss-home-stickbar-1to1-global-fix';
-      style.textContent=css;
-      document.head.appendChild(style);
-    }
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
-    else apply();
-  }catch(e){}
-})();
-
+// AZOBSS 1052: delayed stickybar CSS injection disabled; static stable CSS prevents first-paint reflow.
 
 // AZOBSS compact one-line admin live/history rows
 (function injectAzobssCompactAdminHistoryRows(){
