@@ -1,0 +1,42 @@
+{
+  "baseline": "1.0.1050",
+  "version": "1.0.1053",
+  "cancelled_not_used": [
+    "1.0.1051",
+    "1.0.1052"
+  ],
+  "pages_patched": [
+    "AZOBSSTV/index.html",
+    "Bookmarks/index.html",
+    "CAD-Tools-&-Resources/index.html",
+    "PA-BM/index.html",
+    "Perkhidmatan-Ukur-Tanah/index.html",
+    "Software-Tools/index.html",
+    "Sound-Effects/index.html",
+    "Tempah-Servis-IT/index.html",
+    "Tempah-Website/index.html",
+    "Tempahan-Makanan/index.html",
+    "Troubleshoot-PC-Online/index.html",
+    "admin/index.html",
+    "affiliate-shop/index.html",
+    "index.html",
+    "lucky-draw/index.html",
+    "staff/index.html",
+    "tools/BMI-Calculator.html",
+    "tools/Currency-Converter.html",
+    "tools/Internet-Speed-Converter.html",
+    "tools/PC-Bottleneck-Checker.html",
+    "tools/PSU-Calculator.html",
+    "tools/RAM-Usage-Checker.html",
+    "tools/SSD-Speed-Checker-guide.html",
+    "tools/Windows-Command-Generator.html",
+    "tools/index.html"
+  ],
+  "page_count": 25,
+  "backend_changed": false,
+  "css_changed": false,
+  "js_changed": [
+    "assets/js/azobss-more-nav.js"
+  ],
+  "strategy": "pre-render final stickybar DOM; keep v1050 visual CSS unchanged"
+}

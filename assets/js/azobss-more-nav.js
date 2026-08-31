@@ -1,4 +1,4 @@
-/* AZOBSS 964: More menu + Repair PC dropdown; AZOBSSTV moved into More. */
+/* AZOBSS 1053: More + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
 (function () {
   'use strict';
 
@@ -459,12 +459,100 @@
     });
   }
 
+  function wireStaticMenu(wrap) {
+    if (!wrap || wrap.dataset.azStaticWired === '1') return;
+    var trigger = wrap.querySelector(':scope > .az-more-trigger');
+    var dropdown = wrap.querySelector(':scope > .az-more-dropdown');
+    if (!trigger || !dropdown) return;
+    wrap.dataset.azStaticWired = '1';
+
+    function isMobileStickybar() {
+      return window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+    }
+    function positionMobileDropdown() {
+      if (!isMobileStickybar()) {
+        dropdown.style.removeProperty('--az-more-mobile-top');
+        dropdown.style.removeProperty('--az-more-mobile-left');
+        dropdown.style.removeProperty('--az-more-mobile-width');
+        return;
+      }
+      var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      var triggerRect = trigger.getBoundingClientRect();
+      var baseWidth = wrap.classList.contains('az-repair-nav') ? 310 : 232;
+      var minWidth = wrap.classList.contains('az-repair-nav') ? 230 : 190;
+      var dropdownWidth = Math.min(baseWidth, Math.max(minWidth, viewportWidth - 16));
+      var halfWidth = dropdownWidth / 2;
+      var centre = triggerRect.left + (triggerRect.width / 2);
+      centre = Math.max(8 + halfWidth, Math.min(viewportWidth - 8 - halfWidth, centre));
+      dropdown.style.setProperty('--az-more-mobile-top', Math.round(triggerRect.bottom + 7) + 'px');
+      dropdown.style.setProperty('--az-more-mobile-left', Math.round(centre) + 'px');
+      dropdown.style.setProperty('--az-more-mobile-width', Math.round(dropdownWidth) + 'px');
+    }
+    function setOpen(open) {
+      if (open) positionMobileDropdown();
+      wrap.classList.toggle('is-open', open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function items() {
+      return Array.prototype.slice.call(dropdown.querySelectorAll('a[role="menuitem"]'));
+    }
+    trigger.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.az-more-nav.is-open').forEach(function (other) {
+        if (other !== wrap) {
+          other.classList.remove('is-open');
+          var otherTrigger = other.querySelector(':scope > .az-more-trigger');
+          if (otherTrigger) otherTrigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+      setOpen(!wrap.classList.contains('is-open'));
+    });
+    trigger.addEventListener('keydown', function (event) {
+      var menuItems = items();
+      if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setOpen(true);
+        if (menuItems[0]) menuItems[0].focus();
+      } else if (event.key === 'Escape') {
+        setOpen(false);
+        trigger.focus();
+      }
+    });
+    dropdown.addEventListener('keydown', function (event) {
+      var menuItems = items();
+      if (!menuItems.length) return;
+      var currentIndex = menuItems.indexOf(document.activeElement);
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        trigger.focus();
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        menuItems[(currentIndex + 1 + menuItems.length) % menuItems.length].focus();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        menuItems[(currentIndex - 1 + menuItems.length) % menuItems.length].focus();
+      }
+    });
+    dropdown.querySelectorAll('a[role="menuitem"]').forEach(function (item) {
+      item.addEventListener('click', function () { setOpen(false); });
+    });
+    window.addEventListener('resize', function () {
+      if (wrap.classList.contains('is-open')) positionMobileDropdown();
+    }, { passive: true });
+    window.addEventListener('orientationchange', function () {
+      if (wrap.classList.contains('is-open')) positionMobileDropdown();
+    }, { passive: true });
+  }
+
   function ensureWebsiteOrderLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
     var websitePath = normalisePath('/Tempah-Website/').toLowerCase();
 
     document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
-      var existingLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
+      if (nav.querySelector(':scope > .az-more-nav[data-az-more-menu="1"]')) return;
+      var existingLink = nav.querySelector(':scope > a[data-az-website-order-link="1"], :scope > a[href="/Tempah-Website/"], :scope > a[href="/Tempah-Website"]');
       if (existingLink) {
         existingLink.dataset.azWebsiteOrderLink = '1';
         if (currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0) {
@@ -508,7 +596,8 @@
       currentPath === onlineRepairPath || currentPath.indexOf(onlineRepairPath + '/') === 0;
 
     document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
-      var existingLink = nav.querySelector('a[data-az-repair-service-link="1"], a[href="/Tempah-Servis-IT/"], a[href="/Tempah-Servis-IT"]');
+      if (nav.querySelector(':scope > .az-repair-nav[data-az-repair-menu="1"]')) return;
+      var existingLink = nav.querySelector(':scope > a[data-az-repair-service-link="1"], :scope > a[href="/Tempah-Servis-IT/"], :scope > a[href="/Tempah-Servis-IT"]');
       if (existingLink) {
         existingLink.dataset.azRepairServiceLink = '1';
         existingLink.textContent = 'Repair PC';
@@ -550,17 +639,20 @@
   }
 
   function initialise() {
+    document.querySelectorAll('.market-sticky-bar .market-nav > .az-more-nav[data-az-static-menu="1"]').forEach(wireStaticMenu);
+
+    // Legacy fallback only: pages not yet pre-rendered may still be upgraded.
     ensureWebsiteOrderLink();
     ensureRepairServiceLink();
 
     Array.prototype.slice.call(document.querySelectorAll(
-      '.market-sticky-bar .market-nav a[data-az-repair-service-link="1"]'
+      '.market-sticky-bar .market-nav > a[data-az-repair-service-link="1"]'
     )).forEach(buildRepairMenu);
 
     var links = Array.prototype.slice.call(document.querySelectorAll(
-      '.market-sticky-bar .market-nav a[href="/tools/"], ' +
-      '.market-sticky-bar .market-nav a[href="/tools"], ' +
-      '.market-sticky-bar .market-nav a[href$="/tools/"]'
+      '.market-sticky-bar .market-nav > a[href="/tools/"], ' +
+      '.market-sticky-bar .market-nav > a[href="/tools"], ' +
+      '.market-sticky-bar .market-nav > a[href$="/tools/"]'
     ));
 
     links.filter(function (candidate) {
