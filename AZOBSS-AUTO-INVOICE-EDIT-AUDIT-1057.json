@@ -1,0 +1,34 @@
+{
+  "version": "1.0.1057",
+  "baseline": "1.0.1056",
+  "scope": "Admin Sales & Receipts automatic website invoice/receipt safe edit",
+  "changed_files": [
+    "assets/js/azobss-admin-sales-receipts.js",
+    "admin/index.html",
+    "package.json",
+    "README_PATCH_1057.md",
+    "AZOBSS-AUTO-INVOICE-EDIT-AUDIT-1057.json"
+  ],
+  "editable_fields": [
+    "customerName",
+    "customerPhone",
+    "customerEmail",
+    "customerAddress",
+    "item description",
+    "notes"
+  ],
+  "locked_fields": [
+    "invoice/receipt number",
+    "date/time",
+    "status",
+    "payment method",
+    "quantity",
+    "unit price / gross",
+    "discount/shipping",
+    "payment fee/commission/other cost",
+    "orderId/billCode/payment references"
+  ],
+  "override_source": "admin-auto-invoice-edit",
+  "backend_changed": false,
+  "render_redeploy_required": false
+}

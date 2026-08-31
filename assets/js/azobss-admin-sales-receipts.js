@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 1050: 6-digit Invoice / Receipt + automatic ToyyibPay idempotency; historical auto IDs preserved */
+/* AZOBSS PATCH 1057: automatic website invoices/receipts are editable through safe display-only overrides; payment-critical fields remain locked */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -10,12 +10,13 @@ const db=getFirestore(app);
 const BACKEND='https://azobss-backend.onrender.com';
 const MANUAL_SOURCE='admin-manual-sale';
 const RECEIPT_DELIVERY_STATE_SOURCE='admin-receipt-delivery-state';
+const AUTO_INVOICE_EDIT_SOURCE='admin-auto-invoice-edit';
 const PAGE_SIZE=10;
 const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1050;
+window.__azSalesReceiptsModuleVersion=1057;
 
 let manualRows=[];
 let websiteRows=[];
@@ -27,6 +28,10 @@ let editingInvoiceNo='';
 let editingReceiptNo='';
 let editingSourceBookingId='';
 let editingSourceBookingSnapshot=null;
+let editingMode='manual';
+let editingWebsiteRowId='';
+let editingAutoTargetKey='';
+let editingAutoOverrideDocId='';
 let loadingPromise=null;
 const selectedRowIds=new Set();
 let sharePanelContext=null;
@@ -35,6 +40,7 @@ let manualReceiptPollBusy=false;
 let lastSuccessfulLoadAt=0;
 const toyyibInvoicePromiseById=new Map();
 const receiptDeliveryStateByKey=new Map();
+const autoInvoiceEditByKey=new Map();
 
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -110,6 +116,30 @@ function applyReceiptDeliveryState(row={}){
     row.receiptSentAtMs=websiteAutoSent?(parseMs(row.paidAtMs||row.paymentPaidAtMs||row.saleDateMs)||0):0;
     row.receiptSentVia=websiteAutoSent?'website-auto-receipt':'';
     row.receiptDeliveryStateDocId=receiptDeliveryStateDocIdFromKey(key);
+  }
+  return row;
+}
+function autoInvoiceEditKey(row={}){
+  return String(websiteDedupKey(row)||'').trim().toLowerCase();
+}
+function stableAutoEditHash(text=''){
+  let h=2166136261>>>0;for(const ch of String(text)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0}return h.toString(36);
+}
+function autoInvoiceEditDocIdFromKey(key=''){
+  const text=String(key||'').trim().toLowerCase();const slug=text.replace(/[^a-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60)||'website';
+  return `auto_edit_${slug}_${stableAutoEditHash(text)}`;
+}
+function applyAutoInvoiceEdit(row={}){
+  if(row.source!=='website')return row;
+  const key=autoInvoiceEditKey(row);const state=autoInvoiceEditByKey.get(key);if(!state)return row;
+  row.autoInvoiceEdited=true;row.autoInvoiceEditDocId=String(state._docId||autoInvoiceEditDocIdFromKey(key));
+  row.customerName=String(state.customerName??row.customerName??'Customer');
+  row.customerPhone=String(state.customerPhone??row.customerPhone??'');
+  row.customerEmail=String(state.customerEmail??row.customerEmail??'');
+  row.customerAddress=String(state.customerAddress??row.customerAddress??'');
+  row.notes=String(state.notes??row.notes??'');
+  if(Array.isArray(state.itemNames)&&state.itemNames.length){
+    row.items=(row.items||[]).map((item,index)=>({...item,name:String(state.itemNames[index]??item.name??'Purchase')}));
   }
   return row;
 }
@@ -341,7 +371,7 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const totalCost=paymentFee+commission+otherCost;
   const baseNo=automaticReceiptNo(x,id);
   const row={
-    ...x,id:`${sourceName}:${id}`,docId:id,source:'website',sourceName,editable:false,
+    ...x,id:`${sourceName}:${id}`,docId:id,source:'website',sourceName,editable:true,autoEditable:true,
     deleteRefs:[websiteDeleteRef(x,id,sourceName)],
     invoiceNo:String(x.invoiceNo||deriveInvoiceNo(baseNo)),receiptNo:String(x.receiptNo||deriveReceiptNo(baseNo)),
     documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),
@@ -388,8 +418,8 @@ async function loadData(options={}){
       loadPremiumOrders(user)
     ]);
     const receiptDocs=[];receiptSnap.forEach(d=>receiptDocs.push({id:d.id,data:d.data()||{}}));
-    receiptDeliveryStateByKey.clear();
-    receiptDocs.forEach(entry=>{const x=entry.data;if(String(x.source||'')===RECEIPT_DELIVERY_STATE_SOURCE&&String(x.targetKey||''))receiptDeliveryStateByKey.set(String(x.targetKey),{...x,_docId:entry.id})});
+    receiptDeliveryStateByKey.clear();autoInvoiceEditByKey.clear();
+    receiptDocs.forEach(entry=>{const x=entry.data;if(String(x.source||'')===RECEIPT_DELIVERY_STATE_SOURCE&&String(x.targetKey||''))receiptDeliveryStateByKey.set(String(x.targetKey),{...x,_docId:entry.id});if(String(x.source||'')===AUTO_INVOICE_EDIT_SOURCE&&String(x.targetKey||''))autoInvoiceEditByKey.set(String(x.targetKey).toLowerCase(),{...x,_docId:entry.id})});
     const nextManual=[];receiptDocs.forEach(entry=>{const x=entry.data;if(String(x.source||'')===MANUAL_SOURCE)nextManual.push(applyReceiptDeliveryState(normalizeManual(entry.id,x)))});
     manualRows=nextManual;
     let repairedCount=0;
@@ -410,7 +440,7 @@ async function loadData(options={}){
       if(existing.status!=='paid'&&row.status==='paid')existing.status='paid';
       existing.customerName=existing.customerName||row.customerName;existing.customerPhone=existing.customerPhone||row.customerPhone;existing.customerEmail=existing.customerEmail||row.customerEmail;existing.customerAddress=existing.customerAddress||row.customerAddress;
     });
-    websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row)).map(applyReceiptDeliveryState);
+    websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row)).map(row=>applyReceiptDeliveryState(applyAutoInvoiceEdit(row)));
     selectedRowIds.clear();
     currentPage=1;lastSuccessfulLoadAt=Date.now();applyFilters();
     if(info)info.textContent=`Loaded ${manualRows.length} manual invoice / receipt record(s) and ${websiteRows.length} website sale record(s).`;
@@ -635,6 +665,7 @@ function manualFormUsesToyyibPay(){
   return /toyyib/i.test(method);
 }
 function syncManualPaymentFeeDefault(){
+  if(editingMode==='website')return;
   const input=el('salesReceiptPaymentFee');if(!input)return;
   if(manualFormUsesToyyibPay()){
     if(num(input.value)<=0){input.value=String(DEFAULT_MANUAL_TOYYIBPAY_FEE_RM);input.dataset.autoToyyibFee='1'}
@@ -660,12 +691,38 @@ function recalcForm(){
   if(el('salesReceiptCalcCostsLabel'))el('salesReceiptCalcCostsLabel').textContent=recognized?'Recognized Costs':'Costs (after Paid)';
   if(el('salesReceiptCalcProfitLabel'))el('salesReceiptCalcProfitLabel').textContent=recognized?'Net Profit':'Net Profit (after Paid)';
 }
+function setFormControlLocked(id,locked,title=''){
+  const node=el(id);if(!node)return;node.disabled=!!locked;node.title=locked?title:'';
+}
+function configureFormMode(row=null){
+  const website=editingMode==='website';
+  const lockedTitle='Automatic website purchase: payment, amount, date, status and accounting values are locked to the verified transaction.';
+  ['salesReceiptSaleDate','salesReceiptFormStatus','salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>setFormControlLocked(id,website,lockedTitle));
+  if(website)setFormControlLocked('salesReceiptPaymentMethod',true,lockedTitle);else{const pending=normalizeStatus(el('salesReceiptFormStatus')?.value)==='pending';setFormControlLocked('salesReceiptPaymentMethod',pending,pending?'Pending manual invoices use ToyyibPay so the PDF can include a unique payment QR.':'')}
+  const add=el('salesReceiptAddItem');if(add){add.hidden=website;add.disabled=website}
+  document.querySelectorAll('#salesReceiptItems .az-sr-item-row').forEach(itemRow=>{
+    itemRow.querySelectorAll('[data-sr-item-category],[data-sr-item-qty],[data-sr-item-price],[data-sr-item-cost]').forEach(node=>{node.disabled=website;node.title=website?lockedTitle:''});
+    const name=itemRow.querySelector('[data-sr-item-name]');if(name){name.disabled=false;name.title=website?'You may edit the description shown on the invoice / receipt.':''}
+    const remove=itemRow.querySelector('.az-sr-remove-item');if(remove){remove.hidden=website;remove.disabled=website}
+  });
+  const note=document.querySelector('.az-sr-status-note');if(note){
+    note.innerHTML=website?'<b>Website Auto Invoice / Receipt</b> — customer details, item description and Notes can be edited. Document number, date, status, payment method, quantity, price and payment/accounting values stay locked to the original verified transaction.':'<b>Pending = Invoice</b> (belum dikira sebagai jualan) &nbsp;•&nbsp; <b>Paid = Receipt</b> (terus masuk Gross, Costs dan Net Profit).';
+  }
+}
 function syncFormDocumentMode(initial=false){
   const input=el('salesReceiptReceiptNo');if(!input)return;
+  const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const kind=documentKindForStatus(status);const label=kind==='invoice'?'Invoice':'Receipt';
+  if(editingMode==='website'){
+    input.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;input.dataset.mode=kind;
+    if(el('salesReceiptDocumentNoLabel'))el('salesReceiptDocumentNoLabel').textContent=label+' No';
+    if(el('salesReceiptDialogTitle'))el('salesReceiptDialogTitle').textContent=`Edit Website ${label}`;
+    if(el('salesReceiptItemsTitle'))el('salesReceiptItemsTitle').textContent=label+' Items';
+    if(el('salesReceiptSave'))el('salesReceiptSave').textContent='Save '+label+' Changes';
+    syncToyyibCustomerRequirements();configureFormMode();return;
+  }
   const previous=input.dataset.mode||'';
   if(!initial&&previous==='invoice')editingInvoiceNo=String(input.value||editingInvoiceNo).trim();
   if(!initial&&previous==='receipt')editingReceiptNo=String(input.value||editingReceiptNo).trim();
-  const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const kind=documentKindForStatus(status);const label=kind==='invoice'?'Invoice':'Receipt';
   if(kind==='invoice'){if(!editingInvoiceNo)editingInvoiceNo=editingReceiptNo?deriveInvoiceNo(editingReceiptNo):nextDocumentNo('invoice');input.value=editingInvoiceNo}
   else{if(!editingReceiptNo)editingReceiptNo=editingInvoiceNo?deriveReceiptNo(editingInvoiceNo):nextDocumentNo('receipt');input.value=editingReceiptNo}
   input.dataset.mode=kind;
@@ -678,21 +735,39 @@ function syncFormDocumentMode(initial=false){
     if(status==='pending'){paymentSelect.value='ToyyibPay';paymentSelect.disabled=true;paymentSelect.title='Pending invoices use ToyyibPay so the PDF can include a unique payment QR.'}
     else{paymentSelect.disabled=false;paymentSelect.title=''}
   }
-  syncManualPaymentFeeDefault();
-  syncToyyibCustomerRequirements();
-  recalcForm();
+  syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();configureFormMode();
 }
 function openForm(row=null){
-  editingDocId=row?.docId||'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
-  editingSourceBookingId=String(row?.sourceBookingId||row?.bookingId||'').trim();editingSourceBookingSnapshot=row?.sourceBookingSnapshot||null;
+  editingMode=row?.source==='website'?'website':'manual';
+  editingWebsiteRowId=editingMode==='website'?String(row?.id||''):'';
+  editingAutoTargetKey=editingMode==='website'?autoInvoiceEditKey(row):'';
+  editingAutoOverrideDocId=editingMode==='website'?String(row?.autoInvoiceEditDocId||autoInvoiceEditDocIdFromKey(editingAutoTargetKey)):'';
+  editingDocId=editingMode==='manual'?(row?.docId||''):'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
+  editingSourceBookingId=editingMode==='manual'?String(row?.sourceBookingId||row?.bookingId||'').trim():'';editingSourceBookingSnapshot=editingMode==='manual'?(row?.sourceBookingSnapshot||null):null;
   el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
-  const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
+  const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);configureFormMode(row);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
 }
-function closeForm(){el('salesReceiptDialog').hidden=true;document.body.style.overflow='';editingDocId='';editingOriginalStatus='';editingInvoiceNo='';editingReceiptNo='';editingSourceBookingId='';editingSourceBookingSnapshot=null}
+function closeForm(){
+  el('salesReceiptDialog').hidden=true;document.body.style.overflow='';editingDocId='';editingOriginalStatus='';editingInvoiceNo='';editingReceiptNo='';editingSourceBookingId='';editingSourceBookingSnapshot=null;editingMode='manual';editingWebsiteRowId='';editingAutoTargetKey='';editingAutoOverrideDocId='';configureFormMode();
+}
+async function saveWebsiteEditForm(){
+  const user=await waitForUser();if(!user)return notify('Admin login not ready. Please sign in again.',true);
+  const row=findRow(editingWebsiteRowId);if(!row||row.source!=='website')return notify('Website invoice / receipt record is no longer available. Refresh and try again.',true);
+  const customer=String(el('salesReceiptCustomerName')?.value||'').trim();const customerEmail=String(el('salesReceiptCustomerEmail')?.value||'').trim().toLowerCase();const items=collectFormItems();
+  if(!customer)return notify('Enter customer name.',true);if(customerEmail&&!validCustomerEmail(customerEmail)){el('salesReceiptCustomerEmail')?.focus();return notify('Enter a valid email address or leave it blank.',true)}if(!items.length||items.some(i=>!i.name))return notify('Enter a description for every item.',true);
+  const targetKey=editingAutoTargetKey||autoInvoiceEditKey(row);if(!targetKey)return notify('Automatic transaction key is missing. Refresh and try again.',true);
+  const overrideId=editingAutoOverrideDocId||autoInvoiceEditDocIdFromKey(targetKey);const now=Date.now();
+  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
+  const btn=el('salesReceiptSave');const label=documentKindForStatus(row.status)==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
+  try{
+    await setDoc(doc(db,'receipts',overrideId),payload,{merge:true});autoInvoiceEditByKey.set(targetKey.toLowerCase(),{...payload,_docId:overrideId});applyAutoInvoiceEdit(row);closeForm();notify(`Website ${label.toLowerCase()} updated. Payment/order IDs and verified amount were not changed.`);await loadData({force:true});
+  }catch(e){console.error(e);notify('Save failed: '+(e.message||e),true)}finally{btn.disabled=false;btn.textContent='Save '+label+' Changes'}
+}
 async function saveForm(){
+  if(editingMode==='website')return saveWebsiteEditForm();
   const user=await waitForUser();if(!user)return notify('Admin login not ready.',true);
   const customer=String(el('salesReceiptCustomerName')?.value||'').trim();const items=collectFormItems();if(!customer)return notify('Enter customer name.',true);if(!items.length||items.some(i=>!i.name))return notify('Enter a name for every item.',true);if(items.some(i=>i.qty<=0))return notify('Quantity must be more than zero.',true);
   const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const kind=documentKindForStatus(status);const recognized=isRecognizedPayment(status);const numberInput=el('salesReceiptReceiptNo');
@@ -794,6 +869,9 @@ async function prepareRowForPdf(row,type='receipt'){
   return row;
 }
 
+async function deleteAutoInvoiceEditOverride(row={}){
+  try{const key=autoInvoiceEditKey(row);if(!key)return false;const overrideId=String(row.autoInvoiceEditDocId||autoInvoiceEditDocIdFromKey(key));await deleteDoc(doc(db,'receipts',overrideId));autoInvoiceEditByKey.delete(key);return true}catch(error){console.warn('Website invoice edit override cleanup skipped:',error);return false}
+}
 async function deleteWebsiteRecord(id,button=null){
   const row=websiteRows.find(r=>r.id===id);if(!row)return;
   const label=documentKindForStatus(row.status)==='invoice'?'invoice':'receipt';const paidWarning=isRecognizedPayment(row.status)?'\n\nWarning: this is a Paid record and deleting it removes it from sales and profit totals.':'';
@@ -804,7 +882,7 @@ async function deleteWebsiteRecord(id,button=null){
   try{
     const res=await fetch(BACKEND+'/api/admin/payment-logs/delete',{method:'POST',headers:await adminBackendHeaders(),body:JSON.stringify({records:refs}),cache:'no-store'});
     const text=await res.text();let data={};try{data=JSON.parse(text)}catch(_e){throw new Error('Invalid backend response while deleting the website record.')}if(!res.ok||data.ok===false)throw new Error(data.error||`Delete HTTP ${res.status}`);
-    notify(`Deleted ${data.deleted||refs.length} website payment record(s).`);await loadData({force:true});
+    await deleteAutoInvoiceEditOverride(row);notify(`Deleted ${data.deleted||refs.length} website payment record(s).`);await loadData({force:true});
   }catch(error){
     console.warn('Backend website record delete failed:',error);
     let removed=0;const errors=[];
@@ -812,7 +890,7 @@ async function deleteWebsiteRecord(id,button=null){
       if(ref.collection!=='purchaseLogs'||!ref.docId)continue;
       try{await deleteDoc(doc(db,'purchaseLogs',ref.docId));removed++}catch(e){errors.push(e?.message||String(e))}
     }
-    if(removed){notify(`Deleted ${removed} Firestore purchase record(s). Render backend is still required to remove any premium-order backup.`);await loadData({force:true})}
+    if(removed){await deleteAutoInvoiceEditOverride(row);notify(`Deleted ${removed} Firestore purchase record(s). Render backend is still required to remove any premium-order backup.`);await loadData({force:true})}
     else notify('Website record delete failed: '+(error?.message||error)+(errors.length?' • '+errors[0]:''),true);
   }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
@@ -1146,7 +1224,7 @@ function bind(){
   el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=manualRows.find(r=>r.id===edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=findRow(edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
 function startManualReceiptPaymentWatch(){
   // Quota saver: check only every five minutes and only while a Pending manual
