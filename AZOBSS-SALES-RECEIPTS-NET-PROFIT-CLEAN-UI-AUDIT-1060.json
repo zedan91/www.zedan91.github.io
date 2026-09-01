@@ -1,0 +1,14 @@
+{
+  "version": "1.0.1060",
+  "baseline": "1.0.1059",
+  "feature": "Sales & Receipts Net Profit clean gold card UI",
+  "changes": [
+    "removed AZOBSS NET stamp",
+    "restored shared KPI card sizing and padding",
+    "centered Net Profit content",
+    "kept metallic gold emphasis"
+  ],
+  "calculation_logic_changed": false,
+  "backend_changed": false,
+  "deploy": "website-only"
+}
