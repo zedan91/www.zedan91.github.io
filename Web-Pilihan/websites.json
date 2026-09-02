@@ -1,0 +1,19 @@
+[
+  {
+    "id": "seostudio-tools",
+    "name": "SEOStudio Tools",
+    "url": "https://seostudio.tools/",
+    "domain": "seostudio.tools",
+    "category": "SEO & Web Tools",
+    "description": "Koleksi alat dalam talian percuma untuk SEO, teks, imej, YouTube, pengurusan web, pembangunan web, converter dan kalkulator.",
+    "tags": [
+      "SEO",
+      "YouTube",
+      "Text",
+      "Image",
+      "Web Dev"
+    ],
+    "badge": "Percuma",
+    "featured": true
+  }
+]

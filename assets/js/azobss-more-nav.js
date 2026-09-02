@@ -1,4 +1,4 @@
-/* AZOBSS 1053: More + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
+/* AZOBSS 1061: Web Pilihan direct tab + More + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
 (function () {
   'use strict';
 
@@ -546,6 +546,55 @@
     }, { passive: true });
   }
 
+  function ensureWebPilihanLink() {
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var webPilihanPath = normalisePath('/Web-Pilihan/').toLowerCase();
+    var isWebPilihan = currentPath === webPilihanPath || currentPath.indexOf(webPilihanPath + '/') === 0;
+
+    document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
+      var existingLink = nav.querySelector(':scope > a[data-az-web-pilihan-link="1"], :scope > a[href="/Web-Pilihan/"], :scope > a[href="/Web-Pilihan"]');
+      if (existingLink) {
+        existingLink.dataset.azWebPilihanLink = '1';
+        if (isWebPilihan) {
+          existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
+          existingLink.setAttribute('aria-current', 'page');
+        } else {
+          existingLink.classList.remove('market-nav-active', 'is-active', 'is-current');
+          existingLink.removeAttribute('aria-current');
+        }
+        return;
+      }
+
+      var webLink = document.createElement('a');
+      webLink.href = '/Web-Pilihan/';
+      webLink.textContent = 'Web Pilihan';
+      webLink.title = 'Website dan tools berguna pilihan AZOBSS';
+      webLink.setAttribute('aria-label', 'Web Pilihan');
+      webLink.dataset.azWebPilihanLink = '1';
+      webLink.className = 'az-web-pilihan-link';
+      if (isWebPilihan) {
+        webLink.classList.add('market-nav-active', 'is-active', 'is-current');
+        webLink.setAttribute('aria-current', 'page');
+      }
+
+      var moreWrap = nav.querySelector(':scope > .az-more-nav[data-az-more-menu="1"]');
+      if (moreWrap) {
+        nav.insertBefore(webLink, moreWrap);
+        return;
+      }
+
+      var luckyLink = Array.prototype.find.call(nav.querySelectorAll(':scope > a[href]'), function (candidate) {
+        try {
+          return normalisePath(new URL(candidate.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/lucky-draw';
+        } catch (error) {
+          return false;
+        }
+      });
+      if (luckyLink) luckyLink.insertAdjacentElement('afterend', webLink);
+      else nav.appendChild(webLink);
+    });
+  }
+
   function ensureWebsiteOrderLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
     var websitePath = normalisePath('/Tempah-Website/').toLowerCase();
@@ -642,6 +691,7 @@
     document.querySelectorAll('.market-sticky-bar .market-nav > .az-more-nav[data-az-static-menu="1"]').forEach(wireStaticMenu);
 
     // Legacy fallback only: pages not yet pre-rendered may still be upgraded.
+    ensureWebPilihanLink();
     ensureWebsiteOrderLink();
     ensureRepairServiceLink();
 

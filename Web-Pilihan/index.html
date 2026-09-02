@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <script src="/assets/js/azobss-render-wake.js?v=1056"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Web Pilihan | AZOBSS</title>
+  <meta name="description" content="Koleksi website dan tools berguna pilihan AZOBSS untuk SEO, web, produktiviti dan kegunaan harian.">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#081426">
+  <link rel="stylesheet" href="/assets/css/azobss-home-stickybar-exact-sync.css?v=1053">
+  <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+  <script defer src="/assets/js/azobss-more-nav.js?v=1061"></script>
+  <style>
+    :root{--bg:#07101e;--panel:#0e1a2d;--panel2:#101f37;--line:rgba(148,163,184,.23);--text:#eef7ff;--muted:#9fb1c9;--cyan:#22d3ee;--green:#22c55e;--blue:#3b82f6;--yellow:#facc15}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;padding-top:48px;background:radial-gradient(circle at 14% 0%,rgba(37,99,235,.17),transparent 32%),radial-gradient(circle at 88% 10%,rgba(34,211,238,.10),transparent 26%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}a{color:inherit}
+    .market-search-row{display:none!important}
+    .site-auth-actions{margin-left:auto!important}
+    .wrap{width:min(1180px,calc(100% - 34px));margin:0 auto}
+    .hero{padding:64px 0 30px;text-align:center}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid rgba(34,211,238,.35);border-radius:999px;background:rgba(34,211,238,.08);color:#a5f3fc;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .hero h1{margin:17px auto 10px;font-size:clamp(36px,6vw,64px);line-height:1.04;letter-spacing:-.03em}.hero h1 span{color:#67e8f9}.hero p{max-width:760px;margin:0 auto;color:var(--muted);font-size:clamp(15px,2vw,19px)}
+    .toolbar{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:12px;margin:24px auto 18px;max-width:920px}.field{position:relative}.field input,.field select{width:100%;height:46px;border:1px solid rgba(148,163,184,.30);border-radius:13px;background:#0a1628;color:#fff;padding:0 14px;font:inherit;font-weight:750;outline:none}.field input:focus,.field select:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.11)}
+    .results-meta{max-width:920px;margin:0 auto 16px;color:#8fa4be;font-size:13px;text-align:left}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:10px 0 38px}
+    .site-card{position:relative;display:flex;flex-direction:column;min-height:300px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(155deg,rgba(16,31,55,.96),rgba(8,20,38,.98));padding:20px;box-shadow:0 20px 55px rgba(0,0,0,.26);transition:transform .18s ease,border-color .18s ease}.site-card:hover{transform:translateY(-4px);border-color:rgba(34,211,238,.48)}
+    .site-top{display:flex;align-items:flex-start;gap:13px}.site-icon{display:grid;place-items:center;width:54px;height:54px;flex:0 0 54px;border:1px solid rgba(34,211,238,.35);border-radius:15px;background:linear-gradient(145deg,#12345b,#0b1b31);color:#67e8f9;font-size:17px;font-weight:1000;letter-spacing:-.04em}.site-title{min-width:0}.site-title h2{margin:2px 0 3px;font-size:20px;line-height:1.2}.domain{color:#7dd3fc;font-size:12px;font-weight:800;overflow-wrap:anywhere}
+    .badge{position:absolute;top:17px;right:17px;padding:5px 9px;border-radius:999px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.34);color:#86efac;font-size:11px;font-weight:900}.category{display:inline-flex;width:max-content;margin:17px 0 9px;padding:6px 9px;border-radius:8px;background:rgba(59,130,246,.11);color:#bfdbfe;font-size:11px;font-weight:900}.desc{margin:0;color:#b1c1d5;line-height:1.58;font-size:14px;flex:1}
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}.tag{padding:5px 8px;border:1px solid rgba(148,163,184,.2);border-radius:999px;background:#0a1628;color:#aebed2;font-size:10.5px;font-weight:800}
+    .open-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border-radius:11px;text-decoration:none;background:linear-gradient(135deg,#2563eb,#22d3ee);color:#04111f;font-weight:950;box-shadow:0 10px 26px rgba(34,211,238,.13)}.open-btn:hover{filter:brightness(1.06)}
+    .empty{grid-column:1/-1;padding:34px;border:1px dashed rgba(148,163,184,.28);border-radius:18px;text-align:center;color:#9fb1c9;background:rgba(15,23,42,.45)}
+    .third-party{margin:0 0 42px;padding:13px 15px;border:1px solid rgba(250,204,21,.25);border-radius:13px;background:rgba(250,204,21,.06);color:#d6c785;font-size:12px;text-align:center}
+    .footer{padding:24px 0 34px;border-top:1px solid rgba(148,163,184,.14);text-align:center;color:#71849c;font-size:12px}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:760px){body{padding-top:94px}.wrap{width:min(100% - 22px,1180px)}.hero{padding-top:38px}.toolbar{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.site-auth-actions{margin-right:8px!important}}
+  </style>
+</head>
+<body>
+<header aria-label="AZOBSS navigation" class="market-sticky-bar">
+  <div class="market-bar-inner">
+    <div class="market-main-row">
+      <a aria-label="AZOBSS" class="market-brand" href="/"><img alt="AZOBSS" src="/images/logo-azobss.jpg"></a>
+      <nav aria-label="AZOBSS quick actions" class="market-nav az-more-enabled">
+        <a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+        <a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+        <a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+        <a class="nav-pa-bm-link is-hidden" hidden href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+        <a class="nav-public-pa-link" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a>
+        <a href="/Software-Tools/">Software</a>
+        <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+        <a href="/affiliate-shop/">Affiliate Shop</a>
+        <div class="az-more-nav az-repair-nav" data-az-repair-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger az-repair-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="azRepairDropdownStatic" aria-label="Menu Repair PC"><span>Repair PC</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown az-repair-dropdown" id="azRepairDropdownStatic" role="menu" aria-label="Pilihan servis Repair PC"><a href="/Tempah-Servis-IT/" role="menuitem" data-az-repair-physical-link="1"><svg class="az-more-item-icon az-repair-physical-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path></svg><span class="az-repair-item-copy"><strong>Servis PC &amp; Laptop</strong><small>Pembaikan fizikal, format dan servis kedai</small></span></a><a href="/Troubleshoot-PC-Online/" role="menuitem" data-az-repair-online-link="1"><svg class="az-more-item-icon az-repair-online-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg><span class="az-repair-item-copy"><strong>Troubleshoot PC Online</strong><small>Pemeriksaan dan pembaikan PC dari jauh</small></span></a></div></div>
+        <a href="/lucky-draw/">Lucky Draw</a>
+        <a href="/Web-Pilihan/" data-az-web-pilihan-link="1" title="Website dan tools berguna pilihan AZOBSS" class="market-nav-active is-active is-current" aria-current="page">Web Pilihan</a>
+        <div class="az-more-nav" data-az-more-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="azMoreDropdownStatic" aria-label="More menu"><svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg><span>More</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown" id="azMoreDropdownStatic" role="menu"><a href="/AZOBSSTV/" role="menuitem" data-azobsstv-link="1" title="AZOBSSTV"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M9 21h6"></path><path d="M12 18v3"></path><path d="m10 9 5 3-5 3z"></path></svg><span>AZOBSSTV</span></a><a href="/tools/" role="menuitem" data-az-more-tools-link="1"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span>Mini Web Tools</span></a><a href="/Sound-Effects/" role="menuitem" data-az-sound-effects-link="1" title="AZOBSS Sound Effects"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10v4"></path><path d="M8 8v8"></path><path d="M12 5v14"></path><path d="M16 8v8"></path><path d="M20 10v4"></path></svg><span>Sound Effects</span></a><a href="/Tempah-Website/" role="menuitem" data-az-website-order-link="1" title="Tempah Website untuk Bisnes"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path><path d="M7 10h4"></path><path d="M7 13h8"></path></svg><span>Bina Website</span></a><a href="/Tempahan-Makanan/" role="menuitem" data-az-food-order-link="1" title="Food - Brownies"><svg class="az-more-item-icon az-more-food-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 14h16"></path><path d="M6 14a6 6 0 0 1 12 0"></path><path d="M12 6V4"></path><path d="M3 18h18"></path></svg><span>Food - Brownies</span></a></div></div>
+      </nav>
+      <div class="site-auth-actions" id="siteAuthActions"><button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button><button class="site-auth-btn" data-auth-open="login" id="siteSignInButton" type="button">Login</button></div>
+      <div class="market-user-tools" id="marketUserTools"><div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0"><div class="user-avatar" id="userAvatar">AZ</div><div class="user-name"><span id="signedInName"></span></div><div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 <span>My Purchases</span></a><a class="user-dropdown-item" href="/Bookmarks/" role="menuitem">🔖 <span>Bookmarks</span></a><button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ <span>Settings</span></button><button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 <span>Log Out</span></button></div></div></div>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <span class="hero-badge">AZOBSS Curated Web</span>
+      <h1>Web <span>Pilihan</span></h1>
+      <p>Koleksi website dan tools berguna yang dipilih untuk memudahkan kerja, pembelajaran, SEO, pembangunan web dan tugasan harian.</p>
+      <div class="toolbar" role="search">
+        <div class="field"><input id="siteSearch" type="search" placeholder="Cari website, fungsi atau tag..." aria-label="Cari Web Pilihan"></div>
+        <div class="field"><select id="siteCategory" aria-label="Tapis kategori"><option value="">Semua kategori</option></select></div>
+      </div>
+      <div class="results-meta" id="resultsMeta">Memuatkan Web Pilihan...</div>
+    </div>
+  </section>
+  <section class="wrap"><div class="grid" id="sitesGrid"><div class="empty">Memuatkan senarai website...</div></div><div class="third-party">ℹ️ Web Pilihan mengandungi pautan ke laman pihak ketiga. Kandungan dan perkhidmatan laman tersebut dikendalikan oleh pemilik masing-masing.</div></section>
+</main>
+<footer class="footer"><div class="wrap">© AZOBSS · Web Pilihan</div></footer>
+<script>
+(function(){
+  'use strict';
+  var allSites=[];
+  var grid=document.getElementById('sitesGrid');
+  var search=document.getElementById('siteSearch');
+  var category=document.getElementById('siteCategory');
+  var meta=document.getElementById('resultsMeta');
+
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
+  function render(){
+    var q=(search.value||'').trim().toLowerCase();
+    var cat=category.value||'';
+    var items=allSites.filter(function(site){
+      if(cat && site.category!==cat) return false;
+      if(!q) return true;
+      return [site.name,site.domain,site.category,site.description].concat(site.tags||[]).join(' ').toLowerCase().indexOf(q)!==-1;
+    });
+    meta.textContent=items.length+' website dipaparkan';
+    if(!items.length){grid.innerHTML='<div class="empty">Tiada website sepadan dengan carian ini.</div>';return;}
+    grid.innerHTML=items.map(function(site){
+      var tags=(site.tags||[]).map(function(t){return '<span class="tag">'+esc(t)+'</span>';}).join('');
+      return '<article class="site-card">'+
+        (site.badge?'<span class="badge">'+esc(site.badge)+'</span>':'')+
+        '<div class="site-top"><div class="site-icon" aria-hidden="true">SEO</div><div class="site-title"><h2>'+esc(site.name)+'</h2><div class="domain">'+esc(site.domain)+'</div></div></div>'+
+        '<span class="category">'+esc(site.category)+'</span>'+
+        '<p class="desc">'+esc(site.description)+'</p>'+
+        '<div class="tags">'+tags+'</div>'+
+        '<a class="open-btn" href="'+esc(site.url)+'" target="_blank" rel="noopener noreferrer">Buka Website <span aria-hidden="true">↗</span></a>'+
+      '</article>';
+    }).join('');
+  }
+  fetch('./websites.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(data){
+    allSites=Array.isArray(data)?data:[];
+    var cats=Array.from(new Set(allSites.map(function(x){return x.category;}).filter(Boolean))).sort();
+    cats.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;category.appendChild(o);});
+    render();
+  }).catch(function(){grid.innerHTML='<div class="empty">Senarai Web Pilihan gagal dimuatkan. Cuba refresh halaman.</div>';meta.textContent='Gagal memuatkan senarai.';});
+  search.addEventListener('input',render);category.addEventListener('change',render);
+})();
+</script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=957"></script>
+<script src="/assets/js/azobss-pro-ui.js" defer></script>
+</body>
+</html>
