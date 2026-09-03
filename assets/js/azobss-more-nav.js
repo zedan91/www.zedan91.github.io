@@ -1,4 +1,4 @@
-/* AZOBSS 1061: Web Pilihan direct tab + More + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
+/* AZOBSS 1062: Web Picks compact English tab + More + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
 (function () {
   'use strict';
 
@@ -567,9 +567,9 @@
 
       var webLink = document.createElement('a');
       webLink.href = '/Web-Pilihan/';
-      webLink.textContent = 'Web Pilihan';
-      webLink.title = 'Website dan tools berguna pilihan AZOBSS';
-      webLink.setAttribute('aria-label', 'Web Pilihan');
+      webLink.textContent = 'Web Picks';
+      webLink.title = 'Useful websites and tools curated by AZOBSS';
+      webLink.setAttribute('aria-label', 'Web Picks');
       webLink.dataset.azWebPilihanLink = '1';
       webLink.className = 'az-web-pilihan-link';
       if (isWebPilihan) {
