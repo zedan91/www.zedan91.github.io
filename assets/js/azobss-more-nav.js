@@ -1,4 +1,4 @@
-/* AZOBSS 1062: Web Picks compact English tab + More + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
+/* AZOBSS 1063: Web Picks moved inside More dropdown + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
 (function () {
   'use strict';
 
@@ -25,6 +25,9 @@
     var isWebsiteSection = currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0;
     var tvPath = normalisePath('/AZOBSSTV/');
     var isTvSection = currentPath === tvPath || currentPath.indexOf(tvPath + '/') === 0;
+    var webPicksPath = normalisePath('/Web-Pilihan/');
+    var isWebPicksSection = currentPath === webPicksPath || currentPath.indexOf(webPicksPath + '/') === 0;
+    var webPicksSourceLink = nav.querySelector('a[data-az-web-pilihan-link="1"], a[href="/Web-Pilihan/"], a[href="/Web-Pilihan"]');
     var websiteSourceLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
     var tvSourceLink = nav.querySelector('a[data-azobsstv-link="1"], a[href="/AZOBSSTV/"], a[href="/AZOBSSTV"]');
     var inheritedActive = link.classList.contains('is-active') ||
@@ -42,7 +45,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isTvSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
+    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isTvSection || isWebPicksSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -91,6 +94,26 @@
         '<rect x="14" y="14" width="7" height="7" rx="1.5"></rect>' +
       '</svg>' +
       '<span>Mini Web Tools</span>';
+
+    var webPicksLink = document.createElement('a');
+    webPicksLink.href = webPicksSourceLink ? (webPicksSourceLink.getAttribute('href') || '/Web-Pilihan/') : '/Web-Pilihan/';
+    webPicksLink.setAttribute('role', 'menuitem');
+    webPicksLink.dataset.azWebPilihanLink = '1';
+    webPicksLink.title = 'Useful websites and tools curated by AZOBSS';
+    webPicksLink.setAttribute('aria-label', 'Web Picks');
+    if (isWebPicksSection || (webPicksSourceLink && (
+      webPicksSourceLink.classList.contains('is-active') ||
+      webPicksSourceLink.classList.contains('is-current') ||
+      webPicksSourceLink.classList.contains('market-nav-active')
+    ))) {
+      webPicksLink.classList.add('market-nav-active', 'is-active', 'is-current');
+      webPicksLink.setAttribute('aria-current', 'page');
+    }
+    webPicksLink.innerHTML = '' +
+      '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<path d="M5 4h14v16l-7-4-7 4z"></path>' +
+      '</svg>' +
+      '<span>Web Picks</span>';
 
     var soundLink = document.createElement('a');
     soundLink.href = '/Sound-Effects/';
@@ -155,6 +178,7 @@
 
     dropdown.appendChild(tvLink);
     dropdown.appendChild(toolsLink);
+    dropdown.appendChild(webPicksLink);
     dropdown.appendChild(soundLink);
     dropdown.appendChild(websiteLink);
     dropdown.appendChild(foodLink);
@@ -164,6 +188,7 @@
     link.dataset.azMoreConverted = '1';
     link.replaceWith(wrap);
     if (websiteSourceLink && websiteSourceLink.isConnected) websiteSourceLink.remove();
+    if (webPicksSourceLink && webPicksSourceLink.isConnected) webPicksSourceLink.remove();
     if (tvSourceLink && tvSourceLink.isConnected) tvSourceLink.remove();
     nav.classList.add('az-more-enabled');
 
@@ -262,6 +287,10 @@
     });
 
     tvLink.addEventListener('click', function () {
+      setOpen(false);
+    });
+
+    webPicksLink.addEventListener('click', function () {
       setOpen(false);
     });
 
@@ -552,46 +581,61 @@
     var isWebPilihan = currentPath === webPilihanPath || currentPath.indexOf(webPilihanPath + '/') === 0;
 
     document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
-      var existingLink = nav.querySelector(':scope > a[data-az-web-pilihan-link="1"], :scope > a[href="/Web-Pilihan/"], :scope > a[href="/Web-Pilihan"]');
-      if (existingLink) {
-        existingLink.dataset.azWebPilihanLink = '1';
-        if (isWebPilihan) {
-          existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
-          existingLink.setAttribute('aria-current', 'page');
-        } else {
-          existingLink.classList.remove('market-nav-active', 'is-active', 'is-current');
-          existingLink.removeAttribute('aria-current');
-        }
-        return;
-      }
-
-      var webLink = document.createElement('a');
-      webLink.href = '/Web-Pilihan/';
-      webLink.textContent = 'Web Picks';
-      webLink.title = 'Useful websites and tools curated by AZOBSS';
-      webLink.setAttribute('aria-label', 'Web Picks');
-      webLink.dataset.azWebPilihanLink = '1';
-      webLink.className = 'az-web-pilihan-link';
-      if (isWebPilihan) {
-        webLink.classList.add('market-nav-active', 'is-active', 'is-current');
-        webLink.setAttribute('aria-current', 'page');
-      }
-
+      var topLink = nav.querySelector(':scope > a[data-az-web-pilihan-link="1"], :scope > a[href="/Web-Pilihan/"], :scope > a[href="/Web-Pilihan"]');
       var moreWrap = nav.querySelector(':scope > .az-more-nav[data-az-more-menu="1"]');
-      if (moreWrap) {
-        nav.insertBefore(webLink, moreWrap);
+      var dropdown = moreWrap && moreWrap.querySelector(':scope > .az-more-dropdown');
+
+      if (dropdown) {
+        var webLink = dropdown.querySelector('a[data-az-web-pilihan-link="1"], a[href="/Web-Pilihan/"], a[href="/Web-Pilihan"]');
+        if (!webLink) {
+          webLink = document.createElement('a');
+          webLink.href = '/Web-Pilihan/';
+          webLink.setAttribute('role', 'menuitem');
+          webLink.dataset.azWebPilihanLink = '1';
+          webLink.title = 'Useful websites and tools curated by AZOBSS';
+          webLink.setAttribute('aria-label', 'Web Picks');
+          webLink.innerHTML = '' +
+            '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+              '<path d="M5 4h14v16l-7-4-7 4z"></path>' +
+            '</svg>' +
+            '<span>Web Picks</span>';
+          var toolsLink = dropdown.querySelector('a[data-az-more-tools-link="1"]');
+          if (toolsLink) toolsLink.insertAdjacentElement('afterend', webLink);
+          else dropdown.appendChild(webLink);
+          webLink.addEventListener('click', function () {
+            moreWrap.classList.remove('is-open');
+            var trigger = moreWrap.querySelector(':scope > .az-more-trigger');
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
+          });
+        }
+
+        webLink.dataset.azWebPilihanLink = '1';
+        if (isWebPilihan) {
+          webLink.classList.add('market-nav-active', 'is-active', 'is-current');
+          webLink.setAttribute('aria-current', 'page');
+          var moreTrigger = moreWrap.querySelector(':scope > .az-more-trigger');
+          if (moreTrigger) moreTrigger.classList.add('market-nav-active', 'is-active', 'is-current');
+        } else {
+          webLink.classList.remove('market-nav-active', 'is-active', 'is-current');
+          webLink.removeAttribute('aria-current');
+        }
+        if (topLink && topLink.isConnected) topLink.remove();
         return;
       }
 
-      var luckyLink = Array.prototype.find.call(nav.querySelectorAll(':scope > a[href]'), function (candidate) {
-        try {
-          return normalisePath(new URL(candidate.getAttribute('href'), window.location.href).pathname).toLowerCase() === '/lucky-draw';
-        } catch (error) {
-          return false;
-        }
-      });
-      if (luckyLink) luckyLink.insertAdjacentElement('afterend', webLink);
-      else nav.appendChild(webLink);
+      // Legacy fallback: keep a temporary direct link until buildMoreMenu converts Mini Web Tools into More.
+      if (!topLink) {
+        topLink = document.createElement('a');
+        topLink.href = '/Web-Pilihan/';
+        topLink.textContent = 'Web Picks';
+        topLink.title = 'Useful websites and tools curated by AZOBSS';
+        topLink.dataset.azWebPilihanLink = '1';
+        nav.appendChild(topLink);
+      }
+      if (isWebPilihan) {
+        topLink.classList.add('market-nav-active', 'is-active', 'is-current');
+        topLink.setAttribute('aria-current', 'page');
+      }
     });
   }
 
