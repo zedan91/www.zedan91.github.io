@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 1058: website auto invoice/receipt safe admin status + payment-method overrides; verified gateway state is preserved separately */
+/* AZOBSS PATCH 1064: Manual Invoice registered-customer autocomplete + existing safe website invoice/receipt overrides */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, doc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1058;
+window.__azSalesReceiptsModuleVersion=1064;
 
 let manualRows=[];
 let websiteRows=[];
@@ -42,12 +42,143 @@ const toyyibInvoicePromiseById=new Map();
 const receiptDeliveryStateByKey=new Map();
 const autoInvoiceEditByKey=new Map();
 
+/* PATCH 1064: registered customer lookup for Create Manual Invoice */
+const REGISTERED_CUSTOMER_LOOKUP_LIMIT=500;
+let registeredCustomerCache=[];
+let registeredCustomerLoaded=false;
+let registeredCustomerLoadPromise=null;
+let registeredCustomerMatches=[];
+let registeredCustomerActiveIndex=-1;
+
 const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const num=v=>{const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0};
 const money=v=>'RM'+num(v).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
 const clampMoney=v=>Math.round(Math.max(0,num(v))*100)/100;
 const validCustomerEmail=value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value||'').trim().toLowerCase());
+
+
+function registeredCustomerText(value){return String(value??'').trim()}
+function registeredCustomerEmail(data={}){
+  return registeredCustomerText(data.email||data.authEmail||data.realEmail||data.customerEmail).toLowerCase();
+}
+function registeredCustomerPhone(data={}){
+  return registeredCustomerText(data.phone||data.phoneNumber||data.customerPhone||data.mobile||data.mobileNumber);
+}
+function registeredCustomerUsername(data={},docId=''){
+  return registeredCustomerText(data.username||data.usernameKey||data.userName||data.memberName||docId);
+}
+function registeredCustomerName(data={},docId=''){
+  return registeredCustomerText(
+    data.fullName||data.name||data.displayName||data.profileName||data.customerName||
+    data.realName||data.username||data.usernameKey||data.email||data.authEmail||docId
+  );
+}
+function normalizeRegisteredCustomer(docSnap){
+  const data=docSnap?.data?.()||{};
+  const docId=registeredCustomerText(docSnap?.id);
+  const name=registeredCustomerName(data,docId);
+  const username=registeredCustomerUsername(data,docId);
+  const phone=registeredCustomerPhone(data);
+  const email=registeredCustomerEmail(data);
+  return {
+    docId,name,username,phone,email,
+    search:[name,username,phone,email,data.displayName,data.fullName,data.realName,data.customerName]
+      .map(v=>registeredCustomerText(v).toLowerCase()).filter(Boolean).join(' ')
+  };
+}
+async function loadRegisteredCustomerLookup({force=false}={}){
+  if(registeredCustomerLoaded&&!force)return registeredCustomerCache;
+  if(registeredCustomerLoadPromise&&!force)return registeredCustomerLoadPromise;
+  registeredCustomerLoadPromise=(async()=>{
+    try{
+      const snap=await getDocs(query(collection(db,'users'),limit(REGISTERED_CUSTOMER_LOOKUP_LIMIT)));
+      registeredCustomerCache=snap.docs
+        .map(normalizeRegisteredCustomer)
+        .filter(row=>row.name||row.username||row.phone||row.email)
+        .sort((a,b)=>(a.name||a.username).localeCompare(b.name||b.username,undefined,{sensitivity:'base'}));
+      registeredCustomerLoaded=true;
+      return registeredCustomerCache;
+    }catch(error){
+      console.warn('Registered customer lookup failed:',error);
+      registeredCustomerLoaded=false;
+      return [];
+    }finally{
+      registeredCustomerLoadPromise=null;
+    }
+  })();
+  return registeredCustomerLoadPromise;
+}
+function hideRegisteredCustomerSuggestions(){
+  const box=el('salesReceiptCustomerSuggestions');
+  if(box){box.hidden=true;box.innerHTML=''}
+  registeredCustomerMatches=[];
+  registeredCustomerActiveIndex=-1;
+}
+function registeredCustomerMatchRows(rawQuery){
+  const q=registeredCustomerText(rawQuery).toLowerCase();
+  if(!q)return [];
+  return registeredCustomerCache
+    .filter(row=>row.search.includes(q))
+    .sort((a,b)=>{
+      const an=(a.name||'').toLowerCase(),bn=(b.name||'').toLowerCase();
+      const au=(a.username||'').toLowerCase(),bu=(b.username||'').toLowerCase();
+      const ar=an===q?0:an.startsWith(q)?1:au===q?2:au.startsWith(q)?3:4;
+      const br=bn===q?0:bn.startsWith(q)?1:bu===q?2:bu.startsWith(q)?3:4;
+      return ar-br||an.localeCompare(bn);
+    })
+    .slice(0,8);
+}
+function renderRegisteredCustomerSuggestions(){
+  const input=el('salesReceiptCustomerName');
+  const box=el('salesReceiptCustomerSuggestions');
+  if(!input||!box||editingMode!=='manual'){hideRegisteredCustomerSuggestions();return}
+  const q=registeredCustomerText(input.value);
+  if(!q){hideRegisteredCustomerSuggestions();return}
+  if(!registeredCustomerLoaded){
+    box.innerHTML='<div class="az-sr-customer-suggestion-empty">Loading registered users...</div>';
+    box.hidden=false;
+    return;
+  }
+  registeredCustomerMatches=registeredCustomerMatchRows(q);
+  registeredCustomerActiveIndex=-1;
+  if(!registeredCustomerMatches.length){
+    box.innerHTML='<div class="az-sr-customer-suggestion-empty">No registered user found.</div>';
+    box.hidden=false;
+    return;
+  }
+  box.innerHTML=registeredCustomerMatches.map((row,index)=>{
+    const meta=[row.phone,row.email].filter(Boolean).join(' • ');
+    const username=row.username&&row.username!==row.name?row.username:'';
+    return `<button type="button" class="az-sr-customer-suggestion" data-sr-customer-index="${index}">
+      <b>${esc(row.name||row.username||'Registered user')}</b>
+      ${username?`<span class="az-sr-customer-user">@${esc(username)}</span>`:'<span></span>'}
+      <small>${esc(meta||'Registered AZOBSS user')}</small>
+    </button>`;
+  }).join('');
+  box.hidden=false;
+}
+function setRegisteredCustomerActive(index){
+  const box=el('salesReceiptCustomerSuggestions');
+  if(!box||box.hidden||!registeredCustomerMatches.length)return;
+  registeredCustomerActiveIndex=Math.max(0,Math.min(index,registeredCustomerMatches.length-1));
+  box.querySelectorAll('[data-sr-customer-index]').forEach((node,i)=>node.classList.toggle('is-active',i===registeredCustomerActiveIndex));
+  box.querySelector(`[data-sr-customer-index="${registeredCustomerActiveIndex}"]`)?.scrollIntoView({block:'nearest'});
+}
+function selectRegisteredCustomer(index){
+  const row=registeredCustomerMatches[Number(index)];
+  if(!row)return;
+  if(el('salesReceiptCustomerName'))el('salesReceiptCustomerName').value=row.name||row.username||'';
+  if(el('salesReceiptCustomerPhone'))el('salesReceiptCustomerPhone').value=row.phone||'';
+  if(el('salesReceiptCustomerEmail'))el('salesReceiptCustomerEmail').value=row.email||'';
+  hideRegisteredCustomerSuggestions();
+  el('salesReceiptCustomerPhone')?.focus();
+}
+async function onRegisteredCustomerInput(){
+  if(editingMode!=='manual'){hideRegisteredCustomerSuggestions();return}
+  if(!registeredCustomerLoaded)await loadRegisteredCustomerLookup();
+  renderRegisteredCustomerSuggestions();
+}
 
 function notify(message,error=false){
   let n=el('azSalesReceiptNotice');
@@ -775,9 +906,12 @@ function openForm(row=null){
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
-  const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);configureFormMode(row);recalcForm();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
+  const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);configureFormMode(row);recalcForm();hideRegisteredCustomerSuggestions();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';
+  if(editingMode==='manual')loadRegisteredCustomerLookup().catch(()=>{});
+  setTimeout(()=>el('salesReceiptCustomerName')?.focus(),50);
 }
 function closeForm(){
+  hideRegisteredCustomerSuggestions();
   el('salesReceiptDialog').hidden=true;document.body.style.overflow='';editingDocId='';editingOriginalStatus='';editingInvoiceNo='';editingReceiptNo='';editingSourceBookingId='';editingSourceBookingSnapshot=null;editingMode='manual';editingWebsiteRowId='';editingAutoTargetKey='';editingAutoOverrideDocId='';configureFormMode();
 }
 async function saveWebsiteEditForm(){
@@ -1252,6 +1386,24 @@ function bind(){
   el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',()=>loadData({force:true}));el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
   el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
   el('salesReceiptBulkDownload')?.addEventListener('click',e=>bulkDownloadSelected(e.currentTarget));el('salesReceiptBulkCopyLink')?.addEventListener('click',e=>bulkCopyLinkSelected(e.currentTarget));el('salesReceiptBulkShare')?.addEventListener('click',openBulkSharePanel);el('salesReceiptBulkDelete')?.addEventListener('click',e=>bulkDeleteSelected(e.currentTarget));
+  const customerNameInput=el('salesReceiptCustomerName');
+  customerNameInput?.addEventListener('focus',()=>{if(editingMode==='manual'){loadRegisteredCustomerLookup().then(renderRegisteredCustomerSuggestions).catch(()=>{})}});
+  customerNameInput?.addEventListener('input',()=>{onRegisteredCustomerInput().catch(()=>{})});
+  customerNameInput?.addEventListener('keydown',e=>{
+    const box=el('salesReceiptCustomerSuggestions');
+    if(!box||box.hidden||!registeredCustomerMatches.length)return;
+    if(e.key==='ArrowDown'){e.preventDefault();setRegisteredCustomerActive(registeredCustomerActiveIndex<0?0:registeredCustomerActiveIndex+1)}
+    else if(e.key==='ArrowUp'){e.preventDefault();setRegisteredCustomerActive(registeredCustomerActiveIndex<=0?registeredCustomerMatches.length-1:registeredCustomerActiveIndex-1)}
+    else if(e.key==='Enter'&&registeredCustomerActiveIndex>=0){e.preventDefault();selectRegisteredCustomer(registeredCustomerActiveIndex)}
+    else if(e.key==='Escape'){hideRegisteredCustomerSuggestions()}
+  });
+  el('salesReceiptCustomerSuggestions')?.addEventListener('pointerdown',e=>{
+    const button=e.target.closest('[data-sr-customer-index]');if(!button)return;
+    e.preventDefault();selectRegisteredCustomer(button.dataset.srCustomerIndex);
+  });
+  document.addEventListener('pointerdown',e=>{
+    if(!e.target.closest('.az-sr-customer-lookup'))hideRegisteredCustomerSuggestions();
+  });
   el('salesReceiptAddItem')?.addEventListener('click',()=>addItemRow({category:'other',name:'',qty:1,unitPrice:0,unitCost:0}));el('salesReceiptDialogClose')?.addEventListener('click',closeForm);el('salesReceiptCancel')?.addEventListener('click',closeForm);el('salesReceiptSave')?.addEventListener('click',saveForm);el('salesReceiptDialog')?.addEventListener('click',e=>{if(e.target===el('salesReceiptDialog')){e.preventDefault();e.stopPropagation()}});
   el('salesReceiptShareClose')?.addEventListener('click',closeSharePanel);el('salesReceiptSharePanel')?.addEventListener('click',e=>{if(e.target===el('salesReceiptSharePanel')){closeSharePanel();return}const action=e.target.closest('[data-sr-share-action]');if(action)runSharePanelAction(action.dataset.srShareAction,action)});
   ['salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptCommission','salesReceiptOtherCost'].forEach(id=>el(id)?.addEventListener('input',recalcForm));

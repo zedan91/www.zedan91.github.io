@@ -1,0 +1,13 @@
+{
+  "version": "1.0.1064",
+  "patch": "Manual Invoice Registered Customer Autocomplete",
+  "scope": "Admin > Sales & Receipts > Create/Edit Manual Invoice",
+  "changes": [
+    "Customer Name searches registered Firestore users.",
+    "Search matches name, username, phone and email.",
+    "Selecting a user fills Customer Name, Phone and Email.",
+    "Keyboard navigation supports Arrow Up/Down and Enter.",
+    "Lookup applies only to manual invoice/receipt mode.",
+    "Payment, ToyyibPay, accounting totals, invoice numbering and backend logic are unchanged."
+  ]
+}

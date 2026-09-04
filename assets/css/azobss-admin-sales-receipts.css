@@ -669,3 +669,26 @@
   text-overflow:clip!important;
   text-align:center!important;
 }
+
+
+/* AZOBSS PATCH 1064: Manual Invoice registered-customer autocomplete */
+.az-sr-customer-lookup{position:relative;min-width:0}
+.az-sr-customer-lookup>input{display:block}
+.az-sr-customer-suggestions{
+  position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:40;
+  max-height:260px;overflow:auto;padding:5px;
+  background:#07111f;border:1px solid rgba(56,189,248,.38);
+  border-radius:12px;box-shadow:0 18px 45px rgba(0,0,0,.55);
+  text-transform:none;letter-spacing:normal
+}
+.az-sr-customer-suggestions[hidden]{display:none!important}
+.az-sr-customer-suggestion{
+  width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;
+  align-items:center;text-align:left;padding:9px 10px;border:0;border-radius:9px;
+  background:transparent;color:#e5eefb;cursor:pointer
+}
+.az-sr-customer-suggestion:hover,.az-sr-customer-suggestion.is-active{background:#10233a}
+.az-sr-customer-suggestion b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#f8fafc}
+.az-sr-customer-suggestion small{grid-column:1/-1;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:600;color:#93a9c5;text-transform:none;letter-spacing:0}
+.az-sr-customer-suggestion .az-sr-customer-user{font-size:10px;font-weight:800;color:#7dd3fc;white-space:nowrap}
+.az-sr-customer-suggestion-empty{padding:10px;color:#8ca3bd;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0}
