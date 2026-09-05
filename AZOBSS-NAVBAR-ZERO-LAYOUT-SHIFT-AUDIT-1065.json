@@ -1,0 +1,21 @@
+{
+  "version": "1.0.1065",
+  "patch": "Navbar Zero Layout Shift / Single Auth Owner",
+  "baseline": "1.0.1064",
+  "html_pages_patched": 26,
+  "changes": [
+    "azobss-global-auth.js is the sole navbar visibility/state owner.",
+    "Duplicate syncHeader mutations in azobss-firebase-live-likes-sync.js are suppressed when global auth is present.",
+    "Cached auth and PA/BM state is applied before first paint to reduce login/navbar flashing.",
+    "PA/BM and Ukur Tanah use the same fixed visual width to prevent neighboring buttons shifting.",
+    "Public PA link is no longer detached/reinserted when already in the correct location.",
+    "Existing v1064 Manual Invoice customer autocomplete is preserved."
+  ],
+  "not_changed": [
+    "Payment/ToyyibPay",
+    "Sales & Receipts calculations",
+    "Firestore data model",
+    "Backend",
+    "PA/BM permission logic after global auth synchronization"
+  ]
+}

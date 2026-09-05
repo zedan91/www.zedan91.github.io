@@ -1,4 +1,7 @@
 /* AZOBSS core stability fix 036 */
+
+/* AZOBSS NAVBAR SINGLE OWNER 1065 */
+window.__AZOBSS_NAVBAR_OWNER__='global-auth';
 window.__azobssSafeRealEmail = window.__azobssSafeRealEmail || '';
 
 // AZOBSS: Load Google reCAPTCHA in explicit mode so multiple widgets inside the auth modal can be tracked reliably.
@@ -1537,7 +1540,11 @@ function azobssEnsurePublicPaNavButtons(){
         || String(a.textContent || '').trim().toLowerCase() === 'software';
     });
     if(software){
-      nav.insertBefore(link, software);
+      // v1065: do not detach/reinsert an already-correct navbar node.
+      // Repeated insertBefore() calls can trigger visible navbar reflow.
+      if(link.parentElement !== nav || link.nextElementSibling !== software){
+        nav.insertBefore(link, software);
+      }
     }else if(!link.isConnected || link.parentElement !== nav){
       nav.appendChild(link);
     }
@@ -1586,6 +1593,9 @@ function syncHeader(user){
     if (tools) tools.style.removeProperty('display');
     document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
   }
+  try{
+    document.documentElement.setAttribute('data-azobss-nav-synced','1');
+  }catch(_e){}
 }
 
 function openSiteAuth(mode='signin'){

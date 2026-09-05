@@ -1,6 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style id="azobss-navbar-prepaint-style-1065">
+.market-nav .nav-pa-bm-link,
+.market-nav .nav-public-pa-link{
+  width:86px!important;min-width:86px!important;max-width:86px!important;
+  padding-left:8px!important;padding-right:8px!important;
+  justify-content:center!important;box-sizing:border-box!important;
+}
+html[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
+html[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
+html[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
+html[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
+html[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+html[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+.market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
+</style>
+<script id="azobss-navbar-prepaint-1065">
+(function(){
+  try{
+    function parse(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
+    var u=parse(sessionStorage.getItem('azobssCurrentUser'))||
+          parse(localStorage.getItem('azobssCurrentUser'))||
+          parse(sessionStorage.getItem('azobssUser'))||
+          parse(localStorage.getItem('azobssUser'));
+    var html=document.documentElement;
+    var auth=!!u;
+    var key=String(u&&(u.usernameKey||u.username||u.name)||'').trim().toLowerCase();
+    var email=String(u&&(u.email||u.authEmail)||'').trim().toLowerCase();
+    var role=String(u&&(u.role||u.userRole||u.accountRole||u.staffRole)||'').trim().toLowerCase();
+    var isAdmin=!!u&&(role==='admin'||key==='zedan91'||key==='zedan9107'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com');
+    function truthy(v){
+      if(v===true||v===1)return true;
+      return ['true','yes','y','1','allow','allowed','on','enabled','enable'].indexOf(String(v==null?'':v).trim().toLowerCase())>=0;
+    }
+    var adminManaged=!!u&&(u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
+    var adminAllowed=adminManaged&&(
+      truthy(u.adminPaBmAllowed)||truthy(u.paBmAccess)||truthy(u.paBmAllowed)||
+      truthy(u.allowPABM)||truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||
+      truthy(u.paBmTabAllowed)||truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)
+    );
+    var flagAllowed=!!u&&(
+      truthy(u.paBmAccess)||truthy(u.paBmAllowed)||truthy(u.allowPABM)||
+      truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||truthy(u.paBmTabAllowed)||
+      truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)||truthy(u.paAccess)
+    );
+    var codes=[
+      u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
+      u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
+    ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
+    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var roleFlat=role.replace(/[\s_-]+/g,'');
+    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicPa=!pa&&!isAdmin&&!publicBlocked;
+    html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
+    html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
+    html.setAttribute('data-azobss-pre-publicpa',publicPa?'1':'0');
+  }catch(_e){}
+})();
+</script>
+
   <script src="/assets/js/azobss-render-wake.js?v=1056"></script>
 
 <!-- AZOBSS favicon and app icons -->
@@ -29,7 +100,7 @@ body{margin:0;background:#07111f;color:#fff;font-family:system-ui,Segoe UI,Arial
 </style>
 
 
-<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css">
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css?v=1065">
 <link rel="stylesheet" href="/assets/css/style.css">
 
 <style id="azobss-admin-whatsapp-clean-hide-css">
@@ -1286,8 +1357,8 @@ onAuthStateChanged(auth,async u=>{
  overview();
 });
 </script>
-<script type="module" src="/assets/js/azobss-global-auth.js?v=915"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=614"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1065"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1065"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script type="module" src="/assets/js/azobss-cart-bell-global.js"></script>

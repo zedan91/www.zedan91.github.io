@@ -1179,6 +1179,9 @@ function showAccessDeniedMessage(){
 }
 
 function syncHeader(user){
+  // v1065: azobss-global-auth.js is the single navbar owner.
+  // This legacy copy must not hide/show/reflow navbar elements a second time.
+  if(document.querySelector('script[src*="azobss-global-auth.js"]')) return;
   const authActions = $('siteAuthActions');
   const tools = $('marketUserTools');
   const name = $('signedInName');
