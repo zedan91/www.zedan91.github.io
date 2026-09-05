@@ -1,0 +1,25 @@
+{
+  "version": "1.0.1069",
+  "baseline": "1.0.1068",
+  "patch": "Invoice Exact Alignment + Neutral Colour Balance",
+  "fixes": [
+    "PDF text width measurement now uses exact Helvetica and Helvetica-Bold ASCII metrics instead of rough character estimates.",
+    "NO. values are visually centered correctly, including digit 1.",
+    "QTY values are visually centered correctly.",
+    "CATEGORY remains centered.",
+    "UNIT PRICE and AMOUNT use accurate right alignment.",
+    "DESCRIPTION remains left aligned.",
+    "AMOUNT values changed from saturated green to dark neutral text.",
+    "Totals box changed from green fill/border to neutral light grey/white styling.",
+    "TOTAL PAYABLE changed from strong green to dark neutral text.",
+    "NOTES box changed from yellow/orange to white with light grey border.",
+    "Maybank QR/payment card remains neutral white.",
+    "Semantic Pending status colour and AZOBSS brand accent remain."
+  ],
+  "validation": {
+    "javascript_syntax": "passed for PDF and Sales & Receipts modules",
+    "sample_invoice": "rendered as one-page A4 PDF at 200 DPI",
+    "visual_check": "NO., QTY, CATEGORY, UNIT PRICE and AMOUNT alignment verified",
+    "render_compare": "v1068 vs v1069 visual comparison completed"
+  }
+}

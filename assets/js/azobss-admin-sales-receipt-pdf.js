@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 1067: Maybank payment method + static Maybank QR for Pending manual invoices */
+/* AZOBSS PATCH 1069: exact table alignment + neutral invoice colour balance */
 (function(global){
   'use strict';
 
@@ -97,17 +97,17 @@
     return {bg:[254,226,226],border:[239,68,68],text:[153,27,27]};
   }
   function rgb(r,g,b){ return `${(r/255).toFixed(3)} ${(g/255).toFixed(3)} ${(b/255).toFixed(3)}`; }
+  const HELVETICA_WIDTHS={" ":278,"!":278,"\"":355,"#":556,"$":556,"%":889,"&":667,"'":191,"(":333,")":333,"*":389,"+":584,",":278,"-":333,".":278,"/":278,"0":556,"1":556,"2":556,"3":556,"4":556,"5":556,"6":556,"7":556,"8":556,"9":556,":":278,";":278,"<":584,"=":584,">":584,"?":556,"@":1015,"A":667,"B":667,"C":722,"D":722,"E":667,"F":611,"G":778,"H":722,"I":278,"J":500,"K":667,"L":556,"M":833,"N":722,"O":778,"P":667,"Q":778,"R":722,"S":667,"T":611,"U":722,"V":667,"W":944,"X":667,"Y":667,"Z":611,"[":278,"\\":278,"]":278,"^":469,"_":556,"`":333,"a":556,"b":556,"c":500,"d":556,"e":556,"f":278,"g":556,"h":556,"i":222,"j":222,"k":500,"l":222,"m":833,"n":556,"o":556,"p":556,"q":556,"r":333,"s":500,"t":278,"u":556,"v":500,"w":722,"x":500,"y":500,"z":500,"{":334,"|":260,"}":334,"~":584};
+  const HELVETICA_BOLD_WIDTHS={" ":278,"!":333,"\"":474,"#":556,"$":556,"%":889,"&":722,"'":238,"(":333,")":333,"*":389,"+":584,",":278,"-":333,".":278,"/":278,"0":556,"1":556,"2":556,"3":556,"4":556,"5":556,"6":556,"7":556,"8":556,"9":556,":":333,";":333,"<":584,"=":584,">":584,"?":611,"@":975,"A":722,"B":722,"C":722,"D":722,"E":667,"F":611,"G":778,"H":722,"I":278,"J":556,"K":722,"L":611,"M":833,"N":722,"O":778,"P":667,"Q":778,"R":722,"S":667,"T":611,"U":722,"V":667,"W":944,"X":667,"Y":667,"Z":611,"[":333,"\\":278,"]":333,"^":584,"_":556,"`":333,"a":556,"b":611,"c":556,"d":611,"e":556,"f":333,"g":611,"h":611,"i":278,"j":278,"k":556,"l":278,"m":889,"n":611,"o":611,"p":611,"q":611,"r":389,"s":556,"t":333,"u":611,"v":556,"w":778,"x":556,"y":556,"z":500,"{":389,"|":280,"}":389,"~":584};
   function estimateWidth(value,size,bold){
-    const textValue=ascii(value); let units=0;
+    const textValue=ascii(value);
+    const widths=bold?HELVETICA_BOLD_WIDTHS:HELVETICA_WIDTHS;
+    let units=0;
     for(const ch of textValue){
-      if(ch===' ') units+=0.28;
-      else if(/[ilI1.,:;'|]/.test(ch)) units+=0.27;
-      else if(/[mwMW@%&]/.test(ch)) units+=0.82;
-      else if(/[A-Z]/.test(ch)) units+=0.62;
-      else if(/[0-9]/.test(ch)) units+=0.56;
-      else units+=0.52;
+      if(ch==='\n'||ch==='\r'||ch==='\t')continue;
+      units+=Number(widths[ch]||556);
     }
-    return units*size*(bold?1.035:1);
+    return (units/1000)*size;
   }
   function wrapText(value,maxWidth,size,bold){
     const source=ascii(value)||'-'; const lines=[]; const paragraphs=source.split(/\r?\n/);
@@ -276,7 +276,7 @@
     text(commands,categoryLabel(item.category),tableX(2)+(TABLE.widths[2]/2),centeredBaseline(y,h,7.8),{size:7.8,align:'center',color:[51,65,85]});
     text(commands,formatQty(item.qty),tableX(3)+(TABLE.widths[3]/2),centeredBaseline(y,h,8.8),{size:8.8,bold:true,align:'center'});
     text(commands,money(item.unitPrice),tableX(4)+TABLE.widths[4]-7,centeredBaseline(y,h,8.1),{size:8.1,align:'right'});
-    text(commands,money(item.amount),tableX(5)+TABLE.widths[5]-7,centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'right',color:[4,120,87]});
+    text(commands,money(item.amount),tableX(5)+TABLE.widths[5]-7,centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'right',color:[15,23,42]});
     return y+h;
   }
   function totalLines(row,type){
@@ -290,13 +290,13 @@
   function drawTotals(commands,row,y,type,options){
     const opts=options||{};
     const lines=totalLines(row,type),boxW=Number.isFinite(opts.width)?opts.width:260,boxX=Number.isFinite(opts.x)?opts.x:(PAGE_W-MARGIN_X-boxW),boxH=totalsBoxHeight(row,type);
-    fillRect(commands,boxX,y,boxW,boxH,[236,253,245]); strokeRect(commands,boxX,y,boxW,boxH,[16,185,129],0.9);
+    fillRect(commands,boxX,y,boxW,boxH,[248,250,252]); strokeRect(commands,boxX,y,boxW,boxH,[203,213,225],0.8);
     lines.forEach((entry,index)=>{
       const last=index===lines.length-1,yy=y+20+(index*24);
-      if(last) line(commands,boxX+12,yy-14,boxX+boxW-12,yy-14,[110,231,183],0.9);
-      text(commands,entry[0],boxX+14,yy,{size:last?10:8.5,bold:last,color:last?[6,95,70]:[51,65,85]});
+      if(last) line(commands,boxX+12,yy-14,boxX+boxW-12,yy-14,[203,213,225],0.8);
+      text(commands,entry[0],boxX+14,yy,{size:last?10:8.5,bold:last,color:[51,65,85]});
       const amount=entry[1]; const display=amount<0?`- ${money(Math.abs(amount))}`:money(amount);
-      text(commands,display,boxX+boxW-14,yy,{size:last?14:9.5,bold:true,align:'right',color:last?[4,120,87]:[15,23,42]});
+      text(commands,display,boxX+boxW-14,yy,{size:last?14:9.5,bold:true,align:'right',color:[15,23,42]});
     });
     return y+boxH;
   }
@@ -371,9 +371,9 @@
   function drawNotes(commands,row,y,preparedLayout){
     const layout=preparedLayout||notesLayout(row); if(!layout)return y;
     const h=layout.height;
-    fillRect(commands,MARGIN_X,y,CONTENT_W,h,[255,251,235]); strokeRect(commands,MARGIN_X,y,CONTENT_W,h,[245,158,11],0.75);
-    text(commands,'NOTES',MARGIN_X+12,y+19,{size:8,bold:true,color:[146,64,14]});
-    textLines(commands,layout.lines,MARGIN_X+12,y+36,{size:layout.size,lineHeight:layout.lineHeight,color:[69,26,3]});
+    fillRect(commands,MARGIN_X,y,CONTENT_W,h,[255,255,255]); strokeRect(commands,MARGIN_X,y,CONTENT_W,h,[203,213,225],0.75);
+    text(commands,'NOTES',MARGIN_X+12,y+19,{size:8,bold:true,color:[71,85,105]});
+    textLines(commands,layout.lines,MARGIN_X+12,y+36,{size:layout.size,lineHeight:layout.lineHeight,color:[55,65,81]});
     return y+h;
   }
   function addFooter(commands,pageNumber,pageCount,row,type){
