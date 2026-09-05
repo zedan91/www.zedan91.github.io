@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1064;
+window.__azSalesReceiptsModuleVersion=1067;
 
 let manualRows=[];
 let websiteRows=[];
@@ -694,7 +694,7 @@ function renderTable(){
       iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
-    if(r.source==='manual'&&docType==='invoice'&&normalizeStatus(r.status)==='pending')actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
+    if(r.source==='manual'&&docType==='invoice'&&normalizeStatus(r.status)==='pending'&&rowUsesToyyibPay(r))actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
     if(normalizeStatus(r.status)==='paid'){
       const nextSent=r.receiptSent===true?'0':'1';
       actions.push(iconActionButton(r.receiptSent===true?'deliverysent':'delivery',r.receiptSent===true?'Mark receipt as NOT SENT':'Mark receipt as SENT',`data-sr-receipt-sent-toggle="${rowId}" data-sr-next-sent="${nextSent}"`));
@@ -806,9 +806,24 @@ function addItemRow(item={}){
 function collectFormItems(){return [...document.querySelectorAll('#salesReceiptItems .az-sr-item-row')].map(row=>({category:row.querySelector('[data-sr-item-category]')?.value||'other',name:String(row.querySelector('[data-sr-item-name]')?.value||'').trim(),qty:num(row.querySelector('[data-sr-item-qty]')?.value)||1,unitPrice:num(row.querySelector('[data-sr-item-price]')?.value),unitCost:num(row.querySelector('[data-sr-item-cost]')?.value)}))}
 function formExtras(){return {discount:num(el('salesReceiptDiscount')?.value),shippingCharge:num(el('salesReceiptShippingCharge')?.value),shippingCost:num(el('salesReceiptShippingCost')?.value),paymentFee:num(el('salesReceiptPaymentFee')?.value),commission:num(el('salesReceiptCommission')?.value),otherCost:num(el('salesReceiptOtherCost')?.value)}}
 function manualFormUsesToyyibPay(){
-  const status=normalizeStatus(el('salesReceiptFormStatus')?.value);
-  const method=status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'');
+  const method=String(el('salesReceiptPaymentMethod')?.value||'');
   return /toyyib/i.test(method);
+}
+function paymentMethodIsMaybank(value){
+  return /^maybank$/i.test(String(value||'').trim());
+}
+function manualFormUsesMaybank(){
+  return paymentMethodIsMaybank(el('salesReceiptPaymentMethod')?.value);
+}
+function rowUsesToyyibPay(row={}){
+  return /toyyib/i.test(String(row.paymentMethod||row.verifiedPaymentMethod||''));
+}
+function rowUsesMaybank(row={}){
+  return paymentMethodIsMaybank(row.paymentMethod||row.verifiedPaymentMethod||'');
+}
+function pendingMaybankPaymentText(row={}){
+  if(documentKindForStatus(row.status)!=='invoice'||normalizeStatus(row.status)!=='pending'||!rowUsesMaybank(row))return '';
+  return 'Pay via Maybank: Ahmad Zaidan Bin Omar | Account: 162405194110 | QR is included in the invoice PDF.';
 }
 function syncManualPaymentFeeDefault(){
   if(editingMode==='website')return;
@@ -849,8 +864,8 @@ function configureFormMode(row=null){
     setFormControlLocked('salesReceiptPaymentMethod',false);
   }else{
     setFormControlLocked('salesReceiptFormStatus',false);
-    const pending=normalizeStatus(el('salesReceiptFormStatus')?.value)==='pending';
-    setFormControlLocked('salesReceiptPaymentMethod',pending,pending?'Pending manual invoices use ToyyibPay so the PDF can include a unique payment QR.':'');
+    // v1067: Pending manual invoices can use ToyyibPay OR Maybank.
+    setFormControlLocked('salesReceiptPaymentMethod',false);
   }
   const add=el('salesReceiptAddItem');if(add){add.hidden=website;add.disabled=website}
   document.querySelectorAll('#salesReceiptItems .az-sr-item-row').forEach(itemRow=>{
@@ -890,8 +905,11 @@ function syncFormDocumentMode(initial=false){
   if(el('salesReceiptSave'))el('salesReceiptSave').textContent='Save '+label;
   const paymentSelect=el('salesReceiptPaymentMethod');
   if(paymentSelect){
-    if(status==='pending'){paymentSelect.value='ToyyibPay';paymentSelect.disabled=true;paymentSelect.title='Pending invoices use ToyyibPay so the PDF can include a unique payment QR.'}
-    else{paymentSelect.disabled=false;paymentSelect.title=''}
+    paymentSelect.disabled=false;
+    paymentSelect.title='';
+    // New Pending invoices default to ToyyibPay, but an existing/admin-selected
+    // Maybank value is preserved.
+    if(status==='pending'&&!String(paymentSelect.value||'').trim())paymentSelect.value='ToyyibPay';
   }
   syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();configureFormMode();
 }
@@ -902,7 +920,7 @@ function openForm(row=null){
   editingAutoOverrideDocId=editingMode==='website'?String(row?.autoInvoiceEditDocId||autoInvoiceEditDocIdFromKey(editingAutoTargetKey)):'';
   editingDocId=editingMode==='manual'?(row?.docId||''):'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
   editingSourceBookingId=editingMode==='manual'?String(row?.sourceBookingId||row?.bookingId||'').trim():'';editingSourceBookingSnapshot=editingMode==='manual'?(row?.sourceBookingSnapshot||null):null;
-  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=editingMode==='website'?(row?.paymentMethod||row?.verifiedPaymentMethod||'Other'):(normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':(row?.paymentMethod||'Bank Transfer'));el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
+  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=editingMode==='website'?(row?.paymentMethod||row?.verifiedPaymentMethod||'Other'):(row?.paymentMethod||(normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':'Bank Transfer'));el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
@@ -951,7 +969,7 @@ async function saveForm(){
   const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
   const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
-  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:status==='pending'?'ToyyibPay':String(el('salesReceiptPaymentMethod')?.value||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other',saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
@@ -965,7 +983,7 @@ async function saveForm(){
       editingOriginalStatus=status;
     }
     let toyyibReady=false;
-    if(kind==='invoice'&&status==='pending'){
+    if(kind==='invoice'&&status==='pending'&&/toyyib/i.test(String(payload.paymentMethod||''))){
       const draftRow=normalizeManual(savedId,{...(existing||{}),...payload,docId:savedId,id:savedId});
       await ensureToyyibPayInvoice(draftRow,{silent:true});toyyibReady=true;
     }
@@ -1003,6 +1021,7 @@ function reusableToyyibInvoiceData(row={}){
 }
 async function ensureToyyibPayInvoice(row,{silent=false}={}){
   if(!row||row.source!=='manual'||documentKindForStatus(row.status)!=='invoice'||normalizeStatus(row.status)!=='pending')return row;
+  if(!rowUsesToyyibPay(row))return row;
   row.paymentMethod='ToyyibPay';
   if(reusableToyyibInvoiceData(row))return row;
   if(num(row.gross)<=0)throw new Error('Invoice total must be more than RM0.00 before generating ToyyibPay QR.');
@@ -1033,7 +1052,7 @@ async function ensureToyyibPayInvoice(row,{silent=false}={}){
 }
 async function prepareRowForPdf(row,type='receipt'){
   const docType=documentType(type);
-  if(docType==='invoice'&&row?.source==='manual'&&normalizeStatus(row.status)==='pending'){
+  if(docType==='invoice'&&row?.source==='manual'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row)){
     return await ensureToyyibPayInvoice(row,{silent:true});
   }
   return row;
@@ -1079,9 +1098,9 @@ function customerDocumentHtml(row,type='receipt'){
   const itemRows=(row.items||[]).map((i,index)=>`<tr><td class="no">${index+1}</td><td class="description">${esc(i.name)}</td><td>${esc(categoryLabel(i.category))}</td><td>${num(i.qty)}</td><td class="amount">${money(i.unitPrice)}</td><td class="amount strong">${money(num(i.qty)*num(i.unitPrice))}</td></tr>`).join('');
   const finalLabel=isInvoice?'Total Payable':(normalizeStatus(row.status)==='paid'?'Total Paid':'Total');
   const rightTitle=isInvoice?'Billing Details':'Payment Details';
-  const rightBody=isInvoice?`<div><b>Payment Terms</b><div>${esc(row.paymentTerms||'Due upon receipt')}</div></div><div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(statusDisplayLabel(row))}</span></div></div>`:`<div><b>Payment Method</b><div>${esc(paymentMethodDisplay(row))}</div></div>${row.invoiceNo?`<div style="margin-top:8px"><b>Invoice Reference</b><div>${esc(row.invoiceNo)}</div></div>`:''}<div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(statusDisplayLabel(row))}</span></div></div>`;
+  const rightBody=isInvoice?`<div><b>Payment Method</b><div>${esc(paymentMethodDisplay(row))}</div></div><div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(statusDisplayLabel(row))}</span></div></div>`:`<div><b>Payment Method</b><div>${esc(paymentMethodDisplay(row))}</div></div>${row.invoiceNo?`<div style="margin-top:8px"><b>Invoice Reference</b><div>${esc(row.invoiceNo)}</div></div>`:''}<div style="margin-top:8px"><b>Status</b><div><span class="status">${esc(statusDisplayLabel(row))}</span></div></div>`;
   const footer=isInvoice?'This invoice requests payment and is not proof that payment has been received.':'Thank you for your purchase. This computer-generated receipt records the payment status shown above.';
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(docNo)}</title><style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#4b5563;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #cbd5e1;padding-bottom:14px}.brandline{display:flex;align-items:center;gap:10px}.brand-logo{width:36px;height:36px;display:block;border-radius:7px;object-fit:cover}.brand{font-size:36px;line-height:36px;font-weight:900;letter-spacing:.2px}.muted{color:#64748b;font-size:12px}.doc-title{text-align:right}.doc-title h2{margin:0;font-size:24px;color:#334155}.status{display:inline-block;border:1px solid #94a3b8;border-radius:999px;padding:5px 10px;font-weight:800}.info{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.box{border:1px solid #cbd5e1;border-radius:10px;padding:12px}.box b{display:block;color:#475569;margin-bottom:4px}.customer-address{white-space:pre-line;margin-top:6px;line-height:1.35}table{width:100%;border-collapse:collapse;margin-top:16px;table-layout:fixed}th,td{border:1px solid #d7dee8;padding:9px 7px;font-size:12px;vertical-align:middle;text-align:center}th{background:#e2e8f0;color:#334155;text-transform:uppercase;font-size:10px;letter-spacing:.04em;height:38px}.no{width:6%}.description{width:37%;text-align:left;font-weight:700;line-height:1.35}.amount{text-align:right}.strong{font-weight:900;color:#047857}.totals{width:360px;max-width:100%;margin:18px 0 0 auto;border:1px solid #a7f3d0;padding:10px 14px;background:#ecfdf5}.totals div{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:18px;font-weight:900;border-top:2px solid #94a3b8;margin-top:6px;padding-top:10px!important;color:#047857}.foot{margin-top:34px;text-align:center;color:#64748b;font-size:11px}.note{margin-top:22px;background:#fffbeb;border-color:#fbbf24}@media print{button{display:none}}</style></head><body><div class="head"><div><div class="brandline"><img class="brand-logo" src="/favicon-192x192.png" alt="AZOBSS logo"><div class="brand">AZOBSS</div></div><div class="muted">www.azobss.com</div></div><div class="doc-title"><h2>${title}</h2><div>${esc(docNo)}</div><div class="muted">${formatDate(docType==='receipt'?currentDocumentDateMs(row):(num(row.invoiceDateMs)||row.saleDateMs))}</div></div></div><div class="info"><div class="box"><b>${isInvoice?'Bill To':'Customer'}</b><div>${esc(row.customerName)}</div><div class="muted">${esc(row.customerPhone||'')}</div><div class="muted">${esc(row.customerEmail||'')}</div>${row.customerAddress?`<div class="muted customer-address"><b>Address</b>${esc(row.customerAddress)}</div>`:''}</div><div class="box"><b>${rightTitle}</b>${rightBody}</div></div><table><thead><tr><th style="width:6%">No.</th><th style="width:37%">Description</th><th style="width:15%">Category</th><th style="width:8%">Qty</th><th style="width:16%">Unit Price</th><th style="width:18%">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${money(row.subtotal)}</b></div>${num(row.discount)>0?`<div><span>Discount</span><b>- ${money(row.discount)}</b></div>`:''}${num(row.shippingCharge)>0?`<div><span>Shipping</span><b>${money(row.shippingCharge)}</b></div>`:''}<div class="grand"><span>${finalLabel}</span><span>${money(row.gross)}</span></div></div>${row.notes?`<div class="box note"><b>Notes</b><div>${esc(row.notes)}</div></div>`:''}<div class="foot">${footer}</div><script>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(docNo)}</title><style>@page{size:A4;margin:16mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#4b5563;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #cbd5e1;padding-bottom:14px}.brandline{display:flex;align-items:center;gap:10px}.brand-logo{width:36px;height:36px;display:block;border-radius:7px;object-fit:cover}.brand{font-size:36px;line-height:36px;font-weight:900;letter-spacing:.2px}.muted{color:#64748b;font-size:12px}.doc-title{text-align:right}.doc-title h2{margin:0;font-size:24px;color:#334155}.status{display:inline-block;border:1px solid #94a3b8;border-radius:999px;padding:5px 10px;font-weight:800}.info{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.box{border:1px solid #cbd5e1;border-radius:10px;padding:12px}.box b{display:block;color:#475569;margin-bottom:4px}.customer-address{white-space:pre-line;margin-top:6px;line-height:1.35}table{width:100%;border-collapse:collapse;margin-top:16px;table-layout:fixed}th,td{border:1px solid #d7dee8;padding:9px 7px;font-size:12px;vertical-align:middle;text-align:center}th{background:#e2e8f0;color:#334155;text-transform:uppercase;font-size:10px;letter-spacing:.04em;height:38px}.no{width:6%}.description{width:37%;text-align:left;font-weight:700;line-height:1.35}.amount{text-align:right}.strong{font-weight:900;color:#047857}.totals{width:360px;max-width:100%;margin:18px 0 0 auto;border:1px solid #a7f3d0;padding:10px 14px;background:#ecfdf5}.totals div{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:18px;font-weight:900;border-top:2px solid #94a3b8;margin-top:6px;padding-top:10px!important;color:#047857}.foot{margin-top:34px;text-align:center;color:#64748b;font-size:11px}.note{margin-top:22px;background:#fffbeb;border-color:#fbbf24}@media print{button{display:none}}</style></head><body><div class="head"><div><div class="brandline"><img class="brand-logo" src="/favicon-192x192.png" alt="AZOBSS logo"><div class="brand">AZOBSS</div></div><div class="muted">www.azobss.com</div></div><div class="doc-title"><h2>${title}</h2><div>${esc(docNo)}</div><div class="muted">${formatDate(docType==='receipt'?currentDocumentDateMs(row):(num(row.invoiceDateMs)||row.saleDateMs))}</div></div></div><div class="info"><div class="box"><b>${isInvoice?'Bill To':'Customer'}</b><div>${esc(row.customerName)}</div><div class="muted">${esc(row.customerPhone||'')}</div><div class="muted">${esc(row.customerEmail||'')}</div>${row.customerAddress?`<div class="muted customer-address"><b>Address</b>${esc(row.customerAddress)}</div>`:''}</div><div class="box"><b>${rightTitle}</b>${rightBody}</div></div><table><thead><tr><th style="width:6%">No.</th><th style="width:37%">Description</th><th style="width:15%">Category</th><th style="width:8%">Qty</th><th style="width:16%">Unit Price</th><th style="width:18%">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${money(row.subtotal)}</b></div>${num(row.discount)>0?`<div><span>Discount</span><b>- ${money(row.discount)}</b></div>`:''}${num(row.shippingCharge)>0?`<div><span>Shipping</span><b>${money(row.shippingCharge)}</b></div>`:''}<div class="grand"><span>${finalLabel}</span><span>${money(row.gross)}</span></div></div>${isInvoice&&normalizeStatus(row.status)==='pending'&&rowUsesMaybank(row)?`<div class="box note"><b>Maybank Payment</b><div>Ahmad Zaidan Bin Omar</div><div><b>Account No.</b> 162405194110</div><div style="margin-top:10px"><img src="/assets/images/maybank-payment-qr.jpg?v=1067" alt="Maybank payment QR" style="width:180px;height:180px;object-fit:contain"></div></div>`:''}${row.notes?`<div class="box note"><b>Notes</b><div>${esc(row.notes)}</div></div>`:''}<div class="foot">${footer}</div><script>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
 }
 async function printDocument(row,type='receipt',button=null){
   const printWindow=window.open('','_blank','width=980,height=780');
@@ -1115,7 +1134,8 @@ function toyyibPayPaymentUrl(row,type='invoice'){
 function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
+  const maybankText=docType==='invoice'?pendingMaybankPaymentText(row):'';
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
 async function downloadDocumentPdf(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1276,10 +1296,12 @@ function openSharePanel(row,type='receipt'){
   setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp Actual PDF + Payment Link':'WhatsApp Actual Receipt PDF');
   setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?'Telegram Invoice + Payment Link':'Telegram Receipt Link');
   setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
-  setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?'Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.':'Share the actual receipt PDF and message. Choose WhatsApp in the Share window.');
-  setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':'Open Telegram with the temporary receipt PDF link.');
+  const isMaybankInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesMaybank(row);
+  const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
+  setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?(isToyyibInvoice?'Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.':isMaybankInvoice?'Share the actual invoice PDF together with Maybank account details. The Maybank QR is inside the PDF.':'Share the actual invoice PDF and invoice message. Choose WhatsApp in the Share window.'):'Share the actual receipt PDF and message. Choose WhatsApp in the Share window.');
+  setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareLinkDesc',docType==='invoice'?'Copy the temporary invoice PDF link.':'Copy the temporary receipt PDF link.');
-  setSharePanelText('salesReceiptShareMessageDesc',docType==='invoice'?'Copy invoice details, PDF link and ToyyibPay payment link.':'Copy receipt details and temporary PDF link.');
+  setSharePanelText('salesReceiptShareMessageDesc',docType==='invoice'?(isToyyibInvoice?'Copy invoice details, PDF link and ToyyibPay payment link.':isMaybankInvoice?'Copy invoice details, PDF link and Maybank account details.':'Copy invoice details and PDF link.'):'Copy receipt details and temporary PDF link.');
   setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
   if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
 }
