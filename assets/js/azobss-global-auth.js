@@ -1119,6 +1119,12 @@ async function azobssLogoutOnce(){
       try{ window.dispatchEvent(new Event('storage')); }catch(e){}
       try{ window.dispatchEvent(new Event('azobss-auth-changed')); }catch(e){}
     }catch(e){}
+    try{
+      document.documentElement.setAttribute('data-azobss-pre-auth','0');
+      document.documentElement.setAttribute('data-azobss-pre-pabm','0');
+      document.documentElement.setAttribute('data-azobss-pre-publicpa','1');
+      document.documentElement.removeAttribute('data-azobss-nav-synced');
+    }catch(_e){}
     syncHeader(null);
     // Do not let storage/admin render loops run during logout. Redirect once, quickly.
     const redirectTimer = setTimeout(()=>{ window.location.replace('/'); }, 120);
@@ -1514,10 +1520,11 @@ function azobssEnsurePublicPaNavButtons(){
     if(!link){
       link = document.createElement('a');
       link.className = 'nav-public-pa-link';
-      link.href = '/Perkhidmatan-Ukur-Tanah/';
-      link.textContent = 'Ukur Tanah';
-      link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
     }
+    // v1066: normalize the public survey tab on every page.
+    link.href = '/Perkhidmatan-Ukur-Tanah/';
+    link.textContent = 'Ukur Tanah';
+    link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
 
     // Keep the navbar destination synchronized with the renamed survey service route.
     link.href = '/Perkhidmatan-Ukur-Tanah/';
@@ -1563,7 +1570,42 @@ function syncHeader(user){
   const display = storedUser && azobssResolveUsername(storedUser);
   const canShowPaBm = hasPaBmTabAccess(storedUser);
   const isAdminUser = isAzobssAdmin(storedUser);
+  const roleFlat = String(storedUser && (storedUser.role || storedUser.userRole || storedUser.accountRole || storedUser.staffRole) || '').toLowerCase().replace(/[\s_-]+/g,'');
+  const isStaffUser = !!storedUser && !isAdminUser && (roleFlat.includes('staff') || roleFlat === 'semiadmin');
   const canShowPublicPa = !canShowPaBm && !isAdminUser && !azobssPublicPaRoleBlocked(storedUser);
+
+  // v1066: the live auth state becomes authoritative immediately.
+  // Pre-paint attributes are refreshed here so logout can never leave stale UI.
+  try{
+    const root = document.documentElement;
+    root.setAttribute('data-azobss-pre-auth', display ? '1' : '0');
+    root.setAttribute('data-azobss-pre-pabm', canShowPaBm ? '1' : '0');
+    root.setAttribute('data-azobss-pre-publicpa', canShowPublicPa ? '1' : '0');
+  }catch(_e){}
+
+  // v1066: centralize the left role slot too.
+  const adminButtons = Array.from(document.querySelectorAll('.azAdminDashboardBtn, .admin-dashboard-btn, .market-nav a[href="/admin/"]'));
+  const staffButtons = Array.from(document.querySelectorAll('.azStaffDashboardBtn, .staff-dashboard-btn, .market-nav a[href="/staff/"]'));
+  const whatsappButtons = Array.from(document.querySelectorAll('.market-nav .nav-whatsapp-link, .market-nav a[href*="alvo.chat"]'));
+
+  adminButtons.forEach((el)=>{
+    const show = !!isAdminUser;
+    el.hidden = !show;
+    el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+  });
+  staffButtons.forEach((el)=>{
+    const show = !!isStaffUser;
+    el.hidden = !show;
+    el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+  });
+  whatsappButtons.forEach((el)=>{
+    const show = !isAdminUser && !isStaffUser;
+    el.hidden = !show;
+    el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+  });
   document.body.classList.toggle('is-admin', !!isAdminUser);
   document.body.classList.toggle('has-pa-access', !!canShowPaBm);
   paBmButtons.forEach((paBm) => {
@@ -1589,8 +1631,11 @@ function syncHeader(user){
     if (tools) tools.style.setProperty('display','flex','important');
   } else {
     document.body.classList.remove('is-authenticated');
-    if (authActions) authActions.style.removeProperty('display');
-    if (tools) tools.style.removeProperty('display');
+    // v1066: explicit guest state. Do not fall back to page-local/default CSS.
+    if (authActions) authActions.style.setProperty('display','flex','important');
+    if (tools) tools.style.setProperty('display','none','important');
+    if (name) name.textContent = '';
+    if (avatar) avatar.textContent = 'AZ';
     document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
   }
   try{

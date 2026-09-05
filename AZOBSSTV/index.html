@@ -1,34 +1,34 @@
 <!doctype html>
 <html lang="en">
 <head>
-<style id="azobss-navbar-prepaint-style-1065">
+<style id="azobss-navbar-prepaint-style-1066">
 .market-nav .nav-pa-bm-link,
 .market-nav .nav-public-pa-link{
   width:86px!important;min-width:86px!important;max-width:86px!important;
   padding-left:8px!important;padding-right:8px!important;
   justify-content:center!important;box-sizing:border-box!important;
 }
-html[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
-html[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
-html[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
-html[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
-html[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
-html[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
   display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
 }
-html[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
-html[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
   display:none!important;visibility:hidden!important;pointer-events:none!important
 }
-html[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
   display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
 }
-html[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
   display:none!important;visibility:hidden!important;pointer-events:none!important
 }
 .market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
 </style>
-<script id="azobss-navbar-prepaint-1065">
+<script id="azobss-navbar-prepaint-1066">
 (function(){
   try{
     function parse(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
@@ -248,7 +248,7 @@ html[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" defer></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
-  <script src="/assets/js/azobss-global-auth.js?v=1065" type="module"></script>
+  <script src="/assets/js/azobss-global-auth.js?v=1066" type="module"></script>
   <script src="/assets/js/azobss-cart-bell-global.js?v=442" defer></script>
   <script src="/assets/js/azobss-pro-ui.js" defer></script>
   <script src="./assets/azobsstv.js?v=1037" defer></script>

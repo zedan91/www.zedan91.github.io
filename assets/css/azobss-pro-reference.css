@@ -231,39 +231,39 @@ img{max-width:100%;}
 }
 
 /* Use cached login state before Firebase restoration finishes. */
-html[data-azobss-pre-auth="1"] .site-auth-actions{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .site-auth-actions{
   display:none!important;
 }
-html[data-azobss-pre-auth="1"] .market-user-tools{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .market-user-tools{
   display:flex!important;
 }
-html[data-azobss-pre-auth="0"] .site-auth-actions{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .site-auth-actions{
   display:flex!important;
 }
-html[data-azobss-pre-auth="0"] .market-user-tools{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .market-user-tools{
   display:none!important;
 }
 
 /* Cached PA/BM state before global-auth takes over.
    Higher specificity intentionally beats old page-local [hidden] rules. */
-html[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
-html[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
   display:inline-flex!important;
   visibility:visible!important;
   pointer-events:auto!important;
 }
-html[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
-html[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
   display:none!important;
   visibility:hidden!important;
   pointer-events:none!important;
 }
-html[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
   display:inline-flex!important;
   visibility:visible!important;
   pointer-events:auto!important;
 }
-html[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
   display:none!important;
   visibility:hidden!important;
   pointer-events:none!important;
@@ -280,4 +280,17 @@ html[data-azobss-nav-synced="1"] .market-nav .nav-public-pa-link{
 .market-nav > .az-more-nav,
 .market-nav > .az-repair-nav{
   flex-shrink:0!important;
+}
+
+
+/* ============================================================
+   AZOBSS PATCH 1066 - LOGOUT / GUEST NAVBAR AUTHORITY FIX
+   ============================================================ */
+body:not(.is-authenticated) #marketUserTools,
+body:not(.is-authenticated) .market-user-tools{
+  display:none!important;
+}
+body:not(.is-authenticated) #siteAuthActions,
+body:not(.is-authenticated) .site-auth-actions{
+  display:flex!important;
 }

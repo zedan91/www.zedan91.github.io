@@ -2,34 +2,34 @@
 
 <html>
 <head>
-<style id="azobss-navbar-prepaint-style-1065">
+<style id="azobss-navbar-prepaint-style-1066">
 .market-nav .nav-pa-bm-link,
 .market-nav .nav-public-pa-link{
   width:86px!important;min-width:86px!important;max-width:86px!important;
   padding-left:8px!important;padding-right:8px!important;
   justify-content:center!important;box-sizing:border-box!important;
 }
-html[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
-html[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
-html[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
-html[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
-html[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
-html[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
   display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
 }
-html[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
-html[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
   display:none!important;visibility:hidden!important;pointer-events:none!important
 }
-html[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
   display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
 }
-html[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
   display:none!important;visibility:hidden!important;pointer-events:none!important
 }
 .market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
 </style>
-<script id="azobss-navbar-prepaint-1065">
+<script id="azobss-navbar-prepaint-1066">
 (function(){
   try{
     function parse(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
@@ -841,7 +841,7 @@ line-height:1.6;
 .commission-policy-card .row{margin:4px 0}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css?v=1065">
+<link rel="stylesheet" href="/assets/css/azobss-pro-reference.css?v=1066">
 
 <style id="azobss-pa-bm-access-lock-final">
 /* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
@@ -6636,7 +6636,7 @@ function normalizeItem(item){
 .az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1065" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1065"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1066" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1066"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
