@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1069;
+window.__azSalesReceiptsModuleVersion=1070;
 
 let manualRows=[];
 let websiteRows=[];
@@ -343,6 +343,12 @@ function rowDateMs(x={}){
 function formatDate(ms){if(!ms)return '-';try{return new Date(ms).toLocaleString('en-MY',{timeZone:MY_TIME_ZONE,dateStyle:'medium',timeStyle:'short'})}catch(_e){return new Date(ms).toLocaleString('en-MY',{timeZone:MY_TIME_ZONE})}}
 function normalizeStatus(v,paidFlag=false){
   const s=String(v||'').trim().toLowerCase();
+  // v1070: partial payment / 50% deposit remains an Invoice, not a full Paid receipt.
+  if(
+    s==='deposit-paid'||s==='deposit_50_paid'||s==='deposit50paid'||
+    s==='50%-deposit-paid'||s==='50% deposit paid'||
+    (s.includes('deposit')&&s.includes('paid'))
+  )return 'deposit-paid';
   if(paidFlag||['paid','verified','success','successful','completed','complete','approved','confirmed','settled'].includes(s))return 'paid';
   if(s.includes('refund'))return 'refunded';
   if(s.includes('cancel')||['void','aborted'].includes(s))return 'cancelled';
@@ -379,6 +385,21 @@ function receiptNoForRow(row={}){
 }
 function currentDocumentNo(row={}){return documentKindForStatus(row.status)==='receipt'?receiptNoForRow(row):invoiceNoForRow(row)}
 function currentDocumentDateMs(row={}){const receipt=documentKindForStatus(row.status)==='receipt';const primary=receipt?(parseMs(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||num(row.saleDateMs)||rowDateMs(row)):(parseMs(row.invoiceDateMs)||num(row.saleDateMs)||rowDateMs(row));return row.source==='manual'?actualManualDateMs(primary,row):primary}
+function depositPercent(row={}){return normalizeStatus(row.status)==='deposit-paid'?50:0}
+function depositAmount(row={}){
+  if(normalizeStatus(row.status)!=='deposit-paid')return 0;
+  const stored=clampMoney(row.depositAmount);
+  return stored>0?Math.min(stored,clampMoney(row.gross)):clampMoney(num(row.gross)*0.5);
+}
+function receivedAmount(row={}){
+  const status=normalizeStatus(row.status);
+  if(status==='paid')return clampMoney(row.gross);
+  if(status==='deposit-paid')return depositAmount(row);
+  return 0;
+}
+function outstandingAmount(row={}){
+  return clampMoney(Math.max(0,num(row.gross)-receivedAmount(row)));
+}
 function recognizedGross(row={}){return isRecognizedPayment(row.status)?num(row.gross):0}
 function recognizedCosts(row={}){return isRecognizedPayment(row.status)?num(row.totalCost):0}
 function recognizedProfit(row={}){return isRecognizedPayment(row.status)?num(row.profit):0}
@@ -501,7 +522,7 @@ function normalizeManual(id,x={}){
   const invoiceNo=String(x.invoiceNo||deriveInvoiceNo(legacyNo||('AZR-'+id.slice(0,8).toUpperCase())));
   const receiptNo=String(x.receiptNo||((status==='paid'||status==='refunded')?deriveReceiptNo(legacyNo||invoiceNo):''));
   const row={...x,...c,id,docId:id,source:'manual',editable:true,invoiceNo,receiptNo,documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),customerName:String(x.customerName||'Customer'),customerPhone:String(x.customerPhone||''),customerEmail:String(x.customerEmail||''),customerAddress:String(x.customerAddress||x.billingAddress||x.fullAddress||x.address||''),status,paymentMethod:String(x.paymentMethod||'Bank Transfer'),saleDateMs:actualManualDateMs(rowDateMs(x),x)||Date.now(),categories,category:categories.length===1?categories[0]:'mixed'};
-  row.documentNo=currentDocumentNo(row);row.paidGross=recognizedGross(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=isRecognizedPayment(status)?0:num(row.gross);return row;
+  row.documentNo=currentDocumentNo(row);row.depositPercent=depositPercent(row);row.depositAmount=depositAmount(row);row.paidGross=receivedAmount(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=outstandingAmount(row);return row;
 }
 function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const status=normalizeStatus(x.status||x.paymentStatus,x.paid===true);
@@ -523,7 +544,7 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
     saleDateMs:rowDateMs(x),items:[{category,name:productName(x),qty:1,unitPrice:gross,unitCost:0}],categories:[category],category,
     subtotal:gross,discount:0,productCost:0,shippingCost:0,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
   };
-  row.documentNo=currentDocumentNo(row);row.paidGross=recognizedGross(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=isRecognizedPayment(status)?0:gross;return row;
+  row.documentNo=currentDocumentNo(row);row.depositPercent=depositPercent(row);row.depositAmount=depositAmount(row);row.paidGross=receivedAmount(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=outstandingAmount(row);return row;
 }
 function websiteDedupKey(row){
   const raw=row.raw||row;
@@ -614,7 +635,7 @@ function updateKpis(rows){
   const paid=paidRows(rows);const gross=paid.reduce((s,r)=>s+num(r.gross),0);const costs=paid.reduce((s,r)=>s+num(r.totalCost),0);const profit=paid.reduce((s,r)=>s+num(r.profit),0);
   const physical=paid.reduce((s,r)=>s+categoryGross(r,new Set(['physical','computer-it'])),0);
   const digital=paid.reduce((s,r)=>s+categoryGross(r,new Set(['software','cad','pabm'])),0);
-  const pending=rows.filter(r=>r.status==='pending').length;
+  const pending=rows.filter(r=>['pending','deposit-paid'].includes(normalizeStatus(r.status))).length;
   const set=(id,v)=>{if(el(id))el(id).textContent=v};
   set('srGrossSales',money(gross));set('srTotalCosts',money(costs));set('srNetProfit',money(profit));set('srPhysicalSales',money(physical));set('srSoftwareSales',money(digital));set('srPendingCount',String(pending));
 }
@@ -639,8 +660,15 @@ function applyFilters(){
   const pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));if(currentPage>pages)currentPage=pages;
   updateKpis(rows);renderTable();
 }
-function statusDisplayLabel(row={}){const status=normalizeStatus(row.status);return row.source==='website'&&row.adminStatusOverride?`${status.toUpperCase()} · MANUAL OVERRIDE`:status.toUpperCase()}
-function statusPill(status,row=null){const normalized=normalizeStatus(status);const label=row?statusDisplayLabel(row):normalized.toUpperCase();return `<span class="az-sr-pill ${esc(normalized)}">${esc(label)}</span>`}
+function statusText(status){
+  const normalized=normalizeStatus(status);
+  return normalized==='deposit-paid'?'DEPOSIT 50% PAID':normalized.toUpperCase();
+}
+function statusDisplayLabel(row={}){
+  const label=statusText(row.status);
+  return row.source==='website'&&row.adminStatusOverride?`${label} · MANUAL OVERRIDE`:label;
+}
+function statusPill(status,row=null){const normalized=normalizeStatus(status);const label=row?statusDisplayLabel(row):statusText(normalized);return `<span class="az-sr-pill ${esc(normalized)}">${esc(label)}</span>`}
 function paymentMethodDisplay(row={}){const method=String(row.paymentMethod||'-');return row.source==='website'&&row.adminPaymentMethodOverride?`${method} · Admin override`:method}
 function sourcePill(row){return `<span class="az-sr-pill ${row.source==='manual'?'manual':'website'}">${row.source==='manual'?'MANUAL':'WEBSITE'}</span>`}
 function currentPageRows(){const start=(currentPage-1)*PAGE_SIZE;return visibleRows.slice(start,start+PAGE_SIZE)}
@@ -702,7 +730,12 @@ function renderTable(){
     if(r.editable)actions.push(iconActionButton('edit',`Edit ${label}`,`data-sr-edit="${rowId}"`));
     actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
-    const grossCell=paid?money(r.gross):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext az-sr-due">Due ${money(r.gross)}</div>`;
+    const depositPaid=normalizeStatus(r.status)==='deposit-paid';
+    const grossCell=paid
+      ? money(r.gross)
+      : depositPaid
+        ? `<span class="az-sr-deposit-received">${money(receivedAmount(r))}</span><div class="az-sr-subtext az-sr-due">Due ${money(outstandingAmount(r))}</div>`
+        : `<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext az-sr-due">Due ${money(outstandingAmount(r))}</div>`;
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
@@ -822,8 +855,9 @@ function rowUsesMaybank(row={}){
   return paymentMethodIsMaybank(row.paymentMethod||row.verifiedPaymentMethod||'');
 }
 function pendingMaybankPaymentText(row={}){
-  if(documentKindForStatus(row.status)!=='invoice'||normalizeStatus(row.status)!=='pending'||!rowUsesMaybank(row))return '';
-  return 'Pay via Maybank: Ahmad Zaidan Bin Omar | Account: 162405194110 | QR is included in the invoice PDF.';
+  const status=normalizeStatus(row.status);
+  if(documentKindForStatus(status)!=='invoice'||!['pending','deposit-paid'].includes(status)||!rowUsesMaybank(row))return '';
+  return `Pay remaining ${money(outstandingAmount(row))} via Maybank: Ahmad Zaidan Bin Omar | Account: 162405194110 | QR is included in the invoice PDF.`;
 }
 function syncManualPaymentFeeDefault(){
   if(editingMode==='website')return;
@@ -845,10 +879,11 @@ function syncToyyibCustomerRequirements(){
   if(label)label.textContent='Email (Optional)';
 }
 function recalcForm(){
-  const c=manualCalc(collectFormItems(),formExtras());const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const recognized=isRecognizedPayment(status);
+  const c=manualCalc(collectFormItems(),formExtras());const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const recognized=isRecognizedPayment(status);const depositPaid=status==='deposit-paid';
   const set=(id,v)=>{if(el(id))el(id).textContent=money(v)};
-  set('salesReceiptCalcSubtotal',c.subtotal);set('salesReceiptCalcProductCost',c.productCost);set('salesReceiptCalcGross',c.gross);set('salesReceiptCalcCosts',recognized?c.totalCost:0);set('salesReceiptCalcProfit',recognized?c.profit:0);
-  if(el('salesReceiptCalcGrossLabel'))el('salesReceiptCalcGrossLabel').textContent=recognized?'Total Paid':'Amount Due';
+  const formAmountDue=depositPaid?clampMoney(c.gross*0.5):c.gross;
+  set('salesReceiptCalcSubtotal',c.subtotal);set('salesReceiptCalcProductCost',c.productCost);set('salesReceiptCalcGross',recognized?c.gross:formAmountDue);set('salesReceiptCalcCosts',recognized?c.totalCost:0);set('salesReceiptCalcProfit',recognized?c.profit:0);
+  if(el('salesReceiptCalcGrossLabel'))el('salesReceiptCalcGrossLabel').textContent=recognized?'Total Paid':(depositPaid?'Balance Due (50%)':'Amount Due');
   if(el('salesReceiptCalcCostsLabel'))el('salesReceiptCalcCostsLabel').textContent=recognized?'Recognized Costs':'Costs (after Paid)';
   if(el('salesReceiptCalcProfitLabel'))el('salesReceiptCalcProfitLabel').textContent=recognized?'Net Profit':'Net Profit (after Paid)';
 }
@@ -966,11 +1001,12 @@ async function saveForm(){
   }
   if(kind==='invoice')editingInvoiceNo=String(numberInput?.value||editingInvoiceNo||(editingReceiptNo?deriveInvoiceNo(editingReceiptNo):nextDocumentNo('invoice'))).trim();else editingReceiptNo=String(numberInput?.value||editingReceiptNo||(editingInvoiceNo?deriveReceiptNo(editingInvoiceNo):nextDocumentNo('receipt'))).trim();
   const c=manualCalc(items,formExtras());const dateRaw=el('salesReceiptSaleDate')?.value||localDateTimeInput();const saleDateMs=parseMalaysiaDateTime(dateRaw);const categories=[...new Set(c.items.map(i=>i.category))];
-  const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';
+  const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';const transitionedToDeposit=status==='deposit-paid'&&editingOriginalStatus!=='deposit-paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
   const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
-  const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,amountDue:recognized?0:c.gross,paidGross:recognized?c.gross:0,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other',saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const depositPaid=status==='deposit-paid';const depositValue=depositPaid?clampMoney(c.gross*0.5):0;const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,depositPercent:depositPaid?50:0,depositAmount:depositValue,amountDue:recognized?0:(depositPaid?clampMoney(c.gross-depositValue):c.gross),paidGross:recognized?c.gross:depositValue,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other',saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
+  if(depositPaid){payload.depositPaidAtMs=num(existing?.depositPaidAtMs)||(transitionedToDeposit?Date.now():saleDateMs);if(transitionedToDeposit||!editingDocId)payload.depositPaidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
     let savedId=editId;
@@ -1135,7 +1171,7 @@ function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
   const maybankText=docType==='invoice'?pendingMaybankPaymentText(row):'';
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
 async function downloadDocumentPdf(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1231,7 +1267,7 @@ function setDirectShareWindow(targetWindow,url){
 function temporaryShareText(row,type,shareUrl){
   const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',`PDF: ${shareUrl}`].filter(Boolean).join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',`PDF: ${shareUrl}`].filter(Boolean).join('\n');
 }
 function temporaryDirectShareUrl(row,type,target,shareUrl){
   const text=temporaryShareText(row,type,shareUrl);
@@ -1296,7 +1332,7 @@ function openSharePanel(row,type='receipt'){
   setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp Actual PDF + Payment Link':'WhatsApp Actual Receipt PDF');
   setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?'Telegram Invoice + Payment Link':'Telegram Receipt Link');
   setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
-  const isMaybankInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesMaybank(row);
+  const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
   setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?(isToyyibInvoice?'Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.':isMaybankInvoice?'Share the actual invoice PDF together with Maybank account details. The Maybank QR is inside the PDF.':'Share the actual invoice PDF and invoice message. Choose WhatsApp in the Share window.'):'Share the actual receipt PDF and message. Choose WhatsApp in the Share window.');
   setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
@@ -1398,7 +1434,7 @@ async function bulkDeleteSelected(button=null){
 function csvCell(v){const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
 function exportCsv(){
   const headers=['Document Type','Document No','Invoice No','Receipt No','Date','Source','Status','Customer','Phone','Email','Address','Categories','Items','Payment Method','Invoice Amount / Total','Paid Gross','Product Cost','Shipping Charged','Shipping Cost','Payment Fee','Commission','Other Cost','Recognized Costs','Net Profit'];
-  const rows=visibleRows.map(r=>[documentKindForStatus(r.status),currentDocumentNo(r),r.invoiceNo||'',r.receiptNo||'',new Date(r.saleDateMs||0).toISOString(),r.source,r.status,r.customerName,r.customerPhone,r.customerEmail,r.customerAddress||'',categoriesForRow(r).map(categoryLabel).join(' | '),(r.items||[]).map(i=>`${i.name} x${i.qty}`).join(' | '),r.paymentMethod,num(r.gross).toFixed(2),recognizedGross(r).toFixed(2),num(r.productCost).toFixed(2),num(r.shippingCharge).toFixed(2),num(r.shippingCost).toFixed(2),num(r.paymentFee).toFixed(2),num(r.commission).toFixed(2),num(r.otherCost).toFixed(2),recognizedCosts(r).toFixed(2),recognizedProfit(r).toFixed(2)]);
+  const rows=visibleRows.map(r=>[documentKindForStatus(r.status),currentDocumentNo(r),r.invoiceNo||'',r.receiptNo||'',new Date(r.saleDateMs||0).toISOString(),r.source,r.status,r.customerName,r.customerPhone,r.customerEmail,r.customerAddress||'',categoriesForRow(r).map(categoryLabel).join(' | '),(r.items||[]).map(i=>`${i.name} x${i.qty}`).join(' | '),r.paymentMethod,num(r.gross).toFixed(2),receivedAmount(r).toFixed(2),num(r.productCost).toFixed(2),num(r.shippingCharge).toFixed(2),num(r.shippingCost).toFixed(2),num(r.paymentFee).toFixed(2),num(r.commission).toFixed(2),num(r.otherCost).toFixed(2),recognizedCosts(r).toFixed(2),recognizedProfit(r).toFixed(2)]);
   const csv='\ufeff'+[headers,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='AZOBSS-Sales-Invoices-Receipts-'+localDateInput()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);notify('CSV exported.')
 }
 function clearFilters(){['salesReceiptSearch','salesReceiptFrom','salesReceiptTo'].forEach(id=>{if(el(id))el(id).value=''});if(el('salesReceiptCategory'))el('salesReceiptCategory').value='all';if(el('salesReceiptStatus'))el('salesReceiptStatus').value='all';if(el('salesReceiptSource'))el('salesReceiptSource').value='all';if(el('salesReceiptSort'))el('salesReceiptSort').value='newest';currentPage=1;applyFilters()}

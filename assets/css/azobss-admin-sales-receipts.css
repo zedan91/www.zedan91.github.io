@@ -692,3 +692,15 @@
 .az-sr-customer-suggestion small{grid-column:1/-1;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:600;color:#93a9c5;text-transform:none;letter-spacing:0}
 .az-sr-customer-suggestion .az-sr-customer-user{font-size:10px;font-weight:800;color:#7dd3fc;white-space:nowrap}
 .az-sr-customer-suggestion-empty{padding:10px;color:#8ca3bd;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0}
+
+
+/* AZOBSS PATCH 1070: 50% deposit status */
+.az-sr-pill.deposit-paid{
+  color:#bfdbfe;
+  border-color:rgba(96,165,250,.42);
+  background:rgba(30,58,138,.16);
+}
+.az-sr-deposit-received{
+  color:#dbeafe;
+  font-weight:900;
+}

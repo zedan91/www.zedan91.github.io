@@ -80,21 +80,36 @@
     return `INV-${source}`;
   }
   function documentNumber(row,type){ return normalizeDocumentType(type)==='invoice' ? invoiceNumber(row) : receiptNumber(row); }
+  function normalizedPaymentStatus(value){
+    const raw=clean(value).toLowerCase();
+    if(raw==='deposit-paid'||(raw.includes('deposit')&&raw.includes('paid')))return 'deposit-paid';
+    return raw||'pending';
+  }
   function statusLabel(value){
     const row=(value&&typeof value==='object')?value:null;
-    const status=clean(row?row.status:value)||'pending';
-    if(row&&row.source==='website'&&row.adminStatusOverride) return `${status.toUpperCase()} - MANUAL OVERRIDE`;
-    return status.toUpperCase();
+    const status=normalizedPaymentStatus(row?row.status:value);
+    const label=status==='deposit-paid'?'DEPOSIT 50% PAID':status.toUpperCase();
+    if(row&&row.source==='website'&&row.adminStatusOverride) return `${label} - MANUAL OVERRIDE`;
+    return label;
+  }
+  function paymentAmounts(row){
+    const gross=Math.max(0,number(row?.gross));
+    const status=normalizedPaymentStatus(row?.status);
+    const storedDeposit=Math.max(0,number(row?.depositAmount));
+    const deposit=status==='deposit-paid'?Math.min(gross,storedDeposit>0?storedDeposit:(gross*0.5)):0;
+    const received=status==='paid'?gross:deposit;
+    return {gross,received,due:Math.max(0,gross-received),deposit};
   }
   function paymentMethodLabel(row){
     const method=clean(row?.paymentMethod)||'-';
     return row?.source==='website'&&row?.adminPaymentMethodOverride?`${method} (Admin Override)`:method;
   }
   function statusColors(value){
-    const status=clean(value).toLowerCase();
-    if(status==='paid') return {bg:[220,252,231],border:[34,197,94],text:[22,101,52]};
-    if(status==='pending') return {bg:[254,249,195],border:[234,179,8],text:[133,77,14]};
-    return {bg:[254,226,226],border:[239,68,68],text:[153,27,27]};
+    const status=normalizedPaymentStatus(value);
+    if(status==='paid') return {bg:[236,253,245],border:[110,231,183],text:[6,95,70]};
+    if(status==='deposit-paid') return {bg:[239,246,255],border:[147,197,253],text:[30,64,175]};
+    if(status==='pending') return {bg:[255,251,235],border:[253,230,138],text:[146,64,14]};
+    return {bg:[254,242,242],border:[252,165,165],text:[153,27,27]};
   }
   function rgb(r,g,b){ return `${(r/255).toFixed(3)} ${(g/255).toFixed(3)} ${(b/255).toFixed(3)}`; }
   const HELVETICA_WIDTHS={" ":278,"!":278,"\"":355,"#":556,"$":556,"%":889,"&":667,"'":191,"(":333,")":333,"*":389,"+":584,",":278,"-":333,".":278,"/":278,"0":556,"1":556,"2":556,"3":556,"4":556,"5":556,"6":556,"7":556,"8":556,"9":556,":":278,";":278,"<":584,"=":584,">":584,"?":556,"@":1015,"A":667,"B":667,"C":722,"D":722,"E":667,"F":611,"G":778,"H":722,"I":278,"J":500,"K":667,"L":556,"M":833,"N":722,"O":778,"P":667,"Q":778,"R":722,"S":667,"T":611,"U":722,"V":667,"W":944,"X":667,"Y":667,"Z":611,"[":278,"\\":278,"]":278,"^":469,"_":556,"`":333,"a":556,"b":556,"c":500,"d":556,"e":556,"f":278,"g":556,"h":556,"i":222,"j":222,"k":500,"l":222,"m":833,"n":556,"o":556,"p":556,"q":556,"r":333,"s":500,"t":278,"u":556,"v":500,"w":722,"x":500,"y":500,"z":500,"{":334,"|":260,"}":334,"~":584};
@@ -283,7 +298,13 @@
     const docType=normalizeDocumentType(type); const lines=[['Subtotal',number(row.subtotal||row.gross)]];
     if(number(row.discount)>0) lines.push(['Discount',-number(row.discount)]);
     if(number(row.shippingCharge)>0) lines.push(['Shipping',number(row.shippingCharge)]);
-    const finalLabel=docType==='invoice'?'TOTAL PAYABLE':(clean(row.status).toLowerCase()==='paid'?'TOTAL PAID':'TOTAL');
+    const amounts=paymentAmounts(row);
+    if(docType==='invoice'&&normalizedPaymentStatus(row.status)==='deposit-paid'){
+      lines.push(['Deposit 50% Paid',-amounts.received]);
+      lines.push(['BALANCE DUE',amounts.due]);
+      return lines;
+    }
+    const finalLabel=docType==='invoice'?'TOTAL PAYABLE':(normalizedPaymentStatus(row.status)==='paid'?'TOTAL PAID':'TOTAL');
     lines.push([finalLabel,number(row.gross)]); return lines;
   }
   function totalsBoxHeight(row,type){ return 22+(totalLines(row,type).length*24); }
@@ -329,9 +350,9 @@
   }
   function hasMaybankQr(row,type){
     const docType=normalizeDocumentType(type);
-    const status=clean(row.status).toLowerCase();
+    const status=normalizedPaymentStatus(row.status);
     const method=clean(row.paymentMethod).toLowerCase();
-    return docType==='invoice' && status==='pending' && method==='maybank';
+    return docType==='invoice' && ['pending','deposit-paid'].includes(status) && method==='maybank';
   }
   function drawMaybankQr(commands,row,y,type,options){
     if(!hasMaybankQr(row,type))return y;
@@ -344,7 +365,7 @@
     text(commands,'MAYBANK PAYMENT',tx,y+18,{size:8.3,bold:true,color:[30,41,59]});
     text(commands,MAYBANK_ACCOUNT_NAME,tx,y+37,{size:8.3,bold:true,color:[15,23,42]});
     text(commands,`Account No: ${MAYBANK_ACCOUNT_NO}`,tx,y+55,{size:8.2,bold:true,color:[15,23,42]});
-    text(commands,`Amount Due: ${money(row.gross)}`,tx,y+74,{size:9.2,bold:true,color:[15,23,42]});
+    text(commands,`Amount Due: ${money(paymentAmounts(row).due)}`,tx,y+74,{size:9.2,bold:true,color:[15,23,42]});
     textLines(commands,wrapText('Scan the QR using a supported banking app. Use the invoice number as the payment reference.',available,6.5,false).slice(0,3),tx,y+91,{size:6.5,lineHeight:7.2,color:[71,85,105]});
     return y+h;
   }
@@ -368,6 +389,26 @@
     return y+h;
   }
 
+  function depositTermsLayout(row,type){
+    if(normalizeDocumentType(type)!=='invoice')return null;
+    const status=normalizedPaymentStatus(row.status);
+    if(!['pending','deposit-paid'].includes(status))return null;
+    const amounts=paymentAmounts(row);
+    const textValue=status==='deposit-paid'
+      ? `50% deposit received: ${money(amounts.received)}. Remaining balance: ${money(amounts.due)}, payable upon completion of the work or before handover to the customer.`
+      : `A 50% deposit (${money(amounts.gross*0.5)}) is required to confirm the order and cover initial costs. The remaining 50% is payable upon completion of the work or before handover to the customer.`;
+    const lines=wrapText(textValue,CONTENT_W-24,7.4,false);
+    return {lines,height:31+(lines.length*9)};
+  }
+  function drawDepositTerms(commands,row,y,type,prepared){
+    const layout=prepared||depositTermsLayout(row,type);if(!layout)return y;
+    fillRect(commands,MARGIN_X,y,CONTENT_W,layout.height,[248,250,252]);
+    strokeRect(commands,MARGIN_X,y,CONTENT_W,layout.height,[203,213,225],0.75);
+    text(commands,'DEPOSIT TERMS',MARGIN_X+12,y+18,{size:7.8,bold:true,color:[71,85,105]});
+    textLines(commands,layout.lines,MARGIN_X+12,y+34,{size:7.4,lineHeight:9,color:[55,65,81]});
+    return y+layout.height;
+  }
+
   function drawNotes(commands,row,y,preparedLayout){
     const layout=preparedLayout||notesLayout(row); if(!layout)return y;
     const h=layout.height;
@@ -382,7 +423,7 @@
     text(commands,'AZOBSS | www.azobss.com',MARGIN_X,805,{size:7.7,bold:true,color:[71,85,105]});
     text(commands,`Page ${pageNumber} / ${pageCount}`,PAGE_W-MARGIN_X,805,{size:7.5,align:'right',color:[71,85,105]});
     let note='';
-    if(docType==='invoice') note='This invoice is a request for payment and is not proof that payment has been received.';
+    if(docType==='invoice') note=normalizedPaymentStatus(row.status)==='deposit-paid'?'A 50% deposit has been received. This invoice remains open until the remaining balance is paid.':'This invoice is a request for payment and is not proof that payment has been received.';
     else note=clean(row.status).toLowerCase()==='paid'?`Payment status: PAID. Computer-generated receipt${clean(row.invoiceNo)?` converted from invoice ${clean(row.invoiceNo)}`:''}.`:'This receipt does not confirm payment until its status is PAID.';
     text(commands,note,MARGIN_X,821,{size:7.2,color:[100,116,139]});
   }
@@ -397,11 +438,13 @@
     // Keep the payment summary close to the bottom of the item table.
     // Do not push it down to fill unused page space.
     y+=8; const summaryHeight=paymentSummaryHeight(row,docType);
+    const preparedDepositTerms=depositTermsLayout(row,docType),depositTermsHeight=preparedDepositTerms?preparedDepositTerms.height:0;
     const preparedNotes=notesLayout(row),noteHeight=preparedNotes?preparedNotes.height:0;
-    if(y+summaryHeight>BOTTOM_LIMIT){
+    if(y+summaryHeight+(preparedDepositTerms?8+depositTermsHeight:0)>BOTTOM_LIMIT){
       commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120;
     }
     y=drawPaymentSummary(commands,row,y,docType); y+=8;
+    if(preparedDepositTerms){y=drawDepositTerms(commands,row,y,docType,preparedDepositTerms);y+=8}
     if(preparedNotes){
       let notesOnNewPage=false;
       if(y+noteHeight>BOTTOM_LIMIT){

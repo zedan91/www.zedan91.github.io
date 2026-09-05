@@ -1857,7 +1857,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
 <script defer src="/assets/js/azobss-more-nav.js?v=1063"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1064">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1070">
 
 <style id="az770-admin-service-bookings-style">
 .az770-service-booking-list{display:grid;gap:10px}.az770-service-booking-row{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(220px,1fr) minmax(220px,1.25fr) minmax(170px,.7fr);gap:12px;align-items:start;padding:14px;border:1px solid rgba(148,163,184,.24);border-radius:13px;background:linear-gradient(145deg,rgba(15,31,54,.95),rgba(8,18,34,.98))}.az770-service-booking-row.is-new{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.07) inset}.az770-booking-title{font-weight:950;color:#fff}.az770-booking-meta{margin-top:4px;color:#93a8c2;font-size:12px;line-height:1.45}.az770-booking-services{color:#dbeafe;font-size:12px;line-height:1.5}.az770-booking-price{display:block;margin-top:6px;color:#86efac;font-weight:950}.az770-booking-actions{display:grid;gap:7px}.az770-booking-actions select{width:100%}.az770-booking-actions .btn{width:100%;justify-content:center}.az770-booking-detail{grid-column:1/-1;margin-top:1px;padding:11px;border-radius:10px;background:#071426;border:1px solid rgba(148,163,184,.18);color:#b9c8da;font-size:12px;white-space:pre-wrap}.az770-booking-chip{display:inline-flex;margin-top:6px;padding:4px 7px;border-radius:999px;border:1px solid #365273;color:#bfdbfe;font-size:10px;font-weight:900;text-transform:uppercase}.az770-booking-empty{padding:20px;text-align:center;border:1px dashed #3b516d;border-radius:12px;color:#91a4bd}@media(max-width:1050px){.az770-service-booking-row{grid-template-columns:1fr 1fr}.az770-booking-actions{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.az770-service-booking-row{grid-template-columns:1fr}.az770-booking-actions{grid-column:auto;grid-template-columns:1fr}}
@@ -2908,7 +2908,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="az-sr-filter-grid">
           <label>Search<input id="salesReceiptSearch" placeholder="Document / customer / phone / product..."></label>
           <label>Category<select id="salesReceiptCategory"><option value="all">All Categories</option><option value="physical">Hardware</option><option value="computer-it">Computer &amp; IT</option><option value="digital">Software / Digital</option><option value="software">Software</option><option value="cad">CAD Tools</option><option value="pabm">PA/BM</option><option value="service">Service</option><option value="other">Other</option></select></label>
-          <label>Status<select id="salesReceiptStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="paid-not-sent">Paid (Not Sent)</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option><option value="failed">Failed</option></select></label>
+          <label>Status<select id="salesReceiptStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="paid-not-sent">Paid (Not Sent)</option><option value="pending">Pending</option><option value="deposit-paid">Deposit 50% Paid</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option><option value="failed">Failed</option></select></label>
           <label>Source<select id="salesReceiptSource"><option value="all">All Sources</option><option value="manual">Manual Sale</option><option value="website">Website Payment</option></select></label>
           <label>Sort<select id="salesReceiptSort"><option value="newest">Newest First</option><option value="oldest">Oldest First</option><option value="gross-high">Highest Gross</option><option value="profit-high">Highest Profit</option><option value="az">Customer A–Z</option></select></label>
           <label>Date From<input id="salesReceiptFrom" type="date"></label>
@@ -2987,7 +2987,7 @@ body[data-dashboard-page="admin"] .topbar{
             <div class="az-sr-form-grid">
               <label><span id="salesReceiptDocumentNoLabel">Receipt No</span><input id="salesReceiptReceiptNo" readonly></label>
               <label>Sale Date & Time<input id="salesReceiptSaleDate" type="datetime-local" step="60"></label>
-              <label>Status<select id="salesReceiptFormStatus"><option value="paid">Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
+              <label>Status<select id="salesReceiptFormStatus"><option value="paid">Paid</option><option value="deposit-paid">Deposit 50% Paid</option><option value="pending">Pending</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
               <label>Payment Method<select id="salesReceiptPaymentMethod"><option>Bank Transfer</option><option>Maybank</option><option>Cash</option><option>ToyyibPay</option><option>Stripe</option><option>Card</option><option>QR Payment</option><option>Other</option><option>Manual / Other</option></select></label><div class="az-sr-toyyib-hint">Manual Pending invoices may use ToyyibPay or Maybank. ToyyibPay creates a unique payment QR; Maybank uses the saved AZOBSS Maybank payment QR. Website Auto records may use an Admin Override here without changing the original verified gateway transaction.</div>
               <label class="az-sr-span-2 az-sr-customer-lookup-label">Customer Name
                 <div class="az-sr-customer-lookup">
@@ -2999,7 +2999,7 @@ body[data-dashboard-page="admin"] .topbar{
               <label id="salesReceiptCustomerEmailLabel"><span id="salesReceiptCustomerEmailLabelText">Email (Optional)</span><input id="salesReceiptCustomerEmail" type="email" placeholder="customer@email.com" autocomplete="email"></label>
               <label class="az-sr-span-4">Address (Optional)<textarea id="salesReceiptCustomerAddress" rows="2" maxlength="400" placeholder="Customer / company billing address" autocomplete="street-address"></textarea></label>
             </div>
-            <div class="az-sr-status-note"><b>Pending = Invoice</b> (belum dikira sebagai jualan) &nbsp;•&nbsp; <b>Paid = Receipt</b> (terus masuk Gross, Costs dan Net Profit).</div>
+            <div class="az-sr-status-note"><b>Pending = Invoice</b> (belum bayar) &nbsp;•&nbsp; <b>Deposit 50% Paid = Invoice</b> (deposit diterima, baki 50% masih belum dibayar) &nbsp;•&nbsp; <b>Paid = Receipt</b> (bayaran penuh; masuk Gross, Costs dan Net Profit).</div>
 
             <div class="az-sr-items-card">
               <div class="az-sr-items-head"><h4 id="salesReceiptItemsTitle">Receipt Items</h4><button class="btn gray" id="salesReceiptAddItem" type="button">＋ Add Item</button></div>
@@ -8421,9 +8421,9 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
-<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1069"></script>
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1070"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1069" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1070" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*
