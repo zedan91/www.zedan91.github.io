@@ -337,13 +337,14 @@
     if(!hasMaybankQr(row,type))return y;
     const opts=options||{},x=Number.isFinite(opts.x)?opts.x:MARGIN_X,w=Number.isFinite(opts.width)?opts.width:CONTENT_W,h=Number.isFinite(opts.height)?opts.height:146;
     const qr=Math.min(116,h-24),qrY=y+15,qrX=x+10;
-    fillRect(commands,x,y,w,h,[255,251,235]);strokeRect(commands,x,y,w,h,[234,179,8],0.9);
+    // v1068: neutral payment card - no yellow/orange fill or border.
+    fillRect(commands,x,y,w,h,[255,255,255]);strokeRect(commands,x,y,w,h,[203,213,225],0.8);
     image(commands,'MaybankQR',qrX,qrY,qr,qr);
     const tx=qrX+qr+12,available=Math.max(90,w-(tx-x)-10);
-    text(commands,'MAYBANK PAYMENT',tx,y+18,{size:8.3,bold:true,color:[146,64,14]});
+    text(commands,'MAYBANK PAYMENT',tx,y+18,{size:8.3,bold:true,color:[30,41,59]});
     text(commands,MAYBANK_ACCOUNT_NAME,tx,y+37,{size:8.3,bold:true,color:[15,23,42]});
     text(commands,`Account No: ${MAYBANK_ACCOUNT_NO}`,tx,y+55,{size:8.2,bold:true,color:[15,23,42]});
-    text(commands,`Amount Due: ${money(row.gross)}`,tx,y+74,{size:9.2,bold:true,color:[4,120,87]});
+    text(commands,`Amount Due: ${money(row.gross)}`,tx,y+74,{size:9.2,bold:true,color:[15,23,42]});
     textLines(commands,wrapText('Scan the QR using a supported banking app. Use the invoice number as the payment reference.',available,6.5,false).slice(0,3),tx,y+91,{size:6.5,lineHeight:7.2,color:[71,85,105]});
     return y+h;
   }
