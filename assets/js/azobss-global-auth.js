@@ -431,7 +431,54 @@ function injectModal() {
   </div>
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
-  setupCountryPhoneSelectors(document);\n  setupPasswordVisibilityToggles();\n}\n\nfunction injectGoogleProfileModal(){\n  if(document.getElementById('siteGoogleProfileModal')) return;\n  const wrap=document.createElement('div');\n  wrap.innerHTML=`\n<div class="auth-modal" id="siteGoogleProfileModal" aria-hidden="true">\n  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteGoogleProfileTitle">\n    <div class="auth-modal-top">\n      <h3 id="siteGoogleProfileTitle">Complete Profile</h3>\n    </div>\n    <form class="auth-modal-form" id="siteGoogleProfileForm">\n      <p class="google-profile-copy" id="siteGoogleProfileCopy">Google sign-in was successful. Add your phone number once to complete your AZOBSS profile.</p>\n      <div class="google-profile-identity">\n        <div class="google-profile-avatar-fallback" id="siteGoogleAvatarFallback">G</div>\n        <img class="google-profile-avatar" id="siteGoogleAvatar" alt="Google profile" hidden>\n        <div><strong id="siteGoogleDisplayName">Google User</strong><small id="siteGoogleEmail"></small></div>\n      </div>\n      <label id="siteGoogleUsernameRow" for="siteGoogleUsername" hidden>Existing AZOBSS Username\n        <input id="siteGoogleUsername" autocomplete="username" placeholder="Enter your existing AZOBSS username" type="text">\n      </label>\n      <label for="siteGooglePhone">Phone Number\n        <div class="phone-input-row" data-country-phone="siteGoogle" data-default-dial="60">\n          <div class="country-combo">\n            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>\n            <div class="country-code-menu" data-country-menu>\n              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">\n              <div class="country-menu-options" data-country-options></div>\n            </div>\n          </div>\n          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteGooglePhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteGoogleDial" type="hidden" value="60"></div>\n        </div>\n      </label>\n      <p class="request-error" id="siteGoogleProfileError"></p>\n      <div class="google-profile-actions">\n        <button class="btn signup" type="submit">Save & Continue</button>\n        <button class="btn secondary" id="siteGoogleProfileCancel" type="button">Cancel</button>\n      </div>\n    </form>\n  </div>\n</div>`;\n  document.body.appendChild(wrap.firstElementChild);\n  setupCountryPhoneSelectors(document);\n}\n\nfunction injectAdminUserEditModal() {
+  setupCountryPhoneSelectors(document);
+  setupPasswordVisibilityToggles();
+}
+
+function injectGoogleProfileModal(){
+  if(document.getElementById('siteGoogleProfileModal')) return;
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`
+<div class="auth-modal" id="siteGoogleProfileModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteGoogleProfileTitle">
+    <div class="auth-modal-top">
+      <h3 id="siteGoogleProfileTitle">Complete Profile</h3>
+    </div>
+    <form class="auth-modal-form" id="siteGoogleProfileForm">
+      <p class="google-profile-copy" id="siteGoogleProfileCopy">Google sign-in was successful. Add your phone number once to complete your AZOBSS profile.</p>
+      <div class="google-profile-identity">
+        <div class="google-profile-avatar-fallback" id="siteGoogleAvatarFallback">G</div>
+        <img class="google-profile-avatar" id="siteGoogleAvatar" alt="Google profile" hidden>
+        <div><strong id="siteGoogleDisplayName">Google User</strong><small id="siteGoogleEmail"></small></div>
+      </div>
+      <label id="siteGoogleUsernameRow" for="siteGoogleUsername" hidden>Existing AZOBSS Username
+        <input id="siteGoogleUsername" autocomplete="username" placeholder="Enter your existing AZOBSS username" type="text">
+      </label>
+      <label for="siteGooglePhone">Phone Number
+        <div class="phone-input-row" data-country-phone="siteGoogle" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteGooglePhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteGoogleDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <p class="request-error" id="siteGoogleProfileError"></p>
+      <div class="google-profile-actions">
+        <button class="btn signup" type="submit">Save & Continue</button>
+        <button class="btn secondary" id="siteGoogleProfileCancel" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
+}
+
+function injectAdminUserEditModal() {
   if (document.getElementById('adminUserEditModal')) return;
   const wrap = document.createElement('div');
   wrap.innerHTML = `
