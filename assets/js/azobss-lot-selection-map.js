@@ -59,11 +59,11 @@
     // v951: remove stale map style blocks before injecting the current rules.
     // This avoids older cached copies of this script leaving the original
     // overflow:auto / larger spacing rules active in the same page.
-    document.querySelectorAll('#azobssLotSelectionStyles, #azobssLotSelectionStylesV950, #azobssLotSelectionStylesV951').forEach((node) => {
+    document.querySelectorAll('#azobssLotSelectionStyles, #azobssLotSelectionStylesV950, #azobssLotSelectionStylesV951, #azobssLotSelectionStylesV1071').forEach((node) => {
       try { node.remove(); } catch (_) {}
     });
     const style = document.createElement('style');
-    style.id = 'azobssLotSelectionStylesV951';
+    style.id = 'azobssLotSelectionStylesV1071';
     style.textContent = `
       .az-lot-map-modal{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.84);backdrop-filter:blur(5px)}
       .az-lot-map-dialog{width:min(1180px,calc(100vw - 24px));height:min(820px,calc(100vh - 24px));display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid #38506f;border-radius:8px;background:#0d1729;color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.65)}
@@ -108,6 +108,12 @@
       .az-lot-map-price{margin:14px 0 10px;padding:11px;border:1px solid #e0b100;border-radius:6px;background:#ffd400;color:#111827;text-align:center;font-size:16px;font-weight:900}
       .az-lot-map-add{width:100%;min-height:48px;border:1px solid #4ff0b1;border-radius:6px;background:#0c9f72;color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #056a4c}
       .az-lot-map-add:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}
+      .az-lot-map-add.is-processing{display:grid;grid-template-columns:auto minmax(0,auto);grid-template-areas:"spin main" "spin sub";align-items:center;justify-content:center;column-gap:9px;row-gap:1px;padding:6px 12px;line-height:1.08;text-align:left}
+      .az-lot-map-processing-spinner{grid-area:spin;display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.30);border-top-color:#fff;border-radius:50%;animation:azLotMapSpin1071 .72s linear infinite}
+      .az-lot-map-processing-main{grid-area:main;display:block;font-size:14px;font-weight:900;white-space:nowrap}
+      .az-lot-map-processing-sub{grid-area:sub;display:block;margin-top:1px;color:#d8f7eb;font-size:9px;font-weight:700;line-height:1.05;white-space:nowrap}
+      @keyframes azLotMapSpin1071{to{transform:rotate(360deg)}}
+      @media (prefers-reduced-motion:reduce){.az-lot-map-processing-spinner{animation-duration:1.4s}}
       .az-lot-map-add.is-cart-success{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 48px;background:#087f5b;border-color:#5cf2b5;line-height:1.15;text-align:center;cursor:pointer}
       .az-lot-map-add.is-cart-success:hover,.az-lot-map-add.is-cart-success:focus-visible{background:#07966b;box-shadow:0 0 0 3px rgba(92,242,181,.22)}
       .az-lot-map-cart-success-main{display:block;width:100%;text-align:center}
@@ -170,6 +176,10 @@
         .az-lot-radius-note{margin-top:4px;font-size:9px;line-height:1.18}
         .az-lot-map-price{margin:7px 0 7px;padding:8px 9px;font-size:14px;line-height:1.15}
         .az-lot-map-add{min-height:40px;font-size:14px}
+        .az-lot-map-add.is-processing{min-height:42px;padding:5px 9px}
+        .az-lot-map-processing-spinner{width:16px;height:16px}
+        .az-lot-map-processing-main{font-size:12px}
+        .az-lot-map-processing-sub{font-size:8px}
         .az-lot-map-reset{min-height:33px;margin-top:6px;font-size:12px}
       }
       @media (min-width:761px) and (max-height:780px){
@@ -1584,18 +1594,30 @@
       document.addEventListener('keydown', onDocumentKeyDown);
 
       function setAddButtonDefault() {
-        addButton.classList.remove('is-cart-success');
+        addButton.classList.remove('is-cart-success', 'is-processing');
         addButton.removeAttribute('title');
         addButton.removeAttribute('aria-label');
+        addButton.removeAttribute('aria-busy');
         addButton.textContent = 'Sediakan & Tambah ke Troli';
       }
 
       function setAddButtonSuccess() {
+        addButton.classList.remove('is-processing');
         addButton.classList.add('is-cart-success');
         addButton.disabled = false;
+        addButton.removeAttribute('aria-busy');
         addButton.setAttribute('aria-label', 'Telah dimasukkan ke troli anda. Tekan untuk pergi ke Troli anda.');
         addButton.title = 'Tekan untuk pergi ke Troli anda';
         addButton.innerHTML = '<span class="az-lot-map-cart-success-main">Sudah Masuk Troli</span><span class="az-lot-map-cart-success-tick" aria-hidden="true">✓</span><small class="az-lot-map-cart-success-sub">(Sila tekan untuk ke Troli)</small>';
+      }
+
+      function setAddButtonProcessing() {
+        addButton.classList.remove('is-cart-success');
+        addButton.classList.add('is-processing');
+        addButton.disabled = true;
+        addButton.setAttribute('aria-busy', 'true');
+        addButton.setAttribute('aria-label', 'Sedang Diproses. Mengambil masa 1 hingga 2 minit.');
+        addButton.innerHTML = '<span class="az-lot-map-processing-spinner" aria-hidden="true"></span><span class="az-lot-map-processing-main">Sedang Diproses...</span><small class="az-lot-map-processing-sub">(Mengambil masa 1~2 Minit)</small>';
       }
 
       function focusCartPanel() {
@@ -1876,8 +1898,7 @@
           }
 
           while (!prepared.ready) {
-            addButton.disabled = true;
-            addButton.textContent = 'Sedang Diproses...';
+            setAddButtonProcessing();
             setStatus(status, 'Sedang proses fail Lot Kadaster...\n(Mengambil masa sekitar 1~2 minit)', 'loading');
             await new Promise((resolveDelay, rejectDelay) => {
               const timer = window.setTimeout(resolveDelay, 2500);
