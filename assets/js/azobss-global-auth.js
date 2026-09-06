@@ -204,7 +204,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot, orderBy} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -219,6 +219,15 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// AZOBSS 1073: Google Sign-In
+const azobssGoogleProvider = new GoogleAuthProvider();
+azobssGoogleProvider.setCustomParameters({prompt:'select_account'});
+let azobssGoogleAuthBusy = false;
+let azobssGooglePendingFirebaseUser = null;
+let azobssGooglePendingProfile = null;
+let azobssGooglePendingNeedsUsername = false;
+
 
 function addStyle() {
   if (document.getElementById('azobss-global-auth-style')) return;
@@ -293,6 +302,21 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .forgot-password-box[hidden]{display:none!important;}
 .forgot-password-box .btn.secondary{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;}
 .auth-reset-note{font-size:12px;line-height:1.45;color:#a9c7e8;margin:0;}
+.auth-google-divider{display:flex;align-items:center;gap:10px;color:#8291a8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
+.auth-google-divider::before,.auth-google-divider::after{content:'';height:1px;flex:1;background:rgba(203,213,225,.18);}
+.auth-google-btn{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid rgba(203,213,225,.32);border-radius:10px;background:#fff;color:#172033;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.32);}
+.auth-google-btn:hover{background:#f8fafc;border-color:#fff;}
+.auth-google-btn:disabled{opacity:.65;cursor:wait;}
+.auth-google-g{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;font:900 18px/1 Arial,sans-serif;color:#4285f4;background:#fff;}
+.google-profile-copy{margin:-4px 0 4px;color:#b7c5d9;font-size:13px;line-height:1.5;}
+.google-profile-identity{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(203,213,225,.18);border-radius:10px;background:rgba(8,19,38,.58);}
+.google-profile-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#0d1628;border:1px solid rgba(203,213,225,.25);}
+.google-profile-avatar-fallback{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#1d4ed8;color:#fff;font-weight:900;}
+.google-profile-identity strong{display:block;color:#fff;font-size:13px;}
+.google-profile-identity small{display:block;margin-top:2px;color:#93a4bc;font-size:11px;word-break:break-all;}
+.google-profile-actions{display:grid;grid-template-columns:1fr auto;gap:9px;}
+.google-profile-actions .btn.secondary{background:#475569;color:#fff;}
+#siteGoogleProfileModal .auth-modal-card{width:min(480px,calc(100vw - 28px));}
 `;
   document.head.appendChild(style);
 }
@@ -359,6 +383,8 @@ function injectModal() {
       </label>
       <p class="request-error" id="siteLoginError"></p>
       <button class="btn" type="submit">Login</button>
+      <div class="auth-google-divider"><span>or</span></div>
+      <button class="auth-google-btn" id="siteGoogleSignInButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Continue with Google</span></button>
       <p class="auth-switch-note"><button id="siteForgotPasswordButton" type="button">Forgot password?</button></p>
       <div class="forgot-password-box" id="siteForgotPasswordBox" hidden>
         <label for="siteForgotPasswordInput">Reset password by username or email
@@ -398,16 +424,14 @@ function injectModal() {
       <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Create Account</button>
+      <div class="auth-google-divider"><span>or</span></div>
+      <button class="auth-google-btn" id="siteGoogleSignUpButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Sign up with Google</span></button>
       <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
     </form>
   </div>
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
-  setupCountryPhoneSelectors(document);
-  setupPasswordVisibilityToggles();
-}
-
-function injectAdminUserEditModal() {
+  setupCountryPhoneSelectors(document);\n  setupPasswordVisibilityToggles();\n}\n\nfunction injectGoogleProfileModal(){\n  if(document.getElementById('siteGoogleProfileModal')) return;\n  const wrap=document.createElement('div');\n  wrap.innerHTML=`\n<div class="auth-modal" id="siteGoogleProfileModal" aria-hidden="true">\n  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteGoogleProfileTitle">\n    <div class="auth-modal-top">\n      <h3 id="siteGoogleProfileTitle">Complete Profile</h3>\n    </div>\n    <form class="auth-modal-form" id="siteGoogleProfileForm">\n      <p class="google-profile-copy" id="siteGoogleProfileCopy">Google sign-in was successful. Add your phone number once to complete your AZOBSS profile.</p>\n      <div class="google-profile-identity">\n        <div class="google-profile-avatar-fallback" id="siteGoogleAvatarFallback">G</div>\n        <img class="google-profile-avatar" id="siteGoogleAvatar" alt="Google profile" hidden>\n        <div><strong id="siteGoogleDisplayName">Google User</strong><small id="siteGoogleEmail"></small></div>\n      </div>\n      <label id="siteGoogleUsernameRow" for="siteGoogleUsername" hidden>Existing AZOBSS Username\n        <input id="siteGoogleUsername" autocomplete="username" placeholder="Enter your existing AZOBSS username" type="text">\n      </label>\n      <label for="siteGooglePhone">Phone Number\n        <div class="phone-input-row" data-country-phone="siteGoogle" data-default-dial="60">\n          <div class="country-combo">\n            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>\n            <div class="country-code-menu" data-country-menu>\n              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">\n              <div class="country-menu-options" data-country-options></div>\n            </div>\n          </div>\n          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteGooglePhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteGoogleDial" type="hidden" value="60"></div>\n        </div>\n      </label>\n      <p class="request-error" id="siteGoogleProfileError"></p>\n      <div class="google-profile-actions">\n        <button class="btn signup" type="submit">Save & Continue</button>\n        <button class="btn secondary" id="siteGoogleProfileCancel" type="button">Cancel</button>\n      </div>\n    </form>\n  </div>\n</div>`;\n  document.body.appendChild(wrap.firstElementChild);\n  setupCountryPhoneSelectors(document);\n}\n\nfunction injectAdminUserEditModal() {
   if (document.getElementById('adminUserEditModal')) return;
   const wrap = document.createElement('div');
   wrap.innerHTML = `
@@ -1761,7 +1785,207 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 
 
 
+function isGoogleFirebaseUser(firebaseUser){
+  try{return Array.isArray(firebaseUser?.providerData)&&firebaseUser.providerData.some(p=>String(p?.providerId||'')==='google.com')}catch(_){return false}
+}
+function azobssFirebaseUserLooksExisting(firebaseUser){
+  try{
+    const created=Date.parse(firebaseUser?.metadata?.creationTime||'');
+    const last=Date.parse(firebaseUser?.metadata?.lastSignInTime||'');
+    return Number.isFinite(created)&&Number.isFinite(last)&&(last-created)>120000;
+  }catch(_){return false}
+}
+function azobssGoogleMappedUsername(email,uid=''){
+  const mail=String(email||'').trim().toLowerCase();
+  const id=String(uid||'').trim();
+  try{
+    return normalizeUsername(
+      (mail&&localStorage.getItem('azobssSignupUsernameByEmail:'+mail))||
+      (mail&&localStorage.getItem('azobssUsernameLock:email:'+mail))||
+      (id&&localStorage.getItem('azobssUsernameLock:uid:'+id))||''
+    );
+  }catch(_){return ''}
+}
+async function azobssAllocateGoogleUsername(firebaseUser){
+  const email=String(firebaseUser?.email||'').trim().toLowerCase();
+  const mapped=azobssGoogleMappedUsername(email,firebaseUser?.uid||'');
+  if(mapped){
+    try{
+      const snap=await getDoc(doc(db,'users',mapped));
+      if(!snap.exists()||String(snap.data()?.uid||'')===String(firebaseUser?.uid||'')) return mapped;
+    }catch(_){return mapped}
+  }
+  let base=normalizeUsername(email.split('@')[0]||firebaseUser?.displayName||'googleuser').slice(0,24);
+  if(base.length<3) base=('google'+String(firebaseUser?.uid||'').slice(0,8)).toLowerCase();
+  let candidate=base;
+  for(let i=0;i<8;i++){
+    try{
+      const snap=await getDoc(doc(db,'users',candidate));
+      if(!snap.exists()||String(snap.data()?.uid||'')===String(firebaseUser?.uid||'')) return candidate;
+    }catch(_){return candidate}
+    const suffix=String(firebaseUser?.uid||'user').replace(/[^a-z0-9]/gi,'').slice(0,6).toLowerCase()||String(i+1);
+    candidate=(base.slice(0,Math.max(3,23-suffix.length))+'_'+suffix+(i?String(i):'')).slice(0,30);
+  }
+  return ('google_'+String(firebaseUser?.uid||Date.now()).replace(/[^a-z0-9]/gi,'').slice(0,12)).toLowerCase();
+}
+async function azobssCreateGoogleProfile(firebaseUser,options={}){
+  const email=String(firebaseUser?.email||'').trim().toLowerCase();
+  let profile=await ensureUserProfile(firebaseUser);
+  if(profile&&!profile._profileMissing&&normalizeUsername(profile.usernameKey||profile.username||profile.id||'')) return profile;
 
+  const mapped=azobssGoogleMappedUsername(email,firebaseUser?.uid||'');
+  if(mapped){
+    try{
+      const snap=await getDoc(doc(db,'users',mapped));
+      if(snap.exists()&&String(snap.data()?.uid||'')===String(firebaseUser?.uid||'')){
+        return {uid:firebaseUser.uid,id:mapped,...snap.data(),usernameKey:mapped};
+      }
+    }catch(_){ }
+  }
+
+  // If Firebase says this Auth user is old but the username cannot be safely resolved,
+  // do not silently create a duplicate AZOBSS profile. Ask for the existing username.
+  if(azobssFirebaseUserLooksExisting(firebaseUser)&&!options.allowCreateForExisting){
+    return {uid:firebaseUser.uid,email,authEmail:email,_profileMissing:true,_googleNeedsExistingUsername:true};
+  }
+
+  const usernameKey=await azobssAllocateGoogleUsername(firebaseUser);
+  const inviteCode=normalizePaMemberCode(options.inviteCode||'');
+  const profilePayload={
+    uid:firebaseUser.uid,
+    username:usernameKey,
+    usernameKey,
+    displayName:usernameKey,
+    name:usernameKey,
+    googleDisplayName:String(firebaseUser.displayName||'').trim(),
+    email,
+    authEmail:email,
+    contactEmail:email,
+    phone:'',phoneNumber:'',
+    photoURL:String(firebaseUser.photoURL||''),
+    authProvider:'google.com',
+    googleSignIn:true,
+    ...getPaBmPayloadFromCode(inviteCode),
+    role:'member',verified:true,emailVerified:true,
+    createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+  };
+  await setDoc(doc(db,'users',usernameKey),profilePayload,{merge:true});
+  await saveUsernameAuthEmail(usernameKey,email,firebaseUser.uid);
+  try{
+    localStorage.setItem('azobssAuthEmailMap:'+usernameKey,email);
+    localStorage.setItem('azobssSignupUsernameByEmail:'+email,usernameKey);
+    localStorage.setItem('azobssUsernameLock:email:'+email,usernameKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,usernameKey);
+  }catch(_){ }
+  return profilePayload;
+}
+async function azobssResolveExistingGoogleUsername(firebaseUser,usernameRaw){
+  const usernameKey=normalizeUsername(usernameRaw);
+  if(!usernameKey) throw new Error('Please enter your existing AZOBSS username.');
+  const snap=await getDoc(doc(db,'users',usernameKey));
+  if(!snap.exists()) throw new Error('AZOBSS username not found. Please check the username and try again.');
+  const data=snap.data()||{};
+  if(String(data.uid||'')&&String(data.uid||'')!==String(firebaseUser?.uid||'')) throw new Error('This username belongs to a different account.');
+  const email=String(firebaseUser?.email||data.email||data.authEmail||'').trim().toLowerCase();
+  const merged={...data,uid:firebaseUser.uid,username:usernameKey,usernameKey,displayName:usernameKey,name:usernameKey,email:email||data.email||'',authEmail:email||data.authEmail||'',googleSignIn:true,authProvider:'google.com',photoURL:String(firebaseUser?.photoURL||data.photoURL||''),verified:true,emailVerified:true,updatedAt:serverTimestamp()};
+  await setDoc(doc(db,'users',usernameKey),merged,{merge:true});
+  await saveUsernameAuthEmail(usernameKey,email,firebaseUser.uid);
+  try{
+    localStorage.setItem('azobssSignupUsernameByEmail:'+email,usernameKey);
+    localStorage.setItem('azobssUsernameLock:email:'+email,usernameKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,usernameKey);
+  }catch(_){ }
+  return merged;
+}
+function closeGoogleProfileModal(){
+  const modal=$('siteGoogleProfileModal');
+  if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true')}
+}
+async function azobssAbortGoogleProfile(){
+  azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingNeedsUsername=false;
+  closeGoogleProfileModal();
+  try{await signOut(auth)}catch(_){ }
+  clearUser();syncHeader(null);
+  window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+}
+function openGoogleProfileModal(firebaseUser,profile,needsUsername=false){
+  injectGoogleProfileModal();
+  azobssGooglePendingFirebaseUser=firebaseUser;
+  azobssGooglePendingProfile=profile||{};
+  azobssGooglePendingNeedsUsername=!!needsUsername;
+  const modal=$('siteGoogleProfileModal');
+  const usernameRow=$('siteGoogleUsernameRow');
+  const usernameInput=$('siteGoogleUsername');
+  const copy=$('siteGoogleProfileCopy');
+  if(usernameRow) usernameRow.hidden=!needsUsername;
+  if(usernameInput) usernameInput.value=needsUsername?azobssGoogleMappedUsername(firebaseUser?.email||'',firebaseUser?.uid||''):'';
+  if(copy) copy.textContent=needsUsername
+    ? 'This Google account appears to match an existing AZOBSS account. Enter your existing AZOBSS username and confirm your phone number to link the profile safely.'
+    : 'Google sign-in was successful. Add your phone number once to complete your AZOBSS profile.';
+  if($('siteGoogleDisplayName')) $('siteGoogleDisplayName').textContent=String(firebaseUser?.displayName||profile?.googleDisplayName||profile?.usernameKey||'Google User');
+  if($('siteGoogleEmail')) $('siteGoogleEmail').textContent=String(firebaseUser?.email||profile?.email||'');
+  const avatar=$('siteGoogleAvatar'),fallback=$('siteGoogleAvatarFallback');
+  if(avatar&&firebaseUser?.photoURL){avatar.src=firebaseUser.photoURL;avatar.hidden=false;if(fallback)fallback.hidden=true}else{if(avatar)avatar.hidden=true;if(fallback)fallback.hidden=false}
+  const existingPhone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+  const parsed=splitPhoneToDialLocal(existingPhone);
+  setPhoneDial('siteGoogle',parsed.dial||'60');
+  if($('siteGooglePhone')) $('siteGooglePhone').value=formatPhoneGuide(parsed.local||'');
+  const err=$('siteGoogleProfileError');if(err){err.textContent='';err.style.color=''}
+  closeSiteAuth();
+  if(modal){modal.classList.add('is-open');modal.setAttribute('aria-hidden','false')}
+  setTimeout(()=>{(needsUsername?$('siteGoogleUsername'):$('siteGooglePhone'))?.focus()},60);
+}
+async function finalizeGoogleSession(firebaseUser,profile){
+  const usernameKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
+  if(!usernameKey) throw new Error('AZOBSS profile username is missing.');
+  const phone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+  if(!phone){openGoogleProfileModal(firebaseUser,profile,false);return false}
+  const email=String(profile?.authEmail||profile?.email||firebaseUser?.email||'').trim().toLowerCase();
+  const fullUser={uid:firebaseUser.uid,...profile,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey,email,authEmail:email,phone,phoneNumber:phone,verified:true,emailVerified:true,googleSignIn:true,authProvider:'google.com',photoURL:String(firebaseUser?.photoURL||profile?.photoURL||'')};
+  saveUser(fullUser);syncHeader(fullUser);enforcePaBmPageAccess(fullUser,true);startAzobssPresenceHeartbeat(fullUser);await recordLoginHistory(fullUser,'login');bindAzobssPurchaseRecordsUI();renderAzobssPurchaseRecords();setTimeout(renderAzobssPurchaseRecords,800);renderFirebaseAdminRecords();
+  closeGoogleProfileModal();closeSiteAuth();window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+  return true;
+}
+async function handleGoogleAuth(mode='signin'){
+  if(azobssGoogleAuthBusy)return;
+  azobssGoogleAuthBusy=true;window.__AZOBSS_GOOGLE_AUTH_FLOW__=true;
+  const signup=mode==='signup';
+  const err=$(signup?'siteSignupError':'siteLoginError');
+  const btn=$(signup?'siteGoogleSignUpButton':'siteGoogleSignInButton');
+  const original=btn?.innerHTML||'';
+  try{
+    if(err){err.style.color='#ffd54a';err.textContent='Opening Google sign-in...'}
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="auth-google-g" aria-hidden="true">G</span><span>Please wait...</span>'}
+    await setPersistence(auth,browserLocalPersistence);
+    const result=await signInWithPopup(auth,azobssGoogleProvider);
+    const firebaseUser=result.user;
+    const inviteCode=signup?getSignupInviteCodeValue():'';
+    let profile=await azobssCreateGoogleProfile(firebaseUser,{inviteCode});
+    if(profile?._googleNeedsExistingUsername){
+      openGoogleProfileModal(firebaseUser,profile,true);
+      return;
+    }
+    const phone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+    if(!phone){openGoogleProfileModal(firebaseUser,profile,false);return}
+    await finalizeGoogleSession(firebaseUser,profile);
+  }catch(error){
+    console.warn('AZOBSS Google sign-in failed:',error?.code||error?.message||error);
+    window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+    const code=String(error?.code||'');
+    if(err){
+      err.style.color='';
+      if(code==='auth/popup-closed-by-user') err.textContent='Google sign-in was cancelled.';
+      else if(code==='auth/popup-blocked') err.textContent='Google sign-in popup was blocked. Please allow popups for azobss.com and try again.';
+      else if(code==='auth/account-exists-with-different-credential') err.textContent='This email is already linked to another sign-in method. Sign in using the existing method first.';
+      else if(code==='auth/operation-not-allowed') err.textContent='Google Sign-In is not enabled in Firebase yet. Enable Google under Firebase Authentication > Sign-in method.';
+      else if(code==='auth/unauthorized-domain') err.textContent='This AZOBSS domain is not yet authorized for Google Sign-In in Firebase.';
+      else err.textContent='Google sign-in failed: '+(error?.message||'Please try again.');
+    }
+  }finally{
+    azobssGoogleAuthBusy=false;
+    if(btn){btn.disabled=false;if(original)btn.innerHTML=original}
+  }
+}
 
 // Firebase persistent admin/user records.
 const AZOBSS_LOGIN_HISTORY_COLLECTION = 'loginHistory';
@@ -5045,7 +5269,7 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser()); azobssInstallNavbarUsernameGuard();
+  addStyle(); injectModal(); injectGoogleProfileModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser()); azobssInstallNavbarUsernameGuard();
   bindAzobssPurchaseRecordsUI(); bindAzobssPaBmToyyibButton(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
@@ -5107,6 +5331,45 @@ function bindAuth() {
         menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
       }
     });
+  });
+
+
+  $('siteGoogleSignInButton')?.addEventListener('click',()=>handleGoogleAuth('signin'));
+  $('siteGoogleSignUpButton')?.addEventListener('click',()=>handleGoogleAuth('signup'));
+  $('siteGoogleProfileCancel')?.addEventListener('click',()=>{azobssAbortGoogleProfile().catch(()=>{})});
+  $('siteGoogleProfileForm')?.addEventListener('submit',async(event)=>{
+    event.preventDefault();
+    const err=$('siteGoogleProfileError');if(err){err.textContent='';err.style.color=''}
+    const submit=event.submitter||$('siteGoogleProfileForm')?.querySelector('button[type="submit"]');
+    const firebaseUser=azobssGooglePendingFirebaseUser||auth.currentUser;
+    if(!firebaseUser){if(err)err.textContent='Google session expired. Please sign in with Google again.';return}
+    const phone=normalizeAzobssPhone(getPhoneWithDial('siteGoogle'));
+    if(!phone){if(err)err.textContent='Please enter your phone number.';return}
+    try{
+      if(submit){submit.disabled=true;submit.textContent='Saving...'}
+      let profile=azobssGooglePendingProfile||{};
+      if(azobssGooglePendingNeedsUsername){profile=await azobssResolveExistingGoogleUsername(firebaseUser,$('siteGoogleUsername')?.value||'')}
+      const usernameKey=normalizeUsername(profile.usernameKey||profile.username||profile.name||profile.id||'');
+      if(!usernameKey) throw new Error('AZOBSS username could not be resolved.');
+      const email=String(firebaseUser.email||profile.email||profile.authEmail||'').trim().toLowerCase();
+      const patch={phone,phoneNumber:phone,email:email||profile.email||'',authEmail:email||profile.authEmail||'',googleSignIn:true,authProvider:'google.com',photoURL:String(firebaseUser.photoURL||profile.photoURL||''),verified:true,emailVerified:true,updatedAt:serverTimestamp()};
+      await setDoc(doc(db,'users',usernameKey),patch,{merge:true});
+      try{
+        localStorage.setItem('azobssSignupPhone:'+usernameKey,phone);
+        localStorage.setItem('azobssSignupPhoneByEmail:'+email,phone);
+        localStorage.setItem('azobssSignupUsernameByEmail:'+email,usernameKey);
+        localStorage.setItem('azobssUsernameLock:email:'+email,usernameKey);
+        localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,usernameKey);
+      }catch(_){ }
+      profile={...profile,...patch,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
+      azobssGooglePendingProfile=profile;azobssGooglePendingNeedsUsername=false;
+      await finalizeGoogleSession(firebaseUser,profile);
+      azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;
+    }catch(error){
+      if(err)err.textContent=error?.message||'Unable to save phone number. Please try again.';
+    }finally{
+      if(submit){submit.disabled=false;submit.textContent='Save & Continue'}
+    }
   });
 
   $('siteSignInForm')?.addEventListener('submit', async (event)=>{
@@ -5466,6 +5729,7 @@ function bindAuth() {
   });
 
   onAuthStateChanged(auth, async (firebaseUser)=>{
+    if(window.__AZOBSS_GOOGLE_AUTH_FLOW__) return;
     if(!firebaseUser){
       if(window.__AZOBSS_LOGGING_OUT__ || azobssLogoutInProgress) return;
       if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
@@ -5482,7 +5746,16 @@ function bindAuth() {
         enforcePaBmPageAccess(null, true);
         return;
       }
-      const profile=await ensureUserProfile(freshUser);
+      let profile=await ensureUserProfile(freshUser);
+      if(isGoogleFirebaseUser(freshUser)&&profile?._profileMissing){
+        profile=await azobssCreateGoogleProfile(freshUser,{});
+      }
+      if(isGoogleFirebaseUser(freshUser)&&profile?._googleNeedsExistingUsername){
+        clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,true);return;
+      }
+      if(isGoogleFirebaseUser(freshUser)&&!normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'')){
+        clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,false);return;
+      }
       let usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
       let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
       try{
