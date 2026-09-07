@@ -1,0 +1,27 @@
+{
+  "version": "1.0.1076",
+  "baseline": "1.0.1075",
+  "patch": "Google exact provider-email owner matching and safe relink",
+  "core_fixes": [
+    "Reads actual google.com providerData email before profile resolution.",
+    "Auto-matches users.authEmail and usernameAuthEmails.email to the existing AZOBSS username.",
+    "Does not trust contactEmail alone for automatic ownership; secure password linking is required.",
+    "If Google is linked to the wrong established Firebase user, unlinks google.com only and preserves Email/Password identity.",
+    "Clears stale Google-link fields from the wrong Firestore profile.",
+    "Re-signs with the Google credential and binds it to the correct Firestore username owner.",
+    "If target has its own Firebase identity, falls back to username + password secure linking.",
+    "Preserves an old/stale target UID in previousAuthUids when a fresh Google Auth UID must be assigned."
+  ],
+  "example_expected_result": {
+    "google_email": "zedann.0002@gmail.com",
+    "matched_profile": "zedan0002",
+    "must_not_resolve_to": "zedan0001"
+  },
+  "validation": {
+    "global_auth_js_node_syntax": "passed",
+    "deploy_server_node_syntax": "passed",
+    "lot_converter_node_syntax": "passed",
+    "html_cache_busted_pages": 31,
+    "zip_integrity": "passed"
+  }
+}
