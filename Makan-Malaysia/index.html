@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<style id="azobss-navbar-prepaint-style-1066">
+.market-nav .nav-pa-bm-link,
+.market-nav .nav-public-pa-link{
+  width:86px!important;min-width:86px!important;max-width:86px!important;
+  padding-left:8px!important;padding-right:8px!important;
+  justify-content:center!important;box-sizing:border-box!important;
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+.market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
+</style>
+<script id="azobss-navbar-prepaint-1066">
+(function(){
+  try{
+    function parse(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
+    var u=parse(sessionStorage.getItem('azobssCurrentUser'))||
+          parse(localStorage.getItem('azobssCurrentUser'))||
+          parse(sessionStorage.getItem('azobssUser'))||
+          parse(localStorage.getItem('azobssUser'));
+    var html=document.documentElement;
+    var auth=!!u;
+    var key=String(u&&(u.usernameKey||u.username||u.name)||'').trim().toLowerCase();
+    var email=String(u&&(u.email||u.authEmail)||'').trim().toLowerCase();
+    var role=String(u&&(u.role||u.userRole||u.accountRole||u.staffRole)||'').trim().toLowerCase();
+    var isAdmin=!!u&&(role==='admin'||key==='zedan91'||key==='zedan9107'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com');
+    function truthy(v){
+      if(v===true||v===1)return true;
+      return ['true','yes','y','1','allow','allowed','on','enabled','enable'].indexOf(String(v==null?'':v).trim().toLowerCase())>=0;
+    }
+    var adminManaged=!!u&&(u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
+    var adminAllowed=adminManaged&&(
+      truthy(u.adminPaBmAllowed)||truthy(u.paBmAccess)||truthy(u.paBmAllowed)||
+      truthy(u.allowPABM)||truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||
+      truthy(u.paBmTabAllowed)||truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)
+    );
+    var flagAllowed=!!u&&(
+      truthy(u.paBmAccess)||truthy(u.paBmAllowed)||truthy(u.allowPABM)||
+      truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||truthy(u.paBmTabAllowed)||
+      truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)||truthy(u.paAccess)
+    );
+    var codes=[
+      u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
+      u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
+    ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
+    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var roleFlat=role.replace(/[\s_-]+/g,'');
+    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicPa=!pa&&!isAdmin&&!publicBlocked;
+    html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
+    html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
+    html.setAttribute('data-azobss-pre-publicpa',publicPa?'1':'0');
+  }catch(_e){}
+})();
+</script>
+
+  <script src="/assets/js/azobss-render-wake.js?v=1056"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Makan Malaysia | AZOBSS</title>
+  <meta name="description" content="Cari tempat makan recommended di Malaysia mengikut negeri, kategori dan nama. Lihat Google Maps, lokasi semasa dan arah perjalanan.">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#081426">
+  <link rel="stylesheet" href="/assets/css/azobss-home-stickybar-exact-sync.css?v=1053">
+  <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
+  <script defer src="/assets/js/azobss-more-nav.js?v=1079"></script>
+  <style>
+    :root{--bg:#07101e;--panel:#0e1a2d;--panel2:#101f37;--line:rgba(148,163,184,.23);--text:#eef7ff;--muted:#9fb1c9;--cyan:#22d3ee;--green:#22c55e;--blue:#3b82f6;--yellow:#facc15}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;padding-top:48px;background:radial-gradient(circle at 14% 0%,rgba(37,99,235,.14),transparent 30%),radial-gradient(circle at 88% 10%,rgba(34,211,238,.08),transparent 24%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}a{color:inherit}
+    .market-search-row{display:none!important}.site-auth-actions{margin-left:auto!important}.wrap{width:min(1260px,calc(100% - 30px));margin:0 auto}
+    .hero{padding:34px 0 14px;text-align:center}.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid rgba(34,211,238,.32);border-radius:999px;background:rgba(34,211,238,.07);color:#a5f3fc;font-size:9.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .hero h1{margin:10px auto 6px;font-size:clamp(28px,4vw,42px);line-height:1.02;letter-spacing:-.03em}.hero h1 span{color:#67e8f9}.hero p{max-width:790px;margin:0 auto;color:var(--muted);font-size:13px;line-height:1.45}
+    .toolbar{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:8px;margin:15px auto 9px;max-width:900px}.field{position:relative}.field input,.field select{width:100%;height:38px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:#0a1628;color:#fff;padding:0 12px;font:inherit;font-size:12px;font-weight:750;outline:none}.field input:focus,.field select:focus{border-color:#22d3ee;box-shadow:0 0 0 2px rgba(34,211,238,.10)}
+    .results-meta{max-width:900px;margin:0 auto 8px;color:#879bb5;font-size:10.5px;text-align:left}
+    .grid{display:grid;grid-template-columns:1fr;gap:9px;padding:5px 0 24px}
+    .site-card{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr) auto;align-items:center;gap:15px;min-height:92px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(150deg,rgba(16,31,55,.96),rgba(8,20,38,.98));padding:11px 13px;box-shadow:0 10px 28px rgba(0,0,0,.20);transition:transform .16s ease,border-color .16s ease}.site-card:hover{transform:translateY(-2px);border-color:rgba(34,211,238,.46)}
+    .site-top{display:flex;align-items:center;gap:10px;min-width:0}.site-icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border:1px solid rgba(34,211,238,.30);border-radius:11px;background:linear-gradient(145deg,#12345b,#0b1b31);color:#67e8f9;font-size:13px;font-weight:1000;letter-spacing:-.04em}.site-title{min-width:0}.site-title h2{margin:0 0 2px;font-size:15px;line-height:1.15}.domain{color:#7dd3fc;font-size:10px;font-weight:800;overflow-wrap:anywhere}
+    .site-main{min-width:0}.site-meta{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:5px}.badge,.category,.tag{display:inline-flex;align-items:center;border-radius:999px;font-weight:850;white-space:nowrap}.badge{padding:3px 7px;background:rgba(34,197,94,.11);border:1px solid rgba(34,197,94,.30);color:#86efac;font-size:9px}.category{padding:3px 7px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);color:#bfdbfe;font-size:9px}.tags{display:inline-flex;flex-wrap:wrap;gap:4px}.tag{padding:3px 6px;border:1px solid rgba(148,163,184,.17);background:#0a1628;color:#aebed2;font-size:8.5px}.desc{margin:0;color:#b1c1d5;line-height:1.38;font-size:11px}
+    .site-actions{display:flex;align-items:center;justify-content:flex-end}.open-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:105px;min-height:34px;padding:0 11px;border-radius:9px;text-decoration:none;background:linear-gradient(135deg,#2563eb,#22d3ee);color:#04111f;font-size:10.5px;font-weight:950;box-shadow:0 7px 18px rgba(34,211,238,.11);white-space:nowrap}.open-btn:hover{filter:brightness(1.06)}
+    .empty{grid-column:1/-1;padding:22px;border:1px dashed rgba(148,163,184,.26);border-radius:13px;text-align:center;color:#9fb1c9;background:rgba(15,23,42,.42);font-size:11px}.third-party{margin:0 0 26px;padding:9px 12px;border:1px solid rgba(250,204,21,.22);border-radius:10px;background:rgba(250,204,21,.05);color:#d6c785;font-size:9.5px;text-align:center}.footer{padding:17px 0 24px;border-top:1px solid rgba(148,163,184,.12);text-align:center;color:#71849c;font-size:9.5px}
+    @media(max-width:860px){.site-card{grid-template-columns:minmax(190px,250px) minmax(0,1fr);gap:10px}.site-actions{grid-column:1/-1;justify-content:flex-end;margin-top:-2px}.open-btn{min-height:32px}}
+    @media(max-width:650px){body{padding-top:94px}.wrap{width:min(100% - 18px,1260px)}.hero{padding-top:26px}.toolbar{grid-template-columns:1fr}.site-card{grid-template-columns:1fr;padding:11px}.site-main{padding-left:52px;margin-top:-3px}.site-actions{grid-column:auto;justify-content:stretch}.open-btn{width:100%}.site-auth-actions{margin-right:8px!important}}
+  </style>
+
+<style id="azobss-makan-malaysia-1079">
+:root{--mm-bg:#07101e;--mm-panel:#0d1a2d;--mm-panel2:#11213a;--mm-line:rgba(148,163,184,.22);--mm-text:#eff7ff;--mm-muted:#9db0c8;--mm-cyan:#22d3ee;--mm-green:#22c55e;--mm-blue:#3b82f6;--mm-gold:#facc15}
+body{background:radial-gradient(circle at 10% 0%,rgba(14,165,233,.12),transparent 26%),radial-gradient(circle at 88% 7%,rgba(34,197,94,.08),transparent 24%),#07101e!important;color:var(--mm-text)}
+.mm-wrap{width:min(1240px,calc(100% - 28px));margin:0 auto}.mm-hero{padding:28px 0 13px;text-align:center}.mm-kicker{display:inline-flex;padding:5px 10px;border:1px solid rgba(34,211,238,.3);border-radius:999px;background:rgba(34,211,238,.07);color:#a5f3fc;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.mm-hero h1{margin:9px 0 5px;font-size:clamp(30px,4vw,44px);letter-spacing:-.04em}.mm-hero h1 span{color:#67e8f9}.mm-hero p{max-width:830px;margin:0 auto;color:var(--mm-muted);font-size:13px;line-height:1.5}
+.mm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}.mm-stat{border:1px solid var(--mm-line);background:linear-gradient(150deg,rgba(17,33,58,.96),rgba(9,22,39,.98));border-radius:13px;padding:12px 14px;text-align:left}.mm-stat strong{display:block;font-size:20px;color:#e8f7ff}.mm-stat span{display:block;margin-top:2px;color:#8295ad;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
+.mm-toolbar{display:grid;grid-template-columns:minmax(230px,1.4fr) repeat(3,minmax(145px,.6fr));gap:8px;padding:12px;border:1px solid var(--mm-line);border-radius:14px;background:rgba(11,24,42,.94)}.mm-field label{display:block;margin:0 0 5px;color:#9fb3cb;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.05em}.mm-field input,.mm-field select{width:100%;height:40px;border:1px solid rgba(148,163,184,.28);border-radius:9px;background:#071326;color:#fff;padding:0 11px;font-size:12px;font-weight:750;outline:none}.mm-field input:focus,.mm-field select:focus{border-color:#22d3ee;box-shadow:0 0 0 2px rgba(34,211,238,.09)}
+.mm-map-shell{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.72fr);gap:11px;margin:12px 0}.mm-map-card,.mm-detail-card{border:1px solid var(--mm-line);border-radius:15px;background:linear-gradient(150deg,rgba(16,31,55,.98),rgba(8,20,38,.99));overflow:hidden}.mm-map-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--mm-line)}.mm-map-title{font-size:13px;font-weight:950}.mm-map-sub{color:#8ea1b8;font-size:9.5px;margin-top:2px}.mm-map-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.mm-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 10px;border:1px solid rgba(148,163,184,.25);border-radius:9px;background:#0b1a2e;color:#e8f4ff;font-size:10px;font-weight:900;cursor:pointer;text-decoration:none}.mm-btn:hover{border-color:rgba(34,211,238,.48)}.mm-btn.primary{border-color:rgba(34,197,94,.38);background:linear-gradient(135deg,#16a34a,#22c55e);color:#06130b}.mm-btn.blue{background:linear-gradient(135deg,#2563eb,#0ea5e9);border:0;color:#fff}.mm-map-frame{display:block;width:100%;height:500px;border:0;background:#08111d}.mm-origin{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:7px;padding:9px 10px;border-top:1px solid var(--mm-line);background:rgba(7,16,30,.72)}.mm-origin input{height:36px;border:1px solid rgba(148,163,184,.25);border-radius:9px;background:#071326;color:#fff;padding:0 10px;font-size:11px}.mm-origin-status{grid-column:1/-1;color:#83a2c3;font-size:9px;min-height:12px}
+.mm-detail-card{padding:14px;display:flex;flex-direction:column}.mm-detail-badges{display:flex;flex-wrap:wrap;gap:5px}.mm-pill{display:inline-flex;padding:4px 7px;border-radius:999px;border:1px solid rgba(34,211,238,.22);background:rgba(34,211,238,.07);color:#a5f3fc;font-size:9px;font-weight:900}.mm-pill.state{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.07);color:#86efac}.mm-detail-card h2{margin:12px 0 4px;font-size:22px;line-height:1.1}.mm-specialty{color:#f8d66d;font-size:12px;font-weight:900}.mm-address{margin:12px 0 0;padding:10px 0;border-top:1px solid var(--mm-line);color:#c2cede;font-size:11px;line-height:1.45}.mm-why{margin:10px 0;color:#9fb1c6;font-size:11px;line-height:1.5}.mm-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:auto;padding-top:12px}.mm-empty-detail{display:grid;place-items:center;min-height:330px;text-align:center;color:#8ea1b8;font-size:11px;line-height:1.5}.mm-empty-detail strong{display:block;color:#dbeafe;font-size:16px;margin-bottom:5px}
+.mm-list-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:19px 0 8px}.mm-list-head h2{margin:0;font-size:20px}.mm-result-count{color:#8ea1b8;font-size:10px}.mm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-bottom:26px}.mm-place{display:flex;flex-direction:column;min-height:230px;border:1px solid var(--mm-line);border-radius:14px;background:linear-gradient(150deg,rgba(16,31,55,.96),rgba(8,20,38,.99));padding:12px;cursor:pointer;transition:.16s ease}.mm-place:hover{transform:translateY(-2px);border-color:rgba(34,211,238,.45)}.mm-place.is-selected{border-color:#22d3ee;box-shadow:0 0 0 1px rgba(34,211,238,.2)}.mm-place-top{display:flex;justify-content:space-between;gap:8px}.mm-place-state{color:#86efac;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.05em}.mm-rank{color:#facc15;font-size:9px;font-weight:900}.mm-place h3{margin:6px 0 5px;font-size:15px;line-height:1.2}.mm-place-specialty{color:#bfdbfe;font-size:10px;font-weight:850}.mm-place-address{margin:9px 0;color:#8fa3ba;font-size:9.5px;line-height:1.4}.mm-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto}.mm-tag{padding:3px 6px;border:1px solid rgba(148,163,184,.17);border-radius:999px;background:#071326;color:#aebed2;font-size:8px;font-weight:800}.mm-card-actions{display:flex;gap:6px;margin-top:9px}.mm-card-actions .mm-btn{flex:1;min-height:31px;padding:0 7px;font-size:9px}.mm-empty{grid-column:1/-1;padding:28px;border:1px dashed rgba(148,163,184,.28);border-radius:13px;text-align:center;color:#93a6bc}.mm-note{margin:0 0 28px;padding:10px 12px;border:1px solid rgba(250,204,21,.18);border-radius:10px;background:rgba(250,204,21,.04);color:#c9bd82;font-size:9.5px;line-height:1.45;text-align:center}
+@media(max-width:980px){.mm-map-shell{grid-template-columns:1fr}.mm-detail-card{min-height:250px}.mm-map-frame{height:430px}.mm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mm-toolbar{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){body{padding-top:94px!important}.mm-wrap{width:min(100% - 16px,1240px)}.mm-hero{padding-top:22px}.mm-stats{grid-template-columns:1fr 1fr 1fr}.mm-stat{padding:9px}.mm-stat strong{font-size:16px}.mm-toolbar{grid-template-columns:1fr}.mm-map-head{align-items:flex-start;flex-direction:column}.mm-map-actions{justify-content:flex-start}.mm-map-frame{height:390px}.mm-origin{grid-template-columns:1fr 1fr}.mm-origin input{grid-column:1/-1;grid-row:1}.mm-grid{grid-template-columns:1fr}.mm-detail-actions{grid-template-columns:1fr}.mm-list-head{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header aria-label="AZOBSS navigation" class="market-sticky-bar">
+  <div class="market-bar-inner">
+    <div class="market-main-row">
+      <a aria-label="AZOBSS" class="market-brand" href="/"><img alt="AZOBSS" src="/images/logo-azobss.jpg"></a>
+      <nav aria-label="AZOBSS quick actions" class="market-nav az-more-enabled">
+        <a class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard" aria-label="Admin Dashboard">🛠️</a>
+        <a class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard" aria-label="Staff Dashboard">🧑‍💼</a>
+        <a class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank" aria-label="WhatsApp"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+        <a class="nav-pa-bm-link is-hidden" hidden href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+        <a class="nav-public-pa-link" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a>
+        <a href="/Software-Tools/">Software</a>
+        <a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+        <a href="/affiliate-shop/">Affiliate Shop</a>
+        <div class="az-more-nav az-repair-nav" data-az-repair-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger az-repair-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="azRepairDropdownStatic" aria-label="Menu Repair PC"><span>Repair PC</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown az-repair-dropdown" id="azRepairDropdownStatic" role="menu" aria-label="Pilihan servis Repair PC"><a href="/Tempah-Servis-IT/" role="menuitem" data-az-repair-physical-link="1"><svg class="az-more-item-icon az-repair-physical-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path></svg><span class="az-repair-item-copy"><strong>Servis PC &amp; Laptop</strong><small>Pembaikan fizikal, format dan servis kedai</small></span></a><a href="/Troubleshoot-PC-Online/" role="menuitem" data-az-repair-online-link="1"><svg class="az-more-item-icon az-repair-online-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg><span class="az-repair-item-copy"><strong>Troubleshoot PC Online</strong><small>Pemeriksaan dan pembaikan PC dari jauh</small></span></a></div></div>
+        <a href="/lucky-draw/">Lucky Draw</a>
+        <div class="az-more-nav" data-az-more-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger market-nav-active is-active is-current" aria-haspopup="true" aria-expanded="false" aria-controls="azMoreDropdownStatic" aria-label="More menu"><svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg><span>More</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown" id="azMoreDropdownStatic" role="menu"><a href="/AZOBSSTV/" role="menuitem" data-azobsstv-link="1" title="AZOBSSTV"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M9 21h6"></path><path d="M12 18v3"></path><path d="m10 9 5 3-5 3z"></path></svg><span>AZOBSSTV</span></a><a href="/tools/" role="menuitem" data-az-more-tools-link="1"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span>Mini Web Tools</span></a><a href="/Web-Pilihan/" role="menuitem" data-az-web-pilihan-link="1" title="Useful websites and tools curated by AZOBSS"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"></path></svg><span>Web Picks</span></a><a href="/Makan-Malaysia/" role="menuitem" data-az-makan-malaysia-link="1" title="Tempat makan recommended di Malaysia" class="market-nav-active is-active is-current" aria-current="page"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v8"></path><path d="M4 3v5a3 3 0 0 0 6 0V3"></path><path d="M7 11v10"></path><path d="M17 3v18"></path><path d="M17 3c2.3 2 3 4.2 3 7h-3"></path></svg><span>Makan Malaysia</span></a><a href="/Sound-Effects/" role="menuitem" data-az-sound-effects-link="1" title="AZOBSS Sound Effects"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10v4"></path><path d="M8 8v8"></path><path d="M12 5v14"></path><path d="M16 8v8"></path><path d="M20 10v4"></path></svg><span>Sound Effects</span></a><a href="/Tempah-Website/" role="menuitem" data-az-website-order-link="1" title="Tempah Website untuk Bisnes"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path><path d="M7 10h4"></path><path d="M7 13h8"></path></svg><span>Bina Website</span></a><a href="/Tempahan-Makanan/" role="menuitem" data-az-food-order-link="1" title="Food - Brownies"><svg class="az-more-item-icon az-more-food-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 14h16"></path><path d="M6 14a6 6 0 0 1 12 0"></path><path d="M12 6V4"></path><path d="M3 18h18"></path></svg><span>Food - Brownies</span></a></div></div>
+      </nav>
+      <div class="site-auth-actions" id="siteAuthActions"><button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button><button class="site-auth-btn" data-auth-open="login" id="siteSignInButton" type="button">Login</button></div>
+      <div class="market-user-tools" id="marketUserTools"><div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0"><div class="user-avatar" id="userAvatar">AZ</div><div class="user-name"><span id="signedInName"></span></div><div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu"><a class="user-dropdown-item" href="/#purchases" role="menuitem">🧾 <span>My Purchases</span></a><a class="user-dropdown-item" href="/Bookmarks/" role="menuitem">🔖 <span>Bookmarks</span></a><button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button">⚙️ <span>Settings</span></button><button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button">🚪 <span>Log Out</span></button></div></div></div>
+    </div>
+  </div>
+</header>
+<main>
+<section class="mm-hero"><div class="mm-wrap">
+  <span class="mm-kicker">AZOBSS Food Guide</span>
+  <h1>Makan <span>Malaysia</span></h1>
+  <p>Cari tempat makan yang popular dan sering direkomendasikan di seluruh Malaysia. Tapis ikut negeri atau jenis makanan, lihat Google Maps, gunakan lokasi semasa atau ubah lokasi permulaan untuk dapatkan arah perjalanan.</p>
+  <div class="mm-stats"><div class="mm-stat"><strong id="mmPlaceTotal">—</strong><span>Curated Places</span></div><div class="mm-stat"><strong id="mmStateTotal">—</strong><span>Negeri / Wilayah</span></div><div class="mm-stat"><strong>Google Maps</strong><span>Live Map & Directions</span></div></div>
+  <div class="mm-toolbar">
+    <div class="mm-field"><label for="mmSearch">Carian</label><input id="mmSearch" type="search" placeholder="Nama tempat, makanan, bandar..." autocomplete="off"></div>
+    <div class="mm-field"><label for="mmState">Negeri</label><select id="mmState"><option value="">Semua Negeri</option></select></div>
+    <div class="mm-field"><label for="mmCategory">Kategori</label><select id="mmCategory"><option value="">Semua Kategori</option></select></div>
+    <div class="mm-field"><label for="mmSort">Sort By</label><select id="mmSort"><option value="recommended">Recommended</option><option value="state">Negeri A-Z</option><option value="name">Nama A-Z</option><option value="specialty">Makanan A-Z</option></select></div>
+  </div>
+</div></section>
+<section class="mm-wrap">
+  <div class="mm-map-shell">
+    <div class="mm-map-card">
+      <div class="mm-map-head"><div><div class="mm-map-title">Google Maps</div><div class="mm-map-sub" id="mmMapSubtitle">Pin Google Maps akan ikut carian / negeri yang dipilih.</div></div><div class="mm-map-actions"><button class="mm-btn" id="mmShowPins" type="button">📍 Show Food Pins</button><a class="mm-btn" id="mmOpenGoogle" target="_blank" rel="noopener">↗ Open Google Maps</a></div></div>
+      <iframe class="mm-map-frame" id="mmMapFrame" title="Google Maps tempat makan Malaysia" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      <div class="mm-origin"><button class="mm-btn" id="mmUseCurrent" type="button">◎ Lokasi Semasa</button><input id="mmOrigin" type="text" placeholder="Atau taip lokasi permulaan, contoh: Batu Caves"><button class="mm-btn" id="mmClearOrigin" type="button">Reset</button><div class="mm-origin-status" id="mmOriginStatus">Jika lokasi permulaan dikosongkan, Google Maps boleh menggunakan lokasi peranti semasa apabila Directions dibuka.</div></div>
+    </div>
+    <aside class="mm-detail-card" id="mmDetail"><div class="mm-empty-detail"><div><strong>Pilih tempat makan</strong>Tekan mana-mana kad di bawah untuk fokus lokasi di Google Maps dan lihat butiran serta arah perjalanan.</div></div></aside>
+  </div>
+  <div class="mm-list-head"><div><h2>Tempat Makan Recommended</h2><div class="mm-result-count" id="mmResultCount">Memuatkan senarai...</div></div></div>
+  <div class="mm-grid" id="mmGrid"><div class="mm-empty">Memuatkan tempat makan...</div></div>
+  <div class="mm-note">ℹ️ Senarai ini ialah pilihan kurasi AZOBSS berdasarkan tempat yang terkenal, warisan tempatan dan cadangan awam. Rating, waktu operasi, harga dan status halal/dietary boleh berubah — semak maklumat terkini pada Google Maps atau dengan premis sebelum membuat perjalanan khas.</div>
+</section>
+</main>
+<footer class="footer"><div class="mm-wrap">© AZOBSS · Makan Malaysia</div></footer>
+<script>
+(function(){
+  'use strict';
+  var places=[], filtered=[], selectedId='', currentCoords='', customOrigin='';
+  var $=function(id){return document.getElementById(id)};
+  var grid=$('mmGrid'), search=$('mmSearch'), state=$('mmState'), category=$('mmCategory'), sort=$('mmSort'), detail=$('mmDetail'), frame=$('mmMapFrame');
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function placeQuery(p){return [p.name,p.address,p.state,'Malaysia'].filter(Boolean).join(', ')}
+  function googleSearchUrl(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q)}
+  function googleEmbedUrl(q){return 'https://www.google.com/maps?q='+encodeURIComponent(q)+'&output=embed'}
+  function originValue(){var typed=($('mmOrigin').value||'').trim();return typed||currentCoords||''}
+  function directionsUrl(p){var url='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(placeQuery(p))+'&travelmode=driving';var origin=originValue();if(origin)url+='&origin='+encodeURIComponent(origin);return url}
+  function mapBrowseQuery(){var q=[];if(category.value)q.push(category.value);q.push('recommended food');if(state.value)q.push('in '+state.value);else q.push('in Malaysia');if((search.value||'').trim())q.unshift((search.value||'').trim());return q.join(' ')}
+  function setMapQuery(q,label){frame.src=googleEmbedUrl(q);$('mmOpenGoogle').href=googleSearchUrl(q);$('mmMapSubtitle').textContent=label||'Google Maps live view.'}
+  function showBrowseMap(){selectedId='';document.querySelectorAll('.mm-place.is-selected').forEach(function(x){x.classList.remove('is-selected')});setMapQuery(mapBrowseQuery(),'Google Maps live search — tekan pin pada peta untuk lihat maklumat Google.');detail.innerHTML='<div class="mm-empty-detail"><div><strong>Google Maps Live Pins</strong>Tekan pin pada peta atau pilih kad kurasi AZOBSS di bawah. Arah perjalanan boleh menggunakan lokasi semasa atau lokasi permulaan yang kamu taip.</div></div>'}
+  function renderDetail(p){
+    var tags=(p.tags||[]).map(function(t){return '<span class="mm-pill">'+esc(t)+'</span>'}).join('');
+    detail.innerHTML='<div class="mm-detail-badges"><span class="mm-pill state">'+esc(p.state)+'</span><span class="mm-pill">'+esc(p.category)+'</span>'+tags+'</div><h2>'+esc(p.name)+'</h2><div class="mm-specialty">🍽 '+esc(p.specialty)+'</div><div class="mm-address">📍 '+esc(p.address)+'</div><p class="mm-why">'+esc(p.why)+'</p><div class="mm-detail-actions"><a class="mm-btn blue" target="_blank" rel="noopener" href="'+esc(directionsUrl(p))+'">🧭 Directions</a><a class="mm-btn" target="_blank" rel="noopener" href="'+esc(googleSearchUrl(placeQuery(p)))+'">↗ Google Maps</a><button class="mm-btn" type="button" id="mmSharePlace">⤴ Share</button><button class="mm-btn" type="button" id="mmBackPins">📍 All Pins</button></div>';
+    var share=$('mmSharePlace');if(share)share.onclick=function(){var url=googleSearchUrl(placeQuery(p));if(navigator.share){navigator.share({title:p.name,text:p.specialty,url:url}).catch(function(){})}else if(navigator.clipboard){navigator.clipboard.writeText(url);share.textContent='✓ Copied'}};
+    var back=$('mmBackPins');if(back)back.onclick=showBrowseMap;
+  }
+  function selectPlace(id,scroll){var p=places.find(function(x){return x.id===id});if(!p)return;selectedId=id;setMapQuery(placeQuery(p),'Lokasi dipilih: '+p.name+' · Tekan pin / peta untuk butiran Google Maps.');renderDetail(p);document.querySelectorAll('.mm-place').forEach(function(card){card.classList.toggle('is-selected',card.dataset.id===id)});if(scroll){document.querySelector('.mm-map-shell').scrollIntoView({behavior:'smooth',block:'start'})}}
+  function render(){var q=(search.value||'').trim().toLowerCase(), st=state.value, cat=category.value;filtered=places.filter(function(p){if(st&&p.state!==st)return false;if(cat&&p.category!==cat)return false;if(!q)return true;return [p.name,p.state,p.city,p.address,p.specialty,p.category,p.why].concat(p.tags||[]).join(' ').toLowerCase().indexOf(q)!==-1});filtered.sort(function(a,b){if(sort.value==='name')return a.name.localeCompare(b.name);if(sort.value==='state')return (a.state+' '+a.name).localeCompare(b.state+' '+b.name);if(sort.value==='specialty')return (a.specialty+' '+a.name).localeCompare(b.specialty+' '+b.name);return (a.rank||999)-(b.rank||999)});$('mmResultCount').textContent=filtered.length+' tempat ditunjukkan';if(!filtered.length){grid.innerHTML='<div class="mm-empty">Tiada tempat makan sepadan dengan carian ini.</div>';return}grid.innerHTML=filtered.map(function(p){var tags=(p.tags||[]).slice(0,3).map(function(t){return '<span class="mm-tag">'+esc(t)+'</span>'}).join('');return '<article class="mm-place'+(p.id===selectedId?' is-selected':'')+'" data-id="'+esc(p.id)+'" tabindex="0"><div class="mm-place-top"><span class="mm-place-state">'+esc(p.state)+'</span><span class="mm-rank">AZOBSS PICK</span></div><h3>'+esc(p.name)+'</h3><div class="mm-place-specialty">'+esc(p.specialty)+'</div><div class="mm-place-address">📍 '+esc(p.city)+' · '+esc(p.address)+'</div><div class="mm-tags">'+tags+'</div><div class="mm-card-actions"><button class="mm-btn mm-focus" type="button">📍 Map</button><a class="mm-btn mm-dir" target="_blank" rel="noopener" href="'+esc(directionsUrl(p))+'">🧭 Directions</a></div></article>'}).join('')}
+  function populate(){var states=Array.from(new Set(places.map(function(p){return p.state}))).sort();var cats=Array.from(new Set(places.map(function(p){return p.category}))).sort();states.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;state.appendChild(o)});cats.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;category.appendChild(o)});$('mmPlaceTotal').textContent=places.length;$('mmStateTotal').textContent=states.length;render();showBrowseMap()}
+  grid.addEventListener('click',function(e){var card=e.target.closest('.mm-place');if(!card)return;if(e.target.closest('.mm-dir'))return;selectPlace(card.dataset.id,!!e.target.closest('.mm-focus'))});grid.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('mm-place')){e.preventDefault();selectPlace(e.target.dataset.id,true)}});
+  [search,state,category,sort].forEach(function(el){el.addEventListener(el===search?'input':'change',function(){render();if(!selectedId)showBrowseMap()})});$('mmShowPins').onclick=showBrowseMap;
+  $('mmUseCurrent').onclick=function(){var status=$('mmOriginStatus');if(!navigator.geolocation){status.textContent='Browser ini tidak menyokong lokasi semasa.';return}status.textContent='Mendapatkan lokasi semasa...';navigator.geolocation.getCurrentPosition(function(pos){currentCoords=pos.coords.latitude.toFixed(6)+','+pos.coords.longitude.toFixed(6);$('mmOrigin').value='';status.textContent='✓ Lokasi semasa digunakan sebagai titik mula Directions.';render();if(selectedId){var p=places.find(function(x){return x.id===selectedId});if(p)renderDetail(p)}},function(err){status.textContent='Lokasi tidak dapat diperoleh. Benarkan Location permission atau taip lokasi permulaan secara manual.'},{enableHighAccuracy:true,timeout:10000,maximumAge:60000})};
+  $('mmOrigin').addEventListener('input',function(){customOrigin=this.value.trim();currentCoords='';$('mmOriginStatus').textContent=customOrigin?'Lokasi permulaan manual akan digunakan untuk Directions.':'Jika kosong, Google Maps boleh menggunakan lokasi peranti semasa.';render();if(selectedId){var p=places.find(function(x){return x.id===selectedId});if(p)renderDetail(p)}});$('mmClearOrigin').onclick=function(){$('mmOrigin').value='';currentCoords='';customOrigin='';$('mmOriginStatus').textContent='Lokasi permulaan telah dikosongkan. Google Maps boleh menggunakan lokasi peranti semasa.';render();if(selectedId){var p=places.find(function(x){return x.id===selectedId});if(p)renderDetail(p)}};
+  fetch('./places.json?v=1079',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(data){places=Array.isArray(data)?data:[];populate()}).catch(function(){grid.innerHTML='<div class="mm-empty">Senarai tempat makan gagal dimuatkan. Sila refresh halaman.</div>';$('mmResultCount').textContent='Gagal memuatkan data.';setMapQuery('recommended food in Malaysia','Google Maps live search')});
+})();
+</script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1078"></script>
+<script src="/assets/js/azobss-pro-ui.js" defer></script>
+</body>
+</html>

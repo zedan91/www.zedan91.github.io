@@ -1,0 +1,642 @@
+[
+  {
+    "id": "wanjo",
+    "name": "Nasi Lemak Wanjo Kampung Baru",
+    "state": "Kuala Lumpur",
+    "city": "Kampung Baru",
+    "address": "8, Jalan Raja Muda Musa, Kampung Baru, 50300 Kuala Lumpur",
+    "specialty": "Nasi Lemak & Ayam Goreng Berempah",
+    "category": "Nasi Lemak",
+    "tags": [
+      "Iconic",
+      "Breakfast",
+      "Local Favourite"
+    ],
+    "rank": 1,
+    "why": "A long-running Kampung Baru nasi lemak institution that remains one of KL's most frequently recommended local breakfast stops."
+  },
+  {
+    "id": "yut-kee",
+    "name": "Yut Kee Restaurant",
+    "state": "Kuala Lumpur",
+    "city": "Chow Kit",
+    "address": "1, Jalan Kamunting, Chow Kit, 50300 Kuala Lumpur",
+    "specialty": "Hainanese Kopitiam Classics",
+    "category": "Kopitiam",
+    "tags": [
+      "Heritage",
+      "Breakfast",
+      "Kopitiam"
+    ],
+    "rank": 18,
+    "why": "A heritage Hainanese kopitiam dating to 1928, popular for old-school breakfast and lunch dishes."
+  },
+  {
+    "id": "tanglin",
+    "name": "Nasi Lemak Tanglin",
+    "state": "Kuala Lumpur",
+    "city": "Tasik Perdana",
+    "address": "Gerai No. 6, Kompleks Makan Tanglin, Jalan Cenderasari, 50480 Kuala Lumpur",
+    "specialty": "Nasi Lemak",
+    "category": "Nasi Lemak",
+    "tags": [
+      "Breakfast",
+      "Heritage",
+      "Local Favourite"
+    ],
+    "rank": 10,
+    "why": "A classic morning nasi lemak stop in central KL with a long local following."
+  },
+  {
+    "id": "village-park",
+    "name": "Village Park Restaurant",
+    "state": "Selangor",
+    "city": "Petaling Jaya",
+    "address": "5, Jalan SS 21/37, Damansara Utama, 47400 Petaling Jaya, Selangor",
+    "specialty": "Nasi Lemak Ayam Goreng",
+    "category": "Nasi Lemak",
+    "tags": [
+      "Iconic",
+      "Popular",
+      "Breakfast"
+    ],
+    "rank": 2,
+    "why": "One of the Klang Valley's best-known nasi lemak destinations, especially for ayam goreng berempah."
+  },
+  {
+    "id": "sate-kajang",
+    "name": "Sate Kajang Haji Samuri",
+    "state": "Selangor",
+    "city": "Kajang",
+    "address": "Bangunan Dato Nazir, Jalan Kelab, 43000 Kajang, Selangor",
+    "specialty": "Sate Kajang",
+    "category": "Satay",
+    "tags": [
+      "Iconic",
+      "Family",
+      "Local Favourite"
+    ],
+    "rank": 8,
+    "why": "Kajang is synonymous with satay, and Haji Samuri is one of the most recognisable names associated with it."
+  },
+  {
+    "id": "itik-salai-masthar",
+    "name": "Itik Salai Masthar Sg Merab",
+    "state": "Selangor",
+    "city": "Kajang",
+    "address": "Jalan Aman, 43000 Kajang, Selangor",
+    "specialty": "Itik Salai Masak Lemak",
+    "category": "Regional Malay",
+    "tags": [
+      "Smoked Duck",
+      "Masak Lemak",
+      "Popular"
+    ],
+    "rank": 21,
+    "why": "A popular Kajang-area stop for smoky itik salai with rich masak lemak gravy."
+  },
+  {
+    "id": "hameediyah",
+    "name": "Hameediyah Restaurant",
+    "state": "Pulau Pinang",
+    "city": "George Town",
+    "address": "164, Lebuh Campbell, 10100 George Town, Pulau Pinang",
+    "specialty": "Nasi Kandar",
+    "category": "Nasi Kandar",
+    "tags": [
+      "Heritage",
+      "Iconic",
+      "Curry"
+    ],
+    "rank": 4,
+    "why": "A historic Penang nasi kandar institution with a heritage stretching back more than a century."
+  },
+  {
+    "id": "line-clear",
+    "name": "Restoran Nasi Kandar Line Clear",
+    "state": "Pulau Pinang",
+    "city": "George Town",
+    "address": "161 & 177, Jalan Penang, 10000 George Town, Pulau Pinang",
+    "specialty": "Nasi Kandar Kuah Banjir",
+    "category": "Nasi Kandar",
+    "tags": [
+      "Iconic",
+      "Supper",
+      "Heritage"
+    ],
+    "rank": 5,
+    "why": "A famous Penang Road nasi kandar stop known for mixed curries and its enduring alleyway atmosphere."
+  },
+  {
+    "id": "air-itam-laksa",
+    "name": "Penang Air Itam Laksa",
+    "state": "Pulau Pinang",
+    "city": "Air Itam",
+    "address": "Jalan Pasar, Paya Terubong, 11500 George Town, Pulau Pinang",
+    "specialty": "Asam Laksa",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Street Food",
+      "Iconic",
+      "Laksa"
+    ],
+    "rank": 13,
+    "why": "Air Itam is one of Penang's classic places to look for the island's tangy assam laksa style."
+  },
+  {
+    "id": "penang-chendul",
+    "name": "Penang Road Famous Teochew Chendul",
+    "state": "Pulau Pinang",
+    "city": "George Town",
+    "address": "27 & 29, Lebuh Keng Kwee, 10100 George Town, Pulau Pinang",
+    "specialty": "Teochew Chendul",
+    "category": "Dessert",
+    "tags": [
+      "Dessert",
+      "Heritage",
+      "Iconic"
+    ],
+    "rank": 14,
+    "why": "A long-running Keng Kwee Street dessert stop closely associated with Penang-style chendul."
+  },
+  {
+    "id": "lou-wong",
+    "name": "Lou Wong Tauge Ayam",
+    "state": "Perak",
+    "city": "Ipoh",
+    "address": "214, Jalan Dato Tahwil Azar, Taman Jubilee, 30300 Ipoh, Perak",
+    "specialty": "Tauge Ayam & Hor Fun",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Ipoh",
+      "Chicken",
+      "Local Classic"
+    ],
+    "rank": 19,
+    "why": "A well-known Ipoh name for chicken, crunchy bean sprouts and simple noodle/rice pairings."
+  },
+  {
+    "id": "nasi-ganja",
+    "name": "Nasi Ganja @ Kedai Kopi Yong Suan",
+    "state": "Perak",
+    "city": "Ipoh",
+    "address": "2, Jalan Yang Kalsom, 30250 Ipoh, Perak",
+    "specialty": "Nasi Kandar Ipoh / Nasi Ganja",
+    "category": "Rice & Curry",
+    "tags": [
+      "Ipoh",
+      "Popular",
+      "Lunch"
+    ],
+    "rank": 15,
+    "why": "One of Ipoh's most talked-about rice-and-curry lunch stops, commonly known by the nickname Nasi Ganja."
+  },
+  {
+    "id": "nam-heong",
+    "name": "Kedai Makanan Nam Heong",
+    "state": "Perak",
+    "city": "Ipoh",
+    "address": "2, Jalan Bandar Timah, 30000 Ipoh, Perak",
+    "specialty": "Ipoh White Coffee & Kopitiam Breakfast",
+    "category": "Kopitiam",
+    "tags": [
+      "White Coffee",
+      "Heritage",
+      "Breakfast"
+    ],
+    "rank": 17,
+    "why": "A famous Old Town kopitiam associated with Ipoh white coffee, egg tarts and traditional breakfast stalls."
+  },
+  {
+    "id": "mee-bandung-muar",
+    "name": "Mee Bandung Abu Bakar Hanipah",
+    "state": "Johor",
+    "city": "Muar",
+    "address": "69A, Jalan Abdullah, Pekan Muar, 84000 Muar, Johor",
+    "specialty": "Mee Bandung Muar",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Muar",
+      "Iconic",
+      "Noodles"
+    ],
+    "rank": 11,
+    "why": "A recognised Muar name for the town's signature rich and savoury mee bandung."
+  },
+  {
+    "id": "kacang-pool-haji",
+    "name": "Kacang Pool Haji · Selera Johor",
+    "state": "Johor",
+    "city": "Johor Bahru",
+    "address": "14, Jalan Garuda, Larkin, 80350 Johor Bahru, Johor",
+    "specialty": "Kacang Pool",
+    "category": "Regional Malay",
+    "tags": [
+      "Johor",
+      "Breakfast",
+      "Local Favourite"
+    ],
+    "rank": 22,
+    "why": "A popular Johor breakfast stop for kacang pool served with toast and egg."
+  },
+  {
+    "id": "hiap-joo",
+    "name": "Hiap Joo Bakery & Biscuit Factory",
+    "state": "Johor",
+    "city": "Johor Bahru",
+    "address": "13, Jalan Tan Hiok Nee, Bandar Johor Bahru, 80000 Johor Bahru, Johor",
+    "specialty": "Banana Cake & Traditional Bakery",
+    "category": "Bakery & Dessert",
+    "tags": [
+      "Heritage",
+      "Bakery",
+      "Takeaway"
+    ],
+    "rank": 23,
+    "why": "A heritage wood-fired bakery in old Johor Bahru famous for banana cake and simple traditional bakes."
+  },
+  {
+    "id": "asam-pedas-claypot",
+    "name": "Asam Pedas Claypot · Kota Laksamana",
+    "state": "Melaka",
+    "city": "Melaka City",
+    "address": "86, Jalan Laksamana 5, Taman Kota Laksamana, 75200 Melaka",
+    "specialty": "Asam Pedas Claypot",
+    "category": "Regional Malay",
+    "tags": [
+      "Asam Pedas",
+      "Dinner",
+      "Melaka"
+    ],
+    "rank": 12,
+    "why": "A heavily visited Kota Laksamana stop serving Melaka-style asam pedas bubbling in claypots."
+  },
+  {
+    "id": "capitol-satay-celup",
+    "name": "Capitol Satay Celup",
+    "state": "Melaka",
+    "city": "Melaka City",
+    "address": "30, Jalan KPKS 3, Kompleks Perniagaan Kota Syahbandar, 75200 Melaka",
+    "specialty": "Satay Celup",
+    "category": "Satay",
+    "tags": [
+      "Heritage",
+      "Dinner",
+      "Non-Halal - Verify"
+    ],
+    "rank": 27,
+    "why": "A pioneer name in Melaka's satay celup tradition. Dietary status should be checked before visiting."
+  },
+  {
+    "id": "klebang-shake",
+    "name": "Klebang Original Coconut Shake",
+    "state": "Melaka",
+    "city": "Klebang",
+    "address": "Lot 130, Solok Kampung Bahagia, 75200 Klebang Besar, Melaka",
+    "specialty": "Coconut Shake",
+    "category": "Dessert",
+    "tags": [
+      "Cold Drinks",
+      "Dessert",
+      "Road Trip"
+    ],
+    "rank": 24,
+    "why": "A famous Klebang stop for cold coconut shakes, often paired with a Melaka road trip."
+  },
+  {
+    "id": "selera-nogori",
+    "name": "Restoran Selera Nogori",
+    "state": "Negeri Sembilan",
+    "city": "Seremban",
+    "address": "604, Jalan Haruan 4/8, Oakland Commercial Centre, 70300 Seremban, Negeri Sembilan",
+    "specialty": "Masakan Kampung & Masak Lemak",
+    "category": "Regional Malay",
+    "tags": [
+      "Negeri Sembilan",
+      "Masak Lemak",
+      "Lunch"
+    ],
+    "rank": 16,
+    "why": "A highly visited Seremban restaurant for Negeri Sembilan-style kampung dishes and masak lemak."
+  },
+  {
+    "id": "haji-shariff-cendol",
+    "name": "Haji Shariff Cendol",
+    "state": "Negeri Sembilan",
+    "city": "Seremban",
+    "address": "44, Jalan Yam Tuan, Bandar Seremban, 70100 Seremban, Negeri Sembilan",
+    "specialty": "Cendol",
+    "category": "Dessert",
+    "tags": [
+      "Dessert",
+      "Historic",
+      "Seremban"
+    ],
+    "rank": 26,
+    "why": "A long-standing Seremban cendol stop popular for a quick traditional dessert break."
+  },
+  {
+    "id": "lemang-toki",
+    "name": "Lemang To'Ki",
+    "state": "Pahang",
+    "city": "Bentong",
+    "address": "Batu 2, Jalan Tras, 28700 Bentong, Pahang",
+    "specialty": "Lemang, Rendang & Malay Dishes",
+    "category": "Regional Malay",
+    "tags": [
+      "Iconic",
+      "Lemang",
+      "Road Trip"
+    ],
+    "rank": 3,
+    "why": "A Bentong landmark with thousands of public reviews, especially popular for lemang and rendang."
+  },
+  {
+    "id": "gobang-maju",
+    "name": "Go' Bang Maju Patin Tempoyak",
+    "state": "Pahang",
+    "city": "Temerloh",
+    "address": "Lot 5086, Kampung Raja, 28000 Temerloh, Pahang",
+    "specialty": "Patin Tempoyak",
+    "category": "Regional Malay",
+    "tags": [
+      "Patin",
+      "Tempoyak",
+      "Temerloh"
+    ],
+    "rank": 9,
+    "why": "One of Temerloh's best-known names for patin tempoyak and other Pahang-style patin dishes."
+  },
+  {
+    "id": "nasi-dagang-atas-tol",
+    "name": "Nasi Dagang Atas Tol",
+    "state": "Terengganu",
+    "city": "Kuala Terengganu",
+    "address": "37, Jalan Masjid Abidin, 20200 Kuala Terengganu, Terengganu",
+    "specialty": "Nasi Dagang",
+    "category": "Regional Malay",
+    "tags": [
+      "Breakfast",
+      "Terengganu",
+      "Local Favourite"
+    ],
+    "rank": 6,
+    "why": "A well-known nasi dagang breakfast name in Kuala Terengganu, associated with one of the state's signature dishes."
+  },
+  {
+    "id": "warung-pok-nong",
+    "name": "Warung Pok Nong",
+    "state": "Terengganu",
+    "city": "Kuala Terengganu",
+    "address": "145 A1693, Jalan Pantai, Kampung Teliput, 21030 Kuala Terengganu, Terengganu",
+    "specialty": "Celup Tepung & Seafood",
+    "category": "Seafood",
+    "tags": [
+      "Beach",
+      "Seafood",
+      "Local Favourite"
+    ],
+    "rank": 20,
+    "why": "A popular coastal stop for celup tepung and casual seafood, often recommended for a Terengganu food run."
+  },
+  {
+    "id": "nasi-ulam-cikgu",
+    "name": "Restoran Nasi Ulam Cikgu",
+    "state": "Kelantan",
+    "city": "Kota Bharu",
+    "address": "Kampung Kraftangan, Jalan Hilir Kota, 15300 Kota Bharu, Kelantan",
+    "specialty": "Nasi Ulam & Kelantanese Dishes",
+    "category": "Regional Malay",
+    "tags": [
+      "Kelantan",
+      "Ulam",
+      "Lunch"
+    ],
+    "rank": 7,
+    "why": "A popular Kota Bharu stop for nasi ulam, budu, herbs and a broad spread of Kelantanese dishes."
+  },
+  {
+    "id": "yati-ayam-percik",
+    "name": "Yati Ayam Percik",
+    "state": "Kelantan",
+    "city": "Kota Bharu",
+    "address": "Jalan Long Yunus, 15200 Kota Bharu, Kelantan",
+    "specialty": "Ayam Percik",
+    "category": "Regional Malay",
+    "tags": [
+      "Kelantan",
+      "Ayam Percik",
+      "Local Classic"
+    ],
+    "rank": 25,
+    "why": "A familiar Kota Bharu name for ayam percik, one of Kelantan's best-known grilled dishes."
+  },
+  {
+    "id": "nasi-lemak-royale",
+    "name": "Nasi Lemak Royale Kedah",
+    "state": "Kedah",
+    "city": "Alor Setar",
+    "address": "Jalan Meranti 2, 05300 Alor Setar, Kedah",
+    "specialty": "Nasi Lemak Royale / Curry Rice",
+    "category": "Rice & Curry",
+    "tags": [
+      "Kedah",
+      "Curry",
+      "Local Favourite"
+    ],
+    "rank": 28,
+    "why": "A northern-style rice-and-curry favourite associated with Alor Setar's nasi lemak royale tradition."
+  },
+  {
+    "id": "laksa-teluk-kechai",
+    "name": "Zakaria Laksa Teluk Kechai",
+    "state": "Kedah",
+    "city": "Alor Setar",
+    "address": "250, Jalan Kuala Kedah, Kampung Klong Hoi, 06600 Alor Setar, Kedah",
+    "specialty": "Laksa Kedah",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Laksa",
+      "Kedah",
+      "Lunch"
+    ],
+    "rank": 29,
+    "why": "A long-running local stop for Kedah-style laksa near the Kuala Kedah route."
+  },
+  {
+    "id": "anjung-keli",
+    "name": "Restoran Anjung Keli",
+    "state": "Perlis",
+    "city": "Kangar",
+    "address": "Medan Sri Pulai, Jalan Behor Pulai, 01000 Kangar, Perlis",
+    "specialty": "Masakan Kampung & Ikan Keli",
+    "category": "Regional Malay",
+    "tags": [
+      "Perlis",
+      "Lunch",
+      "Local Food"
+    ],
+    "rank": 32,
+    "why": "A recognised Kangar stop for kampung-style dishes and local Perlis flavours."
+  },
+  {
+    "id": "capati-arau",
+    "name": "Restoran Capati Arau",
+    "state": "Perlis",
+    "city": "Arau",
+    "address": "26 & 28, Jalan 4, Kompleks Tok Arau, Jalan Arau-Kodiang, 02600 Arau, Perlis",
+    "specialty": "Capati & Northern Breakfast",
+    "category": "Breakfast",
+    "tags": [
+      "Perlis",
+      "Capati",
+      "Breakfast"
+    ],
+    "rank": 30,
+    "why": "A well-known Arau breakfast choice, especially for soft capati with dhal, curry and northern-style accompaniments."
+  },
+  {
+    "id": "yee-fung",
+    "name": "Kedai Kopi Yee Fung",
+    "state": "Sabah",
+    "city": "Kota Kinabalu",
+    "address": "127, Jalan Gaya, Pusat Bandar Kota Kinabalu, 88000 Kota Kinabalu, Sabah",
+    "specialty": "Sabah Curry Laksa & Ngiu Chap",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Sabah",
+      "Gaya Street",
+      "Breakfast"
+    ],
+    "rank": 31,
+    "why": "A Gaya Street institution best known for Sabah-style curry laksa and a busy local breakfast crowd."
+  },
+  {
+    "id": "welcome-seafood",
+    "name": "Welcome Seafood Restaurant",
+    "state": "Sabah",
+    "city": "Kota Kinabalu",
+    "address": "Asia City area, 88000 Kota Kinabalu, Sabah",
+    "specialty": "Fresh Seafood",
+    "category": "Seafood",
+    "tags": [
+      "Seafood",
+      "Kota Kinabalu",
+      "Dinner"
+    ],
+    "rank": 34,
+    "why": "One of Kota Kinabalu's busiest seafood names, with live-tank selections and multiple outlets."
+  },
+  {
+    "id": "fatt-kee",
+    "name": "Kedai Kopi Fatt Kee",
+    "state": "Sabah",
+    "city": "Kota Kinabalu",
+    "address": "Jalan Haji Saman, Pusat Bandar Kota Kinabalu, 88000 Kota Kinabalu, Sabah",
+    "specialty": "Sabah Chinese-style Local Dishes",
+    "category": "Kopitiam",
+    "tags": [
+      "Kota Kinabalu",
+      "Lunch",
+      "Local Favourite"
+    ],
+    "rank": 38,
+    "why": "A popular local lunch stop in central Kota Kinabalu with a strong following for hearty local dishes."
+  },
+  {
+    "id": "choon-hui",
+    "name": "Choon Hui Cafe",
+    "state": "Sarawak",
+    "city": "Kuching",
+    "address": "34, Jalan Ban Hock, 93100 Kuching, Sarawak",
+    "specialty": "Sarawak Laksa",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Sarawak Laksa",
+      "Heritage",
+      "Breakfast"
+    ],
+    "rank": 33,
+    "why": "One of Kuching's most famous morning laksa kopitiams, widely associated with the city's Sarawak laksa culture."
+  },
+  {
+    "id": "chong-choon",
+    "name": "Chong Choon Cafe",
+    "state": "Sarawak",
+    "city": "Kuching",
+    "address": "Jalan Abell / Jalan Tunku Abdul Rahman area, 93100 Kuching, Sarawak",
+    "specialty": "Sarawak Laksa & Kolo Mee",
+    "category": "Kopitiam",
+    "tags": [
+      "Kuching",
+      "Breakfast",
+      "Kolo Mee"
+    ],
+    "rank": 35,
+    "why": "A classic Kuching morning food stop frequently recommended for Sarawak laksa and kolo mee."
+  },
+  {
+    "id": "top-spot",
+    "name": "Top Spot Food Court",
+    "state": "Sarawak",
+    "city": "Kuching",
+    "address": "Jalan Padungan, 93100 Kuching, Sarawak",
+    "specialty": "Seafood & Sarawak Dishes",
+    "category": "Seafood",
+    "tags": [
+      "Kuching",
+      "Seafood",
+      "Dinner"
+    ],
+    "rank": 36,
+    "why": "A well-known rooftop food court in central Kuching for seafood and an easy introduction to local dinner favourites."
+  },
+  {
+    "id": "umai-cafe",
+    "name": "Umai Cafe",
+    "state": "Putrajaya",
+    "city": "Presint 6",
+    "address": "Kompleks Sukan Air, Presint 6, 62200 Putrajaya",
+    "specialty": "Malaysian Meals with Lakeside Setting",
+    "category": "Cafe & Restaurant",
+    "tags": [
+      "Putrajaya",
+      "Family",
+      "Lakeside"
+    ],
+    "rank": 37,
+    "why": "A popular Putrajaya casual dining stop with a lakeside setting and broad Malaysian menu."
+  },
+  {
+    "id": "anjung-ketam-labuan",
+    "name": "Anjung Ketam",
+    "state": "Labuan",
+    "city": "Labuan",
+    "address": "Kampung Tanjung Aru, Jalan Tanjung Aru, 87007 Labuan",
+    "specialty": "Seafood & Crab",
+    "category": "Seafood",
+    "tags": [
+      "Labuan",
+      "Seafood",
+      "Local Cuisine"
+    ],
+    "rank": 39,
+    "why": "A Labuan seafood stop known for crab and local seafood dishes near the coast."
+  },
+  {
+    "id": "mawilla",
+    "name": "Mawilla Yacht Club Restaurant",
+    "state": "Labuan",
+    "city": "Labuan",
+    "address": "Jalan Tanjung Batu, 87000 Labuan",
+    "specialty": "Seafood",
+    "category": "Seafood",
+    "tags": [
+      "Labuan",
+      "Dinner",
+      "Waterfront"
+    ],
+    "rank": 40,
+    "why": "A long-running Labuan seafood restaurant with a waterfront/yacht-club setting."
+  }
+]

@@ -1,4 +1,4 @@
-/* AZOBSS 1063: Web Picks moved inside More dropdown + Repair menus; supports pre-rendered static stickybar markup to prevent first-paint layout shift. */
+/* AZOBSS 1079: Makan Malaysia added to More dropdown; keeps Web Picks + Repair menus and static stickybar support. */
 (function () {
   'use strict';
 
@@ -27,6 +27,8 @@
     var isTvSection = currentPath === tvPath || currentPath.indexOf(tvPath + '/') === 0;
     var webPicksPath = normalisePath('/Web-Pilihan/');
     var isWebPicksSection = currentPath === webPicksPath || currentPath.indexOf(webPicksPath + '/') === 0;
+    var makanPath = normalisePath('/Makan-Malaysia/');
+    var isMakanSection = currentPath === makanPath || currentPath.indexOf(makanPath + '/') === 0;
     var webPicksSourceLink = nav.querySelector('a[data-az-web-pilihan-link="1"], a[href="/Web-Pilihan/"], a[href="/Web-Pilihan"]');
     var websiteSourceLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
     var tvSourceLink = nav.querySelector('a[data-azobsstv-link="1"], a[href="/AZOBSSTV/"], a[href="/AZOBSSTV"]');
@@ -45,7 +47,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isTvSection || isWebPicksSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
+    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isTvSection || isWebPicksSection || isMakanSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -115,6 +117,18 @@
       '</svg>' +
       '<span>Web Picks</span>';
 
+    var makanLink = document.createElement('a');
+    makanLink.href = '/Makan-Malaysia/';
+    makanLink.setAttribute('role', 'menuitem');
+    makanLink.dataset.azMakanMalaysiaLink = '1';
+    makanLink.title = 'Tempat makan recommended di Malaysia';
+    if (isMakanSection) { makanLink.classList.add('market-nav-active','is-active','is-current'); makanLink.setAttribute('aria-current','page'); }
+    makanLink.innerHTML = '' +
+      '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<path d="M7 3v8"></path><path d="M4 3v5a3 3 0 0 0 6 0V3"></path><path d="M7 11v10"></path><path d="M17 3v18"></path><path d="M17 3c2.3 2 3 4.2 3 7h-3"></path>' +
+      '</svg>' +
+      '<span>Makan Malaysia</span>';
+
     var soundLink = document.createElement('a');
     soundLink.href = '/Sound-Effects/';
     soundLink.setAttribute('role', 'menuitem');
@@ -179,6 +193,7 @@
     dropdown.appendChild(tvLink);
     dropdown.appendChild(toolsLink);
     dropdown.appendChild(webPicksLink);
+    dropdown.appendChild(makanLink);
     dropdown.appendChild(soundLink);
     dropdown.appendChild(websiteLink);
     dropdown.appendChild(foodLink);
@@ -639,6 +654,34 @@
     });
   }
 
+
+  function ensureMakanMalaysiaLink() {
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var makanPath = normalisePath('/Makan-Malaysia/').toLowerCase();
+    var isMakan = currentPath === makanPath || currentPath.indexOf(makanPath + '/') === 0;
+    document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
+      var moreWrap = nav.querySelector(':scope > .az-more-nav[data-az-more-menu="1"]');
+      var dropdown = moreWrap && moreWrap.querySelector(':scope > .az-more-dropdown');
+      if (!dropdown) return;
+      var link = dropdown.querySelector('a[data-az-makan-malaysia-link="1"], a[href="/Makan-Malaysia/"], a[href="/Makan-Malaysia"]');
+      if (!link) {
+        link = document.createElement('a');
+        link.href = '/Makan-Malaysia/';
+        link.setAttribute('role','menuitem');
+        link.dataset.azMakanMalaysiaLink='1';
+        link.title='Tempat makan recommended di Malaysia';
+        link.innerHTML='<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v8"></path><path d="M4 3v5a3 3 0 0 0 6 0V3"></path><path d="M7 11v10"></path><path d="M17 3v18"></path><path d="M17 3c2.3 2 3 4.2 3 7h-3"></path></svg><span>Makan Malaysia</span>';
+        var webPicks = dropdown.querySelector('a[data-az-web-pilihan-link="1"]');
+        if (webPicks) webPicks.insertAdjacentElement('afterend',link); else dropdown.appendChild(link);
+        link.addEventListener('click',function(){moreWrap.classList.remove('is-open');var trigger=moreWrap.querySelector(':scope > .az-more-trigger');if(trigger)trigger.setAttribute('aria-expanded','false')});
+      }
+      if (isMakan) {
+        link.classList.add('market-nav-active','is-active','is-current');link.setAttribute('aria-current','page');
+        var trigger=moreWrap.querySelector(':scope > .az-more-trigger');if(trigger)trigger.classList.add('market-nav-active','is-active','is-current');
+      } else { link.classList.remove('market-nav-active','is-active','is-current');link.removeAttribute('aria-current'); }
+    });
+  }
+
   function ensureWebsiteOrderLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
     var websitePath = normalisePath('/Tempah-Website/').toLowerCase();
@@ -736,6 +779,7 @@
 
     // Legacy fallback only: pages not yet pre-rendered may still be upgraded.
     ensureWebPilihanLink();
+    ensureMakanMalaysiaLink();
     ensureWebsiteOrderLink();
     ensureRepairServiceLink();
 
@@ -752,6 +796,7 @@
     links.filter(function (candidate) {
       return /mini\s*web\s*tools/i.test((candidate.textContent || '').trim());
     }).forEach(buildMoreMenu);
+    ensureMakanMalaysiaLink();
   }
 
   document.addEventListener('click', function (event) {
