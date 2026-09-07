@@ -2550,14 +2550,60 @@ async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity)
   const storedUid=String(profile.uid||'').trim();
   const currentUid=String(firebaseUser.uid||'').trim();
   const storedGoogleEmail=String(profile.googleEmail||'').trim().toLowerCase();
+  const canonicalAuthEmail=String(profile.authEmail||profile.email||'').trim().toLowerCase();
   const providerGoogleEmail=String(identity.email||'').trim().toLowerCase();
-  const linkConfirmed=profile.googleAuthLinked===true && (profile.googleLinkedExisting===true || profile.googleProfileConfirmed===true || profile.googleSignIn===true);
-  if(!linkConfirmed||!storedGoogleEmail||storedGoogleEmail!==providerGoogleEmail)return null;
+  const explicitLinkConfirmed=profile.googleAuthLinked===true && (profile.googleLinkedExisting===true || profile.googleProfileConfirmed===true || profile.googleSignIn===true);
+
+  // v1082: a verified Google provider already using the exact same Firebase UID
+  // as the AZOBSS profile, together with an exact canonical authEmail match, is
+  // itself a trusted account link. Older/repaired profiles may not yet contain
+  // all googleAuthLinked/googleEmail flags, which caused Complete Profile to
+  // appear on every sign-in even after phone + UID were saved correctly.
+  const uidAndEmailConfirmed=!!(
+    storedUid && currentUid && storedUid===currentUid &&
+    canonicalAuthEmail && canonicalAuthEmail===providerGoogleEmail
+  );
+  const explicitGoogleConfirmed=!!(
+    explicitLinkConfirmed && storedGoogleEmail && storedGoogleEmail===providerGoogleEmail
+  );
+  if(!uidAndEmailConfirmed&&!explicitGoogleConfirmed)return null;
+
   if(storedUid&&currentUid&&storedUid!==currentUid){
     try{
       await setDoc(doc(db,'users',usernameKey),{uid:currentUid,previousAuthUids:arrayUnion(storedUid),updatedAt:serverTimestamp()},{merge:true});
       profile={...profile,uid:currentUid};
     }catch(error){console.warn('AZOBSS stale Google UID repair skipped:',error?.code||error?.message||error);return null}
+  }
+
+  // Backfill the durable link/completion markers once identity is trusted.
+  // This is idempotent and prevents old v107x profiles from re-entering the
+  // Complete Profile flow on future Google sign-ins.
+  const phone=azobssGoogleCompletionPhone(profile,identity);
+  const backfill={
+    googleSignIn:true,
+    googleAuthLinked:true,
+    googleProfileConfirmed:true,
+    googleLinkedExisting:profile.googleLinkedExisting===true || !profile.googleProfileAutoCreated,
+    googleEmail:providerGoogleEmail,
+    googleDisplayName:String(identity.displayName||profile.googleDisplayName||''),
+    googlePhotoURL:String(identity.photoURL||profile.googlePhotoURL||profile.photoURL||''),
+    authProvider:'google.com',
+    verified:true,
+    emailVerified:true,
+    updatedAt:serverTimestamp()
+  };
+  if(phone){
+    backfill.phone=phone;
+    backfill.phoneNumber=phone;
+    backfill.googleLastConfirmedPhone=phone;
+    backfill.phoneConfirmed=true;
+    backfill.googleProfileCompleted=true;
+  }
+  try{
+    await setDoc(doc(db,'users',usernameKey),backfill,{merge:true});
+    profile={...profile,...backfill,phone:phone||profile.phone,phoneNumber:phone||profile.phoneNumber};
+  }catch(error){
+    console.warn('AZOBSS trusted Google link backfill skipped:',error?.code||error?.message||error);
   }
   return {...profile,uid:currentUid||storedUid,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
 }
