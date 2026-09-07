@@ -220,7 +220,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// AZOBSS 1078: Google Sign-In + exact Google-email owner matching + stale-auth repair
+// AZOBSS 1081: Google profile completion is one-time; durable phone save + direct subsequent Google sign-in
 const azobssGoogleProvider = new GoogleAuthProvider();
 azobssGoogleProvider.setCustomParameters({prompt:'select_account'});
 let azobssGoogleAuthBusy = false;
@@ -1900,6 +1900,60 @@ function azobssGoogleProviderIdentity(firebaseUser,result=null,fallback={}){
 function azobssGoogleProfileKey(profile={}){
   return normalizeUsername(profile.usernameKey||profile.username||profile.name||profile.id||profile.__docId||'');
 }
+function azobssGoogleCompletionPhone(profile={},identity={}){
+  let phone=normalizeAzobssPhone(profile.phone||profile.phoneNumber||profile.googleLastConfirmedPhone||'');
+  if(phone)return phone;
+  const key=azobssGoogleProfileKey(profile);
+  const email=String(identity?.email||profile.googleEmail||profile.authEmail||profile.email||'').trim().toLowerCase();
+  try{
+    phone=normalizeAzobssPhone(
+      (key&&localStorage.getItem('azobssSignupPhone:'+key))||
+      (email&&localStorage.getItem('azobssSignupPhoneByEmail:'+email))||''
+    );
+  }catch(_){phone=''}
+  return phone;
+}
+function azobssGoogleProfileIsComplete(profile={},identity={}){
+  const phone=azobssGoogleCompletionPhone(profile,identity);
+  if(!phone)return false;
+  if(profile.googleProfileCompleted===true||profile.phoneConfirmed===true)return true;
+  // Backward compatibility: old builds did not have googleProfileCompleted,
+  // but a confirmed Google link + a stored phone already represents a complete profile.
+  return profile.googleAuthLinked===true||profile.googleProfileConfirmed===true||profile.googleSignIn===true;
+}
+async function azobssPersistGoogleProfileCompletion(usernameRaw,firebaseUser,profile={},identity={},phoneRaw=''){
+  const usernameKey=normalizeUsername(usernameRaw||azobssGoogleProfileKey(profile));
+  if(!usernameKey)throw new Error('AZOBSS username could not be resolved.');
+  const phone=normalizeAzobssPhone(phoneRaw||azobssGoogleCompletionPhone(profile,identity));
+  if(!phone)throw new Error('Please enter your phone number.');
+  const currentUid=String(firebaseUser?.uid||profile.uid||'').trim();
+  const oldUid=String(profile.uid||'').trim();
+  const email=String(identity?.email||profile.googleEmail||profile.authEmail||profile.email||firebaseUser?.email||'').trim().toLowerCase();
+  const patch={
+    phone,phoneNumber:phone,googleLastConfirmedPhone:phone,
+    googleProfileCompleted:true,phoneConfirmed:true,googleProfileCompletedAt:serverTimestamp(),
+    googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,
+    googleEmail:email,googleDisplayName:String(identity?.displayName||profile.googleDisplayName||''),
+    googlePhotoURL:String(identity?.photoURL||profile.googlePhotoURL||''),
+    verified:true,emailVerified:true,updatedAt:serverTimestamp()
+  };
+  if(currentUid)patch.uid=currentUid;
+  if(oldUid&&currentUid&&oldUid!==currentUid)patch.previousAuthUids=arrayUnion(oldUid);
+  await setDoc(doc(db,'users',usernameKey),patch,{merge:true});
+  // Verify the write before closing Complete Profile. This prevents a silent
+  // failure from causing the modal to reappear on every Google sign-in.
+  const verifySnap=await getDoc(doc(db,'users',usernameKey));
+  const verifyData=verifySnap.exists()?(verifySnap.data()||{}):{};
+  const verifiedPhone=normalizeAzobssPhone(verifyData.phone||verifyData.phoneNumber||verifyData.googleLastConfirmedPhone||'');
+  if(!verifiedPhone)throw new Error('Phone number could not be saved. Please try again.');
+  try{
+    localStorage.setItem('azobssSignupPhone:'+usernameKey,verifiedPhone);
+    if(email)localStorage.setItem('azobssSignupPhoneByEmail:'+email,verifiedPhone);
+    if(email)localStorage.setItem('azobssGoogleUsernameByEmail:'+email,usernameKey);
+    if(currentUid)localStorage.setItem('azobssUsernameLock:uid:'+currentUid,usernameKey);
+  }catch(_){ }
+  return {...profile,...verifyData,...patch,phone:verifiedPhone,phoneNumber:verifiedPhone,googleLastConfirmedPhone:verifiedPhone,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey,uid:currentUid||verifyData.uid||oldUid};
+}
 function azobssIsTemporaryGoogleProfile(profile={}){
   if(profile.googleProfileAutoCreated===true)return true;
   if(profile.googleProfileLinkedAway===true||profile.hiddenFromRegisteredUsers===true)return true;
@@ -2003,8 +2057,9 @@ async function azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,
   const currentProfile=await findExistingUserProfileForAuth(firebaseUser);
   const currentKey=azobssGoogleProfileKey(currentProfile||{});
   if(currentKey===targetKey){
-    const phone=normalizeAzobssPhone(target.phone||target.phoneNumber||'');
-    const patch={googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,updatedAt:serverTimestamp()};
+    const oldUid=String(target.uid||'').trim();
+    const patch={uid:firebaseUser.uid,googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,updatedAt:serverTimestamp()};
+    if(oldUid&&oldUid!==String(firebaseUser.uid||''))patch.previousAuthUids=arrayUnion(oldUid);
     await setDoc(doc(db,'users',targetKey),patch,{merge:true});
     return {status:'ready',firebaseUser,profile:{...target,...patch,uid:firebaseUser.uid,usernameKey:targetKey}};
   }
@@ -2403,6 +2458,10 @@ async function azobssSecureLinkExistingGoogleAccount(firebaseUser,usernameRaw,pa
     googleAuthLinked:true,
     googleLinkedExisting:true,
     googleProfileConfirmed:true,
+    googleProfileCompleted:true,
+    phoneConfirmed:true,
+    googleLastConfirmedPhone:phone,
+    googleProfileCompletedAt:serverTimestamp(),
     googleEmail:identity.email,
     googleDisplayName:identity.displayName,
     googlePhotoURL:identity.photoURL,
@@ -2459,7 +2518,7 @@ function openGoogleProfileModal(firebaseUser,profile,offerLink=true){
   const avatar=$('siteGoogleAvatar'),fallback=$('siteGoogleAvatarFallback');
   const photo=String(identity.photoURL||profile?.googlePhotoURL||profile?.photoURL||'');
   if(avatar&&photo){avatar.src=photo;avatar.hidden=false;if(fallback)fallback.hidden=true}else{if(avatar)avatar.hidden=true;if(fallback)fallback.hidden=false}
-  const existingPhone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+  const existingPhone=azobssGoogleCompletionPhone(profile||{},identity);
   const parsed=splitPhoneToDialLocal(existingPhone);
   setPhoneDial('siteGoogle',parsed.dial||'60');
   if($('siteGooglePhone')) $('siteGooglePhone').value=formatPhoneGuide(parsed.local||'');
@@ -2471,7 +2530,8 @@ function openGoogleProfileModal(firebaseUser,profile,offerLink=true){
 async function finalizeGoogleSession(firebaseUser,profile){
   const usernameKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
   if(!usernameKey) throw new Error('AZOBSS profile username is missing.');
-  const phone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+  const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile||{});
+  const phone=azobssGoogleCompletionPhone(profile||{},identity);
   if(!phone){openGoogleProfileModal(firebaseUser,profile,false);return false}
   const email=String(profile?.authEmail||profile?.email||firebaseUser?.email||'').trim().toLowerCase();
   const provider=String(profile?.authProvider||(profile?.googleLinkedExisting?'password+google.com':'google.com'));
@@ -2488,12 +2548,18 @@ async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity)
   const usernameKey=azobssGoogleProfileKey(profile);
   if(!usernameKey)return null;
   const storedUid=String(profile.uid||'').trim();
-  if(storedUid&&storedUid!==String(firebaseUser.uid||''))return null;
+  const currentUid=String(firebaseUser.uid||'').trim();
   const storedGoogleEmail=String(profile.googleEmail||'').trim().toLowerCase();
   const providerGoogleEmail=String(identity.email||'').trim().toLowerCase();
   const linkConfirmed=profile.googleAuthLinked===true && (profile.googleLinkedExisting===true || profile.googleProfileConfirmed===true || profile.googleSignIn===true);
   if(!linkConfirmed||!storedGoogleEmail||storedGoogleEmail!==providerGoogleEmail)return null;
-  return {...profile,uid:firebaseUser.uid,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
+  if(storedUid&&currentUid&&storedUid!==currentUid){
+    try{
+      await setDoc(doc(db,'users',usernameKey),{uid:currentUid,previousAuthUids:arrayUnion(storedUid),updatedAt:serverTimestamp()},{merge:true});
+      profile={...profile,uid:currentUid};
+    }catch(error){console.warn('AZOBSS stale Google UID repair skipped:',error?.code||error?.message||error);return null}
+  }
+  return {...profile,uid:currentUid||storedUid,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
 }
 
 async function handleGoogleAuth(mode='signin'){
@@ -2521,7 +2587,7 @@ async function handleGoogleAuth(mode='signin'){
     // AZOBSS password on every Google login even after a successful link.
     const alreadyLinkedProfile=await azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity);
     if(alreadyLinkedProfile){
-      const linkedPhone=normalizeAzobssPhone(alreadyLinkedProfile.phone||alreadyLinkedProfile.phoneNumber||'');
+      let linkedPhone=azobssGoogleCompletionPhone(alreadyLinkedProfile,identity);
       try{
         localStorage.setItem('azobssGoogleUsernameByEmail:'+identity.email,alreadyLinkedProfile.usernameKey);
         localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,alreadyLinkedProfile.usernameKey);
@@ -2531,8 +2597,11 @@ async function handleGoogleAuth(mode='signin'){
         azobssGooglePendingFirebaseUser=firebaseUser;
         openGoogleProfileModal(firebaseUser,alreadyLinkedProfile,false);
         const copy=$('siteGoogleProfileCopy');
-        if(copy)copy.textContent=`Google is already linked to ${alreadyLinkedProfile.usernameKey}. Add your phone number once to finish the profile.`;
+        if(copy)copy.textContent=`Google is already linked to ${alreadyLinkedProfile.usernameKey}. Add your phone number once to finish the profile. After it is saved, future Google sign-ins will go straight in.`;
         return;
+      }
+      if(!azobssGoogleProfileIsComplete(alreadyLinkedProfile,identity)||!normalizeAzobssPhone(alreadyLinkedProfile.phone||alreadyLinkedProfile.phoneNumber||'')){
+        alreadyLinkedProfile=await azobssPersistGoogleProfileCompletion(alreadyLinkedProfile.usernameKey,firebaseUser,alreadyLinkedProfile,identity,linkedPhone);
       }
       await finalizeGoogleSession(firebaseUser,alreadyLinkedProfile);
       return;
@@ -2554,12 +2623,15 @@ async function handleGoogleAuth(mode='signin'){
       }
       let profile=attached.profile;
       const linkedUser=attached.firebaseUser;
-      const phone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+      const phone=azobssGoogleCompletionPhone(profile||{},identity);
       if(!phone){
         azobssGooglePendingProfile={...profile,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL};
         azobssGooglePendingFirebaseUser=linkedUser;
         openGoogleProfileModal(linkedUser,azobssGooglePendingProfile,false);
         return;
+      }
+      if(!azobssGoogleProfileIsComplete(profile,identity)||!normalizeAzobssPhone(profile.phone||profile.phoneNumber||'')){
+        profile=await azobssPersistGoogleProfileCompletion(profile.usernameKey,linkedUser,profile,identity,phone);
       }
       await finalizeGoogleSession(linkedUser,profile);
       return;
@@ -5983,6 +6055,8 @@ function bindAuth() {
         const username=$('siteGoogleUsername')?.value||'';
         const password=$('siteGoogleLinkPassword')?.value||'';
         const linked=await azobssSecureLinkExistingGoogleAccount(firebaseUser,username,password,phone);
+        const linkedIdentity=azobssGoogleProviderIdentity(linked.firebaseUser,null,linked.profile||{});
+        linked.profile=await azobssPersistGoogleProfileCompletion(linked.profile?.usernameKey||username,linked.firebaseUser,linked.profile||{},linkedIdentity,phone);
         azobssGooglePendingProfile=linked.profile;
         azobssGooglePendingFirebaseUser=linked.firebaseUser;
         await finalizeGoogleSession(linked.firebaseUser,linked.profile);
@@ -5994,15 +6068,10 @@ function bindAuth() {
         const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile);
         const email=String(identity.email||profile.googleEmail||profile.email||profile.authEmail||'').trim().toLowerCase();
         const preserveAuthEmail=String(profile.authEmail||'').trim().toLowerCase();
-        const patch={phone,phoneNumber:phone,email:String(profile.email||email),authEmail:preserveAuthEmail||email,googleEmail:email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,authProvider:String(profile.authProvider||'google.com'),photoURL:String(identity.photoURL||profile.photoURL||''),verified:true,emailVerified:true,updatedAt:serverTimestamp()};
-        await setDoc(doc(db,'users',usernameKey),patch,{merge:true});
-        try{
-          localStorage.setItem('azobssSignupPhone:'+usernameKey,phone);
-          localStorage.setItem('azobssSignupPhoneByEmail:'+email,phone);
-          localStorage.setItem('azobssGoogleUsernameByEmail:'+email,usernameKey);
-          localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,usernameKey);
-        }catch(_){ }
-        profile={...profile,...patch,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
+        if(preserveAuthEmail||email){
+          await setDoc(doc(db,'users',usernameKey),{email:String(profile.email||email),authEmail:preserveAuthEmail||email,authProvider:String(profile.authProvider||'google.com'),photoURL:String(identity.photoURL||profile.photoURL||'')},{merge:true});
+        }
+        profile=await azobssPersistGoogleProfileCompletion(usernameKey,firebaseUser,profile,identity,phone);
         azobssGooglePendingProfile=profile;
         await finalizeGoogleSession(firebaseUser,profile);
       }
@@ -6400,8 +6469,19 @@ function bindAuth() {
       if(isGoogleFirebaseUser(freshUser)&&profile?._googleNeedsExistingUsername){
         clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,true);return;
       }
-      if(isGoogleFirebaseUser(freshUser)&&!normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'')){
-        clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,false);return;
+      if(isGoogleFirebaseUser(freshUser)){
+        const googleIdentityForState=azobssGoogleProviderIdentity(freshUser,null,profile||{});
+        const recoveredGooglePhone=azobssGoogleCompletionPhone(profile||{},googleIdentityForState);
+        if(!recoveredGooglePhone){
+          clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,false);return;
+        }
+        if(!azobssGoogleProfileIsComplete(profile,googleIdentityForState)||!normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'')){
+          const stateKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
+          if(stateKey){
+            try{profile=await azobssPersistGoogleProfileCompletion(stateKey,freshUser,profile,googleIdentityForState,recoveredGooglePhone)}
+            catch(error){console.warn('AZOBSS Google profile completion repair skipped:',error?.code||error?.message||error)}
+          }
+        }
       }
       let usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
       let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
