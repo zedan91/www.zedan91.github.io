@@ -220,7 +220,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// AZOBSS 1076: Google Sign-In + exact Google-email owner matching + safe relinking
+// AZOBSS 1077: Google Sign-In + exact Google-email owner matching + stale-auth repair
 const azobssGoogleProvider = new GoogleAuthProvider();
 azobssGoogleProvider.setCustomParameters({prompt:'select_account'});
 let azobssGoogleAuthBusy = false;
@@ -231,6 +231,9 @@ let azobssGooglePendingCredential = null;
 let azobssGooglePendingTempUid = '';
 let azobssGooglePendingLinkMode = false;
 let azobssGooglePendingMatchedUsername = '';
+let azobssGooglePendingRepairMatch = null;
+let azobssGooglePendingRepairIdentity = null;
+let azobssGoogleRepairBusy = false;
 let azobssLinkVerifierAuth = null;
 
 
@@ -327,6 +330,10 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .google-link-panel[hidden]{display:none!important;}
 .google-link-note{margin:0;color:#a9c7e8;font-size:11px;line-height:1.45;}
 .google-link-panel label{margin:0;}
+.google-repair-panel{display:grid;gap:10px;padding:12px;border:1px solid rgba(34,197,94,.30);border-radius:10px;background:rgba(6,78,59,.18);}
+.google-repair-panel[hidden]{display:none!important;}
+.google-repair-copy{margin:0;color:#c7f9df;font-size:12px;line-height:1.5;}
+.google-repair-panel .auth-google-btn{min-height:46px;}
 #siteGoogleProfileModal .auth-modal-card{width:min(480px,calc(100vw - 28px));}
 `;
   document.head.appendChild(style);
@@ -462,6 +469,10 @@ function injectGoogleProfileModal(){
         <div class="google-profile-avatar-fallback" id="siteGoogleAvatarFallback">G</div>
         <img class="google-profile-avatar" id="siteGoogleAvatar" alt="Google profile" hidden>
         <div><strong id="siteGoogleDisplayName">Google User</strong><small id="siteGoogleEmail"></small></div>
+      </div>
+      <div class="google-repair-panel" id="siteGoogleRepairPanel" hidden>
+        <p class="google-repair-copy" id="siteGoogleRepairText"></p>
+        <button class="auth-google-btn" id="siteGoogleRepairButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Continue with Google Again</span></button>
       </div>
       <button class="google-link-toggle" id="siteGoogleLinkToggle" type="button" aria-expanded="false">Already have an AZOBSS account? Link existing account</button>
       <div class="google-link-panel" id="siteGoogleLinkPanel" hidden>
@@ -1998,12 +2009,18 @@ async function azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,
     return {status:'ready',firebaseUser,profile:{...target,...patch,uid:firebaseUser.uid,usernameKey:targetKey}};
   }
   if(!googleCredential)throw new Error('Google credential is unavailable. Please choose Continue with Google again.');
-  await azobssReleaseGoogleFromWrongFirebaseUser(firebaseUser,identity,target);
+  const releaseResult=await azobssReleaseGoogleFromWrongFirebaseUser(firebaseUser,identity,target);
   let credentialResult;
   try{
     credentialResult=await signInWithCredential(auth,googleCredential);
   }catch(error){
-    if(error?.code==='auth/account-exists-with-different-credential'||error?.code==='auth/credential-already-in-use'){
+    const code=String(error?.code||'');
+    const kinds=Array.isArray(match?.kinds)?match.kinds:[];
+    const exactAuthOwner=kinds.includes('authEmail')||kinds.includes('authMap');
+    if(releaseResult?.released&&exactAuthOwner&&(code==='auth/account-exists-with-different-credential'||code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')){
+      return {status:'reauth-google-required',target,identity,error,match};
+    }
+    if(code==='auth/account-exists-with-different-credential'||code==='auth/credential-already-in-use'||code==='auth/email-already-in-use'){
       return {status:'password-required',target,identity,error};
     }
     throw error;
@@ -2028,6 +2045,143 @@ async function azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,
   }catch(_){ }
   return {status:'ready',firebaseUser:newUser,profile:{...target,...patch,usernameKey:targetKey,authEmail:authEmail||identity.email,email:String(target.email||identity.email)}};
 }
+
+async function azobssBindGoogleUserToExactProfile(firebaseUser,identity,match){
+  const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
+  const targetKey=azobssGoogleProfileKey(target);
+  if(!firebaseUser||!targetKey)throw new Error('Unable to resolve the matched AZOBSS profile.');
+  const actualIdentity=azobssGoogleProviderIdentity(firebaseUser,null,identity||{});
+  if(!actualIdentity.email||actualIdentity.email!==String(identity?.email||'').trim().toLowerCase()){
+    try{await signOut(auth)}catch(_){}
+    throw new Error('Please choose the same Google account shown above.');
+  }
+  const oldUid=String(target.uid||'').trim();
+  const providers=Array.isArray(firebaseUser.providerData)?firebaseUser.providerData:[];
+  const hasNonGoogleProvider=providers.some(p=>String(p?.providerId||'')!=='google.com');
+  const phone=normalizeAzobssPhone(target.phone||target.phoneNumber||'');
+  const patch={
+    uid:firebaseUser.uid,
+    username:targetKey,usernameKey:targetKey,displayName:targetKey,name:targetKey,
+    googleSignIn:true,googleAuthLinked:true,googleLinkedExisting:true,googleProfileConfirmed:true,
+    googleEmail:actualIdentity.email,googleDisplayName:actualIdentity.displayName,googlePhotoURL:actualIdentity.photoURL,
+    authProvider:hasNonGoogleProvider?'password+google.com':'google.com',
+    verified:true,emailVerified:true,updatedAt:serverTimestamp()
+  };
+  if(oldUid&&oldUid!==firebaseUser.uid)patch.previousAuthUids=arrayUnion(oldUid);
+  await setDoc(doc(db,'users',targetKey),patch,{merge:true});
+  const authEmail=String(target.authEmail||target.email||actualIdentity.email).trim().toLowerCase();
+  await saveUsernameAuthEmail(targetKey,authEmail||actualIdentity.email,firebaseUser.uid);
+  try{
+    localStorage.setItem('azobssGoogleUsernameByEmail:'+actualIdentity.email,targetKey);
+    localStorage.setItem('azobssSignupUsernameByEmail:'+actualIdentity.email,targetKey);
+    localStorage.setItem('azobssUsernameLock:email:'+actualIdentity.email,targetKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,targetKey);
+  }catch(_){}
+  const merged={
+    ...target,...patch,
+    usernameKey:targetKey,username:targetKey,name:targetKey,displayName:targetKey,
+    authEmail:authEmail||actualIdentity.email,
+    email:String(target.email||actualIdentity.email),
+    phone,phoneNumber:phone
+  };
+  return {firebaseUser,profile:merged};
+}
+
+function setGoogleRepairMode(active,match=null,identity=null,message=''){
+  const repair=$('siteGoogleRepairPanel');
+  const repairText=$('siteGoogleRepairText');
+  const toggle=$('siteGoogleLinkToggle');
+  const linkPanel=$('siteGoogleLinkPanel');
+  const phoneBlock=$('siteGooglePhone')?.closest('label');
+  const submit=$('siteGoogleProfileForm')?.querySelector('button[type="submit"]');
+  if(active){
+    azobssGooglePendingRepairMatch=match||azobssGooglePendingRepairMatch;
+    azobssGooglePendingRepairIdentity=identity||azobssGooglePendingRepairIdentity;
+    azobssGooglePendingLinkMode=false;
+    if(repair)repair.hidden=false;
+    if(repairText)repairText.textContent=message||`AZOBSS found ${azobssGoogleProfileKey(match?.data||match||{})||'your existing profile'} for this Google email. Google was previously attached to another Firebase account. Choose the same Google account once more to finish the repair.`;
+    if(toggle)toggle.hidden=true;
+    if(linkPanel)linkPanel.hidden=true;
+    if(phoneBlock)phoneBlock.hidden=true;
+    if(submit)submit.hidden=true;
+  }else{
+    if(repair)repair.hidden=true;
+    if(toggle)toggle.hidden=false;
+    if(phoneBlock)phoneBlock.hidden=false;
+    if(submit)submit.hidden=false;
+  }
+}
+
+function azobssPrepareGoogleRepair(identity,match,message=''){
+  const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
+  const pseudo={email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL,providerData:[{providerId:'google.com',email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL}]};
+  azobssGooglePendingMatchedUsername=target.usernameKey;
+  azobssGooglePendingProfile={...target,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,_googleMatchedExisting:true};
+  azobssGooglePendingFirebaseUser=auth.currentUser||null;
+  openGoogleProfileModal(pseudo,azobssGooglePendingProfile,false);
+  setGoogleRepairMode(true,match,identity,message||`AZOBSS found ${target.usernameKey} for ${identity.email}. Google was previously linked to another Firebase account. Click Continue with Google Again and choose ${identity.email} once more. No AZOBSS password is needed unless Firebase confirms a separate password account still exists.`);
+  const copy=$('siteGoogleProfileCopy');
+  if(copy)copy.textContent=`Existing AZOBSS profile ${target.usernameKey} was matched by its registered authentication email. One final Google confirmation is needed to repair the old Firebase link.`;
+}
+
+async function azobssRunGoogleRepair(){
+  if(azobssGoogleRepairBusy)return;
+  const match=azobssGooglePendingRepairMatch;
+  const expected=azobssGooglePendingRepairIdentity;
+  const err=$('siteGoogleProfileError');
+  const btn=$('siteGoogleRepairButton');
+  const original=btn?.innerHTML||'';
+  if(!match||!expected?.email)throw new Error('Google repair session expired. Please cancel and sign in with Google again.');
+  azobssGoogleRepairBusy=true;
+  try{
+    if(err){err.textContent='';err.style.color=''}
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="auth-google-g" aria-hidden="true">G</span><span>Opening Google...</span>'}
+    try{await signOut(auth)}catch(_){}
+    await setPersistence(auth,browserLocalPersistence);
+    const result=await signInWithPopup(auth,azobssGoogleProvider);
+    const newUser=result.user;
+    const freshIdentity=azobssGoogleProviderIdentity(newUser,result,{});
+    if(freshIdentity.email!==String(expected.email||'').trim().toLowerCase()){
+      try{await signOut(auth)}catch(_){}
+      throw new Error(`Please choose ${expected.email}, not ${freshIdentity.email||'another Google account'}.`);
+    }
+    const bound=await azobssBindGoogleUserToExactProfile(newUser,freshIdentity,match);
+    azobssGooglePendingCredential=GoogleAuthProvider.credentialFromResult(result);
+    azobssGooglePendingProfile=bound.profile;
+    azobssGooglePendingFirebaseUser=bound.firebaseUser;
+    azobssGooglePendingRepairMatch=null;
+    azobssGooglePendingRepairIdentity=null;
+    setGoogleRepairMode(false);
+    const phone=normalizeAzobssPhone(bound.profile?.phone||bound.profile?.phoneNumber||'');
+    if(phone){
+      await finalizeGoogleSession(bound.firebaseUser,bound.profile);
+    }else{
+      openGoogleProfileModal(bound.firebaseUser,bound.profile,false);
+      const copy=$('siteGoogleProfileCopy');
+      if(copy)copy.textContent=`Google is now linked to ${bound.profile.usernameKey}. Add your phone number once to finish the profile.`;
+    }
+  }catch(error){
+    const code=String(error?.code||'');
+    console.warn('AZOBSS Google repair failed:',code||error?.message||error);
+    if(code==='auth/account-exists-with-different-credential'){
+      const pending=GoogleAuthProvider.credentialFromError(error);
+      if(pending)azobssGooglePendingCredential=pending;
+      setGoogleRepairMode(false);
+      azobssPrepareMatchedSecureLink(expected,match,`Firebase confirms ${expected.email} still belongs to an existing password-based Firebase account. Enter the AZOBSS password for ${match?.usernameKey||'this account'} once to securely link Google.`);
+    }else{
+      if(err){
+        if(code==='auth/popup-closed-by-user')err.textContent='Google confirmation was cancelled.';
+        else if(code==='auth/popup-blocked')err.textContent='Google popup was blocked. Allow popups for azobss.com and try again.';
+        else err.textContent=error?.message||'Unable to repair the Google sign-in link.';
+      }
+    }
+  }finally{
+    azobssGoogleRepairBusy=false;
+    if(btn){btn.disabled=false;if(original)btn.innerHTML=original}
+  }
+}
+
+
 function azobssPrepareMatchedSecureLink(identity,match,message=''){
   const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
   const pseudo={email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL,providerData:[{providerId:'google.com',email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL}]};
@@ -2271,7 +2425,7 @@ function closeGoogleProfileModal(){
   if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true')}
 }
 async function azobssAbortGoogleProfile(){
-  azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingNeedsUsername=false;azobssGooglePendingCredential=null;azobssGooglePendingTempUid='';azobssGooglePendingLinkMode=false;azobssGooglePendingMatchedUsername='';
+  azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingNeedsUsername=false;azobssGooglePendingCredential=null;azobssGooglePendingTempUid='';azobssGooglePendingLinkMode=false;azobssGooglePendingMatchedUsername='';azobssGooglePendingRepairMatch=null;azobssGooglePendingRepairIdentity=null;azobssGoogleRepairBusy=false;
   closeGoogleProfileModal();
   try{await signOut(auth)}catch(_){ }
   clearUser();syncHeader(null);
@@ -2295,6 +2449,7 @@ function openGoogleProfileModal(firebaseUser,profile,offerLink=true){
   const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile||{});
   const modal=$('siteGoogleProfileModal');
   const copy=$('siteGoogleProfileCopy');
+  setGoogleRepairMode(false);
   setGoogleLinkMode(false);
   if(copy) copy.textContent=offerLink
     ? 'Google sign-in was successful. Add or confirm your phone number. If you already have an AZOBSS account, you can securely link it using your existing username and password.'
@@ -2350,8 +2505,12 @@ async function handleGoogleAuth(mode='signin'){
     const matches=await azobssFindGoogleEmailProfileMatches(identity.email);
     if(matches.strong){
       const attached=await azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,identity,matches.strong);
+      if(attached.status==='reauth-google-required'){
+        azobssPrepareGoogleRepair(identity,matches.strong,`AZOBSS found ${matches.strong.usernameKey} for ${identity.email}. Google was previously attached to another Firebase account. Click Continue with Google Again and choose the same Google account once more. You do not need to create a Firebase user manually.`);
+        return;
+      }
       if(attached.status==='password-required'){
-        azobssPrepareMatchedSecureLink(identity,matches.strong,`AZOBSS found ${matches.strong.usernameKey} for ${identity.email}. This profile already has its own Firebase sign-in, so enter its AZOBSS password once to link Google securely.`);
+        azobssPrepareMatchedSecureLink(identity,matches.strong,`AZOBSS found ${matches.strong.usernameKey} for ${identity.email}. Firebase confirms this profile still has its own sign-in, so enter its AZOBSS password once to link Google securely.`);
         return;
       }
       let profile=attached.profile;
@@ -5770,6 +5929,7 @@ function bindAuth() {
   $('siteGoogleSignInButton')?.addEventListener('click',()=>handleGoogleAuth('signin'));
   $('siteGoogleSignUpButton')?.addEventListener('click',()=>handleGoogleAuth('signup'));
   $('siteGoogleProfileCancel')?.addEventListener('click',()=>{azobssAbortGoogleProfile().catch(()=>{})});
+  $('siteGoogleRepairButton')?.addEventListener('click',()=>{azobssRunGoogleRepair().catch((error)=>{const err=$('siteGoogleProfileError');if(err)err.textContent=error?.message||'Unable to repair Google sign-in.'})});
   $('siteGoogleLinkToggle')?.addEventListener('click',()=>setGoogleLinkMode(!azobssGooglePendingLinkMode));
   $('siteGoogleProfileForm')?.addEventListener('submit',async(event)=>{
     event.preventDefault();
@@ -5807,7 +5967,7 @@ function bindAuth() {
         azobssGooglePendingProfile=profile;
         await finalizeGoogleSession(firebaseUser,profile);
       }
-      azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingCredential=null;azobssGooglePendingTempUid='';azobssGooglePendingLinkMode=false;azobssGooglePendingMatchedUsername='';
+      azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingCredential=null;azobssGooglePendingTempUid='';azobssGooglePendingLinkMode=false;azobssGooglePendingMatchedUsername='';azobssGooglePendingRepairMatch=null;azobssGooglePendingRepairIdentity=null;
       if($('siteGoogleLinkPassword'))$('siteGoogleLinkPassword').value='';
     }catch(error){
       console.warn('AZOBSS secure Google profile/link failed:',error?.code||error?.message||error);
