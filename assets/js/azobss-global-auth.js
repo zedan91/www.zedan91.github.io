@@ -220,7 +220,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// AZOBSS 1077: Google Sign-In + exact Google-email owner matching + stale-auth repair
+// AZOBSS 1078: Google Sign-In + exact Google-email owner matching + stale-auth repair
 const azobssGoogleProvider = new GoogleAuthProvider();
 azobssGoogleProvider.setCustomParameters({prompt:'select_account'});
 let azobssGoogleAuthBusy = false;
@@ -2480,6 +2480,22 @@ async function finalizeGoogleSession(firebaseUser,profile){
   closeGoogleProfileModal();closeSiteAuth();window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
   return true;
 }
+async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity){
+  if(!firebaseUser||!isGoogleFirebaseUser(firebaseUser)||!identity?.email)return null;
+  let profile=null;
+  try{profile=await findExistingUserProfileForAuth(firebaseUser)}catch(error){console.warn('AZOBSS linked Google profile lookup skipped:',error?.code||error?.message||error)}
+  if(!profile)return null;
+  const usernameKey=azobssGoogleProfileKey(profile);
+  if(!usernameKey)return null;
+  const storedUid=String(profile.uid||'').trim();
+  if(storedUid&&storedUid!==String(firebaseUser.uid||''))return null;
+  const storedGoogleEmail=String(profile.googleEmail||'').trim().toLowerCase();
+  const providerGoogleEmail=String(identity.email||'').trim().toLowerCase();
+  const linkConfirmed=profile.googleAuthLinked===true && (profile.googleLinkedExisting===true || profile.googleProfileConfirmed===true || profile.googleSignIn===true);
+  if(!linkConfirmed||!storedGoogleEmail||storedGoogleEmail!==providerGoogleEmail)return null;
+  return {...profile,uid:firebaseUser.uid,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
+}
+
 async function handleGoogleAuth(mode='signin'){
   if(azobssGoogleAuthBusy)return;
   azobssGoogleAuthBusy=true;window.__AZOBSS_GOOGLE_AUTH_FLOW__=true;
@@ -2498,6 +2514,29 @@ async function handleGoogleAuth(mode='signin'){
     azobssGooglePendingCredential=googleCredential;
     azobssGooglePendingTempUid=String(firebaseUser?.uid||'');
     azobssGooglePendingMatchedUsername='';
+
+    // v1078: if this Firebase UID already has a confirmed Google link to an
+    // AZOBSS profile, trust that existing provider link and sign in directly.
+    // The old flow continued into contactEmail matching and asked for the old
+    // AZOBSS password on every Google login even after a successful link.
+    const alreadyLinkedProfile=await azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity);
+    if(alreadyLinkedProfile){
+      const linkedPhone=normalizeAzobssPhone(alreadyLinkedProfile.phone||alreadyLinkedProfile.phoneNumber||'');
+      try{
+        localStorage.setItem('azobssGoogleUsernameByEmail:'+identity.email,alreadyLinkedProfile.usernameKey);
+        localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,alreadyLinkedProfile.usernameKey);
+      }catch(_){ }
+      if(!linkedPhone){
+        azobssGooglePendingProfile=alreadyLinkedProfile;
+        azobssGooglePendingFirebaseUser=firebaseUser;
+        openGoogleProfileModal(firebaseUser,alreadyLinkedProfile,false);
+        const copy=$('siteGoogleProfileCopy');
+        if(copy)copy.textContent=`Google is already linked to ${alreadyLinkedProfile.usernameKey}. Add your phone number once to finish the profile.`;
+        return;
+      }
+      await finalizeGoogleSession(firebaseUser,alreadyLinkedProfile);
+      return;
+    }
 
     // v1076: resolve the VERIFIED Google-provider email before creating any
     // profile. firebaseUser.email may belong to an older Email/Password account
