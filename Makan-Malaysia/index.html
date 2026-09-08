@@ -202,13 +202,17 @@ body{background:radial-gradient(circle at 10% 0%,rgba(14,165,233,.12),transparen
     pendingMapQuery=q;
     $('mmOpenGoogle').href=googleSearchUrl(q);
     $('mmMapSubtitle').textContent=label||'Google Maps direct scroll zoom.';
-    setMapMode('Google Maps · Direct Scroll Zoom');
-    directHost.hidden=false;frame.hidden=true;
+    setMapMode('Google Maps · Checking Direct Map');
+    // Keep the embed visible until the JavaScript API proves it can return
+    // Places results. This prevents Google's broken-map error panel flashing.
+    directHost.hidden=true;frame.hidden=false;
     directPlaces.textSearch({query:q},function(results,status){
       if(!window.google||!google.maps||status!==google.maps.places.PlacesServiceStatus.OK||!results||!results.length){
         useEmbedFallback(q,(label||'Google Maps live view.')+' · Live search fallback aktif.');
         return;
       }
+      directHost.hidden=false;frame.hidden=true;
+      setMapMode('Google Maps · Direct Scroll Zoom');
       var bounds=new google.maps.LatLngBounds();
       results.slice(0,20).forEach(function(r){
         if(!r.geometry||!r.geometry.location)return;
@@ -237,20 +241,25 @@ body{background:radial-gradient(circle at 10% 0%,rgba(14,165,233,.12),transparen
       directPlaces=new google.maps.places.PlacesService(directMap);
       directInfo=new google.maps.InfoWindow();
       directMapsReady=true;directMapsFailed=false;
-      directHost.hidden=false;frame.hidden=true;
-      setMapMode('Google Maps · Direct Scroll Zoom');
+      directHost.hidden=true;frame.hidden=false;
+      setMapMode('Google Maps · Checking Direct Map');
       showDirectResults(pendingMapQuery||mapBrowseQuery(),$('mmMapSubtitle').textContent);
     }catch(err){directMapsFailed=true;useEmbedFallback(pendingMapQuery,$('mmMapSubtitle').textContent)}
   }
   function loadDirectGoogleMaps(){
     if(!GOOGLE_MAPS_BROWSER_KEY)return;
+    window.gm_authFailure=function(){
+      directMapsFailed=true;directMapsReady=false;
+      clearDirectMarkers();directMap=null;directPlaces=null;directInfo=null;
+      useEmbedFallback(pendingMapQuery,'Google Maps embed aktif. Direct map tidak tersedia untuk konfigurasi API semasa.');
+    };
     window.__azMakanGoogleMapsReady=function(){initDirectGoogleMaps()};
     var s=document.createElement('script');
     s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GOOGLE_MAPS_BROWSER_KEY)+'&libraries=places&v=weekly&callback=__azMakanGoogleMapsReady&loading=async';
     s.async=true;s.defer=true;
-    s.onerror=function(){directMapsFailed=true;useEmbedFallback(pendingMapQuery,$('mmMapSubtitle').textContent)};
+    s.onerror=function(){directMapsFailed=true;directMapsReady=false;useEmbedFallback(pendingMapQuery,'Google Maps embed aktif. Direct map gagal dimuatkan.')};
     document.head.appendChild(s);
-    setTimeout(function(){if(!directMapsReady&&!directMapsFailed){useEmbedFallback(pendingMapQuery,$('mmMapSubtitle').textContent)}},7000);
+    setTimeout(function(){if(!directMapsReady&&!directMapsFailed){useEmbedFallback(pendingMapQuery,$('mmMapSubtitle').textContent)}},5500);
   }
   function showBrowseMap(){selectedId='';document.querySelectorAll('.mm-place.is-selected').forEach(function(x){x.classList.remove('is-selected')});setMapQuery(mapBrowseQuery(),'Google Maps live search — tekan pin pada peta untuk lihat maklumat Google.');detail.innerHTML='<div class="mm-empty-detail"><div><strong>Google Maps Live Pins</strong>Tekan pin pada peta atau pilih kad kurasi AZOBSS di bawah. Arah perjalanan boleh menggunakan lokasi semasa atau lokasi permulaan yang kamu taip.</div></div>'}
   function renderDetail(p){
@@ -266,7 +275,7 @@ body{background:radial-gradient(circle at 10% 0%,rgba(14,165,233,.12),transparen
   [search,state,category,sort].forEach(function(el){el.addEventListener(el===search?'input':'change',function(){render();if(!selectedId)showBrowseMap()})});$('mmShowPins').onclick=showBrowseMap;
   $('mmUseCurrent').onclick=function(){var status=$('mmOriginStatus');if(!navigator.geolocation){status.textContent='Browser ini tidak menyokong lokasi semasa.';return}status.textContent='Mendapatkan lokasi semasa...';navigator.geolocation.getCurrentPosition(function(pos){currentCoords=pos.coords.latitude.toFixed(6)+','+pos.coords.longitude.toFixed(6);$('mmOrigin').value='';status.textContent='✓ Lokasi semasa digunakan sebagai titik mula Directions.';render();if(selectedId){var p=places.find(function(x){return x.id===selectedId});if(p)renderDetail(p)}},function(err){status.textContent='Lokasi tidak dapat diperoleh. Benarkan Location permission atau taip lokasi permulaan secara manual.'},{enableHighAccuracy:true,timeout:10000,maximumAge:60000})};
   $('mmOrigin').addEventListener('input',function(){customOrigin=this.value.trim();currentCoords='';$('mmOriginStatus').textContent=customOrigin?'Lokasi permulaan manual akan digunakan untuk Directions.':'Jika kosong, Google Maps boleh menggunakan lokasi peranti semasa.';render();if(selectedId){var p=places.find(function(x){return x.id===selectedId});if(p)renderDetail(p)}});$('mmClearOrigin').onclick=function(){$('mmOrigin').value='';currentCoords='';customOrigin='';$('mmOriginStatus').textContent='Lokasi permulaan telah dikosongkan. Google Maps boleh menggunakan lokasi peranti semasa.';render();if(selectedId){var p=places.find(function(x){return x.id===selectedId});if(p)renderDetail(p)}};
-  fetch('./places.json?v=1080',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(data){places=Array.isArray(data)?data:[];populate()}).catch(function(){grid.innerHTML='<div class="mm-empty">Senarai tempat makan gagal dimuatkan. Sila refresh halaman.</div>';$('mmResultCount').textContent='Gagal memuatkan data.';setMapQuery('recommended food in Malaysia','Google Maps live search')});
+  fetch('./places.json?v=1085',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(data){places=Array.isArray(data)?data:[];populate()}).catch(function(){grid.innerHTML='<div class="mm-empty">Senarai tempat makan gagal dimuatkan. Sila refresh halaman.</div>';$('mmResultCount').textContent='Gagal memuatkan data.';setMapQuery('recommended food in Malaysia','Google Maps live search')});
   loadDirectGoogleMaps();
 })();
 </script>

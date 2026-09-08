@@ -1256,3 +1256,8 @@ body{padding-top:49px}
 .radio-player-panel:not(.is-playing) .radio-equalizer i{height:10px!important;opacity:.42!important}
 .radio-player-panel.is-playing .radio-equalizer i{opacity:.7}
 .radio-equalizer.meter-unavailable i{height:8px!important;opacity:.24!important;filter:none!important}
+
+
+/* v1085 — progressive Anime/Radio catalogue rendering */
+.catalog-pager{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 14px 2px;color:var(--muted);font-size:12px}
+.catalog-pager[hidden]{display:none!important}.catalog-more-btn{min-width:120px;padding:9px 14px}.catalog-pager-text{font-variant-numeric:tabular-nums}
