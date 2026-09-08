@@ -1,7 +1,7 @@
 {
   "name": "azobss-cleanup-functions",
   "description": "AZOBSS Firebase Cloud Functions - auto delete unverified signup accounts.",
-  "version": "1.0.0",
+  "version": "1.0.1083",
   "private": true,
   "main": "index.js",
   "engines": {

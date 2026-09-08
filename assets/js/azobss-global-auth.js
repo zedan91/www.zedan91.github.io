@@ -1851,7 +1851,9 @@ async function ensureUserProfile(firebaseUser, fallback={}){
   if(snap.exists()) return { uid: firebaseUser.uid, id: usernameKey, ...snap.data(), usernameKey: normalizeUsername(snap.data().usernameKey || snap.data().username || usernameKey) };
   const fallbackMemberCode = normalizePaMemberCode(fallback.inviteCode || fallback.inviteCodeUsed || fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
-  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',phone:signupPhone,phoneNumber:signupPhone,...getPaBmPayloadFromCode(fallbackMemberCode),role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',...getPaBmPayloadFromCode(fallbackMemberCode),role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  // v1083: never overwrite an existing profile phone with an empty value.
+  if(signupPhone){profile.phone=signupPhone;profile.phoneNumber=signupPhone;}
   try{
     await setDoc(ref,profile,{merge:true});
     if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,username:usernameKey,usernameKey,updatedAt:serverTimestamp()},{merge:true});
@@ -2252,6 +2254,20 @@ function azobssPrepareMatchedSecureLink(identity,match,message=''){
 
 async function azobssAllocateGoogleUsername(firebaseUser){
   const email=String(firebaseUser?.email||'').trim().toLowerCase();
+  // v1083: before allocating/creating a Google profile, resolve an existing
+  // canonical AZOBSS owner by the verified Google email. This prevents a
+  // page-load/auth-state race from re-creating the same username and merging
+  // phone:'' over a profile that was already completed.
+  try{
+    const matches=await azobssFindGoogleEmailProfileMatches(email);
+    if(matches?.strong){
+      const bound=await azobssBindGoogleUserToExactProfile(firebaseUser,identity,matches.strong);
+      if(bound?.profile)return bound.profile;
+    }
+  }catch(error){
+    console.warn('AZOBSS safe Google owner pre-match skipped:',error?.code||error?.message||error);
+  }
+
   const mapped=azobssGoogleMappedUsername(email,firebaseUser?.uid||'');
   if(mapped){
     try{
@@ -2278,6 +2294,20 @@ async function azobssCreateGoogleProfile(firebaseUser,options={}){
   let profile=await ensureUserProfile(firebaseUser);
   if(profile&&!profile._profileMissing&&normalizeUsername(profile.usernameKey||profile.username||profile.id||'')) return profile;
 
+  // v1083: never allocate a new Google profile before checking whether this
+  // verified Google email already owns an AZOBSS profile. This is especially
+  // important during onAuthStateChanged/page reloads where local username maps
+  // may not exist (for example Private Browsing).
+  try{
+    const ownerMatches=await azobssFindGoogleEmailProfileMatches(email);
+    if(ownerMatches?.strong){
+      const bound=await azobssBindGoogleUserToExactProfile(firebaseUser,identity,ownerMatches.strong);
+      if(bound?.profile)return bound.profile;
+    }
+  }catch(error){
+    console.warn('AZOBSS safe Google owner pre-match skipped:',error?.code||error?.message||error);
+  }
+
   const mapped=azobssGoogleMappedUsername(email,firebaseUser?.uid||'');
   if(mapped){
     try{
@@ -2302,7 +2332,8 @@ async function azobssCreateGoogleProfile(firebaseUser,options={}){
     email,
     authEmail:email,
     contactEmail:email,
-    phone:'',phoneNumber:'',
+    // phone/phoneNumber are intentionally omitted until the user confirms one.
+    // Never merge blank phone fields into an existing document.
     photoURL:identity.photoURL,
     authProvider:'google.com',
     googleSignIn:true,
@@ -2544,6 +2575,15 @@ async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity)
   if(!firebaseUser||!isGoogleFirebaseUser(firebaseUser)||!identity?.email)return null;
   let profile=null;
   try{profile=await findExistingUserProfileForAuth(firebaseUser)}catch(error){console.warn('AZOBSS linked Google profile lookup skipped:',error?.code||error?.message||error)}
+  // v1083: a repaired Google account can temporarily miss the UID lookup while
+  // usernameAuthEmails/users are converging. Exact verified Google authEmail is
+  // authoritative enough to recover the intended AZOBSS profile.
+  if(!profile){
+    try{
+      const matches=await azobssFindGoogleEmailProfileMatches(identity.email);
+      if(matches?.strong)profile={...(matches.strong.data||{}),id:matches.strong.id||matches.strong.usernameKey,usernameKey:normalizeUsername(matches.strong.usernameKey||matches.strong.id||'')};
+    }catch(error){console.warn('AZOBSS linked Google email-owner fallback skipped:',error?.code||error?.message||error)}
+  }
   if(!profile)return null;
   const usernameKey=azobssGoogleProfileKey(profile);
   if(!usernameKey)return null;
@@ -2563,10 +2603,15 @@ async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity)
     storedUid && currentUid && storedUid===currentUid &&
     canonicalAuthEmail && canonicalAuthEmail===providerGoogleEmail
   );
+  // Exact canonical authEmail ownership by the currently verified Google
+  // provider is also trusted for one-time stale UID repair (rules v1081).
+  const canonicalGoogleOwner=!!(
+    currentUid && canonicalAuthEmail && canonicalAuthEmail===providerGoogleEmail
+  );
   const explicitGoogleConfirmed=!!(
     explicitLinkConfirmed && storedGoogleEmail && storedGoogleEmail===providerGoogleEmail
   );
-  if(!uidAndEmailConfirmed&&!explicitGoogleConfirmed)return null;
+  if(!uidAndEmailConfirmed&&!explicitGoogleConfirmed&&!canonicalGoogleOwner)return null;
 
   if(storedUid&&currentUid&&storedUid!==currentUid){
     try{
@@ -2658,6 +2703,17 @@ async function handleGoogleAuth(mode='signin'){
     // when Google was previously linked to the wrong Firebase UID.
     const matches=await azobssFindGoogleEmailProfileMatches(identity.email);
     if(matches.strong){
+      // v1083: direct trusted owner path. If this exact authEmail profile already
+      // belongs to the current Google UID and has a saved phone, do not reopen
+      // Complete Profile or ask for any password again.
+      const exactTarget={...(matches.strong.data||{}),usernameKey:normalizeUsername(matches.strong.usernameKey||matches.strong.id||'')};
+      const exactPhone=azobssGoogleCompletionPhone(exactTarget,identity);
+      const exactUid=String(exactTarget.uid||'').trim();
+      if(exactTarget.usernameKey && exactPhone && exactUid===String(firebaseUser.uid||'')){
+        const completed=await azobssPersistGoogleProfileCompletion(exactTarget.usernameKey,firebaseUser,exactTarget,identity,exactPhone);
+        await finalizeGoogleSession(firebaseUser,completed);
+        return;
+      }
       const attached=await azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,identity,matches.strong);
       if(attached.status==='reauth-google-required'){
         azobssPrepareGoogleRepair(identity,matches.strong,`AZOBSS found ${matches.strong.usernameKey} for ${identity.email}. Google was previously attached to another Firebase account. Click Continue with Google Again and choose the same Google account once more. You do not need to create a Firebase user manually.`);
@@ -6205,8 +6261,10 @@ function bindAuth() {
           const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
           preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
           var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
-          await setDoc(doc(db,'users',usernameKey), {uid:authUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin}, {merge:true});
-          profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForLogin};
+          const loginProfilePatch={uid:authUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', ...mergedPaBmForLogin};
+          if(preservedPhone){loginProfilePatch.phone=preservedPhone;loginProfilePatch.phoneNumber=preservedPhone;}
+          await setDoc(doc(db,'users',usernameKey), loginProfilePatch, {merge:true});
+          profile = {...profile, ...(preservedPhone?{phone:preservedPhone,phoneNumber:preservedPhone}:{}), ...mergedPaBmForLogin};
         }
       }catch(loginProfileUpdateError){
         console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
@@ -6530,7 +6588,7 @@ function bindAuth() {
         }
       }
       let usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
-      let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
+      let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || profile.googleLastConfirmedPhone || '');
       try{
         if(usernameKey && !profile._profileMissing){
           const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
@@ -6538,8 +6596,11 @@ function bindAuth() {
           const profileEmailForState = String(profile.authEmail || profile.email || freshUser.email || '').trim().toLowerCase();
           preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + profileEmailForState) || '');
           var mergedPaBmForState = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + profileEmailForState) || '');
-          await setDoc(doc(db,'users',usernameKey), {uid:freshUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState}, {merge:true});
-          profile = {...profile, phone: preservedPhone, phoneNumber: preservedPhone, ...mergedPaBmForState};
+          const statePatch={uid:freshUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, ...mergedPaBmForState};
+          // v1083: never erase a previously saved phone during auth-state sync.
+          if(preservedPhone){statePatch.phone=preservedPhone;statePatch.phoneNumber=preservedPhone;}
+          await setDoc(doc(db,'users',usernameKey), statePatch, {merge:true});
+          profile = {...profile, ...(preservedPhone?{phone:preservedPhone,phoneNumber:preservedPhone}:{}), ...mergedPaBmForState};
         }
       }catch(stateProfileUpdateError){
         console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
