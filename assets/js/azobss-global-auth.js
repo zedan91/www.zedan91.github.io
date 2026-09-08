@@ -204,7 +204,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCredential, setPersistence, browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser, unlink, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCredential, setPersistence, browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, signOut, updatePassword, updateProfile, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser, unlink, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, deleteField, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot, orderBy} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1781,6 +1781,59 @@ async function findExistingUserProfileForAuth(firebaseUser){
   const uid = String(firebaseUser?.uid || '').trim();
   const email = String(firebaseUser?.email || '').trim().toLowerCase();
   const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+  const googleIdentity = azobssGoogleProviderIdentity(firebaseUser,null,{});
+  const googleEmail = String(googleIdentity?.email || email || '').trim().toLowerCase();
+  const directKeys=[];
+  const addKey=(value)=>{const key=normalizeUsername(value||'');if(key&&!directKeys.includes(key))directKeys.push(key)};
+
+  // v1084: Rules intentionally block collection list/query for normal users.
+  // Resolve the owner's profile using direct document GETs first. Direct GETs
+  // are allowed by the production rules and work in Private Browsing too.
+  try{addKey(azobssGoogleMappedUsername(googleEmail||email,uid))}catch(_){ }
+  try{addKey(localStorage.getItem('azobssUsernameLock:uid:'+uid)||'')}catch(_){ }
+  try{addKey(localStorage.getItem('azobssGoogleUsernameByEmail:'+(googleEmail||email))||'')}catch(_){ }
+  addKey(firebaseUser?.displayName||'');
+  addKey(googleEmail ? googleEmail.split('@')[0] : '');
+  addKey(emailLocalKey);
+
+  const emailMatches=(data={})=>{
+    const vals=[data.authEmail,data.email,data.googleEmail,data.contactEmail].map(v=>String(v||'').trim().toLowerCase()).filter(Boolean);
+    return !!(googleEmail&&vals.includes(googleEmail));
+  };
+  for(const key of directKeys){
+    try{
+      const userSnap=await getDoc(doc(db,'users',key));
+      if(userSnap.exists()){
+        const data=userSnap.data()||{};
+        const sameUid=!!(uid&&String(data.uid||'').trim()===uid);
+        if(sameUid||emailMatches(data)){
+          return {id:key,...data,usernameKey:normalizeUsername(data.usernameKey||data.username||data.name||key)};
+        }
+      }
+    }catch(error){console.warn('AZOBSS direct user lookup '+key+' skipped:',error?.code||error?.message||error)}
+    try{
+      const mapSnap=await getDoc(doc(db,'usernameAuthEmails',key));
+      if(mapSnap.exists()){
+        const m=mapSnap.data()||{};
+        const mapEmail=String(m.authEmail||m.email||'').trim().toLowerCase();
+        const mapUid=String(m.uid||'').trim();
+        if((uid&&mapUid===uid)||(googleEmail&&mapEmail===googleEmail)){
+          const mappedKey=normalizeUsername(m.usernameKey||m.username||key);
+          if(mappedKey){
+            const userSnap=await getDoc(doc(db,'users',mappedKey));
+            if(userSnap.exists()){
+              const data=userSnap.data()||{};
+              return {id:mappedKey,...data,usernameKey:normalizeUsername(data.usernameKey||data.username||data.name||mappedKey)};
+            }
+          }
+        }
+      }
+    }catch(error){console.warn('AZOBSS direct auth-map lookup '+key+' skipped:',error?.code||error?.message||error)}
+  }
+
+  // Legacy query fallback. Production rules currently deny list for normal
+  // users, so this is best-effort only and is no longer required for Google
+  // direct sign-in after v1084.
   const candidates = [];
   if(uid){
     try{
@@ -1957,9 +2010,16 @@ async function azobssPersistGoogleProfileCompletion(usernameRaw,firebaseUser,pro
   return {...profile,...verifyData,...patch,phone:verifiedPhone,phoneNumber:verifiedPhone,googleLastConfirmedPhone:verifiedPhone,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey,uid:currentUid||verifyData.uid||oldUid};
 }
 function azobssIsTemporaryGoogleProfile(profile={}){
-  if(profile.googleProfileAutoCreated===true)return true;
   if(profile.googleProfileLinkedAway===true||profile.hiddenFromRegisteredUsers===true)return true;
-  return profile.googleSignIn===true&&String(profile.authProvider||'')==='google.com'&&profile.googleProfileConfirmed!==true&&String(profile.role||'member').toLowerCase()==='member';
+  // v1084: an auto-created Google profile stops being temporary after the
+  // user has completed the profile and the Google identity is durably linked.
+  if(profile.googleProfileAutoCreated===true){
+    const completed=profile.googleProfileCompleted===true||profile.phoneConfirmed===true||profile.googleProfileConfirmed===true;
+    const bound=profile.googleAuthLinked===true||profile.googleProfileConfirmed===true;
+    if(completed&&bound)return false;
+    return true;
+  }
+  return profile.googleSignIn===true&&String(profile.authProvider||'')==='google.com'&&profile.googleProfileConfirmed!==true&&profile.googleProfileCompleted!==true&&String(profile.role||'member').toLowerCase()==='member';
 }
 async function azobssFindGoogleEmailProfileMatches(emailRaw){
   const email=String(emailRaw||'').trim().toLowerCase();
@@ -1974,6 +2034,34 @@ async function azobssFindGoogleEmailProfileMatches(emailRaw){
     if(kind==='authEmail'||kind==='authMap'||(kind==='email'&&!String(row.data.authEmail||'').trim()))row.autoEligible=true;
     byKey.set(key,row);
   };
+
+  // v1084: production rules block collection LIST for normal users. The
+  // normalized Google email local-part is a deterministic legacy/new-Google
+  // username candidate, so resolve it by direct GET before any query.
+  const directEmailKey=normalizeUsername(email.split('@')[0]||'');
+  if(directEmailKey){
+    try{
+      const us=await getDoc(doc(db,'users',directEmailKey));
+      if(us.exists()){
+        const data=us.data()||{};
+        const authMail=String(data.authEmail||data.email||data.googleEmail||'').trim().toLowerCase();
+        if(authMail===email)add(directEmailKey,data,'authEmail',140);
+      }
+    }catch(error){console.warn('AZOBSS direct Google email user lookup skipped:',error?.code||error?.message||error)}
+    try{
+      const ms=await getDoc(doc(db,'usernameAuthEmails',directEmailKey));
+      if(ms.exists()){
+        const m=ms.data()||{};
+        const mapMail=String(m.authEmail||m.email||'').trim().toLowerCase();
+        const mappedKey=normalizeUsername(m.usernameKey||m.username||directEmailKey);
+        if(mapMail===email&&mappedKey){
+          const us=await getDoc(doc(db,'users',mappedKey));
+          if(us.exists())add(mappedKey,us.data()||{},'authMap',138);
+        }
+      }
+    }catch(error){console.warn('AZOBSS direct Google auth-map email lookup skipped:',error?.code||error?.message||error)}
+  }
+
   const queryUserField=async(field,kind,score)=>{
     try{
       const snap=await getDocs(query(collection(db,'users'),where(field,'==',email)));
@@ -2561,6 +2649,10 @@ function openGoogleProfileModal(firebaseUser,profile,offerLink=true){
 async function finalizeGoogleSession(firebaseUser,profile){
   const usernameKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
   if(!usernameKey) throw new Error('AZOBSS profile username is missing.');
+  // v1084: store the AZOBSS username on the Firebase Auth user itself. This
+  // gives future Private Browsing/new-device sign-ins a durable direct lookup
+  // key without requiring Firestore collection queries.
+  try{if(firebaseUser&&normalizeUsername(firebaseUser.displayName||'')!==usernameKey)await updateProfile(firebaseUser,{displayName:usernameKey})}catch(error){console.warn('AZOBSS Firebase username marker skipped:',error?.code||error?.message||error)}
   const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile||{});
   const phone=azobssGoogleCompletionPhone(profile||{},identity);
   if(!phone){openGoogleProfileModal(firebaseUser,profile,false);return false}
@@ -6567,6 +6659,11 @@ function bindAuth() {
         return;
       }
       let profile=await ensureUserProfile(freshUser);
+      if(isGoogleFirebaseUser(freshUser)){
+        const stateIdentity=azobssGoogleProviderIdentity(freshUser,null,profile||{});
+        const trustedStateProfile=await azobssGetTrustedAlreadyLinkedGoogleProfile(freshUser,stateIdentity);
+        if(trustedStateProfile)profile=trustedStateProfile;
+      }
       if(isGoogleFirebaseUser(freshUser)&&profile?._profileMissing){
         profile=await azobssCreateGoogleProfile(freshUser,{});
       }
