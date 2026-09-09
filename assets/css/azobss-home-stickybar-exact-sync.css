@@ -807,3 +807,10 @@ body[data-dashboard-page="admin"] .market-user-tools{
   }
 }
 
+
+
+/* AZOBSS 1089: stable logo geometry from stylesheet load; matches global navbar final state. */
+html body .market-brand{flex:0 0 154px!important;width:154px!important;min-width:154px!important;max-width:154px!important;height:38px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;margin:0!important;box-sizing:border-box!important;overflow:hidden!important;border-radius:999px!important;background:transparent!important;border:0!important;text-decoration:none!important;transform:none!important;animation:none!important;transition:none!important;}
+html body .market-brand img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;transform:none!important;animation:none!important;transition:none!important;}
+@media(max-width:980px){html body .market-brand{flex-basis:132px!important;width:132px!important;min-width:132px!important;max-width:132px!important;height:34px!important;}}
+@media(max-width:560px){html body .market-brand{flex-basis:120px!important;width:120px!important;min-width:120px!important;max-width:120px!important;height:32px!important;}}
