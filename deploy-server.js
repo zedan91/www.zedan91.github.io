@@ -11421,6 +11421,67 @@ function azobssDecodeSignedLotSelectionToken(value) {
   }
 }
 
+// AZOBSS v1090: friendly Lot Kadaster download filename.
+// Format: LotKadasterBerdigit-YYYY-MM-DD-hh.mmam-11.73percent.ext
+function azobssLotDownloadPercentText(record = {}) {
+  const sources = [record, record.raw || {}, record.item || {}, record.purchase || {}];
+  let ratio = 0;
+  for (const source of sources) {
+    if (!source || typeof source !== "object") continue;
+    for (const value of [source.areaRatio, source.selectionAreaRatio, source.lotAreaRatio, source.area_ratio]) {
+      const n = Number(value);
+      if (Number.isFinite(n) && n > 0) {
+        ratio = n > 1.1 ? n / 100 : n;
+        break;
+      }
+    }
+    if (ratio > 0) break;
+    for (const value of [source.ratioPercent, source.selectionPercent, source.lotPercent, source.areaPercent]) {
+      const n = Number(value);
+      if (Number.isFinite(n) && n > 0) {
+        ratio = n / 100;
+        break;
+      }
+    }
+    if (ratio > 0) break;
+  }
+  if (!(ratio > 0) && record.selectionToken) {
+    try {
+      const payload = azobssDecodeSignedLotSelectionToken(record.selectionToken);
+      const n = Number(payload && payload.areaRatio || 0);
+      if (Number.isFinite(n) && n > 0) ratio = n > 1.1 ? n / 100 : n;
+    } catch (_) {}
+  }
+  const percent = Math.max(0, Math.min(110, ratio * 100));
+  return (Math.round(percent * 100) / 100).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+}
+
+function azobssLotDownloadTimestampText(nowMs = Date.now()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kuala_Lumpur",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).formatToParts(new Date(nowMs));
+  const map = Object.create(null);
+  for (const part of parts) map[part.type] = part.value;
+  const period = String(map.dayPeriod || "am").toLowerCase().replace(/[^apm]/g, "") || "am";
+  const hour = String(Number(map.hour || 0) || 12);
+  return `${map.year || "0000"}-${map.month || "00"}-${map.day || "00"}-${hour}.${map.minute || "00"}${period}`;
+}
+
+function azobssLotDownloadFilename(record = {}, type = "NDCDB", format = "zip", nowMs = Date.now()) {
+  const normalized = String(format || "zip").toLowerCase();
+  const ext = normalized === "dwg" ? "dwg" : (normalized === "dxf" ? "dxf" : "zip");
+  const prefix = String(type || "").toUpperCase() === "NDCDB_C3" ? "LotKadasterBerdigit-C3" : "LotKadasterBerdigit";
+  const timestamp = azobssLotDownloadTimestampText(nowMs);
+  const percent = azobssLotDownloadPercentText(record);
+  return `${prefix}-${timestamp}-${percent}percent.${ext}`;
+}
+
 function azobssDecodeLotSelectionToken(value) {
   const payload = azobssDecodeSignedLotSelectionToken(value);
   if (!payload || Number(payload.expiresAtMs || 0) < Date.now()) return null;
@@ -18266,8 +18327,6 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     }
 
     const jobStatus = directReady.jobStatus || "esriJobSucceeded";
-    const safeJobId = String(jobId || "").replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 80);
-    const fileBase = type === "NDCDB_C3" ? "LotKadasterBerdigit-C3" : "LotKadasterBerdigit";
 
     if (requestedLotFormat === "dxf" || requestedLotFormat === "dwg") {
       let converted;
@@ -18290,7 +18349,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
         return azobssPaBmDownloadError(res, 500, "Pengesahan kuota download gagal. Sila cuba semula; kuota tidak digunakan.");
       }
 
-      const filename = `${fileBase}-${safeJobId || "AZOBSS"}.${requestedLotFormat}`;
+      const filename = azobssLotDownloadFilename(record, type, requestedLotFormat, Date.now());
       const contentType = requestedLotFormat === "dwg" ? "application/acad" : "application/dxf";
       res.writeHead(200, azSecurityHeaders({
         "Content-Type": contentType,
@@ -18306,32 +18365,102 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     }
 
     const directUrl = directReady.directUrl;
+
+    // v1090: proxy/stream the ready JUPEM ZIP through this attachment endpoint.
+    // This lets AZOBSS control the browser filename while keeping the ZIP streamed
+    // directly to the browser (no full ZIP buffering in frontend JavaScript).
+    let upstream;
+    try {
+      upstream = await fetch(directUrl, azJupemFetchOptions({
+        method: "GET",
+        redirect: "follow",
+        signal: AbortSignal.timeout(15 * 60 * 1000),
+        headers: azobssJupemBaseHeaders({
+          "Accept": "application/zip,application/x-zip-compressed,application/octet-stream,*/*",
+          "Accept-Language": "ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7",
+          "Referer": "https://ebiz.jupem.gov.my/"
+        })
+      }));
+    } catch (error) {
+      console.error("NDCDB ZIP upstream fetch failed:", error && (error.stack || error.message || error));
+      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster tidak dapat dimuat turun dari JUPEM sekarang. Kuota download tidak digunakan.");
+    }
+
+    if (!upstream || !upstream.ok || !upstream.body) {
+      try { if (upstream && upstream.body && typeof upstream.body.cancel === "function") await upstream.body.cancel(); } catch (_) {}
+      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster tidak tersedia dari JUPEM. Kuota download tidak digunakan.");
+    }
+
+    const finalUrl = String(upstream.url || directUrl);
+    const contentType = String(upstream.headers.get("content-type") || "").toLowerCase();
+    const looksLogin = /\/Home\/LogMasuk(?:[/?#]|$)/i.test(finalUrl);
+    if (looksLogin || contentType.includes("text/html")) {
+      try { if (typeof upstream.body.cancel === "function") await upstream.body.cancel(); } catch (_) {}
+      return azobssPaBmDownloadError(res, 502, "JUPEM mengembalikan halaman log masuk, bukan ZIP. Kuota download tidak digunakan.");
+    }
+
+    const reader = upstream.body.getReader();
+    let firstPart;
+    try {
+      firstPart = await reader.read();
+    } catch (error) {
+      try { await reader.cancel(); } catch (_) {}
+      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster gagal dibaca dari JUPEM. Kuota download tidak digunakan.");
+    }
+    const firstBuffer = firstPart && firstPart.value ? Buffer.from(firstPart.value) : Buffer.alloc(0);
+    if (firstPart.done || !firstBuffer.length || !azobssBufferIsZip(firstBuffer)) {
+      try { await reader.cancel(); } catch (_) {}
+      return azobssPaBmDownloadError(res, 502, "Fail JUPEM yang diterima bukan ZIP Lot Kadaster yang sah. Kuota download tidak digunakan.");
+    }
+
     try {
       await azobssIncrementPurchaseDownload(ref, record, nowMs);
     } catch (error) {
-      console.error("NDCDB direct-link counter update failed:", error && (error.stack || error.message || error));
+      try { await reader.cancel(); } catch (_) {}
+      console.error("NDCDB ZIP counter update failed:", error && (error.stack || error.message || error));
       return azobssPaBmDownloadError(res, 500, "Pengesahan kuota download gagal. Sila cuba semula; kuota tidak digunakan.");
     }
-    return send(res, 200, JSON.stringify({
-      ok: true,
-      ready: true,
-      zipReady: true,
-      preparing: false,
-      delivery: "jupem-direct",
-      requestedFormat: "original",
-      registered: Boolean(directReady.registered),
-      jobStatus,
-      openUrl: directUrl,
-      directUrl,
-      jobId,
-      stateCode,
-      downloadCount: used + 1,
-      maxDownloads: max,
-      expiresAtMs
-    }), "application/json", {
-      "Cache-Control": "no-store",
+
+    const filename = azobssLotDownloadFilename(record, type, "zip", Date.now());
+    const headers = azSecurityHeaders({
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "private, no-store",
       "Access-Control-Expose-Headers": "Content-Disposition"
     });
+    const contentLength = String(upstream.headers.get("content-length") || "").trim();
+    if (/^\d+$/.test(contentLength)) headers["Content-Length"] = contentLength;
+    res.writeHead(200, headers);
+
+    try {
+      if (!res.destroyed) res.write(firstBuffer);
+      while (!res.destroyed) {
+        const part = await reader.read();
+        if (part.done) break;
+        if (!part.value || !part.value.length) continue;
+        const chunk = Buffer.from(part.value);
+        if (!res.write(chunk)) {
+          await new Promise(resolve => {
+            let settled = false;
+            const finish = () => {
+              if (settled) return;
+              settled = true;
+              res.removeListener("drain", finish);
+              res.removeListener("close", finish);
+              resolve();
+            };
+            res.once("drain", finish);
+            res.once("close", finish);
+          });
+        }
+      }
+      if (!res.destroyed) res.end();
+    } catch (error) {
+      console.warn("NDCDB ZIP stream interrupted:", error && (error.message || error));
+      try { await reader.cancel(); } catch (_) {}
+      try { if (!res.destroyed) res.destroy(error); } catch (_) {}
+    }
+    return;
   }
 
   if (type !== "BM" && type !== "SBM") {

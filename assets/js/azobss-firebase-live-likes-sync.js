@@ -2475,6 +2475,32 @@ function azobssBuildPaidPurchaseDownloadUrl(r, format){
   }
   return String(r.downloadUrl || r.url || '').trim();
 }
+function azobssLotDownloadTimestampToken(nowValue){
+  const now = nowValue instanceof Date ? nowValue : new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const minute = String(now.getMinutes()).padStart(2, '0');
+  const hour24 = now.getHours();
+  const period = hour24 >= 12 ? 'pm' : 'am';
+  const hour12 = hour24 % 12 || 12;
+  return `${year}-${month}-${day}-${hour12}.${minute}${period}`;
+}
+function azobssLotDownloadPercentToken(r){
+  try{
+    const label = typeof azobssLotPurchasePercentLabel === 'function' ? azobssLotPurchasePercentLabel(r || {}) : '';
+    if(label){
+      const clean = String(label).replace(/%/g, '').trim();
+      if(clean) return clean;
+    }
+  }catch(_e){}
+  const direct = Number(r && (r.areaRatio || r.selectionAreaRatio || r.lotAreaRatio || r.area_ratio) || 0);
+  if(Number.isFinite(direct) && direct > 0){
+    const percent = direct > 1.1 ? direct : direct * 100;
+    return (Math.round(percent * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+  }
+  return '0';
+}
 function azobssPaidPurchaseDownloadFilename(r, format){
   r = r || {};
   const type = String(r.productType || r.product || '').trim().toUpperCase();
@@ -2486,9 +2512,10 @@ function azobssPaidPurchaseDownloadFilename(r, format){
     let downloadFormat = String(format || r.downloadFormat || 'original').trim().toLowerCase();
     if(downloadFormat === 'zip') downloadFormat = 'original';
     const ext = downloadFormat === 'dwg' ? 'dwg' : (downloadFormat === 'dxf' ? 'dxf' : 'zip');
-    const sourceCode = String(r.productId || r.itemCode || r.id || '').trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
     const prefix = type === 'NDCDB_C3' ? 'LotKadasterBerdigit-C3' : 'LotKadasterBerdigit';
-    return (prefix + (sourceCode ? '-' + sourceCode : '') + '.' + ext).replace(/-+/g, '-');
+    const timestamp = azobssLotDownloadTimestampToken(new Date());
+    const percent = azobssLotDownloadPercentToken(r);
+    return `${prefix}-${timestamp}-${percent}percent.${ext}`;
   }
   const sourceCode = r.itemCode || r.stationNo || r.stesen || r.productId || '';
   const code = String(sourceCode).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
@@ -2552,6 +2579,7 @@ function azobssPurchaseDownloadPayload(r, format){
       productType: r?.productType || r?.product || '',
       itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
       productId: r?.productId || '',
+      areaRatio: Number(r?.areaRatio || r?.selectionAreaRatio || r?.lotAreaRatio || r?.area_ratio || 0) || 0,
       negeri: r?.negeri || r?.state || '',
       amount: r?.amount || '',
       downloadUrl: r?.downloadUrl || r?.url || '',
@@ -2848,36 +2876,26 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       }
 
       if(downloadFormat === 'original'){
+        // v1090: download ZIP through the AZOBSS backend attachment endpoint so the
+        // browser receives the controlled friendly filename instead of JUPEM's long Job ID.
+        // Navigation is used instead of fetch/blob so large ZIP files can stream directly
+        // into the browser's download manager without buffering the whole ZIP in JavaScript.
         downloadOwner.phase = 'downloading';
-        downloadOwner.label = 'Buka ZIP...';
+        downloadOwner.label = 'Muat ZIP...';
         if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
-        const response = await fetch(directUrl, { method:'GET', cache:'no-store' });
-        let data = null;
-        try{ data = await response.json(); }catch(e){ data = null; }
-        if(response.status === 202 || (data && data.ready === false)){
-          alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
-          return false;
-        }
-        if(!response.ok || !data || data.ok === false){
-          alert((data && (data.error || data.message)) || 'Pengesahan download ZIP gagal. Sila cuba lagi.');
-          return false;
-        }
-        const openUrl = String(data.openUrl || data.directUrl || data.url || '').trim();
-        if(!openUrl || !/^https:\/\/ebiz\.jupem\.gov\.my\/MuatTurunPembelian\/MuatTurunLotKadasterBerdigitCrop(?:c3)?\//i.test(openUrl)){
-          alert('Link terus JUPEM tidak tersedia. Kuota download tidak digunakan.');
-          return false;
-        }
-        try{ window.location.href = openUrl; }
+        const zipUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'download=1&_=' + Date.now();
+        try{ window.location.href = zipUrl; }
         catch(e){
           const a = document.createElement('a');
-          a.href = openUrl;
+          a.href = zipUrl;
           a.rel = 'noopener';
           document.body.appendChild(a);
           a.click();
           a.remove();
         }
-        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download'); }catch(e){}
-        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB direct JUPEM download delayed'); }catch(e){} }, 1600);
+        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download'); }catch(e){}
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed'); }catch(e){} }, 1800);
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed 2'); }catch(e){} }, 4200);
         return false;
       }
 
