@@ -805,6 +805,23 @@ body>main{padding-top:48px;}
 @media(max-width:420px){.az616-real-preview{height:190px}.az617-benefits{grid-template-columns:1fr}}
 </style>
 
+<style id="azobss-1091-website-request-ux">
+/* 1091: one-click WhatsApp request + clear after-submit journey + FAQ. */
+.az1091-github-later{display:flex;align-items:flex-start;gap:12px;margin-top:18px;padding:14px 15px;border:1px solid rgba(34,197,94,.34);border-radius:14px;background:rgba(34,197,94,.075)}
+.az1091-github-later-icon{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:#14532d;color:#86efac;font-weight:1000}
+.az1091-github-later strong{color:#dcfce7}.az1091-github-later p{margin:5px 0 0;color:#aec6b5;font-size:13px;line-height:1.55}
+.az1091-whatsapp-submit{min-width:265px!important;background:linear-gradient(135deg,#16a34a,#22c55e)!important;border-color:#4ade80!important;box-shadow:0 10px 28px rgba(34,197,94,.18)}
+.az1091-whatsapp-submit:hover{filter:brightness(1.06)}.az1091-copy-backup{opacity:.82}
+.az1091-after{padding-top:62px}.az1091-roadmap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px}
+.az1091-roadmap-card{display:flex;align-items:flex-start;gap:13px;padding:17px;border:1px solid #304563;border-radius:16px;background:linear-gradient(150deg,rgba(15,30,52,.98),rgba(8,20,37,.98));box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.az1091-roadmap-card>b{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#22d3ee);color:#03101e;font-size:14px}
+.az1091-roadmap-card strong{display:block;color:#fff;font-size:15px}.az1091-roadmap-card p{margin:6px 0 0;color:#9fb1c8;font-size:13px;line-height:1.55}
+.az1091-roadmap-note{margin-top:15px;padding:14px 16px;border:1px solid rgba(34,211,238,.3);border-radius:13px;background:rgba(34,211,238,.065);color:#c8f7ff;text-align:center}.az1091-roadmap-note strong{color:#fff}
+.az1091-faq-list{display:grid;gap:10px;margin-top:20px}.az1091-faq-list details{border:1px solid #304563;border-radius:14px;background:#0a1629;overflow:hidden}.az1091-faq-list summary{position:relative;cursor:pointer;padding:15px 46px 15px 16px;color:#fff;font-weight:850;list-style:none}.az1091-faq-list summary::-webkit-details-marker{display:none}.az1091-faq-list summary::after{content:"+";position:absolute;right:16px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:#13243c;color:#67e8f9;font-size:18px}.az1091-faq-list details[open] summary::after{content:"−"}.az1091-faq-list details p{margin:0;padding:0 16px 16px;color:#9fb1c8;line-height:1.6;font-size:13.5px}
+#github-register-guide{border-top:1px solid rgba(148,163,184,.08)}
+@media(max-width:900px){.az1091-roadmap{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.az1091-roadmap{grid-template-columns:1fr}.az1091-whatsapp-submit{width:100%;min-width:0!important}.az615-final-actions,.az615-final-actions .az615-right{width:100%}.az615-final-actions{flex-direction:column}.az615-final-actions .az615-right{display:grid;grid-template-columns:1fr}.az1091-copy-backup{order:2}}
+</style>
 
 <style id="azobss-618-clear-full-floating-preview">
 /* 618: Preview images shown fully in cards + accessible floating full preview. */
@@ -880,13 +897,14 @@ html.az618-modal-open,html.az618-modal-open body{overflow:hidden!important}
 </header>
 <!-- AZOBSS patch 618: clear full floating website previews -->
 <!-- AZOBSS patch 619: services full preview CTA changed to Tempah Sekarang -->
+<!-- AZOBSS patch 1091: one-click WhatsApp request, post-submit roadmap, FAQ and GitHub-after-confirmation flow -->
 <main>
-<section class="hero"><div class="wrap"><span class="eyebrow">Website untuk bisnes</span><h1>Pilih contoh, isi ringkas dan <span>hantar terus kepada AZOBSS</span></h1><p>Tidak perlu tahu istilah teknikal. Pilih rupa website yang paling hampir dengan kehendak anda, kemudian lengkapkan borang langkah demi langkah.</p><div class="badge-row"><span class="badge">Mesra telefon</span><span class="badge">WhatsApp / Telegram</span><span class="badge">QR Pembayaran</span><span class="badge">Domain sendiri</span><span class="badge">Milik customer</span></div><div class="hero-actions"><a class="cta primary" href="#request">Mula Pilih Website</a><a class="cta secondary" href="#github-register-guide">Cara Daftar GitHub</a></div><div class="az615-quick-note"><span class="az615-quick-note-icon">✓</span><div><strong>Belum ada logo, domain atau akaun GitHub?</strong><br/>Tidak mengapa. Isi apa yang sudah ada dahulu. AZOBSS akan terangkan langkah seterusnya selepas semakan permintaan.</div></div></div></section>
+<section class="hero"><div class="wrap"><span class="eyebrow">Website untuk bisnes</span><h1>Pilih contoh, isi ringkas dan <span>hantar terus kepada AZOBSS</span></h1><p>Tidak perlu tahu istilah teknikal. Pilih rupa website yang paling hampir dengan kehendak anda, kemudian lengkapkan borang langkah demi langkah.</p><div class="badge-row"><span class="badge">Mesra telefon</span><span class="badge">WhatsApp / Telegram</span><span class="badge">QR Pembayaran</span><span class="badge">Domain sendiri</span><span class="badge">Milik customer</span></div><div class="hero-actions"><a class="cta primary" href="#request">Mula Pilih Website</a><a class="cta secondary" href="#after-submit">Apa Berlaku Selepas Hantar?</a></div><div class="az615-quick-note"><span class="az615-quick-note-icon">✓</span><div><strong>Belum ada logo, domain atau akaun GitHub?</strong><br/>Tidak mengapa. Isi apa yang sudah ada dahulu. <strong>Tidak perlu daftar GitHub sekarang.</strong> AZOBSS akan bantu selepas tempahan disahkan.</div></div></div></section>
 
 <section class="section" id="process"><div class="wrap"><h2 class="section-title">Hanya 3 langkah untuk bermula</h2><p class="section-lead">Customer tidak perlu menyediakan semuanya sekaligus.</p><div class="az615-process">
 <article class="card"><div class="step"><span class="num">1</span><h3>Pilih contoh website</h3></div><p>Lihat gambaran setiap jenis website dan pilih yang paling hampir dengan keperluan bisnes.</p></article>
 <article class="card"><div class="step"><span class="num">2</span><h3>Isi borang ringkas</h3></div><p>Masukkan nama bisnes, fungsi yang diperlukan dan bahan yang sudah tersedia.</p></article>
-<article class="card safety"><div class="step"><span class="num">3</span><h3>Semak bersama AZOBSS</h3></div><p>Skop, harga, tempoh siap, deposit dan langkah GitHub akan diterangkan sebelum pembangunan bermula.</p></article>
+<article class="card safety"><div class="step"><span class="num">3</span><h3>Hantar di WhatsApp</h3></div><p>Tekan sekali sahaja. WhatsApp dibuka dengan maklumat permintaan yang sudah siap diisi untuk dihantar kepada AZOBSS.</p></article>
 </div><div class="notice"><strong>Deposit:</strong> Bayaran deposit hanya dibuat selepas skop, harga, tempoh siap dan jumlah pembetulan dipersetujui.</div></div></section>
 
 <section class="section" id="request"><div class="wrap"><h2 class="section-title">Permintaan website</h2><p class="section-lead">Borang ini dibahagikan kepada tiga langkah supaya lebih mudah diisi.</p>
@@ -913,7 +931,7 @@ html.az618-modal-open,html.az618-modal-open body{overflow:hidden!important}
 <div class="az617-benefit"><i>⌕</i><span>SEO Basic disediakan</span></div>
 <div class="az617-benefit"><i>◉</i><span>Sokongan berterusan</span></div>
 </div>
-<div class="az615-choice-error" id="websiteTypeError">Sila pilih satu jenis website atau pilih “Saya belum pasti”.</div>
+<div class="az615-choice-error" id="websiteTypeError">Sila pilih salah satu jenis website untuk meneruskan.</div>
 <div class="az615-step-actions"><span></span><button class="cta primary" type="button" data-next-step>Seterusnya: Maklumat Bisnes →</button></div>
 </section>
 
@@ -953,15 +971,32 @@ html.az618-modal-open,html.az618-modal-open body{overflow:hidden!important}
 <div class="az615-fields" style="margin-top:16px">
 <div class="az615-field full"><label for="notes">Maklumat tambahan</label><textarea id="notes" placeholder="Contoh: Mahu paparkan 8 produk dan customer boleh terus tekan WhatsApp untuk membuat pesanan."></textarea></div>
 </div>
-<div class="az615-github-inline"><strong>Status akaun GitHub</strong><p>GitHub tidak wajib disiapkan sebelum menghantar borang ini.</p><div class="az615-radio-row" style="margin-top:10px"><label class="az615-radio"><input type="radio" name="githubStatusChoice" value="Belum ada akaun GitHub" checked/><span>Belum ada</span></label><label class="az615-radio"><input type="radio" name="githubStatusChoice" value="Sudah ada akaun GitHub"/><span>Sudah ada</span></label></div><div class="az615-github-username" id="githubUsernameWrap"><div class="az615-field"><label for="githubUsername">Username GitHub</label><input id="githubUsername" placeholder="Contoh: empireshop"/></div></div></div>
-<div class="az615-step-actions az615-final-actions"><button class="cta secondary" type="button" data-prev-step>← Kembali</button><div class="az615-right"><button class="cta secondary" type="button" id="copyOnly">Salin Maklumat</button><button class="cta primary" type="submit">Buka WhatsApp</button></div></div><div class="status" id="formStatus" aria-live="polite"></div>
+<div class="az1091-github-later"><span class="az1091-github-later-icon">✓</span><div><strong>GitHub belum diperlukan pada peringkat ini.</strong><p>Hantar permintaan dahulu. Selepas skop, harga dan tempoh siap dipersetujui, AZOBSS akan bantu langkah GitHub/domain jika diperlukan.</p></div></div>
+<div class="az615-step-actions az615-final-actions"><button class="cta secondary" type="button" data-prev-step>← Kembali</button><div class="az615-right"><button class="cta secondary az1091-copy-backup" type="button" id="copyOnly">Salin Maklumat</button><button class="cta primary az1091-whatsapp-submit" type="submit"><span aria-hidden="true">💬</span> Hantar Permintaan di WhatsApp</button></div></div><div class="status" id="formStatus" aria-live="polite"></div>
 </section>
 </form>
 <aside class="az615-side-panel"><div class="az617-trust"><span class="az617-trust-shield">✓</span><div><small>Semua website dibina oleh</small><strong>AZOBSS Professional Team</strong></div></div><h3>Ringkasan pilihan anda</h3><p>Ringkasan ini dikemas kini semasa anda mengisi borang.</p><div class="az615-summary-list"><div class="az615-summary-item"><small>Jenis website</small><strong id="summaryWebsiteType">Belum dipilih</strong></div><div class="az615-summary-item"><small>Nama bisnes</small><strong id="summaryBusinessName">Belum diisi</strong></div><div class="az615-summary-item"><small>Fungsi dipilih</small><strong id="summaryFeatures">Belum dipilih</strong></div><div class="az615-summary-item"><small>Bahan tersedia</small><strong id="summaryMaterials">Belum dipilih</strong></div></div><div class="az615-side-tip"><strong>Nota Penting:</strong> Harga hanya ditentukan selepas AZOBSS menyemak jenis website, jumlah kandungan dan fungsi yang diperlukan.</div></aside>
 </div></div></section>
 
-<section class="section" id="github-register-guide"><div class="wrap"><h2 class="section-title">Daftar GitHub dalam 4 langkah</h2><p class="section-lead">Belum ada akaun? Proses pendaftaran asas sahaja diperlukan. Repository dan tetapan teknikal akan dibantu kemudian.</p><div class="az615-github-box">
-<div class="az615-github-start"><div><h3>Gunakan email milik bisnes atau pemilik</h3><p>Akaun ini memastikan website kekal menjadi milik customer. Jangan gunakan email pembangun.</p></div><a class="cta primary" href="https://github.com/signup" target="_blank" rel="noopener noreferrer">Buka Pendaftaran GitHub</a></div>
+<section class="section az1091-after" id="after-submit"><div class="wrap"><span class="eyebrow">Selepas hantar permintaan</span><h2 class="section-title">Apa yang berlaku selepas saya hantar?</h2><p class="section-lead">Anda tidak perlu fikir tentang perkara teknikal dahulu. AZOBSS akan bimbing ikut urutan ini.</p><div class="az1091-roadmap">
+<article class="az1091-roadmap-card"><b>1</b><div><strong>Hantar permintaan</strong><p>Isi borang ringkas dan tekan butang WhatsApp. Mesej permintaan sudah disediakan secara automatik.</p></div></article>
+<article class="az1091-roadmap-card"><b>2</b><div><strong>AZOBSS semak keperluan</strong><p>Kami semak jenis website, kandungan, fungsi dan bahan yang anda sudah ada.</p></div></article>
+<article class="az1091-roadmap-card"><b>3</b><div><strong>Sebut harga &amp; tempoh siap</strong><p>Skop, harga, tempoh siap dan jumlah pembetulan diterangkan dahulu supaya semuanya jelas.</p></div></article>
+<article class="az1091-roadmap-card"><b>4</b><div><strong>Setuju &amp; bayar deposit</strong><p>Deposit hanya dibuat selepas anda bersetuju dengan skop dan sebut harga.</p></div></article>
+<article class="az1091-roadmap-card"><b>5</b><div><strong>Website dibina &amp; diberi preview</strong><p>AZOBSS bina website dan berikan pautan preview untuk anda semak sebelum pelancaran.</p></div></article>
+<article class="az1091-roadmap-card"><b>6</b><div><strong>Pembetulan &amp; siap</strong><p>Pembetulan dibuat mengikut skop. Selepas disahkan, domain/GitHub dan pelancaran akhir dibantu.</p></div></article>
+</div><div class="az1091-roadmap-note"><strong>Ringkasnya:</strong> Request → Semak → Sebut Harga → Deposit → Preview → Pembetulan → Siap.</div></div></section>
+
+<section class="section az1091-faq" id="faq"><div class="wrap"><span class="eyebrow">Soalan biasa</span><h2 class="section-title">FAQ sebelum tempah website</h2><p class="section-lead">Jawapan ringkas untuk perkara yang customer selalu risau sebelum menghantar permintaan.</p><div class="az1091-faq-list">
+<details><summary>Perlu ada domain dahulu?</summary><p>Tidak. Pilih “Belum pasti — perlukan cadangan” dalam borang. AZOBSS boleh terangkan pilihan domain selepas keperluan website disemak.</p></details>
+<details><summary>Perlu daftar GitHub sebelum hantar permintaan?</summary><p>Tidak. Hantar permintaan dahulu. GitHub hanya dibantu selepas skop, harga dan tempoh siap dipersetujui.</p></details>
+<details><summary>Kalau belum ada logo atau gambar produk macam mana?</summary><p>Tidak mengapa. Tandakan bahan yang sudah ada sahaja. Bahan yang belum siap boleh dibincangkan bersama AZOBSS kemudian.</p></details>
+<details><summary>Boleh ubah pilihan website selepas hantar?</summary><p>Boleh. Pilihan dalam borang ialah titik permulaan. Jenis, susunan dan fungsi masih boleh diselaraskan semasa perbincangan sebelum pembangunan bermula.</p></details>
+<details><summary>Bila perlu bayar deposit?</summary><p>Selepas anda menerima dan bersetuju dengan skop, harga, tempoh siap dan jumlah pembetulan. Permintaan awal melalui WhatsApp tidak mewajibkan bayaran.</p></details>
+</div></div></section>
+
+<section class="section" id="github-register-guide"><div class="wrap"><span class="eyebrow">Selepas tempahan disahkan</span><h2 class="section-title">GitHub: buat kemudian, dengan panduan AZOBSS</h2><p class="section-lead">Bahagian ini hanya untuk rujukan selepas skop dan sebut harga dipersetujui. Anda tidak perlu daftar GitHub untuk menghantar permintaan website.</p><div class="az615-github-box">
+<div class="az615-github-start"><div><h3>Daftar hanya apabila AZOBSS minta selepas tempahan disahkan</h3><p>Gunakan email milik bisnes atau pemilik supaya akaun dan website kekal milik customer. Jangan gunakan email pembangun.</p></div><a class="cta primary" href="https://github.com/signup" target="_blank" rel="noopener noreferrer">Buka Pendaftaran GitHub</a></div>
 <div class="az615-github-steps">
 <div class="az615-github-step"><b>1</b><strong>Buka GitHub</strong><p>Tekan butang pendaftaran di atas.</p></div>
 <div class="az615-github-step"><b>2</b><strong>Isi maklumat</strong><p>Masukkan email, kata laluan dan username bisnes.</p></div>
@@ -973,7 +1008,7 @@ html.az618-modal-open,html.az618-modal-open body{overflow:hidden!important}
 <div class="form-actions"><a class="cta secondary" href="https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github" target="_blank" rel="noopener noreferrer">Panduan Rasmi GitHub</a><button class="cta secondary" id="copyGithub" type="button">Salin Mesej untuk Customer</button></div><div class="status" id="githubStatus" aria-live="polite"></div>
 </div></div></section>
 
-<section class="section"><div class="wrap"><div class="message-box" id="githubMessage">Untuk memulakan website, mohon daftar akaun GitHub menggunakan email milik bisnes atau pemilik. Selepas akaun siap dan email disahkan, hantar username GitHub sahaja kepada AZOBSS.
+<section class="section"><div class="wrap"><div class="message-box" id="githubMessage">Selepas skop dan sebut harga website disahkan, jika AZOBSS meminta setup GitHub, mohon daftar akaun GitHub menggunakan email milik bisnes atau pemilik. Selepas akaun siap dan email disahkan, hantar username GitHub sahaja kepada AZOBSS.
 
 Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Repository dan tetapan teknikal akan dibantu selepas skop projek disahkan.</div></div></section>
 </main><footer class="footer"><div class="wrap">© AZOBSS — Website, digital tools dan servis teknologi.</div></footer>
@@ -982,7 +1017,7 @@ Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Reposi
   const form=document.getElementById('websiteRequestForm');
   if(!form) return;
   const status=document.getElementById('formStatus');
-  const whatsappUrl='https://alvo.chat/6nZ2';
+  const whatsappPhone='601135600723';
   let currentStep=1;
   const stepNames={1:'Pilih rupa website',2:'Maklumat bisnes',3:'Fungsi & bahan'};
 
@@ -1025,13 +1060,6 @@ Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Reposi
   form.querySelectorAll('[data-prev-step]').forEach(btn=>btn.addEventListener('click',()=>setStep(currentStep-1)));
   form.querySelectorAll('input[name="websiteType"]').forEach(el=>el.addEventListener('change',()=>{document.getElementById('websiteTypeError').classList.remove('is-visible');updateSummary()}));
 
-  function updateGithubField(){
-    const show=selectedValue('githubStatusChoice')==='Sudah ada akaun GitHub';
-    document.getElementById('githubUsernameWrap').classList.toggle('is-visible',show);
-  }
-  form.querySelectorAll('input[name="githubStatusChoice"]').forEach(el=>el.addEventListener('change',updateGithubField));
-  updateGithubField();
-
   function updateSummary(){
     document.getElementById('summaryWebsiteType').textContent=selectedValue('websiteType','Belum dipilih');
     document.getElementById('summaryBusinessName').textContent=value('businessName')||'Belum diisi';
@@ -1047,8 +1075,6 @@ Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Reposi
   function message(){
     const features=checkedValues('features');
     const materials=checkedValues('materials');
-    const githubStatus=selectedValue('githubStatusChoice','Belum dinyatakan');
-    const githubUsername=value('githubUsername');
     return [
       'PERMINTAAN WEBSITE AZOBSS',
       '',
@@ -1061,7 +1087,7 @@ Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Reposi
       'Pilihan domain: '+value('domain'),
       'Fungsi diperlukan: '+(features.length?features.join(', '):'Belum dipilih'),
       'Bahan tersedia: '+(materials.length?materials.join(', '):'Belum ada / belum pasti'),
-      'Status GitHub: '+githubStatus+(githubUsername?' ('+githubUsername+')':''),
+      'GitHub: Belum diperlukan pada peringkat permintaan awal',
       'Maklumat tambahan: '+(value('notes')||'Tiada'),
       '',
       'Saya faham skop, harga, tempoh siap, deposit dan jumlah pembetulan akan disahkan sebelum pembangunan bermula.'
@@ -1089,13 +1115,21 @@ Tidak perlu berikan password, kod pengesahan, kod 2FA atau recovery code. Reposi
   document.getElementById('copyOnly').addEventListener('click',async()=>{
     if(!validateAll()) return;
     const ok=await copyText(message());
-    status.textContent=ok?'Maklumat telah disalin. Sekarang tekan “Buka WhatsApp” dan tampal mesej.':'Browser menghalang salinan. Sila cuba sekali lagi atau salin secara manual.';
+    status.textContent=ok?'Maklumat telah disalin sebagai backup. Anda juga boleh terus tekan “Hantar Permintaan di WhatsApp”.':'Browser menghalang salinan. Anda masih boleh terus tekan “Hantar Permintaan di WhatsApp”.';
   });
   form.addEventListener('submit',e=>{
     e.preventDefault();
     if(!validateAll()) return;
-    const win=window.open(whatsappUrl,'_blank','noopener');
-    status.textContent=win?'WhatsApp telah dibuka. Tekan “Salin Maklumat” dahulu jika belum menyalin mesej.':'Popup WhatsApp disekat. Benarkan popup dan cuba lagi.';
+    const whatsappUrl='https://wa.me/'+whatsappPhone+'?text='+encodeURIComponent(message());
+    status.textContent='Membuka WhatsApp dengan maklumat permintaan yang telah siap diisi…';
+    const win=window.open(whatsappUrl,'_blank');
+    if(win){
+      try{win.opener=null}catch(_e){}
+      status.textContent='WhatsApp telah dibuka dengan mesej siap diisi. Semak dan tekan Send.';
+    }else{
+      status.textContent='Popup disekat. Membuka WhatsApp pada tab ini…';
+      window.location.href=whatsappUrl;
+    }
   });
   const copyGithub=document.getElementById('copyGithub');
   if(copyGithub) copyGithub.addEventListener('click',async()=>{
