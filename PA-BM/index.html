@@ -8930,6 +8930,15 @@ html.azobss-pabm-guard-pending body{
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="paQuickAddButton" type="button"><span>Tambah Terus ke Troli</span></button>
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="paStatus" role="status"></p>
+<div class="pabm-map-search-block" id="paMapSearchBlock">
+<div class="pabm-choice-separator" role="separator"><span>ATAU CARI DI PETA</span></div>
+<label for="paMapSearchInput">
+          <span class="pabm-field-title">Nombor Lot / WGS84</span>
+          <input autocomplete="off" id="paMapSearchInput" inputmode="text" placeholder="Contoh: Lot 1122 atau 3.1390, 101.6869" spellcheck="false" type="search"/>
+</label>
+<button class="pabm-map-button" id="paMapSearchButton" type="button">Buka Peta Pilihan PA</button>
+<p aria-live="polite" class="pabm-map-inline-status" id="paMapSearchStatus" role="status"></p>
+</div>
 <label for="paGeneralSearch">
           <span class="pabm-field-title">Carian Umum</span>
           <input disabled="" id="paGeneralSearch" placeholder="No. PA / Negeri / Daerah / Mukim / Seksyen" type="search"/>
@@ -8999,6 +9008,15 @@ html.azobss-pabm-guard-pending body{
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="benchmarkQuickAddButton" type="button"><span>Tambah Terus ke Troli</span></button>
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="benchmarkStatus" role="status"></p>
+<div class="pabm-map-search-block" id="benchmarkMapSearchBlock">
+<div class="pabm-choice-separator" role="separator"><span>ATAU CARI DI PETA</span></div>
+<label for="benchmarkMapWgs84Input">
+            <span class="pabm-field-title">Carian WGS84</span>
+            <input autocomplete="off" id="benchmarkMapWgs84Input" inputmode="decimal" placeholder="Contoh: 3.1390, 101.6869" spellcheck="false" type="search"/>
+</label>
+<button class="pabm-map-button" id="benchmarkMapOpenButton" type="button">Buka Peta Pilihan BM</button>
+<p aria-live="polite" class="pabm-map-inline-status" id="benchmarkMapStatus" role="status"></p>
+</div>
 <label for="benchmarkGeneralSearch">
             <span class="pabm-field-title">Carian Umum</span>
             <input disabled="" id="benchmarkGeneralSearch" placeholder="No. Stesen / Negeri / Daerah / Bandar / Huraian" type="search"/>
@@ -15631,6 +15649,7 @@ body:not(.pa-bm-page) button{
 
 
 <script src="/assets/js/azobss-lot-selection-map.js?v=1088" defer></script>
+<script src="/assets/js/azobss-pabm-map-search.js?v=1093" defer></script>
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=921"></script>
 <script src="/assets/js/azobss-pabm-result-layout.js?v=3" defer></script>
 <script src="/assets/js/azobss-pa-search.js?v=28" defer></script>

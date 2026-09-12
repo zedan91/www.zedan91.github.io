@@ -11655,6 +11655,336 @@ function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = false) 
   return azobssResolveJupemPointCoordinates(productId, pointType, forceAuth);
 }
 
+
+// =========================
+// PA / BM / SBM WGS84 MAP SEARCH (v1093)
+// =========================
+
+function azobssPabmHaversineKm(lat1, lon1, lat2, lon2) {
+  const values = [lat1, lon1, lat2, lon2].map(Number);
+  if (!values.every(Number.isFinite)) return Infinity;
+  const [aLat, aLon, bLat, bLon] = values;
+  const toRad = (value) => value * Math.PI / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLon = toRad(bLon - aLon);
+  const x = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLon / 2) ** 2;
+  return 6371.0088 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(Math.max(0, 1 - x)));
+}
+
+function azobssPabmValidWgs84(latitude, longitude) {
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -2 && lat <= 8.5 && lng >= 95 && lng <= 125;
+}
+
+function azobssPabmNormalizePaNumber(value) {
+  const raw = String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!raw) return '';
+  if (/^PA[A-Z0-9/_-]+$/.test(raw)) return raw;
+  if (/^[A-Z0-9/_-]+$/.test(raw)) return `PA${raw}`;
+  return raw.slice(0, 48);
+}
+
+function azobssPabmLotFeatureResult(feature, config) {
+  if (!feature || !feature.geometry || !Array.isArray(feature.geometry.rings)) return null;
+  const attributes = feature.attributes || {};
+  const spatial = azobssFocusedLotBounds(feature.geometry);
+  const objectId = azobssCleanLotObjectId(azobssFindFocusedLotAttribute(attributes, [
+    'OBJECTID', 'OBJECTID_1', 'FID'
+  ]));
+  const lotNo = azobssFindFocusedLotAttribute(attributes, [
+    'NO_LOT', 'NOLOT', 'LOT_NO', 'LOTNO', 'NOMBOR_LOT', 'LOT'
+  ]);
+  const paNo = azobssPabmNormalizePaNumber(azobssFindFocusedLotAttribute(attributes, [
+    'NO_PA', 'NOPA', 'PA_NO', 'PANO', 'PELAN_AKUI'
+  ]));
+  return {
+    objectId,
+    lotNo: String(lotNo || '').trim(),
+    paNo,
+    negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[config.state] || '',
+    stateCode: config.state,
+    daerah: azobssFindFocusedLotAttribute(attributes, ['DAERAH', 'DISTRICT']),
+    mukim: azobssFindFocusedLotAttribute(attributes, ['MUKIM', 'BANDAR', 'PEKAN']),
+    seksyen: azobssFindFocusedLotAttribute(attributes, ['SEKSYEN', 'SECTION']),
+    geometry: {
+      rings: feature.geometry.rings,
+      spatialReference: { wkid: 4326 }
+    },
+    bounds: spatial.bounds,
+    center: spatial.center
+  };
+}
+
+function azobssPabmFocusedLotResult(focused) {
+  if (!focused || !focused.geometry || !Array.isArray(focused.geometry.rings)) return null;
+  return {
+    objectId: String(focused.objectId || ''),
+    lotNo: String(focused.lotNo || ''),
+    paNo: azobssPabmNormalizePaNumber(focused.paNo),
+    negeri: AZOBSS_JUPEM_LOT_STATE_NAMES[focused.config && focused.config.state] || '',
+    stateCode: String(focused.config && focused.config.state || ''),
+    daerah: String(focused.daerah || ''),
+    mukim: String(focused.mukim || ''),
+    seksyen: String(focused.seksyen || ''),
+    geometry: focused.geometry,
+    bounds: focused.bounds,
+    center: focused.center
+  };
+}
+
+async function azobssPabmFindPaLotsAtPoint(stateCode, latitude, longitude, forceAuth = false) {
+  const config = azobssGetLotMapConfig('1', stateCode);
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  if (!azobssPabmValidWgs84(lat, lng)) throw new Error('Koordinat WGS84 tidak sah.');
+  const auth = await azobssGetJupemMapAuth(forceAuth);
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  try {
+    const payload = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+      geometry: JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } }),
+      geometryType: 'esriGeometryPoint',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+      outFields: '*',
+      returnGeometry: 'true',
+      outSR: '4326',
+      resultRecordCount: '20'
+    }, auth, 30000);
+    const rows = (Array.isArray(payload.features) ? payload.features : [])
+      .map((feature) => azobssPabmLotFeatureResult(feature, config))
+      .filter(Boolean);
+    const seen = new Set();
+    return rows.filter((row) => {
+      const key = `${row.objectId}|${row.lotNo}|${row.paNo}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 12);
+  } catch (error) {
+    if (!forceAuth && /(?:token|498|499|unauthor)/i.test(String(error && error.message || error))) {
+      azobssJupemMapAuthCache = { token: '', cookie: '', expiresAt: 0 };
+      return azobssPabmFindPaLotsAtPoint(stateCode, lat, lng, true);
+    }
+    throw error;
+  }
+}
+
+async function azobssPabmFindPaLotsByNumber(stateCode, lotNumber) {
+  const cleanStateCode = cleanLotStateCode(stateCode);
+  const wantedLot = cleanLotNumber(lotNumber);
+  if (!cleanStateCode || !wantedLot) return [];
+
+  let searchRows = [];
+  try {
+    const search = await searchJupemLotCadastre('1', cleanStateCode, wantedLot);
+    searchRows = (Array.isArray(search && search.results) ? search.results : [])
+      .filter((row) => cleanLotNumber(row && row.lotNo) === wantedLot)
+      .slice(0, 12);
+  } catch (_) {}
+
+  if (!searchRows.length) {
+    const focused = await azobssResolveFocusedLot('1', cleanStateCode, '', wantedLot, {});
+    const fallback = azobssPabmFocusedLotResult(focused);
+    return fallback ? [fallback] : [];
+  }
+
+  const settled = await Promise.allSettled(searchRows.map(async (row) => {
+    const parsedTarget = azobssParseFocusedLotMapTarget(row && row.mapUrl);
+    const focused = await azobssResolveFocusedLot(
+      '1',
+      cleanStateCode,
+      row && (row.objectId || parsedTarget.objectId) || '',
+      wantedLot,
+      {
+        paNo: String(row && row.paNo || '').trim(),
+        daerah: String(row && row.daerah || '').trim(),
+        mukim: String(row && row.mukim || '').trim(),
+        seksyen: String(row && row.seksyen || '').trim()
+      }
+    );
+    const result = azobssPabmFocusedLotResult(focused);
+    if (!result) return null;
+    result.paNo = result.paNo || azobssPabmNormalizePaNumber(row && row.paNo);
+    result.daerah = result.daerah || String(row && row.daerah || '').trim();
+    result.mukim = result.mukim || String(row && row.mukim || '').trim();
+    result.seksyen = result.seksyen || String(row && row.seksyen || '').trim();
+    return result;
+  }));
+
+  const seen = new Set();
+  const results = [];
+  for (const item of settled) {
+    if (item.status !== 'fulfilled' || !item.value) continue;
+    const row = item.value;
+    const key = [row.objectId, cleanLotNumber(row.lotNo), row.paNo, row.daerah, row.mukim, row.seksyen].join('|').toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push(row);
+  }
+  if (results.length) return results;
+
+  const focused = await azobssResolveFocusedLot('1', cleanStateCode, '', wantedLot, {});
+  const fallback = azobssPabmFocusedLotResult(focused);
+  return fallback ? [fallback] : [];
+}
+
+function azobssPabmBenchmarkCoordinatesFromFeature(feature) {
+  const attributes = feature && feature.attributes || {};
+  let latitude = azobssDmsToDecimal(attributes.WGS_LatD, attributes.WGS_LatM, attributes.WGS_LatS);
+  let longitude = azobssDmsToDecimal(attributes.WGS_LonD, attributes.WGS_LonM, attributes.WGS_LonS);
+  if (!azobssPabmValidWgs84(latitude, longitude)) {
+    latitude = Number(feature && feature.geometry && feature.geometry.y);
+    longitude = Number(feature && feature.geometry && feature.geometry.x);
+  }
+  return azobssPabmValidWgs84(latitude, longitude) ? { latitude, longitude } : null;
+}
+
+function azobssPabmBenchmarkLocalRows(latitude, longitude, jenis, negeri) {
+  const wantedJenis = String(jenis || '1') === '2' ? '2' : '1';
+  const wantedState = azobssCanonicalStateName(negeri);
+  return azobssReadStesenRecords()
+    .filter((row) => String(row && row.jenis || '1') === wantedJenis)
+    .map((row) => {
+      const lat = Number(row && row.latitude);
+      const lng = Number(row && row.longitude);
+      if (!azobssPabmValidWgs84(lat, lng)) return null;
+      const rowState = azobssCanonicalStateName(row && row.negeri);
+      if (wantedState && rowState && rowState !== wantedState) return null;
+      const distanceKm = azobssPabmHaversineKm(latitude, longitude, lat, lng);
+      if (!Number.isFinite(distanceKm) || distanceKm > 250) return null;
+      const productId = String(row.productId || row.id || '').replace(/\D/g, '').slice(0, 20);
+      const stationNo = String(row.stationNo || row.stesen || row.itemCode || '').trim();
+      if (!productId && !stationNo) return null;
+      return {
+        product: wantedJenis === '2' ? 'SBM' : 'BM',
+        jenis: wantedJenis,
+        productId,
+        stationNo,
+        negeri: String(row.negeri || '').trim(),
+        daerah: String(row.daerah || '').trim(),
+        bandar: String(row.bandar || '').trim(),
+        huraian: String(row.huraian || '').trim(),
+        latitude: Number(lat.toFixed(7)),
+        longitude: Number(lng.toFixed(7)),
+        distanceKm: Number(distanceKm.toFixed(3)),
+        downloadUrl: String(row.downloadUrl || (productId ? `https://azobss-backend.onrender.com/api/download-stesen-tanda-aras?productId=${encodeURIComponent(productId)}&jenis=${wantedJenis}` : '')).trim(),
+        source: 'local-wgs84-index'
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.distanceKm - right.distanceKm)
+    .slice(0, 40);
+}
+
+function azobssPabmBenchmarkFeatureResult(feature, latitude, longitude, jenis, localIndex) {
+  const attributes = feature && feature.attributes || {};
+  const coordinates = azobssPabmBenchmarkCoordinatesFromFeature(feature);
+  if (!coordinates) return null;
+  const productId = String(azobssFindFocusedLotAttribute(attributes, [
+    'IdStn', 'IDSTN', 'ID_STN', 'STATION_ID', 'PRODUCT_ID'
+  ]) || '').replace(/\D/g, '').slice(0, 20);
+  const stationNo = String(azobssFindFocusedLotAttribute(attributes, [
+    'NoStn', 'NOSTN', 'NO_STN', 'NO_STESEN', 'STESEN', 'STATION_NO'
+  ]) || '').trim();
+  if (!productId && !stationNo) return null;
+  const local = productId && localIndex ? localIndex.get(productId) : null;
+  const wantedJenis = String(jenis || '1') === '2' ? '2' : '1';
+  const stationState = String(azobssFindFocusedLotAttribute(attributes, ['Negeri', 'STATE']) || (local && local.negeri) || '').trim();
+  const distanceKm = azobssPabmHaversineKm(latitude, longitude, coordinates.latitude, coordinates.longitude);
+  return {
+    product: wantedJenis === '2' ? 'SBM' : 'BM',
+    jenis: wantedJenis,
+    productId,
+    stationNo: stationNo || String(local && (local.stationNo || local.stesen) || '').trim(),
+    negeri: stationState,
+    daerah: String(azobssFindFocusedLotAttribute(attributes, ['Daerah', 'District']) || (local && local.daerah) || '').trim(),
+    bandar: String(azobssFindFocusedLotAttribute(attributes, ['Bandar', 'Pekan', 'City', 'Town']) || (local && local.bandar) || '').trim(),
+    huraian: String(azobssFindFocusedLotAttribute(attributes, ['Huraian', 'Keterangan', 'Description', 'Catatan', 'Lokasi', 'Tempat']) || (local && local.huraian) || '').trim(),
+    latitude: Number(coordinates.latitude.toFixed(7)),
+    longitude: Number(coordinates.longitude.toFixed(7)),
+    distanceKm: Number(distanceKm.toFixed(3)),
+    downloadUrl: String(local && local.downloadUrl || (productId ? `https://azobss-backend.onrender.com/api/download-stesen-tanda-aras?productId=${encodeURIComponent(productId)}&jenis=${wantedJenis}` : '')).trim(),
+    source: 'jupem-wgs84-map'
+  };
+}
+
+async function azobssPabmBenchmarkLiveRows(latitude, longitude, jenis, negeri, forceAuth = false) {
+  const wantedJenis = String(jenis || '1') === '2' ? '2' : '1';
+  const layer = wantedJenis === '2' ? '2' : '1';
+  const wantedState = azobssCanonicalStateName(negeri);
+  const auth = await azobssGetJupemMapAuth(forceAuth);
+  const localRecords = azobssReadStesenRecords().filter((row) => String(row && row.jenis || '1') === wantedJenis);
+  const localIndex = new Map(localRecords.map((row) => [String(row.productId || row.id || '').replace(/\D/g, ''), row]).filter(([key]) => key));
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Geodetik/Produk_Geodetik/MapServer/${layer}`;
+  const collected = new Map();
+  const radiiKm = [8, 20, 50, 100, 180, 300];
+  try {
+    for (const radiusKm of radiiKm) {
+      const latDelta = radiusKm / 110.574;
+      const cosLat = Math.max(0.15, Math.cos(Number(latitude) * Math.PI / 180));
+      const lngDelta = radiusKm / (111.320 * cosLat);
+      const envelope = {
+        xmin: Number(longitude) - lngDelta,
+        ymin: Number(latitude) - latDelta,
+        xmax: Number(longitude) + lngDelta,
+        ymax: Number(latitude) + latDelta,
+        spatialReference: { wkid: 4326 }
+      };
+      const payload = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+        geometry: JSON.stringify(envelope),
+        geometryType: 'esriGeometryEnvelope',
+        inSR: '4326',
+        spatialRel: 'esriSpatialRelIntersects',
+        outFields: '*',
+        returnGeometry: 'true',
+        outSR: '4326',
+        resultRecordCount: '250'
+      }, auth, 35000);
+      for (const feature of Array.isArray(payload.features) ? payload.features : []) {
+        const row = azobssPabmBenchmarkFeatureResult(feature, latitude, longitude, wantedJenis, localIndex);
+        if (!row) continue;
+        const rowState = azobssCanonicalStateName(row.negeri);
+        if (wantedState && rowState && rowState !== wantedState) continue;
+        const key = row.productId || `${row.stationNo}|${row.latitude}|${row.longitude}`;
+        if (!collected.has(key) || row.distanceKm < collected.get(key).distanceKm) collected.set(key, row);
+      }
+      if (collected.size >= 24) break;
+    }
+  } catch (error) {
+    if (!forceAuth && /(?:token|498|499|unauthor)/i.test(String(error && error.message || error))) {
+      azobssJupemMapAuthCache = { token: '', cookie: '', expiresAt: 0 };
+      return azobssPabmBenchmarkLiveRows(latitude, longitude, wantedJenis, negeri, true);
+    }
+    throw error;
+  }
+  return [...collected.values()].sort((left, right) => left.distanceKm - right.distanceKm).slice(0, 40);
+}
+
+async function azobssPabmFindBenchmarkNearby(latitude, longitude, jenis, negeri) {
+  const localRows = azobssPabmBenchmarkLocalRows(latitude, longitude, jenis, negeri);
+  // BM has a large local WGS84 index; use it immediately when it already gives
+  // a useful nearby choice set. SBM currently relies mainly on the live JUPEM layer.
+  if (String(jenis || '1') !== '2' && localRows.length >= 24) {
+    return { rows: localRows.slice(0, 30), source: 'local-wgs84-index' };
+  }
+  try {
+    const liveRows = await azobssPabmBenchmarkLiveRows(latitude, longitude, jenis, negeri, false);
+    const merged = new Map();
+    [...liveRows, ...localRows].forEach((row) => {
+      const key = row.productId || `${row.stationNo}|${row.latitude}|${row.longitude}`;
+      if (!merged.has(key) || row.distanceKm < merged.get(key).distanceKm) merged.set(key, row);
+    });
+    const rows = [...merged.values()].sort((left, right) => left.distanceKm - right.distanceKm).slice(0, 30);
+    return { rows, source: liveRows.length ? 'jupem-live-map' : 'local-wgs84-index' };
+  } catch (error) {
+    if (localRows.length) return { rows: localRows.slice(0, 30), source: 'local-wgs84-index-fallback', warning: error.message || String(error) };
+    throw error;
+  }
+}
+
 // =========================
 // PA/BM JUPEM DOWNLOAD RESOLVER
 // Fixes false "PA/BM not found" during paid download by:
@@ -17187,6 +17517,99 @@ async function handler(req, res) {
       );
     }
 
+
+    // =========================
+    // PA / BM / SBM WGS84 MAP SEARCH (v1093)
+    // =========================
+
+    if (pathname === "/api/pabm-pa-map-search" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "pabm-pa-map-search", 60, 60 * 1000)) return;
+      try {
+        const stateCode = cleanLotStateCode(parsed.query.negeri || parsed.query.state || parsed.query.stateCode);
+        if (!stateCode) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu." }), "application/json", { "Cache-Control":"no-store" });
+        }
+
+        const latitude = Number(parsed.query.lat ?? parsed.query.latitude);
+        const longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
+        const rawLot = String(parsed.query.lot || parsed.query.lotNo || parsed.query.noLot || "").trim();
+        const lotNo = cleanLotNumber(rawLot.replace(/^\s*(?:NO\.?\s*)?LOT\s*/i, ""));
+        let results = [];
+        let mode = "";
+
+        if (lotNo) {
+          mode = "lot";
+          results = await azobssPabmFindPaLotsByNumber(stateCode, lotNo);
+        } else if (azobssPabmValidWgs84(latitude, longitude)) {
+          mode = "wgs84";
+          results = await azobssPabmFindPaLotsAtPoint(stateCode, latitude, longitude);
+        } else {
+          return send(res, 400, JSON.stringify({
+            ok:false,
+            error:"Masukkan Nombor Lot atau koordinat WGS84 yang sah, contoh 3.1390, 101.6869."
+          }), "application/json", { "Cache-Control":"no-store" });
+        }
+
+        return send(res, 200, JSON.stringify({
+          ok:true,
+          mode,
+          stateCode,
+          negeri:AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
+          latitude:mode === "wgs84" ? latitude : undefined,
+          longitude:mode === "wgs84" ? longitude : undefined,
+          lotNo:mode === "lot" ? lotNo : undefined,
+          results
+        }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        const message = String(error && error.message || "Carian PA pada peta tidak tersedia.");
+        const notFound = /tidak dapat dikenal pasti|not found|tiada/i.test(message);
+        return send(res, notFound ? 404 : 502, JSON.stringify({
+          ok:false,
+          error:notFound ? "Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." : message
+        }), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+    if (pathname === "/api/pabm-benchmark-nearby" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "pabm-benchmark-nearby", 60, 60 * 1000)) return;
+      try {
+        const latitude = Number(parsed.query.lat ?? parsed.query.latitude);
+        const longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
+        if (!azobssPabmValidWgs84(latitude, longitude)) {
+          return send(res, 400, JSON.stringify({
+            ok:false,
+            error:"Koordinat WGS84 tidak sah. Contoh: 3.1390, 101.6869."
+          }), "application/json", { "Cache-Control":"no-store" });
+        }
+
+        const requestedProduct = String(parsed.query.produk || parsed.query.product || parsed.query.type || "BM").trim().toUpperCase();
+        const product = requestedProduct === "SBM" || requestedProduct === "2" ? "SBM" : "BM";
+        const jenis = product === "SBM" ? "2" : "1";
+        const negeri = azobssCanonicalStateName(parsed.query.negeri || parsed.query.state || "");
+        if (!negeri) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu." }), "application/json", { "Cache-Control":"no-store" });
+        }
+
+        const found = await azobssPabmFindBenchmarkNearby(latitude, longitude, jenis, negeri);
+        return send(res, 200, JSON.stringify({
+          ok:true,
+          product,
+          jenis,
+          negeri,
+          latitude,
+          longitude,
+          source:found.source || "",
+          warning:found.warning || "",
+          results:Array.isArray(found.rows) ? found.rows : []
+        }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        console.warn("AZOBSS BM/SBM WGS84 map search failed:", error && (error.stack || error.message || error));
+        return send(res, 502, JSON.stringify({
+          ok:false,
+          error:"Carian WGS84 BM/SBM tidak tersedia buat sementara waktu. Sila cuba semula."
+        }), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
 
     // =========================
     // JUPEM LOT KADASTER MAP + VERIFIED SELECTION
