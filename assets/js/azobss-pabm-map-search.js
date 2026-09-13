@@ -28,9 +28,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1100')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1102')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1100';
+    style.id = 'azobssPabmMapSearchStyles1102';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -80,6 +80,11 @@
       .az-pabm-map-footstatus{min-height:16px;margin-top:6px;color:#a9bad0;font-size:11px;line-height:1.3}
       .az-pabm-map-footstatus.is-error{color:#fda4af}.az-pabm-map-footstatus.is-success{color:#86efac}
       .az-pabm-map-target-label{padding:2px 5px;border-radius:4px;background:#0f172a;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+      .az-pabm-search-pin-icon{background:transparent!important;border:0!important}
+      .az-pabm-search-pin{display:block;position:relative;width:28px;height:28px;border:3px solid #fff;border-radius:50% 50% 50% 0;background:#ef4444;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.55)}
+      .az-pabm-search-pin::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
+      .az-pabm-search-origin-label{padding:3px 7px;border:1px solid rgba(255,255,255,.75);border-radius:5px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 7px rgba(0,0,0,.35)}
+      .az-pabm-distance-line-label{padding:3px 7px;border:1px solid rgba(255,255,255,.75);border-radius:5px;background:#92400e;color:#fff;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 7px rgba(0,0,0,.35)}
       .az-pabm-station-label{padding:1px 4px;border:1px solid rgba(15,23,42,.55);border-radius:4px;background:rgba(15,23,42,.88);color:#fff;font-size:10px;font-weight:900;line-height:1.15;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.28)}
       .az-pabm-station-label.is-selected{font-size:11px;border-width:2px;background:#0f172a}
       @keyframes az-pabm-spin{to{transform:rotate(360deg)}}
@@ -132,6 +137,31 @@
     }
     if (lat < -2 || lat > 8.5 || lng < 95 || lng > 125) return null;
     return { lat, lng };
+  }
+
+  function createSearchTargetMarker(L, map, target, label) {
+    if (!target || !Number.isFinite(Number(target.lat)) || !Number.isFinite(Number(target.lng))) return null;
+    const icon = L.divIcon({
+      className: 'az-pabm-search-pin-icon',
+      html: '<span class="az-pabm-search-pin" aria-hidden="true"></span>',
+      iconSize: [28, 36],
+      iconAnchor: [14, 32],
+      tooltipAnchor: [0, -30]
+    });
+    const marker = L.marker([Number(target.lat), Number(target.lng)], {
+      icon,
+      zIndexOffset: 3000,
+      keyboard: false,
+      interactive: false
+    }).addTo(map);
+    marker.bindTooltip(String(label || 'Lokasi carian'), {
+      permanent: true,
+      direction: 'top',
+      offset: [0, -2],
+      className: 'az-pabm-search-origin-label',
+      opacity: 1
+    }).openTooltip();
+    return marker;
   }
 
   function cleanLotQuery(value) {
@@ -342,10 +372,10 @@
       'Peta Pilihan PA',
       `${state} • Nombor Lot ikut negeri • WGS84 auto-detect negeri`,
       'Contoh: Lot 1122 atau 3.1390, 101.6869',
-      'Klik mana-mana lot pada peta untuk menyemak PA di koordinat tersebut.'
+      'Klik lot yang ditemui untuk lihat maklumat. Double-click lokasi pada peta untuk menetapkan titik carian WGS84 baharu.'
     );
     ui.input.value = value;
-    const map = L.map(ui.canvas, { zoomControl: true }).setView([4.2, 102.1], 7);
+    const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView([4.2, 102.1], 7);
     ui.modal._azobssMap = map;
     addBaseMap(L, map);
     addJupemLotOverlay(L, map, stateCode);
@@ -396,7 +426,7 @@
       clearSelection();
       if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} targetMarker = null; }
       if (coordinate) {
-        targetMarker = L.marker([coordinate.lat, coordinate.lng]).addTo(map).bindTooltip('WGS84 dicari', { direction: 'top', className: 'az-pabm-map-target-label' });
+        targetMarker = createSearchTargetMarker(L, map, coordinate, 'Lokasi carian');
       }
       if (!rows.length) {
         ui.results.innerHTML = '<div class="az-pabm-map-empty">Tiada lot / PA ditemui pada carian ini. Cuba klik sedikit ke dalam sempadan lot atau semak negeri yang dipilih.</div>';
@@ -486,7 +516,7 @@
         setFootStatus(ui, error.message || 'PA tidak dapat ditambah ke troli.', 'error');
       }
     });
-    map.on('click', (event) => {
+    map.on('dblclick', (event) => {
       if (!event || !event.latlng) return;
       const coordinate = { lat: Number(event.latlng.lat.toFixed(7)), lng: Number(event.latlng.lng.toFixed(7)) };
       ui.input.value = `${coordinate.lat}, ${coordinate.lng}`;
@@ -521,12 +551,12 @@
       `Peta Pilihan ${product}`,
       `${state} • Cari ${product} terdekat menggunakan Nombor Lot, Nombor PA atau WGS84`,
       'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      `Nombor biasa dianggap sebagai Lot. Untuk Pelan Akui, gunakan awalan PA. Klik lokasi lain pada peta untuk mencari ${product} terdekat.`
+      `Nombor biasa dianggap sebagai Lot. Untuk Pelan Akui, gunakan awalan PA. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
     );
     ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : rawInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
     const initialZoom = coordinate ? 11 : 7;
-    const map = L.map(ui.canvas, { zoomControl: true }).setView(initialCenter, initialZoom);
+    const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView(initialCenter, initialZoom);
     ui.modal._azobssMap = map;
     addBaseMap(L, map);
     window.setTimeout(() => map.invalidateSize(), 60);
@@ -540,6 +570,7 @@
     let currentReference = null;
     let currentTarget = coordinate || null;
     let candidateReferences = [];
+    let distanceLine = null;
 
     function referenceLabel(reference) {
       if (!reference) return 'WGS84';
@@ -593,6 +624,41 @@
       return layer;
     }
 
+    function clearDistanceGuide() {
+      if (distanceLine) {
+        try { map.removeLayer(distanceLine); } catch (_) {}
+        distanceLine = null;
+      }
+    }
+
+    function drawDistanceGuide(row) {
+      clearDistanceGuide();
+      if (!row || !currentTarget) return;
+      const lat = Number(row.latitude);
+      const lng = Number(row.longitude);
+      const targetLat = Number(currentTarget.lat);
+      const targetLng = Number(currentTarget.lng);
+      if (![lat, lng, targetLat, targetLng].every(Number.isFinite)) return;
+      const distanceKm = Number(row.distanceKm);
+      const distanceText = Number.isFinite(distanceKm)
+        ? `${distanceKm.toFixed(3)} km`
+        : `${(map.distance([targetLat, targetLng], [lat, lng]) / 1000).toFixed(3)} km`;
+      distanceLine = L.polyline([[targetLat, targetLng], [lat, lng]], {
+        weight: 3,
+        opacity: 0.95,
+        dashArray: '9 8',
+        lineCap: 'round',
+        interactive: false
+      }).addTo(map);
+      distanceLine.bindTooltip(distanceText, {
+        permanent: true,
+        direction: 'center',
+        className: 'az-pabm-distance-line-label',
+        opacity: 1
+      }).openTooltip();
+      if (typeof distanceLine.bringToFront === 'function') distanceLine.bringToFront();
+    }
+
     function setSelectedMarker(index) {
       stationMarkers.forEach((marker, markerIndex) => {
         if (!marker) return;
@@ -615,6 +681,7 @@
       setFootStatus(ui, '', '');
       ui.results.querySelectorAll('.az-pabm-map-result').forEach((node) => node.classList.remove('is-selected'));
       setSelectedMarker(-1);
+      clearDistanceGuide();
     }
 
     function selectRow(index, pan) {
@@ -623,6 +690,7 @@
       selectedRow = row;
       ui.results.querySelectorAll('.az-pabm-map-result[data-index]').forEach((node) => node.classList.toggle('is-selected', Number(node.dataset.index) === index));
       setSelectedMarker(index);
+      drawDistanceGuide(row);
       ui.detail.hidden = false;
       const refText = currentReference ? referenceLabel(currentReference) : 'WGS84';
       ui.detailGrid.innerHTML = `
@@ -638,7 +706,12 @@
       ui.cartButton.textContent = `Tambah ${product} ${row.stationNo || row.productId || ''} ke Troli`;
       ui.cartButton.disabled = !(row.stationNo || row.productId);
       if (pan && Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude))) {
-        map.setView([Number(row.latitude), Number(row.longitude)], Math.max(map.getZoom(), 14));
+        const stationLatLng = [Number(row.latitude), Number(row.longitude)];
+        if (currentTarget && Number.isFinite(Number(currentTarget.lat)) && Number.isFinite(Number(currentTarget.lng))) {
+          map.fitBounds([[Number(currentTarget.lat), Number(currentTarget.lng)], stationLatLng], { padding: [80, 80], maxZoom: 15 });
+        } else {
+          map.setView(stationLatLng, Math.max(map.getZoom(), 14));
+        }
       }
     }
 
@@ -691,11 +764,7 @@
       if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} }
       const targetLabel = currentReference ? referenceLabel(currentReference) : 'WGS84 dicari';
       if (currentReference) drawReference(currentReference, true);
-      targetMarker = L.marker([target.lat, target.lng]).addTo(map).bindTooltip(targetLabel, {
-        permanent: false,
-        direction: 'top',
-        className: 'az-pabm-map-target-label'
-      });
+      targetMarker = createSearchTargetMarker(L, map, target, currentReference ? `${targetLabel} • Lokasi carian` : 'Lokasi carian');
       if (!rows.length) {
         ui.results.innerHTML = `<div class="az-pabm-map-empty">Tiada ${escapeHtml(product)} ditemui berdekatan ${escapeHtml(currentReference ? referenceLabel(currentReference) : 'koordinat ini')} dalam ${escapeHtml(state)}.</div>`;
         map.setView([target.lat, target.lng], 12);
@@ -808,7 +877,7 @@
         setFootStatus(ui, error.message || `${product} tidak dapat ditambah ke troli.`, 'error');
       }
     });
-    map.on('click', (event) => {
+    map.on('dblclick', (event) => {
       if (!event || !event.latlng) return;
       const target = { lat: Number(event.latlng.lat.toFixed(7)), lng: Number(event.latlng.lng.toFixed(7)) };
       ui.input.value = `${target.lat}, ${target.lng}`;
