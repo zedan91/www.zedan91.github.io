@@ -1,0 +1,18 @@
+{
+  "patch": 1097,
+  "version": "1.0.1097",
+  "date": "2026-09-13",
+  "private_noindex": [
+    "/PA-BM/",
+    "/admin/"
+  ],
+  "preferred_public_sitelinks": [
+    "/Software-Tools/",
+    "/lucky-draw/"
+  ],
+  "sitemap_excludes": [
+    "/PA-BM/",
+    "/admin/"
+  ],
+  "backend_changed": false
+}
