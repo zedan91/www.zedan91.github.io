@@ -12248,6 +12248,46 @@ async function azobssPabmFindBenchmarkNearby(latitude, longitude, jenis, negeri)
   }
 }
 
+
+// v1108: nearest GPS lookup for the map selector. The paid GPS index already
+// contains WGS84 coordinates, so this stays deterministic and does not depend
+// on a fragile live map scrape. Lot/PA references reuse the same JUPEM cadastral
+// resolver used by BM/SBM.
+function azobssPabmGpsLocalRows(latitude, longitude, negeri) {
+  const wantedState = azobssCanonicalStateName(negeri);
+  return azobssReadPaidIndex('stesen-gps-records.json')
+    .map((row) => {
+      const lat = Number(row && row.latitude);
+      const lng = Number(row && row.longitude);
+      if (!azobssPabmValidWgs84(lat, lng)) return null;
+      const rowState = azobssCanonicalStateName(row && row.negeri);
+      if (wantedState && rowState && rowState !== wantedState) return null;
+      const distanceKm = azobssPabmHaversineKm(latitude, longitude, lat, lng);
+      if (!Number.isFinite(distanceKm) || distanceKm > 300) return null;
+      const stationNo = String(row && (row.stationNo || row.itemCode) || '').trim().toUpperCase();
+      const productId = String(row && (row.productId || row.id) || '').trim();
+      if (!stationNo && !productId) return null;
+      return {
+        product: 'GPS',
+        productId,
+        stationNo,
+        negeri: String(row.negeri || wantedState || '').trim(),
+        daerah: String(row.daerah || '').trim(),
+        tempat: String(row.tempat || row.bandar || '').trim(),
+        latitude: Number(lat.toFixed(7)),
+        longitude: Number(lng.toFixed(7)),
+        distanceKm: Number(distanceKm.toFixed(3)),
+        mapUrl: String(row.mapUrl || '').trim(),
+        googleMapsUrl: String(row.googleMapsUrl || '').trim(),
+        downloadUrl: String(row.downloadUrl || (stationNo ? `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenGPS/${encodeURIComponent(stationNo)}` : '')).trim(),
+        source: 'local-gps-wgs84-index'
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, 30);
+}
+
 // =========================
 // PA/BM JUPEM DOWNLOAD RESOLVER
 // Fixes false "PA/BM not found" during paid download by:
@@ -17932,6 +17972,56 @@ async function handler(req, res) {
           ok:false,
           error:message
         }), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+
+    if (pathname === "/api/pabm-gps-nearby" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "pabm-gps-nearby", 60, 60 * 1000)) return;
+      try {
+        const negeri = azobssCanonicalStateName(parsed.query.negeri || parsed.query.state || "");
+        if (!negeri) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu." }), "application/json", { "Cache-Control":"no-store" });
+        }
+        let latitude = Number(parsed.query.lat ?? parsed.query.latitude);
+        let longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
+        const rawReference = String(parsed.query.q ?? parsed.query.reference ?? parsed.query.search ?? parsed.query.query ?? "").trim();
+        let mode = "wgs84";
+        let reference = null;
+        let referenceMatches = [];
+
+        if (!azobssPabmValidWgs84(latitude, longitude)) {
+          if (!rawReference) {
+            return send(res, 400, JSON.stringify({ ok:false, error:"Masukkan Nombor Lot, Nombor PA (contoh PA2131) atau koordinat WGS84 yang sah." }), "application/json", { "Cache-Control":"no-store" });
+          }
+          const resolved = await azobssPabmResolveBenchmarkMapReference(cleanLotStateCode(negeri), rawReference);
+          mode = resolved.mode || "";
+          referenceMatches = Array.isArray(resolved.references) ? resolved.references : [];
+          if (!referenceMatches.length) {
+            return send(res, 404, JSON.stringify({ ok:false, error: mode === "pa" ? "Nombor PA tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." : "Nombor Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." }), "application/json", { "Cache-Control":"no-store" });
+          }
+          if (referenceMatches.length > 1) {
+            return send(res, 200, JSON.stringify({ ok:true, product:"GPS", negeri, mode, needsReferenceSelection:true, referenceMatches, results:[] }, null, 2), "application/json", { "Cache-Control":"no-store" });
+          }
+          reference = referenceMatches[0];
+          latitude = Number(reference.latitude);
+          longitude = Number(reference.longitude);
+        }
+        if (!azobssPabmValidWgs84(latitude, longitude)) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah." }), "application/json", { "Cache-Control":"no-store" });
+        }
+        const rows = azobssPabmGpsLocalRows(latitude, longitude, negeri);
+        return send(res, 200, JSON.stringify({
+          ok:true, product:"GPS", negeri, mode, latitude, longitude,
+          target:{ latitude, longitude, label:reference && reference.label ? reference.label : "WGS84", referenceType:reference && reference.referenceType ? reference.referenceType : "wgs84" },
+          reference, referenceMatches, source:"local-gps-wgs84-index", results:rows
+        }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        console.warn("AZOBSS GPS map reference search failed:", error && (error.stack || error.message || error));
+        const message = String(error && error.message || "Carian GPS tidak tersedia buat sementara waktu.");
+        const notFound = /tidak ditemui|tidak dapat dikenal pasti|not found/i.test(message);
+        const badRequest = /Masukkan|Pilih negeri|tidak sah/i.test(message);
+        return send(res, badRequest ? 400 : (notFound ? 404 : 502), JSON.stringify({ ok:false, error:message }), "application/json", { "Cache-Control":"no-store" });
       }
     }
 

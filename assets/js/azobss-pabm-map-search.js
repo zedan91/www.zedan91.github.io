@@ -28,9 +28,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1107')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1108')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1107';
+    style.id = 'azobssPabmMapSearchStyles1108';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -469,8 +469,12 @@
     ui.input.value = value;
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView([4.2, 102.1], 7);
     ui.modal._azobssMap = map;
-    addBaseMap(L, map);
+    const streetLayer = addBaseMap(L, map);
     addJupemLotOverlay(L, map, stateCode);
+    // v1108: PA now has the same Earth + JUPEM cadastral overlay switch as BM/SBM.
+    // The normal NDCDB overlay remains visible; Earth mode swaps the base map to
+    // satellite imagery and adds the C3 cadastral overlay.
+    createBenchmarkEarthControl(L, map, ui.canvas.parentElement, streetLayer, stateCode);
     window.setTimeout(() => map.invalidateSize(), 60);
 
     const layerGroup = L.featureGroup().addTo(map);
@@ -1076,6 +1080,315 @@
     runSearch(ui.input.value, coordinate);
   }
 
+
+  function gpsCartPayload(row, state) {
+    const stationNo = String(row && (row.stationNo || row.itemCode) || '').trim().toUpperCase();
+    const productId = String(row && (row.productId || row.id) || '').trim();
+    return {
+      productType: 'GPS',
+      product: 'GPS',
+      itemCode: stationNo || productId,
+      stationNo,
+      productId,
+      negeri: String(row && row.negeri || state || '').trim().toUpperCase(),
+      amount: 9,
+      downloadUrl: String(row && row.downloadUrl || (stationNo ? `https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunStesenGPS/${encodeURIComponent(stationNo)}` : '')).trim(),
+      filename: stationNo ? `${stationNo}.pdf` : 'GPS.pdf',
+      azobssCartValidated: true,
+      azobssCartValidatedBy: 'official-stesen-gps-map'
+    };
+  }
+
+  async function openGpsMap(initialValue) {
+    const stateEl = document.getElementById('gpsState');
+    const externalStatus = document.getElementById('gpsMapSearchStatus');
+    const state = String(stateEl && stateEl.value || '').trim().toUpperCase();
+    const stateCode = STATE_CODES[state] || '';
+    const rawInitial = String(initialValue || '').trim();
+    const coordinate = parseCoordinates(rawInitial);
+    if (!stateCode) {
+      setInlineStatus(externalStatus, 'Pilih negeri terlebih dahulu.', 'error');
+      stateEl && stateEl.focus();
+      return;
+    }
+    if (!rawInitial) {
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, Nombor PA atau WGS84 terlebih dahulu.', 'error');
+      document.getElementById('gpsMapSearchInput')?.focus();
+      return;
+    }
+
+    setInlineStatus(externalStatus, 'Membuka Peta Pilihan GPS...', '');
+    const L = await loadLeaflet();
+    addStyles();
+    const ui = createModal(
+      'Peta Pilihan GPS',
+      `${state} • Cari GPS terdekat menggunakan Nombor Lot, Nombor PA atau WGS84`,
+      'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
+      'Nombor biasa dianggap sebagai Lot. Untuk Pelan Akui, gunakan awalan PA. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
+    );
+    ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : rawInitial;
+    const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
+    const initialZoom = coordinate ? 11 : 7;
+    const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView(initialCenter, initialZoom);
+    ui.modal._azobssMap = map;
+    const streetLayer = addBaseMap(L, map);
+    addJupemLotOverlay(L, map, stateCode, '1', 0.84);
+    const earthControl = createBenchmarkEarthControl(L, map, ui.canvas.parentElement, streetLayer, stateCode);
+    if (!map.getPane('azobssGpsReferencePane')) {
+      const pane = map.createPane('azobssGpsReferencePane');
+      pane.style.zIndex = '575';
+      pane.style.pointerEvents = 'none';
+    }
+    window.setTimeout(() => map.invalidateSize(), 60);
+
+    const stationGroup = L.featureGroup().addTo(map);
+    const referenceGroup = L.featureGroup().addTo(map);
+    let targetMarker = null;
+    let rows = [];
+    let selectedRow = null;
+    let stationMarkers = [];
+    let currentReference = null;
+    let currentTarget = coordinate || null;
+    let candidateReferences = [];
+    let distanceLine = null;
+
+    function referenceLabel(reference) {
+      if (!reference) return 'WGS84';
+      return String(reference.label || (reference.referenceType === 'pa' ? reference.paNo : `Lot ${reference.lotNo || '-'}`) || 'Lokasi rujukan').trim();
+    }
+    function referenceLatLng(reference) {
+      const lat = Number(reference && (reference.latitude ?? reference.lat));
+      const lng = Number(reference && (reference.longitude ?? reference.lng));
+      return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    }
+    function geometryLatLngs(reference) {
+      const rings = reference && reference.geometry && Array.isArray(reference.geometry.rings) ? reference.geometry.rings : [];
+      return rings.map((ring) => Array.isArray(ring)
+        ? ring.map((point) => [Number(point && point[1]), Number(point && point[0])]).filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1]))
+        : []).filter((ring) => ring.length >= 3);
+    }
+    function drawReference(reference, selected) {
+      const latLng = referenceLatLng(reference);
+      const rings = geometryLatLngs(reference);
+      let layer = null;
+      if (rings.length) {
+        layer = L.polygon(rings, {
+          pane: 'azobssGpsReferencePane', color: selected ? '#facc15' : '#f59e0b', fillColor: '#fde047',
+          weight: selected ? 5 : 3, fillOpacity: selected ? 0.24 : 0.12, opacity: 1, lineJoin: 'round', interactive: true
+        }).addTo(referenceGroup);
+      } else if (latLng) {
+        layer = L.circleMarker([latLng.lat, latLng.lng], { radius: selected ? 9 : 7, weight: selected ? 4 : 2, fillOpacity: selected ? 0.9 : 0.65 }).addTo(referenceGroup);
+      }
+      if (layer) {
+        layer.bindTooltip(referenceLabel(reference), {
+          permanent: !!selected, direction: 'top', offset: [0, selected ? -5 : 0],
+          className: selected ? 'az-pabm-reference-label' : 'az-pabm-map-target-label', opacity: 1
+        });
+        if (selected && typeof layer.bringToFront === 'function') layer.bringToFront();
+      }
+      return layer;
+    }
+    function clearDistanceGuide() {
+      if (!distanceLine) return;
+      try { map.removeLayer(distanceLine); } catch (_) {}
+      distanceLine = null;
+    }
+    function drawDistanceGuide(row) {
+      clearDistanceGuide();
+      if (!row || !currentTarget) return;
+      const lat = Number(row.latitude), lng = Number(row.longitude);
+      const targetLat = Number(currentTarget.lat), targetLng = Number(currentTarget.lng);
+      if (![lat, lng, targetLat, targetLng].every(Number.isFinite)) return;
+      const distanceKm = Number(row.distanceKm);
+      const distanceText = Number.isFinite(distanceKm) ? `${distanceKm.toFixed(3)} km` : `${(map.distance([targetLat, targetLng], [lat, lng]) / 1000).toFixed(3)} km`;
+      distanceLine = L.polyline([[targetLat, targetLng], [lat, lng]], { weight: 3, opacity: 0.95, dashArray: '9 8', lineCap: 'round', interactive: false }).addTo(map);
+      distanceLine.bindTooltip(distanceText, { permanent: true, direction: 'center', className: 'az-pabm-distance-line-label', opacity: 1 }).openTooltip();
+      if (typeof distanceLine.bringToFront === 'function') distanceLine.bringToFront();
+    }
+    function setSelectedMarker(index) {
+      stationMarkers.forEach((marker, markerIndex) => {
+        if (!marker) return;
+        const selected = markerIndex === index;
+        try {
+          marker.setStyle({ radius: selected ? 11 : 7, weight: selected ? 4 : 2, fillOpacity: selected ? 1 : 0.8 });
+          if (selected && typeof marker.bringToFront === 'function') marker.bringToFront();
+          const tooltip = marker.getTooltip && marker.getTooltip();
+          const tooltipEl = tooltip && tooltip.getElement ? tooltip.getElement() : null;
+          if (tooltipEl) tooltipEl.classList.toggle('is-selected', selected);
+          if (selected && marker.openTooltip) marker.openTooltip();
+        } catch (_) {}
+      });
+    }
+    function clearSelection() {
+      selectedRow = null;
+      ui.detail.hidden = true;
+      ui.detailGrid.innerHTML = '';
+      setFootStatus(ui, '', '');
+      ui.results.querySelectorAll('.az-pabm-map-result').forEach((node) => node.classList.remove('is-selected'));
+      setSelectedMarker(-1);
+      clearDistanceGuide();
+    }
+    function selectRow(index, pan) {
+      const row = rows[index];
+      if (!row) return;
+      selectedRow = row;
+      ui.results.querySelectorAll('.az-pabm-map-result[data-index]').forEach((node) => node.classList.toggle('is-selected', Number(node.dataset.index) === index));
+      setSelectedMarker(index);
+      drawDistanceGuide(row);
+      ui.detail.hidden = false;
+      const refText = currentReference ? referenceLabel(currentReference) : 'WGS84';
+      const lat = Number(row.latitude), lng = Number(row.longitude);
+      const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+      const wgs84 = hasCoords ? `${lat}, ${lng}` : '-';
+      const mapsUrl = hasCoords ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}` : '';
+      const mapsLink = mapsUrl
+        ? `<a class="az-pabm-google-maps-link" href="${mapsUrl}" target="_blank" rel="noopener noreferrer" title="Buka lokasi ini di Google Maps" aria-label="Buka lokasi ${escapeHtml(row.stationNo || 'GPS')} di Google Maps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg></a>`
+        : '';
+      ui.detailGrid.innerHTML = `
+        <b>Produk</b><span>GPS</span>
+        <b>No. Stesen</b><span>${escapeHtml(row.stationNo || '-')}</span>
+        <b>Jarak</b><span>${escapeHtml(Number(row.distanceKm || 0).toFixed(3))} km</span>
+        <b>Rujukan</b><span>${escapeHtml(refText)}</span>
+        <b>Negeri</b><span>${escapeHtml(row.negeri || state)}</span>
+        <b>Daerah</b><span>${escapeHtml(row.daerah || '-')}</span>
+        <b>Tempat</b><span>${escapeHtml(row.tempat || '-')}</span>
+        <b>WGS84</b><span class="az-pabm-wgs84-value">${escapeHtml(wgs84)}${mapsLink}</span>`;
+      ui.cartButton.textContent = `Tambah GPS ${row.stationNo || row.productId || ''} ke Troli`;
+      ui.cartButton.disabled = !(row.stationNo || row.productId);
+      if (pan && hasCoords) {
+        if (currentTarget) map.fitBounds([[Number(currentTarget.lat), Number(currentTarget.lng)], [lat, lng]], { padding: [80, 80], maxZoom: 15 });
+        else map.setView([lat, lng], Math.max(map.getZoom(), 14));
+      }
+    }
+    function chooseReference(index) {
+      const reference = candidateReferences[index];
+      if (!reference) return;
+      const target = referenceLatLng(reference);
+      if (!target) return;
+      ui.input.value = `${target.lat}, ${target.lng}`;
+      runSearch(ui.input.value, target, reference);
+    }
+    function renderReferenceMatches(references) {
+      stationGroup.clearLayers(); referenceGroup.clearLayers(); stationMarkers = []; rows = []; currentReference = null; currentTarget = null; clearSelection();
+      if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} targetMarker = null; }
+      const matches = Array.isArray(references) ? references : [];
+      candidateReferences = matches;
+      ui.results.innerHTML = matches.map((row, index) => `
+        <button class="az-pabm-map-result" type="button" data-reference-index="${index}">
+          <strong>${escapeHtml(referenceLabel(row))}</strong>
+          <span>${escapeHtml([row.daerah, row.mukim, row.seksyen].filter(Boolean).join(' • ') || row.negeri || state)}</span>
+          <span class="az-pabm-map-distance">Pilih lot ini untuk cari GPS terdekat</span>
+        </button>`).join('');
+      matches.forEach((row, index) => { const layer = drawReference(row, false); if (layer) layer.on('click', () => chooseReference(index)); });
+      const bounds = referenceGroup.getBounds();
+      if (bounds.isValid()) map.fitBounds(bounds, { padding: [35, 35], maxZoom: 16 });
+      setModalStatus(ui, `${matches.length} padanan lot ditemui. Pilih lot yang betul daripada senarai atau pada kawasan peta.`, 'success');
+    }
+    function renderRows(newRows, target, reference) {
+      stationGroup.clearLayers(); referenceGroup.clearLayers(); stationMarkers = [];
+      rows = Array.isArray(newRows) ? newRows : [];
+      currentReference = reference || null; currentTarget = target || null; clearSelection();
+      if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} }
+      const targetLabel = currentReference ? referenceLabel(currentReference) : 'WGS84 dicari';
+      if (currentReference) drawReference(currentReference, true);
+      targetMarker = createSearchTargetMarker(L, map, target, currentReference ? `${targetLabel} • Lokasi carian` : 'Lokasi carian');
+      if (!rows.length) {
+        ui.results.innerHTML = `<div class="az-pabm-map-empty">Tiada GPS ditemui berdekatan ${escapeHtml(currentReference ? referenceLabel(currentReference) : 'koordinat ini')} dalam ${escapeHtml(state)}.</div>`;
+        map.setView([target.lat, target.lng], 12); return;
+      }
+      const distanceFrom = currentReference ? referenceLabel(currentReference) : 'WGS84';
+      ui.results.innerHTML = rows.map((row, index) => `
+        <button class="az-pabm-map-result" type="button" data-index="${index}">
+          <strong>GPS ${escapeHtml(row.stationNo || row.productId || '-')}</strong>
+          <span class="az-pabm-map-distance">${escapeHtml(Number(row.distanceKm || 0).toFixed(3))} km dari ${escapeHtml(distanceFrom)}</span>
+          <span>${escapeHtml([row.daerah, row.tempat].filter(Boolean).join(' • ') || row.negeri || state)}</span>
+        </button>`).join('');
+      rows.slice(0, 30).forEach((row, index) => {
+        const lat = Number(row.latitude), lng = Number(row.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        const marker = L.circleMarker([lat, lng], { radius: 7, weight: 2, fillOpacity: 0.8, bubblingMouseEvents: false }).addTo(stationGroup);
+        marker.bindTooltip(String(row.stationNo || row.productId || '-').trim(), { permanent: true, direction: 'top', offset: [0, -8], className: 'az-pabm-station-label' });
+        marker.on('click', () => selectRow(index, false)); stationMarkers[index] = marker;
+      });
+      const bounds = stationGroup.getBounds(); const refBounds = referenceGroup.getBounds();
+      if (currentReference && refBounds.isValid()) {
+        map.fitBounds(refBounds, { padding: [85, 85], maxZoom: 18 }); if (map.getZoom() < 16) map.setZoom(16);
+      } else if (bounds.isValid()) {
+        const combined = L.latLngBounds(bounds); combined.extend([target.lat, target.lng]); map.fitBounds(combined, { padding: [35, 35], maxZoom: 13 });
+      } else map.setView([target.lat, target.lng], 12);
+      selectRow(0, false);
+    }
+    async function runSearch(searchValue, explicitCoordinate, explicitReference) {
+      const typedValue = String(searchValue || '').trim();
+      const target = explicitCoordinate || parseCoordinates(typedValue);
+      if (!target && !typedValue) { setModalStatus(ui, 'Masukkan Nombor Lot, Nombor PA atau koordinat WGS84 yang sah.', 'error'); return; }
+      if (activeController) { try { activeController.abort(); } catch (_) {} }
+      activeController = new AbortController(); setSearchBusy(ui, true, 'Mencari GPS...'); setModalStatus(ui, 'Mencari GPS terdekat...', 'loading');
+      try {
+        const params = new URLSearchParams({ negeri: state });
+        if (target) { params.set('lat', String(target.lat)); params.set('lng', String(target.lng)); }
+        else params.set('q', typedValue);
+        const data = await fetchJson(`${BACKEND_BASE}/api/pabm-gps-nearby?${params.toString()}`, activeController.signal);
+        if (data.needsReferenceSelection && Array.isArray(data.referenceMatches) && data.referenceMatches.length) {
+          renderReferenceMatches(data.referenceMatches); setInlineStatus(externalStatus, `${data.referenceMatches.length} padanan lot ditemui. Pilih lot pada peta.`, 'success'); return;
+        }
+        const resolvedTarget = target || { lat: Number(data.latitude ?? data.target?.latitude), lng: Number(data.longitude ?? data.target?.longitude) };
+        if (!resolvedTarget || !Number.isFinite(resolvedTarget.lat) || !Number.isFinite(resolvedTarget.lng)) throw new Error('Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah.');
+        const resolvedReference = explicitReference || data.reference || null;
+        renderRows(data.results, resolvedTarget, resolvedReference);
+        const count = Array.isArray(data.results) ? data.results.length : 0;
+        const sourceText = resolvedReference ? ` berhampiran ${referenceLabel(resolvedReference)}` : '';
+        setModalStatus(ui, count ? `${count} GPS terdekat${sourceText} ditemui.` : 'Tiada GPS ditemui berdekatan lokasi ini.', count ? 'success' : 'error');
+        setInlineStatus(externalStatus, count ? `${count} GPS terdekat ditemui pada peta.` : 'Tiada GPS ditemui.', count ? 'success' : 'error');
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        stationGroup.clearLayers(); referenceGroup.clearLayers(); rows = []; stationMarkers = []; clearSelection();
+        setModalStatus(ui, error.message || 'Carian GPS tidak tersedia.', 'error'); setInlineStatus(externalStatus, error.message || 'Carian GPS tidak tersedia.', 'error');
+      } finally { setSearchBusy(ui, false); }
+    }
+
+    ui.form.addEventListener('submit', (event) => { event.preventDefault(); runSearch(ui.input.value); });
+    ui.results.addEventListener('click', (event) => {
+      const referenceButton = event.target.closest('[data-reference-index]'); if (referenceButton) { chooseReference(Number(referenceButton.dataset.referenceIndex)); return; }
+      const button = event.target.closest('[data-index]'); if (button) selectRow(Number(button.dataset.index), true);
+    });
+    ui.cartButton.addEventListener('click', async () => {
+      if (!selectedRow) return;
+      try { await addToCart(gpsCartPayload(selectedRow, state), ui, externalStatus); }
+      catch (error) { setFootStatus(ui, error.message || 'GPS tidak dapat ditambah ke troli.', 'error'); }
+    });
+
+    let lotInspectController = null;
+    let lotClickTimer = null;
+    async function inspectLotAtPoint(latlng) {
+      if (!earthControl || !earthControl.isEarth() || !latlng) return;
+      if (lotInspectController) { try { lotInspectController.abort(); } catch (_) {} }
+      lotInspectController = new AbortController();
+      const lat = Number(latlng.lat), lng = Number(latlng.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const popup = L.popup({ className: 'az-pabm-lot-info-popup', maxWidth: 310 }).setLatLng(latlng).setContent('<div class="lot-title">Mencari info lot JUPEM...</div>').openOn(map);
+      try {
+        const params = new URLSearchParams({ negeri: stateCode, lat: String(lat), lng: String(lng) });
+        const data = await fetchJson(`${BACKEND_BASE}/api/pabm-pa-map-search?${params.toString()}`, lotInspectController.signal);
+        const row = Array.isArray(data.results) && data.results.length ? data.results[0] : null;
+        if (!row) { popup.setContent('<div class="lot-title">Tiada lot JUPEM ditemui pada titik ini.</div>'); return; }
+        popup.setContent(`<div class="lot-title">Lot ${escapeHtml(row.lotNo || '-')} ${row.paNo ? `&#8226; ${escapeHtml(row.paNo)}` : ''}</div><div class="lot-grid"><b>Nombor Lot</b><span>${escapeHtml(row.lotNo || '-')}</span><b>Nombor PA</b><span>${escapeHtml(row.paNo || 'Tiada')}</span><b>Negeri</b><span>${escapeHtml(row.negeri || data.negeri || state || '-')}</span><b>Daerah</b><span>${escapeHtml(row.daerah || '-')}</span><b>Mukim/Bandar</b><span>${escapeHtml(row.mukim || '-')}</span><b>Seksyen</b><span>${escapeHtml(row.seksyen || '-')}</span><b>WGS84</b><span>${escapeHtml(`${lat.toFixed(7)}, ${lng.toFixed(7)}`)}</span></div>`);
+      } catch (error) { if (error && error.name === 'AbortError') return; popup.setContent(`<div class="lot-title">${escapeHtml(error.message || 'Info lot JUPEM tidak tersedia.')}</div>`); }
+    }
+    map.on('click', (event) => {
+      if (!earthControl || !earthControl.isEarth() || !event || !event.latlng) return;
+      if (lotClickTimer) window.clearTimeout(lotClickTimer);
+      lotClickTimer = window.setTimeout(() => { lotClickTimer = null; inspectLotAtPoint(event.latlng); }, 280);
+    });
+    map.on('dblclick', (event) => {
+      if (lotClickTimer) { window.clearTimeout(lotClickTimer); lotClickTimer = null; }
+      if (!event || !event.latlng) return;
+      const target = { lat: Number(event.latlng.lat.toFixed(7)), lng: Number(event.latlng.lng.toFixed(7)) };
+      ui.input.value = `${target.lat}, ${target.lng}`; runSearch(ui.input.value, target, null);
+    });
+    runSearch(ui.input.value, coordinate);
+  }
+
   function bind() {
     addStyles();
     const paInput = document.getElementById('paMapSearchInput');
@@ -1083,6 +1396,8 @@
     const bmInput = document.getElementById('benchmarkMapWgs84Input');
     const bmButton = document.getElementById('benchmarkMapOpenButton');
     const bmProduct = document.getElementById('benchmarkProduct');
+    const gpsInput = document.getElementById('gpsMapSearchInput');
+    const gpsButton = document.getElementById('gpsMapOpenButton');
 
     paButton?.addEventListener('click', () => openPaMap(paInput && paInput.value).catch((error) => {
       setInlineStatus(document.getElementById('paMapSearchStatus'), error.message || 'Peta Pilihan PA tidak dapat dibuka.', 'error');
@@ -1107,6 +1422,15 @@
       if (event.key !== 'Enter') return;
       event.preventDefault();
       bmButton?.click();
+    });
+
+    gpsButton?.addEventListener('click', () => openGpsMap(gpsInput && gpsInput.value).catch((error) => {
+      setInlineStatus(document.getElementById('gpsMapSearchStatus'), error.message || 'Peta Pilihan GPS tidak dapat dibuka.', 'error');
+    }));
+    gpsInput?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      gpsButton?.click();
     });
 
     document.addEventListener('keydown', (event) => {

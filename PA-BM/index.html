@@ -9100,6 +9100,15 @@ html.azobss-pabm-guard-pending body{
 <button class="btn pabm-add-product-button pabm-quick-add-button" id="gpsQuickAddButton" type="button"><span>Tambah Terus ke Troli</span></button>
 </div>
 <p aria-live="polite" class="request-status pabm-direct-status" id="gpsSearchStatus" role="status"></p>
+<div class="pabm-map-search-block" id="gpsMapSearchBlock">
+<div aria-label="Carian GPS melalui peta" class="pabm-choice-separator" role="separator"><span>ATAU CARI DI PETA</span></div>
+<label for="gpsMapSearchInput">
+  <span class="pabm-field-title">Nombor Lot / Nombor PA / WGS84</span>
+  <input autocomplete="off" id="gpsMapSearchInput" inputmode="text" placeholder="Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869" spellcheck="false" type="search"/>
+</label>
+<button class="pabm-map-button" id="gpsMapOpenButton" type="button">Buka Peta Pilihan GPS</button>
+<p aria-live="polite" class="pabm-map-inline-status" id="gpsMapSearchStatus" role="status"></p>
+</div>
 <label for="gpsGeneralSearch"><span class="pabm-field-title">Carian Umum</span>
 <input disabled="" id="gpsGeneralSearch" placeholder="No. Stesen / Negeri / Daerah / Tempat" type="search"/>
 </label>
@@ -15651,8 +15660,8 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script src="/assets/js/azobss-lot-selection-map.js?v=1088" defer></script>
-<script src="/assets/js/azobss-pabm-map-search.js?v=1107" defer></script>
+<script src="/assets/js/azobss-lot-selection-map.js?v=1108" defer></script>
+<script src="/assets/js/azobss-pabm-map-search.js?v=1108" defer></script>
 <script type="module" src="/assets/js/azobss-pabm-storefront.js?v=921"></script>
 <script src="/assets/js/azobss-pabm-result-layout.js?v=3" defer></script>
 <script src="/assets/js/azobss-pa-search.js?v=28" defer></script>

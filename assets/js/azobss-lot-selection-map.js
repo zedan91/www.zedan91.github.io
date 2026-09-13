@@ -74,6 +74,12 @@
       .az-lot-map-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px}
       .az-lot-map-stage{position:relative;min-width:0;min-height:420px;background:#172033}
       .az-lot-map-canvas{position:absolute;inset:0}
+      .az-lot-earth-switch{position:absolute;z-index:1002;top:10px;right:10px;display:flex;align-items:center;gap:6px}
+      .az-lot-earth-btn,.az-lot-mylot-link{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 11px;border:1px solid rgba(255,255,255,.72);border-radius:6px;background:rgba(15,23,42,.91);color:#fff;font-size:12px;font-weight:900;line-height:1;text-decoration:none;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35);backdrop-filter:blur(5px)}
+      .az-lot-earth-btn:hover,.az-lot-mylot-link:hover{background:#1e3a5f;border-color:#93c5fd}
+      .az-lot-earth-btn.is-earth{background:#166534;border-color:#86efac;color:#ecfdf5}
+      .az-lot-earth-legend{position:absolute;z-index:1001;top:53px;right:10px;display:none;min-width:188px;max-width:245px;padding:8px 10px;border:1px solid rgba(255,255,255,.7);border-radius:6px;background:rgba(15,23,42,.9);color:#e2e8f0;font-size:10px;line-height:1.4;box-shadow:0 2px 8px rgba(0,0,0,.35);backdrop-filter:blur(5px)}
+      .az-lot-earth-legend.is-visible{display:block}.az-lot-earth-legend strong{display:block;margin-bottom:3px;color:#fff;font-size:11px}
       .az-lot-coordinate-search{position:absolute;z-index:1000;top:10px;left:52px;width:min(440px,calc(100% - 170px));padding:6px;border:1px solid rgba(51,65,85,.9);border-radius:6px;background:rgba(255,255,255,.97);box-shadow:0 2px 8px rgba(15,23,42,.3);overflow:visible}
       .az-lot-coordinate-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
       .az-lot-coordinate-input{width:100%;min-width:0;height:34px;padding:0 10px;border:1px solid #94a3b8;border-radius:4px;background:#fff;color:#0f172a;font-size:13px;letter-spacing:0;outline:none}
@@ -443,6 +449,11 @@
     return await new Promise((resolve, reject) => {
       let settled = false;
       let map = null;
+      let streetLayer = null;
+      let earthLayer = null;
+      let earthSecondaryLayer = null;
+      const earthSecondaryProduct = productCode === '2' ? '1' : '2';
+      let earthMode = false;
       let jupemLotsLayer = null;
       let jupemSheetsLayer = null;
       let jupemLayer = null;
@@ -469,6 +480,11 @@
           <div class="az-lot-map-body">
             <div class="az-lot-map-stage">
               <div class="az-lot-map-canvas"></div>
+              <div class="az-lot-earth-switch">
+                <button class="az-lot-earth-btn" type="button" aria-pressed="false" title="Tukar Map / Earth">&#127758; Earth</button>
+                <a class="az-lot-mylot-link" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer" title="Buka MyLot JUPEM rasmi">MyLot &#8599;</a>
+              </div>
+              <div class="az-lot-earth-legend"><strong>Earth + Kadaster JUPEM</strong><span>NDCDB + C3 dipaparkan di atas imej satelit.</span></div>
               <div class="az-lot-coordinate-search">
                 <form class="az-lot-coordinate-form" role="search">
                   <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84, nama tempat atau nombor lot" placeholder="WGS84, nama tempat atau No. Lot">
@@ -524,6 +540,9 @@
       window.addEventListener('resize', applyV951CompactLayout, { passive: true });
 
       const canvas = modal.querySelector('.az-lot-map-canvas');
+      const earthButton = modal.querySelector('.az-lot-earth-btn');
+      const earthSwitch = modal.querySelector('.az-lot-earth-switch');
+      const earthLegend = modal.querySelector('.az-lot-earth-legend');
       const mapTitleNode = modal.querySelector('#azLotMapTitle');
       const coordinateForm = modal.querySelector('.az-lot-coordinate-form');
       const coordinateInput = modal.querySelector('.az-lot-coordinate-input');
@@ -1164,7 +1183,14 @@
           jupemRefreshTimer = null;
           if (!map || !jupemLayer || !map.hasLayer(jupemLayer)) return;
           try { map.invalidateSize({ pan: false }); } catch (_) {}
-          [jupemLotsLayer, jupemSheetsLayer].forEach((layer) => {
+          // Keep tile URLs synchronized if a searched coordinate/lot auto-detects
+          // another state while the modal remains open.
+          try {
+            if (jupemLotsLayer && typeof jupemLotsLayer.setUrl === 'function') jupemLotsLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(activeStateCode)}&scope=all&layerMode=lots&layerSet=3`, false);
+            if (jupemSheetsLayer && typeof jupemSheetsLayer.setUrl === 'function') jupemSheetsLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=sheets&layerSet=4`, false);
+            if (earthSecondaryLayer && typeof earthSecondaryLayer.setUrl === 'function') earthSecondaryLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&scope=all&layerMode=lots&layerSet=3`, false);
+          } catch (_) {}
+          [jupemLotsLayer, jupemSheetsLayer, earthSecondaryLayer].forEach((layer) => {
             if (!layer || !map.hasLayer(layer)) return;
             try {
               if (forceReload && typeof layer.redraw === 'function') layer.redraw();
@@ -1697,7 +1723,7 @@
 
       try {
         map = window.L.map(canvas, { zoomControl: true, preferCanvas: true });
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        streetLayer = window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
@@ -1724,6 +1750,41 @@
         jupemLayer = window.L.layerGroup([jupemLotsLayer, jupemSheetsLayer]).addTo(map);
         const selectedStateLabel = stateName || config.negeri || 'Negeri Dipilih';
         window.L.control.layers(null, { [`Lot Semua Negeri & Garisan Syit ${selectedStateLabel}`]: jupemLayer }, { collapsed: false }).addTo(map);
+
+        // v1108: Lot Kadaster / C3 gets the same Earth experience as BM/SBM.
+        // Keep the current cadastral product and add the complementary NDCDB/C3
+        // lot overlay above satellite imagery. No undocumented MyLot tiles are hot-linked.
+        try {
+          if (window.L.DomEvent && earthSwitch) {
+            window.L.DomEvent.disableClickPropagation(earthSwitch);
+            window.L.DomEvent.disableScrollPropagation(earthSwitch);
+          }
+        } catch (_) {}
+        const setEarthMode = (enabled) => {
+          earthMode = Boolean(enabled);
+          if (earthMode) {
+            if (streetLayer && map.hasLayer(streetLayer)) map.removeLayer(streetLayer);
+            if (!earthLayer) earthLayer = window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:20, attribution:'Tiles &copy; Esri &mdash; Earth imagery' });
+            if (!map.hasLayer(earthLayer)) earthLayer.addTo(map);
+            if (typeof earthLayer.bringToBack === 'function') earthLayer.bringToBack();
+            if (!earthSecondaryLayer) {
+              earthSecondaryLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&scope=all&layerMode=lots&layerSet=3`, { minZoom:Number(config.minSelectionZoom || 13), maxZoom:20, opacity:0.7, updateWhenIdle:false, updateWhenZooming:true, keepBuffer:4, attribution:'JUPEM eBiz' });
+            }
+            if (!map.hasLayer(earthSecondaryLayer)) earthSecondaryLayer.addTo(map);
+            if (earthButton) { earthButton.classList.add('is-earth'); earthButton.setAttribute('aria-pressed','true'); earthButton.innerHTML='&#128506; Map'; }
+            if (earthLegend) earthLegend.classList.add('is-visible');
+          } else {
+            if (earthLayer && map.hasLayer(earthLayer)) map.removeLayer(earthLayer);
+            if (earthSecondaryLayer && map.hasLayer(earthSecondaryLayer)) map.removeLayer(earthSecondaryLayer);
+            if (streetLayer && !map.hasLayer(streetLayer)) streetLayer.addTo(map);
+            if (streetLayer && typeof streetLayer.bringToBack === 'function') streetLayer.bringToBack();
+            if (earthButton) { earthButton.classList.remove('is-earth'); earthButton.setAttribute('aria-pressed','false'); earthButton.innerHTML='&#127758; Earth'; }
+            if (earthLegend) earthLegend.classList.remove('is-visible');
+          }
+          refreshJupemOverlay(80, true);
+        };
+        earthButton?.addEventListener('click', () => setEarthMode(!earthMode));
+
         drawnItems.addTo(map);
         map.addControl(new window.L.Control.Draw({
           position: 'topleft',
