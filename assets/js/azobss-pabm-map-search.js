@@ -28,9 +28,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1094')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1096')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1094';
+    style.id = 'azobssPabmMapSearchStyles1096';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -75,6 +75,8 @@
       .az-pabm-map-footstatus{min-height:16px;margin-top:6px;color:#a9bad0;font-size:11px;line-height:1.3}
       .az-pabm-map-footstatus.is-error{color:#fda4af}.az-pabm-map-footstatus.is-success{color:#86efac}
       .az-pabm-map-target-label{padding:2px 5px;border-radius:4px;background:#0f172a;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+      .az-pabm-station-label{padding:1px 4px;border:1px solid rgba(15,23,42,.55);border-radius:4px;background:rgba(15,23,42,.88);color:#fff;font-size:10px;font-weight:900;line-height:1.15;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.28)}
+      .az-pabm-station-label.is-selected{font-size:11px;border-width:2px;background:#0f172a}
       @media(max-width:800px){
         .az-pabm-map-modal{padding:4px}.az-pabm-map-dialog{width:calc(100vw - 8px);height:calc(100vh - 8px)}
         .az-pabm-map-body{grid-template-columns:1fr;grid-template-rows:minmax(330px,55vh) minmax(0,1fr)}
@@ -514,6 +516,22 @@
     let targetMarker = null;
     let rows = [];
     let selectedRow = null;
+    let stationMarkers = [];
+
+    function setSelectedMarker(index) {
+      stationMarkers.forEach((marker, markerIndex) => {
+        if (!marker) return;
+        const selected = markerIndex === index;
+        try {
+          marker.setStyle({ radius: selected ? 11 : 7, weight: selected ? 4 : 2, fillOpacity: selected ? 1 : 0.8 });
+          if (selected && typeof marker.bringToFront === 'function') marker.bringToFront();
+          const tooltip = marker.getTooltip && marker.getTooltip();
+          const tooltipEl = tooltip && tooltip.getElement ? tooltip.getElement() : null;
+          if (tooltipEl) tooltipEl.classList.toggle('is-selected', selected);
+          if (selected && marker.openTooltip) marker.openTooltip();
+        } catch (_) {}
+      });
+    }
 
     function clearSelection() {
       selectedRow = null;
@@ -521,6 +539,7 @@
       ui.detailGrid.innerHTML = '';
       setFootStatus(ui, '', '');
       ui.results.querySelectorAll('.az-pabm-map-result').forEach((node) => node.classList.remove('is-selected'));
+      setSelectedMarker(-1);
     }
 
     function selectRow(index, pan) {
@@ -528,6 +547,7 @@
       if (!row) return;
       selectedRow = row;
       ui.results.querySelectorAll('.az-pabm-map-result').forEach((node) => node.classList.toggle('is-selected', Number(node.dataset.index) === index));
+      setSelectedMarker(index);
       ui.detail.hidden = false;
       ui.detailGrid.innerHTML = `
         <b>Produk</b><span>${escapeHtml(product)}</span>
@@ -547,6 +567,7 @@
 
     function renderRows(newRows, target) {
       stationGroup.clearLayers();
+      stationMarkers = [];
       rows = Array.isArray(newRows) ? newRows : [];
       clearSelection();
       if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} }
@@ -567,8 +588,10 @@
         const lng = Number(row.longitude);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
         const marker = L.circleMarker([lat, lng], { radius: 7, weight: 2, fillOpacity: 0.8, bubblingMouseEvents: false }).addTo(stationGroup);
-        marker.bindTooltip(`${product} ${row.stationNo || row.productId || ''} • ${Number(row.distanceKm || 0).toFixed(3)} km`);
+        const stationLabel = String(row.stationNo || row.productId || '-').trim();
+        marker.bindTooltip(stationLabel, { permanent: true, direction: 'top', offset: [0, -8], className: 'az-pabm-station-label' });
         marker.on('click', () => selectRow(index, false));
+        stationMarkers[index] = marker;
       });
       const bounds = stationGroup.getBounds();
       if (bounds.isValid()) {
