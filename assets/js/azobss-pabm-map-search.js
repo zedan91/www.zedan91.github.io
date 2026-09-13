@@ -356,14 +356,17 @@
       ui.results.querySelectorAll('.az-pabm-map-result').forEach((node) => node.classList.toggle('is-selected', Number(node.dataset.index) === index));
       ui.detail.hidden = false;
       ui.detailGrid.innerHTML = `
-        <b>Nombor PA</b><span>${escapeHtml(row.paNo || 'Tiada')}</span>
+        <b>Nombor PA</b><span>${escapeHtml(row.paNo || 'Belum ditemui')}</span>
         <b>Nombor Lot</b><span>${escapeHtml(row.lotNo || '-')}</span>
         <b>Negeri</b><span>${escapeHtml(row.negeri || state)}</span>
         <b>Daerah</b><span>${escapeHtml(row.daerah || '-')}</span>
         <b>Mukim</b><span>${escapeHtml(row.mukim || '-')}</span>
-        <b>Seksyen</b><span>${escapeHtml(row.seksyen || '-')}</span>`;
-      ui.cartButton.textContent = row.paNo ? `Tambah ${row.paNo} ke Troli` : 'PA tidak tersedia';
+        <b>Seksyen</b><span>${escapeHtml(row.seksyen || '-')}</span>
+        <b>Status PA</b><span>${escapeHtml(row.paNo ? (row.paLookupMessage || 'Nombor PA ditemui.') : (row.paLookupMessage || 'Nombor PA belum dapat dipadankan.'))}</span>`;
+      ui.cartButton.textContent = row.paNo ? `Tambah ${row.paNo} ke Troli` : 'Nombor PA belum ditemui';
       ui.cartButton.disabled = !row.paNo;
+      if (!row.paNo) setFootStatus(ui, row.paLookupMessage || 'Lot ditemui, tetapi nombor PA belum dapat dipadankan dengan selamat.', 'error');
+      else setFootStatus(ui, '', '');
       if (row._layer) {
         try { map.fitBounds(row._layer.getBounds(), { padding: [35, 35], maxZoom: 18 }); } catch (_) {}
       }
@@ -384,7 +387,7 @@
       }
       ui.results.innerHTML = rows.map((row, index) => `
         <button class="az-pabm-map-result" type="button" data-index="${index}">
-          <strong>${escapeHtml(row.paNo || 'PA tidak tersedia')} • Lot ${escapeHtml(row.lotNo || '-')}</strong>
+          <strong>${escapeHtml(row.paNo || 'PA belum ditemui')} • Lot ${escapeHtml(row.lotNo || '-')}</strong>
           <span>${escapeHtml([row.daerah, row.mukim, row.seksyen].filter(Boolean).join(' • ') || state)}</span>
         </button>`).join('');
       rows.forEach((row, index) => {
