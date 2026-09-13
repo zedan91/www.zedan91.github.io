@@ -1397,3 +1397,16 @@ body.pa-bm-page .pabm-choice-separator > span {
     display: none;
   }
 }
+
+
+/* v1101: Align PA desktop sizing/vertical rhythm with BM/SBM.
+   Legacy PA form used a larger top margin and input padding than benchmark forms. */
+@media (min-width: 900px) {
+  body.pa-bm-page #paSearchForm {
+    margin-top: 14px !important;
+  }
+
+  body.pa-bm-page #paSearchForm input {
+    padding: 12px 13px !important;
+  }
+}
