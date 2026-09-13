@@ -28,9 +28,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1093')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1094')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1093';
+    style.id = 'azobssPabmMapSearchStyles1094';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -244,12 +244,13 @@
   function paCartPayload(row, state) {
     const paNo = String(row && row.paNo || '').trim().toUpperCase();
     const itemCode = paNo.replace(/^PA/i, '');
+    const actualState = String(row && row.negeri || state || '').trim().toUpperCase();
     return {
       productType: 'PA',
       itemCode,
-      negeri: state,
+      negeri: actualState,
       amount: 5,
-      downloadUrl: `${BACKEND_BASE}/api/pa-pdf?noPA=${encodeURIComponent(paNo + '.TIF')}&negeri=${encodeURIComponent(state)}`,
+      downloadUrl: `${BACKEND_BASE}/api/pa-pdf?noPA=${encodeURIComponent(paNo + '.TIF')}&negeri=${encodeURIComponent(actualState)}`,
       filename: `${paNo}.pdf`,
       azobssCartValidated: true,
       azobssCartValidatedBy: 'jupem-pa-wgs84-map'
@@ -321,7 +322,7 @@
     addStyles();
     const ui = createModal(
       'Peta Pilihan PA',
-      `${state} • Cari melalui Nombor Lot atau WGS84`,
+      `${state} • Nombor Lot ikut negeri • WGS84 auto-detect negeri`,
       'Contoh: Lot 1122 atau 3.1390, 101.6869',
       'Klik mana-mana lot pada peta untuk menyemak PA di koordinat tersebut.'
     );
@@ -429,8 +430,15 @@
         const data = await fetchJson(`${BACKEND_BASE}/api/pabm-pa-map-search?${params.toString()}`, activeController.signal);
         renderRows(data.results, coordinate);
         const count = Array.isArray(data.results) ? data.results.length : 0;
-        setModalStatus(ui, count ? `${count} pilihan lot ditemui. Klik lot atau pilih daripada senarai.` : 'Tiada lot / PA ditemui untuk carian ini.', count ? 'success' : 'error');
-        setInlineStatus(externalStatus, count ? `${count} pilihan PA/lot ditemui pada peta.` : 'Tiada PA/lot ditemui.', count ? 'success' : 'error');
+        const actualState = String(data.negeri || (data.results && data.results[0] && data.results[0].negeri) || '').trim();
+        const requestedStateCode = String(data.requestedStateCode || stateCode || '');
+        const actualStateCode = String(data.stateCode || (data.results && data.results[0] && data.results[0].stateCode) || '');
+        const stateAutoDetected = Boolean(coordinate && count && actualStateCode && requestedStateCode && actualStateCode !== requestedStateCode);
+        const foundMessage = stateAutoDetected
+          ? `${count} lot ditemui. Lokasi WGS84 ini berada di ${actualState}, bukan ${state}.`
+          : `${count} pilihan lot ditemui. Klik lot atau pilih daripada senarai.`;
+        setModalStatus(ui, count ? foundMessage : 'Tiada lot / PA ditemui untuk carian ini.', count ? 'success' : 'error');
+        setInlineStatus(externalStatus, count ? foundMessage : 'Tiada PA/lot ditemui.', count ? 'success' : 'error');
       } catch (error) {
         if (error && error.name === 'AbortError') return;
         renderRows([], coordinate);

@@ -11735,34 +11735,67 @@ function azobssPabmFocusedLotResult(focused) {
   };
 }
 
+function azobssPabmPointInsideStateBounds(stateCode, latitude, longitude, margin = 0.03) {
+  const bounds = AZOBSS_JUPEM_LOT_BOUNDS[cleanLotStateCode(stateCode)];
+  if (!Array.isArray(bounds) || bounds.length < 2) return true;
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  const south = Math.min(Number(bounds[0][0]), Number(bounds[1][0])) - margin;
+  const north = Math.max(Number(bounds[0][0]), Number(bounds[1][0])) + margin;
+  const west = Math.min(Number(bounds[0][1]), Number(bounds[1][1])) - margin;
+  const east = Math.max(Number(bounds[0][1]), Number(bounds[1][1])) + margin;
+  return lat >= south && lat <= north && lng >= west && lng <= east;
+}
+
+function azobssPabmStateCandidatesAtPoint(preferredStateCode, latitude, longitude) {
+  const preferred = cleanLotStateCode(preferredStateCode);
+  const supported = Object.keys(AZOBSS_JUPEM_LOT_CONFIG['1'] || {});
+  const candidates = [];
+  if (preferred) candidates.push(preferred);
+  for (const code of supported) {
+    if (code === preferred) continue;
+    if (azobssPabmPointInsideStateBounds(code, latitude, longitude)) candidates.push(code);
+  }
+  // If the broad state bounds did not identify anything, keep a safe fallback
+  // so WGS84 still works for small islands / boundary coordinates.
+  if (!candidates.length) candidates.push(...supported);
+  return [...new Set(candidates)];
+}
+
 async function azobssPabmFindPaLotsAtPoint(stateCode, latitude, longitude, forceAuth = false) {
-  const config = azobssGetLotMapConfig('1', stateCode);
   const lat = Number(latitude);
   const lng = Number(longitude);
   if (!azobssPabmValidWgs84(lat, lng)) throw new Error('Koordinat WGS84 tidak sah.');
   const auth = await azobssGetJupemMapAuth(forceAuth);
-  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  const candidates = azobssPabmStateCandidatesAtPoint(stateCode, lat, lng);
+
   try {
-    const payload = await azobssJupemArcGisJson(`${layerUrl}/query`, {
-      geometry: JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } }),
-      geometryType: 'esriGeometryPoint',
-      inSR: '4326',
-      spatialRel: 'esriSpatialRelIntersects',
-      outFields: '*',
-      returnGeometry: 'true',
-      outSR: '4326',
-      resultRecordCount: '20'
-    }, auth, 30000);
-    const rows = (Array.isArray(payload.features) ? payload.features : [])
-      .map((feature) => azobssPabmLotFeatureResult(feature, config))
-      .filter(Boolean);
-    const seen = new Set();
-    return rows.filter((row) => {
-      const key = `${row.objectId}|${row.lotNo}|${row.paNo}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, 12);
+    for (const candidateState of candidates) {
+      const config = azobssGetLotMapConfig('1', candidateState);
+      const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+      const payload = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+        geometry: JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } }),
+        geometryType: 'esriGeometryPoint',
+        inSR: '4326',
+        spatialRel: 'esriSpatialRelIntersects',
+        outFields: '*',
+        returnGeometry: 'true',
+        outSR: '4326',
+        resultRecordCount: '20'
+      }, auth, 30000);
+      const rows = (Array.isArray(payload.features) ? payload.features : [])
+        .map((feature) => azobssPabmLotFeatureResult(feature, config))
+        .filter(Boolean);
+      if (!rows.length) continue;
+      const seen = new Set();
+      return rows.filter((row) => {
+        const key = `${row.stateCode}|${row.objectId}|${row.lotNo}|${row.paNo}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 12);
+    }
+    return [];
   } catch (error) {
     if (!forceAuth && /(?:token|498|499|unauthor)/i.test(String(error && error.message || error))) {
       azobssJupemMapAuthCache = { token: '', cookie: '', expiresAt: 0 };
@@ -17526,9 +17559,6 @@ async function handler(req, res) {
       if (azRateLimitOrSend(req, res, "pabm-pa-map-search", 60, 60 * 1000)) return;
       try {
         const stateCode = cleanLotStateCode(parsed.query.negeri || parsed.query.state || parsed.query.stateCode);
-        if (!stateCode) {
-          return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu." }), "application/json", { "Cache-Control":"no-store" });
-        }
 
         const latitude = Number(parsed.query.lat ?? parsed.query.latitude);
         const longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
@@ -17538,6 +17568,9 @@ async function handler(req, res) {
         let mode = "";
 
         if (lotNo) {
+          if (!stateCode) {
+            return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu untuk carian Nombor Lot." }), "application/json", { "Cache-Control":"no-store" });
+          }
           mode = "lot";
           results = await azobssPabmFindPaLotsByNumber(stateCode, lotNo);
         } else if (azobssPabmValidWgs84(latitude, longitude)) {
@@ -17553,8 +17586,9 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({
           ok:true,
           mode,
-          stateCode,
-          negeri:AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
+          stateCode:(results[0] && results[0].stateCode) || stateCode || "",
+          requestedStateCode:stateCode || "",
+          negeri:(results[0] && results[0].negeri) || AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
           latitude:mode === "wgs84" ? latitude : undefined,
           longitude:mode === "wgs84" ? longitude : undefined,
           lotNo:mode === "lot" ? lotNo : undefined,
