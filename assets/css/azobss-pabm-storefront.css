@@ -1326,3 +1326,74 @@ body.pa-bm-page .pabm-choice-separator::after {
 body.pa-bm-page .pabm-choice-separator > span {
   min-width: 56px;
 }
+
+
+/* v1099: Compact PA/BM/SBM desktop search layout so the direct and map-search controls fit more comfortably in one viewport. */
+@media (min-width: 900px) {
+  body.pa-bm-page #requestCard {
+    padding: 14px 20px !important;
+  }
+
+  body.pa-bm-page .pabm-product-heading {
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  body.pa-bm-page .request-form,
+  body.pa-bm-page .benchmark-form {
+    gap: 9px;
+  }
+
+  body.pa-bm-page .request-form label,
+  body.pa-bm-page .benchmark-form label {
+    gap: 5px;
+  }
+
+  body.pa-bm-page .pabm-state-grid {
+    gap: 5px;
+  }
+
+  body.pa-bm-page .pabm-state-button,
+  body.pa-bm-page .pabm-product-button {
+    min-height: 34px;
+  }
+
+  body.pa-bm-page .request-form input,
+  body.pa-bm-page .benchmark-form input {
+    min-height: 40px;
+  }
+
+  body.pa-bm-page .pabm-primary-actions {
+    gap: 8px;
+  }
+
+  body.pa-bm-page .pabm-primary-actions .pabm-add-product-button {
+    height: 46px;
+    min-height: 46px;
+  }
+
+  body.pa-bm-page .pabm-map-search-block {
+    margin-top: 4px;
+    padding-top: 0;
+  }
+
+  body.pa-bm-page .pabm-map-search-block .pabm-choice-separator {
+    gap: 8px;
+    margin: 6px 0;
+    font-size: 11px;
+  }
+
+  body.pa-bm-page .pabm-map-search-block .pabm-map-button {
+    min-height: 40px;
+    margin-top: 6px;
+  }
+
+  body.pa-bm-page .pabm-map-search-block .pabm-map-inline-status {
+    min-height: 0;
+    margin-top: 4px;
+  }
+
+  body.pa-bm-page .pabm-map-search-block .pabm-map-inline-status:empty {
+    display: none;
+  }
+}

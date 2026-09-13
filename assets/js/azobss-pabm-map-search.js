@@ -28,9 +28,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1098')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1100')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1098';
+    style.id = 'azobssPabmMapSearchStyles1100';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -54,10 +54,15 @@
       .az-pabm-map-searchform input{width:100%;min-width:0;height:36px;padding:0 10px;border:1px solid #94a3b8;border-radius:5px;background:#fff;color:#0f172a;font-size:13px;outline:none}
       .az-pabm-map-searchform input:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.18)}
       .az-pabm-map-searchform button{height:36px;padding:0 14px;border:0;border-radius:5px;background:#1d4ed8;color:#fff;font-weight:900;cursor:pointer}
-      .az-pabm-map-searchform button:disabled{opacity:.6;cursor:wait}
+      .az-pabm-map-searchform button:disabled{opacity:.78;cursor:wait}
+      .az-pabm-map-searchform button.is-loading{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+      .az-pabm-map-searchform button.is-loading::before{content:"";width:13px;height:13px;flex:0 0 13px;border:2px solid rgba(255,255,255,.42);border-top-color:#fff;border-radius:50%;animation:az-pabm-spin .72s linear infinite}
       .az-pabm-map-searchhint{margin:5px 2px 0;color:#334155;font-size:11px;line-height:1.25}
       .az-pabm-map-side{min-height:0;display:flex;flex-direction:column;border-left:1px solid #2d405b;background:#0f1b2e}
-      .az-pabm-map-status{padding:10px 12px;border-bottom:1px solid #263951;color:#bfd0e6;font-size:12px;line-height:1.35;background:#111f34}
+      .az-pabm-map-status{position:relative;padding:10px 12px;border-bottom:1px solid #263951;color:#bfd0e6;font-size:12px;line-height:1.35;background:#111f34;overflow:hidden}
+      .az-pabm-map-status.is-loading{padding-left:38px;color:#dbeafe;background:#10213a;font-weight:800}
+      .az-pabm-map-status.is-loading::before{content:"";position:absolute;left:13px;top:50%;width:14px;height:14px;margin-top:-9px;border:2px solid rgba(147,197,253,.32);border-top-color:#60a5fa;border-right-color:#93c5fd;border-radius:50%;animation:az-pabm-spin .72s linear infinite}
+      .az-pabm-map-status.is-loading::after{content:"";position:absolute;left:-35%;bottom:0;width:35%;height:2px;background:linear-gradient(90deg,transparent,#60a5fa,#bfdbfe,transparent);animation:az-pabm-progress 1.15s ease-in-out infinite}
       .az-pabm-map-status.is-error{color:#fecdd3;background:#301822}
       .az-pabm-map-status.is-success{color:#bbf7d0;background:#10291f}
       .az-pabm-map-results{min-height:0;overflow:auto;padding:10px}
@@ -77,6 +82,8 @@
       .az-pabm-map-target-label{padding:2px 5px;border-radius:4px;background:#0f172a;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
       .az-pabm-station-label{padding:1px 4px;border:1px solid rgba(15,23,42,.55);border-radius:4px;background:rgba(15,23,42,.88);color:#fff;font-size:10px;font-weight:900;line-height:1.15;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.28)}
       .az-pabm-station-label.is-selected{font-size:11px;border-width:2px;background:#0f172a}
+      @keyframes az-pabm-spin{to{transform:rotate(360deg)}}
+      @keyframes az-pabm-progress{0%{left:-35%}55%{left:55%}100%{left:110%}}
       @media(max-width:800px){
         .az-pabm-map-modal{padding:4px}.az-pabm-map-dialog{width:calc(100vw - 8px);height:calc(100vh - 8px)}
         .az-pabm-map-body{grid-template-columns:1fr;grid-template-rows:minmax(330px,55vh) minmax(0,1fr)}
@@ -217,6 +224,15 @@
     ui.status.textContent = text || '';
     ui.status.classList.toggle('is-error', kind === 'error');
     ui.status.classList.toggle('is-success', kind === 'success');
+    ui.status.classList.toggle('is-loading', kind === 'loading');
+    ui.status.setAttribute('aria-busy', kind === 'loading' ? 'true' : 'false');
+  }
+
+  function setSearchBusy(ui, busy, label) {
+    if (!ui || !ui.searchButton) return;
+    ui.searchButton.disabled = Boolean(busy);
+    ui.searchButton.classList.toggle('is-loading', Boolean(busy));
+    ui.searchButton.textContent = busy ? (label || 'Mencari...') : 'Cari';
   }
 
   function setFootStatus(ui, text, kind) {
@@ -422,8 +438,8 @@
       }
       if (activeController) { try { activeController.abort(); } catch (_) {} }
       activeController = new AbortController();
-      ui.searchButton.disabled = true;
-      setModalStatus(ui, coordinate ? 'Mencari lot pada koordinat WGS84...' : `Mencari Lot ${lot}...`, '');
+      setSearchBusy(ui, true, 'Mencari Lot...');
+      setModalStatus(ui, coordinate ? 'Mencari lot pada koordinat WGS84...' : `Mencari Lot ${lot}...`, 'loading');
       try {
         const params = new URLSearchParams({ negeri: stateCode });
         if (coordinate) {
@@ -450,7 +466,7 @@
         setModalStatus(ui, error.message || 'Carian PA pada peta gagal.', 'error');
         setInlineStatus(externalStatus, error.message || 'Carian PA pada peta gagal.', 'error');
       } finally {
-        ui.searchButton.disabled = false;
+        setSearchBusy(ui, false);
       }
     }
 
@@ -725,8 +741,8 @@
       }
       if (activeController) { try { activeController.abort(); } catch (_) {} }
       activeController = new AbortController();
-      ui.searchButton.disabled = true;
-      setModalStatus(ui, `Mencari ${product} terdekat...`, '');
+      setSearchBusy(ui, true, `Mencari ${product}...`);
+      setModalStatus(ui, `Mencari ${product} terdekat...`, 'loading');
       try {
         const params = new URLSearchParams({ product, negeri: state });
         if (target) {
@@ -767,7 +783,7 @@
         setModalStatus(ui, error.message || `Carian ${product} gagal.`, 'error');
         setInlineStatus(externalStatus, error.message || `Carian ${product} gagal.`, 'error');
       } finally {
-        ui.searchButton.disabled = false;
+        setSearchBusy(ui, false);
       }
     }
 
