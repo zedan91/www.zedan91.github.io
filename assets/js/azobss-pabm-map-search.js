@@ -75,6 +75,11 @@
       .az-pabm-map-detail{padding:10px 12px;border-top:1px solid #263951;background:#111f34}
       .az-pabm-map-detail-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 9px;margin-bottom:9px;font-size:11px;line-height:1.35}
       .az-pabm-map-detail-grid b{color:#94a3b8;font-weight:700}.az-pabm-map-detail-grid span{color:#e2e8f0;overflow-wrap:anywhere}
+      .az-pabm-wgs84-value{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap}
+      .az-pabm-google-maps-link{display:inline-flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;border:1px solid #3b82f6;border-radius:5px;background:#173b6d;color:#dbeafe;text-decoration:none;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:background .15s ease,border-color .15s ease,transform .15s ease}
+      .az-pabm-google-maps-link:hover{background:#1d4ed8;border-color:#93c5fd;transform:translateY(-1px)}
+      .az-pabm-google-maps-link:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+      .az-pabm-google-maps-link svg{width:15px;height:15px;display:block;fill:currentColor}
       .az-pabm-map-cart{width:100%;min-height:42px;border:0;border-radius:6px;background:#059669;color:#fff;font-weight:900;font-size:14px;cursor:pointer}
       .az-pabm-map-cart:disabled{opacity:.55;cursor:not-allowed}
       .az-pabm-map-footstatus{min-height:16px;margin-top:6px;color:#a9bad0;font-size:11px;line-height:1.3}
@@ -712,6 +717,16 @@
       drawDistanceGuide(row);
       ui.detail.hidden = false;
       const refText = currentReference ? referenceLabel(currentReference) : 'WGS84';
+      const stationLat = Number(row.latitude);
+      const stationLng = Number(row.longitude);
+      const hasStationCoords = Number.isFinite(stationLat) && Number.isFinite(stationLng);
+      const stationWgs84 = hasStationCoords ? `${stationLat}, ${stationLng}` : '-';
+      const googleMapsUrl = hasStationCoords
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${stationLat},${stationLng}`)}`
+        : '';
+      const googleMapsLink = googleMapsUrl
+        ? `<a class="az-pabm-google-maps-link" href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" title="Buka lokasi ini di Google Maps" aria-label="Buka lokasi ${escapeHtml(row.stationNo || product)} di Google Maps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg></a>`
+        : '';
       ui.detailGrid.innerHTML = `
         <b>Produk</b><span>${escapeHtml(product)}</span>
         <b>No. Stesen</b><span>${escapeHtml(row.stationNo || '-')}</span>
@@ -721,7 +736,7 @@
         <b>Daerah</b><span>${escapeHtml(row.daerah || '-')}</span>
         <b>Bandar</b><span>${escapeHtml(row.bandar || '-')}</span>
         <b>Huraian</b><span>${escapeHtml(row.huraian || '-')}</span>
-        <b>WGS84</b><span>${escapeHtml(`${row.latitude}, ${row.longitude}`)}</span>`;
+        <b>WGS84</b><span class="az-pabm-wgs84-value">${escapeHtml(stationWgs84)}${googleMapsLink}</span>`;
       ui.cartButton.textContent = `Tambah ${product} ${row.stationNo || row.productId || ''} ke Troli`;
       ui.cartButton.disabled = !(row.stationNo || row.productId);
       if (pan && Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude))) {
