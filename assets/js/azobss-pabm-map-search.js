@@ -28,9 +28,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1102')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1103')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1102';
+    style.id = 'azobssPabmMapSearchStyles1103';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -80,6 +80,7 @@
       .az-pabm-map-footstatus{min-height:16px;margin-top:6px;color:#a9bad0;font-size:11px;line-height:1.3}
       .az-pabm-map-footstatus.is-error{color:#fda4af}.az-pabm-map-footstatus.is-success{color:#86efac}
       .az-pabm-map-target-label{padding:2px 5px;border-radius:4px;background:#0f172a;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+      .az-pabm-reference-label{padding:3px 7px;border:2px solid #facc15;border-radius:5px;background:rgba(15,23,42,.94);color:#fde68a;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 7px rgba(0,0,0,.4)}
       .az-pabm-search-pin-icon{background:transparent!important;border:0!important}
       .az-pabm-search-pin{display:block;position:relative;width:28px;height:28px;border:3px solid #fff;border-radius:50% 50% 50% 0;background:#ef4444;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.55)}
       .az-pabm-search-pin::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
@@ -559,6 +560,13 @@
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView(initialCenter, initialZoom);
     ui.modal._azobssMap = map;
     addBaseMap(L, map);
+    // v1103: keep cadastral reference geometry above normal vector layers so
+    // the selected lot/PA boundary remains visible when BM/SBM markers overlap it.
+    if (!map.getPane('azobssReferencePane')) {
+      const referencePane = map.createPane('azobssReferencePane');
+      referencePane.style.zIndex = '575';
+      referencePane.style.pointerEvents = 'none';
+    }
     window.setTimeout(() => map.invalidateSize(), 60);
 
     const stationGroup = L.featureGroup().addTo(map);
@@ -603,23 +611,34 @@
       let layer = null;
       if (rings.length) {
         layer = L.polygon(rings, {
-          weight: selected ? 4 : 2,
-          fillOpacity: selected ? 0.22 : 0.10,
-          opacity: selected ? 1 : 0.75
+          pane: 'azobssReferencePane',
+          color: selected ? '#facc15' : '#f59e0b',
+          fillColor: '#fde047',
+          weight: selected ? 5 : 3,
+          fillOpacity: selected ? 0.24 : 0.12,
+          opacity: 1,
+          lineJoin: 'round',
+          interactive: !selected
         }).addTo(referenceGroup);
       } else if (latLng) {
         layer = L.circleMarker([latLng.lat, latLng.lng], {
-          radius: selected ? 10 : 7,
+          pane: 'azobssReferencePane',
+          radius: selected ? 11 : 7,
+          color: '#facc15',
+          fillColor: '#f59e0b',
           weight: selected ? 4 : 2,
           fillOpacity: selected ? 0.9 : 0.65
         }).addTo(referenceGroup);
       }
       if (layer) {
         layer.bindTooltip(referenceLabel(reference), {
-          permanent: false,
+          permanent: !!selected,
           direction: 'top',
-          className: 'az-pabm-map-target-label'
+          offset: [0, selected ? -5 : 0],
+          className: selected ? 'az-pabm-reference-label' : 'az-pabm-map-target-label',
+          opacity: 1
         });
+        if (selected && typeof layer.bringToFront === 'function') layer.bringToFront();
       }
       return layer;
     }
@@ -788,14 +807,18 @@
         stationMarkers[index] = marker;
       });
       const bounds = stationGroup.getBounds();
-      if (bounds.isValid()) {
+      const refBounds = referenceGroup.getBounds();
+      if (currentReference && refBounds.isValid()) {
+        // v1103: a cadastral lot is only a few metres wide. Fitting all nearby
+        // BM/SBM stations at once zoomed the map out so far that the real lot
+        // polygon became only 1–2 pixels and looked as if it had disappeared.
+        // Start by showing the true lot/PA shape clearly; clicking a BM/SBM
+        // result still fits the origin + selected station and draws the distance line.
+        map.fitBounds(refBounds, { padding: [85, 85], maxZoom: 18 });
+        if (map.getZoom() < 16) map.setZoom(16);
+      } else if (bounds.isValid()) {
         const combined = L.latLngBounds(bounds);
         combined.extend([target.lat, target.lng]);
-        const refBounds = referenceGroup.getBounds();
-        if (refBounds.isValid()) {
-          combined.extend(refBounds.getSouthWest());
-          combined.extend(refBounds.getNorthEast());
-        }
         map.fitBounds(combined, { padding: [35, 35], maxZoom: 13 });
       } else map.setView([target.lat, target.lng], 12);
       selectRow(0, false);
