@@ -11657,7 +11657,7 @@ function azobssResolveBenchmarkCoordinates(productId, jenis, forceAuth = false) 
 
 
 // =========================
-// PA / BM / SBM WGS84 MAP SEARCH (v1095)
+// PA / BM / SBM MAP SEARCH (v1098)
 // =========================
 
 function azobssPabmHaversineKm(lat1, lon1, lat2, lon2) {
@@ -11989,6 +11989,109 @@ async function azobssPabmFindPaLotsByNumber(stateCode, lotNumber) {
   const focused = await azobssResolveFocusedLot('1', cleanStateCode, '', wantedLot, {});
   const fallback = azobssPabmFocusedLotResult(focused);
   return fallback ? await azobssPabmResolvePaForLotResults([fallback]) : [];
+}
+
+
+// v1098: Resolve BM/SBM map reference from Nombor Lot or Nombor PA.
+// Numeric input is treated as Nombor Lot; PA searches must use the PA prefix
+// (for example PA2131) to avoid silently choosing the wrong reference type.
+function azobssPabmBenchmarkReferenceResult(row, referenceType) {
+  if (!row || !row.center) return null;
+  const latitude = Number(row.center.latitude);
+  const longitude = Number(row.center.longitude);
+  if (!azobssPabmValidWgs84(latitude, longitude)) return null;
+  const type = referenceType === 'pa' ? 'pa' : 'lot';
+  const lotNo = String(row.lotNo || '').trim();
+  const paNo = azobssPabmNormalizePaNumber(row.paNo);
+  const label = type === 'pa'
+    ? (paNo || 'PA')
+    : `Lot ${lotNo || '-'}` + (paNo ? ` • ${paNo}` : '');
+  return {
+    referenceType: type,
+    label,
+    lotNo,
+    paNo,
+    negeri: String(row.negeri || '').trim(),
+    stateCode: String(row.stateCode || '').trim(),
+    daerah: String(row.daerah || '').trim(),
+    mukim: String(row.mukim || '').trim(),
+    seksyen: String(row.seksyen || '').trim(),
+    objectId: String(row.objectId || '').trim(),
+    latitude: Number(latitude.toFixed(8)),
+    longitude: Number(longitude.toFixed(8)),
+    geometry: row.geometry && Array.isArray(row.geometry.rings)
+      ? {
+          rings: row.geometry.rings,
+          ...(Array.isArray(row.geometry.polygons) ? { polygons: row.geometry.polygons } : {}),
+          spatialReference: { wkid: 4326 }
+        }
+      : null
+  };
+}
+
+async function azobssPabmResolveBenchmarkMapReference(stateCode, rawReference) {
+  const cleanStateCode = cleanLotStateCode(stateCode);
+  if (!cleanStateCode) throw new Error('Sila pilih negeri terlebih dahulu.');
+  const classification = azobssClassifyMapSearchQuery(rawReference);
+  if (!classification || !classification.cadastre || !classification.searchValue
+      || !['lot', 'pa'].includes(classification.searchType)) {
+    throw new Error('Masukkan Nombor Lot, Nombor PA (contoh PA2131) atau koordinat WGS84 yang sah.');
+  }
+
+  if (classification.searchType === 'lot') {
+    const rows = await azobssPabmFindPaLotsByNumber(cleanStateCode, classification.searchValue);
+    const references = (Array.isArray(rows) ? rows : [])
+      .map((row) => azobssPabmBenchmarkReferenceResult(row, 'lot'))
+      .filter(Boolean);
+    const unique = [];
+    const seen = new Set();
+    for (const row of references) {
+      const key = [
+        row.objectId,
+        cleanLotNumber(row.lotNo),
+        row.paNo,
+        row.daerah,
+        row.mukim,
+        row.seksyen,
+        row.latitude,
+        row.longitude
+      ].join('|').toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(row);
+    }
+    return {
+      mode: 'lot',
+      searchValue: classification.searchValue,
+      references: unique.slice(0, 12)
+    };
+  }
+
+  const paNo = azobssPabmNormalizePaNumber(classification.searchValue);
+  let context = { paNo };
+  try {
+    const search = await searchJupemPaCadastre(cleanStateCode, paNo);
+    const wanted = azobssFocusedLotComparable(String(paNo || '').replace(/^PA/i, ''));
+    const rows = (Array.isArray(search && search.results) ? search.results : [])
+      .filter((row) => azobssFocusedLotComparable(String(row && row.paNo || '').replace(/^PA/i, '')) === wanted);
+    if (rows.length === 1) {
+      context = {
+        paNo,
+        daerah: String(rows[0].daerah || '').trim(),
+        mukim: String(rows[0].mukim || '').trim(),
+        seksyen: String(rows[0].seksyen || '').trim()
+      };
+    }
+  } catch (_) {}
+
+  const focused = await azobssResolveFocusedLot('1', cleanStateCode, '', '', context);
+  const row = azobssPabmFocusedLotResult(focused);
+  const reference = azobssPabmBenchmarkReferenceResult(row, 'pa');
+  return {
+    mode: 'pa',
+    searchValue: paNo,
+    references: reference ? [reference] : []
+  };
 }
 
 function azobssPabmBenchmarkCoordinatesFromFeature(feature) {
@@ -17679,7 +17782,7 @@ async function handler(req, res) {
 
 
     // =========================
-    // PA / BM / SBM WGS84 MAP SEARCH (v1095)
+    // PA / BM / SBM MAP SEARCH (v1098)
     // =========================
 
     if (pathname === "/api/pabm-pa-map-search" && req.method === "GET") {
@@ -17734,15 +17837,6 @@ async function handler(req, res) {
     if (pathname === "/api/pabm-benchmark-nearby" && req.method === "GET") {
       if (azRateLimitOrSend(req, res, "pabm-benchmark-nearby", 60, 60 * 1000)) return;
       try {
-        const latitude = Number(parsed.query.lat ?? parsed.query.latitude);
-        const longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
-        if (!azobssPabmValidWgs84(latitude, longitude)) {
-          return send(res, 400, JSON.stringify({
-            ok:false,
-            error:"Koordinat WGS84 tidak sah. Contoh: 3.1390, 101.6869."
-          }), "application/json", { "Cache-Control":"no-store" });
-        }
-
         const requestedProduct = String(parsed.query.produk || parsed.query.product || parsed.query.type || "BM").trim().toUpperCase();
         const product = requestedProduct === "SBM" || requestedProduct === "2" ? "SBM" : "BM";
         const jenis = product === "SBM" ? "2" : "1";
@@ -17751,23 +17845,92 @@ async function handler(req, res) {
           return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu." }), "application/json", { "Cache-Control":"no-store" });
         }
 
+        let latitude = Number(parsed.query.lat ?? parsed.query.latitude);
+        let longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
+        const rawReference = String(
+          parsed.query.q ?? parsed.query.reference ?? parsed.query.search ?? parsed.query.query ?? ""
+        ).trim();
+        let mode = "wgs84";
+        let reference = null;
+        let referenceMatches = [];
+
+        if (!azobssPabmValidWgs84(latitude, longitude)) {
+          if (!rawReference) {
+            return send(res, 400, JSON.stringify({
+              ok:false,
+              error:"Masukkan Nombor Lot, Nombor PA (contoh PA2131) atau koordinat WGS84 yang sah."
+            }), "application/json", { "Cache-Control":"no-store" });
+          }
+
+          const resolved = await azobssPabmResolveBenchmarkMapReference(cleanLotStateCode(negeri), rawReference);
+          mode = resolved.mode || "";
+          referenceMatches = Array.isArray(resolved.references) ? resolved.references : [];
+
+          if (!referenceMatches.length) {
+            return send(res, 404, JSON.stringify({
+              ok:false,
+              error: mode === "pa"
+                ? "Nombor PA tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih."
+                : "Nombor Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih."
+            }), "application/json", { "Cache-Control":"no-store" });
+          }
+
+          // Nombor lot boleh berulang dalam negeri yang sama. Jangan pilih secara tekaan:
+          // pulangkan semua padanan supaya pengguna boleh pilih lot yang betul pada peta.
+          if (referenceMatches.length > 1) {
+            return send(res, 200, JSON.stringify({
+              ok:true,
+              product,
+              jenis,
+              negeri,
+              mode,
+              needsReferenceSelection:true,
+              referenceMatches,
+              results:[]
+            }, null, 2), "application/json", { "Cache-Control":"no-store" });
+          }
+
+          reference = referenceMatches[0];
+          latitude = Number(reference.latitude);
+          longitude = Number(reference.longitude);
+        }
+
+        if (!azobssPabmValidWgs84(latitude, longitude)) {
+          return send(res, 400, JSON.stringify({
+            ok:false,
+            error:"Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah."
+          }), "application/json", { "Cache-Control":"no-store" });
+        }
+
         const found = await azobssPabmFindBenchmarkNearby(latitude, longitude, jenis, negeri);
         return send(res, 200, JSON.stringify({
           ok:true,
           product,
           jenis,
           negeri,
+          mode,
           latitude,
           longitude,
+          target:{
+            latitude,
+            longitude,
+            label: reference && reference.label ? reference.label : "WGS84",
+            referenceType: reference && reference.referenceType ? reference.referenceType : "wgs84"
+          },
+          reference,
+          referenceMatches,
           source:found.source || "",
           warning:found.warning || "",
           results:Array.isArray(found.rows) ? found.rows : []
         }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (error) {
-        console.warn("AZOBSS BM/SBM WGS84 map search failed:", error && (error.stack || error.message || error));
-        return send(res, 502, JSON.stringify({
+        console.warn("AZOBSS BM/SBM map reference search failed:", error && (error.stack || error.message || error));
+        const message = String(error && error.message || "Carian BM/SBM tidak tersedia buat sementara waktu.");
+        const notFound = /tidak ditemui|tidak dapat dikenal pasti|not found/i.test(message);
+        const badRequest = /Masukkan|Pilih negeri|tidak sah/i.test(message);
+        return send(res, badRequest ? 400 : (notFound ? 404 : 502), JSON.stringify({
           ok:false,
-          error:"Carian WGS84 BM/SBM tidak tersedia buat sementara waktu. Sila cuba semula."
+          error:message
         }), "application/json", { "Cache-Control":"no-store" });
       }
     }
