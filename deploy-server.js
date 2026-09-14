@@ -3648,21 +3648,63 @@ async function azobssGetPurchaseRecord(recordId) {
   return { ref, record: Object.assign({ firestoreId: id }, migrated) };
 }
 
-async function azobssIncrementPurchaseDownload(ref, record, nowMs) {
-  const used = azobssRecordDownloadCount(record);
-  const max = azobssRecordMaxDownloads(record);
-  await ref.set({
-    downloadCount: used + 1,
-    usedCount: used + 1,
-    downloadsUsed: used + 1,
-    maxDownloads: max,
-    maxDownload: max,
-    downloadExpiresAtMs: azobssRecordExpiresAtMs(record),
-    downloadExpiresAtClient: new Date(azobssRecordExpiresAtMs(record)).toISOString(),
-    lastDownloadedAtMs: nowMs,
-    lastDownloadedAtClient: new Date(nowMs).toISOString(),
-    updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
+async function azobssIncrementPurchaseDownload(ref, record, nowMs, attemptId = "") {
+  if (!ref) throw new Error("Purchase record reference is missing.");
+  const cleanAttemptId = String(attemptId || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 120);
+  const db = firebaseAdmin.firestore();
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? (snap.data() || {}) : (record || {});
+
+    // downloadCount is authoritative, including an explicit zero.
+    // Legacy aliases are only fallbacks when downloadCount is genuinely absent.
+    const used = azobssRecordDownloadCount(current);
+    const max = azobssRecordMaxDownloads(current);
+    const expiresAtMs = azobssRecordExpiresAtMs(current);
+
+    // Same browser click/request may be retried by Chrome, a proxy, navigation,
+    // or the frontend. Re-serving the same attempt must not consume quota twice.
+    const previousAttemptId = String(current.lastDownloadAttemptId || "").trim();
+    if (cleanAttemptId && previousAttemptId && cleanAttemptId === previousAttemptId) {
+      return { ok:true, duplicate:true, downloadCount:used, usedCount:used, maxDownloads:max };
+    }
+
+    if (Number(nowMs || Date.now()) > expiresAtMs) {
+      const error = new Error("Tempoh download telah tamat.");
+      error.statusCode = 403;
+      throw error;
+    }
+    if (used >= max) {
+      const error = new Error("Had download telah digunakan.");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const nextUsed = used + 1;
+    const patch = {
+      downloadCount: nextUsed,
+      usedCount: nextUsed,
+      downloadsUsed: nextUsed,
+      maxDownloads: max,
+      maxDownload: max,
+      downloadExpiresAtMs: expiresAtMs,
+      downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
+      lastDownloadedAtMs: nowMs,
+      lastDownloadedAtClient: new Date(nowMs).toISOString(),
+      updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+    };
+    if (cleanAttemptId) {
+      patch.lastDownloadAttemptId = cleanAttemptId;
+      patch.lastDownloadAttemptAtMs = nowMs;
+    }
+
+    tx.set(ref, patch, { merge: true });
+    return { ok:true, duplicate:false, downloadCount:nextUsed, usedCount:nextUsed, maxDownloads:max };
+  });
 }
 
 async function azobssResetPurchaseDownloadCounter(ref, record, adminIdentity = {}, nowMs = Date.now()) {
@@ -18959,6 +19001,10 @@ if (pathname === "/api/lot-cad/health" && req.method === "GET") {
 
 if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   const recordId = String(parsed.query.recordId || "").trim();
+  const downloadAttemptId = String(parsed.query.downloadAttemptId || parsed.query.attemptId || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 120);
   if (!recordId) return azobssPaBmDownloadError(res, 400, "Missing recordId");
 
   let ref, record;
@@ -19081,7 +19127,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 500, "PA PDF conversion produced an invalid file. Your download quota was not used.");
     }
 
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
 
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
@@ -19103,7 +19149,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 502, "GPS PDF is temporarily unavailable from JUPEM. Please try again in a moment. Your download quota was not used.");
     }
 
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
     const safeCode = String(code || record.stationNo || record.itemCode || "GPS").replace(/[^A-Z0-9_-]/gi, "-");
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
@@ -19139,7 +19185,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 500, "Syit Piawai conversion produced an invalid PDF. Your download quota was not used.");
     }
 
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${safeCode}.pdf"`,
@@ -19194,7 +19240,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       }
 
       try {
-        await azobssIncrementPurchaseDownload(ref, record, nowMs);
+        await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
       } catch (error) {
         console.error("NDCDB CAD counter update failed:", error && (error.stack || error.message || error));
         return azobssPaBmDownloadError(res, 500, "Pengesahan kuota download gagal. Sila cuba semula; kuota tidak digunakan.");
@@ -19265,7 +19311,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     }
 
     try {
-      await azobssIncrementPurchaseDownload(ref, record, nowMs);
+      await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
     } catch (error) {
       try { await reader.cancel(); } catch (_) {}
       console.error("NDCDB ZIP counter update failed:", error && (error.stack || error.message || error));
@@ -19340,7 +19386,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
   const bmBuffer = bmResult.buffer;
 
-  try { await azobssIncrementPurchaseDownload(ref, record, nowMs); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+  try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
 
   const contentType = "application/pdf";
   const productType = String(record.productType || record.product || type || "BM").trim().toUpperCase();

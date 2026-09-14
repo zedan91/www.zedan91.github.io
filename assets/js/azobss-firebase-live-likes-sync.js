@@ -2821,10 +2821,28 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
   if(!isLotDownload) downloadFormat = 'original';
 
-  const directUrl = azobssBuildPaidPurchaseDownloadUrl(r, downloadFormat);
+  let directUrl = azobssBuildPaidPurchaseDownloadUrl(r, downloadFormat);
   if(!directUrl){
     alert('Link download tidak tersedia.');
     return false;
+  }
+
+  // v1111: one physical click = one quota use.
+  // Keep one idempotency key for every request/retry created by this click.
+  // If the browser repeats the same GET, the backend will return the file again
+  // without increasing 0/5 -> 2/5.
+  let downloadAttemptId = '';
+  try{
+    if(window.crypto && typeof window.crypto.randomUUID === 'function'){
+      downloadAttemptId = window.crypto.randomUUID();
+    }else{
+      downloadAttemptId = 'pabm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+    }
+  }catch(_e){
+    downloadAttemptId = 'pabm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+  if(downloadAttemptId && /\/api\/pa-bm-download(?:\?|$)/i.test(directUrl)){
+    directUrl += (directUrl.includes('?') ? '&' : '?') + 'downloadAttemptId=' + encodeURIComponent(downloadAttemptId);
   }
 
   const downloadOwner = {

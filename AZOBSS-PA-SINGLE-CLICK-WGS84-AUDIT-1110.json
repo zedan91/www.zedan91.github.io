@@ -1,0 +1,20 @@
+{
+  "version": "1.0.1110",
+  "baseline": "(1109)-AZOBSS-PA-BM-DOWNLOAD-COUNTER-0-TO-2-FIX_20260914.zip",
+  "scope": "PA map only",
+  "request": "PA tidak perlu double-click untuk menetapkan titik carian WGS84.",
+  "changes": [
+    "Changed the Peta Pilihan PA map event from dblclick to click.",
+    "Updated PA helper text to explicitly say single-click.",
+    "Kept result polygon click selection isolated via existing stopPropagation behavior.",
+    "BM/SBM and GPS double-click behavior was not changed.",
+    "Bumped PA-BM azobss-pabm-map-search.js cache-buster to 1110."
+  ],
+  "backend_redeploy_required": false,
+  "frontend_redeploy_required": true,
+  "changed_core_files": [
+    "package.json",
+    "assets/js/azobss-pabm-map-search.js",
+    "PA-BM/index.html"
+  ]
+}
