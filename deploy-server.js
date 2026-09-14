@@ -1623,9 +1623,9 @@ function azPaBmPurchaseRecordPublic(x = {}, docId = "") {
     paymentReference: azExportSafeText(x.paymentReference || x.transactionId || "", 180),
     paymentMethod: azExportSafeText(x.paymentMethod || "toyyibpay", 80),
     downloadUrl: azExportSafeText(x.downloadUrl || x.url || x.fileUrl || "", 1000),
-    downloadCount: Number(x.downloadCount || x.usedCount || x.downloadsUsed || 0) || 0,
-    usedCount: Number(x.usedCount || x.downloadCount || x.downloadsUsed || 0) || 0,
-    downloadsUsed: Number(x.downloadsUsed || x.downloadCount || x.usedCount || 0) || 0,
+    downloadCount: azobssRecordDownloadCount(x),
+    usedCount: azobssRecordDownloadCount(x),
+    downloadsUsed: azobssRecordDownloadCount(x),
     maxDownloads: Number(x.maxDownloads || x.maxDownload || x.downloadLimit || 5) || 5,
     downloadExpiresAtMs,
     downloadExpiresAtClient: azExportSafeText(x.downloadExpiresAtClient || x.expiresAt || "", 120),
@@ -3508,7 +3508,12 @@ function azobssRecordMaxDownloads(record) {
   return max > 0 ? max : AZOBSS_PA_BM_MAX_DOWNLOADS;
 }
 function azobssRecordDownloadCount(record) {
-  return Math.max(0, Number(record.downloadCount || record.usedCount || 0));
+  // v1109: downloadCount:0 is authoritative. Do not treat zero as missing and
+  // fall through to stale legacy aliases, otherwise 0/5 can become 2/5.
+  const row = record || {};
+  const raw = row.downloadCount ?? row.usedCount ?? row.downloadsUsed ?? 0;
+  const value = Number(raw);
+  return Math.max(0, Number.isFinite(value) ? value : 0);
 }
 function azobssRecordExpiresAtMs(record) {
   const explicit = Number(record.downloadExpiresAtMs || record.expiresAtMs || 0)
@@ -3620,8 +3625,11 @@ async function azobssGetPurchaseRecord(recordId) {
     createdAtClient: found.createdAtClient || new Date(createdAtMs).toISOString(),
     paidAtMs: paidAtMs || undefined,
     paidAtClient: paidAtMs ? new Date(paidAtMs).toISOString() : undefined,
-    downloadCount: Math.max(0, Number(found.downloadCount || found.usedCount || 0)),
+    downloadCount: azobssRecordDownloadCount(found),
+    usedCount: azobssRecordDownloadCount(found),
+    downloadsUsed: azobssRecordDownloadCount(found),
     maxDownloads: azobssRecordMaxDownloads(found),
+    maxDownload: azobssRecordMaxDownloads(found),
     downloadExpiresAtMs: Number(found.downloadExpiresAtMs || found.expiresAtMs || 0)
       || azobssFirestoreMs(found.downloadExpiresAtClient)
       || azobssFirestoreMs(found.expiresAt)
@@ -3783,8 +3791,11 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
   if (paid) {
     baseUpdate.paidAtMs = paidAtMs;
     baseUpdate.paidAtClient = new Date(paidAtMs).toISOString();
-    baseUpdate.downloadCount = 0;
+    // v1109: do NOT reset an existing row's downloadCount here. ToyyibPay/payment
+    // verification may be replayed after a successful download. Resetting only
+    // downloadCount while legacy usedCount stayed at 1 produced a split 0/1 state.
     baseUpdate.maxDownloads = AZOBSS_PA_BM_MAX_DOWNLOADS;
+    baseUpdate.maxDownload = AZOBSS_PA_BM_MAX_DOWNLOADS;
     baseUpdate.downloadExpiresAtMs = paidAtMs + AZOBSS_PA_BM_VALID_MS;
     baseUpdate.downloadExpiresAtClient = new Date(paidAtMs + AZOBSS_PA_BM_VALID_MS).toISOString();
   }
@@ -3901,8 +3912,11 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
         createdAtMs: Number(item.createdAtMs || nowMs),
         createdAtClient: new Date(Number(item.createdAtMs || nowMs)).toISOString(),
         createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
-        downloadCount: paid ? 0 : Number(item.downloadCount || 0),
-        maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS
+        downloadCount: paid ? 0 : Math.max(0, Number(item.downloadCount ?? item.usedCount ?? item.downloadsUsed ?? 0) || 0),
+        usedCount: paid ? 0 : Math.max(0, Number(item.downloadCount ?? item.usedCount ?? item.downloadsUsed ?? 0) || 0),
+        downloadsUsed: paid ? 0 : Math.max(0, Number(item.downloadCount ?? item.usedCount ?? item.downloadsUsed ?? 0) || 0),
+        maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS,
+        maxDownload: AZOBSS_PA_BM_MAX_DOWNLOADS
       }, { merge: true });
       updated += 1;
       continue;
@@ -7370,7 +7384,7 @@ function azMyPurchasesMs(row = {}) {
 }
 function azMyPurchasesPaBmDownloadMeta(row = {}) {
   const paid = azReceiptStatusBucket(row) === "paid";
-  const used = Math.max(0, Number(row.downloadCount || row.usedDownloads || 0) || 0);
+  const used = azobssRecordDownloadCount(row);
   const max = Math.max(1, Number(row.maxDownloads || row.maxDownload || 5) || 5);
   let expiresAtMs = Number(row.downloadExpiresAtMs || row.expiresAtMs || 0) || 0;
   const paidAtMs = Number(row.paidAtMs || row.downloadResetAtMs || row.updatedAtMs || row.createdAtMs || 0) || 0;

@@ -1,0 +1,35 @@
+{
+  "version": "1.0.1109",
+  "baseline": "(1108)-AZOBSS-PA-GPS-LOT-KADASTER-EARTH-GPS-MAP-SEARCH_20260913.zip",
+  "issue": "PA/BM counter displayed 0/5 but first download could jump directly to 2/5.",
+  "root_cause": [
+    "JavaScript/backend fallback expressions used logical OR for downloadCount, so explicit numeric 0 was treated as missing and could fall through to stale legacy usedCount/downloadsUsed (for example 1).",
+    "Repeated paid/payment verification sync could previously reset only downloadCount to 0 on an existing record while a legacy alias still held 1, creating an inconsistent 0/1 state."
+  ],
+  "fixes": [
+    "Use nullish/explicit zero-safe resolution where PA/BM download count is read.",
+    "Do not reset an existing PA/BM downloadCount during repeated paid verification in the active deploy backend.",
+    "Initialize and increment downloadCount/usedCount/downloadsUsed together.",
+    "Use the same zero-safe count in Admin, Latest Purchase List and My Purchases related code.",
+    "Bump frontend auth/live-sync bundle cache-busters to 1109."
+  ],
+  "expected_sequence": [
+    "0/5",
+    "1/5",
+    "2/5",
+    "3/5",
+    "4/5",
+    "5/5"
+  ],
+  "backend_redeploy_required": true,
+  "frontend_redeploy_required": true,
+  "changed_core_files": [
+    "package.json",
+    "deploy-server.js",
+    "backend/server.js",
+    "assets/js/azobss-firebase-live-likes-sync.js",
+    "assets/js/azobss-global-auth.js",
+    "admin/index.html",
+    "PA-BM/index.html"
+  ]
+}

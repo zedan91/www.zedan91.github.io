@@ -437,6 +437,7 @@ async function azobssSyncJupemPurchaseLogs(order = {}, status = "pending", extra
     const itemCode = String(item.itemCode || "").trim().toUpperCase();
     if (!itemCode) continue;
     let targetRef = null;
+    let existingRow = null;
     try {
       const snap = await db.collection("purchaseLogs").where("itemCode", "==", itemCode).limit(30).get();
       snap.forEach((docSnap) => {
@@ -446,12 +447,21 @@ async function azobssSyncJupemPurchaseLogs(order = {}, status = "pending", extra
           || (order.user?.username && String(row.usernameKey || row.username || "").toLowerCase() === String(order.user.username).toLowerCase());
         const sameType = String(row.productType || row.product || "").toUpperCase() === String(item.productType || "").toUpperCase();
         const sameState = String(row.negeri || row.state || "").toUpperCase() === String(item.negeri || "").toUpperCase();
-        if (sameUser && sameType && sameState) targetRef = docSnap.ref;
+        if (sameUser && sameType && sameState) {
+          targetRef = docSnap.ref;
+          existingRow = row;
+        }
       });
     } catch (error) {
       console.warn("JUPEM purchase log lookup skipped:", error && (error.message || error));
     }
-    if (!targetRef) targetRef = db.collection("purchaseLogs").doc(`${cleanPremiumText(order.orderId, 120)}-${index + 1}`);
+    if (!targetRef) {
+      targetRef = db.collection("purchaseLogs").doc(`${cleanPremiumText(order.orderId, 120)}-${index + 1}`);
+      try {
+        const existingSnap = await targetRef.get();
+        if (existingSnap.exists) existingRow = existingSnap.data() || {};
+      } catch (_) {}
+    }
 
     const payload = {
       uid: String(order.user?.uid || ""),
@@ -488,7 +498,17 @@ async function azobssSyncJupemPurchaseLogs(order = {}, status = "pending", extra
     if (paid) {
       payload.paidAtMs = paidAtMs;
       payload.paidAtClient = new Date(paidAtMs).toISOString();
-      payload.downloadCount = 0;
+      // v1109: payment callbacks can be replayed. Keep an existing counter instead
+      // of resetting it, and initialize all aliases together for a brand-new row.
+      const existingRaw = existingRow
+        ? (existingRow.downloadCount ?? existingRow.usedCount ?? existingRow.downloadsUsed)
+        : undefined;
+      if (existingRaw === undefined || existingRaw === null) {
+        payload.downloadCount = 0;
+        payload.usedCount = 0;
+        payload.downloadsUsed = 0;
+      }
+      payload.maxDownload = AZOBSS_PA_BM_MAX_DOWNLOADS;
       payload.downloadExpiresAtMs = paidAtMs + AZOBSS_PA_BM_VALID_MS;
       payload.downloadExpiresAtClient = new Date(paidAtMs + AZOBSS_PA_BM_VALID_MS).toISOString();
     }

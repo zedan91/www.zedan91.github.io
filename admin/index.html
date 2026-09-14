@@ -4294,7 +4294,9 @@ function azAdminIsPaidRecord(x){
   return ['paid','verified','success','completed','approved','confirmed'].includes(status);
 }
 function azAdminDownloadCount(x){
-  return Math.max(0, Number(x?.downloadCount || x?.usedCount || x?.downloadsUsed || 0) || 0);
+  // v1109: preserve an explicit 0/5 instead of falling through to stale aliases.
+  const raw=x?.downloadCount ?? x?.usedCount ?? x?.downloadsUsed ?? 0;
+  return Math.max(0, Number(raw) || 0);
 }
 function azAdminMaxDownloads(x){
   const n=Number(x?.maxDownloads || x?.maxDownload || 0) || 0;
@@ -6908,8 +6910,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1090"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1090"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1109"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1109"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">

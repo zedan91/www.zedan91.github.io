@@ -2535,7 +2535,12 @@ function azobssPurchaseDownloadMax(r){
   return max > 0 ? max : AZOBSS_PA_BM_MAX_DOWNLOADS;
 }
 function azobssPurchaseDownloadCount(r){
-  return Math.max(0, Number(r?.downloadCount || r?.usedCount || 0));
+  // v1109: 0 is a real counter value. Using `||` made downloadCount:0 fall
+  // through to a stale legacy usedCount/downloadsUsed value (often 1), so the
+  // first download after 0/5 could be written as 2/5.
+  const raw = r?.downloadCount ?? r?.usedCount ?? r?.downloadsUsed ?? 0;
+  const value = Number(raw);
+  return Math.max(0, Number.isFinite(value) ? value : 0);
 }
 function azobssPurchaseDownloadExpiresAtMs(r){
   const explicit = Number(r?.downloadExpiresAtMs || r?.expiresAtMs || 0)
