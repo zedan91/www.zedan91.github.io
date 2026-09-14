@@ -4482,6 +4482,10 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     directUrl += (directUrl.includes('?') ? '&' : '?') + 'downloadAttemptId=' + encodeURIComponent(downloadAttemptId);
   }
 
+  // v1114: distinguish a real failed request from an error that happens
+  // after the browser download has already been triggered.
+  let downloadTriggered = false;
+
   const downloadOwner = {
     key: downloadKey || directUrl,
     link: link || null,
@@ -4680,6 +4684,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     a.download = filename || 'download';
     document.body.appendChild(a);
     a.click();
+    downloadTriggered = true;
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 15000);
 
@@ -4688,7 +4693,11 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     return false;
   }catch(error){
     console.error('Controlled download failed:', error);
-    alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
+    if(!downloadTriggered){
+      alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
+    }else{
+      console.warn('AZOBSS download was already triggered; suppressing misleading post-download error popup.');
+    }
     return false;
   }finally{
     if(window.__azobssPaBmActiveDownload === downloadOwner){
@@ -4732,7 +4741,13 @@ window.azobssClientControlledDownload = azobssClientControlledDownload;
     }catch(e){}
     if(window.azobssClientControlledDownload){
       if(payload){
-        window.azobssClientControlledDownload(payload, link, ev);
+        // v1114: this capture handler is the single click owner.
+        // Mark the DOM element immediately so no second path can start the same click.
+        if(link.dataset && link.dataset.azobssClickClaimed === '1') return false;
+        if(link.dataset) link.dataset.azobssClickClaimed = '1';
+        Promise.resolve(window.azobssClientControlledDownload(payload, link, ev)).finally(function(){
+          try{ if(link && link.dataset) delete link.dataset.azobssClickClaimed; }catch(_e){}
+        });
       }else{
         // Legacy safety: never let Android/Chrome download AZOBSS JSON fallback as .pdf.json.
         link.removeAttribute('download');
@@ -4952,13 +4967,13 @@ function purchaseDetailRowHtml(r){
         const active = !!(activeDownload && activeDownload.key === payload);
         const lockedByOther = !!(activeDownload && !active);
         const shownLabel = active ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : escHtml(def.label);
-        return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${payload}', this, event); } return false;">${shownLabel}</a>`;
+        return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a>`;
       }).join('');
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }else{
       const readyLabel = '↓';
       const shownLabel = isActiveDownload ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : readyLabel;
-      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-generic-download-action-v955"><span class="az-lot-download-format-group"><a class="user-pa-download az-lot-format-download az-lot-format-original az-generic-download-button-v955" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} if(window.azobssClientControlledDownload){ window.azobssClientControlledDownload('${paidDownloadPayload}', this, event); } return false;">${shownLabel}</a></span>${dlMetaHtml}${adminResetHtml}</div>`;
+      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-generic-download-action-v955"><span class="az-lot-download-format-group"><a class="user-pa-download az-lot-format-download az-lot-format-original az-generic-download-button-v955" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a></span>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else if(paid){
     if(limitReached){
