@@ -204,7 +204,7 @@ function normalizePhoneNumber(phone, countryCode="+60"){
 // AZOBSS Global Auth (single source of truth for all pages)
 // Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCredential, setPersistence, browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, signOut, updatePassword, updateProfile, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser, unlink, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCredential, setPersistence, browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, signOut, updatePassword, updateProfile, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser, unlink, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, deleteField, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot, orderBy} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -411,7 +411,7 @@ function injectModal() {
         </label>
         <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
         <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
-        <p class="auth-reset-note">Enter your AZOBSS username or registered email. Firebase will send a password reset link to the registered account email.</p>
+        <p class="auth-reset-note">Enter your AZOBSS username or registered email. A password reset link will be sent to the registered account email. If the account currently uses Google only, sign in with Google first and use Settings → Add Password Sign-In.</p>
       </div>
       <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
     </form>
@@ -439,6 +439,7 @@ function injectModal() {
       </label>
       <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
       <p class="request-error" id="siteSignupError"></p>
+      <button class="btn secondary" id="siteEnablePasswordWithGoogleButton" type="button" hidden>Verify Google & Enable Password Login</button>
       <button class="btn signup" type="submit">Create Account</button>
       <div class="auth-google-divider"><span>or</span></div>
       <button class="auth-google-btn" id="siteGoogleSignUpButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Sign up with Google</span></button>
@@ -1391,12 +1392,12 @@ function injectProfileSettingsModal() {
         <button class="btn secondary" id="profileRedeemReferralCodeButton" type="button">Redeem Invite Code</button>
         <div id="profileReferralStatus" class="auth-reset-note"></div>
       </div>
-      <div class="profile-password-box" aria-label="Reset Password">
-        <p class="profile-password-title">Reset Password</p>
-        <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
-        <label for="profileCurrentPassword">Current Password<input id="profileCurrentPassword" autocomplete="current-password" placeholder="Current password" type="password"></label>
-        <label for="profileNewPassword">New Password<input id="profileNewPassword" autocomplete="new-password" minlength="6" placeholder="Minimum 6 characters" type="password"></label>
-        <label for="profileConfirmPassword">Confirm New Password<input id="profileConfirmPassword" autocomplete="new-password" minlength="6" placeholder="Re-enter new password" type="password"></label>
+      <div class="profile-password-box" id="profilePasswordBox" aria-label="Password Sign-In">
+        <p class="profile-password-title" id="profilePasswordTitle">Reset Password</p>
+        <p class="profile-password-help" id="profilePasswordHelp">For security, enter your current password first, then set a new password.</p>
+        <label for="profileCurrentPassword" id="profileCurrentPasswordLabel">Current Password<input id="profileCurrentPassword" autocomplete="current-password" placeholder="Current password" type="password"></label>
+        <label for="profileNewPassword">New Password<input id="profileNewPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters" type="password"></label>
+        <label for="profileConfirmPassword">Confirm New Password<input id="profileConfirmPassword" autocomplete="new-password" minlength="8" placeholder="Re-enter new password" type="password"></label>
         <button class="btn secondary" id="profileResetPasswordButton" type="button">Reset Password</button>
       </div>
       <p class="request-error" id="profileSettingsError"></p>
@@ -1831,6 +1832,7 @@ function openProfileSettings(){
   if($('profileReferralRedeemCode')) $('profileReferralRedeemCode').value='';
   if($('profileMembershipStatus')) $('profileMembershipStatus').textContent=azobssMembershipStatusText(user);
   ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  azobssSyncProfilePasswordMode();
   modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
   loadAzobssMembershipPanel(); loadAzobssReferralPanel();
 }
@@ -1982,6 +1984,32 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 
 function isGoogleFirebaseUser(firebaseUser){
   try{return Array.isArray(firebaseUser?.providerData)&&firebaseUser.providerData.some(p=>String(p?.providerId||'')==='google.com')}catch(_){return false}
+}
+function azobssAuthProviderIds(firebaseUser){
+  try{return Array.from(new Set((firebaseUser?.providerData||[]).map(p=>String(p?.providerId||'').trim()).filter(Boolean)))}catch(_){return []}
+}
+function azobssHasPasswordProvider(firebaseUser){
+  return azobssAuthProviderIds(firebaseUser).includes('password');
+}
+function azobssSyncProfilePasswordMode(){
+  const user=auth?.currentUser||null;
+  const hasPassword=azobssHasPasswordProvider(user);
+  const hasGoogle=isGoogleFirebaseUser(user);
+  const title=$('profilePasswordTitle');
+  const help=$('profilePasswordHelp');
+  const currentLabel=$('profileCurrentPasswordLabel');
+  const button=$('profileResetPasswordButton');
+  if(hasGoogle&&!hasPassword){
+    if(title)title.textContent='Add Password Sign-In';
+    if(help)help.textContent='This account currently uses Google Sign-In only. Set a password once to allow both Google and email/password login on the same AZOBSS account.';
+    if(currentLabel)currentLabel.hidden=true;
+    if(button)button.textContent='Enable Password Login';
+  }else{
+    if(title)title.textContent='Reset Password';
+    if(help)help.textContent='For security, enter your current password first, then set a new password.';
+    if(currentLabel)currentLabel.hidden=false;
+    if(button)button.textContent='Reset Password';
+  }
 }
 function azobssFirebaseUserLooksExisting(firebaseUser){
   try{
@@ -6496,14 +6524,21 @@ function bindAuth() {
 
 
 
-  $('siteForgotPasswordButton')?.addEventListener('click', (event)=>{
-    event.preventDefault();
-    const box=$('siteForgotPasswordBox');
-    const err=$('siteLoginError');
-    if(err) err.textContent='';
-    if(box) box.hidden = !box.hidden;
-    setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 80);
-  });
+  {
+    const forgotButton=$('siteForgotPasswordButton');
+    if(forgotButton && forgotButton.dataset.azobssForgotBound!=='1'){
+      forgotButton.dataset.azobssForgotBound='1';
+      forgotButton.addEventListener('click', (event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        const box=$('siteForgotPasswordBox');
+        const err=$('siteLoginError');
+        if(err) err.textContent='';
+        if(box) box.hidden = !box.hidden;
+        setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 80);
+      });
+    }
+  }
 
   $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
     event.preventDefault();
@@ -6544,6 +6579,8 @@ function bindAuth() {
     event.preventDefault();
     if(event.stopImmediatePropagation) event.stopImmediatePropagation();
     const err=$('siteSignupError'); if(err) err.textContent='';
+    const enablePasswordGoogleButton=$('siteEnablePasswordWithGoogleButton');
+    if(enablePasswordGoogleButton) enablePasswordGoogleButton.hidden=true;
     let usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
     const password=fieldValue('siteSignupPassword');
     const phone=getSignupPhoneWithDial();
@@ -6575,13 +6612,21 @@ function bindAuth() {
       // We now try the safe username lookup first, and ignore blocked pre-check reads.
       const existingAuthEmail = await getAuthEmailForUsername(usernameKey);
       if(existingAuthEmail){
-        if(err) err.textContent='Username already exists. Please choose another username.';
+        if(String(existingAuthEmail).trim().toLowerCase()===email){
+          if(err) err.textContent='This AZOBSS username/email already exists. If it is your Google account, verify Google once below to enable password login on the SAME account.';
+          const linkBtn=$('siteEnablePasswordWithGoogleButton'); if(linkBtn) linkBtn.hidden=false;
+        }else if(err) err.textContent='Username already exists. Please choose another username.';
         return;
       }
       try{
         const existingUsername = await getDoc(doc(db,'users',usernameKey));
         if(existingUsername.exists()){
-          if(err) err.textContent='Username already exists. Please choose another username.';
+          const existingData=existingUsername.data()||{};
+          const existingEmail=String(existingData.authEmail||existingData.email||existingData.googleEmail||'').trim().toLowerCase();
+          if(existingEmail&&existingEmail===email){
+            if(err) err.textContent='This AZOBSS username/email already exists. Verify Google once below to enable password login on the SAME account.';
+            const linkBtn=$('siteEnablePasswordWithGoogleButton'); if(linkBtn) linkBtn.hidden=false;
+          }else if(err) err.textContent='Username already exists. Please choose another username.';
           return;
         }
       }catch(precheckError){
@@ -6700,7 +6745,11 @@ function bindAuth() {
       if(err){
         err.style.color='';
         const code = String(error?.code || '');
-        if(code === 'auth/email-already-in-use') err.textContent = 'This email is already registered. Please use Sign in or Forgot Password.';
+        if(code === 'auth/email-already-in-use'){
+          err.textContent = 'This email is already registered. If it is your Google account, verify Google once below to enable BOTH Google and password login on the same account. If password login is already enabled, use Sign in or Forgot Password.';
+          const linkBtn=$('siteEnablePasswordWithGoogleButton');
+          if(linkBtn) linkBtn.hidden=false;
+        }
         else if(code === 'auth/invalid-email') err.textContent = 'Invalid email address. Please check your email.';
         else if(code === 'auth/weak-password') err.textContent = 'Password is too weak. Use at least 8 characters with uppercase, lowercase and number.';
         else if(code === 'permission-denied') err.textContent = 'Firebase permission blocked one step. Publish the included Firestore rules, then login with your Gmail email first.';
@@ -6716,6 +6765,82 @@ function bindAuth() {
     }
   });
 
+  $('siteEnablePasswordWithGoogleButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('siteSignupError');
+    const btn=$('siteEnablePasswordWithGoogleButton');
+    const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
+    const password=String(fieldValue('siteSignupPassword')||'');
+    const requestedUsername=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
+    const phone=normalizeAzobssPhone(getSignupPhoneWithDial()||'');
+    if(!email||!email.includes('@')){if(err)err.textContent='Enter the registered Google email first.';return;}
+    if(password.length<8){if(err)err.textContent='Enter the password you want to use (minimum 8 characters).';return;}
+    const original=btn?.textContent||'Verify Google & Enable Password Login';
+    try{
+      window.__AZOBSS_GOOGLE_AUTH_FLOW__=true;
+      if(btn){btn.disabled=true;btn.textContent='Opening Google...';}
+      if(err){err.style.color='#ffd54a';err.textContent='Verify ownership with the SAME Google email. AZOBSS will link password login to that existing account; it will not create a second Firebase user.';}
+      try{if(auth.currentUser)await signOut(auth)}catch(_e){}
+      await setPersistence(auth,browserLocalPersistence);
+      const provider=new GoogleAuthProvider();
+      provider.setCustomParameters({login_hint:email,prompt:'select_account'});
+      const result=await signInWithPopup(auth,provider);
+      const firebaseUser=result.user;
+      const identity=azobssGoogleProviderIdentity(firebaseUser,result,{});
+      if(String(identity.email||'').trim().toLowerCase()!==email){
+        try{await signOut(auth)}catch(_e){}
+        throw Object.assign(new Error('Please choose the same Google account: '+email),{code:'azobss/google-email-mismatch'});
+      }
+      try{await firebaseUser.reload()}catch(_e){}
+      const liveUser=auth.currentUser||firebaseUser;
+      if(azobssHasPasswordProvider(liveUser)){
+        if(err){err.style.color='#62e6a5';err.textContent='This Firebase account already supports password login. Use Sign in, or Forgot Password if you do not remember the password.';}
+        if(btn)btn.hidden=true;
+        return;
+      }
+      const passwordCredential=EmailAuthProvider.credential(email,password);
+      const linked=await linkWithCredential(liveUser,passwordCredential);
+      const linkedUser=linked.user||liveUser;
+      try{await linkedUser.reload()}catch(_e){}
+
+      let profile=null;
+      try{profile=await azobssGetTrustedAlreadyLinkedGoogleProfile(linkedUser,identity)}catch(_e){}
+      if(!profile){
+        try{profile=await findExistingUserProfileForAuth(linkedUser)}catch(_e){}
+      }
+      if(!profile||profile._profileMissing){
+        profile=await ensureUserProfile(linkedUser,{usernameKey:requestedUsername,email,phone});
+      }
+      const profileKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||requestedUsername||'');
+      if(profileKey){
+        const patch={passwordLoginEnabled:true,passwordLinkedAt:serverTimestamp(),updatedAt:serverTimestamp()};
+        if(phone&&!normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'')){patch.phone=phone;patch.phoneNumber=phone;}
+        try{await setDoc(doc(db,'users',profileKey),patch,{merge:true});profile={...profile,...patch,...(patch.phone?{phone:patch.phone,phoneNumber:patch.phoneNumber}:{})};}catch(_e){}
+        try{await saveUsernameAuthEmail(profileKey,email,linkedUser.uid)}catch(_e){}
+      }
+      if(err){err.style.color='#62e6a5';err.textContent='✅ Password login enabled on the SAME account. You can now sign in with Google OR '+email+' + your password.';}
+      if(btn)btn.hidden=true;
+      try{resetAzobssCaptcha($('siteSignUpForm'));}catch(_e){}
+      if(profileKey&&profile&&!profile._profileMissing){
+        try{await finalizeGoogleSession(linkedUser,{...profile,usernameKey:profileKey,authEmail:email,email:profile.email||email,authProvider:'password+google.com',googleAuthLinked:true,googleSignIn:true});}catch(_e){}
+      }
+    }catch(error){
+      console.warn('AZOBSS enable password with Google failed:',error?.code||error?.message||error);
+      if(err){
+        err.style.color='';
+        const code=String(error?.code||'');
+        if(code==='auth/popup-closed-by-user')err.textContent='Google verification was cancelled. No account changes were made.';
+        else if(code==='auth/popup-blocked')err.textContent='Google popup was blocked. Allow popups for azobss.com and try again.';
+        else if(code==='auth/provider-already-linked')err.textContent='Password login is already linked. Use Sign in or Forgot Password.';
+        else if(code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')err.textContent='These password credentials are already attached to another Firebase account. Use Sign in / Forgot Password instead of creating another account.';
+        else err.textContent=error?.message||'Unable to enable password login. Please try again.';
+      }
+    }finally{
+      window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+      if(btn){btn.disabled=false;btn.textContent=original;}
+    }
+  });
+
   $('profileResetPasswordButton')?.addEventListener('click', async (event)=>{
     event.preventDefault();
     const err=$('profileSettingsError'); if(err) err.textContent='';
@@ -6724,18 +6849,46 @@ function bindAuth() {
     const confirmPassword=String($('profileConfirmPassword')?.value||'');
     const saved=getSavedUser() || {};
     let usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
-    if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before reset password.'; return; }
-    if(!currentPassword || !newPassword || !confirmPassword){ if(err) err.textContent='Please enter current password and new password.'; return; }
+    if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before changing password sign-in.'; return; }
+    const googleOnly=isGoogleFirebaseUser(auth.currentUser)&&!azobssHasPasswordProvider(auth.currentUser);
+    if(!newPassword || !confirmPassword || (!googleOnly&&!currentPassword)){ if(err) err.textContent=googleOnly?'Please enter and confirm the new password.':'Please enter current password and new password.'; return; }
     if(newPassword.length < 8){ if(err) err.textContent='New password must be at least 8 characters.'; return; }
     if(newPassword !== confirmPassword){ if(err) err.textContent='Confirm password does not match.'; return; }
     try{
+      if(googleOnly){
+        const email=String(auth.currentUser.email||saved.authEmail||saved.email||'').trim().toLowerCase();
+        if(!email)throw new Error('No verified email is available for this Google account.');
+        const credential=EmailAuthProvider.credential(email,newPassword);
+        try{
+          await linkWithCredential(auth.currentUser,credential);
+        }catch(linkError){
+          if(String(linkError?.code||'')==='auth/requires-recent-login'){
+            const provider=new GoogleAuthProvider();provider.setCustomParameters({login_hint:email,prompt:'select_account'});
+            await reauthenticateWithPopup(auth.currentUser,provider);
+            await linkWithCredential(auth.currentUser,credential);
+          }else throw linkError;
+        }
+        try{await auth.currentUser.reload()}catch(_e){}
+        try{await setDoc(doc(db,'users',usernameKey),{passwordLoginEnabled:true,passwordLinkedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});}catch(_e){}
+        ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+        azobssSyncProfilePasswordMode();
+        if(err){ err.style.color='#62e6a5'; err.textContent='Password login enabled. You can now use either Google Sign-In or email/password for this same account.'; }
+        return;
+      }
       const credential=EmailAuthProvider.credential(auth.currentUser.email || buildUserEmail(usernameKey), currentPassword);
       await reauthenticateWithCredential(auth.currentUser, credential);
       await updatePassword(auth.currentUser, newPassword);
       ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
       if(err){ err.style.color='#62e6a5'; err.textContent='Password updated successfully.'; setTimeout(()=>{ if(err.textContent==='Password updated successfully.'){ err.textContent=''; err.style.color=''; } }, 3500); }
     }catch(error){
-      if(err){ err.style.color=''; err.textContent = error?.code==='auth/wrong-password' || error?.code==='auth/invalid-credential' ? 'Current password is wrong.' : 'Password reset failed. Please login again and try.'; }
+      if(err){
+        err.style.color='';
+        const code=String(error?.code||'');
+        if(code==='auth/wrong-password'||code==='auth/invalid-credential')err.textContent='Current password is wrong.';
+        else if(code==='auth/provider-already-linked')err.textContent='Password login is already enabled for this account.';
+        else if(code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')err.textContent='This email/password credential is already attached to another Firebase user. Contact admin before merging accounts.';
+        else err.textContent='Password update failed: '+(error?.message||'Please login again and try.');
+      }
     }
   });
 
@@ -7111,19 +7264,6 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if (event.key === 'Escape') closeMenus();
   }, true);
 })();
-
-
-// AZOBSS fallback forgot-password click fix
-document.addEventListener('click',function(e){
- const btn=e.target.closest('#siteForgotPasswordButton');
- if(!btn) return;
- e.preventDefault();
- const box=document.getElementById('siteForgotPasswordBox');
- const err=document.getElementById('siteLoginError');
- if(err) err.textContent='';
- if(box) box.hidden=!box.hidden;
-});
-
 
 
 

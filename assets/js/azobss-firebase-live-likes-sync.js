@@ -4794,14 +4794,21 @@ function bindAuth() {
 
 
 
-  $('siteForgotPasswordButton')?.addEventListener('click', (event)=>{
-    event.preventDefault();
-    const box=$('siteForgotPasswordBox');
-    const err=$('siteLoginError');
-    if(err) err.textContent='';
-    if(box) box.hidden = !box.hidden;
-    setTimeout(()=>{ try{ $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 50);
-  });
+  {
+    const forgotButton=$('siteForgotPasswordButton');
+    if(forgotButton && forgotButton.dataset.azobssForgotBound!=='1'){
+      forgotButton.dataset.azobssForgotBound='1';
+      forgotButton.addEventListener('click', (event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        const box=$('siteForgotPasswordBox');
+        const err=$('siteLoginError');
+        if(err) err.textContent='';
+        if(box) box.hidden = !box.hidden;
+        setTimeout(()=>{ try{ $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 50);
+      });
+    }
+  }
 
   $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
     if(window.__AZOBSS_MAIN_AUTH_HANDLER_ACTIVE__) return;
