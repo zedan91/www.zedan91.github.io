@@ -30,21 +30,25 @@
 
   // v1115: PA searches on every map are explicit. `pa2131` and `PA2131`
   // normalize to PA2131; a bare `2131` remains a Nombor Lot search.
+  // v1120: PA/BM/SBM/GPS search also accepts Malaysian place names with
+  // autocomplete suggestions using the same geocoder as Peta Lot Kadaster.
   // v1116: PA/BM/SBM/GPS cadastral overlays load only the active state's
   // JUPEM layer, retry transient tile failures, and re-fit the selected PA lot
   // after modal sizing so the complete lot boundary is visible without manual zoom-out.
   function normalizePaMapReference(value) {
     const raw = String(value || '').trim();
-    if (!/^pa/i.test(raw)) return { value: raw, isPa: false, invalidPa: false };
     const match = raw.match(/^pa\s*[:#-]?\s*(\d{1,12})\s*$/i);
-    if (!match) return { value: raw, isPa: true, invalidPa: true };
-    return { value: `PA${match[1]}`, isPa: true, invalidPa: false };
+    if (match) return { value: `PA${match[1]}`, isPa: true, invalidPa: false };
+    // v1120: place names such as Pasir Gudang / Paka / Parit Buntar must not
+    // be mistaken for a malformed PA merely because they begin with the letters PA.
+    if (/^pa\s*[:#-]?\s*\d/i.test(raw)) return { value: raw, isPa: true, invalidPa: true };
+    return { value: raw, isPa: false, invalidPa: false };
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1108')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1120')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1108';
+    style.id = 'azobssPabmMapSearchStyles1120';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -72,6 +76,14 @@
       .az-pabm-map-searchform button.is-loading{display:inline-flex;align-items:center;justify-content:center;gap:7px}
       .az-pabm-map-searchform button.is-loading::before{content:"";width:13px;height:13px;flex:0 0 13px;border:2px solid rgba(255,255,255,.42);border-top-color:#fff;border-radius:50%;animation:az-pabm-spin .72s linear infinite}
       .az-pabm-map-searchhint{margin:5px 2px 0;color:#334155;font-size:11px;line-height:1.25}
+      .az-pabm-location-suggestions{margin:6px 0 0;max-height:230px;overflow:auto;border:1px solid #94a3b8;border-radius:6px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.22)}
+      .az-pabm-location-suggestions[hidden]{display:none!important}
+      .az-pabm-location-option{display:block;width:100%;padding:8px 9px;border:0;border-bottom:1px solid #e2e8f0;background:#fff;color:#0f172a;text-align:left;cursor:pointer}
+      .az-pabm-location-option:last-child{border-bottom:0}
+      .az-pabm-location-option:hover,.az-pabm-location-option.is-active{background:#eff6ff}
+      .az-pabm-location-option strong{display:block;font-size:12px;line-height:1.25}
+      .az-pabm-location-option span{display:block;margin-top:2px;color:#64748b;font-size:10px;line-height:1.3}
+      .az-pabm-location-attribution{padding:5px 8px;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:9px;text-align:right}
       .az-pabm-map-side{min-height:0;display:flex;flex-direction:column;border-left:1px solid #2d405b;background:#0f1b2e}
       .az-pabm-map-status{position:relative;padding:10px 12px;border-bottom:1px solid #263951;color:#bfd0e6;font-size:12px;line-height:1.35;background:#111f34;overflow:hidden}
       .az-pabm-map-status.is-loading{padding-left:38px;color:#dbeafe;background:#10213a;font-weight:800}
@@ -203,6 +215,187 @@
     return String(value || '').trim().replace(/^\s*(?:NO\.?\s*)?LOT\s*/i, '').replace(/[^A-Za-z0-9/_-]/g, '').slice(0, 48);
   }
 
+
+  // v1120: shared PA/BM/SBM/GPS map search classification. Anything that is
+  // not an explicit PA, WGS84 or Lot reference is treated as a Malaysian place
+  // name and resolved through the same backend geocoder used by Lot Kadaster.
+  function classifyPabmMapQuery(value) {
+    const raw = String(value || '').replace(/\s+/g, ' ').trim();
+    if (!raw) return { kind: 'empty', raw, value: '' };
+    const paRef = normalizePaMapReference(raw);
+    if (paRef.invalidPa) return { kind: 'invalid-pa', raw, value: raw };
+    if (paRef.isPa) return { kind: 'pa', raw, value: paRef.value };
+    const coordinate = parseCoordinates(raw);
+    if (coordinate) return { kind: 'coordinate', raw, value: raw, coordinate };
+    if (/^\s*(?:NO\.?\s*)?LOT\b/i.test(raw)) {
+      const lot = cleanLotQuery(raw);
+      return lot ? { kind: 'lot', raw, value: lot } : { kind: 'empty', raw, value: '' };
+    }
+    if (/^\d{1,12}$/.test(raw)) return { kind: 'lot', raw, value: cleanLotQuery(raw) };
+    return { kind: 'location', raw, value: raw };
+  }
+
+  function suggestionCoordinate(row) {
+    const lat = Number(row && (row.latitude ?? row.lat));
+    const lng = Number(row && (row.longitude ?? row.lng));
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  }
+
+  async function fetchPlaceSuggestions(query, stateCode, productCode, signal) {
+    const clean = String(query || '').replace(/\s+/g, ' ').trim();
+    if (clean.length < 3) return [];
+    const params = new URLSearchParams({
+      q: clean,
+      negeri: String(stateCode || '').padStart(2, '0'),
+      produk: String(productCode || '1') === '2' ? '2' : '1'
+    });
+    const data = await fetchJson(`${BACKEND_BASE}/api/map-location-suggestions?${params.toString()}`, signal);
+    return (Array.isArray(data.results) ? data.results : []).filter((row) => suggestionCoordinate(row));
+  }
+
+  async function resolveFirstPlace(query, stateCode, productCode, signal) {
+    const rows = await fetchPlaceSuggestions(query, stateCode, productCode, signal);
+    if (!rows.length) throw new Error(`Tiada nama tempat ditemui untuk “${String(query || '').trim()}”.`);
+    const row = rows[0];
+    return {
+      row,
+      coordinate: suggestionCoordinate(row),
+      label: String(row.name || row.label || query || 'Lokasi').trim(),
+      detail: String(row.detail || row.label || '').trim()
+    };
+  }
+
+  function installPlaceAutocomplete(ui, options) {
+    if (!ui || !ui.input || !ui.suggestions) return { hide() {}, cleanup() {} };
+    const stateCodeProvider = typeof options?.stateCode === 'function' ? options.stateCode : () => options?.stateCode;
+    const productCodeProvider = typeof options?.productCode === 'function' ? options.productCode : () => options?.productCode || '1';
+    const onSelect = typeof options?.onSelect === 'function' ? options.onSelect : () => {};
+    let timer = null;
+    let controller = null;
+    let rows = [];
+    let activeIndex = -1;
+    let serial = 0;
+
+    function hide(clearRows = true) {
+      if (clearRows) rows = [];
+      activeIndex = -1;
+      ui.suggestions.hidden = true;
+      ui.suggestions.replaceChildren();
+      ui.input.setAttribute('aria-expanded', 'false');
+    }
+
+    function paintActive() {
+      ui.suggestions.querySelectorAll('.az-pabm-location-option').forEach((node, index) => {
+        node.classList.toggle('is-active', index === activeIndex);
+      });
+    }
+
+    function choose(index) {
+      const row = rows[index];
+      const coordinate = suggestionCoordinate(row);
+      if (!row || !coordinate) return;
+      const label = String(row.name || row.label || '').trim();
+      ui.input.value = label || String(row.label || '').trim();
+      hide(false);
+      onSelect(row, coordinate);
+    }
+
+    function render(nextRows) {
+      rows = Array.isArray(nextRows) ? nextRows : [];
+      activeIndex = -1;
+      ui.suggestions.replaceChildren();
+      if (!rows.length) {
+        hide(false);
+        return;
+      }
+      rows.slice(0, 8).forEach((row, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'az-pabm-location-option';
+        button.setAttribute('role', 'option');
+        const title = document.createElement('strong');
+        title.textContent = String(row.name || row.label || 'Lokasi');
+        const detail = document.createElement('span');
+        detail.textContent = String(row.detail || row.label || 'Malaysia');
+        button.append(title, detail);
+        button.addEventListener('mousedown', (event) => event.preventDefault());
+        button.addEventListener('click', () => choose(index));
+        ui.suggestions.appendChild(button);
+      });
+      const attribution = document.createElement('div');
+      attribution.className = 'az-pabm-location-attribution';
+      attribution.textContent = 'Carian lokasi: © OpenStreetMap contributors';
+      ui.suggestions.appendChild(attribution);
+      ui.suggestions.hidden = false;
+      ui.input.setAttribute('aria-expanded', 'true');
+    }
+
+    async function search(value) {
+      const query = classifyPabmMapQuery(value);
+      if (query.kind !== 'location' || query.value.length < 3) {
+        hide(true);
+        return;
+      }
+      if (controller) controller.abort();
+      controller = new AbortController();
+      const currentSerial = ++serial;
+      try {
+        const found = await fetchPlaceSuggestions(query.value, stateCodeProvider(), productCodeProvider(), controller.signal);
+        if (currentSerial !== serial) return;
+        render(found);
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        if (currentSerial !== serial) return;
+        hide(true);
+      }
+    }
+
+    function onInput() {
+      if (timer) window.clearTimeout(timer);
+      if (controller) controller.abort();
+      hide(true);
+      const query = classifyPabmMapQuery(ui.input.value);
+      if (query.kind !== 'location' || query.value.length < 3) return;
+      timer = window.setTimeout(() => search(query.value), 420);
+    }
+
+    function onKeyDown(event) {
+      if (ui.suggestions.hidden || !rows.length) return;
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        activeIndex = (activeIndex + 1) % rows.length;
+        paintActive();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeIndex = (activeIndex - 1 + rows.length) % rows.length;
+        paintActive();
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        choose(activeIndex >= 0 ? activeIndex : 0);
+      } else if (event.key === 'Escape') {
+        hide(true);
+      }
+    }
+
+    function onDocumentPointer(event) {
+      if (!ui.modal.contains(event.target) || !event.target.closest('.az-pabm-map-searchbox')) hide(true);
+    }
+
+    ui.input.addEventListener('input', onInput);
+    ui.input.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onDocumentPointer);
+
+    function cleanup() {
+      if (timer) window.clearTimeout(timer);
+      if (controller) controller.abort();
+      ui.input.removeEventListener('input', onInput);
+      ui.input.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onDocumentPointer);
+    }
+    ui.modal._azobssPlaceAutocompleteCleanup = cleanup;
+    return { hide, cleanup, search };
+  }
+
   function setInlineStatus(element, text, kind) {
     if (!element) return;
     element.textContent = text || '';
@@ -223,6 +416,9 @@
       activeController = null;
     }
     if (!activeModal) return;
+    try {
+      if (typeof activeModal._azobssPlaceAutocompleteCleanup === 'function') activeModal._azobssPlaceAutocompleteCleanup();
+    } catch (_) {}
     try {
       if (activeModal._azobssMap) activeModal._azobssMap.remove();
     } catch (_) {}
@@ -246,9 +442,10 @@
             <div class="az-pabm-map-canvas"></div>
             <div class="az-pabm-map-searchbox">
               <form class="az-pabm-map-searchform">
-                <input type="search" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(placeholder)}">
+                <input type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" placeholder="${escapeHtml(placeholder)}">
                 <button type="submit">Cari</button>
               </form>
+              <div class="az-pabm-location-suggestions" role="listbox" hidden></div>
               <div class="az-pabm-map-searchhint">${escapeHtml(hint)}</div>
             </div>
           </div>
@@ -276,6 +473,7 @@
       form: modal.querySelector('.az-pabm-map-searchform'),
       input: modal.querySelector('.az-pabm-map-searchform input'),
       searchButton: modal.querySelector('.az-pabm-map-searchform button'),
+      suggestions: modal.querySelector('.az-pabm-location-suggestions'),
       status: modal.querySelector('.az-pabm-map-status'),
       results: modal.querySelector('.az-pabm-map-results'),
       detail: modal.querySelector('.az-pabm-map-detail'),
@@ -521,7 +719,7 @@
     }
     const value = String(initialValue || '').trim();
     if (!value) {
-      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 terlebih dahulu.', 'error');
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx, WGS84 atau nama tempat terlebih dahulu.', 'error');
       document.getElementById('paMapSearchInput')?.focus();
       return;
     }
@@ -531,9 +729,9 @@
     addStyles();
     const ui = createModal(
       'Peta Pilihan PA',
-      `${state} • Cari Nombor Lot / PAxxxx / WGS84`,
-      'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      'Klik lot yang ditemui untuk lihat maklumat. Klik sekali lokasi pada peta untuk menetapkan titik carian WGS84 baharu.'
+      `${state} • Cari Nombor Lot / PAxxxx / WGS84 / Nama Tempat`,
+      'Contoh: Lot 1122 / PA2131 / Shah Alam / 3.1390, 101.6869',
+      'Boleh cari nama tempat seperti Shah Alam atau Pasir Gudang. Pilih cadangan lokasi, atau klik sekali pada peta untuk menetapkan titik carian WGS84 baharu.'
     );
     ui.input.value = value;
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView([4.2, 102.1], 7);
@@ -591,19 +789,19 @@
       }
     }
 
-    function renderRows(newRows, coordinate, preserveViewport = false) {
+    function renderRows(newRows, coordinate, preserveViewport = false, locationLabel = '') {
       layerGroup.clearLayers();
       rows = Array.isArray(newRows) ? newRows : [];
       clearSelection();
       if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} targetMarker = null; }
       if (coordinate) {
-        targetMarker = createSearchTargetMarker(L, map, coordinate, 'Lokasi carian');
+        targetMarker = createSearchTargetMarker(L, map, coordinate, locationLabel || 'Lokasi carian');
       }
       if (!rows.length) {
         ui.results.innerHTML = '<div class="az-pabm-map-empty">Tiada lot / PA ditemui pada carian ini. Cuba klik sedikit ke dalam sempadan lot atau semak negeri yang dipilih.</div>';
         if (coordinate) {
           if (preserveViewport) map.setView([coordinate.lat, coordinate.lng], map.getZoom(), { animate: false });
-          else map.setView([coordinate.lat, coordinate.lng], 17);
+          else map.setView([coordinate.lat, coordinate.lng], locationLabel ? 15 : 17);
         }
         return;
       }
@@ -664,32 +862,49 @@
       }
     }
 
-    async function runSearch(searchValue, explicitCoordinate, preserveViewport = false) {
+    async function runSearch(searchValue, explicitCoordinate, preserveViewport = false, explicitLocationLabel = '') {
       const raw = String(searchValue || '').trim();
-      const paRef = normalizePaMapReference(raw);
-      if (paRef.invalidPa) {
+      const query = classifyPabmMapQuery(raw);
+      if (query.kind === 'invalid-pa') {
         setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
         return;
       }
-      const normalized = paRef.isPa ? paRef.value : raw;
-      const looksLikeLot = !paRef.isPa && (/^\s*(?:NO\.?\s*)?LOT\b/i.test(raw) || (raw.includes('/') && !raw.includes(',')));
-      const coordinate = explicitCoordinate || ((!paRef.isPa && !looksLikeLot) ? parseCoordinates(raw) : null);
-      const lot = coordinate || paRef.isPa ? '' : cleanLotQuery(raw);
-      if (!coordinate && !lot && !paRef.isPa) {
-        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 yang sah.', 'error');
+      if (query.kind === 'empty') {
+        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx, WGS84 atau nama tempat.', 'error');
         return;
       }
-      if (paRef.isPa) ui.input.value = normalized;
+
       if (activeController) { try { activeController.abort(); } catch (_) {} }
       activeController = new AbortController();
-      setSearchBusy(ui, true, paRef.isPa ? 'Mencari PA...' : 'Mencari Lot...');
-      setModalStatus(ui, coordinate ? 'Mencari lot pada koordinat WGS84...' : (paRef.isPa ? `Mencari ${normalized}...` : `Mencari Lot ${lot}...`), 'loading');
+
+      let coordinate = explicitCoordinate || (query.kind === 'coordinate' ? query.coordinate : null);
+      let locationMatch = null;
+      let locationLabel = explicitLocationLabel || '';
+      const normalized = query.kind === 'pa' ? query.value : raw;
+      const lot = query.kind === 'lot' ? query.value : '';
+
       try {
+        if (!coordinate && query.kind === 'location') {
+          setSearchBusy(ui, true, 'Mencari lokasi...');
+          setModalStatus(ui, `Mencari nama tempat “${query.value}”...`, 'loading');
+          locationMatch = await resolveFirstPlace(query.value, overlayStateCode || stateCode, '1', activeController.signal);
+          coordinate = locationMatch.coordinate;
+          locationLabel = locationMatch.label || query.value;
+        }
+
+        if (query.kind === 'pa') ui.input.value = normalized;
+        setSearchBusy(ui, true, query.kind === 'pa' ? 'Mencari PA...' : (query.kind === 'location' ? 'Mencari lot...' : 'Mencari Lot...'));
+        setModalStatus(ui,
+          query.kind === 'location'
+            ? `Lokasi ${locationLabel || query.value} ditemui. Menyemak lot pada titik tersebut...`
+            : (coordinate ? 'Mencari lot pada koordinat WGS84...' : (query.kind === 'pa' ? `Mencari ${normalized}...` : `Mencari Lot ${lot}...`)),
+          'loading');
+
         const params = new URLSearchParams({ negeri: stateCode });
         if (coordinate) {
           params.set('lat', String(coordinate.lat));
           params.set('lng', String(coordinate.lng));
-        } else if (paRef.isPa) {
+        } else if (query.kind === 'pa') {
           params.set('pa', normalized);
         } else {
           params.set('lot', lot);
@@ -705,18 +920,29 @@
           setJupemLotOverlayState(jupemOverlay, overlayStateCode, '1');
           try { earthControl && earthControl.setStateCode && earthControl.setStateCode(overlayStateCode); } catch (_) {}
         }
-        renderRows(data.results, coordinate, preserveViewport);
+        renderRows(data.results, coordinate, preserveViewport, locationLabel);
+        if (query.kind === 'location' && coordinate && !count) {
+          map.setView([coordinate.lat, coordinate.lng], 15, { animate: false });
+        }
         const stateAutoDetected = Boolean(count && actualStateCode && requestedStateCode && actualStateCode !== requestedStateCode);
-        const foundMessage = stateAutoDetected
-          ? (paRef.isPa
-              ? `${count} lot ditemui untuk ${normalized}. PA ini berada di ${actualState}, bukan ${state}.`
-              : `${count} lot ditemui. Lokasi WGS84 ini berada di ${actualState}, bukan ${state}.`)
-          : `${count} pilihan lot ditemui. Klik lot atau pilih daripada senarai.`;
-        setModalStatus(ui, count ? foundMessage : 'Tiada lot / PA ditemui untuk carian ini.', count ? 'success' : 'error');
-        setInlineStatus(externalStatus, count ? foundMessage : 'Tiada PA/lot ditemui.', count ? 'success' : 'error');
+        let foundMessage = '';
+        if (query.kind === 'location') {
+          foundMessage = count
+            ? `${count} pilihan lot ditemui berhampiran ${locationLabel || query.value}. Klik lot atau pilih daripada senarai.`
+            : `Lokasi ${locationLabel || query.value} ditemui. Klik lot pada peta untuk melihat PA.`;
+        } else {
+          foundMessage = stateAutoDetected
+            ? (query.kind === 'pa'
+                ? `${count} lot ditemui untuk ${normalized}. PA ini berada di ${actualState}, bukan ${state}.`
+                : `${count} lot ditemui. Lokasi WGS84 ini berada di ${actualState}, bukan ${state}.`)
+            : `${count} pilihan lot ditemui. Klik lot atau pilih daripada senarai.`;
+        }
+        const success = count > 0 || query.kind === 'location';
+        setModalStatus(ui, foundMessage || 'Tiada lot / PA ditemui untuk carian ini.', success ? 'success' : 'error');
+        setInlineStatus(externalStatus, foundMessage || 'Tiada PA/lot ditemui.', success ? 'success' : 'error');
       } catch (error) {
         if (error && error.name === 'AbortError') return;
-        renderRows([], coordinate, preserveViewport);
+        renderRows([], coordinate, preserveViewport, locationLabel);
         setModalStatus(ui, error.message || 'Carian PA pada peta gagal.', 'error');
         setInlineStatus(externalStatus, error.message || 'Carian PA pada peta gagal.', 'error');
       } finally {
@@ -738,6 +964,14 @@
         await addToCart(paCartPayload(selectedRow, state), ui, externalStatus);
       } catch (error) {
         setFootStatus(ui, error.message || 'PA tidak dapat ditambah ke troli.', 'error');
+      }
+    });
+    installPlaceAutocomplete(ui, {
+      stateCode: () => overlayStateCode || stateCode,
+      productCode: '1',
+      onSelect: (row, coordinate) => {
+        const label = String(row && (row.name || row.label) || 'Lokasi').trim();
+        runSearch(label, coordinate, false, label);
       }
     });
     // v1110: PA sahaja menggunakan single-click untuk menetapkan titik carian
@@ -771,7 +1005,7 @@
       return;
     }
     if (!rawInitial) {
-      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 terlebih dahulu.', 'error');
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx, WGS84 atau nama tempat terlebih dahulu.', 'error');
       document.getElementById('benchmarkMapWgs84Input')?.focus();
       return;
     }
@@ -781,9 +1015,9 @@
     addStyles();
     const ui = createModal(
       `Peta Pilihan ${product}`,
-      `${state} • Cari ${product} terdekat menggunakan Nombor Lot, PAxxxx atau WGS84`,
-      'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      `Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Jika PA tiada dalam negeri dipilih, negeri PA akan dikesan automatik. Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
+      `${state} • Cari ${product} terdekat menggunakan Nombor Lot, PAxxxx, WGS84 atau Nama Tempat`,
+      'Contoh: Lot 1122 / PA2131 / Shah Alam / 3.1390, 101.6869',
+      `Boleh cari nama tempat seperti Shah Alam atau Pasir Gudang. Carian PA WAJIB guna awalan PA (contoh PA2131). Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
     );
     ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : normalizedInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
@@ -1048,7 +1282,7 @@
       setModalStatus(ui, `${matches.length} padanan lot ditemui. Pilih lot yang betul daripada senarai atau pada kawasan peta.`, 'success');
     }
 
-    function renderRows(newRows, target, reference, preserveViewport = false) {
+    function renderRows(newRows, target, reference, preserveViewport = false, locationLabel = '') {
       stationGroup.clearLayers();
       referenceGroup.clearLayers();
       stationMarkers = [];
@@ -1084,16 +1318,16 @@
       currentTarget = target || null;
       clearSelection();
       if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} }
-      const targetLabel = currentReference ? referenceLabel(currentReference) : 'WGS84 dicari';
+      const targetLabel = currentReference ? referenceLabel(currentReference) : (locationLabel || 'WGS84 dicari');
       if (currentReference) drawReference(currentReference, true);
-      targetMarker = createSearchTargetMarker(L, map, target, currentReference ? `${targetLabel} • Lokasi carian` : 'Lokasi carian');
+      targetMarker = createSearchTargetMarker(L, map, target, currentReference ? `${targetLabel} • Lokasi carian` : (locationLabel || 'Lokasi carian'));
       if (!rows.length) {
         ui.results.innerHTML = `<div class="az-pabm-map-empty">Tiada ${escapeHtml(product)} ditemui berdekatan ${escapeHtml(currentReference ? referenceLabel(currentReference) : 'koordinat ini')} dalam ${escapeHtml(state)}.</div>`;
         if (preserveViewport) map.setView([target.lat, target.lng], map.getZoom(), { animate: false });
         else map.setView([target.lat, target.lng], 12);
         return;
       }
-      const distanceFrom = currentReference ? referenceLabel(currentReference) : 'WGS84';
+      const distanceFrom = currentReference ? referenceLabel(currentReference) : (locationLabel || 'WGS84');
       ui.results.innerHTML = rows.map((row, index) => `
         <button class="az-pabm-map-result" type="button" data-index="${index}">
           <strong>${escapeHtml(product)} ${escapeHtml(row.stationNo || row.productId || '-')}${stationKey(row) === lockedStationKey ? ' • Dipilih' : ''}</strong>
@@ -1142,25 +1376,40 @@
       }
     }
 
-    async function runSearch(searchValue, explicitCoordinate, explicitReference, preserveViewport = false) {
+    async function runSearch(searchValue, explicitCoordinate, explicitReference, preserveViewport = false, explicitLocationLabel = '') {
       const rawTypedValue = String(searchValue || '').trim();
-      const paRef = normalizePaMapReference(rawTypedValue);
-      if (paRef.invalidPa) {
+      const query = classifyPabmMapQuery(rawTypedValue);
+      if (query.kind === 'invalid-pa') {
         setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
         return;
       }
-      const typedValue = paRef.isPa ? paRef.value : rawTypedValue;
-      if (paRef.isPa) ui.input.value = typedValue;
-      const target = explicitCoordinate || (paRef.isPa ? null : parseCoordinates(typedValue));
-      if (!target && !typedValue) {
-        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau koordinat WGS84 yang sah.', 'error');
+      if (query.kind === 'empty') {
+        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx, WGS84 atau nama tempat.', 'error');
         return;
       }
+      if (query.kind === 'pa') ui.input.value = query.value;
+
       if (activeController) { try { activeController.abort(); } catch (_) {} }
       activeController = new AbortController();
-      setSearchBusy(ui, true, `Mencari ${product}...`);
-      setModalStatus(ui, `Mencari ${product} terdekat...`, 'loading');
+
+      let target = explicitCoordinate || (query.kind === 'coordinate' ? query.coordinate : null);
+      let locationMatch = null;
+      let locationLabel = explicitLocationLabel || '';
       try {
+        if (!target && query.kind === 'location') {
+          setSearchBusy(ui, true, 'Mencari lokasi...');
+          setModalStatus(ui, `Mencari nama tempat “${query.value}”...`, 'loading');
+          locationMatch = await resolveFirstPlace(query.value, benchmarkOverlayStateCode || benchmarkStateCode, '1', activeController.signal);
+          target = locationMatch.coordinate;
+          locationLabel = locationMatch.label || query.value;
+        }
+
+        const typedValue = query.kind === 'pa' ? query.value : (query.kind === 'lot' ? query.value : rawTypedValue);
+        setSearchBusy(ui, true, `Mencari ${product}...`);
+        setModalStatus(ui, query.kind === 'location'
+          ? `Lokasi ${locationLabel || query.value} ditemui. Mencari ${product} terdekat...`
+          : `Mencari ${product} terdekat...`, 'loading');
+
         const params = new URLSearchParams({ product, negeri: state });
         if (target) {
           params.set('lat', String(target.lat));
@@ -1191,15 +1440,17 @@
           setJupemLotOverlayState(benchmarkJupemOverlay, actualStateCode, '1');
           try { earthControl && earthControl.setStateCode && earthControl.setStateCode(actualStateCode); } catch (_) {}
         }
-        renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport);
+        renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport, locationLabel);
         const count = Array.isArray(data.results) ? data.results.length : 0;
         const warning = data.warning ? ' Data live JUPEM tidak tersedia; senarai fallback digunakan.' : '';
-        const sourceText = resolvedReference ? ` berhampiran ${referenceLabel(resolvedReference)}` : '';
+        const sourceText = resolvedReference
+          ? ` berhampiran ${referenceLabel(resolvedReference)}`
+          : (locationLabel ? ` berhampiran ${locationLabel}` : '');
         const detectedText = data.stateAutoDetected && actualState && actualState !== state
           ? ` ${typedValue} berada di ${actualState}, bukan ${state}.`
           : '';
         setModalStatus(ui, count ? `${count} ${product} terdekat${sourceText} ditemui.${detectedText}${warning}` : `Tiada ${product} ditemui berdekatan lokasi ini.${detectedText}`, count ? 'success' : 'error');
-        setInlineStatus(externalStatus, count ? `${count} ${product} terdekat ditemui pada peta.${detectedText}` : `Tiada ${product} ditemui.${detectedText}`, count ? 'success' : 'error');
+        setInlineStatus(externalStatus, count ? `${count} ${product} terdekat${locationLabel ? ` berhampiran ${locationLabel}` : ''} ditemui pada peta.${detectedText}` : `Tiada ${product} ditemui.${detectedText}`, count ? 'success' : 'error');
       } catch (error) {
         if (error && error.name === 'AbortError') return;
         stationGroup.clearLayers();
@@ -1234,6 +1485,15 @@
         await addToCart(benchmarkCartPayload(selectedRow, product, state), ui, externalStatus);
       } catch (error) {
         setFootStatus(ui, error.message || `${product} tidak dapat ditambah ke troli.`, 'error');
+      }
+    });
+    installPlaceAutocomplete(ui, {
+      stateCode: () => benchmarkOverlayStateCode || benchmarkStateCode,
+      productCode: '1',
+      onSelect: (row, coordinate) => {
+        clearStationLock();
+        const label = String(row && (row.name || row.label) || 'Lokasi').trim();
+        runSearch(label, coordinate, null, false, label);
       }
     });
 
@@ -1340,7 +1600,7 @@
       return;
     }
     if (!rawInitial) {
-      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 terlebih dahulu.', 'error');
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx, WGS84 atau nama tempat terlebih dahulu.', 'error');
       document.getElementById('gpsMapSearchInput')?.focus();
       return;
     }
@@ -1350,9 +1610,9 @@
     addStyles();
     const ui = createModal(
       'Peta Pilihan GPS',
-      `${state} • Cari GPS terdekat menggunakan Nombor Lot, PAxxxx atau WGS84`,
-      'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      'Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Jika PA tiada dalam negeri dipilih, negeri PA akan dikesan automatik. Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
+      `${state} • Cari GPS terdekat menggunakan Nombor Lot, PAxxxx, WGS84 atau Nama Tempat`,
+      'Contoh: Lot 1122 / PA2131 / Shah Alam / 3.1390, 101.6869',
+      'Boleh cari nama tempat seperti Shah Alam atau Pasir Gudang. Carian PA WAJIB guna awalan PA (contoh PA2131). Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
     );
     ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : normalizedInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
@@ -1513,21 +1773,21 @@
       if (bounds.isValid()) map.fitBounds(bounds, { padding: [35, 35], maxZoom: 16 });
       setModalStatus(ui, `${matches.length} padanan lot ditemui. Pilih lot yang betul daripada senarai atau pada kawasan peta.`, 'success');
     }
-    function renderRows(newRows, target, reference, preserveViewport = false) {
+    function renderRows(newRows, target, reference, preserveViewport = false, locationLabel = '') {
       stationGroup.clearLayers(); referenceGroup.clearLayers(); stationMarkers = [];
       rows = Array.isArray(newRows) ? newRows : [];
       currentReference = reference || null; currentTarget = target || null; clearSelection();
       if (targetMarker) { try { map.removeLayer(targetMarker); } catch (_) {} }
-      const targetLabel = currentReference ? referenceLabel(currentReference) : 'WGS84 dicari';
+      const targetLabel = currentReference ? referenceLabel(currentReference) : (locationLabel || 'WGS84 dicari');
       if (currentReference) drawReference(currentReference, true);
-      targetMarker = createSearchTargetMarker(L, map, target, currentReference ? `${targetLabel} • Lokasi carian` : 'Lokasi carian');
+      targetMarker = createSearchTargetMarker(L, map, target, currentReference ? `${targetLabel} • Lokasi carian` : (locationLabel || 'Lokasi carian'));
       if (!rows.length) {
         ui.results.innerHTML = `<div class="az-pabm-map-empty">Tiada GPS ditemui berdekatan ${escapeHtml(currentReference ? referenceLabel(currentReference) : 'koordinat ini')} dalam ${escapeHtml(state)}.</div>`;
         if (preserveViewport) map.setView([target.lat, target.lng], map.getZoom(), { animate: false });
         else map.setView([target.lat, target.lng], 12);
         return;
       }
-      const distanceFrom = currentReference ? referenceLabel(currentReference) : 'WGS84';
+      const distanceFrom = currentReference ? referenceLabel(currentReference) : (locationLabel || 'WGS84');
       ui.results.innerHTML = rows.map((row, index) => `
         <button class="az-pabm-map-result" type="button" data-index="${index}">
           <strong>GPS ${escapeHtml(row.stationNo || row.productId || '-')}</strong>
@@ -1553,23 +1813,51 @@
       } else map.setView([target.lat, target.lng], 12);
       selectRow(0, false);
     }
-    async function runSearch(searchValue, explicitCoordinate, explicitReference, preserveViewport = false) {
+    async function runSearch(searchValue, explicitCoordinate, explicitReference, preserveViewport = false, explicitLocationLabel = '') {
       const rawTypedValue = String(searchValue || '').trim();
-      const paRef = normalizePaMapReference(rawTypedValue);
-      if (paRef.invalidPa) { setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error'); return; }
-      const typedValue = paRef.isPa ? paRef.value : rawTypedValue;
-      if (paRef.isPa) ui.input.value = typedValue;
-      const target = explicitCoordinate || (paRef.isPa ? null : parseCoordinates(typedValue));
-      if (!target && !typedValue) { setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau koordinat WGS84 yang sah.', 'error'); return; }
+      const query = classifyPabmMapQuery(rawTypedValue);
+      if (query.kind === 'invalid-pa') {
+        setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
+        return;
+      }
+      if (query.kind === 'empty') {
+        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx, WGS84 atau nama tempat.', 'error');
+        return;
+      }
+      if (query.kind === 'pa') ui.input.value = query.value;
+
       if (activeController) { try { activeController.abort(); } catch (_) {} }
-      activeController = new AbortController(); setSearchBusy(ui, true, 'Mencari GPS...'); setModalStatus(ui, 'Mencari GPS terdekat...', 'loading');
+      activeController = new AbortController();
+
+      let target = explicitCoordinate || (query.kind === 'coordinate' ? query.coordinate : null);
+      let locationLabel = explicitLocationLabel || '';
       try {
+        if (!target && query.kind === 'location') {
+          setSearchBusy(ui, true, 'Mencari lokasi...');
+          setModalStatus(ui, `Mencari nama tempat “${query.value}”...`, 'loading');
+          const locationMatch = await resolveFirstPlace(query.value, gpsOverlayStateCode || stateCode, '1', activeController.signal);
+          target = locationMatch.coordinate;
+          locationLabel = locationMatch.label || query.value;
+        }
+
+        const typedValue = query.kind === 'pa' ? query.value : (query.kind === 'lot' ? query.value : rawTypedValue);
+        setSearchBusy(ui, true, 'Mencari GPS...');
+        setModalStatus(ui, query.kind === 'location'
+          ? `Lokasi ${locationLabel || query.value} ditemui. Mencari GPS terdekat...`
+          : 'Mencari GPS terdekat...', 'loading');
+
         const params = new URLSearchParams({ negeri: state });
-        if (target) { params.set('lat', String(target.lat)); params.set('lng', String(target.lng)); }
-        else params.set('q', typedValue);
+        if (target) {
+          params.set('lat', String(target.lat));
+          params.set('lng', String(target.lng));
+        } else {
+          params.set('q', typedValue);
+        }
         const data = await fetchJson(`${BACKEND_BASE}/api/pabm-gps-nearby?${params.toString()}`, activeController.signal);
         if (data.needsReferenceSelection && Array.isArray(data.referenceMatches) && data.referenceMatches.length) {
-          renderReferenceMatches(data.referenceMatches); setInlineStatus(externalStatus, `${data.referenceMatches.length} padanan lot ditemui. Pilih lot pada peta.`, 'success'); return;
+          renderReferenceMatches(data.referenceMatches);
+          setInlineStatus(externalStatus, `${data.referenceMatches.length} padanan lot ditemui. Pilih lot pada peta.`, 'success');
+          return;
         }
         const resolvedTarget = target || { lat: Number(data.latitude ?? data.target?.latitude), lng: Number(data.longitude ?? data.target?.longitude) };
         if (!resolvedTarget || !Number.isFinite(resolvedTarget.lat) || !Number.isFinite(resolvedTarget.lng)) throw new Error('Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah.');
@@ -1581,14 +1869,16 @@
           setJupemLotOverlayState(gpsJupemOverlay, actualStateCode, '1');
           try { earthControl && earthControl.setStateCode && earthControl.setStateCode(actualStateCode); } catch (_) {}
         }
-        renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport);
+        renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport, locationLabel);
         const count = Array.isArray(data.results) ? data.results.length : 0;
-        const sourceText = resolvedReference ? ` berhampiran ${referenceLabel(resolvedReference)}` : '';
+        const sourceText = resolvedReference
+          ? ` berhampiran ${referenceLabel(resolvedReference)}`
+          : (locationLabel ? ` berhampiran ${locationLabel}` : '');
         const detectedText = data.stateAutoDetected && actualState && actualState !== state
           ? ` ${typedValue} berada di ${actualState}, bukan ${state}.`
           : '';
         setModalStatus(ui, count ? `${count} GPS terdekat${sourceText} ditemui.${detectedText}` : `Tiada GPS ditemui berdekatan lokasi ini.${detectedText}`, count ? 'success' : 'error');
-        setInlineStatus(externalStatus, count ? `${count} GPS terdekat ditemui pada peta.${detectedText}` : `Tiada GPS ditemui.${detectedText}`, count ? 'success' : 'error');
+        setInlineStatus(externalStatus, count ? `${count} GPS terdekat${locationLabel ? ` berhampiran ${locationLabel}` : ''} ditemui pada peta.${detectedText}` : `Tiada GPS ditemui.${detectedText}`, count ? 'success' : 'error');
       } catch (error) {
         if (error && error.name === 'AbortError') return;
         stationGroup.clearLayers(); referenceGroup.clearLayers(); rows = []; stationMarkers = []; clearSelection();
@@ -1605,6 +1895,14 @@
       if (!selectedRow) return;
       try { await addToCart(gpsCartPayload(selectedRow, state), ui, externalStatus); }
       catch (error) { setFootStatus(ui, error.message || 'GPS tidak dapat ditambah ke troli.', 'error'); }
+    });
+    installPlaceAutocomplete(ui, {
+      stateCode: () => gpsOverlayStateCode || stateCode,
+      productCode: '1',
+      onSelect: (row, coordinate) => {
+        const label = String(row && (row.name || row.label) || 'Lokasi').trim();
+        runSearch(label, coordinate, null, false, label);
+      }
     });
 
     let lotInspectController = null;
