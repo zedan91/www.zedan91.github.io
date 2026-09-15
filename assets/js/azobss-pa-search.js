@@ -255,6 +255,24 @@
 
   window.azobssOpenPaPreview = openPaPreview;
 
+  // v1125: Peta Pilihan PA uses the exact same proven LIHAT PA preview
+  // handler as the Carian Umum magnifier.  The map only supplies the same
+  // data-pa-view-url / data-pa-view-name attributes; all fetch, parse and
+  // modal rendering stays in this one script.
+  document.addEventListener('click', async (event) => {
+    const previewButton = event.target.closest('.az-pabm-map-preview[data-pa-view-url]');
+    if (!previewButton || previewButton.disabled) return;
+    event.preventDefault();
+    previewButton.disabled = true;
+    previewButton.setAttribute('aria-busy', 'true');
+    try {
+      await openPaPreview(previewButton);
+    } finally {
+      previewButton.disabled = false;
+      previewButton.removeAttribute('aria-busy');
+    }
+  });
+
   if (!form || !stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
 
   function setSearchBusy(isBusy) {

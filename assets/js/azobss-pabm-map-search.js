@@ -773,27 +773,9 @@
     let selectedLayer = null;
     let rows = [];
 
-    if (ui.previewButton) {
-      ui.previewButton.addEventListener('click', async () => {
-        const previewUrl = String(ui.previewButton.dataset.paViewUrl || '').trim();
-        const previewName = String(ui.previewButton.dataset.paViewName || '').trim();
-        if (!previewUrl || !previewName) return;
-        if (typeof window.azobssOpenPaPreview !== 'function') {
-          setFootStatus(ui, 'Pratonton PA belum tersedia. Sila tutup peta dan cuba lagi.', 'error');
-          return;
-        }
-        ui.previewButton.disabled = true;
-        ui.previewButton.setAttribute('aria-busy', 'true');
-        try {
-          await window.azobssOpenPaPreview({
-            dataset: { paViewUrl: previewUrl, paViewName: previewName }
-          });
-        } finally {
-          ui.previewButton.disabled = false;
-          ui.previewButton.removeAttribute('aria-busy');
-        }
-      });
-    }
+    // v1125: no custom PA-preview click handler here. The button is handled
+    // by azobss-pa-search.js using the exact same LIHAT PA preview script.
+
 
     function clearSelection() {
       selectedRow = null;
