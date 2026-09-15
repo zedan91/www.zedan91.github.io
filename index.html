@@ -18651,6 +18651,16 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
     if(v===true||v===1) return true;
     return /^(1|true|yes|on|enabled|active)$/i.test(String(v||'').trim());
   }
+  // v1133: prefer the canonical Firestore flag when it exists. Legacy aliases are
+  // only a fallback for older records, so an old/stale alias can never override
+  // promoFreeEnabled:false saved by the current Software admin form.
+  function canonicalBool(item, canonicalKey, legacyKeys=[]){
+    if(item && Object.prototype.hasOwnProperty.call(item, canonicalKey)) return bool(item[canonicalKey]);
+    for(const key of legacyKeys){
+      if(item && Object.prototype.hasOwnProperty.call(item, key)) return bool(item[key]);
+    }
+    return false;
+  }
   function amount(v){
     const m=String(v??'').replace(/,/g,'').match(/-?\d+(?:\.\d+)?/);
     return m?Number(m[0]):NaN;
@@ -18674,10 +18684,13 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
     const oldRaw=text(item.originalPrice||item.promoOriginalPrice||item.oldPrice||item.beforePrice||item.listPrice||'',40);
     const sale=amount(saleRaw), old=amount(oldRaw);
     const discounted=Number.isFinite(sale)&&Number.isFinite(old)&&old>sale;
-    const freePromo=bool(item.promoFreeEnabled||item.freePromoEnabled||item.promoFreeDownloadEnabled)&&Number(item.promoFreeLimit||item.promoFreeUnits||item.freePromoUnits||0)>0;
-    const explicit=bool(item.homePromoEnabled||item.homePromotionEnabled||item.promoEnabled||item.promotionEnabled||item.onSale||item.featuredPromo);
-    const badgePromo=/promo|sale|offer|discount/i.test(text(item.badge||item.label||'',80));
-    if(!(discounted||freePromo||explicit||badgePromo)) return null;
+    const promoFreeFlag=canonicalBool(item,'promoFreeEnabled',['freePromoEnabled','promoFreeDownloadEnabled']);
+    const freeLimit=Number(item.promoFreeLimit??item.promoFreeUnits??item.freePromoUnits??item.promoDownloadUnits??0);
+    const freePromo=promoFreeFlag&&Number.isFinite(freeLimit)&&freeLimit>0;
+    // v1133: the homepage SOFTWARE PROMO slider is driven only by a real price
+    // reduction or an active Free Promo flag. Do not treat stale/marketing fields
+    // such as promoEnabled, featuredPromo, badge/label text, etc. as a sale.
+    if(!(discounted||freePromo)) return null;
     const save=discounted?Math.max(1,Math.round((1-sale/old)*100)):0;
     return {
       ...item,

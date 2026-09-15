@@ -4432,12 +4432,21 @@ html body .downloads-section{
   }
 
   function azBool(v){ return v === true || v === 1 || v === '1' || /^(true|yes|y|on|enabled|aktif)$/i.test(String(v || '').trim()); }
+  // v1133: current admin data uses promoFreeEnabled as the canonical switch.
+  // Fall back to legacy aliases only when that canonical field is genuinely absent.
+  function azPromoFreeFlag(item){
+    if(item && Object.prototype.hasOwnProperty.call(item,'promoFreeEnabled')) return azBool(item.promoFreeEnabled);
+    for(const key of ['freePromoEnabled','promoFreeDownloadEnabled']){
+      if(item && Object.prototype.hasOwnProperty.call(item,key)) return azBool(item[key]);
+    }
+    return false;
+  }
   function azPromoFreeLimit(item){
     const n = Number(item?.promoFreeLimit ?? item?.promoFreeUnits ?? item?.freePromoUnits ?? item?.promoDownloadUnits ?? 0);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
   }
   function azPromoFreeEnabled(item){
-    return !!(item && item.type === 'premium' && azBool(item.promoFreeEnabled || item.freePromoEnabled || item.promoFreeDownloadEnabled) && azPromoFreeLimit(item) > 0);
+    return !!(item && item.type === 'premium' && azPromoFreeFlag(item) && azPromoFreeLimit(item) > 0);
   }
   function azPromoFreeBatchId(item){
     const raw = String(item?.promoFreeBatchId || item?.promoBatchId || item?.promoFreeStartedAtMs || '').trim();
@@ -4679,7 +4688,7 @@ function normalizeItem(item){
       price: type === 'free' ? 'FREE' : (price || 'RM0'),
       originalPrice: type === 'free' ? '' : azPromoOriginalPrice(item),
       promoOriginalPrice: type === 'free' ? '' : azPromoOriginalPrice(item),
-      promoFreeEnabled: type === 'premium' && azBool(item.promoFreeEnabled || item.freePromoEnabled || item.promoFreeDownloadEnabled),
+      promoFreeEnabled: type === 'premium' && azPromoFreeFlag(item),
       promoFreeLimit: azPromoFreeLimit(item),
       promoFreeUnits: azPromoFreeLimit(item),
       promoFreeBatchId: String(item.promoFreeBatchId || item.promoBatchId || item.promoFreeStartedAtMs || '').trim(),

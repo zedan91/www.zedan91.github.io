@@ -6831,6 +6831,15 @@ function azPreferredPremiumDownloadUrl(saved = {}, base = "") {
 function azPromoFreeTruth(value) {
   return value === true || value === 1 || value === "1" || /^(true|yes|y|on|enabled|aktif)$/i.test(String(value || "").trim());
 }
+// AZOBSS v1133: a stale legacy Free Promo alias must not override the current
+// canonical promoFreeEnabled:false value saved from the Software admin form.
+function azPromoFreeFlag(product = {}) {
+  if (Object.prototype.hasOwnProperty.call(product, "promoFreeEnabled")) return azPromoFreeTruth(product.promoFreeEnabled);
+  for (const key of ["freePromoEnabled", "promoFreeDownloadEnabled"]) {
+    if (Object.prototype.hasOwnProperty.call(product, key)) return azPromoFreeTruth(product[key]);
+  }
+  return false;
+}
 function azPromoFreeSlug(value = "") {
   return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "software-item";
 }
@@ -6839,7 +6848,7 @@ function azPromoFreeConfig(product = {}) {
   const batchId = cleanPremiumText(product.promoFreeBatchId || product.promoBatchId || product.promoFreeStartedAtMs || "default", 120) || "default";
   const rawLimit = Number(product.promoFreeLimit ?? product.promoFreeUnits ?? product.freePromoUnits ?? product.promoDownloadUnits ?? 0);
   const limit = Number.isFinite(rawLimit) ? Math.max(0, Math.floor(rawLimit)) : 0;
-  const enabled = azPromoFreeTruth(product.promoFreeEnabled || product.freePromoEnabled || product.promoFreeDownloadEnabled) && limit > 0;
+  const enabled = azPromoFreeFlag(product) && limit > 0;
   return { productId, batchId, limit, enabled, statsKey:"promo-free-" + azPromoFreeSlug(`${productId}-${batchId}`) };
 }
 async function azVerifyPromoFreeClaim(product = {}, identity = {}, data = {}) {
