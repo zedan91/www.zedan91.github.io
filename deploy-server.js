@@ -858,6 +858,11 @@ async function azCommissionIdentityFromRequest(req) {
           identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
           identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
           identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
+          identity.membershipBenefitActive = x.membershipBenefitActive === true;
+          identity.membershipBenefitExpiresAtMs = Number(x.membershipBenefitExpiresAtMs || 0) || 0;
+          identity.membershipDiscountByCategory = x.membershipDiscountByCategory && typeof x.membershipDiscountByCategory === "object" ? { ...x.membershipDiscountByCategory } : null;
+          identity.membershipBenefitPackageId = String(x.membershipBenefitPackageId || "");
+          identity.membershipBenefitPackageName = String(x.membershipBenefitPackageName || "");
         });
       } catch (err) {
         console.warn("Commission identity profile lookup failed:", err && (err.message || err));
@@ -919,6 +924,11 @@ async function azHydrateIdentityFromUsernameHint(identity = {}, usernameHint = "
       identity.adminCadToolsPriceAdjustmentPercent = x.adminCadToolsPriceAdjustmentPercent;
       identity.cadToolsPriceAdjustmentPercent = x.cadToolsPriceAdjustmentPercent;
       identity.priceAdjustmentManagedBy = String(x.priceAdjustmentManagedBy || "");
+          identity.membershipBenefitActive = x.membershipBenefitActive === true;
+          identity.membershipBenefitExpiresAtMs = Number(x.membershipBenefitExpiresAtMs || 0) || 0;
+          identity.membershipDiscountByCategory = x.membershipDiscountByCategory && typeof x.membershipDiscountByCategory === "object" ? { ...x.membershipDiscountByCategory } : null;
+          identity.membershipBenefitPackageId = String(x.membershipBenefitPackageId || "");
+          identity.membershipBenefitPackageName = String(x.membershipBenefitPackageName || "");
       identity.priceAdjustmentProfileResolvedBy = resolvedBy;
       return true;
     };
@@ -3191,12 +3201,12 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       }
     }
 
-    if (!azIsManualSalesInvoiceOrder(latest) && !latest.commissionCheckedAt) {
+    if (!azIsManualSalesInvoiceOrder(latest) && !azIsMembershipOrder(latest) && !latest.commissionCheckedAt) {
       try { await azFinalizeCommissionForOrder(latest); } catch (commissionError) { console.warn("Commission finalize skipped:", commissionError && (commissionError.message || commissionError)); }
       latest = findPremiumOrderByAny({ orderId: latest.orderId, billCode: latest.billCode }) || latest;
     }
 
-    if (!azIsManualSalesInvoiceOrder(latest) && !latest.paBmPaidSyncedAt) {
+    if (!azIsManualSalesInvoiceOrder(latest) && !azIsMembershipOrder(latest) && !latest.paBmPaidSyncedAt) {
       try {
         const syncResult = await azobssUpdatePaBmPurchaseLogsForOrder(latest, "paid", { paymentReference: latest.paymentReference, toyyibTransaction: tx, toyyibCallback: callbackData });
         if (syncResult && syncResult.ok) latest = upsertPremiumOrder({ ...latest, paBmPaidSyncedAt: new Date().toISOString(), paBmPaidSyncedCount: syncResult.updated || 0 });
@@ -3212,6 +3222,8 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
         console.error("Manual sales invoice paid sync failed:", manualSyncError && (manualSyncError.stack || manualSyncError.message || manualSyncError));
         throw manualSyncError;
       }
+    } else if (azIsMembershipOrder(latest)) {
+      latest = await azActivateMembershipOrder(latest);
     } else if (!isPaBmPremiumOrder(latest)) {
       latest = await azHydratePremiumOrderExpiryFromCurrentProduct(latest);
       if (!latest.downloadToken) latest = makeDownloadForOrder(latest);
@@ -3257,6 +3269,9 @@ async function refreshToyyibOrder(order, req) {
 }
 function paidPayload(order, req) {
   const base = publicBaseUrlFromReq(req);
+  if (azIsMembershipOrder(order)) {
+    return { ok:true, success:true, paid:true, orderId:order.orderId, status:order.status, membership:true, membershipActivated:!!order.membershipActivatedAt, membershipPackageId:order.membershipPackageId || "", membershipPackageName:order.membershipPackageSnapshot?.packageName || order.productName || "Membership", membershipExpiresAtMs:Number(order.membershipBenefits?.membershipBenefitExpiresAtMs || 0) || 0, receiptUrl:azReceiptUrl(base, order) };
+  }
   const o = makeDownloadForOrder(order);
   return { ok: true, success: true, paid: true, orderId: o.orderId, status: o.status, downloadUrl: azPreferredPremiumDownloadUrl({ ...o, token:o.downloadToken }, base), receiptUrl: azReceiptUrl(base, o), expiresAt: o.tokenExpiresAt, maxDownload: azobssDownloadLimitFromOrder(o) };
 }
@@ -4151,17 +4166,22 @@ function azIdentityPriceAdjustments(identity = {}) {
     software: managed ? (identity.adminSoftwarePriceAdjustmentPercent ?? identity.softwarePriceAdjustmentPercent) : (identity.softwarePriceAdjustmentPercent ?? identity.adminSoftwarePriceAdjustmentPercent),
     cadTools: managed ? (identity.adminCadToolsPriceAdjustmentPercent ?? identity.cadToolsPriceAdjustmentPercent) : (identity.cadToolsPriceAdjustmentPercent ?? identity.adminCadToolsPriceAdjustmentPercent)
   };
+  const expMs = Number(identity.membershipBenefitExpiresAtMs || 0) || 0;
+  const membershipActive = identity.membershipBenefitActive === true && expMs > Date.now();
+  const membershipMap = identity.membershipDiscountByCategory && typeof identity.membershipDiscountByCategory === "object" ? identity.membershipDiscountByCategory : {};
+  const membershipDiscount = key => (membershipActive && (key === "software" || key === "cadTools"))
+    ? Math.max(0, Math.min(99, Number(membershipMap[key] || 0) || 0)) : 0;
   const hasSpecific = !!map || Object.values(direct).some(value => value !== undefined && value !== null && value !== "");
   if (hasSpecific) {
     for (const key of keys) {
       let raw = map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : direct[key];
       if (key === "lotKadaster" && (raw === undefined || raw === null || raw === "")) raw = map && Object.prototype.hasOwnProperty.call(map, "paBm") ? map.paBm : direct.paBm;
-      out[key] = azNormalizeUserPriceAdjustment(raw ?? 0);
+      out[key] = azNormalizeUserPriceAdjustment((raw ?? 0) - membershipDiscount(key));
     }
     return out;
   }
   const legacy = azNormalizeUserPriceAdjustment(managed ? (identity.adminPriceAdjustmentPercent ?? identity.priceAdjustmentPercent ?? 0) : (identity.priceAdjustmentPercent ?? identity.adminPriceAdjustmentPercent ?? 0));
-  for (const key of keys) out[key] = legacy;
+  for (const key of keys) out[key] = azNormalizeUserPriceAdjustment(legacy - membershipDiscount(key));
   return out;
 }
 function azIdentityPriceAdjustment(identity = {}, category = "software") {
@@ -15700,6 +15720,164 @@ try {
   console.warn("AZOBSSTV API handler unavailable:", error && (error.stack || error.message || error));
 }
 
+// AZOBSS v1129: paid Membership packages + referral invite credit.
+// Membership benefits are restricted to Software/CAD discounts and NEVER grant PA/BM access.
+const AZ_MEMBERSHIP_COLLECTION = "membershipPackages";
+const AZ_REFERRAL_CODE_COLLECTION = "referralInviteCodes";
+const AZ_REFERRAL_REWARD_COLLECTION = "referralRewards";
+const AZ_REFERRAL_SETTINGS_COLLECTION = "settings";
+const AZ_REFERRAL_SETTINGS_DOC = "referralProgram";
+function azMembershipPackageId(value){
+  return cleanPremiumText(value || "", 80).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 48);
+}
+function azMembershipDiscounts(value = {}){
+  const clamp = v => Math.max(0, Math.min(99, Math.round((Number(v || 0) || 0) * 100) / 100));
+  return { paBm:0, lotKadaster:0, publicPa:0, software:clamp(value.software), cadTools:clamp(value.cadTools) };
+}
+function azMembershipPublic(row = {}){
+  return {
+    packageId:azMembershipPackageId(row.packageId || row.id || ""),
+    packageName:cleanPremiumText(row.packageName || "Membership", 120),
+    packagePriceRM:Math.max(0, Number(row.packagePriceRM || 0) || 0),
+    durationMonths:Math.max(1, Math.min(60, Math.floor(Number(row.durationMonths || 1) || 1))),
+    active:row.active !== false,
+    discounts:azMembershipDiscounts(row.discounts || {}),
+    extraNote:cleanPremiumText(row.extraNote || "", 500),
+    sortOrder:Number(row.sortOrder || 0) || 0,
+    updatedAtMs:Number(row.updatedAtMs || 0) || 0
+  };
+}
+function azIsMembershipOrder(order = {}){
+  return order.membershipPurchase === true || String(order.automaticCheckoutKind || "").toLowerCase() === "membership" || !!order.membershipPackageId;
+}
+function azFirestoreTimeMs(value){
+  if (!value) return 0;
+  if (typeof value === "number") return Number(value) || 0;
+  if (typeof value.toMillis === "function") { try { return value.toMillis(); } catch (_) {} }
+  if (value._seconds) return Number(value._seconds) * 1000;
+  if (value.seconds) return Number(value.seconds) * 1000;
+  const parsed = Date.parse(String(value || ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+async function azActivateMembershipOrder(order = {}){
+  if (!azIsMembershipOrder(order)) return order;
+  if (order.membershipActivatedAt) return order;
+  const db = getAzobssBackendDb();
+  if (!db) throw new Error("Membership database is unavailable.");
+  const packageSnap = azMembershipPublic(order.membershipPackageSnapshot || order.product || order || {});
+  const packageId = azMembershipPackageId(order.membershipPackageId || packageSnap.packageId);
+  const userDocId = cleanPremiumText(order.membershipUserDocId || order.user?.profileDocId || order.user?.usernameKey || order.user?.username || "", 160).trim();
+  if (!userDocId) throw new Error("Membership user profile was not found.");
+  const orderId = cleanPremiumText(order.orderId || "", 120);
+  const now = Date.now();
+  const userRef = db.collection("users").doc(userDocId);
+  let benefits = null;
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(userRef);
+    if (!snap.exists) throw new Error("Membership user profile was not found.");
+    const user = snap.data() || {};
+    const applied = Array.isArray(user.membershipAppliedOrderIds) ? user.membershipAppliedOrderIds.map(String) : [];
+    if (orderId && applied.includes(orderId)) {
+      benefits = {
+        membershipBenefitActive:user.membershipBenefitActive === true,
+        membershipBenefitPackageId:user.membershipBenefitPackageId || packageId,
+        membershipBenefitPackageName:user.membershipBenefitPackageName || packageSnap.packageName,
+        membershipBenefitExpiresAtMs:Number(user.membershipBenefitExpiresAtMs || 0) || 0,
+        membershipDiscountByCategory:azMembershipDiscounts(user.membershipDiscountByCategory || packageSnap.discounts || {})
+      };
+      return;
+    }
+    const months = Math.max(1, Math.min(60, Number(packageSnap.durationMonths || 1) || 1));
+    const currentExp = Number(user.membershipBenefitExpiresAtMs || 0) || 0;
+    const base = Math.max(now, currentExp);
+    const expiresAtMs = base + Math.round(months * 30.4375 * 86400000);
+    benefits = {
+      membershipBenefitActive:true,
+      membershipBenefitPurchaseOnly:true,
+      membershipBenefitPackageId:packageId,
+      membershipBenefitPackageName:packageSnap.packageName || "Membership",
+      membershipBenefitPackagePriceRM:Number(packageSnap.packagePriceRM || order.amount || 0) || 0,
+      membershipBenefitStartedAtMs:now,
+      membershipBenefitExpiresAtMs:expiresAtMs,
+      membershipBenefitExpiresAt:new Date(expiresAtMs).toISOString(),
+      membershipDiscountByCategory:azMembershipDiscounts(packageSnap.discounts || {}),
+      membershipBenefitExtraNote:cleanPremiumText(packageSnap.extraNote || "", 500),
+      membershipPurchaseOrderId:orderId,
+      membershipAppliedOrderIds:[...new Set([...applied, orderId].filter(Boolean))].slice(-100),
+      membershipBenefitUpdatedAtMs:now
+    };
+    tx.set(userRef, benefits, { merge:true });
+  });
+  const latest = upsertPremiumOrder({
+    ...order,
+    membershipActivatedAt:order.membershipActivatedAt || new Date().toISOString(),
+    membershipActivatedAtMs:order.membershipActivatedAtMs || now,
+    membershipBenefits:benefits || undefined,
+    commissionCheckedAt:order.commissionCheckedAt || new Date().toISOString(),
+    commissionSkippedReason:"membership-package",
+    paBmPaidSyncedAt:order.paBmPaidSyncedAt || new Date().toISOString(),
+    paBmPaidSyncedCount:0
+  });
+  try { await azPersistPremiumOrder(latest); } catch (err) { console.warn("Membership paid order persist skipped:", err && (err.message || err)); }
+  return findPremiumOrderByAny({ orderId:latest.orderId, billCode:latest.billCode }) || latest;
+}
+function azReferralCode(value){ return cleanPremiumText(value || "", 80).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 48); }
+function azReferralDefaultSettings(){ return { active:true, rewardRM:2, maxAccountAgeDays:14, updatedAtMs:0 }; }
+async function azReferralSettings(){
+  const db = getAzobssBackendDb();
+  const defaults = azReferralDefaultSettings();
+  if (!db) return defaults;
+  try {
+    const snap = await db.collection(AZ_REFERRAL_SETTINGS_COLLECTION).doc(AZ_REFERRAL_SETTINGS_DOC).get();
+    const x = snap.exists ? (snap.data() || {}) : {};
+    return {
+      active:x.active !== false,
+      rewardRM:Math.max(0, Math.min(1000, Number(x.rewardRM ?? defaults.rewardRM) || 0)),
+      maxAccountAgeDays:Math.max(1, Math.min(90, Math.floor(Number(x.maxAccountAgeDays ?? defaults.maxAccountAgeDays) || defaults.maxAccountAgeDays))),
+      updatedAtMs:Number(x.updatedAtMs || 0) || 0
+    };
+  } catch (_) { return defaults; }
+}
+function azReferralGeneratedCode(identity = {}){
+  const uname = String(identity.username || identity.userDocId || "USER").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 14) || "USER";
+  const suffix = crypto.createHash("sha256").update(String(identity.uid || identity.userDocId || uname)).digest("hex").slice(0, 5).toUpperCase();
+  return azReferralCode(`AZ${uname}${suffix}`);
+}
+async function azReferralEnsureMe(identity = {}){
+  const db = getAzobssBackendDb();
+  if (!db) throw new Error("Referral database is unavailable.");
+  const userDocId = cleanPremiumText(identity.userDocId || identity.username || "", 160).trim();
+  if (!userDocId) throw new Error("User profile was not found.");
+  const userRef = db.collection("users").doc(userDocId);
+  const snap = await userRef.get();
+  if (!snap.exists) throw new Error("User profile was not found.");
+  const user = snap.data() || {};
+  let code = azReferralCode(user.referralInviteCode || "") || azReferralGeneratedCode(identity);
+  let mapRef = db.collection(AZ_REFERRAL_CODE_COLLECTION).doc(code);
+  let mapSnap = await mapRef.get();
+  if (mapSnap.exists && String(mapSnap.data()?.userDocId || "") !== userDocId) {
+    code = azReferralCode(code + crypto.randomBytes(2).toString("hex").toUpperCase());
+    mapRef = db.collection(AZ_REFERRAL_CODE_COLLECTION).doc(code);
+  }
+  const now = Date.now();
+  if (azReferralCode(user.referralInviteCode || "") !== code) await userRef.set({ referralInviteCode:code, referralUpdatedAtMs:now }, { merge:true });
+  await mapRef.set({ code, userDocId, uid:String(identity.uid || ""), username:String(identity.username || userDocId), active:true, updatedAtMs:now }, { merge:true });
+  const settings = await azReferralSettings();
+  return {
+    userDocId,
+    code,
+    link:`${FRONTEND_BASE_URL || "https://www.azobss.com"}/?invite=${encodeURIComponent(code)}#signup`,
+    creditBalanceRM:Math.max(0, Number(user.referralCreditBalanceRM || 0) || 0),
+    successfulCount:Math.max(0, Number(user.referralSuccessfulCount || 0) || 0),
+    redeemedCode:azReferralCode(user.referralRedeemedCode || ""),
+    referredByUserDocId:String(user.referredByUserDocId || ""),
+    rewardRM:settings.rewardRM,
+    programActive:settings.active,
+    maxAccountAgeDays:settings.maxAccountAgeDays
+  };
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -15762,6 +15940,8 @@ async function handler(req, res) {
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
+    if (pathname === "/api/membership/create-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-membership-bill", 8, 10 * 60 * 1000)) return;
+    if (pathname === "/api/referral/redeem" && req.method === "POST" && azRateLimitOrSend(req, res, "referral-redeem", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/stripe/digital-checkout" && req.method === "POST" && azRateLimitOrSend(req, res, "stripe-digital-checkout", 12, 5 * 60 * 1000)) return;
     if (pathname === "/api/premium/free-promo-download" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-free-promo-download", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/premium/complete-purchase" && req.method === "POST" && azRateLimitOrSend(req, res, "premium-complete-purchase", 8, 10 * 60 * 1000)) return;
@@ -15805,6 +15985,103 @@ async function handler(req, res) {
     if (pathname === "/api/admin/payout-request-status" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-payout-request-status", 30, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
+
+
+    // AZOBSS v1129 Membership package APIs. Paid packages only discount Software/CAD and never grant PA/BM.
+    if (pathname === "/api/membership/packages" && req.method === "GET") {
+      try {
+        const db = getAzobssBackendDb();
+        if (!db) throw new Error("Membership database is unavailable.");
+        let snap;
+        try { snap = await db.collection(AZ_MEMBERSHIP_COLLECTION).orderBy("sortOrder", "asc").get(); }
+        catch (_) { snap = await db.collection(AZ_MEMBERSHIP_COLLECTION).get(); }
+        const records = [];
+        snap.forEach(d => { const row = azMembershipPublic({ packageId:d.id, ...d.data() }); if (row.active) records.push(row); });
+        records.sort((a,b)=>(a.sortOrder-b.sortOrder)||(a.durationMonths-b.durationMonths)||(a.packagePriceRM-b.packagePriceRM));
+        return send(res, 200, JSON.stringify({ ok:true, records }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) { return send(res, 500, JSON.stringify({ ok:false, error:err?.message || String(err) }, null, 2), "application/json"); }
+    }
+    if (pathname === "/api/membership/admin/list" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ok:false,error:"Admin authorization required."}), "application/json");
+        const db = getAzobssBackendDb(); if (!db) throw new Error("Membership database is unavailable.");
+        let snap; try { snap = await db.collection(AZ_MEMBERSHIP_COLLECTION).orderBy("sortOrder","asc").get(); } catch (_) { snap = await db.collection(AZ_MEMBERSHIP_COLLECTION).get(); }
+        const records=[]; snap.forEach(d=>records.push(azMembershipPublic({packageId:d.id,...d.data()})));
+        records.sort((a,b)=>(a.sortOrder-b.sortOrder)||(a.durationMonths-b.durationMonths));
+        return send(res,200,JSON.stringify({ok:true,records},null,2),"application/json",{"Cache-Control":"no-store"});
+      } catch(err){ return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json"); }
+    }
+    if (pathname === "/api/membership/admin/save" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ok:false,error:"Admin authorization required."}), "application/json");
+        const body=parseRequestBody(await readBody(req)); const db=getAzobssBackendDb(); if(!db)throw new Error("Membership database is unavailable.");
+        const packageId=azMembershipPackageId(body.packageId||body.id); if(!packageId)return send(res,400,JSON.stringify({ok:false,error:"Package ID is required."}),"application/json");
+        const price=Math.max(0,Number(body.packagePriceRM||0)||0); if(price<=0)return send(res,400,JSON.stringify({ok:false,error:"Package price must be more than RM0."}),"application/json");
+        const row={packageId,packageName:cleanPremiumText(body.packageName||"Membership",120),packagePriceRM:Math.round(price*100)/100,durationMonths:Math.max(1,Math.min(60,Math.floor(Number(body.durationMonths||1)||1))),active:body.active!==false,discounts:azMembershipDiscounts(body.discounts||{}),extraNote:cleanPremiumText(body.extraNote||"",500),sortOrder:Number(body.sortOrder||0)||0,updatedAt:new Date().toISOString(),updatedAtMs:Date.now(),updatedBy:adminIdentity.username||adminIdentity.email||"admin"};
+        await db.collection(AZ_MEMBERSHIP_COLLECTION).doc(packageId).set(row,{merge:true});
+        return send(res,200,JSON.stringify({ok:true,record:azMembershipPublic(row)},null,2),"application/json");
+      } catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/membership/admin/delete" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ok:false,error:"Admin authorization required."}), "application/json");
+        const body=parseRequestBody(await readBody(req)); const packageId=azMembershipPackageId(body.packageId||body.id); if(!packageId)return send(res,400,JSON.stringify({ok:false,error:"Invalid package ID."}),"application/json");
+        const db=getAzobssBackendDb();if(!db)throw new Error("Membership database is unavailable.");await db.collection(AZ_MEMBERSHIP_COLLECTION).doc(packageId).delete();
+        return send(res,200,JSON.stringify({ok:true,packageId},null,2),"application/json");
+      } catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/membership/create-bill" && req.method === "POST") {
+      try {
+        if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) return send(res,500,JSON.stringify({ok:false,error:"Payment gateway is not configured."}),"application/json");
+        const body=parseRequestBody(await readBody(req));
+        let identity=await azCommissionIdentityFromRequest(req); if(!identity?.uid)return send(res,401,JSON.stringify({ok:false,error:"Login required before purchasing Membership."}),"application/json");
+        identity=await azHydrateIdentityFromUsernameHint(identity,body.usernameKey||"",body.profileDocId||"");
+        const userDocId=cleanPremiumText(identity.userDocId||identity.username||"",160).trim(); if(!userDocId)return send(res,400,JSON.stringify({ok:false,error:"User profile not found."}),"application/json");
+        const packageId=azMembershipPackageId(body.packageId); const db=getAzobssBackendDb(); if(!db)throw new Error("Membership database is unavailable.");
+        const pkgSnap=await db.collection(AZ_MEMBERSHIP_COLLECTION).doc(packageId).get(); if(!pkgSnap.exists)return send(res,404,JSON.stringify({ok:false,error:"Membership package not found."}),"application/json");
+        const pkg=azMembershipPublic({packageId,...pkgSnap.data()}); if(!pkg.active)return send(res,400,JSON.stringify({ok:false,error:"This Membership package is currently unavailable."}),"application/json");
+        const amount=Number(pkg.packagePriceRM||0); const amountSen=Math.round(amount*100); if(amountSen<=0)return send(res,400,JSON.stringify({ok:false,error:"Invalid Membership package price."}),"application/json");
+        const profileSnap=await db.collection("users").doc(userDocId).get(); const profile=profileSnap.exists?(profileSnap.data()||{}):{};
+        const orderId=makeId("mem"); const apiBase=publicBaseUrlFromReq(req); const returnUrl=`${FRONTEND_BASE_URL}/?membership=return&orderId=${encodeURIComponent(orderId)}`; const callbackUrl=TOYYIB_CALLBACK_URL||`${apiBase}/api/toyyib-callback`;
+        const buyerEmail=cleanPremiumText(profile.contactEmail||profile.email||identity.profileEmail||identity.authEmail||"customer@azobss.com",160); const buyerPhone=cleanPremiumText(profile.phone||profile.phoneNumber||"01135600723",40); const buyerName=cleanPremiumText(profile.usernameKey||profile.username||identity.username||"AZOBSS Member",80);
+        const billPayload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:cleanForToyyib(pkg.packageName,30)||"AZOBSS Membership",billDescription:cleanForToyyib(`AZOBSS Membership ${pkg.packageName} - ${pkg.durationMonths} month(s)`,100),billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:callbackUrl,billExternalReferenceNo:orderId,billTo:cleanForToyyib(buyerName,30),billEmail:cleanForToyyib(buyerEmail,80),billPhone:cleanForToyyib(buyerPhone,20),billSplitPayment:0,billSplitPaymentArgs:"",billPaymentChannel:0,billContentEmail:`Thank you for purchasing AZOBSS Membership ${cleanForToyyib(pkg.packageName,50)}.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
+        const apiResult=await postToyyib("createBill",billPayload); const billCode=Array.isArray(apiResult)?(apiResult[0]&&(apiResult[0].BillCode||apiResult[0].billCode)):(apiResult&&apiResult.BillCode); if(!billCode)return send(res,502,JSON.stringify({ok:false,error:"Payment gateway did not return a bill code.",raw:apiResult}),"application/json");
+        const paymentUrl=`${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+        const order=upsertPremiumOrder({orderId,billCode,paymentUrl,returnUrl,status:"pending",paymentMethod:"toyyibpay",amount:azAdjustedMoneyText(amount),amountSen,saleAmount:amount,saleAmountText:azAdjustedMoneyText(amount),baseAmount:amount,baseAmountSen:amountSen,membershipPurchase:true,membershipPackageId:packageId,membershipPackageSnapshot:pkg,membershipUserDocId:userDocId,automaticCheckoutKind:"membership",productId:`membership-${packageId}`,productName:pkg.packageName,product:{id:`membership-${packageId}`,productId:`membership-${packageId}`,name:pkg.packageName,type:"membership",category:"membership",price:azAdjustedMoneyText(amount)},user:{uid:identity.uid,username:buyerName,usernameKey:buyerName,email:buyerEmail,phone:buyerPhone,profileDocId:userDocId},email:buyerEmail,buyerEmail,createdAt:new Date().toISOString(),createdAtMs:Date.now()});
+        try{await azPersistPremiumOrder(order);}catch(e){console.warn("Membership pending order persist failed:",e&&e.message||e);}
+        return send(res,200,JSON.stringify({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:"pending",package:pkg},null,2),"application/json");
+      } catch(err){console.error("Membership create bill failed:",err&&err.stack||err);return send(res,500,JSON.stringify({ok:false,error:err?.message||"Unable to create Membership payment."},null,2),"application/json");}
+    }
+
+    // AZOBSS v1129 Referral Invite Code. Successful new-account referral gives configurable one-off credit to the sharer; never PA/BM access.
+    if (pathname === "/api/referral/me" && req.method === "GET") {
+      try{
+        let identity=await azCommissionIdentityFromRequest(req);if(!identity?.uid)return send(res,401,JSON.stringify({ok:false,error:"Login required."}),"application/json");
+        identity=await azHydrateIdentityFromUsernameHint(identity,parsed.query?.usernameKey||"",parsed.query?.profileDocId||""); const info=await azReferralEnsureMe(identity);
+        return send(res,200,JSON.stringify({ok:true,...info},null,2),"application/json",{"Cache-Control":"no-store"});
+      }catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/referral/redeem" && req.method === "POST") {
+      try{
+        const body=parseRequestBody(await readBody(req)); let identity=await azCommissionIdentityFromRequest(req);if(!identity?.uid)return send(res,401,JSON.stringify({ok:false,error:"Login required before redeeming an Invite Code."}),"application/json");
+        identity=await azHydrateIdentityFromUsernameHint(identity,body.usernameKey||"",body.profileDocId||""); const db=getAzobssBackendDb();if(!db)throw new Error("Referral database is unavailable.");
+        const code=azReferralCode(body.code);if(!code)return send(res,400,JSON.stringify({ok:false,error:"Enter a valid Invite Code."}),"application/json"); const settings=await azReferralSettings();if(!settings.active)return send(res,400,JSON.stringify({ok:false,error:"Referral program is currently unavailable."}),"application/json");
+        const userDocId=cleanPremiumText(identity.userDocId||identity.username||"",160).trim();if(!userDocId)return send(res,400,JSON.stringify({ok:false,error:"User profile not found."}),"application/json");
+        const mapRef=db.collection(AZ_REFERRAL_CODE_COLLECTION).doc(code);const mapSnap=await mapRef.get();if(!mapSnap.exists||mapSnap.data()?.active===false)return send(res,404,JSON.stringify({ok:false,error:"Invite Code not found."}),"application/json"); const inviterDocId=cleanPremiumText(mapSnap.data()?.userDocId||"",160).trim();if(!inviterDocId)return send(res,404,JSON.stringify({ok:false,error:"Invite Code owner not found."}),"application/json");if(inviterDocId===userDocId)return send(res,400,JSON.stringify({ok:false,error:"You cannot redeem your own Invite Code."}),"application/json");
+        const userRef=db.collection("users").doc(userDocId),inviterRef=db.collection("users").doc(inviterDocId),rewardRef=db.collection(AZ_REFERRAL_REWARD_COLLECTION).doc(userDocId);const now=Date.now();let result=null;
+        await db.runTransaction(async tx=>{const [userSnap,inviterSnap,rewardSnap]=await Promise.all([tx.get(userRef),tx.get(inviterRef),tx.get(rewardRef)]);if(!userSnap.exists)throw Object.assign(new Error("User profile not found."),{status:404});if(!inviterSnap.exists)throw Object.assign(new Error("Invite Code owner not found."),{status:404});const user=userSnap.data()||{};if(user.referralRedeemedCode||user.referredByUserDocId||rewardSnap.exists)throw Object.assign(new Error("This account has already redeemed an Invite Code."),{status:409});const createdMs=Number(user.createdAtMs||0)||azFirestoreTimeMs(user.createdAt)||now;const ageDays=Math.max(0,(now-createdMs)/86400000);if(ageDays>settings.maxAccountAgeDays)throw Object.assign(new Error(`Invite Code can only be redeemed by a newly registered account within ${settings.maxAccountAgeDays} days.`),{status:400});const inviter=inviterSnap.data()||{};const reward=Math.max(0,Number(settings.rewardRM||0)||0);const newBalance=Math.round(((Number(inviter.referralCreditBalanceRM||0)||0)+reward)*100)/100;const successCount=(Number(inviter.referralSuccessfulCount||0)||0)+1;tx.set(userRef,{referralRedeemedCode:code,referredByUserDocId:inviterDocId,referralRedeemedAt:new Date(now).toISOString(),referralRedeemedAtMs:now},{merge:true});tx.set(inviterRef,{referralCreditBalanceRM:newBalance,referralSuccessfulCount:successCount,referralLastRewardRM:reward,referralLastRewardAt:new Date(now).toISOString(),referralLastRewardAtMs:now},{merge:true});tx.set(rewardRef,{referredUserDocId:userDocId,referredUid:identity.uid,inviteCode:code,inviterUserDocId:inviterDocId,rewardRM:reward,status:"credited",createdAt:new Date(now).toISOString(),createdAtMs:now},{merge:false});result={code,rewardRM:reward,inviterUserDocId:inviterDocId};});
+        return send(res,200,JSON.stringify({ok:true,message:"Invite Code redeemed successfully.",...result},null,2),"application/json");
+      }catch(err){return send(res,Number(err?.status)||500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/referral/admin/settings" && req.method === "GET") {
+      try{const adminIdentity=await azAdminIdentityFromRequest(req,parsed);if(!adminIdentity?.isAdmin)return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json");return send(res,200,JSON.stringify({ok:true,settings:await azReferralSettings()},null,2),"application/json");}catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/referral/admin/settings" && req.method === "POST") {
+      try{const adminIdentity=await azAdminIdentityFromRequest(req,parsed);if(!adminIdentity?.isAdmin)return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json");const body=parseRequestBody(await readBody(req));const db=getAzobssBackendDb();if(!db)throw new Error("Referral database is unavailable.");const row={active:body.active!==false,rewardRM:Math.max(0,Math.min(1000,Math.round((Number(body.rewardRM||0)||0)*100)/100)),maxAccountAgeDays:Math.max(1,Math.min(90,Math.floor(Number(body.maxAccountAgeDays||14)||14))),updatedAt:new Date().toISOString(),updatedAtMs:Date.now(),updatedBy:adminIdentity.username||adminIdentity.email||"admin"};await db.collection(AZ_REFERRAL_SETTINGS_COLLECTION).doc(AZ_REFERRAL_SETTINGS_DOC).set(row,{merge:true});return send(res,200,JSON.stringify({ok:true,settings:row},null,2),"application/json");}catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
 
 
     if (pathname === "/api/sound-effects/recent" && req.method === "GET") {

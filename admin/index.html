@@ -83,7 +83,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
       u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
-    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:false));
     var roleFlat=role.replace(/[\s_-]+/g,'');
     var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
@@ -3617,6 +3617,42 @@ body[data-dashboard-page="admin"] .topbar{
         <div id="adminApiKeyStatus" class="tabs-note">Admin auth status: checking...</div>
       </div>
       <div class="card">
+        <h2>Membership Packages</h2>
+        <p class="tabs-note">Membership mesti dibeli. Ia hanya memberi diskaun Software dan CAD Tools untuk tempoh pakej. Membership TIDAK memberi akses PA/BM.</p>
+        <div class="toolbar">
+          <input id="membershipPackageId" placeholder="Package ID, e.g. SILVER3M" style="min-width:180px">
+          <input id="membershipPackageName" placeholder="Package name, e.g. Silver 3 Months" style="min-width:220px">
+          <input id="membershipPackagePrice" type="number" min="0.01" step="0.01" placeholder="Price RM" style="width:130px">
+          <input id="membershipDurationMonths" type="number" min="1" max="60" value="1" placeholder="Months" style="width:100px">
+          <input id="membershipSortOrder" type="number" step="1" value="0" placeholder="Sort" style="width:90px">
+        </div>
+        <div class="toolbar">
+          <label>Software % <input id="membershipDiscountSoftware" type="number" min="0" max="99" value="0" style="width:80px"></label>
+          <label>CAD Tools % <input id="membershipDiscountCad" type="number" min="0" max="99" value="0" style="width:80px"></label>
+          <label><input id="membershipPackageActive" type="checkbox" checked> Active</label>
+          <span class="tabs-note">PA/BM, Lot Kadaster dan Beli Pelan Akui sentiasa 0% daripada Membership.</span>
+        </div>
+        <div class="toolbar">
+          <input id="membershipExtraNote" placeholder="Package benefits / note (optional)" style="flex:1;min-width:260px">
+          <button class="btn green" id="saveMembershipPackage" type="button">Save Package</button>
+          <button class="btn" id="generateMembershipPackageId" type="button">Generate ID</button>
+          <button class="btn gray" id="clearMembershipPackageForm" type="button">Clear</button>
+        </div>
+        <div id="membershipPackageAdminStatus" class="tabs-note"></div>
+        <div id="membershipPackageAdminList" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Referral / Invite Code Reward</h2>
+        <p class="tabs-note">User kongsi invite link. Bila akaun baru berjaya register dan redeem/auto-redeem code, pemilik link menerima kredit one-off untuk pendaftaran itu. Referral TIDAK memberi akses PA/BM.</p>
+        <div class="toolbar">
+          <label>Reward RM <input id="referralRewardRM" type="number" min="0" max="1000" step="0.01" value="2" style="width:100px"></label>
+          <label>New account limit (days) <input id="referralMaxAccountAgeDays" type="number" min="1" max="90" step="1" value="14" style="width:100px"></label>
+          <label><input id="referralProgramActive" type="checkbox" checked> Active</label>
+          <button class="btn green" id="saveReferralSettings" type="button">Save Referral Settings</button>
+        </div>
+        <div id="referralSettingsStatus" class="tabs-note"></div>
+      </div>
+      <div class="card">
         <h2>Signup Gate</h2>
         <p class="tabs-note">Quick view for settings/signupGate.</p>
         <div id="settingsBox" class="list"></div>
@@ -6191,7 +6227,6 @@ async function saveRegisteredEdit(){
     toast('Setiap pelarasan harga mesti antara -99% hingga +500%.');return;
   }
   const priceAdjustmentByCategory=Object.fromEntries(Object.entries(priceInputs).map(([key,value])=>[key,Math.round(value*100)/100]));
-  const code = pa ? 'ZX6186' : '';
   await updateDoc(doc(db,'users',id),{
     email:$('#azRegEditEmail')?.value.trim()||'',
     phoneNumber:$('#azRegEditPhone')?.value.trim()||'',
@@ -6239,16 +6274,7 @@ async function saveRegisteredEdit(){
     pa_bm_allowed:pa,
     allow_pa_bm:pa,
 
-    // Clear old invite/code fields when OFF; otherwise old code makes it Allowed again.
-    inviteCode:code,
-    inviteCodeUsed:code,
-    invitedByCode:code,
-    memberCode:code,
-    paMemberCode:code,
-    accessCode:code,
-    signupCode:code,
-    member_code:code,
-    referralCode:code,
+    // v1128: invite/benefit codes are independent from PA/BM access.
 
     updatedAt:serverTimestamp(),updatedAtMs:Date.now(),updatedByAdmin:'admin-dashboard'
   });
@@ -6334,10 +6360,44 @@ async function loadAdminActivity(){
   renderAdminActivity();
 }
 
+function membershipFormPayload(){
+  const n=v=>Math.max(0,Math.min(99,Number(v||0)||0));
+  return {
+    packageId:String($('#membershipPackageId')?.value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,''),
+    packageName:String($('#membershipPackageName')?.value||'').trim(),
+    packagePriceRM:Math.max(0,Number($('#membershipPackagePrice')?.value||0)||0),
+    durationMonths:Math.max(1,Math.min(60,Number($('#membershipDurationMonths')?.value||1)||1)),
+    sortOrder:Number($('#membershipSortOrder')?.value||0)||0,
+    active:!!$('#membershipPackageActive')?.checked,
+    discounts:{paBm:0,lotKadaster:0,publicPa:0,software:n($('#membershipDiscountSoftware')?.value),cadTools:n($('#membershipDiscountCad')?.value)},
+    extraNote:String($('#membershipExtraNote')?.value||'').trim()
+  };
+}
+function clearMembershipPackageForm(){
+  if($('#membershipPackageId'))$('#membershipPackageId').value='';if($('#membershipPackageName'))$('#membershipPackageName').value='';if($('#membershipPackagePrice'))$('#membershipPackagePrice').value='';if($('#membershipDurationMonths'))$('#membershipDurationMonths').value='1';if($('#membershipSortOrder'))$('#membershipSortOrder').value='0';
+  if($('#membershipDiscountSoftware'))$('#membershipDiscountSoftware').value='0';if($('#membershipDiscountCad'))$('#membershipDiscountCad').value='0';if($('#membershipPackageActive'))$('#membershipPackageActive').checked=true;if($('#membershipExtraNote'))$('#membershipExtraNote').value='';
+}
+function editMembershipPackageFromRow(encoded){
+  let row={};try{row=JSON.parse(decodeURIComponent(encoded));}catch(_){return;}const d=row.discounts||{};
+  $('#membershipPackageId').value=row.packageId||'';$('#membershipPackageName').value=row.packageName||'';$('#membershipPackagePrice').value=row.packagePriceRM||0;$('#membershipDurationMonths').value=row.durationMonths||1;$('#membershipSortOrder').value=row.sortOrder||0;$('#membershipPackageActive').checked=row.active!==false;$('#membershipDiscountSoftware').value=d.software||0;$('#membershipDiscountCad').value=d.cadTools||0;$('#membershipExtraNote').value=row.extraNote||'';$('#membershipPackageId').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function loadMembershipPackagesAdmin(){
+  const box=$('#membershipPackageAdminList');if(!box)return;
+  try{const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/list',{cache:'no-store'});const rows=Array.isArray(j.records)?j.records:[];box.innerHTML=rows.map(r=>{const enc=encodeURIComponent(JSON.stringify(r));const d=r.discounts||{};return `<div class="item"><div class="item-title"><b>${esc(r.packageId||'')}</b> • ${esc(r.packageName||'Membership')} • ${r.active!==false?'ACTIVE':'OFF'}</div><div class="item-meta">RM${Number(r.packagePriceRM||0).toFixed(2)} • ${r.durationMonths||1} month(s) • Software ${d.software||0}% • CAD ${d.cadTools||0}% • PA/BM: NO ACCESS</div><div class="toolbar"><button class="btn" type="button" onclick="editMembershipPackageFromRow('${enc}')">Edit</button><button class="btn red" type="button" onclick="deleteMembershipPackage('${esc(r.packageId||'')}')">Delete</button></div></div>`}).join('')||'<div class="item">No Membership packages yet.</div>';}
+  catch(e){box.innerHTML='<div class="item">Unable to load Membership packages: '+esc(e?.message||'error')+'</div>';}
+}
+async function saveMembershipPackageAdmin(){const payload=membershipFormPayload();if(!payload.packageId)return toast('Enter Package ID.');if(!payload.packageName)return toast('Enter package name.');if(!(payload.packagePriceRM>0))return toast('Enter package price.');try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});toast('Membership package saved.');clearMembershipPackageForm();await loadMembershipPackagesAdmin();}catch(e){toast(e?.message||'Failed to save Membership package.');}}
+async function deleteMembershipPackage(packageId){if(!confirm('Delete Membership package '+packageId+'?'))return;try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({packageId})});toast('Membership package deleted.');await loadMembershipPackagesAdmin();}catch(e){toast(e?.message||'Delete failed.');}}
+window.editMembershipPackageFromRow=editMembershipPackageFromRow;window.deleteMembershipPackage=deleteMembershipPackage;
+async function loadReferralSettingsAdmin(){try{const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/referral/admin/settings',{cache:'no-store'});const x=j.settings||{};if($('#referralRewardRM'))$('#referralRewardRM').value=Number(x.rewardRM??2);if($('#referralMaxAccountAgeDays'))$('#referralMaxAccountAgeDays').value=Number(x.maxAccountAgeDays??14);if($('#referralProgramActive'))$('#referralProgramActive').checked=x.active!==false;if($('#referralSettingsStatus'))$('#referralSettingsStatus').textContent=`Current reward: RM${Number(x.rewardRM||0).toFixed(2)} per successful new registration.`;}catch(e){if($('#referralSettingsStatus'))$('#referralSettingsStatus').textContent='Unable to load referral settings: '+(e?.message||'error');}}
+async function saveReferralSettingsAdmin(){const payload={rewardRM:Math.max(0,Number($('#referralRewardRM')?.value||0)||0),maxAccountAgeDays:Math.max(1,Math.min(90,Number($('#referralMaxAccountAgeDays')?.value||14)||14)),active:!!$('#referralProgramActive')?.checked};try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/referral/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});toast('Referral settings saved.');await loadReferralSettingsAdmin();}catch(e){toast(e?.message||'Failed to save referral settings.');}}
+document.addEventListener('click',(event)=>{if(event.target.closest('#saveMembershipPackage'))saveMembershipPackageAdmin();if(event.target.closest('#clearMembershipPackageForm'))clearMembershipPackageForm();if(event.target.closest('#generateMembershipPackageId')){const id='MEM'+Math.random().toString(36).slice(2,7).toUpperCase();if($('#membershipPackageId'))$('#membershipPackageId').value=id;}if(event.target.closest('#saveReferralSettings'))saveReferralSettingsAdmin();});
+
 async function loadSettings(){
   const snap=await getDoc(doc(db,'settings','signupGate')).catch(e=>{azAdminReportQueryError('Settings: signupGate',e);return null});
   if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
   else $('#settingsBox').innerHTML='<div class="item">No signupGate settings found.</div>';
+  await Promise.all([loadMembershipPackagesAdmin(),loadReferralSettingsAdmin()]);
 }
 async function publishNotification(){
   const type=$('#notifType').value, title=$('#notifTitle').value.trim(), body=$('#notifBody').value.trim();
@@ -6910,8 +6970,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1109"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1109"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1129"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1129"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">

@@ -84,7 +84,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
       u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
-    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
     var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
@@ -1664,7 +1664,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   });
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=1109" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=714" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=1109" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=714" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=1129" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;

@@ -343,9 +343,6 @@ function injectModal() {
       <label for="siteSignupEmail">Email
         <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
       </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
-      </label>
       <label class="auth-captcha-row" for="siteSignupCaptcha"><input id="siteSignupCaptcha" type="checkbox" required> I'm not a robot</label>
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Create Account</button>
@@ -399,9 +396,6 @@ function injectAdminUserEditModal() {
           <option value="yes">Yes - allow PA/BM tab</option>
           <option value="no">No - hide PA/BM tab</option>
         </select>
-      </label>
-      <label for="adminUserEditMemberCode">Invite Code
-        <input id="adminUserEditMemberCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
       <p class="request-error" id="adminUserEditError"></p>
       <div class="az-admin-modal-actions">
@@ -977,6 +971,21 @@ function injectProfileSettingsModal() {
       </label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
       
+      <div class="profile-password-box" aria-label="Membership">
+        <p class="profile-password-title">Membership</p>
+        <p class="profile-password-help">Beli pakej Membership untuk dapat diskaun pembelian Software dan CAD Tools mengikut tempoh pakej. Membership tidak membuka akses PA/BM.</p>
+        <div id="profileMembershipStatus" class="auth-reset-note">No active Membership.</div>
+        <div id="profileMembershipPackages" style="display:grid;gap:10px;margin-top:10px"></div>
+      </div>
+      <div class="profile-password-box" aria-label="Redeem Invite Code">
+        <p class="profile-password-title">Redeem Invite Code</p>
+        <p class="profile-password-help">Kongsi invite link kamu. Bila pengguna baru berjaya register dan redeem code, kamu dapat Referral Credit one-off untuk pendaftaran itu. Invite Code tidak membuka PA/BM.</p>
+        <div id="profileReferralOwn" class="auth-reset-note">Loading your Invite Code...</div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label for="profileReferralLink" style="flex:1;min-width:220px">Your Invite Link<input id="profileReferralLink" readonly type="text"></label><button class="btn secondary" id="profileCopyReferralLinkButton" type="button">Copy Link</button></div>
+        <label for="profileReferralRedeemCode">Invite Code<input id="profileReferralRedeemCode" autocomplete="off" placeholder="Enter invite code" type="text"></label>
+        <button class="btn secondary" id="profileRedeemReferralCodeButton" type="button">Redeem Invite Code</button>
+        <div id="profileReferralStatus" class="auth-reset-note"></div>
+      </div>
       <div class="profile-password-box" aria-label="Reset Password">
         <p class="profile-password-title">Reset Password</p>
         <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
@@ -1000,7 +1009,7 @@ function injectProfileSettingsModal() {
 
 const AZOBSS_ADMIN_USERS = ['zedan91','zedan9107'];
 const AZOBSS_ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
-const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
+const AZOBSS_PA_MEMBER_CODE = 'ZX6186'; // legacy historical value only; never grants access in v1128+
 function getUserKey(user){ return String(user?.usernameKey || user?.username || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
 function isAzobssAdmin(user){
   const key = getUserKey(user);
@@ -1061,7 +1070,7 @@ function getPaBmFlagAllowed(user){
   return keys.some((key)=>isTruthyPaBmValue(u[key]));
 }
 function buildPaBmAccessPayload(allowed, code=''){
-  const normalizedCode = normalizePaMemberCode(code || (allowed ? AZOBSS_PA_MEMBER_CODE : ''));
+  const normalizedCode = normalizePaMemberCode(code || '');
   return {
     inviteCode: normalizedCode,
     inviteCodeUsed: normalizedCode,
@@ -1081,18 +1090,21 @@ function buildPaBmAccessPayload(allowed, code=''){
 }
 
 function getPaBmPayloadFromCode(code){
-  const normalizedCode = normalizePaMemberCode(code);
-  const allowed = normalizedCode === AZOBSS_PA_MEMBER_CODE;
-  return buildPaBmAccessPayload(allowed, normalizedCode);
+  // v1128: benefit/invite codes never grant PA/BM access.
+  return buildPaBmAccessPayload(false, '');
 }
 function mergePaBmAccessPreserve(existing={}, incomingCode=''){
-  const code = normalizePaMemberCode(
-    incomingCode || existing.inviteCode || existing.inviteCodeUsed || existing.invitedByCode ||
-    existing.memberCode || existing.paMemberCode || existing.accessCode || existing.signupCode || ''
-  );
-  const codeAllowed = code === AZOBSS_PA_MEMBER_CODE;
-  const allowed = codeAllowed || getPaBmFlagAllowed(existing);
-  return buildPaBmAccessPayload(allowed, code || normalizePaMemberCode(existing.inviteCode || existing.memberCode || ''));
+  // v1128: only an explicit Admin Dashboard override may grant PA/BM.
+  const adminAllowed = getAdminPaBmAllowed(existing);
+  if(adminAllowed !== null){
+    return {
+      ...buildPaBmAccessPayload(adminAllowed, ''),
+      adminPaBmOverride: true,
+      adminPaBmAllowed: adminAllowed,
+      paBmManagedBy: 'admin'
+    };
+  }
+  return buildPaBmAccessPayload(false, '');
 }
 function getPaMemberCodes(user){
   const u = user || {};
@@ -1112,8 +1124,8 @@ function getPaMemberCodes(user){
 function hasPaBmTabAccess(user){
   if (!user) return false;
   if (isAzobssAdmin(user)) return true;
-  if (getPaBmFlagAllowed(user)) return true;
-  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
+  const adminAllowed = getAdminPaBmAllowed(user);
+  return adminAllowed === true;
 }
 
 function isPaBmProtectedPage(){
@@ -1229,6 +1241,43 @@ function openSiteAuth(mode='signin'){
   setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
 }
 function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+function azobssBenefitStatusText(user){
+  const u=user||{};
+  const exp=Number(u.membershipBenefitExpiresAtMs||0)||0;
+  const active=!!u.membershipBenefitActive && exp>Date.now();
+  if(!active) return 'No active benefit package.';
+  const label=String(u.membershipBenefitPackageName||u.membershipBenefitCode||'Benefit package');
+  const until=new Date(exp).toLocaleDateString();
+  const discounts=u.membershipDiscountByCategory&&typeof u.membershipDiscountByCategory==='object'?u.membershipDiscountByCategory:{};
+  const vals=Object.values(discounts).map(Number).filter(v=>Number.isFinite(v)&&v>0);
+  const max=vals.length?Math.max(...vals):0;
+  return `${label} active until ${until}${max?` • up to ${max}% discount`:''}. PA/BM access is not included.`;
+}
+async function redeemAzobssBenefitCode(){
+  const input=$('profileBenefitCode');
+  const status=$('profileBenefitStatus');
+  const err=$('profileSettingsError');
+  const code=String(input?.value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');
+  if(!code){ if(err) err.textContent='Enter a benefit code first.'; return; }
+  if(!auth.currentUser){ if(err) err.textContent='Please login again before redeeming a code.'; return; }
+  try{
+    if(status) status.textContent='Checking code...';
+    const token=await auth.currentUser.getIdToken(true);
+    const saved=getSavedUser()||{};
+    const res=await fetch('https://azobss-backend.onrender.com/api/invite-benefit/redeem',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({code,usernameKey:saved.usernameKey||saved.username||'',profileDocId:saved.profileDocId||''})
+    });
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok||!out.ok) throw new Error(out.message||out.error||'Unable to redeem code.');
+    const updated={...saved,...(out.userBenefits||{})};
+    saveUser(updated);
+    if(status) status.textContent=azobssBenefitStatusText(updated);
+    if(input) input.value='';
+    if(err){err.style.color='#62e6a5';err.textContent='Benefit code activated successfully.';}
+    window.dispatchEvent(new CustomEvent('azobss:benefit-redeemed',{detail:out}));
+  }catch(e){ if(status) status.textContent=azobssBenefitStatusText(getSavedUser()||{}); if(err){err.style.color='';err.textContent=e?.message||'Unable to redeem code.';} }
+}
 function openProfileSettings(){
   const modal=$('profileSettingsModal'); if(!modal) return;
   const user=getSavedUser() || {};
@@ -1238,6 +1287,8 @@ function openProfileSettings(){
   if($('profileEditPhone')) $('profileEditPhone').value=formatPhoneGuide(parsedPhone.local || '');
   if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
   const err=$('profileSettingsError'); if(err) err.textContent='';
+  if($('profileBenefitCode')) $('profileBenefitCode').value='';
+  if($('profileBenefitStatus')) $('profileBenefitStatus').textContent=azobssBenefitStatusText(user);
   ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
   modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
 }
@@ -1421,9 +1472,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
-  const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.accessCode || user.signupCode || '';
-  $('adminUserEditPaAccess').value = (registeredUserHasPaAccess(user) || normalizePaMemberCode(existingCode)===AZOBSS_PA_MEMBER_CODE) ? 'yes' : 'no';
-  $('adminUserEditMemberCode').value = existingCode;
+  $('adminUserEditPaAccess').value = registeredUserHasPaAccess(user) ? 'yes' : 'no';
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
   modal.classList.add('is-open');
@@ -1441,8 +1490,6 @@ async function saveAdminUserEdit(){
   const usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
   if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
   const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
-  const typedCode = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
-  const code = allowPaAccess ? (typedCode || 'ZX6186') : '';
   const existingAdminUser = azobssLastRegisteredUsers.find(u => userDocId(u) === docId) || {};
   const adminEditedPhone = getPhoneWithDial('adminUserEdit');
   const adminFinalPhone = mergePhonePreserve(existingAdminUser.phone || existingAdminUser.phoneNumber || '', adminEditedPhone);
@@ -1454,9 +1501,6 @@ async function saveAdminUserEdit(){
     phoneNumber: adminFinalPhone,
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
-    invitedByCode: code,
-    memberCode: code,
-    paMemberCode: code,
     paBmAccess: allowPaAccess,
     paBmAllowed: allowPaAccess,
     allowPABM: allowPaAccess,
@@ -1688,8 +1732,8 @@ function registeredUserHasPaAccess(user){
   if(!user) return false;
   const role = String(user.role || 'member').toLowerCase();
   if(role === 'admin') return true;
-  if(getPaBmFlagAllowed(user)) return true;
-  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
+  const adminAllowed = getAdminPaBmAllowed(user);
+  return adminAllowed === true;
 }
 function registeredUserCreatedMs(user){
   return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
@@ -4762,7 +4806,7 @@ function bindAuth() {
     const password=fieldValue('siteSignupPassword');
     const phone=getSignupPhoneWithDial();
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
-    const invitedByCode=getSignupInviteCodeValue();
+    const invitedByCode=''; // v1128: invite/benefit code removed from registration
     if(window.isAzobssCaptchaVerified ? !window.isAzobssCaptchaVerified($('siteSignUpForm')) : !$('siteSignupCaptcha')?.checked){ if(err) err.textContent='Please confirm you are not a robot.'; return; }
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
     if(window.__AZOBSS_SIGNUP_BUSY__) return;
@@ -4825,7 +4869,7 @@ function bindAuth() {
       }
       try{ await auth.currentUser?.getIdToken(true); }catch(_){}
 
-      const finalSignupInviteCode = normalizePaMemberCode(getSignupInviteCodeValue() || invitedByCode || '');
+      const finalSignupInviteCode = ''; // v1128: benefit codes are redeemed only after login
       const finalSignupPhone = normalizeAzobssPhone(getSignupPhoneWithDial() || phone || '');
       try{
         localStorage.setItem('azobssSignupPhone:' + usernameKey, finalSignupPhone || '');
@@ -4956,6 +5000,8 @@ function bindAuth() {
   $('adminUserEditCancel')?.addEventListener('click', closeAdminUserEdit);
   // AZOBSS FIX: keep Edit Registered User modal open when clicking/dragging outside. Close only X/Cancel/ESC.
   $('adminUserEditForm')?.addEventListener('submit', async (event)=>{ event.preventDefault(); await saveAdminUserEdit(); });
+
+  $('profileRedeemBenefitCodeButton')?.addEventListener('click', redeemAzobssBenefitCode);
 
   $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();

@@ -437,9 +437,6 @@ function injectModal() {
       <label for="siteSignupEmail">Email
         <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
       </label>
-      <label for="siteSignupInviteCode">Invite Code
-        <input id="siteSignupInviteCode" placeholder="Enter member code if available (optional)" type="text">
-      </label>
       <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
       <p class="request-error" id="siteSignupError"></p>
       <button class="btn signup" type="submit">Create Account</button>
@@ -550,9 +547,6 @@ function injectAdminUserEditModal() {
           <option value="yes">Yes - allow PA/BM tab</option>
           <option value="no">No - hide PA/BM tab</option>
         </select>
-      </label>
-      <label for="adminUserEditMemberCode">Invite Code
-        <input id="adminUserEditMemberCode" placeholder="Enter member code if available (optional)" type="text">
       </label>
       <p class="request-error" id="adminUserEditError"></p>
       <div class="az-admin-modal-actions">
@@ -1379,6 +1373,24 @@ function injectProfileSettingsModal() {
       </label>
       <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
       
+      <div class="profile-password-box" aria-label="Membership">
+        <p class="profile-password-title">Membership</p>
+        <p class="profile-password-help">Beli pakej Membership untuk dapat diskaun pembelian Software dan CAD Tools mengikut tempoh pakej. Membership tidak membuka akses PA/BM.</p>
+        <div id="profileMembershipStatus" class="auth-reset-note">No active Membership.</div>
+        <div id="profileMembershipPackages" style="display:grid;gap:10px;margin-top:10px"></div>
+      </div>
+      <div class="profile-password-box" aria-label="Redeem Invite Code">
+        <p class="profile-password-title">Redeem Invite Code</p>
+        <p class="profile-password-help">Kongsi invite link kamu. Bila pengguna baru berjaya register dan redeem code, kamu dapat Referral Credit one-off untuk pendaftaran itu. Invite Code tidak membuka PA/BM.</p>
+        <div id="profileReferralOwn" class="auth-reset-note">Loading your Invite Code...</div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px">
+          <label for="profileReferralLink" style="flex:1;min-width:220px">Your Invite Link<input id="profileReferralLink" readonly type="text"></label>
+          <button class="btn secondary" id="profileCopyReferralLinkButton" type="button">Copy Link</button>
+        </div>
+        <label for="profileReferralRedeemCode">Invite Code<input id="profileReferralRedeemCode" autocomplete="off" placeholder="Enter invite code" type="text"></label>
+        <button class="btn secondary" id="profileRedeemReferralCodeButton" type="button">Redeem Invite Code</button>
+        <div id="profileReferralStatus" class="auth-reset-note"></div>
+      </div>
       <div class="profile-password-box" aria-label="Reset Password">
         <p class="profile-password-title">Reset Password</p>
         <p class="profile-password-help">For security, enter your current password first, then set a new password.</p>
@@ -1402,7 +1414,7 @@ function injectProfileSettingsModal() {
 
 const AZOBSS_ADMIN_USERS = ['zedan91','zedan9107'];
 const AZOBSS_ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
-const AZOBSS_PA_MEMBER_CODE = 'ZX6186';
+const AZOBSS_PA_MEMBER_CODE = 'ZX6186'; // legacy historical value only; never grants access in v1128+
 function getUserKey(user){ return String(user?.usernameKey || user?.username || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
 function isAzobssAdmin(user){
   const key = getUserKey(user);
@@ -1483,7 +1495,7 @@ function getPaBmFlagAllowed(user){
   return keys.some((key)=>isTruthyPaBmValue(u[key]));
 }
 function buildPaBmAccessPayload(allowed, code=''){
-  const normalizedCode = normalizePaMemberCode(code || (allowed ? AZOBSS_PA_MEMBER_CODE : ''));
+  const normalizedCode = normalizePaMemberCode(code || '');
   return {
     inviteCode: normalizedCode,
     inviteCodeUsed: normalizedCode,
@@ -1503,27 +1515,21 @@ function buildPaBmAccessPayload(allowed, code=''){
 }
 
 function getPaBmPayloadFromCode(code){
-  const normalizedCode = normalizePaMemberCode(code);
-  const allowed = normalizedCode === AZOBSS_PA_MEMBER_CODE;
-  return buildPaBmAccessPayload(allowed, normalizedCode);
+  // v1128: benefit/invite codes never grant PA/BM access.
+  return buildPaBmAccessPayload(false, '');
 }
 function mergePaBmAccessPreserve(existing={}, incomingCode=''){
+  // v1128: only an explicit Admin Dashboard override may grant PA/BM.
   const adminAllowed = getAdminPaBmAllowed(existing);
   if(adminAllowed !== null){
     return {
-      ...buildPaBmAccessPayload(adminAllowed, adminAllowed ? (incomingCode || existing.inviteCode || existing.memberCode || AZOBSS_PA_MEMBER_CODE) : ''),
+      ...buildPaBmAccessPayload(adminAllowed, ''),
       adminPaBmOverride: true,
       adminPaBmAllowed: adminAllowed,
       paBmManagedBy: 'admin'
     };
   }
-  const code = normalizePaMemberCode(
-    incomingCode || existing.inviteCode || existing.inviteCodeUsed || existing.invitedByCode ||
-    existing.memberCode || existing.paMemberCode || existing.accessCode || existing.signupCode || ''
-  );
-  const codeAllowed = code === AZOBSS_PA_MEMBER_CODE;
-  const allowed = codeAllowed || getPaBmFlagAllowed(existing);
-  return buildPaBmAccessPayload(allowed, code || normalizePaMemberCode(existing.inviteCode || existing.memberCode || ''));
+  return buildPaBmAccessPayload(false, '');
 }
 function getPaMemberCodes(user){
   const u = user || {};
@@ -1544,9 +1550,7 @@ function hasPaBmTabAccess(user){
   if (!user) return false;
   if (isAzobssAdmin(user)) return true;
   const adminAllowed = getAdminPaBmAllowed(user);
-  if(adminAllowed !== null) return adminAllowed === true;
-  if (getPaBmFlagAllowed(user)) return true;
-  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
+  return adminAllowed === true;
 }
 
 function isPaBmProtectedPage(){
@@ -1761,6 +1765,51 @@ function openSiteAuth(mode='signin'){
   setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
 }
 function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+const AZOBSS_BACKEND_BASE='https://azobss-backend.onrender.com';
+function azobssMembershipStatusText(user){
+  const u=user||{};const exp=Number(u.membershipBenefitExpiresAtMs||0)||0;const active=!!u.membershipBenefitActive&&exp>Date.now();
+  if(!active)return 'No active Membership. Choose a package below.';
+  const label=String(u.membershipBenefitPackageName||'Membership');const until=new Date(exp).toLocaleDateString();const d=u.membershipDiscountByCategory&&typeof u.membershipDiscountByCategory==='object'?u.membershipDiscountByCategory:{};
+  return `${label} active until ${until} • Software ${Number(d.software||0)||0}% • CAD Tools ${Number(d.cadTools||0)||0}% discount. PA/BM access is not included.`;
+}
+async function azobssRefreshSavedProfile(){
+  const saved=getSavedUser()||{};const key=normalizeUsername(saved.usernameKey||saved.username||saved.name||'');if(!key)return saved;
+  try{const snap=await getDoc(doc(db,'users',key));if(snap.exists()){const updated={...saved,...snap.data(),profileDocId:snap.id};saveUser(updated);syncHeader(updated);return updated;}}catch(_e){}
+  return saved;
+}
+async function loadAzobssMembershipPanel(){
+  const box=$('profileMembershipPackages'),status=$('profileMembershipStatus');if(status)status.textContent=azobssMembershipStatusText(getSavedUser()||{});if(!box)return;
+  box.innerHTML='<div class="auth-reset-note">Loading Membership packages...</div>';
+  try{const res=await fetch(AZOBSS_BACKEND_BASE+'/api/membership/packages',{cache:'no-store'});const out=await res.json().catch(()=>({}));const rows=Array.isArray(out.records)?out.records:[];
+    box.innerHTML=rows.map(r=>{const d=r.discounts||{};return `<div style="border:1px solid rgba(80,160,255,.35);border-radius:10px;padding:10px;background:rgba(9,23,43,.35)"><div style="font-weight:800">${escHtml(r.packageName||r.packageId||'Membership')}</div><div class="auth-reset-note">${Number(r.durationMonths||1)} month(s) • Software ${Number(d.software||0)||0}% • CAD ${Number(d.cadTools||0)||0}%</div>${r.extraNote?`<div class="auth-reset-note">${escHtml(r.extraNote)}</div>`:''}<button type="button" class="btn" data-buy-membership="${escHtml(r.packageId||'')}" style="margin-top:8px;width:100%">Buy Membership • RM${Number(r.packagePriceRM||0).toFixed(2)}</button></div>`}).join('')||'<div class="auth-reset-note">No Membership packages are available yet.</div>';
+  }catch(e){box.innerHTML='<div class="auth-reset-note">Unable to load Membership packages.</div>';}
+}
+async function buyAzobssMembership(packageId){
+  const err=$('profileSettingsError');if(!auth.currentUser){if(err)err.textContent='Please login again before purchasing Membership.';return;}
+  try{if(err){err.style.color='#ffd54a';err.textContent='Creating secure Membership payment...';}const token=await auth.currentUser.getIdToken(true);const saved=getSavedUser()||{};const res=await fetch(AZOBSS_BACKEND_BASE+'/api/membership/create-bill',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({packageId,usernameKey:saved.usernameKey||saved.username||'',profileDocId:saved.profileDocId||''})});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw new Error(out.error||'Unable to create Membership payment.');location.href=out.paymentUrl||out.url;}
+  catch(e){if(err){err.style.color='';err.textContent=e?.message||'Unable to purchase Membership.';}}
+}
+async function loadAzobssReferralPanel(){
+  const own=$('profileReferralOwn'),link=$('profileReferralLink'),status=$('profileReferralStatus');if(!auth.currentUser)return;
+  try{const token=await auth.currentUser.getIdToken();const saved=getSavedUser()||{};const qs='?usernameKey='+encodeURIComponent(saved.usernameKey||saved.username||'')+'&profileDocId='+encodeURIComponent(saved.profileDocId||'');const res=await fetch(AZOBSS_BACKEND_BASE+'/api/referral/me'+qs,{headers:{Authorization:'Bearer '+token},cache:'no-store'});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw new Error(out.error||'Unable to load referral details.');if(own)own.textContent=`Your Invite Code: ${out.code} • Successful referrals: ${out.successfulCount||0} • Referral Credit: RM${Number(out.creditBalanceRM||0).toFixed(2)} • Reward: RM${Number(out.rewardRM||0).toFixed(2)} per successful new registration.`;if(link)link.value=out.link||'';if(status)status.textContent=out.redeemedCode?`This account already redeemed Invite Code ${out.redeemedCode}.`:`New accounts can redeem one Invite Code within ${out.maxAccountAgeDays||14} days after registration.`;}
+  catch(e){if(own)own.textContent=e?.message||'Unable to load Invite Code.';}
+}
+async function redeemAzobssReferralCode(codeOverride=''){
+  const input=$('profileReferralRedeemCode'),err=$('profileSettingsError'),status=$('profileReferralStatus');const code=String(codeOverride||input?.value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!code){if(err)err.textContent='Enter an Invite Code first.';return false;}if(!auth.currentUser)return false;
+  try{if(status)status.textContent='Checking Invite Code...';const token=await auth.currentUser.getIdToken(true);const saved=getSavedUser()||{};const res=await fetch(AZOBSS_BACKEND_BASE+'/api/referral/redeem',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({code,usernameKey:saved.usernameKey||saved.username||'',profileDocId:saved.profileDocId||''})});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw Object.assign(new Error(out.error||'Unable to redeem Invite Code.'),{status:res.status});if(input)input.value='';if(status)status.textContent='Invite Code redeemed. The sharer has received the referral reward.';if(err){err.style.color='#62e6a5';err.textContent='Invite Code redeemed successfully.';}await loadAzobssReferralPanel();return true;}
+  catch(e){if(status)status.textContent=e?.message||'Unable to redeem Invite Code.';if(err){err.style.color='';err.textContent=e?.message||'Unable to redeem Invite Code.';}throw e;}
+}
+function azobssCapturePendingReferral(){
+  try{const params=new URLSearchParams(location.search||'');const code=String(params.get('invite')||params.get('referral')||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(code)localStorage.setItem('azobssPendingReferralCode',code);}catch(_e){}
+}
+async function azobssTryAutoRedeemPendingReferral(){
+  let code='';try{code=String(localStorage.getItem('azobssPendingReferralCode')||'').trim();}catch(_e){}if(!code||!auth.currentUser)return;
+  try{await redeemAzobssReferralCode(code);localStorage.removeItem('azobssPendingReferralCode');}catch(e){if(Number(e?.status||0)===400||Number(e?.status||0)===404||Number(e?.status||0)===409){try{localStorage.removeItem('azobssPendingReferralCode');}catch(_e){}}}
+}
+async function azobssHandleMembershipReturn(){
+  try{const params=new URLSearchParams(location.search||'');if(params.get('membership')!=='return')return;const orderId=String(params.get('orderId')||'').trim();if(!orderId||!auth.currentUser)return;const err=$('profileSettingsError');if(err){err.style.color='#ffd54a';err.textContent='Checking Membership payment...';}const res=await fetch(AZOBSS_BACKEND_BASE+'/api/verify-payment?orderId='+encodeURIComponent(orderId),{cache:'no-store'});const out=await res.json().catch(()=>({}));if(out.paid||out.status==='paid'){const updated=await azobssRefreshSavedProfile();openProfileSettings();if($('profileMembershipStatus'))$('profileMembershipStatus').textContent=azobssMembershipStatusText(updated);if(err){err.style.color='#62e6a5';err.textContent='Membership payment verified and package activated.';}history.replaceState(null,'',location.pathname+location.hash);}else{openProfileSettings();if(err){err.style.color='';err.textContent='Payment is not confirmed yet. Please check again shortly.';}}}catch(_e){}
+}
+azobssCapturePendingReferral();
 function openProfileSettings(){
   const modal=$('profileSettingsModal'); if(!modal) return;
   const user=getSavedUser() || {};
@@ -1770,9 +1819,13 @@ function openProfileSettings(){
   if($('profileEditPhone')) $('profileEditPhone').value=formatPhoneGuide(parsedPhone.local || '');
   if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
   const err=$('profileSettingsError'); if(err) err.textContent='';
+  if($('profileReferralRedeemCode')) $('profileReferralRedeemCode').value='';
+  if($('profileMembershipStatus')) $('profileMembershipStatus').textContent=azobssMembershipStatusText(user);
   ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
   modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+  loadAzobssMembershipPanel(); loadAzobssReferralPanel();
 }
+
 function closeProfileSettings(){const modal=$('profileSettingsModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
 window.openSiteAuth = openSiteAuth;
 window.closeSiteAuth = closeSiteAuth;
@@ -2660,6 +2713,7 @@ async function finalizeGoogleSession(firebaseUser,profile){
   const provider=String(profile?.authProvider||(profile?.googleLinkedExisting?'password+google.com':'google.com'));
   const fullUser={uid:firebaseUser.uid,...profile,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey,email:String(profile?.email||email),authEmail:email,phone,phoneNumber:phone,verified:true,emailVerified:true,googleSignIn:true,authProvider:provider,photoURL:String(profile?.photoURL||profile?.googlePhotoURL||firebaseUser?.photoURL||'')};
   saveUser(fullUser);syncHeader(fullUser);enforcePaBmPageAccess(fullUser,true);startAzobssPresenceHeartbeat(fullUser);await recordLoginHistory(fullUser,'login');bindAzobssPurchaseRecordsUI();renderAzobssPurchaseRecords();setTimeout(renderAzobssPurchaseRecords,800);renderFirebaseAdminRecords();
+  setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
   closeGoogleProfileModal();closeSiteAuth();window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
   return true;
 }
@@ -2995,9 +3049,7 @@ function openAdminUserEdit(userId){
   $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
   $('adminUserEditEmail').value = user.email || '';
   $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
-  const existingCode = user.invitedByCode || user.memberCode || user.paMemberCode || user.inviteCode || user.inviteCodeUsed || user.accessCode || user.signupCode || user.referralCode || '';
-  $('adminUserEditPaAccess').value = (registeredUserHasPaAccess(user) || normalizePaMemberCode(existingCode)===AZOBSS_PA_MEMBER_CODE) ? 'yes' : 'no';
-  $('adminUserEditMemberCode').value = existingCode;
+  $('adminUserEditPaAccess').value = registeredUserHasPaAccess(user) ? 'yes' : 'no';
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
   modal.classList.add('is-open');
@@ -3015,8 +3067,6 @@ async function saveAdminUserEdit(){
   let usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
   if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
   const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
-  const typedCode = normalizePaMemberCode($('adminUserEditMemberCode')?.value || '');
-  const code = allowPaAccess ? (typedCode || 'ZX6186') : '';
   const existingAdminUser = azobssLastRegisteredUsers.find(u => userDocId(u) === docId) || {};
   const adminEditedPhone = getPhoneWithDial('adminUserEdit');
   const adminFinalPhone = mergePhonePreserve(existingAdminUser.phone || existingAdminUser.phoneNumber || '', adminEditedPhone);
@@ -3028,15 +3078,6 @@ async function saveAdminUserEdit(){
     phoneNumber: adminFinalPhone,
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
     role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
-    inviteCode: code,
-    inviteCodeUsed: code,
-    invitedByCode: code,
-    memberCode: code,
-    paMemberCode: code,
-    accessCode: code,
-    signupCode: code,
-    member_code: code,
-    referralCode: code,
     adminPaBmOverride: true,
     adminPaBmAllowed: allowPaAccess,
     paBmManagedBy: 'admin',
@@ -3310,9 +3351,7 @@ function registeredUserHasPaAccess(user){
   const role = String(user.role || 'member').toLowerCase();
   if(role === 'admin') return true;
   const adminAllowed = getAdminPaBmAllowed(user);
-  if(adminAllowed !== null) return adminAllowed === true;
-  if(getPaBmFlagAllowed(user)) return true;
-  return getPaMemberCodes(user).includes(AZOBSS_PA_MEMBER_CODE);
+  return adminAllowed === true;
 }
 function registeredUserCreatedMs(user){
   return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
@@ -6484,7 +6523,7 @@ function bindAuth() {
     const password=fieldValue('siteSignupPassword');
     const phone=getSignupPhoneWithDial();
     const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
-    const invitedByCode=getSignupInviteCodeValue();
+    const invitedByCode=''; // v1128: invite/benefit code removed from registration
     if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err){ err.style.color=''; err.textContent='Please confirm you are not a robot.'; } return; }
     if(err && /confirm you are not a robot/i.test(err.textContent || '')) err.textContent='';
     if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
@@ -6548,7 +6587,7 @@ function bindAuth() {
       }
       try{ await auth.currentUser?.getIdToken(true); }catch(_){}
 
-      const finalSignupInviteCode = normalizePaMemberCode(getSignupInviteCodeValue() || invitedByCode || '');
+      const finalSignupInviteCode = ''; // v1128: benefit codes are redeemed only after login
       const finalSignupPhone = normalizeAzobssPhone(getSignupPhoneWithDial() || phone || '');
       try{
         localStorage.setItem('azobssSignupPhone:' + usernameKey, finalSignupPhone || '');
@@ -6579,9 +6618,6 @@ function bindAuth() {
         for(let attempt=1; attempt<=4; attempt++){
           try{
             await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
-            if(finalSignupInviteCode===AZOBSS_PA_MEMBER_CODE){
-              await setDoc(doc(db,'users',usernameKey), getPaBmPayloadFromCode(finalSignupInviteCode), {merge:true});
-            }
             await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
             return;
           }catch(profileError){
@@ -6683,6 +6719,10 @@ function bindAuth() {
   // AZOBSS FIX: keep Edit Registered User modal open when clicking/dragging outside. Close only X/Cancel/ESC.
   $('adminUserEditForm')?.addEventListener('submit', async (event)=>{ event.preventDefault(); await saveAdminUserEdit(); });
 
+  $('profileRedeemReferralCodeButton')?.addEventListener('click', ()=>redeemAzobssReferralCode().catch(()=>{}));
+  $('profileCopyReferralLinkButton')?.addEventListener('click', async ()=>{const el=$('profileReferralLink');if(!el||!el.value)return;try{await navigator.clipboard.writeText(el.value);const st=$('profileReferralStatus');if(st)st.textContent='Invite link copied.';}catch(_e){el.focus();el.select();}});
+  document.addEventListener('click',(e)=>{const btn=e.target.closest('[data-buy-membership]');if(btn)buyAzobssMembership(btn.getAttribute('data-buy-membership'));});
+
   $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
     event.preventDefault();
     const current=getSavedUser() || {};
@@ -6761,6 +6801,7 @@ function bindAuth() {
       }
       const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
+      setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
     }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); if(isPaBmProtectedPage() && !window.__AZOBSS_PABM_ACCESS_GRANTED__){ enforcePaBmPageAccess(null, true); return; } enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
   });

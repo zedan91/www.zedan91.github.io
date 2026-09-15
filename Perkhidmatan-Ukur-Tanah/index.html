@@ -83,7 +83,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
       u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
-    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
     var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
@@ -505,7 +505,7 @@ body.az-role-is-admin .market-nav .nav-whatsapp-link{
 })();
 </script>
 <script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
-<script src="/assets/js/azobss-global-auth.js?v=1109" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script>
 <script src="/assets/js/azobss-cart-bell-global.js?v=525" defer></script>
 <script src="/assets/js/azobss-public-pa.js?v=593" type="module"></script>
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>

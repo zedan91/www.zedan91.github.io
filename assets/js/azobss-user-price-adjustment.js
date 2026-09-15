@@ -57,7 +57,12 @@ function profilePercents(profile){
       if(key === 'lotKadaster' && (raw === undefined || raw === null || raw === '')){
         raw = map && Object.prototype.hasOwnProperty.call(map,'paBm') ? map.paBm : direct.paBm;
       }
-      result[key] = normalisePercent(raw ?? 0);
+      const baseAdjustment = normalisePercent(raw ?? 0);
+      const expMs = Number(profile.membershipBenefitExpiresAtMs || 0) || 0;
+      const membershipActive = profile.membershipBenefitActive === true && expMs > Date.now();
+      const membershipMap = profile.membershipDiscountByCategory && typeof profile.membershipDiscountByCategory === 'object' ? profile.membershipDiscountByCategory : {};
+      const benefitDiscount = membershipActive && (key === 'software' || key === 'cadTools') ? Math.max(0, Math.min(99, Number(membershipMap[key] || 0) || 0)) : 0;
+      result[key] = normalisePercent(baseAdjustment - benefitDiscount);
     }
     return result;
   }
@@ -66,7 +71,13 @@ function profilePercents(profile){
     ? (profile.adminPriceAdjustmentPercent ?? profile.priceAdjustmentPercent ?? 0)
     : (profile.priceAdjustmentPercent ?? profile.adminPriceAdjustmentPercent ?? 0);
   const legacy = normalisePercent(legacyRaw);
-  for(const key of PRICE_CATEGORIES) result[key] = legacy;
+  const expMs = Number(profile.membershipBenefitExpiresAtMs || 0) || 0;
+  const membershipActive = profile.membershipBenefitActive === true && expMs > Date.now();
+  const membershipMap = profile.membershipDiscountByCategory && typeof profile.membershipDiscountByCategory === 'object' ? profile.membershipDiscountByCategory : {};
+  for(const key of PRICE_CATEGORIES){
+    const benefitDiscount = membershipActive && (key === 'software' || key === 'cadTools') ? Math.max(0, Math.min(99, Number(membershipMap[key] || 0) || 0)) : 0;
+    result[key] = normalisePercent(legacy - benefitDiscount);
+  }
   return result;
 }
 function savedUser(){
@@ -163,4 +174,5 @@ window.azobssApplyPriceAdjustment = applyPriceAdjustment;
 window.azobssAdjustPriceText = adjustPriceText;
 window.azobssPriceAdjustmentLabel = priceAdjustmentLabel;
 onAuthStateChanged(auth, user => refresh(user));
+window.addEventListener('azobss:benefit-redeemed',()=>refresh(auth.currentUser));
 setTimeout(()=>{ if(!state.ready) refresh(auth.currentUser); }, 4500);

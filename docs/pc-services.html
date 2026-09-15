@@ -388,7 +388,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
 </style>
 
 <style id="azobss-pa-bm-access-lock-final">
-/* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
+/* PA/BM tab is private: only admin or an explicit Admin Dashboard PA/BM override may reveal it. Invite/referral codes never grant PA/BM access. */
 .market-nav .nav-pa-bm-link[hidden],
 .market-nav .nav-pa-bm-link.is-hidden,
 a#paBmNavButton[hidden],
@@ -407,7 +407,7 @@ Servis utama AZOBSS:
 - Basic guide untuk pengguna biasa.
 
 User boleh membuat tempahan dan semak anggaran awal melalui [Tempah Servis Laptop & PC](/Tempah-Servis-IT/), kemudian menghantar butiran melalui WhatsApp.
-<script src="/assets/js/azobss-global-auth.js?v=1109" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1109"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1129"></script>
 <script src="/assets/js/azobss-pro-ui.js" defer></script>
 <style id="azobss-admin-compact-pagination-fix">
 /* AZOBSS admin compact lists: 4 records per page + smaller row bars */

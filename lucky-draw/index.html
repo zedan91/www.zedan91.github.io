@@ -84,7 +84,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
       u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
-    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
     var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
@@ -363,7 +363,7 @@ body.is-authenticated #luckyDrawAuthButton{display:none!important;}
 <link rel="stylesheet" href="/assets/css/azobss-pro-reference.css?v=1066">
 
 <style id="azobss-pa-bm-access-lock-final">
-/* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
+/* PA/BM tab is private: only admin or an explicit Admin Dashboard PA/BM override may reveal it. Invite/referral codes never grant PA/BM access. */
 .market-nav .nav-pa-bm-link[hidden],
 .market-nav .nav-pa-bm-link.is-hidden,
 a#paBmNavButton[hidden],
@@ -1479,22 +1479,22 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="lucky-lang-row"><button class="btn dark lucky-lang-toggle" id="luckyLangToggle" type="button">English</button></div>
 <span class="kicker">Lucky Draw</span>
 <h1>Peraduan Lucky Draw User</h1>
-<p>User yang login boleh join Lucky Draw selepas link produk berbayar Software/CAD dibuka oleh orang lain.</p>
+<p>User yang sudah register dan login boleh join Lucky Draw selepas share mana-mana produk Software atau CAD Tools.</p>
 <ul class="rules">
 <li>Login dahulu sebelum join Lucky Draw.</li>
-<li>Share mana-mana produk berbayar di Software Tools atau CAD Tools.</li>
-<li>Tekan Check Product Share untuk semak status sebelum join.</li>
+<li>Share mana-mana produk di Software Tools atau CAD Tools.</li>
+<li>Tekan Check Share Status untuk semak status sebelum join.</li>
 </ul>
 <div class="invite-tools">
 <div>
-<label class="field-label" for="inviteLink">Syarat share produk berbayar</label>
-<input id="inviteLink" readonly="" type="hidden" value="Share produk berbayar Software/CAD untuk aktifkan join"/>
-<p class="share-requirement-text" id="productShareRequirementText">Buka mana-mana produk berbayar Software/CAD dan tekan <strong>Share for Lucky Draw</strong>. Join aktif selepas link produk itu dibuka oleh orang lain.</p>
+<label class="field-label" for="inviteLink">Syarat share produk</label>
+<input id="inviteLink" readonly="" type="hidden" value="Share mana-mana produk Software/CAD untuk unlock Lucky Draw"/>
+<p class="share-requirement-text" id="productShareRequirementText">Buka mana-mana produk Software/CAD dan tekan <strong>Share</strong>. Selepas share direkodkan, Lucky Draw terus unlock.</p>
 </div>
 <div class="actions product-share-actions">
 <button class="btn" id="copyInviteButton" type="button">Open Software Tools</button>
 <button class="btn orange" id="shareInviteButton" type="button">Open CAD Tools</button>
-<button class="btn blue" id="confirmShareButton" type="button" disabled>Check Product Share</button>
+<button class="btn blue" id="confirmShareButton" type="button" disabled>Check Share Status</button>
 <button class="btn green" id="joinLuckyDrawButton" type="button">Join Lucky Draw</button>
 <a class="btn dark" data-auth-open="login" href="#" id="luckyDrawAuthButton">Login / Register</a>
 </div>
@@ -1504,15 +1504,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="lucky-join-checklist" id="luckyJoinChecklist">
 <div class="lucky-join-step warn" id="luckyStepLogin"><span>Status 1</span><strong>Login dahulu</strong><small>Akaun diperlukan untuk join.</small></div>
-<div class="lucky-join-step warn" id="luckyStepReferral"><span>Status 2</span><strong>Belum cukup syarat</strong><small>Produk berbayar perlu dibuka oleh orang lain.</small></div>
+<div class="lucky-join-step warn" id="luckyStepReferral"><span>Status 2</span><strong>Belum cukup syarat</strong><small>Share satu produk Software/CAD dahulu.</small></div>
 <div class="lucky-join-step warn" id="luckyStepJoin"><span>Status 3</span><strong>Belum boleh join</strong><small>Button Join akan aktif selepas syarat lengkap.</small></div>
 </div>
 <div class="referral-info-note" id="referralInfoNote">
-<strong>Nota syarat share produk berbayar</strong>
+<strong>Nota syarat share produk</strong>
 <ul>
-<li>Link produk berbayar yang anda share perlu dibuka oleh sekurang-kurangnya 1 orang lain sebelum anda boleh join Lucky Draw bulan ini.</li>
-<li>Buka link produk sendiri tidak dikira.</li>
-<li>Klik berulang dari device atau IP yang sama tidak akan dikira banyak kali.</li>
+<li>Cukup share sekurang-kurangnya satu produk Software atau CAD Tools selepas login untuk unlock penyertaan Lucky Draw bulan ini.</li>
+<li>Tidak perlu tunggu orang lain membuka link yang dikongsi.</li>
+<li>Satu akaun hanya perlu satu rekod share untuk unlock penyertaan bulan itu.</li>
 </ul>
 </div>
 <div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
@@ -1721,7 +1721,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <script>
     const API_BASE = (window.AZOBSS_LUCKY_DRAW_API || localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
     const ADMIN_USERNAME = 'zedan91';
-    const MEMBER_PA_CODE = 'ZX6186';
+    const MEMBER_PA_CODE = ''; // legacy invite/member codes never grant PA/BM access
     function getLuckyDrawTargetDate(){
       const now = new Date();
       const malaysiaParts = new Intl.DateTimeFormat('en-CA', {
@@ -1901,8 +1901,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       return !!(user && (role === 'admin' || key === ADMIN_USERNAME));
     }
     function hasPaBmAccess(user){
-      const code = cleanInviteCode(user && (user.invitedByCode || user.memberCode || user.paMemberCode));
-      return !!(user && (isAdmin(user) || code === MEMBER_PA_CODE));
+      if (!user) return false;
+      if (isAdmin(user)) return true;
+      const managed = user.adminPaBmOverride === true || String(user.paBmManagedBy || '').toLowerCase() === 'admin';
+      if (!managed) return false;
+      const allowed = user.adminPaBmAllowed === true || user.paBmAccess === true || user.paBmAllowed === true || user.allowPABM === true || user.allowPaBm === true || user.allowPaBmTab === true || user.paBmTabAllowed === true || user.showPaBmTab === true || user.canAccessPaBm === true;
+      return allowed === true;
     }
     function escapeHtml(value){
       return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -1920,9 +1924,24 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       opts.headers = headers;
       return opts;
     }
+    async function azobssLuckyFirebaseHeaders(){
+      for(let i=0;i<15;i++){
+        try{
+          if(typeof window.azobssGetFirebaseAuthHeaders === 'function'){
+            const headers=await window.azobssGetFirebaseAuthHeaders(false);
+            if(headers && headers.Authorization) return headers;
+          }
+        }catch(_e){}
+        await new Promise(resolve=>setTimeout(resolve,80));
+      }
+      return {};
+    }
     async function apiFetch(path, options){
       try{
-        const res = await fetch(API_BASE + path, azobssWithAdminHeaders(options));
+        const opts = azobssWithAdminHeaders(options);
+        const firebaseHeaders = await azobssLuckyFirebaseHeaders();
+        opts.headers = Object.assign({}, firebaseHeaders, opts.headers || {});
+        const res = await fetch(API_BASE + path, opts);
         return res;
       }catch(error){
         throw new Error('Lucky Draw backend tidak dapat dihubungi: ' + API_BASE + '/api/health');
@@ -1934,14 +1953,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         langButton: 'English',
         kicker: 'Lucky Draw',
         title: 'Peraduan Lucky Draw User',
-        intro: 'User yang login boleh join Lucky Draw selepas link produk berbayar Software/CAD dibuka oleh orang lain.',
+        intro: 'User yang sudah register dan login boleh join Lucky Draw selepas share mana-mana produk Software atau CAD Tools.',
         rule1: 'Login dahulu sebelum join Lucky Draw.',
-        rule2: 'Share mana-mana produk berbayar di Software Tools atau CAD Tools.',
-        rule3: 'Tekan Check Product Share untuk semak status sebelum join.',
-        linkLabel: 'Syarat share produk berbayar',
+        rule2: 'Share mana-mana produk di Software Tools atau CAD Tools.',
+        rule3: 'Tekan Check Share Status untuk semak status sebelum join.',
+        linkLabel: 'Syarat share produk',
         copyInvite: 'Open Software Tools',
         shareWebsite: 'Open CAD Tools',
-        checkReferral: 'Check Product Share',
+        checkReferral: 'Check Share Status',
         joinLucky: 'Join Lucky Draw',
         auth: 'Login / Register',
         usernameShare: 'Username share',
@@ -1955,9 +1974,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         loginNeedTitle: 'Login dahulu',
         loginNeedDesc: 'Akaun diperlukan untuk join.',
         referralOkTitle: 'Syarat share lengkap',
-        referralOkDesc: 'Link anda sudah dibuka oleh orang lain.',
+        referralOkDesc: 'Share produk sudah direkodkan.',
         referralNeedTitle: 'Belum cukup syarat',
-        referralNeedDesc: 'Produk berbayar perlu dibuka oleh orang lain.',
+        referralNeedDesc: 'Share satu produk Software/CAD dahulu.',
         joinedTitle: 'Sudah join',
         joinedDesc: 'Penyertaan bulan ini sudah direkod.',
         joinReadyTitle: 'Boleh join sekarang',
@@ -1966,10 +1985,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         joinNeedDesc: 'Button Join akan aktif selepas syarat lengkap.',
         drawClosedTitle: 'Draw bulan ini selesai',
         drawClosedDesc: 'Penyertaan baru telah ditutup.',
-        noteTitle: 'Nota syarat share produk berbayar',
-        note1: 'Link produk berbayar yang anda share perlu dibuka oleh sekurang-kurangnya 1 orang lain sebelum anda boleh join Lucky Draw bulan ini.',
-        note2: 'Buka link produk sendiri tidak dikira.',
-        note3: 'Klik berulang dari device atau IP yang sama tidak akan dikira banyak kali.',
+        noteTitle: 'Nota syarat share produk',
+        note1: 'Cukup share sekurang-kurangnya satu produk Software atau CAD Tools selepas login untuk unlock penyertaan Lucky Draw bulan ini.',
+        note2: 'Tidak perlu tunggu orang lain membuka link yang dikongsi.',
+        note3: 'Satu akaun hanya perlu satu rekod share untuk unlock penyertaan bulan itu.',
         countdownLabel: 'Lucky Draw akan berjalan dalam',
         targetFallback: 'Auto hujung bulan, 10:00 PM Malaysia',
         minimumParticipantsNote: 'Jika peserta tidak mencapai <b>100 orang</b>, roll tidak akan berjalan. Countdown akan reset dan dibawa ke bulan seterusnya.',
@@ -2052,27 +2071,27 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         abuseAuditFail: 'Anti-abuse log belum dapat dibaca.',
         abuseAuditExportEmpty: 'Tiada anti-abuse log untuk export.',
         abuseAuditExportDone: 'Export anti-abuse log selesai.',
-        loginPlaceholder: 'Share produk berbayar Software/CAD untuk aktifkan join',
-        productRequirement: 'Buka mana-mana produk berbayar Software/CAD dan tekan <strong>Share for Lucky Draw</strong>. Join aktif selepas link produk itu dibuka oleh orang lain.',
+        loginPlaceholder: 'Share mana-mana produk Software/CAD untuk unlock Lucky Draw',
+        productRequirement: 'Buka mana-mana produk Software/CAD dan tekan <strong>Share</strong>. Selepas share direkodkan, Lucky Draw terus unlock.',
         loginActive: 'Login dahulu untuk aktifkan Lucky Draw.',
         loginCheck: 'Login dahulu untuk check product share.',
         checking: 'Checking product share...',
         alreadyJoined: 'Anda sudah join Lucky Draw bulan ini.',
-        referralValid: 'Klik produk berbayar sudah valid. Button Join Lucky Draw sudah aktif.',
+        referralValid: 'Share produk direkodkan. Button Join Lucky Draw sudah aktif.',
         joinBlockedDevice: 'Syarat share produk sudah valid, tetapi device ini sudah digunakan untuk join Lucky Draw bulan ini.',
         joinBlockedIp: 'Syarat share produk sudah valid, tetapi IP address ini sudah digunakan untuk join Lucky Draw bulan ini.',
         joinBlockedAccount: 'Akaun ini sudah join Lucky Draw bulan ini.',
         joinBlockedGeneric: 'Syarat share produk sudah valid, tetapi anda belum boleh join bulan ini.',
-        referralMissing: 'Share link username kepada orang lain. Join aktif selepas sekurang-kurangnya 1 orang buka link anda.',
-        referralCount: 'Valid product click: ',
-        noReferral: 'Belum ada klik produk valid',
+        referralMissing: 'Share mana-mana produk Software atau CAD Tools dahulu untuk unlock Lucky Draw.',
+        referralCount: 'Product share: ',
+        noReferral: 'Belum share produk',
         copyLogin: 'Login dahulu sebelum buka Software Tools.',
-        copied: 'Link username berjaya disalin. Join aktif selepas orang lain buka link ini.',
+        copied: 'Link produk berjaya disalin.',
         shareLogin: 'Login dahulu sebelum buka CAD Tools.',
         shareText: 'Jom join AZOBSS Lucky Draw: ',
-        shareOpened: 'Link sudah dibuka untuk share. Join hanya aktif selepas orang lain buka link anda.',
+        shareOpened: 'Share produk direkodkan. Lucky Draw sudah boleh di-unlock.',
         shareCancelled: 'Share dibatalkan. Join belum aktif.',
-        whatsappOpened: 'WhatsApp dibuka. Join hanya aktif selepas orang lain buka link produk anda.',
+        whatsappOpened: 'WhatsApp dibuka. Share produk telah direkodkan.',
         joinLogin: 'Login dahulu sebelum join Lucky Draw.',
         joinSuccess: 'Anda berjaya join Lucky Draw bulan ini. Semoga berjaya!',
         entriesEmpty: 'Belum ada peserta Lucky Draw.',
@@ -2089,14 +2108,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         langButton: 'BM',
         kicker: 'Lucky Draw',
         title: 'User Lucky Draw Contest',
-        intro: 'Logged-in users can join the Lucky Draw after their share link is opened by another person.',
+        intro: 'Registered, logged-in users can join after sharing any Software or CAD Tools product.',
         rule1: 'Log in first before joining the Lucky Draw.',
-        rule2: 'Click Open CAD Tools to share your username link.',
-        rule3: 'Click Check Product Share to check your status before joining.',
-        linkLabel: 'Paid product share requirement',
+        rule2: 'Share any product from Software Tools or CAD Tools.',
+        rule3: 'Click Check Share Status to check your status before joining.',
+        linkLabel: 'Product share requirement',
         copyInvite: 'Open Software Tools',
         shareWebsite: 'Open CAD Tools',
-        checkReferral: 'Check Product Share',
+        checkReferral: 'Check Share Status',
         joinLucky: 'Join Lucky Draw',
         auth: 'Login / Register',
         usernameShare: 'Username share',
@@ -2110,9 +2129,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         loginNeedTitle: 'Log in first',
         loginNeedDesc: 'An account is required to join.',
         referralOkTitle: 'Share requirement complete',
-        referralOkDesc: 'Your link has been opened by another person.',
+        referralOkDesc: 'Your product share has been recorded.',
         referralNeedTitle: 'Requirement not met',
-        referralNeedDesc: 'Your link must be opened by another person.',
+        referralNeedDesc: 'Share one Software/CAD product first.',
         joinedTitle: 'Already joined',
         joinedDesc: 'Your entry for this month has been recorded.',
         joinReadyTitle: 'Ready to join',
@@ -2121,8 +2140,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         joinNeedDesc: 'The Join button will activate after the requirement is complete.',
         drawClosedTitle: 'This month draw is complete',
         drawClosedDesc: 'New entries are now closed.',
-        noteTitle: 'Paid product share note',
-        note1: 'Your paid product share link must be opened by at least 1 other person before you can join this month\'s Lucky Draw.',
+        noteTitle: 'Product share note',
+        note1: 'Share at least one Software or CAD Tools product after login to unlock this month\'s Lucky Draw.',
         note2: 'Opening your own link does not count.',
         note3: 'Repeated clicks from the same device or IP address will not be counted multiple times.',
         countdownLabel: 'Lucky Draw will run in',
@@ -2219,13 +2238,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         joinBlockedAccount: 'This account has already joined the Lucky Draw this month.',
         joinBlockedGeneric: 'Paid product share is valid, but you cannot join this month.',
         referralMissing: 'Share any paid Software/CAD product. Join will be active after at least 1 person opens your product link.',
-        referralCount: 'Valid product click: ',
+        referralCount: 'Product share: ',
         noReferral: 'No valid product click yet',
         copyLogin: 'Log in first before opening Software Tools.',
-        copied: 'Choose any paid product, then tap the Share for Lucky Draw button.',
+        copied: 'Choose any Software/CAD product, then tap Share.',
         shareLogin: 'Log in first before opening CAD Tools.',
-        shareText: 'AZOBSS paid product: ',
-        shareOpened: 'Product share window opened. Join will only be active after someone else opens your product link.',
+        shareText: 'AZOBSS product: ',
+        shareOpened: 'Product share recorded. Lucky Draw can now be unlocked.',
         shareCancelled: 'Share cancelled. Join is not active yet.',
         whatsappOpened: 'WhatsApp opened. Join will only be active after someone else opens your product link.',
         joinLogin: 'Log in first before joining Lucky Draw.',
@@ -2409,7 +2428,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!user || !(user.usernameKey || user.name)) return 0;
       const username = cleanShareUsername(user.usernameKey || user.name);
       try {
-        const query = '/api/lucky-draw/product-referral-status?monthKey=' + encodeURIComponent(monthKey()) +
+        const query = '/api/lucky-draw/share-status?monthKey=' + encodeURIComponent(monthKey()) +
           '&ref=' + encodeURIComponent(username) +
           '&deviceFingerprint=' + encodeURIComponent(getDeviceFingerprint());
         const res = await apiFetch(query);
@@ -2530,7 +2549,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const joined = backendJoined;
       if (backendJoined) markJoinedLocal(user);
       else { try { localStorage.removeItem(getJoinKey(user)); } catch(e) {} }
-      if (els.inviteLink) els.inviteLink.value = luckyDrawLang === 'en' ? 'Open Software/CAD paid product and tap the Share for Lucky Draw button' : 'Buka produk berbayar Software/CAD dan tekan button Share for Lucky Draw';
+      if (els.inviteLink) els.inviteLink.value = luckyDrawLang === 'en' ? 'Open any Software/CAD product and tap Share' : 'Buka mana-mana produk Software/CAD dan tekan Share';
       if (els.productRequirementText) els.productRequirementText.innerHTML = tr('productRequirement');
       els.inviteCode.textContent = user.usernameKey;
       els.shareStatus.textContent = joinBlocked ? getJoinBlockMessage(luckyDrawJoinBlockCache) : (referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral'));
@@ -3191,7 +3210,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         return;
       }
       if (!(localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0)) {
-        setStatus('Belum ada klik valid dari link produk berbayar. Share mana-mana Software/CAD berbayar dahulu.', true);
+        setStatus('Share mana-mana produk Software atau CAD Tools dahulu untuk unlock Lucky Draw.', true);
         return;
       }
       const usernameKey = normalizeUsername(user.usernameKey || user.name);
@@ -3706,7 +3725,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (isAdmin(readUser())) loadReferralAudit();
     setInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); if (isAdmin(readUser())) loadReferralAudit(); }, 30000);
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=1109" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1109"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1129"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

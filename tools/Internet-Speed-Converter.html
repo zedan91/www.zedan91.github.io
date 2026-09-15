@@ -84,7 +84,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
       u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
-    var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:(flagAllowed||codes.indexOf('ZX6186')>=0)));
+    var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
     var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
@@ -194,7 +194,7 @@ body:not(.is-authenticated) .market-user-tools{display:none !important;}
 <link rel="stylesheet" href="/assets/css/azobss-pro-reference.css?v=1066">
 
 <style id="azobss-pa-bm-access-lock-final">
-/* PA/BM tab is private: only global auth JS may reveal it for admin or ZX6186 members. */
+/* PA/BM tab is private: only admin or an explicit Admin Dashboard PA/BM override may reveal it. Invite/referral codes never grant PA/BM access. */
 .market-nav .nav-pa-bm-link[hidden],
 .market-nav .nav-pa-bm-link.is-hidden,
 a#paBmNavButton[hidden],
@@ -971,7 +971,7 @@ function niceTime(sec){if(!isFinite(sec)||sec<0)return "-";let d=Math.floor(sec/
 function calcTime(){let size=parseFloat(fileSize.value)||0;let mult={KB:8e3,MB:8e6,GB:8e9,TB:8e12}[fileUnit.value];let bits=size*mult;let sp=(parseFloat(speedVal.value)||0)*units[speedUnit.value];let sec=bits/sp;timeRes.innerHTML=`Estimated time: <b>${niceTime(sec)}</b>\nNote: Real download can be slower because of WiFi, server speed, router, cable and background usage.`}
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));calc();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1109" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1109"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1129"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

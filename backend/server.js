@@ -1509,6 +1509,9 @@ function getReferralFile(key = monthKey()) {
 function getProductReferralFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-product-referrals", `${key}.json`);
 }
+function getProductShareActionFile(key = monthKey()) {
+  return path.join(DATA_DIR, "lucky-draw-product-share-actions", `${key}.json`);
+}
 
 function getAbuseFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-abuse-logs", `${key}.json`);
@@ -1577,6 +1580,12 @@ function countValidProductShareClicks(key, ref) {
   if (!cleanRef) return 0;
   const clicks = readJson(getProductReferralFile(key), []);
   return clicks.filter((c) => !c.deleted && c.ref === cleanRef).length;
+}
+function countProductShareActions(key, ref) {
+  const cleanRef = cleanShareUsername(ref);
+  if (!cleanRef) return 0;
+  const rows = readJson(getProductShareActionFile(key), []);
+  return rows.filter((r) => !r.deleted && r.ref === cleanRef && r.monthKey === key).length;
 }
 
 
@@ -3141,6 +3150,55 @@ app.get("/api/prize", (req, res) => {
   }
 });
 
+// AZOBSS v1129: Lucky Draw unlocks when a logged-in user shares any Software/CAD product link.
+app.get("/api/lucky-draw/share-status", async (req, res) => {
+  const key = req.query.monthKey || monthKey();
+  const deviceFingerprint = cleanText(req.query.deviceFingerprint || "", 160);
+  const ipAddress = getClientIp(req);
+  try{
+    const identity = await getFirebaseAdminIdentity(req);
+    if (!identity || !identity.uid) return res.status(401).json({ ok:false, error:"Login required" });
+    const ref = cleanShareUsername(identity.username || req.query.ref);
+    if (!ref) return res.status(400).json({ ok:false, error:"Registered username required" });
+    const count = useLuckyDrawFirestore() ? await luckyDrawCountShareActionsFirestore(key,ref) : countProductShareActions(key, ref);
+    const activeEntries = useLuckyDrawFirestore() ? await luckyDrawAllEntriesFirestore(key) : readJson(getEntriesFile(key), []).filter((e)=>e.monthKey===key&&!e.deleted);
+    const sameUser = activeEntries.find((e)=>e.usernameKey===ref);
+    const sameDevice = deviceFingerprint ? activeEntries.find((e)=>e.deviceFingerprint && e.deviceFingerprint===deviceFingerprint) : null;
+    const sameIp = ipAddress ? activeEntries.find((e)=>e.ipAddress && e.ipAddress===ipAddress) : null;
+    let blockCode="", blockReason="";
+    if(sameUser){blockCode="ALREADY_JOINED";blockReason="Akaun ini sudah join Lucky Draw bulan ini.";}
+    else if(sameDevice){blockCode="DUPLICATE_DEVICE";blockReason="Device ini sudah digunakan untuk join Lucky Draw bulan ini.";}
+    else if(sameIp){blockCode="DUPLICATE_IP";blockReason="IP address ini sudah digunakan untuk join Lucky Draw bulan ini.";}
+    return res.json({ok:true,storage:useLuckyDrawFirestore()?"firestore":"json",monthKey:key,ref,count,valid:count>=1,eligible:count>=1&&!blockCode,blockCode,blockReason});
+  }catch(err){return res.status(500).json({ok:false,error:err?.message||"Share status failed"});}
+});
+app.post("/api/lucky-draw/share-action", async (req, res) => {
+  const key=req.body.monthKey||monthKey();
+  const productId=cleanText(req.body.productId||req.body.product||"",120).replace(/[^A-Za-z0-9_.:-]/g,"").slice(0,120);
+  const productName=cleanText(req.body.productName||"",180);
+  const sourcePage=cleanText(req.body.sourcePage||"",40).toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,40);
+  const deviceFingerprint=cleanText(req.body.deviceFingerprint||"",160);
+  if(!productId)return res.status(400).json({ok:false,error:"productId required"});
+  if(sourcePage && !["software","cad"].includes(sourcePage))return res.status(400).json({ok:false,error:"Only Software/CAD shares unlock Lucky Draw."});
+  try{
+    const identity=await getFirebaseAdminIdentity(req);
+    if(!identity||!identity.uid)return res.status(401).json({ok:false,error:"Login required before sharing for Lucky Draw."});
+    const ref=cleanShareUsername(identity.username||req.body.ref||req.body.usernameKey);
+    if(!ref)return res.status(400).json({ok:false,error:"Registered username required"});
+    const requestedRef=cleanShareUsername(req.body.ref||req.body.usernameKey);
+    if(requestedRef&&requestedRef!==ref)return res.status(403).json({ok:false,error:"Share username does not match the logged-in account."});
+    const row={monthKey:key,ref,uid:identity.uid,productId,productName,sourcePage:sourcePage||"software",deviceFingerprint,ipAddress:getClientIp(req),userAgent:cleanText(req.get("user-agent"),300),sharedAtMs:Date.now(),sharedAt:new Date().toISOString(),deleted:false};
+    let duplicate=false;
+    if(useLuckyDrawFirestore()){
+      const docRef=luckyDrawShareActionsRef(key).doc(luckyDrawShareActionDocId(ref,productId));const snap=await docRef.get();duplicate=snap.exists&&snap.data()?.deleted!==true;await docRef.set(row,{merge:true});
+    }else{
+      const file=getProductShareActionFile(key);const rows=readJson(file,[]);const existing=rows.find(r=>!r.deleted&&r.monthKey===key&&r.ref===ref&&r.productId===productId);duplicate=!!existing;if(!existing){rows.push({id:`${key}_${ref}_${productId}_${Date.now()}`,...row});writeJson(file,rows);}
+    }
+    const count=useLuckyDrawFirestore()?await luckyDrawCountShareActionsFirestore(key,ref):countProductShareActions(key,ref);
+    return res.json({ok:true,storage:useLuckyDrawFirestore()?"firestore":"json",duplicate,ref,productId,count,unlocked:true});
+  }catch(err){return res.status(500).json({ok:false,error:err?.message||"Share record failed"});}
+});
+
 app.get("/api/lucky-draw/product-referral-status", (req, res) => {
   const key = req.query.monthKey || monthKey();
   const ref = cleanShareUsername(req.query.ref);
@@ -3310,6 +3368,17 @@ function luckyDrawMonthRef(key){
 function luckyDrawParticipantsRef(key){
   return luckyDrawMonthRef(key).collection("participants");
 }
+function luckyDrawShareActionsRef(key){
+  return luckyDrawMonthRef(key).collection("shareActions");
+}
+async function luckyDrawCountShareActionsFirestore(key, ref){
+  const cleanRef=cleanShareUsername(ref); if(!cleanRef)return 0;
+  const snap=await luckyDrawShareActionsRef(key).where("ref","==",cleanRef).where("deleted","==",false).count().get();
+  return Number(snap.data().count||0);
+}
+function luckyDrawShareActionDocId(ref, productId){
+  return crypto.createHash("sha256").update(`${cleanShareUsername(ref)}|${String(productId||"")}`).digest("hex").slice(0,40);
+}
 function luckyDrawWinnerRef(key){
   return luckyDrawMonthRef(key).collection("meta").doc("winner");
 }
@@ -3475,29 +3544,28 @@ app.get("/api/lucky-draw/entries/export", requireAdmin, async (req, res) => {
 
 app.post("/api/lucky-draw/entries", async (req, res) => {
   const key = req.body.monthKey || monthKey();
-  const usernameKey = cleanText(req.body.usernameKey, 80).toLowerCase();
-  if (!usernameKey) return res.status(400).json({ ok: false, error: "usernameKey required" });
-  const inviteCode = cleanShareUsername(req.body.inviteCode || usernameKey);
+  const identity = await getFirebaseAdminIdentity(req);
+  if (!identity || !identity.uid) return res.status(401).json({ ok:false, error:"Login required before joining Lucky Draw." });
+  const usernameKey = cleanShareUsername(identity.username || req.body.usernameKey);
+  if (!usernameKey) return res.status(400).json({ ok:false, error:"Registered username required" });
+  const requestedUsername = cleanShareUsername(req.body.usernameKey);
+  if (requestedUsername && requestedUsername !== usernameKey) return res.status(403).json({ ok:false, error:"Lucky Draw username does not match the logged-in account." });
+  const inviteCode = usernameKey;
   const inviteUrl = cleanText(req.body.inviteUrl, 500);
-  const shareConfirmed = req.body.shareConfirmed === true || req.body.shareConfirmed === "true" || req.body.shareConfirmed === "1";
   const deviceFingerprint = cleanText(req.body.deviceFingerprint, 160);
   const ipAddress = getClientIp(req);
 
-  if (!inviteCode || !inviteUrl || !shareConfirmed) {
-    return res.status(400).json({ ok: false, error: "Share link username dahulu sebelum join Lucky Draw." });
-  }
-
-  const productShareCount = countValidProductShareClicks(key, usernameKey);
+  const productShareCount = useLuckyDrawFirestore() ? await luckyDrawCountShareActionsFirestore(key, usernameKey) : countProductShareActions(key, usernameKey);
   const referralCount = productShareCount;
   if (productShareCount < 1) {
-    return res.status(403).json({ ok: false, code: "PRODUCT_SHARE_REQUIRED", error: "Belum ada klik valid dari link produk berbayar. Share mana-mana Software/CAD berbayar dahulu.", referralCount, productShareCount });
+    return res.status(403).json({ ok: false, code: "PRODUCT_SHARE_REQUIRED", error: "Share sekurang-kurangnya satu produk Software atau CAD Tools dahulu untuk unlock Lucky Draw.", referralCount, productShareCount });
   }
 
   if (!deviceFingerprint) {
     return res.status(400).json({ ok: false, error: "Device fingerprint required" });
   }
 
-  const uid = cleanText(req.body.uid, 120);
+  const uid = String(identity.uid || "");
 
   try {
     const existingWinner = useLuckyDrawFirestore() ? await luckyDrawGetWinnerFirestore(key) : readJson(getWinnerFile(key), null);
@@ -4529,6 +4597,11 @@ app.post("/api/subscription/admin/extend", requireAdmin, async (req, res) => {
   }
 });
 
+
+
+// AZOBSS v1129: legacy Benefit/Invite Code redemption is retired. Membership must be purchased,
+// while Invite Code is now reserved for the referral reward system. Neither path grants PA/BM access.
+app.use('/api/invite-benefit', (req,res)=>res.status(410).json({ok:false,error:'Legacy Benefit Code has been retired. Use Membership purchase or Referral Invite Code instead.'}));
 
 // Legacy /api/create-toyyib-bill removed. Use /api/toyyib/create-bill.
 
