@@ -770,6 +770,12 @@ body.pa-bm-page .syit-sheet-modal.is-open {
   display: flex;
 }
 
+/* v1126: PA preview opened from inside Peta Pilihan PA must sit above
+   the full-screen map modal (map z-index 2147483100). */
+body.pa-bm-page .syit-sheet-modal.pabm-pa-modal {
+  z-index: 2147483640;
+}
+
 body.pa-bm-page .syit-sheet-modal-backdrop {
   position: absolute;
   inset: 0;
