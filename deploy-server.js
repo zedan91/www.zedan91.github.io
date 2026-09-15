@@ -8455,7 +8455,10 @@ function parseJupemPaRows(html, stateCode) {
     const rowHtml = rowMatch[1];
     const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((match) => stripHtml(match[1]));
     if (cells.length < 6 || /^no\.?\s*pa$/i.test(cells[1] || "")) continue;
-    const paNo = String(cells[1] || "").trim().toUpperCase();
+    // v1117: JUPEM may render a PA with spaces/punctuation (for example
+    // "PA 2131"). Normalize the visible value before validating it so a valid
+    // PA is not discarded only because of display formatting.
+    const paNo = azobssPabmNormalizePaNumber(cells[1] || "");
     if (!/^PA[0-9A-Z/_-]+$/i.test(paNo)) continue;
     const viewPaUrl = extractJupemAttributeUrl(
       rowHtml,
@@ -11970,6 +11973,90 @@ async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
   return unique;
 }
 
+// v1117: PA searches are allowed to recover from a wrong currently-selected
+// negeri. First try the selected negeri. If the PA is not there, locate the PA
+// from JUPEM's official Pelan Akui search in small state batches, then resolve
+// geometry only for the detected negeri. This keeps normal searches fast while
+// making inputs such as PA2131 usable even when the page is still on another
+// negeri. Bare numbers are still Lot searches and never enter this path.
+const azobssPabmPaAutoStateCache = new Map();
+
+async function azobssPabmFindPaLotsAutoState(preferredStateCode, paInput) {
+  const preferred = cleanLotStateCode(preferredStateCode);
+  const paNo = azobssPabmNormalizePaNumber(paInput);
+  if (!/^PA\d{1,12}$/i.test(paNo)) {
+    return { rows: [], stateCode: preferred || '', requestedStateCode: preferred || '', autoDetected: false };
+  }
+  const cacheKey = `${preferred || '00'}|${paNo}`.toUpperCase();
+  const cached = azobssPabmPaAutoStateCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  async function resolveState(stateCode) {
+    try {
+      const rows = await azobssPabmFindPaLotsByPaNumber(stateCode, paNo);
+      return Array.isArray(rows) ? rows : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  if (preferred) {
+    const preferredRows = await resolveState(preferred);
+    if (preferredRows.length) {
+      const value = { rows: preferredRows, stateCode: preferred, requestedStateCode: preferred, autoDetected: false };
+      if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
+      azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return value;
+    }
+  }
+
+  const wanted = azobssFocusedPaComparable(paNo);
+  const remainingStates = Object.keys(AZOBSS_JUPEM_LOT_STATE_NAMES).filter((code) => code !== preferred);
+  for (let index = 0; index < remainingStates.length; index += 4) {
+    const batch = remainingStates.slice(index, index + 4);
+    const located = await Promise.all(batch.map(async (stateCode) => {
+      try {
+        const search = await searchJupemPaCadastre(stateCode, paNo);
+        const exact = (Array.isArray(search && search.results) ? search.results : [])
+          .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted);
+        return exact.length ? stateCode : '';
+      } catch (_) {
+        return '';
+      }
+    }));
+    const matchedStates = [...new Set(located.filter(Boolean))];
+    if (!matchedStates.length) continue;
+
+    // If JUPEM reports the same PA in more than one negeri in the same search
+    // batch, do not guess. The caller will show a clear message instead.
+    if (matchedStates.length > 1) {
+      const value = {
+        rows: [], stateCode: '', requestedStateCode: preferred || '', autoDetected: false,
+        ambiguousStateCodes: matchedStates
+      };
+      azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 2 * 60 * 1000 });
+      return value;
+    }
+
+    const detectedState = matchedStates[0];
+    const rows = await resolveState(detectedState);
+    if (rows.length) {
+      const value = {
+        rows, stateCode: detectedState, requestedStateCode: preferred || '',
+        autoDetected: Boolean(preferred && detectedState !== preferred)
+      };
+      if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
+      azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return value;
+    }
+  }
+
+  const value = { rows: [], stateCode: preferred || '', requestedStateCode: preferred || '', autoDetected: false };
+  if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
+  azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 2 * 60 * 1000 });
+  return value;
+}
+
 function azobssPabmMergePaReferenceRows(rows, paNo) {
   const list = (Array.isArray(rows) ? rows : []).filter((row) => row && row.geometry && Array.isArray(row.geometry.rings));
   if (!list.length) return null;
@@ -12323,12 +12410,19 @@ async function azobssPabmResolveBenchmarkMapReference(stateCode, rawReference) {
   }
 
   const paNo = azobssPabmNormalizePaNumber(classification.searchValue);
-  const paLots = await azobssPabmFindPaLotsByPaNumber(cleanStateCode, paNo);
-  const reference = azobssPabmMergePaReferenceRows(paLots, paNo);
+  const located = await azobssPabmFindPaLotsAutoState(cleanStateCode, paNo);
+  if (Array.isArray(located.ambiguousStateCodes) && located.ambiguousStateCodes.length > 1) {
+    const names = located.ambiguousStateCodes.map((code) => AZOBSS_JUPEM_LOT_STATE_NAMES[code] || code).join(', ');
+    throw new Error(`${paNo} ditemui di beberapa negeri (${names}). Sila pilih negeri yang betul dan cari semula.`);
+  }
+  const reference = azobssPabmMergePaReferenceRows(located.rows, paNo);
   return {
     mode: 'pa',
     searchValue: paNo,
-    references: reference ? [reference] : []
+    references: reference ? [reference] : [],
+    stateCode: located.stateCode || cleanStateCode,
+    requestedStateCode: cleanStateCode,
+    autoDetectedState: Boolean(located.autoDetected)
   };
 }
 
@@ -18078,12 +18172,24 @@ async function handler(req, res) {
         let results = [];
         let mode = "";
 
+        let detectedStateCode = stateCode || "";
+        let stateAutoDetected = false;
         if (paNo) {
           if (!stateCode) {
             return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu untuk carian Nombor PA." }), "application/json", { "Cache-Control":"no-store" });
           }
           mode = "pa";
-          results = await azobssPabmFindPaLotsByPaNumber(stateCode, paNo);
+          const located = await azobssPabmFindPaLotsAutoState(stateCode, paNo);
+          if (Array.isArray(located.ambiguousStateCodes) && located.ambiguousStateCodes.length > 1) {
+            const names = located.ambiguousStateCodes.map((code) => AZOBSS_JUPEM_LOT_STATE_NAMES[code] || code).join(", ");
+            return send(res, 409, JSON.stringify({
+              ok:false,
+              error:`${paNo} ditemui di beberapa negeri (${names}). Sila pilih negeri yang betul dan cari semula.`
+            }), "application/json", { "Cache-Control":"no-store" });
+          }
+          results = located.rows || [];
+          detectedStateCode = located.stateCode || stateCode;
+          stateAutoDetected = Boolean(located.autoDetected);
         } else if (rawPa) {
           return send(res, 400, JSON.stringify({ ok:false, error:"Carian PA mesti ditaip dalam format PAxxxx, contoh PA2131." }), "application/json", { "Cache-Control":"no-store" });
         } else if (lotNo) {
@@ -18105,9 +18211,10 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({
           ok:true,
           mode,
-          stateCode:(results[0] && results[0].stateCode) || stateCode || "",
+          stateCode:(results[0] && results[0].stateCode) || detectedStateCode || stateCode || "",
           requestedStateCode:stateCode || "",
-          negeri:(results[0] && results[0].negeri) || AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
+          stateAutoDetected,
+          negeri:(results[0] && results[0].negeri) || AZOBSS_JUPEM_LOT_STATE_NAMES[detectedStateCode || stateCode] || "",
           latitude:mode === "wgs84" ? latitude : undefined,
           longitude:mode === "wgs84" ? longitude : undefined,
           lotNo:mode === "lot" ? lotNo : undefined,
@@ -18143,6 +18250,8 @@ async function handler(req, res) {
         let mode = "wgs84";
         let reference = null;
         let referenceMatches = [];
+        let effectiveNegeri = negeri;
+        let stateAutoDetected = false;
 
         if (!azobssPabmValidWgs84(latitude, longitude)) {
           if (!rawReference) {
@@ -18155,12 +18264,19 @@ async function handler(req, res) {
           const resolved = await azobssPabmResolveBenchmarkMapReference(cleanLotStateCode(negeri), rawReference);
           mode = resolved.mode || "";
           referenceMatches = Array.isArray(resolved.references) ? resolved.references : [];
+          if (mode === "pa" && referenceMatches[0] && referenceMatches[0].negeri) {
+            const detectedNegeri = azobssCanonicalStateName(referenceMatches[0].negeri);
+            if (detectedNegeri) {
+              effectiveNegeri = detectedNegeri;
+              stateAutoDetected = Boolean(detectedNegeri !== negeri);
+            }
+          }
 
           if (!referenceMatches.length) {
             return send(res, 404, JSON.stringify({
               ok:false,
               error: mode === "pa"
-                ? "Nombor PA tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih."
+                ? "Nombor PA tersebut tidak ditemui dalam rekod peta JUPEM."
                 : "Nombor Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih."
             }), "application/json", { "Cache-Control":"no-store" });
           }
@@ -18192,12 +18308,14 @@ async function handler(req, res) {
           }), "application/json", { "Cache-Control":"no-store" });
         }
 
-        const found = await azobssPabmFindBenchmarkNearby(latitude, longitude, jenis, negeri);
+        const found = await azobssPabmFindBenchmarkNearby(latitude, longitude, jenis, effectiveNegeri);
         return send(res, 200, JSON.stringify({
           ok:true,
           product,
           jenis,
-          negeri,
+          negeri:effectiveNegeri,
+          requestedNegeri:negeri,
+          stateAutoDetected,
           mode,
           latitude,
           longitude,
@@ -18217,7 +18335,7 @@ async function handler(req, res) {
         console.warn("AZOBSS BM/SBM map reference search failed:", error && (error.stack || error.message || error));
         const message = String(error && error.message || "Carian BM/SBM tidak tersedia buat sementara waktu.");
         const notFound = /tidak ditemui|tidak dapat dikenal pasti|not found/i.test(message);
-        const badRequest = /Masukkan|Pilih negeri|tidak sah/i.test(message);
+        const badRequest = /Masukkan|Pilih negeri|tidak sah|beberapa negeri/i.test(message);
         return send(res, badRequest ? 400 : (notFound ? 404 : 502), JSON.stringify({
           ok:false,
           error:message
@@ -18239,6 +18357,8 @@ async function handler(req, res) {
         let mode = "wgs84";
         let reference = null;
         let referenceMatches = [];
+        let effectiveNegeri = negeri;
+        let stateAutoDetected = false;
 
         if (!azobssPabmValidWgs84(latitude, longitude)) {
           if (!rawReference) {
@@ -18247,8 +18367,15 @@ async function handler(req, res) {
           const resolved = await azobssPabmResolveBenchmarkMapReference(cleanLotStateCode(negeri), rawReference);
           mode = resolved.mode || "";
           referenceMatches = Array.isArray(resolved.references) ? resolved.references : [];
+          if (mode === "pa" && referenceMatches[0] && referenceMatches[0].negeri) {
+            const detectedNegeri = azobssCanonicalStateName(referenceMatches[0].negeri);
+            if (detectedNegeri) {
+              effectiveNegeri = detectedNegeri;
+              stateAutoDetected = Boolean(detectedNegeri !== negeri);
+            }
+          }
           if (!referenceMatches.length) {
-            return send(res, 404, JSON.stringify({ ok:false, error: mode === "pa" ? "Nombor PA tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." : "Nombor Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." }), "application/json", { "Cache-Control":"no-store" });
+            return send(res, 404, JSON.stringify({ ok:false, error: mode === "pa" ? "Nombor PA tersebut tidak ditemui dalam rekod peta JUPEM." : "Nombor Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." }), "application/json", { "Cache-Control":"no-store" });
           }
           if (referenceMatches.length > 1) {
             return send(res, 200, JSON.stringify({ ok:true, product:"GPS", negeri, mode, needsReferenceSelection:true, referenceMatches, results:[] }, null, 2), "application/json", { "Cache-Control":"no-store" });
@@ -18260,9 +18387,9 @@ async function handler(req, res) {
         if (!azobssPabmValidWgs84(latitude, longitude)) {
           return send(res, 400, JSON.stringify({ ok:false, error:"Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah." }), "application/json", { "Cache-Control":"no-store" });
         }
-        const rows = azobssPabmGpsLocalRows(latitude, longitude, negeri);
+        const rows = azobssPabmGpsLocalRows(latitude, longitude, effectiveNegeri);
         return send(res, 200, JSON.stringify({
-          ok:true, product:"GPS", negeri, mode, latitude, longitude,
+          ok:true, product:"GPS", negeri:effectiveNegeri, requestedNegeri:negeri, stateAutoDetected, mode, latitude, longitude,
           target:{ latitude, longitude, label:reference && reference.label ? reference.label : "WGS84", referenceType:reference && reference.referenceType ? reference.referenceType : "wgs84" },
           reference, referenceMatches, source:"local-gps-wgs84-index", results:rows
         }, null, 2), "application/json", { "Cache-Control":"no-store" });
@@ -18270,7 +18397,7 @@ async function handler(req, res) {
         console.warn("AZOBSS GPS map reference search failed:", error && (error.stack || error.message || error));
         const message = String(error && error.message || "Carian GPS tidak tersedia buat sementara waktu.");
         const notFound = /tidak ditemui|tidak dapat dikenal pasti|not found/i.test(message);
-        const badRequest = /Masukkan|Pilih negeri|tidak sah/i.test(message);
+        const badRequest = /Masukkan|Pilih negeri|tidak sah|beberapa negeri/i.test(message);
         return send(res, badRequest ? 400 : (notFound ? 404 : 502), JSON.stringify({ ok:false, error:message }), "application/json", { "Cache-Control":"no-store" });
       }
     }

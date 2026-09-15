@@ -704,9 +704,11 @@
           try { earthControl && earthControl.setStateCode && earthControl.setStateCode(overlayStateCode); } catch (_) {}
         }
         renderRows(data.results, coordinate, preserveViewport);
-        const stateAutoDetected = Boolean(coordinate && count && actualStateCode && requestedStateCode && actualStateCode !== requestedStateCode);
+        const stateAutoDetected = Boolean(count && actualStateCode && requestedStateCode && actualStateCode !== requestedStateCode);
         const foundMessage = stateAutoDetected
-          ? `${count} lot ditemui. Lokasi WGS84 ini berada di ${actualState}, bukan ${state}.`
+          ? (paRef.isPa
+              ? `${count} lot ditemui untuk ${normalized}. PA ini berada di ${actualState}, bukan ${state}.`
+              : `${count} lot ditemui. Lokasi WGS84 ini berada di ${actualState}, bukan ${state}.`)
           : `${count} pilihan lot ditemui. Klik lot atau pilih daripada senarai.`;
         setModalStatus(ui, count ? foundMessage : 'Tiada lot / PA ditemui untuk carian ini.', count ? 'success' : 'error');
         setInlineStatus(externalStatus, count ? foundMessage : 'Tiada PA/lot ditemui.', count ? 'success' : 'error');
@@ -779,7 +781,7 @@
       `Peta Pilihan ${product}`,
       `${state} • Cari ${product} terdekat menggunakan Nombor Lot, PAxxxx atau WGS84`,
       'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      `Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
+      `Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Jika PA tiada dalam negeri dipilih, negeri PA akan dikesan automatik. Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
     );
     ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : normalizedInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
@@ -792,7 +794,8 @@
     // Peta Pilihan PA / Lot Kadaster so surrounding lot boundaries and lot
     // numbers remain visible while comparing nearby BM/SBM stations.
     const benchmarkStateCode = STATE_CODES[state] || '';
-    if (benchmarkStateCode) addJupemLotOverlay(L, map, benchmarkStateCode, '1', 0.84);
+    let benchmarkOverlayStateCode = benchmarkStateCode;
+    const benchmarkJupemOverlay = benchmarkStateCode ? addJupemLotOverlay(L, map, benchmarkStateCode, '1', 0.84) : null;
     // v1107: Earth switch. Satellite imagery is combined with official JUPEM
     // NDCDB + C3 overlays. The MyLot button opens the native JUPEM application.
     const earthControl = createBenchmarkEarthControl(L, map, ui.canvas.parentElement, streetLayer, benchmarkStateCode);
@@ -1179,12 +1182,22 @@
           throw new Error('Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah.');
         }
         const resolvedReference = explicitReference || data.reference || null;
+        const actualState = String(data.negeri || (resolvedReference && resolvedReference.negeri) || state || '').trim().toUpperCase();
+        const actualStateCode = String((resolvedReference && resolvedReference.stateCode) || STATE_CODES[actualState] || '').padStart(2, '0');
+        if (actualStateCode && actualStateCode !== benchmarkOverlayStateCode) {
+          benchmarkOverlayStateCode = actualStateCode;
+          setJupemLotOverlayState(benchmarkJupemOverlay, actualStateCode, '1');
+          try { earthControl && earthControl.setStateCode && earthControl.setStateCode(actualStateCode); } catch (_) {}
+        }
         renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport);
         const count = Array.isArray(data.results) ? data.results.length : 0;
         const warning = data.warning ? ' Data live JUPEM tidak tersedia; senarai fallback digunakan.' : '';
         const sourceText = resolvedReference ? ` berhampiran ${referenceLabel(resolvedReference)}` : '';
-        setModalStatus(ui, count ? `${count} ${product} terdekat${sourceText} ditemui.${warning}` : `Tiada ${product} ditemui berdekatan lokasi ini.`, count ? 'success' : 'error');
-        setInlineStatus(externalStatus, count ? `${count} ${product} terdekat ditemui pada peta.` : `Tiada ${product} ditemui.`, count ? 'success' : 'error');
+        const detectedText = data.stateAutoDetected && actualState && actualState !== state
+          ? ` ${typedValue} berada di ${actualState}, bukan ${state}.`
+          : '';
+        setModalStatus(ui, count ? `${count} ${product} terdekat${sourceText} ditemui.${detectedText}${warning}` : `Tiada ${product} ditemui berdekatan lokasi ini.${detectedText}`, count ? 'success' : 'error');
+        setInlineStatus(externalStatus, count ? `${count} ${product} terdekat ditemui pada peta.${detectedText}` : `Tiada ${product} ditemui.${detectedText}`, count ? 'success' : 'error');
       } catch (error) {
         if (error && error.name === 'AbortError') return;
         stationGroup.clearLayers();
@@ -1337,7 +1350,7 @@
       'Peta Pilihan GPS',
       `${state} • Cari GPS terdekat menggunakan Nombor Lot, PAxxxx atau WGS84`,
       'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      'Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
+      'Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Jika PA tiada dalam negeri dipilih, negeri PA akan dikesan automatik. Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
     );
     ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : normalizedInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
@@ -1345,7 +1358,8 @@
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView(initialCenter, initialZoom);
     ui.modal._azobssMap = map;
     const streetLayer = addBaseMap(L, map);
-    addJupemLotOverlay(L, map, stateCode, '1', 0.84);
+    let gpsOverlayStateCode = stateCode;
+    const gpsJupemOverlay = addJupemLotOverlay(L, map, stateCode, '1', 0.84);
     const earthControl = createBenchmarkEarthControl(L, map, ui.canvas.parentElement, streetLayer, stateCode);
     if (!map.getPane('azobssGpsReferencePane')) {
       const pane = map.createPane('azobssGpsReferencePane');
@@ -1558,11 +1572,21 @@
         const resolvedTarget = target || { lat: Number(data.latitude ?? data.target?.latitude), lng: Number(data.longitude ?? data.target?.longitude) };
         if (!resolvedTarget || !Number.isFinite(resolvedTarget.lat) || !Number.isFinite(resolvedTarget.lng)) throw new Error('Lokasi rujukan tidak mempunyai koordinat WGS84 yang sah.');
         const resolvedReference = explicitReference || data.reference || null;
+        const actualState = String(data.negeri || (resolvedReference && resolvedReference.negeri) || state || '').trim().toUpperCase();
+        const actualStateCode = String((resolvedReference && resolvedReference.stateCode) || STATE_CODES[actualState] || '').padStart(2, '0');
+        if (actualStateCode && actualStateCode !== gpsOverlayStateCode) {
+          gpsOverlayStateCode = actualStateCode;
+          setJupemLotOverlayState(gpsJupemOverlay, actualStateCode, '1');
+          try { earthControl && earthControl.setStateCode && earthControl.setStateCode(actualStateCode); } catch (_) {}
+        }
         renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport);
         const count = Array.isArray(data.results) ? data.results.length : 0;
         const sourceText = resolvedReference ? ` berhampiran ${referenceLabel(resolvedReference)}` : '';
-        setModalStatus(ui, count ? `${count} GPS terdekat${sourceText} ditemui.` : 'Tiada GPS ditemui berdekatan lokasi ini.', count ? 'success' : 'error');
-        setInlineStatus(externalStatus, count ? `${count} GPS terdekat ditemui pada peta.` : 'Tiada GPS ditemui.', count ? 'success' : 'error');
+        const detectedText = data.stateAutoDetected && actualState && actualState !== state
+          ? ` ${typedValue} berada di ${actualState}, bukan ${state}.`
+          : '';
+        setModalStatus(ui, count ? `${count} GPS terdekat${sourceText} ditemui.${detectedText}` : `Tiada GPS ditemui berdekatan lokasi ini.${detectedText}`, count ? 'success' : 'error');
+        setInlineStatus(externalStatus, count ? `${count} GPS terdekat ditemui pada peta.${detectedText}` : `Tiada GPS ditemui.${detectedText}`, count ? 'success' : 'error');
       } catch (error) {
         if (error && error.name === 'AbortError') return;
         stationGroup.clearLayers(); referenceGroup.clearLayers(); rows = []; stationMarkers = []; clearSelection();

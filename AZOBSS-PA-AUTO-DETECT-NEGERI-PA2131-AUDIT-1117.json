@@ -1,0 +1,20 @@
+{
+  "version": "1.0.1117",
+  "baseline": "(1116)-AZOBSS-PA-MAP-FULL-LOT-RENDER-TILE-RECOVERY-FIX_20260915.zip",
+  "title": "PA Auto-Detect Negeri + PA2131 Map Resolver Fix",
+  "changes": [
+    "Normalize JUPEM PA display values before validation.",
+    "Auto-detect the actual PA state when the currently selected state has no exact PA match.",
+    "Use detected PA state for PA map, BM, SBM and GPS reference searches.",
+    "Switch cadastral/Earth overlays to the detected PA state.",
+    "Keep PA prefix mandatory while bare numeric input remains Lot search.",
+    "Bump map-search cache to v1117."
+  ],
+  "files": [
+    "deploy-server.js",
+    "assets/js/azobss-pabm-map-search.js",
+    "PA-BM/index.html",
+    "package.json",
+    "README_PATCH_1117.md"
+  ]
+}

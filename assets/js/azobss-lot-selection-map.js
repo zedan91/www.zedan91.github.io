@@ -458,9 +458,8 @@
       let jupemSheetsLayer = null;
       let jupemLayer = null;
       let jupemRefreshTimer = null;
-      let jupemRecoveryTimer = null;
-      let jupemRecoveryAttempts = 0;
-      let jupemRecoveryWindowStartedAt = 0;
+      let jupemViewportSettleTimer = null;
+      const jupemTileRetryCounts = new WeakMap();
       let selectedGeometry = null;
       let estimate = null;
       let estimateController = null;
@@ -1186,9 +1185,12 @@
           // Keep tile URLs synchronized if a searched coordinate/lot auto-detects
           // another state while the modal remains open.
           try {
-            if (jupemLotsLayer && typeof jupemLotsLayer.setUrl === 'function') jupemLotsLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(activeStateCode)}&scope=all&layerMode=lots&layerSet=3`, false);
-            if (jupemSheetsLayer && typeof jupemSheetsLayer.setUrl === 'function') jupemSheetsLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=sheets&layerSet=4`, false);
-            if (earthSecondaryLayer && typeof earthSecondaryLayer.setUrl === 'function') earthSecondaryLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&scope=all&layerMode=lots&layerSet=3`, false);
+            // v1118: primary cadastral overlay is a single composite tile (lot + sheet)
+            // for the ACTIVE state only. This halves tile traffic and avoids the
+            // expensive scope=all request that previously rendered every state's
+            // cadastral layer for every tile.
+            if (jupemLotsLayer && typeof jupemLotsLayer.setUrl === 'function') jupemLotsLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(activeStateCode)}`, false);
+            if (earthSecondaryLayer && typeof earthSecondaryLayer.setUrl === 'function') earthSecondaryLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=lots`, false);
           } catch (_) {}
           [jupemLotsLayer, jupemSheetsLayer, earthSecondaryLayer].forEach((layer) => {
             if (!layer || !map.hasLayer(layer)) return;
@@ -1203,18 +1205,40 @@
         }, Math.max(0, Number(delay) || 0));
       }
 
-      function scheduleJupemTileRecovery() {
-        const now = Date.now();
-        if (!jupemRecoveryWindowStartedAt || now - jupemRecoveryWindowStartedAt > 15000) {
-          jupemRecoveryWindowStartedAt = now;
-          jupemRecoveryAttempts = 0;
-        }
-        if (jupemRecoveryAttempts >= 2 || jupemRecoveryTimer) return;
-        jupemRecoveryAttempts += 1;
-        jupemRecoveryTimer = window.setTimeout(() => {
-          jupemRecoveryTimer = null;
-          refreshJupemOverlay(0, true);
-        }, 450 + (jupemRecoveryAttempts * 350));
+      function retryFailedJupemTile(event) {
+        const tile = event && event.tile;
+        if (!tile || !tile.src) return;
+        const previous = Number(jupemTileRetryCounts.get(tile) || 0);
+        if (previous >= 4) return;
+        const attempt = previous + 1;
+        jupemTileRetryCounts.set(tile, attempt);
+        const delay = [350, 800, 1600, 2800][attempt - 1] || 2800;
+        window.setTimeout(() => {
+          if (settled || !tile || !tile.isConnected || !tile.src) return;
+          try {
+            const retryUrl = new URL(tile.src, window.location.href);
+            retryUrl.searchParams.set('_azretry', String(attempt));
+            retryUrl.searchParams.set('_azretryts', String(Date.now()));
+            tile.src = retryUrl.toString();
+          } catch (_) {}
+        }, delay);
+      }
+
+      function markJupemTileLoaded(event) {
+        if (event && event.tile) jupemTileRetryCounts.delete(event.tile);
+      }
+
+      function settleJupemViewport(delay = 220) {
+        if (jupemViewportSettleTimer) window.clearTimeout(jupemViewportSettleTimer);
+        jupemViewportSettleTimer = window.setTimeout(() => {
+          jupemViewportSettleTimer = null;
+          if (!map || settled) return;
+          try { map.invalidateSize({ pan: false }); } catch (_) {}
+          // Leaflet already requests the correct tile grid after move/zoom ends.
+          // Do not redraw every tile here; a full redraw was one of the causes of
+          // duplicated JUPEM requests and blank/slow patches while zooming.
+          refreshJupemOverlay(0, false);
+        }, Math.max(0, Number(delay) || 0));
       }
 
       function hideLocationSuggestions(clear = false) {
@@ -1586,7 +1610,7 @@
         if (locationSearchController) locationSearchController.abort();
         clearCadastreFocus();
         if (jupemRefreshTimer) window.clearTimeout(jupemRefreshTimer);
-        if (jupemRecoveryTimer) window.clearTimeout(jupemRecoveryTimer);
+        if (jupemViewportSettleTimer) window.clearTimeout(jupemViewportSettleTimer);
         locationSearchSerial += 1;
         document.removeEventListener('keydown', onDocumentKeyDown);
         try { window.removeEventListener('resize', applyV951CompactLayout); } catch (_) {}
@@ -1727,29 +1751,25 @@
           maxZoom: 20,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        jupemLotsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=lots&layerSet=3`, {
-          minZoom: Number(config.minSelectionZoom || 13),
-          maxZoom: 20,
-          opacity: 0.88,
-          updateWhenIdle: false,
-          updateWhenZooming: true,
-          keepBuffer: 4,
-          attribution: 'JUPEM eBiz'
-        });
-        jupemSheetsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}&layerMode=sheets&layerSet=4`, {
+        // v1118: request ONE composite JUPEM tile (lot + sheet) for the active
+        // state. Previously the browser requested separate lot/sheet tiles and
+        // the lot URL used scope=all, multiplying ArcGIS export work during zoom.
+        jupemLotsLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}`, {
           minZoom: Number(config.minSelectionZoom || 13),
           maxZoom: 20,
           opacity: 1,
-          updateWhenIdle: false,
-          updateWhenZooming: true,
-          keepBuffer: 4,
+          updateWhenIdle: true,
+          updateWhenZooming: false,
+          updateInterval: 250,
+          keepBuffer: 1,
           attribution: 'JUPEM eBiz'
         });
-        jupemLotsLayer.on('tileerror', scheduleJupemTileRecovery);
-        jupemSheetsLayer.on('tileerror', scheduleJupemTileRecovery);
-        jupemLayer = window.L.layerGroup([jupemLotsLayer, jupemSheetsLayer]).addTo(map);
+        jupemSheetsLayer = null;
+        jupemLotsLayer.on('tileerror', retryFailedJupemTile);
+        jupemLotsLayer.on('tileload', markJupemTileLoaded);
+        jupemLayer = window.L.layerGroup([jupemLotsLayer]).addTo(map);
         const selectedStateLabel = stateName || config.negeri || 'Negeri Dipilih';
-        window.L.control.layers(null, { [`Lot Semua Negeri & Garisan Syit ${selectedStateLabel}`]: jupemLayer }, { collapsed: false }).addTo(map);
+        window.L.control.layers(null, { [`Lot Kadaster & Garisan Syit ${selectedStateLabel}`]: jupemLayer }, { collapsed: false }).addTo(map);
 
         // v1108: Lot Kadaster / C3 gets the same Earth experience as BM/SBM.
         // Keep the current cadastral product and add the complementary NDCDB/C3
@@ -1768,7 +1788,9 @@
             if (!map.hasLayer(earthLayer)) earthLayer.addTo(map);
             if (typeof earthLayer.bringToBack === 'function') earthLayer.bringToBack();
             if (!earthSecondaryLayer) {
-              earthSecondaryLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&scope=all&layerMode=lots&layerSet=3`, { minZoom:Number(config.minSelectionZoom || 13), maxZoom:20, opacity:0.7, updateWhenIdle:false, updateWhenZooming:true, keepBuffer:4, attribution:'JUPEM eBiz' });
+              earthSecondaryLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=lots`, { minZoom:Number(config.minSelectionZoom || 13), maxZoom:20, opacity:0.7, updateWhenIdle:true, updateWhenZooming:false, updateInterval:250, keepBuffer:1, attribution:'JUPEM eBiz' });
+              earthSecondaryLayer.on('tileerror', retryFailedJupemTile);
+              earthSecondaryLayer.on('tileload', markJupemTileLoaded);
             }
             if (!map.hasLayer(earthSecondaryLayer)) earthSecondaryLayer.addTo(map);
             if (earthButton) { earthButton.classList.add('is-earth'); earthButton.setAttribute('aria-pressed','true'); earthButton.innerHTML='&#128506; Map'; }
@@ -1781,7 +1803,7 @@
             if (earthButton) { earthButton.classList.remove('is-earth'); earthButton.setAttribute('aria-pressed','false'); earthButton.innerHTML='&#127758; Earth'; }
             if (earthLegend) earthLegend.classList.remove('is-visible');
           }
-          refreshJupemOverlay(80, true);
+          refreshJupemOverlay(80, false);
         };
         earthButton?.addEventListener('click', () => setEarthMode(!earthMode));
 
@@ -1831,11 +1853,12 @@
           setStatus(status, 'Pilihan dipadam. Lukis kawasan baharu.', '');
         });
         map.on('overlayadd', (event) => {
-          if (event && event.layer === jupemLayer) refreshJupemOverlay(80, true);
+          if (event && event.layer === jupemLayer) refreshJupemOverlay(80, false);
         });
+        map.on('zoomend moveend', () => settleJupemViewport(220));
         window.setTimeout(() => {
           map.invalidateSize();
-          refreshJupemOverlay(80, true);
+          refreshJupemOverlay(80, false);
         }, 100);
         if (isDirectLotFocus) {
           const launchInitialFocus = () => {
