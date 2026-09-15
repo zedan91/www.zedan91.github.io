@@ -340,6 +340,8 @@
       if (tile.dataset) tile.dataset.azobssRetry = String(attempts + 1);
       const delay = [500, 1100, 2200, 4200][attempts] || 4200;
       window.setTimeout(() => {
+  // v1119: backend treats selected negeri as authoritative for duplicate PA numbers;
+  // auto-state is used only after the selected negeri is positively confirmed to have no exact PA.
         if (!layer._map || !tile.isConnected) return;
         try {
           const retryUrl = layer.getTileUrl(coords);

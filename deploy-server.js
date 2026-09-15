@@ -8545,32 +8545,85 @@ async function searchJupemPaCadastre(stateCode, paNo) {
 // queryable PA field.
 const azobssPaDetailLotsCache = new Map();
 
+function azobssExpandPaLotText(value) {
+  const text = decodeHtmlEntities(stripHtml(String(value || "")))
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+  if (!text) return [];
+
+  const cleaned = text
+    .replace(/^\s*(?:NO\.?\s*)?LOT(?:\s+NO\.?)?\s*[:#-]?\s*/i, "")
+    .replace(/\bLOT\b/gi, " ")
+    .trim();
+  if (!cleaned) return [];
+
+  const values = [];
+  const seen = new Set();
+  const add = (raw) => {
+    const lotNo = cleanLotNumber(raw);
+    if (!lotNo || /^PA\d/i.test(lotNo) || /^(?:NO|NOMBOR|LOT)$/i.test(lotNo)) return;
+    if (!/[0-9]/.test(lotNo)) return;
+    if (seen.has(lotNo)) return;
+    seen.add(lotNo);
+    values.push(lotNo);
+  };
+
+  // Older PA records sometimes show a compact numeric range such as
+  // "LOT 77387 - 77397" instead of one linked row per lot.
+  let hadRange = false;
+  const rangePattern = /(?:^|[^0-9])(\d{1,12})\s*[-–—]\s*(\d{1,12})(?=$|[^0-9])/g;
+  let rangeMatch;
+  while ((rangeMatch = rangePattern.exec(cleaned))) {
+    const start = Number(rangeMatch[1]);
+    const end = Number(rangeMatch[2]);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || end < start || end - start > 300) continue;
+    hadRange = true;
+    for (let number = start; number <= end; number += 1) add(String(number));
+  }
+
+  if (!hadRange) {
+    const tokens = cleaned.match(/[A-Z0-9][A-Z0-9/_-]{0,47}/g) || [];
+    for (const token of tokens) add(token);
+  }
+  return values.slice(0, 160);
+}
+
 function azobssParsePaDetailLots(html, paRow = {}, fallbackStateCode = "") {
-  const tableMatch = String(html || "").match(/<table[^>]+id=["']exampleMini["'][^>]*>([\s\S]*?)<\/table>/i);
+  const sourceHtml = String(html || "");
+  let tableMatch = sourceHtml.match(/<table[^>]+id=["']exampleMini["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) {
+    // Older detail pages do not always keep the same table id. Prefer a table
+    // whose header/content clearly identifies cadastral lot numbers.
+    const tables = [...sourceHtml.matchAll(/<table\b[^>]*>([\s\S]*?)<\/table>/gi)];
+    tableMatch = tables.find((candidate) => /(?:NOMBOR\s+LOT|(?:NO\.?\s*)?LOT)/i.test(stripHtml(candidate[1] || ""))) || null;
+  }
   if (!tableMatch) return [];
+  const tableHtml = tableMatch[1];
   const results = [];
   const seen = new Set();
-  const anchorPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-  let match;
-  while ((match = anchorPattern.exec(tableMatch[1]))) {
-    const mapUrl = absolutizeJupemUrl(decodeHtmlEntities(match[1] || ""));
-    const lotText = stripHtml(match[2] || "").replace(/^\s*(?:NO\.?\s*)?LOT\s*[:#-]?\s*/i, "").trim();
-    const lotNo = cleanLotNumber(lotText);
-    if (!mapUrl || !lotNo) continue;
-    const target = azobssParseFocusedLotMapTarget(mapUrl);
+
+  function addLot(lotNoRaw, mapUrlRaw = "") {
+    const lotNo = cleanLotNumber(lotNoRaw);
+    if (!lotNo) return;
+    const mapUrl = mapUrlRaw ? absolutizeJupemUrl(decodeHtmlEntities(mapUrlRaw)) : "";
+    const target = mapUrl ? azobssParseFocusedLotMapTarget(mapUrl) : { productCode:"", stateCode:"", objectId:"" };
     let productCode = cleanLotProduct(target.productCode || "1");
     let stateCode = cleanLotStateCode(target.stateCode || fallbackStateCode || paRow.stateCode || "");
-    try {
-      const parsed = new URL(mapUrl, "https://ebiz.jupem.gov.my/");
-      const type = String(parsed.searchParams.get("type") || "");
-      productCode = cleanLotProduct(parsed.searchParams.get("produk") || (/c3/i.test(type) ? "2" : productCode));
-      stateCode = cleanLotStateCode(
-        parsed.searchParams.get("neg") || parsed.searchParams.get("negeri") ||
-        ((type.match(/^(\d{2})lot/i) || [])[1]) || stateCode
-      );
-    } catch (_) {}
+    if (mapUrl) {
+      try {
+        const parsed = new URL(mapUrl, "https://ebiz.jupem.gov.my/");
+        const type = String(parsed.searchParams.get("type") || "");
+        productCode = cleanLotProduct(parsed.searchParams.get("produk") || (/c3/i.test(type) ? "2" : productCode));
+        stateCode = cleanLotStateCode(
+          parsed.searchParams.get("neg") || parsed.searchParams.get("negeri") ||
+          ((type.match(/^(\d{2})lot/i) || [])[1]) || stateCode
+        );
+      } catch (_) {}
+    }
     const key = `${stateCode}|${productCode}|${lotNo}|${target.objectId || ""}`.toUpperCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) return;
     seen.add(key);
     results.push({
       lotNo,
@@ -8583,9 +8636,49 @@ function azobssParsePaDetailLots(html, paRow = {}, fallbackStateCode = "") {
       mukim: String(paRow.mukim || "").trim(),
       seksyen: String(paRow.seksyen || "").trim()
     });
-    if (results.length >= 120) break;
   }
-  return results;
+
+  // Primary path: normal JUPEM PA detail rows expose each lot as a map link.
+  const anchorPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchorPattern.exec(tableHtml))) {
+    const lotValues = azobssExpandPaLotText(match[2] || "");
+    for (const lotNo of lotValues) addLot(lotNo, match[1] || "");
+    if (results.length >= 160) break;
+  }
+
+  // v1119: Some older Pelan Akui records (and range-style PA records) do not
+  // expose every lot as an <a> element. Read the actual LOT column as a
+  // fallback, including safe expansion of compact numeric ranges.
+  let lotColumnIndex = -1;
+  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+  while ((rowMatch = rowPattern.exec(tableHtml))) {
+    const rowHtml = rowMatch[1] || "";
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripHtml(m[1] || "").trim());
+    if (!cells.length) continue;
+    if (lotColumnIndex < 0) {
+      const headerIndex = cells.findIndex((cell) => /^(?:NO\.?\s*)?LOT(?:\s+NO\.?)?$/i.test(String(cell || "").trim()) || /NOMBOR\s+LOT/i.test(String(cell || "")));
+      if (headerIndex >= 0) {
+        lotColumnIndex = headerIndex;
+        continue;
+      }
+    }
+
+    let candidateText = lotColumnIndex >= 0 && lotColumnIndex < cells.length ? cells[lotColumnIndex] : "";
+    if (!candidateText) {
+      const explicit = cells.find((cell) => /\bLOT\b/i.test(String(cell || "")) && /[0-9]/.test(String(cell || "")));
+      candidateText = explicit || "";
+    }
+    if (!candidateText) continue;
+
+    const rowMapMatch = rowHtml.match(/href=["']([^"']*\/(?:PetaInteraktif|Produk\/ExtractLotPage)\?[^"']+)["']/i);
+    const rowMapUrl = rowMapMatch && rowMapMatch[1] ? rowMapMatch[1] : "";
+    for (const lotNo of azobssExpandPaLotText(candidateText)) addLot(lotNo, rowMapUrl);
+    if (results.length >= 160) break;
+  }
+
+  return results.slice(0, 160);
 }
 
 async function azobssFetchPaDetailLots(paRow, fallbackStateCode) {
@@ -11885,6 +11978,17 @@ function azobssPabmFocusedLotResult(focused) {
 // PA prefix is mandatory for map PA searches; a bare number remains a Lot.
 const azobssPabmPaLotsByPaCache = new Map();
 
+async function azobssPabmSearchExactPaRows(stateCode, paInput) {
+  const cleanStateCode = cleanLotStateCode(stateCode);
+  const paNo = azobssPabmNormalizePaNumber(paInput);
+  if (!cleanStateCode || !/^PA\d{1,12}$/i.test(paNo)) return [];
+  const search = await searchJupemPaCadastre(cleanStateCode, paNo);
+  const wanted = azobssFocusedPaComparable(paNo);
+  return (Array.isArray(search && search.results) ? search.results : [])
+    .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted)
+    .slice(0, 12);
+}
+
 async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
   const cleanStateCode = cleanLotStateCode(stateCode);
   const paNo = azobssPabmNormalizePaNumber(paInput);
@@ -11894,13 +11998,7 @@ async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
   if (cached && cached.expiresAt > Date.now()) return cached.rows;
 
   let exactPaRows = [];
-  try {
-    const search = await searchJupemPaCadastre(cleanStateCode, paNo);
-    const wanted = azobssFocusedPaComparable(paNo);
-    exactPaRows = (Array.isArray(search && search.results) ? search.results : [])
-      .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted)
-      .slice(0, 12);
-  } catch (_) {}
+  try { exactPaRows = await azobssPabmSearchExactPaRows(cleanStateCode, paNo); } catch (_) {}
 
   const resolvedRows = [];
   for (const paRow of exactPaRows) {
@@ -11991,6 +12089,12 @@ async function azobssPabmFindPaLotsAutoState(preferredStateCode, paInput) {
   const cached = azobssPabmPaAutoStateCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
+  const remember = (value, ttlMs = 5 * 60 * 1000) => {
+    if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
+    azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + ttlMs });
+    return value;
+  };
+
   async function resolveState(stateCode) {
     try {
       const rows = await azobssPabmFindPaLotsByPaNumber(stateCode, paNo);
@@ -12000,61 +12104,118 @@ async function azobssPabmFindPaLotsAutoState(preferredStateCode, paInput) {
     }
   }
 
+  // v1119: PA numbers are not globally unique across Malaysia. The user's
+  // selected negeri is therefore authoritative whenever the official JUPEM PA
+  // search confirms that exact PA exists there. Geometry failure must NOT make
+  // us silently jump to another negeri with the same PA number.
   if (preferred) {
-    const preferredRows = await resolveState(preferred);
-    if (preferredRows.length) {
-      const value = { rows: preferredRows, stateCode: preferred, requestedStateCode: preferred, autoDetected: false };
-      if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
-      azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
-      return value;
+    let preferredExactRows = [];
+    let preferredSearchOk = false;
+    try {
+      preferredExactRows = await azobssPabmSearchExactPaRows(preferred, paNo);
+      preferredSearchOk = true;
+    } catch (_) {}
+
+    if (preferredExactRows.length) {
+      const preferredRows = await resolveState(preferred);
+      if (preferredRows.length) {
+        return remember({
+          rows: preferredRows,
+          stateCode: preferred,
+          requestedStateCode: preferred,
+          autoDetected: false,
+          paExistsInRequestedState: true
+        });
+      }
+      // Keep the selected negeri instead of returning a different state's PA.
+      return remember({
+        rows: [],
+        stateCode: preferred,
+        requestedStateCode: preferred,
+        autoDetected: false,
+        paExistsInRequestedState: true,
+        geometryUnavailable: true
+      }, 2 * 60 * 1000);
+    }
+
+    // If the preferred-negeri lookup itself failed transiently, fail safe. A
+    // transient JUPEM error must never be interpreted as proof that the PA is
+    // in another negeri.
+    if (!preferredSearchOk) {
+      const preferredRows = await resolveState(preferred);
+      if (preferredRows.length) {
+        return remember({
+          rows: preferredRows,
+          stateCode: preferred,
+          requestedStateCode: preferred,
+          autoDetected: false,
+          paExistsInRequestedState: true
+        });
+      }
+      return remember({
+        rows: [],
+        stateCode: preferred,
+        requestedStateCode: preferred,
+        autoDetected: false,
+        preferredSearchUnavailable: true
+      }, 45 * 1000);
     }
   }
 
-  const wanted = azobssFocusedPaComparable(paNo);
+  // Only auto-detect another negeri after the preferred-negeri official search
+  // has positively returned no exact PA. Scan ALL remaining negeri before
+  // deciding: the same PA can legitimately exist in multiple negeri and may
+  // appear in different search batches.
   const remainingStates = Object.keys(AZOBSS_JUPEM_LOT_STATE_NAMES).filter((code) => code !== preferred);
+  const matchedStates = [];
   for (let index = 0; index < remainingStates.length; index += 4) {
     const batch = remainingStates.slice(index, index + 4);
     const located = await Promise.all(batch.map(async (stateCode) => {
       try {
-        const search = await searchJupemPaCadastre(stateCode, paNo);
-        const exact = (Array.isArray(search && search.results) ? search.results : [])
-          .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted);
+        const exact = await azobssPabmSearchExactPaRows(stateCode, paNo);
         return exact.length ? stateCode : '';
       } catch (_) {
         return '';
       }
     }));
-    const matchedStates = [...new Set(located.filter(Boolean))];
-    if (!matchedStates.length) continue;
-
-    // If JUPEM reports the same PA in more than one negeri in the same search
-    // batch, do not guess. The caller will show a clear message instead.
-    if (matchedStates.length > 1) {
-      const value = {
-        rows: [], stateCode: '', requestedStateCode: preferred || '', autoDetected: false,
-        ambiguousStateCodes: matchedStates
-      };
-      azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 2 * 60 * 1000 });
-      return value;
-    }
-
-    const detectedState = matchedStates[0];
-    const rows = await resolveState(detectedState);
-    if (rows.length) {
-      const value = {
-        rows, stateCode: detectedState, requestedStateCode: preferred || '',
-        autoDetected: Boolean(preferred && detectedState !== preferred)
-      };
-      if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
-      azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
-      return value;
+    for (const stateCode of located) {
+      if (stateCode && !matchedStates.includes(stateCode)) matchedStates.push(stateCode);
     }
   }
 
-  const value = { rows: [], stateCode: preferred || '', requestedStateCode: preferred || '', autoDetected: false };
-  if (azobssPabmPaAutoStateCache.size > 180) azobssPabmPaAutoStateCache.clear();
-  azobssPabmPaAutoStateCache.set(cacheKey, { value, expiresAt: Date.now() + 2 * 60 * 1000 });
-  return value;
+  if (matchedStates.length > 1) {
+    return remember({
+      rows: [],
+      stateCode: '',
+      requestedStateCode: preferred || '',
+      autoDetected: false,
+      ambiguousStateCodes: matchedStates
+    }, 2 * 60 * 1000);
+  }
+
+  if (matchedStates.length === 1) {
+    const detectedState = matchedStates[0];
+    const rows = await resolveState(detectedState);
+    if (rows.length) {
+      return remember({
+        rows,
+        stateCode: detectedState,
+        requestedStateCode: preferred || '',
+        autoDetected: Boolean(preferred && detectedState !== preferred),
+        paExistsInDetectedState: true
+      });
+    }
+    return remember({
+      rows: [],
+      stateCode: detectedState,
+      requestedStateCode: preferred || '',
+      autoDetected: Boolean(preferred && detectedState !== preferred),
+      paExistsInDetectedState: true,
+      geometryUnavailable: true
+    }, 2 * 60 * 1000);
+  }
+
+  return remember({ rows: [], stateCode: preferred || '', requestedStateCode: preferred || '', autoDetected: false }, 2 * 60 * 1000);
 }
 
 function azobssPabmMergePaReferenceRows(rows, paNo) {
@@ -12414,6 +12575,12 @@ async function azobssPabmResolveBenchmarkMapReference(stateCode, rawReference) {
   if (Array.isArray(located.ambiguousStateCodes) && located.ambiguousStateCodes.length > 1) {
     const names = located.ambiguousStateCodes.map((code) => AZOBSS_JUPEM_LOT_STATE_NAMES[code] || code).join(', ');
     throw new Error(`${paNo} ditemui di beberapa negeri (${names}). Sila pilih negeri yang betul dan cari semula.`);
+  }
+  if (located.preferredSearchUnavailable) {
+    throw new Error(`Semakan ${paNo} untuk ${AZOBSS_JUPEM_LOT_STATE_NAMES[cleanStateCode] || cleanStateCode} tidak dapat disahkan buat sementara. Sila cuba lagi; sistem tidak akan menukar negeri secara automatik.`);
+  }
+  if (located.geometryUnavailable && located.paExistsInRequestedState) {
+    throw new Error(`${paNo} memang ditemui di ${AZOBSS_JUPEM_LOT_STATE_NAMES[cleanStateCode] || cleanStateCode}, tetapi geometri lot JUPEM belum dapat dimuat. Sila cuba lagi.`);
   }
   const reference = azobssPabmMergePaReferenceRows(located.rows, paNo);
   return {
@@ -18185,6 +18352,18 @@ async function handler(req, res) {
             return send(res, 409, JSON.stringify({
               ok:false,
               error:`${paNo} ditemui di beberapa negeri (${names}). Sila pilih negeri yang betul dan cari semula.`
+            }), "application/json", { "Cache-Control":"no-store" });
+          }
+          if (located.preferredSearchUnavailable) {
+            return send(res, 503, JSON.stringify({
+              ok:false,
+              error:`Semakan ${paNo} untuk ${AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || stateCode} tidak dapat disahkan buat sementara. Sila cuba lagi; sistem tidak akan menukar negeri secara automatik.`
+            }), "application/json", { "Cache-Control":"no-store" });
+          }
+          if (located.geometryUnavailable && located.paExistsInRequestedState) {
+            return send(res, 503, JSON.stringify({
+              ok:false,
+              error:`${paNo} memang ditemui di ${AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || stateCode}, tetapi geometri lot JUPEM belum dapat dimuat. Sila cuba lagi.`
             }), "application/json", { "Cache-Control":"no-store" });
           }
           results = located.rows || [];

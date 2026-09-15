@@ -1,0 +1,12 @@
+{
+  "version": "1.0.1119",
+  "scope": "PA map/BM/SBM/GPS duplicate PA number state selection and older PA lot-list parsing",
+  "baseline": "1118",
+  "fixes": [
+    "Selected negeri wins when exact PA exists there, even if the same PA number exists elsewhere.",
+    "Geometry failure no longer triggers a silent cross-negeri PA switch.",
+    "Cross-negeri auto-detect scans all states before deciding and reports ambiguity.",
+    "Transient preferred-state search failure is fail-safe and never treated as proof of another state.",
+    "PA detail parser can read non-link lot cells and expand safe numeric ranges such as 77387-77397."
+  ]
+}
