@@ -9733,6 +9733,18 @@ async function azobssQueryFocusedLotByNumber(config, lotNo, auth, context = {}) 
         const actualPa = azobssFocusedLotComparable(azobssFocusedPaAttributeValue(feature)).replace(/^PA/, "");
         return actualPa && actualPa === wantedPa;
       }) : [];
+
+      // v1127: when a lot number comes from a PA detail page, never fall back
+      // to an arbitrary same-number lot belonging to another PA. Lot numbers
+      // repeat across mukim/sections, so a query such as Lot 5 may legitimately
+      // return PA8158, PA820, etc. For PA-driven searches we require the ArcGIS
+      // feature to carry the requested PA before it may be selected. If the
+      // layer has no exact PA hit, the caller can still use the exact-PA HTML
+      // search/object-id fallback below, but we do not guess here.
+      if (wantedPa && context && context.strictPaMatch && !exactPaFeatures.length) {
+        continue;
+      }
+
       const selectionPool = exactPaFeatures.length ? exactPaFeatures : features;
       const selected = azobssChooseFocusedLotFeature(selectionPool, { ...context, lotNo: cleanNumber });
       if (selected && azobssFocusedFeatureMatchesExactTarget(selected, cleanNumber, exactPaFeatures.length ? context.paNo : "")) return selected;
@@ -9834,8 +9846,15 @@ async function azobssResolveFocusedLot(productCode, stateCode, objectId, lotNo, 
     try {
       const search = await searchJupemLotCadastre(config.product, config.state, cleanLotNumber(lotNo));
       const wanted = cleanLotNumber(lotNo);
-      const row = (search.results || []).find((item) => cleanLotNumber(item && item.lotNo) === wanted)
-        || (search.results || [])[0];
+      const wantedPa = azobssFocusedPaComparable(context && context.paNo);
+      const sameLotRows = (search.results || []).filter((item) => cleanLotNumber(item && item.lotNo) === wanted);
+      const samePaRows = wantedPa
+        ? sameLotRows.filter((item) => azobssFocusedPaComparable(item && item.paNo) === wantedPa)
+        : sameLotRows;
+      // v1127: if a PA was explicitly supplied, an exact lot-number row from
+      // another PA is not a valid fallback. This is the second guard against
+      // cross-linking PA820 Lot 5 to PA8158 Lot 5, for example.
+      const row = wantedPa ? samePaRows[0] : (sameLotRows[0] || (search.results || [])[0]);
       const rowTarget = azobssParseFocusedLotMapTarget(row && row.mapUrl);
       resolvedObjectId = azobssCleanLotObjectId(rowTarget.objectId || (row && row.objectId));
       if (resolvedObjectId) {
@@ -12045,15 +12064,52 @@ async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
         const targetState = cleanLotStateCode(detailLot.stateCode || cleanStateCode) || cleanStateCode;
         const context = {
           paNo,
+          lotNo: String(detailLot.lotNo || "").trim(),
           daerah: String(paRow.daerah || detailLot.daerah || "").trim(),
           mukim: String(paRow.mukim || detailLot.mukim || "").trim(),
-          seksyen: String(paRow.seksyen || detailLot.seksyen || "").trim()
+          seksyen: String(paRow.seksyen || detailLot.seksyen || "").trim(),
+          // v1127: PA detail -> lot geometry must be an exact PA/lot pair.
+          // Never use a same-number lot that belongs to another PA.
+          strictPaMatch: true
         };
+
+        // Prefer an exact PA+Lot row from the cadastral search because the
+        // same lot number can occur many times in one negeri. The PA number is
+        // the disambiguator. This also gives us the correct object-id/map link
+        // before querying geometry.
+        let trustedObjectId = String(detailLot.objectId || '').trim();
+        try {
+          const lotSearch = await searchJupemLotCadastre(detailLot.productCode || "1", targetState, detailLot.lotNo);
+          const wantedLot = cleanLotNumber(detailLot.lotNo);
+          const wantedPa = azobssFocusedPaComparable(paNo);
+          const exactPairs = (Array.isArray(lotSearch && lotSearch.results) ? lotSearch.results : [])
+            .filter((candidate) => cleanLotNumber(candidate && candidate.lotNo) === wantedLot)
+            .filter((candidate) => azobssFocusedPaComparable(candidate && candidate.paNo) === wantedPa);
+          if (exactPairs.length) {
+            const scored = exactPairs
+              .map((candidate, candidateIndex) => ({
+                candidate,
+                candidateIndex,
+                score: azobssPabmScorePaLotCandidate(context, candidate)
+              }))
+              .sort((a, b) => b.score - a.score || a.candidateIndex - b.candidateIndex);
+            const trustedRow = scored[0] && scored[0].candidate;
+            const parsedTarget = azobssParseFocusedLotMapTarget(trustedRow && trustedRow.mapUrl);
+            trustedObjectId = azobssCleanLotObjectId(
+              (trustedRow && trustedRow.objectId) || parsedTarget.objectId || trustedObjectId
+            );
+          }
+        } catch (_) {}
+
         const focused = await azobssResolveFocusedLot(
-          detailLot.productCode || "1", targetState, detailLot.objectId || "", detailLot.lotNo, context
+          detailLot.productCode || "1", targetState, trustedObjectId, detailLot.lotNo, context
         );
         const row = azobssPabmFocusedLotResult(focused);
         if (!row) return null;
+        // Final safety gate: if the geometry itself explicitly reports another
+        // PA, discard it rather than relabelling it as the requested PA.
+        const resolvedPa = azobssFocusedPaComparable(row.paNo);
+        if (resolvedPa && resolvedPa !== azobssFocusedPaComparable(paNo)) return null;
         row.paNo = paNo;
         row.viewPaUrl = String(paRow.viewPaUrl || '').trim();
         row.daerah = row.daerah || context.daerah;
