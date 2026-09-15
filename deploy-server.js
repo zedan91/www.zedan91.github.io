@@ -8445,7 +8445,7 @@ async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
 // "PAxxxx" to the Lot Kadaster form (which only searches lot numbers).
 const azobssPaMapSearchCache = new Map();
 
-function parseJupemPaRows(html, stateCode) {
+function parseJupemPaRows(html, stateCode, exactPaNo = "") {
   const tableMatch = String(html || "").match(/<table[^>]+id=["']example["'][^>]*>([\s\S]*?)<\/table>/i);
   if (!tableMatch) return [];
   const rows = [];
@@ -8479,14 +8479,25 @@ function parseJupemPaRows(html, stateCode) {
       selectionUrl: ""
     });
   }
+  // v1124: a 1-2 digit PA can sit behind hundreds/thousands of prefix rows.
+  // Preserve the requested exact PA even if it appears after the normal 100-row cap.
+  const wantedExact = azobssFocusedPaComparable(exactPaNo);
+  if (wantedExact) {
+    const exactRows = rows.filter((row) => azobssFocusedPaComparable(row && row.paNo) === wantedExact);
+    if (exactRows.length) {
+      const exactKeys = new Set(exactRows.map((row) => [row.paNo, row.viewPaUrl, row.negeri, row.daerah, row.mukim, row.seksyen].join("|")));
+      const remainder = rows.filter((row) => !exactKeys.has([row.paNo, row.viewPaUrl, row.negeri, row.daerah, row.mukim, row.seksyen].join("|")));
+      return exactRows.concat(remainder).slice(0, 100);
+    }
+  }
   return rows.slice(0, 100);
 }
 
-async function searchJupemPaCadastre(stateCode, paNo) {
+async function searchJupemPaCadastre(stateCode, paNo, exactTargetPaNo = "") {
   const cleanStateCode = cleanLotStateCode(stateCode);
   const cleanPaDigits = cleanLotNumber(paNo).replace(/^PA/i, "");
   if (!cleanStateCode || !cleanPaDigits) return { sourceUrl: "", results: [] };
-  const cacheKey = `${cleanStateCode}|${cleanPaDigits}`;
+  const cacheKey = `${cleanStateCode}|${cleanPaDigits}|${azobssPabmNormalizePaNumber(exactTargetPaNo || "")}`;
   const cached = azobssPaMapSearchCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
@@ -8529,7 +8540,7 @@ async function searchJupemPaCadastre(stateCode, paNo) {
   if (!response.ok) throw new Error(`JUPEM PA search returned HTTP ${response.status}.`);
   const html = await response.text();
   const wanted = azobssFocusedLotComparable(cleanPaDigits);
-  const results = parseJupemPaRows(html, cleanStateCode)
+  const results = parseJupemPaRows(html, cleanStateCode, exactTargetPaNo || `PA${cleanPaDigits}`)
     .filter((row) => azobssFocusedLotComparable(String(row && row.paNo || "").replace(/^PA/i, "")).startsWith(wanted))
     .slice(0, 24);
   const value = { sourceUrl, results };
@@ -12001,7 +12012,7 @@ async function azobssPabmSearchExactPaRows(stateCode, paInput) {
     const key = String(query || '').toUpperCase();
     if (!key || seenQueries.has(key)) continue;
     seenQueries.add(key);
-    const search = await searchJupemPaCadastre(cleanStateCode, query);
+    const search = await searchJupemPaCadastre(cleanStateCode, query, paNo);
     const exact = (Array.isArray(search && search.results) ? search.results : [])
       .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted)
       .slice(0, 12);
@@ -12044,6 +12055,7 @@ async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
         const row = azobssPabmFocusedLotResult(focused);
         if (!row) return null;
         row.paNo = paNo;
+        row.viewPaUrl = String(paRow.viewPaUrl || '').trim();
         row.daerah = row.daerah || context.daerah;
         row.mukim = row.mukim || context.mukim;
         row.seksyen = row.seksyen || context.seksyen;
@@ -12071,6 +12083,7 @@ async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
       const row = azobssPabmFocusedLotResult(focused);
       if (row) {
         row.paNo = paNo;
+        row.viewPaUrl = String(first.viewPaUrl || '').trim();
         row.paLookupStatus = "resolved";
         row.paResolvedBy = "jupem-pa-layer-fallback";
         row.paLookupMessage = "Nombor PA dipadankan melalui layer kadaster JUPEM.";
@@ -12379,6 +12392,7 @@ async function azobssPabmResolvePaForLotResult(row) {
         const candidate = best.candidate;
         resolved = {
           paNo: azobssPabmNormalizePaNumber(candidate.paNo),
+          viewPaUrl: String(candidate.viewPaUrl || '').trim(),
           daerah: result.daerah || String(candidate.daerah || '').trim(),
           mukim: result.mukim || String(candidate.mukim || '').trim(),
           seksyen: result.seksyen || String(candidate.seksyen || '').trim(),
@@ -12523,6 +12537,7 @@ async function azobssPabmFindPaLotsByNumber(stateCode, lotNumber) {
     const result = azobssPabmFocusedLotResult(focused);
     if (!result) return null;
     result.paNo = result.paNo || azobssPabmNormalizePaNumber(row && row.paNo);
+    result.viewPaUrl = String(row && row.viewPaUrl || '').trim();
     result.daerah = result.daerah || String(row && row.daerah || '').trim();
     result.mukim = result.mukim || String(row && row.mukim || '').trim();
     result.seksyen = result.seksyen || String(row && row.seksyen || '').trim();

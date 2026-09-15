@@ -53,9 +53,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1122')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1124')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1122';
+    style.id = 'azobssPabmMapSearchStyles1124';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -113,7 +113,13 @@
       .az-pabm-google-maps-link:hover{background:#1d4ed8;border-color:#93c5fd;transform:translateY(-1px)}
       .az-pabm-google-maps-link:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
       .az-pabm-google-maps-link svg{width:15px;height:15px;display:block;fill:currentColor}
-      .az-pabm-map-cart{width:100%;min-height:42px;border:0;border-radius:6px;background:#059669;color:#fff;font-weight:900;font-size:14px;cursor:pointer}
+      .az-pabm-map-actions{display:flex;align-items:stretch;gap:8px;width:100%}
+      .az-pabm-map-preview{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;min-height:42px;border:1px solid #60a5fa;border-radius:6px;background:#1d4ed8;color:#fff;font-size:20px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 2px 7px rgba(15,23,42,.28)}
+      .az-pabm-map-preview:hover{background:#2563eb;border-color:#bfdbfe}
+      .az-pabm-map-preview:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+      .az-pabm-map-preview[hidden]{display:none!important}
+      .az-pabm-map-preview:disabled{opacity:.5;cursor:not-allowed}
+      .az-pabm-map-cart{flex:1 1 auto;width:100%;min-height:42px;border:0;border-radius:6px;background:#059669;color:#fff;font-weight:900;font-size:14px;cursor:pointer}
       .az-pabm-map-cart:disabled{opacity:.55;cursor:not-allowed}
       .az-pabm-map-footstatus{min-height:16px;margin-top:6px;color:#a9bad0;font-size:11px;line-height:1.3}
       .az-pabm-map-footstatus.is-error{color:#fda4af}.az-pabm-map-footstatus.is-success{color:#86efac}
@@ -461,7 +467,10 @@
             <div class="az-pabm-map-results"><div class="az-pabm-map-empty">Masukkan carian untuk memaparkan pilihan pada peta.</div></div>
             <div class="az-pabm-map-detail" hidden>
               <div class="az-pabm-map-detail-grid"></div>
-              <button class="az-pabm-map-cart" type="button">Tambah ke Troli</button>
+              <div class="az-pabm-map-actions">
+                <button class="az-pabm-map-preview" type="button" hidden aria-label="Lihat gambaran PA dan senarai lot" title="Lihat gambaran PA dan senarai lot"><span aria-hidden="true">&#128269;</span></button>
+                <button class="az-pabm-map-cart" type="button">Tambah ke Troli</button>
+              </div>
               <div class="az-pabm-map-footstatus"></div>
             </div>
           </aside>
@@ -485,6 +494,7 @@
       results: modal.querySelector('.az-pabm-map-results'),
       detail: modal.querySelector('.az-pabm-map-detail'),
       detailGrid: modal.querySelector('.az-pabm-map-detail-grid'),
+      previewButton: modal.querySelector('.az-pabm-map-preview'),
       cartButton: modal.querySelector('.az-pabm-map-cart'),
       footStatus: modal.querySelector('.az-pabm-map-footstatus')
     };
@@ -763,11 +773,39 @@
     let selectedLayer = null;
     let rows = [];
 
+    if (ui.previewButton) {
+      ui.previewButton.addEventListener('click', async () => {
+        const previewUrl = String(ui.previewButton.dataset.paViewUrl || '').trim();
+        const previewName = String(ui.previewButton.dataset.paViewName || '').trim();
+        if (!previewUrl || !previewName) return;
+        if (typeof window.azobssOpenPaPreview !== 'function') {
+          setFootStatus(ui, 'Pratonton PA belum tersedia. Sila tutup peta dan cuba lagi.', 'error');
+          return;
+        }
+        ui.previewButton.disabled = true;
+        ui.previewButton.setAttribute('aria-busy', 'true');
+        try {
+          await window.azobssOpenPaPreview({
+            dataset: { paViewUrl: previewUrl, paViewName: previewName }
+          });
+        } finally {
+          ui.previewButton.disabled = false;
+          ui.previewButton.removeAttribute('aria-busy');
+        }
+      });
+    }
+
     function clearSelection() {
       selectedRow = null;
       selectedLayer = null;
       ui.detail.hidden = true;
       ui.detailGrid.innerHTML = '';
+      if (ui.previewButton) {
+        ui.previewButton.hidden = true;
+        ui.previewButton.disabled = true;
+        delete ui.previewButton.dataset.paViewUrl;
+        delete ui.previewButton.dataset.paViewName;
+      }
       setFootStatus(ui, '', '');
       ui.results.querySelectorAll('.az-pabm-map-result').forEach((node) => node.classList.remove('is-selected'));
     }
@@ -789,6 +827,18 @@
         <b>Status PA</b><span>Tiada</span>`;
       ui.cartButton.textContent = row.paNo ? `Tambah ${row.paNo} ke Troli` : 'Nombor PA belum ditemui';
       ui.cartButton.disabled = !row.paNo;
+      if (ui.previewButton) {
+        const previewUrl = String(row.viewPaUrl || '').trim();
+        const previewName = String(row.paNo || '').trim().toUpperCase();
+        ui.previewButton.hidden = !(previewUrl && previewName);
+        ui.previewButton.disabled = !(previewUrl && previewName);
+        if (previewUrl && previewName) {
+          ui.previewButton.dataset.paViewUrl = previewUrl;
+          ui.previewButton.dataset.paViewName = previewName;
+          ui.previewButton.setAttribute('aria-label', `Lihat gambaran ${previewName} dan senarai lot`);
+          ui.previewButton.title = `Lihat gambaran ${previewName} dan senarai lot`;
+        }
+      }
       if (!row.paNo) setFootStatus(ui, row.paLookupMessage || 'Lot ditemui, tetapi nombor PA belum dapat dipadankan dengan selamat.', 'error');
       else setFootStatus(ui, '', '');
       if (pan && row._layer) {

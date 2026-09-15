@@ -466,10 +466,8 @@
       setQuickStatus('Masukkan nombor PA sebelum membuat carian.', 'unavailable');
       return;
     }
-    if (number.length < 3) {
-      if (errorEl) errorEl.textContent = 'Masukkan sekurang-kurangnya 3 digit nombor PA.';
-      return;
-    }
+    // v1124: PA lama boleh mempunyai hanya 1 atau 2 digit (contoh PA22).
+    // Jangan sekat berdasarkan panjang nombor; satu digit yang sah juga boleh dicari.
 
     const controller = new AbortController();
     const task = { controller, timeout: 0 };
@@ -480,8 +478,12 @@
     try {
       const rows = await fetchOfficialResults(number, stateCode, controller.signal);
       if (activeSearchTask !== task) return;
+      // v1124: untuk PA 1-2 digit, utamakan padanan tepat supaya carian PA lama
+      // tidak memaparkan ribuan rekod prefix moden seperti PA2200/PA22000.
       const prefixRows = rows
-        .filter((row) => cleanNumber(row.paNo).startsWith(number))
+        .filter((row) => number.length < 3
+          ? cleanNumber(row.paNo) === number
+          : cleanNumber(row.paNo).startsWith(number))
         .sort((left, right) => textCollator.compare(cleanNumber(left.paNo), cleanNumber(right.paNo)));
       allRows = prefixRows
         .map((row, index) => ({ ...row, _sourceIndex: index }));
@@ -515,8 +517,8 @@
       setQuickStatus('Pilih negeri yang disokong sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
-    if (number.length < 3) {
-      setQuickStatus('Masukkan nombor PA yang lengkap sebelum menambah terus ke troli.', 'unavailable');
+    if (!number) {
+      setQuickStatus('Masukkan nombor PA sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
     if (typeof window.azobssRecordPurchase !== 'function') {
