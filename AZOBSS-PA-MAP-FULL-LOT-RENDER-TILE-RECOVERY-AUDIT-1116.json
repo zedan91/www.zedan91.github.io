@@ -1,0 +1,16 @@
+{
+  "version": "1.0.1116",
+  "baseline": "1.0.1115",
+  "scope": "PA/BM/SBM/GPS map frontend rendering",
+  "changes": [
+    "Selected PA lot auto-fits fully while never zooming in beyond the user's current zoom.",
+    "Leaflet modal size is revalidated at 60ms, 180ms and 520ms.",
+    "Selected lot is re-fitted after 140ms and 420ms to avoid initial layout clipping.",
+    "JUPEM cadastral tile requests use the active state only instead of scope=all.",
+    "PA WGS84 auto-detected state updates NDCDB and C3 overlay state.",
+    "Transient JUPEM tile failures retry up to four times.",
+    "Tile loading avoids zoom-animation request bursts and keeps a three-tile buffer.",
+    "PA-BM map search cache-buster bumped to v1116."
+  ],
+  "backend_changed": false
+}

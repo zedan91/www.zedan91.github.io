@@ -8535,6 +8535,91 @@ async function searchJupemPaCadastre(stateCode, paNo) {
   return value;
 }
 
+
+// v1115: Resolve a Pelan Akui through the official PA detail page. The
+// #exampleMini table contains the cadastral lots covered by that PA. This is
+// more reliable than assuming every JUPEM ArcGIS lot layer exposes a directly
+// queryable PA field.
+const azobssPaDetailLotsCache = new Map();
+
+function azobssParsePaDetailLots(html, paRow = {}, fallbackStateCode = "") {
+  const tableMatch = String(html || "").match(/<table[^>]+id=["']exampleMini["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) return [];
+  const results = [];
+  const seen = new Set();
+  const anchorPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchorPattern.exec(tableMatch[1]))) {
+    const mapUrl = absolutizeJupemUrl(decodeHtmlEntities(match[1] || ""));
+    const lotText = stripHtml(match[2] || "").replace(/^\s*(?:NO\.?\s*)?LOT\s*[:#-]?\s*/i, "").trim();
+    const lotNo = cleanLotNumber(lotText);
+    if (!mapUrl || !lotNo) continue;
+    const target = azobssParseFocusedLotMapTarget(mapUrl);
+    let productCode = cleanLotProduct(target.productCode || "1");
+    let stateCode = cleanLotStateCode(target.stateCode || fallbackStateCode || paRow.stateCode || "");
+    try {
+      const parsed = new URL(mapUrl, "https://ebiz.jupem.gov.my/");
+      const type = String(parsed.searchParams.get("type") || "");
+      productCode = cleanLotProduct(parsed.searchParams.get("produk") || (/c3/i.test(type) ? "2" : productCode));
+      stateCode = cleanLotStateCode(
+        parsed.searchParams.get("neg") || parsed.searchParams.get("negeri") ||
+        ((type.match(/^(\d{2})lot/i) || [])[1]) || stateCode
+      );
+    } catch (_) {}
+    const key = `${stateCode}|${productCode}|${lotNo}|${target.objectId || ""}`.toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push({
+      lotNo,
+      paNo: azobssPabmNormalizePaNumber(paRow.paNo),
+      stateCode,
+      productCode,
+      objectId: azobssCleanLotObjectId(target.objectId),
+      mapUrl,
+      daerah: String(paRow.daerah || "").trim(),
+      mukim: String(paRow.mukim || "").trim(),
+      seksyen: String(paRow.seksyen || "").trim()
+    });
+    if (results.length >= 120) break;
+  }
+  return results;
+}
+
+async function azobssFetchPaDetailLots(paRow, fallbackStateCode) {
+  const detailUrl = String(paRow && paRow.viewPaUrl || "").trim();
+  if (!detailUrl) return [];
+  const paNo = azobssPabmNormalizePaNumber(paRow && paRow.paNo);
+  const stateCode = cleanLotStateCode(fallbackStateCode || paRow && paRow.stateCode || "");
+  const cacheKey = `${stateCode}|${paNo}|${detailUrl}`;
+  const cached = azobssPaDetailLotsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.rows;
+
+  let rows = [];
+  let cookie = "";
+  try { cookie = await azobssGetJupemSessionCookie(false); } catch (_) {}
+  const attempts = cookie ? [cookie, ""] : [""];
+  for (const activeCookie of attempts) {
+    try {
+      const headers = azobssJupemBaseHeaders({
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Referer": "https://ebiz.jupem.gov.my/Produk/PelanAkui"
+      });
+      if (activeCookie) headers.Cookie = activeCookie;
+      const response = await fetch(detailUrl, azJupemFetchOptions({
+        redirect: "follow",
+        signal: AbortSignal.timeout(25000),
+        headers
+      }));
+      if (!response.ok) continue;
+      rows = azobssParsePaDetailLots(await response.text(), paRow || {}, stateCode);
+      if (rows.length) break;
+    } catch (_) {}
+  }
+  if (azobssPaDetailLotsCache.size > 220) azobssPaDetailLotsCache.clear();
+  azobssPaDetailLotsCache.set(cacheKey, { rows, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return rows;
+}
+
 function azobssJupemBaseHeaders(extraHeaders = {}) {
   return Object.assign({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -9907,10 +9992,11 @@ const azobssMapCadastreSuggestionCache = new Map();
 function azobssClassifyMapSearchQuery(value) {
   const query = azobssCleanLocationQuery(value);
   const upper = query.toUpperCase();
-  const paMatch = upper.match(/^(?:NO\.?\s*)?PA\s*[:#-]?\s*([A-Z0-9/_-]{1,40})$/i);
+  // v1115: PA map searches must explicitly use PAxxxx / paxxxx.
+  // A bare number is always a Lot search, preventing PA/Lot ambiguity.
+  const paMatch = upper.match(/^PA\s*[:#-]?\s*(\d{1,12})$/i);
   if (paMatch) {
-    const paValue = cleanLotNumber(paMatch[1]);
-    return { query, searchType: "pa", cadastre: Boolean(paValue), searchValue: paValue ? `PA${paValue.replace(/^PA/i, "")}` : "" };
+    return { query, searchType: "pa", cadastre: true, searchValue: `PA${paMatch[1]}` };
   }
   const lotMatch = upper.match(/^(?:(?:NO\.?\s*)?LOT|NO\.?\s*LOT)\s*[:#-]?\s*([A-Z0-9/_-]{1,40})$/i);
   if (lotMatch) {
@@ -11791,6 +11877,119 @@ function azobssPabmFocusedLotResult(focused) {
   };
 }
 
+
+// v1115: Exact PA -> official PA-detail lot list -> cadastral geometry.
+// PA prefix is mandatory for map PA searches; a bare number remains a Lot.
+const azobssPabmPaLotsByPaCache = new Map();
+
+async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
+  const cleanStateCode = cleanLotStateCode(stateCode);
+  const paNo = azobssPabmNormalizePaNumber(paInput);
+  if (!cleanStateCode || !/^PA\d{1,12}$/i.test(paNo)) return [];
+  const cacheKey = `${cleanStateCode}|${paNo}`.toUpperCase();
+  const cached = azobssPabmPaLotsByPaCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.rows;
+
+  let exactPaRows = [];
+  try {
+    const search = await searchJupemPaCadastre(cleanStateCode, paNo);
+    const wanted = azobssFocusedPaComparable(paNo);
+    exactPaRows = (Array.isArray(search && search.results) ? search.results : [])
+      .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted)
+      .slice(0, 12);
+  } catch (_) {}
+
+  const resolvedRows = [];
+  for (const paRow of exactPaRows) {
+    let detailLots = [];
+    try { detailLots = await azobssFetchPaDetailLots(paRow, cleanStateCode); } catch (_) {}
+    const limitedLots = detailLots.slice(0, 80);
+    // Resolve in small batches: faster for multi-lot PA, but conservative enough
+    // not to hammer JUPEM's ArcGIS service.
+    for (let index = 0; index < limitedLots.length; index += 6) {
+      const batch = limitedLots.slice(index, index + 6);
+      const settled = await Promise.allSettled(batch.map(async (detailLot) => {
+        const targetState = cleanLotStateCode(detailLot.stateCode || cleanStateCode) || cleanStateCode;
+        const context = {
+          paNo,
+          daerah: String(paRow.daerah || detailLot.daerah || "").trim(),
+          mukim: String(paRow.mukim || detailLot.mukim || "").trim(),
+          seksyen: String(paRow.seksyen || detailLot.seksyen || "").trim()
+        };
+        const focused = await azobssResolveFocusedLot(
+          detailLot.productCode || "1", targetState, detailLot.objectId || "", detailLot.lotNo, context
+        );
+        const row = azobssPabmFocusedLotResult(focused);
+        if (!row) return null;
+        row.paNo = paNo;
+        row.daerah = row.daerah || context.daerah;
+        row.mukim = row.mukim || context.mukim;
+        row.seksyen = row.seksyen || context.seksyen;
+        row.paLookupStatus = "resolved";
+        row.paResolvedBy = "jupem-pa-detail-lots";
+        row.paLookupMessage = "Nombor PA dan lot dipadankan melalui butiran Pelan Akui JUPEM.";
+        return row;
+      }));
+      for (const item of settled) {
+        if (item.status === 'fulfilled' && item.value) resolvedRows.push(item.value);
+      }
+    }
+  }
+
+  // Keep the old ArcGIS-PA-field path only as a fallback.
+  if (!resolvedRows.length) {
+    const first = exactPaRows[0] || { paNo, daerah:"", mukim:"", seksyen:"" };
+    try {
+      const focused = await azobssResolveFocusedLot("1", cleanStateCode, "", "", {
+        paNo,
+        daerah: String(first.daerah || "").trim(),
+        mukim: String(first.mukim || "").trim(),
+        seksyen: String(first.seksyen || "").trim()
+      });
+      const row = azobssPabmFocusedLotResult(focused);
+      if (row) {
+        row.paNo = paNo;
+        row.paLookupStatus = "resolved";
+        row.paResolvedBy = "jupem-pa-layer-fallback";
+        row.paLookupMessage = "Nombor PA dipadankan melalui layer kadaster JUPEM.";
+        resolvedRows.push(row);
+      }
+    } catch (_) {}
+  }
+
+  const unique = [];
+  const seen = new Set();
+  for (const row of resolvedRows) {
+    const key = [row.stateCode, row.objectId, cleanLotNumber(row.lotNo), row.paNo].join('|').toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(row);
+  }
+  if (azobssPabmPaLotsByPaCache.size > 260) azobssPabmPaLotsByPaCache.clear();
+  azobssPabmPaLotsByPaCache.set(cacheKey, { rows: unique, expiresAt: Date.now() + 5 * 60 * 1000 });
+  return unique;
+}
+
+function azobssPabmMergePaReferenceRows(rows, paNo) {
+  const list = (Array.isArray(rows) ? rows : []).filter((row) => row && row.geometry && Array.isArray(row.geometry.rings));
+  if (!list.length) return null;
+  const rings = list.flatMap((row) => row.geometry.rings.filter((ring) => Array.isArray(ring) && ring.length >= 3));
+  if (!rings.length) return null;
+  const spatial = azobssFocusedLotBounds({ rings });
+  const first = list[0];
+  const normalizedPa = azobssPabmNormalizePaNumber(paNo || first.paNo);
+  const lotNos = [...new Set(list.map((row) => String(row.lotNo || '').trim()).filter(Boolean))];
+  return {
+    referenceType: 'pa', label: normalizedPa,
+    lotNo: lotNos.length === 1 ? lotNos[0] : '', lotNos, lotCount: lotNos.length || list.length,
+    paNo: normalizedPa, negeri: String(first.negeri || '').trim(), stateCode: String(first.stateCode || '').trim(),
+    daerah: String(first.daerah || '').trim(), mukim: String(first.mukim || '').trim(), seksyen: String(first.seksyen || '').trim(),
+    objectId: list.length === 1 ? String(first.objectId || '').trim() : '',
+    latitude: Number(spatial.center.latitude.toFixed(8)), longitude: Number(spatial.center.longitude.toFixed(8)),
+    geometry: { rings, polygons: list.map((row) => row.geometry.rings), spatialReference: { wkid: 4326 } }
+  };
+}
+
 // v1095: Lot -> PA second-stage resolver.
 // The JUPEM cadastral map layer can identify a lot but does not always expose Nombor PA.
 // When that happens, resolve the same lot through JUPEM's Lot Kadaster search and match
@@ -12124,25 +12323,8 @@ async function azobssPabmResolveBenchmarkMapReference(stateCode, rawReference) {
   }
 
   const paNo = azobssPabmNormalizePaNumber(classification.searchValue);
-  let context = { paNo };
-  try {
-    const search = await searchJupemPaCadastre(cleanStateCode, paNo);
-    const wanted = azobssFocusedLotComparable(String(paNo || '').replace(/^PA/i, ''));
-    const rows = (Array.isArray(search && search.results) ? search.results : [])
-      .filter((row) => azobssFocusedLotComparable(String(row && row.paNo || '').replace(/^PA/i, '')) === wanted);
-    if (rows.length === 1) {
-      context = {
-        paNo,
-        daerah: String(rows[0].daerah || '').trim(),
-        mukim: String(rows[0].mukim || '').trim(),
-        seksyen: String(rows[0].seksyen || '').trim()
-      };
-    }
-  } catch (_) {}
-
-  const focused = await azobssResolveFocusedLot('1', cleanStateCode, '', '', context);
-  const row = azobssPabmFocusedLotResult(focused);
-  const reference = azobssPabmBenchmarkReferenceResult(row, 'pa');
+  const paLots = await azobssPabmFindPaLotsByPaNumber(cleanStateCode, paNo);
+  const reference = azobssPabmMergePaReferenceRows(paLots, paNo);
   return {
     mode: 'pa',
     searchValue: paNo,
@@ -17888,12 +18070,23 @@ async function handler(req, res) {
 
         const latitude = Number(parsed.query.lat ?? parsed.query.latitude);
         const longitude = Number(parsed.query.lng ?? parsed.query.lon ?? parsed.query.longitude);
+        const rawPa = String(parsed.query.pa || parsed.query.paNo || parsed.query.noPa || "").trim();
+        const paMatch = rawPa.match(/^\s*PA\s*[:#-]?\s*(\d{1,12})\s*$/i);
+        const paNo = paMatch ? `PA${paMatch[1]}` : "";
         const rawLot = String(parsed.query.lot || parsed.query.lotNo || parsed.query.noLot || "").trim();
         const lotNo = cleanLotNumber(rawLot.replace(/^\s*(?:NO\.?\s*)?LOT\s*/i, ""));
         let results = [];
         let mode = "";
 
-        if (lotNo) {
+        if (paNo) {
+          if (!stateCode) {
+            return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu untuk carian Nombor PA." }), "application/json", { "Cache-Control":"no-store" });
+          }
+          mode = "pa";
+          results = await azobssPabmFindPaLotsByPaNumber(stateCode, paNo);
+        } else if (rawPa) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Carian PA mesti ditaip dalam format PAxxxx, contoh PA2131." }), "application/json", { "Cache-Control":"no-store" });
+        } else if (lotNo) {
           if (!stateCode) {
             return send(res, 400, JSON.stringify({ ok:false, error:"Sila pilih negeri terlebih dahulu untuk carian Nombor Lot." }), "application/json", { "Cache-Control":"no-store" });
           }
@@ -17905,7 +18098,7 @@ async function handler(req, res) {
         } else {
           return send(res, 400, JSON.stringify({
             ok:false,
-            error:"Masukkan Nombor Lot atau koordinat WGS84 yang sah, contoh 3.1390, 101.6869."
+            error:"Masukkan Nombor Lot, Nombor PA dalam format PAxxxx (contoh PA2131), atau koordinat WGS84 yang sah."
           }), "application/json", { "Cache-Control":"no-store" });
         }
 
@@ -17918,6 +18111,7 @@ async function handler(req, res) {
           latitude:mode === "wgs84" ? latitude : undefined,
           longitude:mode === "wgs84" ? longitude : undefined,
           lotNo:mode === "lot" ? lotNo : undefined,
+          paNo:mode === "pa" ? paNo : undefined,
           results
         }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (error) {
@@ -17925,7 +18119,7 @@ async function handler(req, res) {
         const notFound = /tidak dapat dikenal pasti|not found|tiada/i.test(message);
         return send(res, notFound ? 404 : 502, JSON.stringify({
           ok:false,
-          error:notFound ? "Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." : message
+          error:notFound ? "PA / Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." : message
         }), "application/json", { "Cache-Control":"no-store" });
       }
     }

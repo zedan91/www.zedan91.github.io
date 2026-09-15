@@ -27,6 +27,20 @@
     })[char]);
   }
 
+
+  // v1115: PA searches on every map are explicit. `pa2131` and `PA2131`
+  // normalize to PA2131; a bare `2131` remains a Nombor Lot search.
+  // v1116: PA/BM/SBM/GPS cadastral overlays load only the active state's
+  // JUPEM layer, retry transient tile failures, and re-fit the selected PA lot
+  // after modal sizing so the complete lot boundary is visible without manual zoom-out.
+  function normalizePaMapReference(value) {
+    const raw = String(value || '').trim();
+    if (!/^pa/i.test(raw)) return { value: raw, isPa: false, invalidPa: false };
+    const match = raw.match(/^pa\s*[:#-]?\s*(\d{1,12})\s*$/i);
+    if (!match) return { value: raw, isPa: true, invalidPa: true };
+    return { value: `PA${match[1]}`, isPa: true, invalidPa: false };
+  }
+
   function addStyles() {
     if (document.getElementById('azobssPabmMapSearchStyles1108')) return;
     const style = document.createElement('style');
@@ -309,19 +323,61 @@
     });
   }
 
+  function jupemLotTileUrl(stateCode, productCode = '1') {
+    const product = String(productCode || '1') === '2' ? '2' : '1';
+    return `${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${product}&negeri=${encodeURIComponent(String(stateCode || '').padStart(2, '0'))}&layerMode=lots&layerSet=3`;
+  }
+
+  function installJupemTileRecovery(layer) {
+    if (!layer || layer._azobssTileRecoveryInstalled) return layer;
+    layer._azobssTileRecoveryInstalled = true;
+    layer.on('tileerror', (event) => {
+      const tile = event && event.tile;
+      const coords = event && event.coords;
+      if (!tile || !coords || !layer._map) return;
+      const attempts = Math.max(0, Number(tile.dataset && tile.dataset.azobssRetry || 0));
+      if (attempts >= 4) return;
+      if (tile.dataset) tile.dataset.azobssRetry = String(attempts + 1);
+      const delay = [500, 1100, 2200, 4200][attempts] || 4200;
+      window.setTimeout(() => {
+        if (!layer._map || !tile.isConnected) return;
+        try {
+          const retryUrl = layer.getTileUrl(coords);
+          const joiner = retryUrl.includes('?') ? '&' : '?';
+          tile.src = `${retryUrl}${joiner}_azretry=${Date.now()}_${attempts + 1}`;
+        } catch (_) {}
+      }, delay);
+    });
+    return layer;
+  }
+
+  function setJupemLotOverlayState(layer, stateCode, productCode = '1') {
+    if (!layer || typeof layer.setUrl !== 'function' || !stateCode) return;
+    try {
+      layer.setUrl(jupemLotTileUrl(stateCode, productCode), true);
+      if (typeof layer.redraw === 'function') layer.redraw();
+    } catch (_) {}
+  }
+
   function addJupemLotOverlay(L, map, stateCode, productCode = '1', opacity = 0.82) {
     try {
       const product = String(productCode || '1') === '2' ? '2' : '1';
-      return L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${product}&negeri=${encodeURIComponent(stateCode)}&scope=all&layerMode=lots&layerSet=3`, {
+      const layer = L.tileLayer(jupemLotTileUrl(stateCode, product), {
         minZoom: 11,
         maxZoom: 20,
         opacity,
-        pane: 'overlayPane'
-      }).addTo(map);
+        pane: 'overlayPane',
+        updateWhenIdle: false,
+        updateWhenZooming: false,
+        keepBuffer: 3
+      });
+      installJupemTileRecovery(layer);
+      return layer.addTo(map);
     } catch (_) { return null; }
   }
 
   function createBenchmarkEarthControl(L, map, stage, streetLayer, stateCode) {
+    let currentStateCode = String(stateCode || '').padStart(2, '0');
     if (!stage || !streetLayer) return null;
     const wrap = document.createElement('div');
     wrap.className = 'az-pabm-map-layer-switch';
@@ -357,9 +413,12 @@
         // MyLot documents NDCDB and C3 as cadastral layer choices. AZOBSS loads
         // both official JUPEM cadastral products in Earth mode. Relative NDCDB
         // is not exposed by the existing authenticated eBiz map endpoint.
-        if (stateCode) {
-          if (!c3Layer) c3Layer = addJupemLotOverlay(L, map, stateCode, '2', 0.74);
-          else if (!map.hasLayer(c3Layer)) c3Layer.addTo(map);
+        if (currentStateCode) {
+          if (!c3Layer) c3Layer = addJupemLotOverlay(L, map, currentStateCode, '2', 0.74);
+          else {
+            setJupemLotOverlayState(c3Layer, currentStateCode, '2');
+            if (!map.hasLayer(c3Layer)) c3Layer.addTo(map);
+          }
         }
         button.classList.add('is-earth');
         button.setAttribute('aria-pressed', 'true');
@@ -377,8 +436,16 @@
       }
     }
 
+    function setStateCode(nextStateCode) {
+      const rawStateCode = String(nextStateCode || '').trim();
+      const normalized = rawStateCode ? rawStateCode.padStart(2, '0') : '';
+      if (!normalized || normalized === currentStateCode) return;
+      currentStateCode = normalized;
+      if (c3Layer) setJupemLotOverlayState(c3Layer, currentStateCode, '2');
+    }
+
     button.addEventListener('click', () => applyMode(!earth));
-    return { isEarth: () => earth, setEarth: applyMode };
+    return { isEarth: () => earth, setEarth: applyMode, setStateCode };
   }
 
   function paCartPayload(row, state) {
@@ -452,7 +519,7 @@
     }
     const value = String(initialValue || '').trim();
     if (!value) {
-      setInlineStatus(externalStatus, 'Masukkan Nombor Lot atau WGS84 terlebih dahulu.', 'error');
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 terlebih dahulu.', 'error');
       document.getElementById('paMapSearchInput')?.focus();
       return;
     }
@@ -462,20 +529,26 @@
     addStyles();
     const ui = createModal(
       'Peta Pilihan PA',
-      `${state} • Nombor Lot ikut negeri • WGS84 auto-detect negeri`,
-      'Contoh: Lot 1122 atau 3.1390, 101.6869',
+      `${state} • Cari Nombor Lot / PAxxxx / WGS84`,
+      'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
       'Klik lot yang ditemui untuk lihat maklumat. Klik sekali lokasi pada peta untuk menetapkan titik carian WGS84 baharu.'
     );
     ui.input.value = value;
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView([4.2, 102.1], 7);
     ui.modal._azobssMap = map;
     const streetLayer = addBaseMap(L, map);
-    addJupemLotOverlay(L, map, stateCode);
+    let overlayStateCode = String(stateCode || '').padStart(2, '0');
+    const jupemOverlay = addJupemLotOverlay(L, map, overlayStateCode);
     // v1108: PA now has the same Earth + JUPEM cadastral overlay switch as BM/SBM.
     // The normal NDCDB overlay remains visible; Earth mode swaps the base map to
     // satellite imagery and adds the C3 cadastral overlay.
-    createBenchmarkEarthControl(L, map, ui.canvas.parentElement, streetLayer, stateCode);
-    window.setTimeout(() => map.invalidateSize(), 60);
+    const earthControl = createBenchmarkEarthControl(L, map, ui.canvas.parentElement, streetLayer, overlayStateCode);
+    // v1116: the modal grid can finish sizing a little after Leaflet is created.
+    // Re-measure a few times so SVG polygons/markers are not clipped until the
+    // user manually zooms.
+    [60, 180, 520].forEach((delay) => window.setTimeout(() => {
+      try { map.invalidateSize({ pan: false }); } catch (_) {}
+    }, delay));
 
     const layerGroup = L.featureGroup().addTo(map);
     let targetMarker = null;
@@ -552,44 +625,85 @@
       });
       const bounds = layerGroup.getBounds();
       if (preserveViewport && coordinate) {
-        // v1112: lokasi WGS84 yang ditetapkan terus pada peta tidak boleh
-        // mengubah tahap zoom pengguna. Pusatkan titik baru sahaja.
+        // v1116: keep the user's current zoom as the maximum, but automatically
+        // zoom OUT when needed so the complete selected lot remains visible.
+        // This fixes the case where only part of the blue lot outline appeared
+        // until the customer manually zoomed out.
         map.setView([coordinate.lat, coordinate.lng], map.getZoom(), { animate: false });
       } else if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 18 });
+        map.fitBounds(bounds, { paddingTopLeft: [72, 105], paddingBottomRight: [58, 58], maxZoom: 18, animate: false });
       } else if (coordinate) {
-        map.setView([coordinate.lat, coordinate.lng], 17);
+        map.setView([coordinate.lat, coordinate.lng], 17, { animate: false });
       }
       selectRow(0, !preserveViewport);
+
+      if (preserveViewport && coordinate && selectedLayer) {
+        const focusedRow = selectedRow;
+        const currentZoom = map.getZoom();
+        const refitSelectedLot = () => {
+          if (!map || !selectedLayer || selectedRow !== focusedRow) return;
+          try { map.invalidateSize({ pan: false }); } catch (_) {}
+          try {
+            const lotBounds = selectedLayer.getBounds();
+            if (lotBounds && lotBounds.isValid && lotBounds.isValid()) {
+              map.fitBounds(lotBounds, {
+                paddingTopLeft: [72, 105],
+                paddingBottomRight: [58, 58],
+                maxZoom: currentZoom,
+                animate: false
+              });
+            }
+          } catch (_) {}
+          try { selectedLayer.bringToFront(); } catch (_) {}
+          try { if (targetMarker && typeof targetMarker.setZIndexOffset === 'function') targetMarker.setZIndexOffset(3000); } catch (_) {}
+        };
+        refitSelectedLot();
+        [140, 420].forEach((delay) => window.setTimeout(refitSelectedLot, delay));
+      }
     }
 
     async function runSearch(searchValue, explicitCoordinate, preserveViewport = false) {
       const raw = String(searchValue || '').trim();
-      const looksLikeLot = /^\s*(?:NO\.?\s*)?LOT\b/i.test(raw) || (raw.includes('/') && !raw.includes(','));
-      const coordinate = explicitCoordinate || (looksLikeLot ? null : parseCoordinates(raw));
-      const lot = coordinate ? '' : cleanLotQuery(raw);
-      if (!coordinate && !lot) {
-        setModalStatus(ui, 'Masukkan Nombor Lot atau WGS84 yang sah.', 'error');
+      const paRef = normalizePaMapReference(raw);
+      if (paRef.invalidPa) {
+        setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
         return;
       }
+      const normalized = paRef.isPa ? paRef.value : raw;
+      const looksLikeLot = !paRef.isPa && (/^\s*(?:NO\.?\s*)?LOT\b/i.test(raw) || (raw.includes('/') && !raw.includes(',')));
+      const coordinate = explicitCoordinate || ((!paRef.isPa && !looksLikeLot) ? parseCoordinates(raw) : null);
+      const lot = coordinate || paRef.isPa ? '' : cleanLotQuery(raw);
+      if (!coordinate && !lot && !paRef.isPa) {
+        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 yang sah.', 'error');
+        return;
+      }
+      if (paRef.isPa) ui.input.value = normalized;
       if (activeController) { try { activeController.abort(); } catch (_) {} }
       activeController = new AbortController();
-      setSearchBusy(ui, true, 'Mencari Lot...');
-      setModalStatus(ui, coordinate ? 'Mencari lot pada koordinat WGS84...' : `Mencari Lot ${lot}...`, 'loading');
+      setSearchBusy(ui, true, paRef.isPa ? 'Mencari PA...' : 'Mencari Lot...');
+      setModalStatus(ui, coordinate ? 'Mencari lot pada koordinat WGS84...' : (paRef.isPa ? `Mencari ${normalized}...` : `Mencari Lot ${lot}...`), 'loading');
       try {
         const params = new URLSearchParams({ negeri: stateCode });
         if (coordinate) {
           params.set('lat', String(coordinate.lat));
           params.set('lng', String(coordinate.lng));
+        } else if (paRef.isPa) {
+          params.set('pa', normalized);
         } else {
           params.set('lot', lot);
         }
         const data = await fetchJson(`${BACKEND_BASE}/api/pabm-pa-map-search?${params.toString()}`, activeController.signal);
-        renderRows(data.results, coordinate, preserveViewport);
         const count = Array.isArray(data.results) ? data.results.length : 0;
         const actualState = String(data.negeri || (data.results && data.results[0] && data.results[0].negeri) || '').trim();
         const requestedStateCode = String(data.requestedStateCode || stateCode || '');
-        const actualStateCode = String(data.stateCode || (data.results && data.results[0] && data.results[0].stateCode) || '');
+        const actualStateCodeRaw = String(data.stateCode || (data.results && data.results[0] && data.results[0].stateCode) || '').trim();
+        const actualStateCode = actualStateCodeRaw ? actualStateCodeRaw.padStart(2, '0') : '';
+        if (count && actualStateCode && actualStateCode !== overlayStateCode) {
+          overlayStateCode = actualStateCode;
+          setJupemLotOverlayState(jupemOverlay, overlayStateCode, '1');
+          try { earthControl && earthControl.setStateCode && earthControl.setStateCode(overlayStateCode); } catch (_) {}
+        }
+        renderRows(data.results, coordinate, preserveViewport);
         const stateAutoDetected = Boolean(coordinate && count && actualStateCode && requestedStateCode && actualStateCode !== requestedStateCode);
         const foundMessage = stateAutoDetected
           ? `${count} lot ditemui. Lokasi WGS84 ini berada di ${actualState}, bukan ${state}.`
@@ -640,14 +754,20 @@
     const state = String(stateEl && stateEl.value || '').trim().toUpperCase();
     const product = String(productEl && productEl.value || 'BM').trim().toUpperCase() === 'SBM' ? 'SBM' : 'BM';
     const rawInitial = String(initialValue || '').trim();
-    const coordinate = parseCoordinates(rawInitial);
+    const initialPaRef = normalizePaMapReference(rawInitial);
+    if (initialPaRef.invalidPa) {
+      setInlineStatus(externalStatus, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
+      return;
+    }
+    const normalizedInitial = initialPaRef.isPa ? initialPaRef.value : rawInitial;
+    const coordinate = initialPaRef.isPa ? null : parseCoordinates(rawInitial);
     if (!state) {
       setInlineStatus(externalStatus, 'Pilih negeri terlebih dahulu.', 'error');
       stateEl && stateEl.focus();
       return;
     }
     if (!rawInitial) {
-      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, Nombor PA atau WGS84 terlebih dahulu.', 'error');
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 terlebih dahulu.', 'error');
       document.getElementById('benchmarkMapWgs84Input')?.focus();
       return;
     }
@@ -657,11 +777,11 @@
     addStyles();
     const ui = createModal(
       `Peta Pilihan ${product}`,
-      `${state} • Cari ${product} terdekat menggunakan Nombor Lot, Nombor PA atau WGS84`,
+      `${state} • Cari ${product} terdekat menggunakan Nombor Lot, PAxxxx atau WGS84`,
       'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      `Nombor biasa dianggap sebagai Lot. Untuk Pelan Akui, gunakan awalan PA. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
+      `Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian ${product} baharu.`
     );
-    ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : rawInitial;
+    ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : normalizedInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
     const initialZoom = coordinate ? 11 : 7;
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView(initialCenter, initialZoom);
@@ -1018,10 +1138,17 @@
     }
 
     async function runSearch(searchValue, explicitCoordinate, explicitReference, preserveViewport = false) {
-      const typedValue = String(searchValue || '').trim();
-      const target = explicitCoordinate || parseCoordinates(typedValue);
+      const rawTypedValue = String(searchValue || '').trim();
+      const paRef = normalizePaMapReference(rawTypedValue);
+      if (paRef.invalidPa) {
+        setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
+        return;
+      }
+      const typedValue = paRef.isPa ? paRef.value : rawTypedValue;
+      if (paRef.isPa) ui.input.value = typedValue;
+      const target = explicitCoordinate || (paRef.isPa ? null : parseCoordinates(typedValue));
       if (!target && !typedValue) {
-        setModalStatus(ui, 'Masukkan Nombor Lot, Nombor PA atau koordinat WGS84 yang sah.', 'error');
+        setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau koordinat WGS84 yang sah.', 'error');
         return;
       }
       if (activeController) { try { activeController.abort(); } catch (_) {} }
@@ -1185,14 +1312,20 @@
     const state = String(stateEl && stateEl.value || '').trim().toUpperCase();
     const stateCode = STATE_CODES[state] || '';
     const rawInitial = String(initialValue || '').trim();
-    const coordinate = parseCoordinates(rawInitial);
+    const initialPaRef = normalizePaMapReference(rawInitial);
+    if (initialPaRef.invalidPa) {
+      setInlineStatus(externalStatus, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error');
+      return;
+    }
+    const normalizedInitial = initialPaRef.isPa ? initialPaRef.value : rawInitial;
+    const coordinate = initialPaRef.isPa ? null : parseCoordinates(rawInitial);
     if (!stateCode) {
       setInlineStatus(externalStatus, 'Pilih negeri terlebih dahulu.', 'error');
       stateEl && stateEl.focus();
       return;
     }
     if (!rawInitial) {
-      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, Nombor PA atau WGS84 terlebih dahulu.', 'error');
+      setInlineStatus(externalStatus, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau WGS84 terlebih dahulu.', 'error');
       document.getElementById('gpsMapSearchInput')?.focus();
       return;
     }
@@ -1202,11 +1335,11 @@
     addStyles();
     const ui = createModal(
       'Peta Pilihan GPS',
-      `${state} • Cari GPS terdekat menggunakan Nombor Lot, Nombor PA atau WGS84`,
+      `${state} • Cari GPS terdekat menggunakan Nombor Lot, PAxxxx atau WGS84`,
       'Contoh: Lot 1122 / PA2131 / 3.1390, 101.6869',
-      'Nombor biasa dianggap sebagai Lot. Untuk Pelan Akui, gunakan awalan PA. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
+      'Carian PA WAJIB guna awalan PA (contoh PA2131; pa2131 juga diterima). Nombor 2131 sahaja dianggap sebagai Lot. Double-click lokasi pada peta untuk menetapkan titik carian GPS baharu.'
     );
-    ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : rawInitial;
+    ui.input.value = coordinate ? `${coordinate.lat}, ${coordinate.lng}` : normalizedInitial;
     const initialCenter = coordinate ? [coordinate.lat, coordinate.lng] : [4.2, 102.1];
     const initialZoom = coordinate ? 11 : 7;
     const map = L.map(ui.canvas, { zoomControl: true, doubleClickZoom: false }).setView(initialCenter, initialZoom);
@@ -1405,9 +1538,13 @@
       selectRow(0, false);
     }
     async function runSearch(searchValue, explicitCoordinate, explicitReference, preserveViewport = false) {
-      const typedValue = String(searchValue || '').trim();
-      const target = explicitCoordinate || parseCoordinates(typedValue);
-      if (!target && !typedValue) { setModalStatus(ui, 'Masukkan Nombor Lot, Nombor PA atau koordinat WGS84 yang sah.', 'error'); return; }
+      const rawTypedValue = String(searchValue || '').trim();
+      const paRef = normalizePaMapReference(rawTypedValue);
+      if (paRef.invalidPa) { setModalStatus(ui, 'Carian PA mesti ditaip sebagai PAxxxx, contoh PA2131.', 'error'); return; }
+      const typedValue = paRef.isPa ? paRef.value : rawTypedValue;
+      if (paRef.isPa) ui.input.value = typedValue;
+      const target = explicitCoordinate || (paRef.isPa ? null : parseCoordinates(typedValue));
+      if (!target && !typedValue) { setModalStatus(ui, 'Masukkan Nombor Lot, PAxxxx (contoh PA2131) atau koordinat WGS84 yang sah.', 'error'); return; }
       if (activeController) { try { activeController.abort(); } catch (_) {} }
       activeController = new AbortController(); setSearchBusy(ui, true, 'Mencari GPS...'); setModalStatus(ui, 'Mencari GPS terdekat...', 'loading');
       try {
