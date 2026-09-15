@@ -11982,11 +11982,32 @@ async function azobssPabmSearchExactPaRows(stateCode, paInput) {
   const cleanStateCode = cleanLotStateCode(stateCode);
   const paNo = azobssPabmNormalizePaNumber(paInput);
   if (!cleanStateCode || !/^PA\d{1,12}$/i.test(paNo)) return [];
-  const search = await searchJupemPaCadastre(cleanStateCode, paNo);
+
   const wanted = azobssFocusedPaComparable(paNo);
-  return (Array.isArray(search && search.results) ? search.results : [])
-    .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted)
-    .slice(0, 12);
+  const digits = String(paNo || '').replace(/^PA/i, '');
+  const queries = [paNo];
+
+  // v1122: The PA search source can occasionally return no row when queried
+  // with the full number even though the same PA is visible when a shorter
+  // prefix is searched. This matters when the same PA number exists in more
+  // than one state: the state selected by the user must win whenever that PA
+  // also exists there. Retry with progressively shorter prefixes, but always
+  // accept ONLY an exact PA match from the selected state.
+  if (digits.length >= 4) queries.push(`PA${digits.slice(0, -1)}`);
+  if (digits.length >= 6) queries.push(`PA${digits.slice(0, -2)}`);
+
+  const seenQueries = new Set();
+  for (const query of queries) {
+    const key = String(query || '').toUpperCase();
+    if (!key || seenQueries.has(key)) continue;
+    seenQueries.add(key);
+    const search = await searchJupemPaCadastre(cleanStateCode, query);
+    const exact = (Array.isArray(search && search.results) ? search.results : [])
+      .filter((row) => azobssFocusedPaComparable(row && row.paNo) === wanted)
+      .slice(0, 12);
+    if (exact.length) return exact;
+  }
+  return [];
 }
 
 async function azobssPabmFindPaLotsByPaNumber(stateCode, paInput) {
@@ -12184,6 +12205,37 @@ async function azobssPabmFindPaLotsAutoState(preferredStateCode, paInput) {
   }
 
   if (matchedStates.length > 1) {
+    // v1122: A duplicate PA number in other states must not override the state
+    // explicitly selected by the user. Re-check the selected state with the
+    // tolerant exact matcher above; if it exists there, keep that state even
+    // when geometry is temporarily unavailable or the PA also exists elsewhere.
+    if (preferred) {
+      try {
+        const preferredExactRows = await azobssPabmSearchExactPaRows(preferred, paNo);
+        if (preferredExactRows.length) {
+          const preferredRows = await resolveState(preferred);
+          if (preferredRows.length) {
+            return remember({
+              rows: preferredRows,
+              stateCode: preferred,
+              requestedStateCode: preferred,
+              autoDetected: false,
+              paExistsInRequestedState: true,
+              duplicateStateCodes: matchedStates
+            });
+          }
+          return remember({
+            rows: [],
+            stateCode: preferred,
+            requestedStateCode: preferred,
+            autoDetected: false,
+            paExistsInRequestedState: true,
+            geometryUnavailable: true,
+            duplicateStateCodes: matchedStates
+          }, 2 * 60 * 1000);
+        }
+      } catch (_) {}
+    }
     return remember({
       rows: [],
       stateCode: '',

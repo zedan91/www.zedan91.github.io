@@ -53,9 +53,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1121')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1122')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1121';
+    style.id = 'azobssPabmMapSearchStyles1122';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
