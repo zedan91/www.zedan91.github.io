@@ -1465,15 +1465,24 @@ function isFalseyPaBmValue(value){
   const text = String(value ?? '').trim().toLowerCase();
   return ['false','no','n','0','off','disabled','disable','hide'].includes(text);
 }
+function hasExplicitAdminPaBmDecision(user){
+  const u = user || {};
+  return isTruthyPaBmValue(u.adminPaBmAllowed) || isFalseyPaBmValue(u.adminPaBmAllowed);
+}
 function hasAdminPaBmOverride(user){
   const u = user || {};
-  return u.adminPaBmOverride === true || String(u.paBmManagedBy || '').toLowerCase() === 'admin';
+  // v1130: an explicit adminPaBmAllowed value is itself an Admin Dashboard decision.
+  // This keeps older manually-approved accounts working even if an old profile is missing
+  // adminPaBmOverride / paBmManagedBy metadata.
+  return hasExplicitAdminPaBmDecision(u) || u.adminPaBmOverride === true || String(u.paBmManagedBy || '').toLowerCase() === 'admin';
 }
 function getAdminPaBmAllowed(user){
   const u = user || {};
   if(!hasAdminPaBmOverride(u)) return null;
+  // v1130: explicit Admin Dashboard allow/deny always wins over every legacy flag.
+  if(hasExplicitAdminPaBmDecision(u)) return isTruthyPaBmValue(u.adminPaBmAllowed);
   const keys = [
-    'adminPaBmAllowed','paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
+    'paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
     'allowPaBmTab','paBmTabAllowed','paBmTab','showPaBmTab','canAccessPaBm',
     'paAccess','pa_bm_access','pa_bm_allowed','allow_pa_bm'
   ];
@@ -6218,7 +6227,23 @@ function startAzobssPurchaseRealtimeSync(){
       azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('usernameKey', '==', key)), function(){
         azobssSchedulePurchaseRecordsRefresh('purchaseLogs username snapshot');
       }, function(e){ console.warn('purchase username snapshot failed:', e); }));
-      azobssPurchaseRealtimeUnsubs.push(onSnapshot(doc(db, 'users', key), function(){
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(doc(db, 'users', key), function(userSnap){
+        // v1130: Admin Dashboard PA/BM allow/deny is reflected in the user's open browser
+        // without requiring a new registration, invite code, Membership purchase, or re-login.
+        try{
+          if(userSnap && userSnap.exists()){
+            const beforeUser = getSavedUser() || {};
+            const beforeAccess = hasPaBmTabAccess(beforeUser);
+            const latestUser = {...beforeUser, ...(userSnap.data() || {}), profileDocId:userSnap.id, usernameKey:key};
+            const afterAccess = hasPaBmTabAccess(latestUser);
+            saveUser(latestUser);
+            syncHeader(latestUser);
+            if(isPaBmProtectedPage()) enforcePaBmPageAccess(latestUser, true);
+            if(beforeAccess !== afterAccess){
+              try{ document.dispatchEvent(new CustomEvent('azobss:pabm-admin-access-changed',{detail:{allowed:afterAccess}})); }catch(_e){}
+            }
+          }
+        }catch(accessSyncError){ console.warn('user PA/BM access snapshot sync failed:', accessSyncError); }
         azobssSchedulePurchaseRecordsRefresh('user purchase reset snapshot');
       }, function(e){ console.warn('user reset snapshot failed:', e); }));
     }

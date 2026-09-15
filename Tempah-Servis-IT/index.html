@@ -69,12 +69,14 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       if(v===true||v===1)return true;
       return ['true','yes','y','1','allow','allowed','on','enabled','enable'].indexOf(String(v==null?'':v).trim().toLowerCase())>=0;
     }
-    var adminManaged=!!u&&(u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
+    var adminDecisionPresent=!!u&&(u.adminPaBmAllowed===true||u.adminPaBmAllowed===false||['true','false','yes','no','y','n','1','0','allow','allowed','on','off','enabled','enable','disabled','disable','hide'].indexOf(String(u.adminPaBmAllowed==null?'':u.adminPaBmAllowed).trim().toLowerCase())>=0);
+    var adminManaged=!!u&&(adminDecisionPresent||u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
     var adminAllowed=adminManaged&&(
       truthy(u.adminPaBmAllowed)||truthy(u.paBmAccess)||truthy(u.paBmAllowed)||
       truthy(u.allowPABM)||truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||
       truthy(u.paBmTabAllowed)||truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)
     );
+    if(adminDecisionPresent) adminAllowed=truthy(u.adminPaBmAllowed);
     var flagAllowed=!!u&&(
       truthy(u.paBmAccess)||truthy(u.paBmAllowed)||truthy(u.allowPABM)||
       truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||truthy(u.paBmTabAllowed)||
@@ -1045,7 +1047,7 @@ body.is-admin .market-nav a[href="/admin/"]{
   requestSync();
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1130" type="module"></script>
 <script defer="" src="/assets/js/azobss-pro-ui.js"></script>
 <script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script>
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>

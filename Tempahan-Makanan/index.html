@@ -69,12 +69,14 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       if(v===true||v===1)return true;
       return ['true','yes','y','1','allow','allowed','on','enabled','enable'].indexOf(String(v==null?'':v).trim().toLowerCase())>=0;
     }
-    var adminManaged=!!u&&(u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
+    var adminDecisionPresent=!!u&&(u.adminPaBmAllowed===true||u.adminPaBmAllowed===false||['true','false','yes','no','y','n','1','0','allow','allowed','on','off','enabled','enable','disabled','disable','hide'].indexOf(String(u.adminPaBmAllowed==null?'':u.adminPaBmAllowed).trim().toLowerCase())>=0);
+    var adminManaged=!!u&&(adminDecisionPresent||u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
     var adminAllowed=adminManaged&&(
       truthy(u.adminPaBmAllowed)||truthy(u.paBmAccess)||truthy(u.paBmAllowed)||
       truthy(u.allowPABM)||truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||
       truthy(u.paBmTabAllowed)||truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)
     );
+    if(adminDecisionPresent) adminAllowed=truthy(u.adminPaBmAllowed);
     var flagAllowed=!!u&&(
       truthy(u.paBmAccess)||truthy(u.paBmAllowed)||truthy(u.allowPABM)||
       truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||truthy(u.paBmTabAllowed)||
@@ -1664,7 +1666,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
   });
   updateUI();
 })();</script>
-<script src="/assets/js/azobss-global-auth.js?v=1129" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=714" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=1129" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script><script>
+<script src="/assets/js/azobss-global-auth.js?v=1130" type="module"></script><script src="/assets/js/azobss-food-receipt-pdf.js?v=663"></script><script src="/assets/js/azobss-food-orders.js?v=671" type="module"></script><script src="/assets/js/azobss-food-menu-admin.js?v=714" type="module"></script><script src="/assets/js/azobss-firebase-live-likes-sync.js?v=1130" type="module"></script><script defer="" src="/assets/js/azobss-pro-ui.js"></script><script defer="" src="/assets/js/azobss-radio-player.js?v=372"></script><script>
 (function(){
   if(window.__azobssAdminWhatsappCleanUpdater) return;
   window.__azobssAdminWhatsappCleanUpdater = true;
