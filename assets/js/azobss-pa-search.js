@@ -229,7 +229,7 @@
     modal.querySelector('.syit-sheet-modal-close').focus();
     try {
       const response = await fetch(detailUrl, { cache: 'no-store', mode: 'cors' });
-      if (!response.ok) throw new Error(`JUPEM returned HTTP ${response.status}.`);
+      if (!response.ok) throw new Error(`Server carian mengembalikan HTTP ${response.status}.`);
       const preview = parsePaPreview(await response.text(), fallbackName);
       title.textContent = preview.title;
       details.innerHTML = `<h3>${escapeHtml(preview.title)}</h3>` + (preview.details.length
@@ -325,7 +325,7 @@
       body: body.toString(),
       signal
     });
-    if (!response.ok) throw new Error(`JUPEM returned HTTP ${response.status}.`);
+    if (!response.ok) throw new Error(`Server carian mengembalikan HTTP ${response.status}.`);
     return parseOfficialResults(await response.text());
   }
 

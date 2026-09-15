@@ -27,6 +27,13 @@
     })[char]);
   }
 
+  function publicMapMessage(value) {
+    return String(value == null ? '' : value)
+      .replace(/JUPEM\s+eBiz/gi, 'server peta')
+      .replace(/JUPEM\s+live/gi, 'server data')
+      .replace(/JUPEM/gi, 'server peta');
+  }
+
 
   // v1115: PA searches on every map are explicit. `pa2131` and `PA2131`
   // normalize to PA2131; a bare `2131` remains a Nombor Lot search.
@@ -46,9 +53,9 @@
   }
 
   function addStyles() {
-    if (document.getElementById('azobssPabmMapSearchStyles1120')) return;
+    if (document.getElementById('azobssPabmMapSearchStyles1121')) return;
     const style = document.createElement('style');
-    style.id = 'azobssPabmMapSearchStyles1120';
+    style.id = 'azobssPabmMapSearchStyles1121';
     style.textContent = `
       .pabm-map-search-block{margin-top:12px;padding-top:2px}
       .pabm-map-search-block label{display:block;margin:0}
@@ -398,7 +405,7 @@
 
   function setInlineStatus(element, text, kind) {
     if (!element) return;
-    element.textContent = text || '';
+    element.textContent = publicMapMessage(text || '');
     element.classList.toggle('is-error', kind === 'error');
     element.classList.toggle('is-success', kind === 'success');
   }
@@ -484,7 +491,7 @@
   }
 
   function setModalStatus(ui, text, kind) {
-    ui.status.textContent = text || '';
+    ui.status.textContent = publicMapMessage(text || '');
     ui.status.classList.toggle('is-error', kind === 'error');
     ui.status.classList.toggle('is-success', kind === 'success');
     ui.status.classList.toggle('is-loading', kind === 'loading');
@@ -499,7 +506,7 @@
   }
 
   function setFootStatus(ui, text, kind) {
-    ui.footStatus.textContent = text || '';
+    ui.footStatus.textContent = publicMapMessage(text || '');
     ui.footStatus.classList.toggle('is-error', kind === 'error');
     ui.footStatus.classList.toggle('is-success', kind === 'success');
   }
@@ -583,11 +590,11 @@
     wrap.className = 'az-pabm-map-layer-switch';
     wrap.innerHTML = `
       <button class="az-pabm-map-layer-button" type="button" aria-pressed="false" title="Tukar Map / Earth">&#127758; Earth</button>
-      <a class="az-pabm-map-mylot-button" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer" title="Buka MyLot JUPEM rasmi">MyLot &#8599;</a>`;
+      <a class="az-pabm-map-mylot-button" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer" title="Buka MyLot">MyLot &#8599;</a>`;
     const legend = document.createElement('div');
     legend.className = 'az-pabm-map-earth-legend';
     legend.innerHTML = `
-      <strong>Earth + Kadaster JUPEM</strong>
+      <strong>Earth + Kadaster</strong>
       <span>NDCDB + C3 dipaparkan di atas imej satelit.</span>
       <span class="my-lot-note">Klik sekali pada lot untuk info. Double-click untuk pindah lokasi carian.</span>`;
     stage.appendChild(wrap);
@@ -1442,7 +1449,7 @@
         }
         renderRows(data.results, resolvedTarget, resolvedReference, preserveViewport, locationLabel);
         const count = Array.isArray(data.results) ? data.results.length : 0;
-        const warning = data.warning ? ' Data live JUPEM tidak tersedia; senarai fallback digunakan.' : '';
+        const warning = data.warning ? ' Data live sementara tidak tersedia; senarai fallback digunakan.' : '';
         const sourceText = resolvedReference
           ? ` berhampiran ${referenceLabel(resolvedReference)}`
           : (locationLabel ? ` berhampiran ${locationLabel}` : '');
@@ -1511,7 +1518,7 @@
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
       const loadingPopup = L.popup({ className: 'az-pabm-lot-info-popup', maxWidth: 310 })
         .setLatLng(latlng)
-        .setContent('<div class="lot-title">Mencari info lot JUPEM...</div>')
+        .setContent('<div class="lot-title">Mencari info lot...</div>')
         .openOn(map);
       try {
         const params = new URLSearchParams({
@@ -1522,7 +1529,7 @@
         const data = await fetchJson(`${BACKEND_BASE}/api/pabm-pa-map-search?${params.toString()}`, lotInspectController.signal);
         const row = Array.isArray(data.results) && data.results.length ? data.results[0] : null;
         if (!row) {
-          loadingPopup.setContent('<div class="lot-title">Tiada lot JUPEM ditemui pada titik ini.</div>');
+          loadingPopup.setContent('<div class="lot-title">Tiada lot ditemui pada titik ini.</div>');
           return;
         }
         const html = `
@@ -1539,7 +1546,7 @@
         loadingPopup.setContent(html);
       } catch (error) {
         if (error && error.name === 'AbortError') return;
-        loadingPopup.setContent(`<div class="lot-title">${escapeHtml(error.message || 'Info lot JUPEM tidak tersedia.')}</div>`);
+        loadingPopup.setContent(`<div class="lot-title">${escapeHtml(publicMapMessage(error.message || 'Info lot tidak tersedia.'))}</div>`);
       }
     }
 
@@ -1913,14 +1920,14 @@
       lotInspectController = new AbortController();
       const lat = Number(latlng.lat), lng = Number(latlng.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-      const popup = L.popup({ className: 'az-pabm-lot-info-popup', maxWidth: 310 }).setLatLng(latlng).setContent('<div class="lot-title">Mencari info lot JUPEM...</div>').openOn(map);
+      const popup = L.popup({ className: 'az-pabm-lot-info-popup', maxWidth: 310 }).setLatLng(latlng).setContent('<div class="lot-title">Mencari info lot...</div>').openOn(map);
       try {
         const params = new URLSearchParams({ negeri: stateCode, lat: String(lat), lng: String(lng) });
         const data = await fetchJson(`${BACKEND_BASE}/api/pabm-pa-map-search?${params.toString()}`, lotInspectController.signal);
         const row = Array.isArray(data.results) && data.results.length ? data.results[0] : null;
-        if (!row) { popup.setContent('<div class="lot-title">Tiada lot JUPEM ditemui pada titik ini.</div>'); return; }
+        if (!row) { popup.setContent('<div class="lot-title">Tiada lot ditemui pada titik ini.</div>'); return; }
         popup.setContent(`<div class="lot-title">Lot ${escapeHtml(row.lotNo || '-')} ${row.paNo ? `&#8226; ${escapeHtml(row.paNo)}` : ''}</div><div class="lot-grid"><b>Nombor Lot</b><span>${escapeHtml(row.lotNo || '-')}</span><b>Nombor PA</b><span>${escapeHtml(row.paNo || 'Tiada')}</span><b>Negeri</b><span>${escapeHtml(row.negeri || data.negeri || state || '-')}</span><b>Daerah</b><span>${escapeHtml(row.daerah || '-')}</span><b>Mukim/Bandar</b><span>${escapeHtml(row.mukim || '-')}</span><b>Seksyen</b><span>${escapeHtml(row.seksyen || '-')}</span><b>WGS84</b><span>${escapeHtml(`${lat.toFixed(7)}, ${lng.toFixed(7)}`)}</span></div>`);
-      } catch (error) { if (error && error.name === 'AbortError') return; popup.setContent(`<div class="lot-title">${escapeHtml(error.message || 'Info lot JUPEM tidak tersedia.')}</div>`); }
+      } catch (error) { if (error && error.name === 'AbortError') return; popup.setContent(`<div class="lot-title">${escapeHtml(publicMapMessage(error.message || 'Info lot tidak tersedia.'))}</div>`); }
     }
     map.on('click', (event) => {
       if (!earthControl || !earthControl.isEarth() || !event || !event.latlng) return;

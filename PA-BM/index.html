@@ -10767,7 +10767,7 @@ html.azobss-pabm-guard-pending body{
         ? `<button type="button" data-benchmark-record="${benchmarkRecordPayload({ ...row, downloadUrl })}" data-benchmark-filename="${esc(benchmarkDownloadFilename(row))}" class="btn blue bm-record-download pabm-table-cart-button" aria-label="Tambah ${esc(row.stationNo || row.stesen || 'item BM/SBM')} ke troli" title="Tambah ke Troli"><span aria-hidden="true">&#128722;</span></button>`
         : '-';
       const locationButton = locationUrl
-        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(row.stationNo || row.stesen || 'station')} location in JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${esc(locationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat lokasi ${esc(row.stationNo || row.stesen || 'station')} pada peta" title="Lihat lokasi pada peta"><span aria-hidden="true">&#128269;</span></a>`
         : '-';
       const mapsButton = mapsUrl
         ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${esc(row.stationNo || row.stesen || 'station')} in Google Maps" title="Google Maps"><span aria-hidden="true">&#128269;</span></a>`
@@ -10950,7 +10950,7 @@ html.azobss-pabm-guard-pending body{
     const timer = setTimeout(function(){ controller.abort(); }, 18000);
     try {
       const response = await fetch(`${BM_SBM_LIVE_SEARCH_API}?${params.toString()}`, { cache:'no-store', signal:controller.signal });
-      if (!response.ok) throw new Error(`JUPEM live HTTP ${response.status}`);
+      if (!response.ok) throw new Error(`Server data HTTP ${response.status}`);
       const data = await response.json();
       if (!data || data.ok !== true || !Array.isArray(data.results)) return [];
       return data.results.map(normalizeBenchmarkLiveRow).filter(function(row){ return row.stationNo || row.productId; });
@@ -11027,7 +11027,7 @@ html.azobss-pabm-guard-pending body{
       const db = await loadBenchmarkDb();
       let row = findExactBenchmarkRow(db);
       if (!row || !row.productId) {
-        setBenchmarkQuickStatus(`${product} tidak ditemui dalam database tempatan. Sedang semak JUPEM live...`, 'checking');
+        setBenchmarkQuickStatus(`${product} tidak ditemui dalam database tempatan. Sedang semak server data...`, 'checking');
         const liveRows = await searchBenchmarkLiveFallback({ query:raw });
         row = exactBenchmarkFromRows(liveRows, raw) || row;
       }
@@ -11101,9 +11101,9 @@ html.azobss-pabm-guard-pending body{
       let rows = searchBenchmarkDb(db);
       let usedLiveFallback = false;
       if (!rows.length) {
-        if (statusEl) statusEl.textContent = 'Tiada rekod dalam database tempatan. Sedang semak JUPEM live...';
+        if (statusEl) statusEl.textContent = 'Tiada rekod dalam database tempatan. Sedang semak server data...';
         try { rows = await searchBenchmarkLiveFallback(); usedLiveFallback = rows.length > 0; }
-        catch (liveError) { console.warn('[AZOBSS BM/SBM] JUPEM live fallback failed:', liveError); }
+        catch (liveError) { console.warn('[AZOBSS BM/SBM] live fallback failed:', liveError); }
       } else if (String(searchEl.value || '').trim() && rows.some(function(row){ return !row.productId; })) {
         try {
           const liveRows = await searchBenchmarkLiveFallback();
@@ -11120,8 +11120,8 @@ html.azobss-pabm-guard-pending body{
       renderResults(rows, 1);
       if (statusEl) {
         statusEl.textContent = rows.length
-          ? `${rows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui${usedLiveFallback ? ' (JUPEM live)' : ''}`
-          : 'Tiada rekod BM/SBM ditemui dalam database tempatan atau JUPEM live';
+          ? `${rows.length.toLocaleString('en-MY')} rekod BM/SBM ditemui${usedLiveFallback ? ' (data live)' : ''}`
+          : 'Tiada rekod BM/SBM ditemui dalam database tempatan atau server data';
       }
     } catch (error) {
       resetBenchmarkResults();
@@ -15660,11 +15660,11 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script src="/assets/js/azobss-lot-selection-map.js?v=1118" defer></script>
-<script src="/assets/js/azobss-pabm-map-search.js?v=1120" defer></script>
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=921"></script>
+<script src="/assets/js/azobss-lot-selection-map.js?v=1121" defer></script>
+<script src="/assets/js/azobss-pabm-map-search.js?v=1121" defer></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=1121"></script>
 <script src="/assets/js/azobss-pabm-result-layout.js?v=3" defer></script>
-<script src="/assets/js/azobss-pa-search.js?v=28" defer></script>
+<script src="/assets/js/azobss-pa-search.js?v=1121" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=12" defer></script>
 <script src="/assets/js/azobss-gps-search.js?v=1042" defer></script>
 <script src="/assets/js/azobss-syit-piawai-search.js?v=1042" defer></script>

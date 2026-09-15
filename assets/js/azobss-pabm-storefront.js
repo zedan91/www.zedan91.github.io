@@ -677,7 +677,7 @@ async function openJupemLotMap(button) {
     return;
   }
 
-  setPanelStatus(status, 'Membuka peta pilihan JUPEM...', 'checking');
+  setPanelStatus(status, 'Membuka peta pilihan...', 'checking');
   const params = new URLSearchParams({
     type: `${stateCode}lot${productCode === '2' ? 'C3' : ''}`,
     c: 'pl',
@@ -695,7 +695,7 @@ async function openJupemLotMap(button) {
     return;
   }
   try { popup.focus(); } catch (_) {}
-  setPanelStatus(status, 'Peta JUPEM dibuka. Sesi JUPEM sedia ada akan digunakan.', 'success');
+  setPanelStatus(status, 'Peta pilihan dibuka. Sesi peta sedia ada akan digunakan.', 'success');
 }
 
 function checkoutPayload(items) {

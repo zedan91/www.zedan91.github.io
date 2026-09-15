@@ -14,6 +14,13 @@
   let lotFocusOpenSerial = 0;
   let lotFocusPrefetchController = null;
 
+  function publicMapMessage(value) {
+    return String(value == null ? '' : value)
+      .replace(/JUPEM\s+eBiz/gi, 'server peta')
+      .replace(/JUPEM\s+live/gi, 'server data')
+      .replace(/JUPEM/gi, 'server peta');
+  }
+
   function userAdjustedAmount(amount) {
     try {
       const percent = typeof window.azobssGetPriceAdjustmentPercent === 'function'
@@ -51,7 +58,7 @@
       signal
     });
     const focused = await response.json().catch(() => ({}));
-    if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot JUPEM tidak dapat dipaparkan.');
+    if (!response.ok || !focused.ok) throw new Error(focused.error || 'Lot tidak dapat dipaparkan.');
     return focused;
   }
 
@@ -161,7 +168,7 @@
       .az-lot-focus-open{display:flex;align-items:center;justify-content:center;width:100%;min-height:42px;margin-top:12px;border:1px solid #60a5fa;border-radius:6px;background:#1d4ed8;color:#fff!important;font-weight:900;text-decoration:none!important;box-shadow:0 2px 0 #172554}
       .az-lot-focus-note{margin:12px 0 0;color:#9fb3cf;font-size:12px;line-height:1.45}
       .az-lot-search-tooltip{border:1px solid #b91c1c!important;background:#fff7cc!important;color:#7f1d1d!important;font-weight:900!important;box-shadow:0 2px 8px rgba(15,23,42,.3)!important}
-      .az-lot-focus-dialog .az-lot-map-canvas.is-loading:after{content:'Sedang memuatkan lot JUPEM...';position:absolute;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:6px;background:rgba(15,23,42,.9);color:#fff;font-weight:800;white-space:nowrap}
+      .az-lot-focus-dialog .az-lot-map-canvas.is-loading:after{content:'Sedang memuatkan lot...';position:absolute;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:6px;background:rgba(15,23,42,.9);color:#fff;font-weight:800;white-space:nowrap}
       /* v950: compact the desktop side panel so all controls fit without an inner scrollbar. */
       @media (min-width:761px) and (max-height:920px){
         .az-lot-map-dialog{height:min(840px,calc(100vh - 16px))}
@@ -390,7 +397,7 @@
   }
 
   function setStatus(node, message, state) {
-    node.textContent = message || '';
+    node.textContent = publicMapMessage(message || '');
     node.classList.remove('is-loading', 'is-error', 'is-success');
     if (state) node.classList.add(`is-${state}`);
   }
@@ -444,7 +451,7 @@
     await loadMapLibraries();
     const configResponse = await fetch(`${BACKEND_BASE}/api/jupem-lot-map/config?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(stateCode)}`, { cache: 'no-store' });
     const config = await configResponse.json().catch(() => ({}));
-    if (!configResponse.ok || !config.ok) throw new Error(config.error || 'Peta JUPEM tidak tersedia untuk negeri ini.');
+    if (!configResponse.ok || !config.ok) throw new Error(config.error || 'Peta kadaster tidak tersedia untuk negeri ini.');
 
     return await new Promise((resolve, reject) => {
       let settled = false;
@@ -481,9 +488,9 @@
               <div class="az-lot-map-canvas"></div>
               <div class="az-lot-earth-switch">
                 <button class="az-lot-earth-btn" type="button" aria-pressed="false" title="Tukar Map / Earth">&#127758; Earth</button>
-                <a class="az-lot-mylot-link" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer" title="Buka MyLot JUPEM rasmi">MyLot &#8599;</a>
+                <a class="az-lot-mylot-link" href="https://jupem2u.kul.jupem.gov.my/mylot/negeri.html" target="_blank" rel="noopener noreferrer" title="Buka MyLot">MyLot &#8599;</a>
               </div>
-              <div class="az-lot-earth-legend"><strong>Earth + Kadaster JUPEM</strong><span>NDCDB + C3 dipaparkan di atas imej satelit.</span></div>
+              <div class="az-lot-earth-legend"><strong>Earth + Kadaster</strong><span>NDCDB + C3 dipaparkan di atas imej satelit.</span></div>
               <div class="az-lot-coordinate-search">
                 <form class="az-lot-coordinate-form" role="search">
                   <input class="az-lot-coordinate-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="azLotLocationResults" aria-label="Cari koordinat WGS84, nama tempat atau nombor lot" placeholder="WGS84, nama tempat atau No. Lot">
@@ -1169,7 +1176,7 @@
       }
 
       function setCoordinateFeedback(message, state = 'error') {
-        coordinateFeedback.textContent = message || '';
+        coordinateFeedback.textContent = publicMapMessage(message || '');
         coordinateFeedback.classList.toggle('is-visible', Boolean(message));
         coordinateFeedback.classList.remove('is-info', 'is-loading', 'is-success');
         if (message && state && state !== 'error') coordinateFeedback.classList.add(`is-${state}`);
@@ -1308,7 +1315,7 @@
         }
         cadastreFocusController = new AbortController();
         hideLocationSuggestions(false);
-        setCoordinateFeedback(`Mencari lokasi tepat ${paNo || `Lot ${lotNo}`} di JUPEM...`, 'loading');
+        setCoordinateFeedback(`Mencari lokasi tepat ${paNo || `Lot ${lotNo}`} pada peta...`, 'loading');
         try {
           const preResolved = suggestion && suggestion.resolvedFocus && typeof suggestion.resolvedFocus === 'object'
             ? suggestion.resolvedFocus
@@ -1333,7 +1340,7 @@
           const rings = focused.geometry && Array.isArray(focused.geometry.rings) ? focused.geometry.rings : [];
           const leafletRings = rings.map(convertRing).filter((ring) => ring.length >= 3);
           const focusShape = leafletPolygons.length ? leafletPolygons : leafletRings;
-          if (!focusShape.length) throw new Error('Geometri lot JUPEM tidak tersedia.');
+          if (!focusShape.length) throw new Error('Geometri lot semasa tidak tersedia.');
           cadastreFocusLayer = window.L.polygon(focusShape, {
             color: '#ef4444',
             weight: 4,
@@ -1349,7 +1356,7 @@
           const tooltip = focusedLot
             ? [`Lot ${focusedLot}`, focusedPa].filter(Boolean).join(' · ')
             : [focusedPa, focusedLotCount > 1 ? `${focusedLotCount} lot` : ''].filter(Boolean).join(' · ');
-          cadastreFocusLayer.bindTooltip(tooltip || 'Lot JUPEM', {
+          cadastreFocusLayer.bindTooltip(tooltip || 'Lot', {
             permanent: true,
             direction: 'center',
             className: 'az-lot-search-tooltip'
@@ -1490,7 +1497,7 @@
         const attribution = document.createElement('div');
         attribution.className = 'az-lot-location-attribution';
         const hasCadastre = locationSuggestions.some((item) => String(item && item.kind || '').toLowerCase() === 'lot');
-        attribution.textContent = hasCadastre ? 'Carian lot: JUPEM eBiz' : 'Carian lokasi: © OpenStreetMap contributors';
+        attribution.textContent = hasCadastre ? 'Carian lot: Data Kadaster' : 'Carian lokasi: © OpenStreetMap contributors';
         locationResultsNode.appendChild(attribution);
         locationResultsNode.hidden = false;
         coordinateInput.setAttribute('aria-expanded', 'true');
@@ -1762,7 +1769,7 @@
           updateWhenZooming: false,
           updateInterval: 250,
           keepBuffer: 1,
-          attribution: 'JUPEM eBiz'
+          attribution: 'Data Kadaster'
         });
         jupemSheetsLayer = null;
         jupemLotsLayer.on('tileerror', retryFailedJupemTile);
@@ -1788,7 +1795,7 @@
             if (!map.hasLayer(earthLayer)) earthLayer.addTo(map);
             if (typeof earthLayer.bringToBack === 'function') earthLayer.bringToBack();
             if (!earthSecondaryLayer) {
-              earthSecondaryLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=lots`, { minZoom:Number(config.minSelectionZoom || 13), maxZoom:20, opacity:0.7, updateWhenIdle:true, updateWhenZooming:false, updateInterval:250, keepBuffer:1, attribution:'JUPEM eBiz' });
+              earthSecondaryLayer = window.L.tileLayer(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=lots`, { minZoom:Number(config.minSelectionZoom || 13), maxZoom:20, opacity:0.7, updateWhenIdle:true, updateWhenZooming:false, updateInterval:250, keepBuffer:1, attribution:'Data Kadaster' });
               earthSecondaryLayer.on('tileerror', retryFailedJupemTile);
               earthSecondaryLayer.on('tileload', markJupemTileLoaded);
             }
@@ -2032,7 +2039,7 @@
         } catch (error) {
           addButton.disabled = false;
           setAddButtonDefault();
-          setStatus(status, error.message || 'JUPEM tidak dapat menyediakan pilihan ini.', 'error');
+          setStatus(status, error.message || 'Server peta tidak dapat menyediakan pilihan ini.', 'error');
         }
       });
     });
@@ -2129,7 +2136,7 @@
       return prepared;
     } catch (error) {
       if (error && (error.name === 'AbortError' || error.code === 'MAP_CLOSED')) return null;
-      const message = error && error.message ? error.message : 'Peta lot JUPEM tidak dapat dibuka.';
+      const message = publicMapMessage(error && error.message ? error.message : 'Peta lot tidak dapat dibuka.');
       try {
         if (typeof window.azShowToast === 'function') window.azShowToast(message);
       } catch (_) {}

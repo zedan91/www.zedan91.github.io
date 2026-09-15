@@ -12580,7 +12580,7 @@ async function azobssPabmResolveBenchmarkMapReference(stateCode, rawReference) {
     throw new Error(`Semakan ${paNo} untuk ${AZOBSS_JUPEM_LOT_STATE_NAMES[cleanStateCode] || cleanStateCode} tidak dapat disahkan buat sementara. Sila cuba lagi; sistem tidak akan menukar negeri secara automatik.`);
   }
   if (located.geometryUnavailable && located.paExistsInRequestedState) {
-    throw new Error(`${paNo} memang ditemui di ${AZOBSS_JUPEM_LOT_STATE_NAMES[cleanStateCode] || cleanStateCode}, tetapi geometri lot JUPEM belum dapat dimuat. Sila cuba lagi.`);
+    throw new Error(`${paNo} ditemui di ${AZOBSS_JUPEM_LOT_STATE_NAMES[cleanStateCode] || cleanStateCode}, tetapi lot asal PA tidak dapat dipadankan dengan peta kadaster semasa. Lot mungkin telah dipecah, digabung, dinomborkan semula atau berubah selepas PA dikeluarkan.`);
   }
   const reference = azobssPabmMergePaReferenceRows(located.rows, paNo);
   return {
@@ -18363,7 +18363,7 @@ async function handler(req, res) {
           if (located.geometryUnavailable && located.paExistsInRequestedState) {
             return send(res, 503, JSON.stringify({
               ok:false,
-              error:`${paNo} memang ditemui di ${AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || stateCode}, tetapi geometri lot JUPEM belum dapat dimuat. Sila cuba lagi.`
+              error:`${paNo} ditemui di ${AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || stateCode}, tetapi lot asal PA tidak dapat dipadankan dengan peta kadaster semasa. Lot mungkin telah dipecah, digabung, dinomborkan semula atau berubah selepas PA dikeluarkan.`
             }), "application/json", { "Cache-Control":"no-store" });
           }
           results = located.rows || [];
@@ -18405,7 +18405,7 @@ async function handler(req, res) {
         const notFound = /tidak dapat dikenal pasti|not found|tiada/i.test(message);
         return send(res, notFound ? 404 : 502, JSON.stringify({
           ok:false,
-          error:notFound ? "PA / Lot tersebut tidak ditemui pada peta JUPEM untuk negeri yang dipilih." : message
+          error:notFound ? "PA / Lot tersebut tidak ditemui pada peta untuk negeri yang dipilih." : message
         }), "application/json", { "Cache-Control":"no-store" });
       }
     }
@@ -18876,9 +18876,9 @@ async function handler(req, res) {
         }), "application/json", { "Cache-Control": "no-store" });
       } catch (error) {
         const message = error && error.name === "AbortError"
-          ? "Sambungan JUPEM mengambil masa terlalu lama. Sila cuba lagi."
+          ? "Sambungan server peta mengambil masa terlalu lama. Sila cuba lagi."
           : (azobssIsTransientJupemError(error)
-              ? "Sambungan JUPEM terputus sementara selepas beberapa percubaan. Sila tekan semula Sediakan & Tambah ke Troli."
+              ? "Sambungan server peta terputus sementara selepas beberapa percubaan. Sila tekan semula Sediakan & Tambah ke Troli."
               : (error.message || "Pilihan Lot Kadaster tidak dapat diproses."));
         console.error("JUPEM lot selection failed:", error && (error.stack || error.message || error));
         return send(res, /invalid|missing|outside|unsupported|tidak ditemui|tiada lot|melebihi/i.test(message) ? 400 : 502, JSON.stringify({ ok: false, error: message }), "application/json");
@@ -18893,7 +18893,7 @@ async function handler(req, res) {
         const body = JSON.parse(bodyTextForStatus || "{}");
         const pending = azobssDecodeLotSelectionToken(body.selectionToken);
         if (!pending || !pending.jobId) {
-          return send(res, 400, JSON.stringify({ ok: false, error: "Token pilihan JUPEM tidak sah atau telah tamat." }), "application/json");
+          return send(res, 400, JSON.stringify({ ok: false, error: "Token pilihan peta tidak sah atau telah tamat." }), "application/json");
         }
 
         const directReady = await azobssEnsureJupemLotDirectReady(
@@ -19780,12 +19780,12 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       }));
     } catch (error) {
       console.error("NDCDB ZIP upstream fetch failed:", error && (error.stack || error.message || error));
-      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster tidak dapat dimuat turun dari JUPEM sekarang. Kuota download tidak digunakan.");
+      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster tidak dapat dimuat turun dari server sumber sekarang. Kuota download tidak digunakan.");
     }
 
     if (!upstream || !upstream.ok || !upstream.body) {
       try { if (upstream && upstream.body && typeof upstream.body.cancel === "function") await upstream.body.cancel(); } catch (_) {}
-      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster tidak tersedia dari JUPEM. Kuota download tidak digunakan.");
+      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster tidak tersedia dari server sumber. Kuota download tidak digunakan.");
     }
 
     const finalUrl = String(upstream.url || directUrl);
@@ -19793,7 +19793,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const looksLogin = /\/Home\/LogMasuk(?:[/?#]|$)/i.test(finalUrl);
     if (looksLogin || contentType.includes("text/html")) {
       try { if (typeof upstream.body.cancel === "function") await upstream.body.cancel(); } catch (_) {}
-      return azobssPaBmDownloadError(res, 502, "JUPEM mengembalikan halaman log masuk, bukan ZIP. Kuota download tidak digunakan.");
+      return azobssPaBmDownloadError(res, 502, "Server sumber mengembalikan halaman log masuk, bukan ZIP. Kuota download tidak digunakan.");
     }
 
     const reader = upstream.body.getReader();
@@ -19802,12 +19802,12 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       firstPart = await reader.read();
     } catch (error) {
       try { await reader.cancel(); } catch (_) {}
-      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster gagal dibaca dari JUPEM. Kuota download tidak digunakan.");
+      return azobssPaBmDownloadError(res, 502, "ZIP Lot Kadaster gagal dibaca dari server sumber. Kuota download tidak digunakan.");
     }
     const firstBuffer = firstPart && firstPart.value ? Buffer.from(firstPart.value) : Buffer.alloc(0);
     if (firstPart.done || !firstBuffer.length || !azobssBufferIsZip(firstBuffer)) {
       try { await reader.cancel(); } catch (_) {}
-      return azobssPaBmDownloadError(res, 502, "Fail JUPEM yang diterima bukan ZIP Lot Kadaster yang sah. Kuota download tidak digunakan.");
+      return azobssPaBmDownloadError(res, 502, "Fail yang diterima daripada server sumber bukan ZIP Lot Kadaster yang sah. Kuota download tidak digunakan.");
     }
 
     try {
