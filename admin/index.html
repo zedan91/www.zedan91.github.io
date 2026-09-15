@@ -1770,6 +1770,9 @@ body[data-dashboard-page="admin"] .topbar{
 }
 .az-admin-reg-food-pill.on{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(20,83,45,.24)}
 .az-admin-reg-food-pill.off{color:#fecaca;border-color:rgba(239,68,68,.38);background:rgba(127,29,29,.22)}
+.az-admin-reg-membership-pill{display:inline-flex;align-items:center;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:950;line-height:1.25;border:1px solid rgba(148,163,184,.22)}
+.az-admin-reg-membership-pill.on{color:#fde68a;border-color:rgba(250,204,21,.42);background:rgba(113,63,18,.28)}
+.az-admin-reg-membership-pill.off{color:#cbd5e1;border-color:rgba(148,163,184,.28);background:rgba(30,41,59,.32)}
 .az-admin-reg-meta-line{
   margin-top:3px;
   display:flex;
@@ -2645,7 +2648,7 @@ body[data-dashboard-page="admin"] .topbar{
 
     <section id="users" class="section">
       <h2>👥 Registered User Records</h2>
-      <p class="az-section-help">Cari, semak role, edit akses PA/BM dan urus akaun user berdaftar.</p>
+      <p class="az-section-help">Cari, semak Account Role, status Membership, edit akses PA/BM dan urus akaun user berdaftar.</p>
       <div class="card" id="registeredUsersAdminCard">
         <h2>Registered User Records</h2>
         <div class="az-admin-registered-toolbar">
@@ -2657,10 +2660,10 @@ body[data-dashboard-page="admin"] .topbar{
             <option value="online">Online users only</option>
             <option value="pabm">PA Access Allowed</option>
             <option value="foodorders">Food Orders Access Allowed</option>
-            <option value="role-admin">Role: admin</option>
-            <option value="role-semiadmin">Role: semiadmin</option>
-            <option value="role-staff">Role: staff</option>
-            <option value="role-member">Role: member</option>
+            <option value="role-admin">Role: Administrator</option>
+            <option value="role-semiadmin">Role: Semi Admin</option>
+            <option value="role-staff">Role: Staff</option>
+            <option value="role-user">Role: User</option>
           </select>
           <button class="btn" id="registeredUsersRefreshBtn" type="button">Refresh</button>
         </div>
@@ -3589,7 +3592,7 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="card">
         <div class="toolbar">
           <input id="staffUsername" placeholder="Username, contoh: zedanstaff" style="flex:1;min-width:220px">
-          <select id="staffRole"><option value="semiAdmin">semiAdmin</option><option value="staff">staff</option><option value="member">member</option></select>
+          <select id="staffRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Semi Admin</option></select>
           <button class="btn green" id="saveStaffRole">Save Role</button>
         </div>
         <div class="toolbar">
@@ -5687,7 +5690,7 @@ async function loadStaffRoles(){
   }
   snap?.forEach(d=>{
     const x=d.data()||{};
-    const role=String(x.role||'member').toLowerCase();
+    const role=String(x.role||'user').toLowerCase();
     if(!['admin','semiadmin','semi-admin','staff'].includes(role) && !x.permissions) return;
     rows.push(`<div class="staff-role-card" data-staff-username="${esc(d.id)}">
       <div class="staff-role-name">👤 ${esc(d.id)}</div>
@@ -6036,8 +6039,16 @@ function azRegTime(x){
 function azRegUser(x){
   return x.usernameKey||x.username||x.name||x.displayName||x.email||x.uid||'Unknown';
 }
+function azRegAccountRoleLabel(value){
+  const r=String(value||'user').trim().toLowerCase().replace(/[\s_-]+/g,'');
+  if(r==='admin')return 'Administrator';
+  if(r==='semiadmin')return 'Semi Admin';
+  if(r==='staff')return 'Staff';
+  // Legacy role=member means a normal registered user. Paid Membership is separate.
+  return 'User';
+}
 function azRegSub(x){
-  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', x.role?('Role: '+x.role):''].filter(Boolean).join(' • ');
+  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', 'Role: '+azRegAccountRoleLabel(x.role)].filter(Boolean).join(' • ');
 }
 function azRegPaAllowed(x){
   const managed = x?.adminPaBmOverride === true || String(x?.paBmManagedBy || '').toLowerCase() === 'admin';
@@ -6058,23 +6069,29 @@ function azRegFoodOrdersAllowed(x){
 function azRegFoodOrdersPillHtml(allowed){
   return `<span class="az-admin-reg-food-pill ${allowed?'on':'off'}"><span class="az-pabm-dot ${allowed?'on':'off'}"></span>Tempahan ${allowed?'allowed':'off'}</span>`;
 }
-function azRegRole(x){return String(x.role||'member').trim().toLowerCase().replace(/[^a-z]/g,'');}
+function azRegRole(x){const r=String(x.role||'user').trim().toLowerCase().replace(/[^a-z]/g,'');return r==='member'?'user':r;}
 function azRegRoleClass(x){
   const r=azRegRole(x);
   if(r==='admin')return 'role-admin';
   if(r==='semiadmin')return 'role-semiadmin';
   if(r==='staff')return 'role-staff';
-  if(r==='member'||r==='user')return 'role-member';
+  if(r==='user')return 'role-user';
   return 'role-unknown';
 }
 function azRegRoleLabel(x){
-  const raw=String(x.role||'member').trim();
-  const r=azRegRole(x);
-  if(r==='admin')return 'admin';
-  if(r==='semiadmin')return 'semiAdmin';
-  if(r==='staff')return 'staff';
-  if(r==='member'||r==='user')return 'member';
-  return raw || 'member';
+  return azRegAccountRoleLabel(x?.role);
+}
+function azRegMembershipInfo(x){
+  const expiry=Number(x?.membershipBenefitExpiresAtMs||0)||azRegMs(x?.membershipBenefitExpiresAt);
+  const active=x?.membershipBenefitActive===true && (!expiry || expiry>Date.now());
+  const name=String(x?.membershipBenefitPackageName||x?.membershipBenefitPackageId||'Membership').trim();
+  return {active,expiry,name};
+}
+function azRegMembershipPillHtml(x){
+  const m=azRegMembershipInfo(x);
+  if(!m.active)return '<span class="az-admin-reg-membership-pill off">Membership: None</span>';
+  const exp=m.expiry?new Date(m.expiry).toLocaleDateString():'Active';
+  return `<span class="az-admin-reg-membership-pill on">Membership: ${esc(m.name)} • ${esc(exp)}</span>`;
 }
 function azRegPaDotHtml(pa){
   return `<span class="az-admin-reg-pabm-pill ${pa?'on':'off'}"><span class="az-pabm-dot ${pa?'on':'off'}"></span>PA/BM ${pa?'allowed':'off'}</span>`;
@@ -6177,6 +6194,7 @@ function renderRegisteredUsersAdmin(){
         <div class="az-admin-reg-meta-line">
           <span class="az-admin-reg-role-pill ${roleClass}">Role: ${esc(roleLabel)}</span>
           ${azRegPaDotHtml(pa)}
+          ${azRegMembershipPillHtml(x)}
           ${azRegFoodOrdersPillHtml(foodAccess)}
           ${azRegPricePillHtml(x)}
         </div>
@@ -6204,7 +6222,7 @@ function openRegisteredEdit(id){
   $('#azRegEditUsername').value=azRegUser(x);
   $('#azRegEditEmail').value=x.email||x.authEmail||'';
   $('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
-  $('#azRegEditRole').value=x.role||'member';
+  $('#azRegEditRole').value=azRegRole(x);
   $('#azRegEditPa').value=azRegPaAllowed(x)?'true':'false';
   const pricePercents=azRegPricePercents(x);
   $('#azRegEditPricePaBm').value=String(pricePercents.paBm);
@@ -6215,8 +6233,16 @@ function openRegisteredEdit(id){
   $('#azRegEditModal')?.classList.add('is-open');
 }
 async function saveRegisteredEdit(){
-  const id=$('#azRegEditDocId')?.value||'';
+  let id=$('#azRegEditDocId')?.value||'';
   if(!id)return;
+  const rawUsername=String($('#azRegEditUsername')?.value||'').trim().toLowerCase();
+  const usernameKey=rawUsername.replace(/[^a-z0-9_]/g,'').slice(0,80);
+  if(!usernameKey){toast('Username tidak sah. Gunakan huruf, nombor atau underscore.');return;}
+  if(usernameKey!==rawUsername){
+    $('#azRegEditUsername').value=usernameKey;
+    toast('Username dinormalisasi kepada '+usernameKey+'. Tekan Save sekali lagi jika betul.');
+    return;
+  }
   const pa=$('#azRegEditPa')?.value==='true';
   const priceInputs={
     paBm:Number($('#azRegEditPricePaBm')?.value||0),
@@ -6229,11 +6255,34 @@ async function saveRegisteredEdit(){
     toast('Setiap pelarasan harga mesti antara -99% hingga +500%.');return;
   }
   const priceAdjustmentByCategory=Object.fromEntries(Object.entries(priceInputs).map(([key,value])=>[key,Math.round(value*100)/100]));
+
+  if(usernameKey!==id){
+    const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id))||{};
+    const uid=azRegUid(x);
+    const ok=confirm(`Tukar username ${id} → ${usernameKey}?\n\nSistem akan merge/move profil Firestore, usernameAuthEmails, purchase summary, referral mapping dan data user berkaitan sambil mengekalkan UID yang sama.`);
+    if(!ok)return;
+    try{
+      const moved=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/user/rename',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({oldUsername:id,newUsername:usernameKey,expectedUid:uid||''})
+      });
+      id=String(moved?.userDocId||usernameKey);
+      $('#azRegEditDocId').value=id;
+    }catch(error){
+      toast(error?.message||'Username gagal ditukar.');
+      return;
+    }
+  }
+
   await updateDoc(doc(db,'users',id),{
+    username:id,
+    usernameKey:id,
+    name:id,
+    displayName:id,
     email:$('#azRegEditEmail')?.value.trim()||'',
     phoneNumber:$('#azRegEditPhone')?.value.trim()||'',
     phone:$('#azRegEditPhone')?.value.trim()||'',
-    role:$('#azRegEditRole')?.value||'member',
+    role:$('#azRegEditRole')?.value||'user',
 
     // Per-user price adjustment kept separately for every paid section.
     adminPriceAdjustmentOverride:true,
@@ -6275,8 +6324,6 @@ async function saveRegisteredEdit(){
     pa_bm_access:pa?'yes':'no',
     pa_bm_allowed:pa,
     allow_pa_bm:pa,
-
-    // v1128: invite/benefit codes are independent from PA/BM access.
 
     updatedAt:serverTimestamp(),updatedAtMs:Date.now(),updatedByAdmin:'admin-dashboard'
   });
@@ -6972,8 +7019,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1131"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1131"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1132"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1132"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
@@ -7107,13 +7154,14 @@ onAuthStateChanged(auth, async user => {
     <h2>Edit Registered User</h2>
     <input type="hidden" id="azRegEditDocId">
     <label>Username</label>
-    <input id="azRegEditUsername" readonly>
+    <input id="azRegEditUsername" autocomplete="off" spellcheck="false">
+    <div class="az-reg-help">Username boleh ditukar oleh admin. Jika ditukar, data akaun berkaitan akan dipindah/merge ke username baharu tanpa menukar Firebase UID.</div>
     <div class="row">
       <div><label>Email</label><input id="azRegEditEmail"></div>
       <div><label>Phone</label><input id="azRegEditPhone"></div>
     </div>
     <div class="row">
-      <div><label>Role</label><select id="azRegEditRole"><option value="member">member</option><option value="staff">staff</option><option value="semiAdmin">semiAdmin</option><option value="admin">admin</option></select></div>
+      <div><label>Account Role</label><select id="azRegEditRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Semi Admin</option><option value="admin">Administrator</option></select><div class="az-reg-help">Membership berbayar adalah status/langganan berasingan dan bukan Account Role.</div></div>
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
     </div>
     <div class="az-reg-price-section">

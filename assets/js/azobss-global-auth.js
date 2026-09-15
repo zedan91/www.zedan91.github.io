@@ -537,10 +537,12 @@ function injectAdminUserEditModal() {
       <label for="adminUserEditEmail">Contact Email
         <input id="adminUserEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email">
       </label>
-      <label for="adminUserEditRole">Role
+      <label for="adminUserEditRole">Account Role
         <select id="adminUserEditRole">
-          <option value="member">Member</option>
-          <option value="admin">Admin</option>
+          <option value="user">User</option>
+          <option value="staff">Staff</option>
+          <option value="semiAdmin">Semi Admin</option>
+          <option value="admin">Administrator</option>
         </select>
       </label>
       <label for="adminUserEditPaAccess">Allow PA/BM Access
@@ -1965,10 +1967,17 @@ async function ensureUserProfile(firebaseUser, fallback={}){
 
   const ref = doc(db, 'users', usernameKey);
   const snap = await getDoc(ref);
-  if(snap.exists()) return { uid: firebaseUser.uid, id: usernameKey, ...snap.data(), usernameKey: normalizeUsername(snap.data().usernameKey || snap.data().username || usernameKey) };
+  if(snap.exists()){
+    const existingData=snap.data()||{};
+    const legacyRole=String(existingData.role||'user').trim().toLowerCase();
+    if(legacyRole==='member'){
+      try{await setDoc(ref,{role:'user',roleMigratedFrom:'member',roleMigratedAt:serverTimestamp()},{merge:true});existingData.role='user';}catch(_e){}
+    }
+    return { uid: firebaseUser.uid, id: usernameKey, ...existingData, usernameKey: normalizeUsername(existingData.usernameKey || existingData.username || usernameKey) };
+  }
   const fallbackMemberCode = normalizePaMemberCode(fallback.inviteCode || fallback.inviteCodeUsed || fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
   const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
-  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',...getPaBmPayloadFromCode(fallbackMemberCode),role:'member',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',...getPaBmPayloadFromCode(fallbackMemberCode),role:'user',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
   // v1083: never overwrite an existing profile phone with an empty value.
   if(signupPhone){profile.phone=signupPhone;profile.phoneNumber=signupPhone;}
   try{
@@ -2109,7 +2118,7 @@ function azobssIsTemporaryGoogleProfile(profile={}){
     if(completed&&bound)return false;
     return true;
   }
-  return profile.googleSignIn===true&&String(profile.authProvider||'')==='google.com'&&profile.googleProfileConfirmed!==true&&profile.googleProfileCompleted!==true&&String(profile.role||'member').toLowerCase()==='member';
+  return profile.googleSignIn===true&&String(profile.authProvider||'')==='google.com'&&profile.googleProfileConfirmed!==true&&profile.googleProfileCompleted!==true&&['user','member'].includes(String(profile.role||'user').toLowerCase());
 }
 async function azobssFindGoogleEmailProfileMatches(emailRaw){
   const email=String(emailRaw||'').trim().toLowerCase();
@@ -2172,7 +2181,7 @@ async function azobssFindGoogleEmailProfileMatches(emailRaw){
   const candidates=[...byKey.values()].filter(r=>r.data?.googleProfileLinkedAway!==true&&r.data?.hiddenFromRegisteredUsers!==true);
   for(const row of candidates){
     if(!azobssIsTemporaryGoogleProfile(row.data))row.score+=18;
-    if(String(row.data.role||'member').toLowerCase()!=='member')row.score+=4;
+    if(!['user','member'].includes(String(row.data.role||'user').toLowerCase()))row.score+=4;
     if(normalizeAzobssPhone(row.data.phone||row.data.phoneNumber||''))row.score+=2;
     row.kinds=[...row.kinds];
   }
@@ -2518,7 +2527,7 @@ async function azobssCreateGoogleProfile(firebaseUser,options={}){
     googleProfileAutoCreated:true,
     googleProfileConfirmed:false,
     ...getPaBmPayloadFromCode(inviteCode),
-    role:'member',verified:true,emailVerified:true,
+    role:'user',verified:true,emailVerified:true,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp()
   };
   await setDoc(doc(db,'users',usernameKey),profilePayload,{merge:true});
@@ -2593,7 +2602,7 @@ async function azobssCleanupTemporaryGoogleProfile(tempUsername,tempUid,targetUs
     const sameUid=!String(data.uid||'')||String(data.uid||'')===String(tempUid||'');
     let createdMs=0;try{createdMs=typeof data.createdAt?.toMillis==='function'?data.createdAt.toMillis():Date.parse(String(data.createdAt||''))||0}catch(_){createdMs=0}
     const recentLegacy=createdMs>0&&(Date.now()-createdMs)<(7*24*60*60*1000);
-    const safeGoogle=(data.googleProfileAutoCreated===true)||(recentLegacy&&data.googleSignIn===true&&String(data.authProvider||'')==='google.com'&&String(data.role||'member').toLowerCase()==='member');
+    const safeGoogle=(data.googleProfileAutoCreated===true)||(recentLegacy&&data.googleSignIn===true&&String(data.authProvider||'')==='google.com'&&['user','member'].includes(String(data.role||'user').toLowerCase()));
     const privileged=data.adminPaBmOverride===true||data.role==='admin'||data.role==='staff'||data.role==='semiadmin'||data.allowPABM===true||data.allowPaBm===true||data.canAccessPaBm===true;
     if(sameUid&&safeGoogle&&!privileged){
       try{await deleteDoc(ref)}catch(deleteError){
@@ -3056,7 +3065,7 @@ function mergeDuplicateUserRecords(existing, incoming){
   return base;
 }
 function userProfileHtml(user){
-  const role = String(user.role || 'member').toLowerCase();
+  const role = String(user.role || 'user').toLowerCase();
   const hasAccess = registeredUserHasPaAccess(user);
   const id = escHtml(userDocId(user));
   const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
@@ -3085,7 +3094,7 @@ function openAdminUserEdit(userId){
   setPhoneDial('adminUserEdit', adminPhoneParts.dial);
   $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
   $('adminUserEditEmail').value = user.email || '';
-  $('adminUserEditRole').value = String(user.role || 'member').toLowerCase() === 'admin' ? 'admin' : 'member';
+  { const rr=String(user.role||'user').trim().toLowerCase().replace(/[\s_-]+/g,''); $('adminUserEditRole').value=rr==='admin'?'admin':rr==='semiadmin'?'semiAdmin':rr==='staff'?'staff':'user'; }
   $('adminUserEditPaAccess').value = registeredUserHasPaAccess(user) ? 'yes' : 'no';
   const err = $('adminUserEditError');
   if(err){ err.textContent=''; err.style.color=''; }
@@ -3114,7 +3123,7 @@ async function saveAdminUserEdit(){
     phone: adminFinalPhone,
     phoneNumber: adminFinalPhone,
     email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
-    role: String($('adminUserEditRole')?.value || 'member').trim().toLowerCase(),
+    role: String($('adminUserEditRole')?.value || 'user').trim(),
     adminPaBmOverride: true,
     adminPaBmAllowed: allowPaAccess,
     paBmManagedBy: 'admin',
@@ -3304,7 +3313,7 @@ async function upsertOnlineUser(user){
   try{
     await setDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase()), {
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
-      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'member',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'user',
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
       status: 'online',
       lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString(), lastSeenMs: Date.now()
@@ -3335,7 +3344,7 @@ async function recordLoginHistory(user, action='login'){
   try{
     await addDoc(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION), {
       uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
-      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'member', action,
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'user', action,
       invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
       createdAt: serverTimestamp(), createdAtClient: new Date().toISOString(), createdAtMs: Date.now()
     });
@@ -3385,7 +3394,7 @@ function registeredUserSearchText(user){
 }
 function registeredUserHasPaAccess(user){
   if(!user) return false;
-  const role = String(user.role || 'member').toLowerCase();
+  const role = String(user.role || 'user').toLowerCase();
   if(role === 'admin') return true;
   const adminAllowed = getAdminPaBmAllowed(user);
   return adminAllowed === true;
@@ -6473,7 +6482,7 @@ function bindAuth() {
         profile = await ensureUserProfile(authUser,{usernameKey, email: lookupEmail || authUser.email || ''});
       }catch(profileError){
         console.warn('AZOBSS login profile recovery skipped:', profileError?.code || profileError?.message || profileError);
-        profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'member'};
+        profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'user'};
       }
       const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
       const resolvedLoginUsername = azobssResolveUsername({uid:authUser.uid, email:realEmail, authEmail:realEmail, ...profile, usernameKey: profile.usernameKey || profile.username || profile.id || usernameKey});
@@ -6676,7 +6685,7 @@ function bindAuth() {
         phone: finalSignupPhone,
         phoneNumber: finalSignupPhone,
         ...paBmSignupPayload,
-        role:'member',
+        role:'user',
         verified:false,
         emailVerified:false,
         createdAt:serverTimestamp(),

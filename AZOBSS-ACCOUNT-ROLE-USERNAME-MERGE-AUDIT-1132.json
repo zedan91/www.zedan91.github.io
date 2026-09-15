@@ -1,0 +1,25 @@
+{
+  "patch": 1132,
+  "version": "1.0.1132",
+  "date": "2026-09-16",
+  "title": "Account Role User/Membership Separation + Safe Username Rename Merge",
+  "changes": [
+    "Normal registered account role renamed from legacy member to User",
+    "Paid Membership remains a separate subscription/status and is not an Account Role",
+    "New signups store role=user",
+    "Legacy role=member is treated as User and gradually migrated",
+    "Admin Registered User Records shows Membership separately from Account Role",
+    "Admin username field can be edited",
+    "Authenticated backend /api/admin/user/rename safely moves or merges same-UID profile data",
+    "usernameAuthEmails, purchaseSummaries, onlineUsers, likes, soundFavorites and referral mapping are migrated",
+    "Membership, referral credit and embedded purchase history are preserved",
+    "Different-UID username collision is blocked",
+    "PA/BM manual admin access remains unchanged"
+  ],
+  "deploy": {
+    "frontend": true,
+    "mainRenderBackend": true,
+    "luckyDrawBackend": false,
+    "firebaseRules": false
+  }
+}

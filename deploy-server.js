@@ -15878,6 +15878,188 @@ async function azReferralEnsureMe(identity = {}){
 }
 
 
+// AZOBSS v1132: Admin-safe username rename/merge.
+// Account Role and paid Membership are deliberately separate concepts.
+function azAdminUserKey(value){
+  return cleanPremiumText(value || "", 120).trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 80);
+}
+function azAdminUserRole(value){
+  const role=String(value || "user").trim().toLowerCase().replace(/[\s_-]+/g, "");
+  if(role === "admin") return "admin";
+  if(role === "semiadmin") return "semiAdmin";
+  if(role === "staff") return "staff";
+  // Legacy role=member means a normal registered user; Membership is stored separately.
+  return "user";
+}
+function azAdminUserValueBlank(value){
+  return value === undefined || value === null || value === "";
+}
+function azAdminUserUpdatedMs(row = {}){
+  return Number(row.updatedAtMs || row.lastUpdatedAtMs || row.modifiedAtMs || 0) || azFirestoreTimeMs(row.updatedAt) || 0;
+}
+function azAdminMergeSameUidProfiles(source = {}, target = {}, newKey = ""){
+  const sourceMs=azAdminUserUpdatedMs(source), targetMs=azAdminUserUpdatedMs(target);
+  const older=sourceMs <= targetMs ? source : target;
+  const newer=sourceMs <= targetMs ? target : source;
+  const merged={...older,...newer};
+  const keys=new Set([...Object.keys(source||{}),...Object.keys(target||{})]);
+  for(const key of keys){
+    if(azAdminUserValueBlank(merged[key])){
+      const fallback=!azAdminUserValueBlank(source[key])?source[key]:target[key];
+      if(!azAdminUserValueBlank(fallback)) merged[key]=fallback;
+    }
+  }
+
+  // Preserve truthy identity/account state from either duplicate.
+  for(const key of ['verified','emailVerified','phoneConfirmed','passwordLoginEnabled','googleAuthLinked','googleProfileCompleted','googleProfileConfirmed']){
+    if(source[key] === true || target[key] === true) merged[key]=true;
+  }
+
+  // Keep the Membership instance with the furthest expiry and preserve applied order history.
+  const sourceExp=Number(source.membershipBenefitExpiresAtMs||0)||azFirestoreTimeMs(source.membershipBenefitExpiresAt);
+  const targetExp=Number(target.membershipBenefitExpiresAtMs||0)||azFirestoreTimeMs(target.membershipBenefitExpiresAt);
+  const membershipWinner=sourceExp >= targetExp ? source : target;
+  const membershipKeys=new Set([...Object.keys(source),...Object.keys(target)].filter(k=>k.startsWith('membership')));
+  for(const key of membershipKeys){
+    if(membershipWinner[key] !== undefined) merged[key]=membershipWinner[key];
+  }
+  const applied=[...(Array.isArray(source.membershipAppliedOrderIds)?source.membershipAppliedOrderIds:[]),...(Array.isArray(target.membershipAppliedOrderIds)?target.membershipAppliedOrderIds:[])].map(String).filter(Boolean);
+  if(applied.length) merged.membershipAppliedOrderIds=[...new Set(applied)].slice(-100);
+
+  // Referral is one account: never double-credit duplicate profile balances.
+  merged.referralCreditBalanceRM=Math.max(Number(source.referralCreditBalanceRM||0)||0,Number(target.referralCreditBalanceRM||0)||0);
+  merged.referralSuccessfulCount=Math.max(Number(source.referralSuccessfulCount||0)||0,Number(target.referralSuccessfulCount||0)||0);
+  const srcRefMs=Number(source.referralUpdatedAtMs||0)||0, tgtRefMs=Number(target.referralUpdatedAtMs||0)||0;
+  const refWinner=srcRefMs >= tgtRefMs ? source : target;
+  merged.referralInviteCode=String(refWinner.referralInviteCode || source.referralInviteCode || target.referralInviteCode || '').trim();
+
+  // Merge embedded PA/BM purchase backup without duplicating the same firestore/item id.
+  const purchaseRows=[...(Array.isArray(source.purchaseRecords)?source.purchaseRecords:[]),...(Array.isArray(target.purchaseRecords)?target.purchaseRecords:[])];
+  if(purchaseRows.length){
+    const seen=new Set(), out=[];
+    for(const row of purchaseRows){
+      const k=String(row?.firestoreId||row?.purchaseLogId||row?.id||`${row?.productType||''}|${row?.itemCode||''}|${row?.createdAtMs||''}`);
+      if(seen.has(k)) continue; seen.add(k); out.push(row);
+    }
+    merged.purchaseRecords=out.slice(-1000);
+  }
+
+  // Preserve earliest creation marker where numeric values are available.
+  const createdCandidates=[Number(source.createdAtMs||0)||azFirestoreTimeMs(source.createdAt),Number(target.createdAtMs||0)||azFirestoreTimeMs(target.createdAt)].filter(Boolean);
+  if(createdCandidates.length) merged.createdAtMs=Math.min(...createdCandidates);
+
+  merged.usernameKey=newKey;
+  merged.username=newKey;
+  merged.name=newKey;
+  merged.displayName=newKey;
+  merged.role=azAdminUserRole(merged.role);
+  merged.updatedAtMs=Date.now();
+  merged.usernameRenamedAtMs=Date.now();
+  return merged;
+}
+async function azAdminMigrateUserSubcollection(db, oldKey, newKey, subcollection){
+  if(!oldKey || !newKey || oldKey===newKey) return 0;
+  const oldCol=db.collection('users').doc(oldKey).collection(subcollection);
+  const snap=await oldCol.get();
+  if(snap.empty) return 0;
+  let batch=db.batch(), ops=0, moved=0;
+  for(const d of snap.docs){
+    batch.set(db.collection('users').doc(newKey).collection(subcollection).doc(d.id),d.data(),{merge:true});ops++;
+    batch.delete(d.ref);ops++;moved++;
+    if(ops>=400){await batch.commit();batch=db.batch();ops=0;}
+  }
+  if(ops) await batch.commit();
+  return moved;
+}
+async function azAdminRewriteUsernameRefs(db, collectionName, fieldName, oldKey, newKey){
+  let snap;
+  try{snap=await db.collection(collectionName).where(fieldName,'==',oldKey).limit(500).get();}
+  catch(_){return 0;}
+  if(snap.empty)return 0;
+  let batch=db.batch(),ops=0,count=0;
+  for(const d of snap.docs){batch.set(d.ref,{[fieldName]:newKey,usernameRenamedAtMs:Date.now()},{merge:true});ops++;count++;if(ops>=400){await batch.commit();batch=db.batch();ops=0;}}
+  if(ops)await batch.commit();
+  return count;
+}
+async function azAdminRenameUser(db,{oldUsername,newUsername,expectedUid,adminIdentity}){
+  const oldKey=azAdminUserKey(oldUsername),newKey=azAdminUserKey(newUsername);
+  if(!oldKey||!newKey)throw Object.assign(new Error('Old and new username are required.'),{status:400});
+  if(oldKey===newKey)return {userDocId:newKey,renamed:false,merged:false,warnings:[]};
+  const oldRef=db.collection('users').doc(oldKey),newRef=db.collection('users').doc(newKey);
+  const oldMapRef=db.collection('usernameAuthEmails').doc(oldKey),newMapRef=db.collection('usernameAuthEmails').doc(newKey);
+  const oldSummaryRef=db.collection('purchaseSummaries').doc(oldKey),newSummaryRef=db.collection('purchaseSummaries').doc(newKey);
+  const oldOnlineRef=db.collection('onlineUsers').doc(oldKey),newOnlineRef=db.collection('onlineUsers').doc(newKey);
+  let mergedProfile=null, targetExisted=false;
+  await db.runTransaction(async tx=>{
+    const [oldSnap,newSnap,oldMapSnap,newMapSnap,oldSummarySnap,newSummarySnap,oldOnlineSnap,newOnlineSnap]=await Promise.all([
+      tx.get(oldRef),tx.get(newRef),tx.get(oldMapRef),tx.get(newMapRef),tx.get(oldSummaryRef),tx.get(newSummaryRef),tx.get(oldOnlineRef),tx.get(newOnlineRef)
+    ]);
+    if(!oldSnap.exists){
+      if(newSnap.exists){
+        const newUid=String(newSnap.data()?.uid||'');
+        if(expectedUid && newUid && newUid!==String(expectedUid))throw Object.assign(new Error('Username target belongs to a different Firebase UID.'),{status:409});
+        mergedProfile={...newSnap.data(),usernameKey:newKey,username:newKey,name:newKey,displayName:newKey};
+        return;
+      }
+      throw Object.assign(new Error('Source user profile was not found.'),{status:404});
+    }
+    const source=oldSnap.data()||{},target=newSnap.exists?(newSnap.data()||{}):{};
+    targetExisted=newSnap.exists;
+    const sourceUid=String(source.uid||''),targetUid=String(target.uid||'');
+    if(expectedUid && sourceUid && sourceUid!==String(expectedUid))throw Object.assign(new Error('Source profile UID changed. Refresh and try again.'),{status:409});
+    if(sourceUid&&targetUid&&sourceUid!==targetUid)throw Object.assign(new Error('New username is already used by a different account.'),{status:409});
+    const uid=sourceUid||targetUid||String(expectedUid||'');
+    const newMapUid=String(newMapSnap.exists?(newMapSnap.data()?.uid||''):'');
+    if(newMapUid&&uid&&newMapUid!==uid)throw Object.assign(new Error('New username login mapping belongs to another account.'),{status:409});
+
+    mergedProfile=azAdminMergeSameUidProfiles(source,target,newKey);
+    if(uid)mergedProfile.uid=uid;
+    mergedProfile.usernamePreviousKeys=[...new Set([...(Array.isArray(source.usernamePreviousKeys)?source.usernamePreviousKeys:[]),...(Array.isArray(target.usernamePreviousKeys)?target.usernamePreviousKeys:[]),oldKey].filter(x=>x&&x!==newKey))].slice(-30);
+    mergedProfile.usernameRenamedBy=String(adminIdentity?.username||adminIdentity?.email||'admin');
+    mergedProfile.updatedAt=firebaseAdmin.firestore.FieldValue.serverTimestamp();
+    tx.set(newRef,mergedProfile,{merge:true});
+    tx.delete(oldRef);
+
+    const oldMap=oldMapSnap.exists?(oldMapSnap.data()||{}):{};
+    const targetMap=newMapSnap.exists?(newMapSnap.data()||{}):{};
+    const authEmail=String(mergedProfile.authEmail||mergedProfile.email||targetMap.email||oldMap.email||'').trim().toLowerCase();
+    tx.set(newMapRef,{...oldMap,...targetMap,uid:uid||targetMap.uid||oldMap.uid||'',email:authEmail,authEmail:authEmail,username:newKey,usernameKey:newKey,updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),updatedAtMs:Date.now()},{merge:true});
+    if(oldKey!==newKey)tx.delete(oldMapRef);
+
+    if(oldSummarySnap.exists||newSummarySnap.exists){
+      const oldSummary=oldSummarySnap.exists?(oldSummarySnap.data()||{}):{};
+      const newSummary=newSummarySnap.exists?(newSummarySnap.data()||{}):{};
+      const records=[...(Array.isArray(oldSummary.records)?oldSummary.records:[]),...(Array.isArray(newSummary.records)?newSummary.records:[])];
+      const seen=new Set(),dedup=[];
+      for(const row of records){const k=String(row?.firestoreId||row?.purchaseLogId||row?.id||`${row?.productType||''}|${row?.itemCode||''}|${row?.createdAtMs||''}`);if(seen.has(k))continue;seen.add(k);dedup.push(row);}
+      tx.set(newSummaryRef,{...oldSummary,...newSummary,uid:uid||newSummary.uid||oldSummary.uid||'',usernameKey:newKey,username:newKey,records:dedup,updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(),updatedAtMs:Date.now()},{merge:true});
+      if(oldKey!==newKey)tx.delete(oldSummaryRef);
+    }
+
+    if(oldOnlineSnap.exists||newOnlineSnap.exists){
+      const oldOnline=oldOnlineSnap.exists?(oldOnlineSnap.data()||{}):{};
+      const newOnline=newOnlineSnap.exists?(newOnlineSnap.data()||{}):{};
+      tx.set(newOnlineRef,{...oldOnline,...newOnline,uid:uid||newOnline.uid||oldOnline.uid||'',usernameKey:newKey,username:newKey,updatedAtMs:Date.now()},{merge:true});
+      if(oldKey!==newKey)tx.delete(oldOnlineRef);
+    }
+
+    const referralCode=azReferralCode(mergedProfile.referralInviteCode||'');
+    if(referralCode){
+      const referralRef=db.collection(AZ_REFERRAL_CODE_COLLECTION).doc(referralCode);
+      tx.set(referralRef,{code:referralCode,userDocId:newKey,uid:uid||'',username:newKey,active:true,updatedAtMs:Date.now()},{merge:true});
+    }
+  });
+
+  const warnings=[];let likesMoved=0,favoritesMoved=0,refsUpdated=0;
+  try{likesMoved=await azAdminMigrateUserSubcollection(db,oldKey,newKey,'likes');}catch(e){warnings.push('likes: '+(e?.message||e));}
+  try{favoritesMoved=await azAdminMigrateUserSubcollection(db,oldKey,newKey,'soundFavorites');}catch(e){warnings.push('soundFavorites: '+(e?.message||e));}
+  for(const [col,field] of [['users','referredByUserDocId'],['referralRewards','inviterUserDocId'],['referralRewards','referredUserDocId']]){
+    try{refsUpdated+=await azAdminRewriteUsernameRefs(db,col,field,oldKey,newKey);}catch(e){warnings.push(`${col}.${field}: `+(e?.message||e));}
+  }
+  return {userDocId:newKey,oldUsername:oldKey,newUsername:newKey,renamed:true,merged:targetExisted,uid:String(mergedProfile?.uid||''),likesMoved,favoritesMoved,refsUpdated,warnings};
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -15964,6 +16146,7 @@ async function handler(req, res) {
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-admin-set", 10, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/user/rename" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-user-rename", 20, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/pa-bm-purchase-records" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-pabm-records-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/sales-document/share-link" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-sales-document-share-link", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/sales-document/temp" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-sales-document-temp-upload", 100, 10 * 60 * 1000)) return;
@@ -15986,6 +16169,22 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/payout/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "payout-receipt", 50, 10 * 60 * 1000)) return;
 
 
+
+    // AZOBSS v1132: rename/merge a website username while keeping the same Firebase UID and account history.
+    if (pathname === "/api/admin/user/rename" && req.method === "POST") {
+      try {
+        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
+        if(!adminIdentity||!adminIdentity.isAdmin)return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json");
+        const body=parseRequestBody(await readBody(req));
+        const db=getAzobssBackendDb();if(!db)throw new Error("User database is unavailable.");
+        const result=await azAdminRenameUser(db,{oldUsername:body.oldUsername,newUsername:body.newUsername,expectedUid:body.expectedUid,adminIdentity});
+        azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,"admin_user_rename","users",result.userDocId,{oldUsername:result.oldUsername,newUsername:result.newUsername,uid:result.uid,merged:result.merged,likesMoved:result.likesMoved,favoritesMoved:result.favoritesMoved,refsUpdated:result.refsUpdated,warnings:result.warnings},"success"),"Admin username rename audit log failed");
+        return send(res,200,JSON.stringify({ok:true,...result},null,2),"application/json",{"Cache-Control":"no-store"});
+      } catch(err) {
+        const status=Number(err?.status||0)||500;
+        return send(res,status,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");
+      }
+    }
 
     // AZOBSS v1129 Membership package APIs. Paid packages only discount Software/CAD and never grant PA/BM.
     if (pathname === "/api/membership/packages" && req.method === "GET") {

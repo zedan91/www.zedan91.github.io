@@ -132,3 +132,12 @@ Pending manual invoices using ToyyibPay now include a payment QR. Verified payme
 
 ## Patch 771
 Tempah Servis IT: kawasan servis terhad, autocomplete jenama/model, dan harga LCD 14/15 tanpa + serta LCD 16 RM350++.
+
+## Patch 1132 — Account Role + Username Merge
+- Replaces the confusing normal `member` Account Role label with `User`; paid Membership is a separate subscription/status.
+- New registrations use `role: user`; legacy `role: member` remains compatible and is gradually normalized.
+- Admin Registered User Records shows Membership status separately from Account Role.
+- Admin can rename a username. The backend safely moves/merges same-UID Firestore profile data and login mapping instead of leaving duplicate username documents.
+- Preserves Membership, referral mapping/credit, embedded purchase history, purchase summary, likes/favorites and online-user mapping.
+- Different Firebase UID collisions are rejected.
+- Requires frontend + main Render backend deploy. PA/BM access rules are unchanged.
