@@ -2848,6 +2848,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
       const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
       if(isOwner){
         candidate.dataset.busy = '1';
+        candidate.classList.add('azobss-download-button-spinning');
         if(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.phase === 'preparing') candidate.dataset.preparing = '1';
         else delete candidate.dataset.preparing;
         delete candidate.dataset.downloadLocked;
@@ -2864,6 +2865,7 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
         if(candidate.dataset.busy === '1'){
           delete candidate.dataset.busy;
           delete candidate.dataset.preparing;
+          candidate.classList.remove('azobss-download-button-spinning');
           candidate.removeAttribute('aria-busy');
           candidate.textContent = defaultLabel;
           candidate.setAttribute('aria-label', defaultLabel);
@@ -2880,18 +2882,24 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
 // The wake check is quota-free; the paid-download endpoint is only called after health is ready.
 function azobssEnsureDownloadButtonSpinnerStyle(){
   try{
-    if(document.getElementById('azobssDownloadButtonSpinnerStyleV1142')) return;
+    if(document.getElementById('azobssDownloadButtonSpinnerStyleV1143')) return;
     const style = document.createElement('style');
-    style.id = 'azobssDownloadButtonSpinnerStyleV1142';
+    style.id = 'azobssDownloadButtonSpinnerStyleV1143';
     style.textContent = `
-      .azobss-download-button-spinning .az-lot-busy-spinner-v949{
+      .azobss-download-button-spinning .az-lot-busy-spinner-v949,
+      .user-pa-download[data-busy="1"] .az-lot-busy-spinner-v949,
+      .az-purchase-detail-test-download-btn[data-busy="1"] .az-lot-busy-spinner-v949{
         display:inline-block!important;width:12px!important;height:12px!important;min-width:12px!important;
         box-sizing:border-box!important;border:2px solid rgba(255,255,255,.34)!important;
         border-top-color:currentColor!important;border-radius:50%!important;
-        animation:azobssDownloadButtonSpin1142 .62s linear infinite!important;pointer-events:none!important;
+        animation:azobssDownloadButtonSpin1143 .62s linear infinite!important;pointer-events:none!important;
       }
-      @keyframes azobssDownloadButtonSpin1142{to{transform:rotate(360deg)}}
-      @media(prefers-reduced-motion:reduce){.azobss-download-button-spinning .az-lot-busy-spinner-v949{animation-duration:1.2s!important}}
+      @keyframes azobssDownloadButtonSpin1143{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){
+        .azobss-download-button-spinning .az-lot-busy-spinner-v949,
+        .user-pa-download[data-busy="1"] .az-lot-busy-spinner-v949,
+        .az-purchase-detail-test-download-btn[data-busy="1"] .az-lot-busy-spinner-v949{animation-duration:1.2s!important}
+      }
     `;
     document.head.appendChild(style);
   }catch(_e){}
@@ -2909,6 +2917,7 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   const healthUrl = 'https://azobss-backend.onrender.com/api/health';
   const startedAt = Date.now();
   const timeoutMs = 70000;
+  const minimumSpinnerMs = 650;
 
   while((Date.now() - startedAt) < timeoutMs){
     const remaining = timeoutMs - (Date.now() - startedAt);
@@ -2926,7 +2935,13 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
       if(response && response.ok && type.includes('application/json')){
         try{ data = await response.json(); }catch(_e){ data = null; }
       }
-      if(response && response.ok && data && data.ok === true) return true;
+      if(response && response.ok && data && data.ok === true){
+        const elapsed = Date.now() - startedAt;
+        if(elapsed < minimumSpinnerMs){
+          await new Promise(function(resolve){ window.setTimeout(resolve, minimumSpinnerMs - elapsed); });
+        }
+        return true;
+      }
     }catch(_e){
       if(abortTimer) window.clearTimeout(abortTimer);
     }
@@ -3535,13 +3550,13 @@ function purchaseDetailRowHtml(r){
         const active = !!(activeDownload && activeDownload.key === payload);
         const lockedByOther = !!(activeDownload && !active);
         const shownLabel = active ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : escHtml(def.label);
-        return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a>`;
+        return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}${active ? ' azobss-download-button-spinning' : ''}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a>`;
       }).join('');
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }else{
       const readyLabel = '↓';
       const shownLabel = isActiveDownload ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : readyLabel;
-      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-generic-download-action-v955"><span class="az-lot-download-format-group"><a class="user-pa-download az-lot-format-download az-lot-format-original az-generic-download-button-v955" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a></span>${dlMetaHtml}${adminResetHtml}</div>`;
+      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-generic-download-action-v955"><span class="az-lot-download-format-group"><a class="user-pa-download az-lot-format-download az-lot-format-original az-generic-download-button-v955${isActiveDownload ? ' azobss-download-button-spinning' : ''}" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a></span>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else if(paid){
     if(limitReached){
@@ -4530,6 +4545,9 @@ function azobssAdminPurchaseDownloadResetHtml(r){
     const testUrl = azobssBuildControlledPurchaseDownloadUrl(r);
     const testName = azobssPaidPurchaseDownloadFilename(r);
     const testAllowed = azobssPurchaseDownloadAllowed(r) && !!testPayload && !!testUrl;
+    const activeDownload = window.__azobssPaBmActiveDownload;
+    const testActive = !!(activeDownload && activeDownload.key === testPayload);
+    const testLockedByOther = !!(activeDownload && !testActive);
     let testTitle = 'Uji muat turun sama seperti POV customer. Ujian berjaya menggunakan 1 kuota download sebenar.';
     if(!testAllowed){
       if(azobssPurchaseDownloadExpired(r)) testTitle = 'POV customer: tempoh download telah tamat. Reset 0/' + max + ' dahulu untuk ujian baharu.';
@@ -4537,7 +4555,7 @@ function azobssAdminPurchaseDownloadResetHtml(r){
       else testTitle = 'POV customer: link download belum tersedia untuk rekod ini.';
     }
     const testHtml = testAllowed
-      ? `<button type="button" class="az-purchase-detail-test-download-btn user-pa-download" title="${escHtml(testTitle)}" aria-label="Test download seperti customer" data-default-label="Test ↓" data-download-url="${escHtml(testUrl)}" data-download-name="${escHtml(testName)}" data-download-payload="${testPayload}">Test ↓</button>`
+      ? `<button type="button" class="az-purchase-detail-test-download-btn user-pa-download${testActive ? ' azobss-download-button-spinning' : ''}" title="${escHtml(testTitle)}" aria-label="${testActive ? 'Sedang menyediakan fail' : 'Test download seperti customer'}" data-default-label="Test ↓" data-download-url="${escHtml(testUrl)}" data-download-name="${escHtml(testName)}" data-download-payload="${testPayload}"${testActive ? ' data-busy="1" aria-busy="true"' : ''}${testLockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''}>${testActive ? '<span class="az-lot-busy-spinner-v949" aria-hidden="true"></span>' : 'Test ↓'}</button>`
       : `<button type="button" class="az-purchase-detail-test-download-btn is-disabled" title="${escHtml(testTitle)}" aria-label="Test download tidak tersedia" disabled>Test 🔒</button>`;
 
     const usageHtml = `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
