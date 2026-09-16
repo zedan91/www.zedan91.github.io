@@ -4512,56 +4512,25 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
 }
 
 
-// AZOBSS v1140: keep customers on azobss.com while a sleeping Render backend wakes.
-// The /health request is quota-free. Only after a valid AZOBSS JSON health response
-// is received do we continue to the real paid-download endpoint.
-function azobssEnsureDownloadWakeOverlay(){
-  let overlay = document.getElementById('azobssDownloadWakeOverlayV1141');
-  if(overlay) return overlay;
-  const style = document.createElement('style');
-  style.id = 'azobssDownloadWakeStyleV1141';
-  style.textContent = `
-    #azobssDownloadWakeOverlayV1141{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(2,8,23,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
-    #azobssDownloadWakeOverlayV1141.is-visible{display:flex}
-    #azobssDownloadWakeOverlayV1141 .az-dl-wake-card{width:min(420px,calc(100vw - 34px));box-sizing:border-box;border:1px solid rgba(34,211,238,.36);border-radius:18px;background:#0d1728;box-shadow:0 24px 80px rgba(0,0,0,.5);padding:25px 24px 22px;text-align:center;color:#f8fafc;font-family:inherit}
-    #azobssDownloadWakeOverlayV1141 .az-dl-wake-spinner{width:42px;height:42px;margin:0 auto 16px;border:4px solid rgba(148,163,184,.28);border-top-color:#22d3ee;border-right-color:#22c55e;border-radius:50%;animation:azobssDownloadWakeSpin1141 .72s linear infinite}
-    #azobssDownloadWakeOverlayV1141 .az-dl-wake-title{font-size:17px;font-weight:800;line-height:1.3;margin-bottom:7px}
-    #azobssDownloadWakeOverlayV1141 .az-dl-wake-message{font-size:13px;line-height:1.55;color:#cbd5e1}
-    #azobssDownloadWakeOverlayV1141 .az-dl-wake-time{margin-top:10px;font-size:12px;font-weight:700;color:#67e8f9;min-height:18px}
-    .azobss-download-button-spinning::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:azobssDownloadWakeSpin1141 .65s linear infinite}
-    @keyframes azobssDownloadWakeSpin1141{to{transform:rotate(360deg)}}
-    @media(prefers-reduced-motion:reduce){#azobssDownloadWakeOverlayV1141 .az-dl-wake-spinner{animation-duration:1.5s}}
-  `;
-  if(!document.getElementById(style.id)) document.head.appendChild(style);
-  overlay = document.createElement('div');
-  overlay.id = 'azobssDownloadWakeOverlayV1141';
-  overlay.setAttribute('role','status');
-  overlay.setAttribute('aria-live','polite');
-  overlay.setAttribute('aria-busy','true');
-  overlay.innerHTML = '<div class="az-dl-wake-card"><div class="az-dl-wake-spinner" aria-hidden="true"></div><div class="az-dl-wake-title">Menyediakan muat turun...</div><div class="az-dl-wake-message">Memeriksa server AZOBSS. Sila tunggu sebentar.</div><div class="az-dl-wake-time"></div></div>';
-  document.body.appendChild(overlay);
-  return overlay;
-}
-
-function azobssSetDownloadWakeOverlay(visible, elapsedSeconds, ready){
+// AZOBSS v1142: Render wake check stays fully inside the clicked Download/Test button.
+// IMPORTANT: the backend health endpoint is /api/health (not /health).
+// The wake check is quota-free; the paid-download endpoint is only called after health is ready.
+function azobssEnsureDownloadButtonSpinnerStyle(){
   try{
-    const overlay = azobssEnsureDownloadWakeOverlay();
-    const title = overlay.querySelector('.az-dl-wake-title');
-    const message = overlay.querySelector('.az-dl-wake-message');
-    const time = overlay.querySelector('.az-dl-wake-time');
-    if(ready){
-      if(title) title.textContent = 'Server sedia';
-      if(message) message.textContent = 'Memulakan muat turun...';
-      if(time) time.textContent = '';
-    }else{
-      const elapsed = Number.isFinite(Number(elapsedSeconds)) ? Math.max(0, Math.floor(Number(elapsedSeconds))) : 0;
-      if(title) title.textContent = elapsed >= 1 ? 'Server sedang dibangunkan...' : 'Menyediakan muat turun...';
-      if(message) message.textContent = elapsed >= 1
-        ? 'Server AZOBSS sedang bangun daripada mod rehat. Sila tunggu dan jangan tutup halaman ini.'
-        : 'Memeriksa server AZOBSS. Sila tunggu sebentar.';
-      if(time) time.textContent = elapsed > 0 ? ('Menunggu ' + elapsed + ' saat...') : '';
-    }
-    overlay.classList.toggle('is-visible', !!visible);
+    if(document.getElementById('azobssDownloadButtonSpinnerStyleV1142')) return;
+    const style = document.createElement('style');
+    style.id = 'azobssDownloadButtonSpinnerStyleV1142';
+    style.textContent = `
+      .azobss-download-button-spinning .az-lot-busy-spinner-v949{
+        display:inline-block!important;width:12px!important;height:12px!important;min-width:12px!important;
+        box-sizing:border-box!important;border:2px solid rgba(255,255,255,.34)!important;
+        border-top-color:currentColor!important;border-radius:50%!important;
+        animation:azobssDownloadButtonSpin1142 .62s linear infinite!important;pointer-events:none!important;
+      }
+      @keyframes azobssDownloadButtonSpin1142{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){.azobss-download-button-spinning .az-lot-busy-spinner-v949{animation-duration:1.2s!important}}
+    `;
+    document.head.appendChild(style);
   }catch(_e){}
 }
 
@@ -4569,50 +4538,38 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   let needsBackend = false;
   try{
     const parsed = new URL(String(downloadUrl || ''), window.location.href);
-    needsBackend = /(^|\.)azobss-backend\.onrender\.com$/i.test(parsed.hostname);
+    needsBackend = /(^|\\.)azobss-backend\\.onrender\\.com$/i.test(parsed.hostname);
   }catch(_e){}
   if(!needsBackend) return true;
 
-  const healthUrl = 'https://azobss-backend.onrender.com/health';
+  // v1142 root-cause fix: backend exposes /api/health.
+  const healthUrl = 'https://azobss-backend.onrender.com/api/health';
   const startedAt = Date.now();
-  const timeoutMs = 95000;
-  const minimumVisibleMs = 650;
+  const timeoutMs = 70000;
 
-  // v1141: immediate feedback on every controlled download, including Test ↓.
-  azobssSetDownloadWakeOverlay(true, 0, false);
-
-  try{
-    while((Date.now() - startedAt) < timeoutMs){
-      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const abortTimer = controller ? window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, 15000) : 0;
-      try{
-        const response = await fetch(healthUrl + '?downloadWake=1&_=' + Date.now(), {
-          method:'GET', cache:'no-store', credentials:'omit', headers:{ 'Accept':'application/json' },
-          signal: controller ? controller.signal : undefined
-        });
-        if(abortTimer) window.clearTimeout(abortTimer);
-        const type = String(response && response.headers && response.headers.get('content-type') || '').toLowerCase();
-        let data = null;
-        if(response && response.ok && type.includes('application/json')){
-          try{ data = await response.json(); }catch(_e){ data = null; }
-        }
-        if(response && response.ok && data && data.ok === true){
-          azobssSetDownloadWakeOverlay(true, 0, true);
-          const elapsed = Date.now() - startedAt;
-          const remain = Math.max(220, minimumVisibleMs - elapsed);
-          await new Promise(function(resolve){ window.setTimeout(resolve, remain); });
-          return true;
-        }
-      }catch(_e){
-        if(abortTimer) window.clearTimeout(abortTimer);
+  while((Date.now() - startedAt) < timeoutMs){
+    const remaining = timeoutMs - (Date.now() - startedAt);
+    const requestTimeout = Math.max(2500, Math.min(20000, remaining));
+    const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const abortTimer = controller ? window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, requestTimeout) : 0;
+    try{
+      const response = await fetch(healthUrl + '?downloadWake=1&_=' + Date.now(), {
+        method:'GET', cache:'no-store', credentials:'omit', headers:{'Accept':'application/json'},
+        signal: controller ? controller.signal : undefined
+      });
+      if(abortTimer) window.clearTimeout(abortTimer);
+      const type = String(response && response.headers && response.headers.get('content-type') || '').toLowerCase();
+      let data = null;
+      if(response && response.ok && type.includes('application/json')){
+        try{ data = await response.json(); }catch(_e){ data = null; }
       }
-      azobssSetDownloadWakeOverlay(true, Math.floor((Date.now()-startedAt)/1000), false);
-      await new Promise(function(resolve){ window.setTimeout(resolve, 1800); });
+      if(response && response.ok && data && data.ok === true) return true;
+    }catch(_e){
+      if(abortTimer) window.clearTimeout(abortTimer);
     }
-    return false;
-  }finally{
-    azobssSetDownloadWakeOverlay(false, 0, false);
+    await new Promise(function(resolve){ window.setTimeout(resolve, 900); });
   }
+  return false;
 }
 
 async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
@@ -4700,6 +4657,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
   try{
     if(link){
+      azobssEnsureDownloadButtonSpinnerStyle();
       link.dataset.busy = '1';
       link.classList.add('azobss-download-button-spinning');
       if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
@@ -4711,9 +4669,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     }
     azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
 
-    // v1140: pre-wake Render with a quota-free /health request while the customer
-    // stays on AZOBSS. This prevents Render's SERVICE WAKING UP page from replacing
-    // the website on the first download after the free backend has been idle.
+    // v1142: pre-wake Render with the quota-free /api/health endpoint.
+    // Only the clicked Download/Test button shows a spinner; there is no page overlay.
+    // This prevents Render's SERVICE WAKING UP page from replacing AZOBSS.
     downloadOwner.phase = 'waking';
     downloadOwner.label = 'Preparing...';
     if(link){
