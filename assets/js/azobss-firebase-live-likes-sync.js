@@ -4433,9 +4433,29 @@ function azobssAdminPurchaseDownloadResetHtml(r){
     if(!azobssCanShowPaBmAdminReset()) return '';
     const used = azobssPurchaseDownloadCount(r);
     const max = azobssPurchaseDownloadMax(r);
-    const payload = azobssPurchaseResetPayload(r);
-    if(!payload) return `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
-    return `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span><button type="button" class="az-purchase-detail-reset-btn" title="Reset kuota item ini kepada 0/${escHtml(String(max))} dan aktifkan semula tempoh 7 hari" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${payload}', this);">Reset 0/${escHtml(String(max))}</button>`;
+    const resetPayload = azobssPurchaseResetPayload(r);
+
+    // v1138: administrator Test Download in Purchase Records Users.
+    // Reuse the exact customer-controlled download payload, URL, quota and expiry.
+    const testPayload = azobssPurchaseDownloadPayload(r);
+    const testUrl = azobssBuildControlledPurchaseDownloadUrl(r);
+    const testName = azobssPaidPurchaseDownloadFilename(r);
+    const testAllowed = azobssPurchaseDownloadAllowed(r) && !!testPayload && !!testUrl;
+    let testTitle = 'Uji muat turun sama seperti POV customer. Ujian berjaya menggunakan 1 kuota download sebenar.';
+    if(!testAllowed){
+      if(azobssPurchaseDownloadExpired(r)) testTitle = 'POV customer: tempoh download telah tamat. Reset 0/' + max + ' dahulu untuk ujian baharu.';
+      else if(azobssPurchaseDownloadLimitReached(r)) testTitle = 'POV customer: had download telah digunakan. Reset 0/' + max + ' dahulu untuk ujian baharu.';
+      else testTitle = 'POV customer: link download belum tersedia untuk rekod ini.';
+    }
+    const testHtml = testAllowed
+      ? `<button type="button" class="az-purchase-detail-test-download-btn user-pa-download" title="${escHtml(testTitle)}" aria-label="Test download seperti customer" data-default-label="Test ↓" data-download-url="${escHtml(testUrl)}" data-download-name="${escHtml(testName)}" data-download-payload="${testPayload}">Test ↓</button>`
+      : `<button type="button" class="az-purchase-detail-test-download-btn is-disabled" title="${escHtml(testTitle)}" aria-label="Test download tidak tersedia" disabled>Test 🔒</button>`;
+
+    const usageHtml = `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
+    const resetHtml = resetPayload
+      ? `<button type="button" class="az-purchase-detail-reset-btn" title="Reset kuota item ini kepada 0/${escHtml(String(max))} dan aktifkan semula tempoh 7 hari" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${resetPayload}', this);">Reset 0/${escHtml(String(max))}</button>`
+      : '';
+    return `${testHtml}${usageHtml}${resetHtml}`;
   }catch(e){ return ''; }
 }
 

@@ -1,0 +1,19 @@
+{
+  "version": "1.0.1138",
+  "baseline": "(1137)-AZOBSS-ADMIN-PURCHASE-RECORDS-DOWNLOAD-RESET-LINK-PRESERVE-FIX_20260916.zip",
+  "scope": "Purchase Records Users",
+  "test_button": "Test ↓",
+  "same_customer_download_flow": true,
+  "successful_test_consumes_real_quota": true,
+  "respects_5x_limit": true,
+  "respects_7_day_expiry": true,
+  "admin_only": true,
+  "backend_change": false,
+  "changed_files": [
+    "package.json",
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-firebase-live-likes-sync.js",
+    "PA-BM/index.html",
+    "README_PATCH_1138.md"
+  ]
+}
