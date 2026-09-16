@@ -2957,7 +2957,7 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   let needsBackend = false;
   try{
     const parsed = new URL(String(downloadUrl || ''), window.location.href);
-    needsBackend = /(^|\\.)azobss-backend\\.onrender\\.com$/i.test(parsed.hostname);
+    needsBackend = String(parsed.hostname || '').toLowerCase() === 'azobss-backend.onrender.com';
   }catch(_e){}
   if(!needsBackend) return true;
 
@@ -3019,11 +3019,10 @@ function azobssTriggerHiddenAttachmentDownload(url){
     frame.style.top = '-10000px';
     frame.src = 'about:blank';
     document.body.appendChild(frame);
-    // Give the iframe one paint before assigning the cross-origin attachment URL.
-    requestAnimationFrame(function(){
-      try{ frame.src = targetUrl; }catch(_e){}
-    });
-    // Keep it around long enough for slow/cold-start attachment responses.
+    // v1148: assign the attachment URL before reporting success. The button spinner
+    // was already painted before this function is called, so an extra rAF is not needed.
+    frame.src = targetUrl;
+    // Keep it around long enough for slow attachment responses.
     window.setTimeout(function(){ try{ frame.remove(); }catch(_e){} }, 180000);
     return true;
   }catch(_e){
@@ -3047,11 +3046,56 @@ function azobssOpenDownloadFallbackWithoutLeavingPage(url){
   if(!value) return false;
   try{
     const parsed = new URL(value, window.location.href);
-    if(/(^|\\.)azobss-backend\\.onrender\\.com$/i.test(parsed.hostname)){
-      return azobssTriggerHiddenAttachmentDownload(parsed.href);
+    if(!/^https?:$/i.test(parsed.protocol)) return false;
+    // v1148: all controlled download fallbacks stay off the top-level PA/BM tab.
+    // Render attachments and JUPEM fallback links are triggered inside a disposable
+    // hidden frame so a cold-start/error page can never replace azobss.com/PA-BM/.
+    return azobssTriggerHiddenAttachmentDownload(parsed.href);
+  }catch(_e){ return false; }
+}
+
+async function azobssLegacyUrlOnlyDownload(url, link){
+  const value = String(url || '').trim();
+  if(!value) return false;
+  const startedAt = Date.now();
+  try{
+    if(link){
+      azobssEnsureDownloadButtonSpinnerStyle();
+      link.dataset.busy = '1';
+      link.classList.add('azobss-download-button-spinning');
+      if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Preparing...';
+      link.style.pointerEvents = 'none';
+      link.setAttribute('aria-busy','true');
+      link.setAttribute('href','#');
+      link.removeAttribute('download');
+      link.removeAttribute('target');
     }
-  }catch(_e){}
-  try{ window.location.href = value; return true; }catch(_e){ return false; }
+    await azobssForceDownloadBusyPaint();
+    const ready = await azobssWaitForDownloadBackendReady(value);
+    if(!ready){
+      alert('Server mengambil masa terlalu lama untuk tersedia. Sila cuba semula sebentar lagi.');
+      return false;
+    }
+    if(!azobssOpenDownloadFallbackWithoutLeavingPage(value)){
+      throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
+    }
+    return true;
+  }catch(error){
+    console.error('Legacy URL-only download failed:', error);
+    alert('Download gagal dimulakan. Sila cuba semula sebentar lagi.');
+    return false;
+  }finally{
+    try{
+      const elapsed = Date.now() - startedAt;
+      if(elapsed < 900) await new Promise(function(resolve){ window.setTimeout(resolve, 900 - elapsed); });
+    }catch(_e){}
+    if(link){
+      try{ link.dataset.busy = ''; }catch(_e){}
+      try{ link.classList.remove('azobss-download-button-spinning'); }catch(_e){}
+      try{ link.querySelectorAll('.azobss-btn-spinner-v1146').forEach(function(node){ node.remove(); }); }catch(_e){}
+      try{ link.style.pointerEvents = ''; link.removeAttribute('aria-busy'); }catch(_e){}
+    }
+  }
 }
 
 async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
@@ -3177,10 +3221,10 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       }
       const nativeUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'native=1&_=' + Date.now();
-      downloadTriggered = true;
       if(!azobssTriggerHiddenAttachmentDownload(nativeUrl)){
         throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
       }
+      downloadTriggered = true;
       try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download'); }catch(e){}
       setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed'); }catch(e){} }, 1800);
       setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed 2'); }catch(e){} }, 4500);
@@ -3399,7 +3443,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 if(!azobssPurchaseUiOwnedByGlobalAuth()) // v1144: global-auth is the single download owner. live-sync is fallback only.
 if(typeof window.azobssClientControlledDownload !== 'function'){
   window.azobssClientControlledDownload = azobssClientControlledDownload;
-  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1146';
+  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1148';
 }
 
 (function(){
@@ -3437,26 +3481,9 @@ if(typeof window.azobssClientControlledDownload !== 'function'){
           try{ if(link && link.dataset) delete link.dataset.azobssClickClaimed; }catch(_e){}
         });
       }else{
-        // Legacy safety: never let Android/Chrome download AZOBSS JSON fallback as .pdf.json.
-        link.removeAttribute('download');
-        link.setAttribute('href', '#');
-        fetch(url, { method:'GET', cache:'no-store' }).then(async function(response){
-          const fallbackFlag = String(response.headers.get('x-azobss-browser-fallback') || '').trim();
-          if(fallbackFlag === '1'){
-            const encodedOpenUrl = response.headers.get('x-azobss-open-url') || '';
-            let openUrl = '';
-            try{ openUrl = decodeURIComponent(encodedOpenUrl); }catch(e){ openUrl = encodedOpenUrl; }
-            if(openUrl){ window.location.href = openUrl; return; }
-            window.location.href = url;
-            return;
-          }
-          const type = String(response.headers.get('content-type') || '').toLowerCase();
-          if(type.includes('application/json')){
-            const data = await response.json().catch(function(){ return null; });
-            if(data && data.openUrl){ window.location.href = data.openUrl; return; }
-          }
-          window.location.href = url;
-        }).catch(function(){ window.location.href = url; });
+        // v1148 legacy URL-only safety: use the same health gate + hidden delivery path.
+        // Never navigate the current PA/BM tab to Render or a source fallback page.
+        Promise.resolve(azobssLegacyUrlOnlyDownload(url, link));
       }
     }
     return false;

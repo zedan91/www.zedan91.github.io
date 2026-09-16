@@ -4000,6 +4000,14 @@ function azobssPaBmDownloadError(res, status, message) {
   return send(res, status, JSON.stringify({ ok: false, error: message }, null, 2), "application/json");
 }
 
+function azobssPaBmCounterWriteError(res, error) {
+  const status = Number(error && error.statusCode) === 403 ? 403 : 500;
+  const message = status === 403 && error && error.message
+    ? String(error.message)
+    : "Pengesahan kuota download gagal. Sila cuba semula; kuota tidak digunakan.";
+  return azobssPaBmDownloadError(res, status, message);
+}
+
 function azobssPaBmDownloadPreparing(res, jobStatus, message) {
   return send(res, 202, JSON.stringify({
     ok: false,
@@ -13913,7 +13921,7 @@ function azobssFirstBmFallbackUrl(record) {
   return (list || []).find(u => /^https:\/\/ebiz\.jupem\.gov\.my\//i.test(String(u || ""))) || (list && list[0]) || "";
 }
 
-async function azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, kind, openUrl, filename) {
+async function azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, kind, openUrl, filename, downloadAttemptId = "") {
   if (!azobssDirectFallbackEnabled() || !openUrl) return false;
 
   const upperKind = String(kind || "").toUpperCase();
@@ -13924,9 +13932,11 @@ async function azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs,
   }
 
   try {
-    await azobssIncrementPurchaseDownload(ref, record, nowMs);
+    await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
   } catch (e) {
     console.error("Download counter update failed before browser fallback:", e && (e.stack || e.message || e));
+    azobssPaBmCounterWriteError(res, e);
+    return true;
   }
 
   const safeKind = String(kind || "File").replace(/[<>]/g, "");
@@ -20441,7 +20451,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     const paSourceIsImage = !!(paResult && azobssBufferIsConvertibleImage(paResult.buffer));
     if (!paResult || !paResult.validFile || (!paSourceIsPdf && !paSourceIsImage)) {
       const fallbackUrl = azobssFirstPaFallbackUrl(record, itemCode, negeri);
-      const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
+      const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`, downloadAttemptId);
       if (fallbackSent) return;
       return azobssPaBmDownloadError(res, 502, "PA file is temporarily unavailable from the source server. Please try again in a moment. Your download quota was not used.");
     }
@@ -20460,7 +20470,12 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 500, "PA PDF conversion produced an invalid file. Your download quota was not used.");
     }
 
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    try {
+      await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
+    } catch (e) {
+      console.error("Download counter update failed:", e && (e.stack || e.message || e));
+      return azobssPaBmCounterWriteError(res, e);
+    }
 
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
@@ -20484,7 +20499,12 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 502, "GPS PDF is temporarily unavailable from JUPEM. Please try again in a moment. Your download quota was not used.");
     }
 
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    try {
+      await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
+    } catch (e) {
+      console.error("Download counter update failed:", e && (e.stack || e.message || e));
+      return azobssPaBmCounterWriteError(res, e);
+    }
     const safeCode = String(code || record.stationNo || record.itemCode || "GPS").replace(/[^A-Z0-9_-]/gi, "-");
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
@@ -20520,7 +20540,12 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       return azobssPaBmDownloadError(res, 500, "Syit Piawai conversion produced an invalid PDF. Your download quota was not used.");
     }
 
-    try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+    try {
+      await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
+    } catch (e) {
+      console.error("Download counter update failed:", e && (e.stack || e.message || e));
+      return azobssPaBmCounterWriteError(res, e);
+    }
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${safeCode}.pdf"`,
@@ -20707,21 +20732,26 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
   } catch (fetchError) {
     console.error("BM/SBM controlled fetch failed:", fetchError && (fetchError.stack || fetchError.message || fetchError));
     const fallbackUrl = azobssFirstBmFallbackUrl(record);
-    const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
+    const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`, downloadAttemptId);
     if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
   if (!bmResult || !bmResult.validFile || !azobssBufferIsPdf(bmResult.buffer)) {
     const fallbackUrl = azobssFirstBmFallbackUrl(record);
-    const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`);
+    const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "BM/SBM", fallbackUrl, `BM-SBM-${String(code || record.itemCode || record.productId || "download").replace(/[^A-Z0-9_-]/gi, "-")}.pdf`, downloadAttemptId);
     if (fallbackSent) return;
     return azobssPaBmDownloadError(res, 502, "BM/SBM file is temporarily unavailable from JUPEM. Please try again in a moment.");
   }
 
   const bmBuffer = bmResult.buffer;
 
-  try { await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId); } catch (e) { console.error("Download counter update failed:", e && (e.stack || e.message || e)); }
+  try {
+      await azobssIncrementPurchaseDownload(ref, record, nowMs, downloadAttemptId);
+    } catch (e) {
+      console.error("Download counter update failed:", e && (e.stack || e.message || e));
+      return azobssPaBmCounterWriteError(res, e);
+    }
 
   const contentType = "application/pdf";
   const productType = String(record.productType || record.product || type || "BM").trim().toUpperCase();
