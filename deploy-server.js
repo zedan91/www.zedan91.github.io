@@ -15743,6 +15743,12 @@ function azMembershipDiscounts(value = {}){
   const clamp = v => Math.max(0, Math.min(99, Math.round((Number(v || 0) || 0) * 100) / 100));
   return { paBm:0, lotKadaster:0, publicPa:0, software:clamp(value.software), cadTools:clamp(value.cadTools) };
 }
+function azMembershipBenefits(value){
+  const raw=Array.isArray(value)?value:(typeof value === "string"?value.split(/\r?\n/):[]);
+  const out=[];const seen=new Set();
+  for(const item of raw){const clean=cleanPremiumText(item||"",160).trim();if(!clean)continue;const key=clean.toLowerCase();if(seen.has(key))continue;seen.add(key);out.push(clean);if(out.length>=12)break;}
+  return out;
+}
 function azMembershipPublic(row = {}){
   return {
     packageId:azMembershipPackageId(row.packageId || row.id || ""),
@@ -15751,6 +15757,7 @@ function azMembershipPublic(row = {}){
     durationMonths:Math.max(1, Math.min(60, Math.floor(Number(row.durationMonths || 1) || 1))),
     active:row.active !== false,
     discounts:azMembershipDiscounts(row.discounts || {}),
+    benefits:azMembershipBenefits(row.benefits || row.membershipBenefitsList || []),
     extraNote:cleanPremiumText(row.extraNote || "", 500),
     sortOrder:Number(row.sortOrder || 0) || 0,
     updatedAtMs:Number(row.updatedAtMs || 0) || 0
@@ -15810,6 +15817,7 @@ async function azActivateMembershipOrder(order = {}){
       membershipBenefitExpiresAtMs:expiresAtMs,
       membershipBenefitExpiresAt:new Date(expiresAtMs).toISOString(),
       membershipDiscountByCategory:azMembershipDiscounts(packageSnap.discounts || {}),
+      membershipBenefitsList:azMembershipBenefits(packageSnap.benefits || []),
       membershipBenefitExtraNote:cleanPremiumText(packageSnap.extraNote || "", 500),
       membershipPurchaseOrderId:orderId,
       membershipAppliedOrderIds:[...new Set([...applied, orderId].filter(Boolean))].slice(-100),
@@ -16227,7 +16235,7 @@ async function handler(req, res) {
         const body=parseRequestBody(await readBody(req)); const db=getAzobssBackendDb(); if(!db)throw new Error("Membership database is unavailable.");
         const packageId=azMembershipPackageId(body.packageId||body.id); if(!packageId)return send(res,400,JSON.stringify({ok:false,error:"Package ID is required."}),"application/json");
         const price=Math.max(0,Number(body.packagePriceRM||0)||0); if(price<=0)return send(res,400,JSON.stringify({ok:false,error:"Package price must be more than RM0."}),"application/json");
-        const row={packageId,packageName:cleanPremiumText(body.packageName||"Membership",120),packagePriceRM:Math.round(price*100)/100,durationMonths:Math.max(1,Math.min(60,Math.floor(Number(body.durationMonths||1)||1))),active:body.active!==false,discounts:azMembershipDiscounts(body.discounts||{}),extraNote:cleanPremiumText(body.extraNote||"",500),sortOrder:Number(body.sortOrder||0)||0,updatedAt:new Date().toISOString(),updatedAtMs:Date.now(),updatedBy:adminIdentity.username||adminIdentity.email||"admin"};
+        const row={packageId,packageName:cleanPremiumText(body.packageName||"Membership",120),packagePriceRM:Math.round(price*100)/100,durationMonths:Math.max(1,Math.min(60,Math.floor(Number(body.durationMonths||1)||1))),active:body.active!==false,discounts:azMembershipDiscounts(body.discounts||{}),benefits:azMembershipBenefits(body.benefits||[]),extraNote:cleanPremiumText(body.extraNote||"",500),sortOrder:Number(body.sortOrder||0)||0,updatedAt:new Date().toISOString(),updatedAtMs:Date.now(),updatedBy:adminIdentity.username||adminIdentity.email||"admin"};
         await db.collection(AZ_MEMBERSHIP_COLLECTION).doc(packageId).set(row,{merge:true});
         return send(res,200,JSON.stringify({ok:true,record:azMembershipPublic(row)},null,2),"application/json");
       } catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
@@ -16240,6 +16248,34 @@ async function handler(req, res) {
         const db=getAzobssBackendDb();if(!db)throw new Error("Membership database is unavailable.");await db.collection(AZ_MEMBERSHIP_COLLECTION).doc(packageId).delete();
         return send(res,200,JSON.stringify({ok:true,packageId},null,2),"application/json");
       } catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/membership/admin/grant" && req.method === "POST") {
+      try {
+        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
+        if(!adminIdentity||!adminIdentity.isAdmin)return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json");
+        const body=parseRequestBody(await readBody(req));const db=getAzobssBackendDb();if(!db)throw new Error("Membership database is unavailable.");
+        const userDocId=cleanPremiumText(body.userDocId||body.usernameKey||body.username||"",160).trim();
+        const packageId=azMembershipPackageId(body.packageId);if(!userDocId||!packageId)return send(res,400,JSON.stringify({ok:false,error:"User and Membership package are required."}),"application/json");
+        const [userSnap,pkgSnap]=await Promise.all([db.collection("users").doc(userDocId).get(),db.collection(AZ_MEMBERSHIP_COLLECTION).doc(packageId).get()]);
+        if(!userSnap.exists)return send(res,404,JSON.stringify({ok:false,error:"User profile not found."}),"application/json");
+        if(!pkgSnap.exists)return send(res,404,JSON.stringify({ok:false,error:"Membership package not found."}),"application/json");
+        const user=userSnap.data()||{};const pkg=azMembershipPublic({packageId,...pkgSnap.data()});const now=Date.now();
+        const currentExp=Number(user.membershipBenefitExpiresAtMs||0)||azFirestoreTimeMs(user.membershipBenefitExpiresAt);const base=Math.max(now,currentExp);const months=Math.max(1,Math.min(60,Number(pkg.durationMonths||1)||1));const expiresAtMs=base+Math.round(months*30.4375*86400000);
+        const patch={membershipBenefitActive:true,membershipBenefitPurchaseOnly:false,membershipGrantedByAdmin:true,membershipBenefitPackageId:packageId,membershipBenefitPackageName:pkg.packageName||"Membership",membershipBenefitPackagePriceRM:Number(pkg.packagePriceRM||0)||0,membershipBenefitStartedAtMs:user.membershipBenefitActive===true&&currentExp>now?(Number(user.membershipBenefitStartedAtMs||now)||now):now,membershipBenefitExpiresAtMs:expiresAtMs,membershipBenefitExpiresAt:new Date(expiresAtMs).toISOString(),membershipDiscountByCategory:azMembershipDiscounts(pkg.discounts||{}),membershipBenefitsList:azMembershipBenefits(pkg.benefits||[]),membershipBenefitExtraNote:cleanPremiumText(pkg.extraNote||"",500),membershipBenefitUpdatedAtMs:now,membershipManualGrantedAtMs:now,membershipManualGrantedBy:adminIdentity.username||adminIdentity.email||adminIdentity.uid||"admin"};
+        await db.collection("users").doc(userDocId).set(patch,{merge:true});
+        azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,"membership_manual_grant","users",userDocId,{packageId,expiresAtMs},"success"),"Membership manual grant audit log failed");
+        return send(res,200,JSON.stringify({ok:true,userDocId,package:pkg,membership:patch},null,2),"application/json",{"Cache-Control":"no-store"});
+      }catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
+    }
+    if (pathname === "/api/membership/admin/revoke" && req.method === "POST") {
+      try {
+        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
+        if(!adminIdentity||!adminIdentity.isAdmin)return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json");
+        const body=parseRequestBody(await readBody(req));const db=getAzobssBackendDb();if(!db)throw new Error("Membership database is unavailable.");const userDocId=cleanPremiumText(body.userDocId||body.usernameKey||body.username||"",160).trim();if(!userDocId)return send(res,400,JSON.stringify({ok:false,error:"User is required."}),"application/json");
+        const ref=db.collection("users").doc(userDocId);const snap=await ref.get();if(!snap.exists)return send(res,404,JSON.stringify({ok:false,error:"User profile not found."}),"application/json");const now=Date.now();const patch={membershipBenefitActive:false,membershipBenefitExpiresAtMs:now,membershipBenefitExpiresAt:new Date(now).toISOString(),membershipBenefitUpdatedAtMs:now,membershipManualRevokedAtMs:now,membershipManualRevokedBy:adminIdentity.username||adminIdentity.email||adminIdentity.uid||"admin"};await ref.set(patch,{merge:true});
+        azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,"membership_manual_revoke","users",userDocId,{},"success"),"Membership manual revoke audit log failed");
+        return send(res,200,JSON.stringify({ok:true,userDocId,membership:patch},null,2),"application/json",{"Cache-Control":"no-store"});
+      }catch(err){return send(res,500,JSON.stringify({ok:false,error:err?.message||String(err)},null,2),"application/json");}
     }
     if (pathname === "/api/membership/create-bill" && req.method === "POST") {
       try {

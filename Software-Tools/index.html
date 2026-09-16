@@ -6670,7 +6670,7 @@ function normalizeItem(item){
 .az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1132" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1132"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1134" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1134"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -10346,7 +10346,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
     const badgeText = guestMode ? 'Product link only' : (adminMode ? 'Admin product link' : 'Lucky Draw unlock active');
     const copyLabel = 'Copy product link';
     const staffCommissionMode = creditMode && !freeNoCommissionMode && isStaffCommissionSharer();
-    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Staff/semi-admin share link commission</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> when sharing paid AZOBSS/admin products.</div><div><b>10%</b> when sharing paid software/CAD owned by another staff account.</div></div><div class="az-lucky-share-commission-small">Commission is calculated after the purchase is verified and the sales record is matched.</div></div>' : '';
+    const commissionInfoHtml = staffCommissionMode ? '<div class="az-lucky-share-commission-card"><div class="az-lucky-share-commission-title">💰 Staff/Manager share link commission</div><div class="az-lucky-share-commission-lines"><div><b>20%</b> when sharing paid AZOBSS/admin products.</div><div><b>10%</b> when sharing paid software/CAD owned by another staff account.</div></div><div class="az-lucky-share-commission-small">Commission is calculated after the purchase is verified and the sales record is matched.</div></div>' : '';
     const encUrl=encodeURIComponent(url), encText=encodeURIComponent(text), encTitle=encodeURIComponent(title);
     const links={
       wa:'https://wa.me/?text='+encodeURIComponent(text+'\n'+url),

@@ -2542,6 +2542,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
+      <button data-tab="membership">⭐ Membership</button>
       <button data-tab="softwarekeys">🗝️ Software Key</button>
       <a class="home-link" href="/admin/AZOBSSTV/">📺 AZOBSSTV</a>
       <div class="nav-group">System</div>
@@ -2661,7 +2662,7 @@ body[data-dashboard-page="admin"] .topbar{
             <option value="pabm">PA Access Allowed</option>
             <option value="foodorders">Food Orders Access Allowed</option>
             <option value="role-admin">Role: Administrator</option>
-            <option value="role-semiadmin">Role: Semi Admin</option>
+            <option value="role-semiadmin">Role: Manager</option>
             <option value="role-staff">Role: Staff</option>
             <option value="role-user">Role: User</option>
           </select>
@@ -3348,14 +3349,14 @@ body[data-dashboard-page="admin"] .topbar{
 
     <section id="commissions" class="section">
       <h2>💸 Commission Manager Pro</h2>
-      <p class="az-section-help">Urus komisen staff/semi-admin untuk jualan Software/CAD paid orders, share link, approval dan payout dari satu tempat.</p>
+      <p class="az-section-help">Urus komisen Staff/Manager untuk jualan Software/CAD paid orders, share link, approval dan payout dari satu tempat.</p>
       <p class="tabs-note">PA/BM tidak masuk komisen staff. Data utama datang daripada <b>commissionRecords</b> yang dijana selepas Software/CAD payment verified.</p>
 
       <div class="grid az-commission-rule-grid">
         <div class="card az-commission-rule-card"><b>🏪 Produk Staff Sendiri</b><span>Owner/staff share 70% • AZOBSS 30%</span></div>
         <div class="card az-commission-rule-card"><b>🔗 Share Produk AZOBSS</b><span>Sharer commission 20% untuk paid order yang sah.</span></div>
         <div class="card az-commission-rule-card"><b>🔗 Share Produk Bukan AZOBSS</b><span>Sharer commission 10% untuk paid order yang sah.</span></div>
-        <div class="card az-commission-rule-card"><b>🚫 PA/BM Excluded</b><span>PA/BM tidak dikira dalam commission staff/semi-admin.</span></div>
+        <div class="card az-commission-rule-card"><b>🚫 PA/BM Excluded</b><span>PA/BM tidak dikira dalam commission Staff/Manager.</span></div>
       </div>
 
       <div class="grid az-commission-kpi-grid">
@@ -3587,12 +3588,12 @@ body[data-dashboard-page="admin"] .topbar{
 
 
     <section id="staffroles" class="section">
-      <h2>🧑‍💼 Staff / Semi-Admin Roles</h2>
+      <h2>🧑‍💼 Staff / Manager Roles</h2>
       <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
       <div class="card">
         <div class="toolbar">
           <input id="staffUsername" placeholder="Username, contoh: zedanstaff" style="flex:1;min-width:220px">
-          <select id="staffRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Semi Admin</option></select>
+          <select id="staffRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Manager</option></select>
           <button class="btn green" id="saveStaffRole">Save Role</button>
         </div>
         <div class="toolbar">
@@ -3605,6 +3606,44 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="card"><h2>Latest Staff Users</h2><div id="staffRolesList" class="list"></div></div>
     </section>
 
+
+    <section id="membership" class="section">
+      <h2>⭐ Membership</h2>
+      <p class="az-section-help">Membership ialah langganan berbayar yang berasingan daripada Account Role. User biasa boleh membeli pakej sendiri, atau admin boleh aktif/lanjutkan pakej secara manual dari Edit Registered User.</p>
+      <div class="grid">
+        <div class="card"><div class="stat-label">Account Role</div><div class="stat-value" style="font-size:18px">User / Staff / Manager / Administrator</div><div class="az-kpi-note">Role menentukan tahap akses pentadbiran.</div></div>
+        <div class="card"><div class="stat-label">Membership</div><div class="stat-value" style="font-size:18px">Paid Subscription</div><div class="az-kpi-note">Membership menentukan tempoh dan faedah pembelian.</div></div>
+        <div class="card"><div class="stat-label">PA/BM</div><div class="stat-value" style="font-size:18px">Separate Access</div><div class="az-kpi-note">Membership tidak pernah membuka PA/BM.</div></div>
+      </div>
+      <div class="card">
+        <h2>Membership Packages</h2>
+        <p class="tabs-note">Bina package mengikut harga dan tempoh. Diskaun Software/CAD ialah faedah automatik. Senarai "Additional benefits" dipaparkan kepada user sebagai kelebihan package. PA/BM, Lot Kadaster dan Beli Pelan Akui kekal tidak dipengaruhi Membership.</p>
+        <div class="toolbar">
+          <input id="membershipPackageId" placeholder="Package ID, e.g. SILVER3M" style="min-width:180px">
+          <input id="membershipPackageName" placeholder="Package name, e.g. Silver 3 Months" style="min-width:220px">
+          <input id="membershipPackagePrice" type="number" min="0.01" step="0.01" placeholder="Price RM" style="width:130px">
+          <input id="membershipDurationMonths" type="number" min="1" max="60" value="1" placeholder="Months" style="width:100px">
+          <input id="membershipSortOrder" type="number" step="1" value="0" placeholder="Sort" style="width:90px">
+        </div>
+        <div class="toolbar">
+          <label>Software Discount % <input id="membershipDiscountSoftware" type="number" min="0" max="99" value="0" style="width:80px"></label>
+          <label>CAD Tools Discount % <input id="membershipDiscountCad" type="number" min="0" max="99" value="0" style="width:80px"></label>
+          <label><input id="membershipPackageActive" type="checkbox" checked> Package Active</label>
+        </div>
+        <label for="membershipBenefitsText" style="display:block;margin:10px 0 6px;font-weight:800">Additional benefits <span class="tabs-note">(one item per line)</span></label>
+        <textarea id="membershipBenefitsText" class="azobss-lite-textarea" rows="4" placeholder="Priority support
+Early access to selected Software/CAD releases
+Special member-only promotion" style="width:100%;box-sizing:border-box;min-height:96px"></textarea>
+        <div class="toolbar" style="margin-top:10px">
+          <input id="membershipExtraNote" placeholder="Terms / package note (optional)" style="flex:1;min-width:260px">
+          <button class="btn green" id="saveMembershipPackage" type="button">Save Package</button>
+          <button class="btn" id="generateMembershipPackageId" type="button">Generate ID</button>
+          <button class="btn gray" id="clearMembershipPackageForm" type="button">Clear</button>
+        </div>
+        <div id="membershipPackageAdminStatus" class="tabs-note">Tip: user membeli di Account / Settings → Membership. Admin juga boleh grant/extend package dari Users → Edit.</div>
+        <div id="membershipPackageAdminList" class="list"></div>
+      </div>
+    </section>
 
     <section id="settings" class="section">
       <h2><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></h2>
@@ -3620,31 +3659,6 @@ body[data-dashboard-page="admin"] .topbar{
           <button class="btn red" id="clearAdminApiKey" type="button">Clear Key</button>
         </div>
         <div id="adminApiKeyStatus" class="tabs-note">Admin auth status: checking...</div>
-      </div>
-      <div class="card">
-        <h2>Membership Packages</h2>
-        <p class="tabs-note">Membership mesti dibeli. Ia hanya memberi diskaun Software dan CAD Tools untuk tempoh pakej. Membership TIDAK memberi akses PA/BM.</p>
-        <div class="toolbar">
-          <input id="membershipPackageId" placeholder="Package ID, e.g. SILVER3M" style="min-width:180px">
-          <input id="membershipPackageName" placeholder="Package name, e.g. Silver 3 Months" style="min-width:220px">
-          <input id="membershipPackagePrice" type="number" min="0.01" step="0.01" placeholder="Price RM" style="width:130px">
-          <input id="membershipDurationMonths" type="number" min="1" max="60" value="1" placeholder="Months" style="width:100px">
-          <input id="membershipSortOrder" type="number" step="1" value="0" placeholder="Sort" style="width:90px">
-        </div>
-        <div class="toolbar">
-          <label>Software % <input id="membershipDiscountSoftware" type="number" min="0" max="99" value="0" style="width:80px"></label>
-          <label>CAD Tools % <input id="membershipDiscountCad" type="number" min="0" max="99" value="0" style="width:80px"></label>
-          <label><input id="membershipPackageActive" type="checkbox" checked> Active</label>
-          <span class="tabs-note">PA/BM, Lot Kadaster dan Beli Pelan Akui sentiasa 0% daripada Membership.</span>
-        </div>
-        <div class="toolbar">
-          <input id="membershipExtraNote" placeholder="Package benefits / note (optional)" style="flex:1;min-width:260px">
-          <button class="btn green" id="saveMembershipPackage" type="button">Save Package</button>
-          <button class="btn" id="generateMembershipPackageId" type="button">Generate ID</button>
-          <button class="btn gray" id="clearMembershipPackageForm" type="button">Clear</button>
-        </div>
-        <div id="membershipPackageAdminStatus" class="tabs-note"></div>
-        <div id="membershipPackageAdminList" class="list"></div>
       </div>
       <div class="card">
         <h2>Referral / Invite Code Reward</h2>
@@ -5676,8 +5690,8 @@ async function loadStaffRoles(){
   ];
   function roleLabel(r){
     r=String(r||'user').toLowerCase();
-    if(r==='admin')return 'Admin';
-    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='admin')return 'Administrator';
+    if(r==='semiadmin'||r==='semi-admin')return 'Manager';
     if(r==='staff')return 'Staff';
     return 'User';
   }
@@ -6042,7 +6056,7 @@ function azRegUser(x){
 function azRegAccountRoleLabel(value){
   const r=String(value||'user').trim().toLowerCase().replace(/[\s_-]+/g,'');
   if(r==='admin')return 'Administrator';
-  if(r==='semiadmin')return 'Semi Admin';
+  if(r==='semiadmin')return 'Manager';
   if(r==='staff')return 'Staff';
   // Legacy role=member means a normal registered user. Paid Membership is separate.
   return 'User';
@@ -6215,6 +6229,25 @@ function renderRegisteredUsersAdmin(){
   if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
   if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
 }
+async function azRegRenderMembershipAdmin(x){
+  const status=$('#azRegMembershipStatus'),sel=$('#azRegMembershipPackage');if(!status||!sel)return;
+  const m=azRegMembershipInfo(x||{});status.textContent=m.active?`Active: ${m.name}${m.expiry?' • until '+new Date(m.expiry).toLocaleDateString():''}`:'No active Membership.';
+  try{const rows=adminMembershipPackagesCache.length?adminMembershipPackagesCache:await loadMembershipPackagesAdmin(false);const current=String(x?.membershipBenefitPackageId||'');sel.innerHTML='<option value="">Select package</option>'+rows.map(r=>`<option value="${esc(r.packageId||'')}" ${String(r.packageId||'')===current?'selected':''}>${esc(r.packageName||r.packageId||'Membership')} • RM${Number(r.packagePriceRM||0).toFixed(2)} • ${Number(r.durationMonths||1)} month(s)</option>`).join('');}catch(_){sel.innerHTML='<option value="">Unable to load packages</option>';}
+}
+async function azRegMembershipAdminAction(action){
+  const id=String($('#azRegEditDocId')?.value||'').trim();if(!id)return toast('User not found.');
+  const packageId=String($('#azRegMembershipPackage')?.value||'').trim();
+  if(action==='grant'&&!packageId)return toast('Select a Membership package first.');
+  const label=action==='grant'?`Activate / extend Membership ${packageId} for ${id}?`:`End Membership for ${id}?`;
+  if(!confirm(label+'\n\nAccount Role and PA/BM access will not change.'))return;
+  try{
+    const out=await azAdminFetchJson(AZOBSS_BACKEND_API+(action==='grant'?'/api/membership/admin/grant':'/api/membership/admin/revoke'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userDocId:id,packageId})});
+    toast(action==='grant'?'Membership activated/extended.':'Membership ended.');
+    await loadRegisteredUsersAdmin();
+    const fresh=adminRegisteredUsersCache.find(r=>String(r.docId)===id||String(azRegUser(r))===id)||out.user||{};
+    await azRegRenderMembershipAdmin(fresh);
+  }catch(e){toast(e?.message||'Membership action failed.');}
+}
 function openRegisteredEdit(id){
   const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id));
   if(!x)return toast('User not found.');
@@ -6230,6 +6263,7 @@ function openRegisteredEdit(id){
   $('#azRegEditPricePublicPa').value=String(pricePercents.publicPa);
   $('#azRegEditPriceSoftware').value=String(pricePercents.software);
   $('#azRegEditPriceCad').value=String(pricePercents.cadTools);
+  azRegRenderMembershipAdmin(x);
   $('#azRegEditModal')?.classList.add('is-open');
 }
 async function saveRegisteredEdit(){
@@ -6409,6 +6443,8 @@ async function loadAdminActivity(){
   renderAdminActivity();
 }
 
+let adminMembershipPackagesCache=[];
+function membershipBenefitsFromText(value){return [...new Set(String(value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean))].slice(0,12);}
 function membershipFormPayload(){
   const n=v=>Math.max(0,Math.min(99,Number(v||0)||0));
   return {
@@ -6419,24 +6455,29 @@ function membershipFormPayload(){
     sortOrder:Number($('#membershipSortOrder')?.value||0)||0,
     active:!!$('#membershipPackageActive')?.checked,
     discounts:{paBm:0,lotKadaster:0,publicPa:0,software:n($('#membershipDiscountSoftware')?.value),cadTools:n($('#membershipDiscountCad')?.value)},
+    benefits:membershipBenefitsFromText($('#membershipBenefitsText')?.value),
     extraNote:String($('#membershipExtraNote')?.value||'').trim()
   };
 }
 function clearMembershipPackageForm(){
   if($('#membershipPackageId'))$('#membershipPackageId').value='';if($('#membershipPackageName'))$('#membershipPackageName').value='';if($('#membershipPackagePrice'))$('#membershipPackagePrice').value='';if($('#membershipDurationMonths'))$('#membershipDurationMonths').value='1';if($('#membershipSortOrder'))$('#membershipSortOrder').value='0';
-  if($('#membershipDiscountSoftware'))$('#membershipDiscountSoftware').value='0';if($('#membershipDiscountCad'))$('#membershipDiscountCad').value='0';if($('#membershipPackageActive'))$('#membershipPackageActive').checked=true;if($('#membershipExtraNote'))$('#membershipExtraNote').value='';
+  if($('#membershipDiscountSoftware'))$('#membershipDiscountSoftware').value='0';if($('#membershipDiscountCad'))$('#membershipDiscountCad').value='0';if($('#membershipPackageActive'))$('#membershipPackageActive').checked=true;if($('#membershipBenefitsText'))$('#membershipBenefitsText').value='';if($('#membershipExtraNote'))$('#membershipExtraNote').value='';
 }
 function editMembershipPackageFromRow(encoded){
   let row={};try{row=JSON.parse(decodeURIComponent(encoded));}catch(_){return;}const d=row.discounts||{};
-  $('#membershipPackageId').value=row.packageId||'';$('#membershipPackageName').value=row.packageName||'';$('#membershipPackagePrice').value=row.packagePriceRM||0;$('#membershipDurationMonths').value=row.durationMonths||1;$('#membershipSortOrder').value=row.sortOrder||0;$('#membershipPackageActive').checked=row.active!==false;$('#membershipDiscountSoftware').value=d.software||0;$('#membershipDiscountCad').value=d.cadTools||0;$('#membershipExtraNote').value=row.extraNote||'';$('#membershipPackageId').scrollIntoView({behavior:'smooth',block:'center'});
+  $('#membershipPackageId').value=row.packageId||'';$('#membershipPackageName').value=row.packageName||'';$('#membershipPackagePrice').value=row.packagePriceRM||0;$('#membershipDurationMonths').value=row.durationMonths||1;$('#membershipSortOrder').value=row.sortOrder||0;$('#membershipPackageActive').checked=row.active!==false;$('#membershipDiscountSoftware').value=d.software||0;$('#membershipDiscountCad').value=d.cadTools||0;if($('#membershipBenefitsText'))$('#membershipBenefitsText').value=Array.isArray(row.benefits)?row.benefits.join('\n'):'';$('#membershipExtraNote').value=row.extraNote||'';$('#membershipPackageId').scrollIntoView({behavior:'smooth',block:'center'});
 }
-async function loadMembershipPackagesAdmin(){
-  const box=$('#membershipPackageAdminList');if(!box)return;
-  try{const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/list',{cache:'no-store'});const rows=Array.isArray(j.records)?j.records:[];box.innerHTML=rows.map(r=>{const enc=encodeURIComponent(JSON.stringify(r));const d=r.discounts||{};return `<div class="item"><div class="item-title"><b>${esc(r.packageId||'')}</b> • ${esc(r.packageName||'Membership')} • ${r.active!==false?'ACTIVE':'OFF'}</div><div class="item-meta">RM${Number(r.packagePriceRM||0).toFixed(2)} • ${r.durationMonths||1} month(s) • Software ${d.software||0}% • CAD ${d.cadTools||0}% • PA/BM: NO ACCESS</div><div class="toolbar"><button class="btn" type="button" onclick="editMembershipPackageFromRow('${enc}')">Edit</button><button class="btn red" type="button" onclick="deleteMembershipPackage('${esc(r.packageId||'')}')">Delete</button></div></div>`}).join('')||'<div class="item">No Membership packages yet.</div>';}
-  catch(e){box.innerHTML='<div class="item">Unable to load Membership packages: '+esc(e?.message||'error')+'</div>';}
+async function loadMembershipPackagesAdmin(force=false){
+  const box=$('#membershipPackageAdminList');
+  try{
+    if(force||!adminMembershipPackagesCache.length){const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/list',{cache:'no-store'});adminMembershipPackagesCache=Array.isArray(j.records)?j.records:[];}
+    const rows=adminMembershipPackagesCache;
+    if(box)box.innerHTML=rows.map(r=>{const enc=encodeURIComponent(JSON.stringify(r));const d=r.discounts||{};const benefits=Array.isArray(r.benefits)?r.benefits:[];const benefitHtml=benefits.length?`<div class="item-meta"><b>Benefits:</b> ${benefits.map(x=>esc(x)).join(' • ')}</div>`:'';return `<div class="item"><div class="item-title"><b>${esc(r.packageId||'')}</b> • ${esc(r.packageName||'Membership')} • ${r.active!==false?'ACTIVE':'OFF'}</div><div class="item-meta">RM${Number(r.packagePriceRM||0).toFixed(2)} • ${r.durationMonths||1} month(s) • Software ${d.software||0}% • CAD ${d.cadTools||0}% • PA/BM: NO ACCESS</div>${benefitHtml}${r.extraNote?`<div class="item-meta"><b>Note:</b> ${esc(r.extraNote)}</div>`:''}<div class="toolbar"><button class="btn" type="button" onclick="editMembershipPackageFromRow('${enc}')">Edit</button><button class="btn red" type="button" onclick="deleteMembershipPackage('${esc(r.packageId||'')}')">Delete</button></div></div>`}).join('')||'<div class="item">No Membership packages yet.</div>';
+    return rows;
+  }catch(e){if(box)box.innerHTML='<div class="item">Unable to load Membership packages: '+esc(e?.message||'error')+'</div>';throw e;}
 }
-async function saveMembershipPackageAdmin(){const payload=membershipFormPayload();if(!payload.packageId)return toast('Enter Package ID.');if(!payload.packageName)return toast('Enter package name.');if(!(payload.packagePriceRM>0))return toast('Enter package price.');try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});toast('Membership package saved.');clearMembershipPackageForm();await loadMembershipPackagesAdmin();}catch(e){toast(e?.message||'Failed to save Membership package.');}}
-async function deleteMembershipPackage(packageId){if(!confirm('Delete Membership package '+packageId+'?'))return;try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({packageId})});toast('Membership package deleted.');await loadMembershipPackagesAdmin();}catch(e){toast(e?.message||'Delete failed.');}}
+async function saveMembershipPackageAdmin(){const payload=membershipFormPayload();if(!payload.packageId)return toast('Enter Package ID.');if(!payload.packageName)return toast('Enter package name.');if(!(payload.packagePriceRM>0))return toast('Enter package price.');try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});toast('Membership package saved.');adminMembershipPackagesCache=[];clearMembershipPackageForm();await loadMembershipPackagesAdmin(true);}catch(e){toast(e?.message||'Failed to save Membership package.');}}
+async function deleteMembershipPackage(packageId){if(!confirm('Delete Membership package '+packageId+'?'))return;try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/membership/admin/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({packageId})});toast('Membership package deleted.');adminMembershipPackagesCache=[];await loadMembershipPackagesAdmin(true);}catch(e){toast(e?.message||'Delete failed.');}}
 window.editMembershipPackageFromRow=editMembershipPackageFromRow;window.deleteMembershipPackage=deleteMembershipPackage;
 async function loadReferralSettingsAdmin(){try{const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/referral/admin/settings',{cache:'no-store'});const x=j.settings||{};if($('#referralRewardRM'))$('#referralRewardRM').value=Number(x.rewardRM??2);if($('#referralMaxAccountAgeDays'))$('#referralMaxAccountAgeDays').value=Number(x.maxAccountAgeDays??14);if($('#referralProgramActive'))$('#referralProgramActive').checked=x.active!==false;if($('#referralSettingsStatus'))$('#referralSettingsStatus').textContent=`Current reward: RM${Number(x.rewardRM||0).toFixed(2)} per successful new registration.`;}catch(e){if($('#referralSettingsStatus'))$('#referralSettingsStatus').textContent='Unable to load referral settings: '+(e?.message||'error');}}
 async function saveReferralSettingsAdmin(){const payload={rewardRM:Math.max(0,Number($('#referralRewardRM')?.value||0)||0),maxAccountAgeDays:Math.max(1,Math.min(90,Number($('#referralMaxAccountAgeDays')?.value||14)||14)),active:!!$('#referralProgramActive')?.checked};try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/referral/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});toast('Referral settings saved.');await loadReferralSettingsAdmin();}catch(e){toast(e?.message||'Failed to save referral settings.');}}
@@ -6446,7 +6487,7 @@ async function loadSettings(){
   const snap=await getDoc(doc(db,'settings','signupGate')).catch(e=>{azAdminReportQueryError('Settings: signupGate',e);return null});
   if(snap?.exists()){$('#settingsBox').innerHTML=item('Signup Gate',`<pre>${esc(JSON.stringify(snap.data(),null,2))}</pre>`)}
   else $('#settingsBox').innerHTML='<div class="item">No signupGate settings found.</div>';
-  await Promise.all([loadMembershipPackagesAdmin(),loadReferralSettingsAdmin()]);
+  await loadReferralSettingsAdmin();
 }
 async function publishNotification(){
   const type=$('#notifType').value, title=$('#notifTitle').value.trim(), body=$('#notifBody').value.trim();
@@ -6779,6 +6820,7 @@ async function initSection(id){
   if(id==='maintenance')return loadMaintenanceScan();
   if(id==='staffroles')return loadStaffRoles();
   if(id==='softwarekeys' && typeof window.azSoftwareKeysLoad==='function')return window.azSoftwareKeysLoad({force:false});
+  if(id==='membership')return loadMembershipPackagesAdmin(true);
   if(id==='settings')return loadSettings();
 }
 document.addEventListener('click',async e=>{
@@ -6908,6 +6950,8 @@ $('#registeredUsersPrevBtn')?.addEventListener('click',()=>{adminRegisteredUsers
 $('#registeredUsersNextBtn')?.addEventListener('click',()=>{adminRegisteredUsersPage++;renderRegisteredUsersAdmin();});
 $('#azRegCancelBtn')?.addEventListener('click',()=>$('#azRegEditModal')?.classList.remove('is-open'));
 $('#azRegSaveBtn')?.addEventListener('click',saveRegisteredEdit);
+$('#azRegMembershipGrantBtn')?.addEventListener('click',()=>azRegMembershipAdminAction('grant'));
+$('#azRegMembershipEndBtn')?.addEventListener('click',()=>azRegMembershipAdminAction('revoke'));
 $('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
 $('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
 $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
@@ -7019,8 +7063,8 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1132"></script>
-<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1132"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1134"></script>
+<script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1134"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
 <script id="az-staff-role-firestore-badge-renderer">
@@ -7042,8 +7086,8 @@ onAuthStateChanged(auth, async user => {
 
   function roleLabel(role){
     const r=String(role||'user').toLowerCase();
-    if(r==='admin')return 'Admin';
-    if(r==='semiadmin'||r==='semi-admin')return 'Semi Admin';
+    if(r==='admin')return 'Administrator';
+    if(r==='semiadmin'||r==='semi-admin')return 'Manager';
     if(r==='staff')return 'Staff';
     return 'User';
   }
@@ -7116,7 +7160,7 @@ onAuthStateChanged(auth, async user => {
     const roleText=card?.querySelector('.staff-role-meta')?.textContent||'';
     const roleSelect=document.querySelector('select#staffRoleSelect,select#roleSelect,select');
     if(roleSelect){
-      const role=roleText.toLowerCase().includes('semi')?'semiAdmin':roleText.toLowerCase().includes('staff')?'staff':'user';
+      const role=(roleText.toLowerCase().includes('manager')||roleText.toLowerCase().includes('semi'))?'semiAdmin':roleText.toLowerCase().includes('staff')?'staff':'user';
       roleSelect.value=role;
     }
     window.scrollTo({top:0,behavior:'smooth'});
@@ -7161,8 +7205,17 @@ onAuthStateChanged(auth, async user => {
       <div><label>Phone</label><input id="azRegEditPhone"></div>
     </div>
     <div class="row">
-      <div><label>Account Role</label><select id="azRegEditRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Semi Admin</option><option value="admin">Administrator</option></select><div class="az-reg-help">Membership berbayar adalah status/langganan berasingan dan bukan Account Role.</div></div>
+      <div><label>Account Role</label><select id="azRegEditRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Manager</option><option value="admin">Administrator</option></select><div class="az-reg-help">Membership berbayar adalah status/langganan berasingan dan bukan Account Role.</div></div>
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
+    </div>
+    <div class="az-reg-price-section" id="azRegMembershipAdminBox">
+      <div class="az-reg-price-heading">Membership</div>
+      <div id="azRegMembershipStatus" class="az-reg-help">Membership: checking...</div>
+      <div class="row" style="margin-top:8px">
+        <div><label>Membership Package</label><select id="azRegMembershipPackage"><option value="">Select package</option></select></div>
+        <div><label>Admin Action</label><div class="toolbar" style="margin:0"><button class="btn green" id="azRegMembershipGrantBtn" type="button">Activate / Extend</button><button class="btn red" id="azRegMembershipEndBtn" type="button">End Membership</button></div></div>
+      </div>
+      <div class="az-reg-help">Activate / Extend menggunakan tempoh dan faedah package terkini. Ia tidak menukar Account Role dan tidak memberi akses PA/BM.</div>
     </div>
     <div class="az-reg-price-section">
       <div class="az-reg-price-heading">Pelarasan Harga Mengikut Bahagian</div>

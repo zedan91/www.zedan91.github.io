@@ -541,7 +541,7 @@ function injectAdminUserEditModal() {
         <select id="adminUserEditRole">
           <option value="user">User</option>
           <option value="staff">Staff</option>
-          <option value="semiAdmin">Semi Admin</option>
+          <option value="semiAdmin">Manager</option>
           <option value="admin">Administrator</option>
         </select>
       </label>
@@ -1793,7 +1793,7 @@ async function loadAzobssMembershipPanel(){
   const box=$('profileMembershipPackages'),status=$('profileMembershipStatus');if(status)status.textContent=azobssMembershipStatusText(getSavedUser()||{});if(!box)return;
   box.innerHTML='<div class="auth-reset-note">Loading Membership packages...</div>';
   try{const res=await fetch(AZOBSS_BACKEND_BASE+'/api/membership/packages',{cache:'no-store'});const out=await res.json().catch(()=>({}));const rows=Array.isArray(out.records)?out.records:[];
-    box.innerHTML=rows.map(r=>{const d=r.discounts||{};return `<div style="border:1px solid rgba(80,160,255,.35);border-radius:10px;padding:10px;background:rgba(9,23,43,.35)"><div style="font-weight:800">${escHtml(r.packageName||r.packageId||'Membership')}</div><div class="auth-reset-note">${Number(r.durationMonths||1)} month(s) • Software ${Number(d.software||0)||0}% • CAD ${Number(d.cadTools||0)||0}%</div>${r.extraNote?`<div class="auth-reset-note">${escHtml(r.extraNote)}</div>`:''}<button type="button" class="btn" data-buy-membership="${escHtml(r.packageId||'')}" style="margin-top:8px;width:100%">Buy Membership • RM${Number(r.packagePriceRM||0).toFixed(2)}</button></div>`}).join('')||'<div class="auth-reset-note">No Membership packages are available yet.</div>';
+    box.innerHTML=rows.map(r=>{const d=r.discounts||{};const benefits=Array.isArray(r.benefits)?r.benefits:[];const benefitHtml=benefits.length?`<ul class="auth-reset-note" style="margin:8px 0 0 18px;padding:0">${benefits.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>`:'';return `<div style="border:1px solid rgba(80,160,255,.35);border-radius:10px;padding:10px;background:rgba(9,23,43,.35)"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div style="font-weight:800">${escHtml(r.packageName||r.packageId||'Membership')}</div><div style="font-weight:900">RM${Number(r.packagePriceRM||0).toFixed(2)}</div></div><div class="auth-reset-note">${Number(r.durationMonths||1)} month(s) • Software ${Number(d.software||0)||0}% • CAD ${Number(d.cadTools||0)||0}%</div>${benefitHtml}${r.extraNote?`<div class="auth-reset-note" style="margin-top:7px">${escHtml(r.extraNote)}</div>`:''}<button type="button" class="btn" data-buy-membership="${escHtml(r.packageId||'')}" style="margin-top:8px;width:100%">Buy Membership • RM${Number(r.packagePriceRM||0).toFixed(2)}</button></div>`}).join('')||'<div class="auth-reset-note">No Membership packages are available yet.</div>';
   }catch(e){box.innerHTML='<div class="auth-reset-note">Unable to load Membership packages.</div>';}
 }
 async function buyAzobssMembership(packageId){

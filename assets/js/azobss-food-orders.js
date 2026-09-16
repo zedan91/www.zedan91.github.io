@@ -445,7 +445,7 @@ async function resolveAccess(user){
     return { allowed:true, role:'admin', user, profile:null };
   }
 
-  // AZOBSS 671: bukan semua staff/semi-admin boleh membaca rekod.
+  // AZOBSS 671: bukan semua Staff/Manager boleh membaca rekod.
   // Akses mesti diberikan secara khusus oleh admin melalui
   // foodOrderStaffAccess/{Firebase Auth UID}.
   let accessDocument = null;
@@ -895,7 +895,7 @@ function startRealtimeTable(){
   panel.hidden = false;
   roleBadge.textContent = currentAccess.role === 'admin'
     ? 'ADMIN'
-    : (currentAccess.role === 'semi-admin' ? 'SEMI-ADMIN' : (currentAccess.role === 'staff' ? 'STAFF' : 'ACCESS'));
+    : (currentAccess.role === 'semi-admin' ? 'MANAGER' : (currentAccess.role === 'staff' ? 'STAFF' : 'ACCESS'));
   if(deleteSelectedButton){
     deleteSelectedButton.hidden = currentAccess.role !== 'admin';
   }

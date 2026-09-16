@@ -389,7 +389,7 @@ function injectAdminUserEditModal() {
         <select id="adminUserEditRole">
           <option value="user">User</option>
           <option value="staff">Staff</option>
-          <option value="semiAdmin">Semi Admin</option>
+          <option value="semiAdmin">Manager</option>
           <option value="admin">Administrator</option>
         </select>
       </label>
