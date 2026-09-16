@@ -4470,12 +4470,16 @@ window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
 function azobssSetLotDownloadBusyVisual(candidate){
   try{
     if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download') || candidate.classList.contains('is-locked')) return false;
-    // v1144: spinner is drawn by a CSS pseudo-element on the BUTTON itself.
-    // Do not replace innerHTML: Purchase Records re-render can replace child nodes.
+    // v1146: use a real child element, not ::before/::after.
+    // Older PA/BM patches also use pseudo-elements for busy buttons and were
+    // overriding the newer spinner. A real DOM spinner avoids that cascade race.
     candidate.dataset.busy = '1';
     candidate.classList.add('azobss-download-button-spinning');
     candidate.setAttribute('aria-busy', 'true');
     candidate.setAttribute('aria-label', 'Sedang menyediakan fail');
+    if(!candidate.querySelector('.azobss-btn-spinner-v1146')){
+      candidate.innerHTML = '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>';
+    }
     return true;
   }catch(_){ return false; }
 }
@@ -4518,42 +4522,54 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
 }
 
 
-// AZOBSS v1145: button-only spinner + verified Render /health wake check; PA/BM page also pre-wakes backend from <head>.
+// AZOBSS v1146: single DOM spinner for Download + Test; verified Render /health wake check; PA/BM page pre-wakes backend from <head>.
 // IMPORTANT v1144: deploy-server.js exposes /health. Do not use /api/health.
 // The wake check is quota-free; the paid-download endpoint is only called after health is ready.
 function azobssEnsureDownloadButtonSpinnerStyle(){
   try{
-    if(document.getElementById('azobssDownloadButtonSpinnerStyleV1144')) return;
+    if(document.getElementById('azobssDownloadButtonSpinnerStyleV1146')) return;
     const style = document.createElement('style');
-    style.id = 'azobssDownloadButtonSpinnerStyleV1144';
+    style.id = 'azobssDownloadButtonSpinnerStyleV1146';
     style.textContent = `
-      .user-pa-download[data-busy="1"],
-      .user-pa-download.azobss-download-button-spinning{
-        position:relative!important;
-        color:transparent!important;
-        text-shadow:none!important;
-        cursor:wait!important;
+      /* v1146: one spinner system only. Disable legacy busy pseudo-elements. */
+      body.pa-bm-page .user-pa-download[data-busy="1"]::before,
+      body.pa-bm-page .user-pa-download[data-busy="1"]::after,
+      body.pa-bm-page .user-pa-download.azobss-download-button-spinning::before,
+      body.pa-bm-page .user-pa-download.azobss-download-button-spinning::after{
+        content:none!important;display:none!important;animation:none!important;
       }
-      .user-pa-download[data-busy="1"]::after,
-      .user-pa-download.azobss-download-button-spinning::after{
-        content:""!important;
-        display:block!important;
-        position:absolute!important;
-        left:50%!important;top:50%!important;
+      body.pa-bm-page .user-pa-download[data-busy="1"],
+      body.pa-bm-page .user-pa-download.azobss-download-button-spinning,
+      body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-download-btn[data-busy="1"]{
+        position:relative!important;
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        cursor:wait!important;
+        line-height:1!important;
+      }
+      .azobss-btn-spinner-v1146{
+        display:inline-block!important;
         width:13px!important;height:13px!important;
-        margin-left:-6.5px!important;margin-top:-6.5px!important;
+        min-width:13px!important;min-height:13px!important;
         box-sizing:border-box!important;
         border:2px solid rgba(255,255,255,.38)!important;
         border-top-color:#fff!important;
         border-right-color:#fff!important;
         border-radius:50%!important;
-        animation:azobssDownloadButtonSpin1144 .58s linear infinite!important;
+        animation:azobssDownloadButtonSpin1146 .58s linear infinite!important;
+        transform-origin:50% 50%!important;
         pointer-events:none!important;
-        z-index:3!important;
+        vertical-align:middle!important;
       }
-      @keyframes azobssDownloadButtonSpin1144{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+      body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-download-btn .azobss-btn-spinner-v1146{
+        width:12px!important;height:12px!important;min-width:12px!important;min-height:12px!important;
+      }
+      @keyframes azobssDownloadButtonSpin1146{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+      @media (prefers-reduced-motion:reduce){.azobss-btn-spinner-v1146{animation-duration:1s!important}}
     `;
-    document.head.appendChild(style);
+    // Put the style at the END of body so old v945/v1138 styles cannot override it.
+    (document.body || document.documentElement).appendChild(style);
   }catch(_e){}
 }
 
@@ -4967,6 +4983,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     if(link){
       link.dataset.busy = '';
       link.classList.remove('azobss-download-button-spinning');
+      try{ link.querySelectorAll('.azobss-btn-spinner-v1146').forEach(function(node){ node.remove(); }); }catch(_e){}
       link.textContent = defaultLabel;
       link.style.pointerEvents = '';
       link.removeAttribute('aria-busy');
@@ -4974,7 +4991,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
-window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1144';
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1146';
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
@@ -5228,13 +5245,13 @@ function purchaseDetailRowHtml(r){
         const filename = azobssPaidPurchaseDownloadFilename(r, def.key);
         const active = !!(activeDownload && activeDownload.key === payload);
         const lockedByOther = !!(activeDownload && !active);
-        const shownLabel = escHtml(def.label);
+        const shownLabel = active ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : escHtml(def.label);
         return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}${active ? ' azobss-download-button-spinning' : ''}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a>`;
       }).join('');
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }else{
       const readyLabel = '↓';
-      const shownLabel = readyLabel;
+      const shownLabel = isActiveDownload ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : readyLabel;
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-generic-download-action-v955"><span class="az-lot-download-format-group"><a class="user-pa-download az-lot-format-download az-lot-format-original az-generic-download-button-v955${isActiveDownload ? ' azobss-download-button-spinning' : ''}" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a></span>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else if(paid){
@@ -6261,7 +6278,7 @@ function azobssAdminPurchaseDownloadResetHtml(r){
       else testTitle = 'POV customer: link download belum tersedia untuk rekod ini.';
     }
     const testHtml = testAllowed
-      ? `<button type="button" class="az-purchase-detail-test-download-btn user-pa-download${testActive ? ' azobss-download-button-spinning' : ''}" title="${escHtml(testTitle)}" aria-label="${testActive ? 'Sedang menyediakan fail' : 'Test download seperti customer'}" data-default-label="Test ↓" data-download-url="${escHtml(testUrl)}" data-download-name="${escHtml(testName)}" data-download-payload="${testPayload}"${testActive ? ' data-busy="1" aria-busy="true"' : ''}${testLockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''}>Test ↓</button>`
+      ? `<button type="button" class="az-purchase-detail-test-download-btn user-pa-download${testActive ? ' azobss-download-button-spinning' : ''}" title="${escHtml(testTitle)}" aria-label="${testActive ? 'Sedang menyediakan fail' : 'Test download seperti customer'}" data-default-label="Test ↓" data-download-url="${escHtml(testUrl)}" data-download-name="${escHtml(testName)}" data-download-payload="${testPayload}"${testActive ? ' data-busy="1" aria-busy="true"' : ''}${testLockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''}>${testActive ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : 'Test ↓'}</button>`
       : `<button type="button" class="az-purchase-detail-test-download-btn is-disabled" title="${escHtml(testTitle)}" aria-label="Test download tidak tersedia" disabled>Test 🔒</button>`;
 
     const usageHtml = `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;

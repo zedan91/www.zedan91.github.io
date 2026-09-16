@@ -12825,7 +12825,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
 .user-pa-download[data-busy="1"]::after,.user-pa-download.azobss-download-button-spinning::after{content:""!important;display:block!important;position:absolute!important;left:50%!important;top:50%!important;width:13px!important;height:13px!important;margin-left:-6.5px!important;margin-top:-6.5px!important;box-sizing:border-box!important;border:2px solid rgba(255,255,255,.38)!important;border-top-color:#fff!important;border-right-color:#fff!important;border-radius:50%!important;animation:azobssDownloadButtonSpin1144 .58s linear infinite!important;pointer-events:none!important;z-index:3!important}
 @keyframes azobssDownloadButtonSpin1144{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
-<script src="/assets/js/azobss-global-auth.js?v=1145" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1145"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1146" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1146"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -15873,6 +15873,18 @@ body:not(.pa-bm-page) button{
 
 
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
+
+<style id="azobss-download-spinner-v1146-final">
+/* v1146 final cascade owner: Download + Admin Test use one real DOM spinner. */
+body.pa-bm-page .user-pa-download[data-busy="1"]::before,
+body.pa-bm-page .user-pa-download[data-busy="1"]::after,
+body.pa-bm-page .user-pa-download.azobss-download-button-spinning::before,
+body.pa-bm-page .user-pa-download.azobss-download-button-spinning::after{content:none!important;display:none!important;animation:none!important}
+.azobss-btn-spinner-v1146{display:inline-block!important;width:13px!important;height:13px!important;min-width:13px!important;min-height:13px!important;box-sizing:border-box!important;border:2px solid rgba(255,255,255,.38)!important;border-top-color:#fff!important;border-right-color:#fff!important;border-radius:50%!important;animation:azobssDownloadButtonSpin1146 .58s linear infinite!important;transform-origin:50% 50%!important;pointer-events:none!important}
+body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-download-btn .azobss-btn-spinner-v1146{width:12px!important;height:12px!important;min-width:12px!important;min-height:12px!important}
+@keyframes azobssDownloadButtonSpin1146{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.azobss-btn-spinner-v1146{animation-duration:1s!important}}
+</style>
 </body>
 </html>
 <script>
