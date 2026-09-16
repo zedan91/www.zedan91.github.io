@@ -1,3 +1,14 @@
+// v1139: PA/BM loads this module together with azobss-global-auth.js.
+// global-auth is the one and only owner of Purchase Records rendering/actions.
+// This module may continue handling its other live-sync duties, but must not
+// overwrite Purchase Records window handlers or create a second render state.
+function azobssPurchaseUiOwnedByGlobalAuth(){
+  try{
+    return window.__AZOBSS_PABM_PURCHASE_UI_OWNER__ === 'global-auth'
+      || !!document.querySelector('script[src*="azobss-global-auth.js"]');
+  }catch(_e){ return window.__AZOBSS_PABM_PURCHASE_UI_OWNER__ === 'global-auth'; }
+}
+
 
 
 function getAzobssPhoneDialForInput(input){
@@ -2458,8 +2469,8 @@ function formatPurchaseDate(record){
 const AZOBSS_PURCHASE_PAGE_SIZE = 6;
 const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 6;
 const AZOBSS_PURCHASE_DETAIL_PAGE_SIZE = 6;
-const azobssPurchaseDetailPages = {};
-const azobssPurchaseOpenKeys = {};
+const azobssPurchaseDetailPages = (window.__AZOBSS_PABM_PURCHASE_DETAIL_PAGES__ = window.__AZOBSS_PABM_PURCHASE_DETAIL_PAGES__ || {});
+const azobssPurchaseOpenKeys = (window.__AZOBSS_PABM_PURCHASE_OPEN_KEYS__ = window.__AZOBSS_PABM_PURCHASE_OPEN_KEYS__ || {});
 let azobssAdminPurchasePage = 1;
 let azobssUserPurchasePage = 1;
 function clampPage(page, totalPages){
@@ -2789,7 +2800,7 @@ async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
     if(btn){ btn.disabled = false; btn.textContent = oldText || 'Reset 0/5'; }
   }
 }
-window.azobssAdminResetPaBmDownloadCounter = azobssAdminResetPaBmDownloadCounter;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssAdminResetPaBmDownloadCounter = azobssAdminResetPaBmDownloadCounter;
 
 function azobssCanShowPaBmAdminReset(){
   try{
@@ -3191,7 +3202,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     }
   }
 }
-window.azobssClientControlledDownload = azobssClientControlledDownload;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssClientControlledDownload = azobssClientControlledDownload;
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
@@ -4113,8 +4124,8 @@ async function resetAzobssPurchaseRecordsForUser(usernameKey){
   azobssAdminPurchasePage = 1;
   await renderAzobssPurchaseRecords();
 }
-window.azobssResetPurchaseRecordsForUser = resetAzobssPurchaseRecordsForUser;
-window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssResetPurchaseRecordsForUser = resetAzobssPurchaseRecordsForUser;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
 
 function azobssPurchaseDeletePayload(r){
   return encodeURIComponent(JSON.stringify({
@@ -4421,12 +4432,12 @@ async function azobssDeleteSelectedPurchaseRecords(button){
     azobssUpdatePurchaseBulkControls();
   }
 }
-window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
-window.azobssUncartPurchaseRecord = azobssUncartPurchaseRecord;
-window.azobssRemovePendingCartItems = azobssRemovePendingCartItems;
-window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
-window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
-window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssUncartPurchaseRecord = azobssUncartPurchaseRecord;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssRemovePendingCartItems = azobssRemovePendingCartItems;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
 
 function azobssAdminPurchaseDownloadResetHtml(r){
   try{
@@ -4474,7 +4485,7 @@ function toggleAzobssPurchaseDetails(button){
 }
 
 
-window.azobssSetPurchaseDetailPage = function(key, page){
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssSetPurchaseDetailPage = function(key, page){
   const cleanKey = String(key || '').toLowerCase();
   if(!cleanKey) return;
   azobssPurchaseDetailPages[cleanKey] = Math.max(1, Number(page) || 1);
@@ -4684,7 +4695,7 @@ function startAzobssPurchaseRealtimeSync(){
     }
   }catch(e){ console.warn('start key purchase listener failed:', e); }
 }
-window.azobssRefreshPaBmPurchasesNow = function(){
+if(!azobssPurchaseUiOwnedByGlobalAuth()) window.azobssRefreshPaBmPurchasesNow = function(){
   azobssSchedulePurchaseRecordsRefresh('manual');
 };
 function bindAzobssPurchaseRecordsUI(){
@@ -4697,10 +4708,7 @@ function bindAzobssPurchaseRecordsUI(){
   }catch(e){}
   // PA/BM page loads both azobss-global-auth.js and this live sync module.
   // Let global-auth own Purchase Records UI to prevent duplicate render races.
-  if(document.querySelector('script[src*="azobss-global-auth.js"]')){
-    if(!window.__AZOBSS_PABM_PURCHASE_UI_OWNER__) window.__AZOBSS_PABM_PURCHASE_UI_OWNER__ = 'global-auth';
-    return;
-  }
+  if(azobssPurchaseUiOwnedByGlobalAuth()) return;
   try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
   ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
     const el = document.getElementById(id);
@@ -4720,7 +4728,7 @@ function bindAzobssPurchaseRecordsUI(){
     renderAzobssPurchaseRecords();
   }
 }
-if(!document.querySelector('script[src*="azobss-global-auth.js"]')){
+if(!azobssPurchaseUiOwnedByGlobalAuth()){
   window.azobssRecordPurchase = recordAzobssPurchase;
   window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;
   window.azobssRenderPurchaseRecords = renderAzobssPurchaseRecords;

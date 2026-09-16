@@ -1,0 +1,13 @@
+{
+  "version": "1.0.1139",
+  "baseline": "(1138)-AZOBSS-ADMIN-PURCHASE-RECORDS-TEST-DOWNLOAD-CUSTOMER-POV-FIX_20260916.zip",
+  "root_cause": "Two loaded auth/live-sync modules still exported competing Purchase Records window handlers, causing UI-state/render races.",
+  "canonical_owner": "azobss-global-auth.js",
+  "backend_redeploy_required": false,
+  "changed_files": [
+    "package.json",
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-firebase-live-likes-sync.js",
+    "PA-BM/index.html"
+  ]
+}

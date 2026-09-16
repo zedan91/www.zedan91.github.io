@@ -2,6 +2,8 @@
 
 /* AZOBSS NAVBAR SINGLE OWNER 1065 */
 window.__AZOBSS_NAVBAR_OWNER__='global-auth';
+// v1139: single canonical owner for PA/BM Purchase Records UI/actions.
+window.__AZOBSS_PABM_PURCHASE_UI_OWNER__='global-auth';
 window.__azobssSafeRealEmail = window.__azobssSafeRealEmail || '';
 
 // AZOBSS: Load Google reCAPTCHA in explicit mode so multiple widgets inside the auth modal can be tracked reliably.
@@ -4104,8 +4106,8 @@ function formatPurchaseDate(record){
 const AZOBSS_PURCHASE_PAGE_SIZE = 6;
 const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 6;
 const AZOBSS_PURCHASE_DETAIL_PAGE_SIZE = 6;
-const azobssPurchaseDetailPages = {};
-const azobssPurchaseOpenKeys = {};
+const azobssPurchaseDetailPages = (window.__AZOBSS_PABM_PURCHASE_DETAIL_PAGES__ = window.__AZOBSS_PABM_PURCHASE_DETAIL_PAGES__ || {});
+const azobssPurchaseOpenKeys = (window.__AZOBSS_PABM_PURCHASE_OPEN_KEYS__ = window.__AZOBSS_PABM_PURCHASE_OPEN_KEYS__ || {});
 let azobssAdminPurchasePage = 1;
 let azobssUserPurchasePage = 1;
 function clampPage(page, totalPages){
