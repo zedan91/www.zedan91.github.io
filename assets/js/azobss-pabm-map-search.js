@@ -130,8 +130,8 @@
       .az-pabm-search-pin::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
       .az-pabm-search-origin-label{padding:3px 7px;border:1px solid rgba(255,255,255,.75);border-radius:5px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 7px rgba(0,0,0,.35)}
       .az-pabm-distance-line-label{padding:3px 7px;border:1px solid rgba(255,255,255,.75);border-radius:5px;background:#92400e;color:#fff;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 7px rgba(0,0,0,.35)}
-      .az-pabm-station-label{padding:1px 4px;border:1px solid rgba(15,23,42,.55);border-radius:4px;background:rgba(15,23,42,.88);color:#fff;font-size:10px;font-weight:900;line-height:1.15;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.28)}
-      .az-pabm-station-label.is-selected{font-size:11px;border-width:2px;background:#0f172a}
+      .az-pabm-station-label{padding:2px 5px;border:1px solid #94a3b8;border-radius:4px;background:#ffffff;color:#0f172a;font-size:10px;font-weight:900;line-height:1.15;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.28)}
+      .az-pabm-station-label.is-selected{font-size:11px;border:2px solid #93c5fd;background:#2563eb;color:#ffffff;box-shadow:0 2px 8px rgba(37,99,235,.45)}
       .az-pabm-map-layer-switch{position:absolute;z-index:1002;top:10px;right:10px;display:flex;align-items:center;gap:6px}
       .az-pabm-map-layer-button,.az-pabm-map-mylot-button{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 11px;border:1px solid rgba(255,255,255,.72);border-radius:6px;background:rgba(15,23,42,.91);color:#fff;font-size:12px;font-weight:900;line-height:1;text-decoration:none;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35);backdrop-filter:blur(5px)}
       .az-pabm-map-layer-button:hover,.az-pabm-map-mylot-button:hover{background:#1e3a5f;border-color:#93c5fd}

@@ -1,0 +1,22 @@
+{
+  "version": "1.0.1136",
+  "date": "2026-09-16",
+  "scope": "Paid PA latest-purchase download reliability",
+  "changes": [
+    "Use native browser attachment navigation for paid PA downloads",
+    "Accept upstream PA source as PDF or convertible image/TIF",
+    "Prioritize and race canonical PA source URLs with hard timeouts",
+    "Collapse duplicate PA spellings before source retry",
+    "Use a bounded PA curl fallback and 30-minute successful-source cache",
+    "Add Content-Length and private no-store headers to PA PDF responses",
+    "Keep 5-download / 7-day policy unchanged and do not consume quota before a valid PDF is ready"
+  ],
+  "deploy": {
+    "frontend": true,
+    "main_render_backend": true,
+    "lucky_draw_backend": false,
+    "firebase_rules": false
+  },
+  "live_source_test": false,
+  "note": "Package validation is code-level; PA8174 source availability was not live-tested from this offline build environment."
+}

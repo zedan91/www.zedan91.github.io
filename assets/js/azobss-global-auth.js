@@ -4328,13 +4328,18 @@ function azobssPurchaseResetPayload(r){
       recordId: r?.firestoreId || r?.id || r?.purchaseLogId || '',
       firestoreId: r?.firestoreId || '',
       id: r?.id || '',
+      purchaseLogId: r?.purchaseLogId || '',
+      uid: r?.uid || '',
+      displayName: r?.displayName || r?.username || '',
       productType: r?.productType || r?.product || '',
       itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
       negeri: r?.negeri || r?.state || '',
-      usernameKey: r?.usernameKey || ''
+      usernameKey: r?.usernameKey || '',
+      createdAtMs: Number(r?.createdAtMs || 0) || (r?.createdAtClient ? Date.parse(r.createdAtClient) : 0) || 0
     }));
   }catch(e){ return ''; }
 }
+
 async function azobssGetFirebaseAuthHeaders(forceRefresh){
   try{
     const u = auth && auth.currentUser ? auth.currentUser : null;
@@ -4385,7 +4390,7 @@ async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
   let payload = {};
   try{ payload = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ payload = {}; }
   const recordId = String(payload.recordId || payload.firestoreId || payload.id || '').trim();
-  if(!recordId){ alert('Record ID tidak ditemui.'); return false; }
+  if(!recordId && !(payload.productType && payload.itemCode && (payload.uid || payload.usernameKey))){ alert('Rekod pembelian tidak dapat dikenal pasti.'); return false; }
   const current = getSavedUser && getSavedUser() || {};
   if(!isAzobssAdmin(current)){ alert('Admin sahaja boleh reset download count.'); return false; }
   if(!confirm('Reset download count untuk item ini kembali ke 0/5 dan renew tempoh 7 hari?')) return false;
@@ -4396,14 +4401,14 @@ async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
     let response = await fetch('https://azobss-backend.onrender.com/api/pa-bm-download/reset-count', {
       method:'POST',
       headers,
-      body: JSON.stringify({ recordId })
+      body: JSON.stringify(Object.assign({}, payload, { recordId }))
     });
     if(response.status === 401 || response.status === 403){
       headers = Object.assign({ 'Content-Type':'application/json' }, await azobssGetFirebaseAuthHeaders(true));
       response = await fetch('https://azobss-backend.onrender.com/api/pa-bm-download/reset-count', {
         method:'POST',
         headers,
-        body: JSON.stringify({ recordId })
+        body: JSON.stringify(Object.assign({}, payload, { recordId }))
       });
     }
     const data = await response.json().catch(function(){ return null; });
@@ -4411,8 +4416,15 @@ async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
       alert((data && (data.error || data.message)) || 'Reset download count gagal.');
       return false;
     }
-    alert('Download count sudah reset ke 0/5. Tempoh download diperbaharui 7 hari.');
+    const resetMax = Math.max(1, Number(data.maxDownloads || data.maxDownload || 5) || 5);
+    try{
+      const row = btn && btn.closest ? btn.closest('.az-purchase-detail-line') : null;
+      const badge = row && row.querySelector ? row.querySelector('.az-purchase-admin-download-usage') : null;
+      if(badge){ badge.textContent = `⬇ 0/${resetMax}`; badge.title = 'Muat turun berjaya / had maksimum'; }
+    }catch(_e){}
+    alert(`Download count sudah reset ke 0/${resetMax}. Tempoh download diperbaharui 7 hari. Link pembelian sedia ada kekal boleh digunakan.`);
     try{ azobssSchedulePurchaseRecordsRefresh('admin reset download count'); }catch(e){}
+    try{ await renderAzobssPurchaseRecords(); }catch(e){}
     setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('admin reset download count delayed'); }catch(e){} }, 900);
     return false;
   }catch(error){
@@ -4591,6 +4603,34 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       link.removeAttribute('target');
     }
     azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+
+    // v1136: PA files are normal attachment responses. Let the browser download
+    // the attachment natively instead of buffering the whole PDF into a JS Blob.
+    // This is substantially more reliable on Android/Chrome/Firefox and avoids a
+    // successful backend response appearing as "nothing happened" to the customer.
+    if(recordType === 'PA' && !isLotDownload){
+      downloadOwner.phase = 'downloading';
+      downloadOwner.label = 'Mula Download...';
+      if(link){
+        if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+      }
+      const nativeUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'native=1&_=' + Date.now();
+      downloadTriggered = true;
+      try{
+        window.location.assign(nativeUrl);
+      }catch(nativeError){
+        const nativeAnchor = document.createElement('a');
+        nativeAnchor.href = nativeUrl;
+        nativeAnchor.rel = 'noopener';
+        document.body.appendChild(nativeAnchor);
+        nativeAnchor.click();
+        nativeAnchor.remove();
+      }
+      try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download'); }catch(e){}
+      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed'); }catch(e){} }, 1800);
+      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed 2'); }catch(e){} }, 4500);
+      return false;
+    }
 
     if(isLotDownload){
       downloadOwner.phase = 'preparing';
@@ -6061,6 +6101,17 @@ window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRe
 window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
 window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
 
+function azobssAdminPurchaseDownloadResetHtml(r){
+  try{
+    if(!azobssCanShowPaBmAdminReset()) return '';
+    const used = azobssPurchaseDownloadCount(r);
+    const max = azobssPurchaseDownloadMax(r);
+    const payload = azobssPurchaseResetPayload(r);
+    if(!payload) return `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
+    return `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span><button type="button" class="az-purchase-detail-reset-btn" title="Reset kuota item ini kepada 0/${escHtml(String(max))} dan aktifkan semula tempoh 7 hari" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${payload}', this);">Reset 0/${escHtml(String(max))}</button>`;
+  }catch(e){ return ''; }
+}
+
 function toggleAzobssPurchaseDetails(button){
   const card = button && button.closest('.admin-purchase-user-card');
   if(!card) return;
@@ -6163,7 +6214,7 @@ async function renderAzobssPurchaseRecords(){
               const detailPage = clampPage(azobssPurchaseDetailPages[key] || 1, Math.max(1, Math.ceil(rows.length / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE)));
               azobssPurchaseDetailPages[key] = detailPage;
               const detailRows = rows.slice((detailPage - 1) * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE, detailPage * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE);
-              return detailRows.map(r => `<div class="az-purchase-detail-line"><span>• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span><button type="button" class="az-purchase-detail-delete-btn" onclick="window.azobssDeleteOnePurchaseRecord && window.azobssDeleteOnePurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Delete</button></div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
+              return detailRows.map(r => `<div class="az-purchase-detail-line"><span class="az-purchase-detail-text">• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span><div class="az-purchase-detail-actions">${azobssAdminPurchaseDownloadResetHtml(r)}<button type="button" class="az-purchase-detail-delete-btn" onclick="window.azobssDeleteOnePurchaseRecord && window.azobssDeleteOnePurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Delete</button></div></div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
             })()}
           </div>
         </div>`;

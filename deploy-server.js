@@ -3736,6 +3736,10 @@ async function azobssResetPurchaseDownloadCounter(ref, record, adminIdentity = {
     downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
     lastDownloadedAtMs: null,
     lastDownloadedAtClient: "",
+    // v1137: preserve the stable record/download link, but clear the old request
+    // idempotency key so the first download after reset counts against fresh 0/5.
+    lastDownloadAttemptId: "",
+    lastDownloadAttemptAtMs: 0,
     adminDownloadResetAtMs: nowMs,
     adminDownloadResetAtClient: new Date(nowMs).toISOString(),
     adminDownloadResetByUid: cleanPremiumText(adminIdentity.uid || "", 120),
@@ -3797,6 +3801,8 @@ async function azobssResetEmbeddedPurchaseDownloadCounter(record = {}, adminIden
           downloadExpiresAtClient: new Date(expiresAtMs).toISOString(),
           lastDownloadedAtMs: null,
           lastDownloadedAtClient: "",
+          lastDownloadAttemptId: "",
+          lastDownloadAttemptAtMs: 0,
           adminDownloadResetAtMs: nowMs,
           adminDownloadResetAtClient: new Date(nowMs).toISOString(),
           adminDownloadResetByUsername: cleanPremiumText(adminIdentity.username || adminIdentity.email || "admin", 120)
@@ -13108,14 +13114,15 @@ function azobssHeaderGet(headersObj, name) {
   return found ? String(found[1] || "") : "";
 }
 
-async function azobssCurlFetchFile(candidate, cookie) {
+async function azobssCurlFetchFile(candidate, cookie, timeoutSeconds = 28) {
   const childProcess = require("child_process");
+  const safeTimeoutSeconds = Math.max(5, Math.min(28, Number(timeoutSeconds || 28)));
   const headerFile = path.join(TEMP_DIR, "azobss-jupem-h-" + crypto.randomBytes(8).toString("hex") + ".txt");
   const bodyFile = path.join(TEMP_DIR, "azobss-jupem-b-" + crypto.randomBytes(8).toString("hex") + ".bin");
   fs.mkdirSync(TEMP_DIR, { recursive: true });
 
   const args = [
-    "-sS", "-L", "--insecure", "--compressed", "--max-time", "28",
+    "-sS", "-L", "--insecure", "--compressed", "--max-time", String(safeTimeoutSeconds),
     "-D", headerFile, "-o", bodyFile,
     "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
     "-H", "Accept: application/zip,application/x-zip-compressed,application/pdf,image/tiff,image/*,application/octet-stream,*/*",
@@ -13127,7 +13134,7 @@ async function azobssCurlFetchFile(candidate, cookie) {
 
   try {
     await new Promise((resolve, reject) => {
-      childProcess.execFile("curl", args, { timeout: 35000, maxBuffer: 1024 * 1024 }, (err) => {
+      childProcess.execFile("curl", args, { timeout: (safeTimeoutSeconds + 7) * 1000, maxBuffer: 1024 * 1024 }, (err) => {
         if (err) reject(err); else resolve();
       });
     });
@@ -13722,12 +13729,117 @@ function azobssBuildPaDownloadCandidates(noPA, negeri) {
   return azobssUnique(candidates);
 }
 
+const AZOBSS_PA_SOURCE_CACHE_TTL_MS = 30 * 60 * 1000;
+const azobssPaSourceCache = new Map();
+function azobssPaSourceCacheKey(noPA, negeri) {
+  const digits = String(noPA || "").replace(/\.tif$/i, "").replace(/^PA/i, "").replace(/[^0-9]/g, "");
+  const state = String(negeri || "").trim().toUpperCase().replace(/\s+/g, " ");
+  return digits && state ? `${state}|${digits}` : "";
+}
+function azobssGetPaSourceCache(noPA, negeri) {
+  const key = azobssPaSourceCacheKey(noPA, negeri);
+  if (!key) return null;
+  const cached = azobssPaSourceCache.get(key);
+  if (!cached || Number(cached.expiresAt || 0) <= Date.now() || !Buffer.isBuffer(cached.buffer) || !cached.buffer.length) {
+    if (cached) azobssPaSourceCache.delete(key);
+    return null;
+  }
+  return {
+    response: { ok:true, status:200, headers:{ get:(name) => String(name || '').toLowerCase() === 'content-type' ? String(cached.contentType || 'application/octet-stream') : '' } },
+    buffer: cached.buffer,
+    url: cached.url || '',
+    firstText: '',
+    contentType: cached.contentType || 'application/octet-stream',
+    validFile: true,
+    mode: 'pa-cache'
+  };
+}
+function azobssSetPaSourceCache(noPA, negeri, result) {
+  if (!result || !result.validFile || !Buffer.isBuffer(result.buffer) || !result.buffer.length) return;
+  const key = azobssPaSourceCacheKey(noPA, negeri);
+  if (!key) return;
+  if (azobssPaSourceCache.size > 120) azobssPaSourceCache.clear();
+  azobssPaSourceCache.set(key, {
+    buffer: result.buffer,
+    contentType: String(result.contentType || (result.response && result.response.headers && result.response.headers.get && result.response.headers.get('content-type')) || 'application/octet-stream'),
+    url: String(result.url || ''),
+    expiresAt: Date.now() + AZOBSS_PA_SOURCE_CACHE_TTL_MS
+  });
+}
+function azobssBuildPaPriorityCandidates(noPA, negeri) {
+  const digits = String(noPA || "").replace(/\.tif$/i, "").replace(/^PA/i, "").replace(/[^0-9]/g, "");
+  if (!digits) return azobssBuildPaDownloadCandidates(noPA, negeri).slice(0, 8);
+  const states = azobssStateVariants(negeri).slice(0, 2);
+  const names = [`PA${digits}.TIF`, `PA ${digits}.TIF`];
+  const out = [];
+  for (const state of states) {
+    for (const name of names) {
+      out.push(`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPa=${encodeURIComponent(name)}&negeri=${encodeURIComponent(state)}`);
+      out.push(`https://ebiz.jupem.gov.my/MuatTurunPembelian/MuatTurunPelanAkui?noPA=${encodeURIComponent(name)}&negeri=${encodeURIComponent(state)}`);
+    }
+  }
+  return azobssUnique(out).slice(0, 8);
+}
+async function azobssTryPaPriorityCandidate(candidate, cookie = '') {
+  const headers = cookie ? { Cookie: cookie } : {};
+  const response = await fetchJupem(candidate, {
+    redirect: 'follow',
+    signal: AbortSignal.timeout(12000),
+    headers
+  });
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const firstText = buffer.slice(0, 240).toString('utf8').toLowerCase();
+  const contentType = response.headers && response.headers.get ? String(response.headers.get('content-type') || '') : '';
+  const validFile = !!(response && response.ok && buffer.length > 80 && !azobssLooksHtmlOrJsonError(buffer)
+    && (azobssBufferIsPdf(buffer) || azobssBufferIsConvertibleImage(buffer)));
+  return { response, buffer, url:candidate, firstText, contentType, validFile, mode:cookie ? 'pa-session' : 'pa-direct' };
+}
+async function azobssRacePaPriorityCandidates(candidates, cookie = '') {
+  const shortlist = azobssUnique(candidates).slice(0, 4);
+  if (!shortlist.length) return null;
+  try {
+    return await Promise.any(shortlist.map(async (candidate) => {
+      const result = await azobssTryPaPriorityCandidate(candidate, cookie);
+      if (!result.validFile) throw Object.assign(new Error('invalid PA source response'), { result });
+      return result;
+    }));
+  } catch (_) {
+    return null;
+  }
+}
 async function fetchPelanAkuiCandidates(noPA, negeri) {
-  return await azobssFetchValidFileCandidates(azobssBuildPaDownloadCandidates(noPA, negeri), "PA");
+  const cached = azobssGetPaSourceCache(noPA, negeri);
+  if (cached) return cached;
+
+  const priority = azobssBuildPaPriorityCandidates(noPA, negeri);
+  let result = null;
+
+  // v1136: the old generic downloader could try dozens of URL/case combinations in
+  // four transport modes. If the source became slow, a customer click could appear
+  // to do nothing for minutes. Try the most likely PA URLs concurrently with a hard
+  // timeout, then one authenticated pass and a single curl-session fallback.
+  result = await azobssRacePaPriorityCandidates(priority, '');
+  if (!result) {
+    let cookie = '';
+    try { cookie = await azobssGetJupemSessionCookie(false); } catch (_) {}
+    if (cookie) result = await azobssRacePaPriorityCandidates(priority, cookie);
+  }
+  if (!result && priority[0]) {
+    try {
+      const cookie = await azobssGetJupemSessionCookie(false);
+      const curlResult = await azobssCurlFetchFile(priority[0], cookie || '', 18);
+      if (curlResult && curlResult.validFile && (azobssBufferIsPdf(curlResult.buffer) || azobssBufferIsConvertibleImage(curlResult.buffer))) result = curlResult;
+    } catch (error) {
+      console.warn('AZOBSS PA curl fallback failed:', error && (error.message || error));
+    }
+  }
+
+  if (result && result.validFile) azobssSetPaSourceCache(noPA, negeri, result);
+  return result || { response:null, buffer:Buffer.alloc(0), url:'', firstText:'', contentType:'', validFile:false, mode:'pa-fast-failed' };
 }
 
 async function azobssFetchPaRecordFile(record, itemCode, negeri) {
-  const inputs = azobssUnique([
+  const rawInputs = azobssUnique([
     azobssExtractNoPaFromUrl(record && record.downloadUrl),
     azobssExtractNoPaFromUrl(record && record.url),
     record && record.noPA,
@@ -13737,8 +13849,29 @@ async function azobssFetchPaRecordFile(record, itemCode, negeri) {
     itemCode && `PA${itemCode}.TIF`,
     itemCode && `PA ${itemCode}.TIF`
   ]);
+
+  // v1136: the same PA is often stored in several cosmetic forms (8174,
+  // PA8174, PA 8174.TIF, URL query values). Retrying the source resolver for
+  // every spelling can multiply a temporary source timeout into several
+  // minutes. Collapse them to unique PA numbers and prefer the paid record's
+  // canonical itemCode first.
+  const normalized = [];
+  const seenDigits = new Set();
+  const preferredDigits = String(itemCode || '').replace(/[^0-9]/g, '');
+  if (preferredDigits) {
+    seenDigits.add(preferredDigits);
+    normalized.push(`PA${preferredDigits}.TIF`);
+  }
+  for (const input of rawInputs) {
+    const digits = String(input || '').replace(/\.tif$/i, '').replace(/^PA/i, '').replace(/[^0-9]/g, '');
+    if (!digits || seenDigits.has(digits)) continue;
+    seenDigits.add(digits);
+    normalized.push(`PA${digits}.TIF`);
+    if (normalized.length >= 2) break; // paid PA records should resolve to one PA; allow one legacy alternate only
+  }
+
   let last = null;
-  for (const input of inputs) {
+  for (const input of normalized) {
     last = await fetchPelanAkuiCandidates(input, negeri);
     if (last && last.validFile) return last;
   }
@@ -20084,6 +20217,48 @@ if (
 // =========================
 
 
+async function azobssResolveAdminResetPurchaseRecord(payload = {}) {
+  const recordId = String(payload.recordId || payload.firestoreId || payload.purchaseLogId || payload.id || "").trim();
+  if (recordId) {
+    const direct = await azobssGetPurchaseRecord(recordId);
+    if (direct && direct.record) return Object.assign({ recordId }, direct);
+  }
+  if (!initFirebaseAdmin()) throw new Error("Firebase Admin is not configured on backend. " + (firebaseAdminInitError || ""));
+  const db = firebaseAdmin.firestore();
+  const uid = String(payload.uid || "").trim();
+  const usernameKey = String(payload.usernameKey || payload.displayName || "").trim().toLowerCase();
+  const type = String(payload.productType || payload.product || "").trim().toUpperCase();
+  const code = String(payload.itemCode || payload.pa || payload.noPA || payload.stesen || payload.stationNo || "").trim().toUpperCase();
+  const negeri = String(payload.negeri || payload.state || "").trim().toUpperCase();
+  const createdAtMs = Number(payload.createdAtMs || 0) || 0;
+  if (!type || !code || (!uid && !usernameKey)) return { ref:null, record:null, recordId:"" };
+
+  let snap = null;
+  try {
+    if (uid) snap = await db.collection("purchaseLogs").where("uid", "==", uid).limit(250).get();
+    else snap = await db.collection("purchaseLogs").where("usernameKey", "==", usernameKey).limit(250).get();
+  } catch (_) {
+    snap = await db.collection("purchaseLogs").limit(2000).get();
+  }
+  const matches = [];
+  snap.forEach(doc => {
+    const row = doc.data() || {};
+    const rowUser = String(row.usernameKey || row.username || row.displayName || "").trim().toLowerCase();
+    const rowType = String(row.productType || row.product || row.type || "").trim().toUpperCase();
+    const rowCode = String(row.itemCode || row.pa || row.noPA || row.noPa || row.stesen || row.stationNo || "").trim().toUpperCase();
+    const rowNegeri = String(row.negeri || row.state || "").trim().toUpperCase();
+    const rowCreated = Number(row.createdAtMs || 0) || azobssFirestoreMs(row.createdAtClient) || azobssFirestoreMs(row.createdAt) || 0;
+    if (uid && String(row.uid || "").trim() !== uid) return;
+    if (!uid && usernameKey && rowUser !== usernameKey) return;
+    if (rowType !== type || rowCode !== code) return;
+    if (negeri && rowNegeri && rowNegeri !== negeri) return;
+    if (createdAtMs && rowCreated && Math.abs(rowCreated - createdAtMs) > 10000) return;
+    matches.push({ ref:doc.ref, record:Object.assign({ firestoreId:doc.id }, row), recordId:doc.id, rowCreated });
+  });
+  matches.sort((a,b) => Math.abs((a.rowCreated || 0) - createdAtMs) - Math.abs((b.rowCreated || 0) - createdAtMs));
+  return matches[0] || { ref:null, record:null, recordId:"" };
+}
+
 if (pathname === "/api/pa-bm-download/reset-count" && req.method === "POST") {
   if (azRateLimitOrSend(req, res, "pa-bm-download-reset", 40, 60 * 1000)) return;
   const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
@@ -20093,20 +20268,30 @@ if (pathname === "/api/pa-bm-download/reset-count" && req.method === "POST") {
 
   let body = {};
   try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
-  const recordId = String(body.recordId || parsed.query.recordId || body.firestoreId || body.id || "").trim();
-  if (!recordId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing recordId" }, null, 2), "application/json");
+  const requestedRecordId = String(body.recordId || parsed.query.recordId || body.firestoreId || body.purchaseLogId || body.id || "").trim();
+  if (!requestedRecordId && !(body.productType && body.itemCode && (body.uid || body.usernameKey))) {
+    return send(res, 400, JSON.stringify({ ok:false, error:"Missing purchase record identity." }, null, 2), "application/json");
+  }
 
   try {
-    const result = await azobssGetPurchaseRecord(recordId);
-    const ref = result.ref;
-    const record = result.record;
-    if (!record) return send(res, 404, JSON.stringify({ ok:false, error:"Purchase record not found." }, null, 2), "application/json");
+    const result = await azobssResolveAdminResetPurchaseRecord(Object.assign({}, body, { recordId:requestedRecordId }));
+    const ref = result && result.ref;
+    const record = result && result.record;
+    const recordId = String(result && result.recordId || requestedRecordId || "").trim();
+    if (!record || !ref) {
+      const nowMs = Date.now();
+      const embeddedOnly = await azobssResetEmbeddedPurchaseDownloadCounter(Object.assign({}, body, { firestoreId:requestedRecordId || body.firestoreId || "" }), adminIdentity, nowMs);
+      if (embeddedOnly && Number(embeddedOnly.updated || 0) > 0) {
+        return send(res, 200, JSON.stringify({ ok:true, recordId:requestedRecordId || "", downloadCount:0, usedCount:0, maxDownloads:AZOBSS_PA_BM_MAX_DOWNLOADS, downloadExpiresAtMs:nowMs + AZOBSS_PA_BM_VALID_MS, embeddedUpdated:embeddedOnly.updated, legacyEmbeddedOnly:true }, null, 2), "application/json");
+      }
+      return send(res, 404, JSON.stringify({ ok:false, error:"Purchase record not found." }, null, 2), "application/json");
+    }
 
     const nowMs = Date.now();
     const reset = await azobssResetPurchaseDownloadCounter(ref, record, adminIdentity, nowMs);
     const embedded = await azobssResetEmbeddedPurchaseDownloadCounter(Object.assign({}, record, { firestoreId: recordId }), adminIdentity, nowMs);
-    azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "pa_bm_download_counter_reset", "purchaseLogs", recordId, { recordId, itemCode: record.itemCode || record.stesen || record.stationNo || "", productType: record.productType || record.product || "", usernameKey: record.usernameKey || "", oldDownloadCount: azobssRecordDownloadCount(record), maxDownloads: reset.maxDownloads, embeddedUpdated: embedded && embedded.updated || 0 }, "success"), "PA/BM download reset audit log failed");
-    return send(res, 200, JSON.stringify(Object.assign({ ok:true, recordId }, reset, { embeddedUpdated: embedded && embedded.updated || 0 }), null, 2), "application/json");
+    azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "pa_bm_download_counter_reset", "purchaseLogs", recordId, { recordId, itemCode: record.itemCode || record.stesen || record.stationNo || "", productType: record.productType || record.product || "", usernameKey: record.usernameKey || "", oldDownloadCount: azobssRecordDownloadCount(record), maxDownloads: reset.maxDownloads, embeddedUpdated: embedded && embedded.updated || 0, stableLinkPreserved:true }, "success"), "PA/BM download reset audit log failed");
+    return send(res, 200, JSON.stringify(Object.assign({ ok:true, recordId, stableLinkPreserved:true }, reset, { embeddedUpdated: embedded && embedded.updated || 0 }), null, 2), "application/json");
   } catch (error) {
     console.error("PA/BM download counter reset failed:", error && (error.stack || error.message || error));
     return send(res, 500, JSON.stringify({ ok:false, error:error && error.message ? error.message : "Reset failed" }, null, 2), "application/json");
@@ -20252,20 +20437,24 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     if (!itemCode || !negeri) return azobssPaBmDownloadError(res, 400, "Invalid PA record.");
 
     const paResult = await azobssFetchPaRecordFile(record, itemCode, negeri);
-    if (!paResult || !paResult.validFile || !azobssBufferIsConvertibleImage(paResult.buffer)) {
+    const paSourceIsPdf = !!(paResult && azobssBufferIsPdf(paResult.buffer));
+    const paSourceIsImage = !!(paResult && azobssBufferIsConvertibleImage(paResult.buffer));
+    if (!paResult || !paResult.validFile || (!paSourceIsPdf && !paSourceIsImage)) {
       const fallbackUrl = azobssFirstPaFallbackUrl(record, itemCode, negeri);
       const fallbackSent = await azobssReturnBrowserFallbackDownload(req, res, ref, record, nowMs, "PA", fallbackUrl, `PA${itemCode}.TIF`);
       if (fallbackSent) return;
-      return azobssPaBmDownloadError(res, 502, "PA PDF is not ready yet. AZOBSS could not fetch the JUPEM TIF for conversion right now. Please try again in a moment. Your download quota was not used.");
+      return azobssPaBmDownloadError(res, 502, "PA file is temporarily unavailable from the source server. Please try again in a moment. Your download quota was not used.");
     }
 
     const safeName = ("PA" + itemCode).replace(/[^A-Z0-9_-]/gi, "");
-    let pdfBuffer;
-    try {
-      pdfBuffer = await convertTifBufferToPdfBuffer(paResult.buffer, safeName);
-    } catch (convertError) {
-      console.error("PA controlled PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
-      return azobssPaBmDownloadError(res, 500, "PA PDF conversion failed.");
+    let pdfBuffer = paSourceIsPdf ? paResult.buffer : null;
+    if (!pdfBuffer) {
+      try {
+        pdfBuffer = await convertTifBufferToPdfBuffer(paResult.buffer, safeName);
+      } catch (convertError) {
+        console.error("PA controlled PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
+        return azobssPaBmDownloadError(res, 500, "PA PDF conversion failed. Your download quota was not used.");
+      }
     }
     if (!azobssBufferIsPdf(pdfBuffer)) {
       return azobssPaBmDownloadError(res, 500, "PA PDF conversion produced an invalid file. Your download quota was not used.");
@@ -20275,8 +20464,10 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
 
     res.writeHead(200, azSecurityHeaders({
       "Content-Type": "application/pdf",
+      "Content-Length": String(pdfBuffer.length),
+      "Cache-Control": "private, no-store",
       "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
-      "Access-Control-Expose-Headers": "Content-Disposition"
+      "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
     }));
     res.end(pdfBuffer);
     return;
@@ -20608,29 +20799,36 @@ if (
     );
   }
 
-  const tifBuffer = paResult.buffer;
+  const sourceBuffer = paResult.buffer;
 
   const safeName =
     `PA${paCleanForFile}`.replace(/[^A-Z0-9_-]/gi, "");
 
-  let pdfBuffer;
-  try {
-    pdfBuffer = await convertTifBufferToPdfBuffer(tifBuffer, safeName);
-  } catch (convertError) {
-    console.error("PA PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
-    return send(
-      res,
-      500,
-      JSON.stringify({
-        ok: false,
-        error: "PA PDF conversion failed. Please make sure sharp and pdfkit are installed on the backend."
-      }),
-      "application/json"
-    );
+  let pdfBuffer = azobssBufferIsPdf(sourceBuffer) ? sourceBuffer : null;
+  if (!pdfBuffer) {
+    if (!azobssBufferIsConvertibleImage(sourceBuffer)) {
+      return send(res, 502, JSON.stringify({ ok:false, error:"PA source returned an unsupported file format." }), "application/json");
+    }
+    try {
+      pdfBuffer = await convertTifBufferToPdfBuffer(sourceBuffer, safeName);
+    } catch (convertError) {
+      console.error("PA PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
+      return send(
+        res,
+        500,
+        JSON.stringify({
+          ok: false,
+          error: "PA PDF conversion failed. Please make sure sharp and pdfkit are installed on the backend."
+        }),
+        "application/json"
+      );
+    }
   }
 
   res.writeHead(200, azSecurityHeaders({
     "Content-Type": "application/pdf",
+    "Content-Length": String(pdfBuffer.length),
+    "Cache-Control": "private, no-store",
     "Content-Disposition":
       `attachment; filename="${safeName}.pdf"`
   }));
