@@ -4635,6 +4635,62 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   return false;
 }
 
+
+// AZOBSS v1147: trigger attachment downloads without navigating the PA/BM tab
+// to the Render backend. If Render ever returns its waking page unexpectedly,
+// it stays inside an invisible iframe instead of replacing www.azobss.com/PA-BM/.
+function azobssTriggerHiddenAttachmentDownload(url){
+  const targetUrl = String(url || '').trim();
+  if(!targetUrl) return false;
+  try{
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden','true');
+    frame.tabIndex = -1;
+    frame.style.position = 'fixed';
+    frame.style.width = '1px';
+    frame.style.height = '1px';
+    frame.style.opacity = '0';
+    frame.style.pointerEvents = 'none';
+    frame.style.border = '0';
+    frame.style.left = '-10000px';
+    frame.style.top = '-10000px';
+    frame.src = 'about:blank';
+    document.body.appendChild(frame);
+    // Give the iframe one paint before assigning the cross-origin attachment URL.
+    requestAnimationFrame(function(){
+      try{ frame.src = targetUrl; }catch(_e){}
+    });
+    // Keep it around long enough for slow/cold-start attachment responses.
+    window.setTimeout(function(){ try{ frame.remove(); }catch(_e){} }, 180000);
+    return true;
+  }catch(_e){
+    try{
+      const a = document.createElement('a');
+      a.href = targetUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return true;
+    }catch(_err){ return false; }
+  }
+}
+
+
+function azobssOpenDownloadFallbackWithoutLeavingPage(url){
+  const value = String(url || '').trim();
+  if(!value) return false;
+  try{
+    const parsed = new URL(value, window.location.href);
+    if(/(^|\\.)azobss-backend\\.onrender\\.com$/i.test(parsed.hostname)){
+      return azobssTriggerHiddenAttachmentDownload(parsed.href);
+    }
+  }catch(_e){}
+  try{ window.location.href = value; return true; }catch(_e){ return false; }
+}
+
 async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
   try{
     const ev = clickEvent || (window.event || null);
@@ -4759,15 +4815,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       }
       const nativeUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'native=1&_=' + Date.now();
       downloadTriggered = true;
-      try{
-        window.location.assign(nativeUrl);
-      }catch(nativeError){
-        const nativeAnchor = document.createElement('a');
-        nativeAnchor.href = nativeUrl;
-        nativeAnchor.rel = 'noopener';
-        document.body.appendChild(nativeAnchor);
-        nativeAnchor.click();
-        nativeAnchor.remove();
+      if(!azobssTriggerHiddenAttachmentDownload(nativeUrl)){
+        throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
       }
       try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download'); }catch(e){}
       setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed'); }catch(e){} }, 1800);
@@ -4816,14 +4865,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         downloadOwner.label = 'Muat ZIP...';
         if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
         const zipUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'download=1&_=' + Date.now();
-        try{ window.location.href = zipUrl; }
-        catch(e){
-          const a = document.createElement('a');
-          a.href = zipUrl;
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+        if(!azobssTriggerHiddenAttachmentDownload(zipUrl)){
+          throw new Error('Browser gagal memulakan muat turun ZIP tanpa meninggalkan halaman AZOBSS.');
         }
         try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download'); }catch(e){}
         setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed'); }catch(e){} }, 1800);
@@ -4875,7 +4918,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       }
       if(openUrl){
         try{ if(link){ if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; } }catch(e){}
-        try{ window.location.href = openUrl; }
+        try{ azobssOpenDownloadFallbackWithoutLeavingPage(openUrl); }
         catch(e){
           const a = document.createElement('a');
           a.href = openUrl;
@@ -4886,7 +4929,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           a.remove();
         }
       }else{
-        try{ window.location.href = directUrl; }catch(e){}
+        try{ azobssOpenDownloadFallbackWithoutLeavingPage(directUrl); }catch(e){}
       }
       try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
       setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
@@ -4903,7 +4946,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       let data = null;
       try{ data = await response.json(); }catch(e){ data = null; }
       if(data && data.openUrl){
-        try{ if(link && !azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; window.location.href = data.openUrl; }
+        try{ if(link && !azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; azobssOpenDownloadFallbackWithoutLeavingPage(data.openUrl); }
         catch(e){
           const a = document.createElement('a');
           a.href = data.openUrl;
