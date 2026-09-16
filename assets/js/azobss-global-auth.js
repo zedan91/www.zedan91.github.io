@@ -4516,28 +4516,29 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
 // The /health request is quota-free. Only after a valid AZOBSS JSON health response
 // is received do we continue to the real paid-download endpoint.
 function azobssEnsureDownloadWakeOverlay(){
-  let overlay = document.getElementById('azobssDownloadWakeOverlayV1140');
+  let overlay = document.getElementById('azobssDownloadWakeOverlayV1141');
   if(overlay) return overlay;
   const style = document.createElement('style');
-  style.id = 'azobssDownloadWakeStyleV1140';
+  style.id = 'azobssDownloadWakeStyleV1141';
   style.textContent = `
-    #azobssDownloadWakeOverlayV1140{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(2,8,23,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
-    #azobssDownloadWakeOverlayV1140.is-visible{display:flex}
-    #azobssDownloadWakeOverlayV1140 .az-dl-wake-card{width:min(420px,calc(100vw - 34px));box-sizing:border-box;border:1px solid rgba(34,211,238,.36);border-radius:18px;background:#0d1728;box-shadow:0 24px 80px rgba(0,0,0,.5);padding:25px 24px 22px;text-align:center;color:#f8fafc;font-family:inherit}
-    #azobssDownloadWakeOverlayV1140 .az-dl-wake-spinner{width:42px;height:42px;margin:0 auto 16px;border:4px solid rgba(148,163,184,.28);border-top-color:#22d3ee;border-right-color:#22c55e;border-radius:50%;animation:azobssDownloadWakeSpin1140 .72s linear infinite}
-    #azobssDownloadWakeOverlayV1140 .az-dl-wake-title{font-size:17px;font-weight:800;line-height:1.3;margin-bottom:7px}
-    #azobssDownloadWakeOverlayV1140 .az-dl-wake-message{font-size:13px;line-height:1.55;color:#cbd5e1}
-    #azobssDownloadWakeOverlayV1140 .az-dl-wake-time{margin-top:10px;font-size:12px;font-weight:700;color:#67e8f9;min-height:18px}
-    @keyframes azobssDownloadWakeSpin1140{to{transform:rotate(360deg)}}
-    @media(prefers-reduced-motion:reduce){#azobssDownloadWakeOverlayV1140 .az-dl-wake-spinner{animation-duration:1.5s}}
+    #azobssDownloadWakeOverlayV1141{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(2,8,23,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    #azobssDownloadWakeOverlayV1141.is-visible{display:flex}
+    #azobssDownloadWakeOverlayV1141 .az-dl-wake-card{width:min(420px,calc(100vw - 34px));box-sizing:border-box;border:1px solid rgba(34,211,238,.36);border-radius:18px;background:#0d1728;box-shadow:0 24px 80px rgba(0,0,0,.5);padding:25px 24px 22px;text-align:center;color:#f8fafc;font-family:inherit}
+    #azobssDownloadWakeOverlayV1141 .az-dl-wake-spinner{width:42px;height:42px;margin:0 auto 16px;border:4px solid rgba(148,163,184,.28);border-top-color:#22d3ee;border-right-color:#22c55e;border-radius:50%;animation:azobssDownloadWakeSpin1141 .72s linear infinite}
+    #azobssDownloadWakeOverlayV1141 .az-dl-wake-title{font-size:17px;font-weight:800;line-height:1.3;margin-bottom:7px}
+    #azobssDownloadWakeOverlayV1141 .az-dl-wake-message{font-size:13px;line-height:1.55;color:#cbd5e1}
+    #azobssDownloadWakeOverlayV1141 .az-dl-wake-time{margin-top:10px;font-size:12px;font-weight:700;color:#67e8f9;min-height:18px}
+    .azobss-download-button-spinning::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:azobssDownloadWakeSpin1141 .65s linear infinite}
+    @keyframes azobssDownloadWakeSpin1141{to{transform:rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){#azobssDownloadWakeOverlayV1141 .az-dl-wake-spinner{animation-duration:1.5s}}
   `;
   if(!document.getElementById(style.id)) document.head.appendChild(style);
   overlay = document.createElement('div');
-  overlay.id = 'azobssDownloadWakeOverlayV1140';
+  overlay.id = 'azobssDownloadWakeOverlayV1141';
   overlay.setAttribute('role','status');
   overlay.setAttribute('aria-live','polite');
   overlay.setAttribute('aria-busy','true');
-  overlay.innerHTML = '<div class="az-dl-wake-card"><div class="az-dl-wake-spinner" aria-hidden="true"></div><div class="az-dl-wake-title">Sedang menyediakan muat turun...</div><div class="az-dl-wake-message">Server AZOBSS sedang disediakan. Sila tunggu dan jangan tutup halaman ini.</div><div class="az-dl-wake-time"></div></div>';
+  overlay.innerHTML = '<div class="az-dl-wake-card"><div class="az-dl-wake-spinner" aria-hidden="true"></div><div class="az-dl-wake-title">Menyediakan muat turun...</div><div class="az-dl-wake-message">Memeriksa server AZOBSS. Sila tunggu sebentar.</div><div class="az-dl-wake-time"></div></div>';
   document.body.appendChild(overlay);
   return overlay;
 }
@@ -4553,9 +4554,12 @@ function azobssSetDownloadWakeOverlay(visible, elapsedSeconds, ready){
       if(message) message.textContent = 'Memulakan muat turun...';
       if(time) time.textContent = '';
     }else{
-      if(title) title.textContent = 'Sedang menyediakan muat turun...';
-      if(message) message.textContent = 'Server AZOBSS sedang disediakan. Sila tunggu dan jangan tutup halaman ini.';
-      if(time) time.textContent = Number.isFinite(Number(elapsedSeconds)) && Number(elapsedSeconds) > 0 ? ('Menunggu ' + Math.floor(Number(elapsedSeconds)) + ' saat...') : '';
+      const elapsed = Number.isFinite(Number(elapsedSeconds)) ? Math.max(0, Math.floor(Number(elapsedSeconds))) : 0;
+      if(title) title.textContent = elapsed >= 1 ? 'Server sedang dibangunkan...' : 'Menyediakan muat turun...';
+      if(message) message.textContent = elapsed >= 1
+        ? 'Server AZOBSS sedang bangun daripada mod rehat. Sila tunggu dan jangan tutup halaman ini.'
+        : 'Memeriksa server AZOBSS. Sila tunggu sebentar.';
+      if(time) time.textContent = elapsed > 0 ? ('Menunggu ' + elapsed + ' saat...') : '';
     }
     overlay.classList.toggle('is-visible', !!visible);
   }catch(_e){}
@@ -4565,18 +4569,17 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   let needsBackend = false;
   try{
     const parsed = new URL(String(downloadUrl || ''), window.location.href);
-    needsBackend = /(^|\\.)azobss-backend\\.onrender\\.com$/i.test(parsed.hostname);
+    needsBackend = /(^|\.)azobss-backend\.onrender\.com$/i.test(parsed.hostname);
   }catch(_e){}
   if(!needsBackend) return true;
 
   const healthUrl = 'https://azobss-backend.onrender.com/health';
   const startedAt = Date.now();
   const timeoutMs = 95000;
-  let overlayShown = false;
-  const delayedOverlay = window.setTimeout(function(){
-    overlayShown = true;
-    azobssSetDownloadWakeOverlay(true, Math.floor((Date.now()-startedAt)/1000), false);
-  }, 350);
+  const minimumVisibleMs = 650;
+
+  // v1141: immediate feedback on every controlled download, including Test ↓.
+  azobssSetDownloadWakeOverlay(true, 0, false);
 
   try{
     while((Date.now() - startedAt) < timeoutMs){
@@ -4584,10 +4587,7 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
       const abortTimer = controller ? window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, 15000) : 0;
       try{
         const response = await fetch(healthUrl + '?downloadWake=1&_=' + Date.now(), {
-          method:'GET',
-          cache:'no-store',
-          credentials:'omit',
-          headers:{ 'Accept':'application/json' },
+          method:'GET', cache:'no-store', credentials:'omit', headers:{ 'Accept':'application/json' },
           signal: controller ? controller.signal : undefined
         });
         if(abortTimer) window.clearTimeout(abortTimer);
@@ -4597,23 +4597,20 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
           try{ data = await response.json(); }catch(_e){ data = null; }
         }
         if(response && response.ok && data && data.ok === true){
-          window.clearTimeout(delayedOverlay);
-          if(overlayShown || document.getElementById('azobssDownloadWakeOverlayV1140')?.classList.contains('is-visible')){
-            azobssSetDownloadWakeOverlay(true, 0, true);
-            await new Promise(function(resolve){ window.setTimeout(resolve, 220); });
-          }
+          azobssSetDownloadWakeOverlay(true, 0, true);
+          const elapsed = Date.now() - startedAt;
+          const remain = Math.max(220, minimumVisibleMs - elapsed);
+          await new Promise(function(resolve){ window.setTimeout(resolve, remain); });
           return true;
         }
       }catch(_e){
         if(abortTimer) window.clearTimeout(abortTimer);
       }
-      overlayShown = true;
       azobssSetDownloadWakeOverlay(true, Math.floor((Date.now()-startedAt)/1000), false);
       await new Promise(function(resolve){ window.setTimeout(resolve, 1800); });
     }
     return false;
   }finally{
-    window.clearTimeout(delayedOverlay);
     azobssSetDownloadWakeOverlay(false, 0, false);
   }
 }
@@ -4704,6 +4701,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   try{
     if(link){
       link.dataset.busy = '1';
+      link.classList.add('azobss-download-button-spinning');
       if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       link.style.pointerEvents = 'none';
       link.setAttribute('aria-busy', 'true');
@@ -4954,6 +4952,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     }
     if(link){
       link.dataset.busy = '';
+      link.classList.remove('azobss-download-button-spinning');
       link.textContent = defaultLabel;
       link.style.pointerEvents = '';
       link.removeAttribute('aria-busy');
