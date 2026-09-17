@@ -2925,6 +2925,11 @@ function azobssEnsureDownloadButtonSpinnerStyle(){
         pointer-events:none!important;
         vertical-align:middle!important;
       }
+      /* v1149: v949 used to hide every busy child except .az-lot-busy-spinner-v949.
+         Keep the v1146 real DOM spinner visible for generic PA/BM downloads too. */
+      #userPaPurchaseList .az-lot-format-download[data-busy="1"] > .azobss-btn-spinner-v1146{
+        display:inline-block!important;visibility:visible!important;opacity:1!important;
+      }
       body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-download-btn .azobss-btn-spinner-v1146{
         width:12px!important;height:12px!important;min-width:12px!important;min-height:12px!important;
       }
@@ -3443,7 +3448,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 if(!azobssPurchaseUiOwnedByGlobalAuth()) // v1144: global-auth is the single download owner. live-sync is fallback only.
 if(typeof window.azobssClientControlledDownload !== 'function'){
   window.azobssClientControlledDownload = azobssClientControlledDownload;
-  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1148';
+  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1149';
 }
 
 (function(){
