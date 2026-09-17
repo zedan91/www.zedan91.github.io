@@ -4595,6 +4595,29 @@ async function azobssForceDownloadBusyPaint(){
   });
 }
 
+async function azobssWaitForDownloadHandoffPaint(){
+  // v1150: after a Blob download is clicked, keep the spinner alive for two browser
+  // paint frames plus a short handoff window. Browsers do not expose a reliable API
+  // that tells a webpage when the Downloads shelf/filesystem entry becomes visible,
+  // but at this point the full file is already in memory and the save click has fired.
+  await new Promise(function(resolve){
+    let finished = false;
+    const done = function(){
+      if(finished) return;
+      finished = true;
+      window.setTimeout(resolve, 350);
+    };
+    try{
+      if(typeof window.requestAnimationFrame === 'function'){
+        window.requestAnimationFrame(function(){ window.requestAnimationFrame(done); });
+        window.setTimeout(done, 180);
+      }else{
+        done();
+      }
+    }catch(_e){ done(); }
+  });
+}
+
 async function azobssWaitForDownloadBackendReady(downloadUrl){
   let needsBackend = false;
   try{
@@ -4852,25 +4875,18 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       return false;
     }
 
-    // v1136: PA files are normal attachment responses. Let the browser download
-    // the attachment natively instead of buffering the whole PDF into a JS Blob.
-    // This is substantially more reliable on Android/Chrome/Firefox and avoids a
-    // successful backend response appearing as "nothing happened" to the customer.
+    // v1150: keep the PA spinner active until the actual PDF bytes have arrived.
+    // The old hidden-iframe/native branch returned immediately after assigning the URL,
+    // so the spinner could stop while Render/JUPEM was still generating or transferring
+    // the file. PA now falls through to the fetch -> Blob -> browser-download handoff
+    // pipeline below. That keeps the clicked button busy for the full network transfer.
     if(recordType === 'PA' && !isLotDownload){
       downloadOwner.phase = 'downloading';
-      downloadOwner.label = 'Mula Download...';
+      downloadOwner.label = 'Downloading...';
       if(link){
         if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       }
-      const nativeUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'native=1&_=' + Date.now();
-      if(!azobssTriggerHiddenAttachmentDownload(nativeUrl)){
-        throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
-      }
-      downloadTriggered = true;
-      try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download'); }catch(e){}
-      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed'); }catch(e){} }, 1800);
-      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('PA native attachment download delayed 2'); }catch(e){} }, 4500);
-      return false;
+      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
     }
 
     if(isLotDownload){
@@ -5046,6 +5062,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     a.click();
     downloadTriggered = true;
     a.remove();
+    // v1150: do not clear the button immediately after a.click(). The file bytes are
+    // already fully received here; wait for the browser download handoff to paint first.
+    await azobssWaitForDownloadHandoffPaint();
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 15000);
 
     try{ azobssSchedulePurchaseRecordsRefresh('download success'); }catch(e){}
@@ -5083,7 +5102,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
-window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1149';
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1150';
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
