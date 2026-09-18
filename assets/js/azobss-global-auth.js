@@ -4629,12 +4629,14 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   // v1144 verified against deploy-server.js: backend health endpoint is /health.
   const healthUrl = 'https://azobss-backend.onrender.com/health';
   const startedAt = Date.now();
-  const timeoutMs = 70000;
+  // v1151: Render Free cold-start/restart can exceed the old 70 s gate.
+  // Keep waiting automatically for up to 4 minutes instead of showing a false failure.
+  const timeoutMs = 240000;
   const minimumSpinnerMs = 0;
 
   while((Date.now() - startedAt) < timeoutMs){
     const remaining = timeoutMs - (Date.now() - startedAt);
-    const requestTimeout = Math.max(2500, Math.min(20000, remaining));
+    const requestTimeout = Math.max(2500, Math.min(30000, remaining));
     const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     const abortTimer = controller ? window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, requestTimeout) : 0;
     try{
@@ -5102,7 +5104,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
-window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1150';
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1151';
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
