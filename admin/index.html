@@ -2144,6 +2144,31 @@ body[data-dashboard-page="admin"] .topbar{
   box-shadow:0 10px 24px rgba(0,0,0,.30),0 0 16px rgba(250,204,21,.32)!important;
 }
 </style>
+
+<style id="az-admin-consolidated-nav-1156">
+/* AZOBSS 1156: consolidated admin navigation with parent sub-tabs */
+.az-admin-subtabs{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  margin:2px 0 10px;padding:6px;
+  border:1px solid rgba(148,163,184,.16);
+  background:rgba(15,23,42,.72);border-radius:12px;
+  width:max-content;max-width:100%;
+}
+.az-admin-subtabs button{
+  appearance:none;border:1px solid transparent;background:transparent;color:#b8c7dc;
+  border-radius:9px;padding:6px 10px;font:inherit;font-size:12px;font-weight:850;cursor:pointer;
+  white-space:nowrap;transition:.15s ease;
+}
+.az-admin-subtabs button:hover{background:rgba(30,41,59,.9);color:#fff;border-color:rgba(148,163,184,.18)}
+.az-admin-subtabs button.active{
+  color:#fff;background:linear-gradient(135deg,rgba(34,197,94,.25),rgba(59,130,246,.16));
+  border-color:rgba(34,197,94,.52);box-shadow:0 0 0 1px rgba(34,197,94,.05) inset;
+}
+@media(max-width:640px){
+  .az-admin-subtabs{width:100%;box-sizing:border-box;gap:5px;padding:5px}
+  .az-admin-subtabs button{flex:1 1 auto;text-align:center;padding:7px 8px;font-size:11.5px}
+}
+</style>
 </head>
 <body data-dashboard-page="admin">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -2528,34 +2553,26 @@ body[data-dashboard-page="admin"] .topbar{
     <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
     <nav class="nav">
       <div class="nav-group">Main</div>
-      <button data-tab="salesreceipts" class="active">🧾 Sales &amp; Receipts</button>
-      <button data-tab="overview">📊 Overview</button>
+      <button data-tab="overview" class="active">📊 Dashboard</button>
       <button data-tab="users">👥 Users</button>
-      <button data-tab="online">🟢 Online Users</button>
-      <button data-tab="activity">📈 Activity</button>
-      <div class="nav-group">Support & Sales</div>
+      <button data-tab="salesreceipts">🧾 Sales &amp; Receipts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
+      <div class="nav-group">Support &amp; Sales</div>
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="servicebookings">🛠️ Service Bookings <span id="serviceBookingNavBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="notifications">🔔 Notifications</button>
-      <button data-tab="adminalerts">🔔 Payment Alerts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
-      <button data-tab="payments">📊 Sales Overview</button>
-      <button data-tab="purchases">🧾 Payment Logs</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
       <button data-tab="membership">⭐ Membership</button>
       <button data-tab="softwarekeys">🗝️ Software Key</button>
       <a class="home-link" href="/admin/AZOBSSTV/">📺 AZOBSSTV</a>
       <div class="nav-group">System</div>
-      <button data-tab="auditlogs">🧾 Audit Logs</button>
+      <button data-tab="activity">📚 Logs &amp; Activity</button>
       <button data-tab="exports">📦 Backup / Export</button>
       <button data-tab="systemhealth">🩺 System Health</button>
-      <button data-tab="sitereport">📋 System Report</button>
       <button data-tab="maintenance">🧰 Maintenance</button>
-      <button data-tab="lucky">🎁 Lucky Draw</button>
-      <button data-tab="staffroles">🧑‍💼 Staff Roles</button>
       <button data-tab="settings"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
     </nav>
-    <div class="side-footer">Sales &amp; Receipts dibuka dahulu. Overview hanya membaca data apabila butang Load Overview Data ditekan.</div>
+    <div class="side-footer">Dashboard dibuka dahulu. Menu berkaitan telah digabungkan sebagai sub-tab supaya sidebar lebih ringkas.</div>
   </aside>
 
   <main class="main">
@@ -2569,15 +2586,15 @@ body[data-dashboard-page="admin"] .topbar{
 
     <div id="adminQueryAlert" class="az-admin-query-alert" aria-live="polite"></div>
 
-    <section id="overview" class="section">
+    <section id="overview" class="section active">
       <div class="az-admin-hero">
-        <h2>📊 Overview Admin</h2>
+        <h2>📊 Dashboard</h2>
         <p>Semak keadaan website dengan cepat. Nombor utama dikumpulkan mengikut pengguna, aktiviti, mesej, notifikasi dan pembelian supaya lebih mudah faham.</p>
         <div class="az-admin-hero-actions">
-          <button class="btn green" id="loadOverviewData" type="button">📥 Load Overview Data</button>
+          <button class="btn green" id="loadOverviewData" type="button">📥 Load Dashboard Data</button>
           <button class="btn gray" data-tab="systemhealth">🩺 Check System</button>
-          <button class="btn gray" data-tab="sitereport">📋 Export Report</button>
-          <button class="btn gray" data-tab="payments">📊 Sales Overview</button>
+          <button class="btn gray" data-tab="sitereport">📋 Full Website Report</button>
+          <button class="btn gray" data-tab="payments">📊 Sales Analytics</button>
           <button class="btn gray" data-tab="salesreceipts">🧾 Sales &amp; Receipts</button>
           <button class="btn gray" data-tab="support">💬 Support</button>
           <button class="btn gray" data-tab="activity">📈 Activity</button>
@@ -2585,12 +2602,12 @@ body[data-dashboard-page="admin"] .topbar{
       </div>
 
       <div class="card" id="overviewManualLoadCard">
-        <div id="overviewLoadNotice" class="tabs-note">Overview data is not loaded. Press <b>Load Overview Data</b> only when you need the latest summary.</div>
+        <div id="overviewLoadNotice" class="tabs-note">Dashboard data is not loaded. Press <b>Load Dashboard Data</b> only when you need the latest summary.</div>
       </div>
 
       <div class="az-friendly-strip">
         <div class="card az-simple-card"><b>👥 Users</b><span>Pantau user berdaftar, online dan login hari ini.</span></div>
-        <div class="card az-simple-card"><b>📊 Sales Overview</b><span>Semak total jualan, pending, paid dan jumlah rekod pembelian.</span></div>
+        <div class="card az-simple-card"><b>📊 Sales Analytics</b><span>Semak total jualan, pending, paid dan jumlah rekod pembelian.</span></div>
         <div class="card az-simple-card"><b>🧾 Sales &amp; Receipts</b><span>Gabungkan jualan fizikal, software, servis dan rekod website dengan kiraan untung.</span></div>
         <div class="card az-simple-card"><b>💬 Support</b><span>Lihat mesej user dan balas dari Support Inbox.</span></div>
         <div class="card az-simple-card"><b>🩺 System</b><span>Pastikan backend, Firebase dan ENV berada dalam keadaan OK.</span></div>
@@ -2648,6 +2665,12 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="users" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="users">
+        <button type="button" data-tab="users">All Users</button>
+        <button type="button" data-tab="online">Online</button>
+        <button type="button" data-tab="staffroles">Staff Permissions</button>
+      </div>
+
       <h2>👥 Registered User Records</h2>
       <p class="az-section-help">Cari, semak Account Role, status Membership, edit akses PA/BM dan urus akaun user berdaftar.</p>
       <div class="card" id="registeredUsersAdminCard">
@@ -2678,6 +2701,12 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="online" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="users">
+        <button type="button" data-tab="users">All Users</button>
+        <button type="button" data-tab="online">Online</button>
+        <button type="button" data-tab="staffroles">Staff Permissions</button>
+      </div>
+
       <h2>🟢 Online Logged-In Users <small style="font-size:12px;color:#94a3b8">(same as PA/BM)</small></h2>
       <p class="az-section-help">Pantau user yang sedang aktif dan masa terakhir mereka online.</p>
       <div class="toolbar"><button class="btn" id="refreshOnline">Refresh Online Users</button></div>
@@ -2685,7 +2714,12 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="activity" class="section">
-      <h2>📈 Activity</h2>
+      <div class="az-admin-subtabs" data-admin-subtabs="logs">
+        <button type="button" data-tab="activity">User Activity</button>
+        <button type="button" data-tab="auditlogs">Admin Audit Logs</button>
+      </div>
+
+      <h2>📚 Logs &amp; Activity</h2>
       <p class="az-section-help">Rekod login, guest visit dan aktiviti penting untuk semakan admin.</p>
       <div class="card activity-panel">
         <div class="az-activity-toolbar">
@@ -2857,6 +2891,13 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="adminalerts" class="section az-payment-alerts-section">
+      <div class="az-admin-subtabs" data-admin-subtabs="sales">
+        <button type="button" data-tab="salesreceipts">Sales Records</button>
+        <button type="button" data-tab="payments">Analytics</button>
+        <button type="button" data-tab="purchases">Payment Logs</button>
+        <button type="button" data-tab="adminalerts">Payment Alerts</button>
+      </div>
+
       <div class="az-payment-alerts-heading">
         <div>
           <h2>🔔 Payment Alerts</h2>
@@ -2909,7 +2950,14 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
 
-    <section id="salesreceipts" class="section active">
+    <section id="salesreceipts" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="sales">
+        <button type="button" data-tab="salesreceipts">Sales Records</button>
+        <button type="button" data-tab="payments">Analytics</button>
+        <button type="button" data-tab="purchases">Payment Logs</button>
+        <button type="button" data-tab="adminalerts">Payment Alerts</button>
+      </div>
+
       <h2>🧾 Sales &amp; Receipts</h2>
       <p class="az-section-help">Satu tempat untuk rekod jualan barang fizikal, software, CAD, PA/BM dan servis. Rekod Pending berfungsi sebagai Invoice, manakala rekod Paid bertukar menjadi Receipt dan terus masuk dalam kiraan jualan serta keuntungan.</p>
 
@@ -3062,6 +3110,13 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="purchases" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="sales">
+        <button type="button" data-tab="salesreceipts">Sales Records</button>
+        <button type="button" data-tab="payments">Analytics</button>
+        <button type="button" data-tab="purchases">Payment Logs</button>
+        <button type="button" data-tab="adminalerts">Payment Alerts</button>
+      </div>
+
       <h2>🧾 Payment Logs / Download Control</h2>
       <p class="az-section-help">Senarai penuh rekod bayaran PA/BM, Software dan CAD Tools untuk semakan detail, carian, filter dan reset had download jika perlu.</p>
       <p class="tabs-note">Tab ini untuk kerja admin/debug. Ringkasan jualan utama berada di Sales Overview.</p>
@@ -3114,9 +3169,16 @@ body[data-dashboard-page="admin"] .topbar{
 
 
     <section id="payments" class="section">
-      <h2>📊 Sales Overview</h2>
+      <div class="az-admin-subtabs" data-admin-subtabs="sales">
+        <button type="button" data-tab="salesreceipts">Sales Records</button>
+        <button type="button" data-tab="payments">Analytics</button>
+        <button type="button" data-tab="purchases">Payment Logs</button>
+        <button type="button" data-tab="adminalerts">Payment Alerts</button>
+      </div>
+
+      <h2>📊 Sales Analytics</h2>
       <p class="az-section-help">Ringkasan jualan PA/BM, Software dan CAD Tools mengikut kategori dan status.</p>
-      <p class="tabs-note">Overview untuk pantauan cepat. Untuk carian penuh, buka Payment Logs / Download Control.</p>
+      <p class="tabs-note">Analytics untuk pantauan jualan. Untuk carian penuh, buka Payment Logs / Download Control.</p>
 
       <div class="grid">
         <div class="card"><div class="stat-label">PA/BM Paid RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
@@ -3205,6 +3267,12 @@ body[data-dashboard-page="admin"] .topbar{
 
 
     <section id="systemhealth" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="system">
+        <button type="button" data-tab="systemhealth">Health</button>
+        <button type="button" data-tab="frontendcheck">Frontend Check</button>
+        <button type="button" data-tab="sitereport">Full Website Report</button>
+      </div>
+
       <h2>🩺 System Health</h2>
       <p class="az-section-help">Checklist mudah untuk pastikan backend, Firebase, ENV dan collection penting dalam keadaan OK.</p>
       <div class="card">
@@ -3229,6 +3297,17 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card"><h2>Firestore Collections</h2><div id="systemHealthCollections" class="list"></div></div>
         <div class="card"><h2>Local Fallback Files</h2><div id="systemHealthFiles" class="list"></div></div>
       </div>
+    </section>
+
+
+    <section id="frontendcheck" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="system">
+        <button type="button" data-tab="systemhealth">Health</button>
+        <button type="button" data-tab="frontendcheck">Frontend Check</button>
+        <button type="button" data-tab="sitereport">Full Website Report</button>
+      </div>
+      <h2>🖥️ Frontend Check</h2>
+      <p class="az-section-help">Semak integrasi Admin Dashboard, auth, Firestore dan fungsi frontend penting selepas deploy.</p>
       <div class="card" id="adminFrontendDiagnosticsCard">
         <h2>Admin Dashboard Frontend Check</h2>
         <p class="tabs-note">Run this after deploy to confirm admin auth, saved ADMIN_KEY, backend health, Firestore access, required sections and old broken functions.</p>
@@ -3242,9 +3321,14 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
 
-
     <section id="sitereport" class="section">
-      <h2>📋 Website Health Report / Export</h2>
+      <div class="az-admin-subtabs" data-admin-subtabs="system">
+        <button type="button" data-tab="systemhealth">Health</button>
+        <button type="button" data-tab="frontendcheck">Frontend Check</button>
+        <button type="button" data-tab="sitereport">Full Website Report</button>
+      </div>
+
+      <h2>📋 Full Website Report</h2>
       <p class="az-section-help">Satu butang untuk semak keseluruhan website atau modul penting, kemudian copy/export report untuk dihantar semula ke ChatGPT tanpa perlu screenshot banyak.</p>
       <div class="card">
         <h2>Run Full Website Check</h2>
@@ -3334,14 +3418,6 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="split">
         <div class="card"><h2>Scan Samples</h2><div id="maintenanceSampleList" class="list"></div></div>
         <div class="card"><h2>Warnings</h2><div id="maintenanceWarningList" class="list"></div></div>
-      </div>
-    </section>
-
-    <section id="lucky" class="section">
-      <h2>🎁 Lucky Draw</h2>
-      <div class="card">
-        <p class="tabs-note">Lucky Draw admin controls remain in the existing Lucky Draw page for now.</p>
-        <a class="btn green" href="/lucky-draw/">Open Lucky Draw Admin</a>
       </div>
     </section>
 
@@ -3529,6 +3605,11 @@ body[data-dashboard-page="admin"] .topbar{
 
 
     <section id="auditlogs" class="section">
+      <div class="az-admin-subtabs" data-admin-subtabs="logs">
+        <button type="button" data-tab="activity">User Activity</button>
+        <button type="button" data-tab="auditlogs">Admin Audit Logs</button>
+      </div>
+
       <h2>🧾 Admin Audit Logs</h2>
       <p class="az-section-help">Log tindakan admin dan backend untuk semakan keselamatan.</p>
       <p class="tabs-note">Backend-protected admin actions and important dashboard changes. Sensitive values such as token, secret, password and full email are masked.</p>
@@ -3588,7 +3669,13 @@ body[data-dashboard-page="admin"] .topbar{
 
 
     <section id="staffroles" class="section">
-      <h2>🧑‍💼 Staff / Manager Roles</h2>
+      <div class="az-admin-subtabs" data-admin-subtabs="users">
+        <button type="button" data-tab="users">All Users</button>
+        <button type="button" data-tab="online">Online</button>
+        <button type="button" data-tab="staffroles">Staff Permissions</button>
+      </div>
+
+      <h2>🧑‍💼 Staff Permissions</h2>
       <p class="tabs-note">Set role dan permission staff. Staff boleh akses /staff/ sahaja, bukan admin penuh.</p>
       <div class="card">
         <div class="toolbar">
@@ -6816,6 +6903,7 @@ async function initSection(id){
   if(id==='auditlogs')return loadAdminAuditLogs();
   if(id==='exports'){ const n=$('#adminExportNotice'); if(n) n.textContent='Choose a report, then download. All export requests are recorded in Audit Logs.'; return; }
   if(id==='systemhealth')return loadSystemHealth();
+  if(id==='frontendcheck')return;
   if(id==='sitereport')return azAdminInitSiteReport();
   if(id==='maintenance')return loadMaintenanceScan();
   if(id==='staffroles')return loadStaffRoles();
@@ -6831,7 +6919,23 @@ document.addEventListener('click',async e=>{
     return;
   }
   const tab=e.target.closest('[data-tab]');
-  if(tab){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('active'));tab.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('#'+tab.dataset.tab).classList.add('active');await initSection(tab.dataset.tab);return;}
+  if(tab){
+    const id=String(tab.dataset.tab||'');
+    const parentMap={
+      salesreceipts:'salesreceipts',payments:'salesreceipts',purchases:'salesreceipts',adminalerts:'salesreceipts',
+      users:'users',online:'users',staffroles:'users',
+      activity:'activity',auditlogs:'activity',
+      systemhealth:'systemhealth',frontendcheck:'systemhealth',sitereport:'systemhealth'
+    };
+    const parent=parentMap[id]||id;
+    document.querySelectorAll('.sidebar .nav [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===parent));
+    document.querySelectorAll('.az-admin-subtabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+    document.querySelectorAll('.section').forEach(sec=>sec.classList.remove('active'));
+    const section=$('#'+id);
+    if(section)section.classList.add('active');
+    await initSection(id);
+    return;
+  }
   const overviewLoadButton=e.target.closest('#loadOverviewData');
   if(overviewLoadButton){
     if(overviewLoadButton.disabled)return;
@@ -6847,7 +6951,7 @@ document.addEventListener('click',async e=>{
       toast('Overview load failed. Check Firestore quota or backend.');
     }finally{
       overviewLoadButton.disabled=false;
-      overviewLoadButton.textContent=oldText||'📥 Load Overview Data';
+      overviewLoadButton.textContent=oldText||'📥 Load Dashboard Data';
     }
     return;
   }
@@ -7043,7 +7147,7 @@ onAuthStateChanged(auth, async user => {
     $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
     $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
     azAdminPrepareOverviewManualMode();
-    await initSection('salesreceipts');
+    await initSection('overview');
   }catch(e){
     azAdminAuthResolved = true;
     clearTimeout(azAdminAuthWatchdog);
