@@ -13419,6 +13419,19 @@ async function azobssWaitForLotJobAndCache(record, type) {
     throw new Error("Maklumat ID atau negeri Lot Kadaster tidak lengkap.");
   }
 
+  // v1153: CAD conversion must reuse the same direct ZIP recovery path as the ZIP button.
+  // A JUPEM GP job can already be purged/Deleted while its generated ZIP is still valid.
+  // v1152 correctly allowed the ZIP button in that state, but CAD conversion still called
+  // azobssWithRegisteredJupemLot() first, which re-checked the deleted GP job and failed.
+  // Try to fetch/cache the existing ZIP directly before any GP-status/cart registration work.
+  try {
+    const directBuffer = await azobssEnsureLotCachedZip(record, type);
+    if (directBuffer && azobssBufferIsZip(directBuffer)) return directBuffer;
+  } catch (error) {
+    lastError = error;
+    console.warn("Lot CAD direct ZIP recovery failed; falling back to GP registration:", error && (error.message || error));
+  }
+
   return await azobssWithRegisteredJupemLot(productCode, stateCode, jobId, async (sessionCookie) => {
     const deadline = Date.now() + (4 * 60 * 1000);
     while (Date.now() < deadline) {

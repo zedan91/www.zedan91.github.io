@@ -1,0 +1,12 @@
+{
+  "patch": 1153,
+  "baseline": 1152,
+  "issue": "ZIP works but displayed DWG fails for stale Lot Kadaster jobs",
+  "rootCause": "CAD path rechecked stale GP job before reusing surviving direct ZIP; v947 also relabelled DXF as DWG",
+  "fixes": [
+    "direct ZIP cache attempt before GP registration in CAD path",
+    "real format=dwg storefront action",
+    "hide/remove legacy DXF action in two-button UI",
+    "preserve quota-on-success semantics"
+  ]
+}

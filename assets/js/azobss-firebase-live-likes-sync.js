@@ -3471,7 +3471,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 if(!azobssPurchaseUiOwnedByGlobalAuth()) // v1144: global-auth is the single download owner. live-sync is fallback only.
 if(typeof window.azobssClientControlledDownload !== 'function'){
   window.azobssClientControlledDownload = azobssClientControlledDownload;
-  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1152';
+  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1153';
 }
 
 (function(){
@@ -3708,7 +3708,7 @@ function purchaseDetailRowHtml(r){
     if(isLotRecord){
       const formatDefs = [
         { key:'original', label:'ZIP', title:'Download data asal JUPEM (.zip)' },
-        { key:'dxf', label:'DWG', title:'Download DWG' }
+        { key:'dwg', label:'DWG', title:'Download DWG (.dwg)' }
       ];
       const formatButtons = formatDefs.map(function(def){
         const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);

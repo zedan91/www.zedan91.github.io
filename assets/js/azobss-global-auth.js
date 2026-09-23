@@ -5106,7 +5106,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
-window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1152';
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1153';
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
@@ -5342,7 +5342,7 @@ function purchaseDetailRowHtml(r){
     if(isLotRecord){
       const formatDefs = [
         { key:'original', label:'ZIP', title:'Download data asal JUPEM (.zip)' },
-        { key:'dxf', label:'DWG', title:'Download DWG' }
+        { key:'dwg', label:'DWG', title:'Download DWG (.dwg)' }
       ];
       const formatButtons = formatDefs.map(function(def){
         const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);
