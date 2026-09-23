@@ -158,7 +158,7 @@ input,select{height:44px} textarea{min-height:92px;width:100%;resize:vertical}
 .item-row{display:flex;justify-content:space-between;gap:12px;align-items:center}.item-title{font-weight:950;color:#7cffb0}.item-meta{font-size:12px;color:#c7d2fe}.item-actions{display:flex;gap:7px;flex-wrap:wrap}.item-actions .btn{padding:8px 10px;border-radius:10px;font-size:12px}
 .tabs-note{color:var(--muted);font-size:13px;margin:6px 0 14px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hidden{display:none!important}.danger{color:#fecaca}.ok{color:#86efac}.warn{color:#fde68a}
+.hidden{display:none!important}.danger{color:#fecaca}.ok{color:#86efac}.warn{color:#fde68a}.info{color:#7dd3fc}
 .table-card{overflow:auto}.mini-table{width:100%;border-collapse:collapse;font-size:13px}.mini-table th,.mini-table td{border-bottom:1px solid rgba(148,163,184,.18);padding:10px;text-align:left}.mini-table th{color:#bfdbfe}
 .login-cover{position:fixed;inset:0;background:#050b14;display:grid;place-items:center;z-index:999999}
 .login-box{width:min(430px,92vw);background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center}
@@ -3406,7 +3406,7 @@ body[data-dashboard-page="admin"] .topbar{
         <div class="card"><div class="stat-label">Commission Status Missing</div><div id="maintCommissionStatus" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Local Orders</div><div id="maintLocalPremiumOrdersCount" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Need Firestore Backup</div><div id="maintLocalOrdersMissingFirestore" class="stat-value">-</div></div>
-        <div class="card"><div class="stat-label">Need Local Restore</div><div id="maintFirestoreOrdersMissingLocal" class="stat-value">-</div></div>
+        <div class="card"><div class="stat-label">Local Cache Gap (Safe)</div><div id="maintFirestoreOrdersMissingLocal" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Prunable Tokens</div><div id="maintPrunableTokens" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Old Audit Logs</div><div id="maintOldAuditLogs" class="stat-value">-</div></div>
         <div class="card"><div class="stat-label">Old Notifications</div><div id="maintOldNotifications" class="stat-value">-</div></div>
@@ -4235,7 +4235,33 @@ function azMaintSeverityClass(sev){
   const s=String(sev||'').toLowerCase();
   if(s==='high')return 'danger';
   if(s==='medium')return 'warn';
+  if(s==='info')return 'info';
   return 'ok';
+}
+function azMaintOkLabel(type,label){
+  const map={
+    paidOrdersMissingToken:'Paid orders download token',
+    paidOrdersMissingReceiptFlag:'Paid order receipt protection',
+    expiredDownloadTokens:'Download token expiry status',
+    commissionMissingPayoutStatus:'Commission payout status',
+    localPremiumOrdersMissingFirestore:'Premium orders Firestore backup',
+    firestorePremiumOrdersMissingLocal:'Local premiumOrders cache',
+    prunableExpiredDownloadTokens:'Expired token retention',
+    oldAuditLogs:'Admin audit log retention',
+    oldNotifications:'Notification retention'
+  };
+  return map[String(type||'')]||String(label||type||'Maintenance check');
+}
+function azMaintIssueHtml(x){
+  const count=Math.max(0,Number(x?.count||0)||0);
+  const type=String(x?.type||'');
+  if(count===0){
+    return item(`<span class="ok">✅ ${esc(azMaintOkLabel(type,x?.label))} — OK</span>`,'No issue found.');
+  }
+  if(type==='firestorePremiumOrdersMissingLocal'){
+    return item(`<span class="info">INFO</span> ${esc(x?.label||'Local cache incomplete — Firestore data safe')}`,`Count: ${esc(count)}${x?.note?' • '+esc(x.note):' • Firestore data remains safe.'}`);
+  }
+  return item(`<span class="${azMaintSeverityClass(x?.severity)}">${esc((x?.severity||'info').toUpperCase())}</span> ${esc(x?.label||type)}`,`Count: ${esc(count)}${x?.note?' • '+esc(x.note):''}`);
 }
 function azMaintSamplesHtml(samples){
   const groups=samples&&typeof samples==='object'?samples:{};
@@ -4266,7 +4292,7 @@ async function loadMaintenanceScan(){
     if($('#maintenanceRetentionNote')) $('#maintenanceRetentionNote').textContent=`Retention cleanup: download tokens ${esc(ret.downloadTokenDays||90)} days • audit logs ${esc(ret.auditLogDays||365)} days • notifications ${esc(ret.notificationDays||180)} days.`;
     if(notice) notice.textContent='Last scanned: '+fmtDate(j.generatedAt)+' • Firestore orders: '+esc((j.scanned&&j.scanned.premiumOrders)||0)+' • Local orders: '+esc((j.scanned&&j.scanned.localPremiumOrders)||0)+' • latency: '+esc(j.latencyMs||0)+'ms';
     const issues=Array.isArray(j.issues)?j.issues:[];
-    if($('#maintenanceIssueList')) $('#maintenanceIssueList').innerHTML=issues.map(x=>item(`<span class="${azMaintSeverityClass(x.severity)}">${esc((x.severity||'info').toUpperCase())}</span> ${esc(x.label||x.type)}`,`Count: ${esc(x.count||0)}${x.note?' • '+esc(x.note):''}`)).join('')||'<div class="item">No issues data.</div>';
+    if($('#maintenanceIssueList')) $('#maintenanceIssueList').innerHTML=issues.map(azMaintIssueHtml).join('')||'<div class="item"><div class="item-title ok">✅ Maintenance checks — OK</div><div class="item-meta">No issues data.</div></div>';
     if($('#maintenanceSampleList')) $('#maintenanceSampleList').innerHTML=azMaintSamplesHtml(j.samples||{});
     const warnings=Array.isArray(j.warnings)?j.warnings:[];
     if($('#maintenanceWarningList')) $('#maintenanceWarningList').innerHTML=warnings.map(w=>item('<span class="warn">Warning</span>',esc(w))).join('')||'<div class="item"><div class="item-title ok">No warnings.</div></div>';

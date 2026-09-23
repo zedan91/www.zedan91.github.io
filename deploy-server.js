@@ -2183,7 +2183,17 @@ function azMaintenanceTokenExpired(x = {}, now = Date.now()) {
   return expires <= now;
 }
 function azMaintenancePublicIssue(type, severity, label, count, note = "") {
-  return { type, severity, label, count:Number(count||0), note:azAuditSafeText(note, 260) };
+  const normalizedCount = Math.max(0, Number(count || 0) || 0);
+  const configuredSeverity = String(severity || "info").toLowerCase();
+  return {
+    type,
+    severity: normalizedCount > 0 ? configuredSeverity : "ok",
+    configuredSeverity,
+    status: normalizedCount > 0 ? "issue" : "ok",
+    label,
+    count: normalizedCount,
+    note: azAuditSafeText(note, 260)
+  };
 }
 function azMaintenanceRetentionDays(envName, fallbackDays) {
   const raw = Number(process.env[envName] || fallbackDays);
@@ -2361,7 +2371,7 @@ async function azAdminMaintenanceScan(req, identity = {}, options = {}) {
     azMaintenancePublicIssue("expiredDownloadTokens", "low", "Expired download tokens not marked expired", result.samples.expiredDownloadTokens.length, "Keeps token collection cleaner."),
     azMaintenancePublicIssue("commissionMissingPayoutStatus", "medium", "Commission records missing payout status", result.samples.commissionMissingPayoutStatus.length, "Keeps payout workflow consistent."),
     azMaintenancePublicIssue("localPremiumOrdersMissingFirestore", "high", "Local premiumOrders not backed up to Firestore", result.samples.localPremiumOrdersMissingFirestore.length, "Run sync-local-premium-orders-firestore to protect Software/CAD payment records from Render restart/deploy loss."),
-    azMaintenancePublicIssue("firestorePremiumOrdersMissingLocal", "low", "Firestore premiumOrders not cached locally", result.samples.firestorePremiumOrdersMissingLocal.length, "Run hydrate-local-premium-orders-firestore when local JSON needs restore after restart."),
+    azMaintenancePublicIssue("firestorePremiumOrdersMissingLocal", "info", "Local cache incomplete — Firestore data safe", result.samples.firestorePremiumOrdersMissingLocal.length, "Firestore remains authoritative. Restore the local cache only when needed after restart/deploy."),
     azMaintenancePublicIssue("prunableExpiredDownloadTokens", "low", "Expired download tokens older than retention", result.samples.prunableExpiredDownloadTokens.length, `Retention: ${result.retention.downloadTokenDays} days.`),
     azMaintenancePublicIssue("oldAuditLogs", "low", "Old admin audit logs older than retention", result.samples.oldAuditLogs.length, `Retention: ${result.retention.auditLogDays} days.`),
     azMaintenancePublicIssue("oldNotifications", "low", "Old notifications older than retention", result.samples.oldNotifications.length, `Retention: ${result.retention.notificationDays} days.`)
