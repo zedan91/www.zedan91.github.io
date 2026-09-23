@@ -7828,13 +7828,19 @@ const FILE_EXPIRE_MS =
 
 // AZOBSS security hardening: optional stricter CORS + common browser security headers.
 const AZOBSS_CORS_ORIGIN = String(process.env.AZOBSS_CORS_ORIGIN || "*").trim() || "*";
-function azCorsOrigin() { return AZOBSS_CORS_ORIGIN; }
+function azCorsOrigin() {
+  // v1155: AZOBSS frontend is served from both azobss.com and www.azobss.com.
+  // The download API uses bearer/query authorization rather than cross-site cookies,
+  // so wildcard CORS is safe here and avoids Firefox rejecting one hostname variant.
+  return "*";
+}
 function azSecurityHeaders(extra = {}) {
   return Object.assign({
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": azCorsOrigin(),
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, HEAD, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, x-azobsstv-admin-token, X-AZOBSS-Filename, X-AZOBSS-Document-No",
+    "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, Content-Type, X-AZOBSS-Browser-Fallback, X-AZOBSS-Open-Url, X-AZOBSS-Filename, Retry-After",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",

@@ -2981,6 +2981,27 @@ async function azobssWaitForDownloadHandoffPaint(){
   });
 }
 
+async function azobssFetchWithTimeout(url, options, timeoutMs){
+  const opts = Object.assign({}, options || {});
+  const ms = Math.max(1000, Number(timeoutMs || 12000));
+  const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const existingSignal = opts.signal;
+  let timer = 0;
+  if(controller){
+    opts.signal = controller.signal;
+    timer = window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, ms);
+    if(existingSignal && typeof existingSignal.addEventListener === 'function'){
+      if(existingSignal.aborted){ try{ controller.abort(); }catch(_e){} }
+      else existingSignal.addEventListener('abort', function(){ try{ controller.abort(); }catch(_e){} }, { once:true });
+    }
+  }
+  try{
+    return await fetch(url, opts);
+  }finally{
+    if(timer) window.clearTimeout(timer);
+  }
+}
+
 async function azobssWaitForDownloadBackendReady(downloadUrl){
   let needsBackend = false;
   try{
@@ -2989,43 +3010,46 @@ async function azobssWaitForDownloadBackendReady(downloadUrl){
   }catch(_e){}
   if(!needsBackend) return true;
 
-  // v1144 verified against deploy-server.js: backend health endpoint is /health.
+  // v1155 Firefox compatibility:
+  // /health is only a best-effort wake hint. It must never block a real download
+  // for minutes when Firefox/ETP/CORS refuses the health request.
   const healthUrl = 'https://azobss-backend.onrender.com/health';
   const startedAt = Date.now();
-  // v1151: Render Free cold-start/restart can exceed the old 70 s gate.
-  // Keep waiting automatically for up to 4 minutes instead of showing a false failure.
-  const timeoutMs = 240000;
-  const minimumSpinnerMs = 0;
+  const timeoutMs = 9000;
+  let sawHttpResponse = false;
 
   while((Date.now() - startedAt) < timeoutMs){
-    const remaining = timeoutMs - (Date.now() - startedAt);
-    const requestTimeout = Math.max(2500, Math.min(30000, remaining));
-    const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    const abortTimer = controller ? window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, requestTimeout) : 0;
     try{
-      const response = await fetch(healthUrl + '?downloadWake=1&_=' + Date.now(), {
-        method:'GET', cache:'no-store', credentials:'omit', headers:{'Accept':'application/json'},
-        signal: controller ? controller.signal : undefined
-      });
-      if(abortTimer) window.clearTimeout(abortTimer);
+      const response = await azobssFetchWithTimeout(
+        healthUrl + '?downloadWake=1&_=' + Date.now(),
+        { method:'GET', cache:'no-store', credentials:'omit', headers:{'Accept':'application/json'} },
+        3500
+      );
+      sawHttpResponse = true;
       const type = String(response && response.headers && response.headers.get('content-type') || '').toLowerCase();
       let data = null;
       if(response && response.ok && type.includes('application/json')){
         try{ data = await response.json(); }catch(_e){ data = null; }
       }
-      if(response && response.ok && data && data.ok === true){
-        const elapsed = Date.now() - startedAt;
-        if(elapsed < minimumSpinnerMs){
-          await new Promise(function(resolve){ window.setTimeout(resolve, minimumSpinnerMs - elapsed); });
-        }
-        return true;
+      if(response && response.ok && data && data.ok === true) return true;
+
+      if(response && [502,503,504].includes(Number(response.status || 0))){
+        await new Promise(function(resolve){ window.setTimeout(resolve, 800); });
+        continue;
       }
-    }catch(_e){
-      if(abortTimer) window.clearTimeout(abortTimer);
+
+      return true;
+    }catch(error){
+      const name = String(error && error.name || '');
+      const message = String(error && error.message || '');
+      console.warn('AZOBSS v1155 health wake bypass:', name || message || error);
+      // Firefox CORS/ETP/network failures on /health fail open.
+      return true;
     }
-    await new Promise(function(resolve){ window.setTimeout(resolve, 900); });
   }
-  return false;
+
+  if(!sawHttpResponse) console.warn('AZOBSS v1155: /health timed out; continuing to download endpoint.');
+  return true;
 }
 
 
@@ -3036,40 +3060,30 @@ function azobssTriggerHiddenAttachmentDownload(url){
   const targetUrl = String(url || '').trim();
   if(!targetUrl) return false;
   try{
-    const frame = document.createElement('iframe');
-    frame.setAttribute('aria-hidden','true');
-    frame.tabIndex = -1;
-    frame.style.position = 'fixed';
-    frame.style.width = '1px';
-    frame.style.height = '1px';
-    frame.style.opacity = '0';
-    frame.style.pointerEvents = 'none';
-    frame.style.border = '0';
-    frame.style.left = '-10000px';
-    frame.style.top = '-10000px';
-    frame.src = 'about:blank';
-    document.body.appendChild(frame);
-    // v1148: assign the attachment URL before reporting success. The button spinner
-    // was already painted before this function is called, so an extra rAF is not needed.
-    frame.src = targetUrl;
-    // Keep it around long enough for slow attachment responses.
-    window.setTimeout(function(){ try{ frame.remove(); }catch(_e){} }, 180000);
+    const parsed = new URL(targetUrl, window.location.href);
+    const isAzobssAttachment = String(parsed.hostname || '').toLowerCase() === 'azobss-backend.onrender.com'
+      && /\/api\/pa-bm-download(?:\/|$)/i.test(String(parsed.pathname || ''))
+      && (parsed.searchParams.get('download') === '1' || /\.(?:zip|dxf|pdf)(?:$|[?#])/i.test(parsed.href));
+
+    // v1155: use a native anchor instead of a cross-origin iframe.
+    // Firefox can strand iframe delivery when X-Frame-Options or ETP is involved.
+    const a = document.createElement('a');
+    a.href = parsed.href;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    if(isAzobssAttachment){
+      a.setAttribute('download', '');
+    }else{
+      a.target = '_blank';
+    }
+    document.body.appendChild(a);
+    a.click();
+    window.setTimeout(function(){ try{ a.remove(); }catch(_e){} }, 0);
     return true;
   }catch(_e){
-    try{
-      const a = document.createElement('a');
-      a.href = targetUrl;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      return true;
-    }catch(_err){ return false; }
+    return false;
   }
 }
-
 
 function azobssOpenDownloadFallbackWithoutLeavingPage(url){
   const value = String(url || '').trim();
@@ -3266,7 +3280,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       for(let attempt = 0; Date.now() < readinessDeadline; attempt += 1){
         let statusResponse = null;
         try{
-          statusResponse = await fetch(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' });
+          statusResponse = await azobssFetchWithTimeout(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' }, 15000);
           readiness = await statusResponse.json().catch(function(){ return {}; });
         }catch(fetchError){
           readiness = { ok:true, ready:false, preparing:true };
@@ -3316,7 +3330,14 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     let lastPreparingData = null;
     const finalDownloadDeadline = Date.now() + (2 * 60 * 1000);
     for(let attempt = 0; Date.now() < finalDownloadDeadline; attempt += 1){
-      response = await fetch(directUrl, { method:'GET', cache:'no-store' });
+      try{
+        response = await azobssFetchWithTimeout(directUrl, { method:'GET', cache:'no-store' }, 30000);
+      }catch(fetchError){
+        console.warn('AZOBSS v1155 download request retry:', fetchError);
+        response = null;
+        await new Promise(function(resolve){ window.setTimeout(resolve, Math.min(5000, 1200 + attempt * 500)); });
+        continue;
+      }
       const pollType = String(response.headers.get('content-type') || '').toLowerCase();
       if(response.status !== 202 || !pollType.includes('application/json')) break;
 
@@ -3471,7 +3492,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 if(!azobssPurchaseUiOwnedByGlobalAuth()) // v1144: global-auth is the single download owner. live-sync is fallback only.
 if(typeof window.azobssClientControlledDownload !== 'function'){
   window.azobssClientControlledDownload = azobssClientControlledDownload;
-  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1153';
+  window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'live-sync-fallback-v1155';
 }
 
 (function(){
