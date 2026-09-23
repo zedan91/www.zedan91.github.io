@@ -3959,7 +3959,10 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
       filename: String(item.filename || "") || undefined,
       downloadUrl: azobssSafeJupemDownloadUrl(item.downloadUrl || item.url, item.productType || item.product) || undefined,
       variant: String(item.variant || item.areaSize || "").toUpperCase() || undefined,
-      areaRatio: Number(item.areaRatio || 0) > 0 ? Number(item.areaRatio) : undefined
+      areaRatio: Number(item.areaRatio || 0) > 0 ? Number(item.areaRatio) : undefined,
+      lotSelectedObjectIds: Array.isArray(item.lotSelectedObjectIds) ? item.lotSelectedObjectIds.map(Number).filter(Number.isInteger).slice(0, 20000) : undefined,
+      lotObjectIdFieldName: String(item.lotObjectIdFieldName || "").trim() || undefined,
+      lotRegenerationVersion: Number(item.lotRegenerationVersion || 0) || undefined
     };
     Object.keys(update).forEach((key) => { if (update[key] === undefined || update[key] === "") delete update[key]; });
     if (!refs.length) {
@@ -4290,6 +4293,11 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
       priceAdjustmentPercent,
       variant,
       areaRatio: areaProductTypes.has(productType) ? Number(verifiedLot && verifiedLot.areaRatio || 0) : undefined,
+      lotSelectedObjectIds: areaProductTypes.has(productType) && Array.isArray(verifiedLot && verifiedLot.selectedObjectIds)
+        ? verifiedLot.selectedObjectIds.map(Number).filter(Number.isInteger).slice(0, 20000)
+        : undefined,
+      lotObjectIdFieldName: areaProductTypes.has(productType) ? cleanPremiumText(verifiedLot && verifiedLot.objectIdFieldName || "OBJECTID", 80) : undefined,
+      lotRegenerationVersion: areaProductTypes.has(productType) && Array.isArray(verifiedLot && verifiedLot.selectedObjectIds) && verifiedLot.selectedObjectIds.length ? 1152 : undefined,
       productId: cleanPremiumText(verifiedLot && verifiedLot.jobId || rawItem.productId || "", 120),
       stationNo: cleanPremiumText(rawItem.stationNo || "", 80).toUpperCase(),
       jenis: productType === "SBM" ? "2" : "1",
@@ -11079,6 +11087,7 @@ async function azobssSubmitLotGpJob(estimate) {
 function azobssIsTransientJupemError(error) {
   const message = String(error && (error.message || error) || "");
   const code = String(error && error.code || "");
+  if (code === "AZOBSS_JUPEM_JOB_TERMINAL" || error && error.terminal === true) return false;
   return /fetch failed|network|socket|timed?\s*out|timeout|ECONN|EAI_AGAIN|ENOTFOUND|UND_ERR|did not register|not register|masih (?:menyediakan|menyelaraskan)/i.test(message)
     || /^AZOBSS_JUPEM_LOT_/i.test(code);
 }
@@ -11637,26 +11646,33 @@ async function azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId) {
   if (cached && cached.promise) return await cached.promise;
 
   const promise = (async () => {
+    const directUrl = azobssLotDownloadUrl(cleanProduct, cleanJobId, cleanStateCode);
+
+    // v1152: probe the already-generated ZIP BEFORE asking ArcGIS for job status.
+    // Old ArcGIS jobs can be purged/Deleted while the eBiz download ZIP remains valid.
+    // In that case the paid download should continue instead of being blocked by a stale job status.
+    try {
+      const initialProbe = await azobssProbeJupemLotDirectZip(directUrl, 10000);
+      if (initialProbe.ready) {
+        return { ready: true, directUrl, jobStatus: "esriJobSucceeded", registered: false, probe: initialProbe, recoveredFromDirectZip: true };
+      }
+    } catch (error) {
+      console.warn("JUPEM direct ZIP pre-status probe failed:", error && (error.message || error));
+    }
+
     const jobStatus = await azobssGetLotGpJobStatus(cleanProduct, cleanStateCode, cleanJobId);
     if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
-      throw new Error(`JUPEM gagal menyediakan Lot Kadaster (${jobStatus}).`);
+      const terminalError = new Error(`JUPEM gagal menyediakan Lot Kadaster (${jobStatus}).`);
+      terminalError.code = "AZOBSS_JUPEM_JOB_TERMINAL";
+      terminalError.jobStatus = jobStatus;
+      terminalError.terminal = true;
+      throw terminalError;
     }
     if (!/^esriJobSucceeded$/i.test(jobStatus)) {
       const waitingError = new Error(`JUPEM masih menyediakan Lot Kadaster (${jobStatus}).`);
       waitingError.code = "AZOBSS_JUPEM_LOT_JOB_NOT_READY";
       waitingError.jobStatus = jobStatus;
       throw waitingError;
-    }
-    const directUrl = azobssLotDownloadUrl(cleanProduct, cleanJobId, cleanStateCode);
-
-    // Already registered/public from an earlier attempt: avoid touching the shared cart.
-    try {
-      const initialProbe = await azobssProbeJupemLotDirectZip(directUrl, 10000);
-      if (initialProbe.ready) {
-        return { ready: true, directUrl, jobStatus, registered: false, probe: initialProbe };
-      }
-    } catch (error) {
-      console.warn("JUPEM direct ZIP pre-registration probe failed:", error && (error.message || error));
     }
 
     let registration = null;
@@ -11708,6 +11724,103 @@ async function azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId) {
     azobssLotDirectReadyCache.delete(cacheKey);
     throw error;
   }
+}
+
+function azobssLotTerminalJobStatus(value) {
+  const status = String(value || "").trim();
+  return /^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(status) ? status : "";
+}
+
+function azobssLotSelectedObjectIdsFromRecord(record = {}) {
+  const raw = Array.isArray(record.lotSelectedObjectIds)
+    ? record.lotSelectedObjectIds
+    : (Array.isArray(record.selectedObjectIds) ? record.selectedObjectIds : []);
+  const out = [];
+  const seen = new Set();
+  for (const value of raw) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 0) continue;
+    const key = String(n);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(n);
+    if (out.length >= 20000) break;
+  }
+  return out;
+}
+
+async function azobssRegenerateLotJobForPurchaseRecord(ref, record, type, terminalStatus = "") {
+  const selectedObjectIds = azobssLotSelectedObjectIdsFromRecord(record);
+  if (!selectedObjectIds.length) return null;
+
+  const productCode = String(type || "").toUpperCase() === "NDCDB_C3" ? "2" : "1";
+  const stateCode = cleanLotStateCode(record.negeri || record.state || "");
+  if (!stateCode) return null;
+
+  const config = azobssGetLotMapConfig(productCode, stateCode);
+  const auth = await azobssGetJupemMapAuth(false);
+  const objectIdFieldName = String(record.lotObjectIdFieldName || record.objectIdFieldName || "OBJECTID").trim() || "OBJECTID";
+  const featureSet = await azobssQueryLotFeatureSet(config, null, auth, {
+    objectIds: selectedObjectIds,
+    objectIdFieldName
+  });
+  const estimate = { config, auth, featureSet, selectedObjectIds };
+  const job = await azobssSubmitLotGpJob(estimate);
+  const newJobId = String(job && job.jobId || "").trim();
+  if (!newJobId) throw new Error("AZOBSS gagal menjana Job ID Lot Kadaster yang baharu.");
+  const downloadUrl = azobssLotDownloadUrl(productCode, newJobId, stateCode);
+  const oldJobId = azobssLotRecordJobId(record);
+  const nowMs = Date.now();
+
+  if (ref && typeof ref.set === "function") {
+    const patch = {
+      productId: newJobId,
+      itemCode: newJobId,
+      jobId: newJobId,
+      downloadUrl,
+      lotPreviousJobId: oldJobId || undefined,
+      lotPreviousJobStatus: terminalStatus || undefined,
+      lotRegeneratedAtMs: nowMs,
+      lotRegeneratedAtClient: new Date(nowMs).toISOString(),
+      lotRegenerationVersion: 1152,
+      lotRegenerationCount: firebaseAdmin && firebaseAdmin.firestore && firebaseAdmin.firestore.FieldValue
+        ? firebaseAdmin.firestore.FieldValue.increment(1)
+        : 1,
+      updatedAt: firebaseAdmin && firebaseAdmin.firestore && firebaseAdmin.firestore.FieldValue
+        ? firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        : new Date().toISOString()
+    };
+    Object.keys(patch).forEach((key) => { if (patch[key] === undefined || patch[key] === "") delete patch[key]; });
+    await ref.set(patch, { merge: true });
+  }
+
+  // Update the in-memory row used by this request too.
+  record.productId = newJobId;
+  record.itemCode = newJobId;
+  record.jobId = newJobId;
+  record.downloadUrl = downloadUrl;
+  record.lotPreviousJobId = oldJobId || "";
+  record.lotPreviousJobStatus = terminalStatus || "";
+  record.lotRegeneratedAtMs = nowMs;
+
+  console.log("AZOBSS regenerated stale Lot Kadaster job:", {
+    oldJobId,
+    newJobId,
+    stateCode,
+    productCode,
+    selectedObjectIdCount: selectedObjectIds.length,
+    terminalStatus
+  });
+  return {
+    regenerated: true,
+    oldJobId,
+    jobId: newJobId,
+    jobStatus: String(job.jobStatus || "esriJobSubmitted"),
+    stateCode,
+    productCode,
+    downloadUrl,
+    selectedObjectIdCount: selectedObjectIds.length
+  };
 }
 
 function azobssCreateLotSelectionToken(payload) {
@@ -19615,6 +19728,11 @@ async function handler(req, res) {
           downloadUrl,
           lotCount: publicResult.lotCount,
           selectedAreaM2: publicResult.selectedAreaM2,
+          // v1152: keep the exact paid lot IDs inside the signed token so a purged
+          // ArcGIS job can be safely regenerated later without changing the selection.
+          selectedObjectIds: Array.isArray(estimate.selectedObjectIds) ? estimate.selectedObjectIds.slice(0, 20000) : [],
+          objectIdFieldName: String(estimate.featureSet && estimate.featureSet.objectIdFieldName || "OBJECTID"),
+          regenerationVersion: 1152,
           exportMode: job.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
           clipLayers: Array.isArray(job.clipLayers) ? job.clipLayers.slice(0, 8) : [],
           clipInputKind: String(job.clipInputKind || ""),
@@ -20430,11 +20548,49 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       }), "application/json", { "Cache-Control": "no-store" });
     } catch (error) {
       console.warn("NDCDB readiness check failed:", error && (error.message || error));
+      const terminalStatus = azobssLotTerminalJobStatus(error && error.jobStatus);
+      if (terminalStatus || error && (error.code === "AZOBSS_JUPEM_JOB_TERMINAL" || error.terminal === true)) {
+        // v1152: stale/expired GP jobs are terminal, not "still processing".
+        // For new purchase records that retain the exact selected lot IDs, regenerate
+        // the same paid selection automatically and keep the purchase/download quota.
+        try {
+          const regenerated = await azobssRegenerateLotJobForPurchaseRecord(ref, record, type, terminalStatus || "esriJobUnknown");
+          if (regenerated) {
+            return send(res, 202, JSON.stringify({
+              ok: true,
+              ready: false,
+              preparing: true,
+              transient: true,
+              regenerated: true,
+              requestedFormat: requestedLotFormat,
+              previousJobId: regenerated.oldJobId || "",
+              jobId: regenerated.jobId,
+              jobStatus: regenerated.jobStatus,
+              stateCode: regenerated.stateCode,
+              message: "Job lama telah tamat. AZOBSS sedang menjana semula fail Lot Kadaster secara automatik..."
+            }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
+          }
+        } catch (regenerateError) {
+          console.error("NDCDB automatic stale-job regeneration failed:", regenerateError && (regenerateError.stack || regenerateError.message || regenerateError));
+          return azobssPaBmDownloadError(res, 502, "Job Lot Kadaster lama telah tamat dan penjanaan semula automatik gagal. Sila cuba lagi sebentar. Kuota download tidak digunakan.");
+        }
+        const terminalCode = /^esriJobDeleted$/i.test(terminalStatus) ? 410 : 409;
+        return send(res, terminalCode, JSON.stringify({
+          ok: false,
+          ready: false,
+          preparing: false,
+          terminal: true,
+          jobStatus: terminalStatus || String(error && error.jobStatus || "esriJobUnknown"),
+          requestedFormat: requestedLotFormat,
+          error: "Job Lot Kadaster lama telah tamat dan rekod lama ini tidak mempunyai data pilihan yang mencukupi untuk dijana semula secara automatik. Kuota download tidak digunakan."
+        }), "application/json", { "Cache-Control": "no-store" });
+      }
       return send(res, 202, JSON.stringify({
         ok: true,
         ready: false,
         preparing: true,
         transient: true,
+        jobStatus: String(error && error.jobStatus || "esriJobUnknown"),
         requestedFormat: requestedLotFormat,
         message: "Tengah Proses..."
       }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
@@ -20572,6 +20728,30 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
       directReady = await azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId);
     } catch (error) {
       console.warn("NDCDB final registration/readiness check failed:", error && (error.message || error));
+      const terminalStatus = azobssLotTerminalJobStatus(error && error.jobStatus);
+      if (terminalStatus || error && (error.code === "AZOBSS_JUPEM_JOB_TERMINAL" || error.terminal === true)) {
+        try {
+          const regenerated = await azobssRegenerateLotJobForPurchaseRecord(ref, record, type, terminalStatus || "esriJobUnknown");
+          if (regenerated) {
+            return send(res, 202, JSON.stringify({
+              ok: true, ready: false, preparing: true, transient: true, regenerated: true,
+              previousJobId: regenerated.oldJobId || "",
+              jobId: regenerated.jobId, jobStatus: regenerated.jobStatus, requestedFormat: requestedLotFormat,
+              message: "Job lama telah tamat. AZOBSS sedang menjana semula fail Lot Kadaster secara automatik..."
+            }), "application/json", { "Cache-Control": "no-store", "Retry-After": "3" });
+          }
+        } catch (regenerateError) {
+          console.error("NDCDB automatic stale-job regeneration failed during download:", regenerateError && (regenerateError.stack || regenerateError.message || regenerateError));
+          return azobssPaBmDownloadError(res, 502, "Job Lot Kadaster lama telah tamat dan penjanaan semula automatik gagal. Sila cuba lagi sebentar. Kuota download tidak digunakan.");
+        }
+        const terminalCode = /^esriJobDeleted$/i.test(terminalStatus) ? 410 : 409;
+        return send(res, terminalCode, JSON.stringify({
+          ok: false, ready: false, preparing: false, terminal: true,
+          jobStatus: terminalStatus || String(error && error.jobStatus || "esriJobUnknown"),
+          requestedFormat: requestedLotFormat,
+          error: "Job Lot Kadaster lama telah tamat dan rekod lama ini tidak mempunyai data pilihan yang mencukupi untuk dijana semula secara automatik. Kuota download tidak digunakan."
+        }), "application/json", { "Cache-Control": "no-store" });
+      }
       return send(res, 202, JSON.stringify({
         ok: true,
         ready: false,

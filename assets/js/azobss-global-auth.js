@@ -4899,7 +4899,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
       let readiness = null;
       const statusUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'prepare=1';
-      for(let attempt = 0; attempt < 160; attempt += 1){
+      const readinessDeadline = Date.now() + (3 * 60 * 1000);
+      for(let attempt = 0; Date.now() < readinessDeadline; attempt += 1){
         let statusResponse = null;
         try{
           statusResponse = await fetch(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' });
@@ -4910,7 +4911,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         if(statusResponse && statusResponse.ok && readiness && readiness.ready === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
           break;
         }
-        if(statusResponse && (statusResponse.status === 400 || statusResponse.status === 403 || statusResponse.status === 409 || statusResponse.status === 503 || (readiness && readiness.ok === false))){
+        if(statusResponse && (statusResponse.status === 400 || statusResponse.status === 403 || statusResponse.status === 409 || statusResponse.status === 410 || statusResponse.status === 503 || (readiness && readiness.ok === false))){
           alert((readiness && (readiness.error || readiness.message)) || 'Backend gagal menyediakan format Lot Kadaster yang dipilih.');
           return false;
         }
@@ -4950,7 +4951,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
     let response = null;
     let lastPreparingData = null;
-    for(let attempt = 0; attempt < 225; attempt += 1){
+    const finalDownloadDeadline = Date.now() + (2 * 60 * 1000);
+    for(let attempt = 0; Date.now() < finalDownloadDeadline; attempt += 1){
       response = await fetch(directUrl, { method:'GET', cache:'no-store' });
       const pollType = String(response.headers.get('content-type') || '').toLowerCase();
       if(response.status !== 202 || !pollType.includes('application/json')) break;
@@ -5104,7 +5106,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
-window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1151';
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1152';
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
@@ -5229,7 +5231,7 @@ function azobssQueueLotPurchaseReadiness(r){
         try{ azobssSchedulePurchaseRecordsRefresh('NDCDB job succeeded'); }catch(e){}
         return;
       }
-      if(response.status === 409 || (data && data.ok === false && /Failed|Cancelled|TimedOut|Deleted/i.test(entry.jobStatus))){
+      if(response.status === 409 || response.status === 410 || (data && data.ok === false && /Failed|Cancelled|TimedOut|Deleted/i.test(entry.jobStatus))){
         entry.status = 'failed';
         entry.error = String(data.error || data.message || 'JUPEM job failed');
         return;
@@ -5238,6 +5240,13 @@ function azobssQueueLotPurchaseReadiness(r){
     }catch(error){
       entry.status = 'checking';
       entry.error = String(error && error.message || error || '');
+    }
+    // v1152: background readiness must not poll forever. A click can always
+    // start a fresh foreground check later, but idle pages stop after ~6 minutes.
+    if(entry.attempts >= 72){
+      entry.status = 'paused';
+      entry.error = entry.error || 'Semakan automatik dihentikan sementara. Tekan Download untuk semak semula.';
+      return;
     }
     const delay = entry.attempts < 10 ? 2500 : 5000;
     entry.timer = window.setTimeout(check, delay);
