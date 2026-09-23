@@ -18848,26 +18848,26 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
 }
 </style>
 
-<style id="azobss-lot-format-two-button-v1153">
-/* v1153: show exactly ZIP + the real DWG action. Hide legacy DXF-only action. */
-#userPaPurchaseList .az-lot-format-dxf,
-#userPaPurchaseList [data-download-format="dxf"]{
+<style id="azobss-lot-format-two-button-v1154">
+/* v1154: show exactly ZIP + DXF. DWG is intentionally hidden because DXF preserves text layout more reliably. */
+#userPaPurchaseList .az-lot-format-dwg,
+#userPaPurchaseList [data-download-format="dwg"]{
   display:none!important;
 }
 </style>
-<script id="azobss-lot-format-two-button-v1153-script">
+<script id="azobss-lot-format-two-button-v1154-script">
 (function(){
   function normalizeLotDownloadButtons(root){
     root = root || document;
     try{
-      root.querySelectorAll('#userPaPurchaseList .az-lot-format-dxf, #userPaPurchaseList [data-download-format="dxf"]').forEach(function(el){
+      root.querySelectorAll('#userPaPurchaseList .az-lot-format-dwg, #userPaPurchaseList [data-download-format="dwg"]').forEach(function(el){
         el.remove();
       });
-      root.querySelectorAll('#userPaPurchaseList .az-lot-format-dwg, #userPaPurchaseList [data-download-format="dwg"]').forEach(function(el){
-        el.setAttribute('data-default-label','DWG');
-        el.setAttribute('title','Download DWG (.dwg)');
-        el.setAttribute('aria-label','Download DWG');
-        if(el.getAttribute('data-busy') !== '1') el.textContent='DWG';
+      root.querySelectorAll('#userPaPurchaseList .az-lot-format-dxf, #userPaPurchaseList [data-download-format="dxf"]').forEach(function(el){
+        el.setAttribute('data-default-label','DXF');
+        el.setAttribute('title','Download DXF (.dxf)');
+        el.setAttribute('aria-label','Download DXF');
+        if(el.getAttribute('data-busy') !== '1') el.textContent='DXF';
       });
     }catch(_e){}
   }

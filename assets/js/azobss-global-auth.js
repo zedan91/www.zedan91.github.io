@@ -4942,7 +4942,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         return false;
       }
 
-      // DXF/DWG: after the source ZIP is ready, the AZOBSS backend returns a real binary attachment.
+      // DXF: after the source ZIP is ready, the AZOBSS backend returns a real binary attachment.
       downloadOwner.phase = 'downloading';
       downloadOwner.label = 'Muat ' + downloadFormat.toUpperCase() + '...';
       if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
@@ -5332,8 +5332,8 @@ function purchaseDetailRowHtml(r){
     ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
     : '';
 
-  // Lot Kadaster keeps the original JUPEM ZIP and adds ready-to-use CAD formats.
-  // Every successful ZIP/DWG/DXF download uses one slot from the same existing 5x/7-day quota.
+  // Lot Kadaster keeps the original source ZIP and exposes DXF as the CAD download.
+  // Every successful ZIP/DXF download uses one slot from the same existing 5x/7-day quota.
   if(isLotRecord && paid && allowed){
     try{ azobssQueueLotPurchaseReadiness(r); }catch(_error){}
   }
@@ -5342,7 +5342,7 @@ function purchaseDetailRowHtml(r){
     if(isLotRecord){
       const formatDefs = [
         { key:'original', label:'ZIP', title:'Download data asal JUPEM (.zip)' },
-        { key:'dwg', label:'DWG', title:'Download DWG (.dwg)' }
+        { key:'dxf', label:'DXF', title:'Download DXF (.dxf)' }
       ];
       const formatButtons = formatDefs.map(function(def){
         const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);
