@@ -2553,9 +2553,9 @@ body[data-dashboard-page="admin"] .topbar{
     <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
     <nav class="nav">
       <div class="nav-group">Main</div>
-      <button data-tab="salesreceipts">🧾 Sales &amp; Receipts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
+      <button data-tab="salesreceipts" class="active">🧾 Sales &amp; Receipts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="users">👥 Users</button>
-      <button data-tab="overview" class="active">📊 Dashboard</button>
+      <button data-tab="overview">📊 Dashboard</button>
       <div class="nav-group">Support &amp; Sales</div>
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="servicebookings">🛠️ Service Bookings <span id="serviceBookingNavBadge" class="az-nav-badge" hidden>0</span></button>
@@ -2572,7 +2572,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="maintenance">🧰 Maintenance</button>
       <button data-tab="settings"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
     </nav>
-    <div class="side-footer">Dashboard dibuka dahulu. Menu berkaitan telah digabungkan sebagai sub-tab supaya sidebar lebih ringkas.</div>
+    <div class="side-footer">Sales &amp; Receipts dibuka dahulu. Dashboard kekal boleh dibuka bila diperlukan.</div>
   </aside>
 
   <main class="main">
@@ -2586,7 +2586,7 @@ body[data-dashboard-page="admin"] .topbar{
 
     <div id="adminQueryAlert" class="az-admin-query-alert" aria-live="polite"></div>
 
-    <section id="overview" class="section active">
+    <section id="overview" class="section">
       <div class="az-admin-hero">
         <h2>📊 Dashboard</h2>
         <p>Semak keadaan website dengan cepat. Nombor utama dikumpulkan mengikut pengguna, aktiviti, mesej, notifikasi dan pembelian supaya lebih mudah faham.</p>
@@ -2950,9 +2950,9 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
 
-    <section id="salesreceipts" class="section">
+    <section id="salesreceipts" class="section active">
       <div class="az-admin-subtabs" data-admin-subtabs="sales">
-        <button type="button" data-tab="salesreceipts">Sales Records</button>
+        <button type="button" data-tab="salesreceipts" class="active">Sales Records</button>
         <button type="button" data-tab="payments">Analytics</button>
         <button type="button" data-tab="purchases">Payment Logs</button>
         <button type="button" data-tab="adminalerts">Payment Alerts</button>
@@ -7173,7 +7173,7 @@ onAuthStateChanged(auth, async user => {
     $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
     $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
     azAdminPrepareOverviewManualMode();
-    await initSection('overview');
+    await initSection('salesreceipts');
   }catch(e){
     azAdminAuthResolved = true;
     clearTimeout(azAdminAuthWatchdog);

@@ -1,0 +1,19 @@
+{
+  "patch": 1160,
+  "packageVersion": "1.0.1160",
+  "baseline": 1159,
+  "scope": [
+    "admin/index.html",
+    "package.json"
+  ],
+  "defaultAdminView": "salesreceipts",
+  "defaultAdminSubtab": "salesreceipts",
+  "dashboardStillAvailable": true,
+  "preserved": [
+    "Sales & Receipts module behavior",
+    "payment alert badge",
+    "Users section",
+    "Dashboard section",
+    "all other Admin sections"
+  ]
+}
