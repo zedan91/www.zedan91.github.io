@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 (function(){
   const root=document.getElementById('azHomeSoftwarePromo529');
@@ -23,10 +23,20 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
   let index=0;
   let timer=0;
   let renderToken=0;
+  let promoStats={};
+  let promoStatsLoaded=false;
 
   function bool(v){
     if(v===true||v===1) return true;
     return /^(1|true|yes|on|enabled|active)$/i.test(String(v||'').trim());
+  }
+  // v1159: promoFreeEnabled is authoritative; legacy aliases are only fallbacks.
+  function canonicalBool(item, canonicalKey, legacyKeys=[]){
+    if(item && Object.prototype.hasOwnProperty.call(item, canonicalKey)) return bool(item[canonicalKey]);
+    for(const key of legacyKeys){
+      if(item && Object.prototype.hasOwnProperty.call(item,key)) return bool(item[key]);
+    }
+    return false;
   }
   function amount(v){
     const m=String(v??'').replace(/,/g,'').match(/-?\d+(?:\.\d+)?/);
@@ -36,6 +46,53 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
   function safeProductId(item){return text(item.productId||item.sku||item.id||item.docId||'',120);}
   function safeLogoName(v){
     return text(v||'software-logo',120).replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'software-logo';
+  }
+  // v1159: homepage FREE state must match the Software Tools card, including exhausted free-promo units.
+  function statsKeyFrom(value){
+    return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'software-item';
+  }
+  function promoFreeBatchId(item){
+    return text(item?.promoFreeBatchId||item?.promoBatchId||item?.promoFreeStartedAtMs||'default',120)||'default';
+  }
+  function promoFreeStatsKey(item){
+    const id=safeProductId(item)||text(item?.name||item?.title||'software',120);
+    return 'promo-free-'+statsKeyFrom(id+'-'+promoFreeBatchId(item));
+  }
+  function localSoftwareStats(){
+    try{
+      const data=JSON.parse(localStorage.getItem('azobss_software_manual_stats_v2')||'{}')||{};
+      return data.items&&typeof data.items==='object'?data.items:data;
+    }catch(_e){return {};}
+  }
+  function validFreeDownloadSource(item){
+    const r2=text(item?.r2ObjectKey||item?.r2Key||item?.downloadObjectKey||item?.privateObjectKey||'',600);
+    if(r2) return true;
+    const paymentUrls=new Set([
+      text(item?.paymentLink||'',1200),
+      text(item?.stripeLink||'',1200),
+      text(item?.toyyibpayLink||'',1200)
+    ].filter(Boolean));
+    for(const raw of [item?.secureDownloadLink,item?.privateDownloadLink,item?.premiumDownloadFileLink,item?.downloadLink]){
+      const value=text(raw||'',1200);
+      if(!/^https:\/\//i.test(value)||paymentUrls.has(value)) continue;
+      try{
+        const host=new URL(value).hostname.toLowerCase();
+        if(host==='toyyibpay.com'||host.endsWith('.toyyibpay.com')||host==='stripe.com'||host.endsWith('.stripe.com')) continue;
+      }catch(_e){continue;}
+      return true;
+    }
+    return false;
+  }
+  function freePromoState(item){
+    const enabled=canonicalBool(item,'promoFreeEnabled',['freePromoEnabled','promoFreeDownloadEnabled']);
+    const limitRaw=Number(item?.promoFreeLimit??item?.promoFreeUnits??item?.freePromoUnits??item?.promoDownloadUnits??0);
+    const limit=Number.isFinite(limitRaw)?Math.max(0,Math.floor(limitRaw)):0;
+    if(!enabled||limit<=0||!promoStatsLoaded) return {enabled,limit,claimed:0,remaining:0,active:false};
+    const row=promoStats[promoFreeStatsKey(item)]||{};
+    const claimedRaw=Number(row.claimed??row.used??item?.promoFreeUsed??0);
+    const claimed=Number.isFinite(claimedRaw)?Math.max(0,Math.floor(claimedRaw)):0;
+    const remaining=Math.max(0,limit-claimed);
+    return {enabled,limit,claimed,remaining,active:remaining>0&&validFreeDownloadSource(item)};
   }
   function imageUrl(item){
     const direct=text(item.promoImageUrl||item.promotionImageUrl||item.imageUrl||item.image||item.logoUrl||item.gifUrl||item.gif||'',1200);
@@ -51,10 +108,12 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
     const oldRaw=text(item.originalPrice||item.promoOriginalPrice||item.oldPrice||item.beforePrice||item.listPrice||'',40);
     const sale=amount(saleRaw), old=amount(oldRaw);
     const discounted=Number.isFinite(sale)&&Number.isFinite(old)&&old>sale;
-    const freePromo=bool(item.promoFreeEnabled||item.freePromoEnabled||item.promoFreeDownloadEnabled)&&Number(item.promoFreeLimit||item.promoFreeUnits||item.freePromoUnits||0)>0;
-    const explicit=bool(item.homePromoEnabled||item.homePromotionEnabled||item.promoEnabled||item.promotionEnabled||item.onSale||item.featuredPromo);
-    const badgePromo=/promo|sale|offer|discount/i.test(text(item.badge||item.label||'',80));
-    if(!(discounted||freePromo||explicit||badgePromo)) return null;
+    const freeState=freePromoState(item);
+    const freePromo=freeState.active;
+    // v1159: FREE is shown only while a real free-promo unit is still claimable.
+    // Once the free quota is exhausted/disabled, a discounted item falls back to
+    // its paid promo price (for example RM30 -> RM20) instead of staying FREE.
+    if(!(discounted||freePromo)) return null;
     const save=discounted?Math.max(1,Math.round((1-sale/old)*100)):0;
     return {
       ...item,
@@ -136,6 +195,20 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
       return [];
     }
   }
+  async function fromSoftwareStats(){
+    const local=localSoftwareStats();
+    try{
+      const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+      const snap=await getDoc(doc(getFirestore(app),'settings','softwareStats'));
+      if(!snap.exists()) return {ok:true,items:local};
+      const data=snap.data()||{};
+      const remote=data.items&&typeof data.items==='object'?data.items:data;
+      return {ok:true,items:{...local,...remote}};
+    }catch(e){
+      console.warn('AZOBSS home software promo stats load skipped:',e);
+      return {ok:false,items:local};
+    }
+  }
   async function fromBundled(){
     try{
       const res=await fetch('/assets/data/home-software-promos-v704.json',{cache:'force-cache'});
@@ -145,7 +218,9 @@ import { collection, getDocs, getFirestore } from 'https://www.gstatic.com/fireb
     }catch(e){return [];}
   }
   async function start(){
-    const remote=await fromFirestore();
+    const [remote,statsResult]=await Promise.all([fromFirestore(),fromSoftwareStats()]);
+    promoStats=statsResult?.items||{};
+    promoStatsLoaded=!!statsResult?.ok;
     promos=normalize(remote);
     if(!promos.length){promos=normalize(await fromBundled());}
     if(!promos.length){root.hidden=true;return;}

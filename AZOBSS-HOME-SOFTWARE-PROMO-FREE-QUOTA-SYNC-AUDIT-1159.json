@@ -1,0 +1,43 @@
+{
+  "patch": 1159,
+  "packageVersion": "1.0.1159",
+  "date": "2026-09-24",
+  "baseline": 1158,
+  "purpose": "Synchronize homepage Software Promo FREE label with the actual remaining Free Promo quota used by Software Tools.",
+  "rootCause": "Homepage treated promoFreeEnabled+limit as enough to show FREE and did not subtract claimed units from settings/softwareStats; Software Tools did, so an exhausted free promo could show RM20 on the product card while homepage still showed FREE.",
+  "changedFiles": [
+    {
+      "path": "index.html",
+      "bytes": 675334,
+      "sha256": "7a64dbec10b90812d56d107613659ad9a7632ec4663896d0fe70216f20578406"
+    },
+    {
+      "path": "assets/js/home-deferred/home-software-promo-v705.js",
+      "bytes": 10632,
+      "sha256": "8564d713e07e6f79ed36d23ca4a5fe756e4c82e62f2aa025b9e9f763548a8298"
+    },
+    {
+      "path": "package.json",
+      "bytes": 814,
+      "sha256": "dde1708a578527f2cf0a7f386c5936b6d7489ef7050b64f46bb0d791c22b8243"
+    },
+    {
+      "path": "README_PATCH_1159.md",
+      "bytes": 1538,
+      "sha256": "f3c18a8973d7ed113bbb06c8bee91b4ffd8b4fc85dbe77170ee2aeac99ba2c1c"
+    }
+  ],
+  "semanticChecks": {
+    "homepageReadsSoftwareStats": true,
+    "freeRequiresRemainingQuota": true,
+    "freeRequiresValidDownloadSource": true,
+    "exhaustedFreeFallsBackToPaidDiscount": true,
+    "canonicalPromoFreeFlagPrecedence": true,
+    "deferredModuleAlsoHardened": true
+  },
+  "validation": {
+    "npmRunCheck": "passed",
+    "inlinePromoModuleNodeCheck": "passed",
+    "deferredPromoModuleNodeCheck": "passed"
+  }
+}
