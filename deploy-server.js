@@ -13469,6 +13469,134 @@ async function azobssWaitForLotJobAndCache(record, type) {
   });
 }
 
+function azobssLotRecordSelectionToken(record = {}) {
+  const sources = [record, record.raw || {}, record.item || {}, record.purchase || {}];
+  for (const source of sources) {
+    const token = String(source && source.selectionToken || '').trim();
+    if (token) return token;
+  }
+  return '';
+}
+
+function azobssLotCadSelectedIds(record = {}) {
+  const directSources = [record, record.raw || {}, record.item || {}, record.purchase || {}];
+  for (const source of directSources) {
+    if (!source || !Array.isArray(source.selectedObjectIds)) continue;
+    const ids = source.selectedObjectIds
+      .map((value) => String(value).trim())
+      .filter((value) => /^-?\d+$/.test(value))
+      .slice(0, 20000);
+    if (ids.length) {
+      return {
+        ids,
+        objectIdFieldName: String(source.objectIdFieldName || 'OBJECTID').trim() || 'OBJECTID'
+      };
+    }
+  }
+
+  const token = azobssLotRecordSelectionToken(record);
+  if (!token) return { ids: [], objectIdFieldName: 'OBJECTID' };
+  try {
+    const payload = azobssDecodeSignedLotSelectionToken(token);
+    const ids = Array.isArray(payload && payload.selectedObjectIds)
+      ? payload.selectedObjectIds
+          .map((value) => String(value).trim())
+          .filter((value) => /^-?\d+$/.test(value))
+          .slice(0, 20000)
+      : [];
+    return {
+      ids,
+      objectIdFieldName: String(payload && payload.objectIdFieldName || 'OBJECTID').trim() || 'OBJECTID'
+    };
+  } catch (_) {
+    return { ids: [], objectIdFieldName: 'OBJECTID' };
+  }
+}
+
+// v1161: Build a CAD-only Syit Piawai overlay from the exact paid lot IDs.
+// Query geometry is WGS84, but outSR is intentionally omitted for the sheet
+// result so the sheet polygons use the cadastral service's native CAD CRS.
+async function azobssLotCadSheetFeatures(record, type) {
+  const productCode = type === 'NDCDB_C3' ? '2' : '1';
+  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || '');
+  if (!stateCode) return [];
+
+  const selected = azobssLotCadSelectedIds(record);
+  if (!selected.ids.length) {
+    // Legacy purchases can still generate their original lot-only CAD.
+    return [];
+  }
+
+  const config = azobssGetLotMapConfig(productCode, stateCode);
+  let lastError = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const auth = await azobssGetJupemMapAuth(attempt > 0);
+      const featureSet = await azobssQueryLotFeatureSet(config, null, auth, {
+        objectIds: selected.ids,
+        objectIdFieldName: selected.objectIdFieldName
+      });
+
+      const rings = [];
+      for (const feature of Array.isArray(featureSet && featureSet.features) ? featureSet.features : []) {
+        const sourceRings = feature && feature.geometry && Array.isArray(feature.geometry.rings)
+          ? feature.geometry.rings
+          : [];
+        for (const rawRing of sourceRings) {
+          const ring = (Array.isArray(rawRing) ? rawRing : [])
+            .filter((point) => Array.isArray(point) && point.length >= 2 && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1])))
+            .map((point) => [Number(point[0]), Number(point[1])]);
+          if (ring.length >= 3) rings.push(ring);
+        }
+      }
+      if (!rings.length) throw new Error('Geometri lot terpilih tidak tersedia untuk mendapatkan garisan Syit Piawai.');
+
+      const layerUrl = 'https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/' +
+        config.sheetLayer + '/query';
+      const result = await azobssJupemArcGisJson(layerUrl, {
+        geometry: JSON.stringify({ rings, spatialReference: { wkid: 4326 } }),
+        geometryType: 'esriGeometryPolygon',
+        inSR: '4326',
+        spatialRel: 'esriSpatialRelIntersects',
+        outFields: '*',
+        returnGeometry: 'true'
+      }, auth, 45000);
+
+      const features = Array.isArray(result && result.features) ? result.features : [];
+      if (!features.length) throw new Error('Garisan Syit Piawai yang berkaitan tidak ditemui untuk pilihan lot ini.');
+
+      const seen = new Set();
+      const rows = [];
+      features.forEach((feature, index) => {
+        const name = String(azobssLotSheetName(feature, index) || '').trim();
+        const sourceRings = feature && feature.geometry && Array.isArray(feature.geometry.rings)
+          ? feature.geometry.rings
+          : [];
+        const cleanRings = sourceRings.map((rawRing) =>
+          (Array.isArray(rawRing) ? rawRing : [])
+            .filter((point) => Array.isArray(point) && point.length >= 2 && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1])))
+            .map((point) => [Number(point[0]), Number(point[1])])
+        ).filter((ring) => ring.length >= 3);
+        if (!name || !cleanRings.length) return;
+        const key = name.toUpperCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        rows.push({ name, rings: cleanRings });
+      });
+
+      if (!rows.length) throw new Error('Data geometri Syit Piawai tidak lengkap untuk DXF.');
+      rows.sort((a, b) => String(a.name).localeCompare(String(b.name), 'en', { numeric: true }));
+      return rows;
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0) continue;
+    }
+  }
+
+  throw lastError || new Error('Garisan Syit Piawai tidak dapat disediakan untuk DXF.');
+}
+
 function azobssNormalizeLotDownloadFormat(value) {
   const format = String(value || "original").trim().toLowerCase();
   if (format === "zip") return "original";
@@ -13557,9 +13685,11 @@ async function azobssEnsureLotCadBuffer(record, type, format) {
     if (!zipBuffer) zipBuffer = await azobssWaitForLotJobAndCache(record, type);
     if (!azobssBufferIsZip(zipBuffer)) throw new Error("ZIP JUPEM Lot Kadaster belum tersedia untuk conversion.");
 
+    const sheetFeatures = await azobssLotCadSheetFeatures(record, type);
     const converted = azobssLotCadConverter.convertLotZip(zipBuffer, normalizedFormat, {
       root: ROOT,
-      tempDir: path.join(TEMP_DIR, "jupem-lot-cad-work")
+      tempDir: path.join(TEMP_DIR, "jupem-lot-cad-work"),
+      sheetFeatures
     });
     if (!converted || !Buffer.isBuffer(converted.buffer) || !converted.buffer.length) throw new Error("CAD conversion tidak menghasilkan fail.");
     azobssWriteLotCachedCad(productCode, stateCode, jobId, normalizedFormat, converted.buffer);
