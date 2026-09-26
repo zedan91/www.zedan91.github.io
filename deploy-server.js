@@ -10432,7 +10432,7 @@ async function azobssQueryLotObjectIds(config, geometry, auth) {
   }
 }
 
-async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult) {
+async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult, outputSpatialReference = "4326") {
   const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
   const idResult = knownIdResult || await azobssQueryLotObjectIds(config, geometry, auth);
   const objectIds = Array.isArray(idResult.objectIds) ? idResult.objectIds : [];
@@ -10447,7 +10447,7 @@ async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult) {
       objectIds: objectIds.slice(offset, offset + 200).join(","),
       outFields: "*",
       returnGeometry: "true",
-      outSR: "4326"
+      outSR: String(outputSpatialReference || "4326")
     }, auth, 45000);
     if (!fields.length && Array.isArray(batch.fields)) fields = batch.fields;
     if (batch.geometryType) geometryType = batch.geometryType;
@@ -10457,7 +10457,7 @@ async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult) {
   return {
     objectIdFieldName: String(idResult.objectIdFieldName || "OBJECTID"),
     geometryType,
-    spatialReference: { wkid: 4326 },
+    spatialReference: { wkid: Number(outputSpatialReference) || outputSpatialReference || 4326 },
     fields,
     features
   };
@@ -13482,10 +13482,6 @@ function azobssLotCadSelectedIds(record = {}) {
   const directSources = [record, record.raw || {}, record.item || {}, record.purchase || {}];
   for (const source of directSources) {
     if (!source || typeof source !== 'object') continue;
-    // v1162: paid purchase records persist these under the established
-    // lotSelectedObjectIds / lotObjectIdFieldName fields (used by stale-job
-    // regeneration). v1161 only looked for selectedObjectIds, so the sheet
-    // resolver received an empty list and generated no SYIT entities.
     const rawIds = Array.isArray(source.lotSelectedObjectIds)
       ? source.lotSelectedObjectIds
       : (Array.isArray(source.selectedObjectIds) ? source.selectedObjectIds : []);
@@ -13524,30 +13520,126 @@ function azobssLotCadSelectedIds(record = {}) {
   }
 }
 
-// v1161: Build a CAD-only Syit Piawai overlay from the exact paid lot IDs.
-// Query geometry is WGS84, but outSR is intentionally omitted for the sheet
-// result so the sheet polygons use the cadastral service's native CAD CRS.
-async function azobssLotCadSheetFeatures(record, type) {
+// v1163: cadastral SHP files use state cadastral grids, while the interactive
+// ArcGIS layer is normally queried in WGS84. v1162 omitted outSR for the sheet
+// query, so the sheet polygons could remain in degrees while the SHP/DXF lot
+// geometry was in metres. The converter correctly rejected that mismatch.
+//
+// Use the modern GDM2000 grid first, but also probe the legacy cadastral grid
+// where one exists. The selected CRS is the one whose exact selected-lot bbox
+// most closely matches the bbox read from the downloaded SHP itself.
+const AZOBSS_LOT_CAD_SR_CANDIDATES = Object.freeze({
+  "01": Object.freeze([3377, 4390]),       // Johor
+  "02": Object.freeze([3383, 4396]),       // Kedah
+  "03": Object.freeze([3385, 4398]),       // Kelantan
+  "04": Object.freeze([3378, 4391]),       // Melaka
+  "05": Object.freeze([3378, 4391]),       // Negeri Sembilan
+  "06": Object.freeze([3379, 4392]),       // Pahang
+  "07": Object.freeze([3382, 4395]),       // Pulau Pinang
+  "08": Object.freeze([3384, 4397]),       // Perak
+  "09": Object.freeze([3383, 4396]),       // Perlis
+  "10": Object.freeze([3380, 4393]),       // Selangor
+  "11": Object.freeze([3381, 4394]),       // Terengganu
+  "14": Object.freeze([3380, 4393]),       // Kuala Lumpur
+  "15": Object.freeze([3376, 29873]),      // Labuan: GDM2000 BRSO / Timbalai RSO (m)
+  "16": Object.freeze([3380, 4393])        // Putrajaya
+});
+
+function azobssCadGeometryBounds(features) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const feature of Array.isArray(features) ? features : []) {
+    const rings = feature && feature.geometry && Array.isArray(feature.geometry.rings)
+      ? feature.geometry.rings
+      : [];
+    for (const ring of rings) {
+      for (const point of Array.isArray(ring) ? ring : []) {
+        const x = Number(point && point[0]);
+        const y = Number(point && point[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+        minX = Math.min(minX, x); minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+      }
+    }
+  }
+  if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
+  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+}
+
+function azobssCadBoundsFitScore(candidate, target) {
+  if (!candidate || !target) return Number.POSITIVE_INFINITY;
+  const tcx = (Number(target.minX) + Number(target.maxX)) / 2;
+  const tcy = (Number(target.minY) + Number(target.maxY)) / 2;
+  const ccx = (Number(candidate.minX) + Number(candidate.maxX)) / 2;
+  const ccy = (Number(candidate.minY) + Number(candidate.maxY)) / 2;
+  const tw = Math.max(1, Math.abs(Number(target.width ?? (target.maxX - target.minX))));
+  const th = Math.max(1, Math.abs(Number(target.height ?? (target.maxY - target.minY))));
+  const cw = Math.max(1e-9, Math.abs(Number(candidate.width ?? (candidate.maxX - candidate.minX))));
+  const ch = Math.max(1e-9, Math.abs(Number(candidate.height ?? (candidate.maxY - candidate.minY))));
+  const centre = Math.hypot(ccx - tcx, ccy - tcy) / Math.max(tw, th, 1);
+  const size = Math.abs(Math.log(cw / tw)) + Math.abs(Math.log(ch / th));
+  return centre + size;
+}
+
+async function azobssResolveLotCadSpatialReference(config, selected, auth, targetBounds) {
+  const candidates = AZOBSS_LOT_CAD_SR_CANDIDATES[String(config && config.state || '').padStart(2, '0')]
+    || [3375];
+
+  // If the SHP bbox is unavailable, prefer modern GDM2000.
+  if (!targetBounds) return Number(candidates[0]);
+
+  let best = null;
+  for (const wkid of candidates) {
+    try {
+      const projectedLots = await azobssQueryLotFeatureSet(
+        config,
+        null,
+        auth,
+        { objectIds: selected.ids, objectIdFieldName: selected.objectIdFieldName },
+        String(wkid)
+      );
+      const bounds = azobssCadGeometryBounds(projectedLots && projectedLots.features);
+      const score = azobssCadBoundsFitScore(bounds, targetBounds);
+      if (!best || score < best.score) best = { wkid: Number(wkid), score, bounds };
+      // Near-exact bbox match: do not spend another ArcGIS request.
+      if (Number.isFinite(score) && score < 0.0025) break;
+    } catch (error) {
+      console.warn("Lot CAD CRS probe failed:", wkid, error && (error.message || error));
+    }
+  }
+
+  if (!best || !Number.isFinite(best.score)) {
+    throw new Error("Sistem koordinat CAD Lot Kadaster tidak dapat dikenal pasti.");
+  }
+
+  // A huge mismatch means the SHP does not correspond to either known state
+  // cadastral grid. Refuse to fabricate/shift sheet lines.
+  if (best.score > 0.25) {
+    throw new Error("Sistem koordinat Lot Kadaster tidak sepadan dengan grid negeri yang dijangka.");
+  }
+  return best.wkid;
+}
+
+async function azobssLotCadSheetFeatures(record, type, options = {}) {
   const productCode = type === 'NDCDB_C3' ? '2' : '1';
   const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || '');
   if (!stateCode) return [];
 
   const selected = azobssLotCadSelectedIds(record);
-  if (!selected.ids.length) {
-    // Legacy purchases can still generate their original lot-only CAD.
-    return [];
-  }
+  if (!selected.ids.length) return [];
 
   const config = azobssGetLotMapConfig(productCode, stateCode);
+  const targetBounds = options && options.targetBounds || null;
   let lastError = null;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const auth = await azobssGetJupemMapAuth(attempt > 0);
+
+      // Exact selected lots in WGS84 are used only as the spatial filter.
       const featureSet = await azobssQueryLotFeatureSet(config, null, auth, {
         objectIds: selected.ids,
         objectIdFieldName: selected.objectIdFieldName
-      });
+      }, "4326");
 
       const rings = [];
       for (const feature of Array.isArray(featureSet && featureSet.features) ? featureSet.features : []) {
@@ -13563,6 +13655,8 @@ async function azobssLotCadSheetFeatures(record, type) {
       }
       if (!rings.length) throw new Error('Geometri lot terpilih tidak tersedia untuk mendapatkan garisan Syit Piawai.');
 
+      const cadWkid = await azobssResolveLotCadSpatialReference(config, selected, auth, targetBounds);
+
       const layerUrl = 'https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/' +
         config.sheetLayer + '/query';
       const result = await azobssJupemArcGisJson(layerUrl, {
@@ -13571,7 +13665,8 @@ async function azobssLotCadSheetFeatures(record, type) {
         inSR: '4326',
         spatialRel: 'esriSpatialRelIntersects',
         outFields: '*',
-        returnGeometry: 'true'
+        returnGeometry: 'true',
+        outSR: String(cadWkid)
       }, auth, 45000);
 
       const features = Array.isArray(result && result.features) ? result.features : [];
@@ -13593,7 +13688,7 @@ async function azobssLotCadSheetFeatures(record, type) {
         const key = name.toUpperCase();
         if (seen.has(key)) return;
         seen.add(key);
-        rows.push({ name, rings: cleanRings });
+        rows.push({ name, rings: cleanRings, spatialReference: cadWkid });
       });
 
       if (!rows.length) throw new Error('Data geometri Syit Piawai tidak lengkap untuk DXF.');
@@ -13696,7 +13791,12 @@ async function azobssEnsureLotCadBuffer(record, type, format) {
     if (!zipBuffer) zipBuffer = await azobssWaitForLotJobAndCache(record, type);
     if (!azobssBufferIsZip(zipBuffer)) throw new Error("ZIP JUPEM Lot Kadaster belum tersedia untuk conversion.");
 
-    const sheetFeatures = await azobssLotCadSheetFeatures(record, type);
+    const lotInspection = (azobssLotCadConverter && typeof azobssLotCadConverter.inspectLotZipBounds === "function")
+      ? azobssLotCadConverter.inspectLotZipBounds(zipBuffer)
+      : null;
+    const sheetFeatures = await azobssLotCadSheetFeatures(record, type, {
+      targetBounds: lotInspection && lotInspection.bounds || null
+    });
     const converted = azobssLotCadConverter.convertLotZip(zipBuffer, normalizedFormat, {
       root: ROOT,
       tempDir: path.join(TEMP_DIR, "jupem-lot-cad-work"),
