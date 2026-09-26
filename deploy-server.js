@@ -13481,15 +13481,24 @@ function azobssLotRecordSelectionToken(record = {}) {
 function azobssLotCadSelectedIds(record = {}) {
   const directSources = [record, record.raw || {}, record.item || {}, record.purchase || {}];
   for (const source of directSources) {
-    if (!source || !Array.isArray(source.selectedObjectIds)) continue;
-    const ids = source.selectedObjectIds
+    if (!source || typeof source !== 'object') continue;
+    // v1162: paid purchase records persist these under the established
+    // lotSelectedObjectIds / lotObjectIdFieldName fields (used by stale-job
+    // regeneration). v1161 only looked for selectedObjectIds, so the sheet
+    // resolver received an empty list and generated no SYIT entities.
+    const rawIds = Array.isArray(source.lotSelectedObjectIds)
+      ? source.lotSelectedObjectIds
+      : (Array.isArray(source.selectedObjectIds) ? source.selectedObjectIds : []);
+    const ids = rawIds
       .map((value) => String(value).trim())
       .filter((value) => /^-?\d+$/.test(value))
       .slice(0, 20000);
     if (ids.length) {
       return {
         ids,
-        objectIdFieldName: String(source.objectIdFieldName || 'OBJECTID').trim() || 'OBJECTID'
+        objectIdFieldName: String(
+          source.lotObjectIdFieldName || source.objectIdFieldName || 'OBJECTID'
+        ).trim() || 'OBJECTID'
       };
     }
   }
@@ -13506,7 +13515,9 @@ function azobssLotCadSelectedIds(record = {}) {
       : [];
     return {
       ids,
-      objectIdFieldName: String(payload && payload.objectIdFieldName || 'OBJECTID').trim() || 'OBJECTID'
+      objectIdFieldName: String(
+        payload && (payload.lotObjectIdFieldName || payload.objectIdFieldName) || 'OBJECTID'
+      ).trim() || 'OBJECTID'
     };
   } catch (_) {
     return { ids: [], objectIdFieldName: 'OBJECTID' };
