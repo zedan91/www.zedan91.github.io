@@ -434,6 +434,83 @@ function normalizeJupemType(raw){
 function jupemTypeLabel(type){
   return ({PA:'Pelan Akui',BM:'BM',SBM:'SBM',GPS:'GPS',SYIT_PIAWAI:'Syit Piawai',NDCDB:'Lot Kadaster Berdigit',NDCDB_C3:'Lot Kadaster Berdigit C3'})[type]||'';
 }
+
+function jupemStateDisplay(raw){
+  const state=String(raw||'').trim().toUpperCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');
+  if(!state)return '';
+  const aliases={
+    'WILAYAH PERSEKUTUAN KUALA LUMPUR':'WPKL',
+    'WP KUALA LUMPUR':'WPKL',
+    'KUALA LUMPUR':'WPKL',
+    'WPKL':'WPKL',
+    'WILAYAH PERSEKUTUAN PUTRAJAYA':'WP Putrajaya',
+    'WP PUTRAJAYA':'WP Putrajaya',
+    'WILAYAH PERSEKUTUAN LABUAN':'WP Labuan',
+    'WP LABUAN':'WP Labuan'
+  };
+  if(aliases[state])return aliases[state];
+  return state.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
+}
+function jupemItemCode(raw={}){
+  return String(raw.itemCode||raw.stationNo||raw.stesen||raw.sheetName||raw.code||raw.noPA||raw.noPa||raw.noBM||raw.noBm||'').trim().toUpperCase().replace(/\s+/g,' ');
+}
+function detailedJupemItemName(raw={}){
+  const type=normalizeJupemType(raw.productType||raw.product||raw.type||raw.itemType||raw.documentType||raw.category);
+  if(!type)return '';
+  const state=jupemStateDisplay(raw.negeri||raw.state||raw.stateName);
+  let code=jupemItemCode(raw);
+  const parts=[];
+  if(type==='PA'){
+    code=code.replace(/^PA\s*/i,'').replace(/\.TIF$/i,'').trim();
+    parts.push('Pelan Akui',code?`PA${code}`:'');
+  }else if(type==='BM'){
+    parts.push('Benchmark BM',code);
+  }else if(type==='SBM'){
+    parts.push('Benchmark SBM',code);
+  }else if(type==='GPS'){
+    parts.push('GPS',code);
+  }else if(type==='SYIT_PIAWAI'){
+    parts.push('Syit Piawai (Gambar)',code);
+  }else if(type==='NDCDB_C3'){
+    parts.push('Lot Kadaster Berdigit C3');
+  }else if(type==='NDCDB'){
+    parts.push('Lot Kadaster Berdigit');
+  }
+  if(state)parts.push(state);
+  return parts.filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+}
+function jupemRawSalesItems(x={}){
+  const p=x.product||{};
+  const groups=[x.paBmItems,p.paBmItems,x.items,x.cartItems,x.selectedItems,x.purchaseItems,x.documents,x.orderItems,p.items].filter(Array.isArray);
+  for(const rows of groups){
+    const exact=rows.filter(item=>normalizeJupemType(item?.productType||item?.product||item?.type||item?.itemType||item?.documentType||item?.category));
+    if(exact.length)return exact;
+  }
+  return normalizeJupemType(x.productType||x.product||x.type||x.itemType||x.documentType||x.category)?[x]:[];
+}
+function jupemSalesItems(x={},gross=0){
+  const rawRows=jupemRawSalesItems(x);
+  if(!rawRows.length)return [];
+  const rows=rawRows.map(raw=>{
+    const qty=Math.max(1,Math.round(num(raw?.qty||raw?.quantity||raw?.units||1)||1));
+    const unitPrice=clampMoney(raw?.amount||raw?.unitPrice||raw?.price||raw?.saleAmount||0);
+    return {category:'pabm',name:detailedJupemItemName(raw)||jupemTypeLabel(normalizeJupemType(raw?.productType||raw?.product||raw?.type)),qty,unitPrice,unitCost:0};
+  }).filter(item=>item.name);
+  if(!rows.length)return [];
+  const explicit=rows.reduce((sum,item)=>sum+(num(item.qty)*num(item.unitPrice)),0);
+  if(explicit<=0&&num(gross)>0){
+    const qtyTotal=rows.reduce((sum,item)=>sum+Math.max(1,num(item.qty)||1),0)||1;
+    rows.forEach(item=>{item.unitPrice=clampMoney(num(gross)/qtyTotal)});
+  }
+  return rows;
+}
+function totalRowQty(row={}){
+  return (row.items||[]).reduce((sum,item)=>sum+Math.max(0,num(item?.qty)||0),0)||1;
+}
+function displayQty(value){
+  const n=num(value);return Number.isInteger(n)?String(n):n.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+}
+
 function detailedJupemProductName(x={}){
   const p=x.product||{};
   const arrays=[x.paBmItems,x.items,x.cartItems,x.selectedItems,x.purchaseItems,x.documents,x.orderItems,p.paBmItems,p.items].filter(Array.isArray);
@@ -527,7 +604,8 @@ function normalizeManual(id,x={}){
 function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const status=normalizeStatus(x.status||x.paymentStatus,x.paid===true);
   const gross=clampMoney(extractAmount(x));
-  const category=detectCategory(x);
+  const paBmSalesItems=jupemSalesItems(x,gross);
+  const category=paBmSalesItems.length?'pabm':detectCategory(x);
   const explicitFee=extractCost(x,['paymentFee','gatewayFee','transactionFee','toyyibPayFee','processingFee']);
   const method=String(x.paymentMethod||x.paymentSource||x.gateway||'ToyyibPay');
   const paymentFee=explicitFee>0?explicitFee:(status==='paid'&&/toyyib|online|gateway/i.test(method)?1:0);
@@ -541,8 +619,8 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
     invoiceNo:String(x.invoiceNo||deriveInvoiceNo(baseNo)),receiptNo:String(x.receiptNo||deriveReceiptNo(baseNo)),
     documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),
     customerName:customerName(x),customerPhone:customerPhone(x),customerEmail:customerEmail(x),customerAddress:customerAddress(x),status,paymentMethod:method,
-    saleDateMs:rowDateMs(x),items:[{category,name:productName(x),qty:1,unitPrice:gross,unitCost:0}],categories:[category],category,
-    subtotal:gross,discount:0,productCost:0,shippingCost:0,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
+    saleDateMs:rowDateMs(x),items:paBmSalesItems.length?paBmSalesItems:[{category,name:productName(x),qty:1,unitPrice:gross,unitCost:0}],categories:[category],category,
+    subtotal:paBmSalesItems.length?paBmSalesItems.reduce((sum,item)=>sum+num(item.qty)*num(item.unitPrice),0):gross,discount:0,productCost:0,shippingCost:0,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
   };
   row.documentNo=currentDocumentNo(row);row.depositPercent=depositPercent(row);row.depositAmount=depositAmount(row);row.paidGross=receivedAmount(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=outstandingAmount(row);return row;
 }
@@ -597,13 +675,16 @@ async function loadData(options={}){
       const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);const existing=map.get(k);
       if(!existing){map.set(k,row);return}
       existing.deleteRefs=mergeDeleteRefs(existing.deleteRefs,row.deleteRefs);
-      const exactName=detailedJupemProductName(x);
-      if(exactName){
-        existing.items=[{...(existing.items?.[0]||{}),category:'pabm',name:exactName,qty:1,unitPrice:existing.gross,unitCost:0}];
-        existing.categories=['pabm'];existing.category='pabm';
+      const exactItems=jupemSalesItems(x,row.gross);
+      if(exactItems.length){
+        existing.paBmItems=Array.isArray(x.paBmItems)?x.paBmItems:existing.paBmItems;
+        existing.items=exactItems;existing.categories=['pabm'];existing.category='pabm';
+        existing.gross=row.gross;existing.subtotal=row.subtotal;existing.paymentFee=row.paymentFee;existing.commission=row.commission;existing.otherCost=row.otherCost;existing.totalCost=row.totalCost;existing.profit=row.profit;
       }
       if(existing.status!=='paid'&&row.status==='paid')existing.status='paid';
       existing.customerName=existing.customerName||row.customerName;existing.customerPhone=existing.customerPhone||row.customerPhone;existing.customerEmail=existing.customerEmail||row.customerEmail;existing.customerAddress=existing.customerAddress||row.customerAddress;
+      existing.invoiceNo=existing.invoiceNo||row.invoiceNo;existing.receiptNo=existing.receiptNo||row.receiptNo;
+      existing.documentType=documentKindForStatus(existing.status);existing.paymentRecognized=isRecognizedPayment(existing.status);existing.documentNo=currentDocumentNo(existing);existing.depositPercent=depositPercent(existing);existing.depositAmount=depositAmount(existing);existing.paidGross=receivedAmount(existing);existing.recognizedTotalCost=recognizedCosts(existing);existing.recognizedProfit=recognizedProfit(existing);existing.amountDue=outstandingAmount(existing);
     });
     websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row)).map(row=>applyReceiptDeliveryState(applyAutoInvoiceEdit(row)));
     selectedRowIds.clear();
@@ -710,7 +791,7 @@ function renderTable(){
   const tbody=el('salesReceiptTableBody');if(!tbody)return;
   const pages=Math.max(1,Math.ceil(visibleRows.length/PAGE_SIZE));const start=(currentPage-1)*PAGE_SIZE;const pageRows=visibleRows.slice(start,start+PAGE_SIZE);
   tbody.innerHTML=pageRows.map(r=>{
-    const itemNames=(r.items||[]).map(i=>i.name).filter(Boolean);const itemText=itemNames.slice(0,2).join(', ')+(itemNames.length>2?` +${itemNames.length-2}`:'');
+    const itemNames=(r.items||[]).map(i=>i.name).filter(Boolean);const isPaBmRow=categoriesForRow(r).includes('pabm');const itemText=itemNames.slice(0,isPaBmRow?3:2).join(', ')+(itemNames.length>(isPaBmRow?3:2)?` +${itemNames.length-(isPaBmRow?3:2)}`:'');const qtyText=displayQty(totalRowQty(r));
     const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';const selected=selectedRowIds.has(r.id);
     const actions=[];
     if(isRecognizedPayment(r.status)){
@@ -739,8 +820,8 @@ function renderTable(){
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
-    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(paymentMethodDisplay(r))}</div></td><td>${statusPill(r.status,r)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
-  }).join('')||'<tr><td colspan="10"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
+    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td class="az-sr-items-payment"><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(paymentMethodDisplay(r))}</div></td><td class="az-sr-qty-cell">${esc(qtyText)}</td><td>${statusPill(r.status,r)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
+  }).join('')||'<tr><td colspan="11"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
   if(el('salesReceiptPageInfo'))el('salesReceiptPageInfo').textContent=`Page ${currentPage} / ${pages} • ${visibleRows.length} record(s)`;
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
   updateBulkUI();

@@ -1,0 +1,19 @@
+{
+  "patch": 1167,
+  "baseline": "1.0.1166",
+  "version": "1.0.1167",
+  "scope": "Admin > Sales & Receipts + Invoice/Receipt item quantity",
+  "examples": [
+    "Pelan Akui PA34334 WPKL",
+    "Benchmark BM B 2342 Selangor",
+    "GPS GP90 WPKL",
+    "Syit Piawai (Gambar) 4B Selangor",
+    "Lot Kadaster Berdigit Selangor"
+  ],
+  "changes": [
+    "Rebuild PA/BM sales items from paBmItems/items using itemCode/stationNo/negeri.",
+    "Add dedicated Qty column after Items / Payment.",
+    "Preserve full premium-order PA/BM item list during purchaseLogs deduplication.",
+    "Invoice/Receipt PDF already consumes row.items qty; corrected row items make Qty accurate."
+  ]
+}

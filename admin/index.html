@@ -1887,7 +1887,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=910">
 <script defer src="/assets/js/azobss-more-nav.js?v=1079"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1070">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1167">
 
 <style id="az770-admin-service-bookings-style">
 .az770-service-booking-list{display:grid;gap:10px}.az770-service-booking-row{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(220px,1fr) minmax(220px,1.25fr) minmax(170px,.7fr);gap:12px;align-items:start;padding:14px;border:1px solid rgba(148,163,184,.24);border-radius:13px;background:linear-gradient(145deg,rgba(15,31,54,.95),rgba(8,18,34,.98))}.az770-service-booking-row.is-new{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.07) inset}.az770-booking-title{font-weight:950;color:#fff}.az770-booking-meta{margin-top:4px;color:#93a8c2;font-size:12px;line-height:1.45}.az770-booking-services{color:#dbeafe;font-size:12px;line-height:1.5}.az770-booking-price{display:block;margin-top:6px;color:#86efac;font-weight:950}.az770-booking-actions{display:grid;gap:7px}.az770-booking-actions select{width:100%}.az770-booking-actions .btn{width:100%;justify-content:center}.az770-booking-detail{grid-column:1/-1;margin-top:1px;padding:11px;border-radius:10px;background:#071426;border:1px solid rgba(148,163,184,.18);color:#b9c8da;font-size:12px;white-space:pre-wrap}.az770-booking-chip{display:inline-flex;margin-top:6px;padding:4px 7px;border-radius:999px;border:1px solid #365273;color:#bfdbfe;font-size:10px;font-weight:900;text-transform:uppercase}.az770-booking-empty{padding:20px;text-align:center;border:1px dashed #3b516d;border-radius:12px;color:#91a4bd}@media(max-width:1050px){.az770-service-booking-row{grid-template-columns:1fr 1fr}.az770-booking-actions{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.az770-service-booking-row{grid-template-columns:1fr}.az770-booking-actions{grid-column:auto;grid-template-columns:1fr}}
@@ -3009,7 +3009,7 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
         <div class="az-sr-table-wrap">
           <table class="az-sr-table">
-            <thead><tr><th class="az-sr-select-head"><input id="salesReceiptSelectPage" type="checkbox" title="Select all records on this page" aria-label="Select all records on this page"></th><th>Document / Date</th><th>Customer</th><th>Source / Category</th><th>Items / Payment</th><th>Status</th><th>Paid / Due</th><th>Costs</th><th>Profit</th><th>Actions</th></tr></thead>
+            <thead><tr><th class="az-sr-select-head"><input id="salesReceiptSelectPage" type="checkbox" title="Select all records on this page" aria-label="Select all records on this page"></th><th>Document / Date</th><th>Customer</th><th>Source / Category</th><th>Items / Payment</th><th>Qty</th><th>Status</th><th>Paid / Due</th><th>Costs</th><th>Profit</th><th>Actions</th></tr></thead>
             <tbody id="salesReceiptTableBody"><tr><td colspan="10"><div class="az-sr-empty">Open Sales &amp; Receipts to load records.</div></td></tr></tbody>
           </table>
         </div>
@@ -8743,7 +8743,7 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1070"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1165" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1167" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*
