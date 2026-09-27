@@ -1279,6 +1279,11 @@ function temporaryDirectShareUrl(row,type,target,shareUrl){
 function nativeFileShareSupported(files){
   if(!navigator.share)return false;try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
 }
+function nativePdfFileShareLikelySupported(){
+  if(!navigator.share)return false;
+  if(!navigator.canShare)return true;
+  try{return navigator.canShare({files:[new File([new Uint8Array(1)],'azobss-share-test.pdf',{type:'application/pdf'})]})}catch(_e){return false}
+}
 async function shareTemporaryFile(data,title,text,button=null,{preferredApp=''}={}){
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
@@ -1325,42 +1330,47 @@ async function shareDocumentPdf(row,type,button=null){
 function closeSharePanel(){const panel=el('salesReceiptSharePanel');if(panel)panel.hidden=true;sharePanelContext=null}
 function setSharePanelText(id,value){const node=el(id);if(node)node.textContent=value}
 function openSharePanel(row,type='receipt'){
-  if(!row)return;const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
+  if(!row)return;const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';const canShareActualPdf=nativePdfFileShareLikelySupported();
   sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
-  setSharePanelText('salesReceiptShareNativeLabel','Share Actual PDF File');
-  setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp Actual PDF + Payment Link':'WhatsApp Actual Receipt PDF');
+  setSharePanelText('salesReceiptShareNativeLabel',canShareActualPdf?'Share Actual PDF File':'Share Actual PDF File — unsupported here');
+  setSharePanelText('salesReceiptShareWhatsAppLabel',canShareActualPdf?(docType==='invoice'?'WhatsApp Actual PDF + Payment Link':'WhatsApp Actual Receipt PDF'):(docType==='invoice'?'WhatsApp PDF Link + Payment Link':'WhatsApp Receipt PDF Link'));
   setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?'Telegram Invoice + Payment Link':'Telegram Receipt Link');
   setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
-  setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?(isToyyibInvoice?'Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.':isMaybankInvoice?'Share the actual invoice PDF together with Maybank account details. The Maybank QR is inside the PDF.':'Share the actual invoice PDF and invoice message. Choose WhatsApp in the Share window.'):'Share the actual receipt PDF and message. Choose WhatsApp in the Share window.');
+  setSharePanelText('salesReceiptShareWhatsAppDesc',canShareActualPdf?(docType==='invoice'?(isToyyibInvoice?'Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.':isMaybankInvoice?'Share the actual invoice PDF together with Maybank account details. The Maybank QR is inside the PDF.':'Share the actual invoice PDF and invoice message. Choose WhatsApp in the Share window.'):'Share the actual receipt PDF and message. Choose WhatsApp in the Share window.'):(docType==='invoice'?(isToyyibInvoice?'This browser cannot attach PDF files directly. Open WhatsApp with the secure temporary invoice PDF link and ToyyibPay payment link instead.':isMaybankInvoice?'This browser cannot attach PDF files directly. Open WhatsApp with the secure temporary invoice PDF link and Maybank payment details instead.':'This browser cannot attach PDF files directly. Open WhatsApp with the secure temporary invoice PDF link instead.'):'This browser cannot attach PDF files directly. Open WhatsApp with the secure temporary receipt PDF link instead.'));
   setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareLinkDesc',docType==='invoice'?'Copy the temporary invoice PDF link.':'Copy the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareMessageDesc',docType==='invoice'?(isToyyibInvoice?'Copy invoice details, PDF link and ToyyibPay payment link.':isMaybankInvoice?'Copy invoice details, PDF link and Maybank account details.':'Copy invoice details and PDF link.'):'Copy receipt details and temporary PDF link.');
   setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
-  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
+  if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;const panel=el('salesReceiptSharePanel');if(panel){const nativeButton=panel.querySelector('[data-sr-share-action="native"]');if(nativeButton){nativeButton.disabled=!canShareActualPdf;nativeButton.title=canShareActualPdf?'':'This browser does not support sharing PDF files as native attachments.'}panel.hidden=false;(canShareActualPdf?nativeButton:panel.querySelector('[data-sr-share-action="whatsapp"]'))?.focus()}
 }
 function openBulkSharePanel(){
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
   sharePanelContext={mode:'bulk',rows,temp:null,tempPromise:null};setSharePanelText('salesReceiptShareTitle','Share Selected Documents');setSharePanelText('salesReceiptShareMeta',`${rows.length} selected document(s) in one temporary ZIP`);setSharePanelText('salesReceiptShareNativeLabel','Share Actual ZIP File');setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp ZIP Link');setSharePanelText('salesReceiptShareTelegramLabel','Telegram ZIP Link');setSharePanelText('salesReceiptShareLinkLabel','Copy ZIP Link');setSharePanelText('salesReceiptShareWhatsAppDesc','Open WhatsApp with the temporary ZIP link.');setSharePanelText('salesReceiptShareTelegramDesc','Open Telegram with the temporary ZIP link.');setSharePanelText('salesReceiptShareLinkDesc','Copy the temporary ZIP link.');setSharePanelText('salesReceiptShareMessageDesc','Copy a summary and the temporary ZIP link.');setSharePanelText('salesReceiptShareDownloadLabel','Download ZIP');if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=true;const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
 }
-async function openTemporaryApp(target,context,button=null){
+async function openTemporaryApp(target,context,button=null,{fileShareFallback=false}={}){
+  const targetWindow=window.open('about:blank','_blank');
+  if(!targetWindow){notify(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked. Allow popups for AZOBSS and try again.`,true);return false}
+  try{targetWindow.opener=null}catch(_e){}
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
     const data=await ensureSharePanelTemporary();let url='';
     if(context.mode==='single')url=temporaryDirectShareUrl(context.row,context.type,target,data.shareUrl);
     else{const text=`${bulkShareSummary(context.rows||[])}
 ZIP: ${data.shareUrl}`;url=target==='whatsapp'?`https://wa.me/?text=${encodeURIComponent(text)}`:`https://t.me/share/url?url=${encodeURIComponent(data.shareUrl)}&text=${encodeURIComponent(bulkShareSummary(context.rows||[]))}`}
-    if(!setDirectShareWindow(null,url))throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
-    notify(`Opened ${target==='whatsapp'?'WhatsApp':'Telegram'} with a temporary backend link. No local download was created.`);
-  }catch(e){console.error(e);notify('Could not open the app with the temporary file: '+(e.message||e),true)}
+    if(!setDirectShareWindow(targetWindow,url))throw new Error(`${target==='whatsapp'?'WhatsApp':'Telegram'} popup was blocked.`);
+    notify(fileShareFallback?`This browser cannot attach PDF files directly. Opened ${target==='whatsapp'?'WhatsApp':'Telegram'} with the secure temporary PDF link instead.`:`Opened ${target==='whatsapp'?'WhatsApp':'Telegram'} with a temporary backend link. No local download was created.`);
+    return true;
+  }catch(e){try{targetWindow.close()}catch(_e){}console.error(e);notify('Could not open the app with the temporary file: '+(e.message||e),true);return false}
   finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 async function runSharePanelAction(action,button=null){
   const context=sharePanelContext;if(!context)return;
   if(action==='whatsapp'){
     if(context.mode==='single'){
+      if(!nativePdfFileShareLikelySupported())return openTemporaryApp('whatsapp',context,button,{fileShareFallback:true});
       try{const shared=await shareSingleActualPdfWithMessage(context,button,'WhatsApp');if(shared)await autoMarkSharedReceipt(context,'whatsapp-share');return shared}
       catch(e){console.error(e);notify('Could not prepare the actual PDF for WhatsApp: '+(e.message||e),true);return}
     }

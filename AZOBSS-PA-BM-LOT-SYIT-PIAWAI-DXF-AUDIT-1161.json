@@ -1,0 +1,29 @@
+{
+  "patch": 1161,
+  "packageVersion": "1.0.1161",
+  "baseline": 1160,
+  "date": "2026-09-26",
+  "packageType": "full-website",
+  "feature": "Lot Kadaster Syit Piawai DXF layers",
+  "layers": {
+    "SYIT_PIAWAI": "full related sheet boundaries",
+    "SYIT_LABEL": "sheet number/name labels"
+  },
+  "preservedLayers": [
+    "PER NDCDB",
+    "NOLOT",
+    "NOPA"
+  ],
+  "cadConverterVersion": "1161.1",
+  "fullSheetBoundary": true,
+  "aoiClippingOfSheetBoundary": false,
+  "initialViewport": "purchased lot area",
+  "zoomExtents": "includes full relevant sheet boundaries",
+  "coordinateOverlapGuard": true,
+  "legacyPurchaseFallback": "lot-only CAD when selectedObjectIds are unavailable",
+  "validation": {
+    "npmRunCheck": "passed",
+    "publicDxfSheetLayerSmokeTest": "passed",
+    "libreDwgR2000LayerSmokeTest": "passed"
+  }
+}
