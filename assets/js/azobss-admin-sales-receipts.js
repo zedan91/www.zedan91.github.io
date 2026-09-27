@@ -451,6 +451,49 @@ function jupemStateDisplay(raw){
   if(aliases[state])return aliases[state];
   return state.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
 }
+
+function jupemStateAbbr(raw){
+  const state=String(raw||'').trim().toUpperCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');
+  if(!state)return '';
+  const map={
+    'SELANGOR':'SGR','KELANTAN':'KTN','PAHANG':'PHG','JOHOR':'JHR','PERAK':'PRK',
+    'KEDAH':'KDH','PERLIS':'PLS','TERENGGANU':'TRG','NEGERI SEMBILAN':'NSN',
+    'MELAKA':'MLK','MALACCA':'MLK','PULAU PINANG':'PNG','PENANG':'PNG',
+    'SABAH':'SBH','SARAWAK':'SWK',
+    'WILAYAH PERSEKUTUAN KUALA LUMPUR':'WPKL','WP KUALA LUMPUR':'WPKL','KUALA LUMPUR':'WPKL','WPKL':'WPKL',
+    'WILAYAH PERSEKUTUAN PUTRAJAYA':'WPPJ','WP PUTRAJAYA':'WPPJ','PUTRAJAYA':'WPPJ',
+    'WILAYAH PERSEKUTUAN LABUAN':'WPL','WP LABUAN':'WPL','LABUAN':'WPL'
+  };
+  return map[state]||state.replace(/\s+/g,'');
+}
+function compactJupemItemName(raw={}){
+  const type=normalizeJupemType(raw.productType||raw.product||raw.type||raw.itemType||raw.documentType||raw.category);
+  if(!type)return '';
+  let code=jupemItemCode(raw);
+  const state=jupemStateAbbr(raw.negeri||raw.state||raw.stateName);
+  let label='';
+  if(type==='PA'){
+    code=code.replace(/^PA\s*/i,'').replace(/\.TIF$/i,'').trim();
+    label=code?`PA${code}`:'PA';
+  }else if(type==='BM'){
+    code=code.replace(/^BM\s*/i,'').trim();
+    label=`BM${code?` ${code}`:''}`;
+  }else if(type==='SBM'){
+    code=code.replace(/^SBM\s*/i,'').trim();
+    label=`SBM${code?` ${code}`:''}`;
+  }else if(type==='GPS'){
+    code=code.replace(/^GPS\s*/i,'').trim();
+    label=`GPS${code?` ${code}`:''}`;
+  }else if(type==='SYIT_PIAWAI'){
+    label=`Syit${code?` ${code}`:''}`;
+  }else if(type==='NDCDB_C3'){
+    label='Lot Kadaster C3';
+  }else if(type==='NDCDB'){
+    label='Lot Kadaster';
+  }
+  return `${label}${state?` (${state})`:''}`.replace(/\s+/g,' ').trim();
+}
+
 function jupemItemCode(raw={}){
   return String(raw.itemCode||raw.stationNo||raw.stesen||raw.sheetName||raw.code||raw.noPA||raw.noPa||raw.noBM||raw.noBm||'').trim().toUpperCase().replace(/\s+/g,' ');
 }
@@ -494,7 +537,7 @@ function jupemSalesItems(x={},gross=0){
   const rows=rawRows.map(raw=>{
     const qty=Math.max(1,Math.round(num(raw?.qty||raw?.quantity||raw?.units||1)||1));
     const unitPrice=clampMoney(raw?.amount||raw?.unitPrice||raw?.price||raw?.saleAmount||0);
-    return {category:'pabm',name:detailedJupemItemName(raw)||jupemTypeLabel(normalizeJupemType(raw?.productType||raw?.product||raw?.type)),qty,unitPrice,unitCost:0};
+    return {category:'pabm',name:detailedJupemItemName(raw)||jupemTypeLabel(normalizeJupemType(raw?.productType||raw?.product||raw?.type)),compactName:compactJupemItemName(raw),qty,unitPrice,unitCost:0};
   }).filter(item=>item.name);
   if(!rows.length)return [];
   const explicit=rows.reduce((sum,item)=>sum+(num(item.qty)*num(item.unitPrice)),0);
@@ -791,7 +834,16 @@ function renderTable(){
   const tbody=el('salesReceiptTableBody');if(!tbody)return;
   const pages=Math.max(1,Math.ceil(visibleRows.length/PAGE_SIZE));const start=(currentPage-1)*PAGE_SIZE;const pageRows=visibleRows.slice(start,start+PAGE_SIZE);
   tbody.innerHTML=pageRows.map(r=>{
-    const itemNames=(r.items||[]).map(i=>i.name).filter(Boolean);const isPaBmRow=categoriesForRow(r).includes('pabm');const itemText=itemNames.slice(0,isPaBmRow?3:2).join(', ')+(itemNames.length>(isPaBmRow?3:2)?` +${itemNames.length-(isPaBmRow?3:2)}`:'');const qtyText=displayQty(totalRowQty(r));
+    const isPaBmRow=categoriesForRow(r).includes('pabm');const itemNames=(r.items||[]).map(i=>isPaBmRow?(i.compactName||i.name):i.name).filter(Boolean);const qtyText=displayQty(totalRowQty(r));
+    let itemHtml='';
+    if(isPaBmRow){
+      const first=itemNames.slice(0,2),more=itemNames.slice(2);
+      const line=(name,index,total)=>`<div class="az-sr-pabm-item">${esc(name)}${index<total-1?',':''}</div>`;
+      itemHtml=`<div class="az-sr-pabm-list">${first.map((name,index)=>line(name,index,first.length+(more.length?1:0))).join('')}${more.length?`<div class="az-sr-pabm-more" data-sr-items-more-panel="${esc(r.id)}" hidden>${more.map((name,index)=>line(name,index,more.length)).join('')}</div><button class="az-sr-items-more-btn" type="button" data-sr-items-more="${esc(r.id)}" aria-expanded="false">+${more.length} more ▾</button>`:''}</div>`;
+    }else{
+      const itemText=itemNames.slice(0,2).join(', ')+(itemNames.length>2?` +${itemNames.length-2}`:'');
+      itemHtml=`<div>${esc(itemText||'Purchase')}</div>`;
+    }
     const docType=documentKindForStatus(r.status);const docLabel=docType==='invoice'?'INVOICE':'RECEIPT';const docNo=currentDocumentNo(r);const rowId=esc(r.id);const label=docType==='invoice'?'Invoice':'Receipt';const selected=selectedRowIds.has(r.id);
     const actions=[];
     if(isRecognizedPayment(r.status)){
@@ -820,7 +872,7 @@ function renderTable(){
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
-    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td class="az-sr-items-payment"><div>${esc(itemText||'Purchase')}</div><div class="az-sr-subtext">${esc(paymentMethodDisplay(r))}</div></td><td class="az-sr-qty-cell">${esc(qtyText)}</td><td>${statusPill(r.status,r)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
+    return `<tr class="${selected?'az-sr-row-selected':''}" data-sr-table-row="${rowId}"><td class="az-sr-select-cell"><input class="az-sr-row-select" type="checkbox" data-sr-select="${rowId}" aria-label="Select ${esc(label)} ${esc(docNo)}"${selected?' checked':''}></td><td><div class="az-sr-doc-kind ${docType}">${docLabel}</div><div class="az-sr-receipt-no">${esc(docNo)}</div><div class="az-sr-subtext">${formatDate(currentDocumentDateMs(r))}</div></td><td><div class="az-sr-customer">${esc(r.customerName)}</div><div class="az-sr-subtext">${esc(r.customerPhone||r.customerEmail||'-')}</div></td><td>${sourcePill(r)}<div class="az-sr-subtext">${esc(categoryLabel(r.category))}</div></td><td class="az-sr-items-payment">${itemHtml}<div class="az-sr-subtext">${esc(paymentMethodDisplay(r))}</div></td><td class="az-sr-qty-cell">${esc(qtyText)}</td><td>${statusPill(r.status,r)}${receiptDeliveryBadge(r)}</td><td class="az-sr-money">${grossCell}</td><td class="az-sr-money">${costCell}</td><td class="az-sr-money ${profitValue>=0?'az-sr-profit':'az-sr-loss'}">${profitCell}</td><td><div class="az-sr-actions">${actions.join('')}</div></td></tr>`;
   }).join('')||'<tr><td colspan="11"><div class="az-sr-empty">No sales or receipts match the current filter.</div></td></tr>';
   if(el('salesReceiptPageInfo'))el('salesReceiptPageInfo').textContent=`Page ${currentPage} / ${pages} • ${visibleRows.length} record(s)`;
   if(el('salesReceiptPrev'))el('salesReceiptPrev').disabled=currentPage<=1;if(el('salesReceiptNext'))el('salesReceiptNext').disabled=currentPage>=pages;
@@ -1561,7 +1613,7 @@ function bind(){
   el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
-  document.addEventListener('click',e=>{const edit=e.target.closest('[data-sr-edit]');if(edit){const row=findRow(edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
+  document.addEventListener('click',e=>{const moreBtn=e.target.closest('[data-sr-items-more]');if(moreBtn){const rowId=moreBtn.dataset.srItemsMore;const panel=document.querySelector(`[data-sr-items-more-panel="${CSS.escape(rowId)}"]`);if(panel){const open=moreBtn.getAttribute('aria-expanded')==='true';panel.hidden=open;moreBtn.setAttribute('aria-expanded',open?'false':'true');moreBtn.textContent=open?`+${panel.children.length} more ▾`:'Show less ▴';}return}const edit=e.target.closest('[data-sr-edit]');if(edit){const row=findRow(edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
 function startManualReceiptPaymentWatch(){
   // Quota saver: check only every five minutes and only while a Pending manual
