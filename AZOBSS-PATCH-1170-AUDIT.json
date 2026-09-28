@@ -1,0 +1,23 @@
+{
+  "patch": 1170,
+  "baseline": "1.0.1169",
+  "version": "1.0.1170",
+  "date": "2026-09-28",
+  "fullPackage": true,
+  "features": [
+    "Deposit Terms opt-in checkbox; default hidden",
+    "Invoice PDF renders Deposit Terms only when explicitly enabled",
+    "AZOBSSTV Firefox native HLS/DASH compatibility path with relay and iframe fallback",
+    "AZOBSSTV v1086 cache/version refresh"
+  ],
+  "filesChanged": [
+    "package.json",
+    "admin/index.html",
+    "assets/js/azobss-admin-sales-receipts.js",
+    "assets/js/azobss-admin-sales-receipt-pdf.js",
+    "AZOBSSTV/index.html",
+    "AZOBSSTV/assets/azobsstv.js",
+    "AZOBSSTV/sw.js",
+    "README_PATCH_1170.md"
+  ]
+}

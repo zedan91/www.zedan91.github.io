@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1070;
+window.__azSalesReceiptsModuleVersion=1170;
 
 let manualRows=[];
 let websiteRows=[];
@@ -273,6 +273,7 @@ function applyAutoInvoiceEdit(row={}){
   row.customerEmail=String(state.customerEmail??row.customerEmail??'');
   row.customerAddress=String(state.customerAddress??row.customerAddress??'');
   row.notes=String(state.notes??row.notes??'');
+  row.showDepositTerms=state.showDepositTerms===true;
   if(Array.isArray(state.itemNames)&&state.itemNames.length){
     row.items=(row.items||[]).map((item,index)=>({...item,name:String(state.itemNames[index]??item.name??'Purchase')}));
   }
@@ -1041,6 +1042,11 @@ function configureFormMode(row=null){
     const name=itemRow.querySelector('[data-sr-item-name]');if(name){name.disabled=false;name.title=website?'You may edit the description shown on the invoice / receipt.':''}
     const remove=itemRow.querySelector('.az-sr-remove-item');if(remove){remove.hidden=website;remove.disabled=website}
   });
+  const depositTermsToggle=el('salesReceiptShowDepositTerms');
+  const depositTermsWrap=document.querySelector('[data-sr-deposit-terms-toggle]');
+  const invoiceMode=documentKindForStatus(el('salesReceiptFormStatus')?.value)==='invoice';
+  if(depositTermsWrap)depositTermsWrap.hidden=!invoiceMode;
+  if(depositTermsToggle){depositTermsToggle.disabled=!invoiceMode;depositTermsToggle.title=invoiceMode?'Tick to show Deposit Terms on the invoice PDF.':'Deposit Terms apply to invoices only.'}
   const note=document.querySelector('.az-sr-status-note');if(note){
     if(website){
       const sourceRow=row||findRow(editingWebsiteRowId)||{};
@@ -1091,6 +1097,7 @@ function openForm(row=null){
   el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=editingMode==='website'?(row?.paymentMethod||row?.verifiedPaymentMethod||'Other'):(row?.paymentMethod||(normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':'Bank Transfer'));el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;el('salesReceiptOtherCost').value=num(row?.otherCost)||0;el('salesReceiptNotes').value=row?.notes||'';
+  const depositTermsToggle=el('salesReceiptShowDepositTerms');if(depositTermsToggle)depositTermsToggle.checked=row?.showDepositTerms===true;
   const numberInput=el('salesReceiptReceiptNo');numberInput.value='';numberInput.dataset.mode='';syncFormDocumentMode(true);
   const box=el('salesReceiptItems');box.innerHTML='';(row?.items?.length?row.items:[{category:'other',name:'',qty:1,unitPrice:0,unitCost:0}]).forEach(addItemRow);configureFormMode(row);recalcForm();hideRegisteredCustomerSuggestions();el('salesReceiptDialog').hidden=false;document.body.style.overflow='hidden';
   if(editingMode==='manual')loadRegisteredCustomerLookup().catch(()=>{});
@@ -1114,7 +1121,7 @@ async function saveWebsiteEditForm(){
   if(!['pending','paid','refunded','cancelled'].includes(desiredStatus))return notify('Choose a valid status: Pending, Paid, Refunded or Cancelled.',true);
   const statusOverride=desiredStatus!==verifiedStatus?desiredStatus:'';
   const paymentMethodOverride=desiredPaymentMethod.toLowerCase()!==verifiedPaymentMethod.toLowerCase()?desiredPaymentMethod:'';
-  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),statusOverride,paymentMethodOverride,verifiedStatusSnapshot:verifiedStatus,verifiedPaymentMethodSnapshot:verifiedPaymentMethod,overrideUpdatedAtMs:now,updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
+  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,statusOverride,paymentMethodOverride,verifiedStatusSnapshot:verifiedStatus,verifiedPaymentMethodSnapshot:verifiedPaymentMethod,overrideUpdatedAtMs:now,updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
   const btn=el('salesReceiptSave');const label=documentKindForStatus(desiredStatus)==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
     await setDoc(doc(db,'receipts',overrideId),payload,{merge:true});autoInvoiceEditByKey.set(targetKey.toLowerCase(),{...payload,_docId:overrideId});applyAutoInvoiceEdit(row);closeForm();
@@ -1137,7 +1144,7 @@ async function saveForm(){
   const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';const transitionedToDeposit=status==='deposit-paid'&&editingOriginalStatus!=='deposit-paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
   const documentNo=kind==='invoice'?editingInvoiceNo:editingReceiptNo;
-  const depositPaid=status==='deposit-paid';const depositValue=depositPaid?clampMoney(c.gross*0.5):0;const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,depositPercent:depositPaid?50:0,depositAmount:depositValue,amountDue:recognized?0:(depositPaid?clampMoney(c.gross-depositValue):c.gross),paidGross:recognized?c.gross:depositValue,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other',saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const depositPaid=status==='deposit-paid';const depositValue=depositPaid?clampMoney(c.gross*0.5):0;const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,invoiceNo:editingInvoiceNo||'',receiptNo:editingReceiptNo||'',paymentRecognized:recognized,depositPercent:depositPaid?50:0,depositAmount:depositValue,amountDue:recognized?0:(depositPaid?clampMoney(c.gross-depositValue):c.gross),paidGross:recognized?c.gross:depositValue,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other',saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   if(depositPaid){payload.depositPaidAtMs=num(existing?.depositPaidAtMs)||(transitionedToDeposit?Date.now():saleDateMs);if(transitionedToDeposit||!editingDocId)payload.depositPaidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';

@@ -3129,6 +3129,12 @@ body[data-dashboard-page="admin"] .topbar{
             </div>
 
             <label style="display:grid;gap:5px;margin-top:13px;color:#bfdbfe;font-size:11px;font-weight:900;text-transform:uppercase">Notes<textarea id="salesReceiptNotes" placeholder="Optional invoice / receipt note..."></textarea></label>
+            <div data-sr-deposit-terms-toggle style="margin-top:10px">
+              <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid rgba(148,163,184,.28);border-radius:10px;background:rgba(15,23,42,.42);color:#dbeafe;text-transform:none;cursor:pointer">
+                <input id="salesReceiptShowDepositTerms" type="checkbox" style="width:18px;height:18px;margin-top:1px;accent-color:#22c55e">
+                <span style="display:grid;gap:3px"><b style="font-size:12px">Show Deposit Terms on Invoice</b><small style="font-size:11px;color:#94a3b8;font-weight:600">Optional. Deposit Terms will appear in the PDF only when this box is ticked. Default is hidden.</small></span>
+              </label>
+            </div>
             <div class="az-sr-form-actions"><button class="btn gray" id="salesReceiptCancel" type="button">Cancel</button><button class="btn green" id="salesReceiptSave" type="button">Save Receipt</button></div>
           </div>
         </div>
@@ -8767,9 +8773,9 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
-<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1070"></script>
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1170"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1168" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1170" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*

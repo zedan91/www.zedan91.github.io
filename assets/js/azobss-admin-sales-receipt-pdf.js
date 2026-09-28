@@ -391,6 +391,7 @@
 
   function depositTermsLayout(row,type){
     if(normalizeDocumentType(type)!=='invoice')return null;
+    if(row?.showDepositTerms!==true)return null;
     const status=normalizedPaymentStatus(row.status);
     if(!['pending','deposit-paid'].includes(status))return null;
     const amounts=paymentAmounts(row);
