@@ -1,0 +1,29 @@
+{
+  "patch": 1171,
+  "version": "1.0.1171",
+  "azobsstv_version": "1.0.1087",
+  "baseline": "1.0.1170",
+  "date": "2026-09-28",
+  "files": {
+    "package.json": {
+      "size": 814,
+      "sha256": "f782b5b24a3f1fcb6dc64d877aef18c9dd86d1d411ce68ae7cbea1c454d1e95c"
+    },
+    "AZOBSSTV/index.html": {
+      "size": 25029,
+      "sha256": "3f102487c8f682d0c13fd5192f9507b776dff7cf4184b4c76f3b61e98f2f9fd4"
+    },
+    "AZOBSSTV/assets/azobsstv.js": {
+      "size": 144739,
+      "sha256": "8b025630e84fa9e86336962ae3c8901f7efe70de9a8f9db5f3e0d54472901ecc"
+    },
+    "AZOBSSTV/sw.js": {
+      "size": 1144,
+      "sha256": "fade86c285c4af928e657c0ab7f903241a4f27d3a34e6fe209bab3140aaadb5a"
+    },
+    "README_PATCH_1171.md": {
+      "size": 1668,
+      "sha256": "d46caca866a9c8f7b7c91c19ef76c0d926b4d8990685578e570bd7c987a4a798"
+    }
+  }
+}
