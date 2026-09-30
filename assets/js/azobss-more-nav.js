@@ -389,7 +389,7 @@
       'Semua PC &amp; IT Services', 'Semua servis build, repair, upgrade &amp; parts', isOverviewLanding);
     var buildLink = makeLink('/PC-Build/', 'azPcitBuildLink', 'az-pcit-build-icon',
       '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path>',
-      'PC Build &amp; Hardware', 'Cadangan spec Low → High dengan harga Malaysia', isBuildPage);
+      'PC Build &amp; Hardware', 'Build siap + Build Sendiri dengan harga Malaysia', isBuildPage);
     var physicalLink = makeLink('/Tempah-Servis-IT/', 'azRepairPhysicalLink', 'az-repair-physical-icon',
       '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>',
       'Servis PC &amp; Laptop', 'Repair, format, cleaning, LCD dan keyboard', isPhysicalPage);

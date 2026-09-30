@@ -16680,12 +16680,319 @@ async function azAdminRenameUser(db,{oldUsername,newUsername,expectedUid,adminId
 }
 
 
+// AZOBSS v1181: PC Build live pricing in production deploy-server.
+// Ported from backend/server.js because Render starts deploy-server.js.
+// Prices are read from the exact reference product used by /PC-Build/ and cached briefly
+// so the public page follows market changes without hammering the source stores.
+const AZOBSS_PC_BUILD_PRICE_CACHE_MS = Math.max(60_000, Number(process.env.PC_BUILD_PRICE_CACHE_MS || 300_000) || 300_000);
+const AZOBSS_PC_BUILD_PRICE_TIMEOUT_MS = Math.max(4_000, Number(process.env.PC_BUILD_PRICE_TIMEOUT_MS || 12_000) || 12_000);
+const AZOBSS_PC_BUILD_PRICE_SOURCES = [
+  {
+    id: "essential-office",
+    sourceName: "ALL IT Office Plus",
+    provider: "shopify",
+    sourceUrl: "https://www.allithypermarket.com.my/products/office-plus-pre-built-custom-pc-rtx-3050-oc-amd-ryzen-5-3400g",
+    variantKeywords: ["16GB", "No Software Required"]
+  },
+  {
+    id: "entry-rtx",
+    sourceName: "ALL IT Aura Gaming RTX 5060",
+    provider: "shopify",
+    sourceUrl: "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
+    variantKeywords: ["16GB", "No Software Required"]
+  },
+  {
+    id: "mainstream-rx",
+    sourceName: "ALL IT Nova Gaming RX 9060 XT",
+    provider: "shopify",
+    sourceUrl: "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
+    variantKeywords: ["16GB", "No Software Required"]
+  },
+  {
+    id: "performance-rtx",
+    sourceName: "Ideal Tech Radiance Stellar RTX 5070",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5070-gamingpc/"
+  },
+  {
+    id: "highend-rx",
+    sourceName: "ALL IT Phantom Gaming RX 9070 XT",
+    provider: "shopify",
+    sourceUrl: "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen",
+    variantKeywords: ["16GB", "No Software Required"]
+  },
+  {
+    id: "flagship-rtx",
+    sourceName: "Ideal Tech Radiance Apex RTX 5080",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"
+  }
+];
+
+const azobssPcBuildPriceCache = { fetchedAtMs: 0, prices: [] };
+
+function azobssPcBuildCleanPrice(value) {
+  const n = Number(String(value == null ? "" : value).replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) && n >= 300 && n <= 100_000 ? Math.round(n * 100) / 100 : 0;
+}
+
+async function azobssPcBuildFetch(url, asJson = false) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AZOBSS_PC_BUILD_PRICE_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSSPriceBot/1.0",
+        "Accept": asJson ? "application/json,text/javascript,*/*;q=0.8" : "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-MY,en;q=0.9,ms-MY;q=0.8"
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return asJson ? await response.json() : await response.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function azobssPcBuildShopifyJsUrl(sourceUrl) {
+  const u = new URL(sourceUrl);
+  u.search = "";
+  u.hash = "";
+  u.pathname = u.pathname.replace(/\/$/, "");
+  if (!/\.js$/i.test(u.pathname)) u.pathname += ".js";
+  return u.toString();
+}
+
+function azobssPcBuildVariantMatches(title, keywords = []) {
+  const hay = String(title || "").toLowerCase().replace(/\s+/g, " ");
+  return (keywords || []).every((kw) => hay.includes(String(kw || "").toLowerCase()));
+}
+
+async function azobssPcBuildReadShopify(source) {
+  const product = await azobssPcBuildFetch(azobssPcBuildShopifyJsUrl(source.sourceUrl), true);
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  let variant = variants.find((v) => azobssPcBuildVariantMatches(v?.title, source.variantKeywords));
+  if (!variant && source.variantKeywords?.length) {
+    variant = variants.find((v) => azobssPcBuildVariantMatches(v?.title, [source.variantKeywords[0]]));
+  }
+  if (!variant) variant = variants.find((v) => v && v.available !== false) || variants[0];
+  const cents = Number(variant?.price);
+  const price = Number.isFinite(cents) && cents > 0 ? cents / 100 : 0;
+  if (!azobssPcBuildCleanPrice(price)) throw new Error("Shopify variant price not found");
+  return {
+    price: Math.round(price * 100) / 100,
+    variant: String(variant?.title || "").trim(),
+    available: variant?.available !== false,
+    productTitle: String(product?.title || "").trim()
+  };
+}
+
+function azobssPcBuildPriceFromJsonLd(html) {
+  const scripts = String(html || "").match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
+  const candidates = [];
+  const walk = (value) => {
+    if (!value) return;
+    if (Array.isArray(value)) { value.forEach(walk); return; }
+    if (typeof value !== "object") return;
+    const type = Array.isArray(value["@type"]) ? value["@type"].join(" ") : String(value["@type"] || "");
+    if (/Product/i.test(type) || value.offers) {
+      const offers = Array.isArray(value.offers) ? value.offers : [value.offers];
+      offers.filter(Boolean).forEach((offer) => {
+        [offer?.price, offer?.lowPrice, offer?.priceSpecification?.price].forEach((raw) => {
+          const n = azobssPcBuildCleanPrice(raw);
+          if (n) candidates.push(n);
+        });
+      });
+    }
+    if (value["@graph"]) walk(value["@graph"]);
+  };
+  for (const script of scripts) {
+    const body = script.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "").trim();
+    try { walk(JSON.parse(body)); } catch { /* malformed JSON-LD: continue */ }
+  }
+  return candidates.find(Boolean) || 0;
+}
+
+function azobssPcBuildPriceFromHtml(html) {
+  const text = String(html || "");
+  let price = azobssPcBuildPriceFromJsonLd(text);
+  if (price) return price;
+  const patterns = [
+    /<meta[^>]+property=["']product:price:amount["'][^>]+content=["']([0-9.,]+)["']/i,
+    /<meta[^>]+content=["']([0-9.,]+)["'][^>]+property=["']product:price:amount["']/i,
+    /Product\s*price\s*:\s*(?:<[^>]+>|\||&nbsp;|\s)*RM\s*([0-9,]+(?:\.\d{1,2})?)/i,
+    /Order\s*Total[\s\S]{0,500}?RM\s*([0-9,]+(?:\.\d{1,2})?)/i,
+    /woocommerce-Price-amount[^>]*>[\s\S]{0,120}?RM(?:&nbsp;|\s)*([0-9,]+(?:\.\d{1,2})?)/i
+  ];
+  for (const re of patterns) {
+    const m = text.match(re);
+    price = azobssPcBuildCleanPrice(m && m[1]);
+    if (price) return price;
+  }
+  return 0;
+}
+
+async function azobssPcBuildReadWooCommerce(source) {
+  const html = await azobssPcBuildFetch(source.sourceUrl, false);
+  const price = azobssPcBuildPriceFromHtml(html);
+  if (!price) throw new Error("WooCommerce product price not found");
+  return { price, variant: "Base configuration", available: true };
+}
+
+async function azobssPcBuildReadSource(source) {
+  const startedAt = Date.now();
+  try {
+    const data = source.provider === "shopify"
+      ? await azobssPcBuildReadShopify(source)
+      : await azobssPcBuildReadWooCommerce(source);
+    return {
+      ok: true,
+      id: source.id,
+      price: data.price,
+      variant: data.variant || "",
+      available: data.available !== false,
+      sourceName: source.sourceName,
+      sourceUrl: source.sourceUrl,
+      fetchedAt: new Date().toISOString(),
+      responseMs: Date.now() - startedAt
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      id: source.id,
+      sourceName: source.sourceName,
+      sourceUrl: source.sourceUrl,
+      error: cleanPremiumText(err?.message || String(err), 180),
+      fetchedAt: new Date().toISOString(),
+      responseMs: Date.now() - startedAt
+    };
+  }
+}
+
+
+// AZOBSS v1181: live upgrade-delta reader for Build Sendiri.
+const AZOBSS_PC_CUSTOM_PRICE_CACHE_MS = Math.max(60_000, Number(process.env.PC_CUSTOM_PRICE_CACHE_MS || 300_000) || 300_000);
+const azobssPcCustomPriceCache = { fetchedAtMs: 0, deltas: {}, sources: [] };
+const AZOBSS_PC_CUSTOM_CATALOG_PATH = path.join(__dirname, "PC-Build", "pc-custom-builder-data.json");
+
+function azobssPcCustomDecodeEntities(value) {
+  return String(value || "")
+    .replace(/&nbsp;/gi, " ").replace(/&#160;/gi, " ")
+    .replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
+}
+function azobssPcCustomHtmlLines(html) {
+  let s = String(html || "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "\n")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(?:div|p|li|label|option|h[1-6]|tr|td|section|article)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+  s = azobssPcCustomDecodeEntities(s);
+  return s.split(/\r?\n/).map(x => x.replace(/\s+/g, " ").trim()).filter(Boolean);
+}
+function azobssPcCustomExtractDelta(lines, needle) {
+  const target = String(needle || "").toLowerCase().replace(/\s+/g, " ").trim();
+  if (!target) return 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = String(lines[i] || "");
+    if (!line.toLowerCase().includes(target)) continue;
+    // The current promo price is the final RM amount on the same option line.
+    for (let j = i; j <= Math.min(i + 1, lines.length - 1); j++) {
+      const matches = [...String(lines[j] || "").matchAll(/\bRM\s*([0-9][0-9,]*(?:\.\d{1,2})?)/gi)];
+      if (matches.length) {
+        const raw = matches[matches.length - 1][1];
+        const n = Number(String(raw).replace(/,/g, ""));
+        if (Number.isFinite(n) && n >= 0 && n <= 50_000) return Math.round(n * 100) / 100;
+      }
+    }
+  }
+  return 0;
+}
+function azobssPcCustomLoadCatalog() {
+  try { return JSON.parse(fs.readFileSync(AZOBSS_PC_CUSTOM_CATALOG_PATH, "utf8")); }
+  catch (err) { throw new Error("PC custom builder catalog unavailable: " + (err?.message || err)); }
+}
+async function azobssPcCustomRefresh(force = false) {
+  const now = Date.now();
+  if (!force && azobssPcCustomPriceCache.fetchedAtMs && now - azobssPcCustomPriceCache.fetchedAtMs < AZOBSS_PC_CUSTOM_PRICE_CACHE_MS) return { ...azobssPcCustomPriceCache, cached:true };
+  const catalog = azobssPcCustomLoadCatalog();
+  const items = [];
+  for (const profile of (catalog.profiles || [])) {
+    for (const group of (profile.groups || [])) {
+      for (const option of (group.options || [])) {
+        if (!option?.sourceKey || !option?.sourceNeedle || !option?.sourceUrl) continue;
+        items.push({ key:String(option.sourceKey), needle:String(option.sourceNeedle), url:String(option.sourceUrl), profileId:String(profile.id || ""), groupId:String(group.id || "") });
+      }
+    }
+  }
+  const byUrl = new Map();
+  for (const item of items) {
+    if (!byUrl.has(item.url)) byUrl.set(item.url, []);
+    byUrl.get(item.url).push(item);
+  }
+  const deltas = {};
+  const sources = [];
+  await Promise.all([...byUrl.entries()].map(async ([sourceUrl, rows]) => {
+    const started = Date.now();
+    try {
+      const html = await azobssPcBuildFetch(sourceUrl, false);
+      const lines = azobssPcCustomHtmlLines(html);
+      let matched = 0;
+      for (const row of rows) {
+        const value = azobssPcCustomExtractDelta(lines, row.needle);
+        if (value || value === 0) {
+          // zero is only accepted when the source explicitly contains RM0; otherwise unresolved remains absent.
+          if (value > 0) { deltas[row.key] = value; matched++; }
+        }
+      }
+      sources.push({ sourceUrl, ok:true, matched, requested:rows.length, responseMs:Date.now()-started });
+    } catch (err) {
+      sources.push({ sourceUrl, ok:false, matched:0, requested:rows.length, error:cleanPremiumText(err?.message || String(err),180), responseMs:Date.now()-started });
+    }
+  }));
+  azobssPcCustomPriceCache.fetchedAtMs = Date.now();
+  azobssPcCustomPriceCache.deltas = deltas;
+  azobssPcCustomPriceCache.sources = sources;
+  return { ...azobssPcCustomPriceCache, cached:false };
+}
+
+
 async function handler(req, res) {
 
   try {
 
     const parsed = url.parse(req.url, true);
     const pathname = parsed.pathname || "/";
+
+
+    // AZOBSS v1181: production PC Build pricing routes.
+    if (pathname === "/api/pc-build/live-prices" && req.method === "GET") {
+      try {
+        const now = Date.now();
+        const force = String((parsed.query && parsed.query.refresh) || "") === "1";
+        if (!force && azobssPcBuildPriceCache.prices.length && now - azobssPcBuildPriceCache.fetchedAtMs < AZOBSS_PC_BUILD_PRICE_CACHE_MS) {
+          return send(res, 200, JSON.stringify({ ok:true, cached:true, cacheSeconds:Math.round(AZOBSS_PC_BUILD_PRICE_CACHE_MS/1000), fetchedAt:new Date(azobssPcBuildPriceCache.fetchedAtMs).toISOString(), prices:azobssPcBuildPriceCache.prices }), "application/json");
+        }
+        const prices = await Promise.all(AZOBSS_PC_BUILD_PRICE_SOURCES.map(azobssPcBuildReadSource));
+        azobssPcBuildPriceCache.fetchedAtMs = Date.now();
+        azobssPcBuildPriceCache.prices = prices;
+        return send(res, 200, JSON.stringify({ ok:prices.some(x=>x.ok), cached:false, cacheSeconds:Math.round(AZOBSS_PC_BUILD_PRICE_CACHE_MS/1000), fetchedAt:new Date(azobssPcBuildPriceCache.fetchedAtMs).toISOString(), prices }), "application/json");
+      } catch (err) {
+        return send(res, 502, JSON.stringify({ ok:false, error:cleanPremiumText(err?.message || String(err),180), prices:[] }), "application/json");
+      }
+    }
+    if (pathname === "/api/pc-build/custom-market" && req.method === "GET") {
+      try {
+        const force = String((parsed.query && parsed.query.refresh) || "") === "1";
+        const result = await azobssPcCustomRefresh(force);
+        return send(res, 200, JSON.stringify({ ok:true, cached:!!result.cached, cacheSeconds:Math.round(AZOBSS_PC_CUSTOM_PRICE_CACHE_MS/1000), fetchedAt:new Date(result.fetchedAtMs).toISOString(), deltas:result.deltas || {}, sources:result.sources || [] }), "application/json");
+      } catch (err) {
+        return send(res, 502, JSON.stringify({ ok:false, error:cleanPremiumText(err?.message || String(err),180), deltas:{} }), "application/json");
+      }
+    }
 
     // AZOBSS PATCH 413: emergency subscription route diagnostics before all other route logic.
     if (pathname === "/api/subscription/health" || pathname === "/api/subscription/ping") {
