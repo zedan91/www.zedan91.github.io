@@ -330,20 +330,22 @@ body{
 
 /* AZOBSS 1173: PC & IT Services dropdown groups build, repair, upgrade, parts and online support. */
 .market-sticky-bar .az-repair-dropdown{
-  min-width:350px;
+  width:390px;
+  min-width:390px;
+  max-width:min(390px,calc(100vw - 16px));
   padding:8px;
 }
 
 .market-sticky-bar .market-nav .az-repair-dropdown a{
-  min-height:54px!important;
-  align-items:flex-start!important;
+  min-height:56px!important;
+  align-items:center!important;
   white-space:normal!important;
   padding:10px 12px!important;
 }
 
 .az-repair-item-copy{
   display:grid;
-  gap:3px;
+  gap:2px;
   min-width:0;
   line-height:1.18;
 }
@@ -360,7 +362,7 @@ body{
   color:#94a3b8;
   font-size:10.5px;
   font-weight:650;
-  line-height:1.3;
+  line-height:1.25;
 }
 
 .market-sticky-bar .market-nav .az-repair-dropdown a:hover .az-repair-item-copy small,
@@ -408,7 +410,9 @@ body{
 
 @media(max-width:760px){
   .market-sticky-bar .az-repair-dropdown{
+    width:var(--az-more-mobile-width,350px);
     min-width:0;
+    max-width:calc(100vw - 16px);
   }
 }
 
@@ -461,4 +465,23 @@ body{
     flex-basis:18px;
     font-size:13px;
   }
+}
+
+/* AZOBSS 1176: PC & IT dropdown alignment + overview/upgrade state polish. */
+.market-sticky-bar .market-nav .az-repair-dropdown .az-more-item-icon{
+  align-self:center!important;
+}
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-overview-link="1"]{
+  margin-bottom:5px!important;
+  border-bottom:1px solid rgba(148,163,184,.18)!important;
+  border-radius:8px!important;
+}
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-build-link="1"]{
+  border-top:0!important;
+  margin-top:0!important;
+}
+@media(max-width:430px){
+  .market-sticky-bar .market-nav .az-repair-dropdown a{padding:9px 10px!important;gap:9px!important;}
+  .az-repair-item-copy strong{font-size:12.5px;}
+  .az-repair-item-copy small{font-size:10px;}
 }

@@ -337,6 +337,8 @@
       return currentPath === sectionPath || currentPath.indexOf(sectionPath + '/') === 0;
     }
     var isOverviewPage = inSection(overviewPath);
+    var isUpgradePage = isOverviewPage && String(window.location.hash || '').toLowerCase() === '#upgrade-parts';
+    var isOverviewLanding = isOverviewPage && !isUpgradePage;
     var isBuildPage = inSection(buildPath);
     var isPhysicalPage = inSection(physicalPath);
     var isOnlinePage = inSection(onlinePath);
@@ -384,7 +386,7 @@
 
     var overviewLink = makeLink('/PC-IT-Services/', 'azPcitOverviewLink', 'az-pcit-overview-icon',
       '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path>',
-      'Semua PC &amp; IT Services', 'Build, repair, upgrade, parts dan servis IT', isOverviewPage);
+      'Semua PC &amp; IT Services', 'Semua servis build, repair, upgrade &amp; parts', isOverviewLanding);
     var buildLink = makeLink('/PC-Build/', 'azPcitBuildLink', 'az-pcit-build-icon',
       '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path>',
       'PC Build &amp; Hardware', 'Cadangan spec Low → High dengan harga Malaysia', isBuildPage);
@@ -393,7 +395,7 @@
       'Servis PC &amp; Laptop', 'Repair, format, cleaning, LCD dan keyboard', isPhysicalPage);
     var upgradeLink = makeLink('/PC-IT-Services/#upgrade-parts', 'azPcitUpgradeLink', 'az-pcit-upgrade-icon',
       '<path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle>',
-      'Upgrade &amp; Parts', 'RAM, SSD, GPU, PSU, bateri, adapter dan lain-lain', false);
+      'Upgrade &amp; Parts', 'RAM, SSD, GPU, PSU, bateri &amp; adapter', isUpgradePage);
     var onlineLink = makeLink('/Troubleshoot-PC-Online/', 'azRepairOnlineLink', 'az-repair-online-icon',
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
@@ -422,7 +424,7 @@
 
       var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
       var triggerRect = trigger.getBoundingClientRect();
-      var dropdownWidth = Math.min(350, Math.max(250, viewportWidth - 16));
+      var dropdownWidth = Math.min(390, Math.max(250, viewportWidth - 16));
       var halfWidth = dropdownWidth / 2;
       var centre = triggerRect.left + (triggerRect.width / 2);
       centre = Math.max(8 + halfWidth, Math.min(viewportWidth - 8 - halfWidth, centre));
@@ -509,12 +511,56 @@
     });
   }
 
+  function syncRepairMenuActive(wrap) {
+    if (!wrap || !wrap.classList || !wrap.classList.contains('az-repair-nav')) return;
+    var trigger = wrap.querySelector(':scope > .az-repair-trigger');
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var hash = String(window.location.hash || '').toLowerCase();
+    var overviewPath = normalisePath('/PC-IT-Services/').toLowerCase();
+    var buildPath = normalisePath('/PC-Build/').toLowerCase();
+    var physicalPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
+    var onlinePath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
+    function inSection(sectionPath) {
+      return currentPath === sectionPath || currentPath.indexOf(sectionPath + '/') === 0;
+    }
+    var overview = inSection(overviewPath);
+    var upgrade = overview && hash === '#upgrade-parts';
+    var states = [
+      ['[data-az-pcit-overview-link="1"]', overview && !upgrade, 'page'],
+      ['[data-az-pcit-build-link="1"]', inSection(buildPath), 'page'],
+      ['[data-az-repair-physical-link="1"]', inSection(physicalPath), 'page'],
+      ['[data-az-pcit-upgrade-link="1"]', upgrade, 'location'],
+      ['[data-az-repair-online-link="1"]', inSection(onlinePath), 'page']
+    ];
+    var anyActive = false;
+    states.forEach(function (entry) {
+      var item = wrap.querySelector(entry[0]);
+      if (!item) return;
+      var active = !!entry[1];
+      item.classList.toggle('is-active', active);
+      item.classList.toggle('is-current', active);
+      item.classList.remove('market-nav-active');
+      if (active) {
+        item.setAttribute('aria-current', entry[2]);
+        anyActive = true;
+      } else {
+        item.removeAttribute('aria-current');
+      }
+    });
+    if (trigger) {
+      trigger.classList.toggle('market-nav-active', anyActive);
+      trigger.classList.toggle('is-active', anyActive);
+      trigger.classList.toggle('is-current', anyActive);
+    }
+  }
+
   function wireStaticMenu(wrap) {
     if (!wrap || wrap.dataset.azStaticWired === '1') return;
     var trigger = wrap.querySelector(':scope > .az-more-trigger');
     var dropdown = wrap.querySelector(':scope > .az-more-dropdown');
     if (!trigger || !dropdown) return;
     wrap.dataset.azStaticWired = '1';
+    syncRepairMenuActive(wrap);
 
     function isMobileStickybar() {
       return window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
@@ -528,7 +574,7 @@
       }
       var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
       var triggerRect = trigger.getBoundingClientRect();
-      var baseWidth = wrap.classList.contains('az-repair-nav') ? 350 : 232;
+      var baseWidth = wrap.classList.contains('az-repair-nav') ? 390 : 232;
       var minWidth = wrap.classList.contains('az-repair-nav') ? 230 : 190;
       var dropdownWidth = Math.min(baseWidth, Math.max(minWidth, viewportWidth - 16));
       var halfWidth = dropdownWidth / 2;
@@ -594,6 +640,9 @@
     window.addEventListener('orientationchange', function () {
       if (wrap.classList.contains('is-open')) positionMobileDropdown();
     }, { passive: true });
+    if (wrap.classList.contains('az-repair-nav')) {
+      window.addEventListener('hashchange', function () { syncRepairMenuActive(wrap); }, { passive: true });
+    }
   }
 
   function ensureWebPilihanLink() {

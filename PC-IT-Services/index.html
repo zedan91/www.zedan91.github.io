@@ -1,6 +1,103 @@
 <!doctype html>
 <html lang="ms">
 <head>
+
+<style id="azobss-navbar-prepaint-style-1066">
+/* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
+html body .market-brand{
+  flex:0 0 154px!important;
+  width:154px!important;min-width:154px!important;max-width:154px!important;height:38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;margin:0!important;box-sizing:border-box!important;overflow:hidden!important;
+  border-radius:999px!important;background:transparent!important;border:0!important;text-decoration:none!important;
+  transform:none!important;animation:none!important;transition:none!important;
+}
+html body .market-brand img{
+  display:block!important;width:100%!important;height:100%!important;
+  object-fit:contain!important;object-position:center!important;
+  margin:0!important;padding:0!important;border:0!important;background:transparent!important;
+  transform:none!important;animation:none!important;transition:none!important;
+}
+@media(max-width:980px){
+  html body .market-brand{flex-basis:132px!important;width:132px!important;min-width:132px!important;max-width:132px!important;height:34px!important;}
+}
+@media(max-width:560px){
+  html body .market-brand{flex-basis:120px!important;width:120px!important;min-width:120px!important;max-width:120px!important;height:32px!important;}
+}
+
+.market-nav .nav-pa-bm-link,
+.market-nav .nav-public-pa-link{
+  width:86px!important;min-width:86px!important;max-width:86px!important;
+  padding-left:8px!important;padding-right:8px!important;
+  justify-content:center!important;box-sizing:border-box!important;
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+.market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
+</style>
+<script id="azobss-navbar-prepaint-1066">
+(function(){
+  try{
+    function parse(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
+    var u=parse(sessionStorage.getItem('azobssCurrentUser'))||
+          parse(localStorage.getItem('azobssCurrentUser'))||
+          parse(sessionStorage.getItem('azobssUser'))||
+          parse(localStorage.getItem('azobssUser'));
+    var html=document.documentElement;
+    var auth=!!u;
+    var key=String(u&&(u.usernameKey||u.username||u.name)||'').trim().toLowerCase();
+    var email=String(u&&(u.email||u.authEmail)||'').trim().toLowerCase();
+    var role=String(u&&(u.role||u.userRole||u.accountRole||u.staffRole)||'').trim().toLowerCase();
+    var isAdmin=!!u&&(role==='admin'||key==='zedan91'||key==='zedan9107'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com');
+    function truthy(v){
+      if(v===true||v===1)return true;
+      return ['true','yes','y','1','allow','allowed','on','enabled','enable'].indexOf(String(v==null?'':v).trim().toLowerCase())>=0;
+    }
+    var adminDecisionPresent=!!u&&(u.adminPaBmAllowed===true||u.adminPaBmAllowed===false||['true','false','yes','no','y','n','1','0','allow','allowed','on','off','enabled','enable','disabled','disable','hide'].indexOf(String(u.adminPaBmAllowed==null?'':u.adminPaBmAllowed).trim().toLowerCase())>=0);
+    var adminManaged=!!u&&(adminDecisionPresent||u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
+    var adminAllowed=adminManaged&&(
+      truthy(u.adminPaBmAllowed)||truthy(u.paBmAccess)||truthy(u.paBmAllowed)||
+      truthy(u.allowPABM)||truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||
+      truthy(u.paBmTabAllowed)||truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)
+    );
+    if(adminDecisionPresent) adminAllowed=truthy(u.adminPaBmAllowed);
+    var flagAllowed=!!u&&(
+      truthy(u.paBmAccess)||truthy(u.paBmAllowed)||truthy(u.allowPABM)||
+      truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||truthy(u.paBmTabAllowed)||
+      truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)||truthy(u.paAccess)
+    );
+    var codes=[
+      u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
+      u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
+    ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
+    var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
+    var roleFlat=role.replace(/[\s_-]+/g,'');
+    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicPa=!pa&&!isAdmin&&!publicBlocked;
+    html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
+    html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
+    html.setAttribute('data-azobss-pre-publicpa',publicPa?'1':'0');
+  }catch(_e){}
+})();
+</script>
+<script src="/assets/js/azobss-render-wake.js?v=1056"></script>
+
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>PC & IT Services | AZOBSS</title>
@@ -11,20 +108,52 @@
 <meta property="og:description" content="PC Build, repair, upgrade hardware, parts dan servis IT dalam satu tempat."/>
 <meta property="og:url" content="https://www.azobss.com/PC-IT-Services/"/>
 <meta property="og:type" content="website"/>
+<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=1176" rel="stylesheet"/>
+<script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
+<link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
+
 <style>
 :root{--bg:#07111f;--panel:#0d1b2d;--panel2:#111f33;--line:#243650;--text:#edf6ff;--muted:#9fb0c4;--cyan:#22d3ee;--blue:#3b82f6;--green:#22c55e;--yellow:#facc15;--orange:#fb923c;--purple:#c084fc;--shadow:0 18px 55px rgba(0,0,0,.28)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 16% -8%,rgba(37,99,235,.2),transparent 30%),radial-gradient(circle at 92% 8%,rgba(34,211,238,.12),transparent 26%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}.top{position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(148,163,184,.16);background:rgba(7,17,31,.92);backdrop-filter:blur(16px)}.nav{min-height:68px;display:flex;align-items:center;gap:18px}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:white;font-weight:900}.brand img{width:43px;height:43px;border-radius:12px;object-fit:cover}.links{display:flex;align-items:center;gap:6px;flex:1;overflow:auto;scrollbar-width:none}.links::-webkit-scrollbar{display:none}.links a{white-space:nowrap;text-decoration:none;color:#d7e4f3;font-size:14px;font-weight:700;padding:10px 12px;border-radius:10px}.links a:hover,.links a.active{color:#fff;background:#15304e}.wa{margin-left:auto;color:#001318!important;background:#25d366!important}.hero{padding:58px 0 34px}.eyebrow{display:inline-flex;align-items:center;padding:7px 11px;border:1px solid rgba(34,211,238,.35);border-radius:999px;color:#b9f6ff;background:rgba(8,145,178,.1);font-size:12px;font-weight:900;letter-spacing:.08em}.hero h1{font-size:clamp(36px,5.5vw,67px);line-height:1.02;margin:16px 0 14px;max-width:920px}.hero h1 span{background:linear-gradient(90deg,#67e8f9,#60a5fa,#c084fc);-webkit-background-clip:text;color:transparent}.hero p{max-width:810px;color:var(--muted);font-size:17px;line-height:1.7}.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}.chip{border:1px solid var(--line);border-radius:999px;padding:9px 12px;color:#d7e4f3;background:#0b1828;font-size:13px;font-weight:750}.section-title{font-size:28px;margin:10px 0 6px}.section-sub{margin:0 0 20px;color:var(--muted);line-height:1.6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:12px 0 48px}.card{display:flex;flex-direction:column;min-height:280px;padding:21px;border:1px solid #263c59;border-radius:21px;background:linear-gradient(160deg,rgba(17,31,51,.98),rgba(8,21,35,.98));box-shadow:0 15px 40px rgba(0,0,0,.18);position:relative;overflow:hidden}.card::before{content:"";height:4px;background:var(--accent,#22d3ee);position:absolute;left:0;right:0;top:0}.icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#0a1728;border:1px solid #2b4564;color:var(--accent,#22d3ee);font-size:25px;margin-bottom:14px}.card h2{font-size:21px;margin:0 0 8px}.card p{color:#aabbd0;line-height:1.6;font-size:14px;margin:0 0 12px}.card ul{list-style:none;padding:0;margin:0 0 20px}.card li{position:relative;padding:5px 0 5px 18px;color:#d6e2ef;font-size:13px}.card li::before{content:"✓";position:absolute;left:0;color:#5ee39b;font-weight:900}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.btn{min-height:42px;padding:0 14px;border-radius:10px;border:1px solid #34506e;background:#102239;color:white;font-weight:850;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px}.btn.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border-color:transparent}.btn:hover{filter:brightness(1.1)}.band{margin:0 0 52px;padding:23px;border:1px solid #28425f;border-radius:20px;background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(124,58,237,.08));display:flex;gap:18px;align-items:center;justify-content:space-between}.band h3{margin:0 0 6px;font-size:20px}.band p{margin:0;color:#a9bbcf;line-height:1.55}.footer{border-top:1px solid #1d3047;padding:28px 0 36px;color:#8fa2b7;font-size:13px}
+.market-sticky-bar .market-search-row{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;padding-top:49px;background:radial-gradient(circle at 16% -8%,rgba(37,99,235,.2),transparent 30%),radial-gradient(circle at 92% 8%,rgba(34,211,238,.12),transparent 26%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}.wrap{width:min(1180px,calc(100% - 28px));margin:auto}.top{position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(148,163,184,.16);background:rgba(7,17,31,.92);backdrop-filter:blur(16px)}.nav{min-height:68px;display:flex;align-items:center;gap:18px}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:white;font-weight:900}.brand img{width:43px;height:43px;border-radius:12px;object-fit:cover}.links{display:flex;align-items:center;gap:6px;flex:1;overflow:auto;scrollbar-width:none}.links::-webkit-scrollbar{display:none}.links a{white-space:nowrap;text-decoration:none;color:#d7e4f3;font-size:14px;font-weight:700;padding:10px 12px;border-radius:10px}.links a:hover,.links a.active{color:#fff;background:#15304e}.wa{margin-left:auto;color:#001318!important;background:#25d366!important}.hero{padding:58px 0 34px}.eyebrow{display:inline-flex;align-items:center;padding:7px 11px;border:1px solid rgba(34,211,238,.35);border-radius:999px;color:#b9f6ff;background:rgba(8,145,178,.1);font-size:12px;font-weight:900;letter-spacing:.08em}.hero h1{font-size:clamp(36px,5.5vw,67px);line-height:1.02;margin:16px 0 14px;max-width:920px}.hero h1 span{background:linear-gradient(90deg,#67e8f9,#60a5fa,#c084fc);-webkit-background-clip:text;color:transparent}.hero p{max-width:810px;color:var(--muted);font-size:17px;line-height:1.7}.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}.chip{border:1px solid var(--line);border-radius:999px;padding:9px 12px;color:#d7e4f3;background:#0b1828;font-size:13px;font-weight:750}.section-title{font-size:28px;margin:10px 0 6px}.section-sub{margin:0 0 20px;color:var(--muted);line-height:1.6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:12px 0 48px}#upgrade-parts{scroll-margin-top:78px}.card{display:flex;flex-direction:column;min-height:280px;padding:21px;border:1px solid #263c59;border-radius:21px;background:linear-gradient(160deg,rgba(17,31,51,.98),rgba(8,21,35,.98));box-shadow:0 15px 40px rgba(0,0,0,.18);position:relative;overflow:hidden}.card::before{content:"";height:4px;background:var(--accent,#22d3ee);position:absolute;left:0;right:0;top:0}.icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#0a1728;border:1px solid #2b4564;color:var(--accent,#22d3ee);font-size:25px;margin-bottom:14px}.card h2{font-size:21px;margin:0 0 8px}.card p{color:#aabbd0;line-height:1.6;font-size:14px;margin:0 0 12px}.card ul{list-style:none;padding:0;margin:0 0 20px}.card li{position:relative;padding:5px 0 5px 18px;color:#d6e2ef;font-size:13px}.card li::before{content:"✓";position:absolute;left:0;color:#5ee39b;font-weight:900}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.btn{min-height:42px;padding:0 14px;border-radius:10px;border:1px solid #34506e;background:#102239;color:white;font-weight:850;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px}.btn.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border-color:transparent}.btn:hover{filter:brightness(1.1)}.band{margin:0 0 52px;padding:23px;border:1px solid #28425f;border-radius:20px;background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(124,58,237,.08));display:flex;gap:18px;align-items:center;justify-content:space-between}.band h3{margin:0 0 6px;font-size:20px}.band p{margin:0;color:#a9bbcf;line-height:1.55}.footer{border-top:1px solid #1d3047;padding:28px 0 36px;color:#8fa2b7;font-size:13px}
 @media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.links a:nth-of-type(2),.links a:nth-of-type(3){display:none}}
 @media(max-width:650px){.wrap{width:min(100% - 18px,1180px)}.nav{gap:9px}.brand span{display:none}.links a{padding:9px 10px}.hero{padding-top:36px}.hero p{font-size:15px}.grid{grid-template-columns:1fr}.band{align-items:flex-start;flex-direction:column}.wa{display:none}}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"AZOBSS PC & IT Services","url":"https://www.azobss.com/PC-IT-Services/","areaServed":"Malaysia","serviceType":["PC Build","Computer Repair","Laptop Repair","Hardware Upgrade","IT Support"]}</script>
 </head>
 <body>
-<header class="top"><div class="wrap nav">
-<a class="brand" href="/"><img src="/images/logo-azobss.jpg" alt="AZOBSS"/><span>AZOBSS</span></a>
-<nav class="links" aria-label="Main navigation"><a href="/">Home</a><a href="/Software-Tools/">Software</a><a href="/CAD-Tools-&-Resources/">CAD Tools</a><a href="/affiliate-shop/">Affiliate Shop</a><a class="active" href="/PC-IT-Services/">PC &amp; IT Services</a><a href="/lucky-draw/">Lucky Draw</a></nav>
-<a class="wa" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">WhatsApp</a>
-</div></header>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="/"><img alt="AZOBSS" src="/images/logo-azobss.jpg"/></a>
+<nav aria-label="AZOBSS quick actions" class="market-nav az-more-enabled">
+<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
+<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
+<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a class="nav-public-pa-link" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a> <a href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><div class="az-more-nav az-repair-nav" data-az-repair-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger az-repair-trigger market-nav-active is-active is-current" aria-haspopup="true" aria-expanded="false" aria-controls="azRepairDropdownStatic" aria-label="Menu PC &amp; IT Services"><span>PC &amp; IT Services</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown az-repair-dropdown" id="azRepairDropdownStatic" role="menu" aria-label="Pilihan PC &amp; IT Services"><a href="/PC-IT-Services/" role="menuitem" data-az-pcit-overview-link="1" class="is-active is-current" aria-current="page"><svg class="az-more-item-icon az-pcit-overview-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path></svg><span class="az-repair-item-copy"><strong>Semua PC &amp; IT Services</strong><small>Semua servis build, repair, upgrade &amp; parts</small></span></a><a href="/PC-Build/" role="menuitem" data-az-pcit-build-link="1"><svg class="az-more-item-icon az-pcit-build-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path></svg><span class="az-repair-item-copy"><strong>PC Build &amp; Hardware</strong><small>Cadangan spec Low → High dengan harga Malaysia</small></span></a><a href="/Tempah-Servis-IT/" role="menuitem" data-az-repair-physical-link="1"><svg class="az-more-item-icon az-repair-physical-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path></svg><span class="az-repair-item-copy"><strong>Servis PC &amp; Laptop</strong><small>Repair, format, cleaning, LCD dan keyboard</small></span></a><a href="/PC-IT-Services/#upgrade-parts" role="menuitem" data-az-pcit-upgrade-link="1"><svg class="az-more-item-icon az-pcit-upgrade-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg><span class="az-repair-item-copy"><strong>Upgrade &amp; Parts</strong><small>RAM, SSD, GPU, PSU, bateri &amp; adapter</small></span></a><a href="/Troubleshoot-PC-Online/" role="menuitem" data-az-repair-online-link="1"><svg class="az-more-item-icon az-repair-online-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg><span class="az-repair-item-copy"><strong>Troubleshoot PC Online</strong><small>Pemeriksaan dan pembaikan Windows dari jauh</small></span></a></div></div>
+<a href="/lucky-draw/">Lucky Draw</a>
+<div class="az-more-nav" data-az-more-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="azMoreDropdownStatic" aria-label="More menu"><svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg><span>More</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown" id="azMoreDropdownStatic" role="menu"><a href="/AZOBSSTV/" role="menuitem" data-azobsstv-link="1" title="AZOBSSTV"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M9 21h6"></path><path d="M12 18v3"></path><path d="m10 9 5 3-5 3z"></path></svg><span>AZOBSSTV</span></a><a href="/tools/" role="menuitem" data-az-more-tools-link="1"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span>Mini Web Tools</span></a><a href="/Web-Pilihan/" role="menuitem" data-az-web-pilihan-link="1" title="Useful websites and tools curated by AZOBSS"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"></path></svg><span>Web Picks</span></a><a href="/Sound-Effects/" role="menuitem" data-az-sound-effects-link="1" title="AZOBSS Sound Effects"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10v4"></path><path d="M8 8v8"></path><path d="M12 5v14"></path><path d="M16 8v8"></path><path d="M20 10v4"></path></svg><span>Sound Effects</span></a><a href="/Tempah-Website/" role="menuitem" data-az-website-order-link="1" title="Tempah Website untuk Bisnes"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path><path d="M7 10h4"></path><path d="M7 13h8"></path></svg><span>Bina Website</span></a><a href="/Tempahan-Makanan/" role="menuitem" data-az-food-order-link="1" title="Food - Brownies"><svg class="az-more-item-icon az-more-food-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 14h16"></path><path d="M6 14a6 6 0 0 1 12 0"></path><path d="M12 6V4"></path><path d="M3 18h18"></path></svg><span>Food - Brownies</span></a></div></div>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions"><button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button><button class="site-auth-btn" data-auth-open="login" id="siteSignInButton" type="button">Login</button></div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0"><div class="user-avatar" id="userAvatar">AZ</div><div class="user-name"><span id="signedInName"></span></div><div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button>
+</div></div>
+<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks"><svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></a>
+<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#"><span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg></a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg></a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg></a>
+</div>
+</div>
+<form action="#" class="market-search-row"><label class="market-search-field"><input aria-label="Search for an item" placeholder="Search for an item" type="search"/></label></form>
+</div>
+</header>
 <main class="wrap">
 <section class="hero">
 <div class="eyebrow">🖥️ AZOBSS • PC &amp; IT SERVICES</div>
@@ -47,5 +176,6 @@
 <section class="band"><div><h3>Tidak pasti servis mana yang sesuai?</h3><p>Terangkan masalah atau apa yang kamu mahu upgrade. AZOBSS boleh bantu tentukan pilihan yang sesuai sebelum tempahan.</p></div><a class="btn primary" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya di WhatsApp</a></section>
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • PC &amp; IT Services</div></footer>
+<script src="/assets/js/azobss-global-auth.js?v=1136" type="module"></script>
 </body>
 </html>
