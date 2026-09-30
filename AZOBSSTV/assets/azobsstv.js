@@ -1707,7 +1707,7 @@ function localizeAZOBSSTVNavigation(){
     if(small)small.textContent='Remote PC diagnostics and repair';
     a.setAttribute('aria-label','Online PC Troubleshooting');
   });
-  bar.querySelectorAll('.az-repair-trigger').forEach(b=>b.setAttribute('aria-label','Repair PC menu'));
+  bar.querySelectorAll('.az-repair-trigger').forEach(b=>b.setAttribute('aria-label','PC & IT Services menu'));
   bar.querySelectorAll('.az-repair-dropdown').forEach(d=>d.setAttribute('aria-label','Repair PC options'));
   bar.querySelectorAll('a[data-az-repair-service-link="1"],a[href="/Tempah-Servis-IT/"],a[href="/Tempah-Servis-IT"]').forEach(a=>{
     if(!a.closest('.az-repair-dropdown'))setEnglishNavLabel(a,'Repair PC','Book Laptop / PC Service');

@@ -329,10 +329,17 @@
     if (!nav) return;
 
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var overviewPath = normalisePath('/PC-IT-Services/').toLowerCase();
+    var buildPath = normalisePath('/PC-Build/').toLowerCase();
     var physicalPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
     var onlinePath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
-    var isPhysicalPage = currentPath === physicalPath || currentPath.indexOf(physicalPath + '/') === 0;
-    var isOnlinePage = currentPath === onlinePath || currentPath.indexOf(onlinePath + '/') === 0;
+    function inSection(sectionPath) {
+      return currentPath === sectionPath || currentPath.indexOf(sectionPath + '/') === 0;
+    }
+    var isOverviewPage = inSection(overviewPath);
+    var isBuildPage = inSection(buildPath);
+    var isPhysicalPage = inSection(physicalPath);
+    var isOnlinePage = inSection(onlinePath);
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
       link.classList.contains('market-nav-active');
@@ -347,51 +354,53 @@
     trigger.setAttribute('aria-haspopup', 'true');
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azRepairDropdown' + index);
-    trigger.setAttribute('aria-label', 'Menu Repair PC');
-    if (isPhysicalPage || isOnlinePage || inheritedActive) {
+    trigger.setAttribute('aria-label', 'Menu PC & IT Services');
+    if (isOverviewPage || isBuildPage || isPhysicalPage || isOnlinePage || inheritedActive) {
       trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     }
     trigger.innerHTML = '' +
-      '<span>Repair PC</span>' +
+      '<span>PC &amp; IT Services</span>' +
       '<span class="az-more-chevron" aria-hidden="true">▾</span>';
 
     var dropdown = document.createElement('div');
     dropdown.className = 'az-more-dropdown az-repair-dropdown';
     dropdown.id = 'azRepairDropdown' + index;
     dropdown.setAttribute('role', 'menu');
-    dropdown.setAttribute('aria-label', 'Pilihan servis Repair PC');
+    dropdown.setAttribute('aria-label', 'Pilihan PC & IT Services');
 
-    var physicalLink = document.createElement('a');
-    physicalLink.href = '/Tempah-Servis-IT/';
-    physicalLink.setAttribute('role', 'menuitem');
-    physicalLink.dataset.azRepairPhysicalLink = '1';
-    if (isPhysicalPage) {
-      physicalLink.classList.add('is-active');
-      physicalLink.setAttribute('aria-current', 'page');
+    function makeLink(href, dataName, iconClass, iconSvg, title, note, active) {
+      var item = document.createElement('a');
+      item.href = href;
+      item.setAttribute('role', 'menuitem');
+      item.dataset[dataName] = '1';
+      if (active) {
+        item.classList.add('is-active');
+        item.setAttribute('aria-current', 'page');
+      }
+      item.innerHTML = '<svg class="az-more-item-icon ' + iconClass + '" aria-hidden="true" viewBox="0 0 24 24">' + iconSvg + '</svg>' +
+        '<span class="az-repair-item-copy"><strong>' + title + '</strong><small>' + note + '</small></span>';
+      return item;
     }
-    physicalLink.innerHTML = '' +
-      '<svg class="az-more-item-icon az-repair-physical-icon" aria-hidden="true" viewBox="0 0 24 24">' +
-        '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>' +
-      '</svg>' +
-      '<span class="az-repair-item-copy"><strong>Servis PC &amp; Laptop</strong><small>Pembaikan fizikal, format dan servis kedai</small></span>';
 
-    var onlineLink = document.createElement('a');
-    onlineLink.href = '/Troubleshoot-PC-Online/';
-    onlineLink.setAttribute('role', 'menuitem');
-    onlineLink.dataset.azRepairOnlineLink = '1';
-    if (isOnlinePage) {
-      onlineLink.classList.add('is-active');
-      onlineLink.setAttribute('aria-current', 'page');
-    }
-    onlineLink.innerHTML = '' +
-      '<svg class="az-more-item-icon az-repair-online-icon" aria-hidden="true" viewBox="0 0 24 24">' +
-        '<rect x="3" y="4" width="18" height="12" rx="2"></rect>' +
-        '<path d="M8 20h8M12 16v4"></path>' +
-      '</svg>' +
-      '<span class="az-repair-item-copy"><strong>Troubleshoot PC Online</strong><small>Pemeriksaan dan pembaikan PC dari jauh</small></span>';
+    var overviewLink = makeLink('/PC-IT-Services/', 'azPcitOverviewLink', 'az-pcit-overview-icon',
+      '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path>',
+      'Semua PC &amp; IT Services', 'Build, repair, upgrade, parts dan servis IT', isOverviewPage);
+    var buildLink = makeLink('/PC-Build/', 'azPcitBuildLink', 'az-pcit-build-icon',
+      '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path>',
+      'PC Build &amp; Hardware', 'Cadangan spec Low → High dengan harga Malaysia', isBuildPage);
+    var physicalLink = makeLink('/Tempah-Servis-IT/', 'azRepairPhysicalLink', 'az-repair-physical-icon',
+      '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>',
+      'Servis PC &amp; Laptop', 'Repair, format, cleaning, LCD dan keyboard', isPhysicalPage);
+    var upgradeLink = makeLink('/PC-IT-Services/#upgrade-parts', 'azPcitUpgradeLink', 'az-pcit-upgrade-icon',
+      '<path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle>',
+      'Upgrade &amp; Parts', 'RAM, SSD, GPU, PSU, bateri, adapter dan lain-lain', false);
+    var onlineLink = makeLink('/Troubleshoot-PC-Online/', 'azRepairOnlineLink', 'az-repair-online-icon',
+      '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
+      'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
 
-    dropdown.appendChild(physicalLink);
-    dropdown.appendChild(onlineLink);
+    [overviewLink, buildLink, physicalLink, upgradeLink, onlineLink].forEach(function (item) {
+      dropdown.appendChild(item);
+    });
     wrap.appendChild(trigger);
     wrap.appendChild(dropdown);
 
@@ -413,7 +422,7 @@
 
       var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
       var triggerRect = trigger.getBoundingClientRect();
-      var dropdownWidth = Math.min(310, Math.max(230, viewportWidth - 16));
+      var dropdownWidth = Math.min(350, Math.max(250, viewportWidth - 16));
       var halfWidth = dropdownWidth / 2;
       var centre = triggerRect.left + (triggerRect.width / 2);
       centre = Math.max(8 + halfWidth, Math.min(viewportWidth - 8 - halfWidth, centre));
@@ -495,11 +504,8 @@
       }
     });
 
-    physicalLink.addEventListener('click', function () {
-      setOpen(false);
-    });
-    onlineLink.addEventListener('click', function () {
-      setOpen(false);
+    dropdown.querySelectorAll('a[role="menuitem"]').forEach(function (item) {
+      item.addEventListener('click', function () { setOpen(false); });
     });
   }
 
@@ -522,7 +528,7 @@
       }
       var viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
       var triggerRect = trigger.getBoundingClientRect();
-      var baseWidth = wrap.classList.contains('az-repair-nav') ? 310 : 232;
+      var baseWidth = wrap.classList.contains('az-repair-nav') ? 350 : 232;
       var minWidth = wrap.classList.contains('az-repair-nav') ? 230 : 190;
       var dropdownWidth = Math.min(baseWidth, Math.max(minWidth, viewportWidth - 16));
       var halfWidth = dropdownWidth / 2;
@@ -726,18 +732,23 @@
 
   function ensureRepairServiceLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var overviewPath = normalisePath('/PC-IT-Services/').toLowerCase();
+    var buildPath = normalisePath('/PC-Build/').toLowerCase();
     var repairPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
     var onlineRepairPath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
-    var isRepairSection = currentPath === repairPath || currentPath.indexOf(repairPath + '/') === 0 ||
-      currentPath === onlineRepairPath || currentPath.indexOf(onlineRepairPath + '/') === 0;
+    function inSection(sectionPath) {
+      return currentPath === sectionPath || currentPath.indexOf(sectionPath + '/') === 0;
+    }
+    var isRepairSection = inSection(overviewPath) || inSection(buildPath) || inSection(repairPath) || inSection(onlineRepairPath);
 
     document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
       if (nav.querySelector(':scope > .az-repair-nav[data-az-repair-menu="1"]')) return;
-      var existingLink = nav.querySelector(':scope > a[data-az-repair-service-link="1"], :scope > a[href="/Tempah-Servis-IT/"], :scope > a[href="/Tempah-Servis-IT"]');
+      var existingLink = nav.querySelector(':scope > a[data-az-repair-service-link="1"], :scope > a[href="/PC-IT-Services/"], :scope > a[href="/PC-IT-Services"], :scope > a[href="/Tempah-Servis-IT/"], :scope > a[href="/Tempah-Servis-IT"]');
       if (existingLink) {
         existingLink.dataset.azRepairServiceLink = '1';
-        existingLink.textContent = 'Repair PC';
-        existingLink.title = 'Tempah Servis Laptop / PC';
+        existingLink.href = '/PC-IT-Services/';
+        existingLink.textContent = 'PC & IT Services';
+        existingLink.title = 'PC Build, Repair, Upgrade & IT Services';
         if (isRepairSection) {
           existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
           existingLink.setAttribute('aria-current', 'page');
@@ -758,10 +769,10 @@
       if (!affiliateLink) return;
 
       var repairLink = document.createElement('a');
-      repairLink.href = '/Tempah-Servis-IT/';
-      repairLink.textContent = 'Repair PC';
-      repairLink.title = 'Tempah Servis Laptop / PC';
-      repairLink.setAttribute('aria-label', 'Repair PC');
+      repairLink.href = '/PC-IT-Services/';
+      repairLink.textContent = 'PC & IT Services';
+      repairLink.title = 'PC Build, Repair, Upgrade & IT Services';
+      repairLink.setAttribute('aria-label', 'PC & IT Services');
       repairLink.dataset.azRepairServiceLink = '1';
       repairLink.className = 'az-repair-service-link';
 

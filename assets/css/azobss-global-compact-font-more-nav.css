@@ -328,14 +328,14 @@ body{
   color:#052e16!important;
 }
 
-/* AZOBSS 910: Repair PC dropdown with physical and online service choices. */
+/* AZOBSS 1173: PC & IT Services dropdown groups build, repair, upgrade, parts and online support. */
 .market-sticky-bar .az-repair-dropdown{
-  min-width:310px;
+  min-width:350px;
   padding:8px;
 }
 
 .market-sticky-bar .market-nav .az-repair-dropdown a{
-  min-height:58px!important;
+  min-height:54px!important;
   align-items:flex-start!important;
   white-space:normal!important;
   padding:10px 12px!important;
@@ -370,13 +370,34 @@ body{
   opacity:.82;
 }
 
+.az-pcit-overview-icon{color:#c4b5fd}
+.az-pcit-build-icon{color:#facc15}
 .az-repair-physical-icon{color:#86efac}
+.az-pcit-upgrade-icon{color:#fb923c}
 .az-repair-online-icon{color:#67e8f9}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-overview-link="1"]:hover,
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-overview-link="1"]:focus-visible{
+  background:rgba(139,92,246,.14)!important;
+  color:#ddd6fe!important;
+}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-build-link="1"]:hover,
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-build-link="1"]:focus-visible{
+  background:rgba(250,204,21,.14)!important;
+  color:#fef08a!important;
+}
 
 .market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-physical-link="1"]:hover,
 .market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-physical-link="1"]:focus-visible{
   background:rgba(34,197,94,.14)!important;
   color:#bbf7d0!important;
+}
+
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-upgrade-link="1"]:hover,
+.market-sticky-bar .market-nav .az-repair-dropdown a[data-az-pcit-upgrade-link="1"]:focus-visible{
+  background:rgba(249,115,22,.14)!important;
+  color:#fed7aa!important;
 }
 
 .market-sticky-bar .market-nav .az-repair-dropdown a[data-az-repair-online-link="1"]:hover,
@@ -391,7 +412,7 @@ body{
   }
 }
 
-/* AZOBSS 914: make the Repair PC dropdown arrow unmistakably visible. */
+/* Keep the PC & IT Services dropdown arrow unmistakably visible. */
 .market-sticky-bar .market-nav .az-repair-trigger{
   gap:7px!important;
   padding-right:7px!important;

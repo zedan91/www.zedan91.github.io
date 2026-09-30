@@ -1,0 +1,27 @@
+{
+  "patch": 1173,
+  "version": "1.0.1173",
+  "date": "2026-10-01",
+  "baseline": "1.0.1172",
+  "feature": "PC & IT Services unified navigation",
+  "route": "/PC-IT-Services/",
+  "changes": [
+    "Renamed Repair PC main navbar menu to PC & IT Services",
+    "Removed standalone PC Build navbar tab from shared navigation",
+    "Moved PC Build into PC & IT Services dropdown",
+    "Added PC & IT Services overview page",
+    "Added Upgrade & Parts entry",
+    "Retained Servis PC & Laptop and Troubleshoot PC Online entries",
+    "Updated mobile dropdown width and hover styles",
+    "Updated Home hero PC Build card into PC & IT Services umbrella card",
+    "Updated sitemap and structured data"
+  ],
+  "checks": {
+    "sharedMenusUpdated": 27,
+    "oldRepairMenuLabelsRemaining": 0,
+    "standalonePcBuildSharedNavRemaining": 0,
+    "overviewPage": true,
+    "sitemap": true,
+    "dynamicFallbackMenuUpdated": true
+  }
+}
