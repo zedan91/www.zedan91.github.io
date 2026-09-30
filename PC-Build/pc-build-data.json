@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 4,
   "market": "Malaysia",
   "currency": "MYR",
   "priceChecked": "2026-10-01",
@@ -93,7 +93,10 @@
         "MapInfo Pro / QGIS ringan",
         "Global Mapper ringan",
         "PDF / Canva / Photoshop ringan"
-      ]
+      ],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "AZOBSS Essential mATX office build with integrated graphics and airflow case",
+      "imageNote": "Visual rujukan ikut konfigurasi: mATX • iGPU • airflow"
     },
     {
       "id": "entry-rtx",
@@ -152,7 +155,10 @@
         "SketchUp",
         "Photoshop / Premiere",
         "Blender CUDA entry-level"
-      ]
+      ],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AZOBSS Entry RTX mATX gaming build with RTX-class GPU and three-fan airflow case",
+      "imageNote": "Visual rujukan ikut konfigurasi: mATX • RTX • 3-fan airflow"
     },
     {
       "id": "mainstream-rx",
@@ -215,7 +221,10 @@
         "SketchUp",
         "Revit asas–sederhana",
         "DaVinci Resolve"
-      ]
+      ],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "AZOBSS Mainstream RX AM5 gaming build with Radeon GPU and AIO cooling",
+      "imageNote": "Visual rujukan ikut konfigurasi: Radeon • AIO • airflow"
     },
     {
       "id": "performance-rtx",
@@ -280,7 +289,10 @@
         "Premiere Pro / After Effects",
         "Lumion / Twinmotion sederhana",
         "Agisoft Metashape sederhana"
-      ]
+      ],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "AZOBSS Performance RTX build with RTX-class GPU, tower air cooler and ARGB airflow case",
+      "imageNote": "Visual rujukan ikut konfigurasi: RTX • tower air • ARGB"
     },
     {
       "id": "highend-rx",
@@ -345,7 +357,10 @@
         "DaVinci Resolve",
         "Blender",
         "Agisoft Metashape"
-      ]
+      ],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "AZOBSS High-End RX build with large Radeon GPU, liquid cooling and premium airflow",
+      "imageNote": "Visual rujukan ikut konfigurasi: Radeon • AIO • premium airflow"
     },
     {
       "id": "flagship-rtx",
@@ -411,7 +426,10 @@
         "DaVinci Resolve",
         "Agisoft Metashape",
         "Local AI / CUDA workloads"
-      ]
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS 4K RTX flagship build with large RTX 5080-class GPU, liquid cooling and high-airflow ARGB case",
+      "imageNote": "Visual rujukan ikut konfigurasi: RTX 5080-class • high-airflow • AIO"
     }
   ],
   "livePriceApi": "https://azobss-backend.onrender.com/api/pc-build/live-prices",
