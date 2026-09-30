@@ -1,24 +1,39 @@
 {
-  "version": 1,
+  "version": 2,
   "market": "Malaysia",
   "currency": "MYR",
   "priceChecked": "2026-10-01",
-  "priceNote": "Harga ialah anggaran pasaran hardware / PC build Malaysia semasa semakan dan boleh berubah mengikut stok, jenama, promosi dan kedai.",
+  "priceNote": "Harga kad cuba diselaraskan secara live daripada sumber rujukan Malaysia melalui backend AZOBSS. Jika sumber tidak dapat dibaca, harga terakhir dalam fail ini digunakan sebagai fallback.",
   "sources": [
     {
-      "name": "Ideal Tech PC Builder",
-      "url": "https://build.idealtech.com.my/",
-      "note": "Price list semasa Malaysia"
+      "name": "ALL IT Office Plus",
+      "url": "https://www.allithypermarket.com.my/products/office-plus-pre-built-custom-pc-rtx-3050-oc-amd-ryzen-5-3400g",
+      "note": "Sumber live untuk harga build"
     },
     {
-      "name": "Ideal Tech NVIDIA Gaming PCs",
-      "url": "https://idealtech.com.my/nvidia-gaming-pcs/",
-      "note": "Rujukan PC RTX 5060 / 5070 / 5080"
+      "name": "ALL IT Aura Gaming RTX 5060",
+      "url": "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
+      "note": "Sumber live untuk harga build"
     },
     {
-      "name": "ALL IT Hypermarket Custom PC",
-      "url": "https://www.allithypermarket.com.my/pages/built-for-you-custom-pc",
-      "note": "Rujukan Office & custom PC Malaysia"
+      "name": "ALL IT Nova Gaming RX 9060 XT",
+      "url": "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
+      "note": "Sumber live untuk harga build"
+    },
+    {
+      "name": "Ideal Tech Radiance Stellar RTX 5070",
+      "url": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/",
+      "note": "Sumber live untuk harga build"
+    },
+    {
+      "name": "ALL IT Phantom Gaming RX 9070 XT",
+      "url": "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen?variant=49856424706276",
+      "note": "Sumber live untuk harga build"
+    },
+    {
+      "name": "Ideal Tech Radiance Apex RTX 5080",
+      "url": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/",
+      "note": "Sumber live untuk harga build"
     }
   ],
   "builds": [
@@ -30,10 +45,9 @@
       "category": "office",
       "resolution": "Office & light creative",
       "price": 1699,
-      "priceType": "Anggaran hardware semasa",
-      "marketReference": "RM1,399–RM2,169",
+      "priceType": "Harga live sumber / fallback terakhir",
       "sourceName": "ALL IT Office Plus",
-      "sourceUrl": "https://www.allithypermarket.com.my/collections/office-pc",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/office-plus-pre-built-custom-pc-rtx-3050-oc-amd-ryzen-5-3400g",
       "badge": "LOW / VALUE",
       "accent": "green",
       "parts": [
@@ -68,11 +82,18 @@
       ],
       "bestFor": [
         "Office & kerja harian",
-        "Belajar / Google Workspace / Microsoft Office",
-        "Browsing, video & multitasking",
-        "Light Photoshop / Canva"
+        "Belajar / Microsoft Office",
+        "AutoCAD 2D ringan & pelan asas",
+        "Browsing, video & multitasking"
       ],
-      "note": "Tidak memerlukan dedicated GPU; paling jimat kuasa dan kos."
+      "note": "Sesuai untuk kerja pejabat dan CAD 2D ringan. Untuk Civil 3D, Revit, 3D atau rendering, pilih build dengan dedicated GPU dan sekurang-kurangnya 32GB RAM.",
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD 2018–2026 (2D ringan)",
+        "MapInfo Pro / QGIS ringan",
+        "Global Mapper ringan",
+        "PDF / Canva / Photoshop ringan"
+      ]
     },
     {
       "id": "entry-rtx",
@@ -81,11 +102,10 @@
       "tagline": "1080p Gaming / General Creator",
       "category": "gaming",
       "resolution": "1080p High",
-      "price": 3699,
-      "priceType": "Anggaran hardware semasa",
-      "marketReference": "Base RTX 5060 build sekitar RM3,299; naik taraf RAM/SSD diambil kira",
-      "sourceName": "Ideal Tech Radiance Rush RTX 5060",
-      "sourceUrl": "https://idealtech.com.my/nvidia-gaming-pcs/",
+      "price": 3749,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Aura Gaming RTX 5060",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
       "badge": "1080P VALUE",
       "accent": "cyan",
       "parts": [
@@ -119,12 +139,20 @@
         ]
       ],
       "bestFor": [
+        "AutoCAD 2D/3D & kerja teknikal",
         "1080p gaming High settings",
         "Esports high FPS",
-        "Photoshop / Premiere ringan-sederhana",
-        "AI / CUDA entry-level"
+        "Creator ringan–sederhana"
       ],
-      "note": "Lebih sesuai daripada 8GB RAM/256GB SSD untuk kegunaan sebenar 2026."
+      "note": "RTX 5060 sesuai untuk CAD/creator entry-level dan CUDA. Untuk Civil 3D/Revit projek besar, 32GB RAM dan SSD 1TB lebih selesa.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D (projek ringan–sederhana)",
+        "MapInfo Pro / Global Mapper / QGIS",
+        "SketchUp",
+        "Photoshop / Premiere",
+        "Blender CUDA entry-level"
+      ]
     },
     {
       "id": "mainstream-rx",
@@ -133,10 +161,9 @@
       "tagline": "1080p Ultra / 1440p Gaming",
       "category": "gaming",
       "resolution": "1440p",
-      "price": 4599,
-      "priceType": "Harga rujukan pasaran",
-      "marketReference": "RM4,599",
-      "sourceName": "ALL IT Nova Gaming",
+      "price": 5049,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Nova Gaming RX 9060 XT",
       "sourceUrl": "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
       "badge": "BEST BALANCE",
       "accent": "blue",
@@ -175,12 +202,20 @@
         ]
       ],
       "bestFor": [
+        "CAD / GIS dan kerja ukur",
         "1440p gaming",
         "AAA games dengan VRAM 16GB",
-        "Streaming & multitasking",
-        "AM5 upgrade path"
+        "Streaming & multitasking"
       ],
-      "note": "Pilihan mid-range dengan VRAM 16GB dan platform AM5."
+      "note": "VRAM 16GB membantu kerja grafik dan gaming. Untuk Revit/Civil 3D lebih berat, naik taraf ke 32GB RAM dan SSD 1TB.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D (sederhana)",
+        "MapInfo Pro / Global Mapper / QGIS / ArcGIS Pro",
+        "SketchUp",
+        "Revit asas–sederhana",
+        "DaVinci Resolve"
+      ]
     },
     {
       "id": "performance-rtx",
@@ -190,8 +225,7 @@
       "category": "performance",
       "resolution": "1440p High Refresh",
       "price": 6299,
-      "priceType": "Harga rujukan pasaran",
-      "marketReference": "RM6,299",
+      "priceType": "Harga live sumber / fallback terakhir",
       "sourceName": "Ideal Tech Radiance Stellar RTX 5070",
       "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/",
       "badge": "RTX 5070",
@@ -231,12 +265,22 @@
         ]
       ],
       "bestFor": [
+        "CAD/BIM profesional",
         "1440p high-refresh gaming",
-        "Ray tracing / DLSS",
-        "Premiere / Blender / CUDA",
+        "Rendering GPU / CUDA",
         "Gaming + streaming"
       ],
-      "note": "Boleh naik taraf ke 32GB RAM dan 1TB SSD untuk workstation lebih selesa."
+      "note": "Pilihan seimbang untuk CAD/BIM dan creator. 32GB RAM + 1TB SSD sangat disarankan untuk Civil 3D, Revit dan Adobe projek besar.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D / Revit",
+        "MapInfo Pro / Global Mapper / ArcGIS Pro",
+        "3ds Max / SketchUp + V-Ray",
+        "Blender CUDA",
+        "Premiere Pro / After Effects",
+        "Lumion / Twinmotion sederhana",
+        "Agisoft Metashape sederhana"
+      ]
     },
     {
       "id": "highend-rx",
@@ -245,10 +289,9 @@
       "tagline": "1440p Ultra / 4K Gaming",
       "category": "highend",
       "resolution": "4K capable",
-      "price": 8219,
-      "priceType": "Harga rujukan pasaran",
-      "marketReference": "RM8,219",
-      "sourceName": "ALL IT Phantom Gaming",
+      "price": 7649,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Phantom Gaming RX 9070 XT",
       "sourceUrl": "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen?variant=49856424706276",
       "badge": "HIGH-END",
       "accent": "orange",
@@ -287,12 +330,22 @@
         ]
       ],
       "bestFor": [
+        "CAD/GIS berat & multitasking",
         "1440p Ultra high FPS",
         "4K gaming",
-        "AAA gaming jangka panjang",
-        "Gaming-focused X3D platform"
+        "AAA gaming jangka panjang"
       ],
-      "note": "Untuk build kelas ini, 32GB RAM + 1TB SSD ialah upgrade yang sangat disarankan."
+      "note": "CPU X3D sangat kuat untuk gaming dan GPU 16GB sesuai untuk visualisasi. Untuk workstation utama, 32–64GB RAM + SSD 1–2TB disarankan.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D / Revit",
+        "MapInfo Pro / Global Mapper / ArcGIS Pro / QGIS",
+        "SketchUp",
+        "Lumion / Twinmotion",
+        "DaVinci Resolve",
+        "Blender",
+        "Agisoft Metashape"
+      ]
     },
     {
       "id": "flagship-rtx",
@@ -302,8 +355,7 @@
       "category": "flagship",
       "resolution": "4K Ultra",
       "price": 10299,
-      "priceType": "Harga rujukan pasaran",
-      "marketReference": "RM10,299",
+      "priceType": "Harga live sumber / fallback terakhir",
       "sourceName": "Ideal Tech Radiance Apex RTX 5080",
       "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/",
       "badge": "RTX 5080 / 4K",
@@ -344,11 +396,24 @@
       ],
       "bestFor": [
         "4K Ultra gaming",
-        "Ray tracing / DLSS 4",
+        "CAD/BIM + rendering berat",
         "3D rendering / CUDA / AI",
         "Professional content creation"
       ],
-      "note": "Untuk workstation/AI sebenar, naik taraf 32–64GB RAM dan SSD 1–2TB."
+      "note": "GPU kelas tinggi untuk 4K, rendering dan AI. Untuk workstation sebenar, naik taraf ke 32–64GB RAM, SSD 1–2TB dan CPU lebih tinggi jika kerja CPU-heavy.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D / Revit",
+        "MapInfo Pro / Global Mapper / ArcGIS Pro",
+        "3ds Max / Blender CUDA",
+        "Lumion / Twinmotion",
+        "Premiere Pro / After Effects",
+        "DaVinci Resolve",
+        "Agisoft Metashape",
+        "Local AI / CUDA workloads"
+      ]
     }
-  ]
+  ],
+  "livePriceApi": "https://azobss-backend.onrender.com/api/pc-build/live-prices",
+  "liveRefreshSeconds": 300
 }

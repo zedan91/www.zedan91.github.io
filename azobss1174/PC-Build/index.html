@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<style id="azobss-navbar-prepaint-style-1066">
+/* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
+html body .market-brand{
+  flex:0 0 154px!important;
+  width:154px!important;min-width:154px!important;max-width:154px!important;height:38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;margin:0!important;box-sizing:border-box!important;overflow:hidden!important;
+  border-radius:999px!important;background:transparent!important;border:0!important;text-decoration:none!important;
+  transform:none!important;animation:none!important;transition:none!important;
+}
+html body .market-brand img{
+  display:block!important;width:100%!important;height:100%!important;
+  object-fit:contain!important;object-position:center!important;
+  margin:0!important;padding:0!important;border:0!important;background:transparent!important;
+  transform:none!important;animation:none!important;transition:none!important;
+}
+@media(max-width:980px){
+  html body .market-brand{flex-basis:132px!important;width:132px!important;min-width:132px!important;max-width:132px!important;height:34px!important;}
+}
+@media(max-width:560px){
+  html body .market-brand{flex-basis:120px!important;width:120px!important;min-width:120px!important;max-width:120px!important;height:32px!important;}
+}
+
+.market-nav .nav-pa-bm-link,
+.market-nav .nav-public-pa-link{
+  width:86px!important;min-width:86px!important;max-width:86px!important;
+  padding-left:8px!important;padding-right:8px!important;
+  justify-content:center!important;box-sizing:border-box!important;
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .site-auth-actions{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="1"] .market-user-tools{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .site-auth-actions{display:flex!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-auth="0"] .market-user-tools{display:none!important}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="1"] body .market-nav .nav-pa-bm-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav a#paBmNavButton,
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-pabm="0"] body .market-nav .nav-pa-bm-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="1"] body .market-nav .nav-public-pa-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important
+}
+html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .market-nav .nav-public-pa-link{
+  display:none!important;visibility:hidden!important;pointer-events:none!important
+}
+.market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
+</style>
+<script id="azobss-navbar-prepaint-1066">
+(function(){
+  try{
+    function parse(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
+    var u=parse(sessionStorage.getItem('azobssCurrentUser'))||
+          parse(localStorage.getItem('azobssCurrentUser'))||
+          parse(sessionStorage.getItem('azobssUser'))||
+          parse(localStorage.getItem('azobssUser'));
+    var html=document.documentElement;
+    var auth=!!u;
+    var key=String(u&&(u.usernameKey||u.username||u.name)||'').trim().toLowerCase();
+    var email=String(u&&(u.email||u.authEmail)||'').trim().toLowerCase();
+    var role=String(u&&(u.role||u.userRole||u.accountRole||u.staffRole)||'').trim().toLowerCase();
+    var isAdmin=!!u&&(role==='admin'||key==='zedan91'||key==='zedan9107'||email==='zedan91@azobss.local'||email==='zedan9107@gmail.com');
+    function truthy(v){
+      if(v===true||v===1)return true;
+      return ['true','yes','y','1','allow','allowed','on','enabled','enable'].indexOf(String(v==null?'':v).trim().toLowerCase())>=0;
+    }
+    var adminDecisionPresent=!!u&&(u.adminPaBmAllowed===true||u.adminPaBmAllowed===false||['true','false','yes','no','y','n','1','0','allow','allowed','on','off','enabled','enable','disabled','disable','hide'].indexOf(String(u.adminPaBmAllowed==null?'':u.adminPaBmAllowed).trim().toLowerCase())>=0);
+    var adminManaged=!!u&&(adminDecisionPresent||u.adminPaBmOverride===true||String(u.paBmManagedBy||'').toLowerCase()==='admin');
+    var adminAllowed=adminManaged&&(
+      truthy(u.adminPaBmAllowed)||truthy(u.paBmAccess)||truthy(u.paBmAllowed)||
+      truthy(u.allowPABM)||truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||
+      truthy(u.paBmTabAllowed)||truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)
+    );
+    if(adminDecisionPresent) adminAllowed=truthy(u.adminPaBmAllowed);
+    var flagAllowed=!!u&&(
+      truthy(u.paBmAccess)||truthy(u.paBmAllowed)||truthy(u.allowPABM)||
+      truthy(u.allowPaBm)||truthy(u.allowPaBmTab)||truthy(u.paBmTabAllowed)||
+      truthy(u.showPaBmTab)||truthy(u.canAccessPaBm)||truthy(u.paAccess)
+    );
+    var codes=[
+      u&&u.invitedByCode,u&&u.memberCode,u&&u.paMemberCode,u&&u.accessCode,
+      u&&u.inviteCodeUsed,u&&u.signupCode,u&&u.member_code,u&&u.referralCode,u&&u.inviteCode
+    ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
+    var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
+    var roleFlat=role.replace(/[\s_-]+/g,'');
+    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicPa=!pa&&!isAdmin&&!publicBlocked;
+    html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
+    html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
+    html.setAttribute('data-azobss-pre-publicpa',publicPa?'1':'0');
+  }catch(_e){}
+})();
+</script>
+<script src="/assets/js/azobss-render-wake.js?v=1056"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PC Build Malaysia | AZOBSS</title>
+<meta name="description" content="Cadangan PC build Malaysia dari low hingga high untuk Office, AutoCAD, CAD/Survey, gaming, creator dan workstation dengan harga rujukan yang dikemas kini secara live."/>
+<link rel="canonical" href="https://www.azobss.com/PC-Build/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="ms_MY"/>
+<meta property="og:site_name" content="AZOBSS"/>
+<meta property="og:title" content="PC Build Malaysia | AZOBSS"/>
+<meta property="og:description" content="Pilih PC build mengikut bajet, software dan kegunaan dengan harga pasaran Malaysia yang diselaraskan secara live daripada sumber rujukan."/>
+<meta property="og:url" content="https://www.azobss.com/PC-Build/"/>
+<meta name="theme-color" content="#07111f"/>
+<link rel="icon" href="/favicon-96x96.png"/>
+<link href="/assets/css/azobss-global-compact-font-more-nav.css?v=910" rel="stylesheet"/>
+<script defer src="/assets/js/azobss-more-nav.js?v=1079"></script>
+<link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
+<style>
+:root{--bg:#07111f;--panel:#0d1b2d;--line:#243650;--text:#edf6ff;--muted:#9fb0c4;--cyan:#22d3ee;--blue:#3b82f6;--green:#22c55e;--yellow:#facc15;--shadow:0 18px 55px rgba(0,0,0,.28)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;padding-top:49px;background:radial-gradient(circle at 16% -8%,rgba(37,99,235,.2),transparent 30%),radial-gradient(circle at 92% 8%,rgba(34,211,238,.12),transparent 26%),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+.market-sticky-bar .market-search-row{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
+.hero{padding:58px 0 28px}.eyebrow{display:inline-flex;align-items:center;padding:7px 12px;border:1px solid rgba(34,211,238,.4);border-radius:999px;color:#a5f3fc;background:rgba(34,211,238,.08);font-size:12px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.hero h1{font-size:clamp(42px,6vw,68px);line-height:.98;margin:18px 0 16px;letter-spacing:-.04em;max-width:920px}.hero h1 span{background:linear-gradient(90deg,#67e8f9,#60a5fa,#c084fc);-webkit-background-clip:text;color:transparent}.hero p{max-width:900px;color:#a9bad0;font-size:17px;line-height:1.7;margin:0}.status{display:flex;flex-wrap:wrap;gap:9px;margin-top:21px}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #2b425f;border-radius:999px;background:#0b1828;padding:8px 11px;color:#cbd8e7;font-size:12px}.live-dot{width:8px;height:8px;border-radius:50%;background:#facc15;box-shadow:0 0 0 4px rgba(250,204,21,.09)}.pill.live-ok .live-dot{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.09)}.pill.live-bad .live-dot{background:#fb7185;box-shadow:0 0 0 4px rgba(251,113,133,.09)}
+.toolbar{position:sticky;top:58px;z-index:20;display:grid;grid-template-columns:minmax(280px,1.4fr) repeat(3,minmax(170px,.65fr));gap:10px;margin:0 0 22px;padding:14px;border:1px solid #243a56;border-radius:17px;background:rgba(8,21,35,.94);backdrop-filter:blur(14px)}.control{width:100%;height:44px;border:1px solid #34506e;border-radius:10px;background:#0b1a2c;color:#fff;padding:0 12px;font:inherit;font-size:13px;font-weight:700}.control::placeholder{color:#7f93aa}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:0 0 52px}.card{position:relative;display:flex;flex-direction:column;min-height:100%;background:linear-gradient(160deg,rgba(17,31,51,.98),rgba(8,21,35,.98));border:1px solid #263c59;border-radius:22px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,.18);transition:.2s}.card:hover{transform:translateY(-3px);border-color:#3e5f86;box-shadow:0 20px 45px rgba(0,0,0,.28)}.card::before{content:"";height:4px;background:var(--accent,#22d3ee);display:block}.card-head{padding:20px 20px 13px}.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.tier{color:#8ea7bf;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:900}.badge{font-size:11px;font-weight:900;padding:6px 8px;border-radius:999px;color:#06101d;background:var(--accent,#22d3ee)}.card h2{font-size:23px;margin:10px 0 5px}.tagline{color:#a9bad0;font-size:13px;min-height:18px}.price{display:flex;align-items:baseline;gap:7px;margin-top:16px;flex-wrap:wrap}.price strong{font-size:31px;letter-spacing:-.04em}.price span{font-size:12px;color:#91a3b9}.live-label{display:inline-flex;align-items:center;gap:5px;color:#86efac!important;font-weight:850}.live-label::before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e}.ref{margin-top:6px;color:#7f93aa;font-size:11px;line-height:1.45}.ref a{color:#8be9f7;text-decoration:none}.ref a:hover{text-decoration:underline}.specs{margin:0 20px;border-top:1px solid #22354e;border-bottom:1px solid #22354e;padding:12px 0}.spec{display:grid;grid-template-columns:92px 1fr;gap:8px;padding:6px 0;font-size:13px}.spec b{color:#87a2bf}.spec span{color:#eef6ff}.fit{padding:16px 20px 0}.fit+.fit{padding-top:10px}.fit-title{font-size:12px;color:#8ca1b7;text-transform:uppercase;letter-spacing:.08em;font-weight:900}.fit ul{padding:0;margin:10px 0 0;list-style:none}.fit li{position:relative;padding:5px 0 5px 19px;font-size:13px;color:#cbd8e7}.fit li::before{content:"✓";position:absolute;left:0;color:#5ee39b;font-weight:900}.software-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.software-chip{display:inline-flex;padding:6px 8px;border:1px solid #29445f;border-radius:8px;background:#091829;color:#cfe5fa;font-size:11px;line-height:1.25}.note{margin:14px 20px 0;padding:10px 12px;border-radius:12px;background:#0b1726;color:#9eb0c4;font-size:12px;line-height:1.5}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding:18px 20px 20px}.btn{height:40px;border-radius:10px;border:1px solid #34506e;background:#102239;color:white;font-weight:800;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;font-size:13px}.btn.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border-color:transparent}.btn:hover{filter:brightness(1.1)}.empty{grid-column:1/-1;text-align:center;padding:50px;border:1px dashed #38506b;border-radius:18px;color:#9aacbf}.footer{border-top:1px solid #1d3047;padding:28px 0 36px;color:#8fa2b7;font-size:13px}
+@media(max-width:980px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.toolbar{grid-template-columns:1fr 1fr}.toolbar .search{grid-column:1/-1}}
+@media(max-width:650px){.wrap{width:min(100% - 18px,1220px)}.hero{padding-top:35px}.hero p{font-size:15px}.toolbar{position:static;grid-template-columns:1fr}.toolbar .search{grid-column:auto}.grid{grid-template-columns:1fr}.card h2{font-size:22px}.actions{grid-template-columns:1fr 1fr}}
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"PC Build Malaysia | AZOBSS","url":"https://www.azobss.com/PC-Build/","description":"Cadangan PC build dari low ke high untuk Office, AutoCAD, CAD/Survey, gaming dan workstation dengan harga rujukan Malaysia yang dikemas kini secara live."}</script>
+</head>
+<body>
+<header aria-label="Carousell style navigation" class="market-sticky-bar">
+<div class="market-bar-inner">
+<div class="market-main-row">
+<a aria-label="AZOBSS" class="market-brand" href="/"><img alt="AZOBSS" src="/images/logo-azobss.jpg"/></a>
+<nav aria-label="AZOBSS quick actions" class="market-nav az-more-enabled">
+<a aria-label="Admin Dashboard" class="azobss-nav-chip azAdminDashboardBtn admin-dashboard-btn" href="/admin/" title="Admin Dashboard">🛠️</a>
+<a aria-label="Staff Dashboard" class="azobss-nav-chip azStaffDashboardBtn staff-dashboard-btn" href="/staff/" title="Staff Dashboard">🧑‍💼</a>
+<a aria-label="WhatsApp" class="nav-whatsapp-link" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><span aria-label="WhatsApp" class="nav-whatsapp-circle"></span></a>
+<a class="nav-pa-bm-link is-hidden" hidden="" href="/PA-BM/" id="paBmNavButton">PA / BM</a>
+<a class="nav-public-pa-link" href="/Perkhidmatan-Ukur-Tanah/" title="Pelan Akui &amp; Perkhidmatan Ukur Tanah">Ukur Tanah</a> <a href="/Software-Tools/">Software</a>
+<a href="/CAD-Tools-&amp;-Resources/">CAD Tools</a>
+<a href="/affiliate-shop/">Affiliate Shop</a><div class="az-more-nav az-repair-nav" data-az-repair-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger az-repair-trigger market-nav-active is-active is-current" aria-haspopup="true" aria-expanded="false" aria-controls="azRepairDropdownStatic" aria-label="Menu PC &amp; IT Services"><span>PC &amp; IT Services</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown az-repair-dropdown" id="azRepairDropdownStatic" role="menu" aria-label="Pilihan PC &amp; IT Services"><a href="/PC-IT-Services/" role="menuitem" data-az-pcit-overview-link="1"><svg class="az-more-item-icon az-pcit-overview-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path></svg><span class="az-repair-item-copy"><strong>Semua PC &amp; IT Services</strong><small>Build, repair, upgrade, parts dan servis IT</small></span></a><a href="/PC-Build/" role="menuitem" data-az-pcit-build-link="1" class="is-active" aria-current="page"><svg class="az-more-item-icon az-pcit-build-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path></svg><span class="az-repair-item-copy"><strong>PC Build &amp; Hardware</strong><small>Cadangan spec Low → High dengan harga Malaysia</small></span></a><a href="/Tempah-Servis-IT/" role="menuitem" data-az-repair-physical-link="1"><svg class="az-more-item-icon az-repair-physical-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path></svg><span class="az-repair-item-copy"><strong>Servis PC &amp; Laptop</strong><small>Repair, format, cleaning, LCD dan keyboard</small></span></a><a href="/PC-IT-Services/#upgrade-parts" role="menuitem" data-az-pcit-upgrade-link="1"><svg class="az-more-item-icon az-pcit-upgrade-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg><span class="az-repair-item-copy"><strong>Upgrade &amp; Parts</strong><small>RAM, SSD, GPU, PSU, bateri, adapter dan lain-lain</small></span></a><a href="/Troubleshoot-PC-Online/" role="menuitem" data-az-repair-online-link="1"><svg class="az-more-item-icon az-repair-online-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg><span class="az-repair-item-copy"><strong>Troubleshoot PC Online</strong><small>Pemeriksaan dan pembaikan Windows dari jauh</small></span></a></div></div>
+<a href="/lucky-draw/">Lucky Draw</a>
+<div class="az-more-nav" data-az-more-menu="1" data-az-static-menu="1"><button type="button" class="az-more-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="azMoreDropdownStatic" aria-label="More menu"><svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg><span>More</span><span class="az-more-chevron" aria-hidden="true">▾</span></button><div class="az-more-dropdown" id="azMoreDropdownStatic" role="menu"><a href="/AZOBSSTV/" role="menuitem" data-azobsstv-link="1" title="AZOBSSTV"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M9 21h6"></path><path d="M12 18v3"></path><path d="m10 9 5 3-5 3z"></path></svg><span>AZOBSSTV</span></a><a href="/tools/" role="menuitem" data-az-more-tools-link="1"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span>Mini Web Tools</span></a><a href="/Web-Pilihan/" role="menuitem" data-az-web-pilihan-link="1" title="Useful websites and tools curated by AZOBSS"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"></path></svg><span>Web Picks</span></a><a href="/Sound-Effects/" role="menuitem" data-az-sound-effects-link="1" title="AZOBSS Sound Effects"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10v4"></path><path d="M8 8v8"></path><path d="M12 5v14"></path><path d="M16 8v8"></path><path d="M20 10v4"></path></svg><span>Sound Effects</span></a><a href="/Tempah-Website/" role="menuitem" data-az-website-order-link="1" title="Tempah Website untuk Bisnes"><svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path><path d="M7 10h4"></path><path d="M7 13h8"></path></svg><span>Bina Website</span></a><a href="/Tempahan-Makanan/" role="menuitem" data-az-food-order-link="1" title="Food - Brownies"><svg class="az-more-item-icon az-more-food-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 14h16"></path><path d="M6 14a6 6 0 0 1 12 0"></path><path d="M12 6V4"></path><path d="M3 18h18"></path></svg><span>Food - Brownies</span></a></div></div>
+</nav>
+<div class="site-auth-actions" id="siteAuthActions"><button class="site-auth-btn primary" data-auth-open="register" id="siteSignUpButton" type="button">Register</button><button class="site-auth-btn" data-auth-open="login" id="siteSignInButton" type="button">Login</button></div>
+<div class="market-user-tools" id="marketUserTools">
+<div aria-expanded="false" aria-haspopup="true" class="user-menu" id="userMenu" role="button" tabindex="0"><div class="user-avatar" id="userAvatar">AZ</div><div class="user-name"><span id="signedInName"></span></div><div aria-label="Account menu" class="user-dropdown" id="userDropdown" role="menu">
+<a class="user-dropdown-item" href="/#purchases" role="menuitem"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+<a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg aria-hidden="true" class="az-user-menu-bookmark-icon" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+<button class="user-dropdown-item" id="profileSettingsButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+<button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button>
+</div></div>
+<a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks"><svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></a>
+<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#"><span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg></a>
+<a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg></a>
+<a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg></a>
+</div>
+</div>
+<form action="#" class="market-search-row"><label class="market-search-field"><input aria-label="Search for an item" placeholder="Search for an item" type="search"/></label></form>
+</div>
+</header>
+<main class="wrap">
+<section class="hero"><div class="eyebrow">🖥️ AZOBSS PC BUILD • MALAYSIA</div><h1>Pilih PC Build dari <span>Low → High</span></h1><p>Cadangan spesifikasi mengikut bajet, software dan kegunaan. Harga kad akan diselaraskan secara automatik daripada sumber rujukan Malaysia apabila halaman dibuka dan diperiksa semula setiap beberapa minit.</p><div class="status"><span class="pill">Pasaran: <strong>Malaysia</strong></span><span class="pill" id="livePricePill"><span class="live-dot"></span><span id="livePriceStatus">Harga live: memuat…</span></span><span class="pill">Build dipaparkan: <strong id="count">0</strong></span></div></section>
+<section class="toolbar" aria-label="PC build filters">
+<input class="control search" id="search" type="search" placeholder="Cari CPU, GPU, AutoCAD, Civil 3D, software atau kegunaan…"/>
+<select class="control" id="category"><option value="all">Semua Kegunaan</option><option value="office">Office / Study</option><option value="gaming">Gaming</option><option value="performance">Performance / Creator</option><option value="highend">High-End</option><option value="flagship">Flagship / 4K</option></select>
+<select class="control" id="budget"><option value="0">Semua Bajet</option><option value="2000">≤ RM2,000</option><option value="4000">≤ RM4,000</option><option value="5000">≤ RM5,000</option><option value="7000">≤ RM7,000</option><option value="9000">≤ RM9,000</option><option value="11000">≤ RM11,000</option></select>
+<select class="control" id="sort"><option value="asc">Harga: Low → High</option><option value="desc">Harga: High → Low</option><option value="tier">Tier: Low → High</option></select>
+</section>
+<section class="grid" id="grid" aria-live="polite"></section>
+</main>
+<footer class="footer"><div class="wrap">© AZOBSS • PC Build Malaysia • Harga boleh berubah mengikut sumber pasaran.</div></footer>
+<script>
+const LIVE_PRICE_API='https://azobss-backend.onrender.com/api/pc-build/live-prices';
+const fmt=n=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR',maximumFractionDigits:0}).format(Number(n)||0);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let DATA={builds:[]};
+const els={grid:document.querySelector('#grid'),search:document.querySelector('#search'),category:document.querySelector('#category'),budget:document.querySelector('#budget'),sort:document.querySelector('#sort'),count:document.querySelector('#count'),liveStatus:document.querySelector('#livePriceStatus'),livePill:document.querySelector('#livePricePill')};
+function copyBuild(b){const lines=[`${b.name} — ${fmt(b.price)}`,b.tagline,'',...b.parts.map(p=>`${p[0]}: ${p[1]}`),'',...(b.softwareFit?.length?['Software sesuai:',...b.softwareFit.map(x=>`- ${x}`),'']:[]),`Sumber harga: ${b.sourceName}`,b.sourceUrl,'Harga boleh berubah mengikut sumber pasaran Malaysia.'];navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('Spesifikasi disalin.')).catch(()=>prompt('Copy spesifikasi:',lines.join('\n')))}
+function render(){let list=[...DATA.builds];const q=els.search.value.trim().toLowerCase(),cat=els.category.value,max=Number(els.budget.value||0);if(q)list=list.filter(b=>JSON.stringify(b).toLowerCase().includes(q));if(cat!=='all')list=list.filter(b=>b.category===cat);if(max)list=list.filter(b=>Number(b.price)<=max);if(els.sort.value==='desc')list.sort((a,b)=>b.price-a.price);else list.sort((a,b)=>a.price-b.price);els.count.textContent=list.length;if(!list.length){els.grid.innerHTML='<div class="empty">Tiada build yang sepadan. Cuba ubah filter bajet atau carian.</div>';return}els.grid.innerHTML=list.map(b=>`<article class="card" style="--accent:${({green:'#22c55e',cyan:'#22d3ee',blue:'#60a5fa',purple:'#c084fc',orange:'#fb923c',red:'#fb7185'})[b.accent]||'#22d3ee'}"><div class="card-head"><div class="row"><div class="tier">${esc(b.tier)}</div><div class="badge">${esc(b.badge)}</div></div><h2>${esc(b.name)}</h2><div class="tagline">${esc(b.tagline)}</div><div class="price"><strong>${fmt(b.price)}</strong><span class="${b.livePrice?'live-label':''}">${b.livePrice?'Harga live sumber':'Harga terakhir'}</span></div><div class="ref">Sumber: <a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener">${esc(b.sourceName)}</a>${b.livePrice?' · dikemas kini automatik':''}</div></div><div class="specs">${b.parts.map(p=>`<div class="spec"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('')}</div><div class="fit"><div class="fit-title">Sesuai untuk</div><ul>${b.bestFor.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>${b.softwareFit?.length?`<div class="fit"><div class="fit-title">Software sesuai</div><div class="software-list">${b.softwareFit.map(x=>`<span class="software-chip">${esc(x)}</span>`).join('')}</div></div>`:''}<div class="note">${esc(b.note)}</div><div class="actions"><button class="btn" data-copy="${esc(b.id)}">Salin Spec</button><a class="btn primary" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya / Tempah</a></div></article>`).join('');document.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>copyBuild(DATA.builds.find(b=>b.id===btn.dataset.copy)))}
+function setLiveStatus(text,state=''){els.liveStatus.textContent=text;els.livePill.classList.remove('live-ok','live-bad');if(state)els.livePill.classList.add(state)}
+async function loadLivePrices(attempt=0){if(!DATA.builds?.length)return;setLiveStatus(attempt?'Harga live: cuba semula…':'Harga live: menyemak…');const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),45000);try{const r=await fetch(LIVE_PRICE_API+'?t='+Date.now(),{cache:'no-store',signal:ctrl.signal});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();const map=new Map((d.prices||[]).filter(x=>x&&x.ok&&Number(x.price)>0).map(x=>[x.id,x]));let updated=0;DATA.builds.forEach(b=>{const p=map.get(b.id);if(!p)return;b.price=Number(p.price);b.livePrice=true;b.liveFetchedAt=p.fetchedAt||d.fetchedAt||'';if(p.sourceName)b.sourceName=p.sourceName;if(p.sourceUrl)b.sourceUrl=p.sourceUrl;updated++});render();const when=new Date(d.fetchedAt||Date.now()).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});if(updated===DATA.builds.length)setLiveStatus(`Harga live: ${updated}/${DATA.builds.length} • ${when}`,'live-ok');else if(updated>0)setLiveStatus(`Harga live: ${updated}/${DATA.builds.length} • baki guna harga terakhir`,'live-ok');else setLiveStatus('Harga live gagal • harga terakhir digunakan','live-bad')}catch(e){console.warn('AZOBSS live PC pricing:',e);if(attempt<1){setLiveStatus('Harga live belum dapat • cuba semula…');setTimeout(()=>loadLivePrices(1),12000)}else{setLiveStatus('Harga live gagal • harga terakhir digunakan','live-bad')}}finally{clearTimeout(timer)}}
+fetch('./pc-build-data.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Data gagal dimuat');return r.json()}).then(d=>{DATA=d;render();loadLivePrices();setInterval(loadLivePrices,5*60*1000)}).catch(e=>{els.grid.innerHTML='<div class="empty">Data PC Build tidak dapat dimuat. Sila refresh halaman.</div>';setLiveStatus('Data PC Build gagal dimuat','live-bad');console.error(e)});
+[els.search,els.category,els.budget,els.sort].forEach(el=>el.addEventListener(el.tagName==='INPUT'?'input':'change',render));
+</script>
+<script src="/assets/js/azobss-global-auth.js?v=1136" type="module"></script>
+</body></html>
