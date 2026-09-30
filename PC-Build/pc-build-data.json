@@ -1,0 +1,354 @@
+{
+  "version": 1,
+  "market": "Malaysia",
+  "currency": "MYR",
+  "priceChecked": "2026-10-01",
+  "priceNote": "Harga ialah anggaran pasaran hardware / PC build Malaysia semasa semakan dan boleh berubah mengikut stok, jenama, promosi dan kedai.",
+  "sources": [
+    {
+      "name": "Ideal Tech PC Builder",
+      "url": "https://build.idealtech.com.my/",
+      "note": "Price list semasa Malaysia"
+    },
+    {
+      "name": "Ideal Tech NVIDIA Gaming PCs",
+      "url": "https://idealtech.com.my/nvidia-gaming-pcs/",
+      "note": "Rujukan PC RTX 5060 / 5070 / 5080"
+    },
+    {
+      "name": "ALL IT Hypermarket Custom PC",
+      "url": "https://www.allithypermarket.com.my/pages/built-for-you-custom-pc",
+      "note": "Rujukan Office & custom PC Malaysia"
+    }
+  ],
+  "builds": [
+    {
+      "id": "essential-office",
+      "tier": "Low",
+      "name": "AZOBSS Essential",
+      "tagline": "Office / Study / Daily Use",
+      "category": "office",
+      "resolution": "Office & light creative",
+      "price": 1699,
+      "priceType": "Anggaran hardware semasa",
+      "marketReference": "RM1,399–RM2,169",
+      "sourceName": "ALL IT Office Plus",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/office-pc",
+      "badge": "LOW / VALUE",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500GT"
+        ],
+        [
+          "GPU",
+          "AMD Radeon Graphics (Integrated)"
+        ],
+        [
+          "Motherboard",
+          "A520M mATX"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "512GB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "500W 80+ / reputable brand"
+        ],
+        [
+          "Case",
+          "mATX airflow case"
+        ]
+      ],
+      "bestFor": [
+        "Office & kerja harian",
+        "Belajar / Google Workspace / Microsoft Office",
+        "Browsing, video & multitasking",
+        "Light Photoshop / Canva"
+      ],
+      "note": "Tidak memerlukan dedicated GPU; paling jimat kuasa dan kos."
+    },
+    {
+      "id": "entry-rtx",
+      "tier": "Low-Mid",
+      "name": "AZOBSS Entry RTX",
+      "tagline": "1080p Gaming / General Creator",
+      "category": "gaming",
+      "resolution": "1080p High",
+      "price": 3699,
+      "priceType": "Anggaran hardware semasa",
+      "marketReference": "Base RTX 5060 build sekitar RM3,299; naik taraf RAM/SSD diambil kira",
+      "sourceName": "Ideal Tech Radiance Rush RTX 5060",
+      "sourceUrl": "https://idealtech.com.my/nvidia-gaming-pcs/",
+      "badge": "1080P VALUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ],
+        [
+          "Motherboard",
+          "A520M / B550M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "500GB–1TB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "650W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "mATX airflow + 3 fans"
+        ]
+      ],
+      "bestFor": [
+        "1080p gaming High settings",
+        "Esports high FPS",
+        "Photoshop / Premiere ringan-sederhana",
+        "AI / CUDA entry-level"
+      ],
+      "note": "Lebih sesuai daripada 8GB RAM/256GB SSD untuk kegunaan sebenar 2026."
+    },
+    {
+      "id": "mainstream-rx",
+      "tier": "Mid",
+      "name": "AZOBSS Mainstream RX",
+      "tagline": "1080p Ultra / 1440p Gaming",
+      "category": "gaming",
+      "resolution": "1440p",
+      "price": 4599,
+      "priceType": "Harga rujukan pasaran",
+      "marketReference": "RM4,599",
+      "sourceName": "ALL IT Nova Gaming",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
+      "badge": "BEST BALANCE",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ],
+        [
+          "Motherboard",
+          "A620M AM5"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 5600MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "240mm AIO / equivalent"
+        ],
+        [
+          "PSU",
+          "650W 80+ Silver"
+        ],
+        [
+          "Case",
+          "mATX airflow case"
+        ]
+      ],
+      "bestFor": [
+        "1440p gaming",
+        "AAA games dengan VRAM 16GB",
+        "Streaming & multitasking",
+        "AM5 upgrade path"
+      ],
+      "note": "Pilihan mid-range dengan VRAM 16GB dan platform AM5."
+    },
+    {
+      "id": "performance-rtx",
+      "tier": "Mid-High",
+      "name": "AZOBSS Performance RTX",
+      "tagline": "1440p High Refresh / Creator",
+      "category": "performance",
+      "resolution": "1440p High Refresh",
+      "price": 6299,
+      "priceType": "Harga rujukan pasaran",
+      "marketReference": "RM6,299",
+      "sourceName": "Ideal Tech Radiance Stellar RTX 5070",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/",
+      "badge": "RTX 5070",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ],
+        [
+          "Motherboard",
+          "MSI B650M Gaming WiFi / equivalent"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Tower air cooler"
+        ],
+        [
+          "PSU",
+          "750W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "ARGB airflow case"
+        ]
+      ],
+      "bestFor": [
+        "1440p high-refresh gaming",
+        "Ray tracing / DLSS",
+        "Premiere / Blender / CUDA",
+        "Gaming + streaming"
+      ],
+      "note": "Boleh naik taraf ke 32GB RAM dan 1TB SSD untuk workstation lebih selesa."
+    },
+    {
+      "id": "highend-rx",
+      "tier": "High",
+      "name": "AZOBSS High-End RX",
+      "tagline": "1440p Ultra / 4K Gaming",
+      "category": "highend",
+      "resolution": "4K capable",
+      "price": 8219,
+      "priceType": "Harga rujukan pasaran",
+      "marketReference": "RM8,219",
+      "sourceName": "ALL IT Phantom Gaming",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen?variant=49856424706276",
+      "badge": "HIGH-END",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7800X3D"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT 16GB"
+        ],
+        [
+          "Motherboard",
+          "ASUS Prime B850M-F WiFi / equivalent"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 5600MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "240mm AIO"
+        ],
+        [
+          "PSU",
+          "750W 80+ Gold"
+        ],
+        [
+          "Case",
+          "mATX premium airflow"
+        ]
+      ],
+      "bestFor": [
+        "1440p Ultra high FPS",
+        "4K gaming",
+        "AAA gaming jangka panjang",
+        "Gaming-focused X3D platform"
+      ],
+      "note": "Untuk build kelas ini, 32GB RAM + 1TB SSD ialah upgrade yang sangat disarankan."
+    },
+    {
+      "id": "flagship-rtx",
+      "tier": "Very High",
+      "name": "AZOBSS 4K RTX",
+      "tagline": "4K Ultra / AI / Professional Creator",
+      "category": "flagship",
+      "resolution": "4K Ultra",
+      "price": 10299,
+      "priceType": "Harga rujukan pasaran",
+      "marketReference": "RM10,299",
+      "sourceName": "Ideal Tech Radiance Apex RTX 5080",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/",
+      "badge": "RTX 5080 / 4K",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080 16GB"
+        ],
+        [
+          "Motherboard",
+          "AM5 performance motherboard"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Performance air / AIO"
+        ],
+        [
+          "PSU",
+          "850W 80+ Gold ATX 3.1"
+        ],
+        [
+          "Case",
+          "High-airflow ARGB case"
+        ]
+      ],
+      "bestFor": [
+        "4K Ultra gaming",
+        "Ray tracing / DLSS 4",
+        "3D rendering / CUDA / AI",
+        "Professional content creation"
+      ],
+      "note": "Untuk workstation/AI sebenar, naik taraf 32–64GB RAM dan SSD 1–2TB."
+    }
+  ]
+}
