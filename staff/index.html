@@ -691,6 +691,51 @@ body[data-dashboard-page="staff"] .card{
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1176">
 <script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
+
+<style id="azobss-staff-compact-1191">
+/* v1191: compact, user-friendly Staff Dashboard */
+body[data-dashboard-page="staff"] .shell{grid-template-columns:205px minmax(0,1fr)}
+body[data-dashboard-page="staff"] .side{padding:14px 12px}
+body[data-dashboard-page="staff"] .brand{font-size:20px;margin-bottom:12px}
+body[data-dashboard-page="staff"] .nav{gap:6px}
+body[data-dashboard-page="staff"] .nav button{padding:10px 12px;border-radius:11px;font-size:14px}
+body[data-dashboard-page="staff"] .main{padding:14px 20px;max-width:1280px;width:100%;box-sizing:border-box}
+body[data-dashboard-page="staff"] .main>h1{font-size:30px;line-height:1.05;margin:0 0 2px}
+body[data-dashboard-page="staff"] .main>p{margin:0 0 12px}
+body[data-dashboard-page="staff"] .section>h2,
+body[data-dashboard-page="staff"] .az-section-head h2{font-size:24px}
+body[data-dashboard-page="staff"] .card{padding:11px 12px;margin:8px 0;border-radius:13px}
+body[data-dashboard-page="staff"] .item{padding:9px 11px;border-radius:11px}
+body[data-dashboard-page="staff"] .list{gap:6px}
+body[data-dashboard-page="staff"] .btn{padding:8px 11px;border-radius:9px;font-size:13px}
+body[data-dashboard-page="staff"] input,
+body[data-dashboard-page="staff"] select,
+body[data-dashboard-page="staff"] textarea{padding:8px 9px;border-radius:9px;font-size:13px}
+.az1191-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1px solid rgba(34,197,94,.38);background:linear-gradient(135deg,rgba(20,83,45,.22),rgba(15,23,42,.96));border-radius:15px;margin:8px 0 10px}
+.az1191-top strong{font-size:17px;color:#bbf7d0}.az1191-top .muted{margin-top:2px}.az1191-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.az1191-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:8px 0}
+.az1191-kpi{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:9px 8px;text-align:center;min-width:0}
+.az1191-kpi.primary{border-color:rgba(34,197,94,.5);background:linear-gradient(180deg,rgba(20,83,45,.18),#0f172a)}
+.az1191-kpi .l{font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az1191-kpi .v{font-size:21px;line-height:1.15;color:#5cff9d;font-weight:1000;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az1191-details{border:1px solid #334155;border-radius:13px;background:#0b1220;margin:8px 0;overflow:hidden}
+.az1191-details>summary{cursor:pointer;list-style:none;padding:10px 12px;font-weight:900;color:#dbeafe;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.az1191-details>summary::-webkit-details-marker{display:none}.az1191-details>summary:after{content:'▾';color:#94a3b8}.az1191-details:not([open])>summary:after{content:'▸'}
+.az1191-details[open]>summary{border-bottom:1px solid #243244}.az1191-details-body{padding:10px 12px}
+.az1191-mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.az1191-mini{background:#020617;border:1px solid #26364b;border-radius:10px;padding:8px;text-align:center}.az1191-mini b{display:block;font-size:11px;color:#94a3b8}.az1191-mini span{display:block;margin-top:3px;font-size:17px;color:#5cff9d;font-weight:900}
+.az1191-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:7px 0}.az1191-toolbar input{flex:1;min-width:190px}.az1191-toolbar select{min-width:145px}
+.az1191-summaryline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:7px 0}.az1191-summaryline .az1191-mini{padding:7px}
+.az1191-compact-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}.az1191-row-title{font-weight:900;color:#e5e7eb}.az1191-row-sub{font-size:12px;color:#94a3b8;margin-top:2px}.az1191-row-metrics{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.az1191-chip{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;border:1px solid #334155;background:#020617;color:#dbeafe;font-size:11px;font-weight:900;white-space:nowrap}.az1191-chip.good{border-color:rgba(34,197,94,.45);color:#bbf7d0}.az1191-chip.warn{border-color:rgba(245,158,11,.5);color:#fde68a}.az1191-chip.info{border-color:rgba(59,130,246,.5);color:#bfdbfe}.az1191-chip.bad{border-color:rgba(239,68,68,.5);color:#fecaca}
+.az1191-refbox{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#0b1220;border:1px solid rgba(34,197,94,.36);border-radius:12px;padding:9px 11px;margin:7px 0}.az1191-refbox code{color:#93c5fd;font-size:12px;word-break:break-all}.az1191-ref-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.az1191-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.az1191-panel{margin:0}.az1191-panel .toolbar{margin:7px 0}.az1191-panel textarea{min-height:52px}
+.az1191-notice{padding:8px 10px;border-radius:10px;border:1px solid rgba(59,130,246,.32);background:rgba(30,64,175,.1);color:#cbd5e1;font-size:12px;margin:7px 0}
+.az1191-empty{padding:18px;text-align:center;border:1px dashed #334155;border-radius:12px;color:#94a3b8}.az1191-empty b{color:#bbf7d0}
+#salesList,#shareComList,#payoutList,#payoutRequestList{margin-top:6px}
+#payoutProfileNotice,#payoutRequestNotice{font-size:12px;line-height:1.3}
+@media(max-width:1100px){.az1191-kpis{grid-template-columns:repeat(3,1fr)}.az1191-summaryline{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){body[data-dashboard-page="staff"] .shell{grid-template-columns:1fr}body[data-dashboard-page="staff"] .main{padding:12px}.az1191-top{align-items:flex-start;flex-direction:column}.az1191-actions{justify-content:flex-start}.az1191-kpis{grid-template-columns:repeat(2,1fr)}.az1191-mini-grid{grid-template-columns:repeat(2,1fr)}.az1191-two{grid-template-columns:1fr}.az1191-compact-row{grid-template-columns:1fr}.az1191-row-metrics{justify-content:flex-start}.az1191-refbox{grid-template-columns:1fr}.az1191-ref-actions{justify-content:flex-start}}
+</style>
+
 </head>
 <body data-dashboard-page="staff">
 <!-- AZOBSS_REAL_MARKET_STICKYBAR_START -->
@@ -751,50 +796,59 @@ body[data-dashboard-page="staff"] .card{
 <main class="main">
 <h1 id="staffDashboardTitle">Staff Dashboard</h1><p class="muted" id="staffDashboardSubtitle">Ringkasan jualan dan komisen untuk akaun staff/semi-admin anda sahaja.</p>
 <section id="overview" class="section active">
-<div class="az-staff-hero">
-  <div class="az-small" id="staffDashboardAreaLabel">AZOBSS Staff Area</div>
-  <h2 id="staffDashboardHeroTitle">Dashboard ringkas untuk staff</h2>
-  <p id="staffDashboardHeroText">Di sini anda boleh semak produk sendiri, jualan yang berkaitan dengan akaun anda, komisen share link dan status payout.</p>
-  <div class="az-quick-actions">
-    <button type="button" data-tab-jump="sales">💳 Lihat Sales</button>
-    <button type="button" data-tab-jump="share">🔗 Share Link</button>
-    <button type="button" data-tab-jump="payout">💸 Payout</button>
+<div class="az1191-top">
+  <div><strong id="staffDashboardHeroTitle">Dashboard Staff</strong><div class="muted"><span id="staffAccountStatus">Checking...</span> • Data akaun anda sahaja</div></div>
+  <div class="az1191-actions"><button class="btn" type="button" id="refreshOverview">↻ Refresh</button><button class="btn" type="button" data-tab-jump="sales">💳 Jualan</button><button class="btn" type="button" data-tab-jump="share">🔗 Share Link</button><button class="btn green" type="button" data-tab-jump="payout">💸 Payout</button></div>
+</div>
+<div class="az1191-kpis">
+  <div class="az1191-kpi"><div class="l">Jualan Unik</div><div id="statSales" class="v">0</div></div>
+  <div class="az1191-kpi"><div class="l">Nilai Jualan</div><div id="statSalesAmount" class="v">RM0.00</div></div>
+  <div class="az1191-kpi primary"><div class="l">Komisen Saya</div><div id="statCom" class="v">RM0.00</div></div>
+  <div class="az1191-kpi primary"><div class="l">Sedia Dibayar</div><div id="statApprovedCom" class="v">RM0.00</div></div>
+  <div class="az1191-kpi"><div class="l">Pending</div><div id="statComPending" class="v">RM0.00</div></div>
+  <div class="az1191-kpi"><div class="l">Sudah Dibayar</div><div id="statComPaid" class="v">RM0.00</div></div>
+</div>
+<div id="staffOverviewNote" class="az1191-notice">Memuatkan ringkasan...</div>
+<details class="az1191-details">
+  <summary>📊 Butiran lanjut <span class="muted">Produk, referral & pecahan komisen</span></summary>
+  <div class="az1191-details-body">
+    <div class="az1191-mini-grid">
+      <div class="az1191-mini"><b>Software Saya</b><span id="statSw">0</span></div>
+      <div class="az1191-mini"><b>CAD Saya</b><span id="statCad">0</span></div>
+      <div class="az1191-mini"><b>Share Link</b><span id="statShareCom">RM0.00</span></div>
+      <div class="az1191-mini"><b>Rekod Layak</b><span id="statEligibleRecords">0</span></div>
+      <div class="az1191-mini"><b>AZOBSS Share</b><span id="statPlatformShare">RM0.00</span></div>
+      <div class="az1191-mini"><b>Owner Share</b><span id="statOwnerShare">RM0.00</span></div>
+    </div>
   </div>
-</div>
-<div class="az-status-strip">
-  <div class="az-status-card"><b>Akaun</b><span id="staffAccountStatus">Checking...</span></div>
-  <div class="az-status-card"><b>Data dipapar</b><span>Milik anda sahaja</span></div>
-</div>
-<div id="staffOverviewNote" class="card az-zero-note"><b>ℹ️ Nota</b><div class="muted">Semua angka di bawah akan jadi RM0.00 jika tiada jualan Software/CAD atau share link yang sah untuk akaun ini.</div></div>
-<div class="az-friendly-grid">
-  <div class="az-stat-card"><div class="az-stat-label">💻 Software Saya</div><div id="statSw" class="az-stat-value">0</div><div class="az-stat-help">Produk software yang dikaitkan dengan akaun ini.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">📐 CAD Saya</div><div id="statCad" class="az-stat-value">0</div><div class="az-stat-help">CAD tools/LISP/VLX milik akaun ini.</div></div>
-  <div class="az-stat-card primary"><div class="az-stat-label">💳 Sales Sah</div><div id="statSales" class="az-stat-value">0</div><div class="az-stat-help">Jualan produk yang layak untuk akaun ini.</div></div>
-</div>
-<div class="az-friendly-grid compact">
-  <div class="az-stat-card primary"><div class="az-stat-label">💰 Komisen Saya</div><div id="statCom" class="az-stat-value">RM0.00</div><div class="az-stat-help" id="statComHelp">Jumlah komisen yang layak untuk akaun ini.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">🔗 Share Link</div><div id="statShareCom" class="az-stat-value">RM0.00</div><div class="az-stat-help">Komisen daripada link referral/share.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">⏳ Pending</div><div id="statComPending" class="az-stat-value">RM0.00</div><div class="az-stat-help">Belum dibayar / belum selesai payout.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">✅ Paid</div><div id="statComPaid" class="az-stat-value">RM0.00</div><div class="az-stat-help">Komisen yang sudah dibayar.</div></div>
-</div>
-<div class="az-friendly-grid compact">
-  <div class="az-stat-card"><div class="az-stat-label">🏢 AZOBSS Share</div><div id="statPlatformShare" class="az-stat-value">RM0.00</div><div class="az-stat-help">Bahagian platform untuk jualan yang layak.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">👤 Owner Share</div><div id="statOwnerShare" class="az-stat-value">RM0.00</div><div class="az-stat-help">Bahagian owner produk jika berkaitan.</div></div>
-  <div class="az-stat-card"><div class="az-stat-label">🧾 Rekod Layak</div><div id="statEligibleRecords" class="az-stat-value">0</div><div class="az-stat-help">Rekod komisen yang benar-benar dikira.</div></div>
-</div>
-<div class="card az-safe-note" id="azStaffCommissionPolicyBox">
-  <h2>📢 Cara kiraan komisen</h2>
-  <div class="az-info-list" id="azStaffCommissionPolicyLines">
-    <div>Checking commission policy...</div>
-  </div>
-</div>
-<details class="card"><summary style="cursor:pointer;font-weight:900">🔐 Lihat akses akaun / permission</summary><pre id="permBox" class="az-readable-json"></pre></details>
+</details>
+<details class="az1191-details" id="azStaffCommissionPolicyBox"><summary>📢 Cara kiraan komisen <span class="muted">Lihat polisi</span></summary><div class="az1191-details-body"><div class="az-info-list" id="azStaffCommissionPolicyLines"><div>Checking commission policy...</div></div></div></details>
+<details class="az1191-details"><summary>🔐 Akses akaun <span class="muted">Permission & diagnostic</span></summary><div class="az1191-details-body"><pre id="permBox" class="az-readable-json"></pre></div></details>
 </section>
 <section id="software" class="section"><h2>💻 Software Manager</h2><div class="card"><div class="toolbar"><input id="swTitle" placeholder="Software title"><input id="swPrice" type="number" placeholder="RM"><select id="swType"><option>free</option><option>premium</option><option>affiliate</option></select></div><input id="swUrl" placeholder="URL" style="width:100%"><textarea id="swDesc" placeholder="Description"></textarea><button class="btn green" id="submitSw">Submit Software</button></div><div class="card"><h2>Latest</h2><div id="swList" class="list"></div></div></section>
 <section id="cad" class="section"><h2>📐 CAD Tools Manager</h2><div class="card"><div class="toolbar"><input id="cadTitle" placeholder="CAD/LISP title"><input id="cadPrice" type="number" placeholder="RM"><select id="cadType"><option>lisp</option><option>vlx</option><option>plugin</option><option>template</option></select></div><input id="cadUrl" placeholder="URL" style="width:100%"><textarea id="cadDesc" placeholder="Description"></textarea><button class="btn green" id="submitCad">Submit CAD</button></div><div class="card"><h2>Latest</h2><div id="cadList" class="list"></div></div></section>
-<section id="sales" class="section"><div class="az-section-head"><div><h2>💳 Sales View</h2><div class="muted">Jualan yang layak untuk komisen staff akaun ini.</div></div><button class="btn green" id="refreshSales">Refresh Sales</button></div><div id="salesList" class="list"></div></section>
-<section id="share" class="section"><h2>🔗 Share Link Commission</h2><div class="card az-share-note"><b>Share link punya paparan</b><div class="muted">Senarai ini baca rekod <b>commissionRecords</b> jenis share/referral. Ia termasuk share produk admin/AZOBSS 20%, share produk staff lain 10%, dan owner split jika berkaitan.</div><div class="muted">Buka produk berbayar → tekan button Share for Lucky Draw → link pendek mengandungi <code>?p=ID&amp;r=username</code>.</div></div><button class="btn" id="refreshShareCom">Refresh Share Link Records</button><div id="shareComList" class="list"></div></section>
-<section id="payout" class="section"><h2>💸 My Payout</h2><div class="card az-share-note"><b>Commission payout view</b><div class="muted">This page shows your own commission records by payout status. Admin can still manage payout approval from Admin Dashboard.</div><div class="muted">New: save payout details and submit a payout request after commission is approved.</div></div><div class="card"><div class="az-payout-tools"><select id="payoutFilter"><option value="all">All payout status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="btn" id="refreshPayout">Refresh Payout</button><button class="btn green" id="exportPayoutCsv">Export My CSV</button></div><div id="payoutSummary" class="az-payout-summary"></div></div><div class="card"><h2>🏦 Payout Profile</h2><div class="muted">Save your payout details once. Account number is only shown as masked after save.</div><div class="toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><input id="payoutBankName" placeholder="Bank name / wallet name" style="flex:1;min-width:180px"><input id="payoutAccountName" placeholder="Account holder name" style="flex:1;min-width:180px"></div><div class="toolbar"><input id="payoutAccountNo" placeholder="Account no / DuitNow ID / wallet phone" style="flex:1;min-width:220px"><input id="payoutPhone" placeholder="Phone optional" style="flex:1;min-width:160px"><input id="payoutEmail" placeholder="Payout email optional" style="flex:1;min-width:180px"></div><textarea id="payoutProfileNote" placeholder="Payout note optional" style="width:100%;min-height:70px"></textarea><div class="toolbar"><button class="btn green" id="savePayoutProfile" type="button">Save Payout Profile</button><button class="btn" id="loadPayoutProfile" type="button">Reload Profile</button><span id="payoutProfileNotice" class="muted"></span></div></div><div class="card"><h2>📨 Request Payout</h2><div class="muted">You can request payout for approved unpaid commission. Admin will review and mark it as paid after transfer.</div><div class="toolbar"><input id="payoutRequestAmount" type="number" min="0" step="0.01" placeholder="Amount RM, leave blank for all approved" style="min-width:230px"><input id="payoutRequestNote" placeholder="Request note optional" style="flex:1;min-width:220px"><button class="btn green" id="submitPayoutRequest" type="button">Submit Payout Request</button><button class="btn" id="refreshPayoutRequests" type="button">Refresh Requests</button></div><div id="payoutRequestNotice" class="muted"></div><div id="payoutRequestList" class="list"></div></div><div id="payoutList" class="list"></div></section>
+<section id="sales" class="section">
+<div class="az-section-head"><div><h2>💳 Sales View</h2><div class="muted">Jualan produk sendiri yang layak kepada akaun ini.</div></div><button class="btn green" id="refreshSales">↻ Refresh</button></div>
+<div id="salesSummary" class="az1191-summaryline"></div>
+<div class="az1191-toolbar"><input id="salesSearch" placeholder="Cari produk / Order ID..."><select id="salesPayoutFilter"><option value="all">Semua status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><select id="salesTypeFilter"><option value="all">Semua jenis</option><option value="direct">Direct Sale</option><option value="split">Split Sale</option><option value="legacy">Legacy</option></select></div>
+<div id="salesList" class="list"></div></section>
+<section id="share" class="section">
+<div class="az-section-head"><div><h2>🔗 Share Link</h2><div class="muted">Link referral Staff/Manager dan komisen share yang sah.</div></div><button class="btn" id="refreshShareCom">↻ Refresh</button></div>
+<div class="az1191-refbox"><div><b>Link Software Tools anda</b><br><code id="softwareReferralLink">Memuatkan...</code></div><div class="az1191-ref-actions"><button class="btn" type="button" id="copySoftwareReferral">Copy</button><button class="btn green" type="button" id="shareSoftwareReferral">Share</button></div></div>
+<div class="az1191-refbox"><div><b>Link CAD Tools anda</b><br><code id="cadReferralLink">Memuatkan...</code></div><div class="az1191-ref-actions"><button class="btn" type="button" id="copyCadReferral">Copy</button></div></div>
+<div id="shareSummary" class="az1191-summaryline"></div>
+<div class="az1191-toolbar"><input id="shareSearch" placeholder="Cari produk / Order ID..."><select id="shareStatusFilter"><option value="all">Semua status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div>
+<div id="shareComList" class="list"></div></section>
+<section id="payout" class="section">
+<div class="az-section-head"><div><h2>💸 My Payout</h2><div class="muted">Semak baki, simpan kaedah bayaran dan hantar permintaan payout.</div></div><div class="az1191-actions"><button class="btn" id="refreshPayout">↻ Refresh</button><button class="btn" id="exportPayoutCsv">CSV</button></div></div>
+<div id="payoutSummary" class="az1191-kpis"></div>
+<div class="az1191-two">
+ <details class="az1191-details az1191-panel" open><summary>📨 Request Payout <span id="payoutAvailableInline" class="az1191-chip good">RM0.00 tersedia</span></summary><div class="az1191-details-body"><div class="muted">Hanya komisen berstatus Approved boleh diminta.</div><div class="az1191-toolbar"><input id="payoutRequestAmount" type="number" min="0" step="0.01" placeholder="Jumlah RM (kosong = semua)"><input id="payoutRequestNote" placeholder="Nota pilihan"><button class="btn green" id="submitPayoutRequest" type="button">Request</button></div><div id="payoutRequestNotice" class="muted"></div></div></details>
+ <details class="az1191-details az1191-panel"><summary>🏦 Payout Profile <span id="payoutProfileSummary" class="muted">Belum disemak</span></summary><div class="az1191-details-body"><div class="az1191-toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><input id="payoutBankName" placeholder="Bank / wallet"><input id="payoutAccountName" placeholder="Nama pemilik akaun"></div><div class="az1191-toolbar"><input id="payoutAccountNo" placeholder="No akaun / DuitNow ID"><input id="payoutPhone" placeholder="Telefon (optional)"><input id="payoutEmail" placeholder="Email payout (optional)"></div><textarea id="payoutProfileNote" placeholder="Nota payout (optional)"></textarea><div class="az1191-toolbar"><button class="btn green" id="savePayoutProfile" type="button">Simpan</button><button class="btn" id="loadPayoutProfile" type="button">Reload</button><span id="payoutProfileNotice" class="muted"></span></div></div></details>
+</div>
+<details class="az1191-details" open><summary>🧾 Permintaan Payout <span id="payoutRequestCount" class="muted">0 rekod</span></summary><div class="az1191-details-body"><div class="az1191-toolbar"><button class="btn" id="refreshPayoutRequests" type="button">↻ Refresh Requests</button></div><div id="payoutRequestList" class="list"></div></div></details>
+<details class="az1191-details"><summary>📚 Rekod Komisen <span class="muted">Filter & sejarah penuh</span></summary><div class="az1191-details-body"><div class="az1191-toolbar"><select id="payoutFilter"><option value="all">Semua status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div><div id="payoutList" class="list"></div></div></details>
+</section>
 </main></div>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
@@ -1199,29 +1253,23 @@ async function overview(){
  const sw=await queryOwnedCollectionRows('staffSoftwareSubmissions',{adminLimit:100,staffLimit:50});
  const cad=await queryOwnedCollectionRows('staffCADSubmissions',{adminLimit:100,staffLimit:50});
  const comRows=await getCommissionRecords();
- let swCount=0,cadCount=0,salesCount=0,totalSales=0,totalCom=0,pendingCom=0,paidCom=0,platformShare=0,ownerShare=0,shareCom=0,eligibleRecords=0,excludedPabm=0;
+ let swCount=0,cadCount=0,salesCount=0,totalSales=0,totalCom=0,pendingCom=0,approvedCom=0,paidCom=0,platformShare=0,ownerShare=0,shareCom=0,eligibleRecords=0,excludedPabm=0;
  sw.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) swCount++;});
  cad.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) cadCount++;});
-
- // Commission records are the authoritative Staff/Manager sale source because the backend
- // has already verified ownership/referral and the payment callback. Count each order once.
  const ownerSaleRows=uniqueOwnerSaleCommissionRows(comRows);
  ownerSaleRows.forEach(x=>{ salesCount++; totalSales+=saleAmountOf(x); });
-
  comRows.forEach(x=>{
    if(isPaBmSaleRecord(x)){ excludedPabm++; return; }
    if(x?.voided===true || !isValidStaffCommissionRecord(x)) return;
-   const amt=commissionAmountOf(x); eligibleRecords++;
-   totalCom+=amt;
-   platformShare+=azobssShareOf(x);
-   ownerShare+=ownerShareOf(x);
-   if(isShareCommissionRecord(x)) shareCom+=amt;
    const payout=String(x.payoutStatus||x.status||'pending').toLowerCase();
+   if(payout==='rejected'||payout==='void') return;
+   const amt=commissionAmountOf(x); eligibleRecords++; totalCom+=amt;
+   platformShare+=azobssShareOf(x); ownerShare+=ownerShareOf(x);
+   if(isShareCommissionRecord(x)) shareCom+=amt;
    if(payout==='paid') paidCom+=amt;
-   else if(payout!=='rejected' && payout!=='void') pendingCom+=amt;
+   else if(payout==='approved') approvedCom+=amt;
+   else pendingCom+=amt;
  });
-
- // Legacy fallback for old owner sales that existed before commissionRecords were generated.
  if(!salesCount && can('canViewPayments')){
    const legacySalesRows=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
    legacySalesRows.forEach(x=>{
@@ -1232,30 +1280,35 @@ async function overview(){
      if(!eligibleRecords){ ownerShare+=amt*ownerRate/100; platformShare+=amt*platformRate/100; }
    });
  }
- if(!totalCom && ownerShare && salesCount) { totalCom=ownerShare; pendingCom=ownerShare; }
- // If there is no valid Software/CAD sale and no valid share/referral record, keep the staff commission clean at zero.
- if(!salesCount && !eligibleRecords){ totalCom=0; pendingCom=0; paidCom=0; platformShare=0; ownerShare=0; shareCom=0; }
- $('#statSw').textContent=swCount; $('#statCad').textContent=cadCount; $('#statSales').textContent=salesCount; $('#statCom').textContent='RM'+totalCom.toFixed(2);
- if($('#statComPending')) $('#statComPending').textContent='RM'+pendingCom.toFixed(2);
- if($('#statComPaid')) $('#statComPaid').textContent='RM'+paidCom.toFixed(2);
- if($('#statPlatformShare')) $('#statPlatformShare').textContent='RM'+platformShare.toFixed(2);
- if($('#statOwnerShare')) $('#statOwnerShare').textContent='RM'+ownerShare.toFixed(2);
- if($('#statShareCom')) $('#statShareCom').textContent='RM'+shareCom.toFixed(2);
- if($('#statEligibleRecords')) $('#statEligibleRecords').textContent=eligibleRecords;
- if($('#statExcludedPabm')) $('#statExcludedPabm').textContent=excludedPabm;
+ if(!totalCom && ownerShare && salesCount){ totalCom=ownerShare; pendingCom=ownerShare; }
+ if(!salesCount && !eligibleRecords){ totalCom=0; pendingCom=0; approvedCom=0; paidCom=0; platformShare=0; ownerShare=0; shareCom=0; }
+ const set=(id,v)=>{const e=$(id); if(e)e.textContent=v;};
+ set('#statSw',swCount); set('#statCad',cadCount); set('#statSales',salesCount); set('#statSalesAmount','RM'+totalSales.toFixed(2)); set('#statCom','RM'+totalCom.toFixed(2));
+ set('#statComPending','RM'+pendingCom.toFixed(2)); set('#statApprovedCom','RM'+approvedCom.toFixed(2)); set('#statComPaid','RM'+paidCom.toFixed(2)); set('#statPlatformShare','RM'+platformShare.toFixed(2)); set('#statOwnerShare','RM'+ownerShare.toFixed(2)); set('#statShareCom','RM'+shareCom.toFixed(2)); set('#statEligibleRecords',eligibleRecords); set('#statExcludedPabm',excludedPabm);
  azRenderStaffRoleUI();
- if($('#staffAccountStatus')) $('#staffAccountStatus').textContent=azStaffRankLabel(profile);
+ if($('#staffAccountStatus')) $('#staffAccountStatus').textContent=azStaffAccountDisplayName(profile)+' ('+azStaffRankLabel(profile)+')';
  if($('#staffOverviewNote')){
-   const clean=(!salesCount&&!eligibleRecords);
-   $('#staffOverviewNote').innerHTML= clean
-    ? '<b>✅ Tiada komisen staff yang layak setakat ini.</b><div class="muted">Komisen akan muncul selepas jualan atau share link yang layak direkodkan.</div>'
-    : `<b>✅ ${eligibleRecords} rekod komisen layak dikira.</b><div class="muted">Paparan ini hanya menunjukkan rekod yang layak untuk akaun staff ini.</div>`;
+   $('#staffOverviewNote').innerHTML=(!salesCount&&!eligibleRecords)
+    ? '<b>✅ Belum ada komisen.</b> Jualan/referral yang sah akan muncul automatik di sini.'
+    : `<b>✅ ${eligibleRecords} rekod layak</b> • ${salesCount} jualan unik • RM${approvedCom.toFixed(2)} sedia dibayar.`;
  }
  $('#permBox').textContent=JSON.stringify({role:profile?.role||profileRole(profile),account:azStaffAccountDisplayName(profile),rank:azStaffRankLabel(profile),username:currentOwnerKeys().username,email:currentOwnerKeys().email,permissions:perms,commissionPolicy:isSemiAdminProfile(profile)?'semiAdmin own sale: 90% owner / 10% AZOBSS. semiAdmin product via staff share: owner 90%, sharer 4%, AZOBSS 6%.':'staff own sale: 70% owner / 30% AZOBSS. staff product via staff share: owner 60%, sharer 10%, AZOBSS 30%.'},null,2);
 }
 async function submitSw(){if(!can('canManageSoftware'))return alert('No permission');await addDoc(collection(db,'staffSoftwareSubmissions'),withOwnerPayload({title:$('#swTitle').value,price:Number($('#swPrice').value||0),type:$('#swType').value,url:$('#swUrl').value,description:$('#swDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffSoftwareSubmissions','#swList');overview()}
 async function submitCad(){if(!can('canManageCAD'))return alert('No permission');await addDoc(collection(db,'staffCADSubmissions'),withOwnerPayload({title:$('#cadTitle').value,price:Number($('#cadPrice').value||0),type:$('#cadType').value,url:$('#cadUrl').value,description:$('#cadDesc').value,status:'pending',createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('staffCADSubmissions','#cadList');overview()}
 async function submitCom(){if(!can('canManageCommission'))return alert('No permission');await addDoc(collection(db,'commissionRecords'),withOwnerPayload({username:$('#comUser').value,product:$('#comProduct').value,amount:Number($('#comAmount').value||0),status:$('#comStatus').value,note:$('#comNote').value,createdAt:serverTimestamp(),createdAtMs:Date.now()}));loadList('commissionRecords','#comList');overview()}
+
+
+function az1191Money(v){return 'RM'+(Number(v||0)||0).toFixed(2)}
+function az1191StatusClass(st){st=String(st||'pending').toLowerCase();return st==='paid'?'good':st==='approved'?'info':st==='rejected'||st==='void'?'bad':'warn'}
+function az1191StatusLabel(st){st=String(st||'pending').toLowerCase();return ({pending:'Pending',approved:'Approved',paid:'Paid',rejected:'Rejected',void:'Void',requested:'Requested',reviewing:'Reviewing',cancelled:'Cancelled'}[st]||st)}
+async function az1191Copy(text,label='Link'){
+ try{await navigator.clipboard.writeText(String(text||'')); return true;}catch(_){try{const ta=document.createElement('textarea');ta.value=String(text||'');ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();return true;}catch(__){return false;}}
+}
+function az1191ReferralLinks(){const u=currentOwnerKeys().username||'';return {software:location.origin+'/Software-Tools/?ref='+encodeURIComponent(u),cad:location.origin+'/CAD-Tools-&-Resources/?ref='+encodeURIComponent(u)};}
+function az1191RenderReferralLinks(){const l=az1191ReferralLinks();if($('#softwareReferralLink'))$('#softwareReferralLink').textContent=l.software;if($('#cadReferralLink'))$('#cadReferralLink').textContent=l.cad;}
+let staffSalesRows=[];
+let staffShareRows=[];
 
 function payoutStatusOf(x){return String(x.payoutStatus||x.status||x.paymentStatus||'pending').toLowerCase()||'pending';}
 function visibleCommissionRows(rows){return rows.filter(x=>isValidStaffCommissionRecord(x));}
@@ -1264,6 +1317,7 @@ function downloadTextFile(name,body,type='text/csv;charset=utf-8'){
  const blob=new Blob([body],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
 }
 let lastPayoutRows=[];
+let allPayoutRows=[];
 let payoutConfig={minAmount:0.01,minAmountText:'RM0.01',maxAmount:0,maxAmountText:''};
 function payoutConfigNotice(){
  const bits=[];
@@ -1273,21 +1327,25 @@ function payoutConfigNotice(){
 }
 async function payoutView(){
  const rows=visibleCommissionRows(await getCommissionRecords());
+ allPayoutRows=rows;
  const filter=String($('#payoutFilter')?.value||'all').toLowerCase();
  const sum={pending:0,approved:0,paid:0,rejected:0,total:0};
- rows.forEach(x=>{const st=payoutStatusOf(x); const amt=commissionAmountOf(x); sum.total+=amt; if(sum[st]!==undefined)sum[st]+=amt; else sum.pending+=amt;});
- if($('#payoutSummary')) $('#payoutSummary').innerHTML=['pending','approved','paid','rejected'].map(k=>`<div class="mini"><b>${k.toUpperCase()}</b><span>RM${sum[k].toFixed(2)}</span></div>`).join('') + (payoutConfigNotice()?`<div class="mini"><b>RULE</b><span>${esc(payoutConfigNotice())}</span></div>`:'');
+ rows.forEach(x=>{const st=payoutStatusOf(x); const amt=commissionAmountOf(x); if(st!=='rejected'&&st!=='void')sum.total+=amt; if(sum[st]!==undefined)sum[st]+=amt; else sum.pending+=amt;});
+ if($('#payoutSummary')) $('#payoutSummary').innerHTML=[
+  ['Jumlah',sum.total,''],['Sedia Dibayar',sum.approved,'primary'],['Pending',sum.pending,''],['Paid',sum.paid,''],['Rejected',sum.rejected,'']
+ ].map(([l,v,c])=>`<div class="az1191-kpi ${c}"><div class="l">${l}</div><div class="v">${az1191Money(v)}</div></div>`).join('') + (payoutConfigNotice()?`<div class="az1191-kpi"><div class="l">Rule</div><div class="v" style="font-size:13px">${esc(payoutConfigNotice())}</div></div>`:'');
+ if($('#payoutAvailableInline')) $('#payoutAvailableInline').textContent=az1191Money(sum.approved)+' tersedia';
  const filtered=rows.filter(x=>filter==='all'||payoutStatusOf(x)===filter);
  lastPayoutRows=filtered;
  const html=filtered.map(x=>{
    const product=esc(x.productName||x.product||x.title||x.productId||'Product');
    const order=esc(x.orderId||x.billCode||x.docId||'');
-   const st=payoutStatusOf(x); const sale=saleAmountOf(x); const com=commissionAmountOf(x); const type=esc(commissionKind(x)||'commission');
-   const ref=esc(x.payoutReference||''); const method=esc(x.payoutMethod||''); const note=esc(x.payoutNote||x.note||'');
-   return `<div class="item"><b>💸 ${product}</b><div class="muted"><span class="az-pill ${esc(st)}">${esc(st.toUpperCase())}</span><span class="az-share-badge">Commission RM${com.toFixed(2)}</span><span class="az-share-badge">Sale RM${sale.toFixed(2)}</span></div><div class="muted">${type} • ${order}${method?' • '+method:''}${ref?' • Ref: '+ref:''}</div>${note?`<div class="muted">${note}</div>`:''}</div>`;
+   const st=payoutStatusOf(x), sale=saleAmountOf(x), com=commissionAmountOf(x), type=esc(commissionKind(x)||'commission');
+   const ref=esc(x.payoutReference||''), method=esc(x.payoutMethod||'');
+   return `<div class="item az1191-compact-row"><div><div class="az1191-row-title">${product}</div><div class="az1191-row-sub">${type} • Order ${order}${method?' • '+method:''}${ref?' • Ref '+ref:''}</div></div><div class="az1191-row-metrics"><span class="az1191-chip good">${az1191Money(com)}</span><span class="az1191-chip">Sale ${az1191Money(sale)}</span><span class="az1191-chip ${az1191StatusClass(st)}">${esc(az1191StatusLabel(st))}</span></div></div>`;
  }).join('');
- const notice=staffApiNotice?`<div class="item"><b>⚠️ Backend API notice</b><div class="muted">${esc(staffApiNotice)}</div></div>`:'';
- if($('#payoutList')) $('#payoutList').innerHTML=html || notice || '<div class="item">No payout records yet.</div>';
+ const notice=staffApiNotice?`<div class="az1191-notice">ℹ️ ${esc(staffApiNotice)}</div>`:'';
+ if($('#payoutList')) $('#payoutList').innerHTML=html || notice || '<div class="az1191-empty"><b>Belum ada rekod payout.</b><br>Rekod komisen akan muncul selepas jualan/referral yang sah.</div>';
 }
 function exportPayoutCsv(){
  const rows=lastPayoutRows||[];
@@ -1309,8 +1367,8 @@ async function loadPayoutProfile(){
    if($('#payoutPhone')) $('#payoutPhone').value='';
    if($('#payoutEmail')) $('#payoutEmail').value=p.payoutEmail&&p.payoutEmail.includes('*')?'':(p.payoutEmail||'');
    if($('#payoutProfileNote')) $('#payoutProfileNote').value=p.note||'';
-   if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=p.updatedAt?('Profile saved: '+new Date(p.updatedAt).toLocaleString()):'No payout profile saved yet.';
- }catch(e){ if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=e?.message||'Failed to load payout profile.'; }
+   if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=p.updatedAt?('Disimpan: '+new Date(p.updatedAt).toLocaleString()):'Belum ada payout profile.'; if($('#payoutProfileSummary')) $('#payoutProfileSummary').textContent=p.updatedAt?((p.bankName||p.ewalletName||p.payoutMethod||'Payout')+(p.accountNoMasked?' • '+p.accountNoMasked:'')):'Belum disimpan';
+ }catch(e){ if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=e?.message||'Gagal load payout profile.'; if($('#payoutProfileSummary')) $('#payoutProfileSummary').textContent='Gagal dimuat'; }
 }
 async function savePayoutProfile(){
  try{
@@ -1327,12 +1385,12 @@ async function savePayoutProfile(){
      note:$('#payoutProfileNote')?.value.trim()||''
    };
    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-   if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent='Payout profile saved.';
+   if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent='Payout profile disimpan.'; if($('#payoutProfileSummary')) $('#payoutProfileSummary').textContent=(j.profile?.bankName||j.profile?.ewalletName||j.profile?.payoutMethod||'Payout')+(j.profile?.accountNoMasked?' • '+j.profile.accountNoMasked:'');
    if($('#payoutAccountNo')) { $('#payoutAccountNo').value=''; $('#payoutAccountNo').placeholder=j.profile?.accountNoMasked?('Saved: '+j.profile.accountNoMasked+' — enter again to update'):'Saved.'; }
  }catch(e){ if($('#payoutProfileNotice')) $('#payoutProfileNotice').textContent=e?.message||'Failed to save payout profile.'; }
 }
 function approvedPayoutAmount(){
- const rows=(lastPayoutRows&&lastPayoutRows.length?lastPayoutRows:[]).filter(x=>payoutStatusOf(x)==='approved' && (!x.payoutRequestId || ['rejected','cancelled'].includes(String(x.payoutRequestStatus||'').toLowerCase())));
+ const rows=(allPayoutRows&&allPayoutRows.length?allPayoutRows:[]).filter(x=>payoutStatusOf(x)==='approved' && (!x.payoutRequestId || ['rejected','cancelled'].includes(String(x.payoutRequestStatus||'').toLowerCase())));
  return rows.reduce((sum,x)=>sum+commissionAmountOf(x),0);
 }
 async function submitPayoutRequest(){
@@ -1361,6 +1419,7 @@ async function loadPayoutRequests(){
    payoutConfig=j.config||payoutConfig||{};
    if($('#payoutRequestNotice') && payoutConfigNotice() && !$('#payoutRequestNotice').textContent) $('#payoutRequestNotice').textContent=payoutConfigNotice();
    const rows=Array.isArray(j.requests)?j.requests:[];
+   if($('#payoutRequestCount')) $('#payoutRequestCount').textContent=rows.length+' rekod';
    if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>{
      const st=String(r.status||'requested').toLowerCase();
      const canCancel=['requested','reviewing'].includes(st);
@@ -1381,66 +1440,53 @@ async function cancelPayoutRequest(requestId){
 }
 async function payoutTools(){ await Promise.all([payoutView(), loadPayoutProfile(), loadPayoutRequests()]); }
 
-async function shareCom(){
- const rows=await getCommissionRecords();
- const visible=rows.filter(x=>isShareCommissionRecord(x)&&isValidStaffCommissionRecord(x));
+function renderStaffShareRows(){
+ const q=String($('#shareSearch')?.value||'').trim().toLowerCase(), filter=String($('#shareStatusFilter')?.value||'all').toLowerCase();
+ const visible=staffShareRows.filter(x=>{const st=payoutStatusOf(x);const hay=[x.productName,x.product,x.title,x.productId,x.orderId,x.billCode].join(' ').toLowerCase();return (!q||hay.includes(q))&&(filter==='all'||st===filter);});
  const html=visible.map(x=>{
-   const sale=saleAmountOf(x), com=commissionAmountOf(x), rate=Number(x.commissionRate||x.rate||0)||0;
-   const type=commissionKind(x)||'share_referral';
-   const ref=esc(x.username||x.shareReferral?.username||x.shareReferral?.ref||'-');
-   const product=esc(x.productName||x.product||x.title||x.productId||'Product');
-   const order=esc(x.orderId||x.billCode||x.docId||'');
-   const st=esc(x.payoutStatus||x.status||x.paymentStatus||'pending');
-   const source=esc(x._source||'firestore');
-   const refUrl=(x.productId&& (x.username||x.shareReferral?.username||x.shareReferral?.ref)) ? (location.origin+(String(x.sourcePage||'Software').toLowerCase().includes('cad')?'/CAD-Tools-&-Resources/':'/Software-Tools/')+'?p='+encodeURIComponent(x.productId)+'&r='+encodeURIComponent(x.username||x.shareReferral?.username||x.shareReferral?.ref)) : '';
-   return `<div class="item"><b>🔗 ${product}</b><div class="muted"><span class="az-share-badge green">Sharer: ${ref}</span><span class="az-share-badge gold">Rate ${rate}%</span><span class="az-share-badge">Commission RM${com.toFixed(2)}</span><span class="az-share-badge">Sale RM${sale.toFixed(2)}</span><span class="az-share-badge">${st}</span></div><div class="muted">${esc(type)} • ${order} • ${source}</div>${refUrl?`<div class="muted az-mini-link">${esc(refUrl)}</div>`:''}<div class="muted">${esc(x.note||'')}</div></div>`;
+   const sale=saleAmountOf(x), com=commissionAmountOf(x), rate=Number(x.commissionRate||x.rate||0)||0, st=payoutStatusOf(x);
+   const ref=x.username||x.shareReferral?.username||x.shareReferral?.ref||currentOwnerKeys().username||'-';
+   const product=esc(x.productName||x.product||x.title||x.productId||'Product'), order=esc(x.orderId||x.billCode||x.docId||'');
+   const refUrl=(x.productId&&ref) ? (location.origin+(String(x.sourcePage||'Software').toLowerCase().includes('cad')?'/CAD-Tools-&-Resources/':'/Software-Tools/')+'?p='+encodeURIComponent(x.productId)+'&r='+encodeURIComponent(ref)) : '';
+   return `<div class="item az1191-compact-row"><div><div class="az1191-row-title">🔗 ${product}</div><div class="az1191-row-sub">Order ${order} • ${rate||0}%${refUrl?` • <button type="button" class="btn" style="padding:3px 7px" data-copy-ref-link="${esc(refUrl)}">Copy link</button>`:''}</div></div><div class="az1191-row-metrics"><span class="az1191-chip good">${az1191Money(com)}</span><span class="az1191-chip">Sale ${az1191Money(sale)}</span><span class="az1191-chip ${az1191StatusClass(st)}">${esc(az1191StatusLabel(st))}</span></div></div>`;
  }).join('');
- const notice=staffApiNotice?`<div class="item"><b>⚠️ Backend API notice</b><div class="muted">${esc(staffApiNotice)}</div></div>`:'';
- $('#shareComList').innerHTML=html || notice || '<div class="item">No share link commission records yet.<div class="muted">If frontend Firestore read is blocked, this dashboard will try backend API with your Firebase login token. Make sure payment callback is paid and commissionRecords exists.</div></div>';
+ if($('#shareComList')) $('#shareComList').innerHTML=html||'<div class="az1191-empty"><b>Tiada rekod share untuk filter ini.</b></div>';
+}
+async function shareCom(){
+ az1191RenderReferralLinks();
+ const rows=await getCommissionRecords();
+ staffShareRows=rows.filter(x=>isShareCommissionRecord(x)&&isValidStaffCommissionRecord(x)&&x?.voided!==true);
+ let total=0,pending=0,approved=0,paid=0,sales=0; const seen=new Set();
+ staffShareRows.forEach((x,i)=>{const st=payoutStatusOf(x),amt=commissionAmountOf(x); if(st!=='rejected'&&st!=='void')total+=amt;if(st==='paid')paid+=amt;else if(st==='approved')approved+=amt;else if(st!=='rejected'&&st!=='void')pending+=amt;const k=staffSaleUniqueKey(x,i);if(!seen.has(k)){seen.add(k);sales++;}});
+ if($('#shareSummary')) $('#shareSummary').innerHTML=[['Sales Referral',sales],['Komisen',az1191Money(total)],['Sedia Dibayar',az1191Money(approved)],['Paid',az1191Money(paid)]].map(([l,v])=>`<div class="az1191-mini"><b>${l}</b><span>${v}</span></div>`).join('');
+ renderStaffShareRows();
+}
+function renderStaffSales(){
+ const q=String($('#salesSearch')?.value||'').trim().toLowerCase(), pf=String($('#salesPayoutFilter')?.value||'all').toLowerCase(), tf=String($('#salesTypeFilter')?.value||'all').toLowerCase();
+ const rows=staffSalesRows.filter(x=>{const hay=[x.title,x.source,x.order,x.type].join(' ').toLowerCase();return (!q||hay.includes(q))&&(pf==='all'||x.payout===pf)&&(tf==='all'||x.typeKey===tf);});
+ const html=rows.map(x=>`<div class="item az1191-compact-row"><div><div class="az1191-row-title">${esc(x.title)}</div><div class="az1191-row-sub">${esc(x.source)} • ${esc(x.type)} • Order ${esc(x.order)}</div></div><div class="az1191-row-metrics"><span class="az1191-chip">Sale ${az1191Money(x.sale)}</span><span class="az1191-chip good">Komisen ${az1191Money(x.commission)}</span><span class="az1191-chip info">${x.rate?Number(x.rate).toFixed(0)+'%':'-'}</span><span class="az1191-chip ${az1191StatusClass(x.payout)}">${esc(az1191StatusLabel(x.payout))}</span></div></div>`).join('');
+ if($('#salesList')) $('#salesList').innerHTML=html||'<div class="az1191-empty"><b>Tiada jualan untuk filter ini.</b><br>Cuba tukar filter atau tekan Refresh.</div>';
 }
 async function sales(){
- const box=$('#salesList');
- if(!box) return;
- if(!isStaffProfile(profile)){
-   box.innerHTML='<div class="az-staff-empty"><b>Akses Staff/Manager diperlukan.</b><div class="muted">Sales View hanya memaparkan jualan milik akaun yang sedang login.</div></div>';
-   return;
- }
- box.innerHTML='<div class="item"><b>⏳ Memuatkan jualan...</b><div class="muted">Semakan dibuat melalui backend terlindung untuk akaun ini sahaja.</div></div>';
+ const box=$('#salesList'); if(!box)return;
+ if(!isStaffProfile(profile)){box.innerHTML='<div class="az1191-empty"><b>Akses Staff/Manager diperlukan.</b></div>';return;}
+ box.innerHTML='<div class="az1191-notice">⏳ Memuatkan jualan akaun anda...</div>';
  try{
    const records=await getCommissionRecords();
    const saleRows=uniqueOwnerSaleCommissionRows(records);
-   let html=[];
-   saleRows.forEach(x=>{
-     const sale=saleAmountOf(x), commission=commissionAmountOf(x), rate=Number(x.commissionRate||x.rate||0)||0;
-     const title=esc(x.productName||x.product||x.title||x.productId||'Staff product sale');
-     const source=esc(x.sourcePage||x.productType||x.itemCode||'Software/CAD');
-     const payout=esc(x.payoutStatus||x.status||'pending');
-     const order=esc(x.orderId||x.billCode||x.docId||'-');
-     const type=commissionKind(x)==='owner_sale_split'?'Owner Split Sale':'Owner Direct Sale';
-     html.push(`<div class="item az-sale-row"><div><strong>${title}</strong><div class="muted">${source} • ${esc(type)} • Order ${order}</div></div><div class="az-sale-metrics"><span>Sale RM${sale.toFixed(2)}</span><span>Komisen RM${commission.toFixed(2)}</span><span>${rate?rate.toFixed(0)+'%':'-'}</span><span>${payout}</span></div></div>`);
-   });
-
-   // Legacy fallback: old purchaseLogs may predate automatic commissionRecords.
-   if(!html.length){
+   staffSalesRows=saleRows.map(x=>({title:x.productName||x.product||x.title||x.productId||'Staff product sale',source:x.sourcePage||x.productType||x.itemCode||'Software/CAD',order:x.orderId||x.billCode||x.docId||'-',type:commissionKind(x)==='owner_sale_split'?'Owner Split Sale':'Owner Direct Sale',typeKey:commissionKind(x)==='owner_sale_split'?'split':'direct',payout:payoutStatusOf(x),sale:saleAmountOf(x),commission:commissionAmountOf(x),rate:Number(x.commissionRate||x.rate||0)||0}));
+   if(!staffSalesRows.length){
      const docs=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
-     docs.forEach(x=>{
-       if(isPaBmSaleRecord(x) || !isStaffOwnedSaleRecord(x)) return;
-       const amt=amountOf(x), ownerRate=staffOwnerRatePercent(x), platformRate=staffPlatformRatePercent(x);
-       const title=esc(x.productName||x.product||x.title||x.docId||'Staff product sale');
-       const type=esc(x.productType||x.itemCode||'Software/CAD');
-       const status=esc(x.status||x.paymentStatus||'');
-       html.push(`<div class="item az-sale-row"><div><strong>${title}</strong><div class="muted">${type} • ${status} • Rekod legacy</div></div><div class="az-sale-metrics"><span>Sale RM${amt.toFixed(2)}</span><span>Anggaran Staff RM${(amt*ownerRate/100).toFixed(2)}</span><span>${ownerRate}%</span><span>AZOBSS ${platformRate}%</span></div></div>`);
-     });
+     docs.forEach(x=>{if(isPaBmSaleRecord(x)||!isStaffOwnedSaleRecord(x))return;const amt=amountOf(x),ownerRate=staffOwnerRatePercent(x);staffSalesRows.push({title:x.productName||x.product||x.title||x.docId||'Staff product sale',source:x.productType||x.itemCode||'Software/CAD',order:x.orderId||x.billCode||x.docId||'-',type:'Rekod Legacy',typeKey:'legacy',payout:String(x.status||x.paymentStatus||'pending').toLowerCase(),sale:amt,commission:amt*ownerRate/100,rate:ownerRate});});
    }
-   const notice=staffApiNotice?`<div class="item"><b>ℹ️ Status backend</b><div class="muted">${esc(staffApiNotice)}</div></div>`:'';
-   box.innerHTML=html.join('') || notice || '<div class="az-staff-empty"><b>Tiada sales untuk akaun ini.</b><div class="muted">Bila produk sendiri terjual dan payment disahkan, rekod akan muncul di sini. Share-link commission berada di tab Share Link.</div></div>';
- }catch(e){
-   console.warn('Staff Sales View failed',e);
-   box.innerHTML=`<div class="az-staff-empty"><b>Sales View gagal dimuatkan.</b><div class="muted">${esc(e?.message||'Sila cuba Refresh Sales sekali lagi.')}</div></div>`;
- }
+   let saleTotal=0,commissionTotal=0,unpaid=0;staffSalesRows.forEach(x=>{saleTotal+=x.sale;commissionTotal+=x.commission;if(!['paid','rejected','void'].includes(x.payout))unpaid+=x.commission;});
+   if($('#salesSummary')) $('#salesSummary').innerHTML=[['Jualan Unik',staffSalesRows.length],['Nilai Jualan',az1191Money(saleTotal)],['Komisen',az1191Money(commissionTotal)],['Belum Dibayar',az1191Money(unpaid)]].map(([l,v])=>`<div class="az1191-mini"><b>${l}</b><span>${v}</span></div>`).join('');
+   renderStaffSales();
+ }catch(e){console.warn('Staff Sales View failed',e);box.innerHTML=`<div class="az1191-empty"><b>Sales View gagal dimuatkan.</b><br>${esc(e?.message||'Cuba Refresh sekali lagi.')}</div>`;}
 }
-document.addEventListener('click',e=>{const jump=e.target.closest('[data-tab-jump]');if(jump){const target=document.querySelector(`[data-tab="${jump.dataset.tabJump}"]`);if(target)target.click();return;}const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
-$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
+document.addEventListener('click',e=>{const cr=e.target.closest('[data-copy-ref-link]');if(cr){az1191Copy(cr.dataset.copyRefLink).then(ok=>{cr.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>cr.textContent='Copy link',1200)});return;}const jump=e.target.closest('[data-tab-jump]');if(jump){const target=document.querySelector(`[data-tab="${jump.dataset.tabJump}"]`);if(target)target.click();return;}const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
+$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutTools);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
+$('#refreshOverview')?.addEventListener('click',overview);$('#salesSearch')?.addEventListener('input',renderStaffSales);$('#salesPayoutFilter')?.addEventListener('change',renderStaffSales);$('#salesTypeFilter')?.addEventListener('change',renderStaffSales);$('#shareSearch')?.addEventListener('input',renderStaffShareRows);$('#shareStatusFilter')?.addEventListener('change',renderStaffShareRows);$('#copySoftwareReferral')?.addEventListener('click',async e=>{const ok=await az1191Copy(az1191ReferralLinks().software);e.currentTarget.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>e.currentTarget.textContent='Copy',1200)});$('#copyCadReferral')?.addEventListener('click',async e=>{const ok=await az1191Copy(az1191ReferralLinks().cad);e.currentTarget.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>e.currentTarget.textContent='Copy',1200)});$('#shareSoftwareReferral')?.addEventListener('click',async()=>{const url=az1191ReferralLinks().software;try{if(navigator.share)await navigator.share({title:'AZOBSS Software Tools',text:'Software & tools AZOBSS',url});else await az1191Copy(url);}catch(_){}});
 onAuthStateChanged(auth,async u=>{
  user=u;
  if(!u) return deny('Please login first.');

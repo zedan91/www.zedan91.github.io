@@ -144,3 +144,5 @@ Tempah Servis IT: kawasan servis terhad, autocomplete jenama/model, dan harga LC
 ## Latest patch
 - v1190: Staff Sales View permission + scoped backend sales fix. See `README_PATCH_1190.md`.
 
+
+- v1191: Staff Dashboard compact/friendly 4-tab UX (Overview, Sales, Share Link, Payout). See `README_PATCH_1191.md`.
