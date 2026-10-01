@@ -87,7 +87,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
     var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
-    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='manager'||roleFlat==='semiadmin'||roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
     html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
     html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
@@ -901,7 +901,7 @@ function isStaffProfile(p){
  if(!profileBelongsToAuth(p,user)) return false;
  const role=profileRole(p);
  const permissions=p?.permissions||{};
- return ['staff','semiadmin','seller','editor'].includes(role)
+ return ['staff','manager','semiadmin','seller','editor'].includes(role)
    || permissions.canAccessStaffDashboard===true
    || permissions.canManageSoftware===true
    || permissions.canManageCAD===true
@@ -909,7 +909,13 @@ function isStaffProfile(p){
 }
 function deny(m){document.body.classList.remove('staff-ok');try{localStorage.removeItem('azobss_staff_role_cache');}catch(_e){}$('#accessMsg').textContent=m}
 function allow(){document.body.classList.add('staff-ok'); try{azRenderStaffRoleUI();}catch(_e){}}
-function can(k){return isAdmin(profile)||!!perms[k]} 
+function can(k){
+ if(isAdmin(profile)) return true;
+ // Sales View is always a scoped self-service read for valid Staff/Manager accounts.
+ // Older staff profiles may not have permissions.canViewPayments even though their role is Staff.
+ if(k==='canViewPayments') return isStaffProfile(profile);
+ return !!perms[k];
+}
 function azStaffApiErrorMessage(status,data,fallback){const raw=String(data?.error||data?.message||fallback||'Request failed.');if(status===401)return 'Session expired. Please login again, then retry.';if(status===403)return 'Staff/Admin permission required for this backend API.';if(status===429)return 'Too many attempts. '+(data?.retryAfter?('Please wait '+data.retryAfter+' seconds.'):'Please wait a while.');if(String(data?.verification||'').toLowerCase()==='pending')return 'Payment verification is still pending. Please wait a moment and check again.';return raw;}
 async function azStaffAuthHeaders(forceRefresh=false){try{const u=user||auth.currentUser;if(!u||typeof u.getIdToken!=='function')return{};const token=await u.getIdToken(!!forceRefresh);return token?{Authorization:'Bearer '+token}:{}}catch(_e){return{};}}
 async function azStaffFetchJson(url,options={}){const baseHeaders=options.headers||{};let authHeaders=await azStaffAuthHeaders(false);let r=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});let j=await r.json().catch(()=>({ok:false,error:'Invalid backend response'}));if((r.status===401||r.status===403)&&Object.keys(authHeaders).length){authHeaders=await azStaffAuthHeaders(true);r=await fetch(url,{...options,headers:{...baseHeaders,...authHeaders}});j=await r.json().catch(()=>({ok:false,error:'Invalid backend response'}));}if(!r.ok)throw new Error(azStaffApiErrorMessage(r.status,j));return j;}
@@ -1030,13 +1036,43 @@ async function fetchCommissionRecordsFromApi(){
 }
 async function getCommissionRecords(){
   const rows=[]; const seen=new Set();
-  const fsRows=await queryOwnedCollectionRows('commissionRecords',{adminLimit:200,staffLimit:60,includeShare:true});
-  fsRows.forEach((x,i)=>{const row={...x,_source:x._source||'firestore'}; const key=docKeyForRow(row,i)+'_'+String(row.commissionType||row.type||''); if(!seen.has(key)){seen.add(key);rows.push(row);}});
+  const addRows=(list,source)=>{
+    (Array.isArray(list)?list:[]).forEach((x,i)=>{
+      const row={...x,_source:x._source||source};
+      const key=docKeyForRow(row,i)+'_'+String(row.commissionType||row.type||'');
+      if(!seen.has(key)){seen.add(key);rows.push(row);}
+    });
+  };
+  // v1190: backend API first. It verifies the Firebase token and only returns records
+  // belonging to the logged-in Staff/Manager. This avoids Firestore browser-rule failures.
+  const apiRows=await fetchCommissionRecordsFromApi();
+  addRows(apiRows,'backend-api');
   if(!rows.length){
-    const apiRows=await fetchCommissionRecordsFromApi();
-    apiRows.forEach((x,i)=>{const row={...x,_source:x._source||'backend-api'}; const key=docKeyForRow(row,i)+'_'+String(row.commissionType||row.type||''); if(!seen.has(key)){seen.add(key);rows.push(row);}});
+    const fsRows=await queryOwnedCollectionRows('commissionRecords',{adminLimit:200,staffLimit:60,includeShare:true});
+    addRows(fsRows,'firestore-fallback');
   }
   return rows;
+}
+function isOwnProductSaleCommissionRecord(x){
+  if(!x || x.voided===true || isPaBmSaleRecord(x) || !isValidStaffCommissionRecord(x)) return false;
+  const k=commissionKind(x);
+  if(k==='owner_sale' || k==='owner_sale_split') return true;
+  if(isShareCommissionRecord(x) || k==='manual_adjustment' || k==='adjustment') return false;
+  return isStrongOwnerLinkedRecord(x) && saleAmountOf(x)>0;
+}
+function staffSaleUniqueKey(x,i=0){
+  const direct=String(x.orderId||x.billCode||x.paymentReference||'').trim();
+  if(direct) return direct.toLowerCase();
+  return [x.productId||x.productName||x.product||'sale',Math.round(Number(x.createdAtMs||0)/60000),i].join('|').toLowerCase();
+}
+function uniqueOwnerSaleCommissionRows(rows){
+  const out=[]; const seen=new Set();
+  (Array.isArray(rows)?rows:[]).filter(isOwnProductSaleCommissionRecord).forEach((x,i)=>{
+    const key=staffSaleUniqueKey(x,i);
+    if(seen.has(key)) return;
+    seen.add(key); out.push(x);
+  });
+  return out;
 }
 function withOwnerPayload(payload){
   const k=currentOwnerKeys();
@@ -1163,25 +1199,39 @@ async function overview(){
  const sw=await queryOwnedCollectionRows('staffSoftwareSubmissions',{adminLimit:100,staffLimit:50});
  const cad=await queryOwnedCollectionRows('staffCADSubmissions',{adminLimit:100,staffLimit:50});
  const comRows=await getCommissionRecords();
- const salesRows=can('canViewPayments')?await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60}):[];
  let swCount=0,cadCount=0,salesCount=0,totalSales=0,totalCom=0,pendingCom=0,paidCom=0,platformShare=0,ownerShare=0,shareCom=0,eligibleRecords=0,excludedPabm=0;
  sw.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) swCount++;});
  cad.forEach(x=>{ if(isAdmin(profile)||isMineRecord(x)) cadCount++;});
- salesRows.forEach(x=>{
-   if(isPaBmSaleRecord(x)){ excludedPabm++; return; }
-   if(isStaffOwnedSaleRecord(x)){ const amt=amountOf(x), ownerRate=staffOwnerRatePercent(x), platformRate=staffPlatformRatePercent(x); salesCount++; totalSales+=amt; ownerShare+=amt*ownerRate/100; platformShare+=amt*platformRate/100; }
- });
+
+ // Commission records are the authoritative Staff/Manager sale source because the backend
+ // has already verified ownership/referral and the payment callback. Count each order once.
+ const ownerSaleRows=uniqueOwnerSaleCommissionRows(comRows);
+ ownerSaleRows.forEach(x=>{ salesCount++; totalSales+=saleAmountOf(x); });
+
  comRows.forEach(x=>{
    if(isPaBmSaleRecord(x)){ excludedPabm++; return; }
-   if(isValidStaffCommissionRecord(x)){
-     const amt=commissionAmountOf(x); eligibleRecords++;
-     totalCom+=amt;
-     platformShare+=azobssShareOf(x);
-     ownerShare+=ownerShareOf(x);
-     if(isShareCommissionRecord(x)) shareCom+=amt;
-     if(isPaidStatus(x) || String(x.payoutStatus||'').toLowerCase()==='paid') paidCom+=amt; else pendingCom+=amt;
-   }
+   if(x?.voided===true || !isValidStaffCommissionRecord(x)) return;
+   const amt=commissionAmountOf(x); eligibleRecords++;
+   totalCom+=amt;
+   platformShare+=azobssShareOf(x);
+   ownerShare+=ownerShareOf(x);
+   if(isShareCommissionRecord(x)) shareCom+=amt;
+   const payout=String(x.payoutStatus||x.status||'pending').toLowerCase();
+   if(payout==='paid') paidCom+=amt;
+   else if(payout!=='rejected' && payout!=='void') pendingCom+=amt;
  });
+
+ // Legacy fallback for old owner sales that existed before commissionRecords were generated.
+ if(!salesCount && can('canViewPayments')){
+   const legacySalesRows=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
+   legacySalesRows.forEach(x=>{
+     if(isPaBmSaleRecord(x)){ excludedPabm++; return; }
+     if(!isStaffOwnedSaleRecord(x)) return;
+     const amt=amountOf(x), ownerRate=staffOwnerRatePercent(x), platformRate=staffPlatformRatePercent(x);
+     salesCount++; totalSales+=amt;
+     if(!eligibleRecords){ ownerShare+=amt*ownerRate/100; platformShare+=amt*platformRate/100; }
+   });
+ }
  if(!totalCom && ownerShare && salesCount) { totalCom=ownerShare; pendingCom=ownerShare; }
  // If there is no valid Software/CAD sale and no valid share/referral record, keep the staff commission clean at zero.
  if(!salesCount && !eligibleRecords){ totalCom=0; pendingCom=0; paidCom=0; platformShare=0; ownerShare=0; shareCom=0; }
@@ -1349,20 +1399,45 @@ async function shareCom(){
  $('#shareComList').innerHTML=html || notice || '<div class="item">No share link commission records yet.<div class="muted">If frontend Firestore read is blocked, this dashboard will try backend API with your Firebase login token. Make sure payment callback is paid and commissionRecords exists.</div></div>';
 }
 async function sales(){
- if(!can('canViewPayments'))return alert('No permission');
- const docs=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
- let rows=[];
- let skippedPaBm=0;
- docs.forEach(x=>{
-   if(isPaBmSaleRecord(x)){ skippedPaBm++; return; }
-   if(!isStaffOwnedSaleRecord(x)) return;
-   const amt=amountOf(x);
-   const title=esc(x.productName||x.product||x.title||x.docId||'Staff product sale');
-   const type=esc(x.productType||x.itemCode||'Software/CAD');
-   const status=esc(x.status||x.paymentStatus||'');
-   rows.push(`<div class="item az-sale-row"><div><strong>${title}</strong><div class="muted">${type} • ${status}</div></div><div class="az-sale-metrics"><span>Sale RM${amt.toFixed(2)}</span><span>Staff RM${(amt*0.7).toFixed(2)}</span><span>AZOBSS RM${(amt*0.3).toFixed(2)}</span></div></div>`);
- });
- $('#salesList').innerHTML=rows.join('') || '<div class="az-staff-empty"><b>Tiada sales untuk akaun ini.</b><div class="muted">Bila jualan atau share link yang sah digunakan, rekod akan muncul di sini.</div></div>';
+ const box=$('#salesList');
+ if(!box) return;
+ if(!isStaffProfile(profile)){
+   box.innerHTML='<div class="az-staff-empty"><b>Akses Staff/Manager diperlukan.</b><div class="muted">Sales View hanya memaparkan jualan milik akaun yang sedang login.</div></div>';
+   return;
+ }
+ box.innerHTML='<div class="item"><b>⏳ Memuatkan jualan...</b><div class="muted">Semakan dibuat melalui backend terlindung untuk akaun ini sahaja.</div></div>';
+ try{
+   const records=await getCommissionRecords();
+   const saleRows=uniqueOwnerSaleCommissionRows(records);
+   let html=[];
+   saleRows.forEach(x=>{
+     const sale=saleAmountOf(x), commission=commissionAmountOf(x), rate=Number(x.commissionRate||x.rate||0)||0;
+     const title=esc(x.productName||x.product||x.title||x.productId||'Staff product sale');
+     const source=esc(x.sourcePage||x.productType||x.itemCode||'Software/CAD');
+     const payout=esc(x.payoutStatus||x.status||'pending');
+     const order=esc(x.orderId||x.billCode||x.docId||'-');
+     const type=commissionKind(x)==='owner_sale_split'?'Owner Split Sale':'Owner Direct Sale';
+     html.push(`<div class="item az-sale-row"><div><strong>${title}</strong><div class="muted">${source} • ${esc(type)} • Order ${order}</div></div><div class="az-sale-metrics"><span>Sale RM${sale.toFixed(2)}</span><span>Komisen RM${commission.toFixed(2)}</span><span>${rate?rate.toFixed(0)+'%':'-'}</span><span>${payout}</span></div></div>`);
+   });
+
+   // Legacy fallback: old purchaseLogs may predate automatic commissionRecords.
+   if(!html.length){
+     const docs=await queryOwnedCollectionRows('purchaseLogs',{adminLimit:100,staffLimit:60});
+     docs.forEach(x=>{
+       if(isPaBmSaleRecord(x) || !isStaffOwnedSaleRecord(x)) return;
+       const amt=amountOf(x), ownerRate=staffOwnerRatePercent(x), platformRate=staffPlatformRatePercent(x);
+       const title=esc(x.productName||x.product||x.title||x.docId||'Staff product sale');
+       const type=esc(x.productType||x.itemCode||'Software/CAD');
+       const status=esc(x.status||x.paymentStatus||'');
+       html.push(`<div class="item az-sale-row"><div><strong>${title}</strong><div class="muted">${type} • ${status} • Rekod legacy</div></div><div class="az-sale-metrics"><span>Sale RM${amt.toFixed(2)}</span><span>Anggaran Staff RM${(amt*ownerRate/100).toFixed(2)}</span><span>${ownerRate}%</span><span>AZOBSS ${platformRate}%</span></div></div>`);
+     });
+   }
+   const notice=staffApiNotice?`<div class="item"><b>ℹ️ Status backend</b><div class="muted">${esc(staffApiNotice)}</div></div>`:'';
+   box.innerHTML=html.join('') || notice || '<div class="az-staff-empty"><b>Tiada sales untuk akaun ini.</b><div class="muted">Bila produk sendiri terjual dan payment disahkan, rekod akan muncul di sini. Share-link commission berada di tab Share Link.</div></div>';
+ }catch(e){
+   console.warn('Staff Sales View failed',e);
+   box.innerHTML=`<div class="az-staff-empty"><b>Sales View gagal dimuatkan.</b><div class="muted">${esc(e?.message||'Sila cuba Refresh Sales sekali lagi.')}</div></div>`;
+ }
 }
 document.addEventListener('click',e=>{const jump=e.target.closest('[data-tab-jump]');if(jump){const target=document.querySelector(`[data-tab="${jump.dataset.tabJump}"]`);if(target)target.click();return;}const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='overview')overview();if(b.dataset.tab==='software')loadList('staffSoftwareSubmissions','#swList');if(b.dataset.tab==='cad')loadList('staffCADSubmissions','#cadList');if(b.dataset.tab==='sales')sales();if(b.dataset.tab==='share')shareCom();if(b.dataset.tab==='payout')payoutTools();}});
 $('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutView);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);

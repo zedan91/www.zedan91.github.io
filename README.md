@@ -141,3 +141,6 @@ Tempah Servis IT: kawasan servis terhad, autocomplete jenama/model, dan harga LC
 - Preserves Membership, referral mapping/credit, embedded purchase history, purchase summary, likes/favorites and online-user mapping.
 - Different Firebase UID collisions are rejected.
 - Requires frontend + main Render backend deploy. PA/BM access rules are unchanged.
+## Latest patch
+- v1190: Staff Sales View permission + scoped backend sales fix. See `README_PATCH_1190.md`.
+

@@ -1,0 +1,15 @@
+{
+  "version": "1.0.1190",
+  "staff_role_can_open_sales_view_without_legacy_permission_flag": true,
+  "manager_role_supported": true,
+  "sales_api_first": true,
+  "staff_sales_scoped_to_logged_in_identity": true,
+  "no_sales_view_no_permission_alert": true,
+  "actual_commission_rate_used": true,
+  "actual_commission_amount_used": true,
+  "unique_order_deduplication": true,
+  "approved_not_counted_as_paid": true,
+  "void_excluded": true,
+  "pa_bm_excluded": true,
+  "legacy_purchase_logs_fallback": true
+}
