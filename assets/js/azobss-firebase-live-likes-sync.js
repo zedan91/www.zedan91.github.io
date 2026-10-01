@@ -5765,7 +5765,8 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     '/affiliate-shop': 'Affiliate Shop',
     '/software-tools': 'Software Tools',
     '/cad-tools-&-resources': 'CAD Tools & Resources',
-    '/cad-tools-and-resources': 'CAD Tools & Resources'
+    '/cad-tools-and-resources': 'CAD Tools & Resources',
+    '/pc-build': 'PC Build'
   };
   const state = { loadedFor: '', ids: new Set(), busy: new Set(), loading: null };
   const likesPageState = { usernameKey: '', rows: [], lastDoc: null, hasMore: false, loading: false, pageSize: 20 };
@@ -5902,12 +5903,13 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const lowerRaw = raw.toLowerCase();
     if(lowerRaw.startsWith('software-tools/')) return location.origin + '/' + raw.replace(/^\/+/, '');
     if(lowerRaw.startsWith('cad-tools-&-resources/') || lowerRaw.startsWith('cad-tools-and-resources/')) return location.origin + '/' + raw.replace(/^\/+/, '');
-    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('bookmarks/')) return location.origin + '/' + raw.replace(/^\/+/, '');
+    if(lowerRaw.startsWith('affiliate-shop/') || lowerRaw.startsWith('bookmarks/') || lowerRaw.startsWith('pc-build/')) return location.origin + '/' + raw.replace(/^\/+/, '');
 
     const pageName = String(page || pageType() || '').toLowerCase();
     if(pageName.includes('software')) return location.origin + '/Software-Tools/' + raw.replace(/^\/+/, '');
     if(pageName.includes('cad')) return location.origin + '/CAD-Tools-&-Resources/' + raw.replace(/^\/+/, '');
     if(pageName.includes('affiliate')) return location.origin + '/affiliate-shop/' + raw.replace(/^\/+/, '');
+    if(pageName.includes('pc build') || pageName.includes('pcbuild')) return location.origin + '/PC-Build/' + raw.replace(/^\/+/, '');
     return location.origin + '/' + raw.replace(/^\/+/, '');
   }
   function bookmarkProductUrl439(productId, page, type){
@@ -5915,24 +5917,28 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const pageName = String(page || '').toLowerCase();
     const typeName = String(type || '').toLowerCase();
     if(!id) return '';
-    const route = (pageName.includes('cad') || typeName.includes('cad'))
-      ? '/CAD-Tools-&-Resources/'
-      : (pageName.includes('affiliate') || typeName.includes('affiliate'))
-        ? '/affiliate-shop/'
-        : '/Software-Tools/';
+    const isPcBuild = pageName.includes('pc build') || pageName.includes('pcbuild') || typeName.includes('pcbuild');
+    const route = isPcBuild
+      ? '/PC-Build/'
+      : (pageName.includes('cad') || typeName.includes('cad'))
+        ? '/CAD-Tools-&-Resources/'
+        : (pageName.includes('affiliate') || typeName.includes('affiliate'))
+          ? '/affiliate-shop/'
+          : '/Software-Tools/';
+    const param = isPcBuild ? 'pc' : 'p';
     try{
       const url = new URL(location.origin + route);
-      url.searchParams.set('p', id);
+      url.searchParams.set(param, id);
       return url.toString();
     }catch(e){
-      return location.origin + route + '?p=' + encodeURIComponent(id);
+      return location.origin + route + '?' + param + '=' + encodeURIComponent(id);
     }
   }
   function bookmarkOpenUrlForRow439(row){
     const page = String(row?.page || row?.category || '').toLowerCase();
     const type = String(row?.type || '').toLowerCase();
     const id = String(row?.productId || row?.softwareId || row?.cadId || row?.itemId || row?.id || '').trim();
-    if(id && (page.includes('software') || type.includes('software') || page.includes('cad') || type.includes('cad') || page.includes('affiliate') || type.includes('affiliate'))){
+    if(id && (page.includes('software') || type.includes('software') || page.includes('cad') || type.includes('cad') || page.includes('affiliate') || type.includes('affiliate') || page.includes('pc build') || type.includes('pcbuild'))){
       return bookmarkProductUrl439(id, row.page || row.category || '', row.type || '');
     }
     return normalizeLikeUrl(row?.pageUrl || row?.url || row?.downloadUrl || '', row?.page || row?.category || row?.type || '');
@@ -5962,31 +5968,36 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     };
   }
   function getCardInfo(card){
-    const isAff = card.matches('.card');
+    const isPc = card.matches('.pc-build-card,[data-pc-build="1"]');
+    const isAff = !isPc && card.matches('.card');
     const isSw = card.matches('.download-card');
     const isCad = card.matches('.cad-card');
     const rawId = String(card.dataset.productId || card.dataset.softwareId || card.dataset.cadId || card.dataset.docId || card.dataset.id || '').trim() || cleanKey(card.querySelector('h2,h3')?.textContent || 'item');
-    const id = cleanKey(rawId) || ('item-' + Date.now());
+    const cleanId = cleanKey(rawId) || ('item-' + Date.now());
+    const id = isPc ? ('pcbuild-' + cleanId) : cleanId;
     const title = String(card.querySelector('h2,h3')?.textContent || rawId || id).trim();
-    const desc = String(card.querySelector('p')?.textContent || '').trim();
+    const desc = String(card.querySelector('p,.tagline,.note')?.textContent || '').trim();
     const category = String(card.dataset.category || card.querySelector('.badge,.software-badge,.cad-badge,.meta')?.textContent || pageType()).trim();
-    const page = pageType();
-    const type = isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item'));
+    const page = isPc ? 'PC Build' : pageType();
+    const type = isPc ? 'pcbuild' : (isAff ? 'affiliate' : (isSw ? 'software' : (isCad ? 'cad' : 'item')));
     const productPageUrl = bookmarkProductUrl439(rawId || id, page, type);
     const moneyInfo = (isSw || isCad) ? azReadCardMonetization443(card) : {productType:'',price:'',productPrice:'',isPremium:false,isFree:false,paymentLink:'',stripeLink:'',secureDownloadLink:'',premiumDownloadFileLink:'',downloadLink:''};
+    const pcPrice = isPc ? String(card.querySelector('.price strong')?.textContent || card.dataset.price || '').trim() : '';
+    const pcImage = isPc ? String(card.querySelector('.build-media img')?.getAttribute('src') || card.dataset.image || '').trim() : '';
     return {
       id,
       productId: rawId || id,
       title, desc, category,
       page,
       type,
-      productType: moneyInfo.productType,
+      productType: isPc ? 'pcbuild' : moneyInfo.productType,
       softwareType: isSw ? moneyInfo.productType : '',
       cadType: isCad ? moneyInfo.productType : '',
-      price: moneyInfo.price,
-      productPrice: moneyInfo.productPrice,
-      isPremium: moneyInfo.isPremium,
-      isFree: moneyInfo.isFree,
+      price: isPc ? pcPrice : moneyInfo.price,
+      productPrice: isPc ? pcPrice : moneyInfo.productPrice,
+      image: pcImage,
+      isPremium: isPc ? false : moneyInfo.isPremium,
+      isFree: isPc ? false : moneyInfo.isFree,
       paymentLink: moneyInfo.paymentLink,
       stripeLink: moneyInfo.stripeLink,
       secureDownloadLink: moneyInfo.secureDownloadLink,
@@ -6057,7 +6068,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(!btn || isBookmarksRoute439()) return;
     // If the normal per-button listener is already bound, it stops propagation before this bubble listener.
     // So reaching here means fallback is needed.
-    const card = btn.closest('.card[data-product-id], .download-card, .cad-card');
+    const card = btn.closest('.card[data-product-id], .pc-build-card[data-product-id], .download-card, .cad-card');
     if(!card) return;
     event.preventDefault();
     event.stopPropagation();
@@ -6105,6 +6116,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     const type = String(row?.type || '').toLowerCase();
     if(page.includes('cad') || type.includes('cad')) return 'cad';
     if(page.includes('software') || type.includes('software')) return 'software';
+    if(page.includes('pc build') || type.includes('pcbuild')) return 'pcbuild';
     return '';
   }
   function azText443(value){ return String(value == null ? '' : value).trim(); }
@@ -6194,7 +6206,9 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
 
   function likeCardHtml(row){
     const title = String(row.title || row.name || row.itemId || 'Bookmarked item');
-    const meta = [row.page, row.category, row.type].filter(Boolean).join(' • ');
+    const kind = bookmarkRowKind(row);
+    const pcPrice = kind === 'pcbuild' ? String(row.price || row.productPrice || '').trim() : '';
+    const meta = [row.page, row.category, row.type, pcPrice].filter(Boolean).join(' • ');
     const url = bookmarkOpenUrlForRow439(row);
     const itemId = String(row.itemId || row.id || '');
     return `<div class="az-like-card liked-item" data-url="${escapeHtml(url)}" data-type="${escapeHtml(row.type || '')}" data-like-id="${escapeHtml(itemId)}">
@@ -6288,6 +6302,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(sort==='software') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('software'));
     else if(sort==='cad') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('cad'));
     else if(sort==='affiliate') out=out.filter(r=>String(r.type||r.category||r.page||'').toLowerCase().includes('affiliate'));
+    else if(sort==='pcbuild') out=out.filter(r=>{const v=String(r.type||r.category||r.page||'').toLowerCase();return v.includes('pcbuild')||v.includes('pc build')});
     else if(sort==='category') out.sort((a,b)=>String(a.category||a.page||'').localeCompare(String(b.category||b.page||'')));
     else if(sort==='az') out.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
     else if(sort==='za') out.sort((a,b)=>String(b.title||'').localeCompare(String(a.title||'')));
@@ -6301,7 +6316,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     if(!list) return;
     const rows = sortAndFilterLikesRows(likesPageState.rows);
     if(!rows.length){
-      list.innerHTML = '<div class="az-like-empty">No bookmarks yet. Tap the bookmark button on Software, CAD or Affiliate items.</div>';
+      list.innerHTML = '<div class="az-like-empty">No bookmarks yet. Tap the bookmark button on PC Build, Software, CAD or Affiliate items.</div>';
       return;
     }
     const more = likesPageState.hasMore

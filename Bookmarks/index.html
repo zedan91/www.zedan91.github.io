@@ -853,7 +853,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <div class="top">
       <div>
         <h1><svg class="az-page-title-bookmark" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg> Bookmarks</h1>
-        <p class="muted">Saved bookmarks from Affiliate Shop, CAD Tools and Software Tools.</p>
+        <p class="muted">Saved bookmarks from PC Build, Affiliate Shop, CAD Tools and Software Tools.</p>
       </div>
     </div>
     <div class="likes-controls">
@@ -872,14 +872,15 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           <option value="software">Software</option>
           <option value="cad">CAD Tools</option>
           <option value="affiliate">Affiliate Shop</option>
+          <option value="pcbuild">PC Builds</option>
         </select>
       </div>
     </div>
     <div id="azobssLikesList"><div class="az-like-empty">Loading bookmarks...</div></div>
   </main>
   <script type="module" src="/assets/js/azobss-global-auth.js?v=1136"></script>
-  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1136"></script>
-<script>document.addEventListener("click",e=>{if(e.target.closest('.az-like-unlike-btn,.az-bookmark-add-cart-btn,[data-bookmark-add-cart]'))return; const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/';});</script><script id="azobss-shop-cart-js">
+  <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1184"></script>
+<script>document.addEventListener("click",e=>{if(e.target.closest('.az-like-unlike-btn,.az-bookmark-add-cart-btn,[data-bookmark-add-cart]'))return; const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/'; else if(cat.includes('pcbuild')) window.location='/PC-Build/';});</script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
