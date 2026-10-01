@@ -2192,6 +2192,13 @@ body[data-dashboard-page="admin"] .topbar{
   .az-admin-subtabs button{flex:1 1 auto;text-align:center;padding:7px 8px;font-size:11.5px}
 }
 </style>
+
+<style id="azobss-admin-staff-link-context-1192">
+.az1192-context{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border:1px solid rgba(56,189,248,.3);background:linear-gradient(135deg,rgba(8,47,73,.35),rgba(15,23,42,.78));padding:10px 12px;border-radius:14px;margin:10px 0}
+.az1192-context[hidden]{display:none!important}.az1192-context-main{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.az1192-context-user{font-weight:900;color:#67e8f9}.az1192-context-actions{display:flex;gap:6px;flex-wrap:wrap}.az1192-context-actions .btn{padding:6px 9px;min-height:0;font-size:11px}.az1192-context-actions .btn.active{background:#0ea5e9;color:#fff;border-color:#38bdf8}.az1192-staff-links{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.az1192-staff-links .btn{padding:4px 7px;min-height:0;font-size:10px}.az1192-admin-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}.az1192-admin-map>div{border:1px solid rgba(148,163,184,.18);background:#0b1424;border-radius:12px;padding:9px}.az1192-admin-map b{display:block;color:#e2e8f0;margin-bottom:3px}.az1192-admin-map span{font-size:11px;color:#94a3b8}.az1192-payout-context{border-color:rgba(34,197,94,.35)!important;box-shadow:0 0 0 1px rgba(34,197,94,.08) inset}
+@media(max-width:850px){.az1192-admin-map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.az1192-admin-map{grid-template-columns:1fr}.az1192-context{align-items:flex-start}}
+</style>
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -3511,6 +3518,23 @@ body[data-dashboard-page="admin"] .topbar{
         <div id="commissionStaffSummaryList" class="az-commission-staff-summary-list"></div>
       </div>
 
+      <div class="az1192-admin-map">
+        <div><b>📊 Staff Overview</b><span>↔ Admin Commission Summary untuk Staff yang sama.</span></div>
+        <div><b>💳 Sales View</b><span>↔ Owner Direct / Owner Split commission records.</span></div>
+        <div><b>🔗 Share Link</b><span>↔ Referral / share commission records.</span></div>
+        <div><b>💸 Payout</b><span>↔ Approved commission + Payout Requests.</span></div>
+      </div>
+      <div id="commissionStaffContext" class="az1192-context" hidden>
+        <div class="az1192-context-main"><span>Staff dipilih:</span><span id="commissionStaffContextName" class="az1192-context-user">-</span><span id="commissionStaffContextMeta" class="tabs-note"></span></div>
+        <div class="az1192-context-actions">
+          <button class="btn" type="button" data-commission-context-mode="overview">📊 Overview</button>
+          <button class="btn" type="button" data-commission-context-mode="sales">💳 Sales</button>
+          <button class="btn" type="button" data-commission-context-mode="share">🔗 Share</button>
+          <button class="btn" type="button" data-commission-context-mode="payout">💸 Payout</button>
+          <button class="btn gray" type="button" data-commission-context-clear>Clear</button>
+        </div>
+      </div>
+
       <div class="card az-commission-pro-card">
         <h2>Carian & Penapis</h2>
         <div class="toolbar az-commission-toolbar">
@@ -3627,10 +3651,11 @@ body[data-dashboard-page="admin"] .topbar{
         <div id="adminCommissionList" class="list"></div>
       </div>
 
-      <div class="card">
+      <div class="card" id="adminPayoutRequestsCard">
         <h2>📨 Payout Requests</h2>
         <p class="tabs-note">Permintaan payout Staff dilindungi backend. Mark Paid memerlukan payment reference dan akan sync commission records berkaitan.</p>
         <div class="toolbar">
+          <input id="payoutRequestStaffFilter" placeholder="Staff / Manager" style="min-width:170px">
           <select id="payoutRequestFilter">
             <option value="all">Semua request</option>
             <option value="requested">Requested</option>
@@ -5950,6 +5975,9 @@ async function saveStaffRole(){
 
 
 let adminCommissionCache = [];
+let az1192CommissionStaffContext='';
+let az1192CommissionContextMode='overview';
+let az1192CommissionContextUrlApplied=false;
 let adminCommissionFilteredCache = [];
 let adminCommissionSelectedDocIds = new Set();
 let azCommissionSearchTimer = null;
@@ -6033,6 +6061,12 @@ function getFilteredAdminCommissions(){
     const ms=commissionCreatedMs(x);
     if(start!==null && (!ms || ms<start)) return false;
     if(end!==null && (!ms || ms>=end)) return false;
+    if(az1192CommissionStaffContext){
+      const t=commissionTypeBucket(x);
+      if(az1192CommissionContextMode==='sales' && !['owner_sale','owner_sale_split'].includes(t)) return false;
+      if(az1192CommissionContextMode==='share' && !['admin_product_share_referral','share_referral'].includes(t)) return false;
+      if(az1192CommissionContextMode==='payout' && ['rejected','void'].includes(commissionStatusBucket(x))) return false;
+    }
     return true;
   });
 }
@@ -6079,9 +6113,44 @@ function azRenderCommissionStaffSummary(rows){
   const list=[...map.values()].sort((a,b)=>(b.approved+b.pending)-(a.approved+a.pending)||b.paid-a.paid);
   const box=$('#commissionStaffSummaryList');
   if(!box) return;
-  box.innerHTML=list.slice(0,12).map(r=>`<div class="az-commission-staff-card" data-commission-staff-focus="${esc(r.name)}" title="Filter ${esc(r.name)}"><strong>👤 ${esc(r.name)}</strong><div class="az-commission-staff-metrics"><span>Pending<b>RM${r.pending.toFixed(2)}</b></span><span>Ready<b>RM${r.approved.toFixed(2)}</b></span><span>Paid<b>RM${r.paid.toFixed(2)}</b></span></div><div class="item-meta" style="margin-top:6px">${r.records} records • Last paid: ${r.lastPaid?esc(fmtDate(r.lastPaid)):'-'}</div></div>`).join('') || '<div class="tabs-note">Tiada rekod Staff/Manager untuk filter semasa.</div>';
+  box.innerHTML=list.slice(0,12).map(r=>`<div class="az-commission-staff-card" data-commission-staff-focus="${esc(r.name)}" title="Filter ${esc(r.name)}"><strong>👤 ${esc(r.name)}</strong><div class="az-commission-staff-metrics"><span>Pending<b>RM${r.pending.toFixed(2)}</b></span><span>Ready<b>RM${r.approved.toFixed(2)}</b></span><span>Paid<b>RM${r.paid.toFixed(2)}</b></span></div><div class="item-meta" style="margin-top:6px">${r.records} records • Last paid: ${r.lastPaid?esc(fmtDate(r.lastPaid)):'-'}</div><div class="az1192-staff-links"><button class="btn" type="button" data-commission-staff-mode="overview" data-commission-staff-name="${esc(r.name)}">Overview</button><button class="btn" type="button" data-commission-staff-mode="sales" data-commission-staff-name="${esc(r.name)}">Sales</button><button class="btn" type="button" data-commission-staff-mode="share" data-commission-staff-name="${esc(r.name)}">Share</button><button class="btn" type="button" data-commission-staff-mode="payout" data-commission-staff-name="${esc(r.name)}">Payout</button></div></div>`).join('') || '<div class="tabs-note">Tiada rekod Staff/Manager untuk filter semasa.</div>';
 }
 
+
+function az1192CommissionModeLabel(mode){return ({overview:'Overview',sales:'Sales View',share:'Share Link',payout:'Payout'})[mode]||'Overview';}
+function az1192SyncCommissionContextUi(){
+  const box=$('#commissionStaffContext'),name=$('#commissionStaffContextName'),meta=$('#commissionStaffContextMeta');
+  if(box) box.hidden=!az1192CommissionStaffContext;
+  if(name) name.textContent=az1192CommissionStaffContext||'-';
+  if(meta) meta.textContent=az1192CommissionStaffContext?('↔ Staff Dashboard: '+az1192CommissionModeLabel(az1192CommissionContextMode)):'';
+  document.querySelectorAll('[data-commission-context-mode]').forEach(b=>b.classList.toggle('active',b.dataset.commissionContextMode===az1192CommissionContextMode));
+}
+function az1192SetCommissionContext(staff,mode='overview',{updateUrl=true,scroll=true}={}){
+  az1192CommissionStaffContext=String(staff||'').trim();
+  az1192CommissionContextMode=['overview','sales','share','payout'].includes(mode)?mode:'overview';
+  if($('#commissionStaffFilter')) $('#commissionStaffFilter').value=az1192CommissionStaffContext;
+  if($('#commissionTypeFilter')) $('#commissionTypeFilter').value='all';
+  if($('#commissionPayoutFilter')) $('#commissionPayoutFilter').value='all';
+  if($('#payoutRequestStaffFilter')) $('#payoutRequestStaffFilter').value=az1192CommissionStaffContext;
+  az1192SyncCommissionContextUi();
+  renderAdminCommissions(); renderAdminPayoutRequests();
+  if(updateUrl){try{const u=new URL(location.href);u.searchParams.set('tab','commissions');if(az1192CommissionStaffContext)u.searchParams.set('staff',az1192CommissionStaffContext);else u.searchParams.delete('staff');u.searchParams.set('mode',az1192CommissionContextMode);history.replaceState({},'',u.pathname+'?'+u.searchParams.toString()+u.hash);}catch(_e){}}
+  if(scroll){
+    if(az1192CommissionContextMode==='payout'){const c=$('#adminPayoutRequestsCard');c?.classList.add('az1192-payout-context');c?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>c?.classList.remove('az1192-payout-context'),1800);}
+    else $('#commissionStaffContext')?.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+function az1192ClearCommissionContext(){
+  az1192CommissionStaffContext='';az1192CommissionContextMode='overview';
+  if($('#commissionStaffFilter'))$('#commissionStaffFilter').value='';
+  if($('#payoutRequestStaffFilter'))$('#payoutRequestStaffFilter').value='';
+  az1192SyncCommissionContextUi();renderAdminCommissions();renderAdminPayoutRequests();
+  try{const u=new URL(location.href);u.searchParams.delete('staff');u.searchParams.delete('mode');u.searchParams.set('tab','commissions');history.replaceState({},'',u.pathname+'?'+u.searchParams.toString()+u.hash);}catch(_e){}
+}
+function az1192ApplyCommissionContextFromUrl(){
+  if(az1192CommissionContextUrlApplied)return;az1192CommissionContextUrlApplied=true;
+  try{const u=new URL(location.href),staff=u.searchParams.get('staff')||'',mode=u.searchParams.get('mode')||'overview';if(staff)az1192SetCommissionContext(staff,mode,{updateUrl:false,scroll:false});}catch(_e){}
+}
 function renderAdminCommissions(){
   azAdminSetCommissionDateState();
   adminCommissionFilteredCache=getFilteredAdminCommissions();
@@ -6169,6 +6238,7 @@ async function loadAdminCommissions(){
   adminCommissionCache=await fetchAdminCommissionsFromApi();
   adminCommissionCache.sort((a,b)=>commissionCreatedMs(b)-commissionCreatedMs(a));
   renderAdminCommissions();
+  az1192ApplyCommissionContextFromUrl();
 }
 function resetCommissionForm(){
   $('#commissionEditDocId').value=''; if($('#commissionParentDocId')) $('#commissionParentDocId').value='';
@@ -6338,9 +6408,10 @@ async function loadAdminPayoutRequests(){
 }
 function renderAdminPayoutRequests(){
   const filter=String($('#payoutRequestFilter')?.value||'all').toLowerCase();
-  const rows=adminPayoutRequestCache.filter(r=>filter==='all'||String(r.status||'requested').toLowerCase()===filter);
-  const sum=adminPayoutRequestCache.reduce((a,r)=>{const st=String(r.status||'requested').toLowerCase();a.total+=Number(r.amount||0)||0;a.count++;a[st]=(a[st]||0)+(Number(r.amount||0)||0);return a;},{total:0,count:0});
-  if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Requests: ${sum.count} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)}`;
+  const staffFilter=String($('#payoutRequestStaffFilter')?.value||az1192CommissionStaffContext||'').trim().toLowerCase();
+  const rows=adminPayoutRequestCache.filter(r=>{const statusOk=filter==='all'||String(r.status||'requested').toLowerCase()===filter;const who=String([r.username,r.staffUsername,r.email,r.staffEmail,r.uid,r.staffUid].filter(Boolean).join(' ')).toLowerCase();return statusOk&&(!staffFilter||who.includes(staffFilter));});
+  const sum=rows.reduce((a,r)=>{const st=String(r.status||'requested').toLowerCase();a.total+=Number(r.amount||0)||0;a.count++;a[st]=(a[st]||0)+(Number(r.amount||0)||0);return a;},{total:0,count:0});
+  if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Showing ${rows.length} request(s)${staffFilter?' • Staff: '+staffFilter:''} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)}`;
   const payoutBox=$('#adminPayoutRequestList');
   if(payoutBox){
     payoutBox.innerHTML=rows.map(r=>{
@@ -6353,7 +6424,7 @@ function renderAdminPayoutRequests(){
       const approveBtn=['requested','reviewing'].includes(st)?`<button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button>`:'';
       const reviewBtn=st==='requested'?`<button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button>`:'';
       const rejectBtn=!['paid','cancelled','rejected'].includes(st)?`<button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button>`:'';
-      return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button>${reviewBtn}${approveBtn}${paidBtn}${rejectBtn}</div></div>`;
+      return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" type="button" data-payout-open-commission="${esc(r.username||r.staffUsername||r.email||'')}">Commission</button>${reviewBtn}${approveBtn}${paidBtn}${rejectBtn}</div></div>`;
     }).join('') || '<div class="item">No payout requests.</div>';
     azAdminApplyPager('#adminPayoutRequestList',{key:'adminPayoutRequestList',pageSize:6,label:'payout requests',reset:true});
   }
@@ -7390,8 +7461,16 @@ document.addEventListener('click',async e=>{
   if(adjustBtn){beginCommissionAdjustment(adjustBtn.getAttribute('data-adjust-commission'));return;}
   const voidBtn = e.target.closest('[data-void-commission]');
   if(voidBtn){await voidCommissionRecord(voidBtn.getAttribute('data-void-commission'));return;}
+  const staffModeBtn=e.target.closest('[data-commission-staff-mode]');
+  if(staffModeBtn){e.stopPropagation();az1192SetCommissionContext(staffModeBtn.getAttribute('data-commission-staff-name')||'',staffModeBtn.getAttribute('data-commission-staff-mode')||'overview');return;}
+  const contextModeBtn=e.target.closest('[data-commission-context-mode]');
+  if(contextModeBtn){az1192SetCommissionContext(az1192CommissionStaffContext||$('#commissionStaffFilter')?.value||'',contextModeBtn.getAttribute('data-commission-context-mode')||'overview');return;}
+  const contextClearBtn=e.target.closest('[data-commission-context-clear]');
+  if(contextClearBtn){az1192ClearCommissionContext();return;}
+  const payoutCommissionBtn=e.target.closest('[data-payout-open-commission]');
+  if(payoutCommissionBtn){az1192SetCommissionContext(payoutCommissionBtn.getAttribute('data-payout-open-commission')||'','payout');return;}
   const staffFocusBtn = e.target.closest('[data-commission-staff-focus]');
-  if(staffFocusBtn){const v=staffFocusBtn.getAttribute('data-commission-staff-focus')||'';if($('#commissionStaffFilter')) $('#commissionStaffFilter').value=v;renderAdminCommissions();$('#commissionStaffFilter')?.scrollIntoView({behavior:'smooth',block:'center'});return;}
+  if(staffFocusBtn){const v=staffFocusBtn.getAttribute('data-commission-staff-focus')||'';az1192SetCommissionContext(v,'overview');return;}
 });
 
 
@@ -7472,6 +7551,7 @@ $('#selectAllVisibleCommissions')?.addEventListener('click',()=>{document.queryS
 $('#clearSelectedCommissions')?.addEventListener('click',()=>{document.querySelectorAll('[data-commission-select]').forEach(el=>{el.checked=false;});azAdminUpdateCommissionSelectedInfo();});
 document.addEventListener('change',e=>{if(e.target?.matches?.('[data-commission-select]')) azAdminUpdateCommissionSelectedInfo();});
 $('#payoutRequestFilter')?.addEventListener('change', renderAdminPayoutRequests);
+$('#payoutRequestStaffFilter')?.addEventListener('input',()=>{clearTimeout(window.az1192PayoutStaffTimer);window.az1192PayoutStaffTimer=setTimeout(renderAdminPayoutRequests,160);});
 $('#refreshPayoutRequestsAdmin')?.addEventListener('click', loadAdminPayoutRequests);
 $('#exportCommissionCsv')?.addEventListener('click', exportCommissionCsv);
 $('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
@@ -7546,7 +7626,12 @@ onAuthStateChanged(auth, async user => {
     $('#adminName').textContent=adminProfile?.username||adminProfile?.name||user.email||'Admin';
     $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
     azAdminPrepareOverviewManualMode();
-    await initSection('salesreceipts');
+    let az1192Target='salesreceipts';
+    try{const q=new URL(location.href).searchParams; if(q.get('tab')==='commissions') az1192Target='commissions';}catch(_e){}
+    if(az1192Target==='commissions'){
+      const btn=[...document.querySelectorAll('.sidebar .nav [data-tab="commissions"], [data-tab="commissions"]')][0];
+      if(btn) btn.click(); else await initSection('commissions');
+    }else await initSection('salesreceipts');
   }catch(e){
     azAdminAuthResolved = true;
     clearTimeout(azAdminAuthWatchdog);
