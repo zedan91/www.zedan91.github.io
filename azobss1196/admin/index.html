@@ -2199,10 +2199,12 @@ body[data-dashboard-page="admin"] .topbar{
 @media(max-width:850px){.az1192-admin-map{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.az1192-admin-map{grid-template-columns:1fr}.az1192-context{align-items:flex-start}}
 </style>
-<style id="azobss-v1194-commission-payout">
-.az1194-admin-payout-qr{display:inline-grid;grid-template-columns:130px minmax(120px,1fr);gap:10px;align-items:center;margin:8px 0;padding:8px;border:1px solid rgba(34,197,94,.32);border-radius:12px;background:rgba(20,83,45,.12)}
-.az1194-admin-payout-qr img{width:130px;height:130px;object-fit:contain;background:#fff;border-radius:8px;padding:4px}.az1194-admin-payout-qr span{font-size:12px;font-weight:900;color:#bbf7d0}
-@media(max-width:640px){.az1194-admin-payout-qr{grid-template-columns:1fr}.az1194-admin-payout-qr img{width:170px;height:170px}}
+<style id="azobss-v1196-commission-payout-qr">
+/* v1196: payout QR is intentionally large enough for reliable phone scanning. */
+.az1194-admin-payout-qr{display:grid;grid-template-columns:minmax(260px,320px) minmax(180px,1fr);gap:18px;align-items:center;width:min(100%,820px);margin:12px auto;padding:14px;border:1px solid rgba(34,197,94,.42);border-radius:14px;background:rgba(20,83,45,.14)}
+.az1196-qr-image-btn{display:grid;place-items:center;width:100%;padding:8px;border:0;border-radius:12px;background:#fff;cursor:zoom-in;box-sizing:border-box}.az1196-qr-image-btn img{display:block;width:300px;height:300px;max-width:100%;object-fit:contain;background:#fff;border-radius:8px}.az1196-qr-side{display:grid;gap:9px;align-content:center}.az1196-qr-side b{font-size:14px;color:#bbf7d0}.az1196-qr-side small{color:#94a3b8;line-height:1.45}.az1196-qr-actions{display:flex;gap:7px;flex-wrap:wrap}.az1196-qr-actions .btn{padding:7px 10px;min-height:0}.az1196-qr-empty{width:min(100%,820px);margin:10px auto;padding:12px;border:1px dashed rgba(148,163,184,.35);border-radius:12px;text-align:center;color:#94a3b8}.az1196-qr-empty .btn{margin-left:8px}
+.az1196-qr-modal{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:18px;background:rgba(2,6,23,.88);backdrop-filter:blur(5px)}.az1196-qr-modal[hidden]{display:none!important}.az1196-qr-modal-card{width:min(760px,96vw);max-height:94vh;overflow:auto;background:#0b1220;border:1px solid #334155;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.55);padding:16px}.az1196-qr-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.az1196-qr-modal-head b{font-size:18px;color:#e2e8f0}.az1196-qr-modal-preview{display:grid;place-items:center;min-height:420px;padding:12px;border-radius:14px;background:#fff}.az1196-qr-modal-preview img{display:block;width:min(540px,82vw);height:min(540px,68vh);object-fit:contain;background:#fff}.az1196-qr-modal-editor{display:grid;gap:10px;margin-top:12px}.az1196-qr-modal-editor input[type=file]{width:100%;box-sizing:border-box}.az1196-qr-modal-note{font-size:12px;color:#94a3b8}.az1196-qr-modal-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:700px){.az1194-admin-payout-qr{grid-template-columns:1fr}.az1196-qr-image-btn img{width:280px;height:280px}.az1196-qr-modal-preview{min-height:300px}.az1196-qr-modal-preview img{width:min(88vw,460px);height:min(62vh,460px)}}
 </style>
 </head>
 
@@ -6449,6 +6451,35 @@ async function copyAdminPayoutDetails(requestId){
  const p=row.profile||{};const lines=[`Staff: ${row.username||row.email||'-'}`,`Amount: ${row.amountText||('RM'+Number(row.amount||0).toFixed(2))}`,`Method: ${p.payoutMethod||'-'}`,p.bankName?`Bank: ${p.bankName}`:'',p.accountName?`Account Name: ${p.accountName}`:'',p.accountNo?`Account / DuitNow: ${p.accountNo}`:(p.duitNowId?`DuitNow: ${p.duitNowId}`:''),p.payoutPhone?`Phone: ${p.payoutPhone}`:''].filter(Boolean);
  try{await navigator.clipboard.writeText(lines.join('\n'));toast('Payout details copied.');}catch(_){toast('Unable to copy payout details.');}
 }
+let adminPayoutQrDraft='';
+function adminPayoutRowById(requestId){return adminPayoutRequestCache.find(x=>String(x.docId||x.requestId||'')===String(requestId));}
+function ensureAdminPayoutQrModal(){
+ let modal=document.getElementById('az1196PayoutQrModal');
+ if(modal)return modal;
+ modal=document.createElement('div');modal.id='az1196PayoutQrModal';modal.className='az1196-qr-modal';modal.hidden=true;
+ modal.innerHTML=`<div class="az1196-qr-modal-card" role="dialog" aria-modal="true" aria-labelledby="az1196QrTitle"><div class="az1196-qr-modal-head"><b id="az1196QrTitle">Payout QR</b><button class="btn" type="button" data-payout-qr-close>✕ Close</button></div><div class="az1196-qr-modal-preview"><img id="az1196QrModalImage" alt="Payout QR large preview"></div><div id="az1196QrEditor" class="az1196-qr-modal-editor" hidden><label><b>✏️ Edit / Tukar QR</b></label><input id="az1196QrFile" type="file" accept="image/png,image/jpeg,image/webp"><div id="az1196QrEditorInfo" class="az1196-qr-modal-note">Pilih QR baru. Preview di atas akan berubah sebelum Simpan.</div><div class="az1196-qr-modal-actions"><button class="btn red" type="button" data-payout-qr-remove>Remove QR</button><button class="btn" type="button" data-payout-qr-cancel-edit>Cancel Edit</button><button class="btn green" type="button" data-payout-qr-save>💾 Simpan QR</button></div></div></div>`;
+ document.body.appendChild(modal);
+ const file=modal.querySelector('#az1196QrFile');
+ file?.addEventListener('change',async()=>{const f=file.files?.[0];if(!f)return;try{const info=modal.querySelector('#az1196QrEditorInfo');if(info)info.textContent='Processing QR...';adminPayoutQrDraft=await adminPayoutQrFileToDataUrl(f);const img=modal.querySelector('#az1196QrModalImage');if(img)img.src=adminPayoutQrDraft;if(info)info.textContent='QR baru ready • '+Math.round(adminPayoutQrDraft.length/1024)+' KB • tekan Simpan QR.';}catch(e){const info=modal.querySelector('#az1196QrEditorInfo');if(info)info.textContent=e?.message||'QR gagal diproses.';file.value='';}});
+ modal.addEventListener('click',e=>{if(e.target===modal)closeAdminPayoutQrModal();});
+ return modal;
+}
+async function adminPayoutQrFileToDataUrl(file){
+ if(!file)return'';if(!/^image\/(png|jpeg|webp)$/i.test(file.type||''))throw new Error('QR mesti PNG, JPG atau WebP.');if(file.size>6*1024*1024)throw new Error('QR terlalu besar. Maksimum 6MB.');
+ const raw=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(new Error('Gagal membaca QR.'));r.readAsDataURL(file);});
+ const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('QR image tidak sah.'));i.src=raw;});
+ const max=900,scale=Math.min(1,max/Math.max(img.naturalWidth||1,img.naturalHeight||1));const c=document.createElement('canvas');c.width=Math.max(1,Math.round((img.naturalWidth||1)*scale));c.height=Math.max(1,Math.round((img.naturalHeight||1)*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,c.width,c.height);let out=c.toDataURL('image/png');if(out.length>420000)out=c.toDataURL('image/jpeg',.92);if(out.length>520000)throw new Error('QR masih terlalu besar. Crop bahagian QR dan cuba semula.');return out;
+}
+function openAdminPayoutQrModal(requestId,edit=false){
+ const row=adminPayoutRowById(requestId);if(!row)return toast('Payout request not found.');const p=row.profile||{};const modal=ensureAdminPayoutQrModal();modal.dataset.requestId=String(requestId);modal.dataset.originalQr=String(p.qrImageDataUrl||'');adminPayoutQrDraft=String(p.qrImageDataUrl||'');const img=modal.querySelector('#az1196QrModalImage');if(img){img.src=adminPayoutQrDraft||'';img.style.visibility=adminPayoutQrDraft?'visible':'hidden';}const title=modal.querySelector('#az1196QrTitle');if(title)title.textContent=`Payout QR • ${row.username||row.email||'Staff'}`;const editor=modal.querySelector('#az1196QrEditor');if(editor)editor.hidden=!edit;const file=modal.querySelector('#az1196QrFile');if(file)file.value='';const info=modal.querySelector('#az1196QrEditorInfo');if(info)info.textContent=adminPayoutQrDraft?'QR semasa dimuatkan. Pilih fail jika mahu tukar.':'Belum ada QR. Pilih fail QR untuk upload.';modal.hidden=false;document.body.style.overflow='hidden';
+}
+function closeAdminPayoutQrModal(){const modal=document.getElementById('az1196PayoutQrModal');if(!modal)return;modal.hidden=true;modal.dataset.requestId='';document.body.style.overflow='';adminPayoutQrDraft='';}
+function cancelAdminPayoutQrEdit(){const modal=ensureAdminPayoutQrModal();const original=String(modal.dataset.originalQr||'');adminPayoutQrDraft=original;const img=modal.querySelector('#az1196QrModalImage');if(img){img.src=original;img.style.visibility=original?'visible':'hidden';}const editor=modal.querySelector('#az1196QrEditor');if(editor)editor.hidden=true;const file=modal.querySelector('#az1196QrFile');if(file)file.value='';}
+async function saveAdminPayoutQr(remove=false){
+ const modal=ensureAdminPayoutQrModal(),requestId=String(modal.dataset.requestId||'');if(!requestId)return toast('Missing payout request ID.');if(!remove&&!adminPayoutQrDraft)return toast('Pilih QR image dahulu.');if(remove&&!confirm('Remove QR payout untuk Staff/Manager ini?'))return;
+ try{const info=modal.querySelector('#az1196QrEditorInfo');if(info)info.textContent='Saving QR...';await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-profile-qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId,qrImageDataUrl:remove?'':adminPayoutQrDraft,removeQrImage:!!remove})});toast(remove?'QR payout removed.':'QR payout updated.');closeAdminPayoutQrModal();await loadAdminPayoutRequests();}catch(e){const info=modal.querySelector('#az1196QrEditorInfo');if(info)info.textContent=e?.message||'Gagal simpan QR.';toast(e?.message||'Gagal simpan QR.');}
+}
+
 async function loadAdminPayoutRequests(){
   try{
     const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-requests?limit=120',{cache:'no-store'});
@@ -6472,7 +6503,7 @@ function renderAdminPayoutRequests(){
       const rid=esc(r.docId||r.requestId);
       const receiptLabel=String(r.status||'requested').toLowerCase()==='paid'?'View Receipt':'View Statement';
       const st=String(r.status||'requested').toLowerCase();
-      const qr=p.qrImageDataUrl?`<div class="az1194-admin-payout-qr"><img src="${esc(p.qrImageDataUrl)}" alt="Payout QR ${esc(r.username||'staff')}"><span>Scan QR dengan phone</span></div>`:'';
+      const qr=p.qrImageDataUrl?`<div class="az1194-admin-payout-qr"><button class="az1196-qr-image-btn" type="button" data-payout-qr-view="${rid}" title="Klik untuk besarkan QR"><img src="${esc(p.qrImageDataUrl)}" alt="Payout QR ${esc(r.username||'staff')}"></button><div class="az1196-qr-side"><b>📱 Scan QR dengan phone</b><small>QR dibesarkan untuk scan lebih mudah. Klik gambar atau Besarkan QR untuk paparan penuh.</small><div class="az1196-qr-actions"><button class="btn" type="button" data-payout-qr-view="${rid}">🔍 Besarkan QR</button><button class="btn" type="button" data-payout-qr-edit="${rid}">✏️ Edit / Tukar QR</button></div></div></div>`:`<div class="az1196-qr-empty">Belum ada QR payout. <button class="btn" type="button" data-payout-qr-edit="${rid}">✏️ Upload / Edit QR</button></div>`;
       const copyBtn=account?`<button class="btn" data-payout-copy-details="${rid}">📋 Copy Details</button>`:'';
       const paidBtn=st==='approved'?`<button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">✓ Record Payment</button>`:'';
       const approveBtn=['requested','reviewing'].includes(st)?`<button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button>`:'';
@@ -6481,7 +6512,7 @@ function renderAdminPayoutRequests(){
       const rejectBtn=!['paid','cancelled','rejected','processing','refunded'].includes(st)?`<button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button>`:'';
       return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${qr}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" type="button" data-payout-open-commission="${esc(r.username||r.staffUsername||r.email||'')}">Commission</button>${copyBtn}${reviewBtn}${approveBtn}${paidBtn}${legacySyncBtn}${rejectBtn}</div></div>`;
     }).join('') || '<div class="item">No payout requests.</div>';
-    azAdminApplyPager('#adminPayoutRequestList',{key:'adminPayoutRequestList',pageSize:6,label:'payout requests',reset:true});
+    azAdminApplyPager('#adminPayoutRequestList',{key:'adminPayoutRequestList',pageSize:5,label:'payout requests',reset:true});
   }
 }
 async function updatePayoutRequestStatus(requestId,status){
@@ -7511,6 +7542,14 @@ document.addEventListener('click',async e=>{
   if(bankPayBtn){await payPayoutRequestToBank(bankPayBtn.getAttribute('data-payout-pay-bank'));return;}
   const bankSyncBtn=e.target.closest('[data-payout-sync-bank]');
   if(bankSyncBtn){await syncPayoutBankStatus(bankSyncBtn.getAttribute('data-payout-sync-bank'));return;}
+  const payoutQrViewBtn=e.target.closest('[data-payout-qr-view]');
+  if(payoutQrViewBtn){openAdminPayoutQrModal(payoutQrViewBtn.getAttribute('data-payout-qr-view'),false);return;}
+  const payoutQrEditBtn=e.target.closest('[data-payout-qr-edit]');
+  if(payoutQrEditBtn){openAdminPayoutQrModal(payoutQrEditBtn.getAttribute('data-payout-qr-edit'),true);return;}
+  if(e.target.closest('[data-payout-qr-close]')){closeAdminPayoutQrModal();return;}
+  if(e.target.closest('[data-payout-qr-cancel-edit]')){cancelAdminPayoutQrEdit();return;}
+  if(e.target.closest('[data-payout-qr-remove]')){await saveAdminPayoutQr(true);return;}
+  if(e.target.closest('[data-payout-qr-save]')){await saveAdminPayoutQr(false);return;}
   const payoutCopyBtn=e.target.closest('[data-payout-copy-details]');
   if(payoutCopyBtn){await copyAdminPayoutDetails(payoutCopyBtn.getAttribute('data-payout-copy-details'));return;}
   const payoutReqBtn = e.target.closest('[data-payout-request-status]');

@@ -20086,6 +20086,36 @@ async function handler(req, res) {
       }catch(err){return send(res,500,JSON.stringify({ok:false,error:err&&err.message?err.message:String(err)},null,2),'application/json');}
     }
 
+    if (pathname === "/api/admin/payout-profile-qr" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to edit payout QR." }, null, 2), "application/json");
+        const db = getAzobssBackendDb();
+        if (!db) return send(res, 500, JSON.stringify({ ok:false, error:"Firebase Admin is not configured." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const requestId = cleanPremiumText(body.requestId || body.id || '', 160);
+        if (!requestId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing payout request ID." }, null, 2), "application/json");
+        const requestSnap = await db.collection('payoutRequests').doc(requestId).get();
+        if (!requestSnap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
+        const row = requestSnap.data() || {};
+        const profileIdentity = { uid:row.uid || row.staffUid || '', username:row.username || row.staffUsername || '', email:row.email || row.staffEmail || '' };
+        const profileId = azPayoutIdentityDocId(profileIdentity);
+        const profileRef = db.collection('staffPayoutProfiles').doc(profileId);
+        const profileSnap = await profileRef.get();
+        if (!profileSnap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Staff payout profile not found. Staff/Manager needs to save Payout Profile first." }, null, 2), "application/json");
+        const qrImageDataUrl = body.removeQrImage === true ? '' : azPayoutQrDataUrl(body.qrImageDataUrl || '');
+        if (body.removeQrImage !== true && !qrImageDataUrl) return send(res, 400, JSON.stringify({ ok:false, error:"QR image is required." }, null, 2), "application/json");
+        const now = Date.now();
+        await profileRef.set({ qrImageDataUrl, updatedAt:new Date(now).toISOString(), updatedAtMs:now }, { merge:true });
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, body.removeQrImage === true ? 'admin_payout_qr_remove' : 'admin_payout_qr_update', 'staffPayoutProfiles', profileId, { requestId, staffUsername:profileIdentity.username || '', hasQr:!!qrImageDataUrl }, 'success'), 'Admin payout QR audit failed');
+        return send(res, 200, JSON.stringify({ ok:true, requestId, profileId, qrImageDataUrl }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
     if (pathname === "/api/admin/payout-requests" && req.method === "GET") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);

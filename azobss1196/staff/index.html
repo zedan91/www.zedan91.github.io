@@ -733,10 +733,22 @@ body[data-dashboard-page="staff"] textarea{padding:8px 9px;border-radius:9px;fon
 #salesList,#shareComList,#payoutList,#payoutRequestList{margin-top:6px}
 #payoutProfileNotice,#payoutRequestNotice{font-size:12px;line-height:1.3}
 
-.az1194-qr-upload{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;align-items:center;margin:10px 0;padding:10px;border:1px solid rgba(56,189,248,.28);border-radius:12px;background:rgba(8,47,73,.15)}
-.az1194-qr-copy{display:grid;gap:6px}.az1194-qr-copy>b{color:#e2e8f0}.az1194-qr-copy>span{font-size:12px;color:#94a3b8}.az1194-qr-copy input[type=file]{max-width:100%;color:#cbd5e1}
-.az1194-qr-preview-wrap{display:grid;place-items:center;min-height:160px;border:1px dashed #334155;border-radius:12px;background:#fff;padding:6px}.az1194-qr-preview{display:block;width:150px;height:150px;object-fit:contain;background:#fff}.az1194-qr-empty{color:#64748b;font-weight:900}.az1194-qr-preview[hidden]{display:none!important}
-@media(max-width:700px){.az1194-qr-upload{grid-template-columns:1fr}.az1194-qr-preview-wrap{min-height:180px}.az1194-qr-preview{width:170px;height:170px}}
+.az1194-qr-upload{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:center;margin:10px 0;padding:12px;border:1px solid rgba(56,189,248,.28);border-radius:12px;background:rgba(8,47,73,.15)}
+.az1194-qr-copy{display:grid;gap:8px}.az1194-qr-copy>b{color:#e2e8f0}.az1194-qr-copy>span{font-size:12px;color:#94a3b8}.az1194-qr-copy input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.az1196-qr-edit-label{display:inline-flex!important;align-items:center;justify-content:center;cursor:pointer;width:max-content}
+.az1194-qr-preview-wrap{display:grid;place-items:center;min-height:260px;border:1px dashed #334155;border-radius:12px;background:#fff;padding:8px}.az1194-qr-preview{display:block;width:240px;height:240px;object-fit:contain;background:#fff}.az1194-qr-empty{color:#64748b;font-weight:900}.az1194-qr-preview[hidden]{display:none!important}
+@media(max-width:700px){.az1194-qr-upload{grid-template-columns:1fr}.az1194-qr-preview-wrap{min-height:250px}.az1194-qr-preview{width:230px;height:230px}}
+
+/* v1195: payout form/history stay open + compact pagination */
+.az1195-fixed-open{border:1px solid #334155;border-radius:13px;background:#0b1220;margin:8px 0;overflow:hidden}
+.az1195-fixed-open.az1191-panel{margin:0}
+.az1195-fixed-head{padding:10px 12px;font-weight:900;color:#dbeafe;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #243244;cursor:default;user-select:none}
+.az1195-pager{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:11px 0 2px;padding-top:10px;border-top:1px solid #243244}
+.az1195-pager[hidden]{display:none!important}
+.az1195-pager button{min-width:36px;padding:6px 9px!important;border-radius:8px!important}
+.az1195-pager button[aria-current="page"]{border-color:#22c55e!important;background:#14532d!important;color:#dcfce7!important}
+.az1195-pager button:disabled{opacity:.45;cursor:not-allowed}
+.az1195-page-info{font-size:11px;color:#94a3b8;font-weight:800;margin:0 4px;white-space:nowrap}
+@media(max-width:620px){.az1195-pager{gap:4px}.az1195-pager button{min-width:33px;padding:6px 7px!important}.az1195-page-info{width:100%;text-align:center;order:-1}}
 @media(max-width:1100px){.az1191-kpis{grid-template-columns:repeat(3,1fr)}.az1191-summaryline{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:800px){body[data-dashboard-page="staff"] .shell{grid-template-columns:1fr}body[data-dashboard-page="staff"] .main{padding:12px}.az1191-top{align-items:flex-start;flex-direction:column}.az1191-actions{justify-content:flex-start}.az1191-kpis{grid-template-columns:repeat(2,1fr)}.az1191-mini-grid{grid-template-columns:repeat(2,1fr)}.az1191-two{grid-template-columns:1fr}.az1191-compact-row{grid-template-columns:1fr}.az1191-row-metrics{justify-content:flex-start}.az1191-refbox{grid-template-columns:1fr}.az1191-ref-actions{justify-content:flex-start}}
 </style>
@@ -858,10 +870,10 @@ body[data-dashboard-page="staff"] textarea{padding:8px 9px;border-radius:9px;fon
 <div class="az1192-sync-note"><span class="az1192-sync-chip">↔ Admin: Payout Requests</span><span>Request Staff dihantar terus ke <b>Admin → Commission Manager → Payout Requests</b>.</span></div><div id="payoutSummary" class="az1191-kpis"></div>
 <div class="az1191-two">
  <details class="az1191-details az1191-panel" open><summary>📨 Request Payout <span id="payoutAvailableInline" class="az1191-chip good">RM0.00 tersedia</span></summary><div class="az1191-details-body"><div class="muted">Hanya komisen berstatus Approved boleh diminta. Admin akan semak request, kemudian bayar secara manual melalui <b>Bank Transfer / DuitNow / QR</b> berdasarkan Payout Profile kamu.</div><div class="az1191-toolbar"><input id="payoutRequestAmount" type="number" min="0" step="0.01" placeholder="Jumlah RM (kosong = semua)"><input id="payoutRequestNote" placeholder="Nota pilihan"><button class="btn green" id="submitPayoutRequest" type="button">Request</button></div><div id="payoutRequestNotice" class="muted"></div></div></details>
- <details class="az1191-details az1191-panel"><summary>🏦 Payout Profile <span id="payoutProfileSummary" class="muted">Belum disemak</span></summary><div class="az1191-details-body"><div class="az1191-toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><select id="payoutBankName"><option value="Maybank" data-swift="MBBEMYKL">Maybank</option><option value="CIMB Bank" data-swift="CIBBMYKL">CIMB Bank</option><option value="Public Bank" data-swift="PBBEMYKL">Public Bank</option><option value="RHB Bank" data-swift="RHBBMYKL">RHB Bank</option><option value="Hong Leong Bank" data-swift="HLBBMYKL">Hong Leong Bank</option><option value="Bank Islam" data-swift="BIMBMYKL">Bank Islam</option><option value="Bank Rakyat" data-swift="BKRMMYKL">Bank Rakyat</option><option value="Bank Simpanan Nasional" data-swift="BSNAMYK1">BSN</option><option value="AmBank" data-swift="ARBKMYKL">AmBank</option><option value="Alliance Bank" data-swift="MFBBMYKL">Alliance Bank</option><option value="Affin Bank" data-swift="PHBMMYKL">Affin Bank</option><option value="Agrobank" data-swift="AGOBMYKL">Agrobank</option><option value="OCBC Bank" data-swift="OCBCMYKL">OCBC Bank</option><option value="UOB Malaysia" data-swift="UOVBMYKL">UOB Malaysia</option><option value="Standard Chartered" data-swift="SCBLMYKX">Standard Chartered</option><option value="HSBC Bank Malaysia" data-swift="HBMBMYKL">HSBC</option><option value="Citibank" data-swift="CITIMYKL">Citibank</option><option value="Bank Muamalat" data-swift="BMMBMYKL">Bank Muamalat</option><option value="Al Rajhi Bank" data-swift="RJHIMYKL">Al Rajhi Bank</option><option value="Kuwait Finance House" data-swift="KFHOMYKL">Kuwait Finance House</option></select><input id="payoutWalletName" placeholder="Wallet / provider (jika bukan bank)" style="display:none"><input id="payoutAccountName" placeholder="Nama pemilik akaun"></div><div class="az1191-toolbar"><input id="payoutAccountNo" placeholder="No akaun / DuitNow ID"><input id="payoutPhone" placeholder="Telefon (optional)"><input id="payoutEmail" placeholder="Email payout (optional)"></div><textarea id="payoutProfileNote" placeholder="Nota payout (optional)"></textarea><div class="az1194-qr-upload"><div class="az1194-qr-copy"><b>QR Payout (Optional)</b><span>Upload QR DuitNow / bank supaya Admin boleh scan terus dari phone semasa bayar.</span><input id="payoutQrImage" type="file" accept="image/png,image/jpeg,image/webp"><div class="az1191-toolbar"><button class="btn" id="removePayoutQr" type="button">Remove QR</button><span id="payoutQrInfo" class="muted">PNG/JPG/WebP • akan dikecilkan automatik.</span></div></div><div class="az1194-qr-preview-wrap"><img id="payoutQrPreview" class="az1194-qr-preview" alt="Payout QR preview" hidden><div id="payoutQrEmpty" class="az1194-qr-empty">No QR</div></div></div><div class="az1191-toolbar"><button class="btn green" id="savePayoutProfile" type="button">Simpan</button><button class="btn" id="loadPayoutProfile" type="button">Reload</button><span id="payoutProfileNotice" class="muted"></span></div></div></details>
+ <section class="az1191-details az1191-panel az1195-fixed-open" id="payoutProfilePanel"><div class="az1195-fixed-head">🏦 Payout Profile <span id="payoutProfileSummary" class="muted">Belum disemak</span></div><div class="az1191-details-body"><div class="az1191-toolbar"><select id="payoutMethod"><option value="bank">Bank Transfer</option><option value="duitnow">DuitNow</option><option value="tng">Touch n Go</option><option value="ewallet">eWallet</option><option value="paypal">PayPal</option><option value="cash">Cash</option><option value="other">Other</option></select><select id="payoutBankName"><option value="Maybank" data-swift="MBBEMYKL">Maybank</option><option value="CIMB Bank" data-swift="CIBBMYKL">CIMB Bank</option><option value="Public Bank" data-swift="PBBEMYKL">Public Bank</option><option value="RHB Bank" data-swift="RHBBMYKL">RHB Bank</option><option value="Hong Leong Bank" data-swift="HLBBMYKL">Hong Leong Bank</option><option value="Bank Islam" data-swift="BIMBMYKL">Bank Islam</option><option value="Bank Rakyat" data-swift="BKRMMYKL">Bank Rakyat</option><option value="Bank Simpanan Nasional" data-swift="BSNAMYK1">BSN</option><option value="AmBank" data-swift="ARBKMYKL">AmBank</option><option value="Alliance Bank" data-swift="MFBBMYKL">Alliance Bank</option><option value="Affin Bank" data-swift="PHBMMYKL">Affin Bank</option><option value="Agrobank" data-swift="AGOBMYKL">Agrobank</option><option value="OCBC Bank" data-swift="OCBCMYKL">OCBC Bank</option><option value="UOB Malaysia" data-swift="UOVBMYKL">UOB Malaysia</option><option value="Standard Chartered" data-swift="SCBLMYKX">Standard Chartered</option><option value="HSBC Bank Malaysia" data-swift="HBMBMYKL">HSBC</option><option value="Citibank" data-swift="CITIMYKL">Citibank</option><option value="Bank Muamalat" data-swift="BMMBMYKL">Bank Muamalat</option><option value="Al Rajhi Bank" data-swift="RJHIMYKL">Al Rajhi Bank</option><option value="Kuwait Finance House" data-swift="KFHOMYKL">Kuwait Finance House</option></select><input id="payoutWalletName" placeholder="Wallet / provider (jika bukan bank)" style="display:none"><input id="payoutAccountName" placeholder="Nama pemilik akaun"></div><div class="az1191-toolbar"><input id="payoutAccountNo" placeholder="No akaun / DuitNow ID"><input id="payoutPhone" placeholder="Telefon (optional)"><input id="payoutEmail" placeholder="Email payout (optional)"></div><textarea id="payoutProfileNote" placeholder="Nota payout (optional)"></textarea><div class="az1194-qr-upload"><div class="az1194-qr-copy"><b>QR Payout (Optional)</b><span>Upload QR DuitNow / bank supaya Admin boleh scan terus dari phone semasa bayar.</span><input id="payoutQrImage" type="file" accept="image/png,image/jpeg,image/webp"><div class="az1191-toolbar"><label class="btn az1196-qr-edit-label" for="payoutQrImage">✏️ Edit / Tukar QR</label><button class="btn" id="removePayoutQr" type="button">Remove QR</button><span id="payoutQrInfo" class="muted">PNG/JPG/WebP • preview besar untuk semakan scan.</span></div></div><div class="az1194-qr-preview-wrap"><img id="payoutQrPreview" class="az1194-qr-preview" alt="Payout QR preview" hidden><div id="payoutQrEmpty" class="az1194-qr-empty">No QR</div></div></div><div class="az1191-toolbar"><button class="btn green" id="savePayoutProfile" type="button">Simpan</button><button class="btn" id="loadPayoutProfile" type="button">Reload</button><span id="payoutProfileNotice" class="muted"></span></div></div></section>
 </div>
-<details class="az1191-details" open><summary>🧾 Permintaan Payout <span id="payoutRequestCount" class="muted">0 rekod</span></summary><div class="az1191-details-body"><div class="az1191-toolbar"><button class="btn" id="refreshPayoutRequests" type="button">↻ Refresh Requests</button></div><div id="payoutRequestList" class="list"></div></div></details>
-<details class="az1191-details"><summary>📚 Rekod Komisen <span class="muted">Filter & sejarah penuh</span></summary><div class="az1191-details-body"><div class="az1191-toolbar"><select id="payoutFilter"><option value="all">Semua status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div><div id="payoutList" class="list"></div></div></details>
+<section class="az1191-details az1195-fixed-open" id="payoutRequestsPanel"><div class="az1195-fixed-head">🧾 Permintaan Payout <span id="payoutRequestCount" class="muted">0 rekod</span></div><div class="az1191-details-body"><div class="az1191-toolbar"><button class="btn" id="refreshPayoutRequests" type="button">↻ Refresh Requests</button></div><div id="payoutRequestList" class="list"></div><div id="payoutRequestPager" class="az1195-pager" hidden></div></div></section>
+<section class="az1191-details az1195-fixed-open" id="commissionHistoryPanel"><div class="az1195-fixed-head">📚 Rekod Komisen <span class="muted">Filter & sejarah penuh</span></div><div class="az1191-details-body"><div class="az1191-toolbar"><select id="payoutFilter"><option value="all">Semua status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select></div><div id="payoutList" class="list"></div><div id="payoutPager" class="az1195-pager" hidden></div></div></section>
 </section>
 </main></div>
 <script type="module">
@@ -1332,6 +1344,8 @@ function downloadTextFile(name,body,type='text/csv;charset=utf-8'){
 }
 let lastPayoutRows=[];
 let allPayoutRows=[];
+let payoutCommissionPage=1;
+const payoutCommissionPageSize=8;
 let payoutConfig={minAmount:0.01,minAmountText:'RM0.01',maxAmount:0,maxAmountText:''};
 function payoutConfigNotice(){
  const bits=[];
@@ -1339,19 +1353,32 @@ function payoutConfigNotice(){
  if(payoutConfig?.maxAmountText) bits.push('Maximum per request: '+payoutConfig.maxAmountText);
  return bits.join(' • ');
 }
-async function payoutView(){
- const rows=visibleCommissionRows(await getCommissionRecords());
- allPayoutRows=rows;
+function az1195PagerTokens(current,total){
+ const set=new Set([1,total,current-1,current,current+1]);
+ const pages=[...set].filter(x=>x>=1&&x<=total).sort((a,b)=>a-b), out=[];
+ let prev=0;
+ pages.forEach(p=>{if(prev&&p-prev>1)out.push('…');out.push(p);prev=p;});
+ return out;
+}
+function az1195RenderPager(holder,current,totalRows,pageSize,kind){
+ if(!holder) return;
+ const totalPages=Math.max(1,Math.ceil(totalRows/pageSize));
+ if(totalRows<=pageSize){holder.hidden=true;holder.innerHTML='';return;}
+ holder.hidden=false;
+ const start=((current-1)*pageSize)+1, end=Math.min(totalRows,current*pageSize);
+ const attr=kind==='request'?'data-payout-request-page':'data-payout-page';
+ const pages=az1195PagerTokens(current,totalPages).map(x=>x==='…'?'<span class="az1195-page-info">…</span>':`<button class="btn" type="button" ${attr}="${x}" ${x===current?'aria-current="page"':''}>${x}</button>`).join('');
+ holder.innerHTML=`<button class="btn" type="button" ${attr}="${Math.max(1,current-1)}" ${current<=1?'disabled':''}>◀ Sebelum</button>${pages}<span class="az1195-page-info">${start}–${end} daripada ${totalRows} • Halaman ${current}/${totalPages}</span><button class="btn" type="button" ${attr}="${Math.min(totalPages,current+1)}" ${current>=totalPages?'disabled':''}>Seterusnya ▶</button>`;
+}
+function renderPayoutCommissionPage(){
  const filter=String($('#payoutFilter')?.value||'all').toLowerCase();
- const sum={pending:0,approved:0,paid:0,rejected:0,total:0};
- rows.forEach(x=>{const st=payoutStatusOf(x); const amt=commissionAmountOf(x); if(st!=='rejected'&&st!=='void')sum.total+=amt; if(sum[st]!==undefined)sum[st]+=amt; else sum.pending+=amt;});
- if($('#payoutSummary')) $('#payoutSummary').innerHTML=[
-  ['Jumlah',sum.total,''],['Sedia Dibayar',sum.approved,'primary'],['Pending',sum.pending,''],['Paid',sum.paid,''],['Rejected',sum.rejected,'']
- ].map(([l,v,c])=>`<div class="az1191-kpi ${c}"><div class="l">${l}</div><div class="v">${az1191Money(v)}</div></div>`).join('') + (payoutConfigNotice()?`<div class="az1191-kpi"><div class="l">Rule</div><div class="v" style="font-size:13px">${esc(payoutConfigNotice())}</div></div>`:'');
- if($('#payoutAvailableInline')) $('#payoutAvailableInline').textContent=az1191Money(sum.approved)+' tersedia';
- const filtered=rows.filter(x=>filter==='all'||payoutStatusOf(x)===filter);
+ const filtered=allPayoutRows.filter(x=>filter==='all'||payoutStatusOf(x)===filter);
  lastPayoutRows=filtered;
- const html=filtered.map(x=>{
+ const totalPages=Math.max(1,Math.ceil(filtered.length/payoutCommissionPageSize));
+ payoutCommissionPage=Math.max(1,Math.min(payoutCommissionPage,totalPages));
+ const start=(payoutCommissionPage-1)*payoutCommissionPageSize;
+ const pageRows=filtered.slice(start,start+payoutCommissionPageSize);
+ const html=pageRows.map(x=>{
    const product=esc(x.productName||x.product||x.title||x.productId||'Product');
    const order=esc(x.orderId||x.billCode||x.docId||'');
    const st=payoutStatusOf(x), sale=saleAmountOf(x), com=commissionAmountOf(x), type=esc(commissionKind(x)||'commission');
@@ -1359,7 +1386,19 @@ async function payoutView(){
    return `<div class="item az1191-compact-row"><div><div class="az1191-row-title">${product}</div><div class="az1191-row-sub">${type} • Order ${order}${method?' • '+method:''}${ref?' • Ref '+ref:''}</div></div><div class="az1191-row-metrics"><span class="az1191-chip good">${az1191Money(com)}</span><span class="az1191-chip">Sale ${az1191Money(sale)}</span><span class="az1191-chip ${az1191StatusClass(st)}">${esc(az1191StatusLabel(st))}</span></div></div>`;
  }).join('');
  const notice=staffApiNotice?`<div class="az1191-notice">ℹ️ ${esc(staffApiNotice)}</div>`:'';
- if($('#payoutList')) $('#payoutList').innerHTML=html || notice || '<div class="az1191-empty"><b>Belum ada rekod payout.</b><br>Rekod komisen akan muncul selepas jualan/referral yang sah.</div>';
+ if($('#payoutList')) $('#payoutList').innerHTML=(notice+html) || '<div class="az1191-empty"><b>Belum ada rekod payout.</b><br>Rekod komisen akan muncul selepas jualan/referral yang sah.</div>';
+ az1195RenderPager($('#payoutPager'),payoutCommissionPage,filtered.length,payoutCommissionPageSize,'commission');
+}
+async function payoutView(){
+ const rows=visibleCommissionRows(await getCommissionRecords());
+ allPayoutRows=rows;
+ const sum={pending:0,approved:0,paid:0,rejected:0,total:0};
+ rows.forEach(x=>{const st=payoutStatusOf(x); const amt=commissionAmountOf(x); if(st!=='rejected'&&st!=='void')sum.total+=amt; if(sum[st]!==undefined)sum[st]+=amt; else sum.pending+=amt;});
+ if($('#payoutSummary')) $('#payoutSummary').innerHTML=[
+  ['Jumlah',sum.total,''],['Sedia Dibayar',sum.approved,'primary'],['Pending',sum.pending,''],['Paid',sum.paid,''],['Rejected',sum.rejected,'']
+ ].map(([l,v,c])=>`<div class="az1191-kpi ${c}"><div class="l">${l}</div><div class="v">${az1191Money(v)}</div></div>`).join('') + (payoutConfigNotice()?`<div class="az1191-kpi"><div class="l">Rule</div><div class="v" style="font-size:13px">${esc(payoutConfigNotice())}</div></div>`:'');
+ if($('#payoutAvailableInline')) $('#payoutAvailableInline').textContent=az1191Money(sum.approved)+' tersedia';
+ renderPayoutCommissionPage();
 }
 function exportPayoutCsv(){
  const rows=lastPayoutRows||[];
@@ -1459,21 +1498,37 @@ function payoutTimelineHtml(r){
  if(!rows.length) return '';
  return `<div class="muted" style="margin-top:8px"><b>Timeline:</b>${rows.map(x=>`<div>• ${esc(x.status||x.type||'update')} — ${esc(x.note||'')} ${x.createdAt?`<span class="muted">(${esc(new Date(x.createdAt).toLocaleString())})</span>`:''}</div>`).join('')}</div>`;
 }
+let payoutRequestRows=[];
+let payoutRequestPage=1;
+const payoutRequestPageSize=5;
+function renderPayoutRequestPage(){
+ const rows=payoutRequestRows||[];
+ const totalPages=Math.max(1,Math.ceil(rows.length/payoutRequestPageSize));
+ payoutRequestPage=Math.max(1,Math.min(payoutRequestPage,totalPages));
+ const start=(payoutRequestPage-1)*payoutRequestPageSize;
+ const pageRows=rows.slice(start,start+payoutRequestPageSize);
+ if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=pageRows.map(r=>{
+   const st=String(r.status||'requested').toLowerCase();
+   const canCancel=['requested','reviewing'].includes(st);
+   const rid=esc(r.requestId||r.docId||'');
+   const receiptLabel=st==='paid'?'View Receipt':'View Statement';
+   return `<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(st)}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}${r.gatewayStatus?`<div class="muted">🏦 Bank status: <b>${esc(r.gatewayStatus)}</b>${r.gatewayPaymentOrderId?' • '+esc(r.gatewayPaymentOrderId):''}</div>`:''}${payoutTimelineHtml(r)}<div class="toolbar"><button class="btn" type="button" data-payout-receipt="${rid}">${receiptLabel}</button>${canCancel?`<button class="btn danger" type="button" data-cancel-payout-request="${rid}">Cancel Request</button>`:''}</div></div>`;
+ }).join('') || '<div class="item">No payout requests yet.</div>';
+ az1195RenderPager($('#payoutRequestPager'),payoutRequestPage,rows.length,payoutRequestPageSize,'request');
+}
 async function loadPayoutRequests(){
  try{
    const j=await azStaffFetchJson(AZOBSS_BACKEND_API+'/api/staff/payout-requests',{cache:'no-store'});
    payoutConfig=j.config||payoutConfig||{};
    if($('#payoutRequestNotice') && payoutConfigNotice() && !$('#payoutRequestNotice').textContent) $('#payoutRequestNotice').textContent=payoutConfigNotice();
-   const rows=Array.isArray(j.requests)?j.requests:[];
-   if($('#payoutRequestCount')) $('#payoutRequestCount').textContent=rows.length+' rekod';
-   if($('#payoutRequestList')) $('#payoutRequestList').innerHTML=rows.map(r=>{
-     const st=String(r.status||'requested').toLowerCase();
-     const canCancel=['requested','reviewing'].includes(st);
-     const rid=esc(r.requestId||r.docId||'');
-     const receiptLabel=st==='paid'?'View Receipt':'View Statement';
-     return `<div class="item"><b>📨 ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${esc(st)}</b><div class="muted">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?new Date(r.createdAt).toLocaleString():'')}</div><div class="muted">${esc(r.note||'')}</div>${r.adminNote?`<div class="muted">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="muted">Reference: ${esc(r.payoutReference)}</div>`:''}${r.gatewayStatus?`<div class="muted">🏦 Bank status: <b>${esc(r.gatewayStatus)}</b>${r.gatewayPaymentOrderId?' • '+esc(r.gatewayPaymentOrderId):''}</div>`:''}${payoutTimelineHtml(r)}<div class="toolbar"><button class="btn" type="button" data-payout-receipt="${rid}">${receiptLabel}</button>${canCancel?`<button class="btn danger" type="button" data-cancel-payout-request="${rid}">Cancel Request</button>`:''}</div></div>`;
-   }).join('') || '<div class="item">No payout requests yet.</div>';
- }catch(e){ if($('#payoutRequestList')) $('#payoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>'; }
+   payoutRequestRows=Array.isArray(j.requests)?j.requests:[];
+   if($('#payoutRequestCount')) $('#payoutRequestCount').textContent=payoutRequestRows.length+' rekod';
+   renderPayoutRequestPage();
+ }catch(e){
+   payoutRequestRows=[];
+   if($('#payoutRequestList')) $('#payoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>';
+   az1195RenderPager($('#payoutRequestPager'),1,0,payoutRequestPageSize,'request');
+ }
 }
 async function cancelPayoutRequest(requestId){
  try{
@@ -1546,10 +1601,10 @@ function az1192SetStaffTab(tab,{updateUrl=true,query=''}={}){
   if(tab==='payout') payoutTools();
 }
 function az1192InitialStaffTab(){try{return new URL(location.href).searchParams.get('tab')||'overview';}catch(_e){return 'overview';}}
-document.addEventListener('click',e=>{const cr=e.target.closest('[data-copy-ref-link]');if(cr){az1191Copy(cr.dataset.copyRefLink).then(ok=>{cr.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>cr.textContent='Copy link',1200)});return;}const cross=e.target.closest('[data-staff-cross-tab]');if(cross){az1192SetStaffTab(cross.dataset.staffCrossTab,{query:cross.dataset.staffCrossQuery||''});return;}const jump=e.target.closest('[data-tab-jump]');if(jump){az1192SetStaffTab(jump.dataset.tabJump);return;}const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){az1192SetStaffTab(b.dataset.tab);}});
+document.addEventListener('click',e=>{const pp=e.target.closest('[data-payout-page]');if(pp&&!pp.disabled){payoutCommissionPage=Math.max(1,Number(pp.dataset.payoutPage)||1);renderPayoutCommissionPage();$('#commissionHistoryPanel')?.scrollIntoView({behavior:'smooth',block:'start'});return;}const prp=e.target.closest('[data-payout-request-page]');if(prp&&!prp.disabled){payoutRequestPage=Math.max(1,Number(prp.dataset.payoutRequestPage)||1);renderPayoutRequestPage();$('#payoutRequestsPanel')?.scrollIntoView({behavior:'smooth',block:'start'});return;}const cr=e.target.closest('[data-copy-ref-link]');if(cr){az1191Copy(cr.dataset.copyRefLink).then(ok=>{cr.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>cr.textContent='Copy link',1200)});return;}const cross=e.target.closest('[data-staff-cross-tab]');if(cross){az1192SetStaffTab(cross.dataset.staffCrossTab,{query:cross.dataset.staffCrossQuery||''});return;}const jump=e.target.closest('[data-tab-jump]');if(jump){az1192SetStaffTab(jump.dataset.tabJump);return;}const pr=e.target.closest('[data-payout-receipt]');if(pr){viewPayoutReceipt(pr.dataset.payoutReceipt);return;}const c=e.target.closest('[data-cancel-payout-request]');if(c){cancelPayoutRequest(c.dataset.cancelPayoutRequest);return;}const b=e.target.closest('[data-tab]');if(b){az1192SetStaffTab(b.dataset.tab);}});
 function syncPayoutMethodFields(){const m=$('#payoutMethod')?.value||'bank';const isBank=m==='bank';if($('#payoutBankName'))$('#payoutBankName').style.display=isBank?'':'none';if($('#payoutWalletName'))$('#payoutWalletName').style.display=isBank?'none':'';}
 $('#payoutMethod')?.addEventListener('change',syncPayoutMethodFields);setTimeout(syncPayoutMethodFields,0);
-$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutTools);$('#payoutFilter')?.addEventListener('change',payoutView);$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#payoutQrImage')?.addEventListener('change',onPayoutQrSelected);$('#removePayoutQr')?.addEventListener('click',removePayoutQr);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',loadPayoutRequests);
+$('#submitSw').onclick=submitSw;$('#submitCad').onclick=submitCad;$('#refreshSales').onclick=sales;$('#refreshShareCom')?.addEventListener('click',shareCom);$('#refreshPayout')?.addEventListener('click',payoutTools);$('#payoutFilter')?.addEventListener('change',()=>{payoutCommissionPage=1;renderPayoutCommissionPage();});$('#exportPayoutCsv')?.addEventListener('click',exportPayoutCsv);$('#savePayoutProfile')?.addEventListener('click',savePayoutProfile);$('#payoutQrImage')?.addEventListener('change',onPayoutQrSelected);$('#removePayoutQr')?.addEventListener('click',removePayoutQr);$('#loadPayoutProfile')?.addEventListener('click',loadPayoutProfile);$('#submitPayoutRequest')?.addEventListener('click',submitPayoutRequest);$('#refreshPayoutRequests')?.addEventListener('click',()=>{payoutRequestPage=1;loadPayoutRequests();});
 $('#refreshOverview')?.addEventListener('click',overview);$('#salesSearch')?.addEventListener('input',renderStaffSales);$('#salesPayoutFilter')?.addEventListener('change',renderStaffSales);$('#salesTypeFilter')?.addEventListener('change',renderStaffSales);$('#shareSearch')?.addEventListener('input',renderStaffShareRows);$('#shareStatusFilter')?.addEventListener('change',renderStaffShareRows);$('#copySoftwareReferral')?.addEventListener('click',async e=>{const ok=await az1191Copy(az1191ReferralLinks().software);e.currentTarget.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>e.currentTarget.textContent='Copy',1200)});$('#copyCadReferral')?.addEventListener('click',async e=>{const ok=await az1191Copy(az1191ReferralLinks().cad);e.currentTarget.textContent=ok?'Copied ✓':'Copy gagal';setTimeout(()=>e.currentTarget.textContent='Copy',1200)});$('#shareSoftwareReferral')?.addEventListener('click',async()=>{const url=az1191ReferralLinks().software;try{if(navigator.share)await navigator.share({title:'AZOBSS Software Tools',text:'Software & tools AZOBSS',url});else await az1191Copy(url);}catch(_){}});
 onAuthStateChanged(auth,async u=>{
  user=u;
