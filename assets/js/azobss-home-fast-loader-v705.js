@@ -16,7 +16,7 @@
     jobs.set(key, p);
     return p;
   };
-  const loadAuth = () => importOnce('auth','/assets/js/azobss-global-auth.js?v=705');
+  const loadAuth = () => importOnce('auth','/assets/js/azobss-global-auth.js?v=1199');
   const loadLikes = () => importOnce('likes','/assets/js/azobss-home-likes-lite.js?v=705');
   const loadCart = () => importOnce('cart','/assets/js/home-deferred/cart-firestore-sync-v705.js?v=705');
   const loadPromo = () => importOnce('promo','/assets/js/home-deferred/home-software-promo-v705.js?v=705');

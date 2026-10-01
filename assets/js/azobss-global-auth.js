@@ -1708,17 +1708,42 @@ function syncHeader(user){
   const staffButtons = Array.from(document.querySelectorAll('.azStaffDashboardBtn, .staff-dashboard-btn, .market-nav a[href="/staff/"]'));
   const whatsappButtons = Array.from(document.querySelectorAll('.market-nav .nav-whatsapp-link, .market-nav a[href*="alvo.chat"]'));
 
+  // v1199: make the live role state authoritative for both visibility AND clickability.
+  // Some compact navbar styles intentionally pre-hide role buttons with
+  // pointer-events:none. Pages without a page-local role-sync could therefore
+  // show the Staff/Admin icon via inline display while it remained unclickable.
+  // Keep body role classes and pointer-events in sync here so every page uses
+  // the same behaviour, including PC & IT Services pages.
+  document.body.classList.toggle('az-role-is-admin', !!isAdminUser);
+  document.body.classList.toggle('az-role-is-staff', !!isStaffUser);
+
   adminButtons.forEach((el)=>{
     const show = !!isAdminUser;
     el.hidden = !show;
     el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
     el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+    el.style.setProperty('pointer-events', show ? 'auto' : 'none', 'important');
+    if(show){
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
+    }else{
+      el.setAttribute('aria-hidden','true');
+      el.setAttribute('tabindex','-1');
+    }
   });
   staffButtons.forEach((el)=>{
     const show = !!isStaffUser;
     el.hidden = !show;
     el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
     el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+    el.style.setProperty('pointer-events', show ? 'auto' : 'none', 'important');
+    if(show){
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
+    }else{
+      el.setAttribute('aria-hidden','true');
+      el.setAttribute('tabindex','-1');
+    }
   });
   whatsappButtons.forEach((el)=>{
     const show = !isAdminUser && !isStaffUser;

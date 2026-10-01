@@ -2209,6 +2209,30 @@ body[data-dashboard-page="admin"] .topbar{
 .az1197-cropper{display:grid;gap:10px;margin-top:10px;padding:12px;border:1px solid rgba(56,189,248,.35);border-radius:14px;background:rgba(8,47,73,.18)}.az1197-cropper[hidden]{display:none!important}.az1197-crop-stage{position:relative;display:grid;place-items:center;width:min(100%,440px);margin:auto;padding:10px;border-radius:14px;background:#020617;box-sizing:border-box}.az1197-crop-canvas{display:block;width:min(390px,82vw);height:auto;aspect-ratio:1/1;background:#fff;border:2px solid #38bdf8;border-radius:10px;touch-action:none;cursor:grab}.az1197-crop-canvas.is-dragging{cursor:grabbing}.az1197-crop-hint{font-size:12px;color:#bae6fd;text-align:center;line-height:1.4}.az1197-crop-controls{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}.az1197-crop-controls label{display:flex;align-items:center;gap:8px;color:#cbd5e1;font-size:12px}.az1197-crop-controls input[type=range]{width:min(260px,55vw);accent-color:#22c55e}.az1197-crop-controls .btn{padding:7px 10px;min-height:0}
 
 </style>
+
+<style id="azobss-admin-commission-scale-style">
+/* v1198 scalable Commission Manager: compact tables + drawers + needs-action workflow */
+#commissions{--az1198-border:rgba(148,163,184,.20);--az1198-soft:rgba(15,23,42,.68);--az1198-row:rgba(8,15,29,.72)}
+.az1198-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px}.az1198-topbar h2{margin:0}.az1198-top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.az1198-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:10px 0}.az1198-kpi{padding:12px!important;min-height:84px;display:grid;align-content:center}.az1198-kpi .stat-label{font-size:10.5px}.az1198-kpi .stat-value{font-size:27px}.az1198-kpi .az-kpi-note{font-size:10.5px;margin-top:2px}
+.az1198-mini-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 10px}.az1198-mini-metric{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--az1198-border);border-radius:10px;background:rgba(15,23,42,.48);font-size:11px;color:#94a3b8}.az1198-mini-metric b{font-size:12.5px;color:#e2e8f0;white-space:nowrap}
+.az1198-section-card{padding:12px!important}.az1198-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px}.az1198-card-head h2{margin:0;font-size:19px}.az1198-card-head .tabs-note{margin:3px 0 0}
+.az1198-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:7px 0}.az1198-toolbar input,.az1198-toolbar select{min-height:38px}.az1198-toolbar .az1198-grow{flex:1;min-width:220px}
+.az1198-table{border:1px solid var(--az1198-border);border-radius:12px;overflow:visible;background:rgba(2,6,23,.28)}.az1198-table-head,.az1198-table-row{display:grid;align-items:center;gap:8px;padding:8px 10px}.az1198-table-head{min-height:34px;background:rgba(30,41,59,.74);border-radius:11px 11px 0 0;color:#93c5fd;font-weight:950;font-size:10px;text-transform:uppercase;letter-spacing:.35px}.az1198-table-body>.az1198-table-row{border-top:1px solid rgba(148,163,184,.12);background:var(--az1198-row);min-height:54px;transition:.14s ease}.az1198-table-body>.az1198-table-row:hover{background:rgba(30,41,59,.64)}
+.az1198-staff-grid{grid-template-columns:minmax(180px,2fr) minmax(82px,.8fr) minmax(82px,.8fr) minmax(92px,.9fr) minmax(88px,.8fr) minmax(120px,1fr) 66px}.az1198-commission-grid{grid-template-columns:30px minmax(230px,2.2fr) minmax(100px,.8fr) minmax(105px,.9fr) minmax(110px,.9fr) 54px}.az1198-payout-grid{grid-template-columns:30px minmax(180px,1.7fr) minmax(100px,.8fr) minmax(120px,.95fr) minmax(110px,.9fr) minmax(105px,.9fr) 60px}
+.az1198-person{min-width:0}.az1198-person strong{display:block;color:#f8fafc;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az1198-sub{display:block;color:#94a3b8;font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az1198-money{font-weight:950;color:#e2e8f0;font-size:12px}.az1198-money.ready{color:#86efac}.az1198-money.pending{color:#fde68a}.az1198-status{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;padding:3px 7px;border-radius:999px;border:1px solid rgba(148,163,184,.25);font-size:9.5px;font-weight:950;white-space:nowrap}.az1198-status.requested,.az1198-status.reviewing,.az1198-status.pending{color:#fde68a;border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.08)}.az1198-status.approved{color:#bfdbfe;border-color:rgba(59,130,246,.45);background:rgba(59,130,246,.08)}.az1198-status.paid{color:#86efac;border-color:rgba(34,197,94,.42);background:rgba(34,197,94,.08)}.az1198-status.rejected,.az1198-status.cancelled{color:#fecaca;border-color:rgba(239,68,68,.42);background:rgba(239,68,68,.08)}.az1198-status.void,.az1198-status.refunded{color:#cbd5e1;background:rgba(100,116,139,.12)}
+.az1198-open-btn{border:1px solid rgba(56,189,248,.28);background:rgba(14,116,144,.12);color:#bae6fd;border-radius:8px;min-height:30px;padding:5px 8px;font-size:10px;font-weight:950;cursor:pointer}.az1198-open-btn:hover{background:rgba(14,116,144,.24)}
+.az1198-row-menu{position:relative;justify-self:end}.az1198-row-menu>summary{list-style:none;width:32px;height:32px;display:grid;place-items:center;border:1px solid rgba(148,163,184,.22);border-radius:9px;background:rgba(15,23,42,.85);cursor:pointer;font-weight:950;font-size:18px}.az1198-row-menu>summary::-webkit-details-marker{display:none}.az1198-row-menu[open]>summary{border-color:rgba(56,189,248,.45)}.az1198-row-menu-pop{position:absolute;right:0;top:37px;z-index:60;width:170px;padding:6px;border:1px solid #334155;border-radius:10px;background:#0b1220;box-shadow:0 16px 45px rgba(0,0,0,.42);display:grid;gap:5px}.az1198-row-menu-pop .btn{width:100%;justify-content:flex-start;padding:7px 8px;min-height:0;font-size:10px}
+.az1198-queue-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:thin}.az1198-queue-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.68);color:#cbd5e1;border-radius:999px;padding:7px 11px;font-size:10.5px;font-weight:950;cursor:pointer}.az1198-queue-tab.active{color:#052e16;background:#4ade80;border-color:#4ade80}.az1198-queue-tab .count{margin-left:5px;opacity:.85}
+.az1198-selection-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px;margin:8px 0;border:1px solid rgba(56,189,248,.28);border-radius:10px;background:rgba(8,47,73,.20)}.az1198-selection-bar[hidden]{display:none!important}.az1198-selection-actions{display:flex;gap:6px;flex-wrap:wrap}.az1198-selection-actions .btn{min-height:32px;padding:6px 10px;font-size:10px}
+.az1198-tools>summary,.az1198-rules>summary{cursor:pointer;font-weight:950;color:#dbeafe}.az1198-tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.az1198-tool-box{border:1px solid rgba(148,163,184,.16);border-radius:11px;padding:10px;background:rgba(15,23,42,.44)}.az1198-tool-box h3{margin:0 0 5px;font-size:14px}.az1198-tool-box .tabs-note{margin:0 0 7px}
+.az1198-drawer-backdrop{position:fixed;inset:0;z-index:99980;background:rgba(2,6,23,.58);backdrop-filter:blur(2px)}.az1198-drawer-backdrop[hidden]{display:none!important}.az1198-drawer{position:fixed;z-index:99990;top:0;right:0;width:min(470px,94vw);height:100vh;background:#08111f;border-left:1px solid #334155;box-shadow:-24px 0 70px rgba(0,0,0,.45);display:flex;flex-direction:column;transform:translateX(0);overflow:hidden}.az1198-drawer[hidden]{display:none!important}.az1198-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px;border-bottom:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.92)}.az1198-drawer-title{min-width:0}.az1198-drawer-title strong{display:block;color:#f8fafc;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.az1198-drawer-title span{display:block;color:#94a3b8;font-size:11px;margin-top:3px}.az1198-drawer-close{width:36px;height:36px;border:1px solid rgba(148,163,184,.22);border-radius:10px;background:#111827;color:#e2e8f0;cursor:pointer}.az1198-drawer-body{padding:14px;overflow:auto;display:grid;gap:10px}.az1198-drawer-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.az1198-drawer-metric{padding:9px;border:1px solid rgba(148,163,184,.16);border-radius:10px;background:rgba(15,23,42,.62);text-align:center}.az1198-drawer-metric span{display:block;color:#94a3b8;font-size:9.5px;text-transform:uppercase;font-weight:900}.az1198-drawer-metric b{display:block;color:#f8fafc;font-size:15px;margin-top:3px}.az1198-drawer-section{border:1px solid rgba(148,163,184,.16);border-radius:11px;padding:10px;background:rgba(15,23,42,.44)}.az1198-drawer-section h3{margin:0 0 8px;font-size:13px;color:#dbeafe}.az1198-drawer-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(148,163,184,.08);font-size:11px}.az1198-drawer-line:last-child{border-bottom:0}.az1198-drawer-line span{color:#94a3b8}.az1198-drawer-line b{color:#e2e8f0;text-align:right;word-break:break-word}.az1198-drawer-list{display:grid;gap:5px}.az1198-drawer-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:7px 8px;border:1px solid rgba(148,163,184,.12);border-radius:9px;background:rgba(2,6,23,.32);font-size:10.5px}.az1198-drawer-item strong{display:block;color:#e2e8f0}.az1198-drawer-item small{color:#94a3b8}.az1198-drawer-actions{display:flex;gap:6px;flex-wrap:wrap}.az1198-drawer-actions .btn{padding:7px 9px;min-height:0;font-size:10px}.az1198-drawer-qr{display:grid;place-items:center;gap:8px}.az1198-drawer-qr img{display:block;width:min(330px,78vw);height:min(330px,78vw);object-fit:contain;background:#fff;border-radius:12px;padding:8px;box-sizing:border-box}.az1198-empty{padding:16px;text-align:center;color:#94a3b8;font-size:11px}
+.az1198-filter-panel{margin:0 0 10px}.az1198-filter-panel>summary{cursor:pointer;font-weight:950;color:#cbd5e1;font-size:12px}.az1198-filter-panel[open]>summary{margin-bottom:8px}.az1198-hidden-compat{display:none!important}
+.az1198-attention-dot{display:inline-block;width:8px;height:8px;border-radius:999px;background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.12);margin-right:6px}.az1198-ok-dot{display:inline-block;width:8px;height:8px;border-radius:999px;background:#22c55e;margin-right:6px}.az1198-qr-ok{color:#86efac;font-weight:950}.az1198-qr-missing{color:#fca5a5;font-weight:950}
+@media(max-width:1050px){.az1198-staff-grid{grid-template-columns:minmax(170px,1.8fr) 82px 82px 88px 72px 60px}.az1198-staff-grid>*:nth-child(6){display:none}.az1198-commission-grid{grid-template-columns:30px minmax(210px,2fr) 95px 100px 50px}.az1198-commission-grid>*:nth-child(4){display:none}.az1198-payout-grid{grid-template-columns:30px minmax(170px,1.6fr) 95px 110px 100px 55px}.az1198-payout-grid>*:nth-child(5){display:none}}
+@media(max-width:760px){.az1198-topbar{flex-direction:column}.az1198-top-actions{justify-content:flex-start}.az1198-kpi-grid{grid-template-columns:repeat(2,1fr)}.az1198-mini-metrics{grid-template-columns:repeat(2,1fr)}.az1198-tools-grid{grid-template-columns:1fr}.az1198-table{overflow-x:auto}.az1198-table-head,.az1198-table-row{min-width:720px}.az1198-drawer{width:100vw;max-width:100vw}.az1198-toolbar>*{width:100%!important;min-width:0!important}.az1198-drawer-metrics{grid-template-columns:repeat(3,1fr)}}
+</style>
+
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -3504,196 +3528,139 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="commissions" class="section">
-      <div class="az-commission-title-row">
+      <div class="az1198-topbar">
         <div>
           <h2>💸 Commission Manager Pro</h2>
-          <p class="az-section-help">Urus komisen Staff/Manager untuk jualan Software/CAD, referral, kelulusan dan payout dengan rekod audit yang lebih selamat.</p>
+          <p class="az-section-help">Urus Staff/Manager, commission dan payout dalam paparan compact yang kekal kemas walaupun jumlah staff bertambah.</p>
         </div>
-        <div id="commissionApiStatus" class="az-commission-api-chip checking">● Menyemak Commission API...</div>
-      </div>
-      <p class="tabs-note">PA/BM tidak termasuk dalam komisen Staff/Manager. Commission Manager menggunakan backend API sebagai sumber utama supaya rekod kewangan tidak bergantung pada Firestore browser permission.</p>
-
-      <div class="grid az-commission-rule-grid">
-        <div class="card az-commission-rule-card"><b>🏪 Produk Staff — Direct Sale</b><span>Jika produk Staff terjual tanpa sharer lain: owner 70% • AZOBSS 30%.</span></div>
-        <div class="card az-commission-rule-card"><b>🤝 Produk Staff — Dengan Sharer</b><span>Owner 60% • Staff/Manager sharer 10% • AZOBSS 30%.</span></div>
-        <div class="card az-commission-rule-card"><b>🔗 Share Produk AZOBSS</b><span>Staff/Manager sharer menerima 20% untuk paid order yang sah.</span></div>
-        <div class="card az-commission-rule-card"><b>🚫 PA/BM Excluded</b><span>PA/BM tidak dimasukkan dalam sistem komisen Staff/Manager.</span></div>
-      </div>
-
-      <div class="grid az-commission-kpi-grid">
-        <div class="card"><div class="stat-label">Jumlah Komisen RM</div><div id="adminComTotal" class="stat-value">0.00</div><div class="az-kpi-note">Aktif + adjustment, tidak termasuk void.</div></div>
-        <div class="card"><div class="stat-label">Belum Diluluskan RM</div><div id="adminComPending" class="stat-value">0.00</div><div class="az-kpi-note">Status pending.</div></div>
-        <div class="card"><div class="stat-label">Sedia Dibayar RM</div><div id="adminComApproved" class="stat-value">0.00</div><div class="az-kpi-note">Approved dan belum paid.</div></div>
-        <div class="card"><div class="stat-label">Sudah Dibayar RM</div><div id="adminComPaid" class="stat-value">0.00</div><div class="az-kpi-note">Ada rekod payout.</div></div>
-        <div class="card"><div class="stat-label">Jualan Unik</div><div id="adminComUniqueSalesCount" class="stat-value">0</div><div class="az-kpi-note">Order/bill dikira sekali sahaja.</div></div>
-        <div class="card"><div class="stat-label">Nilai Jualan Unik RM</div><div id="adminComSalesTotal" class="stat-value">0.00</div><div class="az-kpi-note">Tidak double-count owner + sharer.</div></div>
-        <div class="card"><div class="stat-label">Purata Komisen %</div><div id="adminComAvgRate" class="stat-value">0%</div><div class="az-kpi-note">Auto commission sahaja.</div></div>
-        <div class="card"><div class="stat-label">Rekod Aktif / Void</div><div id="adminComCount" class="stat-value">0 / 0</div><div id="adminComRejectedNote" class="az-kpi-note">Rejected RM0.00</div></div>
-      </div>
-
-      <div class="card az-commission-staff-summary-card">
-        <div class="az-commission-card-head">
-          <div><h2>Staff / Manager Payout Summary</h2><p class="tabs-note">Ringkasan siapa yang masih pending, sedia dibayar dan sudah dibayar. Klik nama untuk filter rekod.</p></div>
-        </div>
-        <div id="commissionStaffSummaryList" class="az-commission-staff-summary-list"></div>
-      </div>
-
-      <div class="az1192-admin-map">
-        <div><b>📊 Staff Overview</b><span>↔ Admin Commission Summary untuk Staff yang sama.</span></div>
-        <div><b>💳 Sales View</b><span>↔ Owner Direct / Owner Split commission records.</span></div>
-        <div><b>🔗 Share Link</b><span>↔ Referral / share commission records.</span></div>
-        <div><b>💸 Payout</b><span>↔ Approved commission + Payout Requests.</span></div>
-      </div>
-      <div id="commissionStaffContext" class="az1192-context" hidden>
-        <div class="az1192-context-main"><span>Staff dipilih:</span><span id="commissionStaffContextName" class="az1192-context-user">-</span><span id="commissionStaffContextMeta" class="tabs-note"></span></div>
-        <div class="az1192-context-actions">
-          <button class="btn" type="button" data-commission-context-mode="overview">📊 Overview</button>
-          <button class="btn" type="button" data-commission-context-mode="sales">💳 Sales</button>
-          <button class="btn" type="button" data-commission-context-mode="share">🔗 Share</button>
-          <button class="btn" type="button" data-commission-context-mode="payout">💸 Payout</button>
-          <button class="btn gray" type="button" data-commission-context-clear>Clear</button>
-        </div>
-      </div>
-
-      <div class="card az-commission-pro-card">
-        <h2>Carian & Penapis</h2>
-        <div class="toolbar az-commission-toolbar">
-          <input id="commissionSearch" placeholder="Cari username / email / produk / order / bill..." style="flex:1;min-width:260px">
-          <input id="commissionStaffFilter" placeholder="Username Staff/Manager" style="min-width:170px">
-          <input id="commissionProductFilter" placeholder="Nama / ID produk" style="min-width:190px">
-          <select id="commissionSourceFilter" title="Source">
-            <option value="all">Semua Produk</option>
-            <option value="software">Software</option>
-            <option value="cad">CAD</option>
-          </select>
-          <select id="commissionTypeFilter" title="Jenis komisen">
-            <option value="all">Semua Jenis</option>
-            <option value="owner_sale">Owner Direct Sale</option>
-            <option value="owner_sale_split">Owner Split Sale</option>
-            <option value="admin_product_share_referral">AZOBSS Referral 20%</option>
-            <option value="share_referral">Other Staff Referral</option>
-            <option value="manual">Manual Adjustment</option>
-          </select>
-          <select id="commissionPayoutFilter" title="Status payout">
-            <option value="all">Semua Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved / Ready</option>
-            <option value="paid">Paid</option>
-            <option value="rejected">Rejected</option>
-            <option value="void">Void</option>
-          </select>
-          <select id="commissionMonthFilter" title="Tarikh">
-            <option value="all">Semua Tarikh</option>
-            <option value="today">Hari Ini</option>
-            <option value="thisMonth">Bulan Ini</option>
-            <option value="lastMonth">Bulan Lepas</option>
-            <option value="custom">Tarikh Custom</option>
-          </select>
-          <input id="commissionMinAmount" type="number" step="0.01" placeholder="Min RM" title="Minimum commission amount">
-          <input id="commissionMaxAmount" type="number" step="0.01" placeholder="Max RM" title="Maximum commission amount">
-          <input id="commissionDateFrom" type="date" title="Dari" class="az-commission-date-input" disabled>
-          <input id="commissionDateTo" type="date" title="Hingga" class="az-commission-date-input" disabled>
-          <button class="btn" id="refreshCommissionRecords" type="button">Refresh</button>
-          <button class="btn gray" id="clearCommissionFilters" type="button">Clear</button>
+        <div class="az1198-top-actions">
+          <div id="commissionApiStatus" class="az-commission-api-chip checking">● Menyemak Commission API...</div>
+          <button class="btn" id="refreshCommissionRecords" type="button">↻ Refresh</button>
           <button class="btn green" id="exportCommissionCsv" type="button">Export CSV</button>
         </div>
-        <div id="commissionResultInfo" class="tabs-note">Ready.</div>
       </div>
 
-      <div class="split az-commission-pro-split">
-        <div class="card">
-          <h2>Jana / Baiki Komisen Paid Order</h2>
-          <p class="tabs-note">Guna jika pembayaran Software/CAD sudah paid tetapi commission record belum dijana. Masukkan Order ID atau Bill Code.</p>
-          <div class="toolbar">
-            <input id="commissionRetryOrderId" placeholder="Order ID / Bill Code" style="flex:1;min-width:220px">
-            <button class="btn amber" id="retryCommissionOrder" type="button">Jana / Baiki</button>
-          </div>
-          <div id="commissionRetryResult" class="tabs-note">Paid Software/CAD orders sahaja yang layak.</div>
-        </div>
-
-        <div class="card">
-          <h2>Bayaran Pukal</h2>
-          <p class="tabs-note">Bayaran Paid dibuat mengikut seorang Staff/Manager pada satu masa. Pending perlu Approved dahulu.</p>
-          <div class="toolbar">
-            <button class="btn gray" id="selectAllVisibleCommissions" type="button">Pilih Paparan</button>
-            <button class="btn gray" id="clearSelectedCommissions" type="button">Kosongkan</button>
-            <button class="btn" data-commission-bulk="approved" type="button">Approve</button>
-            <button class="btn green" data-commission-bulk="paid" type="button">Mark Paid</button>
-            <button class="btn red" data-commission-bulk="rejected" type="button">Reject</button>
-            <button class="btn gray" data-commission-bulk="pending" type="button">Kembali Pending</button>
-          </div>
-          <div id="commissionSelectedInfo" class="tabs-note">Selected: 0 • RM0.00 • 0 Staff</div>
-        </div>
+      <div class="az1198-kpi-grid">
+        <div class="card az1198-kpi"><div class="stat-label">Jumlah Komisen RM</div><div id="adminComTotal" class="stat-value">0.00</div><div class="az-kpi-note">Aktif + adjustment.</div></div>
+        <div class="card az1198-kpi"><div class="stat-label">Belum Diluluskan RM</div><div id="adminComPending" class="stat-value">0.00</div><div class="az-kpi-note">Perlu semakan.</div></div>
+        <div class="card az1198-kpi"><div class="stat-label">Sedia Dibayar RM</div><div id="adminComApproved" class="stat-value">0.00</div><div class="az-kpi-note">Approved & belum paid.</div></div>
+        <div class="card az1198-kpi"><div class="stat-label">Sudah Dibayar RM</div><div id="adminComPaid" class="stat-value">0.00</div><div class="az-kpi-note">Payout selesai.</div></div>
       </div>
-
-      <div class="card az-commission-audit-card">
-        <div class="az-commission-card-head">
-          <div><h2>Audit & Reconciliation Ringkas</h2><p class="tabs-note">Semak duplicate commission, rate mismatch, paid tanpa reference dan rekod void/manual. Ini tidak mengubah data.</p></div>
-          <button class="btn" id="runCommissionAudit" type="button">Run Audit</button>
-        </div>
-        <div id="commissionAuditSummary" class="tabs-note">Belum diaudit.</div>
-        <div id="commissionAuditList" class="list"></div>
+      <div class="az1198-mini-metrics">
+        <div class="az1198-mini-metric"><span>Jualan unik</span><b id="adminComUniqueSalesCount">0</b></div>
+        <div class="az1198-mini-metric"><span>Nilai jualan</span><b>RM<span id="adminComSalesTotal">0.00</span></b></div>
+        <div class="az1198-mini-metric"><span>Purata komisen</span><b id="adminComAvgRate">0%</b></div>
+        <div class="az1198-mini-metric"><span>Aktif / Void</span><b id="adminComCount">0 / 0</b></div>
       </div>
+      <div id="adminComRejectedNote" class="tabs-note" style="margin:0 0 10px">Rejected RM0.00</div>
 
-      <details class="card az-admin-details" id="commissionManualEntryPanel">
-        <summary>➕ Manual Commission Adjustment</summary>
-        <p class="tabs-note">Untuk adjustment khas sahaja. Rekod auto-generated tidak diedit terus; buat adjustment baru supaya audit trail kekal. Isi <b>Gross Sale RM</b> dan contoh <b>20%</b> untuk kira Adjustment RM secara automatik.</p>
-        <h2 id="commissionFormTitle">Tambah Manual Adjustment</h2>
-        <input type="hidden" id="commissionEditDocId">
-        <input type="hidden" id="commissionParentDocId">
-        <div class="toolbar">
-          <input id="commissionUsername" placeholder="Username / Staff owner" style="flex:1;min-width:180px">
-          <input id="commissionProduct" placeholder="Produk / rujukan jualan" style="flex:1;min-width:180px">
-          <input id="commissionSaleAmount" type="number" min="0" step="0.01" placeholder="Gross Sale RM">
-          <input id="commissionPercent" type="number" step="0.01" placeholder="% of Gross Sale">
-          <input id="commissionAmount" type="number" step="0.01" placeholder="Adjustment RM (+ / -)">
-          <select id="commissionStatus">
-            <option value="pending">pending</option>
-            <option value="approved">approved</option>
-            <option value="rejected">rejected</option>
+      <div class="card az1198-section-card az-commission-staff-summary-card">
+        <div class="az1198-card-head">
+          <div><h2>Staff / Manager</h2><p class="tabs-note">Satu row seorang. Klik <b>View</b> untuk buka detail di panel kanan tanpa memanjangkan halaman.</p></div>
+          <div class="tabs-note" id="az1198StaffCount">0 staff</div>
+        </div>
+        <div class="az1198-toolbar">
+          <input id="commissionStaffTableSearch" class="az1198-grow" placeholder="Cari Staff / Manager...">
+          <select id="commissionStaffTableStatus" title="Staff status">
+            <option value="all" selected>Semua Staff</option>
+            <option value="attention">Perlu perhatian</option>
+            <option value="ready">Ada Ready</option>
+            <option value="pending">Ada Pending</option>
+            <option value="paid">Ada Paid</option>
           </select>
         </div>
-        <div class="toolbar">
-          <input id="commissionOwnerUid" placeholder="Owner UID optional" style="flex:1;min-width:180px">
-          <input id="commissionOwnerUsername" placeholder="Owner username optional" style="flex:1;min-width:180px">
-          <input id="commissionOwnerEmail" placeholder="Owner email optional" style="flex:1;min-width:180px">
+        <div class="az1198-table">
+          <div class="az1198-table-head az1198-staff-grid"><span>Staff / Manager</span><span>Pending</span><span>Ready</span><span>Paid</span><span>QR</span><span>Last Paid</span><span></span></div>
+          <div id="commissionStaffSummaryList" class="az1198-table-body"></div>
         </div>
-        <textarea id="commissionNote" placeholder="Sebab adjustment / nota audit" style="width:100%;min-height:90px"></textarea>
-        <div class="toolbar">
-          <button class="btn green" id="saveCommissionRecord">Simpan Adjustment</button>
-          <button class="btn gray" id="resetCommissionForm" type="button">Reset</button>
+      </div>
+
+      <div id="commissionStaffContext" class="az1198-hidden-compat" hidden>
+        <span id="commissionStaffContextName">-</span><span id="commissionStaffContextMeta"></span>
+        <button type="button" data-commission-context-mode="overview">Overview</button><button type="button" data-commission-context-mode="sales">Sales</button><button type="button" data-commission-context-mode="share">Share</button><button type="button" data-commission-context-mode="payout">Payout</button><button type="button" data-commission-context-clear>Clear</button>
+      </div>
+
+      <div class="card az1198-section-card" id="adminPayoutRequestsCard">
+        <div class="az1198-card-head">
+          <div><h2>📨 Payout Queue</h2><p class="tabs-note">Default hanya tunjuk request yang perlukan tindakan. Rekod selesai kekal dalam Paid / History.</p></div>
+          <button class="btn" id="refreshPayoutRequestsAdmin" type="button">↻ Refresh</button>
         </div>
+        <div id="payoutGatewayBox" class="az1198-hidden-compat"><div>Manual Bank / DuitNow Payout READY</div></div>
+        <div id="az1198PayoutTabs" class="az1198-queue-tabs">
+          <button class="az1198-queue-tab active" type="button" data-payout-view="needs_action">Needs Action <span class="count" data-payout-count="needs_action">0</span></button>
+          <button class="az1198-queue-tab" type="button" data-payout-view="requested">Requested <span class="count" data-payout-count="requested">0</span></button>
+          <button class="az1198-queue-tab" type="button" data-payout-view="approved">Approved <span class="count" data-payout-count="approved">0</span></button>
+          <button class="az1198-queue-tab" type="button" data-payout-view="paid">Paid <span class="count" data-payout-count="paid">0</span></button>
+          <button class="az1198-queue-tab" type="button" data-payout-view="history">History <span class="count" data-payout-count="history">0</span></button>
+          <button class="az1198-queue-tab" type="button" data-payout-view="all">All <span class="count" data-payout-count="all">0</span></button>
+        </div>
+        <div class="az1198-toolbar">
+          <input id="payoutRequestStaffFilter" class="az1198-grow" placeholder="Cari Staff / Manager...">
+          <select id="payoutRequestFilter" class="az1198-hidden-compat" aria-hidden="true">
+            <option value="needs_action" selected>Needs Action</option><option value="requested">Requested</option><option value="reviewing">Reviewing</option><option value="approved">Approved</option><option value="processing">Processing</option><option value="paid">Paid</option><option value="history">History</option><option value="all">All</option><option value="refunded">Refunded</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option>
+          </select>
+          <div id="adminPayoutRequestSummary" class="tabs-note" style="flex:1"></div>
+        </div>
+        <div id="az1198PayoutBulkBar" class="az1198-selection-bar" hidden>
+          <b id="az1198PayoutSelectedInfo">0 selected</b>
+          <div class="az1198-selection-actions"><button class="btn" type="button" data-payout-bulk="approved">Approve Selected</button><button class="btn red" type="button" data-payout-bulk="rejected">Reject Selected</button><button class="btn gray" type="button" data-payout-bulk-clear>Clear</button></div>
+        </div>
+        <div class="az1198-table">
+          <div class="az1198-table-head az1198-payout-grid"><span></span><span>Staff / Manager</span><span>Amount</span><span>Status</span><span>Requested</span><span>Method</span><span></span></div>
+          <div id="adminPayoutRequestList" class="az1198-table-body"></div>
+        </div>
+      </div>
+
+      <div class="card az1198-section-card" id="commissionRecordsCard">
+        <div class="az1198-card-head">
+          <div><h2>Commission Records</h2><p class="tabs-note">Compact view. Gunakan filter bila perlu; detail dan tindakan berada dalam menu ⋮.</p></div>
+        </div>
+        <details class="az1198-filter-panel">
+          <summary>🔎 Carian & Penapis</summary>
+          <div class="az1198-toolbar az-commission-toolbar">
+            <input id="commissionSearch" class="az1198-grow" placeholder="Cari username / email / produk / order / bill...">
+            <input id="commissionStaffFilter" placeholder="Staff/Manager" style="min-width:150px">
+            <input id="commissionProductFilter" placeholder="Produk / ID" style="min-width:150px">
+            <select id="commissionSourceFilter"><option value="all">Semua Produk</option><option value="software">Software</option><option value="cad">CAD</option></select>
+            <select id="commissionTypeFilter"><option value="all">Semua Jenis</option><option value="owner_sale">Owner Direct Sale</option><option value="owner_split">Owner Split 60%</option><option value="azobss_referral">AZOBSS Referral 20%</option><option value="share_referral">Other Staff Referral</option><option value="manual">Manual Adjustment</option></select>
+            <select id="commissionPayoutFilter"><option value="all">Semua Status</option><option value="pending">Pending</option><option value="approved">Approved / Ready</option><option value="paid">Paid</option><option value="rejected">Rejected</option><option value="void">Void</option></select>
+            <select id="commissionMonthFilter"><option value="all">Semua Tarikh</option><option value="today">Hari Ini</option><option value="thisMonth">Bulan Ini</option><option value="lastMonth">Bulan Lepas</option><option value="custom">Tarikh Custom</option></select>
+            <input id="commissionMinAmount" type="number" step="0.01" placeholder="Min RM"><input id="commissionMaxAmount" type="number" step="0.01" placeholder="Max RM">
+            <input id="commissionDateFrom" type="date" class="az-commission-date-input" disabled><input id="commissionDateTo" type="date" class="az-commission-date-input" disabled>
+            <button class="btn gray" id="clearCommissionFilters" type="button">Clear</button>
+          </div>
+        </details>
+        <div id="commissionResultInfo" class="tabs-note">Ready.</div>
+        <div id="az1198CommissionSelectionBar" class="az1198-selection-bar" hidden>
+          <b id="commissionSelectedInfo">Selected: 0 • RM0.00 • 0 Staff</b>
+          <div class="az1198-selection-actions">
+            <button class="btn gray" id="selectAllVisibleCommissions" type="button">Select Page</button><button class="btn gray" id="clearSelectedCommissions" type="button">Clear</button><button class="btn" data-commission-bulk="approved" type="button">Approve</button><button class="btn green" data-commission-bulk="paid" type="button">Mark Paid</button><button class="btn red" data-commission-bulk="rejected" type="button">Reject</button><button class="btn gray" data-commission-bulk="pending" type="button">Pending</button>
+          </div>
+        </div>
+        <div class="az1198-table">
+          <div class="az1198-table-head az1198-commission-grid"><span></span><span>Staff / Product</span><span>Sale</span><span>Commission</span><span>Status</span><span></span></div>
+          <div id="adminCommissionList" class="az1198-table-body"></div>
+        </div>
+      </div>
+
+      <details class="card az1198-tools">
+        <summary>🧰 Commission Tools, Audit & Adjustment</summary>
+        <div class="az1198-tools-grid">
+          <div class="az1198-tool-box"><h3>Jana / Baiki Paid Order</h3><p class="tabs-note">Guna jika paid order belum menghasilkan commission.</p><div class="az1198-toolbar"><input id="commissionRetryOrderId" class="az1198-grow" placeholder="Order ID / Bill Code"><button class="btn amber" id="retryCommissionOrder" type="button">Jana / Baiki</button></div><div id="commissionRetryResult" class="tabs-note">Paid Software/CAD orders sahaja.</div></div>
+          <div class="az1198-tool-box az-commission-audit-card"><div class="az1198-card-head"><div><h3>Audit & Reconciliation</h3><p class="tabs-note">Semak duplicate, rate mismatch dan paid tanpa reference.</p></div><button class="btn" id="runCommissionAudit" type="button">Run Audit</button></div><div id="commissionAuditSummary" class="tabs-note">Belum diaudit.</div><div id="commissionAuditList" class="list"></div></div>
+        </div>
+        <details class="az1198-rules" style="margin-top:10px"><summary>📘 Commission Rules</summary><div class="grid az-commission-rule-grid" style="margin-top:10px"><div class="card az-commission-rule-card"><b>🏪 Produk Staff — Direct Sale</b><span>Owner 70% • AZOBSS 30%.</span></div><div class="card az-commission-rule-card"><b>🤝 Produk Staff — Dengan Sharer</b><span>Owner 60% • sharer 10% • AZOBSS 30%.</span></div><div class="card az-commission-rule-card"><b>🔗 Share Produk AZOBSS</b><span>Staff/Manager sharer 20%.</span></div><div class="card az-commission-rule-card"><b>🚫 PA/BM Excluded</b><span>PA/BM tidak termasuk.</span></div></div></details>
+        <details class="card az-admin-details" id="commissionManualEntryPanel" style="margin-top:10px">
+          <summary>➕ Manual Commission Adjustment</summary><p class="tabs-note">Adjustment khas sahaja. Gross Sale + % mengira nilai RM secara automatik.</p><h2 id="commissionFormTitle">Tambah Manual Adjustment</h2><input type="hidden" id="commissionEditDocId"><input type="hidden" id="commissionParentDocId">
+          <div class="toolbar"><input id="commissionUsername" placeholder="Username / Staff owner" style="flex:1;min-width:180px"><input id="commissionProduct" placeholder="Produk / rujukan jualan" style="flex:1;min-width:180px"><input id="commissionSaleAmount" type="number" min="0" step="0.01" placeholder="Gross Sale RM"><input id="commissionPercent" type="number" step="0.01" placeholder="% of Gross Sale"><input id="commissionAmount" type="number" step="0.01" placeholder="Adjustment RM (+ / -)"><select id="commissionStatus"><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option></select></div>
+          <div class="toolbar"><input id="commissionOwnerUid" placeholder="Owner UID optional" style="flex:1;min-width:180px"><input id="commissionOwnerUsername" placeholder="Owner username optional" style="flex:1;min-width:180px"><input id="commissionOwnerEmail" placeholder="Owner email optional" style="flex:1;min-width:180px"></div>
+          <textarea id="commissionNote" placeholder="Sebab adjustment / nota audit" style="width:100%;min-height:90px"></textarea><div class="toolbar"><button class="btn green" id="saveCommissionRecord">Simpan Adjustment</button><button class="btn gray" id="resetCommissionForm" type="button">Reset</button></div>
+        </details>
       </details>
 
-      <div class="card">
-        <div class="az-commission-card-head">
-          <div><h2>Commission Records</h2><p class="tabs-note">Auto-generated record hanya boleh melalui payout workflow, Void atau Adjustment. Delete fizikal tidak digunakan.</p></div>
-        </div>
-        <div id="adminCommissionList" class="list"></div>
-      </div>
-
-      <div class="card" id="adminPayoutRequestsCard">
-        <h2>📨 Payout Requests</h2>
-        <p class="tabs-note">Smart Manual Payout: <b>Staff Request → Admin Review → Approve → scan QR / transfer bank atau DuitNow → Record Payment</b>. Reference bayaran wajib sebelum status Paid.</p>
-        <div class="item" id="payoutGatewayBox" style="margin:10px 0 12px"><div class="item-title">📱 Manual Bank / DuitNow Payout <span class="pill" style="color:#34d399">READY</span></div><div class="item-meta">Gunakan butiran payout atau QR yang Staff/Manager simpan. Selepas transfer, tekan <b>Record Payment</b> dan masukkan reference bank.</div></div>
-        <div class="toolbar">
-          <input id="payoutRequestStaffFilter" placeholder="Staff / Manager" style="min-width:170px">
-          <select id="payoutRequestFilter">
-            <option value="all">Semua request</option>
-            <option value="requested">Requested</option>
-            <option value="reviewing">Reviewing</option>
-            <option value="approved">Approved</option>
-            <option value="processing">Processing (Legacy)</option>
-            <option value="paid">Paid</option>
-            <option value="refunded">Refunded</option>
-            <option value="rejected">Rejected</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <button class="btn" id="refreshPayoutRequestsAdmin" type="button">Refresh Requests</button>
-        </div>
-        <div id="adminPayoutRequestSummary" class="tabs-note"></div>
-        <div id="adminPayoutRequestList" class="list"></div>
-      </div>
+      <div id="az1198DrawerBackdrop" class="az1198-drawer-backdrop" hidden data-az1198-close-drawer></div>
+      <aside id="az1198StaffDrawer" class="az1198-drawer" hidden aria-label="Staff detail drawer"><div class="az1198-drawer-head"><div class="az1198-drawer-title"><strong id="az1198StaffDrawerTitle">Staff / Manager</strong><span id="az1198StaffDrawerSubtitle">Commission & payout detail</span></div><button class="az1198-drawer-close" type="button" data-az1198-close-drawer>✕</button></div><div id="az1198StaffDrawerBody" class="az1198-drawer-body"></div></aside>
+      <aside id="az1198PayoutDrawer" class="az1198-drawer" hidden aria-label="Payout detail drawer"><div class="az1198-drawer-head"><div class="az1198-drawer-title"><strong id="az1198PayoutDrawerTitle">Payout Request</strong><span id="az1198PayoutDrawerSubtitle">Review & payment</span></div><button class="az1198-drawer-close" type="button" data-az1198-close-drawer>✕</button></div><div id="az1198PayoutDrawerBody" class="az1198-drawer-body"></div></aside>
     </section>
 
 
@@ -6119,25 +6086,26 @@ function azAdminUpdateCommissionSelectedInfo(){
   const amount=selected.reduce((a,x)=>a+commissionAmountOf(x),0);
   const staff=new Set(selected.map(commissionUsernameOf).filter(Boolean));
   if($('#commissionSelectedInfo')) $('#commissionSelectedInfo').textContent=`Selected: ${ids.length} • RM${amount.toFixed(2)} • ${staff.size} Staff`;
+  const bar=$('#az1198CommissionSelectionBar'); if(bar) bar.hidden=!ids.length;
 }
+function az1198PayoutWho(r){return String(r?.username||r?.staffUsername||r?.email||r?.staffEmail||'').trim();}
+function az1198LatestPayoutForStaff(name){const key=String(name||'').trim().toLowerCase();return adminPayoutRequestCache.filter(r=>az1198PayoutWho(r).toLowerCase()===key).sort((a,b)=>(Number(b.createdAtMs||0)||Date.parse(b.createdAt||'')||0)-(Number(a.createdAtMs||0)||Date.parse(a.createdAt||'')||0))[0]||null;}
 function azRenderCommissionStaffSummary(rows){
   const map=new Map();
   rows.forEach(x=>{
     if(commissionIsVoid(x)) return;
-    const name=commissionUsernameOf(x)||'Unknown';
-    const key=name.toLowerCase();
+    const name=commissionUsernameOf(x)||'Unknown',key=name.toLowerCase();
     if(!map.has(key)) map.set(key,{name,pending:0,approved:0,paid:0,rejected:0,lastPaid:0,records:0});
-    const r=map.get(key), amt=commissionAmountOf(x), st=commissionStatusBucket(x);
-    r.records++;
-    if(st==='pending') r.pending+=amt;
-    else if(st==='approved') r.approved+=amt;
-    else if(st==='paid'){r.paid+=amt;r.lastPaid=Math.max(r.lastPaid,Date.parse(x.payoutPaidAt||'')||Number(x.payoutPaidAtMs||0)||commissionCreatedMs(x));}
-    else if(st==='rejected') r.rejected+=amt;
+    const r=map.get(key),amt=commissionAmountOf(x),st=commissionStatusBucket(x);r.records++;
+    if(st==='pending')r.pending+=amt;else if(st==='approved')r.approved+=amt;else if(st==='paid'){r.paid+=amt;r.lastPaid=Math.max(r.lastPaid,Date.parse(x.payoutPaidAt||'')||Number(x.payoutPaidAtMs||0)||commissionCreatedMs(x));}else if(st==='rejected')r.rejected+=amt;
   });
-  const list=[...map.values()].sort((a,b)=>(b.approved+b.pending)-(a.approved+a.pending)||b.paid-a.paid);
-  const box=$('#commissionStaffSummaryList');
-  if(!box) return;
-  box.innerHTML=list.slice(0,12).map(r=>`<div class="az-commission-staff-card" data-commission-staff-focus="${esc(r.name)}" title="Filter ${esc(r.name)}"><strong>👤 ${esc(r.name)}</strong><div class="az-commission-staff-metrics"><span>Pending<b>RM${r.pending.toFixed(2)}</b></span><span>Ready<b>RM${r.approved.toFixed(2)}</b></span><span>Paid<b>RM${r.paid.toFixed(2)}</b></span></div><div class="item-meta" style="margin-top:6px">${r.records} records • Last paid: ${r.lastPaid?esc(fmtDate(r.lastPaid)):'-'}</div><div class="az1192-staff-links"><button class="btn" type="button" data-commission-staff-mode="overview" data-commission-staff-name="${esc(r.name)}">Overview</button><button class="btn" type="button" data-commission-staff-mode="sales" data-commission-staff-name="${esc(r.name)}">Sales</button><button class="btn" type="button" data-commission-staff-mode="share" data-commission-staff-name="${esc(r.name)}">Share</button><button class="btn" type="button" data-commission-staff-mode="payout" data-commission-staff-name="${esc(r.name)}">Payout</button></div></div>`).join('') || '<div class="tabs-note">Tiada rekod Staff/Manager untuk filter semasa.</div>';
+  let list=[...map.values()].sort((a,b)=>(b.approved+b.pending)-(a.approved+a.pending)||b.paid-a.paid);
+  const q=String($('#commissionStaffTableSearch')?.value||'').trim().toLowerCase(),mode=String($('#commissionStaffTableStatus')?.value||'attention');
+  list=list.filter(r=>{if(q&&!r.name.toLowerCase().includes(q))return false;if(mode==='ready')return r.approved>0;if(mode==='pending')return r.pending>0;if(mode==='paid')return r.paid>0;if(mode==='attention')return r.pending>0||r.approved>0;return true;});
+  const box=$('#commissionStaffSummaryList');if(!box)return;
+  if($('#az1198StaffCount'))$('#az1198StaffCount').textContent=`${list.length} staff`;
+  box.innerHTML=list.map(r=>{const latest=az1198LatestPayoutForStaff(r.name),qr=!!latest?.profile?.qrImageDataUrl,attention=(r.pending+r.approved)>0;return `<div class="az1198-table-row az1198-staff-grid"><div class="az1198-person"><strong>${attention?'<span class="az1198-attention-dot"></span>':'<span class="az1198-ok-dot"></span>'}${esc(r.name)}</strong><span class="az1198-sub">${r.records} commission record${r.records===1?'':'s'}</span></div><span class="az1198-money pending">RM${r.pending.toFixed(2)}</span><span class="az1198-money ready">RM${r.approved.toFixed(2)}</span><span class="az1198-money">RM${r.paid.toFixed(2)}</span><span class="${qr?'az1198-qr-ok':'az1198-qr-missing'}">${qr?'✓ Ready':'! Missing'}</span><span class="az1198-sub">${r.lastPaid?esc(fmtDate(r.lastPaid)):'-'}</span><button class="az1198-open-btn" type="button" data-commission-staff-drawer="${esc(r.name)}">View ›</button></div>`;}).join('')||'<div class="az1198-empty">Tiada Staff/Manager untuk filter ini.</div>';
+  azAdminApplyPager('#commissionStaffSummaryList',{key:'commissionStaffSummaryList',pageSize:12,label:'staff',reset:true});
 }
 
 
@@ -6155,13 +6123,14 @@ function az1192SetCommissionContext(staff,mode='overview',{updateUrl=true,scroll
   if($('#commissionStaffFilter')) $('#commissionStaffFilter').value=az1192CommissionStaffContext;
   if($('#commissionTypeFilter')) $('#commissionTypeFilter').value='all';
   if($('#commissionPayoutFilter')) $('#commissionPayoutFilter').value='all';
-  if($('#payoutRequestStaffFilter')) $('#payoutRequestStaffFilter').value=az1192CommissionStaffContext;
+  if($('#payoutRequestStaffFilter')) $('#payoutRequestStaffFilter').value=az1192CommissionStaffContext;if($('#payoutRequestFilter')&&az1192CommissionContextMode==='payout')$('#payoutRequestFilter').value='needs_action';
   az1192SyncCommissionContextUi();
   renderAdminCommissions(); renderAdminPayoutRequests();
   if(updateUrl){try{const u=new URL(location.href);u.searchParams.set('tab','commissions');if(az1192CommissionStaffContext)u.searchParams.set('staff',az1192CommissionStaffContext);else u.searchParams.delete('staff');u.searchParams.set('mode',az1192CommissionContextMode);history.replaceState({},'',u.pathname+'?'+u.searchParams.toString()+u.hash);}catch(_e){}}
   if(scroll){
+    az1198CloseDrawers?.();
     if(az1192CommissionContextMode==='payout'){const c=$('#adminPayoutRequestsCard');c?.classList.add('az1192-payout-context');c?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>c?.classList.remove('az1192-payout-context'),1800);}
-    else $('#commissionStaffContext')?.scrollIntoView({behavior:'smooth',block:'center'});
+    else $('#commissionRecordsCard')?.scrollIntoView({behavior:'smooth',block:'start'});
   }
 }
 function az1192ClearCommissionContext(){
@@ -6176,52 +6145,22 @@ function az1192ApplyCommissionContextFromUrl(){
   try{const u=new URL(location.href),staff=u.searchParams.get('staff')||'',mode=u.searchParams.get('mode')||'overview';if(staff)az1192SetCommissionContext(staff,mode,{updateUrl:false,scroll:false});}catch(_e){}
 }
 function renderAdminCommissions(){
-  azAdminSetCommissionDateState();
-  adminCommissionFilteredCache=getFilteredAdminCommissions();
+  azAdminSetCommissionDateState();adminCommissionFilteredCache=getFilteredAdminCommissions();
   let total=0,pending=0,approved=0,paid=0,rejected=0,voidCount=0,activeCount=0;
-  adminCommissionFilteredCache.forEach(x=>{
-    const amt=commissionAmountOf(x), b=commissionStatusBucket(x);
-    if(b==='void'){voidCount++;return;}
-    activeCount++;
-    if(b==='paid'){paid+=amt;total+=amt;}
-    else if(b==='approved'){approved+=amt;total+=amt;}
-    else if(b==='rejected') rejected+=amt;
-    else {pending+=amt;total+=amt;}
-  });
+  adminCommissionFilteredCache.forEach(x=>{const amt=commissionAmountOf(x),b=commissionStatusBucket(x);if(b==='void'){voidCount++;return;}activeCount++;if(b==='paid'){paid+=amt;total+=amt;}else if(b==='approved'){approved+=amt;total+=amt;}else if(b==='rejected')rejected+=amt;else{pending+=amt;total+=amt;}});
   const unique=azCommissionUniqueSalesStats(adminCommissionFilteredCache);
-  if($('#adminComTotal')) $('#adminComTotal').textContent=total.toFixed(2);
-  if($('#adminComSalesTotal')) $('#adminComSalesTotal').textContent=unique.sales.toFixed(2);
-  if($('#adminComUniqueSalesCount')) $('#adminComUniqueSalesCount').textContent=String(unique.count);
-  if($('#adminComAvgRate')) $('#adminComAvgRate').textContent=unique.avgRate?unique.avgRate.toFixed(1)+'%':'0%';
-  if($('#adminComPending')) $('#adminComPending').textContent=pending.toFixed(2);
-  if($('#adminComApproved')) $('#adminComApproved').textContent=approved.toFixed(2);
-  if($('#adminComPaid')) $('#adminComPaid').textContent=paid.toFixed(2);
-  if($('#adminComCount')) $('#adminComCount').textContent=activeCount+' / '+voidCount;
-  if($('#adminComRejectedNote')) $('#adminComRejectedNote').textContent='Rejected RM'+rejected.toFixed(2)+' • Total '+adminCommissionCache.length+' records';
-  if($('#commissionResultInfo')) $('#commissionResultInfo').textContent=`Showing ${adminCommissionFilteredCache.length} of ${adminCommissionCache.length} records • Active commission RM${total.toFixed(2)} • Unique sales ${unique.count} / RM${unique.sales.toFixed(2)}`;
+  if($('#adminComTotal'))$('#adminComTotal').textContent=total.toFixed(2);if($('#adminComSalesTotal'))$('#adminComSalesTotal').textContent=unique.sales.toFixed(2);if($('#adminComUniqueSalesCount'))$('#adminComUniqueSalesCount').textContent=String(unique.count);if($('#adminComAvgRate'))$('#adminComAvgRate').textContent=unique.avgRate?unique.avgRate.toFixed(1)+'%':'0%';if($('#adminComPending'))$('#adminComPending').textContent=pending.toFixed(2);if($('#adminComApproved'))$('#adminComApproved').textContent=approved.toFixed(2);if($('#adminComPaid'))$('#adminComPaid').textContent=paid.toFixed(2);if($('#adminComCount'))$('#adminComCount').textContent=activeCount+' / '+voidCount;if($('#adminComRejectedNote'))$('#adminComRejectedNote').textContent='Rejected RM'+rejected.toFixed(2)+' • Total '+adminCommissionCache.length+' records';if($('#commissionResultInfo'))$('#commissionResultInfo').textContent=`Showing ${adminCommissionFilteredCache.length} of ${adminCommissionCache.length} • Active RM${total.toFixed(2)} • Unique sales ${unique.count} / RM${unique.sales.toFixed(2)}`;
   azRenderCommissionStaffSummary(adminCommissionFilteredCache);
-
   const rows=adminCommissionFilteredCache.map(x=>{
-    const amt=commissionAmountOf(x).toFixed(2), sale=commissionSaleAmountOf(x), owner=commissionRecordTitle(x), product=esc(commissionProductName(x)), statusRaw=commissionPayoutStatus(x), statusBucket=commissionStatusBucket(x), docId=esc(x.docId||''), rowKey=esc(x._azRowKey||x.docId||''), typeLabel=esc(commissionTypeLabel(x)), rate=commissionRateOf(x), source=esc(x._source||'');
-    const payoutMeta=[x.payoutReference?('Ref: '+esc(x.payoutReference)):'',x.payoutMethod?('Method: '+esc(x.payoutMethod)):'',x.payoutNote?('Note: '+esc(x.payoutNote)):'',x.voidReason?('Void: '+esc(x.voidReason)):''].filter(Boolean).join(' • ');
-    const selectDisabled=!docId||statusBucket==='void'||statusBucket==='paid'?'disabled':'';
-    const isManual=commissionIsManual(x);
-    let actionHtml=`<button class="btn" data-commission-detail="${rowKey}" title="Lihat detail">Detail</button>`;
-    if(statusBucket==='pending') actionHtml+=`<button class="btn" data-commission-payout="approved" data-commission-doc="${docId}" ${docId?'':'disabled'}>Approve</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}" ${docId?'':'disabled'}>Reject</button>`;
-    else if(statusBucket==='approved') actionHtml+=`<button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}" ${docId?'':'disabled'}>Paid</button><button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}" ${docId?'':'disabled'}>Pending</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}" ${docId?'':'disabled'}>Reject</button>`;
-    else if(statusBucket==='rejected') actionHtml+=`<button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}" ${docId?'':'disabled'}>Reopen</button>`;
-    if(statusBucket!=='void'){
-      if(isManual) actionHtml+=`<button class="btn gray" data-edit-commission="${docId}" ${docId?'':'disabled'}>Edit Adj.</button>`;
-      else actionHtml+=`<button class="btn gray" data-adjust-commission="${docId}" ${docId?'':'disabled'}>Adjustment</button>`;
-      actionHtml+=`<button class="btn red" data-void-commission="${docId}" ${docId?'':'disabled'}>Void</button>`;
-    }
-    return `<div class="item az-commission-row is-${statusBucket}"><div class="az-commission-row-head"><input type="checkbox" value="${docId}" data-commission-select ${selectDisabled}><div style="flex:1;min-width:0"><div class="item-title">💸 ${owner} <span class="az-com-badge ${statusBucket}">${commissionStatusBadge(statusRaw)}</span> <span class="az-com-badge type">${typeLabel}</span></div><div class="item-meta">${product} • Commission RM${amt} • Sale ${sale?('RM'+sale.toFixed(2)):'-'} • Rate ${rate?rate.toFixed(1)+'%':'-'} • ${fmtDate(commissionCreatedMs(x))} ${source?('• '+source):''}</div><div class="item-meta">Order: ${esc(x.orderId||'-')} • Bill: ${esc(x.billCode||'-')} • Product ID: ${esc(x.productId||'-')} ${payoutMeta?(' • '+payoutMeta):''}</div><div class="toolbar" style="margin:6px 0 0">${actionHtml}</div></div></div></div>`;
+    const amt=commissionAmountOf(x).toFixed(2),sale=commissionSaleAmountOf(x),owner=commissionRecordTitle(x),product=esc(commissionProductName(x)),statusRaw=commissionPayoutStatus(x),statusBucket=commissionStatusBucket(x),docId=esc(x.docId||''),rowKey=esc(x._azRowKey||x.docId||''),typeLabel=esc(commissionTypeLabel(x)),rate=commissionRateOf(x),selectDisabled=!docId||statusBucket==='void'||statusBucket==='paid'?'disabled':'',isManual=commissionIsManual(x);
+    let actions=`<button class="btn" data-commission-detail="${rowKey}">Detail</button>`;
+    if(statusBucket==='pending')actions+=`<button class="btn" data-commission-payout="approved" data-commission-doc="${docId}">Approve</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}">Reject</button>`;
+    else if(statusBucket==='approved')actions+=`<button class="btn green" data-commission-payout="paid" data-commission-doc="${docId}">Paid</button><button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}">Pending</button><button class="btn red" data-commission-payout="rejected" data-commission-doc="${docId}">Reject</button>`;
+    else if(statusBucket==='rejected')actions+=`<button class="btn gray" data-commission-payout="pending" data-commission-doc="${docId}">Reopen</button>`;
+    if(statusBucket!=='void'){actions+=isManual?`<button class="btn gray" data-edit-commission="${docId}">Edit Adjustment</button>`:`<button class="btn gray" data-adjust-commission="${docId}">Adjustment</button>`;actions+=`<button class="btn red" data-void-commission="${docId}">Void</button>`;}
+    return `<div class="az1198-table-row az1198-commission-grid is-${statusBucket}"><input type="checkbox" value="${docId}" data-commission-select ${selectDisabled}><div class="az1198-person"><strong>${owner}</strong><span class="az1198-sub">${product} • ${typeLabel} • ${fmtDate(commissionCreatedMs(x))}</span></div><span class="az1198-money">${sale?'RM'+sale.toFixed(2):'-'}</span><span class="az1198-money ready">RM${amt}${rate?' • '+rate.toFixed(1)+'%':''}</span><span class="az1198-status ${statusBucket}">${commissionStatusBadge(statusRaw)}</span><details class="az1198-row-menu"><summary>⋮</summary><div class="az1198-row-menu-pop">${actions}</div></details></div>`;
   });
-  const notice=adminApiNotice?`<div class="item"><div class="item-title">⚠️ Commission API</div><div class="item-meta">${esc(adminApiNotice)}</div></div>`:'';
-  if($('#adminCommissionList')){
-    $('#adminCommissionList').innerHTML=rows.join('')||notice||'<div class="item">Tiada commission records.</div>';
-    azAdminApplyPager('#adminCommissionList',{key:'adminCommissionList',pageSize:8,label:'commission records',reset:true});
-  }
+  const notice=adminApiNotice?`<div class="az1198-empty">⚠️ ${esc(adminApiNotice)}</div>`:'';const list=$('#adminCommissionList');if(list){list.innerHTML=rows.join('')||notice||'<div class="az1198-empty">Tiada commission records.</div>';azAdminApplyPager(list,{key:'adminCommissionList',pageSize:10,label:'commission records',reset:true});}
   azAdminUpdateCommissionSelectedInfo();
 }
 
@@ -6504,39 +6443,19 @@ async function saveAdminPayoutQr(remove=false){
 }
 
 async function loadAdminPayoutRequests(){
-  try{
-    const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-requests?limit=120',{cache:'no-store'});
-    adminPayoutRequestCache=Array.isArray(j.requests)?j.requests:[];
-    renderAdminPayoutRequests();
-  }catch(e){
-    if($('#adminPayoutRequestList')) $('#adminPayoutRequestList').innerHTML='<div class="item">'+esc(e?.message||'Failed to load payout requests.')+'</div>';
-  }
+  try{const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-requests?limit=120',{cache:'no-store'});adminPayoutRequestCache=Array.isArray(j.requests)?j.requests:[];renderAdminPayoutRequests();if(adminCommissionFilteredCache?.length)azRenderCommissionStaffSummary(adminCommissionFilteredCache);}
+  catch(e){if($('#adminPayoutRequestList'))$('#adminPayoutRequestList').innerHTML='<div class="az1198-empty">'+esc(e?.message||'Failed to load payout requests.')+'</div>';}
 }
+function az1198PayoutFilterMatch(status,mode){status=String(status||'requested').toLowerCase();mode=String(mode||'needs_action').toLowerCase();if(mode==='all')return true;if(mode==='needs_action')return ['requested','reviewing','approved','processing'].includes(status);if(mode==='history')return ['paid','refunded','rejected','cancelled'].includes(status);return status===mode;}
+function az1198UpdatePayoutTabs(staffFilter=''){const all=adminPayoutRequestCache.filter(r=>{const who=String([r.username,r.staffUsername,r.email,r.staffEmail,r.uid,r.staffUid].filter(Boolean).join(' ')).toLowerCase();return !staffFilter||who.includes(staffFilter);});const counts={all:all.length,needs_action:0,requested:0,approved:0,paid:0,history:0};all.forEach(r=>{const st=String(r.status||'requested').toLowerCase();if(['requested','reviewing','approved','processing'].includes(st))counts.needs_action++;if(st==='requested')counts.requested++;if(st==='approved')counts.approved++;if(st==='paid')counts.paid++;if(['paid','refunded','rejected','cancelled'].includes(st))counts.history++;});Object.entries(counts).forEach(([k,v])=>{document.querySelector(`[data-payout-count="${k}"]`)?.replaceChildren(document.createTextNode(String(v)));});const mode=String($('#payoutRequestFilter')?.value||'needs_action');document.querySelectorAll('[data-payout-view]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-payout-view')===mode));}
+function az1198PayoutMethodText(p){return String(p?.payoutMethod||p?.bankName||p?.ewalletName||p?.duitNowType||'-');}
 function renderAdminPayoutRequests(){
-  const filter=String($('#payoutRequestFilter')?.value||'all').toLowerCase();
-  const staffFilter=String($('#payoutRequestStaffFilter')?.value||az1192CommissionStaffContext||'').trim().toLowerCase();
-  const rows=adminPayoutRequestCache.filter(r=>{const statusOk=filter==='all'||String(r.status||'requested').toLowerCase()===filter;const who=String([r.username,r.staffUsername,r.email,r.staffEmail,r.uid,r.staffUid].filter(Boolean).join(' ')).toLowerCase();return statusOk&&(!staffFilter||who.includes(staffFilter));});
-  const sum=rows.reduce((a,r)=>{const st=String(r.status||'requested').toLowerCase();a.total+=Number(r.amount||0)||0;a.count++;a[st]=(a[st]||0)+(Number(r.amount||0)||0);return a;},{total:0,count:0});
-  if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Showing ${rows.length} request(s)${staffFilter?' • Staff: '+staffFilter:''} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Processing RM${(sum.processing||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)} • Refunded RM${(sum.refunded||0).toFixed(2)}`;
-  const payoutBox=$('#adminPayoutRequestList');
-  if(payoutBox){
-    payoutBox.innerHTML=rows.map(r=>{
-      const p=r.profile||{};
-      const account=[p.payoutMethod,p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
-      const rid=esc(r.docId||r.requestId);
-      const receiptLabel=String(r.status||'requested').toLowerCase()==='paid'?'View Receipt':'View Statement';
-      const st=String(r.status||'requested').toLowerCase();
-      const qr=p.qrImageDataUrl?`<div class="az1194-admin-payout-qr"><button class="az1196-qr-image-btn" type="button" data-payout-qr-view="${rid}" title="Klik untuk besarkan QR"><img src="${esc(p.qrImageDataUrl)}" alt="Payout QR ${esc(r.username||'staff')}"></button><div class="az1196-qr-side"><b>📱 Scan QR dengan phone</b><small>QR dibesarkan untuk scan lebih mudah. Klik gambar atau Besarkan QR untuk paparan penuh.</small><div class="az1196-qr-actions"><button class="btn" type="button" data-payout-qr-view="${rid}">🔍 Besarkan QR</button><button class="btn" type="button" data-payout-qr-edit="${rid}">✏️ Edit / Tukar QR</button></div></div></div>`:`<div class="az1196-qr-empty">Belum ada QR payout. <button class="btn" type="button" data-payout-qr-edit="${rid}">✏️ Upload / Edit QR</button></div>`;
-      const copyBtn=account?`<button class="btn" data-payout-copy-details="${rid}">📋 Copy Details</button>`:'';
-      const paidBtn=st==='approved'?`<button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">✓ Record Payment</button>`:'';
-      const approveBtn=['requested','reviewing'].includes(st)?`<button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button>`:'';
-      const reviewBtn=st==='requested'?`<button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button>`:'';
-      const legacySyncBtn=st==='processing'?`<button class="btn" data-payout-sync-bank="${rid}">↻ Sync Legacy Bank</button>`:'';
-      const rejectBtn=!['paid','cancelled','rejected','processing','refunded'].includes(st)?`<button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button>`:'';
-      return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${qr}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" type="button" data-payout-open-commission="${esc(r.username||r.staffUsername||r.email||'')}">Commission</button>${copyBtn}${reviewBtn}${approveBtn}${paidBtn}${legacySyncBtn}${rejectBtn}</div></div>`;
-    }).join('') || '<div class="item">No payout requests.</div>';
-    azAdminApplyPager('#adminPayoutRequestList',{key:'adminPayoutRequestList',pageSize:5,label:'payout requests',reset:true});
-  }
+  const mode=String($('#payoutRequestFilter')?.value||'needs_action').toLowerCase(),staffFilter=String($('#payoutRequestStaffFilter')?.value||az1192CommissionStaffContext||'').trim().toLowerCase();az1198UpdatePayoutTabs(staffFilter);
+  const rows=adminPayoutRequestCache.filter(r=>{const who=String([r.username,r.staffUsername,r.email,r.staffEmail,r.uid,r.staffUid].filter(Boolean).join(' ')).toLowerCase();return az1198PayoutFilterMatch(r.status,mode)&&(!staffFilter||who.includes(staffFilter));});
+  const sum=rows.reduce((a,r)=>{a.total+=Number(r.amount||0)||0;a.count++;return a;},{total:0,count:0});if($('#adminPayoutRequestSummary'))$('#adminPayoutRequestSummary').textContent=`${rows.length} request • RM${sum.total.toFixed(2)}${staffFilter?' • '+staffFilter:''}`;
+  const box=$('#adminPayoutRequestList');if(!box)return;
+  box.innerHTML=rows.map(r=>{const p=r.profile||{},rid=esc(r.docId||r.requestId),st=String(r.status||'requested').toLowerCase(),who=esc(r.username||r.staffUsername||r.email||'staff'),amount=esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2))),canSelect=['requested','reviewing','approved'].includes(st),qr=!!p.qrImageDataUrl,requested=r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'-';return `<div class="az1198-table-row az1198-payout-grid"><input type="checkbox" data-payout-select="${rid}" ${canSelect?'':'disabled'}><div class="az1198-person"><strong>${who}</strong><span class="az1198-sub">${r.recordCount||0} record${Number(r.recordCount||0)===1?'':'s'} • ${qr?'QR ready':'QR missing'}</span></div><span class="az1198-money ready">${amount}</span><span class="az1198-status ${st}">${esc(st.replace('_',' '))}</span><span class="az1198-sub">${esc(requested)}</span><span class="az1198-sub">${esc(az1198PayoutMethodText(p))}</span><button class="az1198-open-btn" type="button" data-payout-drawer="${rid}">View ›</button></div>`;}).join('')||'<div class="az1198-empty">Tiada payout request dalam view ini.</div>';
+  azAdminApplyPager(box,{key:'adminPayoutRequestList',pageSize:10,label:'payout requests',reset:true});az1198UpdatePayoutSelection();
 }
 async function updatePayoutRequestStatus(requestId,status){
   if(!requestId) return toast('Missing payout request ID.');
@@ -6558,9 +6477,33 @@ async function updatePayoutRequestStatus(requestId,status){
   try{
     const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-request-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId,status,payoutReference,payoutMethod,adminNote})});
     toast('Payout request updated: '+(j.status||status));
+    az1198CloseDrawers?.();
     await Promise.all([loadAdminPayoutRequests(), loadAdminCommissions()]);
   }catch(e){ toast(e?.message||'Failed to update payout request.'); }
 }
+
+
+function az1198CloseDrawers(){const b=$('#az1198DrawerBackdrop'),sd=$('#az1198StaffDrawer'),pd=$('#az1198PayoutDrawer');if(b)b.hidden=true;if(sd)sd.hidden=true;if(pd)pd.hidden=true;document.body.style.overflow='';}
+function az1198ShowDrawer(which){az1198CloseDrawers();const b=$('#az1198DrawerBackdrop'),d=$(which);if(b)b.hidden=false;if(d)d.hidden=false;document.body.style.overflow='hidden';}
+function az1198Money(n){return 'RM'+(Number(n||0)||0).toFixed(2);}
+function az1198OpenStaffDrawer(name){
+  const key=String(name||'').trim().toLowerCase();if(!key)return;const comm=adminCommissionCache.filter(x=>commissionUsernameOf(x).toLowerCase()===key&&!commissionIsVoid(x));const payouts=adminPayoutRequestCache.filter(r=>az1198PayoutWho(r).toLowerCase()===key).sort((a,b)=>(Number(b.createdAtMs||0)||0)-(Number(a.createdAtMs||0)||0));let pending=0,ready=0,paid=0;comm.forEach(x=>{const st=commissionStatusBucket(x),a=commissionAmountOf(x);if(st==='pending')pending+=a;else if(st==='approved')ready+=a;else if(st==='paid')paid+=a;});const latest=payouts.find(r=>r.profile&&Object.keys(r.profile).length)||payouts[0]||null,p=latest?.profile||{},rid=latest?String(latest.docId||latest.requestId||''):'';
+  if($('#az1198StaffDrawerTitle'))$('#az1198StaffDrawerTitle').textContent=name;if($('#az1198StaffDrawerSubtitle'))$('#az1198StaffDrawerSubtitle').textContent=`${comm.length} commission • ${payouts.length} payout request`;
+  const account=[p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • ');
+  const qr=p.qrImageDataUrl&&rid?`<div class="az1198-drawer-qr"><button class="az1196-qr-image-btn" type="button" data-payout-qr-view="${esc(rid)}"><img src="${esc(p.qrImageDataUrl)}" alt="Payout QR"></button><div class="az1198-drawer-actions"><button class="btn" type="button" data-payout-qr-view="${esc(rid)}">🔍 Besarkan QR</button><button class="btn" type="button" data-payout-qr-edit="${esc(rid)}">✏️ Edit / Crop QR</button></div></div>`:(rid?`<div class="az1198-empty">Belum ada QR payout.<br><button class="btn" type="button" data-payout-qr-edit="${esc(rid)}" style="margin-top:8px">Upload / Crop QR</button></div>`:'<div class="az1198-empty">Belum ada payout request/profile untuk QR.</div>');
+  const recentComm=comm.sort((a,b)=>commissionCreatedMs(b)-commissionCreatedMs(a)).slice(0,6).map(x=>`<div class="az1198-drawer-item"><div><strong>${esc(commissionProductName(x))}</strong><small>${esc(commissionTypeLabel(x))} • ${fmtDate(commissionCreatedMs(x))}</small></div><span class="az1198-status ${commissionStatusBucket(x)}">${az1198Money(commissionAmountOf(x))}</span></div>`).join('')||'<div class="az1198-empty">Tiada commission.</div>';
+  const recentPay=payouts.slice(0,5).map(r=>`<div class="az1198-drawer-item"><div><strong>${az1198Money(r.amount)}</strong><small>${esc(String(r.status||'requested'))} • ${r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'-'}</small></div><button class="az1198-open-btn" type="button" data-payout-drawer="${esc(r.docId||r.requestId)}">View</button></div>`).join('')||'<div class="az1198-empty">Tiada payout request.</div>';
+  const body=$('#az1198StaffDrawerBody');if(body)body.innerHTML=`<div class="az1198-drawer-metrics"><div class="az1198-drawer-metric"><span>Pending</span><b>${az1198Money(pending)}</b></div><div class="az1198-drawer-metric"><span>Ready</span><b>${az1198Money(ready)}</b></div><div class="az1198-drawer-metric"><span>Paid</span><b>${az1198Money(paid)}</b></div></div><div class="az1198-drawer-actions"><button class="btn" type="button" data-commission-staff-mode="overview" data-commission-staff-name="${esc(name)}">Filter Commission</button><button class="btn" type="button" data-commission-staff-mode="payout" data-commission-staff-name="${esc(name)}">Filter Payout</button></div><div class="az1198-drawer-section"><h3>💳 Payout Profile</h3><div class="az1198-drawer-line"><span>Method</span><b>${esc(p.payoutMethod||'-')}</b></div><div class="az1198-drawer-line"><span>Details</span><b>${account||'-'}</b></div>${qr}</div><div class="az1198-drawer-section"><h3>Recent Commission</h3><div class="az1198-drawer-list">${recentComm}</div></div><div class="az1198-drawer-section"><h3>Payout History</h3><div class="az1198-drawer-list">${recentPay}</div></div>`;az1198ShowDrawer('#az1198StaffDrawer');
+}
+function az1198OpenPayoutDrawer(requestId){
+  const r=adminPayoutRowById(requestId);if(!r)return toast('Payout request not found.');const p=r.profile||{},st=String(r.status||'requested').toLowerCase(),rid=esc(r.docId||r.requestId),who=esc(r.username||r.staffUsername||r.email||'staff'),account=[p.bankName||p.ewalletName,p.accountName,p.accountNo||p.accountNoMasked,p.duitNowId,p.payoutPhone,p.payoutEmail].filter(Boolean).map(esc).join(' • '),receiptLabel=st==='paid'?'View Receipt':'View Statement';
+  if($('#az1198PayoutDrawerTitle'))$('#az1198PayoutDrawerTitle').textContent=`${r.username||r.staffUsername||r.email||'Staff'} • ${az1198Money(r.amount)}`;if($('#az1198PayoutDrawerSubtitle'))$('#az1198PayoutDrawerSubtitle').textContent=`${st.toUpperCase()} • ${r.createdAt?fmtDate(r.createdAtMs||r.createdAt):''}`;
+  const qr=p.qrImageDataUrl?`<div class="az1198-drawer-qr"><button class="az1196-qr-image-btn" type="button" data-payout-qr-view="${rid}"><img src="${esc(p.qrImageDataUrl)}" alt="Payout QR ${who}"></button><div class="az1198-drawer-actions"><button class="btn" type="button" data-payout-qr-view="${rid}">🔍 Besarkan</button><button class="btn" type="button" data-payout-qr-edit="${rid}">✏️ Edit / Crop QR</button></div></div>`:`<div class="az1198-empty">Belum ada QR.<br><button class="btn" type="button" data-payout-qr-edit="${rid}" style="margin-top:8px">Upload / Crop QR</button></div>`;
+  const copyBtn=account?`<button class="btn" data-payout-copy-details="${rid}">📋 Copy Details</button>`:'',paidBtn=st==='approved'?`<button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">✓ Record Payment</button>`:'',approveBtn=['requested','reviewing'].includes(st)?`<button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button>`:'',reviewBtn=st==='requested'?`<button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button>`:'',rejectBtn=!['paid','cancelled','rejected','processing','refunded'].includes(st)?`<button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button>`:'';
+  const body=$('#az1198PayoutDrawerBody');if(body)body.innerHTML=`<div class="az1198-drawer-metrics"><div class="az1198-drawer-metric"><span>Amount</span><b>${az1198Money(r.amount)}</b></div><div class="az1198-drawer-metric"><span>Records</span><b>${esc(r.recordCount||0)}</b></div><div class="az1198-drawer-metric"><span>Status</span><b>${esc(st)}</b></div></div><div class="az1198-drawer-section"><h3>Payment Details</h3><div class="az1198-drawer-line"><span>Staff</span><b>${who}</b></div><div class="az1198-drawer-line"><span>Method</span><b>${esc(p.payoutMethod||'-')}</b></div><div class="az1198-drawer-line"><span>Account</span><b>${account||'-'}</b></div><div class="az1198-drawer-line"><span>Reference</span><b>${esc(r.payoutReference||'-')}</b></div><div class="az1198-drawer-line"><span>Note</span><b>${esc(r.note||r.adminNote||'-')}</b></div></div><div class="az1198-drawer-section"><h3>QR Payout</h3>${qr}</div><div class="az1198-drawer-section"><h3>Timeline</h3>${adminPayoutTimelineHtml(r)}</div><div class="az1198-drawer-actions"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" type="button" data-payout-open-commission="${who}">Commission</button>${copyBtn}${reviewBtn}${approveBtn}${paidBtn}${rejectBtn}</div>`;az1198ShowDrawer('#az1198PayoutDrawer');
+}
+function az1198UpdatePayoutSelection(){const checked=[...document.querySelectorAll('[data-payout-select]:checked')],bar=$('#az1198PayoutBulkBar');if(bar)bar.hidden=!checked.length;if($('#az1198PayoutSelectedInfo'))$('#az1198PayoutSelectedInfo').textContent=`${checked.length} selected • ${az1198Money(checked.reduce((a,c)=>{const r=adminPayoutRowById(c.getAttribute('data-payout-select'));return a+(Number(r?.amount||0)||0)},0))}`;}
+async function az1198BulkPayoutStatus(status){const ids=[...document.querySelectorAll('[data-payout-select]:checked')].map(c=>c.getAttribute('data-payout-select')).filter(Boolean);if(!ids.length)return toast('Pilih payout request dahulu.');const allowed=status==='approved'?['requested','reviewing']:['requested','reviewing','approved'],targets=ids.map(adminPayoutRowById).filter(r=>r&&allowed.includes(String(r.status||'requested').toLowerCase()));if(!targets.length)return toast('Tiada request dipilih yang boleh dikemas kini.');let adminNote='';if(status==='rejected')adminNote=String(prompt('Sebab reject untuk semua dipilih (optional):','')||'').trim();if(!confirm(`${status==='approved'?'Approve':'Reject'} ${targets.length} payout request?`))return;let ok=0,fail=0;for(const r of targets){try{await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-request-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:r.docId||r.requestId,status,adminNote})});ok++;}catch(_e){fail++;}}toast(`Bulk payout: ${ok} updated${fail?' • '+fail+' failed':''}.`);await Promise.all([loadAdminPayoutRequests(),loadAdminCommissions()]);}
 
 
 let adminActivityCache = [];
@@ -7553,6 +7496,12 @@ document.addEventListener('click',async e=>{
   if(payEmailReceipt){await azAdminEmailPaymentReceipt(payEmailReceipt.getAttribute('data-paylog-email-receipt'));return;}
   const closePayDetail=e.target.closest('[data-close-payment-detail]');
   if(closePayDetail){azAdminClosePaymentLogDetail();return;}
+  const close1198=e.target.closest('[data-az1198-close-drawer]');if(close1198){az1198CloseDrawers();return;}
+  const staffDrawerBtn=e.target.closest('[data-commission-staff-drawer]');if(staffDrawerBtn){az1198OpenStaffDrawer(staffDrawerBtn.getAttribute('data-commission-staff-drawer'));return;}
+  const payoutDrawerBtn=e.target.closest('[data-payout-drawer]');if(payoutDrawerBtn){az1198OpenPayoutDrawer(payoutDrawerBtn.getAttribute('data-payout-drawer'));return;}
+  const payoutViewBtn=e.target.closest('[data-payout-view]');if(payoutViewBtn){const v=payoutViewBtn.getAttribute('data-payout-view')||'needs_action';if($('#payoutRequestFilter'))$('#payoutRequestFilter').value=v;renderAdminPayoutRequests();return;}
+  const payoutBulkBtn=e.target.closest('[data-payout-bulk]');if(payoutBulkBtn){await az1198BulkPayoutStatus(payoutBulkBtn.getAttribute('data-payout-bulk'));return;}
+  if(e.target.closest('[data-payout-bulk-clear]')){document.querySelectorAll('[data-payout-select]').forEach(c=>c.checked=false);az1198UpdatePayoutSelection();return;}
   const comDetailBtn = e.target.closest('[data-commission-detail]');
   if(comDetailBtn){azAdminOpenCommissionDetail(comDetailBtn.getAttribute('data-commission-detail'));return;}
   const closeComDetail=e.target.closest('[data-close-commission-detail]');
@@ -7674,10 +7623,13 @@ $('#commissionMaxAmount')?.addEventListener('input',()=>{clearTimeout(azCommissi
 $('#clearCommissionFilters')?.addEventListener('click', clearCommissionFilters);
 $('#retryCommissionOrder')?.addEventListener('click', retryCommissionForOrder);
 $('#runCommissionAudit')?.addEventListener('click', runCommissionAudit);
-$('#selectAllVisibleCommissions')?.addEventListener('click',()=>{document.querySelectorAll('[data-commission-select]:not(:disabled)').forEach(el=>{el.checked=true;});azAdminUpdateCommissionSelectedInfo();});
+$('#selectAllVisibleCommissions')?.addEventListener('click',()=>{document.querySelectorAll('[data-commission-select]:not(:disabled)').forEach(el=>{if(el.closest('.az1198-table-row')?.style.display!=='none')el.checked=true;});azAdminUpdateCommissionSelectedInfo();});
 $('#clearSelectedCommissions')?.addEventListener('click',()=>{document.querySelectorAll('[data-commission-select]').forEach(el=>{el.checked=false;});azAdminUpdateCommissionSelectedInfo();});
 document.addEventListener('change',e=>{if(e.target?.matches?.('[data-commission-select]')) azAdminUpdateCommissionSelectedInfo();});
 $('#payoutRequestFilter')?.addEventListener('change', renderAdminPayoutRequests);
+$('#commissionStaffTableSearch')?.addEventListener('input',()=>{clearTimeout(window.az1198StaffTimer);window.az1198StaffTimer=setTimeout(()=>azRenderCommissionStaffSummary(adminCommissionFilteredCache),120);});
+$('#commissionStaffTableStatus')?.addEventListener('change',()=>azRenderCommissionStaffSummary(adminCommissionFilteredCache));
+document.addEventListener('change',e=>{if(e.target?.matches?.('[data-payout-select]'))az1198UpdatePayoutSelection();});
 $('#payoutRequestStaffFilter')?.addEventListener('input',()=>{clearTimeout(window.az1192PayoutStaffTimer);window.az1192PayoutStaffTimer=setTimeout(renderAdminPayoutRequests,160);});
 $('#refreshPayoutRequestsAdmin')?.addEventListener('click', loadAdminPayoutRequests);
 $('#refreshPayoutGateway')?.addEventListener('click', loadAdminPayoutGatewayStatus);
@@ -7779,7 +7731,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1136"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1199"></script>
 <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1136"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
