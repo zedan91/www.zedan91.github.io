@@ -585,10 +585,10 @@ function azReferralFrom(data = {}, product = {}, order = {}){
   if(normalized.username) return normalized;
   return azReferralFromUrl(data.returnUrl || data.pageUrl || data.sourceUrl || product.pageUrl || order.returnUrl || order.pageUrl || order.sourceUrl || '', product, order) || normalized;
 }
-function azBuildCommissionLines(order = {}){
+function azBuildCommissionLines(order = {}, verifiedReferral = null){
   const product = order.product || {};
   const owner = azProductOwnerFrom(product, order);
-  const referral = azReferralFrom({}, product, order);
+  const referral = verifiedReferral || azReferralFrom({}, product, order);
   const buyer = azCommissionUsername(order.user?.username || order.username || '');
   const saleAmount = Number(order.amountSen || 0) > 0 ? Number(order.amountSen) / 100 : azCommissionMoney(order.amount || product.price);
   if (!saleAmount) return [];
@@ -648,6 +648,9 @@ function azBuildCommissionLines(order = {}){
       sharerShareAmount: String(kind).includes('share') ? amount : 0,
       note,
       shareReferral: referral,
+      sharerUid: String(kind).includes('share') ? cleanPremiumText(referral.sharerUid || '', 140) : '',
+      sharerRole: String(kind).includes('share') ? cleanPremiumText(referral.sharerRole || '', 40) : '',
+      referralVerified: String(kind).includes('share') ? referral.verified === true : false,
       productOwner: owner
     };
     lines.push(line);
@@ -658,26 +661,56 @@ function azBuildCommissionLines(order = {}){
     const ownerSplitRate = semiOwner ? 90 : 60;
     const splitAzRate = Math.max(0, 100 - ownerSplitRate - sharerRate);
     const splitNote = semiOwner
-      ? 'Produk semi-admin terjual melalui share link staff lain. Semi-admin owner 90%, sharer 4%, AZOBSS 6%.'
-      : 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.';
+      ? 'Produk semi-admin terjual melalui share link Staff/Manager lain. Semi-admin owner 90%, sharer 4%, AZOBSS 6%.'
+      : 'Produk staff terjual melalui share link Staff/Manager lain. Owner 60%, sharer 10%, AZOBSS 30%.';
     const shareNote = semiOwner
-      ? 'Staff share link berjaya menjual produk semi-admin. Sharer 4%, AZOBSS 6%.'
-      : 'Staff share link berjaya menjual produk staff lain. Sharer 10%.';
+      ? 'Staff/Manager share link berjaya menjual produk semi-admin. Sharer 4%, AZOBSS 6%.'
+      : 'Staff/Manager share link berjaya menjual produk staff lain. Sharer 10%.';
     add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, ownerSplitRate, splitNote, { azobssShareRate: splitAzRate });
     add('share_referral', sharer, '', '', sharerRate, shareNote, { azobssShareRate: splitAzRate });
   } else if (hasStaffOwner) {
     add('owner_sale', ownerName, owner.ownerUid, owner.ownerEmail, ownerDirectRate, `Produk owner terjual. ${ownerDirectPolicy}.`);
   } else if (validSharer) {
-    add('admin_product_share_referral', sharer, '', '', 20, 'Staff share link berjaya menjual produk admin/AZOBSS. Sharer 20%, AZOBSS 80%.');
+    add('admin_product_share_referral', sharer, '', '', 20, 'Staff/Manager share link berjaya menjual produk admin/AZOBSS. Sharer 20%, AZOBSS 80%.');
   }
   return lines;
+}
+function azCommissionSharerRoleKey(value){ return String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, ''); }
+function azCommissionSharerRoleEligible(value){ return ['staff','manager','semiadmin','semistaff','seller','editor'].includes(azCommissionSharerRoleKey(value)); }
+async function azVerifyCommissionReferral(order = {}, db = null){
+  const product = order.product || {};
+  const referral = azReferralFrom({}, product, order);
+  const username = azCommissionUsername(referral && referral.username);
+  if(!username) return referral || {};
+  if(!db) return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'firestore-unavailable' };
+  try{
+    let snap = await db.collection('users').doc(username).get();
+    let data = snap && snap.exists ? (snap.data() || {}) : null;
+    let docId = snap && snap.exists ? snap.id : '';
+    if(!data){
+      for(const field of ['usernameKey','username']){
+        try{
+          const q=await db.collection('users').where(field,'==',username).limit(1).get();
+          if(q && !q.empty){const d=q.docs[0];data=d.data()||{};docId=d.id;break;}
+        }catch(_e){}
+      }
+    }
+    if(!data) return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'sharer-not-found' };
+    const role = data.role || data.userRole || data.accountRole || data.memberRole || '';
+    if(!azCommissionSharerRoleEligible(role)) return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'role-not-eligible', rejectedRole:cleanPremiumText(role,40) };
+    return { ...referral, username, ref:username, sharerUid:cleanPremiumText(data.uid || data.authUid || docId || '',140), sharerRole:cleanPremiumText(role,40), verified:true, verifiedAt:new Date().toISOString() };
+  }catch(err){
+    console.warn('AZOBSS referral verification failed:', err && err.message ? err.message : err);
+    return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'verification-error' };
+  }
 }
 async function azSaveCommissionLinesForOrder(order = {}){
   try{
     if (!order || order.status !== 'paid') return { ok:false, skipped:true, reason:'order-not-paid' };
-    const lines = azBuildCommissionLines(order);
-    if (!lines.length) return { ok:true, skipped:true, reason:'no-staff-commission' };
     const db = getAzobssBackendDb();
+    const verifiedReferral = await azVerifyCommissionReferral(order, db);
+    const lines = azBuildCommissionLines(order, verifiedReferral);
+    if (!lines.length) return { ok:true, skipped:true, reason:'no-staff-commission' };
     if (db) {
       for (const line of lines) {
         const idBase = `${line.orderId || line.billCode || Date.now()}_${line.commissionType}_${line.username}`.replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,180);

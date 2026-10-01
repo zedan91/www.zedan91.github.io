@@ -1030,7 +1030,7 @@ function azIdentityHasStaffDashboardAccess(identity = {}) {
   if (!identity || !identity.uid) return false;
   if (azIdentityTrustedForBackendAdmin(identity)) return true;
   const role = String(identity.role || '').trim().toLowerCase().replace(/[\s_-]+/g, '');
-  return ['staff', 'semiadmin', 'seller', 'editor'].includes(role);
+  return ['staff', 'manager', 'semiadmin', 'seller', 'editor'].includes(role);
 }
 function azAdminBypassEnabled() {
   // Emergency only. Keep unset in production. This reopens the old public manual completion endpoint.
@@ -1105,6 +1105,13 @@ function azCommissionSafeRecord(x = {}, docId = "") {
     productName: cleanPremiumText(x.productName || x.product || x.title || "", 180),
     username: azCommissionUsername(x.username || x.ownerUsername || ""),
     ownerUsername: azCommissionUsername(x.ownerUsername || x.username || ""),
+    ownerUid: cleanPremiumText(x.ownerUid || x.uid || "", 140),
+    ownerEmail: cleanPremiumText(x.ownerEmail || x.email || "", 180),
+    buyerUsername: azCommissionUsername(x.buyerUsername || ""),
+    buyerEmail: cleanPremiumText(x.buyerEmail || "", 180),
+    sharerUid: cleanPremiumText(x.sharerUid || "", 140),
+    sharerRole: cleanPremiumText(x.sharerRole || "", 40),
+    referralVerified: x.referralVerified === true,
     commissionType: cleanPremiumText(x.commissionType || "", 80),
     commissionRate: Number(x.commissionRate || x.rate || 0) || 0,
     rate: Number(x.rate || x.commissionRate || 0) || 0,
@@ -1126,6 +1133,13 @@ function azCommissionSafeRecord(x = {}, docId = "") {
     payoutApprovedAt: cleanPremiumText(x.payoutApprovedAt || "", 80),
     payoutPaidAt: cleanPremiumText(x.payoutPaidAt || "", 80),
     payoutRejectedAt: cleanPremiumText(x.payoutRejectedAt || "", 80),
+    voided: x.voided === true || String(x.payoutStatus || x.status || "").toLowerCase() === "void",
+    voidReason: cleanPremiumText(x.voidReason || "", 500),
+    voidedAt: cleanPremiumText(x.voidedAt || "", 80),
+    voidedAtMs: Number(x.voidedAtMs || 0) || 0,
+    previousPayoutStatus: cleanPremiumText(x.previousPayoutStatus || "", 40),
+    parentDocId: cleanPremiumText(x.parentDocId || x.adjustmentParentDocId || "", 160),
+    adjustmentParentDocId: cleanPremiumText(x.adjustmentParentDocId || x.parentDocId || "", 160),
     paymentStatus: cleanPremiumText(x.paymentStatus || "", 40),
     sourcePage: cleanPremiumText(x.sourcePage || (safeReferral && safeReferral.sourcePage) || "", 40),
     note: cleanPremiumText(x.note || "", 260),
@@ -1133,6 +1147,49 @@ function azCommissionSafeRecord(x = {}, docId = "") {
     createdAtMs: Number(x.createdAtMs || 0) || 0,
     shareReferral: safeReferral
   };
+}
+
+
+async function azCommissionReadRecordById(docId = "") {
+  const id = cleanPremiumText(docId, 160);
+  if (!id) return { found:false, storage:"", row:null };
+  const db = getAzobssBackendDb();
+  if (db) {
+    const ref = db.collection("commissionRecords").doc(id);
+    const snap = await ref.get();
+    return { found:snap.exists, storage:"firestore", row:snap.exists ? (snap.data() || {}) : null, ref, db };
+  }
+  const all = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+  if (!Array.isArray(all)) return { found:false, storage:"json", row:null, all:[] };
+  const index = all.findIndex(row => cleanPremiumText(row.docId || row.id || `${row.orderId || ""}_${row.commissionType || ""}_${row.username || ""}`, 160) === id);
+  return { found:index >= 0, storage:"json", row:index >= 0 ? all[index] : null, index, all };
+}
+async function azCommissionMergeRecordById(docId = "", patch = {}, options = {}) {
+  const id = cleanPremiumText(docId, 160);
+  if (!id) throw new Error("Missing commission docId.");
+  const db = getAzobssBackendDb();
+  if (db) {
+    const ref = db.collection("commissionRecords").doc(id);
+    if (!options.create) {
+      const snap = await ref.get();
+      if (!snap.exists) throw new Error("Commission record not found.");
+    }
+    await ref.set(azJsonSafe(patch), { merge:true });
+    const out = await ref.get();
+    return { storage:"firestore", docId:id, row:out.exists ? (out.data() || {}) : patch };
+  }
+  const all = readPremiumJson(COMMISSION_RECORDS_FILE, []);
+  if (!Array.isArray(all)) throw new Error("Commission JSON fallback is not available.");
+  let index = all.findIndex(row => cleanPremiumText(row.docId || row.id || `${row.orderId || ""}_${row.commissionType || ""}_${row.username || ""}`, 160) === id);
+  if (index < 0) {
+    if (!options.create) throw new Error("Commission record not found.");
+    all.unshift({ docId:id, ...patch });
+    index = 0;
+  } else {
+    all[index] = { ...all[index], ...patch, docId:id };
+  }
+  writePremiumJson(COMMISSION_RECORDS_FILE, all.slice(0, 5000));
+  return { storage:"json", docId:id, row:all[index] };
 }
 
 
@@ -1323,7 +1380,8 @@ function azPayoutMaxAmountRm() {
   return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0;
 }
 function azPayoutRequirePaidReference() {
-  return String(process.env.AZOBSS_PAYOUT_REQUIRE_PAID_REFERENCE || "").trim() === "1";
+  const raw = String(process.env.AZOBSS_PAYOUT_REQUIRE_PAID_REFERENCE || "").trim().toLowerCase();
+  return raw !== "0" && raw !== "false" && raw !== "off";
 }
 function azPayoutAllowReopenFinal() {
   return String(process.env.AZOBSS_PAYOUT_ALLOW_REOPEN_FINAL || "").trim() === "1";
@@ -1461,6 +1519,16 @@ function azCommissionPatchForPayoutRequest(status, body = {}, identity = {}) {
     payoutRequestUpdatedByUid: cleanPremiumText(identity.uid || '', 140),
     payoutRequestUpdatedByUsername: cleanPremiumText(identity.username || '', 80)
   };
+  if (status === 'approved') {
+    patch.status = 'approved';
+    patch.payoutStatus = 'approved';
+    patch.payoutApprovedAt = patch.payoutRequestUpdatedAt;
+    patch.payoutApprovedAtMs = now;
+    patch.payoutUpdatedAt = patch.payoutRequestUpdatedAt;
+    patch.payoutUpdatedAtMs = now;
+    patch.payoutUpdatedByUid = cleanPremiumText(identity.uid || '', 140);
+    patch.payoutUpdatedByUsername = cleanPremiumText(identity.username || '', 80);
+  }
   if (status === 'paid') {
     patch.status = 'paid';
     patch.payoutStatus = 'paid';
@@ -5517,10 +5585,10 @@ function azReferralFrom(data = {}, product = {}, order = {}){
   if(normalized.username) return normalized;
   return azReferralFromUrl(data.returnUrl || data.pageUrl || data.sourceUrl || product.pageUrl || order.returnUrl || order.pageUrl || order.sourceUrl || '', product, order) || normalized;
 }
-function azBuildCommissionLines(order = {}){
+function azBuildCommissionLines(order = {}, verifiedReferral = null){
   const product = order.product || {};
   const owner = azProductOwnerFrom(product, order);
-  const referral = azReferralFrom({}, product, order);
+  const referral = verifiedReferral || azReferralFrom({}, product, order);
   const buyer = azCommissionUsername(order.user?.username || order.username || '');
   const saleAmount = Number(order.amountSen || 0) > 0 ? Number(order.amountSen) / 100 : azCommissionMoney(order.amount || product.price);
   if (!saleAmount) return [];
@@ -5551,7 +5619,7 @@ function azBuildCommissionLines(order = {}){
     const amount = Math.round((saleAmount * rate / 100) * 100) / 100;
     const azRate = opts.azobssShareRate != null ? Math.max(0, Number(opts.azobssShareRate || 0)) : Math.max(0, 100 - Number(rate || 0));
     const azobssShareAmount = Math.round((saleAmount * azRate / 100) * 100) / 100;
-    const line = { ...base, commissionType: kind, username, uid: uid || '', ownerUid: uid || '', ownerUsername: username, ownerEmail: email || '', commissionRate: rate, rate, commissionAmount: amount, amount, amountText: azCommissionAmountText(amount), azobssShareRate: azRate, azobssShareAmount, azobssShareText: azCommissionAmountText(azobssShareAmount), ownerShareAmount: String(kind).includes('share') ? 0 : amount, sharerShareAmount: String(kind).includes('share') ? amount : 0, note, shareReferral: referral, productOwner: owner };
+    const line = { ...base, commissionType: kind, username, uid: uid || '', ownerUid: uid || '', ownerUsername: username, ownerEmail: email || '', commissionRate: rate, rate, commissionAmount: amount, amount, amountText: azCommissionAmountText(amount), azobssShareRate: azRate, azobssShareAmount, azobssShareText: azCommissionAmountText(azobssShareAmount), ownerShareAmount: String(kind).includes('share') ? 0 : amount, sharerShareAmount: String(kind).includes('share') ? amount : 0, note, shareReferral: referral, sharerUid: String(kind).includes('share') ? cleanPremiumText(referral.sharerUid || '', 140) : '', sharerRole: String(kind).includes('share') ? cleanPremiumText(referral.sharerRole || '', 40) : '', referralVerified: String(kind).includes('share') ? referral.verified === true : false, productOwner: owner };
     lines.push(line);
   }
   if (hasStaffOwner && validSharer) {
@@ -5560,26 +5628,56 @@ function azBuildCommissionLines(order = {}){
     const ownerSplitRate = semiOwner ? 90 : 60;
     const splitAzRate = Math.max(0, 100 - ownerSplitRate - sharerRate);
     const splitNote = semiOwner
-      ? 'Produk semi-admin terjual melalui share link staff lain. Semi-admin owner 90%, sharer 4%, AZOBSS 6%.'
-      : 'Produk staff terjual melalui share link staff lain. Owner 60%, sharer 10%, AZOBSS 30%.';
+      ? 'Produk semi-admin terjual melalui share link Staff/Manager lain. Semi-admin owner 90%, sharer 4%, AZOBSS 6%.'
+      : 'Produk staff terjual melalui share link Staff/Manager lain. Owner 60%, sharer 10%, AZOBSS 30%.';
     const shareNote = semiOwner
-      ? 'Staff share link berjaya menjual produk semi-admin. Sharer 4%, AZOBSS 6%.'
-      : 'Staff share link berjaya menjual produk staff lain. Sharer 10%.';
+      ? 'Staff/Manager share link berjaya menjual produk semi-admin. Sharer 4%, AZOBSS 6%.'
+      : 'Staff/Manager share link berjaya menjual produk staff lain. Sharer 10%.';
     add('owner_sale_split', ownerName, owner.ownerUid, owner.ownerEmail, ownerSplitRate, splitNote, { azobssShareRate: splitAzRate });
     add('share_referral', sharer, '', '', sharerRate, shareNote, { azobssShareRate: splitAzRate });
   } else if (hasStaffOwner) {
     add('owner_sale', ownerName, owner.ownerUid, owner.ownerEmail, ownerDirectRate, `Produk owner terjual. ${ownerDirectPolicy}.`);
   } else if (validSharer) {
-    add('admin_product_share_referral', sharer, '', '', 20, 'Staff share link berjaya menjual produk admin/AZOBSS. Sharer 20%, AZOBSS 80%.');
+    add('admin_product_share_referral', sharer, '', '', 20, 'Staff/Manager share link berjaya menjual produk admin/AZOBSS. Sharer 20%, AZOBSS 80%.');
   }
   return lines;
+}
+function azCommissionSharerRoleKey(value){ return String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, ''); }
+function azCommissionSharerRoleEligible(value){ return ['staff','manager','semiadmin','semistaff','seller','editor'].includes(azCommissionSharerRoleKey(value)); }
+async function azVerifyCommissionReferral(order = {}, db = null){
+  const product = order.product || {};
+  const referral = azReferralFrom({}, product, order);
+  const username = azCommissionUsername(referral && referral.username);
+  if(!username) return referral || {};
+  if(!db) return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'firestore-unavailable' };
+  try{
+    let snap = await db.collection('users').doc(username).get();
+    let data = snap && snap.exists ? (snap.data() || {}) : null;
+    let docId = snap && snap.exists ? snap.id : '';
+    if(!data){
+      for(const field of ['usernameKey','username']){
+        try{
+          const q=await db.collection('users').where(field,'==',username).limit(1).get();
+          if(q && !q.empty){const d=q.docs[0];data=d.data()||{};docId=d.id;break;}
+        }catch(_e){}
+      }
+    }
+    if(!data) return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'sharer-not-found' };
+    const role = data.role || data.userRole || data.accountRole || data.memberRole || '';
+    if(!azCommissionSharerRoleEligible(role)) return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'role-not-eligible', rejectedRole:cleanPremiumText(role,40) };
+    return { ...referral, username, ref:username, sharerUid:cleanPremiumText(data.uid || data.authUid || docId || '',140), sharerRole:cleanPremiumText(role,40), verified:true, verifiedAt:new Date().toISOString() };
+  }catch(err){
+    console.warn('AZOBSS referral verification failed:', err && err.message ? err.message : err);
+    return { ...referral, username:'', rejectedUsername:username, verified:false, rejectReason:'verification-error' };
+  }
 }
 async function azSaveCommissionLinesForOrder(order = {}){
   try{
     if (!order || order.status !== 'paid') return { ok:false, skipped:true, reason:'order-not-paid' };
-    const lines = azBuildCommissionLines(order);
-    if (!lines.length) return { ok:true, skipped:true, reason:'no-staff-commission' };
     const db = getAzobssBackendDb();
+    const verifiedReferral = await azVerifyCommissionReferral(order, db);
+    const lines = azBuildCommissionLines(order, verifiedReferral);
+    if (!lines.length) return { ok:true, skipped:true, reason:'no-staff-commission' };
     if (db) {
       for (const line of lines) {
         const idBase = `${line.orderId || line.billCode || Date.now()}_${line.commissionType}_${line.username}`.replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,180);
@@ -17331,6 +17429,8 @@ async function handler(req, res) {
     if (pathname === "/api/commission/status" && req.method === "GET" && parsed.query && parsed.query.records && azRateLimitOrSend(req, res, "commission-records", 60, 60 * 1000)) return;
     if (pathname === "/api/commission/retry-order" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-retry", 10, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/payout-status" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-payout-status", 30, 10 * 60 * 1000)) return;
+    if (pathname === "/api/commission/adjustment" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-adjustment", 30, 10 * 60 * 1000)) return;
+    if (pathname === "/api/commission/void" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-void", 20, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download-session/") && (req.method === "GET" || req.method === "HEAD") && azRateLimitOrSend(req, res, "premium-download-session", 500, 60 * 1000)) return;
@@ -19694,8 +19794,14 @@ async function handler(req, res) {
         if (['paid', 'cancelled'].includes(oldStatus) && oldStatus !== status && !azPayoutAllowReopenFinal()) {
           return send(res, 409, JSON.stringify({ ok:false, error:`Payout request is already ${oldStatus}. Set AZOBSS_PAYOUT_ALLOW_REOPEN_FINAL=1 only if you intentionally need to reopen final requests.`, status: oldStatus }, null, 2), "application/json");
         }
+        if (status === 'paid' && oldStatus !== 'approved') {
+          return send(res, 409, JSON.stringify({ ok:false, error:'Payout request must be Approved before it can be marked Paid.', status: oldStatus }, null, 2), "application/json");
+        }
         if (status === 'paid' && azPayoutRequirePaidReference() && !cleanPremiumText(body.payoutReference || body.reference || '', 160)) {
           return send(res, 400, JSON.stringify({ ok:false, error:'Payment/reference number is required before marking payout as paid.' }, null, 2), "application/json");
+        }
+        if (status === 'paid' && !cleanPremiumText(body.payoutMethod || body.method || '', 80)) {
+          return send(res, 400, JSON.stringify({ ok:false, error:'Payout method is required before marking payout as paid.' }, null, 2), "application/json");
         }
         const patch = azPayoutRequestPatch({ ...body, status }, adminIdentity);
         patch.timeline = azPayoutAppendTimeline(old, azPayoutTimelineEvent('status_update', adminIdentity, `Admin updated payout request to ${status}.`, { status }));
@@ -19703,13 +19809,26 @@ async function handler(req, res) {
         batch.set(ref, azJsonSafe(patch), { merge:true });
         const docIds = Array.isArray(old.commissionDocIds) ? old.commissionDocIds.map(v => cleanPremiumText(v, 160)).filter(Boolean) : [];
         const cpatch = azCommissionPatchForPayoutRequest(status, body, adminIdentity);
-        docIds.forEach(id => batch.set(db.collection("commissionRecords").doc(id), azJsonSafe(cpatch), { merge:true }));
+        let updatedCommissionRecords = 0;
+        for (const id of docIds) {
+          const cref = db.collection("commissionRecords").doc(id);
+          const csnap = await cref.get();
+          if (!csnap.exists) continue;
+          const crow = csnap.data() || {};
+          const cstatus = String(crow.voided === true ? "void" : (crow.payoutStatus || crow.status || "pending")).toLowerCase();
+          if (cstatus === "void") {
+            return send(res, 409, JSON.stringify({ ok:false, error:`Linked commission ${id} is void. Resolve the payout request before continuing.` }, null, 2), "application/json");
+          }
+          if (cstatus === "paid") continue; // never downgrade an already-paid commission
+          batch.set(cref, azJsonSafe(cpatch), { merge:true });
+          updatedCommissionRecords += 1;
+        }
         await batch.commit();
         const updatedSnap = await ref.get();
         const updated = updatedSnap.exists ? (updatedSnap.data() || { ...old, ...patch }) : { ...old, ...patch };
-        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payout_request_status_update", "payoutRequests", requestId, { requestId, status, amount: old.amount || 0, recordCount: docIds.length, payoutReference: patch.payoutReference || '', payoutMethod: patch.payoutMethod || '' }, "success"), "Admin payout request audit log failed");
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_payout_request_status_update", "payoutRequests", requestId, { requestId, status, amount: old.amount || 0, recordCount: docIds.length, updatedCommissionRecords, payoutReference: patch.payoutReference || '', payoutMethod: patch.payoutMethod || '' }, "success"), "Admin payout request audit log failed");
         azFireAndForget(azNotifyPayoutStatusToStaff(req, { ...old, ...updated, requestId }, status, patch), "Staff payout status email failed");
-        return send(res, 200, JSON.stringify({ ok:true, status, updatedCommissionRecords: docIds.length, request: azPayoutRequestSafe(updated, requestId, true) }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, status, updatedCommissionRecords, request: azPayoutRequestSafe(updated, requestId, true) }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
@@ -19728,20 +19847,40 @@ async function handler(req, res) {
           return send(res, 403, JSON.stringify({ ok:false, error:"Commission records are protected. Use Firebase login token or admin API secret." }, null, 2), "application/json");
         }
         const maxRecords = Math.max(1, Math.min(300, Number(parsed.query.limit || 100) || 100));
+        const beforeMs = Math.max(0, Number(parsed.query.beforeMs || parsed.query.cursorMs || 0) || 0);
+        const cursorDocId = cleanPremiumText(parsed.query.cursorDocId || parsed.query.afterDocId || "", 160);
         let records = [];
+        let hasMore = false;
+        let nextCursorMs = 0;
+        let nextCursorDocId = "";
         if (db) {
           try {
-            const snap = wantRecords
-              ? await db.collection('commissionRecords').orderBy('createdAtMs', 'desc').limit(maxRecords).get()
-              : await db.collection('commissionRecords').limit(1).get();
+            let ref = db.collection('commissionRecords').orderBy('createdAtMs', 'desc');
+            if (wantRecords && cursorDocId) {
+              const cursorSnap = await db.collection('commissionRecords').doc(cursorDocId).get();
+              if (cursorSnap.exists) ref = ref.startAfter(cursorSnap);
+              else if (beforeMs > 0) ref = ref.where('createdAtMs', '<', beforeMs);
+            } else if (wantRecords && beforeMs > 0) {
+              ref = ref.where('createdAtMs', '<', beforeMs);
+            }
+            const snap = wantRecords ? await ref.limit(maxRecords + 1).get() : await db.collection('commissionRecords').limit(1).get();
             firestoreOk = true;
             sampleCount = snap.size;
             if (wantRecords) {
-              snap.forEach(doc => {
+              const docs = snap.docs || [];
+              const pageDocs = docs.slice(0, maxRecords);
+              hasMore = docs.length > maxRecords;
+              for (const doc of pageDocs) {
                 const x = doc.data() || {};
-                if (wantRecords && !hasCommissionSecret && !azCommissionRecordBelongsToIdentity(x, commissionIdentity)) return;
+                if (!hasCommissionSecret && !azCommissionRecordBelongsToIdentity(x, commissionIdentity)) continue;
                 records.push(azCommissionSafeRecord(x, doc.id));
-              });
+              }
+              if (pageDocs.length) {
+                const lastDoc = pageDocs[pageDocs.length - 1];
+                const last = lastDoc.data() || {};
+                nextCursorMs = Number(last.createdAtMs || 0) || 0;
+                nextCursorDocId = cleanPremiumText(lastDoc.id || "", 160);
+              }
             }
           } catch (err) {
             error = err && err.message ? err.message : String(err);
@@ -19751,8 +19890,19 @@ async function handler(req, res) {
         }
         const localRows = readPremiumJson(COMMISSION_RECORDS_FILE, []);
         if (wantRecords && !records.length && Array.isArray(localRows)) {
-          const visibleLocalRows = hasCommissionSecret ? localRows : localRows.filter(x => azCommissionRecordBelongsToIdentity(x, commissionIdentity));
-          records = visibleLocalRows.slice(0, maxRecords).map((x, i) => azCommissionSafeRecord(x, x.docId || x.id || `local_${i}`));
+          const visibleLocalRows = (hasCommissionSecret ? localRows : localRows.filter(x => azCommissionRecordBelongsToIdentity(x, commissionIdentity)))
+            .slice()
+            .sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)))
+            .filter(x=>beforeMs>0 ? Number(x.createdAtMs||0)<beforeMs : true);
+          const page = visibleLocalRows.slice(0, maxRecords + 1);
+          hasMore = page.length > maxRecords;
+          const pageRows = page.slice(0, maxRecords);
+          records = pageRows.map((x, i) => {
+            const localId = cleanPremiumText(x.docId || x.id || `${x.orderId || ""}_${x.commissionType || ""}_${x.username || ""}` || `local_${i}`, 160);
+            return azCommissionSafeRecord(x, localId);
+          });
+          nextCursorMs = pageRows.length ? Number(pageRows[pageRows.length-1].createdAtMs||0)||0 : 0;
+          nextCursorDocId = pageRows.length ? cleanPremiumText(pageRows[pageRows.length-1].docId || pageRows[pageRows.length-1].id || `${pageRows[pageRows.length-1].orderId || ""}_${pageRows[pageRows.length-1].commissionType || ""}_${pageRows[pageRows.length-1].username || ""}`, 160) : "";
         }
         return send(res, 200, JSON.stringify({
           ok: true,
@@ -19762,6 +19912,9 @@ async function handler(req, res) {
           localJsonCount: Array.isArray(localRows) ? localRows.length : 0,
           envHasServiceAccountJson: !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
           recordsReturned: records.length,
+          hasMore,
+          nextCursorMs,
+          nextCursorDocId,
           records: wantRecords ? records : undefined,
           error
         }, null, 2), "application/json");
@@ -19769,6 +19922,7 @@ async function handler(req, res) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
+
 
     if (pathname === "/api/commission/retry-order" && req.method === "POST") {
       try {
@@ -19795,7 +19949,6 @@ async function handler(req, res) {
       }
     }
 
-
     if (pathname === "/api/commission/payout-status" && req.method === "POST") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
@@ -19812,32 +19965,187 @@ async function handler(req, res) {
           .filter(Boolean)
           .filter((v, i, arr) => arr.indexOf(v) === i);
         if (!ids.length) return send(res, 400, JSON.stringify({ ok:false, error:"Missing commission docId/docIds." }, null, 2), "application/json");
-        const patch = azCommissionPayoutPatch(body, adminIdentity);
+
+        const targetStatus = azCommissionPayoutStatus(body.payoutStatus || body.status);
+        if (!targetStatus) return send(res, 400, JSON.stringify({ ok:false, error:"Invalid payout status." }, null, 2), "application/json");
+        const payoutReference = cleanPremiumText(body.payoutReference || body.reference || "", 160);
+        const payoutMethod = cleanPremiumText(body.payoutMethod || body.method || "", 80);
+        if (targetStatus === "paid" && !payoutReference) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Payment/reference number is required before marking commission as paid." }, null, 2), "application/json");
+        }
+        if (targetStatus === "paid" && !payoutMethod) {
+          return send(res, 400, JSON.stringify({ ok:false, error:"Payout method is required before marking commission as paid." }, null, 2), "application/json");
+        }
+
+        const currentRows = [];
+        for (const id of ids) {
+          const rec = await azCommissionReadRecordById(id);
+          if (!rec.found || !rec.row) return send(res, 404, JSON.stringify({ ok:false, error:`Commission record not found: ${id}` }, null, 2), "application/json");
+          currentRows.push({ id, ...rec });
+        }
+        if (targetStatus === "paid") {
+          const staff = new Set(currentRows.map(r => azCommissionUsername(r.row.username || r.row.ownerUsername || "")).filter(Boolean));
+          if (staff.size > 1) return send(res, 409, JSON.stringify({ ok:false, error:"Bulk Paid must contain one Staff/Manager only." }, null, 2), "application/json");
+        }
+        for (const rec of currentRows) {
+          const old = rec.row || {};
+          const oldStatus = String(old.voided === true ? "void" : (old.payoutStatus || old.status || "pending")).toLowerCase();
+          if (oldStatus === "void") return send(res, 409, JSON.stringify({ ok:false, error:`Commission ${rec.id} is void and cannot change payout status.` }, null, 2), "application/json");
+          if (oldStatus === "paid" && targetStatus !== "paid") return send(res, 409, JSON.stringify({ ok:false, error:`Commission ${rec.id} is already Paid. Use Void/Reverse for corrections.` }, null, 2), "application/json");
+          if (targetStatus === "paid" && oldStatus !== "approved") return send(res, 409, JSON.stringify({ ok:false, error:`Commission ${rec.id} must be Approved before Paid.` }, null, 2), "application/json");
+        }
+
         let updated = 0;
         let storage = "";
-        const db = getAzobssBackendDb();
-        if (db) {
-          storage = "firestore";
-          for (const id of ids) {
-            await db.collection("commissionRecords").doc(id).set(azJsonSafe(patch), { merge:true });
-            updated += 1;
-          }
-        } else {
-          storage = "json";
-          const all = readPremiumJson(COMMISSION_RECORDS_FILE, []);
-          if (!Array.isArray(all)) return send(res, 500, JSON.stringify({ ok:false, error:"Commission JSON fallback is not available." }, null, 2), "application/json");
-          for (const row of all) {
-            const rowId = cleanPremiumText(row.docId || row.id || `${row.orderId || ""}_${row.commissionType || ""}_${row.username || ""}`, 160);
-            if (ids.includes(rowId)) { Object.assign(row, patch); updated += 1; }
-          }
-          writePremiumJson(COMMISSION_RECORDS_FILE, all.slice(0, 5000));
+        for (const rec of currentRows) {
+          const old = rec.row || {};
+          const oldStatus = String(old.payoutStatus || old.status || "pending").toLowerCase();
+          const basePatch = azCommissionPayoutPatch({ ...body, payoutStatus:targetStatus }, adminIdentity);
+          const history = Array.isArray(old.payoutHistory) ? old.payoutHistory.slice(-19) : [];
+          history.push({
+            from: oldStatus,
+            to: targetStatus,
+            at: basePatch.payoutUpdatedAt,
+            atMs: basePatch.payoutUpdatedAtMs,
+            byUid: basePatch.payoutUpdatedByUid || "",
+            byUsername: basePatch.payoutUpdatedByUsername || "",
+            note: cleanPremiumText(body.payoutNote || body.note || "", 300),
+            reference: payoutReference,
+            method: payoutMethod
+          });
+          const patch = { ...basePatch, previousPayoutStatus:oldStatus, payoutHistory:history };
+          const result = await azCommissionMergeRecordById(rec.id, patch);
+          storage = result.storage || storage;
+          updated += 1;
         }
-        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "commission_payout_status_update", "commissionRecords", ids.join(",").slice(0, 180), { docIds: ids, payoutStatus: patch.payoutStatus, payoutReference: patch.payoutReference || "", payoutMethod: patch.payoutMethod || "", updated, storage }, "success"), "Commission payout audit log failed");
-        return send(res, 200, JSON.stringify({ ok:true, updated, storage, payoutStatus: patch.payoutStatus }, null, 2), "application/json");
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "commission_payout_status_update", "commissionRecords", ids.join(",").slice(0, 180), { docIds: ids, payoutStatus: targetStatus, payoutReference, payoutMethod, updated, storage }, "success"), "Commission payout audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, updated, storage, payoutStatus:targetStatus }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
+
+    if (pathname === "/api/commission/adjustment" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to create commission adjustments." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+
+        const existingId = cleanPremiumText(body.docId || body.id || "", 160);
+        const parentDocId = cleanPremiumText(body.parentDocId || body.adjustmentParentDocId || "", 160);
+        let parent = null;
+        if (parentDocId) {
+          const p = await azCommissionReadRecordById(parentDocId);
+          if (!p.found || !p.row) return send(res, 404, JSON.stringify({ ok:false, error:"Parent commission record not found." }, null, 2), "application/json");
+          parent = p.row || {};
+        }
+        if (existingId) {
+          const current = await azCommissionReadRecordById(existingId);
+          if (!current.found || !current.row) return send(res, 404, JSON.stringify({ ok:false, error:"Adjustment record not found." }, null, 2), "application/json");
+          const kind = String(current.row.commissionType || "").toLowerCase();
+          if (!kind.includes("manual") && !kind.includes("adjustment")) return send(res, 409, JSON.stringify({ ok:false, error:"Auto-generated commission cannot be edited. Create a new Adjustment instead." }, null, 2), "application/json");
+          const currentStatus = String(current.row.payoutStatus || current.row.status || "pending").toLowerCase();
+          if (current.row.voided === true || currentStatus === "void") return send(res, 409, JSON.stringify({ ok:false, error:"Void adjustment cannot be edited." }, null, 2), "application/json");
+          if (currentStatus === "paid") return send(res, 409, JSON.stringify({ ok:false, error:"Paid adjustment is final. Use Void/Reverse and create a new adjustment." }, null, 2), "application/json");
+        }
+
+        const amount = Number(body.amount ?? body.commissionAmount ?? 0);
+        if (!Number.isFinite(amount) || amount === 0) return send(res, 400, JSON.stringify({ ok:false, error:"Adjustment amount must be non-zero." }, null, 2), "application/json");
+        const saleAmount = Math.max(0, Number(body.saleAmount ?? (parent && parent.saleAmount) ?? 0) || 0);
+        const username = azCommissionUsername(body.username || body.ownerUsername || (parent && (parent.username || parent.ownerUsername)) || "");
+        if (!username) return send(res, 400, JSON.stringify({ ok:false, error:"Staff/Manager username is required." }, null, 2), "application/json");
+        const productName = cleanPremiumText(body.productName || body.product || (parent && parent.productName) || "Manual Commission Adjustment", 180);
+        const status = azCommissionPayoutStatus(body.payoutStatus || body.status || "pending");
+        if (!["pending","approved","rejected"].includes(status)) return send(res, 400, JSON.stringify({ ok:false, error:"Manual adjustment status must be pending, approved or rejected." }, null, 2), "application/json");
+        const now = Date.now();
+        const docId = existingId || cleanPremiumText(makePremiumId("comadj"), 160);
+        const patch = {
+          docId,
+          parentDocId,
+          adjustmentParentDocId: parentDocId,
+          manualAdjustment: true,
+          commissionType: "manual_admin_adjustment",
+          username,
+          ownerUsername: azCommissionUsername(body.ownerUsername || username),
+          ownerUid: cleanPremiumText(body.ownerUid || (parent && parent.ownerUid) || "", 140),
+          ownerEmail: cleanPremiumText(body.ownerEmail || (parent && parent.ownerEmail) || "", 180),
+          productName,
+          product: productName,
+          productId: cleanPremiumText(body.productId || (parent && parent.productId) || "", 160),
+          orderId: cleanPremiumText(body.orderId || (parent && parent.orderId) || "", 140),
+          billCode: cleanPremiumText(body.billCode || (parent && parent.billCode) || "", 100),
+          sourcePage: cleanPremiumText(body.sourcePage || (parent && parent.sourcePage) || "", 40),
+          saleAmount,
+          saleAmountText: saleAmount ? azCommissionAmountText(saleAmount) : "",
+          commissionAmount: Math.round(amount * 100) / 100,
+          amount: Math.round(amount * 100) / 100,
+          amountText: azCommissionAmountText(amount),
+          commissionRate: saleAmount > 0 ? Math.round((amount / saleAmount) * 10000) / 100 : 0,
+          rate: saleAmount > 0 ? Math.round((amount / saleAmount) * 10000) / 100 : 0,
+          status,
+          payoutStatus: status,
+          note: cleanPremiumText(body.note || "", 500),
+          updatedAt: new Date(now).toISOString(),
+          updatedAtMs: now,
+          updatedByAdminUid: cleanPremiumText(adminIdentity.uid || "", 140),
+          updatedByAdminUsername: cleanPremiumText(adminIdentity.username || "", 80)
+        };
+        if (!existingId) {
+          patch.createdAt = patch.updatedAt;
+          patch.createdAtMs = now;
+          patch.createdByAdmin = cleanPremiumText(adminIdentity.username || adminIdentity.uid || "admin", 100);
+        }
+        const result = await azCommissionMergeRecordById(docId, patch, { create:!existingId });
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, existingId ? "commission_adjustment_update" : "commission_adjustment_create", "commissionRecords", docId, { docId, parentDocId, username, productName, amount, saleAmount, payoutStatus:status }, "success"), "Commission adjustment audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, storage:result.storage, record:azCommissionSafeRecord(result.row || patch, docId) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/commission/void" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:"Admin authorization required to void commission records." }, null, 2), "application/json");
+        let body = {};
+        try { body = JSON.parse((await readBody(req)) || "{}"); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body" }, null, 2), "application/json"); }
+        const docId = cleanPremiumText(body.docId || body.id || "", 160);
+        const reason = cleanPremiumText(body.reason || body.voidReason || body.note || "", 500);
+        if (!docId) return send(res, 400, JSON.stringify({ ok:false, error:"Missing commission docId." }, null, 2), "application/json");
+        if (!reason) return send(res, 400, JSON.stringify({ ok:false, error:"Void/Reverse reason is required." }, null, 2), "application/json");
+        const current = await azCommissionReadRecordById(docId);
+        if (!current.found || !current.row) return send(res, 404, JSON.stringify({ ok:false, error:"Commission record not found." }, null, 2), "application/json");
+        const old = current.row || {};
+        const oldStatus = String(old.voided === true ? "void" : (old.payoutStatus || old.status || "pending")).toLowerCase();
+        if (oldStatus === "void") return send(res, 409, JSON.stringify({ ok:false, error:"Commission record is already void." }, null, 2), "application/json");
+        const now = Date.now();
+        const history = Array.isArray(old.payoutHistory) ? old.payoutHistory.slice(-19) : [];
+        history.push({ from:oldStatus, to:"void", at:new Date(now).toISOString(), atMs:now, byUid:cleanPremiumText(adminIdentity.uid||"",140), byUsername:cleanPremiumText(adminIdentity.username||"",80), note:reason });
+        const patch = {
+          voided:true,
+          previousPayoutStatus:oldStatus,
+          status:"void",
+          payoutStatus:"void",
+          voidReason:reason,
+          voidedAt:new Date(now).toISOString(),
+          voidedAtMs:now,
+          voidedByUid:cleanPremiumText(adminIdentity.uid||"",140),
+          voidedByUsername:cleanPremiumText(adminIdentity.username||"",80),
+          payoutHistory:history,
+          updatedAt:new Date(now).toISOString(),
+          updatedAtMs:now
+        };
+        const result = await azCommissionMergeRecordById(docId, patch);
+        azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "commission_record_void", "commissionRecords", docId, { docId, previousPayoutStatus:oldStatus, reason }, "success"), "Commission void audit log failed");
+        return send(res, 200, JSON.stringify({ ok:true, storage:result.storage, record:azCommissionSafeRecord(result.row || { ...old, ...patch }, docId) }, null, 2), "application/json");
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err) }, null, 2), "application/json");
+      }
+    }
+
 
     // =========================
     // SOFTWARE STATS BACKEND SYNC

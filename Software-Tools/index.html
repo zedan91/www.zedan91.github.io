@@ -3355,6 +3355,38 @@ html body .downloads-section{
     </select>
   </label>
 </div>
+<div class="az-software-affiliate-share-bar" id="azSoftwareAffiliateShareBar" hidden>
+  <div class="az-software-affiliate-share-copy">
+    <strong>💰 Share Software Tools &amp; Earn</strong>
+    <span>Staff / Manager: komisen auto apabila pembelian berbayar datang melalui link anda.</span>
+  </div>
+  <button type="button" id="azSoftwareAffiliateShareButton" class="az-software-affiliate-share-btn">Share Link</button>
+</div>
+<style id="azobss-software-affiliate-share-1188-css">
+.az-software-affiliate-share-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 16px;padding:12px 14px;border:1px solid rgba(250,204,21,.32);border-radius:14px;background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.08));box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.az-software-affiliate-share-bar[hidden]{display:none!important}.az-software-affiliate-share-copy{display:grid;gap:3px}.az-software-affiliate-share-copy strong{color:#fde68a;font-size:13px;font-weight:950}.az-software-affiliate-share-copy span{color:#bfdbfe;font-size:12px;line-height:1.4}.az-software-affiliate-share-btn{flex:0 0 auto;border:1px solid rgba(96,165,250,.68);border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:9px 14px;font-size:12px;font-weight:950;cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.24)}.az-software-affiliate-share-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+@media(max-width:700px){.az-software-affiliate-share-bar{align-items:stretch;flex-direction:column}.az-software-affiliate-share-btn{width:100%}}
+</style>
+<script id="azobss-software-catalog-affiliate-share-1188-js">
+(function(){
+  if(window.__azSoftwareCatalogAffiliate1188) return; window.__azSoftwareCatalogAffiliate1188=true;
+  const CATALOG_REF_KEY='azobssSoftwareCatalogReferral';
+  function parse(v){try{return v?JSON.parse(v):null}catch(_e){return null}}
+  function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
+  function roleKey(v){return String(v||'').toLowerCase().replace(/[\s_-]+/g,'')}
+  function uname(u){return String((u&&(u.usernameKey||u.username||u.name))||document.getElementById('signedInName')?.textContent||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40)}
+  function eligible(u){const r=roleKey(u&&(u.role||u.userRole||u.accountRole||u.memberRole));return ['staff','manager','semiadmin','semistaff','seller','editor'].includes(r)}
+  function captureIncoming(){try{const q=new URLSearchParams(location.search);const ref=String(q.get('r')||q.get('ref')||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);if(!ref)return;const now=Date.now();localStorage.setItem(CATALOG_REF_KEY,JSON.stringify({username:ref,ref,sourcePage:'Software',source:'software-catalog-share',openedAt:new Date(now).toISOString(),expiresAtMs:now+30*24*60*60*1000}));}catch(_e){}}
+  function shareUrl(){const u=readUser();const ref=uname(u);const url=new URL('https://www.azobss.com/Software-Tools/');url.searchParams.set('ref',ref);url.searchParams.set('src','staff-manager-share');return url.toString()}
+  async function copy(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return true}}catch(_e){}try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(_e){return false}}
+  function toast(msg){let el=document.getElementById('azSoftwareAffiliateToast1188');if(!el){el=document.createElement('div');el.id='azSoftwareAffiliateToast1188';el.style.cssText='position:fixed;left:50%;bottom:24px;z-index:1000001;transform:translateX(-50%);background:#0f172a;color:#ecfdf5;border:1px solid rgba(52,211,153,.45);border-radius:999px;padding:10px 14px;font:800 12px/1.2 inherit;box-shadow:0 16px 40px rgba(0,0,0,.35)';document.body.appendChild(el)}el.textContent=msg;el.hidden=false;clearTimeout(window.__azSoftwareAffiliateToastTimer1188);window.__azSoftwareAffiliateToastTimer1188=setTimeout(()=>{el.hidden=true},2600)}
+  async function doShare(){const u=readUser();if(!eligible(u)||!uname(u))return;const url=shareUrl();const payload={title:'AZOBSS Software Tools',text:'Software & tools daripada AZOBSS',url};try{if(navigator.share){await navigator.share(payload);return}}catch(err){if(err&&err.name==='AbortError')return}const ok=await copy(url);toast(ok?'Affiliate link Software Tools copied.':'Copy link gagal.');}
+  function sync(){const bar=document.getElementById('azSoftwareAffiliateShareBar');const btn=document.getElementById('azSoftwareAffiliateShareButton');if(!bar||!btn)return;const u=readUser();const show=eligible(u)&&!!uname(u);bar.hidden=!show;if(show){btn.onclick=doShare;btn.title='Share affiliate link Software Tools';}}
+  captureIncoming();
+  document.addEventListener('DOMContentLoaded',sync);if(document.readyState!=='loading')sync();window.addEventListener('focus',sync);window.addEventListener('storage',sync);[300,900,1800,3500].forEach(ms=>setTimeout(sync,ms));
+  try{new MutationObserver(()=>{clearTimeout(window.__azSoftwareAffiliateSync1188);window.__azSoftwareAffiliateSync1188=setTimeout(sync,100)}).observe(document.documentElement,{childList:true,subtree:true})}catch(_e){}
+})();
+</script>
 <div class="software-platform-card" aria-label="Software platform filter card">
   <div class="software-platform-filter" id="softwarePlatformFilter" aria-label="Software platform filter">
     <button class="software-platform-btn is-active" type="button" data-software-platform="all">▦ All Platforms</button>
@@ -6841,6 +6873,12 @@ function normalizeItem(item){
         const raw = localStorage.getItem('azobssStaffShareReferral_'+id) || sessionStorage.getItem('azobssStaffShareReferral_'+id) || '';
         if(raw) return JSON.parse(raw);
       }
+      const catalog = JSON.parse(localStorage.getItem('azobssSoftwareCatalogReferral') || 'null');
+      if(catalog && (catalog.username || catalog.ref)){
+        const exp=Number(catalog.expiresAtMs||0)||0;
+        if(!exp || exp>Date.now()) return {...catalog, username:String(catalog.username||catalog.ref||'').toLowerCase().replace(/[^a-z0-9_]/g,''), productId:id || catalog.productId || '', sourcePage:'Software', source:catalog.source || 'software-catalog-share'};
+        try{localStorage.removeItem('azobssSoftwareCatalogReferral')}catch(_e){}
+      }
       const last = JSON.parse(localStorage.getItem('azobssLuckyLastProductShareOpen') || 'null');
       if(last && last.ref && (!id || !last.productId || last.productId === id)) return {username:last.ref, productId:id || last.productId, sourcePage:last.sourcePage || '', openedAt:last.at || '', source:'last-product-open'};
     }catch(_e){}
@@ -10271,7 +10309,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       const role=String(u.role||u.userRole||u.accountRole||u.memberRole||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
       const perms=u.permissions||u.perms||{};
       const flags=[u.isStaff,u.staff,u.isSemiAdmin,u.semiAdmin,u.semiadmin,u.staffDashboard,perms.canManageSoftware,perms.canManageCAD,perms.canManageCad,perms.canManageTools];
-      if(role==='staff'||role==='semiadmin'||role==='semi-admin'||role==='semistaff'||role==='seller'||role==='editor') return true;
+      if(role==='staff'||role==='manager'||role==='semiadmin'||role==='semi-admin'||role==='semistaff'||role==='seller'||role==='editor') return true;
       if(flags.some(Boolean)) return true;
       if(localStorage.getItem('azobss_staff_role_cache')==='1'||sessionStorage.getItem('azobss_staff_role_cache')==='1') return true;
       return false;

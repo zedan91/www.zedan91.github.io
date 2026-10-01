@@ -1,0 +1,11 @@
+{
+  "api_first_no_commission_safeget": true,
+  "no_physical_delete_button": true,
+  "void_action": true,
+  "adjustment_action": true,
+  "unique_sales_kpi": true,
+  "staff_summary": true,
+  "paid_requires_approved_frontend": true,
+  "api_status_chip": true,
+  "audit_panel": true
+}

@@ -5073,7 +5073,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
       const role=String(u.role||u.userRole||u.accountRole||u.memberRole||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
       const perms=u.permissions||u.perms||{};
       const flags=[u.isStaff,u.staff,u.isSemiAdmin,u.semiAdmin,u.semiadmin,u.staffDashboard,perms.canManageSoftware,perms.canManageCAD,perms.canManageCad,perms.canManageTools];
-      if(role==='staff'||role==='semiadmin'||role==='semi-admin'||role==='semistaff'||role==='seller'||role==='editor') return true;
+      if(role==='staff'||role==='manager'||role==='semiadmin'||role==='semi-admin'||role==='semistaff'||role==='seller'||role==='editor') return true;
       if(flags.some(Boolean)) return true;
       if(localStorage.getItem('azobss_staff_role_cache')==='1'||sessionStorage.getItem('azobss_staff_role_cache')==='1') return true;
       return false;
