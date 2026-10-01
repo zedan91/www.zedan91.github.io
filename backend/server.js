@@ -4607,6 +4607,12 @@ const AZOBSS_PC_BUILD_PRICE_CACHE_MS = Math.max(60_000, Number(process.env.PC_BU
 const AZOBSS_PC_BUILD_PRICE_TIMEOUT_MS = Math.max(4_000, Number(process.env.PC_BUILD_PRICE_TIMEOUT_MS || 12_000) || 12_000);
 const AZOBSS_PC_BUILD_PRICE_SOURCES = [
   {
+    id: "office-amd-standard",
+    sourceName: "Ideal Tech AMD Standard Office PC",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-officepc/"
+  },
+  {
     id: "essential-office",
     sourceName: "ALL IT Office Plus",
     provider: "shopify",
@@ -4614,11 +4620,41 @@ const AZOBSS_PC_BUILD_PRICE_SOURCES = [
     variantKeywords: ["16GB", "No Software Required"]
   },
   {
+    id: "office-intel-standard",
+    sourceName: "Ideal Tech Intel Standard Office PC",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/intel-officepc/"
+  },
+  {
+    id: "starter-rtx3050",
+    sourceName: "Ideal Tech Radiance Novice RTX 3050",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx3050-packagepc/"
+  },
+  {
+    id: "value-rx9050",
+    sourceName: "Ideal Tech Radiance Adept RX 9050",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rx9050-gamingpcs/"
+  },
+  {
+    id: "rush-rtx5060",
+    sourceName: "Ideal Tech Radiance Rush RTX 5060",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/"
+  },
+  {
     id: "entry-rtx",
     sourceName: "ALL IT Aura Gaming RTX 5060",
     provider: "shopify",
     sourceUrl: "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
     variantKeywords: ["16GB", "No Software Required"]
+  },
+  {
+    id: "creator-rtx5060ti",
+    sourceName: "Ideal Tech Radiance Prime RTX 5060 Ti",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5060ti-gamingpc/"
   },
   {
     id: "mainstream-rx",
@@ -4641,10 +4677,46 @@ const AZOBSS_PC_BUILD_PRICE_SOURCES = [
     variantKeywords: ["16GB", "No Software Required"]
   },
   {
+    id: "workstation-creator",
+    sourceName: "Ideal Tech Creator Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx5060ti-workstation/"
+  },
+  {
+    id: "pro-rtx5070ti",
+    sourceName: "Ideal Tech Radiance Zenith RTX 5070 Ti",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5070ti-gamingpc/"
+  },
+  {
+    id: "workstation-adept",
+    sourceName: "Ideal Tech Adept Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx5070ti-workstation/"
+  },
+  {
     id: "flagship-rtx",
     sourceName: "Ideal Tech Radiance Apex RTX 5080",
     provider: "woocommerce",
     sourceUrl: "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"
+  },
+  {
+    id: "workstation-anvil",
+    sourceName: "Ideal Tech Anvil AI Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx-pro-4000-blackwell-ai-workstation/"
+  },
+  {
+    id: "workstation-artisan",
+    sourceName: "Ideal Tech Artisan AI Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx-pro-4500-blackwell-ai-workstation/"
+  },
+  {
+    id: "ultimate-rtx5090",
+    sourceName: "Ideal Tech Radiance Crown RTX 5090",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5090-gamingpc/"
   }
 ];
 

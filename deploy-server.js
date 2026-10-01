@@ -16680,13 +16680,19 @@ async function azAdminRenameUser(db,{oldUsername,newUsername,expectedUid,adminId
 }
 
 
-// AZOBSS v1181: PC Build live pricing in production deploy-server.
+// AZOBSS v1183: expanded PC Build live pricing (Office, Package, Workstation/AI).
 // Ported from backend/server.js because Render starts deploy-server.js.
 // Prices are read from the exact reference product used by /PC-Build/ and cached briefly
 // so the public page follows market changes without hammering the source stores.
 const AZOBSS_PC_BUILD_PRICE_CACHE_MS = Math.max(60_000, Number(process.env.PC_BUILD_PRICE_CACHE_MS || 300_000) || 300_000);
 const AZOBSS_PC_BUILD_PRICE_TIMEOUT_MS = Math.max(4_000, Number(process.env.PC_BUILD_PRICE_TIMEOUT_MS || 12_000) || 12_000);
 const AZOBSS_PC_BUILD_PRICE_SOURCES = [
+  {
+    id: "office-amd-standard",
+    sourceName: "Ideal Tech AMD Standard Office PC",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-officepc/"
+  },
   {
     id: "essential-office",
     sourceName: "ALL IT Office Plus",
@@ -16695,11 +16701,41 @@ const AZOBSS_PC_BUILD_PRICE_SOURCES = [
     variantKeywords: ["16GB", "No Software Required"]
   },
   {
+    id: "office-intel-standard",
+    sourceName: "Ideal Tech Intel Standard Office PC",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/intel-officepc/"
+  },
+  {
+    id: "starter-rtx3050",
+    sourceName: "Ideal Tech Radiance Novice RTX 3050",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx3050-packagepc/"
+  },
+  {
+    id: "value-rx9050",
+    sourceName: "Ideal Tech Radiance Adept RX 9050",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rx9050-gamingpcs/"
+  },
+  {
+    id: "rush-rtx5060",
+    sourceName: "Ideal Tech Radiance Rush RTX 5060",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/"
+  },
+  {
     id: "entry-rtx",
     sourceName: "ALL IT Aura Gaming RTX 5060",
     provider: "shopify",
     sourceUrl: "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
     variantKeywords: ["16GB", "No Software Required"]
+  },
+  {
+    id: "creator-rtx5060ti",
+    sourceName: "Ideal Tech Radiance Prime RTX 5060 Ti",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5060ti-gamingpc/"
   },
   {
     id: "mainstream-rx",
@@ -16722,10 +16758,46 @@ const AZOBSS_PC_BUILD_PRICE_SOURCES = [
     variantKeywords: ["16GB", "No Software Required"]
   },
   {
+    id: "workstation-creator",
+    sourceName: "Ideal Tech Creator Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx5060ti-workstation/"
+  },
+  {
+    id: "pro-rtx5070ti",
+    sourceName: "Ideal Tech Radiance Zenith RTX 5070 Ti",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5070ti-gamingpc/"
+  },
+  {
+    id: "workstation-adept",
+    sourceName: "Ideal Tech Adept Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx5070ti-workstation/"
+  },
+  {
     id: "flagship-rtx",
     sourceName: "Ideal Tech Radiance Apex RTX 5080",
     provider: "woocommerce",
     sourceUrl: "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"
+  },
+  {
+    id: "workstation-anvil",
+    sourceName: "Ideal Tech Anvil AI Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx-pro-4000-blackwell-ai-workstation/"
+  },
+  {
+    id: "workstation-artisan",
+    sourceName: "Ideal Tech Artisan AI Workstation",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/rtx-pro-4500-blackwell-ai-workstation/"
+  },
+  {
+    id: "ultimate-rtx5090",
+    sourceName: "Ideal Tech Radiance Crown RTX 5090",
+    provider: "woocommerce",
+    sourceUrl: "https://idealtech.com.my/product/amd-rtx5090-gamingpc/"
   }
 ];
 
@@ -16960,6 +17032,196 @@ async function azobssPcCustomRefresh(force = false) {
 }
 
 
+// AZOBSS v1182: full 29-category PC Builder catalog.
+// The public Ideal Tech builder is rendered with Chromium because its product options are hydrated client-side.
+// Results are cached to avoid launching Chromium for every visitor. A local 29-category fallback keeps the
+// AZOBSS builder usable when the reference site is unavailable or changes its front-end structure.
+const AZOBSS_PC_FULL_CATALOG_URL = "https://build.idealtech.com.my/#idt__main-section";
+const AZOBSS_PC_FULL_FALLBACK_PATH = path.join(__dirname, "PC-Build", "pc-full-builder-fallback.json");
+const AZOBSS_PC_FULL_CACHE_MS = Math.max(5 * 60_000, Number(process.env.PC_FULL_CATALOG_CACHE_MS || 15 * 60_000) || 15 * 60_000);
+const AZOBSS_PC_FULL_TIMEOUT_MS = Math.max(30_000, Number(process.env.PC_FULL_CATALOG_TIMEOUT_MS || 65_000) || 65_000);
+const azobssPcFullCatalogCache = { fetchedAtMs: 0, payload: null };
+let azobssPcFullRefreshPromise = null;
+let azobssPuppeteerCore = undefined;
+function azobssPcFullPuppeteer(){
+  if (azobssPuppeteerCore !== undefined) return azobssPuppeteerCore;
+  try { azobssPuppeteerCore = require("puppeteer-core"); }
+  catch (_e) { azobssPuppeteerCore = null; }
+  return azobssPuppeteerCore;
+}
+function azobssPcFullReadFallback(){
+  try { return JSON.parse(fs.readFileSync(AZOBSS_PC_FULL_FALLBACK_PATH, "utf8")); }
+  catch (_e) { return { categories: [] }; }
+}
+function azobssPcFullCategoryIdByIndex(index){
+  const fb = azobssPcFullReadFallback();
+  return (fb.categories || []).find(c => Number(c.index) === Number(index))?.id || `category-${index}`;
+}
+function azobssPcFullParsePrice(text){
+  const matches = [...String(text || "").matchAll(/\bRM\s*([0-9][0-9,]*(?:\.\d{1,2})?)/gi)];
+  if (!matches.length) return 0;
+  const raw = matches[matches.length - 1][1];
+  const n = Number(String(raw).replace(/,/g, ""));
+  return Number.isFinite(n) && n >= 0 && n <= 100000 ? Math.round(n * 100) / 100 : 0;
+}
+function azobssPcFullCleanLabel(text){
+  return azobssPcCustomDecodeEntities(String(text || ""))
+    .replace(/\s*\|\s*RM\s*[0-9][0-9,]*(?:\.\d{1,2})?\s*$/i, "")
+    .replace(/\s+/g, " ").trim();
+}
+function azobssPcFullStableId(index, label){
+  return `live-${index}-${crypto.createHash("sha1").update(String(label || "")).digest("hex").slice(0, 12)}`;
+}
+function azobssPcFullParsePlaceholder(text){
+  const t = String(text || "").replace(/\s+/g, " ").trim();
+  const m = t.match(/--\s*(\d{1,2})\.\s*(.*?)\s*--/i);
+  if (!m) return null;
+  return { index: Number(m[1]), label: String(m[2] || "").trim() };
+}
+function azobssPcFullMergeLiveWithFallback(liveCategories){
+  const fallback = azobssPcFullReadFallback();
+  const by = new Map((liveCategories || []).map(c => [Number(c.index), c]));
+  const categories = (fallback.categories || []).map(fc => {
+    const lc = by.get(Number(fc.index));
+    if (!lc || !Array.isArray(lc.options) || !lc.options.length) return { ...fc, live:false };
+    return { ...fc, options:lc.options, live:true, sourceUpdated:lc.sourceUpdated || "" };
+  });
+  const liveCategoriesCount = categories.filter(c => c.live).length;
+  const liveProducts = categories.reduce((n,c)=>n+(c.live?(c.options||[]).length:0),0);
+  return { ...fallback, categories, liveCategories:liveCategoriesCount, liveProducts };
+}
+async function azobssPcFullScrapeRendered(){
+  const puppeteer = azobssPcFullPuppeteer();
+  if (!puppeteer) throw new Error("puppeteer-core unavailable");
+  const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_BIN || "/usr/bin/chromium";
+  let browser = null;
+  const started = Date.now();
+  try {
+    browser = await puppeteer.launch({
+      headless:true,
+      executablePath,
+      args:["--no-sandbox","--disable-setuid-sandbox","--disable-dev-shm-usage","--disable-gpu","--no-zygote"],
+      timeout:30000
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width:1365, height:900, deviceScaleFactor:1 });
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSSCatalog/1.0");
+    await page.setExtraHTTPHeaders({"Accept-Language":"en-MY,en;q=0.9,ms-MY;q=0.8"});
+    await page.goto(AZOBSS_PC_FULL_CATALOG_URL, { waitUntil:"domcontentloaded", timeout:AZOBSS_PC_FULL_TIMEOUT_MS });
+    await page.waitForSelector("select", { timeout:18000 }).catch(()=>{});
+    await new Promise(r => setTimeout(r, 1800));
+
+    const base = await page.evaluate(() => {
+      const text = document.body?.innerText || "";
+      const updated = (text.match(/Price\s*list\s*last\s*updated\s*:\s*([^\n]+)/i)||[])[1] || "";
+      const arr = [];
+      const selects = [...document.querySelectorAll("select")];
+      for (let si=0; si<selects.length; si++) {
+        const sel = selects[si];
+        const all = [...sel.querySelectorAll("option")].map(o => ({text:(o.textContent||"").replace(/\s+/g," ").trim(), disabled:!!o.disabled, group:o.parentElement?.tagName==="OPTGROUP"?(o.parentElement.getAttribute("label")||""):""}));
+        const holder = all.find(x => /--\s*\d{1,2}\./.test(x.text));
+        if (!holder) continue;
+        const m = holder.text.match(/--\s*(\d{1,2})\.\s*(.*?)\s*--/);
+        if (!m) continue;
+        arr.push({selectIndex:si,index:Number(m[1]),label:m[2].trim(),options:all});
+      }
+      return {updated, selects:arr, totalSelects:selects.length};
+    });
+
+    const live = [];
+    for (const item of (base.selects || [])) {
+      let rawOptions = Array.isArray(item.options) ? item.options : [];
+      let priced = rawOptions.filter(x => /\bRM\s*[0-9]/i.test(x.text || "")).length;
+      // Select2/AJAX builders often keep only the placeholder in the native <select>.
+      // Open the rendered dropdown and read the visible result set when native options are sparse.
+      if (priced < 2) {
+        try {
+          const clicked = await page.evaluate((selectIndex) => {
+            const sel = [...document.querySelectorAll("select")][selectIndex];
+            if (!sel) return false;
+            const near = sel.nextElementSibling?.querySelector?.(".select2-selection") || sel.parentElement?.querySelector?.(".select2-selection") || sel.nextElementSibling;
+            if (near && typeof near.click === "function") { near.click(); return true; }
+            if (typeof sel.click === "function") { sel.click(); return true; }
+            return false;
+          }, item.selectIndex);
+          if (clicked) {
+            await new Promise(r => setTimeout(r, 350));
+            const opened = await page.evaluate(() => {
+              const root = document.querySelector(".select2-container--open") || document.querySelector('[role="listbox"]');
+              if (!root) return [];
+              const nodes = [...root.querySelectorAll(".select2-results__group,.select2-results__option,[role=option]")];
+              let currentGroup = "";
+              const out = [];
+              for (const n of nodes) {
+                const text = (n.textContent || "").replace(/\s+/g," ").trim();
+                if (!text) continue;
+                const cls = String(n.className || "");
+                const isGroup = /select2-results__group/.test(cls) || n.getAttribute?.("role") === "group";
+                if (isGroup || (!/\bRM\s*[0-9]/i.test(text) && /ONLY|GEN|SERIES|BUNDLE|PROCESSOR|COOLER|MOTHERBOARD|RAM|GRAPHIC|POWER|CASE|SSD|HDD|MONITOR|PERIPHERAL|ACCESSOR|NETWORK|SOFTWARE|CHAIR|DESK/i.test(text))) {
+                  currentGroup = text; out.push({text,disabled:true,group:""}); continue;
+                }
+                if (/\bRM\s*[0-9]/i.test(text)) out.push({text,disabled:false,group:currentGroup});
+              }
+              return out;
+            });
+            if (opened.filter(x => /\bRM\s*[0-9]/i.test(x.text||"")).length > priced) rawOptions = opened;
+            await page.keyboard.press("Escape").catch(()=>{});
+          }
+        } catch (_e) { /* keep native data */ }
+      }
+      const options = [];
+      let currentSection = "";
+      const seen = new Set();
+      for (const row of rawOptions) {
+        const text = String(row.text || "").replace(/\s+/g," ").trim();
+        if (!text || /--\s*\d{1,2}\./.test(text)) continue;
+        const price = azobssPcFullParsePrice(text);
+        if (!price) { if (row.disabled || !/\bRM\s*[0-9]/i.test(text)) currentSection = text; continue; }
+        const label = azobssPcFullCleanLabel(text);
+        if (!label) continue;
+        const key = label.toLowerCase(); if (seen.has(key)) continue; seen.add(key);
+        options.push({ id:azobssPcFullStableId(item.index,label), label, marketPrice:price, section:String(row.group || currentSection || "").trim(), sourceName:"Ideal Tech PC Builder", sourceUrl:AZOBSS_PC_FULL_CATALOG_URL, live:true });
+      }
+      if (options.length) live.push({ index:Number(item.index), id:azobssPcFullCategoryIdByIndex(item.index), label:String(item.label||""), options, sourceUpdated:base.updated || "" });
+    }
+    return { categories:live, sourceUpdated:base.updated || "", responseMs:Date.now()-started };
+  } finally {
+    if (browser) await browser.close().catch(()=>{});
+  }
+}
+async function azobssPcFullCatalog(force=false){
+  const now=Date.now();
+  const lastLive=Number(azobssPcFullCatalogCache.payload?.liveCategories || 0)>0;
+  const effectiveCacheMs=lastLive?AZOBSS_PC_FULL_CACHE_MS:Math.min(AZOBSS_PC_FULL_CACHE_MS,120000);
+  if (!force && azobssPcFullCatalogCache.payload && now-azobssPcFullCatalogCache.fetchedAtMs<effectiveCacheMs) return { ...azobssPcFullCatalogCache.payload, cached:true };
+  if (azobssPcFullRefreshPromise) return await azobssPcFullRefreshPromise;
+  azobssPcFullRefreshPromise=(async()=>{
+    let liveResult=null, scrapeError="";
+    try { liveResult=await azobssPcFullScrapeRendered(); }
+    catch (err) { scrapeError=cleanPremiumText(err?.message || String(err), 220); }
+    const merged=azobssPcFullMergeLiveWithFallback(liveResult?.categories || []);
+    const payload={
+      ok:true,
+      source:"Ideal Tech PC Builder",
+      sourceUrl:AZOBSS_PC_FULL_CATALOG_URL,
+      sourceUpdated:liveResult?.sourceUpdated || "",
+      fetchedAt:new Date().toISOString(),
+      cached:false,
+      cacheSeconds:Math.round(AZOBSS_PC_FULL_CACHE_MS/1000),
+      liveCategories:merged.liveCategories || 0,
+      liveProducts:merged.liveProducts || 0,
+      scrapeError:scrapeError || undefined,
+      categories:merged.categories || []
+    };
+    azobssPcFullCatalogCache.fetchedAtMs=Date.now();
+    azobssPcFullCatalogCache.payload=payload;
+    return payload;
+  })();
+  try { return await azobssPcFullRefreshPromise; }
+  finally { azobssPcFullRefreshPromise=null; }
+}
+
+
 async function handler(req, res) {
 
   try {
@@ -16967,6 +17229,18 @@ async function handler(req, res) {
     const parsed = url.parse(req.url, true);
     const pathname = parsed.pathname || "/";
 
+
+    // AZOBSS v1182: full 29-category rendered PC catalog.
+    if (pathname === "/api/pc-build/full-catalog" && req.method === "GET") {
+      try {
+        const force = String((parsed.query && parsed.query.refresh) || "") === "1";
+        const payload = await azobssPcFullCatalog(force);
+        return send(res, 200, JSON.stringify(payload), "application/json");
+      } catch (err) {
+        const fb = azobssPcFullMergeLiveWithFallback([]);
+        return send(res, 200, JSON.stringify({ ok:true, source:"Fallback catalog", sourceUpdated:"", fetchedAt:new Date().toISOString(), cached:false, liveCategories:0, liveProducts:0, scrapeError:cleanPremiumText(err?.message || String(err),180), categories:fb.categories||[] }), "application/json");
+      }
+    }
 
     // AZOBSS v1181: production PC Build pricing routes.
     if (pathname === "/api/pc-build/live-prices" && req.method === "GET") {
