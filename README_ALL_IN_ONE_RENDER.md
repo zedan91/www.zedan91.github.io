@@ -56,3 +56,7 @@ Render backend does not need redeploy.
 
 ## Patch (486)
 - Removed the third-party software informational notice card above the software grid.
+
+
+## v1193 — Billplz Direct Bank Payout
+See `README_PATCH_1193.md` for required Render environment variables and callback URL. Start in Billplz Sandbox before switching to production.

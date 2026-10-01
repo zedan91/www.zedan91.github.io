@@ -1193,6 +1193,69 @@ async function azCommissionMergeRecordById(docId = "", patch = {}, options = {})
 }
 
 
+// AZOBSS v1194: Manual Sales & Receipts commission linkage.
+function azCommissionRoleKey(v){ return String(v||'').trim().toLowerCase().replace(/[\s_-]+/g,''); }
+function azCommissionInvoiceRoleEligible(v){ return ['staff','manager','semiadmin'].includes(azCommissionRoleKey(v)); }
+async function azResolveCommissionStaff(body = {}){
+  const db=getAzobssBackendDb(); if(!db) throw new Error('Firebase Admin is not configured.');
+  const uid=cleanPremiumText(body.staffUid||body.ownerUid||'',140);
+  const username=azCommissionUsername(body.staffUsername||body.username||body.ownerUsername||'');
+  const email=cleanPremiumText(body.staffEmail||body.ownerEmail||'',180).toLowerCase();
+  const candidates=[]; const seen=new Set();
+  async function addSnap(snap){if(!snap||!snap.exists)return;const d=snap.data()||{};const k=snap.id;if(!seen.has(k)){seen.add(k);candidates.push({docId:snap.id,...d});}}
+  if(uid){try{const q=await db.collection('users').where('uid','==',uid).limit(3).get();q.forEach(d=>{if(!seen.has(d.id)){seen.add(d.id);candidates.push({docId:d.id,...(d.data()||{})});}});}catch(_){}}
+  if(username){for(const key of [username]){try{await addSnap(await db.collection('users').doc(key).get());}catch(_){}}
+    for(const field of ['username','usernameKey']){try{const q=await db.collection('users').where(field,'==',username).limit(3).get();q.forEach(d=>{if(!seen.has(d.id)){seen.add(d.id);candidates.push({docId:d.id,...(d.data()||{})});}});}catch(_){}}}
+  if(email){for(const field of ['email','authEmail']){try{const q=await db.collection('users').where(field,'==',email).limit(3).get();q.forEach(d=>{if(!seen.has(d.id)){seen.add(d.id);candidates.push({docId:d.id,...(d.data()||{})});}});}catch(_){}}}
+  const row=candidates.find(x=>azCommissionInvoiceRoleEligible(x.role||x.accountRole||x.userRole||x.type));
+  if(!row) throw new Error('Selected account is not an eligible Staff/Manager profile.');
+  return {
+    uid:cleanPremiumText(row.uid||uid||'',140), username:azCommissionUsername(row.username||row.usernameKey||row.docId||username),
+    email:cleanPremiumText(row.email||row.authEmail||email||'',180), phone:cleanPremiumText(row.phone||row.phoneNumber||row.mobile||'',80),
+    name:cleanPremiumText(row.fullName||row.name||row.displayName||row.profileName||row.username||row.usernameKey||row.docId||'',160),
+    role:cleanPremiumText(row.role||row.accountRole||row.userRole||'staff',40)
+  };
+}
+async function azSyncManualInvoiceCommission(req, adminIdentity, body = {}){
+  const db=getAzobssBackendDb(); if(!db) throw new Error('Firebase Admin is not configured.');
+  const invoiceDocId=cleanPremiumText(body.invoiceDocId||body.receiptDocId||body.sourceInvoiceDocId||'',160);
+  if(!invoiceDocId) throw new Error('Invoice record ID is required.');
+  const invoiceNo=cleanPremiumText(body.invoiceNo||body.documentNo||body.orderId||'',140);
+  const paymentStatus=String(body.paymentStatus||body.status||'pending').trim().toLowerCase();
+  const saleAmount=Math.max(0,Number(body.saleAmount||body.gross||0)||0);
+  const amount=Math.round(Math.max(0,Number(body.commissionAmount||body.amount||0)||0)*100)/100;
+  let rate=Math.max(0,Number(body.commissionRate||body.rate||0)||0);
+  if(!rate&&saleAmount>0&&amount>0) rate=Math.round((amount/saleAmount)*10000)/100;
+  const existingSnap=await db.collection('commissionRecords').where('sourceInvoiceDocId','==',invoiceDocId).limit(20).get();
+  const existing=[];existingSnap.forEach(d=>existing.push({docId:d.id,...(d.data()||{})}));
+  const finalInvoice=['cancelled','refunded','failed','void'].includes(paymentStatus);
+  const hasNew=amount>0 && (body.staffUsername||body.staffUid||body.staffEmail);
+  let staff=null;if(hasNew) staff=await azResolveCommissionStaff(body);
+  const now=Date.now(),nowIso=new Date(now).toISOString();
+  const batch=db.batch();let voided=0;
+  for(const old of existing){
+    const oldStatus=String(old.voided===true?'void':(old.payoutStatus||old.status||'pending')).toLowerCase();
+    const same=staff && azCommissionUsername(old.username||old.ownerUsername)===staff.username;
+    if(oldStatus==='paid') continue;
+    if(finalInvoice || !hasNew || !same){batch.set(db.collection('commissionRecords').doc(old.docId),azJsonSafe({voided:true,previousPayoutStatus:oldStatus,status:'void',payoutStatus:'void',voidReason:finalInvoice?`Invoice ${invoiceNo||invoiceDocId} is ${paymentStatus}.`:'Commission assignment changed/removed from manual invoice.',voidedAt:nowIso,voidedAtMs:now,updatedAt:nowIso,updatedAtMs:now}),{merge:true});voided++;}
+  }
+  let record=null;
+  if(hasNew && !finalInvoice){
+    const docId=cleanPremiumText(`manual_invoice_${invoiceDocId}_${staff.username}`.replace(/[^A-Za-z0-9_-]+/g,'_'),160);
+    const current=existing.find(x=>x.docId===docId)||{}; const oldStatus=String(current.payoutStatus||current.status||'pending').toLowerCase();
+    if(oldStatus==='paid'){record=azCommissionSafeRecord(current,docId);}
+    else{
+      const productName=cleanPremiumText(body.productName||body.description||(`Manual Invoice ${invoiceNo||invoiceDocId}`),180);
+      const row={docId,sourceInvoiceDocId:invoiceDocId,sourceInvoiceNo:invoiceNo,manualInvoiceCommission:true,commissionType:'manual_invoice_commission',sourcePage:'sales-receipts',orderId:invoiceNo||invoiceDocId,productName,product:productName,username:staff.username,ownerUsername:staff.username,ownerUid:staff.uid,ownerEmail:staff.email,ownerRole:staff.role,staffPhone:staff.phone,staffDisplayName:staff.name,saleAmount,saleAmountText:azCommissionAmountText(saleAmount),commissionRate:Math.round(rate*100)/100,rate:Math.round(rate*100)/100,commissionAmount:amount,amount,amountText:azCommissionAmountText(amount),paymentStatus,status:oldStatus==='approved'||(['paid','verified','completed','success'].includes(paymentStatus)&&oldStatus!=='rejected')?'approved':(oldStatus==='rejected'?'rejected':'pending'),payoutStatus:oldStatus==='approved'||(['paid','verified','completed','success'].includes(paymentStatus)&&oldStatus!=='rejected')?'approved':(oldStatus==='rejected'?'rejected':'pending'),voided:false,invoiceCustomerName:cleanPremiumText(body.customerName||'',160),note:cleanPremiumText(body.note||`Commission from manual invoice ${invoiceNo||invoiceDocId}`,500),updatedAt:nowIso,updatedAtMs:now,updatedByAdminUid:cleanPremiumText(adminIdentity.uid||'',140),updatedByAdminUsername:cleanPremiumText(adminIdentity.username||'',80)};
+      if(!current.createdAt){row.createdAt=nowIso;row.createdAtMs=now;row.createdByAdmin=cleanPremiumText(adminIdentity.username||adminIdentity.uid||'admin',100);}
+      batch.set(db.collection('commissionRecords').doc(docId),azJsonSafe(row),{merge:true}); record=azCommissionSafeRecord({...current,...row},docId);
+    }
+  }
+  await batch.commit();
+  azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,'manual_invoice_commission_sync','commissionRecords',invoiceDocId,{invoiceDocId,invoiceNo,paymentStatus,saleAmount,commissionAmount:amount,commissionRate:rate,staffUsername:staff&&staff.username||'',voided},'success'),'Manual invoice commission audit failed');
+  return {ok:true,record,voided};
+}
+
 // =========================
 // STAFF PAYOUT PROFILE / REQUEST HELPERS
 // Backend-only writes so no Firebase Rules update is required.
@@ -1213,6 +1276,13 @@ function azPayoutMaskAccount(value) {
   if (compact.length <= 4) return '••••';
   return '•••• ' + compact.slice(-4);
 }
+function azPayoutQrDataUrl(value){
+  const s=String(value||'').trim();
+  if(!s) return '';
+  if(!/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=\r\n]+$/i.test(s)) throw new Error('Invalid payout QR image.');
+  if(s.length>560000) throw new Error('Payout QR image is too large. Please upload a smaller/cropped QR image.');
+  return s.replace(/[\r\n]/g,'');
+}
 function azPayoutIdentityDocId(identity = {}) {
   return cleanPremiumText(identity.uid || identity.username || identity.email || 'unknown', 140).replace(/[\\/#?\[\]]/g, '_') || 'unknown';
 }
@@ -1227,6 +1297,7 @@ function azPayoutProfileFromBody(body = {}, identity = {}) {
     email: cleanPremiumText(identity.email || '', 160),
     payoutMethod: method,
     bankName: cleanPremiumText(body.bankName || body.bank || '', 120),
+    bankCode: (cleanPremiumText(body.bankCode || body.swiftCode || '', 20).toUpperCase() || azBillplzBankCode(body.bankName || body.bank || '')),
     accountName: cleanPremiumText(body.accountName || body.name || '', 140),
     accountNo: azPayoutCleanAccountNo(body.accountNo || body.accountNumber || ''),
     duitNowId: cleanPremiumText(body.duitNowId || body.duitnow || '', 120),
@@ -1234,6 +1305,7 @@ function azPayoutProfileFromBody(body = {}, identity = {}) {
     payoutPhone: cleanPremiumText(body.payoutPhone || body.phone || '', 60),
     payoutEmail: cleanPremiumText(body.payoutEmail || body.email || identity.email || '', 160),
     note: cleanPremiumText(body.note || '', 300),
+    qrImageDataUrl: body.removeQrImage === true ? '' : azPayoutQrDataUrl(body.qrImageDataUrl || ''),
     updatedAt: new Date(now).toISOString(),
     updatedAtMs: now
   };
@@ -1250,6 +1322,7 @@ function azPayoutProfilePublic(x = {}, adminView = false) {
     email: adminView ? cleanPremiumText(x.email || '', 160) : maskEmail(x.email || ''),
     payoutMethod: cleanPremiumText(x.payoutMethod || '', 40),
     bankName: cleanPremiumText(x.bankName || '', 120),
+    bankCode: cleanPremiumText(x.bankCode || '', 20).toUpperCase(),
     accountName: cleanPremiumText(x.accountName || '', 140),
     accountNo: adminView ? cleanPremiumText(x.accountNo || '', 80) : '',
     accountNoMasked: azPayoutMaskAccount(x.accountNo || ''),
@@ -1258,6 +1331,7 @@ function azPayoutProfilePublic(x = {}, adminView = false) {
     payoutPhone: adminView ? cleanPremiumText(x.payoutPhone || '', 60) : (x.payoutPhone ? azPayoutMaskAccount(x.payoutPhone) : ''),
     payoutEmail: adminView ? cleanPremiumText(x.payoutEmail || '', 160) : maskEmail(x.payoutEmail || ''),
     note: cleanPremiumText(x.note || '', 300),
+    qrImageDataUrl: azPayoutQrDataUrl(x.qrImageDataUrl || ''),
     updatedAt: cleanPremiumText(x.updatedAt || '', 80),
     updatedAtMs: Number(x.updatedAtMs || 0) || 0
   };
@@ -1315,6 +1389,12 @@ function azPayoutRequestSafe(x = {}, docId = '', adminView = false) {
     adminNote: cleanPremiumText(x.adminNote || '', 500),
     payoutReference: cleanPremiumText(x.payoutReference || '', 160),
     payoutMethod: cleanPremiumText(x.payoutMethod || '', 80),
+    payoutProvider: cleanPremiumText(x.payoutProvider || x.gateway || '', 60),
+    gatewayStatus: cleanPremiumText(x.gatewayStatus || x.billplzStatus || '', 60),
+    gatewayPaymentOrderId: cleanPremiumText(x.gatewayPaymentOrderId || x.billplzPaymentOrderId || '', 160),
+    gatewayReferenceId: cleanPremiumText(x.gatewayReferenceId || x.billplzReferenceId || '', 180),
+    gatewayUpdatedAt: cleanPremiumText(x.gatewayUpdatedAt || x.billplzUpdatedAt || '', 80),
+    gatewayError: cleanPremiumText(x.gatewayError || x.billplzError || '', 300),
     profile: azPayoutProfilePublic(profile, adminView),
     createdAt: cleanPremiumText(x.createdAt || '', 80),
     createdAtMs: Number(x.createdAtMs || 0) || 0,
@@ -1365,7 +1445,7 @@ function azPayoutRequestReceiptHtml(x = {}, docId = '', identity = {}) {
 
 function azPayoutRequestStatus(value) {
   const s = String(value || '').trim().toLowerCase();
-  if (['requested','reviewing','approved','paid','rejected','cancelled'].includes(s)) return s;
+  if (['requested','reviewing','approved','processing','paid','refunded','rejected','cancelled'].includes(s)) return s;
   return '';
 }
 
@@ -1395,9 +1475,172 @@ function azPayoutConfigPublic() {
     maxAmount,
     maxAmountText: maxAmount ? `RM${maxAmount.toFixed(2)}` : "",
     requirePaidReference: azPayoutRequirePaidReference(),
-    finalStatusGuard: !azPayoutAllowReopenFinal()
+    finalStatusGuard: !azPayoutAllowReopenFinal(),
+    directBankPayoutAvailable: azBillplzPayoutConfig().ready
   };
 }
+
+// =========================
+// BILLPLZ PAYMENT ORDER / DIRECT BANK PAYOUT
+// Credentials stay server-side. Frontend only receives masked/config-safe fields.
+// =========================
+const AZOBSS_BILLPLZ_SWIFT_BANKS = Object.freeze([
+  ['Affin Bank','PHBMMYKL'],['Agrobank','AGOBMYKL'],['Alliance Bank','MFBBMYKL'],['Al Rajhi Bank','RJHIMYKL'],
+  ['AmBank','ARBKMYKL'],['Bank Islam','BIMBMYKL'],['Bank Rakyat','BKRMMYKL'],['Bank Muamalat','BMMBMYKL'],
+  ['Bank Simpanan Nasional','BSNAMYK1'],['CIMB Bank','CIBBMYKL'],['Citibank','CITIMYKL'],['Hong Leong Bank','HLBBMYKL'],
+  ['HSBC Bank Malaysia','HBMBMYKL'],['Kuwait Finance House','KFHOMYKL'],['Maybank','MBBEMYKL'],['OCBC Bank','OCBCMYKL'],
+  ['Public Bank','PBBEMYKL'],['RHB Bank','RHBBMYKL'],['Standard Chartered','SCBLMYKX'],['UOB Malaysia','UOVBMYKL']
+]);
+function azBillplzNormalizeBankName(v='') { return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function azBillplzBankCode(bankName='', explicitCode='') {
+  const explicit=String(explicitCode||'').trim().toUpperCase();
+  if (/^[A-Z0-9]{8,11}$/.test(explicit)) return explicit;
+  const n=azBillplzNormalizeBankName(bankName);
+  const aliases={
+    maybank:'MBBEMYKL',malayanbanking:'MBBEMYKL',cimb:'CIBBMYKL',cimbbank:'CIBBMYKL',publicbank:'PBBEMYKL',pbb:'PBBEMYKL',
+    rhb:'RHBBMYKL',rhbbank:'RHBBMYKL',hongleong:'HLBBMYKL',hongleongbank:'HLBBMYKL',bankislam:'BIMBMYKL',
+    bankrakyat:'BKRMMYKL',bsn:'BSNAMYK1',banksimpanannasional:'BSNAMYK1',ambank:'ARBKMYKL',alliancebank:'MFBBMYKL',
+    affinbank:'PHBMMYKL',agrobank:'AGOBMYKL',ocbc:'OCBCMYKL',ocbcbank:'OCBCMYKL',uob:'UOVBMYKL',uobmalaysia:'UOVBMYKL',
+    standardchartered:'SCBLMYKX',hsbc:'HBMBMYKL',citibank:'CITIMYKL',bankmuamalat:'BMMBMYKL',alrajhibank:'RJHIMYKL',
+    kuwaitfinancehouse:'KFHOMYKL',kfh:'KFHOMYKL'
+  };
+  if (aliases[n]) return aliases[n];
+  for (const [name,code] of AZOBSS_BILLPLZ_SWIFT_BANKS) {
+    const k=azBillplzNormalizeBankName(name);
+    if (n===k || (n && (k.includes(n) || n.includes(k)))) return code;
+  }
+  return '';
+}
+function azBillplzPayoutConfig() {
+  const enabled=String(process.env.AZOBSS_BILLPLZ_PAYOUT_ENABLED||'').trim()==='1';
+  let base=String(process.env.BILLPLZ_BASE_URL||'https://www.billplz-sandbox.com/api').trim().replace(/\/+$/,'');
+  if (!/\/api$/i.test(base)) base += '/api';
+  const sandbox=/billplz-sandbox\.com/i.test(base);
+  const secretKey=String(process.env.BILLPLZ_SECRET_KEY||'').trim();
+  const xSignatureKey=String(process.env.BILLPLZ_X_SIGNATURE_KEY||process.env.BILLPLZ_XSIGNATURE_KEY||'').trim();
+  const collectionId=String(process.env.BILLPLZ_PAYMENT_ORDER_COLLECTION_ID||'').trim();
+  return { enabled, base, sandbox, secretKey, xSignatureKey, collectionId, ready: !!(enabled&&secretKey&&xSignatureKey&&collectionId) };
+}
+function azBillplzPublicConfig(req) {
+  const c=azBillplzPayoutConfig();
+  return {
+    enabled:c.enabled, ready:c.ready, mode:c.sandbox?'sandbox':'production',
+    collectionConfigured:!!c.collectionId,
+    collectionIdMasked:c.collectionId?('••••'+c.collectionId.slice(-6)):'',
+    callbackUrl:(publicBaseUrlFromReq(req)||'').replace(/\/+$/,'')+'/api/billplz/payment-order-callback',
+    supportedBanks:AZOBSS_BILLPLZ_SWIFT_BANKS.map(([name,code])=>({name,code}))
+  };
+}
+function azBillplzHmac512(values=[], key='') {
+  return crypto.createHmac('sha512', String(key||'')).update(values.map(v=>String(v??'')).join('')).digest('hex');
+}
+function azBillplzBasicAuth(secretKey='') { return 'Basic '+Buffer.from(String(secretKey||'')+':').toString('base64'); }
+function azBillplzCleanDescription(v='') {
+  return String(v||'AZOBSS Commission Payout').replace(/[^A-Za-z0-9 .,_()\-]/g,' ').replace(/\s+/g,' ').trim().slice(0,190) || 'AZOBSS Commission Payout';
+}
+async function azBillplzHttp(pathname, { method='GET', params={}, timeoutMs=18000 }={}) {
+  const c=azBillplzPayoutConfig();
+  if (!c.ready) { const e=new Error('Billplz Payment Order is not configured on the backend.'); e.code='BILLPLZ_NOT_CONFIGURED'; throw e; }
+  const url=new URL(c.base+pathname);
+  const headers={Authorization:azBillplzBasicAuth(c.secretKey),Accept:'application/json'};
+  let body;
+  if (String(method).toUpperCase()==='GET') Object.entries(params).forEach(([k,v])=>{ if(v!==undefined&&v!==null&&String(v)!=='') url.searchParams.set(k,String(v)); });
+  else { const form=new URLSearchParams(); Object.entries(params).forEach(([k,v])=>{ if(v!==undefined&&v!==null&&String(v)!=='') form.set(k,String(v)); }); body=form.toString(); headers['Content-Type']='application/x-www-form-urlencoded'; }
+  let resp, textBody='';
+  try { resp=await fetch(url,{method,headers,body,signal:AbortSignal.timeout(timeoutMs)}); textBody=await resp.text(); }
+  catch(err){ const e=new Error('Billplz network response is uncertain. Do not retry payment automatically; use Sync / Billplz dashboard first.'); e.code='BILLPLZ_NETWORK_UNCERTAIN'; e.cause=err; throw e; }
+  let data={}; try{ data=textBody?JSON.parse(textBody):{}; }catch(_){ data={raw:textBody}; }
+  if(!resp.ok){ const msg=(data&&((data.error&&data.error.message)||data.message||data.error))||('Billplz HTTP '+resp.status); const e=new Error(typeof msg==='string'?msg:JSON.stringify(msg)); e.code='BILLPLZ_HTTP_ERROR'; e.httpStatus=resp.status; e.response=data; throw e; }
+  return data||{};
+}
+async function azBillplzCreatePaymentOrder({bankCode,bankAccountNumber,name,description,totalSen,email,referenceId}) {
+  const c=azBillplzPayoutConfig();
+  const epoch=Math.floor(Date.now()/1000);
+  const total=Math.max(1,Math.round(Number(totalSen)||0));
+  const account=String(bankAccountNumber||'').replace(/\s+/g,'');
+  const checksum=azBillplzHmac512([c.collectionId,account,total,epoch],c.xSignatureKey);
+  return azBillplzHttp('/v5/payment_orders',{method:'POST',params:{
+    payment_order_collection_id:c.collectionId,
+    bank_code:c.sandbox?'DUMMYBANKVERIFIED':bankCode,
+    bank_account_number:account,
+    name:cleanPremiumText(name||'',140),
+    description:azBillplzCleanDescription(description),
+    total, email:cleanPremiumText(email||'',160), notification:'true', recipient_notification:'true',
+    reference_id:cleanPremiumText(referenceId||'',220), epoch, checksum
+  }});
+}
+async function azBillplzGetPaymentOrder(paymentOrderId) {
+  const c=azBillplzPayoutConfig();
+  const id=cleanPremiumText(paymentOrderId||'',180); const epoch=Math.floor(Date.now()/1000);
+  const checksum=azBillplzHmac512([id,epoch],c.xSignatureKey);
+  return azBillplzHttp('/v5/payment_orders/'+encodeURIComponent(id),{method:'GET',params:{epoch,checksum}});
+}
+let azBillplzLimitCache={at:0,data:null};
+async function azBillplzGetPaymentOrderLimitCached() {
+  const now=Date.now(); if(azBillplzLimitCache.data && now-azBillplzLimitCache.at<10*60*1000) return azBillplzLimitCache.data;
+  const c=azBillplzPayoutConfig(); const epoch=Math.floor(now/1000); const checksum=azBillplzHmac512([epoch],c.xSignatureKey);
+  const data=await azBillplzHttp('/v5/payment_order_limit',{method:'GET',params:{epoch,checksum}});
+  azBillplzLimitCache={at:now,data}; return data;
+}
+function azBillplzProviderStatus(v='') { return String(v||'').trim().toLowerCase(); }
+function azBillplzRequestStatusFromProvider(v='') {
+  const s=azBillplzProviderStatus(v); if(s==='completed') return 'paid'; if(['refunded','cancelled'].includes(s)) return 'refunded'; return 'processing';
+}
+function azBillplzCallbackObject(raw='') {
+  const t=String(raw||'').trim(); if(!t) return {};
+  try { return JSON.parse(t); } catch(_) {}
+  const p=new URLSearchParams(t); const o={}; for(const [k,v] of p.entries()) o[k]=v; return o;
+}
+function azBillplzVerifyCallback(o={}) {
+  const c=azBillplzPayoutConfig(); if(!c.xSignatureKey) return false;
+  const expected=azBillplzHmac512([o.id||'',o.bank_account_number||'',o.status||'',o.total||'',o.reference_id||'',o.epoch||''],c.xSignatureKey);
+  const got=String(o.checksum||'').trim().toLowerCase();
+  if(!got||got.length!==expected.length) return false;
+  try{return crypto.timingSafeEqual(Buffer.from(got),Buffer.from(expected));}catch(_){return got===expected;}
+}
+async function azBillplzFindPayoutRequest(db, provider={}) {
+  const id=cleanPremiumText(provider.id||'',180), refId=cleanPremiumText(provider.reference_id||'',220);
+  if(id){ const q=await db.collection('payoutRequests').where('billplzPaymentOrderId','==',id).limit(1).get(); if(!q.empty) return {ref:q.docs[0].ref,data:q.docs[0].data()||{}}; }
+  if(refId){ const q=await db.collection('payoutRequests').where('billplzReferenceId','==',refId).limit(1).get(); if(!q.empty) return {ref:q.docs[0].ref,data:q.docs[0].data()||{}}; }
+  return null;
+}
+async function azBillplzApplyProviderStatus(req, requestRef, old, provider={}, actor={}) {
+  const db=getAzobssBackendDb(); if(!db) throw new Error('Firebase Admin is not configured.');
+  const providerStatus=azBillplzProviderStatus(provider.status||old.billplzStatus||'processing');
+  const mapped=azBillplzRequestStatusFromProvider(providerStatus); const now=Date.now();
+  if(String(old.status||'').toLowerCase()==='paid' && mapped!=='paid') return old;
+  const patch={
+    status:mapped,
+    payoutProvider:'billplz', gateway:'billplz', gatewayStatus:providerStatus,
+    billplzStatus:providerStatus,
+    billplzPaymentOrderId:cleanPremiumText(provider.id||old.billplzPaymentOrderId||'',180),
+    gatewayPaymentOrderId:cleanPremiumText(provider.id||old.billplzPaymentOrderId||'',180),
+    billplzReferenceId:cleanPremiumText(provider.reference_id||old.billplzReferenceId||'',220),
+    gatewayReferenceId:cleanPremiumText(provider.reference_id||old.billplzReferenceId||'',220),
+    gatewayUpdatedAt:new Date(now).toISOString(), gatewayUpdatedAtMs:now,
+    billplzUpdatedAt:new Date(now).toISOString(), billplzUpdatedAtMs:now,
+    updatedAt:new Date(now).toISOString(), updatedAtMs:now,
+    updatedByUsername:cleanPremiumText(actor.username||'billplz',80), updatedByRole:cleanPremiumText(actor.role||'payment-gateway',40),
+    gatewayError:''
+  };
+  if(mapped==='paid'){
+    patch.paidAt=patch.updatedAt; patch.paidAtMs=now; patch.payoutMethod='Billplz Payment Order';
+    patch.payoutReference=cleanPremiumText(provider.id||old.billplzPaymentOrderId||'',160);
+  }
+  if(mapped==='refunded'){patch.refundedAt=patch.updatedAt;patch.refundedAtMs=now;}
+  patch.timeline=azPayoutAppendTimeline(old,azPayoutTimelineEvent(mapped==='paid'?'bank_paid':(mapped==='refunded'?'bank_refunded':'bank_status'),actor,`Billplz Payment Order status: ${providerStatus||mapped}.`,{status:mapped}));
+  const batch=db.batch(); batch.set(requestRef,azJsonSafe(patch),{merge:true});
+  const ids=Array.isArray(old.commissionDocIds)?old.commissionDocIds.map(v=>cleanPremiumText(v,160)).filter(Boolean):[];
+  for(const id of ids){
+    const cref=db.collection('commissionRecords').doc(id); const cs=await cref.get(); if(!cs.exists) continue; const crow=cs.data()||{};
+    if(crow.voided===true) continue;
+    if(mapped==='paid') batch.set(cref,azJsonSafe(azCommissionPatchForPayoutRequest('paid',{payoutReference:patch.payoutReference,payoutMethod:'Billplz Payment Order'},actor)),{merge:true});
+    else if(mapped==='refunded') batch.set(cref,azJsonSafe({status:'approved',payoutStatus:'approved',payoutRequestStatus:'refunded',payoutRequestUpdatedAt:patch.updatedAt,payoutRequestUpdatedAtMs:now,payoutUpdatedAt:patch.updatedAt,payoutUpdatedAtMs:now}),{merge:true});
+    else batch.set(cref,azJsonSafe({payoutRequestStatus:'processing',payoutRequestUpdatedAt:patch.updatedAt,payoutRequestUpdatedAtMs:now}),{merge:true});
+  }
+  await batch.commit(); const us=await requestRef.get(); return us.exists?(us.data()||{...old,...patch}):{...old,...patch};
+}
+
 function azPayoutTimelineEvent(type, actor = {}, note = '', extra = {}) {
   const now = Date.now();
   return {
@@ -1505,7 +1748,9 @@ function azPayoutRequestPatch(body = {}, identity = {}) {
   };
   if (status === 'reviewing') { patch.reviewedAt = patch.updatedAt; patch.reviewedAtMs = now; }
   if (status === 'approved') { patch.approvedAt = patch.updatedAt; patch.approvedAtMs = now; }
+  if (status === 'processing') { patch.processingAt = patch.updatedAt; patch.processingAtMs = now; }
   if (status === 'paid') { patch.paidAt = patch.updatedAt; patch.paidAtMs = now; }
+  if (status === 'refunded') { patch.refundedAt = patch.updatedAt; patch.refundedAtMs = now; }
   if (status === 'rejected') { patch.rejectedAt = patch.updatedAt; patch.rejectedAtMs = now; }
   if (status === 'cancelled') { patch.cancelledAt = patch.updatedAt; patch.cancelledAtMs = now; }
   return patch;
@@ -17430,6 +17675,7 @@ async function handler(req, res) {
     if (pathname === "/api/commission/retry-order" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-retry", 10, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/payout-status" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-payout-status", 30, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/adjustment" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-adjustment", 30, 10 * 60 * 1000)) return;
+    if (pathname === "/api/admin/manual-invoice-commission" && req.method === "POST" && azRateLimitOrSend(req, res, "manual-invoice-commission", 40, 10 * 60 * 1000)) return;
     if (pathname === "/api/commission/void" && req.method === "POST" && azRateLimitOrSend(req, res, "commission-void", 20, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-download-gate", 40, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/download/") && req.method === "POST" && azRateLimitOrSend(req, res, "premium-download-start", 15, 60 * 1000)) return;
@@ -19541,6 +19787,7 @@ async function handler(req, res) {
         if (!String(mergedBody.duitNowId || '').trim() && oldData.duitNowId) mergedBody.duitNowId = oldData.duitNowId;
         if (!String(mergedBody.payoutPhone || '').trim() && oldData.payoutPhone) mergedBody.payoutPhone = oldData.payoutPhone;
         if (!String(mergedBody.payoutEmail || '').trim() && oldData.payoutEmail) mergedBody.payoutEmail = oldData.payoutEmail;
+        if (mergedBody.removeQrImage !== true && !String(mergedBody.qrImageDataUrl || '').trim() && oldData.qrImageDataUrl) mergedBody.qrImageDataUrl = oldData.qrImageDataUrl;
         const profile = azPayoutProfileFromBody(mergedBody, identity);
         const now = Date.now();
         const saveRow = { ...oldData, ...profile, docId, createdAt: oldData.createdAt || new Date(now).toISOString(), createdAtMs: oldData.createdAtMs || now };
@@ -19690,9 +19937,11 @@ async function handler(req, res) {
           console.warn("AZOBSS payout duplicate guard warning:", guardErr && (guardErr.message || guardErr));
         }
         const profileSnapshot = azPayoutProfilePublic(profileSnap.data() || {}, true);
+        // v1194: keep the large QR only in staffPayoutProfiles; Admin merges the latest profile at read time.
+        profileSnapshot.qrImageDataUrl = '';
         const rows = (await azGetCommissionRowsForIdentity(identity, 800))
           .filter(x => azPayoutStatusBucketValue(x) === 'approved')
-          .filter(x => !x.payoutRequestId || ['rejected','cancelled'].includes(String(x.payoutRequestStatus || '').toLowerCase()))
+          .filter(x => !x.payoutRequestId || ['rejected','cancelled','refunded'].includes(String(x.payoutRequestStatus || '').toLowerCase()))
           .filter(x => cleanPremiumText(x.docId || x.id || '', 160));
         const eligibleAmount = rows.reduce((sum, x) => sum + azCommissionAmountValue(x), 0);
         if (eligibleAmount <= 0) return send(res, 400, JSON.stringify({ ok:false, error:"No approved unpaid commission is available for payout request." }, null, 2), "application/json");
@@ -19754,6 +20003,89 @@ async function handler(req, res) {
       }
     }
 
+
+    if (pathname === "/api/billplz/payment-order-callback" && req.method === "POST") {
+      try {
+        const raw=await readBody(req); const provider=azBillplzCallbackObject(raw);
+        if(!azBillplzVerifyCallback(provider)) return send(res, 401, JSON.stringify({ok:false,error:'Invalid Billplz checksum.'}), 'application/json');
+        const db=getAzobssBackendDb(); if(!db) return send(res,500,JSON.stringify({ok:false,error:'Firebase Admin is not configured.'}),'application/json');
+        const found=await azBillplzFindPayoutRequest(db,provider);
+        if(!found) return send(res,200,JSON.stringify({ok:true,ignored:true,reason:'Payout request not found.'}),'application/json');
+        const actor={uid:'billplz',username:'billplz',role:'payment-gateway',email:'',isAdmin:false};
+        const updated=await azBillplzApplyProviderStatus(req,found.ref,found.data,provider,actor);
+        azFireAndForget(azWriteAdminAuditLog(req, actor, 'billplz_payment_order_callback', 'payoutRequests', found.ref.id, {paymentOrderId:provider.id||'',providerStatus:provider.status||'',mappedStatus:updated.status||''}, 'success'),'Billplz callback audit failed');
+        if(String(updated.status||'').toLowerCase()==='paid') azFireAndForget(azNotifyPayoutStatusToStaff(req,{...updated,requestId:found.ref.id},'paid',updated),'Billplz paid notification failed');
+        if(String(updated.status||'').toLowerCase()==='refunded') azFireAndForget(azNotifyPayoutStatusToStaff(req,{...updated,requestId:found.ref.id},'refunded',updated),'Billplz refund notification failed');
+        return send(res,200,JSON.stringify({ok:true,status:updated.status||''}),'application/json');
+      } catch(err) { console.error('Billplz callback error:',err&&err.message||err); return send(res,500,JSON.stringify({ok:false,error:'Callback processing failed.'}),'application/json'); }
+    }
+
+    if (pathname === "/api/admin/payout-gateway-status" && req.method === "GET") {
+      try {
+        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
+        if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:'Admin authorization required.'}),'application/json');
+        const pub=azBillplzPublicConfig(req); let limit=null, limitError='';
+        if(pub.ready && String(parsed.query.limit||'1')!=='0'){
+          try{ const x=await azBillplzGetPaymentOrderLimitCached(); limit={sen:Number(x.total||0)||0,rm:(Number(x.total||0)||0)/100,text:'RM'+(((Number(x.total||0)||0)/100).toFixed(2))}; }
+          catch(e){limitError=cleanPremiumText(e&&e.message||'Unable to read Payment Order Limit.',240);}
+        }
+        return send(res,200,JSON.stringify({ok:true,...pub,limit,limitError},null,2),'application/json');
+      } catch(err){ return send(res,500,JSON.stringify({ok:false,error:err&&err.message?err.message:String(err)},null,2),'application/json'); }
+    }
+
+    if (pathname === "/api/admin/payout-request-pay-bank" && req.method === "POST") {
+      let requestId=''; let requestRef=null; let old=null; let adminIdentity=null;
+      try {
+        adminIdentity=await azAdminIdentityFromRequest(req,parsed);
+        if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:'Admin authorization required to pay payout request.'},null,2),'application/json');
+        const cfg=azBillplzPayoutConfig(); if(!cfg.ready) return send(res,503,JSON.stringify({ok:false,error:'Direct bank payout is not configured. Set Billplz Payment Order environment variables first.',gateway:azBillplzPublicConfig(req)},null,2),'application/json');
+        let body={}; try{body=JSON.parse((await readBody(req))||'{}');}catch(_){return send(res,400,JSON.stringify({ok:false,error:'Invalid request body'}),'application/json');}
+        requestId=cleanPremiumText(body.requestId||body.id||'',160); if(!requestId) return send(res,400,JSON.stringify({ok:false,error:'Missing payout request ID.'}),'application/json');
+        const db=getAzobssBackendDb(); if(!db) return send(res,500,JSON.stringify({ok:false,error:'Firebase Admin is not configured.'}),'application/json');
+        requestRef=db.collection('payoutRequests').doc(requestId); const snap=await requestRef.get(); if(!snap.exists) return send(res,404,JSON.stringify({ok:false,error:'Payout request not found.'}),'application/json');
+        old=snap.data()||{}; const current=String(old.status||'requested').toLowerCase();
+        if(current!=='approved') return send(res,409,JSON.stringify({ok:false,error:'Payout request must be Approved before Pay to Bank.',status:current},null,2),'application/json');
+        if(old.billplzPaymentOrderId) return send(res,409,JSON.stringify({ok:false,error:'A Billplz Payment Order already exists for this request. Use Sync Bank Status instead.',paymentOrderId:old.billplzPaymentOrderId},null,2),'application/json');
+        const p=old.profileSnapshot||old.profile||{}; if(String(p.payoutMethod||'bank').toLowerCase()!=='bank') return send(res,400,JSON.stringify({ok:false,error:'Pay to Bank requires payout profile method Bank Transfer. Use manual payment for other payout methods.'},null,2),'application/json');
+        const accountNo=String(p.accountNo||'').replace(/\s+/g,''); const accountName=cleanPremiumText(p.accountName||'',140); const bankName=cleanPremiumText(p.bankName||'',120); const bankCode=azBillplzBankCode(bankName,p.bankCode||'');
+        if(!accountNo||!accountName||!bankName) return send(res,400,JSON.stringify({ok:false,error:'Staff payout profile is incomplete. Bank name, account holder and account number are required.'},null,2),'application/json');
+        if(!bankCode) return send(res,400,JSON.stringify({ok:false,error:'This bank could not be mapped to a Billplz SWIFT code. Ask staff to re-save the Bank Transfer profile using the bank list.'},null,2),'application/json');
+        const amountSen=Math.round((Number(old.amount||0)||0)*100); if(amountSen<=0) return send(res,400,JSON.stringify({ok:false,error:'Payout amount must be greater than RM0.00.'},null,2),'application/json');
+        const referenceId=cleanPremiumText(requestId.replace(/[^A-Za-z0-9_-]/g,'_'),220);
+        await db.runTransaction(async tx=>{ const fresh=await tx.get(requestRef); if(!fresh.exists) throw new Error('Payout request not found.'); const row=fresh.data()||{}; if(String(row.status||'').toLowerCase()!=='approved'||row.billplzPaymentOrderId) throw new Error('Payout request changed. Refresh before paying.'); const now=Date.now(); tx.set(requestRef,azJsonSafe({status:'processing',payoutProvider:'billplz',gateway:'billplz',gatewayStatus:'initiating',billplzStatus:'initiating',billplzReferenceId:referenceId,gatewayReferenceId:referenceId,gatewayStartedAt:new Date(now).toISOString(),gatewayStartedAtMs:now,updatedAt:new Date(now).toISOString(),updatedAtMs:now,timeline:azPayoutAppendTimeline(row,azPayoutTimelineEvent('bank_payment_started',adminIdentity,'Admin started direct bank payout through Billplz Payment Order.',{status:'processing'}))}),{merge:true}); });
+        let provider;
+        try{
+          provider=await azBillplzCreatePaymentOrder({bankCode,bankAccountNumber:accountNo,name:accountName,description:`AZOBSS commission payout ${requestId}`,totalSen:amountSen,email:p.payoutEmail||old.email||'',referenceId});
+        }catch(e){
+          const now=Date.now();
+          if(e&&e.code==='BILLPLZ_NETWORK_UNCERTAIN'){
+            await requestRef.set(azJsonSafe({status:'processing',gatewayStatus:'unknown',billplzStatus:'unknown',gatewayError:cleanPremiumText(e.message,300),updatedAt:new Date(now).toISOString(),updatedAtMs:now,timeline:azPayoutAppendTimeline(old,azPayoutTimelineEvent('bank_payment_uncertain',adminIdentity,'Billplz response was uncertain. Do not retry automatically; check Billplz dashboard.',{status:'processing'}))}),{merge:true});
+          } else {
+            await requestRef.set(azJsonSafe({status:'approved',gatewayStatus:'failed',billplzStatus:'failed',gatewayError:cleanPremiumText(e&&e.message||'Billplz request failed.',300),updatedAt:new Date(now).toISOString(),updatedAtMs:now,timeline:azPayoutAppendTimeline(old,azPayoutTimelineEvent('bank_payment_failed',adminIdentity,`Billplz Payment Order failed: ${cleanPremiumText(e&&e.message||'unknown error',220)}`,{status:'approved'}))}),{merge:true});
+          }
+          throw e;
+        }
+        const lockedSnap=await requestRef.get(); const locked=lockedSnap.exists?(lockedSnap.data()||old):old;
+        const updated=await azBillplzApplyProviderStatus(req,requestRef,locked,provider,adminIdentity);
+        azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,'admin_payout_pay_to_bank','payoutRequests',requestId,{amount:old.amount||0,bankName,bankCode,providerStatus:provider.status||'',paymentOrderId:provider.id||''},'success'),'Direct payout audit failed');
+        return send(res,200,JSON.stringify({ok:true,status:updated.status||'processing',providerStatus:updated.gatewayStatus||provider.status||'',paymentOrderId:provider.id||'',request:azPayoutRequestSafe(updated,requestId,true)},null,2),'application/json');
+      } catch(err){ return send(res,(err&&err.code==='BILLPLZ_HTTP_ERROR')?502:500,JSON.stringify({ok:false,error:err&&err.message?err.message:String(err),requestId},null,2),'application/json'); }
+    }
+
+    if (pathname === "/api/admin/payout-request-sync" && req.method === "POST") {
+      try{
+        const adminIdentity=await azAdminIdentityFromRequest(req,parsed); if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:'Admin authorization required.'}),'application/json');
+        let body={}; try{body=JSON.parse((await readBody(req))||'{}');}catch(_){return send(res,400,JSON.stringify({ok:false,error:'Invalid request body'}),'application/json');}
+        const requestId=cleanPremiumText(body.requestId||body.id||'',160); const db=getAzobssBackendDb(); if(!db) return send(res,500,JSON.stringify({ok:false,error:'Firebase Admin is not configured.'}),'application/json');
+        const ref=db.collection('payoutRequests').doc(requestId); const snap=await ref.get(); if(!snap.exists) return send(res,404,JSON.stringify({ok:false,error:'Payout request not found.'}),'application/json');
+        const old=snap.data()||{}; const paymentOrderId=cleanPremiumText(old.billplzPaymentOrderId||old.gatewayPaymentOrderId||'',180); if(!paymentOrderId) return send(res,400,JSON.stringify({ok:false,error:'No Billplz Payment Order ID is stored for this payout request. Check Billplz dashboard if a previous network response was uncertain.'}),'application/json');
+        const provider=await azBillplzGetPaymentOrder(paymentOrderId); const updated=await azBillplzApplyProviderStatus(req,ref,old,provider,adminIdentity);
+        if(String(updated.status||'').toLowerCase()==='paid') azFireAndForget(azNotifyPayoutStatusToStaff(req,{...updated,requestId},'paid',updated),'Direct payout paid email failed');
+        if(String(updated.status||'').toLowerCase()==='refunded') azFireAndForget(azNotifyPayoutStatusToStaff(req,{...updated,requestId},'refunded',updated),'Direct payout refund email failed');
+        return send(res,200,JSON.stringify({ok:true,status:updated.status||'',providerStatus:updated.gatewayStatus||provider.status||'',request:azPayoutRequestSafe(updated,requestId,true)},null,2),'application/json');
+      }catch(err){return send(res,500,JSON.stringify({ok:false,error:err&&err.message?err.message:String(err)},null,2),'application/json');}
+    }
+
     if (pathname === "/api/admin/payout-requests" && req.method === "GET") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
@@ -19764,8 +20096,33 @@ async function handler(req, res) {
         let snap;
         try { snap = await db.collection("payoutRequests").orderBy("createdAtMs", "desc").limit(maxRows).get(); }
         catch (_) { snap = await db.collection("payoutRequests").limit(maxRows).get(); }
+        const rawRows = [];
+        snap.forEach(doc => rawRows.push({ docId:doc.id, ...(doc.data() || {}) }));
+        // v1194: merge the current payout profile so a QR uploaded after the request was created
+        // is immediately available to Admin without duplicating the base64 image in every request.
+        const profileCache = new Map();
         const rows = [];
-        snap.forEach(doc => rows.push(azPayoutRequestSafe(doc.data() || {}, doc.id, true)));
+        for (const raw of rawRows) {
+          const safe = azPayoutRequestSafe(raw, raw.docId, true);
+          const actionable = ['requested','reviewing','approved'].includes(String(safe.status || '').toLowerCase());
+          if (actionable) {
+            const profileIdentity = {
+              uid: raw.uid || raw.staffUid || safe.uid || '',
+              username: raw.username || raw.staffUsername || safe.username || '',
+              email: raw.email || raw.staffEmail || safe.email || ''
+            };
+            const profileId = azPayoutIdentityDocId(profileIdentity);
+            if (!profileCache.has(profileId)) {
+              try {
+                const ps = await db.collection('staffPayoutProfiles').doc(profileId).get();
+                profileCache.set(profileId, ps.exists ? azPayoutProfilePublic(ps.data() || {}, true) : null);
+              } catch (_) { profileCache.set(profileId, null); }
+            }
+            const liveProfile = profileCache.get(profileId);
+            if (liveProfile && liveProfile.qrImageDataUrl) safe.profile.qrImageDataUrl = liveProfile.qrImageDataUrl;
+          }
+          rows.push(safe);
+        }
         rows.sort((a,b)=>(Number(b.createdAtMs||0)-Number(a.createdAtMs||0)));
         return send(res, 200, JSON.stringify({ ok:true, requests: rows }, null, 2), "application/json");
       } catch (err) {
@@ -19791,11 +20148,17 @@ async function handler(req, res) {
         if (!snap.exists) return send(res, 404, JSON.stringify({ ok:false, error:"Payout request not found." }, null, 2), "application/json");
         const old = snap.data() || {};
         const oldStatus = String(old.status || 'requested').toLowerCase();
-        if (['paid', 'cancelled'].includes(oldStatus) && oldStatus !== status && !azPayoutAllowReopenFinal()) {
+        if (['paid', 'cancelled', 'refunded'].includes(oldStatus) && oldStatus !== status && !azPayoutAllowReopenFinal()) {
           return send(res, 409, JSON.stringify({ ok:false, error:`Payout request is already ${oldStatus}. Set AZOBSS_PAYOUT_ALLOW_REOPEN_FINAL=1 only if you intentionally need to reopen final requests.`, status: oldStatus }, null, 2), "application/json");
         }
+        if (oldStatus === 'processing') {
+          return send(res, 409, JSON.stringify({ ok:false, error:'Payout is being processed by the bank gateway. Use Sync Bank Status; do not change it manually.', status: oldStatus }, null, 2), "application/json");
+        }
         if (status === 'paid' && oldStatus !== 'approved') {
-          return send(res, 409, JSON.stringify({ ok:false, error:'Payout request must be Approved before it can be marked Paid.', status: oldStatus }, null, 2), "application/json");
+          return send(res, 409, JSON.stringify({ ok:false, error:'Payout request must be Approved before a manual payment can be recorded.', status: oldStatus }, null, 2), "application/json");
+        }
+        if (status === 'paid' && (old.billplzPaymentOrderId || ['processing','initiating','unknown'].includes(String(old.billplzStatus || old.gatewayStatus || '').toLowerCase()))) {
+          return send(res, 409, JSON.stringify({ ok:false, error:'A direct bank payout is already linked to this request. Use Sync Bank Status instead of recording a manual payment.' }, null, 2), "application/json");
         }
         if (status === 'paid' && azPayoutRequirePaidReference() && !cleanPremiumText(body.payoutReference || body.reference || '', 160)) {
           return send(res, 400, JSON.stringify({ ok:false, error:'Payment/reference number is required before marking payout as paid.' }, null, 2), "application/json");
@@ -20025,6 +20388,16 @@ async function handler(req, res) {
       }
     }
 
+    if (pathname === "/api/admin/manual-invoice-commission" && req.method === "POST") {
+      try {
+        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
+        if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required to sync invoice commission."},null,2),"application/json");
+        let body={};try{body=JSON.parse((await readBody(req))||"{}");}catch(_){return send(res,400,JSON.stringify({ok:false,error:"Invalid request body"},null,2),"application/json");}
+        const result=await azSyncManualInvoiceCommission(req,adminIdentity,body);
+        return send(res,200,JSON.stringify(result,null,2),"application/json");
+      } catch(err){return send(res,500,JSON.stringify({ok:false,error:err&&err.message?err.message:String(err)},null,2),"application/json");}
+    }
+
     if (pathname === "/api/commission/adjustment" && req.method === "POST") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
@@ -20082,8 +20455,8 @@ async function handler(req, res) {
           commissionAmount: Math.round(amount * 100) / 100,
           amount: Math.round(amount * 100) / 100,
           amountText: azCommissionAmountText(amount),
-          commissionRate: saleAmount > 0 ? Math.round((amount / saleAmount) * 10000) / 100 : 0,
-          rate: saleAmount > 0 ? Math.round((amount / saleAmount) * 10000) / 100 : 0,
+          commissionRate: Number.isFinite(Number(body.commissionRate)) && Number(body.commissionRate)!==0 ? Math.round(Number(body.commissionRate)*100)/100 : (saleAmount > 0 ? Math.round((amount / saleAmount) * 10000) / 100 : 0),
+          rate: Number.isFinite(Number(body.commissionRate)) && Number(body.commissionRate)!==0 ? Math.round(Number(body.commissionRate)*100)/100 : (saleAmount > 0 ? Math.round((amount / saleAmount) * 10000) / 100 : 0),
           status,
           payoutStatus: status,
           note: cleanPremiumText(body.note || "", 500),

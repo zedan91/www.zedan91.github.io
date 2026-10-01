@@ -1910,7 +1910,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1176">
 <script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1168">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1194">
 
 <style id="az770-admin-service-bookings-style">
 .az770-service-booking-list{display:grid;gap:10px}.az770-service-booking-row{display:grid;grid-template-columns:minmax(180px,.85fr) minmax(220px,1fr) minmax(220px,1.25fr) minmax(170px,.7fr);gap:12px;align-items:start;padding:14px;border:1px solid rgba(148,163,184,.24);border-radius:13px;background:linear-gradient(145deg,rgba(15,31,54,.95),rgba(8,18,34,.98))}.az770-service-booking-row.is-new{border-color:rgba(34,211,238,.52);box-shadow:0 0 0 1px rgba(34,211,238,.07) inset}.az770-booking-title{font-weight:950;color:#fff}.az770-booking-meta{margin-top:4px;color:#93a8c2;font-size:12px;line-height:1.45}.az770-booking-services{color:#dbeafe;font-size:12px;line-height:1.5}.az770-booking-price{display:block;margin-top:6px;color:#86efac;font-weight:950}.az770-booking-actions{display:grid;gap:7px}.az770-booking-actions select{width:100%}.az770-booking-actions .btn{width:100%;justify-content:center}.az770-booking-detail{grid-column:1/-1;margin-top:1px;padding:11px;border-radius:10px;background:#071426;border:1px solid rgba(148,163,184,.18);color:#b9c8da;font-size:12px;white-space:pre-wrap}.az770-booking-chip{display:inline-flex;margin-top:6px;padding:4px 7px;border-radius:999px;border:1px solid #365273;color:#bfdbfe;font-size:10px;font-weight:900;text-transform:uppercase}.az770-booking-empty{padding:20px;text-align:center;border:1px dashed #3b516d;border-radius:12px;color:#91a4bd}@media(max-width:1050px){.az770-service-booking-row{grid-template-columns:1fr 1fr}.az770-booking-actions{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.az770-service-booking-row{grid-template-columns:1fr}.az770-booking-actions{grid-column:auto;grid-template-columns:1fr}}
@@ -2198,6 +2198,11 @@ body[data-dashboard-page="admin"] .topbar{
 .az1192-context[hidden]{display:none!important}.az1192-context-main{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.az1192-context-user{font-weight:900;color:#67e8f9}.az1192-context-actions{display:flex;gap:6px;flex-wrap:wrap}.az1192-context-actions .btn{padding:6px 9px;min-height:0;font-size:11px}.az1192-context-actions .btn.active{background:#0ea5e9;color:#fff;border-color:#38bdf8}.az1192-staff-links{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.az1192-staff-links .btn{padding:4px 7px;min-height:0;font-size:10px}.az1192-admin-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}.az1192-admin-map>div{border:1px solid rgba(148,163,184,.18);background:#0b1424;border-radius:12px;padding:9px}.az1192-admin-map b{display:block;color:#e2e8f0;margin-bottom:3px}.az1192-admin-map span{font-size:11px;color:#94a3b8}.az1192-payout-context{border-color:rgba(34,197,94,.35)!important;box-shadow:0 0 0 1px rgba(34,197,94,.08) inset}
 @media(max-width:850px){.az1192-admin-map{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.az1192-admin-map{grid-template-columns:1fr}.az1192-context{align-items:flex-start}}
+</style>
+<style id="azobss-v1194-commission-payout">
+.az1194-admin-payout-qr{display:inline-grid;grid-template-columns:130px minmax(120px,1fr);gap:10px;align-items:center;margin:8px 0;padding:8px;border:1px solid rgba(34,197,94,.32);border-radius:12px;background:rgba(20,83,45,.12)}
+.az1194-admin-payout-qr img{width:130px;height:130px;object-fit:contain;background:#fff;border-radius:8px;padding:4px}.az1194-admin-payout-qr span{font-size:12px;font-weight:900;color:#bbf7d0}
+@media(max-width:640px){.az1194-admin-payout-qr{grid-template-columns:1fr}.az1194-admin-payout-qr img{width:170px;height:170px}}
 </style>
 </head>
 
@@ -3141,12 +3146,22 @@ body[data-dashboard-page="admin"] .topbar{
               <div id="salesReceiptItems"></div>
             </div>
 
+            <div class="az1194-invoice-commission-card">
+              <div><b>Staff / Manager Commission</b><span>Search ikut nama, username atau phone. Pilih akaun supaya commission terus linked ke Commission Manager dan Staff Dashboard.</span></div>
+              <div class="az1194-invoice-staff-row">
+                <label class="az1194-invoice-staff-lookup">Staff / Manager Search<input id="salesReceiptCommissionStaffSearch" placeholder="Type name / phone / username..." autocomplete="off"><div id="salesReceiptCommissionStaffSuggestions" class="az-sr-customer-suggestions" hidden></div></label>
+                <div id="salesReceiptCommissionStaffSelected" class="az1194-staff-selected">No Staff/Manager selected</div>
+                <button class="btn gray" id="salesReceiptCommissionStaffClear" type="button">Clear</button>
+              </div>
+              <input id="salesReceiptCommissionStaffUsername" type="hidden"><input id="salesReceiptCommissionStaffUid" type="hidden"><input id="salesReceiptCommissionStaffEmail" type="hidden"><input id="salesReceiptCommissionStaffRole" type="hidden"><input id="salesReceiptCommissionStaffName" type="hidden"><input id="salesReceiptCommissionStaffPhone" type="hidden">
+            </div>
+
             <div class="az-sr-cost-grid">
               <label>Discount (RM)<input id="salesReceiptDiscount" type="number" min="0" step="0.01" value="0"></label>
               <label>Shipping Charged (RM)<input id="salesReceiptShippingCharge" type="number" min="0" step="0.01" value="0"></label>
               <label>Shipping Cost (RM)<input id="salesReceiptShippingCost" type="number" min="0" step="0.01" value="0"></label>
               <label>Payment Fee (RM)<input id="salesReceiptPaymentFee" type="number" min="0" step="0.01" value="1"></label>
-              <label>Commission (RM)<input id="salesReceiptCommission" type="number" min="0" step="0.01" value="0"></label>
+              <label>Commission % of Gross<input id="salesReceiptCommissionPercent" type="number" min="0" max="100" step="0.01" value="0"></label><label>Commission (RM)<input id="salesReceiptCommission" type="number" min="0" step="0.01" value="0"></label>
               <label>Other Cost (RM)<input id="salesReceiptOtherCost" type="number" min="0" step="0.01" value="0"></label>
             </div>
 
@@ -3617,14 +3632,15 @@ body[data-dashboard-page="admin"] .topbar{
 
       <details class="card az-admin-details" id="commissionManualEntryPanel">
         <summary>➕ Manual Commission Adjustment</summary>
-        <p class="tabs-note">Untuk adjustment khas sahaja. Rekod auto-generated tidak diedit terus; buat adjustment baru supaya audit trail kekal.</p>
+        <p class="tabs-note">Untuk adjustment khas sahaja. Rekod auto-generated tidak diedit terus; buat adjustment baru supaya audit trail kekal. Isi <b>Gross Sale RM</b> dan contoh <b>20%</b> untuk kira Adjustment RM secara automatik.</p>
         <h2 id="commissionFormTitle">Tambah Manual Adjustment</h2>
         <input type="hidden" id="commissionEditDocId">
         <input type="hidden" id="commissionParentDocId">
         <div class="toolbar">
           <input id="commissionUsername" placeholder="Username / Staff owner" style="flex:1;min-width:180px">
           <input id="commissionProduct" placeholder="Produk / rujukan jualan" style="flex:1;min-width:180px">
-          <input id="commissionSaleAmount" type="number" min="0" step="0.01" placeholder="Sale RM optional">
+          <input id="commissionSaleAmount" type="number" min="0" step="0.01" placeholder="Gross Sale RM">
+          <input id="commissionPercent" type="number" step="0.01" placeholder="% of Gross Sale">
           <input id="commissionAmount" type="number" step="0.01" placeholder="Adjustment RM (+ / -)">
           <select id="commissionStatus">
             <option value="pending">pending</option>
@@ -3653,7 +3669,8 @@ body[data-dashboard-page="admin"] .topbar{
 
       <div class="card" id="adminPayoutRequestsCard">
         <h2>📨 Payout Requests</h2>
-        <p class="tabs-note">Permintaan payout Staff dilindungi backend. Mark Paid memerlukan payment reference dan akan sync commission records berkaitan.</p>
+        <p class="tabs-note">Smart Manual Payout: <b>Staff Request → Admin Review → Approve → scan QR / transfer bank atau DuitNow → Record Payment</b>. Reference bayaran wajib sebelum status Paid.</p>
+        <div class="item" id="payoutGatewayBox" style="margin:10px 0 12px"><div class="item-title">📱 Manual Bank / DuitNow Payout <span class="pill" style="color:#34d399">READY</span></div><div class="item-meta">Gunakan butiran payout atau QR yang Staff/Manager simpan. Selepas transfer, tekan <b>Record Payment</b> dan masukkan reference bank.</div></div>
         <div class="toolbar">
           <input id="payoutRequestStaffFilter" placeholder="Staff / Manager" style="min-width:170px">
           <select id="payoutRequestFilter">
@@ -3661,7 +3678,9 @@ body[data-dashboard-page="admin"] .topbar{
             <option value="requested">Requested</option>
             <option value="reviewing">Reviewing</option>
             <option value="approved">Approved</option>
+            <option value="processing">Processing (Legacy)</option>
             <option value="paid">Paid</option>
+            <option value="refunded">Refunded</option>
             <option value="rejected">Rejected</option>
             <option value="cancelled">Cancelled</option>
           </select>
@@ -6242,7 +6261,7 @@ async function loadAdminCommissions(){
 }
 function resetCommissionForm(){
   $('#commissionEditDocId').value=''; if($('#commissionParentDocId')) $('#commissionParentDocId').value='';
-  $('#commissionUsername').value=''; $('#commissionProduct').value=''; if($('#commissionSaleAmount')) $('#commissionSaleAmount').value=''; $('#commissionAmount').value=''; $('#commissionStatus').value='pending'; $('#commissionOwnerUid').value=''; $('#commissionOwnerUsername').value=''; $('#commissionOwnerEmail').value=''; $('#commissionNote').value='';
+  $('#commissionUsername').value=''; $('#commissionProduct').value=''; if($('#commissionSaleAmount')) $('#commissionSaleAmount').value=''; if($('#commissionPercent')) $('#commissionPercent').value=''; $('#commissionAmount').value=''; $('#commissionStatus').value='pending'; $('#commissionOwnerUid').value=''; $('#commissionOwnerUsername').value=''; $('#commissionOwnerEmail').value=''; $('#commissionNote').value='';
   if($('#commissionFormTitle')) $('#commissionFormTitle').textContent='Tambah Manual Adjustment';
 }
 function clearCommissionFilters(){
@@ -6262,11 +6281,11 @@ function exportCommissionCsv(){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='azobss-commission-records-'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function saveCommissionRecord(){
-  const docId=$('#commissionEditDocId')?.value||'', parentDocId=$('#commissionParentDocId')?.value||'', amount=Number($('#commissionAmount')?.value||0), saleAmount=Number($('#commissionSaleAmount')?.value||0), productName=$('#commissionProduct')?.value.trim()||'', username=$('#commissionUsername')?.value.trim()||'';
+  const docId=$('#commissionEditDocId')?.value||'', parentDocId=$('#commissionParentDocId')?.value||'', saleAmount=Number($('#commissionSaleAmount')?.value||0), pct=Number($('#commissionPercent')?.value||0), amount=Number($('#commissionAmount')?.value||0), productName=$('#commissionProduct')?.value.trim()||'', username=$('#commissionUsername')?.value.trim()||'';
   if(!username) return toast('Username Staff/Manager diperlukan.');
   if(!productName) return toast('Produk / rujukan diperlukan.');
   if(!Number.isFinite(amount)||amount===0) return toast('Adjustment RM mesti bukan 0.');
-  const payload={docId,parentDocId,username,productName,saleAmount,amount,payoutStatus:$('#commissionStatus')?.value||'pending',note:$('#commissionNote')?.value.trim()||'',ownerUid:$('#commissionOwnerUid')?.value.trim()||'',ownerUsername:$('#commissionOwnerUsername')?.value.trim()||username,ownerEmail:$('#commissionOwnerEmail')?.value.trim()||''};
+  const payload={docId,parentDocId,username,productName,saleAmount,amount,commissionRate:pct||((saleAmount&&amount)?(amount/saleAmount*100):0),payoutStatus:$('#commissionStatus')?.value||'pending',note:$('#commissionNote')?.value.trim()||'',ownerUid:$('#commissionOwnerUid')?.value.trim()||'',ownerUsername:$('#commissionOwnerUsername')?.value.trim()||username,ownerEmail:$('#commissionOwnerEmail')?.value.trim()||''};
   try{
     await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/commission/adjustment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     toast(docId?'Adjustment dikemas kini.':'Adjustment ditambah.');
@@ -6278,7 +6297,7 @@ function editCommissionRecord(docId){
   if(!commissionIsManual(x)) return beginCommissionAdjustment(docId);
   const panel=$('#commissionManualEntryPanel'); if(panel) panel.open=true;
   $('#commissionEditDocId').value=x.docId; if($('#commissionParentDocId')) $('#commissionParentDocId').value=x.parentDocId||x.adjustmentParentDocId||'';
-  $('#commissionUsername').value=commissionUsernameOf(x); $('#commissionProduct').value=commissionProductName(x); if($('#commissionSaleAmount')) $('#commissionSaleAmount').value=commissionSaleAmountOf(x)||''; $('#commissionAmount').value=commissionAmountOf(x); $('#commissionStatus').value=['pending','approved','rejected'].includes(commissionStatusBucket(x))?commissionStatusBucket(x):'pending'; $('#commissionOwnerUid').value=x.ownerUid||''; $('#commissionOwnerUsername').value=x.ownerUsername||x.username||''; $('#commissionOwnerEmail').value=x.ownerEmail||''; $('#commissionNote').value=x.note||x.payoutNote||'';
+  $('#commissionUsername').value=commissionUsernameOf(x); $('#commissionProduct').value=commissionProductName(x); if($('#commissionSaleAmount')) $('#commissionSaleAmount').value=commissionSaleAmountOf(x)||''; if($('#commissionPercent')) $('#commissionPercent').value=commissionRateOf(x)||''; $('#commissionAmount').value=commissionAmountOf(x); $('#commissionStatus').value=['pending','approved','rejected'].includes(commissionStatusBucket(x))?commissionStatusBucket(x):'pending'; $('#commissionOwnerUid').value=x.ownerUid||''; $('#commissionOwnerUsername').value=x.ownerUsername||x.username||''; $('#commissionOwnerEmail').value=x.ownerEmail||''; $('#commissionNote').value=x.note||x.payoutNote||'';
   if($('#commissionFormTitle')) $('#commissionFormTitle').textContent='Edit Manual Adjustment'; panel?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function beginCommissionAdjustment(docId){
@@ -6314,8 +6333,8 @@ async function updateCommissionPayoutStatus(docId,status){
   let payoutReference='',payoutMethod='',payoutNote='';
   if(status==='paid'){
     payoutReference=String(prompt('Payment / transfer reference (WAJIB):','')||'').trim();
-    if(!payoutReference) return toast('Payment reference wajib sebelum Mark Paid.');
-    payoutMethod=String(prompt('Payout method (WAJIB):','Bank Transfer')||'').trim();
+    if(!payoutReference) return toast('Payment reference wajib untuk rekod bayaran manual.');
+    payoutMethod=String(prompt('Payout method manual (WAJIB):','Manual Bank Transfer')||'').trim();
     if(!payoutMethod) return toast('Payout method wajib sebelum Mark Paid.');
   }
   if(status==='rejected'){payoutNote=String(prompt('Sebab reject (digalakkan):','')||'').trim();}
@@ -6341,7 +6360,7 @@ async function azAdminBulkCommissionStatus(status){
   if(status==='paid'){
     payoutReference=String(prompt('Payment / transfer reference untuk payout ini (WAJIB):','')||'').trim();
     if(!payoutReference) return toast('Payment reference wajib.');
-    payoutMethod=String(prompt('Payout method (WAJIB):','Bank Transfer')||'').trim();
+    payoutMethod=String(prompt('Payout method manual (WAJIB):','Manual Bank Transfer')||'').trim();
     if(!payoutMethod) return toast('Payout method wajib.');
   }
   if(status==='rejected') payoutNote=String(prompt('Sebab reject (optional):','')||'').trim();
@@ -6391,11 +6410,44 @@ function adminPayoutTimelineHtml(r){
 function payoutRequestStatusBadge(status){
   const s=String(status||'requested').toLowerCase();
   if(s==='paid') return '✅ paid';
+  if(s==='processing') return '🏦 processing';
+  if(s==='refunded') return '↩️ refunded';
   if(s==='approved') return '🟦 approved';
   if(s==='rejected') return '⛔ rejected';
   if(s==='cancelled') return '🚫 cancelled';
   if(s==='reviewing') return '🔎 reviewing';
   return '📨 requested';
+}
+
+let adminPayoutGateway={ready:false};
+async function loadAdminPayoutGatewayStatus(){
+ adminPayoutGateway={ready:false,manual:true};
+ if($('#payoutGatewayBadge'))$('#payoutGatewayBadge').textContent='MANUAL';
+ if($('#payoutGatewayText'))$('#payoutGatewayText').textContent='Manual Bank / DuitNow payout is the primary flow.';
+ return;
+ /* legacy Billplz compatibility retained */
+ try{
+  const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-gateway-status?limit=1',{cache:'no-store'}); adminPayoutGateway=j||{};
+  const badge=$('#payoutGatewayBadge'),txt=$('#payoutGatewayText');
+  if(badge){badge.textContent=j.ready?(j.mode==='production'?'LIVE READY':'SANDBOX READY'):(j.enabled?'SETUP INCOMPLETE':'DISABLED');badge.style.color=j.ready?'#34d399':'#f59e0b';}
+  if(txt){const bits=[j.ready?'Billplz Payment Order sedia digunakan.':'Direct payout belum sedia.',j.limit?.text?('Payment Order Limit: '+j.limit.text):'',j.limitError?('Limit check: '+j.limitError):'',j.mode?('Mode: '+j.mode):'',j.callbackUrl?('Callback: '+j.callbackUrl):''].filter(Boolean);txt.textContent=bits.join(' • ');}
+ }catch(e){adminPayoutGateway={ready:false};if($('#payoutGatewayBadge'))$('#payoutGatewayBadge').textContent='ERROR';if($('#payoutGatewayText'))$('#payoutGatewayText').textContent=e?.message||'Unable to check direct payout gateway.';}
+}
+async function payPayoutRequestToBank(requestId){
+ const row=adminPayoutRequestCache.find(x=>String(x.docId||x.requestId||'')===String(requestId)); if(!row)return toast('Payout request not found.');
+ const p=row.profile||{}; const account=p.accountNoMasked||'bank account';
+ if(!adminPayoutGateway?.ready) return toast('Direct bank payout belum ready. Semak Direct Bank Payout / Render environment dahulu.');
+ if(!confirm(`Pay ${row.amountText||('RM'+Number(row.amount||0).toFixed(2))} to ${p.bankName||'bank'} ${account} for ${row.username||row.email||'staff'}?\n\nThis will create a real Billplz Payment Order when gateway mode is production.`)) return;
+ try{toast('Creating bank payout...');const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-request-pay-bank',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});toast('Bank payout: '+(j.providerStatus||j.status||'processing'));await Promise.all([loadAdminPayoutRequests(),loadAdminCommissions(),loadAdminPayoutGatewayStatus()]);}catch(e){toast(e?.message||'Pay to Bank failed.');await loadAdminPayoutRequests();}
+}
+async function syncPayoutBankStatus(requestId){
+ try{toast('Syncing bank status...');const j=await azAdminFetchJson(AZOBSS_BACKEND_API+'/api/admin/payout-request-sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});toast('Bank status: '+(j.providerStatus||j.status||''));await Promise.all([loadAdminPayoutRequests(),loadAdminCommissions()]);}catch(e){toast(e?.message||'Unable to sync bank status.');}
+}
+
+async function copyAdminPayoutDetails(requestId){
+ const row=adminPayoutRequestCache.find(x=>String(x.docId||x.requestId||'')===String(requestId));if(!row)return toast('Payout request not found.');
+ const p=row.profile||{};const lines=[`Staff: ${row.username||row.email||'-'}`,`Amount: ${row.amountText||('RM'+Number(row.amount||0).toFixed(2))}`,`Method: ${p.payoutMethod||'-'}`,p.bankName?`Bank: ${p.bankName}`:'',p.accountName?`Account Name: ${p.accountName}`:'',p.accountNo?`Account / DuitNow: ${p.accountNo}`:(p.duitNowId?`DuitNow: ${p.duitNowId}`:''),p.payoutPhone?`Phone: ${p.payoutPhone}`:''].filter(Boolean);
+ try{await navigator.clipboard.writeText(lines.join('\n'));toast('Payout details copied.');}catch(_){toast('Unable to copy payout details.');}
 }
 async function loadAdminPayoutRequests(){
   try{
@@ -6411,7 +6463,7 @@ function renderAdminPayoutRequests(){
   const staffFilter=String($('#payoutRequestStaffFilter')?.value||az1192CommissionStaffContext||'').trim().toLowerCase();
   const rows=adminPayoutRequestCache.filter(r=>{const statusOk=filter==='all'||String(r.status||'requested').toLowerCase()===filter;const who=String([r.username,r.staffUsername,r.email,r.staffEmail,r.uid,r.staffUid].filter(Boolean).join(' ')).toLowerCase();return statusOk&&(!staffFilter||who.includes(staffFilter));});
   const sum=rows.reduce((a,r)=>{const st=String(r.status||'requested').toLowerCase();a.total+=Number(r.amount||0)||0;a.count++;a[st]=(a[st]||0)+(Number(r.amount||0)||0);return a;},{total:0,count:0});
-  if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Showing ${rows.length} request(s)${staffFilter?' • Staff: '+staffFilter:''} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)}`;
+  if($('#adminPayoutRequestSummary')) $('#adminPayoutRequestSummary').textContent=`Showing ${rows.length} request(s)${staffFilter?' • Staff: '+staffFilter:''} • Total RM${sum.total.toFixed(2)} • Requested RM${(sum.requested||0).toFixed(2)} • Approved RM${(sum.approved||0).toFixed(2)} • Processing RM${(sum.processing||0).toFixed(2)} • Paid RM${(sum.paid||0).toFixed(2)} • Refunded RM${(sum.refunded||0).toFixed(2)}`;
   const payoutBox=$('#adminPayoutRequestList');
   if(payoutBox){
     payoutBox.innerHTML=rows.map(r=>{
@@ -6420,11 +6472,14 @@ function renderAdminPayoutRequests(){
       const rid=esc(r.docId||r.requestId);
       const receiptLabel=String(r.status||'requested').toLowerCase()==='paid'?'View Receipt':'View Statement';
       const st=String(r.status||'requested').toLowerCase();
-      const paidBtn=st==='approved'?`<button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">Mark Paid</button>`:'';
+      const qr=p.qrImageDataUrl?`<div class="az1194-admin-payout-qr"><img src="${esc(p.qrImageDataUrl)}" alt="Payout QR ${esc(r.username||'staff')}"><span>Scan QR dengan phone</span></div>`:'';
+      const copyBtn=account?`<button class="btn" data-payout-copy-details="${rid}">📋 Copy Details</button>`:'';
+      const paidBtn=st==='approved'?`<button class="btn green" data-payout-request-status="paid" data-payout-request-id="${rid}">✓ Record Payment</button>`:'';
       const approveBtn=['requested','reviewing'].includes(st)?`<button class="btn" data-payout-request-status="approved" data-payout-request-id="${rid}">Approve</button>`:'';
       const reviewBtn=st==='requested'?`<button class="btn" data-payout-request-status="reviewing" data-payout-request-id="${rid}">Review</button>`:'';
-      const rejectBtn=!['paid','cancelled','rejected'].includes(st)?`<button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button>`:'';
-      return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" type="button" data-payout-open-commission="${esc(r.username||r.staffUsername||r.email||'')}">Commission</button>${reviewBtn}${approveBtn}${paidBtn}${rejectBtn}</div></div>`;
+      const legacySyncBtn=st==='processing'?`<button class="btn" data-payout-sync-bank="${rid}">↻ Sync Legacy Bank</button>`:'';
+      const rejectBtn=!['paid','cancelled','rejected','processing','refunded'].includes(st)?`<button class="btn red" data-payout-request-status="rejected" data-payout-request-id="${rid}">Reject</button>`:'';
+      return `<div class="item"><div class="item-title">📨 ${esc(r.username||r.email||'staff')} • ${esc(r.amountText||('RM'+Number(r.amount||0).toFixed(2)))} • ${payoutRequestStatusBadge(r.status)}</div><div class="item-meta">Records: ${esc(r.recordCount||0)} • ${esc(r.createdAt?fmtDate(r.createdAtMs||r.createdAt):'')} ${r.note?('• Note: '+esc(r.note)):''}</div><div class="item-meta">Payout: ${account||'-'}</div>${r.adminNote?`<div class="item-meta">Admin note: ${esc(r.adminNote)}</div>`:''}${r.payoutReference?`<div class="item-meta">Reference: ${esc(r.payoutReference)}</div>`:''}${qr}${adminPayoutTimelineHtml(r)}<div class="toolbar" style="margin:6px 0 0"><button class="btn" data-payout-receipt="${rid}">${receiptLabel}</button><button class="btn" type="button" data-payout-open-commission="${esc(r.username||r.staffUsername||r.email||'')}">Commission</button>${copyBtn}${reviewBtn}${approveBtn}${paidBtn}${legacySyncBtn}${rejectBtn}</div></div>`;
     }).join('') || '<div class="item">No payout requests.</div>';
     azAdminApplyPager('#adminPayoutRequestList',{key:'adminPayoutRequestList',pageSize:6,label:'payout requests',reset:true});
   }
@@ -6433,14 +6488,15 @@ async function updatePayoutRequestStatus(requestId,status){
   if(!requestId) return toast('Missing payout request ID.');
   const row=adminPayoutRequestCache.find(x=>String(x.docId||x.requestId||'')===String(requestId));
   const current=String(row?.status||'requested').toLowerCase();
-  if(status==='paid'&&current!=='approved') return toast('Payout request mesti Approved dahulu sebelum Mark Paid.');
-  if(['paid','cancelled'].includes(current)&&current!==status) return toast('Payout request final tidak boleh diubah.');
+  if(status==='paid'&&current!=='approved') return toast('Payout request mesti Approved dahulu sebelum rekod bayaran manual.');
+  if(['paid','cancelled','refunded'].includes(current)&&current!==status) return toast('Payout request final tidak boleh diubah.');
+  if(current==='processing') return toast('Payout sedang diproses bank. Gunakan Sync Bank Status.');
   if(!confirm('Update payout request daripada '+current.toUpperCase()+' kepada '+String(status).toUpperCase()+'?')) return;
   let payoutReference='', payoutMethod='', adminNote='';
   if(status==='paid'){
     payoutReference=String(prompt('Payment / transfer reference (WAJIB):','')||'').trim();
-    if(!payoutReference) return toast('Payment reference wajib sebelum Mark Paid.');
-    payoutMethod=String(prompt('Payout method (WAJIB):','Bank Transfer')||'').trim();
+    if(!payoutReference) return toast('Payment reference wajib untuk rekod bayaran manual.');
+    payoutMethod=String(prompt('Payout method manual (WAJIB):','Manual Bank Transfer')||'').trim();
     if(!payoutMethod) return toast('Payout method wajib sebelum Mark Paid.');
   }
   if(status==='rejected') adminNote=String(prompt('Sebab reject (optional):','')||'').trim();
@@ -7361,7 +7417,7 @@ async function initSection(id){
     return;
   }
   if(id==='activity')return loadAdminActivity();
-  if(id==='commissions')return Promise.all([loadAdminCommissions(),loadAdminPayoutRequests()]);
+  if(id==='commissions')return Promise.all([loadAdminCommissions(),loadAdminPayoutRequests(),loadAdminPayoutGatewayStatus()]);
   if(id==='auditlogs')return loadAdminAuditLogs();
   if(id==='exports'){ const n=$('#adminExportNotice'); if(n) n.textContent='Choose a report, then download. All export requests are recorded in Audit Logs.'; return; }
   if(id==='systemhealth')return loadSystemHealth();
@@ -7451,6 +7507,12 @@ document.addEventListener('click',async e=>{
   if(comBulkBtn){await azAdminBulkCommissionStatus(comBulkBtn.getAttribute('data-commission-bulk'));return;}
   const payoutReceiptBtn = e.target.closest('[data-payout-receipt]');
   if(payoutReceiptBtn){await viewAdminPayoutReceipt(payoutReceiptBtn.getAttribute('data-payout-receipt'));return;}
+  const bankPayBtn=e.target.closest('[data-payout-pay-bank]');
+  if(bankPayBtn){await payPayoutRequestToBank(bankPayBtn.getAttribute('data-payout-pay-bank'));return;}
+  const bankSyncBtn=e.target.closest('[data-payout-sync-bank]');
+  if(bankSyncBtn){await syncPayoutBankStatus(bankSyncBtn.getAttribute('data-payout-sync-bank'));return;}
+  const payoutCopyBtn=e.target.closest('[data-payout-copy-details]');
+  if(payoutCopyBtn){await copyAdminPayoutDetails(payoutCopyBtn.getAttribute('data-payout-copy-details'));return;}
   const payoutReqBtn = e.target.closest('[data-payout-request-status]');
   if(payoutReqBtn){await updatePayoutRequestStatus(payoutReqBtn.getAttribute('data-payout-request-id'), payoutReqBtn.getAttribute('data-payout-request-status'));return;}
   const payoutBtn = e.target.closest('[data-commission-payout]');
@@ -7530,6 +7592,9 @@ $('#azRegCancelBtn')?.addEventListener('click',()=>$('#azRegEditModal')?.classLi
 $('#azRegSaveBtn')?.addEventListener('click',saveRegisteredEdit);
 $('#azRegMembershipGrantBtn')?.addEventListener('click',()=>azRegMembershipAdminAction('grant'));
 $('#azRegMembershipEndBtn')?.addEventListener('click',()=>azRegMembershipAdminAction('revoke'));
+function syncCommissionAdjustmentFromPercent(){const sale=Number($('#commissionSaleAmount')?.value||0)||0,pct=Number($('#commissionPercent')?.value||0)||0;if($('#commissionAmount')&&sale>0)$('#commissionAmount').value=(sale*pct/100).toFixed(2);}
+function syncCommissionAdjustmentPercentFromAmount(){const sale=Number($('#commissionSaleAmount')?.value||0)||0,amt=Number($('#commissionAmount')?.value||0)||0;if($('#commissionPercent'))$('#commissionPercent').value=sale?((amt/sale)*100).toFixed(2):'';}
+$('#commissionPercent')?.addEventListener('input',syncCommissionAdjustmentFromPercent);$('#commissionSaleAmount')?.addEventListener('input',()=>{if(String($('#commissionPercent')?.value||'').trim())syncCommissionAdjustmentFromPercent();});$('#commissionAmount')?.addEventListener('input',syncCommissionAdjustmentPercentFromAmount);
 $('#saveCommissionRecord')?.addEventListener('click', saveCommissionRecord);
 $('#resetCommissionForm')?.addEventListener('click', resetCommissionForm);
 $('#refreshCommissionRecords')?.addEventListener('click', loadAdminCommissions);
@@ -7553,6 +7618,7 @@ document.addEventListener('change',e=>{if(e.target?.matches?.('[data-commission-
 $('#payoutRequestFilter')?.addEventListener('change', renderAdminPayoutRequests);
 $('#payoutRequestStaffFilter')?.addEventListener('input',()=>{clearTimeout(window.az1192PayoutStaffTimer);window.az1192PayoutStaffTimer=setTimeout(renderAdminPayoutRequests,160);});
 $('#refreshPayoutRequestsAdmin')?.addEventListener('click', loadAdminPayoutRequests);
+$('#refreshPayoutGateway')?.addEventListener('click', loadAdminPayoutGatewayStatus);
 $('#exportCommissionCsv')?.addEventListener('click', exportCommissionCsv);
 $('#refreshAuditLogs')?.addEventListener('click', loadAdminAuditLogs);
 $('#downloadAdminExport')?.addEventListener('click', ()=>downloadAdminExport(false));
@@ -9201,7 +9267,7 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1170"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1170" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1194" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*
