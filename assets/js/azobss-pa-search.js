@@ -3,8 +3,6 @@
 
   const JUPEM_SEARCH_URL = 'https://ebiz.jupem.gov.my/Produk/PelanAkui';
   const PDF_API = 'https://azobss-backend.onrender.com/api/pa-pdf';
-  const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (typeof window.azobssGetBackendBaseUrl === 'function' ? window.azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
-  const PA_SEARCH_API = `${String(BACKEND_BASE || '').replace(/\/+$/, '')}/api/search-pa`;
   const ROWS_PER_PAGE = 5;
   const JUPEM_STATE_CODES = Object.freeze({
     JOHOR: '01',
@@ -332,28 +330,21 @@
   }
 
   async function fetchOfficialResults(number, stateCode, signal) {
-    // v1203: AZOBSS backend is the only browser path. The backend can search
-    // ArcGIS first and fall back to the JUPEM HTML form server-side; the
-    // browser no longer attempts a cross-origin JUPEM POST that Firefox may block.
-    const params = new URLSearchParams({ negeri: stateCode, pa: `PA${number}`, _: Date.now() });
-    let lastError = null;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const response = await fetch(`${PA_SEARCH_API}?${params.toString()}`, {
-          cache: 'no-store',
-          credentials: 'omit',
-          signal
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.ok) throw new Error(data.error || `Backend carian PA mengembalikan HTTP ${response.status}.`);
-        return Array.isArray(data.results) ? data.results : [];
-      } catch (error) {
-        if (error && error.name === 'AbortError') throw error;
-        lastError = error;
-        if (attempt === 0) await new Promise((resolve) => window.setTimeout(resolve, 700));
-      }
-    }
-    throw lastError || new Error('Carian PA melalui backend gagal.');
+    const body = new URLSearchParams({
+      negeri: String(Number(stateCode)),
+      noPa: number,
+      cetak: '0'
+    });
+    const response = await fetch(JUPEM_SEARCH_URL, {
+      method: 'POST',
+      cache: 'no-store',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+      signal
+    });
+    if (!response.ok) throw new Error(`Server carian mengembalikan HTTP ${response.status}.`);
+    return parseOfficialResults(await response.text());
   }
 
   function clearResults() {
@@ -498,7 +489,7 @@
 
     const controller = new AbortController();
     const task = { controller, timeout: 0 };
-    task.timeout = window.setTimeout(() => controller.abort(), 60000);
+    task.timeout = window.setTimeout(() => controller.abort(), 30000);
     activeSearchTask = task;
     setSearchBusy(true);
     setQuickStatus(`Sedang mencari PA ${number}. Tekan Batal Carian PA untuk berhenti.`, 'checking');
@@ -522,12 +513,9 @@
         : 'Tiada rekod PA ditemui', allRows.length ? 'success' : 'unavailable');
     } catch (error) {
       if (activeSearchTask !== task) return;
-      const message = error && error.name === 'AbortError'
-        ? 'Carian PA dibatalkan selepas 60 saat. Masukkan nombor PA dan cuba lagi.'
-        : (error && error.message && /Carian PA|sambungan|backend/i.test(error.message)
-          ? error.message
-          : 'Carian PA tidak tersedia buat sementara waktu. Sila cuba lagi.');
-      setQuickStatus(message, 'unavailable');
+      setQuickStatus(error && error.name === 'AbortError'
+        ? 'Carian PA dibatalkan selepas 30 saat. Masukkan nombor PA dan cuba lagi.'
+        : 'Carian PA tidak tersedia buat sementara waktu. Sila cuba lagi.', 'unavailable');
     } finally {
       window.clearTimeout(task.timeout);
       if (activeSearchTask === task) {
