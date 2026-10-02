@@ -467,6 +467,9 @@
       let jupemRefreshTimer = null;
       let jupemViewportSettleTimer = null;
       const jupemTileRetryCounts = new WeakMap();
+      let jupemHardFailureCount = 0;
+      let jupemRecoveryTimer = null;
+      let jupemLastRecoveryAt = 0;
       let selectedGeometry = null;
       let estimate = null;
       let estimateController = null;
@@ -1212,11 +1215,36 @@
         }, Math.max(0, Number(delay) || 0));
       }
 
+      function scheduleFullJupemRecovery() {
+        const now = Date.now();
+        if (settled || jupemRecoveryTimer || (now - jupemLastRecoveryAt) < 6500) return;
+        jupemRecoveryTimer = window.setTimeout(() => {
+          jupemRecoveryTimer = null;
+          if (settled || !map) return;
+          jupemLastRecoveryAt = Date.now();
+          jupemHardFailureCount = 0;
+          const recoverKey = String(Date.now());
+          try {
+            if (jupemLotsLayer && typeof jupemLotsLayer.setUrl === 'function') {
+              jupemLotsLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(productCode)}&negeri=${encodeURIComponent(activeStateCode)}&_azrecover=${recoverKey}`, false);
+            }
+            if (earthSecondaryLayer && typeof earthSecondaryLayer.setUrl === 'function') {
+              earthSecondaryLayer.setUrl(`${BACKEND_BASE}/api/jupem-lot-map/tile/{z}/{x}/{y}.png?produk=${encodeURIComponent(earthSecondaryProduct)}&negeri=${encodeURIComponent(activeStateCode)}&layerMode=lots&_azrecover=${recoverKey}`, false);
+            }
+          } catch (_) {}
+          refreshJupemOverlay(0, true);
+        }, 1400);
+      }
+
       function retryFailedJupemTile(event) {
         const tile = event && event.tile;
         if (!tile || !tile.src) return;
         const previous = Number(jupemTileRetryCounts.get(tile) || 0);
-        if (previous >= 4) return;
+        if (previous >= 4) {
+          jupemHardFailureCount += 1;
+          if (jupemHardFailureCount >= 2) scheduleFullJupemRecovery();
+          return;
+        }
         const attempt = previous + 1;
         jupemTileRetryCounts.set(tile, attempt);
         const delay = [350, 800, 1600, 2800][attempt - 1] || 2800;
@@ -1233,6 +1261,7 @@
 
       function markJupemTileLoaded(event) {
         if (event && event.tile) jupemTileRetryCounts.delete(event.tile);
+        jupemHardFailureCount = 0;
       }
 
       function settleJupemViewport(delay = 220) {
@@ -1618,6 +1647,7 @@
         clearCadastreFocus();
         if (jupemRefreshTimer) window.clearTimeout(jupemRefreshTimer);
         if (jupemViewportSettleTimer) window.clearTimeout(jupemViewportSettleTimer);
+        if (jupemRecoveryTimer) window.clearTimeout(jupemRecoveryTimer);
         locationSearchSerial += 1;
         document.removeEventListener('keydown', onDocumentKeyDown);
         try { window.removeEventListener('resize', applyV951CompactLayout); } catch (_) {}

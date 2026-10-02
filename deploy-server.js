@@ -21250,33 +21250,59 @@ async function handler(req, res) {
         const xmax = xmin + tileSize;
         const ymax = world - (tileY * tileSize);
         const ymin = ymax - tileSize;
-        const auth = await azobssGetJupemMapAuth(false);
-        const exportUrl = new URL("https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/export");
-        exportUrl.search = new URLSearchParams({
-          bbox: [xmin, ymin, xmax, ymax].join(","),
-          bboxSR: "3857",
-          imageSR: "3857",
-          size: "256,256",
-          layers: `show:${layerIds.join(",")}`,
-          format: "png32",
-          transparent: "true",
-          dpi: "96",
-          f: "image",
-          token: auth.token
-        }).toString();
-        const imageResponse = await fetch(exportUrl, azJupemFetchOptions({
-          redirect: "follow",
-          signal: AbortSignal.timeout(25000),
-          headers: azobssJupemBaseHeaders({
-            "Accept": "image/png,image/*,*/*",
-            "Cookie": auth.cookie,
-            "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
-          })
-        }));
-        const contentType = String(imageResponse.headers.get("content-type") || "").toLowerCase();
-        if (!imageResponse.ok || !contentType.includes("image/")) throw new Error("JUPEM map tile is unavailable.");
+        // v1201: cadastral tiles must recover immediately when the cached ArcGIS
+        // token/session has expired. Previously the tile route used the cached
+        // auth exactly once; a stale token therefore made every lot tile return
+        // 502 until the cache expired even though the street basemap still worked.
+        let imageResponse = null;
+        let contentType = "";
+        let lastTileError = "";
+        for (let authAttempt = 0; authAttempt < 2; authAttempt += 1) {
+          if (authAttempt > 0) azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
+          const auth = await azobssGetJupemMapAuth(authAttempt > 0);
+          const exportUrl = new URL("https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/export");
+          exportUrl.search = new URLSearchParams({
+            bbox: [xmin, ymin, xmax, ymax].join(","),
+            bboxSR: "3857",
+            imageSR: "3857",
+            size: "256,256",
+            layers: `show:${layerIds.join(",")}`,
+            format: "png32",
+            transparent: "true",
+            dpi: "96",
+            f: "image",
+            token: auth.token
+          }).toString();
+          imageResponse = await fetch(exportUrl, azJupemFetchOptions({
+            redirect: "follow",
+            signal: AbortSignal.timeout(25000),
+            headers: azobssJupemBaseHeaders({
+              "Accept": "image/png,image/*,*/*",
+              "Cookie": auth.cookie,
+              "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
+            })
+          }));
+          contentType = String(imageResponse.headers.get("content-type") || "").toLowerCase();
+          if (imageResponse.ok && contentType.includes("image/")) break;
+
+          let responseHint = "";
+          try {
+            responseHint = String(await imageResponse.text()).slice(0, 1000);
+          } catch (_) {}
+          lastTileError = `HTTP ${imageResponse.status || 0}${responseHint ? `: ${responseHint.replace(/\s+/g, " ").slice(0, 220)}` : ""}`;
+          if (authAttempt === 0) {
+            console.warn("JUPEM lot map tile auth/session rejected; refreshing token once:", lastTileError);
+            continue;
+          }
+        }
+        if (!imageResponse || !imageResponse.ok || !contentType.includes("image/")) {
+          throw new Error(`JUPEM map tile is unavailable${lastTileError ? ` (${lastTileError})` : ""}.`);
+        }
         const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-        return send(res, 200, imageBuffer, contentType || "image/png", { "Cache-Control": "public, max-age=300" });
+        return send(res, 200, imageBuffer, contentType || "image/png", {
+          "Cache-Control": "public, max-age=300",
+          "X-AZOBSS-Lot-Tile-Recovery": "v1201"
+        });
       } catch (error) {
         console.warn("JUPEM lot map tile failed:", error && (error.message || error));
         return send(res, 502, "", "image/png", { "Cache-Control": "no-store" });
