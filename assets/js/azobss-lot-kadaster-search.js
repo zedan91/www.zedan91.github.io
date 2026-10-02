@@ -2,7 +2,8 @@
   'use strict';
 
   const JUPEM_SEARCH_URL = 'https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigit';
-  const FALLBACK_API_URL = 'https://azobss-backend.onrender.com/api/search-lot-kadaster';
+  const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (typeof window.azobssGetBackendBaseUrl === 'function' ? window.azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+  const FALLBACK_API_URL = `${String(BACKEND_BASE || '').replace(/\/+$/, '')}/api/search-lot-kadaster`;
   const ROWS_PER_PAGE = 5;
   const JUPEM_STATE_CODES = Object.freeze({
     JOHOR: '01',
@@ -71,16 +72,27 @@
   }
 
   async function fetchOfficialResults(productCode, stateCode, lotNo, signal) {
-    // v1202: backend proxy is the primary path so session/cookie/anti-forgery
-    // handling stays server-side and does not depend on browser CORS rules.
-    const params = new URLSearchParams({ produk: productCode, negeri: stateCode, lot: lotNo });
-    const response = await fetch(`${FALLBACK_API_URL}?${params.toString()}`, {
-      cache: 'no-store',
-      signal
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok) throw new Error(data.error || 'Carian lot melalui backend gagal.');
-    return Array.isArray(data.results) ? data.results : [];
+    // v1203: backend only. Do not overwrite a useful backend error with a
+    // browser-direct JUPEM NetworkError/CORS failure.
+    const params = new URLSearchParams({ produk: productCode, negeri: stateCode, lot: lotNo, _: Date.now() });
+    let lastError = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await fetch(`${FALLBACK_API_URL}?${params.toString()}`, {
+          cache: 'no-store',
+          credentials: 'omit',
+          signal
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) throw new Error(data.error || `Carian lot mengembalikan HTTP ${response.status}.`);
+        return Array.isArray(data.results) ? data.results : [];
+      } catch (error) {
+        if (error && error.name === 'AbortError') throw error;
+        lastError = error;
+        if (attempt === 0) await new Promise((resolve) => window.setTimeout(resolve, 700));
+      }
+    }
+    throw lastError || new Error('Carian lot melalui backend gagal.');
   }
 
   async function fetchFallbackResults(productCode, stateCode, lotNo, signal) {
@@ -250,11 +262,7 @@
       searchButton.disabled = true;
       setLotStatus(`Sedang mencari lot ${lotNo}. Sila tunggu...`, 'checking');
       try {
-        try {
-          allRows = await fetchOfficialResults(productCode, stateCode, lotNo, controller.signal);
-        } catch (officialError) {
-          allRows = await fetchFallbackResults(productCode, stateCode, lotNo, controller.signal);
-        }
+        allRows = await fetchOfficialResults(productCode, stateCode, lotNo, controller.signal);
         allRows = allRows.map((record, index) => ({ ...record, _sourceIndex: index }));
         filteredRows = allRows.slice();
         generalEl.disabled = !allRows.length;

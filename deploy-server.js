@@ -8844,6 +8844,140 @@ function azobssResetJupemPublicSession() {
   try { azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 }; } catch (_) {}
 }
 
+
+function azobssArcGisCadastreFeatureRow(feature, productCode, stateCode) {
+  const attributes = feature && feature.attributes || {};
+  const objectId = azobssCleanLotObjectId(azobssFindFocusedLotAttribute(attributes, [
+    "OBJECTID", "OBJECTID_1", "FID"
+  ]));
+  const lotNo = cleanLotNumber(azobssFindFocusedLotAttribute(attributes, [
+    "NO_LOT", "NOLOT", "LOT_NO", "LOTNO", "NOMBOR_LOT", "LOT"
+  ]));
+  let paNo = String(azobssFindFocusedLotAttribute(attributes, [
+    "NO_PA", "NOPA", "PA_NO", "PANO", "PELAN_AKUI", "PELANAKUI"
+  ]) || "").trim().toUpperCase();
+  if (paNo && !/^PA/i.test(paNo) && /\d/.test(paNo)) paNo = `PA${paNo.replace(/\s+/g, "")}`;
+  const negeri = String(azobssFindFocusedLotAttribute(attributes, ["NEGERI", "STATE"]) || AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "").replace(/^Negeri\s+/i, "").trim();
+  const daerah = String(azobssFindFocusedLotAttribute(attributes, ["DAERAH", "DISTRICT"]) || "").replace(/^Daerah\s+/i, "").trim();
+  const mukim = String(azobssFindFocusedLotAttribute(attributes, ["MUKIM", "BANDAR", "PEKAN"]) || "").trim();
+  const seksyen = String(azobssFindFocusedLotAttribute(attributes, ["SEKSYEN", "SECTION"]) || "").trim();
+  const mapUrl = objectId
+    ? `https://ebiz.jupem.gov.my/PetaInteraktif?c=pl&jenis=Lot&no=${encodeURIComponent(objectId)}&type=${encodeURIComponent(stateCode)}lot&produk=${encodeURIComponent(productCode)}&neg=${encodeURIComponent(stateCode)}`
+    : "";
+  return {
+    lotNo,
+    paNo,
+    negeri,
+    daerah,
+    mukim,
+    seksyen,
+    objectId,
+    productCode: cleanLotProduct(productCode),
+    stateCode: cleanLotStateCode(stateCode),
+    viewPaUrl: "",
+    mapUrl,
+    selectionUrl: mapUrl
+  };
+}
+
+async function azobssSearchLotCadastreViaArcGis(productCode, stateCode, lotNo, forceAuth = false) {
+  const config = azobssGetLotMapConfig(productCode, stateCode);
+  const auth = await azobssGetJupemMapAuth(forceAuth);
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.lotLayer}`;
+  let metadata;
+  try {
+    metadata = await azobssJupemArcGisJson(layerUrl, {}, auth, 25000);
+  } catch (error) {
+    if (!forceAuth && /498|499|token|auth/i.test(String(error && error.message || error))) {
+      return await azobssSearchLotCadastreViaArcGis(productCode, stateCode, lotNo, true);
+    }
+    throw error;
+  }
+  const fields = Array.isArray(metadata && metadata.fields) ? metadata.fields : [];
+  const candidates = fields.filter((field) => {
+    const token = azobssNormalizeFieldToken(`${field && field.name || ""} ${field && field.alias || ""}`);
+    return /(?:^|NO)(?:LOT|LOTT|LOTNUMBER)|LOTNO|NOMBORLOT/.test(token);
+  }).slice(0, 10);
+  if (!candidates.length) throw new Error("Medan nombor lot tidak ditemui pada layer kadaster.");
+
+  const cleanNumber = cleanLotNumber(lotNo);
+  const escaped = cleanNumber.replace(/'/g, "''");
+  const rows = [];
+  const seen = new Set();
+  for (const field of candidates) {
+    const fieldName = String(field && field.name || "").trim();
+    if (!fieldName) continue;
+    const numeric = /Integer|Double|Single|SmallInteger/i.test(String(field.type || ""));
+    if (numeric && !/^\d+(?:\.\d+)?$/.test(cleanNumber)) continue;
+    const where = numeric ? `${fieldName} = ${cleanNumber}` : `${fieldName} = '${escaped}'`;
+    let payload;
+    try {
+      payload = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+        where,
+        outFields: "*",
+        returnGeometry: "false",
+        resultRecordCount: "200"
+      }, auth, 30000);
+    } catch (error) {
+      if (!forceAuth && /498|499|token|auth/i.test(String(error && error.message || error))) {
+        return await azobssSearchLotCadastreViaArcGis(productCode, stateCode, lotNo, true);
+      }
+      continue;
+    }
+    for (const feature of Array.isArray(payload && payload.features) ? payload.features : []) {
+      const row = azobssArcGisCadastreFeatureRow(feature, config.product, config.state);
+      if (!row.lotNo || azobssFocusedLotComparable(row.lotNo) !== azobssFocusedLotComparable(cleanNumber)) continue;
+      const key = [row.objectId, row.lotNo, row.paNo, row.daerah, row.mukim, row.seksyen].join("|").toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(row);
+      if (rows.length >= 200) return rows;
+    }
+    if (rows.length) break;
+  }
+  return rows;
+}
+
+async function azobssSearchPaCadastreViaArcGis(stateCode, paNo, forceAuth = false) {
+  const config = azobssGetLotMapConfig("1", stateCode);
+  const auth = await azobssGetJupemMapAuth(forceAuth);
+  let features;
+  try {
+    features = await azobssQueryFocusedLotsByPa(config, paNo, auth, { paNo });
+  } catch (error) {
+    if (!forceAuth && /498|499|token|auth/i.test(String(error && error.message || error))) {
+      return await azobssSearchPaCadastreViaArcGis(stateCode, paNo, true);
+    }
+    throw error;
+  }
+  const wanted = azobssFocusedPaComparable(paNo);
+  const rows = [];
+  const seen = new Set();
+  for (const feature of Array.isArray(features) ? features : []) {
+    const row = azobssArcGisCadastreFeatureRow(feature, "1", stateCode);
+    const actual = azobssFocusedPaComparable(row.paNo || paNo);
+    if (wanted && actual && actual !== wanted) continue;
+    row.paNo = row.paNo || `PA${wanted}`;
+    const key = [row.paNo, row.negeri, row.daerah, row.mukim, row.seksyen].join("|").toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      paNo: row.paNo,
+      negeri: row.negeri,
+      daerah: row.daerah,
+      mukim: row.mukim,
+      seksyen: row.seksyen,
+      stateCode: row.stateCode,
+      productCode: "1",
+      objectId: row.objectId,
+      mapUrl: row.mapUrl,
+      viewPaUrl: ""
+    });
+    if (rows.length >= 100) break;
+  }
+  return rows;
+}
+
 async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
   const cacheKey = [productCode, stateCode, lotNo].join("|");
   const cached = azobssLotSearchCache.get(cacheKey);
@@ -8851,6 +8985,24 @@ async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
 
   const sourceUrl = "https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigit";
   let lastError = null;
+
+  // v1203: ArcGIS cadastral layer is the primary search source. The public
+  // product HTML endpoint can temporarily return 502 while PetaInteraktif and
+  // the underlying MapServer remain available. Searching the layer directly
+  // keeps Cari Lot working during that partial JUPEM outage.
+  try {
+    const arcRows = await azobssSearchLotCadastreViaArcGis(productCode, stateCode, lotNo, false);
+    if (arcRows.length) {
+      const value = { sourceUrl: "JUPEM ArcGIS Kadaster", sourceMode: "arcgis", results: arcRows };
+      if (azobssLotSearchCache.size > 120) azobssLotSearchCache.clear();
+      azobssLotSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return value;
+    }
+  } catch (error) {
+    lastError = error;
+    console.warn("AZOBSS ArcGIS lot search primary path failed:", error && (error.message || error));
+  }
+
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const bootCookie = await azobssGetJupemSessionCookie(attempt > 0);
@@ -8963,6 +9115,23 @@ async function searchJupemPaCadastre(stateCode, paNo, exactTargetPaNo = "") {
 
   const sourceUrl = "https://ebiz.jupem.gov.my/Produk/PelanAkui";
   let lastError = null;
+
+  // v1203: try the cadastral MapServer first. This path does not depend on the
+  // /Produk/PelanAkui HTML page being healthy. Some state layers do not expose
+  // a PA field, so the existing HTML form remains the compatibility fallback.
+  try {
+    const arcRows = await azobssSearchPaCadastreViaArcGis(cleanStateCode, `PA${cleanPaDigits}`, false);
+    if (arcRows.length) {
+      const value = { sourceUrl: "JUPEM ArcGIS Kadaster", sourceMode: "arcgis", results: arcRows };
+      if (azobssPaMapSearchCache.size > 180) azobssPaMapSearchCache.clear();
+      azobssPaMapSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return value;
+    }
+  } catch (error) {
+    lastError = error;
+    console.warn("AZOBSS ArcGIS PA search primary path failed:", error && (error.message || error));
+  }
+
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const bootCookie = await azobssGetJupemSessionCookie(attempt > 0);
@@ -20955,6 +21124,7 @@ async function handler(req, res) {
           negeri:AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
           paNo:`PA${paDigits}`,
           source:found.sourceUrl || "",
+          sourceMode:found.sourceMode || "html",
           results:Array.isArray(found.results) ? found.results : []
         }), "application/json", { "Cache-Control":"no-store" });
       } catch (error) {
@@ -21680,6 +21850,7 @@ async function handler(req, res) {
           stateCode,
           lotNo,
           sourceUrl: found.sourceUrl,
+          sourceMode: found.sourceMode || "html",
           results: found.results
         }), "application/json");
       } catch (error) {
