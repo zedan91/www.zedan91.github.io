@@ -8797,57 +8797,107 @@ function parseJupemLotRows(html, productCode, stateCode) {
   return rows.slice(0, 500);
 }
 
+
+function azobssParseJupemSearchForm(html, expectedPath) {
+  const source = String(html || "");
+  const forms = Array.from(source.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/gi));
+  for (const formMatch of forms) {
+    const attributes = formMatch[1] || "";
+    const content = formMatch[2] || "";
+    const actionRaw = azobssHtmlAttribute(attributes, "action") || expectedPath || "/";
+    let actionUrl = "";
+    try { actionUrl = new URL(actionRaw, "https://ebiz.jupem.gov.my").toString(); } catch (_) { continue; }
+    if (expectedPath && !String(new URL(actionUrl).pathname || "").toLowerCase().includes(String(expectedPath).toLowerCase())) continue;
+    const body = new URLSearchParams();
+    const inputPattern = /<input\b([^>]*)>/gi;
+    let inputMatch;
+    while ((inputMatch = inputPattern.exec(content))) {
+      const inputAttributes = inputMatch[1] || "";
+      const name = azobssHtmlAttribute(inputAttributes, "name");
+      const type = azobssHtmlAttribute(inputAttributes, "type").toLowerCase();
+      if (!name || ["submit", "button", "reset", "file", "image"].includes(type)) continue;
+      if (["checkbox", "radio"].includes(type) && !/\bchecked(?:\s*=|\s|$)/i.test(inputAttributes)) continue;
+      body.set(name, azobssHtmlAttribute(inputAttributes, "value"));
+    }
+    return {
+      action: actionUrl,
+      method: String(azobssHtmlAttribute(attributes, "method") || "POST").toUpperCase() === "GET" ? "GET" : "POST",
+      body
+    };
+  }
+  return null;
+}
+
+function azobssJupemSearchPageLooksUsable(html, expectedTable = true) {
+  const source = String(html || "");
+  if (!source) return false;
+  if (azobssJupemIsLoginPage(source)) return false;
+  if (expectedTable && !/<table[^>]+id=["']example["']/i.test(source)) {
+    // A valid zero-result search can render an empty-state instead of the table.
+    if (!/(?:tiada\s+(?:rekod|data)|no\s+(?:record|data)|carian[^<]{0,80}tidak\s+ditemui)/i.test(source)) return false;
+  }
+  return true;
+}
+
+function azobssResetJupemPublicSession() {
+  try { azobssJupemSessionCache = { cookie: "", expiresAt: 0 }; } catch (_) {}
+  try { azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 }; } catch (_) {}
+}
+
 async function searchJupemLotCadastre(productCode, stateCode, lotNo) {
   const cacheKey = [productCode, stateCode, lotNo].join("|");
   const cached = azobssLotSearchCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
   const sourceUrl = "https://ebiz.jupem.gov.my/Produk/LotKadasterBerdigit";
-  const commonHeaders = azobssJupemBaseHeaders({
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Referer": sourceUrl
-  });
-  const pageResponse = await fetch(sourceUrl, azJupemFetchOptions({
-    redirect: "follow",
-    signal: AbortSignal.timeout(20000),
-    headers: commonHeaders
-  }));
-  if (!pageResponse.ok) throw new Error(`JUPEM lot search page returned HTTP ${pageResponse.status}.`);
-  const cookie = azobssExtractCookieHeader(pageResponse.headers);
-  const pageHtml = await pageResponse.text();
-  const formMatch = pageHtml.match(/<form[^>]+action=["']\/Produk\/LotKadasterBerdigit["'][\s\S]*?<\/form>/i);
-  const tokenMatch = formMatch && formMatch[0].match(/<input[^>]+name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i);
-  if (!tokenMatch || !tokenMatch[1]) throw new Error("JUPEM lot search token is unavailable.");
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const bootCookie = await azobssGetJupemSessionCookie(attempt > 0);
+      const pageResult = await azobssJupemAuthFetch(sourceUrl, {
+        timeoutMs: 25000,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        referer: "https://ebiz.jupem.gov.my/"
+      }, bootCookie);
+      if (!pageResult.response.ok) throw new Error(`JUPEM lot search page returned HTTP ${pageResult.response.status}.`);
+      const pageHtml = await pageResult.response.text();
+      if (azobssJupemIsLoginPage(pageHtml, pageResult.url)) throw new Error("JUPEM lot search session requires refresh.");
 
-  const body = new URLSearchParams({
-    __RequestVerificationToken: decodeHtmlEntities(tokenMatch[1]),
-    produk: productCode,
-    negeri: stateCode,
-    searchString: lotNo
-  });
-  const postHeaders = azobssJupemBaseHeaders({
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Referer": sourceUrl,
-    "Origin": "https://ebiz.jupem.gov.my"
-  });
-  if (cookie) postHeaders.Cookie = cookie;
-  const resultResponse = await fetch(sourceUrl, azJupemFetchOptions({
-    method: "POST",
-    redirect: "follow",
-    signal: AbortSignal.timeout(20000),
-    headers: postHeaders,
-    body: body.toString()
-  }));
-  if (!resultResponse.ok) throw new Error(`JUPEM lot search returned HTTP ${resultResponse.status}.`);
-  const resultHtml = await resultResponse.text();
-  const value = {
-    sourceUrl,
-    results: parseJupemLotRows(resultHtml, productCode, stateCode)
-  };
-  if (azobssLotSearchCache.size > 120) azobssLotSearchCache.clear();
-  azobssLotSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
-  return value;
+      const form = azobssParseJupemSearchForm(pageHtml, "/Produk/LotKadasterBerdigit");
+      if (!form) throw new Error("JUPEM lot search form is unavailable.");
+      form.body.set("produk", productCode);
+      form.body.set("negeri", stateCode);
+      form.body.set("searchString", lotNo);
+
+      const submitUrl = form.method === "GET"
+        ? `${form.action}${form.action.includes("?") ? "&" : "?"}${form.body.toString()}`
+        : form.action;
+      const result = await azobssJupemAuthFetch(submitUrl, {
+        method: form.method,
+        timeoutMs: 30000,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        contentType: form.method === "GET" ? "" : "application/x-www-form-urlencoded",
+        referer: pageResult.url || sourceUrl,
+        body: form.method === "GET" ? undefined : form.body.toString()
+      }, pageResult.cookie);
+      if (!result.response.ok) throw new Error(`JUPEM lot search returned HTTP ${result.response.status}.`);
+      const resultHtml = await result.response.text();
+      if (!azobssJupemSearchPageLooksUsable(resultHtml, true)) throw new Error("JUPEM lot search response is not usable.");
+
+      const value = {
+        sourceUrl,
+        results: parseJupemLotRows(resultHtml, productCode, stateCode)
+      };
+      if (azobssLotSearchCache.size > 120) azobssLotSearchCache.clear();
+      azobssLotSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return value;
+    } catch (error) {
+      lastError = error;
+      azobssResetJupemPublicSession();
+      if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+  }
+  throw lastError || new Error("JUPEM lot search is unavailable.");
 }
 
 
@@ -8912,51 +8962,55 @@ async function searchJupemPaCadastre(stateCode, paNo, exactTargetPaNo = "") {
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
   const sourceUrl = "https://ebiz.jupem.gov.my/Produk/PelanAkui";
-  let cookie = "";
-  try {
-    const pageResponse = await fetch(sourceUrl, azJupemFetchOptions({
-      redirect: "follow",
-      signal: AbortSignal.timeout(20000),
-      headers: azobssJupemBaseHeaders({
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Referer": sourceUrl
-      })
-    }));
-    if (pageResponse.ok) {
-      cookie = azobssExtractCookieHeader(pageResponse.headers);
-      try { await pageResponse.arrayBuffer(); } catch (_) {}
-    }
-  } catch (_) {}
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const bootCookie = await azobssGetJupemSessionCookie(attempt > 0);
+      const pageResult = await azobssJupemAuthFetch(sourceUrl, {
+        timeoutMs: 25000,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        referer: "https://ebiz.jupem.gov.my/"
+      }, bootCookie);
+      if (!pageResult.response.ok) throw new Error(`JUPEM PA search page returned HTTP ${pageResult.response.status}.`);
+      const pageHtml = await pageResult.response.text();
+      if (azobssJupemIsLoginPage(pageHtml, pageResult.url)) throw new Error("JUPEM PA search session requires refresh.");
 
-  const body = new URLSearchParams({
-    negeri: String(Number(cleanStateCode)),
-    noPa: cleanPaDigits,
-    cetak: "0"
-  });
-  const headers = azobssJupemBaseHeaders({
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Referer": sourceUrl,
-    "Origin": "https://ebiz.jupem.gov.my"
-  });
-  if (cookie) headers.Cookie = cookie;
-  const response = await fetch(sourceUrl, azJupemFetchOptions({
-    method: "POST",
-    redirect: "follow",
-    signal: AbortSignal.timeout(25000),
-    headers,
-    body: body.toString()
-  }));
-  if (!response.ok) throw new Error(`JUPEM PA search returned HTTP ${response.status}.`);
-  const html = await response.text();
-  const wanted = azobssFocusedLotComparable(cleanPaDigits);
-  const results = parseJupemPaRows(html, cleanStateCode, exactTargetPaNo || `PA${cleanPaDigits}`)
-    .filter((row) => azobssFocusedLotComparable(String(row && row.paNo || "").replace(/^PA/i, "")).startsWith(wanted))
-    .slice(0, 24);
-  const value = { sourceUrl, results };
-  if (azobssPaMapSearchCache.size > 180) azobssPaMapSearchCache.clear();
-  azobssPaMapSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
-  return value;
+      const form = azobssParseJupemSearchForm(pageHtml, "/Produk/PelanAkui") || {
+        action: sourceUrl,
+        method: "POST",
+        body: new URLSearchParams()
+      };
+      form.body.set("negeri", String(Number(cleanStateCode)));
+      form.body.set("noPa", cleanPaDigits);
+      form.body.set("cetak", "0");
+
+      const result = await azobssJupemAuthFetch(form.action || sourceUrl, {
+        method: "POST",
+        timeoutMs: 30000,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        contentType: "application/x-www-form-urlencoded",
+        referer: pageResult.url || sourceUrl,
+        body: form.body.toString()
+      }, pageResult.cookie);
+      if (!result.response.ok) throw new Error(`JUPEM PA search returned HTTP ${result.response.status}.`);
+      const html = await result.response.text();
+      if (!azobssJupemSearchPageLooksUsable(html, true)) throw new Error("JUPEM PA search response is not usable.");
+
+      const wanted = azobssFocusedLotComparable(cleanPaDigits);
+      const results = parseJupemPaRows(html, cleanStateCode, exactTargetPaNo || `PA${cleanPaDigits}`)
+        .filter((row) => azobssFocusedLotComparable(String(row && row.paNo || "").replace(/^PA/i, "")).startsWith(wanted))
+        .slice(0, 24);
+      const value = { sourceUrl, results };
+      if (azobssPaMapSearchCache.size > 180) azobssPaMapSearchCache.clear();
+      azobssPaMapSearchCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return value;
+    } catch (error) {
+      lastError = error;
+      azobssResetJupemPublicSession();
+      if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+  }
+  throw lastError || new Error("JUPEM PA search is unavailable.");
 }
 
 
@@ -9237,7 +9291,8 @@ async function azobssJupemAuthFetch(url, options = {}, cookie = "") {
         ...(options.contentType ? { "Content-Type": options.contentType } : {}),
         ...(activeCookie ? { "Cookie": activeCookie } : {}),
         ...(options.referer ? { "Referer": options.referer } : {}),
-        ...(options.ajax ? { "X-Requested-With": "XMLHttpRequest" } : {})
+        ...(options.ajax ? { "X-Requested-With": "XMLHttpRequest" } : {}),
+        ...(options.headers || {})
       })
     }));
     activeCookie = azobssMergeCookieHeaders(activeCookie, azobssExtractCookieHeader(response.headers));
@@ -12318,52 +12373,72 @@ async function azobssGetJupemMapAuth(force = false) {
   if (!force && azobssJupemMapAuthCache.token && azobssJupemMapAuthCache.cookie && azobssJupemMapAuthCache.expiresAt > now) {
     return azobssJupemMapAuthCache;
   }
-  if (!force && azobssJupemMapAuthPending) return azobssJupemMapAuthPending;
+
+  // v1202: all concurrent tile/query requests share ONE auth refresh. v1201 let
+  // every failed tile create its own forced refresh, which could stampede JUPEM
+  // and make the whole cadastral overlay appear blank during a token failure.
+  if (azobssJupemMapAuthPending) return azobssJupemMapAuthPending;
+  if (force) {
+    azobssJupemMapAuthCache = { token: "", cookie: "", expiresAt: 0 };
+    try { azobssJupemSessionCache = { cookie: "", expiresAt: 0 }; } catch (_) {}
+  }
 
   azobssJupemMapAuthPending = (async () => {
-    const mapUrl = "https://ebiz.jupem.gov.my/PetaInteraktif?no=1&type=bm&c=pt";
-    const pageResponse = await fetch(mapUrl, azJupemFetchOptions({
-      redirect: "follow",
-      signal: AbortSignal.timeout(20000),
-      headers: azobssJupemBaseHeaders({
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Referer": "https://ebiz.jupem.gov.my/"
-      })
-    }));
-    if (!pageResponse.ok) throw new Error(`JUPEM map session returned HTTP ${pageResponse.status}`);
+    const bootCookie = await azobssGetJupemSessionCookie(force);
+    const mapUrls = [
+      "https://ebiz.jupem.gov.my/PetaInteraktif?type=10lot&c=pl&jenis=Lot&produk=1&neg=10",
+      "https://ebiz.jupem.gov.my/PetaInteraktif?type=01lot&c=pl&jenis=Lot&produk=1&neg=01",
+      "https://ebiz.jupem.gov.my/PetaInteraktif?no=1&type=bm&c=pt"
+    ];
+    let lastError = null;
 
-    const cookie = azobssExtractCookieHeader(pageResponse.headers);
-    const html = await pageResponse.text();
-    const csrfMatch = html.match(/<input[^>]+name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i);
-    if (!cookie || !csrfMatch || !csrfMatch[1]) throw new Error("JUPEM map session token is unavailable");
+    for (const mapUrl of mapUrls) {
+      try {
+        const pageResult = await azobssJupemAuthFetch(mapUrl, {
+          timeoutMs: 25000,
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          referer: "https://ebiz.jupem.gov.my/"
+        }, bootCookie);
+        if (!pageResult.response.ok) throw new Error(`JUPEM map session returned HTTP ${pageResult.response.status}`);
+        const html = await pageResult.response.text();
+        if (azobssJupemIsLoginPage(html, pageResult.url)) throw new Error("JUPEM map session was redirected to login");
+        const csrfMatch = html.match(/<input[^>]+name=["']__RequestVerificationToken["'][^>]+value=["']([^"']+)["']/i);
+        if (!pageResult.cookie || !csrfMatch || !csrfMatch[1]) throw new Error("JUPEM map session token is unavailable");
 
-    const csrf = decodeHtmlEntities(csrfMatch[1]);
-    const body = new URLSearchParams({ __RequestVerificationToken: csrf });
-    const tokenResponse = await fetch("https://ebiz.jupem.gov.my/PetaInteraktif/GetArcGISToken", azJupemFetchOptions({
-      method: "POST",
-      redirect: "follow",
-      signal: AbortSignal.timeout(20000),
-      headers: azobssJupemBaseHeaders({
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Cookie": cookie,
-        "Referer": mapUrl,
-        "X-CSRF-TOKEN": csrf,
-        "X-Requested-With": "XMLHttpRequest"
-      }),
-      body: body.toString()
-    }));
-    if (!tokenResponse.ok) throw new Error(`JUPEM map token returned HTTP ${tokenResponse.status}`);
+        const csrf = decodeHtmlEntities(csrfMatch[1]);
+        const body = new URLSearchParams({ __RequestVerificationToken: csrf });
+        const tokenResult = await azobssJupemAuthFetch("https://ebiz.jupem.gov.my/PetaInteraktif/GetArcGISToken", {
+          method: "POST",
+          timeoutMs: 25000,
+          accept: "application/json,text/javascript,*/*;q=0.01",
+          contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+          referer: pageResult.url || mapUrl,
+          ajax: true,
+          headers: { "X-CSRF-TOKEN": csrf },
+          body: body.toString()
+        }, pageResult.cookie);
+        if (!tokenResult.response.ok) throw new Error(`JUPEM map token returned HTTP ${tokenResult.response.status}`);
+        const rawPayload = await tokenResult.response.text();
+        let payload = null;
+        try { payload = JSON.parse(rawPayload); } catch (_) {}
+        if (!payload || !payload.success || !payload.token) {
+          const tokenMatch = rawPayload.match(/["']token["']\s*:\s*["']([^"']+)["']/i);
+          if (tokenMatch && tokenMatch[1]) payload = { success: true, token: tokenMatch[1], expiresIn: 600 };
+        }
+        if (!payload || !payload.success || !payload.token) throw new Error("JUPEM ArcGIS token is unavailable");
 
-    const payload = await tokenResponse.json();
-    if (!payload || !payload.success || !payload.token) throw new Error("JUPEM ArcGIS token is unavailable");
-    const expiresInSeconds = Math.max(60, Number(payload.expiresIn) || 600);
-    azobssJupemMapAuthCache = {
-      token: String(payload.token),
-      cookie,
-      expiresAt: Date.now() + Math.max(60 * 1000, (expiresInSeconds * 1000) - 60 * 1000)
-    };
-    return azobssJupemMapAuthCache;
+        const expiresInSeconds = Math.max(60, Number(payload.expiresIn) || 600);
+        azobssJupemMapAuthCache = {
+          token: String(payload.token),
+          cookie: tokenResult.cookie || pageResult.cookie,
+          expiresAt: Date.now() + Math.max(60 * 1000, (expiresInSeconds * 1000) - 60 * 1000)
+        };
+        return azobssJupemMapAuthCache;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error("JUPEM map authentication is unavailable");
   })();
 
   try {
@@ -20860,6 +20935,35 @@ async function handler(req, res) {
 
 
     // =========================
+    // PA SEARCH PROXY (v1202)
+    // Browser-side direct POST to JUPEM is no longer the primary path because
+    // CORS/session policy changes can make a valid search fail only in browsers.
+    // =========================
+
+    if (pathname === "/api/search-pa" && req.method === "GET") {
+      if (azRateLimitOrSend(req, res, "search-pa", 60, 60 * 1000)) return;
+      try {
+        const stateCode = cleanLotStateCode(parsed.query.negeri || parsed.query.state || parsed.query.stateCode);
+        const rawPa = String(parsed.query.pa || parsed.query.paNo || parsed.query.noPa || "").trim();
+        const paDigits = cleanLotNumber(rawPa).replace(/^PA/i, "").replace(/\D/g, "");
+        if (!stateCode) return send(res, 400, JSON.stringify({ ok:false, error:"Pilih negeri sebelum membuat carian PA." }), "application/json", { "Cache-Control":"no-store" });
+        if (!paDigits) return send(res, 400, JSON.stringify({ ok:false, error:"Masukkan nombor PA yang sah." }), "application/json", { "Cache-Control":"no-store" });
+        const found = await searchJupemPaCadastre(stateCode, paDigits, `PA${paDigits}`);
+        return send(res, 200, JSON.stringify({
+          ok:true,
+          stateCode,
+          negeri:AZOBSS_JUPEM_LOT_STATE_NAMES[stateCode] || "",
+          paNo:`PA${paDigits}`,
+          source:found.sourceUrl || "",
+          results:Array.isArray(found.results) ? found.results : []
+        }), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        console.warn("AZOBSS PA search proxy failed:", error && (error.stack || error.message || error));
+        return send(res, 502, JSON.stringify({ ok:false, error:"Carian PA sedang memulihkan sambungan sumber peta. Sila cuba semula sebentar lagi." }), "application/json", { "Cache-Control":"no-store" });
+      }
+    }
+
+    // =========================
     // PA / BM / SBM MAP SEARCH (v1098)
     // =========================
 
@@ -21582,7 +21686,7 @@ async function handler(req, res) {
         console.error("JUPEM lot search failed:", error && (error.stack || error.message || error));
         return send(res, 502, JSON.stringify({
           ok: false,
-          error: "JUPEM lot search is temporarily unavailable. Please try again."
+          error: "Carian lot sedang memulihkan sambungan sumber peta. Sila cuba semula sebentar lagi."
         }), "application/json");
       }
     }

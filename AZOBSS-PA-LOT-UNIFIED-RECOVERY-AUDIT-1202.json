@@ -1,0 +1,28 @@
+{
+  "version": "1.0.1202",
+  "scope": "PA search + Lot Kadaster search/map recovery",
+  "observed_ui_symptoms": [
+    "PA search shows temporary unavailable message",
+    "OpenStreetMap basemap renders while cadastral lot overlay is absent"
+  ],
+  "code_findings": [
+    "PA storefront search used browser-direct POST to external source",
+    "Lot storefront search tried browser-direct request before backend fallback",
+    "Cadastral overlay uses backend ArcGIS token/session",
+    "v1201 forced tile recovery could start multiple auth refreshes across simultaneous failed tiles"
+  ],
+  "changes": [
+    "new /api/search-pa backend proxy",
+    "PA search backend-first with direct emergency fallback",
+    "Lot search backend-first with direct emergency fallback",
+    "server-side JUPEM form session/cookie/hidden-token preservation and retry",
+    "cadastral-first PetaInteraktif ArcGIS auth bootstrap",
+    "single shared in-flight ArcGIS token refresh",
+    "visible cadastral layer reconnect/recovered status",
+    "frontend cache-busters set to 1202"
+  ],
+  "deployment": {
+    "frontend": true,
+    "render_backend": true
+  }
+}

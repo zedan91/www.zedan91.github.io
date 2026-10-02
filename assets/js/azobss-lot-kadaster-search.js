@@ -71,6 +71,20 @@
   }
 
   async function fetchOfficialResults(productCode, stateCode, lotNo, signal) {
+    // v1202: backend proxy is the primary path so session/cookie/anti-forgery
+    // handling stays server-side and does not depend on browser CORS rules.
+    const params = new URLSearchParams({ produk: productCode, negeri: stateCode, lot: lotNo });
+    const response = await fetch(`${FALLBACK_API_URL}?${params.toString()}`, {
+      cache: 'no-store',
+      signal
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Carian lot melalui backend gagal.');
+    return Array.isArray(data.results) ? data.results : [];
+  }
+
+  async function fetchFallbackResults(productCode, stateCode, lotNo, signal) {
+    // Emergency browser-direct fallback only.
     const params = new URLSearchParams({
       produk: productCode,
       negeri: stateCode,
@@ -83,17 +97,6 @@
     });
     if (!response.ok) throw new Error(`JUPEM returned HTTP ${response.status}.`);
     return parseOfficialResults(await response.text(), productCode, stateCode);
-  }
-
-  async function fetchFallbackResults(productCode, state, lotNo, signal) {
-    const params = new URLSearchParams({ produk: productCode, negeri: state, lot: lotNo });
-    const response = await fetch(`${FALLBACK_API_URL}?${params.toString()}`, {
-      cache: 'no-store',
-      signal
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok) throw new Error(data.error || 'Lot search failed.');
-    return Array.isArray(data.results) ? data.results : [];
   }
 
   function setupPanel(panel) {
@@ -250,7 +253,7 @@
         try {
           allRows = await fetchOfficialResults(productCode, stateCode, lotNo, controller.signal);
         } catch (officialError) {
-          allRows = await fetchFallbackResults(productCode, state, lotNo, controller.signal);
+          allRows = await fetchFallbackResults(productCode, stateCode, lotNo, controller.signal);
         }
         allRows = allRows.map((record, index) => ({ ...record, _sourceIndex: index }));
         filteredRows = allRows.slice();

@@ -3,6 +3,7 @@
 
   const JUPEM_SEARCH_URL = 'https://ebiz.jupem.gov.my/Produk/PelanAkui';
   const PDF_API = 'https://azobss-backend.onrender.com/api/pa-pdf';
+  const PA_SEARCH_API = 'https://azobss-backend.onrender.com/api/search-pa';
   const ROWS_PER_PAGE = 5;
   const JUPEM_STATE_CODES = Object.freeze({
     JOHOR: '01',
@@ -330,21 +331,45 @@
   }
 
   async function fetchOfficialResults(number, stateCode, signal) {
-    const body = new URLSearchParams({
-      negeri: String(Number(stateCode)),
-      noPa: number,
-      cetak: '0'
-    });
-    const response = await fetch(JUPEM_SEARCH_URL, {
-      method: 'POST',
-      cache: 'no-store',
-      mode: 'cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-      signal
-    });
-    if (!response.ok) throw new Error(`Server carian mengembalikan HTTP ${response.status}.`);
-    return parseOfficialResults(await response.text());
+    // v1202: use AZOBSS backend first. Browser -> JUPEM direct POST is fragile
+    // because CORS/session policy can change independently of the public form.
+    let backendError = null;
+    try {
+      const params = new URLSearchParams({ negeri: stateCode, pa: `PA${number}` });
+      const response = await fetch(`${PA_SEARCH_API}?${params.toString()}`, {
+        cache: 'no-store',
+        signal
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.error || `Backend carian PA mengembalikan HTTP ${response.status}.`);
+      return Array.isArray(data.results) ? data.results : [];
+    } catch (error) {
+      if (error && error.name === 'AbortError') throw error;
+      backendError = error;
+    }
+
+    // Emergency fallback only. Most browsers will block this if JUPEM CORS is
+    // restricted, but keeping it provides a second path when backend is offline.
+    try {
+      const body = new URLSearchParams({
+        negeri: String(Number(stateCode)),
+        noPa: number,
+        cetak: '0'
+      });
+      const response = await fetch(JUPEM_SEARCH_URL, {
+        method: 'POST',
+        cache: 'no-store',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+        signal
+      });
+      if (!response.ok) throw new Error(`Server carian mengembalikan HTTP ${response.status}.`);
+      return parseOfficialResults(await response.text());
+    } catch (directError) {
+      if (directError && directError.name === 'AbortError') throw directError;
+      throw backendError || directError;
+    }
   }
 
   function clearResults() {
@@ -513,9 +538,12 @@
         : 'Tiada rekod PA ditemui', allRows.length ? 'success' : 'unavailable');
     } catch (error) {
       if (activeSearchTask !== task) return;
-      setQuickStatus(error && error.name === 'AbortError'
+      const message = error && error.name === 'AbortError'
         ? 'Carian PA dibatalkan selepas 30 saat. Masukkan nombor PA dan cuba lagi.'
-        : 'Carian PA tidak tersedia buat sementara waktu. Sila cuba lagi.', 'unavailable');
+        : (error && error.message && /Carian PA|sambungan|backend/i.test(error.message)
+          ? error.message
+          : 'Carian PA tidak tersedia buat sementara waktu. Sila cuba lagi.');
+      setQuickStatus(message, 'unavailable');
     } finally {
       window.clearTimeout(task.timeout);
       if (activeSearchTask === task) {

@@ -468,6 +468,7 @@
       let jupemViewportSettleTimer = null;
       const jupemTileRetryCounts = new WeakMap();
       let jupemHardFailureCount = 0;
+      let jupemRecoveryNoticeActive = false;
       let jupemRecoveryTimer = null;
       let jupemLastRecoveryAt = 0;
       let selectedGeometry = null;
@@ -1223,6 +1224,8 @@
           if (settled || !map) return;
           jupemLastRecoveryAt = Date.now();
           jupemHardFailureCount = 0;
+          jupemRecoveryNoticeActive = true;
+          setStatus(status, 'Layer Lot Kadaster terputus seketika. Sistem sedang sambung semula secara automatik...', 'loading');
           const recoverKey = String(Date.now());
           try {
             if (jupemLotsLayer && typeof jupemLotsLayer.setUrl === 'function') {
@@ -1262,6 +1265,10 @@
       function markJupemTileLoaded(event) {
         if (event && event.tile) jupemTileRetryCounts.delete(event.tile);
         jupemHardFailureCount = 0;
+        if (jupemRecoveryNoticeActive) {
+          jupemRecoveryNoticeActive = false;
+          setStatus(status, 'Layer Lot Kadaster berjaya disambung semula. Zum masuk dan pilih kawasan seperti biasa.', 'success');
+        }
       }
 
       function settleJupemViewport(delay = 220) {
