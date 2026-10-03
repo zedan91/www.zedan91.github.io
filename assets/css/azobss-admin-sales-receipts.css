@@ -1,0 +1,767 @@
+/* AZOBSS PATCH 735: Admin Sales & Receipts + direct PDF links */
+.az-sr-hero{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
+.az-sr-hero-copy{max-width:760px}.az-sr-hero-copy h3{margin:0 0 7px;font-size:24px}.az-sr-hero-copy p{margin:0;color:#cbd5e1;line-height:1.55}
+.az-sr-hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.az-sr-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.az-sr-kpis .stat-value{font-size:25px}
+.az-sr-filter-card{margin-bottom:14px}.az-sr-filter-grid{display:grid;grid-template-columns:minmax(240px,2fr) repeat(5,minmax(140px,1fr));gap:9px;align-items:end}
+.az-sr-filter-grid label{display:grid;gap:5px;color:#bfdbfe;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.az-sr-filter-grid input,.az-sr-filter-grid select{width:100%;min-width:0}
+.az-sr-filter-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.az-sr-result-note{color:#b6c7df;font-size:12px;margin:10px 0 0}
+.az-sr-table-wrap{overflow:auto;border:1px solid rgba(148,163,184,.19);border-radius:16px}
+.az-sr-table{width:100%;border-collapse:collapse;min-width:1120px;font-size:12px}.az-sr-table th,.az-sr-table td{padding:10px;border-bottom:1px solid rgba(148,163,184,.14);vertical-align:top;text-align:left}.az-sr-table th{position:sticky;top:0;background:#0a1424;color:#bfdbfe;z-index:1;font-size:11px;text-transform:uppercase;letter-spacing:.04em}.az-sr-table tr:hover td{background:rgba(30,41,59,.32)}
+.az-sr-receipt-no{font-family:Consolas,monospace;color:#7dd3fc;font-weight:900}.az-sr-customer{font-weight:900;color:#fff}.az-sr-subtext{color:#94a3b8;font-size:11px;line-height:1.4;margin-top:3px}.az-sr-money{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:900}.az-sr-profit{color:#86efac}.az-sr-loss{color:#fca5a5}
+.az-sr-pill{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:950;border:1px solid rgba(148,163,184,.28);background:rgba(2,6,23,.42);white-space:nowrap}.az-sr-pill.paid{color:#86efac;border-color:rgba(34,197,94,.42)}.az-sr-pill.pending{color:#fde68a;border-color:rgba(245,158,11,.45)}.az-sr-pill.refunded,.az-sr-pill.cancelled,.az-sr-pill.failed{color:#fecaca;border-color:rgba(239,68,68,.45)}.az-sr-pill.manual{color:#c4b5fd;border-color:rgba(139,92,246,.45)}.az-sr-pill.website{color:#7dd3fc;border-color:rgba(56,189,248,.45)}
+.az-sr-actions{display:flex;gap:5px;flex-wrap:wrap;min-width:245px}.az-sr-actions .btn{padding:7px 8px;font-size:10px;border-radius:8px}.az-sr-actions .busy{opacity:.62;cursor:wait}.az-sr-wa-btn{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}.az-sr-tg-btn{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important}
+.az-sr-pagination{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:13px}.az-sr-pagination button{min-width:84px}.az-sr-pagination span{font-size:12px;color:#cbd5e1;font-weight:900}
+.az-sr-empty{text-align:center;padding:28px;color:#94a3b8}
+.az-sr-modal{position:fixed;inset:0;z-index:999999;background:rgba(2,6,23,.82);backdrop-filter:blur(8px);display:grid;place-items:center;padding:16px}.az-sr-modal[hidden]{display:none!important}.az-sr-dialog{width:min(980px,96vw);max-height:94vh;overflow:auto;background:#0b1526;border:1px solid rgba(125,211,252,.30);border-radius:22px;box-shadow:0 30px 100px rgba(0,0,0,.56)}
+.az-sr-dialog-head{position:sticky;top:0;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px 18px;background:rgba(11,21,38,.97);border-bottom:1px solid rgba(148,163,184,.18)}.az-sr-dialog-head h3{margin:0}.az-sr-close{border:0;background:#334155;color:#fff;border-radius:10px;width:36px;height:36px;font-size:20px;cursor:pointer}
+.az-sr-form{padding:18px}.az-sr-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.az-sr-form label{display:grid;gap:5px;color:#bfdbfe;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.az-sr-form input,.az-sr-form select,.az-sr-form textarea{width:100%;min-width:0}.az-sr-span-2{grid-column:span 2}.az-sr-span-4{grid-column:1/-1}
+.az-sr-items-card{margin-top:14px;padding:13px;border:1px solid rgba(56,189,248,.22);border-radius:16px;background:rgba(2,6,23,.32)}.az-sr-items-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:9px}.az-sr-items-head h4{margin:0;color:#7dd3fc}
+.az-sr-item-row{display:grid;grid-template-columns:150px minmax(220px,2fr) 90px 130px 130px 42px;gap:7px;align-items:end;margin-bottom:8px}.az-sr-item-row label{font-size:9px}.az-sr-remove-item{height:44px;border:1px solid rgba(239,68,68,.45);background:rgba(127,29,29,.32);color:#fecaca;border-radius:10px;font-weight:950;cursor:pointer}
+.az-sr-cost-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:12px}.az-sr-calculation{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:13px}.az-sr-calc{padding:11px;border:1px solid rgba(148,163,184,.18);border-radius:13px;background:rgba(15,23,42,.7)}.az-sr-calc span{display:block;color:#94a3b8;font-size:10px;font-weight:900;text-transform:uppercase}.az-sr-calc b{display:block;margin-top:4px;font-size:19px;color:#fff}.az-sr-calc.profit b{color:#86efac}
+.az-sr-form-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;margin:18px -18px -18px;padding:13px 18px;background:rgba(11,21,38,.97);border-top:1px solid rgba(148,163,184,.18)}
+.az-sr-notice{position:fixed;right:18px;bottom:18px;z-index:1000000;max-width:min(420px,90vw);padding:12px 14px;border-radius:14px;background:#172033;border:1px solid rgba(125,211,252,.35);color:#fff;box-shadow:0 18px 60px rgba(0,0,0,.42);font-weight:850;font-size:12px}.az-sr-notice.error{border-color:rgba(239,68,68,.55);color:#fecaca}
+@media(max-width:1280px){.az-sr-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.az-sr-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.az-sr-filter-grid label:first-child{grid-column:span 2}}
+@media(max-width:860px){.az-sr-hero{flex-direction:column}.az-sr-hero-actions{justify-content:flex-start}.az-sr-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.az-sr-span-4{grid-column:1/-1}.az-sr-item-row{grid-template-columns:1fr 1fr}.az-sr-item-row .az-sr-item-name{grid-column:1/-1}.az-sr-cost-grid,.az-sr-calculation{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.az-sr-kpis,.az-sr-filter-grid,.az-sr-form-grid,.az-sr-cost-grid,.az-sr-calculation{grid-template-columns:1fr}.az-sr-filter-grid label:first-child,.az-sr-span-2,.az-sr-span-4{grid-column:auto}.az-sr-hero-actions .btn,.az-sr-filter-actions .btn{width:100%}.az-sr-item-row{grid-template-columns:1fr}.az-sr-item-row .az-sr-item-name{grid-column:auto}.az-sr-form-actions{flex-direction:column}.az-sr-form-actions .btn{width:100%}}
+
+
+/* AZOBSS PATCH 728: compact horizontal responsive Sales & Receipts filters */
+.az-sr-filter-card{padding:16px 18px}
+.az-sr-filter-head{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:10px}
+.az-sr-filter-head h3{margin:0;font-size:19px;line-height:1.2}
+.az-sr-filter-head .az-sr-result-note{margin:0;text-align:right;line-height:1.35}
+.az-sr-filter-grid{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-end}
+.az-sr-filter-grid>label{flex:1 1 132px;min-width:132px}
+.az-sr-filter-grid>label:first-child{flex:2 1 260px;min-width:220px}
+.az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:0 1 150px;min-width:142px}
+.az-sr-filter-actions{display:flex;flex:0 0 auto;align-items:flex-end;gap:8px;flex-wrap:nowrap;margin:0}
+.az-sr-filter-actions .btn{height:44px;min-width:122px;white-space:nowrap;padding-top:0;padding-bottom:0}
+@media(max-width:760px){
+  .az-sr-filter-head{align-items:flex-start}
+  .az-sr-filter-head .az-sr-result-note{width:100%;text-align:left}
+  .az-sr-filter-grid>label{flex:1 1 calc(50% - 9px);min-width:180px}
+  .az-sr-filter-grid>label:first-child{flex-basis:100%;min-width:100%}
+  .az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:1 1 calc(50% - 9px);min-width:180px}
+}
+@media(max-width:480px){
+  .az-sr-filter-card{padding:14px}
+  .az-sr-filter-grid>label,.az-sr-filter-grid>label:first-child,.az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:1 1 100%;min-width:100%}
+  .az-sr-filter-actions{width:100%}
+  .az-sr-filter-actions .btn{width:100%}
+}
+
+/* AZOBSS PATCH 729: compact filter height + full-width receipt table without clipped columns */
+.az-sr-filter-card{
+  padding:10px 12px!important;
+  margin-bottom:10px!important;
+}
+.az-sr-filter-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:nowrap!important;
+  gap:8px 14px!important;
+  margin:0 0 7px!important;
+  min-height:0!important;
+}
+.az-sr-filter-head h3{
+  margin:0!important;
+  font-size:17px!important;
+  line-height:1.1!important;
+  white-space:nowrap;
+  text-align:left!important;
+}
+.az-sr-filter-head .az-sr-result-note{
+  flex:1 1 auto;
+  width:auto!important;
+  margin:0!important;
+  text-align:right!important;
+  line-height:1.2!important;
+  font-size:11px!important;
+  min-width:0;
+}
+.az-sr-filter-grid{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:flex-end!important;
+  gap:6px!important;
+  margin:0!important;
+}
+.az-sr-filter-grid>label{
+  flex:1 1 88px!important;
+  min-width:88px!important;
+  gap:3px!important;
+  font-size:9px!important;
+  line-height:1!important;
+}
+.az-sr-filter-grid>label:first-child{
+  flex:1.7 1 180px!important;
+  min-width:180px!important;
+}
+.az-sr-filter-grid>label:nth-child(6),
+.az-sr-filter-grid>label:nth-child(7){
+  flex:1.05 1 110px!important;
+  min-width:110px!important;
+}
+.az-sr-filter-grid input,
+.az-sr-filter-grid select{
+  height:38px!important;
+  min-height:38px!important;
+  padding:7px 10px!important;
+  font-size:11px!important;
+  border-radius:10px!important;
+}
+.az-sr-filter-actions{
+  flex:0 0 100px!important;
+  width:100px!important;
+  margin:0!important;
+  align-self:flex-end!important;
+}
+.az-sr-filter-actions .btn{
+  width:100%!important;
+  min-width:0!important;
+  height:38px!important;
+  padding:0 8px!important;
+  font-size:11px!important;
+  border-radius:10px!important;
+}
+
+.az-sr-table-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  -webkit-overflow-scrolling:touch;
+}
+.az-sr-table{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+  font-size:11px!important;
+}
+.az-sr-table th,
+.az-sr-table td{
+  padding:8px 6px!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.az-sr-table th{font-size:9px!important;line-height:1.15!important}
+.az-sr-table th:nth-child(1),.az-sr-table td:nth-child(1){width:11%}
+.az-sr-table th:nth-child(2),.az-sr-table td:nth-child(2){width:11%}
+.az-sr-table th:nth-child(3),.az-sr-table td:nth-child(3){width:11%}
+.az-sr-table th:nth-child(4),.az-sr-table td:nth-child(4){width:15%}
+.az-sr-table th:nth-child(5),.az-sr-table td:nth-child(5){width:7%}
+.az-sr-table th:nth-child(6),.az-sr-table td:nth-child(6),
+.az-sr-table th:nth-child(7),.az-sr-table td:nth-child(7),
+.az-sr-table th:nth-child(8),.az-sr-table td:nth-child(8){width:7%}
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){width:24%}
+.az-sr-receipt-no{
+  font-size:9px!important;
+  line-height:1.25!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.az-sr-customer{font-size:11px!important;line-height:1.25!important;overflow-wrap:anywhere}
+.az-sr-subtext{font-size:9.5px!important;line-height:1.25!important;overflow-wrap:anywhere}
+.az-sr-money{font-size:10.5px!important}
+.az-sr-pill{padding:3px 6px!important;font-size:8.5px!important;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.az-sr-actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:5px!important;
+  min-width:0!important;
+  width:100%!important;
+}
+.az-sr-actions .btn{
+  width:100%!important;
+  min-width:0!important;
+  padding:7px 4px!important;
+  font-size:8.5px!important;
+  line-height:1.15!important;
+  border-radius:8px!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+}
+
+@media(max-width:980px){
+  .az-sr-filter-head{flex-wrap:wrap!important}
+  .az-sr-filter-head .az-sr-result-note{flex-basis:100%;text-align:left!important}
+  .az-sr-filter-grid>label{flex:1 1 105px!important;min-width:105px!important}
+  .az-sr-filter-grid>label:first-child{flex:2 1 210px!important;min-width:190px!important}
+  .az-sr-filter-grid>label:nth-child(6),.az-sr-filter-grid>label:nth-child(7){flex:1 1 120px!important;min-width:120px!important}
+}
+@media(max-width:720px){
+  .az-sr-table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .az-sr-table{min-width:760px!important;table-layout:fixed!important}
+  .az-sr-filter-grid>label{flex:1 1 calc(50% - 6px)!important;min-width:145px!important}
+  .az-sr-filter-grid>label:first-child{flex-basis:100%!important;min-width:100%!important}
+  .az-sr-filter-actions{flex:1 1 145px!important;width:auto!important}
+}
+@media(max-width:480px){
+  .az-sr-filter-card{padding:9px!important}
+  .az-sr-filter-head{margin-bottom:6px!important}
+  .az-sr-filter-grid>label,
+  .az-sr-filter-grid>label:first-child,
+  .az-sr-filter-grid>label:nth-child(6),
+  .az-sr-filter-grid>label:nth-child(7),
+  .az-sr-filter-actions{flex:1 1 100%!important;min-width:100%!important;width:100%!important}
+}
+
+/* AZOBSS PATCH 730: compact separate Receipt / Invoice action menus */
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){overflow:visible!important}
+.az-sr-actions{align-items:start!important}
+.az-sr-doc-menu{min-width:0;width:100%;position:relative}
+.az-sr-doc-menu summary{
+  list-style:none;cursor:pointer;user-select:none;
+  width:100%;padding:8px 5px;border-radius:8px;
+  border:1px solid rgba(56,189,248,.42);
+  background:rgba(3,105,161,.18);color:#bae6fd;
+  font-size:9px;font-weight:950;text-align:center;line-height:1.1;
+}
+.az-sr-doc-menu.invoice summary{border-color:rgba(167,139,250,.48);background:rgba(109,40,217,.16);color:#ddd6fe}
+.az-sr-doc-menu summary::-webkit-details-marker{display:none}
+.az-sr-doc-menu[open] summary{border-bottom-left-radius:5px;border-bottom-right-radius:5px}
+.az-sr-doc-menu-body{display:grid;grid-template-columns:1fr;gap:4px;margin-top:4px}
+.az-sr-doc-menu-body .btn{padding:6px 3px!important;font-size:8px!important}
+.az-sr-manage-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+@media(max-width:720px){
+  .az-sr-actions{min-width:170px!important}
+  .az-sr-doc-menu summary{font-size:8.5px}
+}
+
+/* AZOBSS PATCH 731: status-linked Invoice / Receipt and recognized accounting */
+.az-sr-doc-kind{
+  display:inline-flex;align-items:center;margin:0 0 4px;padding:2px 6px;border-radius:999px;
+  font-size:7.5px;font-weight:950;letter-spacing:.06em;border:1px solid rgba(148,163,184,.32);
+}
+.az-sr-doc-kind.invoice{color:#ddd6fe;border-color:rgba(167,139,250,.48);background:rgba(109,40,217,.16)}
+.az-sr-doc-kind.receipt{color:#bbf7d0;border-color:rgba(34,197,94,.42);background:rgba(21,128,61,.16)}
+.az-sr-unrecognized{color:#94a3b8!important;font-weight:800}
+.az-sr-due{color:#fde68a!important;font-weight:850;white-space:normal}
+.az-sr-doc-menu{grid-column:1/-1}
+#salesReceiptReceiptNo[data-mode="invoice"]{border-color:rgba(167,139,250,.58);color:#ddd6fe}
+#salesReceiptReceiptNo[data-mode="receipt"]{border-color:rgba(34,197,94,.52);color:#bbf7d0}
+.az-sr-status-note{margin-top:10px;padding:9px 11px;border:1px solid rgba(125,211,252,.20);border-radius:11px;background:rgba(15,23,42,.52);color:#cbd5e1;font-size:11px;line-height:1.4}
+.az-sr-status-note b:first-child{color:#ddd6fe}.az-sr-status-note b:last-child{color:#bbf7d0}
+
+/* AZOBSS PATCH 732: compact top action bar + direct circular icon actions */
+.az-sr-hero.az-sr-hero-compact{
+  display:block!important;
+  padding:10px 12px!important;
+  margin:0 0 10px!important;
+  min-height:0!important;
+}
+.az-sr-hero-compact .az-sr-hero-actions{
+  width:100%!important;
+  display:flex!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  gap:7px!important;
+  flex-wrap:wrap!important;
+}
+.az-sr-hero-compact .az-sr-hero-actions .btn{
+  min-height:36px!important;
+  padding:8px 13px!important;
+  border-radius:10px!important;
+  font-size:11px!important;
+  line-height:1!important;
+}
+
+.az-sr-table th:nth-child(1),.az-sr-table td:nth-child(1){width:12%!important}
+.az-sr-table th:nth-child(2),.az-sr-table td:nth-child(2){width:12%!important}
+.az-sr-table th:nth-child(3),.az-sr-table td:nth-child(3){width:11%!important}
+.az-sr-table th:nth-child(4),.az-sr-table td:nth-child(4){width:18%!important}
+.az-sr-table th:nth-child(5),.az-sr-table td:nth-child(5){width:8%!important}
+.az-sr-table th:nth-child(6),.az-sr-table td:nth-child(6){width:8%!important}
+.az-sr-table th:nth-child(7),.az-sr-table td:nth-child(7){width:7%!important}
+.az-sr-table th:nth-child(8),.az-sr-table td:nth-child(8){width:8%!important}
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){width:16%!important;overflow:visible!important}
+
+.az-sr-actions{
+  display:grid!important;
+  grid-template-columns:repeat(4,30px)!important;
+  grid-auto-rows:30px!important;
+  align-content:start!important;
+  justify-content:start!important;
+  gap:6px!important;
+  width:max-content!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+.az-sr-icon-btn{
+  appearance:none;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  background:#334155!important;
+  color:#e2e8f0!important;
+  cursor:pointer!important;
+  box-shadow:none!important;
+  transition:transform .14s ease,filter .14s ease,border-color .14s ease!important;
+}
+.az-sr-icon-btn:hover{transform:translateY(-1px);filter:brightness(1.13)}
+.az-sr-icon-btn:focus-visible{outline:2px solid #7dd3fc!important;outline-offset:2px!important}
+.az-sr-icon-btn:disabled,.az-sr-icon-btn.busy{opacity:.55!important;cursor:wait!important;transform:none!important}
+.az-sr-icon-btn svg{
+  width:15px!important;
+  height:15px!important;
+  display:block!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.9!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  pointer-events:none!important;
+}
+.az-sr-icon-btn svg text{fill:currentColor!important;stroke:none!important;paint-order:normal!important}
+.az-sr-icon-btn.download{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}
+.az-sr-icon-btn.invoice{background:#6d28d9!important;border-color:#a78bfa!important;color:#fff!important}
+.az-sr-icon-btn.receipt{background:#15803d!important;border-color:#22c55e!important;color:#fff!important}
+.az-sr-icon-btn.link{background:#7c3aed!important;border-color:#a78bfa!important;color:#fff!important}
+.az-sr-icon-btn.share{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important}
+.az-sr-icon-btn.wa{background:#166534!important;border-color:#22c55e!important;color:#fff!important}
+.az-sr-icon-btn.telegram{background:#0369a1!important;border-color:#38bdf8!important;color:#fff!important}
+.az-sr-icon-btn.print{background:#334155!important;border-color:#64748b!important;color:#fff!important}
+.az-sr-icon-btn.edit{background:#0f766e!important;border-color:#2dd4bf!important;color:#fff!important}
+.az-sr-icon-btn.delete{background:#b91c1c!important;border-color:#f87171!important;color:#fff!important}
+.az-sr-visually-hidden{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+
+@media(max-width:720px){
+  .az-sr-table{min-width:760px!important}
+  .az-sr-actions{grid-template-columns:repeat(4,28px)!important;grid-auto-rows:28px!important;gap:5px!important}
+  .az-sr-icon-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important}
+  .az-sr-icon-btn svg{width:14px!important;height:14px!important}
+}
+@media(max-width:480px){
+  .az-sr-hero-compact .az-sr-hero-actions{gap:6px!important}
+  .az-sr-hero-compact .az-sr-hero-actions .btn{width:auto!important;flex:1 1 auto!important;padding:8px 10px!important}
+}
+
+/* AZOBSS PATCH 734: bulk selection, ZIP download, share and delete */
+.az-sr-bulkbar{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  flex-wrap:wrap!important;
+  padding:8px 10px!important;
+  margin:0 0 8px!important;
+  border:1px solid rgba(56,189,248,.24)!important;
+  border-radius:12px!important;
+  background:rgba(15,23,42,.56)!important;
+}
+.az-sr-bulk-select{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  color:#dbeafe!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  text-transform:none!important;
+  letter-spacing:0!important;
+  cursor:pointer!important;
+}
+.az-sr-bulk-select input,
+.az-sr-select-head input,
+.az-sr-row-select{
+  appearance:auto!important;
+  width:17px!important;
+  height:17px!important;
+  min-width:17px!important;
+  margin:0!important;
+  accent-color:#22c55e!important;
+  cursor:pointer!important;
+}
+.az-sr-bulk-count{
+  color:#94a3b8!important;
+  font-size:11px!important;
+  font-weight:850!important;
+  white-space:nowrap!important;
+}
+.az-sr-bulk-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  margin-left:auto!important;
+}
+.az-sr-bulk-icon{
+  appearance:none!important;
+  width:31px!important;
+  height:31px!important;
+  min-width:31px!important;
+  min-height:31px!important;
+  padding:0!important;
+  margin:0!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  border:1px solid rgba(148,163,184,.36)!important;
+  color:#fff!important;
+  cursor:pointer!important;
+  transition:transform .14s ease,filter .14s ease,opacity .14s ease!important;
+}
+.az-sr-bulk-icon:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.12)}
+.az-sr-bulk-icon:focus-visible{outline:2px solid #7dd3fc!important;outline-offset:2px!important}
+.az-sr-bulk-icon:disabled,.az-sr-bulk-icon.busy{opacity:.38!important;cursor:not-allowed!important;transform:none!important}
+.az-sr-bulk-icon svg{width:15px!important;height:15px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;pointer-events:none!important}
+.az-sr-bulk-icon.download{background:#15803d!important;border-color:#22c55e!important}
+.az-sr-bulk-icon.link{background:#7c3aed!important;border-color:#a78bfa!important}
+.az-sr-bulk-icon.share{background:#0369a1!important;border-color:#38bdf8!important}
+.az-sr-bulk-icon.wa{background:#166534!important;border-color:#22c55e!important}
+.az-sr-bulk-icon.telegram{background:#0369a1!important;border-color:#38bdf8!important}
+.az-sr-bulk-icon.delete{background:#b91c1c!important;border-color:#f87171!important}
+.az-sr-select-head,.az-sr-select-cell{text-align:center!important;vertical-align:middle!important;padding-left:4px!important;padding-right:4px!important;overflow:visible!important}
+.az-sr-table tr.az-sr-row-selected td{background:rgba(34,197,94,.10)!important}
+.az-sr-table tr.az-sr-row-selected:hover td{background:rgba(34,197,94,.15)!important}
+
+/* 10-column fit after adding selection checkboxes */
+.az-sr-table th:nth-child(1),.az-sr-table td:nth-child(1){width:3.5%!important}
+.az-sr-table th:nth-child(2),.az-sr-table td:nth-child(2){width:11.5%!important}
+.az-sr-table th:nth-child(3),.az-sr-table td:nth-child(3){width:11.5%!important}
+.az-sr-table th:nth-child(4),.az-sr-table td:nth-child(4){width:10.5%!important}
+.az-sr-table th:nth-child(5),.az-sr-table td:nth-child(5){width:17%!important}
+.az-sr-table th:nth-child(6),.az-sr-table td:nth-child(6){width:8%!important}
+.az-sr-table th:nth-child(7),.az-sr-table td:nth-child(7){width:8%!important}
+.az-sr-table th:nth-child(8),.az-sr-table td:nth-child(8){width:7%!important}
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){width:7%!important;overflow:hidden!important}
+.az-sr-table th:nth-child(10),.az-sr-table td:nth-child(10){width:16%!important;overflow:visible!important}
+
+@media(max-width:720px){
+  .az-sr-table{min-width:800px!important}
+  .az-sr-bulkbar{gap:8px!important;padding:7px 8px!important}
+  .az-sr-bulk-actions{margin-left:0!important}
+}
+@media(max-width:480px){
+  .az-sr-bulk-select{flex:1 1 auto!important}
+  .az-sr-bulk-actions{width:100%!important;justify-content:flex-start!important}
+}
+
+
+/* AZOBSS PATCH 735: direct app sharing and copy-link icons */
+.az-sr-icon-btn.link,.az-sr-bulk-icon.link{box-shadow:0 0 0 1px rgba(167,139,250,.08) inset!important}
+
+/* AZOBSS PATCH 741: preserve downloadable invoice after Pending becomes Paid */
+.az-sr-icon-btn.invoice{box-shadow:0 0 0 1px rgba(167,139,250,.10) inset!important}
+
+/* AZOBSS PATCH 742: one native Share action replaces separate WhatsApp and Telegram buttons */
+
+
+/* AZOBSS PATCH 745: custom no-API PDF share panel */
+.az-sr-share-modal{
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:grid!important;place-items:center!important;padding:18px!important;
+  background:rgba(2,6,23,.78)!important;backdrop-filter:blur(8px)!important;
+}
+.az-sr-share-modal[hidden]{display:none!important}
+.az-sr-share-dialog{
+  width:min(720px,100%)!important;max-height:min(760px,calc(100vh - 36px))!important;overflow:auto!important;
+  border:1px solid rgba(56,189,248,.36)!important;border-radius:20px!important;
+  background:linear-gradient(145deg,#0b1729,#111f34)!important;color:#e5edf8!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.55)!important;padding:0!important;
+}
+.az-sr-share-head{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;
+  padding:17px 18px!important;border-bottom:1px solid rgba(148,163,184,.18)!important;
+  position:sticky!important;top:0!important;z-index:2!important;background:rgba(11,23,41,.96)!important;backdrop-filter:blur(10px)!important;
+}
+.az-sr-share-heading{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+.az-sr-share-heading h3{margin:0!important;font-size:20px!important;line-height:1.2!important;color:#f8fafc!important}
+.az-sr-share-heading p{margin:4px 0 0!important;color:#9fb0c7!important;font-size:11px!important;line-height:1.35!important;overflow-wrap:anywhere!important}
+.az-sr-share-main-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;border-radius:14px!important;
+  display:grid!important;place-items:center!important;background:linear-gradient(135deg,#0284c7,#2563eb)!important;color:#fff!important;
+  box-shadow:0 10px 28px rgba(2,132,199,.28)!important;
+}
+.az-sr-share-main-icon svg,.az-sr-share-option-icon svg{width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.az-sr-share-close{
+  width:34px!important;height:34px!important;min-width:34px!important;border-radius:11px!important;border:1px solid rgba(148,163,184,.24)!important;
+  background:#26364c!important;color:#fff!important;font-size:23px!important;line-height:1!important;cursor:pointer!important;
+}
+.az-sr-share-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:16px 18px 8px!important}
+.az-sr-share-option{
+  appearance:none!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:15px!important;
+  background:rgba(15,23,42,.70)!important;color:#e5edf8!important;padding:13px!important;min-height:84px!important;
+  display:flex!important;align-items:center!important;gap:12px!important;text-align:left!important;cursor:pointer!important;
+  transition:transform .14s ease,border-color .14s ease,background .14s ease!important;
+}
+.az-sr-share-option:hover{transform:translateY(-1px)!important;border-color:rgba(125,211,252,.56)!important;background:rgba(30,41,59,.94)!important}
+.az-sr-share-option:focus-visible{outline:2px solid #7dd3fc!important;outline-offset:2px!important}
+.az-sr-share-option:disabled,.az-sr-share-option.busy{opacity:.55!important;cursor:wait!important;transform:none!important}
+.az-sr-share-option-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;border-radius:50%!important;display:grid!important;place-items:center!important;
+  background:#334155!important;color:#e2e8f0!important;border:1px solid rgba(148,163,184,.28)!important;
+}
+.az-sr-share-option b{display:block!important;color:#f8fafc!important;font-size:13px!important;line-height:1.2!important;margin-bottom:4px!important}
+.az-sr-share-option small{display:block!important;color:#94a3b8!important;font-size:10px!important;line-height:1.35!important;font-weight:650!important}
+.az-sr-share-option.native .az-sr-share-option-icon{background:#0369a1!important;color:#fff!important;border-color:#38bdf8!important}
+.az-sr-share-option.whatsapp-option .az-sr-share-option-icon{background:#15803d!important;color:#fff!important;border-color:#4ade80!important}
+.az-sr-share-option.telegram-option .az-sr-share-option-icon{background:#0284c7!important;color:#fff!important;border-color:#38bdf8!important}
+.az-sr-share-option.link-option .az-sr-share-option-icon{background:#7c3aed!important;color:#fff!important;border-color:#a78bfa!important}
+.az-sr-share-option.message-option .az-sr-share-option-icon{background:#475569!important;color:#fff!important;border-color:#94a3b8!important}
+.az-sr-share-option.download-option .az-sr-share-option-icon{background:#047857!important;color:#fff!important;border-color:#34d399!important}
+.az-sr-share-option.print-option .az-sr-share-option-icon{background:#334155!important;color:#fff!important;border-color:#94a3b8!important}
+.az-sr-share-note{margin:8px 18px 17px!important;padding:10px 12px!important;border:1px solid rgba(251,191,36,.25)!important;border-radius:12px!important;background:rgba(120,53,15,.14)!important;color:#cbd5e1!important;font-size:10px!important;line-height:1.45!important}
+.az-sr-share-note b{color:#fde68a!important}
+@media(max-width:620px){
+  .az-sr-share-modal{padding:9px!important;place-items:end center!important}
+  .az-sr-share-dialog{width:100%!important;max-height:92vh!important;border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}
+  .az-sr-share-grid{grid-template-columns:1fr!important;padding:12px!important}
+  .az-sr-share-head{padding:14px!important}
+  .az-sr-share-option{min-height:70px!important;padding:11px!important}
+  .az-sr-share-note{margin:6px 12px 13px!important}
+}
+
+/* PATCH 747: ToyyibPay invoice QR */
+.az-sr-toyyib-hint{grid-column:1/-1;margin-top:-4px;padding:9px 12px;border:1px dashed rgba(56,189,248,.42);border-radius:10px;background:rgba(14,116,144,.10);color:#bae6fd;font-size:11px;line-height:1.45}.az-sr-icon-btn.pay{background:#f59e0b;border-color:#fbbf24;color:#111827}.az-sr-icon-btn.pay:hover{filter:brightness(1.08)}
+
+/* AZOBSS PATCH 753: enlarge Invoice/Receipt document glyphs without enlarging the round action button */
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon{
+  width:21px!important;
+  height:21px!important;
+  overflow:visible!important;
+}
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon .az-sr-doc-paper,
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon .az-sr-doc-fold,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon .az-sr-doc-paper,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon .az-sr-doc-fold{
+  fill:currentColor!important;
+  stroke:currentColor!important;
+  stroke-width:1.05!important;
+}
+.az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon text,
+.az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon text{
+  fill:#fff!important;
+  stroke:none!important;
+}
+@media(max-width:720px){
+  .az-sr-icon-btn.invoice svg.az-sr-doc-letter-icon,
+  .az-sr-icon-btn.receipt svg.az-sr-doc-letter-icon{width:20px!important;height:20px!important}
+}
+
+/* AZOBSS PATCH 765: clear Paid receipt delivery marker */
+.az-sr-delivery-badge{
+  display:block!important;
+  width:max-content!important;
+  max-width:78px!important;
+  margin-top:5px!important;
+  padding:3px 5px!important;
+  border-radius:6px!important;
+  border:1px solid rgba(148,163,184,.35)!important;
+  font-size:6.8px!important;
+  line-height:1.18!important;
+  font-weight:950!important;
+  letter-spacing:.035em!important;
+  white-space:normal!important;
+  text-align:center!important;
+}
+.az-sr-delivery-badge.not-sent{
+  color:#fecaca!important;
+  background:rgba(153,27,27,.30)!important;
+  border-color:rgba(248,113,113,.68)!important;
+  box-shadow:0 0 0 1px rgba(239,68,68,.08)!important;
+}
+.az-sr-delivery-badge.sent{
+  color:#bbf7d0!important;
+  background:rgba(21,128,61,.24)!important;
+  border-color:rgba(74,222,128,.58)!important;
+}
+.az-sr-icon-btn.delivery{
+  background:#b45309!important;
+  border-color:#fbbf24!important;
+  color:#fff!important;
+}
+.az-sr-icon-btn.deliverysent{
+  background:#15803d!important;
+  border-color:#4ade80!important;
+  color:#fff!important;
+}
+/* AZOBSS PATCH 766: ToyyibPay customer-email requirement */
+.az-sr-field-hint{display:block;color:#fbbf24;font-size:10px;font-weight:700;line-height:1.35;text-transform:none;letter-spacing:0}
+.az-sr-field-hint[hidden]{display:none!important}
+#salesReceiptCustomerEmail:required:invalid:not(:placeholder-shown){border-color:#ef4444!important;box-shadow:0 0 0 1px rgba(239,68,68,.25)}
+
+
+/* AZOBSS PATCH 821: keep Receipt Sent badge fully visible in the Status column */
+.az-sr-table th:nth-child(4),
+.az-sr-table td:nth-child(4){width:10%!important}
+.az-sr-table th:nth-child(5),
+.az-sr-table td:nth-child(5){width:16%!important}
+.az-sr-table th:nth-child(6),
+.az-sr-table td:nth-child(6){
+  width:9.5%!important;
+  overflow:visible!important;
+}
+.az-sr-delivery-badge{
+  width:100%!important;
+  max-width:78px!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  padding:3px 2px!important;
+  letter-spacing:0!important;
+  overflow:visible!important;
+}
+.az-sr-delivery-badge.sent{
+  white-space:nowrap!important;
+  font-size:6.4px!important;
+}
+.az-sr-delivery-badge.not-sent{
+  white-space:normal!important;
+  font-size:6.2px!important;
+}
+
+/* AZOBSS PATCH 822: keep Receipt Not Sent badge fully inside the Status cell */
+.az-sr-table th:nth-child(6),
+.az-sr-table td:nth-child(6){
+  width:10.5%!important;
+  padding-left:5px!important;
+  padding-right:5px!important;
+  overflow:visible!important;
+}
+.az-sr-table th:nth-child(5),
+.az-sr-table td:nth-child(5){width:15%!important}
+.az-sr-delivery-badge{
+  width:calc(100% - 2px)!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:2px!important;
+  overflow:hidden!important;
+}
+.az-sr-delivery-badge.not-sent{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:0!important;
+  min-height:24px!important;
+  padding:2px 1px!important;
+  font-size:6px!important;
+  line-height:1.05!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+}
+.az-sr-delivery-badge.not-sent .az-sr-delivery-line{
+  display:block!important;
+  width:100%!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  text-align:center!important;
+}
+
+
+/* AZOBSS PATCH 1064: Manual Invoice registered-customer autocomplete */
+.az-sr-customer-lookup{position:relative;min-width:0}
+.az-sr-customer-lookup>input{display:block}
+.az-sr-customer-suggestions{
+  position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:40;
+  max-height:260px;overflow:auto;padding:5px;
+  background:#07111f;border:1px solid rgba(56,189,248,.38);
+  border-radius:12px;box-shadow:0 18px 45px rgba(0,0,0,.55);
+  text-transform:none;letter-spacing:normal
+}
+.az-sr-customer-suggestions[hidden]{display:none!important}
+.az-sr-customer-suggestion{
+  width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;
+  align-items:center;text-align:left;padding:9px 10px;border:0;border-radius:9px;
+  background:transparent;color:#e5eefb;cursor:pointer
+}
+.az-sr-customer-suggestion:hover,.az-sr-customer-suggestion.is-active{background:#10233a}
+.az-sr-customer-suggestion b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#f8fafc}
+.az-sr-customer-suggestion small{grid-column:1/-1;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:600;color:#93a9c5;text-transform:none;letter-spacing:0}
+.az-sr-customer-suggestion .az-sr-customer-user{font-size:10px;font-weight:800;color:#7dd3fc;white-space:nowrap}
+.az-sr-customer-suggestion-empty{padding:10px;color:#8ca3bd;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0}
+
+
+/* AZOBSS PATCH 1070: 50% deposit status */
+.az-sr-pill.deposit-paid{
+  color:#bfdbfe;
+  border-color:rgba(96,165,250,.42);
+  background:rgba(30,58,138,.16);
+}
+.az-sr-deposit-received{
+  color:#dbeafe;
+  font-weight:900;
+}
+
+
+/* AZOBSS PATCH 1167: PA/BM exact item detail + dedicated quantity column */
+.az-sr-table{min-width:1100px!important}
+.az-sr-table th:nth-child(1),.az-sr-table td:nth-child(1){width:3.5%!important}
+.az-sr-table th:nth-child(2),.az-sr-table td:nth-child(2){width:11%!important}
+.az-sr-table th:nth-child(3),.az-sr-table td:nth-child(3){width:11%!important}
+.az-sr-table th:nth-child(4),.az-sr-table td:nth-child(4){width:9%!important}
+.az-sr-table th:nth-child(5),.az-sr-table td:nth-child(5){width:16%!important}
+.az-sr-table th:nth-child(6),.az-sr-table td:nth-child(6){width:4.5%!important;text-align:center!important}
+.az-sr-table th:nth-child(7),.az-sr-table td:nth-child(7){width:10.5%!important;overflow:visible!important}
+.az-sr-table th:nth-child(8),.az-sr-table td:nth-child(8){width:7%!important}
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){width:6%!important}
+.az-sr-table th:nth-child(10),.az-sr-table td:nth-child(10){width:6%!important}
+.az-sr-table th:nth-child(11),.az-sr-table td:nth-child(11){width:15.5%!important;overflow:visible!important}
+.az-sr-qty-cell{font-weight:900!important;color:#e2e8f0!important;text-align:center!important}
+.az-sr-items-payment{line-height:1.35!important}
+@media(max-width:980px){.az-sr-table{min-width:1060px!important}}
+
+
+/* AZOBSS PATCH 1168: compact PA/BM item labels + expandable row + tighter desktop table */
+.az-sr-table{
+  min-width:960px!important;
+  table-layout:fixed!important;
+}
+.az-sr-table th,.az-sr-table td{
+  padding:8px 6px!important;
+}
+.az-sr-table th:nth-child(1),.az-sr-table td:nth-child(1){width:3%!important}
+.az-sr-table th:nth-child(2),.az-sr-table td:nth-child(2){width:12%!important}
+.az-sr-table th:nth-child(3),.az-sr-table td:nth-child(3){width:11%!important}
+.az-sr-table th:nth-child(4),.az-sr-table td:nth-child(4){width:9%!important}
+.az-sr-table th:nth-child(5),.az-sr-table td:nth-child(5){width:16%!important}
+.az-sr-table th:nth-child(6),.az-sr-table td:nth-child(6){width:4%!important;text-align:center!important}
+.az-sr-table th:nth-child(7),.az-sr-table td:nth-child(7){width:9%!important}
+.az-sr-table th:nth-child(8),.az-sr-table td:nth-child(8){width:8%!important}
+.az-sr-table th:nth-child(9),.az-sr-table td:nth-child(9){width:6%!important}
+.az-sr-table th:nth-child(10),.az-sr-table td:nth-child(10){width:6%!important}
+.az-sr-table th:nth-child(11),.az-sr-table td:nth-child(11){width:16%!important;overflow:visible!important}
+.az-sr-items-payment{min-width:0!important;overflow-wrap:anywhere!important}
+.az-sr-pabm-list{display:block;min-width:0}
+.az-sr-pabm-item{display:block;white-space:normal;line-height:1.28;font-weight:800;color:#f1f5f9}
+.az-sr-pabm-more[hidden]{display:none!important}
+.az-sr-items-more-btn{
+  margin-top:4px;padding:2px 7px;border:1px solid rgba(56,189,248,.35);border-radius:999px;
+  background:rgba(14,165,233,.08);color:#7dd3fc;font:800 9px/1.3 "Segoe UI",sans-serif;
+  cursor:pointer;white-space:nowrap
+}
+.az-sr-items-more-btn:hover{background:rgba(14,165,233,.16)}
+.az-sr-items-more-btn:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
+.az-sr-actions{gap:5px!important}
+.az-sr-icon-btn{margin:0!important}
+@media(max-width:980px){
+  .az-sr-table{min-width:940px!important}
+}
+
+/* AZOBSS v1194: invoice commission Staff/Manager linkage */
+.az1194-invoice-commission-card{display:grid;gap:10px;margin:13px 0;padding:12px;border:1px solid rgba(34,197,94,.3);border-radius:12px;background:rgba(20,83,45,.10)}
+.az1194-invoice-commission-card>div:first-child{display:grid;gap:3px}.az1194-invoice-commission-card b{color:#bbf7d0}.az1194-invoice-commission-card span{font-size:11px;color:#94a3b8;text-transform:none;letter-spacing:0}
+.az1194-invoice-staff-row{display:grid;grid-template-columns:minmax(260px,1fr) minmax(180px,.8fr) auto;gap:8px;align-items:end}.az1194-invoice-staff-lookup{position:relative}.az1194-staff-selected{min-height:40px;display:flex;align-items:center;padding:8px 10px;border:1px solid #334155;border-radius:9px;background:#020617;color:#cbd5e1;font-size:11px;font-weight:800;text-transform:none}
+@media(max-width:800px){.az1194-invoice-staff-row{grid-template-columns:1fr}.az1194-invoice-staff-row .btn{justify-self:start}}
