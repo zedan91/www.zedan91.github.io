@@ -17,7 +17,7 @@ async function azdmVerifiedAccount(req) {
   }
   return result;
 }
-const handleAzdm=createAzdmHandler({getIdentity:azdmVerifiedAccount,readBody,send,rateLimit:azRateLimitOrSend});
+const handleAzdm=createAzdmHandler({getIdentity:azdmVerifiedAccount,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend});
 const {createAzdmAdminHandler}=require('./lib/azobss-azdm-admin');
 async function azdmAdminIdentity(req) {
   const verified=await azdmVerifiedAccount(req);
@@ -25,6 +25,37 @@ async function azdmAdminIdentity(req) {
   return {...verified,isAdmin:azIdentityTrustedForBackendAdmin({uid:verified.uid,authEmail:verified.email})};
 }
 const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend});
+const {createOfferHandler,model:azSoftwarePackageModel}=require('./lib/azobss-azdm-offers');
+async function azSoftwarePackageProduct(productId){
+  const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
+  const items=db.collection('softwareTools'),direct=await items.doc(productId).get();
+  if(direct.exists)return azNormalizeTrustedProduct({...direct.data(),docId:direct.id},'firestore:softwareTools');
+  const found=await items.where('productId','==',productId).limit(1).get();
+  if(found.empty)return null;
+  return azNormalizeTrustedProduct({...found.docs[0].data(),docId:found.docs[0].id},'firestore:softwareTools');
+}
+async function azSoftwarePackageOffer(productId){
+  if(!/^[A-Za-z0-9_-]{1,100}$/.test(productId))throw Error('Invalid product');
+  const trusted=await azSoftwarePackageProduct(productId);
+  if(trusted&&trusted.status&&trusted.status!=='active')throw Error('Software is not published');
+  if(trusted&&!trusted.softwarePackages?.enabled)throw Error('Packages are not enabled');
+  if(trusted?.softwarePackages?.enabled&&trusted.softwarePackages.fulfilment==='download')
+    return azSoftwarePackageModel.normalize({...trusted.softwarePackages,product_id:productId,name:trusted.name});
+  const db=getAzobssBackendDb();
+  if(!db)throw Error('Catalogue unavailable');
+  const snap=await db.collection('settings').doc('azdmSoftwareOffers').get();
+  const stored=snap.data()?.items?.[productId];
+  if(stored&&(productId==='AZDM'||(trusted?.softwarePackages?.enabled&&trusted.softwarePackages.fulfilment==='azdm')))return azSoftwarePackageModel.normalize(stored);
+  if(productId==='AZDM')return azSoftwarePackageModel.normalize(azSoftwarePackageModel.defaults());
+  throw Error('Offer not found');
+}
+const handleSoftwarePackages=createOfferHandler({getIdentity:azdmAdminIdentity,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend,
+  saveOffer:async(offer,owner)=>{
+    const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
+    const ref=db.collection('settings').doc('azdmSoftwareOffers');
+    await db.runTransaction(async tx=>{const snap=await tx.get(ref),items={...(snap.data()?.items||{})};items[offer.product_id]=offer;tx.set(ref,{items,updatedAtMs:Date.now(),updatedByUid:owner.uid},{merge:true});});
+  }});
+
 
 
 function azobssNum(v, fallback){
@@ -780,6 +811,18 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   }
   if (!azProductIsPremium(trusted)) {
     throw new Error("Product is not marked as premium on backend.");
+  }
+  if(trusted.softwarePackages?.enabled){
+    if(trusted.status&&trusted.status!=='active')throw Error('Software is not published');
+    const identity=await azdmVerifiedAccount(req);if(!identity?.uid)throw Error('Sila sign in ke akaun AZOBSS dahulu.');
+    const offer=azSoftwarePackageModel.normalize({...trusted.softwarePackages,product_id:productId,name:trusted.name});
+    if(offer.fulfilment!=='download')throw Error('Gunakan pilihan pakej serial AZDM pada kad software.');
+    if(azSoftwarePackageModel.normalize(offer).enabled!==true)throw Error('Pakej belum aktif');
+    const selected=azSoftwarePackageModel.quote(offer,data.softwarePackageId||clientProduct.softwarePackageId,Number(data.packageQuantity??clientProduct.packageQuantity));
+    const file=cleanPremiumUrl(trusted.secureDownloadLink||trusted.premiumDownloadFileLink||trusted.downloadLink||''),r2=azSafeR2ObjectKey(trusted.r2ObjectKey||trusted.r2Key||'');
+    if(!file&&!r2)throw Error('Fail download software belum ditetapkan.');
+    const price=`RM${(selected.total_cents/100).toFixed(2)}`;
+    return {account:identity,product:{...trusted,name:selected.name+' · '+selected.quantity+' PC',price,softwarePackageId:data.softwarePackageId||clientProduct.softwarePackageId,packageQuantity:selected.quantity,softwarePackageDays:selected.days,subscriptionCodeEnabled:false,activationCodeSale:false},amountText:price,amountSen:selected.total_cents,downloadLink:file,r2ObjectKey:r2,subscriptionCodeEnabled:false,trustedSource:trusted.source||'backend'};
   }
   const subscriptionPlan = azSubscriptionSelectedPlan(data, trusted);
   let amountSen = subscriptionPlan ? Number(subscriptionPlan.priceSen || 0) : parseAmountToSen(trusted.price || trusted.amount || "");
@@ -4982,7 +5025,8 @@ function azAutomaticCheckoutFingerprint(kind = "digital", payload = {}) {
     planId,
     items.join(";;")
   ].join("|");
-  return crypto.createHash("sha256").update(canonical).digest("hex");
+  const packagePart=payload.softwarePackageId ? "|package:"+String(payload.softwarePackageId)+":"+String(payload.packageQuantity)+":"+String(payload.softwarePackageDays??'') : "";
+  return crypto.createHash("sha256").update(canonical+packagePart).digest("hex");
 }
 function azAutomaticCheckoutKindForOrder(order = {}) {
   if (order.publicPaPurchase === true || String(order.source || "").toLowerCase().includes("public-pa")) return "public-pa";
@@ -5001,6 +5045,7 @@ function azAutomaticCheckoutFingerprintForOrder(order = {}) {
     amountSen:Number(order.amountSen || 0),
     productId:order.productId || (order.product && (order.product.productId || order.product.id)) || "",
     subscriptionPlanId:order.subscriptionPlanId || (order.subscriptionPlan && order.subscriptionPlan.id) || "",
+    softwarePackageId:order.product?.softwarePackageId, packageQuantity:order.product?.packageQuantity, softwarePackageDays:order.product?.softwarePackageDays,
     items:order.paBmItems || []
   });
 }
@@ -15378,7 +15423,7 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || '');
   const r2ObjectKey = azSafeR2ObjectKey(trustedResolved.r2ObjectKey || product.r2ObjectKey || product.r2Key || requestedProduct.r2ObjectKey || requestedProduct.r2Key || data.r2ObjectKey || data.r2Key || '');
   const submittedUser = getPremiumUser(data);
-  const user = identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
+  const user = trustedResolved.account ? {...submittedUser,uid:trustedResolved.account.uid,username:trustedResolved.account.name||trustedResolved.account.email,email:trustedResolved.account.email,phone:trustedResolved.account.phone||""} : identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
   const buyerEmail = cleanPremiumText(user.email || data.buyerEmail || data.email || '', 180);
   const requestedLimit = azobssDownloadLimitFromOrder({ ...data, product });
   const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
@@ -17601,6 +17646,7 @@ async function handler(req, res) {
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
+    if (await handleSoftwarePackages(req,res,parsed)) return;
     if (await handleAzdmAdmin(req,res,parsed)) return;
     if (await handleAzdm(req,res,parsed)) return;
 
@@ -18647,7 +18693,7 @@ async function handler(req, res) {
           billExternalReferenceNo: orderId,
           billTo: cleanForToyyib(user.username || usernameKey || user.email || "AZOBSS Customer", 30),
           billEmail: cleanForToyyib(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
-          billPhone: cleanForToyyib(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
+          billPhone: cleanForToyyib(trustedResolved.account ? user.phone : (user.phone || data.buyerPhone || data.phone || "01135600723"), 20),
           billSplitPayment: 0,
           billSplitPaymentArgs: "",
           billPaymentChannel: 0,
@@ -18712,13 +18758,13 @@ async function handler(req, res) {
         const downloadLink = cleanPremiumUrl(trustedResolved.downloadLink || product.secureDownloadLink || product.premiumDownloadFileLink || product.privateDownloadLink || product.downloadLink || "");
         const r2ObjectKey = azSafeR2ObjectKey(trustedResolved.r2ObjectKey || product.r2ObjectKey || product.r2Key || requestedProduct.r2ObjectKey || requestedProduct.r2Key || data.r2ObjectKey || data.r2Key || "");
         const submittedUser = getPremiumUser(data);
-        const user = identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
+        const user = trustedResolved.account ? {...submittedUser,uid:trustedResolved.account.uid,username:trustedResolved.account.name||trustedResolved.account.email,email:trustedResolved.account.email,phone:trustedResolved.account.phone||""} : identity ? { ...submittedUser, uid:identity.uid || submittedUser.uid, username:identity.username || submittedUser.username, email:identity.authEmail || identity.email || submittedUser.email } : submittedUser;
         const requestedLimit = azobssDownloadLimitFromOrder({ ...data, product });
         const requestedExpiryHours = azobssExpiryHoursFromOrder({ ...data, product });
         if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing backend product name or valid backend amount." }, null, 2), "application/json");
         if (!downloadLink && !r2ObjectKey) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Premium Download File Link atau Cloudflare R2 Private Object Key belum diset untuk produk ini." }, null, 2), "application/json");
         const checkoutFingerprint = azAutomaticCheckoutFingerprint("digital", {
-          user, amountSen, productId, subscriptionPlanId:activationPlan && activationPlan.id || ""
+          user, amountSen, productId, softwarePackageId:product.softwarePackageId, packageQuantity:product.packageQuantity, softwarePackageDays:product.softwarePackageDays, subscriptionPlanId:activationPlan && activationPlan.id || ""
         });
         const releaseCheckoutLock = await azAcquireAutomaticCheckoutCreateLock(checkoutFingerprint);
         try {
@@ -18749,7 +18795,7 @@ async function handler(req, res) {
           billExternalReferenceNo: orderId,
           billTo: cleanForToyyib(user.username || user.email || "AZOBSS Customer", 30),
           billEmail: cleanForToyyib(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
-          billPhone: cleanForToyyib(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
+          billPhone: cleanForToyyib(trustedResolved.account ? user.phone : (user.phone || data.buyerPhone || data.phone || "01135600723"), 20),
           billSplitPayment: 0,
           billSplitPaymentArgs: "",
           billPaymentChannel: 0,
