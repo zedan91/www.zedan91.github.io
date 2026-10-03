@@ -1411,8 +1411,16 @@ async function deleteTemporaryDocument(data){
   if(!res.ok){const text=await res.text();throw new Error(text||`Temporary cleanup HTTP ${res.status}`)}
   return true;
 }
-function downloadBlobFile(blob,name){
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name||'AZOBSS-Document.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);return name;
+function isFirefoxDesktop(){
+  const ua=String(navigator.userAgent||'');
+  return /Firefox\/\d+/i.test(ua)&&!/Android|Mobile|Tablet/i.test(ua);
+}
+function downloadBlobFile(blob,name,{forceAttachment=false}={}){
+  // Firefox Desktop can be configured to open PDFs in its built-in viewer even when a
+  // download is triggered.  Re-wrapping the bytes as octet-stream keeps this fallback
+  // as a real download instead of unexpectedly opening a PDF preview tab.
+  const payload=forceAttachment?new Blob([blob],{type:'application/octet-stream'}):blob;
+  const url=URL.createObjectURL(payload);const a=document.createElement('a');a.href=url;a.download=name||'AZOBSS-Document.pdf';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),isFirefoxDesktop()?10000:2500);return name;
 }
 async function copyDocumentShareLink(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1478,11 +1486,46 @@ function openDirectUrl(url){
   try{const opened=window.open(url,'_blank','noopener');if(opened)return true}catch(_e){}
   return false;
 }
+async function firefoxDownloadPdfAndOpenWhatsApp(context,button=null){
+  // Firefox Desktop does not provide the same file-share path used by Chromium on
+  // Windows.  Keep the user gesture alive by opening a blank target immediately,
+  // then save the actual PDF as an attachment-only download and redirect that target
+  // to WhatsApp with a secure temporary PDF link when available.
+  const targetWindow=window.open('about:blank','_blank');
+  if(targetWindow){try{targetWindow.opener=null}catch(_e){}}
+  if(button){button.disabled=true;button.classList.add('busy')}
+  try{
+    const payload=await prepareSingleActualPdf(context);
+    downloadBlobFile(payload.file,payload.file.name,{forceAttachment:true});
+    let message=payload.text;
+    try{
+      const data=await ensureSharePanelTemporary();
+      message=temporaryShareText(payload.row,payload.docType,data.shareUrl);
+    }catch(error){
+      console.warn('Firefox secure PDF link fallback unavailable; using invoice text only:',error);
+      message=[payload.text,'',`PDF saved to Downloads: ${payload.file.name}`,'Attach the saved PDF manually if you want the file inside WhatsApp.'].filter(Boolean).join('\n');
+    }
+    try{await copyPlainText(message)}catch(_e){}
+    const url=whatsappMessageUrl(payload.row,payload.docType,message);
+    let opened=false;
+    if(targetWindow&&!targetWindow.closed)opened=setDirectShareWindow(targetWindow,url);
+    else opened=openDirectUrl(url);
+    if(!opened){
+      notify(`Firefox saved ${payload.file.name} to Downloads, but the WhatsApp popup was blocked. Use the WhatsApp PDF button or allow popups for AZOBSS.`,true);
+      return true;
+    }
+    notify(`Firefox saved ${payload.file.name} without opening the PDF preview, then opened WhatsApp. A secure PDF link is included when available.`);
+    return true;
+  }catch(error){
+    try{if(targetWindow&&!targetWindow.closed)targetWindow.close()}catch(_e){}
+    console.error(error);notify('Firefox PDF fallback failed: '+(error?.message||error),true);return false;
+  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+}
 async function downloadPdfAndOpenWhatsAppFallback(context,prepared=null,button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
     const payload=prepared||await prepareSingleActualPdf(context);
-    downloadBlobFile(payload.file,payload.file.name);
+    downloadBlobFile(payload.file,payload.file.name,{forceAttachment:isFirefoxDesktop()});
     const message=[payload.text,'',`PDF downloaded: ${payload.file.name}`,'Attach the downloaded PDF file in WhatsApp.'].filter(Boolean).join('\n');
     try{await copyPlainText(message)}catch(_e){}
     const whatsappUrl=whatsappMessageUrl(payload.row,payload.docType,message);
@@ -1548,8 +1591,9 @@ function openSharePanel(row,type='receipt'){
   if(!row)return;const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
   sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
-  setSharePanelText('salesReceiptShareNativeLabel','Share Actual PDF File');
-  setSharePanelText('salesReceiptShareNativeDesc','AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
+  const firefoxDesktop=isFirefoxDesktop();
+  setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?'Firefox: Download PDF + WhatsApp':'Share Actual PDF File');
+  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?'Firefox Desktop cannot use the Chromium/Windows actual-file Share path. AZOBSS will save the PDF without opening it, then open WhatsApp with a secure PDF link.':'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
   setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp PDF + Payment Link':'WhatsApp Receipt PDF');
   setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?'Telegram Invoice + Payment Link':'Telegram Receipt Link');
   setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
@@ -1588,6 +1632,7 @@ async function runSharePanelAction(action,button=null){
   const context=sharePanelContext;if(!context)return;
   if(action==='whatsapp'){
     if(context.mode==='single'){
+      if(isFirefoxDesktop())return openTemporaryApp('whatsapp',context,button,{fileShareFallback:true});
       try{
         const result=await tryNativeSinglePdfShare(context,button,{preferredApp:'WhatsApp'});
         if(result.ok){await autoMarkSharedReceipt(context,'whatsapp-share');return true}
@@ -1609,6 +1654,7 @@ ZIP: ${data.shareUrl}`;await copyPlainText(text);notify('Message with temporary 
   }
   if(action==='native'){
     if(context.mode==='single'){
+      if(isFirefoxDesktop())return firefoxDownloadPdfAndOpenWhatsApp(context,button);
       if(button?.dataset?.srFallbackWhatsappUrl){
         const url=button.dataset.srFallbackWhatsappUrl;
         delete button.dataset.srFallbackWhatsappUrl;

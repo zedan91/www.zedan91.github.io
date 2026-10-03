@@ -3118,7 +3118,7 @@ body[data-dashboard-page="admin"] .topbar{
           <div class="az-sr-share-grid">
             <button class="az-sr-share-option native" type="button" data-sr-share-action="native">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg></span>
-              <span><b id="salesReceiptShareNativeLabel">Share Actual PDF File</b><small id="salesReceiptShareNativeDesc">Prepare the real PDF when clicked. If native file sharing is unavailable, download the PDF and open WhatsApp.</small></span>
+              <span><b id="salesReceiptShareNativeLabel">Share Actual PDF File</b><small id="salesReceiptShareNativeDesc">Prepare the real PDF when clicked. Chrome/Edge can use Windows Share. Firefox saves the PDF without opening preview and opens WhatsApp with a secure PDF link.</small></span>
             </button>
             <button class="az-sr-share-option whatsapp-option" type="button" data-sr-share-action="whatsapp">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg></span>
@@ -3145,7 +3145,7 @@ body[data-dashboard-page="admin"] .topbar{
               <span><b>Print PDF</b><small>Load the same temporary backend PDF and open Print Preview.</small></span>
             </button>
           </div>
-          <p class="az-sr-share-note"><b>PDF sharing:</b> AZOBSS now prepares the <b>actual invoice/receipt PDF first</b> and tests that exact file only when you click Share. If Windows/browser native file sharing is unavailable, <b>Share Actual PDF File</b> downloads the PDF and opens WhatsApp so you can attach the downloaded file manually. The WhatsApp button falls back to a secure temporary PDF link when direct attachment is unsupported. Telegram continues to use a temporary link.</p>
+          <p class="az-sr-share-note"><b>PDF sharing:</b> Chrome/Edge keep the actual-file Windows Share flow. Firefox Desktop uses a safer fallback: the PDF is forced into Downloads without opening a preview tab, then WhatsApp opens with a secure temporary PDF link when available. WhatsApp itself cannot be auto-filled with a local PDF by Firefox. Telegram continues to use a temporary link.</p>
         </div>
       </div>
 
@@ -9281,7 +9281,7 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1170"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1205" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1206" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*
