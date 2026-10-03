@@ -3254,9 +3254,10 @@ html body .downloads-section{
 </style>
 <script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
 
-<!-- AZOBSS v1207: account-based AZDM licensing -->
-<link rel="stylesheet" href="/assets/css/azobss-azdm.css?v=1207">
-<script src="/assets/js/azobss-azdm.js?v=1207" defer></script>
+<!-- AZOBSS v1210: universal per-software packages and support -->
+<link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1210">
+<script src="/assets/js/azobss-azdm-offer-model.js?v=1210" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1210" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3418,29 +3419,7 @@ html body .downloads-section{
 </div>
 
 
-<section id="azdm-license" aria-labelledby="azdm-title">
-  <div class="azdm-heading"><img src="/assets/images/azdm-logo.svg" alt="" width="60" height="60"><div><h2 id="azdm-title">Lesen AZDM untuk PC anda</h2><span>Guna akaun AZOBSS yang sedia ada</span></div></div>
-  <p>Pilih pakej, bayar melalui ToyyibPay dan terima serial di email akaun anda. Setiap PC mendapat satu serial sendiri.</p>
-  <div class="azdm-prices">
-    <div class="azdm-price">1 Tahun<strong>RM25 <small>setiap PC / tahun</small></strong><small>Lesen bermula selepas bayaran disahkan.</small></div>
-    <div class="azdm-price">Lifetime · 1 PC<strong>RM50</strong><small>Tiada tarikh tamat lesen.</small></div>
-    <div class="azdm-price">Lifetime · 2 PC atau lebih<strong>RM40 <small>setiap PC</small></strong><small>Dalam satu pembelian. 2 PC RM80 · 3 PC RM120.</small></div>
-  </div>
-  <div class="azdm-form">
-    <label>Pakej<select name="azdm-plan"><option value="annual">1 Tahun</option><option value="lifetime" selected>Lifetime</option></select></label>
-    <label>Bilangan PC<input name="azdm-quantity" type="number" inputmode="numeric" value="1" min="1" max="100" step="1"></label>
-    <button type="button" data-azdm-buy disabled>Bayar melalui ToyyibPay</button>
-    <button type="button" data-azdm-signin>Sign in AZOBSS</button>
-  </div>
-  <div class="azdm-summary" data-azdm-summary>1 PC × RM50.00 = RM50.00</div>
-  <p data-azdm-saving>Beli 2 PC atau lebih sekaligus untuk harga RM40 setiap PC.</p>
-  <p>Nama dan email diambil daripada akaun anda. Selepas menerima serial, buka AZDM, masukkan serial dan tekan <b>Activate</b>. Satu serial untuk satu PC aktif.</p>
-  <p data-azdm-message role="status" aria-live="polite"></p>
-  <h3>Perlukan bantuan?</h3>
-  <div class="azdm-contact"><a href="mailto:zedan9107@gmail.com?subject=Support%20AZDM">Email: zedan9107@gmail.com</a><a href="https://wa.me/601135600723?text=Saya%20perlukan%20bantuan%20AZDM." target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">Chat support AZOBSS</a></div>
-  <div class="azdm-orders-head"><h3>Pesanan AZDM saya</h3><button type="button" data-azdm-refresh>Semak pesanan / bayaran</button></div>
-  <div data-azdm-orders>Sign in dan tekan Semak pesanan untuk melihat pembelian akaun anda.</div>
-</section>
+
 <div class="downloads-grid" id="softwareDownloadsGrid">
 
 </div>
@@ -3511,6 +3490,23 @@ html body .downloads-section{
           <input id="softwareAdminOriginalPrice" type="text" placeholder="Optional old price, e.g. RM30">
         </label>
       </div>
+<fieldset id="softwarePackagesEditor" class="az-package-editor">
+  <legend>Pakej &amp; bilangan PC</legend>
+  <label class="az-package-toggle"><input id="softwarePackagesEnabled" type="checkbox"> Aktifkan pilihan pakej pada kad software</label>
+  <div id="softwarePackageFields" hidden>
+    <label>Cara pembelian<select id="softwarePackageFulfilment"><option value="download">Pembelian &amp; download software</option><option value="azdm">Serial lesen AZDM</option></select></label>
+    <p class="az-package-hint">Tambah pakej mengikut software ini. Harga, tempoh dan bilangan PC boleh diubah kemudian.</p>
+    <div id="softwarePackageRows"></div>
+    <button type="button" id="softwarePackageAdd">+ Tambah pakej</button>
+    <div class="az-package-grid">
+      <label>Maksimum PC setiap pembelian<input id="softwarePackageMax" type="number" min="1" max="100" step="1" value="100"></label>
+      <label>Minimum PC untuk diskaun<input id="softwarePackageBulkMin" type="number" min="0" max="100" step="1" value="0"><small>0 = tiada diskaun kuantiti</small></label>
+      <label>Harga diskaun setiap PC (RM)<input id="softwarePackageBulkPrice" type="number" min="0" step="0.01" value="0"><small>Untuk pakej tiada tamat dengan bilangan PC pilihan customer.</small></label>
+    </div>
+  </div>
+</fieldset>
+<label class="az-package-toggle"><input id="softwareSupportEnabled" type="checkbox" checked> Paparkan butang Support pada kad software</label>
+
       <div class="software-admin-row az-promo-free-admin-row">
         <label>Promo Free Download
           <small>Untuk Premium Software: bagi percuma download sempena promosi sementara unit masih ada.</small>
@@ -4753,6 +4749,8 @@ function normalizeItem(item){
       promoFreeUnits: azPromoFreeLimit(item),
       promoFreeBatchId: String(item.promoFreeBatchId || item.promoBatchId || item.promoFreeStartedAtMs || '').trim(),
       promoFreeStartedAtMs: Number(item.promoFreeStartedAtMs || item.promoFreeStartAtMs || 0),
+      softwarePackages: item.softwarePackages || null,
+      supportEnabled: item.supportEnabled !== false,
       category: canonicalSoftwareCategory485(item.category || item.softwareCategory || 'Productivity & Office'),
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
       replacesProductId: item.replacesProductId || item.oldProductId || '',
@@ -4820,6 +4818,8 @@ function normalizeItem(item){
       promoFreeUnits: azPromoFreeLimit(n),
       promoFreeBatchId: n.promoFreeBatchId || '',
       promoFreeStartedAtMs: Number(n.promoFreeStartedAtMs || 0),
+      softwarePackages: n.softwarePackages || null,
+      supportEnabled: n.supportEnabled !== false,
       category: n.category,
       status: n.status,
       featured: !!n.featured,
@@ -5390,7 +5390,7 @@ function normalizeItem(item){
     const promoFreeActionBtnHtml = `<button type="button" class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" aria-label="Claim free promotional download after login"><span class="download-text">🎁 Free Promo Download</span></button>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
-    const actionHtml = subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
+    const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Pilihan pakej</button>` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
@@ -5404,7 +5404,7 @@ function normalizeItem(item){
       ${promoPriceHtml}
       ${promoFreeHtml}
       ${promoFreeNormalPriceHtml}
-      <div class="az-card-bottom-actions-498">${actionHtml}</div>
+      <div class="az-card-bottom-actions-498"><div class="az-package-card-actions">${actionHtml}${item.supportEnabled!==false ? `<button type="button" class="az-package-support-btn" data-software-support="1" data-product-name="${esc(item.name)}">Support</button>` : ''}</div></div>
       ${adminEdit}
       ${stableStatsHtml}
     </div>`;
@@ -5429,6 +5429,10 @@ function normalizeItem(item){
   }
   function mergeSoftwareDirectorySources470(remoteItems,localItems,bundledItems){
     const live=dedupeSoftwareItems([...(remoteItems||[]),...(localItems||[])]);
+    if(!live.some(x=>(x.softwarePackages?.enabled&&x.softwarePackages.fulfilment==='azdm')||String(x.productId||x.id).toUpperCase()==='AZDM')){
+      live.unshift(normalizeItem({id:'AZDM',productId:'AZDM',name:'AZDM',desc:'Pilih pakej lesen AZDM untuk PC anda. Setiap PC mendapat satu serial sendiri.',type:'premium',price:'RM25',status:'active',category:'Downloads & Torrents',platforms:['Windows'],imageUrl:'/assets/images/azdm-logo.svg',icon:'A',ownerUsername:'zedan91',createdAtMs:1791032400000,softwarePackages:window.azdmOfferModel?.defaults(),supportEnabled:true}));
+    }
+
     const seen=new Set();
     live.forEach(item=>azSoftwareItemKeys470(item).forEach(k=>seen.add(k)));
     const additions=[];
@@ -5964,6 +5968,7 @@ function normalizeItem(item){
     if(paymentLinkLabel) paymentLinkLabel.style.display = premium ? '' : 'none';
     if(stripeLinkLabel) stripeLinkLabel.style.display = premium ? '' : 'none';
     if(downloadLinkInput){
+      downloadLinkInput.disabled = premium;
       downloadLinkInput.required = !premium;
       if(premium){
         downloadLinkInput.removeAttribute('required');
@@ -6050,6 +6055,7 @@ function normalizeItem(item){
     if(downloadsInput) downloadsInput.value = st.downloads || '';
     if(ratingInput) ratingInput.value = st.rating || '';
     if(likesInput) likesInput.value = st.likes || '';
+    window.azdmSoftwareEditorLoad?.(item);
     syncTypeDefaults();
     updateMediaPreview();
     modal?.classList.add('is-open');
@@ -6618,7 +6624,9 @@ function normalizeItem(item){
     const secureDownloadUrlValue = azCleanSoftwareSecureDownloadLink(rawSecureDownloadValue);
     if(r2ObjectKeyInput) r2ObjectKeyInput.value = azSoftwareR2FilenameForAdmin(r2ObjectKeyValue);
     if(secureDownloadInput && rawSecureDownloadValue && !secureDownloadUrlValue && r2ObjectKeyValue) secureDownloadInput.value = '';
+    let packageFields;try{packageFields=window.azdmSoftwareEditorRead?.()||{};}catch(e){alert(e.message);return;}
     let item = azApplySoftwareCommissionOwner(normalizeItem({
+      ...packageFields,
       id: productIdInput?.value.trim() || makeProductId('AZSW'),
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
       status: statusInput?.value || 'active',
@@ -6664,6 +6672,7 @@ function normalizeItem(item){
     }));
     item = azSoftwarePayloadWithOwner(azForceSoftwareOwnerMetadata(item));
     console.log('AZOBSS FORCE OWNER PAYLOAD', item);
+    try{await window.azdmSoftwareEditorSave?.(item);}catch(e){alert(e.message);return;}
     const oldEditProductId = editingSoftwareProductId ? String(editingSoftwareProductId) : '';
     try{
       if(editingSoftwareDocId){
@@ -8081,6 +8090,7 @@ return;
   };
   function isPremiumSoftwareCard(card){
     if(isCADPage()) return true;
+    if(card?.querySelector?.('[data-software-package-buy]')) return false;
     // AZOBSS 457: an active free-promo premium item behaves like a free download.
     // Do not wrap its compact promo button with the paid Add-to-Cart row.
     if(card?.querySelector?.('[data-azobss-promo-free="1"], .az-promo-free-download-btn')) return false;
@@ -8097,7 +8107,7 @@ return;
   }
   function cleanupSoftwareCartSlot(card){
     if(!card) return;
-    const actionWrap = card.querySelector(':scope > .az-card-bottom-actions-498');
+    const actionWrap = card.querySelector(':scope > .az-card-bottom-actions-498 > .az-package-card-actions') || card.querySelector(':scope > .az-card-bottom-actions-498');
     // Remove only accidental direct duplicates created outside the real CTA wrapper.
     card.querySelectorAll(':scope > .az-card-cart-slot').forEach(el => el.remove());
     card.querySelectorAll(':scope > .az-software-buy-cart-row').forEach(row => {
@@ -8150,7 +8160,7 @@ return;
   function patchCards(){
     eligibleCards().forEach(card => {
       const isSoftwareCard = !isCADPage();
-      const actionWrap = card.querySelector(':scope > .az-card-bottom-actions-498') || card;
+      const actionWrap = card.querySelector(':scope > .az-card-bottom-actions-498 > .az-package-card-actions') || card.querySelector(':scope > .az-card-bottom-actions-498') || card;
 
       // Remove duplicate cart slots/rows that older patches may have inserted as direct card children.
       card.querySelectorAll(':scope > .az-card-cart-slot').forEach(el => el.remove());
@@ -17385,5 +17395,28 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
 
 <script type="module" src="/assets/js/azobss-price-display-global.js?v=593"></script>
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
+
+<dialog id="softwarePackageDialog" class="az-package-dialog" aria-labelledby="softwarePackageTitle">
+ <div id="azdm-license">
+  <div class="az-package-dialog-head"><h2 id="softwarePackageTitle">Pilihan pakej</h2><button type="button" data-package-close aria-label="Tutup pilihan pakej">×</button></div>
+  <p>Pilih pakej dan bilangan PC untuk software ini.</p>
+  <div class="azdm-form">
+   <label>Pakej<select name="azdm-plan"></select></label>
+   <label>Bilangan PC<input name="azdm-quantity" type="number" inputmode="numeric" value="1" min="1" max="100" step="1"></label>
+  </div>
+  <div class="azdm-summary" data-azdm-summary></div><p data-azdm-saving></p>
+  <p data-package-activation></p>
+  <button type="button" data-azdm-buy disabled>Bayar melalui ToyyibPay</button>
+  <button type="button" data-azdm-signin>Sign in AZOBSS</button>
+  <button type="button" data-package-support>Support</button>
+  <p data-azdm-message role="status" aria-live="polite"></p>
+  <div data-package-order-box hidden><h3>Pesanan saya</h3><button type="button" data-azdm-refresh>Semak pesanan / bayaran</button><div data-azdm-orders></div></div>
+ </div>
+</dialog>
+<dialog id="softwareSupportDialog" class="az-package-dialog" aria-labelledby="softwareSupportTitle">
+ <div class="az-package-dialog-head"><h2 id="softwareSupportTitle">Support software</h2><button type="button" data-support-close aria-label="Tutup Support">×</button></div>
+ <p data-support-name></p>
+ <div class="az-package-contact"><a data-support-email href="mailto:zedan9107@gmail.com">Email: zedan9107@gmail.com</a><a data-support-whatsapp href="https://wa.me/601135600723" target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">Chat support AZOBSS</a></div>
+</dialog>
 </body>
 </html>
