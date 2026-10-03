@@ -12006,7 +12006,7 @@ function azobssScheduleRegisteredLotCleanup(registration, cacheKey, delayMs = 15
   azobssLotCleanupTimers.set(cacheKey, timer);
 }
 
-async function azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId) {
+async function azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId, options = {}) {
   const cleanProduct = cleanLotProduct(productCode);
   const cleanStateCode = cleanLotStateCode(stateCode);
   const cleanJobId = String(jobId || "").trim();
@@ -12018,19 +12018,26 @@ async function azobssEnsureJupemLotDirectReady(productCode, stateCode, jobId) {
   const promise = (async () => {
     const directUrl = azobssLotDownloadUrl(cleanProduct, cleanJobId, cleanStateCode);
 
-    // v1152: probe the already-generated ZIP BEFORE asking ArcGIS for job status.
-    // Old ArcGIS jobs can be purged/Deleted while the eBiz download ZIP remains valid.
-    // In that case the paid download should continue instead of being blocked by a stale job status.
-    try {
-      const initialProbe = await azobssProbeJupemLotDirectZip(directUrl, 10000);
-      if (initialProbe.ready) {
-        return { ready: true, directUrl, jobStatus: "esriJobSucceeded", registered: false, probe: initialProbe, recoveredFromDirectZip: true };
+    const knownJobStatus = String(options && options.knownJobStatus || "").trim();
+
+    // v1201: For a freshly submitted selection, do NOT spend up to 10 seconds probing
+    // the ZIP before we even know whether the GP job has finished. The status endpoint
+    // supplies knownJobStatus once ArcGIS reports success. Keep the old direct-ZIP probe
+    // only for legacy/download callers where a purged ArcGIS job may still have a valid ZIP.
+    if (!/^esriJobSucceeded$/i.test(knownJobStatus)) {
+      try {
+        const initialProbe = await azobssProbeJupemLotDirectZip(directUrl, 10000);
+        if (initialProbe.ready) {
+          return { ready: true, directUrl, jobStatus: "esriJobSucceeded", registered: false, probe: initialProbe, recoveredFromDirectZip: true };
+        }
+      } catch (error) {
+        console.warn("JUPEM direct ZIP pre-status probe failed:", error && (error.message || error));
       }
-    } catch (error) {
-      console.warn("JUPEM direct ZIP pre-status probe failed:", error && (error.message || error));
     }
 
-    const jobStatus = await azobssGetLotGpJobStatus(cleanProduct, cleanStateCode, cleanJobId);
+    const jobStatus = /^esriJobSucceeded$/i.test(knownJobStatus)
+      ? "esriJobSucceeded"
+      : await azobssGetLotGpJobStatus(cleanProduct, cleanStateCode, cleanJobId);
     if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(jobStatus)) {
       const terminalError = new Error(`JUPEM gagal menyediakan Lot Kadaster (${jobStatus}).`);
       terminalError.code = "AZOBSS_JUPEM_JOB_TERMINAL";
@@ -14026,102 +14033,8 @@ async function azobssResolveLotCadSpatialReference(config, selected, auth, targe
     label: `EPSG:${best.wkid}`
   };
 }
-async function azobssLotCadSheetFeatures(record, type, options = {}) {
-  const productCode = type === 'NDCDB_C3' ? '2' : '1';
-  const stateCode = cleanLotStateCode(record && (record.negeri || record.state) || '');
-  if (!stateCode) return [];
-
-  const selected = azobssLotCadSelectedIds(record);
-  if (!selected.ids.length) return [];
-
-  const config = azobssGetLotMapConfig(productCode, stateCode);
-  const targetBounds = options && options.targetBounds || null;
-  const targetProjectionWkt = String(options && options.targetProjectionWkt || '').trim();
-  let lastError = null;
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const auth = await azobssGetJupemMapAuth(attempt > 0);
-
-      // Exact selected lots in WGS84 are used only as the spatial filter.
-      const featureSet = await azobssQueryLotFeatureSet(config, null, auth, {
-        objectIds: selected.ids,
-        objectIdFieldName: selected.objectIdFieldName
-      }, "4326");
-
-      const rings = [];
-      for (const feature of Array.isArray(featureSet && featureSet.features) ? featureSet.features : []) {
-        const sourceRings = feature && feature.geometry && Array.isArray(feature.geometry.rings)
-          ? feature.geometry.rings
-          : [];
-        for (const rawRing of sourceRings) {
-          const ring = (Array.isArray(rawRing) ? rawRing : [])
-            .filter((point) => Array.isArray(point) && point.length >= 2 && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1])))
-            .map((point) => [Number(point[0]), Number(point[1])]);
-          if (ring.length >= 3) rings.push(ring);
-        }
-      }
-      if (!rings.length) throw new Error('Geometri lot terpilih tidak tersedia untuk mendapatkan garisan Syit Piawai.');
-
-      const cadSpatialReference = await azobssResolveLotCadSpatialReference(
-        config,
-        selected,
-        auth,
-        targetBounds,
-        targetProjectionWkt
-      );
-
-      const layerUrl = 'https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/' +
-        config.sheetLayer + '/query';
-      const result = await azobssJupemArcGisJson(layerUrl, {
-        geometry: JSON.stringify({ rings, spatialReference: { wkid: 4326 } }),
-        geometryType: 'esriGeometryPolygon',
-        inSR: '4326',
-        spatialRel: 'esriSpatialRelIntersects',
-        outFields: '*',
-        returnGeometry: 'true',
-        outSR: String(cadSpatialReference.outSr)
-      }, auth, 45000);
-
-      const features = Array.isArray(result && result.features) ? result.features : [];
-      if (!features.length) throw new Error('Garisan Syit Piawai yang berkaitan tidak ditemui untuk pilihan lot ini.');
-
-      const seen = new Set();
-      const rows = [];
-      features.forEach((feature, index) => {
-        const name = String(azobssLotSheetName(feature, index) || '').trim();
-        const sourceRings = feature && feature.geometry && Array.isArray(feature.geometry.rings)
-          ? feature.geometry.rings
-          : [];
-        const cleanRings = sourceRings.map((rawRing) =>
-          (Array.isArray(rawRing) ? rawRing : [])
-            .filter((point) => Array.isArray(point) && point.length >= 2 && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1])))
-            .map((point) => [Number(point[0]), Number(point[1])])
-        ).filter((ring) => ring.length >= 3);
-        if (!name || !cleanRings.length) return;
-        const key = name.toUpperCase();
-        if (seen.has(key)) return;
-        seen.add(key);
-        rows.push({
-          name,
-          rings: cleanRings,
-          spatialReference: cadSpatialReference.label,
-          spatialReferenceSource: cadSpatialReference.source
-        });
-      });
-
-      if (!rows.length) throw new Error('Data geometri Syit Piawai tidak lengkap untuk DXF.');
-      rows.sort((a, b) => String(a.name).localeCompare(String(b.name), 'en', { numeric: true }));
-      return rows;
-    } catch (error) {
-      lastError = error;
-      if (attempt === 0) continue;
-    }
-  }
-
-  throw lastError || new Error('Garisan Syit Piawai tidak dapat disediakan untuk DXF.');
-}
-
+// v1203: Lot CAD no longer fetches or processes Syit Piawai geometry.
+// DXF/DWG is generated only from the purchased NDCDB ZIP/SHP to keep conversion fast and reliable.
 function azobssNormalizeLotDownloadFormat(value) {
   const format = String(value || "original").trim().toLowerCase();
   if (format === "zip") return "original";
@@ -14210,17 +14123,12 @@ async function azobssEnsureLotCadBuffer(record, type, format) {
     if (!zipBuffer) zipBuffer = await azobssWaitForLotJobAndCache(record, type);
     if (!azobssBufferIsZip(zipBuffer)) throw new Error("ZIP JUPEM Lot Kadaster belum tersedia untuk conversion.");
 
-    const lotInspection = (azobssLotCadConverter && typeof azobssLotCadConverter.inspectLotZipBounds === "function")
-      ? azobssLotCadConverter.inspectLotZipBounds(zipBuffer)
-      : null;
-    const sheetFeatures = await azobssLotCadSheetFeatures(record, type, {
-      targetBounds: lotInspection && lotInspection.bounds || null,
-      targetProjectionWkt: lotInspection && lotInspection.projectionWkt || ""
-    });
+    // v1203: intentionally ignore Syit Piawai for Lot CAD conversion.
+    // Do not query sheet geometry, resolve a second CRS, or create sheet layers.
+    // The purchased NDCDB ZIP/SHP is the only source used for DXF/DWG.
     const converted = azobssLotCadConverter.convertLotZip(zipBuffer, normalizedFormat, {
       root: ROOT,
-      tempDir: path.join(TEMP_DIR, "jupem-lot-cad-work"),
-      sheetFeatures
+      tempDir: path.join(TEMP_DIR, "jupem-lot-cad-work")
     });
     if (!converted || !Buffer.isBuffer(converted.buffer) || !converted.buffer.length) throw new Error("CAD conversion tidak menghasilkan fail.");
     azobssWriteLotCachedCad(productCode, stateCode, jobId, normalizedFormat, converted.buffer);
@@ -21440,10 +21348,63 @@ async function handler(req, res) {
           return send(res, 400, JSON.stringify({ ok: false, error: "Token pilihan peta tidak sah atau telah tamat." }), "application/json");
         }
 
+        // v1201: Fast status path. While the ArcGIS GP job is still running, return
+        // 202 immediately after ONE lightweight job-status request. Do not run ZIP
+        // registration/probes on every poll; those are needed only after GP success.
+        let fastJobStatus = String(pending.jobStatus || "esriJobSubmitted").trim();
+        if (!/^esriJobSucceeded$/i.test(fastJobStatus)) {
+          fastJobStatus = await azobssGetLotGpJobStatus(
+            pending.productCode,
+            pending.stateCode,
+            pending.jobId
+          );
+          if (/^esriJob(?:Failed|Cancelled|TimedOut|Deleted)$/i.test(fastJobStatus)) {
+            const terminalError = new Error(`JUPEM gagal menyediakan Lot Kadaster (${fastJobStatus}).`);
+            terminalError.code = "AZOBSS_JUPEM_JOB_TERMINAL";
+            terminalError.jobStatus = fastJobStatus;
+            terminalError.terminal = true;
+            throw terminalError;
+          }
+          if (!/^esriJobSucceeded$/i.test(fastJobStatus)) {
+            const waitingPayload = {
+              ...pending,
+              ready: false,
+              zipReady: false,
+              jobStatus: fastJobStatus,
+              expiresAtMs: Date.now() + AZOBSS_LOT_SELECTION_CHECKOUT_TTL_MS
+            };
+            return send(res, 202, JSON.stringify({
+              ok: true,
+              ready: false,
+              zipReady: false,
+              preparing: true,
+              directDownload: true,
+              cached: false,
+              jobStatus: fastJobStatus,
+              selectionToken: azobssCreateLotSelectionToken(waitingPayload),
+              jobId: waitingPayload.jobId,
+              productType: waitingPayload.productType,
+              productCode: waitingPayload.productCode,
+              stateCode: waitingPayload.stateCode,
+              negeri: waitingPayload.negeri,
+              variant: waitingPayload.variant,
+              amount: waitingPayload.amount,
+              exportMode: waitingPayload.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
+              exactBoundaryClip: false,
+              naturalLotGeometry: Boolean(waitingPayload.naturalLotGeometry),
+              lotCount: waitingPayload.lotCount || 0,
+              selectedAreaM2: waitingPayload.selectedAreaM2 || 0,
+              processingMs: Math.max(0, Date.now() - Number(waitingPayload.preparedAtMs || Date.now())),
+              message: `ArcGIS sedang menyediakan ${Number(waitingPayload.lotCount || 0).toLocaleString("ms-MY")} lot (${fastJobStatus}).`
+            }), "application/json", { "Cache-Control": "no-store", "Retry-After": "2" });
+          }
+        }
+
         const directReady = await azobssEnsureJupemLotDirectReady(
           pending.productCode,
           pending.stateCode,
-          pending.jobId
+          pending.jobId,
+          { knownJobStatus: fastJobStatus }
         );
         const jobStatus = directReady.jobStatus || "esriJobSucceeded";
         const downloadUrl = directReady.directUrl;

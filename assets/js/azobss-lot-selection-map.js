@@ -1673,8 +1673,8 @@
         addButton.classList.add('is-processing');
         addButton.disabled = true;
         addButton.setAttribute('aria-busy', 'true');
-        addButton.setAttribute('aria-label', 'Sedang Diproses. Mengambil masa 1 hingga 2 minit.');
-        addButton.innerHTML = '<span class="az-lot-map-processing-spinner" aria-hidden="true"></span><span class="az-lot-map-processing-main">Sedang Diproses...</span><small class="az-lot-map-processing-sub">(Mengambil masa 1~2 Minit)</small>';
+        addButton.setAttribute('aria-label', 'Sedang Diproses. Masa bergantung pada jumlah lot dan status server peta.');
+        addButton.innerHTML = '<span class="az-lot-map-processing-spinner" aria-hidden="true"></span><span class="az-lot-map-processing-main">Sedang Diproses...</span><small class="az-lot-map-processing-sub">(Masa ikut jumlah lot & server peta)</small>';
       }
 
       function focusCartPanel() {
@@ -1988,11 +1988,21 @@
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
           }
 
+          const processingStartedAt = Date.now();
           while (!prepared.ready) {
             setAddButtonProcessing();
-            setStatus(status, 'Sedang proses fail Lot Kadaster...\n(Mengambil masa sekitar 1~2 minit)', 'loading');
+            const elapsedSeconds = Math.max(0, Math.round((Date.now() - processingStartedAt) / 1000));
+            const elapsedText = elapsedSeconds >= 60
+              ? `${Math.floor(elapsedSeconds / 60)}m ${String(elapsedSeconds % 60).padStart(2, '0')}s`
+              : `${elapsedSeconds}s`;
+            const currentJobStatus = String(prepared.jobStatus || 'esriJobSubmitted').replace(/^esriJob/i, '') || 'Submitted';
+            setStatus(
+              status,
+              `Sedang menyediakan ${Number(prepared.lotCount || estimate.lotCount || 0).toLocaleString('ms-MY')} lot...\nStatus: ${currentJobStatus} • ${elapsedText}`,
+              'loading'
+            );
             await new Promise((resolveDelay, rejectDelay) => {
-              const timer = window.setTimeout(resolveDelay, 2500);
+              const timer = window.setTimeout(resolveDelay, 2000);
               if (operationController && operationController.signal) {
                 operationController.signal.addEventListener('abort', () => {
                   window.clearTimeout(timer);
