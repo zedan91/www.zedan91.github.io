@@ -1,0 +1,27 @@
+#azdm-license{max-width:1200px;margin:24px auto 32px;padding:28px;border:1px solid rgba(45,212,191,.3);border-radius:20px;background:#132420;color:#edf9f5;scroll-margin-top:110px;font-family:inherit}
+#azdm-license *{box-sizing:border-box}
+#azdm-license .azdm-heading{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+#azdm-license .azdm-heading img{width:60px;height:60px;flex:none}
+#azdm-license h2{margin:0;font-size:26px;color:#fff}
+#azdm-license p{line-height:1.6;margin:8px 0 16px;color:#c5d9d3}
+#azdm-license .azdm-prices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+#azdm-license .azdm-price{background:#1b332c;border:1px solid #375a4d;border-radius:12px;padding:16px}
+#azdm-license .azdm-price strong{display:block;font-size:24px;margin:6px 0;color:#fff}
+#azdm-license .azdm-price small{display:block;color:#c5d9d3;line-height:1.5}
+#azdm-license .azdm-form{display:flex;flex-wrap:wrap;gap:16px;align-items:end}
+#azdm-license label{display:grid;gap:8px;font-weight:600}
+#azdm-license input,#azdm-license select{background:#10241d;color:#fff;border:1px solid #688c7b;border-radius:8px;padding:12px;font:inherit;min-height:46px}
+#azdm-license input{width:130px}
+#azdm-license button,#azdm-license .azdm-contact a{cursor:pointer;font:inherit;border-radius:8px;padding:11px 16px;background:#087f72;color:white;border:1px solid #36b2a2;min-height:44px;text-decoration:none}
+#azdm-license button:disabled{opacity:.5;cursor:default}
+#azdm-license button:focus-visible,#azdm-license a:focus-visible,#azdm-license input:focus-visible,#azdm-license select:focus-visible{outline:3px solid #5eead4;outline-offset:3px}
+#azdm-license .azdm-summary{font-size:21px;font-weight:bold;margin:20px 0 6px}
+#azdm-license .azdm-contact{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+#azdm-license .azdm-contact a{background:transparent;overflow-wrap:anywhere}
+#azdm-license [data-azdm-message]{color:#f6dfa1;min-height:28px;overflow-wrap:anywhere}
+#azdm-license .azdm-orders-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:26px}
+#azdm-license h3{margin:12px 0;color:#fff}
+#azdm-license .azdm-order{border-top:1px solid #375a4d;padding:16px 0;overflow-wrap:anywhere}
+#azdm-license .azdm-order small{display:block;margin-bottom:12px}
+#azdm-license .azdm-order a{display:inline-block;color:#5eead4;padding:10px}
+@media(max-width:620px){#azdm-license{margin:16px 10px;padding:20px 16px}#azdm-license .azdm-prices{grid-template-columns:1fr}#azdm-license h2{font-size:23px}#azdm-license .azdm-form{align-items:stretch}#azdm-license label,#azdm-license select{width:100%}#azdm-license .azdm-contact{flex-direction:column}}
