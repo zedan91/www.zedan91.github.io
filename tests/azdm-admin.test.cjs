@@ -18,6 +18,12 @@ test('server admin credential is sent to the fixed license endpoint and never re
   assert.equal(f.replies[0].status,200);assert.equal(f.calls[0].url,'https://azdm-license.zedan9107.workers.dev/admin/list');
   assert.equal(f.calls[0].options.headers.Authorization,'Bearer '+secret);assert.equal(JSON.stringify(f.replies).includes(secret),false);assert.equal(f.replies[0].headers['Cache-Control'],'no-store');
 });
+test('copied credentials tolerate surrounding whitespace without changing the secret',async()=>{
+  const f=fixture(undefined,{AZDM_ADMIN_TOKEN:' \n'+secret+'\r\n '});
+  await f.handler({method:'POST',body:'{}'},{},{pathname:'/api/azdm/admin/list'});
+  assert.equal(f.replies[0].status,200);
+  assert.equal(f.calls[0].options.headers.Authorization,'Bearer '+secret);
+});
 test('allowed license operations and email retries are forwarded without SurveyCAD operations',async()=>{
   for(const action of ['issue','update','reset','revoke','restore','orders','order-email-retry']) {
     const f=fixture();await f.handler({method:'POST',body:'{"customer":"Example"}'},{},{pathname:'/api/azdm/admin/'+action});assert.equal(f.calls.length,1);assert.match(f.calls[0].url,new RegExp('/admin/'+action+'$'));
