@@ -1,0 +1,7 @@
+AZOBSS Patch 823
+
+Perubahan:
+- Nilai selepas label `Cara serahan:` dalam mesej WhatsApp Tempah Servis IT kini diboldkan.
+- Contoh: Cara serahan: *Pengambilan / Penghantaran*
+- Perubahan dibuat pada mesej rasmi backend dan mesej fallback frontend.
+- Semua fungsi patch 822 dikekalkan.

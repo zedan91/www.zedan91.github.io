@@ -1,0 +1,21 @@
+{
+  "patch": 1151,
+  "packageVersion": "1.0.1151",
+  "date": "2026-09-18",
+  "title": "PA/BM Download Backend Wake Retry Fix",
+  "baseline": "(1150)-AZOBSS-DOWNLOAD-SPINNER-UNTIL-FILE-HANDOFF-FIX_20260917.zip",
+  "changes": {
+    "backendHealthOverallTimeoutMs": 240000,
+    "backendHealthPerRequestMaxTimeoutMs": 30000,
+    "quotaBehavior": "unchanged; failed readiness does not consume quota",
+    "downloadFlow": "v1150 fetch -> Blob -> a.download preserved",
+    "backendRedeployRequired": false,
+    "cacheBuster": "1151"
+  },
+  "sha256": {
+    "assets/js/azobss-global-auth.js": "854c051900be3d0e718c36dbad3bd0a80dd070c53859707bac2eb54c609fac84",
+    "assets/js/azobss-firebase-live-likes-sync.js": "2bfb260c766e4e76452815daa6f0988b96850b73ccfe649ee49b88efec5b4b36",
+    "PA-BM/index.html": "5854594014aa179f19351fee8b32a3bbdf5d8d2f416c8fd437bc1a1a58eb666d",
+    "package.json": "666f32c5ba2e02392bf18eaa6bd2b338730a16a2735c14ddaf950089e744daf2"
+  }
+}

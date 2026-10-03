@@ -1,0 +1,16 @@
+{
+  "version": "1.0.1066",
+  "baseline": "1.0.1065",
+  "patch": "Logout Guest Navbar State Authority Fix",
+  "html_pages_patched": 26,
+  "fixes": [
+    "Pre-paint navbar CSS only applies before global auth synchronization.",
+    "Logout immediately resets pre-auth/pre-PA-BM attributes.",
+    "Guest state explicitly shows Register/Login and hides market user tools.",
+    "Admin/staff navbar buttons are explicitly hidden for guests.",
+    "WhatsApp quick button is explicitly restored for guests/normal members.",
+    "Public survey tab is normalized to 'Ukur Tanah' on every page, including AZOBSSTV.",
+    "v1065 zero-layout-shift behavior remains in place.",
+    "v1064 Manual Invoice registered-customer autocomplete remains intact."
+  ]
+}

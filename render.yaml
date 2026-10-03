@@ -1,0 +1,92 @@
+services:
+  - type: web
+    name: azobss-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./render-backend.dockerfile
+    dockerContext: .
+    dockerCommand: node deploy-server.js
+    # v989: only backend/runtime-relevant changes trigger an automatic Render deploy.
+    # Frontend-only edits (e.g. Tempah-Servis-IT, PA-BM HTML, posters/images) stay on GitHub Pages
+    # and no longer rebuild this Docker service.
+    buildFilter:
+      paths:
+        - Dockerfile
+        - render-backend.dockerfile
+        - .dockerignore
+        - package.json
+        - .npmrc
+        - deploy-server.js
+        - azobsstv-backend/**
+        - lib/**
+        - scripts/**
+        - templates/**
+        - backend/**
+        - _private-tech-vault/**
+        - affiliate-products.json
+        - azobss-software-tools-export (5).json
+        - admin-audit-logs.json
+        - premium-orders.json
+        - premium-download-tokens.json
+        - premium-download-sessions.json
+        - commission-records.json
+        - stesen-tanda-aras-records.json
+        - stesen-gps-records.json
+        - lembar-piawai-records.json
+        - Sound-Effects/catalog-7210.json
+      ignoredPaths: []
+    envVars:
+      - key: AZDM_ADMIN_TOKEN
+        sync: false
+      - key: AZDM_LICENSE_URL
+        value: https://azdm-license.zedan9107.workers.dev
+      - key: ADMIN_KEY
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: TZ
+        value: Asia/Kuala_Lumpur
+      - key: AZOBSS_DISABLE_RUNTIME_NPM
+        value: "1"
+      - key: AZOBSS_LIBREDWG_BUILD_JOBS
+        value: "1"
+      - key: AZOBSS_STRICT_JUPEM_TLS
+        value: "0"
+      - key: JUPEM_EBIZ_USERNAME
+        sync: false
+      - key: JUPEM_EBIZ_PASSWORD
+        sync: false
+      - key: AZOBSS_COMMISSION_API_SECRET
+        sync: false
+      - key: AZOBSS_ADMIN_API_SECRET
+        sync: false
+      - key: AZOBSS_RECEIPT_SECRET
+        sync: false
+      - key: AZOBSS_DOWNLOAD_HASH_SECRET
+        sync: false
+      - key: AZOBSS_DOWNLOAD_SESSION_TTL_MS
+        value: "900000"
+      - key: AZOBSS_R2_GATE_TTL_SECONDS
+        value: "604800"
+      - key: AZOBSS_PREMIUM_ALLOWED_FILE_HOSTS
+        value: files.azobss.com
+      - key: TOYYIB_SECRET_KEY
+        sync: false
+      - key: TOYYIB_CATEGORY_CODE
+        value: wqrblyk7
+      - key: FRONTEND_BASE_URL
+        value: https://www.azobss.com
+      - key: TOYYIB_BASE_URL
+        value: https://toyyibpay.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false

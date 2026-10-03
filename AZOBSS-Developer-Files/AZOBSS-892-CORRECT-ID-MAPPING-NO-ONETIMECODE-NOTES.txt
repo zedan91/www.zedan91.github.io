@@ -1,0 +1,9 @@
+AZOBSS PATCH 892
+Correct SurveyCAD ID Mapping + Remove Onetimecode
+
+- Required identifiers: System ID (exactly 12 digits), Systemcode (exactly
+  12 digits), Motherboard ID, and a real Key Serial for complete status.
+- Onetimecode is no longer accepted, stored, displayed, searched, or exported.
+- Existing oneTimeCode fields are deleted when a record is updated.
+- Status is complete only when serialKey is present.
+- Use with AZOBSS_Installer.bat v211 or newer.

@@ -1,0 +1,30 @@
+AZOBSS PATCH 891
+Software Key Auto-Save Reliability Fix
+
+Baseline:
+(890)-AZOBSS-JUPEM-EBIZ-SINGLE-SESSION-AUTO-TAKEOVER-FIX_20260810_20260810_213230.zip
+
+Backend:
+- Firestore collection: softwareKeyRecords
+- Capture endpoint: POST /api/software-keys/capture
+- Identifier-only capture is stored as pending-key.
+- A later capture with the same Motherboard ID + System ID + Systemcode updates
+  the same record to complete.
+- Existing serial/onetime key values are preserved during partial updates.
+- Admin manual entry still requires Onetimecode or Key Serial.
+
+Admin:
+- Pending/complete badges.
+- Pending count.
+- Auto refresh every 10 seconds while Software Key is the active tab.
+- CSV includes capture status.
+
+Compatible installer:
+- AZOBSS_Installer.bat v204 or newer.
+- Sends identifiers first and complete key second.
+- Retries Render capture up to 3 times with a 60-second request timeout.
+
+Deployment:
+- Redeploy Render backend.
+- Publish website files.
+- No new Render ENV is required.

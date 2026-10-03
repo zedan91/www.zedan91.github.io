@@ -1,0 +1,11 @@
+AZOBSS Patch 832 — WhatsApp Ultra Fast Open + Auto Close
+
+- Baseline: 831.
+- Frontend starts the booking POST immediately with keepalive.
+- WhatsApp app launch fallback reduced from 2.5 s to about 250 ms.
+- Protocol navigation delay reduced from 120 ms to about 25 ms.
+- Launcher auto-close after external WhatsApp takes focus reduced from ~8 s blur fallback to ~450 ms.
+- visibility hidden closes in ~180 ms; pagehide closes in ~120 ms.
+- Browser security dialog Open WhatsApp? cannot be auto-clicked.
+- A website cannot detect the actual WhatsApp Send button/message-delivery event. The launcher closes when the app takes focus, normally before the user sends.
+- Background booking save, keepalive and duplicate protection remain unchanged.

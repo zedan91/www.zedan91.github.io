@@ -1,0 +1,4 @@
+Patch 828
+Baseline: 827
+
+Desktop/laptop now routes service-booking WhatsApp messages to web.whatsapp.com/send instead of whatsapp://. This avoids the Chrome/Windows external protocol confirmation popup. Mobile/tablet devices retain the native app attempt and launcher fallback. Booking persistence, 2.5 second fast-open behavior and duplicate protection remain unchanged.

@@ -1,0 +1,34 @@
+{
+  "baseline": "(1046)-AZOBSS-SOFTWARE-KEY-FULL-EDIT-FIX_20260828.zip",
+  "patch": 1047,
+  "packageVersion": "1.0.1047",
+  "scope": "Admin > Sales & Receipts manual invoice/receipt numbering",
+  "newFormat": {
+    "invoice": "AZI-YYYYMMDD-000001",
+    "receipt": "AZR-YYYYMMDD-000001"
+  },
+  "sequenceBehavior": {
+    "digits": 6,
+    "resetDaily": false,
+    "globalAcrossDates": true,
+    "dateStillEmbedded": true,
+    "invoiceReceiptPairKeepsSameSuffix": true,
+    "legacy4DigitReadable": true,
+    "legacyRecordsNotAutoRenumberedOnNormalEdit": true
+  },
+  "example": [
+    "AZI-20260828-000047",
+    "AZR-20260828-000047",
+    "AZI-20260829-000048"
+  ],
+  "touchedFiles": [
+    "assets/js/azobss-admin-sales-receipts.js",
+    "admin/index.html",
+    "package.json"
+  ],
+  "checks": {
+    "javascriptSyntax": "node --check passed",
+    "nextAfter0047": "AZI-20260829-000048",
+    "adminCacheBuster": "v=1047"
+  }
+}

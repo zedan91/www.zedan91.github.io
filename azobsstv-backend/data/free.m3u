@@ -1,0 +1,82 @@
+#EXTM3U
+# AZOBSSTV v989 - current Mana-Mana VIDEO catalogue fallback.
+# Primary catalogue is fetched dynamically from Mana-Mana /public/channels.
+# This static list mirrors the 26 public video slugs found by Deep Inspector v5.
+
+#EXTINF:-1 tvg-id="101" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/tv1_bckg.png" group-title="Live TV" x-source-page="https://mana2.my/channel/tv1" x-mode="official" x-official-url="https://mana2.my/channel/tv1",TV1
+https://mana2.my/channel/tv1
+
+#EXTINF:-1 tvg-id="102" tvg-logo="https://tv2.rtm.gov.my/assets/img/TV2.png" group-title="Live TV" x-source-page="https://mana2.my/channel/tv2" x-mode="official" x-official-url="https://mana2.my/channel/tv2",TV2
+https://mana2.my/channel/tv2
+
+#EXTINF:-1 tvg-id="110" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_TVOKEY.jpg" group-title="Live TV" x-source-page="https://mana2.my/channel/tv-okey" x-mode="official" x-official-url="https://mana2.my/channel/tv-okey",TV OKEY
+https://mana2.my/channel/tv-okey
+
+#EXTINF:-1 tvg-id="111" tvg-logo="https://rtm-images.glueapi.io/320x0/live_channel/SALURAN_1920x1080px_SUKANRTM.jpg" group-title="Live TV" x-source-page="https://mana2.my/channel/sukan-rtm" x-mode="official" x-official-url="https://mana2.my/channel/sukan-rtm",SUKAN+
+https://mana2.my/channel/sukan-rtm
+
+#EXTINF:-1 tvg-id="123" tvg-logo="https://berita.rtm.gov.my/images/01-homepage/logo-berita.png" group-title="Live TV" x-source-page="https://mana2.my/channel/berita-rtm" x-mode="official" x-official-url="https://mana2.my/channel/berita-rtm",BERITA RTM
+https://mana2.my/channel/berita-rtm
+
+#EXTINF:-1 tvg-id="122" tvg-logo="https://s3.tvstv.my/wp-content/uploads/2024/03/tvs-logo-reduced.png" group-title="Live TV" x-source-page="https://mana2.my/channel/tvs" x-mode="official" x-official-url="https://mana2.my/channel/tvs",TVS
+https://mana2.my/channel/tvs
+
+#EXTINF:-1 tvg-id="114" tvg-logo="https://tvalhijrah.com/wp-content/uploads/2023/04/TV_Alhijrah_logo-1.png" group-title="Live TV" x-source-page="https://mana2.my/channel/tv-alhijrah" x-mode="official" x-official-url="https://mana2.my/channel/tv-alhijrah",TV ALHIJRAH
+https://mana2.my/channel/tv-alhijrah
+
+#EXTINF:-1 tvg-id="sukma-1" tvg-logo="" group-title="Live TV" x-source-page="https://mana2.my/channel/sukma-1" x-mode="official" x-official-url="https://mana2.my/channel/sukma-1",SUKMA 1
+https://mana2.my/channel/sukma-1
+
+#EXTINF:-1 tvg-id="sukma-2" tvg-logo="" group-title="Live TV" x-source-page="https://mana2.my/channel/sukma-2" x-mode="official" x-official-url="https://mana2.my/channel/sukma-2",SUKMA 2
+https://mana2.my/channel/sukma-2
+
+#EXTINF:-1 tvg-id="free-movies" tvg-logo="./assets/channel-icons/free-movies-card.svg" group-title="Live TV" x-source-page="https://mana2.my/channel/free-movies" x-mode="official" x-official-url="https://mana2.my/channel/free-movies",FREE MOVIES
+https://mana2.my/channel/free-movies
+
+#EXTINF:-1 tvg-id="mysport" tvg-logo="./assets/channel-icons/mysports-card.svg" group-title="Live TV" x-source-page="https://mana2.my/channel/mysport" x-mode="official" x-official-url="https://mana2.my/channel/mysport",MySports
+https://mana2.my/channel/mysport
+
+#EXTINF:-1 tvg-id="121" tvg-logo="./assets/channel-icons/bernama-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/bernama" x-mode="official" x-official-url="https://mana2.my/channel/bernama",BERNAMA
+https://mana2.my/channel/bernama
+
+#EXTINF:-1 tvg-id="cna" tvg-logo="./assets/channel-icons/cna-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/cna" x-mode="official" x-official-url="https://mana2.my/channel/cna",CNA
+https://mana2.my/channel/cna
+
+#EXTINF:-1 tvg-id="the-indonesia-channel" tvg-logo="./assets/channel-icons/indonesia-channel-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/the-indonesia-channel" x-mode="official" x-official-url="https://mana2.my/channel/the-indonesia-channel",The Indonesia Channel
+https://mana2.my/channel/the-indonesia-channel
+
+#EXTINF:-1 tvg-id="al-jazeera-english-hd" tvg-logo="./assets/channel-icons/aljazeera-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/al-jazeera-english-hd" x-mode="official" x-official-url="https://mana2.my/channel/al-jazeera-english-hd",Al JAZEERA ENGLISH HD
+https://mana2.my/channel/al-jazeera-english-hd
+
+#EXTINF:-1 tvg-id="arirang" tvg-logo="./assets/channel-icons/arirang-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/arirang" x-mode="official" x-official-url="https://mana2.my/channel/arirang",ARIRANG
+https://mana2.my/channel/arirang
+
+#EXTINF:-1 tvg-id="euronews" tvg-logo="./assets/channel-icons/euronews-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/euronews" x-mode="official" x-official-url="https://mana2.my/channel/euronews",EURONEWS
+https://mana2.my/channel/euronews
+
+#EXTINF:-1 tvg-id="taiwanplus" tvg-logo="./assets/channel-icons/taiwanplus-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/taiwanplus" x-mode="official" x-official-url="https://mana2.my/channel/taiwanplus",TaiwanPlus
+https://mana2.my/channel/taiwanplus
+
+#EXTINF:-1 tvg-id="dw" tvg-logo="" group-title="Live TV" x-source-page="https://mana2.my/channel/dw" x-mode="official" x-official-url="https://mana2.my/channel/dw",DW
+https://mana2.my/channel/dw
+
+#EXTINF:-1 tvg-id="nhk-world" tvg-logo="./assets/channel-icons/nhk-world-card.svg" group-title="Live TV" x-source-page="https://mana2.my/channel/nhk-world" x-mode="official" x-official-url="https://mana2.my/channel/nhk-world",NHK WORLD
+https://mana2.my/channel/nhk-world
+
+#EXTINF:-1 tvg-id="rt-international" tvg-logo="./assets/channel-icons/rt-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/rt-international" x-mode="official" x-official-url="https://mana2.my/channel/rt-international",RT International
+https://mana2.my/channel/rt-international
+
+#EXTINF:-1 tvg-id="al-jazeera-arabic-hd" tvg-logo="./assets/channel-icons/aljazeera-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/al-jazeera-arabic-hd" x-mode="official" x-official-url="https://mana2.my/channel/al-jazeera-arabic-hd",Al JAZEERA ARABIC HD
+https://mana2.my/channel/al-jazeera-arabic-hd
+
+#EXTINF:-1 tvg-id="usim-tv" tvg-logo="./assets/channel-icons/usim-tv-card.svg" group-title="Live TV" x-source-page="https://mana2.my/channel/usim-tv" x-mode="official" x-official-url="https://mana2.my/channel/usim-tv",USIM TV
+https://mana2.my/channel/usim-tv
+
+#EXTINF:-1 tvg-id="225" tvg-logo="./assets/channel-icons/selangor-tv-card.svg" group-title="Live TV" x-source-page="https://mana2.my/channel/selangor-tv" x-mode="official" x-official-url="https://mana2.my/channel/selangor-tv",SELANGOR TV
+https://mana2.my/channel/selangor-tv
+
+#EXTINF:-1 tvg-id="tv-ikim" tvg-logo="./assets/channel-icons/ikim-card.png" group-title="Live TV" x-source-page="https://mana2.my/channel/tv-ikim" x-mode="official" x-official-url="https://mana2.my/channel/tv-ikim",TVIKIM
+https://mana2.my/channel/tv-ikim
+
+#EXTINF:-1 tvg-id="200" tvg-logo="./assets/channel-icons/siara-tv-card.svg" group-title="Live TV" x-source-page="https://mana2.my/channel/siara-tv" x-mode="official" x-official-url="https://mana2.my/channel/siara-tv",SIARA TV
+https://mana2.my/channel/siara-tv

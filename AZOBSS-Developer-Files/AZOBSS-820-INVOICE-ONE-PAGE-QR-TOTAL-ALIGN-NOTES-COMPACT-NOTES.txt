@@ -1,0 +1,8 @@
+AZOBSS Patch 820
+
+1. Places the ToyyibPay QR/payment box on the same horizontal row as the Total Payable box.
+2. Resizes the QR and payment text into a compact left-side panel while retaining amount, Bill Code and payment guidance.
+3. Moves the Notes box directly below the payment summary with reduced spacing.
+4. Allows the shown four-item service invoice and its notes to fit on one A4 page instead of creating a continuation page.
+5. Keeps automatic pagination for unusually long invoices that genuinely cannot fit on one page.
+6. Baseline: patch 819.

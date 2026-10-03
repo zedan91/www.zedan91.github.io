@@ -1,0 +1,13 @@
+AZOBSS Patch 822
+
+Purpose
+- Fix the "RECEIPT NOT SENT" badge being clipped in Admin > Sales & Receipts.
+
+Changes
+- Renders the longer marker as two controlled lines: "! RECEIPT" and "NOT SENT".
+- Gives the Status column slightly more room and reduces Items / Payment by the same amount.
+- Keeps the badge inside the cell using safe right spacing and border-box sizing.
+- Preserves the full border and wording at narrower desktop widths.
+
+Baseline
+- Built directly from patch 821.

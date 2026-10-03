@@ -1,0 +1,10 @@
+AZOBSS Patch 814 — Other Issue Textbox & Form Cleanup
+
+Baseline: (813)-AZOBSS-TEMPAH-SERVIS-IT-DEVICE-TYPE-FIRST-FIELD-LOCK-FIX_20260806.zip
+
+Changes:
+1. The “Masalah lain” checkbox now reveals a dedicated “Nyatakan masalah lain” text box.
+2. The text box is required only while “Masalah lain” is selected and is cleared when deselected.
+3. Removed the separate “Ceritakan masalah dan bila ia mula berlaku” textarea.
+4. Removed the green password/PIN privacy notice requested by the user.
+5. Existing problemDetails field/data compatibility is retained for Service Bookings, WhatsApp, draft invoices and admin records.
