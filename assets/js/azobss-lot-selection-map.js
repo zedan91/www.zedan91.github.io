@@ -32,6 +32,112 @@
     } catch (_) { return Number(amount || 0); }
   }
 
+
+  // v1204: user-facing processing ETA for Lot Kadaster. The first estimate uses
+  // conservative lot-count buckets. Successful jobs are then remembered in this
+  // browser so the displayed average gradually follows the real server speed.
+  const LOT_PROCESSING_STATS_KEY = 'azobssLotProcessingStatsV1204';
+  const LOT_PROCESSING_BUCKETS = [
+    { key: '1-25', min: 1, max: 25, low: 10, high: 25 },
+    { key: '26-100', min: 26, max: 100, low: 20, high: 45 },
+    { key: '101-250', min: 101, max: 250, low: 35, high: 75 },
+    { key: '251-500', min: 251, max: 500, low: 60, high: 120 },
+    { key: '501-1000', min: 501, max: 1000, low: 90, high: 210 },
+    { key: '1001-2000', min: 1001, max: 2000, low: 150, high: 300 },
+    { key: '2001+', min: 2001, max: Infinity, low: 240, high: 480 }
+  ];
+
+  function lotProcessingBucket(lotCount) {
+    const count = Math.max(1, Math.round(Number(lotCount || 1)));
+    return LOT_PROCESSING_BUCKETS.find((row) => count >= row.min && count <= row.max) || LOT_PROCESSING_BUCKETS[LOT_PROCESSING_BUCKETS.length - 1];
+  }
+
+  function loadLotProcessingStats() {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(LOT_PROCESSING_STATS_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (_) { return {}; }
+  }
+
+  function formatProcessingDuration(seconds, compact = false) {
+    const value = Math.max(0, Math.round(Number(seconds || 0)));
+    if (value < 60) {
+      const rounded = Math.max(5, Math.round(value / 5) * 5);
+      return compact ? `${rounded}s` : `${rounded} saat`;
+    }
+    const minutes = Math.floor(value / 60);
+    const remainder = value % 60;
+    if (!remainder || compact) return compact ? `${minutes}m${remainder ? ` ${String(remainder).padStart(2, '0')}s` : ''}` : `${minutes} min`;
+    const roundedSeconds = Math.round(remainder / 10) * 10;
+    if (roundedSeconds >= 60) return `${minutes + 1} min`;
+    return `${minutes} min ${roundedSeconds}s`;
+  }
+
+  function getLotProcessingTiming(lotCount) {
+    const bucket = lotProcessingBucket(lotCount);
+    const stats = loadLotProcessingStats();
+    const samples = Array.isArray(stats[bucket.key])
+      ? stats[bucket.key].map(Number).filter((value) => Number.isFinite(value) && value >= 5 && value <= 1800).slice(-12)
+      : [];
+    if (samples.length) {
+      const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
+      return {
+        bucket: bucket.key,
+        learned: true,
+        sampleCount: samples.length,
+        average,
+        low: Math.max(5, average * 0.72),
+        high: Math.max(10, average * 1.38)
+      };
+    }
+    return {
+      bucket: bucket.key,
+      learned: false,
+      sampleCount: 0,
+      average: (bucket.low + bucket.high) / 2,
+      low: bucket.low,
+      high: bucket.high
+    };
+  }
+
+  function rememberLotProcessingDuration(lotCount, seconds) {
+    const duration = Number(seconds || 0);
+    if (!Number.isFinite(duration) || duration < 5 || duration > 1800) return;
+    try {
+      const bucket = lotProcessingBucket(lotCount);
+      const stats = loadLotProcessingStats();
+      const samples = Array.isArray(stats[bucket.key]) ? stats[bucket.key].slice(-11) : [];
+      samples.push(Number(duration.toFixed(1)));
+      stats[bucket.key] = samples;
+      window.localStorage.setItem(LOT_PROCESSING_STATS_KEY, JSON.stringify(stats));
+    } catch (_) {}
+  }
+
+  function lotProcessingRangeText(timing) {
+    if (!timing) return '';
+    return `${formatProcessingDuration(timing.low)}–${formatProcessingDuration(timing.high)}`;
+  }
+
+  function lotProcessingProgress(jobStatus, elapsedSeconds, timing) {
+    const status = String(jobStatus || '').replace(/^esriJob/i, '').toLowerCase();
+    const elapsed = Math.max(0, Number(elapsedSeconds || 0));
+    const average = Math.max(10, Number(timing && timing.average || 60));
+    let floor = 8;
+    if (/execut/.test(status)) floor = 22;
+    if (/succeed/.test(status)) floor = 90;
+    const timed = Math.round((elapsed / average) * 82);
+    return Math.min(95, Math.max(floor, timed));
+  }
+
+  function lotProcessingRemainingText(elapsedSeconds, timing) {
+    const elapsed = Math.max(0, Number(elapsedSeconds || 0));
+    const lowRemaining = Math.max(0, Number(timing.low || 0) - elapsed);
+    const highRemaining = Math.max(0, Number(timing.high || 0) - elapsed);
+    if (highRemaining <= 0) return 'Melebihi anggaran biasa • masih diproses';
+    if (lowRemaining <= 5) return `Baki anggaran ≤ ${formatProcessingDuration(highRemaining, true)}`;
+    return `Baki anggaran ${formatProcessingDuration(lowRemaining, true)}–${formatProcessingDuration(highRemaining, true)}`;
+  }
+
   function createLotFocusParams(input, productCode, stateCode) {
     const source = input && typeof input === 'object' ? input : {};
     const params = new URLSearchParams();
@@ -124,7 +230,7 @@
       .az-lot-map-add.is-processing{display:grid;grid-template-columns:auto auto;grid-template-areas:"spinner main" "sub sub";align-items:center;justify-content:center;column-gap:8px;row-gap:4px;min-height:58px;padding:7px 12px;line-height:1;text-align:center;white-space:nowrap}
       .az-lot-map-processing-spinner{grid-area:spinner;display:inline-block;width:19px;height:19px;border:2px solid rgba(255,255,255,.30);border-top-color:#fff;border-radius:50%;animation:azLotMapSpin1088 .72s linear infinite}
       .az-lot-map-processing-main{grid-area:main;display:block;font-size:16px;font-weight:900;line-height:1.05;white-space:nowrap}
-      .az-lot-map-processing-sub{grid-area:sub;display:block;margin:0;color:#d8f7eb;font-size:11px;font-weight:700;line-height:1.05;white-space:nowrap}
+      .az-lot-map-processing-sub{grid-area:sub;display:block;max-width:290px;margin:0;color:#d8f7eb;font-size:11px;font-weight:700;line-height:1.15;white-space:normal}
       @keyframes azLotMapSpin1088{to{transform:rotate(360deg)}}
       @media (prefers-reduced-motion:reduce){.az-lot-map-processing-spinner{animation-duration:1.4s}}
       .az-lot-map-add.is-cart-success{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 48px;background:#087f5b;border-color:#5cf2b5;line-height:1.15;text-align:center;cursor:pointer}
@@ -1668,13 +1774,19 @@
         addButton.innerHTML = '<span class="az-lot-map-cart-success-main">Sudah Masuk Troli</span><span class="az-lot-map-cart-success-tick" aria-hidden="true">✓</span><small class="az-lot-map-cart-success-sub">(Sila tekan untuk ke Troli)</small>';
       }
 
-      function setAddButtonProcessing() {
+      function setAddButtonProcessing(details = {}) {
+        const lotCount = Math.max(0, Number(details.lotCount || estimate && estimate.lotCount || 0));
+        const elapsedSeconds = Math.max(0, Number(details.elapsedSeconds || 0));
+        const timing = details.timing || getLotProcessingTiming(lotCount);
+        const jobStatus = String(details.jobStatus || 'esriJobSubmitted');
+        const progress = lotProcessingProgress(jobStatus, elapsedSeconds, timing);
+        const remainingText = lotProcessingRemainingText(elapsedSeconds, timing);
         addButton.classList.remove('is-cart-success');
         addButton.classList.add('is-processing');
         addButton.disabled = true;
         addButton.setAttribute('aria-busy', 'true');
-        addButton.setAttribute('aria-label', 'Sedang Diproses. Masa bergantung pada jumlah lot dan status server peta.');
-        addButton.innerHTML = '<span class="az-lot-map-processing-spinner" aria-hidden="true"></span><span class="az-lot-map-processing-main">Sedang Diproses...</span><small class="az-lot-map-processing-sub">(Masa ikut jumlah lot & server peta)</small>';
+        addButton.setAttribute('aria-label', `Sedang Diproses ${lotCount.toLocaleString('ms-MY')} lot. Progress anggaran ${progress} peratus. ${remainingText}.`);
+        addButton.innerHTML = `<span class="az-lot-map-processing-spinner" aria-hidden="true"></span><span class="az-lot-map-processing-main">Sedang Diproses... ${progress}%</span><small class="az-lot-map-processing-sub">${lotCount.toLocaleString('ms-MY')} lot • ${remainingText}</small>`;
       }
 
       function focusCartPanel() {
@@ -1740,8 +1852,11 @@
           const sourceNotice = source === 'reference'
             ? ` Pemilihan menggunakan ${referenceShape === 'square' ? 'petak' : 'bulatan'} pilihan.`
             : '';
-          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan.${stateNotice}${sourceNotice} Harga berdasarkan saiz kawasan pilihan, bukan garisan syit.`, 'success');
+          const processingTiming = getLotProcessingTiming(estimate.lotCount);
+          const timingLabel = processingTiming.learned ? 'Purata proses berdasarkan rekod sebelum ini' : 'Anggaran awal proses';
+          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan.${stateNotice}${sourceNotice} Harga berdasarkan saiz kawasan pilihan. ${timingLabel}: ${lotProcessingRangeText(processingTiming)}.`, 'success');
         } catch (error) {
+          if (processingUiTimer) window.clearInterval(processingUiTimer);
           if (error && error.name === 'AbortError') return;
           clearSummary();
           setStatus(status, error.message || 'Kawasan pilihan tidak dapat disemak.', 'error');
@@ -1967,8 +2082,38 @@
         addButton.classList.remove('is-cart-success');
         addButton.textContent = 'Mendapatkan lot pilihan...';
         setStatus(status, 'Mendapatkan lot pilihan...', 'loading');
+        let processingUiTimer = 0;
         try {
           operationController = new AbortController();
+          const processingStartedAt = Date.now();
+          const processingLotCount = Math.max(1, Number(estimate.lotCount || 1));
+          const processingTiming = getLotProcessingTiming(processingLotCount);
+          let processingJobStatus = 'esriJobSubmitted';
+          const updateProcessingUi = () => {
+            const elapsedSeconds = Math.max(0, Math.round((Date.now() - processingStartedAt) / 1000));
+            const elapsedText = elapsedSeconds >= 60
+              ? `${Math.floor(elapsedSeconds / 60)}m ${String(elapsedSeconds % 60).padStart(2, '0')}s`
+              : `${elapsedSeconds}s`;
+            const currentJobStatus = String(processingJobStatus || 'esriJobSubmitted').replace(/^esriJob/i, '') || 'Submitted';
+            const progress = lotProcessingProgress(processingJobStatus, elapsedSeconds, processingTiming);
+            const remainingText = lotProcessingRemainingText(elapsedSeconds, processingTiming);
+            setAddButtonProcessing({
+              lotCount: processingLotCount,
+              elapsedSeconds,
+              timing: processingTiming,
+              jobStatus: processingJobStatus
+            });
+            const estimateSource = processingTiming.learned
+              ? `Purata ${processingTiming.sampleCount} proses sebelum ini`
+              : 'Anggaran awal';
+            setStatus(
+              status,
+              `Sedang menyediakan ${processingLotCount.toLocaleString('ms-MY')} lot...\nStatus: ${currentJobStatus} • Progress anggaran ${progress}%\n${estimateSource}: ${lotProcessingRangeText(processingTiming)} • Berlalu ${elapsedText} • ${remainingText}`,
+              'loading'
+            );
+          };
+          updateProcessingUi();
+          processingUiTimer = window.setInterval(updateProcessingUi, 1000);
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);
@@ -1988,19 +2133,9 @@
             throw new Error('ID pilihan Lot Kadaster tidak berjaya diperoleh. Sila cuba semula.');
           }
 
-          const processingStartedAt = Date.now();
+          processingJobStatus = String(prepared.jobStatus || processingJobStatus || 'esriJobSubmitted');
+          updateProcessingUi();
           while (!prepared.ready) {
-            setAddButtonProcessing();
-            const elapsedSeconds = Math.max(0, Math.round((Date.now() - processingStartedAt) / 1000));
-            const elapsedText = elapsedSeconds >= 60
-              ? `${Math.floor(elapsedSeconds / 60)}m ${String(elapsedSeconds % 60).padStart(2, '0')}s`
-              : `${elapsedSeconds}s`;
-            const currentJobStatus = String(prepared.jobStatus || 'esriJobSubmitted').replace(/^esriJob/i, '') || 'Submitted';
-            setStatus(
-              status,
-              `Sedang menyediakan ${Number(prepared.lotCount || estimate.lotCount || 0).toLocaleString('ms-MY')} lot...\nStatus: ${currentJobStatus} • ${elapsedText}`,
-              'loading'
-            );
             await new Promise((resolveDelay, rejectDelay) => {
               const timer = window.setTimeout(resolveDelay, 2000);
               if (operationController && operationController.signal) {
@@ -2027,6 +2162,8 @@
             if (!prepared.selectionToken) {
               throw new Error('Token pilihan Lot Kadaster hilang semasa semakan status. Sila cuba semula.');
             }
+            processingJobStatus = String(prepared.jobStatus || processingJobStatus || 'esriJobExecuting');
+            updateProcessingUi();
           }
 
           if (!/^esriJobSucceeded$/i.test(String(prepared.jobStatus || '')) || !prepared.downloadUrl) {
@@ -2041,12 +2178,15 @@
                 : (confirmation || '')
             ).trim() || confirmationMessage;
           }
+          window.clearInterval(processingUiTimer);
+          rememberLotProcessingDuration(processingLotCount, (Date.now() - processingStartedAt) / 1000);
           setAddButtonSuccess();
           setStatus(status, `✓ ${confirmationMessage} Sila cek di Troli anda. Tekan X apabila selesai.`, 'success');
           // Resolve the caller after the cart is updated, but keep the Leaflet
           // modal alive. The close button will perform cleanup later.
           resolve(prepared);
         } catch (error) {
+          if (processingUiTimer) window.clearInterval(processingUiTimer);
           addButton.disabled = false;
           setAddButtonDefault();
           setStatus(status, error.message || 'Server peta tidak dapat menyediakan pilihan ini.', 'error');
