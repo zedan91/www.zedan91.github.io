@@ -1,4 +1,32 @@
 
+// v1207: AZDM licensing uses the current AZOBSS account and ToyyibPay.
+const {createAzdmHandler}=require('./lib/azobss-azdm');
+async function azdmVerifiedAccount(req) {
+  if(!initFirebaseAdmin()||!firebaseAdmin)return null;
+  const header=String(req.headers.authorization||'');
+  if(!/^Bearer /i.test(header))return null;
+  let decoded;
+  try{decoded=await firebaseAdmin.auth().verifyIdToken(header.slice(7),true);}catch{return null;}
+  const result={uid:String(decoded.uid||''),email:String(decoded.email||'').trim(),emailVerified:decoded.email_verified===true,name:String(decoded.name||''),phone:String(decoded.phone_number||'')};
+  const db=getAzobssBackendDb();
+  if(db&&result.uid){
+    try{
+      const found=await db.collection('users').where('uid','==',result.uid).limit(1).get();
+      found.forEach(doc=>{const profile=doc.data()||{};result.name=result.name||String(profile.displayName||profile.name||profile.username||'');result.phone=result.phone||String(profile.phoneNumber||profile.phone||'');});
+    }catch{/* Firebase token still supplies verified identity; profile is optional. */}
+  }
+  return result;
+}
+const handleAzdm=createAzdmHandler({getIdentity:azdmVerifiedAccount,readBody,send,rateLimit:azRateLimitOrSend});
+const {createAzdmAdminHandler}=require('./lib/azobss-azdm-admin');
+async function azdmAdminIdentity(req) {
+  const verified=await azdmVerifiedAccount(req);
+  if(!verified?.uid)return null;
+  return {...verified,isAdmin:azIdentityTrustedForBackendAdmin({uid:verified.uid,authEmail:verified.email})};
+}
+const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend});
+
+
 function azobssNum(v, fallback){
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -17573,6 +17601,9 @@ async function handler(req, res) {
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
+    if (await handleAzdmAdmin(req,res,parsed)) return;
+    if (await handleAzdm(req,res,parsed)) return;
+
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
     if (pathname === "/api/membership/create-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-membership-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/referral/redeem" && req.method === "POST" && azRateLimitOrSend(req, res, "referral-redeem", 8, 10 * 60 * 1000)) return;

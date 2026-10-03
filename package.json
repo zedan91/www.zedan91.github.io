@@ -1,7 +1,7 @@
 {
   "name": "azobss-docs",
   "description": "AZOBSS documentation, PC services, PA downloader, digital tools, and AutoCAD LISP.",
-  "version": "1.0.1206",
+  "version": "1.0.1208",
   "private": true,
   "homepage": ".",
   "keywords": [
@@ -15,7 +15,8 @@
   "scripts": {
     "start": "node deploy-server.js",
     "check": "node --check deploy-server.js && node --check lib/azobss-lot-cad-converter.js",
-    "libredwg:install": "bash scripts/install-libredwg.sh"
+    "libredwg:install": "bash scripts/install-libredwg.sh",
+    "test:azdm": "node --test tests/azdm-bridge.test.cjs tests/azdm-admin.test.cjs"
   },
   "dependencies": {
     "selfsigned": "^5.5.0",

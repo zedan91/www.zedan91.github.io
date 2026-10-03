@@ -3253,6 +3253,10 @@ html body .downloads-section{
 }
 </style>
 <script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
+
+<!-- AZOBSS v1207: account-based AZDM licensing -->
+<link rel="stylesheet" href="/assets/css/azobss-azdm.css?v=1207">
+<script src="/assets/js/azobss-azdm.js?v=1207" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3413,6 +3417,30 @@ html body .downloads-section{
 </div>
 </div>
 
+
+<section id="azdm-license" aria-labelledby="azdm-title">
+  <div class="azdm-heading"><img src="/assets/images/azdm-logo.svg" alt="" width="60" height="60"><div><h2 id="azdm-title">Lesen AZDM untuk PC anda</h2><span>Guna akaun AZOBSS yang sedia ada</span></div></div>
+  <p>Pilih pakej, bayar melalui ToyyibPay dan terima serial di email akaun anda. Setiap PC mendapat satu serial sendiri.</p>
+  <div class="azdm-prices">
+    <div class="azdm-price">1 Tahun<strong>RM25 <small>setiap PC / tahun</small></strong><small>Lesen bermula selepas bayaran disahkan.</small></div>
+    <div class="azdm-price">Lifetime · 1 PC<strong>RM50</strong><small>Tiada tarikh tamat lesen.</small></div>
+    <div class="azdm-price">Lifetime · 2 PC atau lebih<strong>RM40 <small>setiap PC</small></strong><small>Dalam satu pembelian. 2 PC RM80 · 3 PC RM120.</small></div>
+  </div>
+  <div class="azdm-form">
+    <label>Pakej<select name="azdm-plan"><option value="annual">1 Tahun</option><option value="lifetime" selected>Lifetime</option></select></label>
+    <label>Bilangan PC<input name="azdm-quantity" type="number" inputmode="numeric" value="1" min="1" max="100" step="1"></label>
+    <button type="button" data-azdm-buy disabled>Bayar melalui ToyyibPay</button>
+    <button type="button" data-azdm-signin>Sign in AZOBSS</button>
+  </div>
+  <div class="azdm-summary" data-azdm-summary>1 PC × RM50.00 = RM50.00</div>
+  <p data-azdm-saving>Beli 2 PC atau lebih sekaligus untuk harga RM40 setiap PC.</p>
+  <p>Nama dan email diambil daripada akaun anda. Selepas menerima serial, buka AZDM, masukkan serial dan tekan <b>Activate</b>. Satu serial untuk satu PC aktif.</p>
+  <p data-azdm-message role="status" aria-live="polite"></p>
+  <h3>Perlukan bantuan?</h3>
+  <div class="azdm-contact"><a href="mailto:zedan9107@gmail.com?subject=Support%20AZDM">Email: zedan9107@gmail.com</a><a href="https://wa.me/601135600723?text=Saya%20perlukan%20bantuan%20AZDM." target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">Chat support AZOBSS</a></div>
+  <div class="azdm-orders-head"><h3>Pesanan AZDM saya</h3><button type="button" data-azdm-refresh>Semak pesanan / bayaran</button></div>
+  <div data-azdm-orders>Sign in dan tekan Semak pesanan untuk melihat pembelian akaun anda.</div>
+</section>
 <div class="downloads-grid" id="softwareDownloadsGrid">
 
 </div>
