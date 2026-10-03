@@ -4,7 +4,7 @@
   if(!root)return;
   const $=id=>root.querySelector('#azdm-'+id);
   const tabs=[...document.querySelectorAll('[data-software-key-product]')];
-  let product='surveycad',loaded=false,loading=null,page=0,cursors=[null],next=null,search='';
+  let product='azdm',loaded=false,loading=null,page=0,cursors=[null],next=null,search='';
   let orderPage=0,orderCursors=[null],orderNext=null,serialRecord=null,editing=null,pending=null,generation=0;
   const apiBase='https://azobss-backend.onrender.com/api/azdm/admin/';
   const date=seconds=>seconds?new Date(seconds*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}):'Lifetime';
@@ -127,5 +127,5 @@
   $('orders-previous').addEventListener('click',()=>action(async()=>{const old=orderPage;orderPage--;try{await loadOrders(false);}catch(error){orderPage=old;throw error;}}));
   window.addEventListener('azobss-auth-changed',()=>{generation++;loaded=false;serialRecord=null;$('rows').replaceChildren();$('order-rows').replaceChildren();$('serial-value').value='';root.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());});
   window.addEventListener('pagehide',()=>{serialRecord=null;$('serial-value').value='';});
-  selectProduct('surveycad');updatePages();
+  selectProduct('azdm');updatePages();
 })();

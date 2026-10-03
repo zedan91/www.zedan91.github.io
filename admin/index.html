@@ -2234,7 +2234,7 @@ body[data-dashboard-page="admin"] .topbar{
 </style>
 
 <link rel="stylesheet" href="/assets/css/azobss-azdm-admin.css?v=1209">
-<script src="/assets/js/azobss-azdm-admin.js?v=1209" defer></script>
+<script src="/assets/js/azobss-azdm-admin.js?v=1211" defer></script>
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -2864,10 +2864,10 @@ body[data-dashboard-page="admin"] .topbar{
     <section id="softwarekeys" class="section">
       <h2>🗝️ Software Key</h2>
       <div class="azdm-key-tabs" role="tablist" aria-label="Pilih software">
-        <button id="softwareKeyAzdmTab" type="button" role="tab" aria-controls="azdmAdminPanel" aria-selected="false" tabindex="-1" data-software-key-product="azdm">AZDM</button>
-        <button id="softwareKeySurveycadTab" type="button" role="tab" aria-controls="surveycadKeyPanel" aria-selected="true" data-software-key-product="surveycad">SurveyCAD</button>
+        <button id="softwareKeyAzdmTab" type="button" role="tab" aria-controls="azdmAdminPanel" aria-selected="true" data-software-key-product="azdm">AZDM</button>
+        <button id="softwareKeySurveycadTab" type="button" role="tab" aria-controls="surveycadKeyPanel" aria-selected="false" tabindex="-1" data-software-key-product="surveycad">SurveyCAD</button>
       </div>
-      <div id="surveycadKeyPanel" role="tabpanel" aria-labelledby="softwareKeySurveycadTab">
+      <div id="surveycadKeyPanel" role="tabpanel" aria-labelledby="softwareKeySurveycadTab" hidden>
 
       <p class="az-section-help">Rekod SurveyCAD daripada AZOBSS Installer. Gunakan Edit untuk ubah maklumat pelanggan, PC, System ID, Systemcode, Motherboard ID dan Key Serial; semua maklumat boleh dicari, disusun dan dieksport.</p>
       <div class="card az880-software-key-toolbar-card">
@@ -2905,7 +2905,7 @@ body[data-dashboard-page="admin"] .topbar{
       <nav id="softwareKeyPager" class="az894-software-key-pager" aria-label="Halaman Software Key" hidden></nav>
 
       </div>
-<div id="azdmAdminPanel" role="tabpanel" aria-labelledby="softwareKeyAzdmTab" hidden>
+<div id="azdmAdminPanel" role="tabpanel" aria-labelledby="softwareKeyAzdmTab">
   <div class="azdm-admin-heading"><img src="/assets/images/azdm-logo.svg" alt="" width="44" height="44"><div><h3>AZDM — Pengurusan lesen</h3><p>Serial, penggunaan PC dan pesanan customer dalam admin AZOBSS.</p></div><a class="azdm-admin-source" href="https://azdm-license.zedan9107.workers.dev/admin" target="_blank" rel="noopener">Buka panel asal AZDM ↗</a></div>
   <div id="azdm-notice" class="azdm-admin-notice" role="status" aria-live="polite" hidden></div>
   <div class="azdm-admin-stats"><div class="azdm-admin-stat"><strong>1 PC</strong><small>Bagi setiap serial · Reset untuk pindah PC</small></div><div class="azdm-admin-stat"><strong>6 jam</strong><small>Jadual semakan online</small></div><div class="azdm-admin-stat"><strong>30 hari</strong><small>Offline maksimum, terhad kepada tamat lesen</small></div></div>
