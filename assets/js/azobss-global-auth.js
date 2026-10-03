@@ -1,0 +1,8355 @@
+/* AZOBSS core stability fix 036 */
+
+/* AZOBSS NAVBAR SINGLE OWNER 1065 */
+window.__AZOBSS_NAVBAR_OWNER__='global-auth';
+// v1139: single canonical owner for PA/BM Purchase Records UI/actions.
+window.__AZOBSS_PABM_PURCHASE_UI_OWNER__='global-auth';
+window.__azobssSafeRealEmail = window.__azobssSafeRealEmail || '';
+
+// AZOBSS: Load Google reCAPTCHA in explicit mode so multiple widgets inside the auth modal can be tracked reliably.
+window.__AZOBSS_RECAPTCHA_WIDGETS__ = window.__AZOBSS_RECAPTCHA_WIDGETS__ || [];
+window.azobssRecaptchaReady = function(){
+  try { if (typeof window.renderAzobssRecaptchaWidgets === 'function') window.renderAzobssRecaptchaWidgets(); } catch(e){}
+};
+if(!document.querySelector('script[src*="recaptcha/api.js"]')){const s=document.createElement('script');s.src='https://www.google.com/recaptcha/api.js?render=explicit&onload=azobssRecaptchaReady';s.async=true;s.defer=true;document.head.appendChild(s);}
+
+// AZOBSS FIX 222: hide Google test-key warning strip only. The checkbox remains usable.
+function injectAzobssRecaptchaWarningHideStyle(){
+  try{
+    if(document.getElementById('azobssRecaptchaWarningHideStyle')) return;
+    const style=document.createElement('style');
+    style.id='azobssRecaptchaWarningHideStyle';
+    style.textContent=`
+      .auth-captcha-row{position:relative;display:block;max-width:304px;min-height:78px;overflow:visible;}
+      .auth-captcha-row .g-recaptcha{position:relative;display:block;max-width:304px;min-height:78px;}
+      .auth-captcha-row .g-recaptcha::before{
+        content:"";
+        position:absolute;
+        left:0;
+        top:0;
+        width:304px;
+        max-width:100%;
+        height:18px;
+        background:#f9f9f9;
+        z-index:9;
+        pointer-events:none;
+      }
+      .auth-captcha-row iframe{max-width:100%;}
+    `;
+    document.head.appendChild(style);
+  }catch(e){}
+}
+injectAzobssRecaptchaWarningHideStyle();
+
+
+function getAzobssPhoneDialForInput(input){
+  try {
+    const row = input && input.closest ? input.closest('[data-country-phone]') : null;
+    const hidden = row ? row.querySelector('input[type="hidden"][id$="Dial"]') : null;
+    const dial = String(hidden && hidden.value ? hidden.value : '60').replace(/\D/g, '') || '60';
+    return dial;
+  } catch (e) {
+    return '60';
+  }
+}
+
+function getAzobssMaxLocalDigits(input){
+  // ITU E.164: maximum international phone number length is 15 digits including country code.
+  const dial = getAzobssPhoneDialForInput(input);
+  return Math.max(1, 15 - dial.length);
+}
+
+function getPhoneGuideDigits(value, input){
+  const max = getAzobssMaxLocalDigits(input);
+  let digits = String(value || '').replace(/\D/g, '');
+  const dial = getAzobssPhoneDialForInput(input);
+  // If user pastes a full international number into local box, remove the country code.
+  if (digits.startsWith(dial) && digits.length > dial.length + 3) digits = digits.slice(dial.length);
+  // If user pastes a local Malaysia-style 0 prefix after choosing MY +60, remove only that local trunk 0.
+  if (dial === '60' && digits.startsWith('0') && digits.length > 1) digits = digits.slice(1);
+  return digits.slice(0, max);
+}
+
+function formatPhoneGuide(value, input){
+  const digits = getPhoneGuideDigits(value, input);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return digits.slice(0, 2) + '-' + digits.slice(2);
+  return digits.slice(0, 2) + '-' + digits.slice(2, 6) + ' ' + digits.slice(6);
+}
+
+function countPhoneDigitsBefore(value, pos){
+  return String(value || '').slice(0, Math.max(0, pos || 0)).replace(/\D/g, '').length;
+}
+
+function caretFromPhoneDigitIndex(formatted, digitIndex){
+  if (digitIndex <= 0) return 0;
+  let seen = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (/\d/.test(formatted[i])) {
+      seen++;
+      if (seen >= digitIndex) return i + 1;
+    }
+  }
+  return formatted.length;
+}
+
+function setPhoneValueAndCaret(input, digits, caretDigitIndex){
+  const formatted = formatPhoneGuide(digits, input);
+  input.value = formatted;
+  const caret = caretFromPhoneDigitIndex(formatted, Math.max(0, caretDigitIndex));
+  requestAnimationFrame(() => {
+    try { input.setSelectionRange(caret, caret); } catch (e) {}
+  });
+}
+
+function bindAzobssPhoneDisplayFormatter(root){
+  const scope = root || document;
+  const ids = ['siteSignupPhone', 'adminUserEditPhone', 'profileEditPhone'];
+  ids.forEach((id) => {
+    const input = scope.getElementById ? scope.getElementById(id) : null;
+    if (!input || input.dataset.azobssPhoneFormatter === '1') return;
+    input.dataset.azobssPhoneFormatter = '1';
+    input.placeholder = '10-3560 0723';
+    input.setAttribute('maxlength', String(15));
+
+    input.addEventListener('beforeinput', (event) => {
+      const type = event.inputType;
+      if (type !== 'deleteContentBackward' && type !== 'deleteContentForward') return;
+      const value = input.value || '';
+      const start = input.selectionStart ?? value.length;
+      const end = input.selectionEnd ?? start;
+      const digits = getPhoneGuideDigits(value, input);
+      let startDigit = countPhoneDigitsBefore(value, start);
+      let endDigit = countPhoneDigitsBefore(value, end);
+
+      event.preventDefault();
+
+      if (start !== end) {
+        const nextDigits = digits.slice(0, startDigit) + digits.slice(endDigit);
+        setPhoneValueAndCaret(input, nextDigits, startDigit);
+      } else if (type === 'deleteContentBackward') {
+        if (startDigit <= 0) {
+          setPhoneValueAndCaret(input, digits, 0);
+        } else {
+          const removeIndex = startDigit - 1;
+          const nextDigits = digits.slice(0, removeIndex) + digits.slice(removeIndex + 1);
+          setPhoneValueAndCaret(input, nextDigits, removeIndex);
+        }
+      } else {
+        if (startDigit >= digits.length) {
+          setPhoneValueAndCaret(input, digits, digits.length);
+        } else {
+          const nextDigits = digits.slice(0, startDigit) + digits.slice(startDigit + 1);
+          setPhoneValueAndCaret(input, nextDigits, startDigit);
+        }
+      }
+
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    input.addEventListener('input', () => {
+      const oldValue = input.value || '';
+      const oldCaret = input.selectionStart ?? oldValue.length;
+      const digitIndex = countPhoneDigitsBefore(oldValue, oldCaret);
+      const digits = getPhoneGuideDigits(oldValue, input);
+      setPhoneValueAndCaret(input, digits, digitIndex);
+    });
+
+    input.addEventListener('paste', () => {
+      setTimeout(() => {
+        const digits = getPhoneGuideDigits(input.value, input);
+        setPhoneValueAndCaret(input, digits, digits.length);
+      }, 0);
+    });
+
+    input.addEventListener('blur', () => {
+      input.value = formatPhoneGuide(input.value, input);
+    });
+  });
+}
+
+(function installAzobssPhoneDisplayFormatter(){
+  if (window.__azobssPhoneDisplayFormatterInstalled) return;
+  window.__azobssPhoneDisplayFormatterInstalled = true;
+  document.addEventListener('DOMContentLoaded', () => bindAzobssPhoneDisplayFormatter(document));
+  setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 300);
+  setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 1200);
+  document.addEventListener('click', () => setTimeout(() => bindAzobssPhoneDisplayFormatter(document), 50), true);
+})();
+
+function normalizePhoneNumber(phone, countryCode="+60"){
+  phone=(phone||"").replace(/\s+/g,"").replace(/-/g,"");
+  if(phone.startsWith("+")) return phone;
+  if(phone.startsWith("0")) return countryCode + phone.substring(1);
+  if(phone.startsWith(countryCode.replace("+",""))) return "+"+phone;
+  return countryCode + phone;
+}
+
+// Clean production URLs: /folder/index.html -> /folder/
+(function cleanAzobssIndexHtmlUrl(){
+  try {
+    var path = window.location.pathname || '';
+    if (/\/index\.html$/i.test(path)) {
+      var cleanPath = path.replace(/index\.html$/i, '');
+      window.history.replaceState(null, document.title, cleanPath + window.location.search + (window.location.hash && window.location.hash !== '/' ? window.location.hash : ''));
+    }
+  } catch (e) {}
+})();
+
+// Remove old / hash if user opens/clicks an old cached logo link
+(function(){
+  if (window.location.hash === '/') {
+    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+  }
+})();
+
+// AZOBSS Global Auth (single source of truth for all pages)
+// Use this file on every page: <script type="module" src="/assets/js/azobss-global-auth.js"></script>
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCredential, setPersistence, browserLocalPersistence, inMemoryPersistence, onAuthStateChanged, signOut, updatePassword, updateProfile, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, sendPasswordResetEmail, sendEmailVerification, deleteUser, unlink, GoogleAuthProvider, signInWithPopup, linkWithCredential } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, deleteField, serverTimestamp, collection, addDoc, getDocs, query, where, arrayUnion, onSnapshot, orderBy} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+  authDomain: 'azobss.firebaseapp.com',
+  projectId: 'azobss',
+  storageBucket: 'azobss.firebasestorage.app',
+  messagingSenderId: '159277716405',
+  appId: '1:159277716405:web:17d8924b6b6380e2b77ffc'
+};
+
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// AZOBSS 1081: Google profile completion is one-time; durable phone save + direct subsequent Google sign-in
+const azobssGoogleProvider = new GoogleAuthProvider();
+azobssGoogleProvider.setCustomParameters({prompt:'select_account'});
+let azobssGoogleAuthBusy = false;
+let azobssGooglePendingFirebaseUser = null;
+let azobssGooglePendingProfile = null;
+let azobssGooglePendingNeedsUsername = false;
+let azobssGooglePendingCredential = null;
+let azobssGooglePendingTempUid = '';
+let azobssGooglePendingLinkMode = false;
+let azobssGooglePendingMatchedUsername = '';
+let azobssGooglePendingRepairMatch = null;
+let azobssGooglePendingRepairIdentity = null;
+let azobssGoogleRepairBusy = false;
+let azobssLinkVerifierAuth = null;
+
+
+function addStyle() {
+  if (document.getElementById('azobss-global-auth-style')) return;
+  const style = document.createElement('style');
+  style.id = 'azobss-global-auth-style';
+  style.textContent = `
+.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;}
+#siteAuthModal.auth-modal{align-items:center!important;padding:22px!important;}
+#siteAuthModal .auth-modal-card{margin:auto!important;font-size:16px!important;line-height:1.35!important;}
+/* AZOBSS 647: Keep login/register typography identical on every page.
+   Some product pages define generic label/input font sizes that previously
+   leaked into the shared auth modal. */
+#siteAuthModal .auth-modal-top h3{font-size:20px!important;line-height:1.2!important;}
+#siteAuthModal .auth-modal-form label{font-size:13px!important;line-height:1.35!important;}
+#siteAuthModal .auth-modal-form input{font-size:15px!important;line-height:1.2!important;}
+#siteAuthModal .auth-modal-form .btn{font-size:14px!important;line-height:1.2!important;}
+#siteAuthModal .auth-switch-note,#siteAuthModal .auth-switch-note button{font-size:14px!important;line-height:1.4!important;}
+#siteAuthModal .request-error,#siteAuthModal .auth-reset-note{font-size:13px!important;line-height:1.4!important;}
+
+.auth-modal-card{position:relative;width:min(520px,calc(100vw - 28px));margin:0 auto;padding:26px 22px;border:1px solid rgba(35,211,114,.32);border-radius:12px;background:#1d2a3d;color:#fff;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.auth-modal-top h3{margin:0;font-size:20px;font-weight:800;}
+.auth-close-btn{width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.auth-close-btn:hover{background:rgba(255,255,255,.2);}
+.auth-modal-form{display:grid;gap:14px;}
+.auth-modal-form[hidden]{display:none!important;}
+.auth-modal-form label{display:grid;gap:8px;font-weight:800;color:#eaf2ff;}
+.auth-modal-form input{width:100%;box-sizing:border-box;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:14px;font:inherit;outline:none;}
+.auth-modal-form input:focus{border-color:#fff;}
+.auth-modal-form .btn{border:0;border-radius:10px;background:#2f6bed;color:#fff;padding:14px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.6);}
+.auth-modal-form .btn.signup{background:#22c55e;color:#fff;}
+.auth-modal-form .request-error{min-height:18px;margin:0;color:#ff7b7b;font-weight:700;}
+.auth-switch-note{margin:0;color:#c7d2e5;text-align:center;}
+.auth-switch-note button{border:0;background:transparent;color:#62e6a5;font-weight:800;cursor:pointer;}
+.phone-input-row{display:grid;grid-template-columns:minmax(118px,auto) 1fr;gap:8px;align-items:center;}
+.country-code-button{height:48px;border:1px solid rgba(211,223,240,.35);border-radius:10px;background:#0d1628;color:#fff;padding:0 12px;font-weight:800;cursor:pointer;white-space:normal;}
+.country-code-button::after{content:'⌄';margin-left:7px;font-size:13px;color:#cbd5e1;}
+.country-combo{position:relative;}
+.country-code-menu{position:absolute;left:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 44px);padding:8px;border:1px solid rgba(211,223,240,.32);border-radius:12px;background:#081326;box-shadow:0 18px 45px rgba(0,0,0,.45);display:none;z-index:10020;}
+.country-combo.is-open .country-code-menu{display:block;}
+.country-menu-search{width:100%;box-sizing:border-box;margin-bottom:7px;border:1px solid rgba(211,223,240,.35);border-radius:9px;background:#0d1628;color:#fff;padding:10px 11px;font:inherit;outline:none;}
+.country-menu-options{max-height:220px;overflow:auto;display:grid;gap:4px;}
+.country-code-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;border-radius:8px;background:transparent;color:#eaf2ff;padding:9px 10px;text-align:left;font:inherit;font-weight:800;cursor:pointer;}
+.country-code-option:hover,.country-code-option:focus{background:rgba(34,197,94,.16);outline:none;}
+.country-option-dial{color:#62e6a5;font-weight:900;}
+.phone-number-wrap{position:relative;}
+/* Phone layout like Android/Google Contacts: country code stays in the country box,
+   the phone input shows local number only. Firebase still saves full +countrycode number. */
+.phone-prefix{display:none!important;}
+.phone-number-wrap input{padding-left:14px!important;}
+body.is-authenticated .site-auth-actions{display:none!important;}
+body.is-authenticated .market-user-tools{display:flex!important;}
+body.is-authenticated .user-menu{display:flex!important;}
+body:not(.is-authenticated) .market-user-tools{display:none!important;}
+.market-user-tools{align-items:center!important;}
+.user-menu{position:relative!important;}
+.user-menu.is-open .user-dropdown{display:block!important;}
+.user-dropdown{z-index:3300!important;}
+.market-nav a.market-nav-active{background:#22c55e!important;border-color:#22c55e!important;color:#052e16!important;text-shadow:none!important;box-shadow:0 0 15px rgba(34,197,94,.34),inset 0 0 0 1px rgba(255,255,255,.12)!important;}
+.az-admin-user-edit-btn{border:0;border-radius:9px;background:#2f6bed;color:#fff;padding:9px 14px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.55);}
+.az-admin-user-edit-btn:hover{filter:brightness(1.08);}
+.az-admin-modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.az-admin-modal-actions .btn.secondary{background:#64748b;}
+
+.password-toggle-wrap{position:relative;display:block;width:100%;}
+.password-toggle-wrap input{padding-right:48px!important;box-sizing:border-box;width:100%;}
+.password-eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#9ca3af;font-size:20px;cursor:pointer;padding:4px;line-height:1;z-index:5;}
+.password-eye-btn:hover{color:#fff;}
+
+.forgot-password-box{margin-top:10px;padding:12px;border:1px solid rgba(88,166,255,.35);border-radius:14px;background:rgba(15,23,42,.35);display:grid;gap:10px;}
+.forgot-password-box[hidden]{display:none!important;}
+.forgot-password-box .btn.secondary{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;}
+.auth-reset-note{font-size:12px;line-height:1.45;color:#a9c7e8;margin:0;}
+.auth-google-divider{display:flex;align-items:center;gap:10px;color:#8291a8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
+.auth-google-divider::before,.auth-google-divider::after{content:'';height:1px;flex:1;background:rgba(203,213,225,.18);}
+.auth-google-btn{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid rgba(203,213,225,.32);border-radius:10px;background:#fff;color:#172033;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.32);}
+.auth-google-btn:hover{background:#f8fafc;border-color:#fff;}
+.auth-google-btn:disabled{opacity:.65;cursor:wait;}
+.auth-google-g{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;font:900 18px/1 Arial,sans-serif;color:#4285f4;background:#fff;}
+.google-profile-copy{margin:-4px 0 4px;color:#b7c5d9;font-size:13px;line-height:1.5;}
+.google-profile-identity{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(203,213,225,.18);border-radius:10px;background:rgba(8,19,38,.58);}
+.google-profile-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#0d1628;border:1px solid rgba(203,213,225,.25);}
+.google-profile-avatar-fallback{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#1d4ed8;color:#fff;font-weight:900;}
+.google-profile-identity strong{display:block;color:#fff;font-size:13px;}
+.google-profile-identity small{display:block;margin-top:2px;color:#93a4bc;font-size:11px;word-break:break-all;}
+.google-profile-actions{display:grid;grid-template-columns:1fr auto;gap:9px;}
+.google-profile-actions .btn.secondary{background:#475569;color:#fff;}
+.google-link-toggle{width:100%;padding:0;border:0;background:transparent;color:#7dd3fc;font:800 12px/1.4 inherit;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.google-link-toggle:hover{color:#bae6fd;}
+.google-link-panel{display:grid;gap:10px;padding:12px;border:1px solid rgba(56,189,248,.26);border-radius:10px;background:rgba(8,47,73,.18);}
+.google-link-panel[hidden]{display:none!important;}
+.google-link-note{margin:0;color:#a9c7e8;font-size:11px;line-height:1.45;}
+.google-link-panel label{margin:0;}
+.google-repair-panel{display:grid;gap:10px;padding:12px;border:1px solid rgba(34,197,94,.30);border-radius:10px;background:rgba(6,78,59,.18);}
+.google-repair-panel[hidden]{display:none!important;}
+.google-repair-copy{margin:0;color:#c7f9df;font-size:12px;line-height:1.5;}
+.google-repair-panel .auth-google-btn{min-height:46px;}
+#siteGoogleProfileModal .auth-modal-card{width:min(480px,calc(100vw - 28px));}
+`;
+  document.head.appendChild(style);
+}
+
+
+function setupPasswordVisibilityToggles() {
+  const passwordIds = [
+    'siteLoginPassword',
+    'siteSignupPassword',
+    'profileCurrentPassword',
+    'profileNewPassword',
+    'profileConfirmPassword',
+    'siteGoogleLinkPassword'
+  ];
+
+  passwordIds.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.passwordEyeReady === '1') return;
+
+    const wrapper = document.createElement('span');
+    wrapper.className = 'password-toggle-wrap';
+
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'password-eye-btn';
+    btn.setAttribute('aria-label', 'Show password');
+    btn.title = 'Show password';
+    btn.textContent = '👁';
+
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      btn.title = show ? 'Hide password' : 'Show password';
+      btn.textContent = show ? '🙈' : '👁';
+      input.focus();
+    });
+
+    wrapper.appendChild(btn);
+    input.dataset.passwordEyeReady = '1';
+  });
+}
+
+function injectModal() {
+  if (document.getElementById('siteAuthModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div class="auth-modal" id="siteAuthModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteAuthTitle">
+    <div class="auth-modal-top">
+      <h3 id="siteAuthTitle">Sign in</h3>
+      <button class="auth-close-btn" id="siteAuthClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="auth-modal-form" id="siteSignInForm">
+      <label for="siteLoginUsername">Username / Email
+        <input id="siteLoginUsername" autocomplete="username" placeholder="Enter your username or email" required type="text">
+      </label>
+      <label for="siteLoginPassword">Password
+        <input id="siteLoginPassword" autocomplete="current-password" placeholder="Password" required type="password">
+      </label>
+      <p class="request-error" id="siteLoginError"></p>
+      <button class="btn" type="submit">Login</button>
+      <div class="auth-google-divider"><span>or</span></div>
+      <button class="auth-google-btn" id="siteGoogleSignInButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Continue with Google</span></button>
+      <p class="auth-switch-note"><button id="siteForgotPasswordButton" type="button">Forgot password?</button></p>
+      <div class="forgot-password-box" id="siteForgotPasswordBox" hidden>
+        <label for="siteForgotPasswordInput">Reset password by username or email
+          <input id="siteForgotPasswordInput" autocomplete="username email" placeholder="Enter username or email" type="text">
+        </label>
+        <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
+        <button class="btn secondary" id="siteSendPasswordResetButton" type="button">Send Reset Link</button>
+        <p class="auth-reset-note">Enter your AZOBSS username or registered email. A password reset link will be sent to the registered account email. If the account currently uses Google only, sign in with Google first and use Settings → Add Password Sign-In.</p>
+      </div>
+      <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
+    </form>
+    <form class="auth-modal-form" id="siteSignUpForm" hidden>
+      <label for="siteSignupUsername">Username / Email
+        <input id="siteSignupUsername" autocomplete="username" placeholder="Choose a username" required type="text">
+      </label>
+      <label for="siteSignupPassword">Password
+        <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 8 characters" minlength="8" required type="password">
+      </label>
+      <label for="siteSignupPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="siteSignup" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <label for="siteSignupEmail">Email
+        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
+      </label>
+      <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
+      <p class="request-error" id="siteSignupError"></p>
+      <button class="btn secondary" id="siteEnablePasswordWithGoogleButton" type="button" hidden>Verify Google & Enable Password Login</button>
+      <button class="btn signup" type="submit">Create Account</button>
+      <div class="auth-google-divider"><span>or</span></div>
+      <button class="auth-google-btn" id="siteGoogleSignUpButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Sign up with Google</span></button>
+      <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
+  setupPasswordVisibilityToggles();
+}
+
+function injectGoogleProfileModal(){
+  if(document.getElementById('siteGoogleProfileModal')) return;
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`
+<div class="auth-modal" id="siteGoogleProfileModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteGoogleProfileTitle">
+    <div class="auth-modal-top">
+      <h3 id="siteGoogleProfileTitle">Complete Profile</h3>
+    </div>
+    <form class="auth-modal-form" id="siteGoogleProfileForm">
+      <p class="google-profile-copy" id="siteGoogleProfileCopy">Google sign-in was successful. Add your phone number once to complete your AZOBSS profile.</p>
+      <div class="google-profile-identity">
+        <div class="google-profile-avatar-fallback" id="siteGoogleAvatarFallback">G</div>
+        <img class="google-profile-avatar" id="siteGoogleAvatar" alt="Google profile" hidden>
+        <div><strong id="siteGoogleDisplayName">Google User</strong><small id="siteGoogleEmail"></small></div>
+      </div>
+      <div class="google-repair-panel" id="siteGoogleRepairPanel" hidden>
+        <p class="google-repair-copy" id="siteGoogleRepairText"></p>
+        <button class="auth-google-btn" id="siteGoogleRepairButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Continue with Google Again</span></button>
+      </div>
+      <button class="google-link-toggle" id="siteGoogleLinkToggle" type="button" aria-expanded="false">Already have an AZOBSS account? Link existing account</button>
+      <div class="google-link-panel" id="siteGoogleLinkPanel" hidden>
+        <p class="google-link-note">For security, enter the username and password of your existing AZOBSS account. Google will only be linked after the password is verified.</p>
+        <label for="siteGoogleUsername">AZOBSS Username
+          <input id="siteGoogleUsername" autocomplete="username" placeholder="Enter existing AZOBSS username" type="text">
+        </label>
+        <label for="siteGoogleLinkPassword">AZOBSS Password
+          <input id="siteGoogleLinkPassword" autocomplete="current-password" placeholder="Enter existing AZOBSS password" type="password">
+        </label>
+      </div>
+      <label for="siteGooglePhone">Phone Number
+        <div class="phone-input-row" data-country-phone="siteGoogle" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteGooglePhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteGoogleDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <p class="request-error" id="siteGoogleProfileError"></p>
+      <div class="google-profile-actions">
+        <button class="btn signup" type="submit">Save & Continue</button>
+        <button class="btn secondary" id="siteGoogleProfileCancel" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
+  setupPasswordVisibilityToggles();
+}
+
+function injectAdminUserEditModal() {
+  if (document.getElementById('adminUserEditModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div class="auth-modal" id="adminUserEditModal" aria-hidden="true">
+  <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminUserEditTitle">
+    <div class="auth-modal-top">
+      <h3 id="adminUserEditTitle">Edit Registered User</h3>
+      <button class="auth-close-btn" id="adminUserEditClose" type="button" aria-label="Close">×</button>
+    </div>
+    <form class="auth-modal-form" id="adminUserEditForm">
+      <input id="adminUserEditDocId" type="hidden">
+      <label for="adminUserEditUsername">Username / Email / Name
+        <input id="adminUserEditUsername" placeholder="Username" required type="text">
+      </label>
+      <label for="adminUserEditPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="adminUserEdit" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="adminUserEditPhone" inputmode="tel" placeholder="10-3560 0723" type="tel"><input id="adminUserEditDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <label for="adminUserEditEmail">Contact Email
+        <input id="adminUserEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email">
+      </label>
+      <label for="adminUserEditRole">Account Role
+        <select id="adminUserEditRole">
+          <option value="user">User</option>
+          <option value="staff">Staff</option>
+          <option value="semiAdmin">Manager</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </label>
+      <label for="adminUserEditPaAccess">Allow PA/BM Access
+        <select id="adminUserEditPaAccess">
+          <option value="yes">Yes - allow PA/BM tab</option>
+          <option value="no">No - hide PA/BM tab</option>
+        </select>
+      </label>
+      <p class="request-error" id="adminUserEditError"></p>
+      <div class="az-admin-modal-actions">
+        <button class="btn signup" type="submit">Save User</button>
+        <button class="btn secondary" id="adminUserEditCancel" type="button">Cancel</button>
+      </div>
+      <p class="auth-switch-note" style="text-align:left">Admin can edit profile records here. Password reset should be done using the reset-password flow.</p>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+
+const $ = (id) => document.getElementById(id);
+window.__AZOBSS_MAIN_AUTH_HANDLER_ACTIVE__ = true;
+function normalizeUsername(value){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
+function buildUserEmail(usernameKey){return `${usernameKey}@azobss.local`;}
+
+/* AZOBSS FIX: Never create duplicate username from email prefix when an existing profile owns the email. */
+async function findExistingUsernameByEmail(email){
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if(!normalizedEmail || typeof getDocs !== 'function' || typeof collection !== 'function' || typeof query !== 'function' || typeof where !== 'function') return '';
+  try{
+    const qs = await getDocs(query(collection(db, 'users'), where('email', '==', normalizedEmail)));
+    if(!qs.empty){
+      const d = qs.docs[0];
+      const data = d.data() || {};
+      return normalizeUsername(data.usernameKey || data.username || data.name || d.id || '');
+    }
+  }catch(e){ console.warn('AZOBSS email owner lookup skipped:', e); }
+  try{
+    const qs = await getDocs(query(collection(db, 'users'), where('authEmail', '==', normalizedEmail)));
+    if(!qs.empty){
+      const d = qs.docs[0];
+      const data = d.data() || {};
+      return normalizeUsername(data.usernameKey || data.username || data.name || d.id || '');
+    }
+  }catch(e){ console.warn('AZOBSS authEmail owner lookup skipped:', e); }
+  return '';
+}
+
+
+function renderAzobssRecaptchaWidgets(){
+  const api = window.grecaptcha;
+  if(!api || typeof api.render !== 'function') return;
+  document.querySelectorAll('.g-recaptcha').forEach((el)=>{
+    if(el.dataset.azobssWidgetId) return;
+    try{
+      const widgetId = api.render(el, {
+        sitekey: el.dataset.sitekey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+        callback: window.azobssCaptchaOk,
+        'expired-callback': window.azobssCaptchaExpired,
+        'error-callback': window.azobssCaptchaExpired
+      });
+      el.dataset.azobssWidgetId = String(widgetId);
+      window.__AZOBSS_RECAPTCHA_WIDGETS__.push(widgetId);
+    }catch(e){
+      // If Google already rendered it, keep the form usable instead of blocking the user.
+      console.warn('AZOBSS reCAPTCHA render skipped:', e?.message || e);
+    }
+  });
+}
+window.renderAzobssRecaptchaWidgets = renderAzobssRecaptchaWidgets;
+
+function isAzobssCaptchaVerified(scope){
+  const root = scope && scope.querySelector ? scope : document;
+
+  // Compatibility with older/fake checkbox versions if the baseline still contains them.
+  const legacyCheck = root.querySelector('input[type="checkbox"][id*="Captcha"], input[type="checkbox"][id*="captcha"], input[type="checkbox"][name*="captcha" i]');
+  if(legacyCheck) return legacyCheck.checked === true;
+
+  // Real Google reCAPTCHA widgets. Check only widgets inside the active form/box first.
+  try{
+    const api = window.grecaptcha;
+    if(api && typeof api.getResponse === 'function'){
+      renderAzobssRecaptchaWidgets();
+      const widgets = Array.from(root.querySelectorAll('.g-recaptcha[data-azobss-widget-id]'));
+      for(const el of widgets){
+        const id = Number(el.dataset.azobssWidgetId);
+        if(api.getResponse(id)) return true;
+      }
+      // Fallback for auto-rendered widgets / older builds.
+      if(api.getResponse()) return true;
+    }
+  }catch(e){
+    console.warn('AZOBSS captcha check skipped:', e?.message || e);
+  }
+  // Small grace for Google callback/UI paint timing right after user ticks the checkbox.
+  if(Date.now() - (window.__AZOBSS_CAPTCHA_LAST_OK__ || 0) < 120000) return true;
+  return false;
+}
+
+function resetAzobssCaptcha(scope){
+  try{
+    const api = window.grecaptcha;
+    if(!api || typeof api.reset !== 'function') return;
+    const root = scope && scope.querySelector ? scope : document;
+    root.querySelectorAll('.g-recaptcha[data-azobss-widget-id]').forEach((el)=>{
+      const id = Number(el.dataset.azobssWidgetId);
+      if(Number.isFinite(id)) api.reset(id);
+    });
+  }catch(e){}
+}
+
+window.isAzobssCaptchaVerified = isAzobssCaptchaVerified;
+window.resetAzobssCaptcha = resetAzobssCaptcha;
+window.azobssCaptchaOk = function(token){
+  window.__AZOBSS_CAPTCHA_LAST_OK__ = Date.now();
+  ['siteSignupError','siteLoginError'].forEach((id)=>{
+    const el = document.getElementById(id);
+    if(el && /confirm you are not a robot/i.test(el.textContent || '')) el.textContent = '';
+  });
+};
+window.azobssCaptchaExpired = function(){ window.__AZOBSS_CAPTCHA_LAST_OK__ = 0; };
+
+const AZOBSS_USERNAME_AUTH_COLLECTION = 'usernameAuthEmails';
+async function getAuthEmailForUsername(usernameKey){
+  const key = normalizeUsername(usernameKey);
+  if(!key) return '';
+
+  // IMPORTANT FIX:
+  // Do NOT trust localStorage first. Old builds stored username@azobss.local there,
+  // which breaks username login even when Firestore has the real Gmail.
+  const localKey = 'azobssAuthEmailMap:' + key;
+
+  async function readFirestoreMapping(){
+    try{
+      const lookupSnap = await getDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key));
+      if(lookupSnap.exists()){
+        const data = lookupSnap.data() || {};
+        const email = String(data.email || data.authEmail || data.contactEmail || '').trim().toLowerCase();
+        if(email && email.includes('@') && !email.endsWith('@azobss.local')) return email;
+        if(email && email.includes('@')) return email;
+      }
+    }catch(e){
+      console.warn('AZOBSS username auth lookup failed:', e?.code || e?.message || e);
+    }
+    return '';
+  }
+
+  async function readUserProfileEmail(){
+    try{
+      const userSnap = await getDoc(doc(db, 'users', key));
+      if(userSnap.exists()){
+        const data = userSnap.data() || {};
+        const email = String(data.authEmail || data.email || data.contactEmail || '').trim().toLowerCase();
+        if(email && email.includes('@') && !email.endsWith('@azobss.local')){
+          try{ localStorage.setItem(localKey, email); }catch(_){}
+          try{ await saveUsernameAuthEmail(key, email, data.uid || ''); }catch(_){}
+          return email;
+        }
+        if(email && email.includes('@')) return email;
+      }
+    }catch(e){
+      console.warn('AZOBSS users email lookup failed:', e?.code || e?.message || e);
+    }
+    return '';
+  }
+
+  const mappedEmail = await readFirestoreMapping();
+  if(mappedEmail && !mappedEmail.endsWith('@azobss.local')) return mappedEmail;
+
+  const profileEmail = await readUserProfileEmail();
+  if(profileEmail && !profileEmail.endsWith('@azobss.local')) return profileEmail;
+
+  // Only use local cache after Firestore. This prevents stale wrong username@azobss.local mapping.
+  try{
+    const localEmail = String(localStorage.getItem(localKey) || '').trim().toLowerCase();
+    if(localEmail && localEmail.includes('@') && !localEmail.endsWith('@azobss.local')) return localEmail;
+  }catch(_){}
+
+  return mappedEmail || profileEmail || '';
+}
+
+async function saveUsernameAuthEmail(usernameKey, email, uid){
+  const key = normalizeUsername(usernameKey);
+  const authEmail = String(email || '').trim().toLowerCase();
+  if(!key || !authEmail || !authEmail.includes('@')) return;
+  try{
+    await setDoc(doc(db, AZOBSS_USERNAME_AUTH_COLLECTION, key), {
+      username: key,
+      usernameKey: key,
+      email: authEmail,
+      authEmail,
+      contactEmail: authEmail,
+      uid: uid || null,
+      updatedAt: serverTimestamp()
+    }, {merge:true});
+    try{ localStorage.setItem('azobssAuthEmailMap:' + key, authEmail); }catch(_){}
+  }catch(e){
+    console.warn('AZOBSS username auth email save failed:', e?.code || e?.message || e);
+  }
+}
+async function migrateUsernameAuthLookupForAdmin(){
+  try{
+    const saved = getSavedUser && getSavedUser();
+    if(!saved || String(saved.email || '').toLowerCase() !== 'zedan91@azobss.local') return;
+    const snap = await getDocs(collection(db, 'users'));
+    const jobs = [];
+    snap.forEach((d)=>{
+      const data = d.data() || {};
+      let usernameKey = normalizeUsername(data.usernameKey || d.id);
+      const email = String(data.authEmail || data.email || '').trim().toLowerCase();
+      if(usernameKey && email && email.includes('@')) jobs.push(saveUsernameAuthEmail(usernameKey, email, data.uid || null));
+    });
+    await Promise.all(jobs.slice(0, 200));
+  }catch(e){
+    console.warn('AZOBSS username auth lookup migration skipped:', e?.code || e?.message || e);
+  }
+}
+
+function cleanPhone(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^60/,'').replace(/^0+/,'');}
+const AZOBSS_COUNTRY_DIAL_CODES = [
+  ["🇲🇾", "Malaysia", "60"],
+  ["🇸🇬", "Singapore", "65"],
+  ["🇮🇩", "Indonesia", "62"],
+  ["🇧🇳", "Brunei", "673"],
+  ["🇹🇭", "Thailand", "66"],
+  ["🇵🇭", "Philippines", "63"],
+  ["🇻🇳", "Vietnam", "84"],
+  ["🇨🇳", "China", "86"],
+  ["🇭🇰", "Hong Kong", "852"],
+  ["🇹🇼", "Taiwan", "886"],
+  ["🇯🇵", "Japan", "81"],
+  ["🇰🇷", "South Korea", "82"],
+  ["🇮🇳", "India", "91"],
+  ["🇵🇰", "Pakistan", "92"],
+  ["🇧🇩", "Bangladesh", "880"],
+  ["🇦🇺", "Australia", "61"],
+  ["🇳🇿", "New Zealand", "64"],
+  ["🇬🇧", "United Kingdom", "44"],
+  ["🇺🇸", "United States", "1"],
+  ["🇨🇦", "Canada", "1"],
+  ["🇸🇦", "Saudi Arabia", "966"],
+  ["🇦🇪", "United Arab Emirates", "971"],
+  ["🇦🇫", "Afghanistan", "93"],
+  ["🇦🇱", "Albania", "355"],
+  ["🇩🇿", "Algeria", "213"],
+  ["🇦🇸", "American Samoa", "1684"],
+  ["🇦🇴", "Angola", "244"],
+  ["🇦🇮", "Anguilla", "1264"],
+  ["🇦🇬", "Antigua and Barbuda", "1268"],
+  ["🇦🇷", "Argentina", "54"],
+  ["🇦🇲", "Armenia", "374"],
+  ["🇦🇼", "Aruba", "297"],
+  ["🇦🇹", "Austria", "43"],
+  ["🇦🇿", "Azerbaijan", "994"],
+  ["🇧🇭", "Bahrain", "973"],
+  ["🇧🇧", "Barbados", "1246"],
+  ["🇧🇾", "Belarus", "375"],
+  ["🇧🇪", "Belgium", "32"],
+  ["🇧🇿", "Belize", "501"],
+  ["🇧🇯", "Benin", "229"],
+  ["🇧🇲", "Bermuda", "1441"],
+  ["🇧🇹", "Bhutan", "975"],
+  ["🇧🇴", "Bolivia", "591"],
+  ["🇧🇦", "Bosnia and Herzegovina", "387"],
+  ["🇧🇼", "Botswana", "267"],
+  ["🇧🇷", "Brazil", "55"],
+  ["🇮🇴", "British Indian Ocean Territory", "246"],
+  ["🇧🇬", "Bulgaria", "359"],
+  ["🇧🇫", "Burkina Faso", "226"],
+  ["🇧🇮", "Burundi", "257"],
+  ["🇰🇭", "Cambodia", "855"],
+  ["🇨🇲", "Cameroon", "237"],
+  ["🇨🇻", "Cape Verde", "238"],
+  ["🇰🇾", "Cayman Islands", "1345"],
+  ["🇨🇫", "Central African Republic", "236"],
+  ["🇹🇩", "Chad", "235"],
+  ["🇨🇱", "Chile", "56"],
+  ["🇨🇽", "Christmas Island", "61"],
+  ["🇨🇨", "Cocos (Keeling) Islands", "61"],
+  ["🇨🇴", "Colombia", "57"],
+  ["🇰🇲", "Comoros", "269"],
+  ["🇨🇰", "Cook Islands", "682"],
+  ["🇨🇷", "Costa Rica", "506"],
+  ["🇭🇷", "Croatia", "385"],
+  ["🇨🇺", "Cuba", "53"],
+  ["🇨🇾", "Cyprus", "357"],
+  ["🇨🇿", "Czech Republic", "420"],
+  ["🇨🇩", "Democratic Republic of the Congo", "243"],
+  ["🇩🇰", "Denmark", "45"],
+  ["🇩🇯", "Djibouti", "253"],
+  ["🇩🇲", "Dominica", "1767"],
+  ["🇩🇴", "Dominican Republic", "1809"],
+  ["🇩🇴", "Dominican Republic", "1829"],
+  ["🇩🇴", "Dominican Republic", "1849"],
+  ["🇹🇱", "East Timor", "670"],
+  ["🇪🇨", "Ecuador", "593"],
+  ["🇪🇬", "Egypt", "20"],
+  ["🇸🇻", "El Salvador", "503"],
+  ["🇬🇶", "Equatorial Guinea", "240"],
+  ["🇪🇷", "Eritrea", "291"],
+  ["🇪🇪", "Estonia", "372"],
+  ["🇪🇹", "Ethiopia", "251"],
+  ["🇫🇰", "Falkland Islands", "500"],
+  ["🇫🇴", "Faroe Islands", "298"],
+  ["🇫🇲", "Federated States of Micronesia", "691"],
+  ["🇫🇯", "Fiji", "679"],
+  ["🇫🇮", "Finland", "358"],
+  ["🇫🇷", "France", "33"],
+  ["🇬🇫", "French Guiana", "594"],
+  ["🇵🇫", "French Polynesia", "689"],
+  ["🇬🇦", "Gabon", "241"],
+  ["🇬🇪", "Georgia", "995"],
+  ["🇩🇪", "Germany", "49"],
+  ["🇬🇭", "Ghana", "233"],
+  ["🇬🇮", "Gibraltar", "350"],
+  ["🇬🇷", "Greece", "30"],
+  ["🇬🇱", "Greenland", "299"],
+  ["🇬🇩", "Grenada", "1473"],
+  ["🇬🇵", "Guadeloupe", "590"],
+  ["🇬🇺", "Guam", "1671"],
+  ["🇬🇹", "Guatemala", "502"],
+  ["🇬🇬", "Guernsey", "44"],
+  ["🇬🇳", "Guinea", "224"],
+  ["🇬🇼", "Guinea-Bissau", "245"],
+  ["🇬🇾", "Guyana", "592"],
+  ["🇭🇹", "Haiti", "509"],
+  ["🇭🇳", "Honduras", "504"],
+  ["🇭🇺", "Hungary", "36"],
+  ["🇮🇸", "Iceland", "354"],
+  ["🇮🇷", "Iran", "98"],
+  ["🇮🇶", "Iraq", "964"],
+  ["🇮🇪", "Ireland", "353"],
+  ["🇮🇲", "Isle of Man", "44"],
+  ["🇮🇱", "Israel", "972"],
+  ["🇮🇹", "Italy", "39"],
+  ["🇨🇮", "Ivory Coast", "225"],
+  ["🇯🇲", "Jamaica", "1876"],
+  ["🇯🇪", "Jersey", "44"],
+  ["🇯🇴", "Jordan", "962"],
+  ["🇰🇿", "Kazakhstan", "76"],
+  ["🇰🇿", "Kazakhstan", "77"],
+  ["🇰🇪", "Kenya", "254"],
+  ["🇰🇮", "Kiribati", "686"],
+  ["🇰🇼", "Kuwait", "965"],
+  ["🇰🇬", "Kyrgyzstan", "996"],
+  ["🇱🇦", "Laos", "856"],
+  ["🇱🇻", "Latvia", "371"],
+  ["🇱🇧", "Lebanon", "961"],
+  ["🇱🇸", "Lesotho", "266"],
+  ["🇱🇷", "Liberia", "231"],
+  ["🇱🇾", "Libya", "218"],
+  ["🇱🇮", "Liechtenstein", "423"],
+  ["🇱🇹", "Lithuania", "370"],
+  ["🇱🇺", "Luxembourg", "352"],
+  ["🇲🇴", "Macau", "853"],
+  ["🇲🇬", "Madagascar", "261"],
+  ["🇲🇼", "Malawi", "265"],
+  ["🇲🇻", "Maldives", "960"],
+  ["🇲🇱", "Mali", "223"],
+  ["🇲🇹", "Malta", "356"],
+  ["🇲🇭", "Marshall Islands", "692"],
+  ["🇲🇶", "Martinique", "596"],
+  ["🇲🇷", "Mauritania", "222"],
+  ["🇲🇺", "Mauritius", "230"],
+  ["🇾🇹", "Mayotte", "262"],
+  ["🇲🇽", "Mexico", "52"],
+  ["🇲🇩", "Moldova", "373"],
+  ["🇲🇨", "Monaco", "377"],
+  ["🇲🇳", "Mongolia", "976"],
+  ["🇲🇸", "Montserrat", "1664"],
+  ["🇲🇦", "Morocco", "212"],
+  ["🇲🇿", "Mozambique", "258"],
+  ["🇳🇦", "Namibia", "264"],
+  ["🇳🇷", "Nauru", "674"],
+  ["🇳🇵", "Nepal", "977"],
+  ["🇳🇱", "Netherlands", "31"],
+  ["🇳🇨", "New Caledonia", "687"],
+  ["🇳🇮", "Nicaragua", "505"],
+  ["🇳🇪", "Niger", "227"],
+  ["🇳🇬", "Nigeria", "234"],
+  ["🇳🇺", "Niue", "683"],
+  ["🇳🇫", "Norfolk Island", "672"],
+  ["🇰🇵", "North Korea", "850"],
+  ["🇲🇵", "Northern Mariana Islands", "1670"],
+  ["🇳🇴", "Norway", "47"],
+  ["🇴🇲", "Oman", "968"],
+  ["🇵🇼", "Palau", "680"],
+  ["🇵🇦", "Panama", "507"],
+  ["🇵🇬", "Papua New Guinea", "675"],
+  ["🇵🇾", "Paraguay", "595"],
+  ["🇵🇪", "Peru", "51"],
+  ["🇵🇳", "Pitcairn Islands", "64"],
+  ["🇵🇱", "Poland", "48"],
+  ["🇵🇹", "Portugal", "351"],
+  ["🇵🇷", "Puerto Rico", "1787"],
+  ["🇵🇷", "Puerto Rico", "1939"],
+  ["🇶🇦", "Qatar", "974"],
+  ["🇲🇰", "Republic of Macedonia", "389"],
+  ["🇨🇬", "Republic of the Congo", "242"],
+  ["🇷🇴", "Romania", "40"],
+  ["🇷🇺", "Russia", "7"],
+  ["🇷🇼", "Rwanda", "250"],
+  ["🇷🇪", "Réunion", "262"],
+  ["🇸🇭", "Saint Helena", "290"],
+  ["🇰🇳", "Saint Kitts and Nevis", "1869"],
+  ["🇱🇨", "Saint Lucia", "1758"],
+  ["🇵🇲", "Saint Pierre and Miquelon", "508"],
+  ["🇻🇨", "Saint Vincent and the Grenadines", "1784"],
+  ["🇼🇸", "Samoa", "685"],
+  ["🇸🇲", "San Marino", "378"],
+  ["🇸🇳", "Senegal", "221"],
+  ["🇷🇸", "Serbia", "381"],
+  ["🇸🇨", "Seychelles", "248"],
+  ["🇸🇱", "Sierra Leone", "232"],
+  ["🇸🇰", "Slovakia", "421"],
+  ["🇸🇮", "Slovenia", "386"],
+  ["🇸🇧", "Solomon Islands", "677"],
+  ["🇸🇴", "Somalia", "252"],
+  ["🇿🇦", "South Africa", "27"],
+  ["🇬🇸", "South Georgia", "500"],
+  ["🇸🇸", "South Sudan", "211"],
+  ["🇪🇸", "Spain", "34"],
+  ["🇱🇰", "Sri Lanka", "94"],
+  ["🇸🇩", "Sudan", "249"],
+  ["🇸🇷", "Suriname", "597"],
+  ["🇸🇯", "Svalbard and Jan Mayen", "4779"],
+  ["🇸🇿", "Swaziland", "268"],
+  ["🇸🇪", "Sweden", "46"],
+  ["🇨🇭", "Switzerland", "41"],
+  ["🇸🇾", "Syria", "963"],
+  ["🇸🇹", "São Tomé and Príncipe", "239"],
+  ["🇹🇯", "Tajikistan", "992"],
+  ["🇹🇿", "Tanzania", "255"],
+  ["🇧🇸", "The Bahamas", "1242"],
+  ["🇬🇲", "The Gambia", "220"],
+  ["🇹🇬", "Togo", "228"],
+  ["🇹🇰", "Tokelau", "690"],
+  ["🇹🇴", "Tonga", "676"],
+  ["🇹🇹", "Trinidad and Tobago", "1868"],
+  ["🇹🇳", "Tunisia", "216"],
+  ["🇹🇷", "Turkey", "90"],
+  ["🇹🇲", "Turkmenistan", "993"],
+  ["🇹🇻", "Tuvalu", "688"],
+  ["🇺🇬", "Uganda", "256"],
+  ["🇺🇦", "Ukraine", "380"],
+  ["🇺🇾", "Uruguay", "598"],
+  ["🇺🇿", "Uzbekistan", "998"],
+  ["🇻🇺", "Vanuatu", "678"],
+  ["🇻🇪", "Venezuela", "58"],
+  ["🇼🇫", "Wallis and Futuna", "681"],
+  ["🇪🇭", "Western Sahara", "212"],
+  ["🇾🇪", "Yemen", "967"],
+  ["🇿🇲", "Zambia", "260"],
+  ["🇿🇼", "Zimbabwe", "263"]
+];
+function getCountryByDial(dial){return AZOBSS_COUNTRY_DIAL_CODES.find(c=>c[2]===String(dial||'').replace(/[^0-9]/g,'')) || AZOBSS_COUNTRY_DIAL_CODES[0];}
+function setPhoneDial(prefix, dial){
+  const row=document.querySelector(`[data-country-phone="${prefix}"]`); if(!row) return;
+  const country=getCountryByDial(dial);
+  const hidden=$(prefix+'Dial'); if(hidden) hidden.value=country[2];
+  const btn=row.querySelector('[data-country-button]'); if(btn) btn.textContent=`${country[0]} +${country[2]}`;
+  const pre=row.querySelector('[data-phone-prefix]'); if(pre) pre.textContent=`+${country[2]}`;
+}
+function normalizeAzobssPhone(value, fallbackDial='60'){
+  const dial=String(fallbackDial||'60').replace(/[^0-9]/g,'') || '60';
+  let raw=String(value||'').trim();
+  if(!raw) return '';
+  const hadPlus=/^\s*\+/.test(raw);
+  let digits=raw.replace(/[^0-9]/g,'');
+  if(!digits) return '';
+  if(hadPlus) return '+' + digits;
+  if(digits.startsWith('00')) return '+' + digits.slice(2);
+  if(digits.startsWith(dial)) return '+' + digits;
+  if(digits.startsWith('0')) return '+' + dial + digits.replace(/^0+/,'');
+  return '+' + dial + digits;
+}
+function getPhoneWithDial(prefix){
+  const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
+  return normalizeAzobssPhone($(prefix+'Phone')?.value||'', dial);
+}
+
+function getSignupPhoneWithDial(){
+  // AZOBSS FIX: register phone input has changed names across builds.
+  // Read from all possible signup phone inputs, then save one normalized E.164 number.
+  const possiblePrefixes = ['siteSignup','signup','register','siteRegister'];
+  for(const prefix of possiblePrefixes){
+    const input = $(prefix+'Phone');
+    if(input && String(input.value||'').replace(/\D/g,'')){
+      const dial=String($(prefix+'Dial')?.value||'60').replace(/[^0-9]/g,'') || '60';
+      return normalizeAzobssPhone(input.value, dial);
+    }
+  }
+  const input = document.querySelector('#siteSignupPhone,#signupPhone,#registerPhone,#siteRegisterPhone,input[name="signupPhone"],input[name="registerPhone"],input[name="phone"],input[name="phoneNumber"]');
+  if(input && String(input.value||'').replace(/\D/g,'')){
+    const row = input.closest?.('[data-country-phone]');
+    const hidden = row?.querySelector?.('input[type="hidden"][id$="Dial"]');
+    const dial=String(hidden?.value||'60').replace(/[^0-9]/g,'') || '60';
+    return normalizeAzobssPhone(input.value, dial);
+  }
+  return '';
+}
+
+function mergePhonePreserve(currentPhone, newPhone){
+  const next = normalizeAzobssPhone(newPhone || '');
+  if(next) return next;
+  return normalizeAzobssPhone(currentPhone || '');
+}
+function splitPhoneToDialLocal(value){
+  const digits=String(value||'').replace(/[^0-9]/g,'');
+  const sorted=[...AZOBSS_COUNTRY_DIAL_CODES].sort((a,b)=>b[2].length-a[2].length);
+  const found=sorted.find(c=>digits.startsWith(c[2]) && digits.length>c[2].length+3);
+  if(found) return {dial:found[2], local:digits.slice(found[2].length).replace(/^0+/,'')};
+  return {dial:'60', local:digits.replace(/^60/,'').replace(/^0+/,'')};
+}
+function setupCountryPhoneSelectors(root=document){
+  root.querySelectorAll('[data-country-phone]').forEach(row=>{
+    if(row.dataset.countryReady==='1') return; row.dataset.countryReady='1';
+    const prefix=row.dataset.countryPhone;
+    const btn=row.querySelector('[data-country-button]');
+    const combo=row.querySelector('.country-combo');
+    const search=row.querySelector('[data-country-search]');
+    const options=row.querySelector('[data-country-options]');
+    const render=(q='')=>{
+      if(!options) return; const query=String(q).trim().toLowerCase();
+      options.innerHTML=AZOBSS_COUNTRY_DIAL_CODES.filter(c=>!query || c.join(' ').toLowerCase().includes(query) || ('+'+c[2]).includes(query)).map(c=>`<button class="country-code-option" type="button" data-dial="${c[2]}"><span>${c[0]} ${c[1]}</span><span class="country-option-dial">+${c[2]}</span></button>`).join('');
+    };
+    render(); setPhoneDial(prefix,row.dataset.defaultDial||'60');
+    btn?.addEventListener('click',()=>{ combo?.classList.toggle('is-open'); if(combo?.classList.contains('is-open')){ render(search?.value||''); setTimeout(()=>search?.focus(),0); } });
+    search?.addEventListener('input',()=>render(search.value));
+    options?.addEventListener('click',(event)=>{ const opt=event.target.closest('[data-dial]'); if(!opt) return; setPhoneDial(prefix,opt.dataset.dial); combo?.classList.remove('is-open'); });
+  });
+}
+document.addEventListener('click',(event)=>{ if(!event.target.closest('.country-combo')) document.querySelectorAll('.country-combo.is-open').forEach(el=>el.classList.remove('is-open')); });
+function buildInviteCode(usernameKey){return `AZ${String(usernameKey||'USER').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,6)}`;}
+function initials(name){return String(name||'AZ').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0).toUpperCase()).join('')||'AZ';}
+
+
+/* AZOBSS NAVBAR USERNAME LOCK FIX 20260624
+   Keep the top navbar showing the official AZOBSS username only.
+   Do not let Firebase/Gmail displayName or email prefix overwrite it after auth/profile renders. */
+function azobssIsEmailLike(value){ return /@/.test(String(value || '')); }
+function azobssUsernameCandidate(value){
+  const raw = String(value || '').trim();
+  if(!raw || azobssIsEmailLike(raw)) return '';
+  const key = normalizeUsername(raw);
+  // Avoid storing obvious human display names / random labels as the navbar username.
+  if(!key || key === 'user' || key === 'guest') return '';
+  return key;
+}
+function azobssReadUserStorageValue(){
+  return safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
+    safeJson(localStorage.getItem('azobssCurrentUser')) ||
+    safeJson(sessionStorage.getItem('azobssUser')) ||
+    safeJson(localStorage.getItem('azobssUser')) || {};
+}
+function azobssLockStorageKeys(user={}){
+  const uid = String(user.uid || '').trim();
+  const email = String(user.authEmail || user.email || '').trim().toLowerCase();
+  return {
+    uidKey: uid ? 'azobssUsernameLock:uid:' + uid : '',
+    emailKey: email ? 'azobssUsernameLock:email:' + email : '',
+    legacyEmailKey: email ? 'azobssSignupUsernameByEmail:' + email : ''
+  };
+}
+function azobssResolveUsername(user={}){
+  const direct = [user.usernameKey, user.username, user.userName, user.id]
+    .map(azobssUsernameCandidate).find(Boolean);
+  const keys = azobssLockStorageKeys(user);
+  const fromLock = [
+    keys.uidKey ? localStorage.getItem(keys.uidKey) : '',
+    keys.emailKey ? localStorage.getItem(keys.emailKey) : '',
+    keys.legacyEmailKey ? localStorage.getItem(keys.legacyEmailKey) : ''
+  ].map(azobssUsernameCandidate).find(Boolean);
+  const saved = azobssReadUserStorageValue();
+  const sameSaved = saved && (
+    (user.uid && saved.uid && String(user.uid) === String(saved.uid)) ||
+    (String(user.email || user.authEmail || '').trim().toLowerCase() && String(saved.email || saved.authEmail || '').trim().toLowerCase() === String(user.email || user.authEmail || '').trim().toLowerCase())
+  );
+  const fromSaved = sameSaved ? [saved.usernameKey, saved.username, saved.userName, saved.id]
+    .map(azobssUsernameCandidate).find(Boolean) : '';
+  const resolved = direct || fromLock || fromSaved || '';
+  if(resolved){
+    try{
+      if(keys.uidKey) localStorage.setItem(keys.uidKey, resolved);
+      if(keys.emailKey) localStorage.setItem(keys.emailKey, resolved);
+      if(keys.legacyEmailKey) localStorage.setItem(keys.legacyEmailKey, resolved);
+      localStorage.setItem('azobssUsernameLock:last', resolved);
+    }catch(_e){}
+    try{ window.azobssCurrentUsername = resolved; }catch(_e){}
+  }
+  return resolved;
+}
+function azobssNormalizeSavedUser(user={}){
+  if(!user || typeof user !== 'object') return user;
+  const key = azobssResolveUsername(user);
+  if(!key) return user;
+  return {...user, usernameKey:key, username:key, name:key, displayName:key};
+}
+function azobssApplyNavbarUsernameLock(user){
+  const key = azobssResolveUsername(user || getSavedUser?.() || {});
+  if(!key) return '';
+  const nameEl = document.getElementById('signedInName');
+  const avatarEl = document.getElementById('userAvatar');
+  if(nameEl && nameEl.textContent !== key){
+    nameEl.dataset.azobssUsernameLocked = '1';
+    nameEl.textContent = key;
+  }
+  if(avatarEl){
+    avatarEl.textContent = initials(key);
+    avatarEl.dataset.azobssUsernameLocked = '1';
+  }
+  return key;
+}
+function azobssInstallNavbarUsernameGuard(){
+  const nameEl = document.getElementById('signedInName');
+  if(!nameEl || nameEl.dataset.azobssGuardReady === '1') return;
+  nameEl.dataset.azobssGuardReady = '1';
+  const observer = new MutationObserver(()=>{
+    const saved = getSavedUser?.() || {};
+    const key = azobssResolveUsername(saved);
+    if(key && nameEl.textContent !== key){
+      requestAnimationFrame(()=>azobssApplyNavbarUsernameLock(saved));
+    }
+  });
+  observer.observe(nameEl, {childList:true, characterData:true, subtree:true});
+  azobssApplyNavbarUsernameLock(getSavedUser?.() || {});
+}
+window.azobssResolveUsername = azobssResolveUsername;
+window.azobssApplyNavbarUsernameLock = azobssApplyNavbarUsernameLock;
+function safeJson(raw){try{return JSON.parse(raw||'null');}catch{return null;}}
+function clearSavedUser(){try{localStorage.removeItem('azobssUser');sessionStorage.removeItem('azobssUser');}catch(e){}}
+function saveUser(user){
+  const normalizedUser = azobssNormalizeSavedUser(user || {});
+  const value = JSON.stringify(normalizedUser);
+  sessionStorage.setItem('azobssCurrentUser', value);
+  localStorage.setItem('azobssCurrentUser', value);
+  sessionStorage.setItem('azobssLoggedIn', '1');
+  localStorage.setItem('azobssLoggedIn', '1');
+  window.dispatchEvent(new Event('storage'));
+  setTimeout(()=>azobssApplyNavbarUsernameLock(normalizedUser), 0);
+}
+function clearUser(silent=false){
+  ['azobssCurrentUser','azobssUser','azobssLoggedIn'].forEach((key)=>{
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
+  });
+  if(!silent) window.dispatchEvent(new Event('storage'));
+}
+
+let azobssLogoutInProgress = false;
+async function azobssLogoutOnce(){
+  if(azobssLogoutInProgress) return;
+  azobssLogoutInProgress = true;
+  window.__AZOBSS_LOGGING_OUT__ = true;
+  try{
+    const logoutUser = getSavedUser();
+    if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
+    await removeOnlineUser(logoutUser);
+    document.querySelectorAll('.user-menu.is-open').forEach(el=>{
+      el.classList.remove('is-open');
+      el.setAttribute('aria-expanded','false');
+    });
+    clearUser(true);
+    try{
+      [
+        'azobssCurrentUser','azobssUser','azobssProfile','azobss_auth_user',
+        'azobssLoggedIn','azobss_admin_role_cache','azobss_staff_role_cache'
+      ].forEach(k=>{
+        try{ localStorage.removeItem(k); }catch(e){}
+        try{ sessionStorage.removeItem(k); }catch(e){}
+      });
+      try{ window.azCurrentUser = undefined; }catch(e){}
+      try{ window.dispatchEvent(new Event('storage')); }catch(e){}
+      try{ window.dispatchEvent(new Event('azobss-auth-changed')); }catch(e){}
+    }catch(e){}
+    try{
+      document.documentElement.setAttribute('data-azobss-pre-auth','0');
+      document.documentElement.setAttribute('data-azobss-pre-pabm','0');
+      document.documentElement.setAttribute('data-azobss-pre-publicpa','1');
+      document.documentElement.removeAttribute('data-azobss-nav-synced');
+    }catch(_e){}
+    syncHeader(null);
+    // Do not let storage/admin render loops run during logout. Redirect once, quickly.
+    const redirectTimer = setTimeout(()=>{ window.location.replace('/'); }, 120);
+    try{
+      await Promise.race([
+        signOut(auth),
+        new Promise(resolve=>setTimeout(resolve, 900))
+      ]);
+    }catch(_e){}
+    clearTimeout(redirectTimer);
+  }finally{
+    window.location.replace('/');
+  }
+}
+window.azobssLogoutUser = azobssLogoutOnce;
+window.addEventListener('beforeunload', ()=>{ try{ if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer); }catch(_e){} });
+function getSavedUser(){
+  const saved = safeJson(sessionStorage.getItem('azobssCurrentUser')) ||
+    safeJson(localStorage.getItem('azobssCurrentUser')) ||
+    safeJson(sessionStorage.getItem('azobssUser')) ||
+    safeJson(localStorage.getItem('azobssUser'));
+  return saved ? azobssNormalizeSavedUser(saved) : saved;
+}
+
+// Expose auth helpers for legacy admin panels in index.html and PA-BM/index.html.
+window.getSavedUser = getSavedUser;
+window.hasSavedLogin = function(){ return !!getSavedUser(); };
+window.azobssIsAdminUser = isAzobssAdmin;
+window.azobssHasPaBmAccess = hasPaBmTabAccess;
+function fieldValue(...ids){
+  for (const id of ids) {
+    const el = $(id);
+    if (el) return el.value || '';
+  }
+  return '';
+}
+
+function normalizeUserMenu() {
+  const dropdown = $('userDropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = `
+    
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+    <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
+    
+    <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
+    <button class="user-dropdown-item" id="logoutButton" type="button" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button>`;
+}
+
+function bindUserDropdownActions() {
+  const menu = document.getElementById('userMenu') || document.querySelector('.user-menu');
+  const dropdown = document.getElementById('userDropdown') || document.querySelector('.user-dropdown');
+
+  // Important: dropdown item clicks must not be swallowed by the parent user menu toggle.
+  dropdown?.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
+
+  document.getElementById('profileSettingsButton')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    document.querySelectorAll('.user-menu.is-open').forEach(el => {
+      el.classList.remove('is-open');
+      el.setAttribute('aria-expanded', 'false');
+    });
+    if (typeof openProfileSettings === 'function') openProfileSettings();
+  });
+
+  document.getElementById('logoutButton')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof azobssLogoutOnce === 'function') azobssLogoutOnce();
+  });
+
+  dropdown?.querySelector('a[href="/#purchases"]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    menu?.classList.remove('is-open');
+    menu?.setAttribute('aria-expanded', 'false');
+  });
+
+  dropdown?.querySelector('a[href="/Bookmarks/"]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    menu?.classList.remove('is-open');
+    menu?.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function normalizePath(pathname) {
+  return String(pathname || '/')
+    .toLowerCase()
+    .replace(/\/index\.html$/, '/')
+    .replace(/\/+$/, '/');
+}
+
+function getActiveNavPath() {
+  const path = normalizePath(location.pathname);
+  if (path === '/') return '';
+  if (path.includes('/pa-bm/')) return '/pa-bm/';
+  if (path.includes('/software-tools/')) return '/software-tools/';
+  if (path.includes('/cad-tools-&-resources/') || path.includes('/cad-tools-%26-resources/')) return '/cad-tools-&-resources/';
+  if (path.includes('/affiliate-shop/')) return '/affiliate-shop/';
+  if (path.includes('/tempah-website/')) return '/tempah-website/';
+  if (path.includes('/lucky-draw/')) return '/lucky-draw/';
+  if (path.includes('/tools/')) return '/tools/';
+  return '';
+}
+
+function syncActiveNav() {
+  const activePath = getActiveNavPath();
+  document.querySelectorAll('.market-nav a').forEach((link) => {
+    link.classList.remove('market-nav-primary', 'is-active', 'market-nav-active');
+    if (!activePath) return;
+
+    let linkPath = '';
+    try {
+      linkPath = normalizePath(new URL(link.getAttribute('href') || '', location.href).pathname);
+    } catch {
+      linkPath = '';
+    }
+
+    if (linkPath.includes(activePath)) {
+      link.classList.add('market-nav-active');
+    }
+  });
+}
+
+function injectProfileSettingsModal() {
+  if (document.getElementById('profileSettingsModal')) return;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+<div aria-hidden="true" class="auth-modal" id="profileSettingsModal">
+  <div aria-labelledby="profileSettingsTitle" aria-modal="true" class="auth-modal-card" role="dialog">
+    <div class="auth-modal-top">
+      <h3 id="profileSettingsTitle">Edit Profile</h3>
+      <button aria-label="Close" class="auth-close-btn" id="profileSettingsClose" type="button">×</button>
+    </div>
+    <form class="auth-modal-form" id="profileSettingsForm">
+      <label for="profileEditName">Username / Email / Name<input id="profileEditName" placeholder="Username" required type="text"></label>
+      <label for="profileEditPhone">Phone Number
+        <div class="phone-input-row" data-country-phone="profileEdit" data-default-dial="60">
+          <div class="country-combo">
+            <button class="country-code-button" type="button" data-country-button>🇲🇾 +60</button>
+            <div class="country-code-menu" data-country-menu>
+              <input class="country-menu-search" data-country-search placeholder="Search country / code" type="search">
+              <div class="country-menu-options" data-country-options></div>
+            </div>
+          </div>
+          <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="profileEditPhone" inputmode="tel" placeholder="10-3560 0723" type="tel"><input id="profileEditDial" type="hidden" value="60"></div>
+        </div>
+      </label>
+      <label for="profileEditEmail">Contact Email<input id="profileEditEmail" inputmode="email" placeholder="Example: name@email.com" type="email"></label>
+      
+      <div class="profile-password-box" aria-label="Membership">
+        <p class="profile-password-title">Membership</p>
+        <p class="profile-password-help">Beli pakej Membership untuk dapat diskaun pembelian Software dan CAD Tools mengikut tempoh pakej. Membership tidak membuka akses PA/BM.</p>
+        <div id="profileMembershipStatus" class="auth-reset-note">No active Membership.</div>
+        <div id="profileMembershipPackages" style="display:grid;gap:10px;margin-top:10px"></div>
+      </div>
+      <div class="profile-password-box" aria-label="Redeem Invite Code">
+        <p class="profile-password-title">Redeem Invite Code</p>
+        <p class="profile-password-help">Kongsi invite link kamu. Bila pengguna baru berjaya register dan redeem code, kamu dapat Referral Credit one-off untuk pendaftaran itu. Invite Code tidak membuka PA/BM.</p>
+        <div id="profileReferralOwn" class="auth-reset-note">Loading your Invite Code...</div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px">
+          <label for="profileReferralLink" style="flex:1;min-width:220px">Your Invite Link<input id="profileReferralLink" readonly type="text"></label>
+          <button class="btn secondary" id="profileCopyReferralLinkButton" type="button">Copy Link</button>
+        </div>
+        <label for="profileReferralRedeemCode">Invite Code<input id="profileReferralRedeemCode" autocomplete="off" placeholder="Enter invite code" type="text"></label>
+        <button class="btn secondary" id="profileRedeemReferralCodeButton" type="button">Redeem Invite Code</button>
+        <div id="profileReferralStatus" class="auth-reset-note"></div>
+      </div>
+      <div class="profile-password-box" id="profilePasswordBox" aria-label="Password Sign-In">
+        <p class="profile-password-title" id="profilePasswordTitle">Reset Password</p>
+        <p class="profile-password-help" id="profilePasswordHelp">For security, enter your current password first, then set a new password.</p>
+        <label for="profileCurrentPassword" id="profileCurrentPasswordLabel">Current Password<input id="profileCurrentPassword" autocomplete="current-password" placeholder="Current password" type="password"></label>
+        <label for="profileNewPassword">New Password<input id="profileNewPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters" type="password"></label>
+        <label for="profileConfirmPassword">Confirm New Password<input id="profileConfirmPassword" autocomplete="new-password" minlength="8" placeholder="Re-enter new password" type="password"></label>
+        <button class="btn secondary" id="profileResetPasswordButton" type="button">Reset Password</button>
+      </div>
+      <p class="request-error" id="profileSettingsError"></p>
+      <div class="profile-settings-actions">
+        <button class="btn" id="profileSettingsSaveButton" type="submit">Save Changes</button>
+        <button class="btn" id="profileSettingsCancelButton" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>`;
+  document.body.appendChild(wrap.firstElementChild);
+  setupCountryPhoneSelectors(document);
+  setupPasswordVisibilityToggles();
+}
+
+const AZOBSS_ADMIN_USERS = ['zedan91','zedan9107'];
+const AZOBSS_ADMIN_EMAILS = ['zedan91@azobss.local','zedan9107@gmail.com'];
+const AZOBSS_PA_MEMBER_CODE = 'ZX6186'; // legacy historical value only; never grants access in v1128+
+function getUserKey(user){ return String(user?.usernameKey || user?.username || user?.name || (user?.email ? String(user.email).split('@')[0] : '') || '').trim().toLowerCase(); }
+function isAzobssAdmin(user){
+  const key = getUserKey(user);
+  const role = String(user?.role || '').trim().toLowerCase();
+  const email = String(user?.email || user?.authEmail || '').trim().toLowerCase();
+  return !!(user && (role === 'admin' || AZOBSS_ADMIN_USERS.includes(key) || AZOBSS_ADMIN_EMAILS.includes(email)));
+}
+function normalizePaMemberCode(value){
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+function getSignupInviteCodeValue(){
+  const selectors = [
+    '#siteSignupInviteCode',
+    '#signupInviteCode',
+    '#signupMemberCode',
+    '#memberInviteCode',
+    '[name="inviteCode"]',
+    '[name="memberCode"]',
+    '[data-invite-code-input]',
+    'input[placeholder*="Invite Code" i]',
+    'input[placeholder*="member code" i]'
+  ];
+  for (const selector of selectors) {
+    try {
+      const el = document.querySelector(selector);
+      if (el && String(el.value || '').trim()) return normalizePaMemberCode(el.value);
+    } catch (_) {}
+  }
+  try {
+    const labels = Array.from(document.querySelectorAll('label'));
+    for (const label of labels) {
+      if (/invite code|member code/i.test(label.textContent || '')) {
+        const el = label.querySelector('input') || document.getElementById(label.getAttribute('for') || '');
+        if (el && String(el.value || '').trim()) return normalizePaMemberCode(el.value);
+      }
+    }
+  } catch (_) {}
+  return '';
+}
+
+function isTruthyPaBmValue(value){
+  if(value === true || value === 1) return true;
+  const text = String(value ?? '').trim().toLowerCase();
+  return ['true','yes','y','1','allow','allowed','on','enabled','enable'].includes(text);
+}
+function isFalseyPaBmValue(value){
+  if(value === false || value === 0) return true;
+  const text = String(value ?? '').trim().toLowerCase();
+  return ['false','no','n','0','off','disabled','disable','hide'].includes(text);
+}
+function hasExplicitAdminPaBmDecision(user){
+  const u = user || {};
+  return isTruthyPaBmValue(u.adminPaBmAllowed) || isFalseyPaBmValue(u.adminPaBmAllowed);
+}
+function hasAdminPaBmOverride(user){
+  const u = user || {};
+  // v1130: an explicit adminPaBmAllowed value is itself an Admin Dashboard decision.
+  // This keeps older manually-approved accounts working even if an old profile is missing
+  // adminPaBmOverride / paBmManagedBy metadata.
+  return hasExplicitAdminPaBmDecision(u) || u.adminPaBmOverride === true || String(u.paBmManagedBy || '').toLowerCase() === 'admin';
+}
+function getAdminPaBmAllowed(user){
+  const u = user || {};
+  if(!hasAdminPaBmOverride(u)) return null;
+  // v1130: explicit Admin Dashboard allow/deny always wins over every legacy flag.
+  if(hasExplicitAdminPaBmDecision(u)) return isTruthyPaBmValue(u.adminPaBmAllowed);
+  const keys = [
+    'paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
+    'allowPaBmTab','paBmTabAllowed','paBmTab','showPaBmTab','canAccessPaBm',
+    'paAccess','pa_bm_access','pa_bm_allowed','allow_pa_bm'
+  ];
+  for(const key of keys){
+    if(isTruthyPaBmValue(u[key])) return true;
+    if(isFalseyPaBmValue(u[key])) return false;
+  }
+  return false;
+}
+function getPaBmFlagAllowed(user){
+  const adminAllowed = getAdminPaBmAllowed(user);
+  if(adminAllowed !== null) return adminAllowed === true;
+  const u = user || {};
+  const keys = [
+    'paBmAccess','paBmAllowed','allowPABM','allowPaBm','allowPabm',
+    'allowPaBmTab','paBmTabAllowed','paBmTab','showPaBmTab','canAccessPaBm',
+    'paAccess','pa_bm_access','pa_bm_allowed','allow_pa_bm'
+  ];
+  return keys.some((key)=>isTruthyPaBmValue(u[key]));
+}
+function buildPaBmAccessPayload(allowed, code=''){
+  const normalizedCode = normalizePaMemberCode(code || '');
+  return {
+    inviteCode: normalizedCode,
+    inviteCodeUsed: normalizedCode,
+    invitedByCode: normalizedCode,
+    memberCode: normalizedCode,
+    paMemberCode: normalizedCode,
+    paBmAccess: !!allowed,
+    paBmAllowed: !!allowed,
+    allowPABM: !!allowed,
+    allowPaBm: !!allowed,
+    allowPaBmTab: !!allowed,
+    paBmTabAllowed: !!allowed,
+    showPaBmTab: !!allowed,
+    canAccessPaBm: !!allowed,
+    paAccess: allowed ? 'yes' : 'no'
+  };
+}
+
+function getPaBmPayloadFromCode(code){
+  // v1128: benefit/invite codes never grant PA/BM access.
+  return buildPaBmAccessPayload(false, '');
+}
+function mergePaBmAccessPreserve(existing={}, incomingCode=''){
+  // v1128: only an explicit Admin Dashboard override may grant PA/BM.
+  const adminAllowed = getAdminPaBmAllowed(existing);
+  if(adminAllowed !== null){
+    return {
+      ...buildPaBmAccessPayload(adminAllowed, ''),
+      adminPaBmOverride: true,
+      adminPaBmAllowed: adminAllowed,
+      paBmManagedBy: 'admin'
+    };
+  }
+  return buildPaBmAccessPayload(false, '');
+}
+function getPaMemberCodes(user){
+  const u = user || {};
+  return [
+    u.invitedByCode,
+    u.memberCode,
+    u.paMemberCode,
+    u.accessCode,
+    u.inviteCodeUsed,
+    u.signupCode,
+    u.member_code,
+    u.referralCode,
+    // Some older builds stored the entered member code in inviteCode.
+    u.inviteCode
+  ].map(normalizePaMemberCode).filter(Boolean);
+}
+function hasPaBmTabAccess(user){
+  if (!user) return false;
+  if (isAzobssAdmin(user)) return true;
+  const adminAllowed = getAdminPaBmAllowed(user);
+  return adminAllowed === true;
+}
+
+function isPaBmProtectedPage(){
+  return /\/PA-BM\/?(?:index\.html)?$/i.test(location.pathname) || /\/PA-BM\//i.test(location.pathname);
+}
+function isAzobssMemberProtectedPage(){
+  const path = location.pathname.replace(/\\/g,'/');
+  return /\/(purchase-history|member-area|members|my-account)\/?(?:index\.html)?$/i.test(path)
+    || /\/(purchase-history|member-area|members|my-account)\//i.test(path);
+}
+function showPaBmDeniedAndRedirect(){
+  // Silent redirect only. Do not show a PA/BM access popup/toast.
+  const target = '/';
+  if(location.pathname !== target) location.replace(target);
+}
+function showMemberLoginRequired(){
+  try{ sessionStorage.setItem('azobssAccessDeniedMessage','Please login first to access this page.'); }catch(e){}
+  if(location.pathname !== '/') location.replace('/#login');
+  else setTimeout(()=>openSiteAuth('signin'), 80);
+}
+function markPaBmAccessGranted(){
+  try{
+    window.__AZOBSS_PABM_ACCESS_GRANTED__ = true;
+    document.documentElement.classList.remove('azobss-pabm-guard-pending');
+    document.documentElement.classList.add('azobss-pabm-access-granted');
+    if(document.body){
+      document.body.classList.remove('azobss-pabm-guard-pending');
+      document.body.classList.add('azobss-pabm-access-granted');
+    }
+    document.dispatchEvent(new CustomEvent('azobss:pabm-access-granted'));
+  }catch(e){}
+}
+function enforcePaBmPageAccess(user, settled){
+  if(isAzobssMemberProtectedPage() && !user){
+    if(settled) showMemberLoginRequired();
+    return;
+  }
+  if(!isPaBmProtectedPage()) return;
+  // Strict PA/BM page gate: wait until Firebase auth/profile restoration has
+  // settled, then fail closed unless this signed-in account is explicitly
+  // allowed (or is the AZOBSS admin). Direct URL entry is not a bypass.
+  if(!settled) return;
+  if(!user){
+    showMemberLoginRequired();
+    return;
+  }
+  if(!hasPaBmTabAccess(user)){
+    showPaBmDeniedAndRedirect();
+    return;
+  }
+  markPaBmAccessGranted();
+}
+function showAccessDeniedMessage(){
+  let msg = '';
+  try{ msg = sessionStorage.getItem('azobssAccessDeniedMessage') || ''; sessionStorage.removeItem('azobssAccessDeniedMessage'); }catch(e){}
+  if(!msg) return;
+  const box = document.createElement('div');
+  box.className = 'azobss-access-denied-toast';
+  box.textContent = msg;
+  document.body.appendChild(box);
+  setTimeout(()=>box.classList.add('is-visible'), 30);
+  setTimeout(()=>{ box.classList.remove('is-visible'); setTimeout(()=>box.remove(), 350); }, 4200);
+}
+
+function azobssPublicPaRoleBlocked(user){
+  const role = String(user && (user.role || user.userRole || user.accountRole || user.staffRole) || '').toLowerCase().replace(/[\s_-]+/g,'');
+  return role.includes('staff') || role === 'semiadmin' || role === 'admin';
+}
+function azobssEnsurePublicPaNavButtons(){
+  const found = [];
+  document.querySelectorAll('.market-nav').forEach((nav)=>{
+    let link = nav.querySelector('.nav-public-pa-link');
+    if(!link){
+      link = document.createElement('a');
+      link.className = 'nav-public-pa-link';
+    }
+    // v1066: normalize the public survey tab on every page.
+    link.href = '/Perkhidmatan-Ukur-Tanah/';
+    link.textContent = 'Ukur Tanah';
+    link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
+
+    // Keep the navbar destination synchronized with the renamed survey service route.
+    link.href = '/Perkhidmatan-Ukur-Tanah/';
+    link.textContent = 'Ukur Tanah';
+    link.title = 'Pelan Akui & Perkhidmatan Ukur Tanah';
+
+    // Match the normal storefront tabs: no permanent glow. The button is
+    // highlighted only while the public PA page is currently open.
+    const isPublicPaPage = /\/Perkhidmatan-Ukur-Tanah\/?(?:index\.html)?$/i.test(String(location.pathname || ''));
+    link.classList.toggle('market-nav-active', isPublicPaPage);
+    link.classList.toggle('is-active', isPublicPaPage);
+    link.classList.toggle('is-current', isPublicPaPage);
+
+    // Keep the public PA button as the first normal storefront tab,
+    // immediately before Software. This also repositions older cached/static
+    // markup where the button previously appeared near Mini Web Tools.
+    const software = Array.from(nav.querySelectorAll('a')).find((a)=>{
+      const href = String(a.getAttribute('href') || '').replace(/\?.*$/, '').replace(/#.*$/, '');
+      return /\/Software-Tools\/?(?:index\.html)?$/i.test(href)
+        || String(a.textContent || '').trim().toLowerCase() === 'software';
+    });
+    if(software){
+      // v1065: do not detach/reinsert an already-correct navbar node.
+      // Repeated insertBefore() calls can trigger visible navbar reflow.
+      if(link.parentElement !== nav || link.nextElementSibling !== software){
+        nav.insertBefore(link, software);
+      }
+    }else if(!link.isConnected || link.parentElement !== nav){
+      nav.appendChild(link);
+    }
+    found.push(link);
+  });
+  return found;
+}
+function syncHeader(user){
+  const authActions = $('siteAuthActions');
+  const tools = $('marketUserTools');
+  const name = $('signedInName');
+  const avatar = $('userAvatar');
+  const paBmButtons = Array.from(document.querySelectorAll('#paBmNavButton, .nav-pa-bm-link, a[href="/PA-BM/"].nav-pa-bm-link'));
+  const publicPaButtons = azobssEnsurePublicPaNavButtons();
+  const storedUser = azobssNormalizeSavedUser(user || (typeof getSavedUser === 'function' ? getSavedUser() : null));
+  const display = storedUser && azobssResolveUsername(storedUser);
+  const canShowPaBm = hasPaBmTabAccess(storedUser);
+  const isAdminUser = isAzobssAdmin(storedUser);
+  const roleFlat = String(storedUser && (storedUser.role || storedUser.userRole || storedUser.accountRole || storedUser.staffRole) || '').toLowerCase().replace(/[\s_-]+/g,'');
+  const isStaffUser = !!storedUser && !isAdminUser && (roleFlat.includes('staff') || roleFlat === 'semiadmin');
+  const canShowPublicPa = !canShowPaBm && !isAdminUser && !azobssPublicPaRoleBlocked(storedUser);
+
+  // v1066: the live auth state becomes authoritative immediately.
+  // Pre-paint attributes are refreshed here so logout can never leave stale UI.
+  try{
+    const root = document.documentElement;
+    root.setAttribute('data-azobss-pre-auth', display ? '1' : '0');
+    root.setAttribute('data-azobss-pre-pabm', canShowPaBm ? '1' : '0');
+    root.setAttribute('data-azobss-pre-publicpa', canShowPublicPa ? '1' : '0');
+  }catch(_e){}
+
+  // v1066: centralize the left role slot too.
+  const adminButtons = Array.from(document.querySelectorAll('.azAdminDashboardBtn, .admin-dashboard-btn, .market-nav a[href="/admin/"]'));
+  const staffButtons = Array.from(document.querySelectorAll('.azStaffDashboardBtn, .staff-dashboard-btn, .market-nav a[href="/staff/"]'));
+  const whatsappButtons = Array.from(document.querySelectorAll('.market-nav .nav-whatsapp-link, .market-nav a[href*="alvo.chat"]'));
+
+  // v1199: make the live role state authoritative for both visibility AND clickability.
+  // Some compact navbar styles intentionally pre-hide role buttons with
+  // pointer-events:none. Pages without a page-local role-sync could therefore
+  // show the Staff/Admin icon via inline display while it remained unclickable.
+  // Keep body role classes and pointer-events in sync here so every page uses
+  // the same behaviour, including PC & IT Services pages.
+  document.body.classList.toggle('az-role-is-admin', !!isAdminUser);
+  document.body.classList.toggle('az-role-is-staff', !!isStaffUser);
+
+  adminButtons.forEach((el)=>{
+    const show = !!isAdminUser;
+    el.hidden = !show;
+    el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+    el.style.setProperty('pointer-events', show ? 'auto' : 'none', 'important');
+    if(show){
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
+    }else{
+      el.setAttribute('aria-hidden','true');
+      el.setAttribute('tabindex','-1');
+    }
+  });
+  staffButtons.forEach((el)=>{
+    const show = !!isStaffUser;
+    el.hidden = !show;
+    el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+    el.style.setProperty('pointer-events', show ? 'auto' : 'none', 'important');
+    if(show){
+      el.removeAttribute('aria-hidden');
+      el.removeAttribute('tabindex');
+    }else{
+      el.setAttribute('aria-hidden','true');
+      el.setAttribute('tabindex','-1');
+    }
+  });
+  whatsappButtons.forEach((el)=>{
+    const show = !isAdminUser && !isStaffUser;
+    el.hidden = !show;
+    el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
+    el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
+  });
+  document.body.classList.toggle('is-admin', !!isAdminUser);
+  document.body.classList.toggle('has-pa-access', !!canShowPaBm);
+  paBmButtons.forEach((paBm) => {
+    paBm.hidden = !canShowPaBm;
+    paBm.classList.toggle('is-hidden', !canShowPaBm);
+    paBm.style.setProperty('display', canShowPaBm ? 'inline-flex' : 'none', 'important');
+    paBm.style.setProperty('visibility', canShowPaBm ? 'visible' : 'hidden', 'important');
+    paBm.style.setProperty('pointer-events', canShowPaBm ? 'auto' : 'none', 'important');
+  });
+  publicPaButtons.forEach((publicPa) => {
+    publicPa.hidden = !canShowPublicPa;
+    publicPa.classList.toggle('is-hidden', !canShowPublicPa);
+    publicPa.style.setProperty('display', canShowPublicPa ? 'inline-flex' : 'none', 'important');
+    publicPa.style.setProperty('visibility', canShowPublicPa ? 'visible' : 'hidden', 'important');
+    publicPa.style.setProperty('pointer-events', canShowPublicPa ? 'auto' : 'none', 'important');
+  });
+  document.body.classList.toggle('can-buy-public-pa', !!canShowPublicPa);
+  if (display) {
+    document.body.classList.add('is-authenticated');
+    if (name) name.textContent = display;
+    if (avatar) avatar.textContent = initials(display);
+    if (authActions) authActions.style.setProperty('display','none','important');
+    if (tools) tools.style.setProperty('display','flex','important');
+  } else {
+    document.body.classList.remove('is-authenticated');
+    // v1066: explicit guest state. Do not fall back to page-local/default CSS.
+    if (authActions) authActions.style.setProperty('display','flex','important');
+    if (tools) tools.style.setProperty('display','none','important');
+    if (name) name.textContent = '';
+    if (avatar) avatar.textContent = 'AZ';
+    document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+  }
+  try{
+    document.documentElement.setAttribute('data-azobss-nav-synced','1');
+  }catch(_e){}
+}
+
+function openSiteAuth(mode='signin'){
+  const modal=$('siteAuthModal'), title=$('siteAuthTitle'), signInForm=$('siteSignInForm'), signUpForm=$('siteSignUpForm');
+  if(!modal || !signInForm || !signUpForm) return;
+  const isSignup=mode==='signup' || mode==='register';
+  if(title) title.textContent=isSignup?'Sign up':'Sign in';
+  signInForm.hidden=isSignup;
+  signUpForm.hidden=!isSignup;
+  const loginError=$('siteLoginError'), signupError=$('siteSignupError');
+  if(loginError) loginError.textContent='';
+  if(signupError) signupError.textContent='';
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+  setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); }catch(e){} }, 80);
+  setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
+}
+function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+const AZOBSS_BACKEND_BASE='https://azobss-backend.onrender.com';
+function azobssMembershipStatusText(user){
+  const u=user||{};const exp=Number(u.membershipBenefitExpiresAtMs||0)||0;const active=!!u.membershipBenefitActive&&exp>Date.now();
+  if(!active)return 'No active Membership. Choose a package below.';
+  const label=String(u.membershipBenefitPackageName||'Membership');const until=new Date(exp).toLocaleDateString();const d=u.membershipDiscountByCategory&&typeof u.membershipDiscountByCategory==='object'?u.membershipDiscountByCategory:{};
+  return `${label} active until ${until} • Software ${Number(d.software||0)||0}% • CAD Tools ${Number(d.cadTools||0)||0}% discount. PA/BM access is not included.`;
+}
+async function azobssRefreshSavedProfile(){
+  const saved=getSavedUser()||{};const key=normalizeUsername(saved.usernameKey||saved.username||saved.name||'');if(!key)return saved;
+  try{const snap=await getDoc(doc(db,'users',key));if(snap.exists()){const updated={...saved,...snap.data(),profileDocId:snap.id};saveUser(updated);syncHeader(updated);return updated;}}catch(_e){}
+  return saved;
+}
+async function loadAzobssMembershipPanel(){
+  const box=$('profileMembershipPackages'),status=$('profileMembershipStatus');if(status)status.textContent=azobssMembershipStatusText(getSavedUser()||{});if(!box)return;
+  box.innerHTML='<div class="auth-reset-note">Loading Membership packages...</div>';
+  try{const res=await fetch(AZOBSS_BACKEND_BASE+'/api/membership/packages',{cache:'no-store'});const out=await res.json().catch(()=>({}));const rows=Array.isArray(out.records)?out.records:[];
+    box.innerHTML=rows.map(r=>{const d=r.discounts||{};const benefits=Array.isArray(r.benefits)?r.benefits:[];const benefitHtml=benefits.length?`<ul class="auth-reset-note" style="margin:8px 0 0 18px;padding:0">${benefits.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>`:'';return `<div style="border:1px solid rgba(80,160,255,.35);border-radius:10px;padding:10px;background:rgba(9,23,43,.35)"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div style="font-weight:800">${escHtml(r.packageName||r.packageId||'Membership')}</div><div style="font-weight:900">RM${Number(r.packagePriceRM||0).toFixed(2)}</div></div><div class="auth-reset-note">${Number(r.durationMonths||1)} month(s) • Software ${Number(d.software||0)||0}% • CAD ${Number(d.cadTools||0)||0}%</div>${benefitHtml}${r.extraNote?`<div class="auth-reset-note" style="margin-top:7px">${escHtml(r.extraNote)}</div>`:''}<button type="button" class="btn" data-buy-membership="${escHtml(r.packageId||'')}" style="margin-top:8px;width:100%">Buy Membership • RM${Number(r.packagePriceRM||0).toFixed(2)}</button></div>`}).join('')||'<div class="auth-reset-note">No Membership packages are available yet.</div>';
+  }catch(e){box.innerHTML='<div class="auth-reset-note">Unable to load Membership packages.</div>';}
+}
+async function buyAzobssMembership(packageId){
+  const err=$('profileSettingsError');if(!auth.currentUser){if(err)err.textContent='Please login again before purchasing Membership.';return;}
+  try{if(err){err.style.color='#ffd54a';err.textContent='Creating secure Membership payment...';}const token=await auth.currentUser.getIdToken(true);const saved=getSavedUser()||{};const res=await fetch(AZOBSS_BACKEND_BASE+'/api/membership/create-bill',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({packageId,usernameKey:saved.usernameKey||saved.username||'',profileDocId:saved.profileDocId||''})});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw new Error(out.error||'Unable to create Membership payment.');location.href=out.paymentUrl||out.url;}
+  catch(e){if(err){err.style.color='';err.textContent=e?.message||'Unable to purchase Membership.';}}
+}
+async function loadAzobssReferralPanel(){
+  const own=$('profileReferralOwn'),link=$('profileReferralLink'),status=$('profileReferralStatus');if(!auth.currentUser)return;
+  try{const token=await auth.currentUser.getIdToken();const saved=getSavedUser()||{};const qs='?usernameKey='+encodeURIComponent(saved.usernameKey||saved.username||'')+'&profileDocId='+encodeURIComponent(saved.profileDocId||'');const res=await fetch(AZOBSS_BACKEND_BASE+'/api/referral/me'+qs,{headers:{Authorization:'Bearer '+token},cache:'no-store'});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw new Error(out.error||'Unable to load referral details.');if(own)own.textContent=`Your Invite Code: ${out.code} • Successful referrals: ${out.successfulCount||0} • Referral Credit: RM${Number(out.creditBalanceRM||0).toFixed(2)} • Reward: RM${Number(out.rewardRM||0).toFixed(2)} per successful new registration.`;if(link)link.value=out.link||'';if(status)status.textContent=out.redeemedCode?`This account already redeemed Invite Code ${out.redeemedCode}.`:`New accounts can redeem one Invite Code within ${out.maxAccountAgeDays||14} days after registration.`;}
+  catch(e){if(own)own.textContent=e?.message||'Unable to load Invite Code.';}
+}
+async function redeemAzobssReferralCode(codeOverride=''){
+  const input=$('profileReferralRedeemCode'),err=$('profileSettingsError'),status=$('profileReferralStatus');const code=String(codeOverride||input?.value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!code){if(err)err.textContent='Enter an Invite Code first.';return false;}if(!auth.currentUser)return false;
+  try{if(status)status.textContent='Checking Invite Code...';const token=await auth.currentUser.getIdToken(true);const saved=getSavedUser()||{};const res=await fetch(AZOBSS_BACKEND_BASE+'/api/referral/redeem',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({code,usernameKey:saved.usernameKey||saved.username||'',profileDocId:saved.profileDocId||''})});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw Object.assign(new Error(out.error||'Unable to redeem Invite Code.'),{status:res.status});if(input)input.value='';if(status)status.textContent='Invite Code redeemed. The sharer has received the referral reward.';if(err){err.style.color='#62e6a5';err.textContent='Invite Code redeemed successfully.';}await loadAzobssReferralPanel();return true;}
+  catch(e){if(status)status.textContent=e?.message||'Unable to redeem Invite Code.';if(err){err.style.color='';err.textContent=e?.message||'Unable to redeem Invite Code.';}throw e;}
+}
+function azobssCapturePendingReferral(){
+  try{const params=new URLSearchParams(location.search||'');const code=String(params.get('invite')||params.get('referral')||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(code)localStorage.setItem('azobssPendingReferralCode',code);}catch(_e){}
+}
+async function azobssTryAutoRedeemPendingReferral(){
+  let code='';try{code=String(localStorage.getItem('azobssPendingReferralCode')||'').trim();}catch(_e){}if(!code||!auth.currentUser)return;
+  try{await redeemAzobssReferralCode(code);localStorage.removeItem('azobssPendingReferralCode');}catch(e){if(Number(e?.status||0)===400||Number(e?.status||0)===404||Number(e?.status||0)===409){try{localStorage.removeItem('azobssPendingReferralCode');}catch(_e){}}}
+}
+async function azobssHandleMembershipReturn(){
+  try{const params=new URLSearchParams(location.search||'');if(params.get('membership')!=='return')return;const orderId=String(params.get('orderId')||'').trim();if(!orderId||!auth.currentUser)return;const err=$('profileSettingsError');if(err){err.style.color='#ffd54a';err.textContent='Checking Membership payment...';}const res=await fetch(AZOBSS_BACKEND_BASE+'/api/verify-payment?orderId='+encodeURIComponent(orderId),{cache:'no-store'});const out=await res.json().catch(()=>({}));if(out.paid||out.status==='paid'){const updated=await azobssRefreshSavedProfile();openProfileSettings();if($('profileMembershipStatus'))$('profileMembershipStatus').textContent=azobssMembershipStatusText(updated);if(err){err.style.color='#62e6a5';err.textContent='Membership payment verified and package activated.';}history.replaceState(null,'',location.pathname+location.hash);}else{openProfileSettings();if(err){err.style.color='';err.textContent='Payment is not confirmed yet. Please check again shortly.';}}}catch(_e){}
+}
+azobssCapturePendingReferral();
+function openProfileSettings(){
+  const modal=$('profileSettingsModal'); if(!modal) return;
+  const user=getSavedUser() || {};
+  if($('profileEditName')) $('profileEditName').value=user.usernameKey || user.name || '';
+  const parsedPhone=splitPhoneToDialLocal(user.phone || user.phoneNumber || '');
+  setPhoneDial('profileEdit', parsedPhone.dial);
+  if($('profileEditPhone')) $('profileEditPhone').value=formatPhoneGuide(parsedPhone.local || '');
+  if($('profileEditEmail')) $('profileEditEmail').value=user.email || '';
+  const err=$('profileSettingsError'); if(err) err.textContent='';
+  if($('profileReferralRedeemCode')) $('profileReferralRedeemCode').value='';
+  if($('profileMembershipStatus')) $('profileMembershipStatus').textContent=azobssMembershipStatusText(user);
+  ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  azobssSyncProfilePasswordMode();
+  modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+  loadAzobssMembershipPanel(); loadAzobssReferralPanel();
+}
+
+function closeProfileSettings(){const modal=$('profileSettingsModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+window.openSiteAuth = openSiteAuth;
+window.closeSiteAuth = closeSiteAuth;
+
+async function findExistingUserProfileForAuth(firebaseUser){
+  const uid = String(firebaseUser?.uid || '').trim();
+  const email = String(firebaseUser?.email || '').trim().toLowerCase();
+  const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+  const googleIdentity = azobssGoogleProviderIdentity(firebaseUser,null,{});
+  const googleEmail = String(googleIdentity?.email || email || '').trim().toLowerCase();
+  const directKeys=[];
+  const addKey=(value)=>{const key=normalizeUsername(value||'');if(key&&!directKeys.includes(key))directKeys.push(key)};
+
+  // v1084: Rules intentionally block collection list/query for normal users.
+  // Resolve the owner's profile using direct document GETs first. Direct GETs
+  // are allowed by the production rules and work in Private Browsing too.
+  try{addKey(azobssGoogleMappedUsername(googleEmail||email,uid))}catch(_){ }
+  try{addKey(localStorage.getItem('azobssUsernameLock:uid:'+uid)||'')}catch(_){ }
+  try{addKey(localStorage.getItem('azobssGoogleUsernameByEmail:'+(googleEmail||email))||'')}catch(_){ }
+  addKey(firebaseUser?.displayName||'');
+  addKey(googleEmail ? googleEmail.split('@')[0] : '');
+  addKey(emailLocalKey);
+
+  const emailMatches=(data={})=>{
+    const vals=[data.authEmail,data.email,data.googleEmail,data.contactEmail].map(v=>String(v||'').trim().toLowerCase()).filter(Boolean);
+    return !!(googleEmail&&vals.includes(googleEmail));
+  };
+  for(const key of directKeys){
+    try{
+      const userSnap=await getDoc(doc(db,'users',key));
+      if(userSnap.exists()){
+        const data=userSnap.data()||{};
+        const sameUid=!!(uid&&String(data.uid||'').trim()===uid);
+        if(sameUid||emailMatches(data)){
+          return {id:key,...data,usernameKey:normalizeUsername(data.usernameKey||data.username||data.name||key)};
+        }
+      }
+    }catch(error){console.warn('AZOBSS direct user lookup '+key+' skipped:',error?.code||error?.message||error)}
+    try{
+      const mapSnap=await getDoc(doc(db,'usernameAuthEmails',key));
+      if(mapSnap.exists()){
+        const m=mapSnap.data()||{};
+        const mapEmail=String(m.authEmail||m.email||'').trim().toLowerCase();
+        const mapUid=String(m.uid||'').trim();
+        if((uid&&mapUid===uid)||(googleEmail&&mapEmail===googleEmail)){
+          const mappedKey=normalizeUsername(m.usernameKey||m.username||key);
+          if(mappedKey){
+            const userSnap=await getDoc(doc(db,'users',mappedKey));
+            if(userSnap.exists()){
+              const data=userSnap.data()||{};
+              return {id:mappedKey,...data,usernameKey:normalizeUsername(data.usernameKey||data.username||data.name||mappedKey)};
+            }
+          }
+        }
+      }
+    }catch(error){console.warn('AZOBSS direct auth-map lookup '+key+' skipped:',error?.code||error?.message||error)}
+  }
+
+  // Legacy query fallback. Production rules currently deny list for normal
+  // users, so this is best-effort only and is no longer required for Google
+  // direct sign-in after v1084.
+  const candidates = [];
+  if(uid){
+    try{
+      const snap = await getDocs(query(collection(db,'users'), where('uid','==',uid)));
+      snap.forEach(d=>{
+        const data = d.data() || {};
+        candidates.push({id:d.id, ...data, usernameKey: normalizeUsername(data.usernameKey || data.username || data.name || d.id)});
+      });
+    }catch(e){ console.warn('AZOBSS user lookup by uid skipped:', e?.code || e?.message || e); }
+  }
+  if(!candidates.length && email){
+    try{
+      const mapSnap = await getDocs(query(collection(db,'usernameAuthEmails'), where('email','==',email)));
+      for(const d of mapSnap.docs){
+        const key = normalizeUsername(d.id);
+        if(!key) continue;
+        try{
+          const userSnap = await getDoc(doc(db,'users',key));
+          if(userSnap.exists()){
+            const data = userSnap.data() || {};
+            candidates.push({id:key, ...data, usernameKey: normalizeUsername(data.usernameKey || data.username || data.name || key)});
+          }
+        }catch(e){}
+      }
+    }catch(e){ console.warn('AZOBSS usernameAuthEmails lookup skipped:', e?.code || e?.message || e); }
+  }
+  if(!candidates.length) return null;
+  candidates.sort((a,b)=>{
+    const aId = normalizeUsername(a.id || a.usernameKey || a.username || '');
+    const bId = normalizeUsername(b.id || b.usernameKey || b.username || '');
+    const score = (r,id)=>{
+      let s = 0;
+      if(id && id !== emailLocalKey) s += 20;
+      if(id && normalizeUsername(r.usernameKey || r.username || '') === id) s += 10;
+      if(r.email || r.authEmail) s += 2;
+      if(r.phone) s += 1;
+      return s;
+    };
+    return score(b,bId) - score(a,aId);
+  });
+  return candidates[0];
+}
+
+async function ensureUserProfile(firebaseUser, fallback={}){
+  const explicitUsernameKey = normalizeUsername(fallback.usernameKey || fallback.username || fallback.name || '');
+  const saved = getSavedUser?.() || {};
+  const savedUsernameKey = String(saved.uid || '') === String(firebaseUser?.uid || '') ? normalizeUsername(saved.usernameKey || saved.username || saved.name || '') : '';
+  let usernameKey = explicitUsernameKey || savedUsernameKey;
+
+  // Important: never create a Firestore username from Gmail prefix (example zedann.0002@gmail.com -> zedann0002).
+  // That was the source of duplicate users. If no real username is supplied, locate the existing profile by uid/email mapping instead.
+  if(!usernameKey){
+    const existingByUid = await findExistingUserProfileForAuth(firebaseUser);
+    if(existingByUid) return { uid: firebaseUser.uid, ...existingByUid };
+    return {
+      uid: firebaseUser.uid,
+      usernameKey:'',
+      email: firebaseUser.email || '',
+      authEmail: firebaseUser.email || '',
+      verified: !!firebaseUser.emailVerified,
+      emailVerified: !!firebaseUser.emailVerified,
+      _profileMissing: true
+    };
+  }
+
+  const ref = doc(db, 'users', usernameKey);
+  const snap = await getDoc(ref);
+  if(snap.exists()){
+    const existingData=snap.data()||{};
+    const legacyRole=String(existingData.role||'user').trim().toLowerCase();
+    if(legacyRole==='member'){
+      try{await setDoc(ref,{role:'user',roleMigratedFrom:'member',roleMigratedAt:serverTimestamp()},{merge:true});existingData.role='user';}catch(_e){}
+    }
+    return { uid: firebaseUser.uid, id: usernameKey, ...existingData, usernameKey: normalizeUsername(existingData.usernameKey || existingData.username || usernameKey) };
+  }
+  const fallbackMemberCode = normalizePaMemberCode(fallback.inviteCode || fallback.inviteCodeUsed || fallback.invitedByCode || fallback.memberCode || fallback.paMemberCode || '');
+  const signupPhone = normalizeAzobssPhone(fallback.phone || fallback.phoneNumber || '');
+  const profile={uid:firebaseUser.uid,usernameKey,username:usernameKey,email:fallback.email||firebaseUser.email||'',authEmail:fallback.email||firebaseUser.email||'',...getPaBmPayloadFromCode(fallbackMemberCode),role:'user',verified:!!firebaseUser.emailVerified,emailVerified:!!firebaseUser.emailVerified,createdAt:serverTimestamp()};
+  // v1083: never overwrite an existing profile phone with an empty value.
+  if(signupPhone){profile.phone=signupPhone;profile.phoneNumber=signupPhone;}
+  try{
+    await setDoc(ref,profile,{merge:true});
+    if(profile.email) await setDoc(doc(db,'usernameAuthEmails',usernameKey),{uid:firebaseUser.uid,email:profile.email,username:usernameKey,usernameKey,updatedAt:serverTimestamp()},{merge:true});
+  }catch(profileWriteError){
+    console.warn('AZOBSS ensureUserProfile write skipped:', profileWriteError?.code || profileWriteError?.message || profileWriteError);
+  }
+  return profile;
+}
+
+
+
+function isGoogleFirebaseUser(firebaseUser){
+  try{return Array.isArray(firebaseUser?.providerData)&&firebaseUser.providerData.some(p=>String(p?.providerId||'')==='google.com')}catch(_){return false}
+}
+function azobssAuthProviderIds(firebaseUser){
+  try{return Array.from(new Set((firebaseUser?.providerData||[]).map(p=>String(p?.providerId||'').trim()).filter(Boolean)))}catch(_){return []}
+}
+function azobssHasPasswordProvider(firebaseUser){
+  return azobssAuthProviderIds(firebaseUser).includes('password');
+}
+function azobssSyncProfilePasswordMode(){
+  const user=auth?.currentUser||null;
+  const hasPassword=azobssHasPasswordProvider(user);
+  const hasGoogle=isGoogleFirebaseUser(user);
+  const title=$('profilePasswordTitle');
+  const help=$('profilePasswordHelp');
+  const currentLabel=$('profileCurrentPasswordLabel');
+  const button=$('profileResetPasswordButton');
+  if(hasGoogle&&!hasPassword){
+    if(title)title.textContent='Add Password Sign-In';
+    if(help)help.textContent='This account currently uses Google Sign-In only. Set a password once to allow both Google and email/password login on the same AZOBSS account.';
+    if(currentLabel)currentLabel.hidden=true;
+    if(button)button.textContent='Enable Password Login';
+  }else{
+    if(title)title.textContent='Reset Password';
+    if(help)help.textContent='For security, enter your current password first, then set a new password.';
+    if(currentLabel)currentLabel.hidden=false;
+    if(button)button.textContent='Reset Password';
+  }
+}
+function azobssFirebaseUserLooksExisting(firebaseUser){
+  try{
+    const created=Date.parse(firebaseUser?.metadata?.creationTime||'');
+    const last=Date.parse(firebaseUser?.metadata?.lastSignInTime||'');
+    return Number.isFinite(created)&&Number.isFinite(last)&&(last-created)>120000;
+  }catch(_){return false}
+}
+function azobssGoogleMappedUsername(email,uid=''){
+  const mail=String(email||'').trim().toLowerCase();
+  const id=String(uid||'').trim();
+  try{
+    return normalizeUsername(
+      (mail&&localStorage.getItem('azobssGoogleUsernameByEmail:'+mail))||
+      (mail&&localStorage.getItem('azobssSignupUsernameByEmail:'+mail))||
+      (mail&&localStorage.getItem('azobssUsernameLock:email:'+mail))||
+      (id&&localStorage.getItem('azobssUsernameLock:uid:'+id))||''
+    );
+  }catch(_){return ''}
+}
+
+function azobssGoogleProviderIdentity(firebaseUser,result=null,fallback={}){
+  let provider=null;
+  try{provider=(firebaseUser?.providerData||[]).find(p=>String(p?.providerId||'')==='google.com')||null}catch(_){provider=null}
+  const email=String(provider?.email||fallback?.googleEmail||fallback?.email||firebaseUser?.email||'').trim().toLowerCase();
+  return {
+    email,
+    displayName:String(provider?.displayName||fallback?.googleDisplayName||firebaseUser?.displayName||'').trim(),
+    photoURL:String(provider?.photoURL||fallback?.googlePhotoURL||firebaseUser?.photoURL||'').trim(),
+    providerUid:String(provider?.uid||'').trim()
+  };
+}
+function azobssGoogleProfileKey(profile={}){
+  return normalizeUsername(profile.usernameKey||profile.username||profile.name||profile.id||profile.__docId||'');
+}
+function azobssGoogleCompletionPhone(profile={},identity={}){
+  let phone=normalizeAzobssPhone(profile.phone||profile.phoneNumber||profile.googleLastConfirmedPhone||'');
+  if(phone)return phone;
+  const key=azobssGoogleProfileKey(profile);
+  const email=String(identity?.email||profile.googleEmail||profile.authEmail||profile.email||'').trim().toLowerCase();
+  try{
+    phone=normalizeAzobssPhone(
+      (key&&localStorage.getItem('azobssSignupPhone:'+key))||
+      (email&&localStorage.getItem('azobssSignupPhoneByEmail:'+email))||''
+    );
+  }catch(_){phone=''}
+  return phone;
+}
+function azobssGoogleProfileIsComplete(profile={},identity={}){
+  const phone=azobssGoogleCompletionPhone(profile,identity);
+  if(!phone)return false;
+  if(profile.googleProfileCompleted===true||profile.phoneConfirmed===true)return true;
+  // Backward compatibility: old builds did not have googleProfileCompleted,
+  // but a confirmed Google link + a stored phone already represents a complete profile.
+  return profile.googleAuthLinked===true||profile.googleProfileConfirmed===true||profile.googleSignIn===true;
+}
+async function azobssPersistGoogleProfileCompletion(usernameRaw,firebaseUser,profile={},identity={},phoneRaw=''){
+  const usernameKey=normalizeUsername(usernameRaw||azobssGoogleProfileKey(profile));
+  if(!usernameKey)throw new Error('AZOBSS username could not be resolved.');
+  const phone=normalizeAzobssPhone(phoneRaw||azobssGoogleCompletionPhone(profile,identity));
+  if(!phone)throw new Error('Please enter your phone number.');
+  const currentUid=String(firebaseUser?.uid||profile.uid||'').trim();
+  const oldUid=String(profile.uid||'').trim();
+  const email=String(identity?.email||profile.googleEmail||profile.authEmail||profile.email||firebaseUser?.email||'').trim().toLowerCase();
+  const patch={
+    phone,phoneNumber:phone,googleLastConfirmedPhone:phone,
+    googleProfileCompleted:true,phoneConfirmed:true,googleProfileCompletedAt:serverTimestamp(),
+    googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,
+    googleEmail:email,googleDisplayName:String(identity?.displayName||profile.googleDisplayName||''),
+    googlePhotoURL:String(identity?.photoURL||profile.googlePhotoURL||''),
+    verified:true,emailVerified:true,updatedAt:serverTimestamp()
+  };
+  if(currentUid)patch.uid=currentUid;
+  if(oldUid&&currentUid&&oldUid!==currentUid)patch.previousAuthUids=arrayUnion(oldUid);
+  await setDoc(doc(db,'users',usernameKey),patch,{merge:true});
+  // Verify the write before closing Complete Profile. This prevents a silent
+  // failure from causing the modal to reappear on every Google sign-in.
+  const verifySnap=await getDoc(doc(db,'users',usernameKey));
+  const verifyData=verifySnap.exists()?(verifySnap.data()||{}):{};
+  const verifiedPhone=normalizeAzobssPhone(verifyData.phone||verifyData.phoneNumber||verifyData.googleLastConfirmedPhone||'');
+  if(!verifiedPhone)throw new Error('Phone number could not be saved. Please try again.');
+  try{
+    localStorage.setItem('azobssSignupPhone:'+usernameKey,verifiedPhone);
+    if(email)localStorage.setItem('azobssSignupPhoneByEmail:'+email,verifiedPhone);
+    if(email)localStorage.setItem('azobssGoogleUsernameByEmail:'+email,usernameKey);
+    if(currentUid)localStorage.setItem('azobssUsernameLock:uid:'+currentUid,usernameKey);
+  }catch(_){ }
+  return {...profile,...verifyData,...patch,phone:verifiedPhone,phoneNumber:verifiedPhone,googleLastConfirmedPhone:verifiedPhone,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey,uid:currentUid||verifyData.uid||oldUid};
+}
+function azobssIsTemporaryGoogleProfile(profile={}){
+  if(profile.googleProfileLinkedAway===true||profile.hiddenFromRegisteredUsers===true)return true;
+  // v1084: an auto-created Google profile stops being temporary after the
+  // user has completed the profile and the Google identity is durably linked.
+  if(profile.googleProfileAutoCreated===true){
+    const completed=profile.googleProfileCompleted===true||profile.phoneConfirmed===true||profile.googleProfileConfirmed===true;
+    const bound=profile.googleAuthLinked===true||profile.googleProfileConfirmed===true;
+    if(completed&&bound)return false;
+    return true;
+  }
+  return profile.googleSignIn===true&&String(profile.authProvider||'')==='google.com'&&profile.googleProfileConfirmed!==true&&profile.googleProfileCompleted!==true&&['user','member'].includes(String(profile.role||'user').toLowerCase());
+}
+async function azobssFindGoogleEmailProfileMatches(emailRaw){
+  const email=String(emailRaw||'').trim().toLowerCase();
+  if(!email)return {email,strong:null,contact:null,ambiguous:false,candidates:[]};
+  const byKey=new Map();
+  const add=(id,data,kind,score)=>{
+    const key=normalizeUsername(data?.usernameKey||data?.username||data?.name||id||'');
+    if(!key)return;
+    const row=byKey.get(key)||{id:key,usernameKey:key,data:{},kinds:new Set(),score:0,autoEligible:false};
+    row.data={...row.data,...(data||{}),usernameKey:key};
+    row.kinds.add(kind);row.score=Math.max(row.score,score);
+    if(kind==='authEmail'||kind==='authMap'||(kind==='email'&&!String(row.data.authEmail||'').trim()))row.autoEligible=true;
+    byKey.set(key,row);
+  };
+
+  // v1084: production rules block collection LIST for normal users. The
+  // normalized Google email local-part is a deterministic legacy/new-Google
+  // username candidate, so resolve it by direct GET before any query.
+  const directEmailKey=normalizeUsername(email.split('@')[0]||'');
+  if(directEmailKey){
+    try{
+      const us=await getDoc(doc(db,'users',directEmailKey));
+      if(us.exists()){
+        const data=us.data()||{};
+        const authMail=String(data.authEmail||data.email||data.googleEmail||'').trim().toLowerCase();
+        if(authMail===email)add(directEmailKey,data,'authEmail',140);
+      }
+    }catch(error){console.warn('AZOBSS direct Google email user lookup skipped:',error?.code||error?.message||error)}
+    try{
+      const ms=await getDoc(doc(db,'usernameAuthEmails',directEmailKey));
+      if(ms.exists()){
+        const m=ms.data()||{};
+        const mapMail=String(m.authEmail||m.email||'').trim().toLowerCase();
+        const mappedKey=normalizeUsername(m.usernameKey||m.username||directEmailKey);
+        if(mapMail===email&&mappedKey){
+          const us=await getDoc(doc(db,'users',mappedKey));
+          if(us.exists())add(mappedKey,us.data()||{},'authMap',138);
+        }
+      }
+    }catch(error){console.warn('AZOBSS direct Google auth-map email lookup skipped:',error?.code||error?.message||error)}
+  }
+
+  const queryUserField=async(field,kind,score)=>{
+    try{
+      const snap=await getDocs(query(collection(db,'users'),where(field,'==',email)));
+      snap.forEach(d=>add(d.id,d.data()||{},kind,score));
+    }catch(error){console.warn('AZOBSS Google email lookup '+field+' skipped:',error?.code||error?.message||error)}
+  };
+  await queryUserField('authEmail','authEmail',130);
+  await queryUserField('email','email',105);
+  await queryUserField('contactEmail','contactEmail',55);
+  try{
+    const mapSnap=await getDocs(query(collection(db,'usernameAuthEmails'),where('email','==',email)));
+    for(const d of mapSnap.docs){
+      const key=normalizeUsername(d.data()?.usernameKey||d.data()?.username||d.id||'');
+      if(!key)continue;
+      try{const us=await getDoc(doc(db,'users',key));if(us.exists())add(key,us.data()||{},'authMap',125)}catch(_){ }
+    }
+  }catch(error){console.warn('AZOBSS Google auth-map lookup skipped:',error?.code||error?.message||error)}
+  const candidates=[...byKey.values()].filter(r=>r.data?.googleProfileLinkedAway!==true&&r.data?.hiddenFromRegisteredUsers!==true);
+  for(const row of candidates){
+    if(!azobssIsTemporaryGoogleProfile(row.data))row.score+=18;
+    if(!['user','member'].includes(String(row.data.role||'user').toLowerCase()))row.score+=4;
+    if(normalizeAzobssPhone(row.data.phone||row.data.phoneNumber||''))row.score+=2;
+    row.kinds=[...row.kinds];
+  }
+  candidates.sort((a,b)=>b.score-a.score||a.usernameKey.localeCompare(b.usernameKey));
+  const auto=candidates.filter(r=>r.autoEligible&&!azobssIsTemporaryGoogleProfile(r.data));
+  const strong=auto.length===1?auto[0]:(auto.length>1&&auto[0].score>=auto[1].score+20?auto[0]:null);
+  const contactOnly=candidates.find(r=>!r.autoEligible&&r.kinds.includes('contactEmail')&&!azobssIsTemporaryGoogleProfile(r.data))||null;
+  return {email,strong,contact:contactOnly,ambiguous:auto.length>1&&!strong,candidates};
+}
+function azobssRemoveWrongGoogleLocalMaps(googleEmail,sourceKey){
+  const mail=String(googleEmail||'').trim().toLowerCase(),key=normalizeUsername(sourceKey);
+  if(!mail||!key)return;
+  for(const storageKey of ['azobssGoogleUsernameByEmail:'+mail,'azobssSignupUsernameByEmail:'+mail,'azobssUsernameLock:email:'+mail]){
+    try{if(normalizeUsername(localStorage.getItem(storageKey)||'')===key)localStorage.removeItem(storageKey)}catch(_){ }
+  }
+}
+async function azobssClearGoogleFieldsFromSourceProfile(sourceProfile,googleEmail,targetKey){
+  const sourceKey=azobssGoogleProfileKey(sourceProfile),target=normalizeUsername(targetKey);
+  if(!sourceKey||sourceKey===target)return;
+  const provider=String(sourceProfile?.authProvider||'').toLowerCase();
+  const nextProvider=provider.includes('password')?'password':'password';
+  try{
+    await setDoc(doc(db,'users',sourceKey),{
+      googleAuthLinked:false,googleLinkedExisting:false,googleSignIn:false,googleProfileConfirmed:false,
+      googleEmail:deleteField(),googleDisplayName:deleteField(),googlePhotoURL:deleteField(),
+      authProvider:nextProvider,updatedAt:serverTimestamp()
+    },{merge:true});
+  }catch(error){console.warn('AZOBSS wrong Google source cleanup skipped:',error?.code||error?.message||error)}
+  azobssRemoveWrongGoogleLocalMaps(googleEmail,sourceKey);
+}
+async function azobssReleaseGoogleFromWrongFirebaseUser(firebaseUser,identity,targetProfile){
+  if(!firebaseUser||!isGoogleFirebaseUser(firebaseUser))return {released:false,sourceProfile:null};
+  const targetKey=azobssGoogleProfileKey(targetProfile);
+  const sourceProfile=await findExistingUserProfileForAuth(firebaseUser);
+  const sourceKey=azobssGoogleProfileKey(sourceProfile||{});
+  if(sourceKey&&targetKey&&sourceKey===targetKey)return {released:false,sourceProfile};
+  const providers=Array.isArray(firebaseUser.providerData)?firebaseUser.providerData:[];
+  const nonGoogle=providers.filter(p=>String(p?.providerId||'')!=='google.com');
+  if(nonGoogle.length){
+    await unlink(firebaseUser,'google.com');
+    await azobssClearGoogleFieldsFromSourceProfile(sourceProfile||{},identity.email,targetKey);
+    try{await signOut(auth)}catch(_){ }
+    return {released:true,sourceProfile};
+  }
+  // A Google-only temporary Auth identity is safe to delete. Never delete an old
+  // Email/Password account just to move Google to another profile.
+  if(!sourceProfile||azobssIsTemporaryGoogleProfile(sourceProfile)||String(sourceProfile?.authEmail||sourceProfile?.email||'').trim().toLowerCase()!==identity.email){
+    const tempKey=sourceKey;
+    if(tempKey)await azobssCleanupTemporaryGoogleProfile(tempKey,firebaseUser.uid,targetKey);
+    try{await deleteUser(firebaseUser)}catch(error){
+      if(error?.code==='auth/requires-recent-login')throw new Error('Please choose the Google account again, then retry.');
+      throw error;
+    }
+    return {released:true,sourceProfile};
+  }
+  throw new Error('This Google identity is attached to another AZOBSS profile. Use secure account linking to continue.');
+}
+async function azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,identity,match){
+  const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
+  const targetKey=azobssGoogleProfileKey(target);
+  if(!targetKey)throw new Error('Matched AZOBSS profile has no username.');
+  const currentProfile=await findExistingUserProfileForAuth(firebaseUser);
+  const currentKey=azobssGoogleProfileKey(currentProfile||{});
+  if(currentKey===targetKey){
+    const oldUid=String(target.uid||'').trim();
+    const patch={uid:firebaseUser.uid,googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,updatedAt:serverTimestamp()};
+    if(oldUid&&oldUid!==String(firebaseUser.uid||''))patch.previousAuthUids=arrayUnion(oldUid);
+    await setDoc(doc(db,'users',targetKey),patch,{merge:true});
+    return {status:'ready',firebaseUser,profile:{...target,...patch,uid:firebaseUser.uid,usernameKey:targetKey}};
+  }
+  if(!googleCredential)throw new Error('Google credential is unavailable. Please choose Continue with Google again.');
+  const releaseResult=await azobssReleaseGoogleFromWrongFirebaseUser(firebaseUser,identity,target);
+  let credentialResult;
+  try{
+    credentialResult=await signInWithCredential(auth,googleCredential);
+  }catch(error){
+    const code=String(error?.code||'');
+    const kinds=Array.isArray(match?.kinds)?match.kinds:[];
+    const exactAuthOwner=kinds.includes('authEmail')||kinds.includes('authMap');
+    if(releaseResult?.released&&exactAuthOwner&&(code==='auth/account-exists-with-different-credential'||code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')){
+      return {status:'reauth-google-required',target,identity,error,match};
+    }
+    if(code==='auth/account-exists-with-different-credential'||code==='auth/credential-already-in-use'||code==='auth/email-already-in-use'){
+      return {status:'password-required',target,identity,error};
+    }
+    throw error;
+  }
+  const newUser=credentialResult.user;
+  const oldUid=String(target.uid||'').trim();
+  const hasNonGoogleProvider=(newUser.providerData||[]).some(p=>String(p?.providerId||'')!=='google.com');
+  const patch={
+    uid:newUser.uid,username:targetKey,usernameKey:targetKey,displayName:targetKey,name:targetKey,
+    googleSignIn:true,googleAuthLinked:true,googleProfileConfirmed:true,googleEmail:identity.email,
+    googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,authProvider:hasNonGoogleProvider?'password+google.com':'google.com',
+    verified:true,emailVerified:true,updatedAt:serverTimestamp()
+  };
+  if(oldUid&&oldUid!==newUser.uid)patch.previousAuthUids=arrayUnion(oldUid);
+  await setDoc(doc(db,'users',targetKey),patch,{merge:true});
+  const authEmail=String(target.authEmail||target.email||identity.email).trim().toLowerCase();
+  await saveUsernameAuthEmail(targetKey,authEmail||identity.email,newUser.uid);
+  try{
+    localStorage.setItem('azobssGoogleUsernameByEmail:'+identity.email,targetKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+newUser.uid,targetKey);
+    localStorage.setItem('azobssUsernameLock:email:'+identity.email,targetKey);
+  }catch(_){ }
+  return {status:'ready',firebaseUser:newUser,profile:{...target,...patch,usernameKey:targetKey,authEmail:authEmail||identity.email,email:String(target.email||identity.email)}};
+}
+
+async function azobssBindGoogleUserToExactProfile(firebaseUser,identity,match){
+  const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
+  const targetKey=azobssGoogleProfileKey(target);
+  if(!firebaseUser||!targetKey)throw new Error('Unable to resolve the matched AZOBSS profile.');
+  const actualIdentity=azobssGoogleProviderIdentity(firebaseUser,null,identity||{});
+  if(!actualIdentity.email||actualIdentity.email!==String(identity?.email||'').trim().toLowerCase()){
+    try{await signOut(auth)}catch(_){}
+    throw new Error('Please choose the same Google account shown above.');
+  }
+  const oldUid=String(target.uid||'').trim();
+  const providers=Array.isArray(firebaseUser.providerData)?firebaseUser.providerData:[];
+  const hasNonGoogleProvider=providers.some(p=>String(p?.providerId||'')!=='google.com');
+  const phone=normalizeAzobssPhone(target.phone||target.phoneNumber||'');
+  const patch={
+    uid:firebaseUser.uid,
+    username:targetKey,usernameKey:targetKey,displayName:targetKey,name:targetKey,
+    googleSignIn:true,googleAuthLinked:true,googleLinkedExisting:true,googleProfileConfirmed:true,
+    googleEmail:actualIdentity.email,googleDisplayName:actualIdentity.displayName,googlePhotoURL:actualIdentity.photoURL,
+    authProvider:hasNonGoogleProvider?'password+google.com':'google.com',
+    verified:true,emailVerified:true,updatedAt:serverTimestamp()
+  };
+  if(oldUid&&oldUid!==firebaseUser.uid)patch.previousAuthUids=arrayUnion(oldUid);
+  await setDoc(doc(db,'users',targetKey),patch,{merge:true});
+  const authEmail=String(target.authEmail||target.email||actualIdentity.email).trim().toLowerCase();
+  await saveUsernameAuthEmail(targetKey,authEmail||actualIdentity.email,firebaseUser.uid);
+  try{
+    localStorage.setItem('azobssGoogleUsernameByEmail:'+actualIdentity.email,targetKey);
+    localStorage.setItem('azobssSignupUsernameByEmail:'+actualIdentity.email,targetKey);
+    localStorage.setItem('azobssUsernameLock:email:'+actualIdentity.email,targetKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,targetKey);
+  }catch(_){}
+  const merged={
+    ...target,...patch,
+    usernameKey:targetKey,username:targetKey,name:targetKey,displayName:targetKey,
+    authEmail:authEmail||actualIdentity.email,
+    email:String(target.email||actualIdentity.email),
+    phone,phoneNumber:phone
+  };
+  return {firebaseUser,profile:merged};
+}
+
+function setGoogleRepairMode(active,match=null,identity=null,message=''){
+  const repair=$('siteGoogleRepairPanel');
+  const repairText=$('siteGoogleRepairText');
+  const toggle=$('siteGoogleLinkToggle');
+  const linkPanel=$('siteGoogleLinkPanel');
+  const phoneBlock=$('siteGooglePhone')?.closest('label');
+  const submit=$('siteGoogleProfileForm')?.querySelector('button[type="submit"]');
+  if(active){
+    azobssGooglePendingRepairMatch=match||azobssGooglePendingRepairMatch;
+    azobssGooglePendingRepairIdentity=identity||azobssGooglePendingRepairIdentity;
+    azobssGooglePendingLinkMode=false;
+    if(repair)repair.hidden=false;
+    if(repairText)repairText.textContent=message||`AZOBSS found ${azobssGoogleProfileKey(match?.data||match||{})||'your existing profile'} for this Google email. Google was previously attached to another Firebase account. Choose the same Google account once more to finish the repair.`;
+    if(toggle)toggle.hidden=true;
+    if(linkPanel)linkPanel.hidden=true;
+    if(phoneBlock)phoneBlock.hidden=true;
+    if(submit)submit.hidden=true;
+  }else{
+    if(repair)repair.hidden=true;
+    if(toggle)toggle.hidden=false;
+    if(phoneBlock)phoneBlock.hidden=false;
+    if(submit)submit.hidden=false;
+  }
+}
+
+function azobssPrepareGoogleRepair(identity,match,message=''){
+  const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
+  const pseudo={email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL,providerData:[{providerId:'google.com',email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL}]};
+  azobssGooglePendingMatchedUsername=target.usernameKey;
+  azobssGooglePendingProfile={...target,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,_googleMatchedExisting:true};
+  azobssGooglePendingFirebaseUser=auth.currentUser||null;
+  openGoogleProfileModal(pseudo,azobssGooglePendingProfile,false);
+  setGoogleRepairMode(true,match,identity,message||`AZOBSS found ${target.usernameKey} for ${identity.email}. Google was previously linked to another Firebase account. Click Continue with Google Again and choose ${identity.email} once more. No AZOBSS password is needed unless Firebase confirms a separate password account still exists.`);
+  const copy=$('siteGoogleProfileCopy');
+  if(copy)copy.textContent=`Existing AZOBSS profile ${target.usernameKey} was matched by its registered authentication email. One final Google confirmation is needed to repair the old Firebase link.`;
+}
+
+async function azobssRunGoogleRepair(){
+  if(azobssGoogleRepairBusy)return;
+  const match=azobssGooglePendingRepairMatch;
+  const expected=azobssGooglePendingRepairIdentity;
+  const err=$('siteGoogleProfileError');
+  const btn=$('siteGoogleRepairButton');
+  const original=btn?.innerHTML||'';
+  if(!match||!expected?.email)throw new Error('Google repair session expired. Please cancel and sign in with Google again.');
+  azobssGoogleRepairBusy=true;
+  try{
+    if(err){err.textContent='';err.style.color=''}
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="auth-google-g" aria-hidden="true">G</span><span>Opening Google...</span>'}
+    try{await signOut(auth)}catch(_){}
+    await setPersistence(auth,browserLocalPersistence);
+    const result=await signInWithPopup(auth,azobssGoogleProvider);
+    const newUser=result.user;
+    const freshIdentity=azobssGoogleProviderIdentity(newUser,result,{});
+    if(freshIdentity.email!==String(expected.email||'').trim().toLowerCase()){
+      try{await signOut(auth)}catch(_){}
+      throw new Error(`Please choose ${expected.email}, not ${freshIdentity.email||'another Google account'}.`);
+    }
+    const bound=await azobssBindGoogleUserToExactProfile(newUser,freshIdentity,match);
+    azobssGooglePendingCredential=GoogleAuthProvider.credentialFromResult(result);
+    azobssGooglePendingProfile=bound.profile;
+    azobssGooglePendingFirebaseUser=bound.firebaseUser;
+    azobssGooglePendingRepairMatch=null;
+    azobssGooglePendingRepairIdentity=null;
+    setGoogleRepairMode(false);
+    const phone=normalizeAzobssPhone(bound.profile?.phone||bound.profile?.phoneNumber||'');
+    if(phone){
+      await finalizeGoogleSession(bound.firebaseUser,bound.profile);
+    }else{
+      openGoogleProfileModal(bound.firebaseUser,bound.profile,false);
+      const copy=$('siteGoogleProfileCopy');
+      if(copy)copy.textContent=`Google is now linked to ${bound.profile.usernameKey}. Add your phone number once to finish the profile.`;
+    }
+  }catch(error){
+    const code=String(error?.code||'');
+    console.warn('AZOBSS Google repair failed:',code||error?.message||error);
+    if(code==='auth/account-exists-with-different-credential'){
+      const pending=GoogleAuthProvider.credentialFromError(error);
+      if(pending)azobssGooglePendingCredential=pending;
+      setGoogleRepairMode(false);
+      azobssPrepareMatchedSecureLink(expected,match,`Firebase confirms ${expected.email} still belongs to an existing password-based Firebase account. Enter the AZOBSS password for ${match?.usernameKey||'this account'} once to securely link Google.`);
+    }else{
+      if(err){
+        if(code==='auth/popup-closed-by-user')err.textContent='Google confirmation was cancelled.';
+        else if(code==='auth/popup-blocked')err.textContent='Google popup was blocked. Allow popups for azobss.com and try again.';
+        else err.textContent=error?.message||'Unable to repair the Google sign-in link.';
+      }
+    }
+  }finally{
+    azobssGoogleRepairBusy=false;
+    if(btn){btn.disabled=false;if(original)btn.innerHTML=original}
+  }
+}
+
+
+function azobssPrepareMatchedSecureLink(identity,match,message=''){
+  const target={...(match?.data||{}),usernameKey:normalizeUsername(match?.usernameKey||match?.id||'')};
+  const pseudo={email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL,providerData:[{providerId:'google.com',email:identity.email,displayName:identity.displayName,photoURL:identity.photoURL}]};
+  azobssGooglePendingMatchedUsername=target.usernameKey;
+  azobssGooglePendingProfile={...target,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL,_googleMatchedExisting:true};
+  azobssGooglePendingFirebaseUser=auth.currentUser||null;
+  openGoogleProfileModal(pseudo,azobssGooglePendingProfile,true);
+  setGoogleLinkMode(true);
+  if($('siteGoogleUsername'))$('siteGoogleUsername').value=target.usernameKey;
+  const copy=$('siteGoogleProfileCopy');
+  if(copy)copy.textContent=message||`AZOBSS found the existing account ${target.usernameKey} for this Google email. Enter that account password once to securely link Google.`;
+}
+
+async function azobssAllocateGoogleUsername(firebaseUser){
+  const email=String(firebaseUser?.email||'').trim().toLowerCase();
+  // v1083: before allocating/creating a Google profile, resolve an existing
+  // canonical AZOBSS owner by the verified Google email. This prevents a
+  // page-load/auth-state race from re-creating the same username and merging
+  // phone:'' over a profile that was already completed.
+  try{
+    const matches=await azobssFindGoogleEmailProfileMatches(email);
+    if(matches?.strong){
+      const bound=await azobssBindGoogleUserToExactProfile(firebaseUser,identity,matches.strong);
+      if(bound?.profile)return bound.profile;
+    }
+  }catch(error){
+    console.warn('AZOBSS safe Google owner pre-match skipped:',error?.code||error?.message||error);
+  }
+
+  const mapped=azobssGoogleMappedUsername(email,firebaseUser?.uid||'');
+  if(mapped){
+    try{
+      const snap=await getDoc(doc(db,'users',mapped));
+      if(!snap.exists()||String(snap.data()?.uid||'')===String(firebaseUser?.uid||'')) return mapped;
+    }catch(_){return mapped}
+  }
+  let base=normalizeUsername(email.split('@')[0]||firebaseUser?.displayName||'googleuser').slice(0,24);
+  if(base.length<3) base=('google'+String(firebaseUser?.uid||'').slice(0,8)).toLowerCase();
+  let candidate=base;
+  for(let i=0;i<8;i++){
+    try{
+      const snap=await getDoc(doc(db,'users',candidate));
+      if(!snap.exists()||String(snap.data()?.uid||'')===String(firebaseUser?.uid||'')) return candidate;
+    }catch(_){return candidate}
+    const suffix=String(firebaseUser?.uid||'user').replace(/[^a-z0-9]/gi,'').slice(0,6).toLowerCase()||String(i+1);
+    candidate=(base.slice(0,Math.max(3,23-suffix.length))+'_'+suffix+(i?String(i):'')).slice(0,30);
+  }
+  return ('google_'+String(firebaseUser?.uid||Date.now()).replace(/[^a-z0-9]/gi,'').slice(0,12)).toLowerCase();
+}
+async function azobssCreateGoogleProfile(firebaseUser,options={}){
+  const identity=azobssGoogleProviderIdentity(firebaseUser,null,options);
+  const email=identity.email;
+  let profile=await ensureUserProfile(firebaseUser);
+  if(profile&&!profile._profileMissing&&normalizeUsername(profile.usernameKey||profile.username||profile.id||'')) return profile;
+
+  // v1083: never allocate a new Google profile before checking whether this
+  // verified Google email already owns an AZOBSS profile. This is especially
+  // important during onAuthStateChanged/page reloads where local username maps
+  // may not exist (for example Private Browsing).
+  try{
+    const ownerMatches=await azobssFindGoogleEmailProfileMatches(email);
+    if(ownerMatches?.strong){
+      const bound=await azobssBindGoogleUserToExactProfile(firebaseUser,identity,ownerMatches.strong);
+      if(bound?.profile)return bound.profile;
+    }
+  }catch(error){
+    console.warn('AZOBSS safe Google owner pre-match skipped:',error?.code||error?.message||error);
+  }
+
+  const mapped=azobssGoogleMappedUsername(email,firebaseUser?.uid||'');
+  if(mapped){
+    try{
+      const snap=await getDoc(doc(db,'users',mapped));
+      if(snap.exists()&&String(snap.data()?.uid||'')===String(firebaseUser?.uid||'')){
+        return {uid:firebaseUser.uid,id:mapped,...snap.data(),usernameKey:mapped};
+      }
+    }catch(_){ }
+  }
+
+  // v1076: this is reached only after exact Google-email owner matching found no
+  // authoritative existing AZOBSS profile.
+  const usernameKey=await azobssAllocateGoogleUsername({uid:firebaseUser?.uid||'',email,displayName:identity.displayName});
+  const inviteCode=normalizePaMemberCode(options.inviteCode||'');
+  const profilePayload={
+    uid:firebaseUser.uid,
+    username:usernameKey,
+    usernameKey,
+    displayName:usernameKey,
+    name:usernameKey,
+    googleDisplayName:identity.displayName,
+    email,
+    authEmail:email,
+    contactEmail:email,
+    // phone/phoneNumber are intentionally omitted until the user confirms one.
+    // Never merge blank phone fields into an existing document.
+    photoURL:identity.photoURL,
+    authProvider:'google.com',
+    googleSignIn:true,
+    googleProfileAutoCreated:true,
+    googleProfileConfirmed:false,
+    ...getPaBmPayloadFromCode(inviteCode),
+    role:'user',verified:true,emailVerified:true,
+    createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+  };
+  await setDoc(doc(db,'users',usernameKey),profilePayload,{merge:true});
+  await saveUsernameAuthEmail(usernameKey,email,firebaseUser.uid);
+  try{
+    localStorage.setItem('azobssAuthEmailMap:'+usernameKey,email);
+    localStorage.setItem('azobssSignupUsernameByEmail:'+email,usernameKey);
+    localStorage.setItem('azobssUsernameLock:email:'+email,usernameKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,usernameKey);
+  }catch(_){ }
+  return profilePayload;
+}
+function azobssGoogleProfileNeedsChoice(profile={}){
+  if(profile?.googleLinkedExisting===true || profile?.googleProfileConfirmed===true) return false;
+  return profile?.googleSignIn===true || profile?.authProvider==='google.com' || profile?._profileMissing===true;
+}
+async function azobssGetLinkVerifierAuth(){
+  if(azobssLinkVerifierAuth) return azobssLinkVerifierAuth;
+  const verifierApp=getApps().find(a=>a.name==='azobss-link-verifier')||initializeApp(firebaseConfig,'azobss-link-verifier');
+  azobssLinkVerifierAuth=getAuth(verifierApp);
+  try{await setPersistence(azobssLinkVerifierAuth,inMemoryPersistence)}catch(_){ }
+  return azobssLinkVerifierAuth;
+}
+async function azobssVerifyExistingAccount(usernameRaw,password){
+  const usernameKey=normalizeUsername(usernameRaw);
+  if(!usernameKey) throw new Error('Please enter your existing AZOBSS username.');
+  if(!String(password||'')) throw new Error('Please enter the password for your existing AZOBSS account.');
+  const snap=await getDoc(doc(db,'users',usernameKey));
+  if(!snap.exists()) throw new Error('AZOBSS username not found. Please check the username and try again.');
+  const data=snap.data()||{};
+  const mappedEmail=await getAuthEmailForUsername(usernameKey);
+  const primaryEmail=mappedEmail||buildUserEmail(usernameKey);
+  const verifierAuth=await azobssGetLinkVerifierAuth();
+  try{await signOut(verifierAuth)}catch(_){ }
+  let credential;
+  try{
+    credential=await signInWithEmailAndPassword(verifierAuth,primaryEmail,password);
+  }catch(primaryError){
+    if(mappedEmail){
+      try{credential=await signInWithEmailAndPassword(verifierAuth,buildUserEmail(usernameKey),password)}catch(_){throw primaryError}
+    }else throw primaryError;
+  }
+  const verifiedUid=String(credential?.user?.uid||'');
+  const profileUid=String(data.uid||'');
+  if(profileUid&&verifiedUid&&profileUid!==verifiedUid){
+    try{await signOut(verifierAuth)}catch(_){ }
+    throw new Error('Account verification did not match this AZOBSS username.');
+  }
+  const authEmail=String(credential?.user?.email||primaryEmail||'').trim().toLowerCase();
+  try{await signOut(verifierAuth)}catch(_){ }
+  return {usernameKey,data,authUid:verifiedUid,authEmail};
+}
+async function azobssSignInExistingPrimary(verified,password){
+  let credential;
+  try{
+    credential=await signInWithEmailAndPassword(auth,verified.authEmail||buildUserEmail(verified.usernameKey),password);
+  }catch(primaryError){
+    const fallback=buildUserEmail(verified.usernameKey);
+    if(String(verified.authEmail||'').toLowerCase()!==fallback.toLowerCase()){
+      try{credential=await signInWithEmailAndPassword(auth,fallback,password)}catch(_){throw primaryError}
+    }else throw primaryError;
+  }
+  return credential;
+}
+async function azobssCleanupTemporaryGoogleProfile(tempUsername,tempUid,targetUsername){
+  const tempKey=normalizeUsername(tempUsername),targetKey=normalizeUsername(targetUsername);
+  if(!tempKey||!targetKey||tempKey===targetKey)return;
+  try{
+    const ref=doc(db,'users',tempKey);const snap=await getDoc(ref);
+    if(!snap.exists())return;
+    const data=snap.data()||{};
+    const sameUid=!String(data.uid||'')||String(data.uid||'')===String(tempUid||'');
+    let createdMs=0;try{createdMs=typeof data.createdAt?.toMillis==='function'?data.createdAt.toMillis():Date.parse(String(data.createdAt||''))||0}catch(_){createdMs=0}
+    const recentLegacy=createdMs>0&&(Date.now()-createdMs)<(7*24*60*60*1000);
+    const safeGoogle=(data.googleProfileAutoCreated===true)||(recentLegacy&&data.googleSignIn===true&&String(data.authProvider||'')==='google.com'&&['user','member'].includes(String(data.role||'user').toLowerCase()));
+    const privileged=data.adminPaBmOverride===true||data.role==='admin'||data.role==='staff'||data.role==='semiadmin'||data.allowPABM===true||data.allowPaBm===true||data.canAccessPaBm===true;
+    if(sameUid&&safeGoogle&&!privileged){
+      try{await deleteDoc(ref)}catch(deleteError){
+        await setDoc(ref,{googleProfileLinkedAway:true,hiddenFromRegisteredUsers:true,linkedToUsername:targetKey,updatedAt:serverTimestamp()},{merge:true});
+      }
+      try{await deleteDoc(doc(db,'usernameAuthEmails',tempKey))}catch(_){ }
+    }
+  }catch(error){console.warn('AZOBSS temporary Google profile cleanup skipped:',error?.code||error?.message||error)}
+}
+async function azobssSecureLinkExistingGoogleAccount(firebaseUser,usernameRaw,password,phoneRaw){
+  const googleCredential=azobssGooglePendingCredential;
+  if(!googleCredential) throw new Error('Google linking session expired. Please cancel and choose Continue with Google again.');
+  const verified=await azobssVerifyExistingAccount(usernameRaw,password);
+  const tempProfile=azobssGooglePendingProfile||{};
+  const identity=azobssGoogleProviderIdentity(firebaseUser,null,tempProfile);
+  const tempUid=String(firebaseUser?.uid||auth.currentUser?.uid||azobssGooglePendingTempUid||'');
+  const tempUsername=normalizeUsername(tempProfile._googleMatchedExisting?'':(tempProfile.usernameKey||tempProfile.username||tempProfile.name||tempProfile.id||''));
+  const targetKey=verified.usernameKey;
+
+  // v1076 safety: if Google is currently attached to a DIFFERENT established
+  // Firebase account, remove only google.com. Never delete its Email/Password user.
+  const currentUser=auth.currentUser;
+  if(currentUser&&isGoogleFirebaseUser(currentUser)&&String(currentUser.uid)!==String(verified.authUid||'')){
+    const sourceProfile=await findExistingUserProfileForAuth(currentUser);
+    const providers=Array.isArray(currentUser.providerData)?currentUser.providerData:[];
+    const nonGoogle=providers.filter(p=>String(p?.providerId||'')!=='google.com');
+    if(nonGoogle.length){
+      await unlink(currentUser,'google.com');
+      await azobssClearGoogleFieldsFromSourceProfile(sourceProfile||{},identity.email,targetKey);
+      try{await signOut(auth)}catch(_){ }
+    }else{
+      const sourceKey=azobssGoogleProfileKey(sourceProfile||{});
+      if(!sourceProfile||azobssIsTemporaryGoogleProfile(sourceProfile)||sourceKey===tempUsername){
+        if(sourceKey)await azobssCleanupTemporaryGoogleProfile(sourceKey,currentUser.uid,targetKey);
+        try{await deleteUser(currentUser)}catch(error){
+          if(error?.code==='auth/requires-recent-login')throw new Error('Please sign in with Google again, then retry linking.');
+          throw error;
+        }
+      }else{
+        throw new Error('Google is already attached to another established AZOBSS account. Please contact Admin before linking.');
+      }
+    }
+  }else if(currentUser&&String(currentUser.uid)!==String(verified.authUid||'')){
+    try{await signOut(auth)}catch(_){ }
+  }
+
+  // If a temporary Google-only Auth identity still exists, remove it before
+  // attaching the Google credential to the verified existing Firebase UID.
+  if(auth.currentUser&&String(auth.currentUser.uid)!==String(verified.authUid||'')){
+    try{await signOut(auth)}catch(_){ }
+  }
+  const oldCredential=await azobssSignInExistingPrimary(verified,password);
+  const oldUser=oldCredential.user;
+  if(verified.authUid&&String(oldUser.uid)!==String(verified.authUid)) throw new Error('Existing AZOBSS account UID verification failed.');
+  try{
+    await linkWithCredential(oldUser,googleCredential);
+  }catch(error){
+    if(error?.code!=='auth/provider-already-linked'){
+      if(error?.code==='auth/credential-already-in-use') throw new Error('This Google account is still linked to another Firebase account. Sign out, choose Google again, and retry.');
+      throw error;
+    }
+  }
+  try{await oldUser.reload()}catch(_){ }
+  const existingPhone=normalizeAzobssPhone(verified.data?.phone||verified.data?.phoneNumber||'');
+  const phone=normalizeAzobssPhone(phoneRaw)||existingPhone;
+  if(!phone) throw new Error('Please enter your phone number.');
+  const patch={
+    uid:oldUser.uid,
+    phone,phoneNumber:phone,
+    googleSignIn:true,
+    googleAuthLinked:true,
+    googleLinkedExisting:true,
+    googleProfileConfirmed:true,
+    googleProfileCompleted:true,
+    phoneConfirmed:true,
+    googleLastConfirmedPhone:phone,
+    googleProfileCompletedAt:serverTimestamp(),
+    googleEmail:identity.email,
+    googleDisplayName:identity.displayName,
+    googlePhotoURL:identity.photoURL,
+    authProvider:'password+google.com',
+    updatedAt:serverTimestamp()
+  };
+  await setDoc(doc(db,'users',verified.usernameKey),patch,{merge:true});
+  await saveUsernameAuthEmail(verified.usernameKey,String(oldUser.email||verified.authEmail||''),oldUser.uid);
+  try{
+    localStorage.setItem('azobssGoogleUsernameByEmail:'+identity.email,verified.usernameKey);
+    localStorage.setItem('azobssUsernameLock:uid:'+oldUser.uid,verified.usernameKey);
+    localStorage.setItem('azobssSignupPhone:'+verified.usernameKey,phone);
+  }catch(_){ }
+  if(tempUsername)await azobssCleanupTemporaryGoogleProfile(tempUsername,tempUid,verified.usernameKey);
+  const merged={...verified.data,...patch,usernameKey:verified.usernameKey,username:verified.usernameKey,name:verified.usernameKey,displayName:verified.usernameKey,authEmail:String(oldUser.email||verified.authEmail||verified.data?.authEmail||''),email:String(verified.data?.email||oldUser.email||verified.authEmail||'')};
+  return {firebaseUser:oldUser,profile:merged};
+}
+function closeGoogleProfileModal(){
+  const modal=$('siteGoogleProfileModal');
+  if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true')}
+}
+async function azobssAbortGoogleProfile(){
+  azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingNeedsUsername=false;azobssGooglePendingCredential=null;azobssGooglePendingTempUid='';azobssGooglePendingLinkMode=false;azobssGooglePendingMatchedUsername='';azobssGooglePendingRepairMatch=null;azobssGooglePendingRepairIdentity=null;azobssGoogleRepairBusy=false;
+  closeGoogleProfileModal();
+  try{await signOut(auth)}catch(_){ }
+  clearUser();syncHeader(null);
+  window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+}
+function setGoogleLinkMode(active){
+  azobssGooglePendingLinkMode=!!active;
+  const panel=$('siteGoogleLinkPanel'),toggle=$('siteGoogleLinkToggle');
+  if(panel)panel.hidden=!active;
+  if(toggle){toggle.setAttribute('aria-expanded',active?'true':'false');toggle.textContent=active?'Use a new AZOBSS profile instead':'Already have an AZOBSS account? Link existing account'}
+  if(!active){if($('siteGoogleUsername'))$('siteGoogleUsername').value='';if($('siteGoogleLinkPassword'))$('siteGoogleLinkPassword').value=''}
+  const submit=$('siteGoogleProfileForm')?.querySelector('button[type="submit"]');
+  if(submit)submit.textContent=active?'Verify, Link & Continue':'Save & Continue';
+  if(active)setTimeout(()=>$('siteGoogleUsername')?.focus(),40);
+}
+function openGoogleProfileModal(firebaseUser,profile,offerLink=true){
+  injectGoogleProfileModal();
+  azobssGooglePendingFirebaseUser=(firebaseUser&&firebaseUser.uid)?firebaseUser:(auth.currentUser||null);
+  azobssGooglePendingProfile=profile||{};
+  azobssGooglePendingNeedsUsername=false;
+  const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile||{});
+  const modal=$('siteGoogleProfileModal');
+  const copy=$('siteGoogleProfileCopy');
+  setGoogleRepairMode(false);
+  setGoogleLinkMode(false);
+  if(copy) copy.textContent=offerLink
+    ? 'Google sign-in was successful. Add or confirm your phone number. If you already have an AZOBSS account, you can securely link it using your existing username and password.'
+    : 'Google sign-in was successful. Add your phone number once to complete your AZOBSS profile.';
+  if($('siteGoogleDisplayName')) $('siteGoogleDisplayName').textContent=String(identity.displayName||profile?.usernameKey||'Google User');
+  if($('siteGoogleEmail')) $('siteGoogleEmail').textContent=String(identity.email||profile?.googleEmail||profile?.email||'');
+  const avatar=$('siteGoogleAvatar'),fallback=$('siteGoogleAvatarFallback');
+  const photo=String(identity.photoURL||profile?.googlePhotoURL||profile?.photoURL||'');
+  if(avatar&&photo){avatar.src=photo;avatar.hidden=false;if(fallback)fallback.hidden=true}else{if(avatar)avatar.hidden=true;if(fallback)fallback.hidden=false}
+  const existingPhone=azobssGoogleCompletionPhone(profile||{},identity);
+  const parsed=splitPhoneToDialLocal(existingPhone);
+  setPhoneDial('siteGoogle',parsed.dial||'60');
+  if($('siteGooglePhone')) $('siteGooglePhone').value=formatPhoneGuide(parsed.local||'');
+  const err=$('siteGoogleProfileError');if(err){err.textContent='';err.style.color=''}
+  closeSiteAuth();
+  if(modal){modal.classList.add('is-open');modal.setAttribute('aria-hidden','false')}
+  setTimeout(()=>$('siteGooglePhone')?.focus(),60);
+}
+async function finalizeGoogleSession(firebaseUser,profile){
+  const usernameKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
+  if(!usernameKey) throw new Error('AZOBSS profile username is missing.');
+  // v1084: store the AZOBSS username on the Firebase Auth user itself. This
+  // gives future Private Browsing/new-device sign-ins a durable direct lookup
+  // key without requiring Firestore collection queries.
+  try{if(firebaseUser&&normalizeUsername(firebaseUser.displayName||'')!==usernameKey)await updateProfile(firebaseUser,{displayName:usernameKey})}catch(error){console.warn('AZOBSS Firebase username marker skipped:',error?.code||error?.message||error)}
+  const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile||{});
+  const phone=azobssGoogleCompletionPhone(profile||{},identity);
+  if(!phone){openGoogleProfileModal(firebaseUser,profile,false);return false}
+  const email=String(profile?.authEmail||profile?.email||firebaseUser?.email||'').trim().toLowerCase();
+  const provider=String(profile?.authProvider||(profile?.googleLinkedExisting?'password+google.com':'google.com'));
+  const fullUser={uid:firebaseUser.uid,...profile,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey,email:String(profile?.email||email),authEmail:email,phone,phoneNumber:phone,verified:true,emailVerified:true,googleSignIn:true,authProvider:provider,photoURL:String(profile?.photoURL||profile?.googlePhotoURL||firebaseUser?.photoURL||'')};
+  saveUser(fullUser);syncHeader(fullUser);enforcePaBmPageAccess(fullUser,true);startAzobssPresenceHeartbeat(fullUser);await recordLoginHistory(fullUser,'login');bindAzobssPurchaseRecordsUI();renderAzobssPurchaseRecords();setTimeout(renderAzobssPurchaseRecords,800);renderFirebaseAdminRecords();
+  setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
+  closeGoogleProfileModal();closeSiteAuth();window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+  return true;
+}
+async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity){
+  if(!firebaseUser||!isGoogleFirebaseUser(firebaseUser)||!identity?.email)return null;
+  let profile=null;
+  try{profile=await findExistingUserProfileForAuth(firebaseUser)}catch(error){console.warn('AZOBSS linked Google profile lookup skipped:',error?.code||error?.message||error)}
+  // v1083: a repaired Google account can temporarily miss the UID lookup while
+  // usernameAuthEmails/users are converging. Exact verified Google authEmail is
+  // authoritative enough to recover the intended AZOBSS profile.
+  if(!profile){
+    try{
+      const matches=await azobssFindGoogleEmailProfileMatches(identity.email);
+      if(matches?.strong)profile={...(matches.strong.data||{}),id:matches.strong.id||matches.strong.usernameKey,usernameKey:normalizeUsername(matches.strong.usernameKey||matches.strong.id||'')};
+    }catch(error){console.warn('AZOBSS linked Google email-owner fallback skipped:',error?.code||error?.message||error)}
+  }
+  if(!profile)return null;
+  const usernameKey=azobssGoogleProfileKey(profile);
+  if(!usernameKey)return null;
+  const storedUid=String(profile.uid||'').trim();
+  const currentUid=String(firebaseUser.uid||'').trim();
+  const storedGoogleEmail=String(profile.googleEmail||'').trim().toLowerCase();
+  const canonicalAuthEmail=String(profile.authEmail||profile.email||'').trim().toLowerCase();
+  const providerGoogleEmail=String(identity.email||'').trim().toLowerCase();
+  const explicitLinkConfirmed=profile.googleAuthLinked===true && (profile.googleLinkedExisting===true || profile.googleProfileConfirmed===true || profile.googleSignIn===true);
+
+  // v1082: a verified Google provider already using the exact same Firebase UID
+  // as the AZOBSS profile, together with an exact canonical authEmail match, is
+  // itself a trusted account link. Older/repaired profiles may not yet contain
+  // all googleAuthLinked/googleEmail flags, which caused Complete Profile to
+  // appear on every sign-in even after phone + UID were saved correctly.
+  const uidAndEmailConfirmed=!!(
+    storedUid && currentUid && storedUid===currentUid &&
+    canonicalAuthEmail && canonicalAuthEmail===providerGoogleEmail
+  );
+  // Exact canonical authEmail ownership by the currently verified Google
+  // provider is also trusted for one-time stale UID repair (rules v1081).
+  const canonicalGoogleOwner=!!(
+    currentUid && canonicalAuthEmail && canonicalAuthEmail===providerGoogleEmail
+  );
+  const explicitGoogleConfirmed=!!(
+    explicitLinkConfirmed && storedGoogleEmail && storedGoogleEmail===providerGoogleEmail
+  );
+  if(!uidAndEmailConfirmed&&!explicitGoogleConfirmed&&!canonicalGoogleOwner)return null;
+
+  if(storedUid&&currentUid&&storedUid!==currentUid){
+    try{
+      await setDoc(doc(db,'users',usernameKey),{uid:currentUid,previousAuthUids:arrayUnion(storedUid),updatedAt:serverTimestamp()},{merge:true});
+      profile={...profile,uid:currentUid};
+    }catch(error){console.warn('AZOBSS stale Google UID repair skipped:',error?.code||error?.message||error);return null}
+  }
+
+  // Backfill the durable link/completion markers once identity is trusted.
+  // This is idempotent and prevents old v107x profiles from re-entering the
+  // Complete Profile flow on future Google sign-ins.
+  const phone=azobssGoogleCompletionPhone(profile,identity);
+  const backfill={
+    googleSignIn:true,
+    googleAuthLinked:true,
+    googleProfileConfirmed:true,
+    googleLinkedExisting:profile.googleLinkedExisting===true || !profile.googleProfileAutoCreated,
+    googleEmail:providerGoogleEmail,
+    googleDisplayName:String(identity.displayName||profile.googleDisplayName||''),
+    googlePhotoURL:String(identity.photoURL||profile.googlePhotoURL||profile.photoURL||''),
+    authProvider:'google.com',
+    verified:true,
+    emailVerified:true,
+    updatedAt:serverTimestamp()
+  };
+  if(phone){
+    backfill.phone=phone;
+    backfill.phoneNumber=phone;
+    backfill.googleLastConfirmedPhone=phone;
+    backfill.phoneConfirmed=true;
+    backfill.googleProfileCompleted=true;
+  }
+  try{
+    await setDoc(doc(db,'users',usernameKey),backfill,{merge:true});
+    profile={...profile,...backfill,phone:phone||profile.phone,phoneNumber:phone||profile.phoneNumber};
+  }catch(error){
+    console.warn('AZOBSS trusted Google link backfill skipped:',error?.code||error?.message||error);
+  }
+  return {...profile,uid:currentUid||storedUid,usernameKey,username:usernameKey,name:usernameKey,displayName:usernameKey};
+}
+
+async function handleGoogleAuth(mode='signin'){
+  if(azobssGoogleAuthBusy)return;
+  azobssGoogleAuthBusy=true;window.__AZOBSS_GOOGLE_AUTH_FLOW__=true;
+  const signup=mode==='signup';
+  const err=$(signup?'siteSignupError':'siteLoginError');
+  const btn=$(signup?'siteGoogleSignUpButton':'siteGoogleSignInButton');
+  const original=btn?.innerHTML||'';
+  try{
+    if(err){err.style.color='#ffd54a';err.textContent='Opening Google sign-in...'}
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="auth-google-g" aria-hidden="true">G</span><span>Please wait...</span>'}
+    await setPersistence(auth,browserLocalPersistence);
+    const result=await signInWithPopup(auth,azobssGoogleProvider);
+    const firebaseUser=result.user;
+    const googleCredential=GoogleAuthProvider.credentialFromResult(result);
+    const identity=azobssGoogleProviderIdentity(firebaseUser,result,{});
+    azobssGooglePendingCredential=googleCredential;
+    azobssGooglePendingTempUid=String(firebaseUser?.uid||'');
+    azobssGooglePendingMatchedUsername='';
+
+    // v1078: if this Firebase UID already has a confirmed Google link to an
+    // AZOBSS profile, trust that existing provider link and sign in directly.
+    // The old flow continued into contactEmail matching and asked for the old
+    // AZOBSS password on every Google login even after a successful link.
+    const alreadyLinkedProfile=await azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity);
+    if(alreadyLinkedProfile){
+      let linkedPhone=azobssGoogleCompletionPhone(alreadyLinkedProfile,identity);
+      try{
+        localStorage.setItem('azobssGoogleUsernameByEmail:'+identity.email,alreadyLinkedProfile.usernameKey);
+        localStorage.setItem('azobssUsernameLock:uid:'+firebaseUser.uid,alreadyLinkedProfile.usernameKey);
+      }catch(_){ }
+      if(!linkedPhone){
+        azobssGooglePendingProfile=alreadyLinkedProfile;
+        azobssGooglePendingFirebaseUser=firebaseUser;
+        openGoogleProfileModal(firebaseUser,alreadyLinkedProfile,false);
+        const copy=$('siteGoogleProfileCopy');
+        if(copy)copy.textContent=`Google is already linked to ${alreadyLinkedProfile.usernameKey}. Add your phone number once to finish the profile. After it is saved, future Google sign-ins will go straight in.`;
+        return;
+      }
+      if(!azobssGoogleProfileIsComplete(alreadyLinkedProfile,identity)||!normalizeAzobssPhone(alreadyLinkedProfile.phone||alreadyLinkedProfile.phoneNumber||'')){
+        alreadyLinkedProfile=await azobssPersistGoogleProfileCompletion(alreadyLinkedProfile.usernameKey,firebaseUser,alreadyLinkedProfile,identity,linkedPhone);
+      }
+      await finalizeGoogleSession(firebaseUser,alreadyLinkedProfile);
+      return;
+    }
+
+    // v1076: resolve the VERIFIED Google-provider email before creating any
+    // profile. firebaseUser.email may belong to an older Email/Password account
+    // when Google was previously linked to the wrong Firebase UID.
+    const matches=await azobssFindGoogleEmailProfileMatches(identity.email);
+    if(matches.strong){
+      // v1083: direct trusted owner path. If this exact authEmail profile already
+      // belongs to the current Google UID and has a saved phone, do not reopen
+      // Complete Profile or ask for any password again.
+      const exactTarget={...(matches.strong.data||{}),usernameKey:normalizeUsername(matches.strong.usernameKey||matches.strong.id||'')};
+      const exactPhone=azobssGoogleCompletionPhone(exactTarget,identity);
+      const exactUid=String(exactTarget.uid||'').trim();
+      if(exactTarget.usernameKey && exactPhone && exactUid===String(firebaseUser.uid||'')){
+        const completed=await azobssPersistGoogleProfileCompletion(exactTarget.usernameKey,firebaseUser,exactTarget,identity,exactPhone);
+        await finalizeGoogleSession(firebaseUser,completed);
+        return;
+      }
+      const attached=await azobssAttachGoogleToMatchedProfile(firebaseUser,googleCredential,identity,matches.strong);
+      if(attached.status==='reauth-google-required'){
+        azobssPrepareGoogleRepair(identity,matches.strong,`AZOBSS found ${matches.strong.usernameKey} for ${identity.email}. Google was previously attached to another Firebase account. Click Continue with Google Again and choose the same Google account once more. You do not need to create a Firebase user manually.`);
+        return;
+      }
+      if(attached.status==='password-required'){
+        azobssPrepareMatchedSecureLink(identity,matches.strong,`AZOBSS found ${matches.strong.usernameKey} for ${identity.email}. Firebase confirms this profile still has its own sign-in, so enter its AZOBSS password once to link Google securely.`);
+        return;
+      }
+      let profile=attached.profile;
+      const linkedUser=attached.firebaseUser;
+      const phone=azobssGoogleCompletionPhone(profile||{},identity);
+      if(!phone){
+        azobssGooglePendingProfile={...profile,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL};
+        azobssGooglePendingFirebaseUser=linkedUser;
+        openGoogleProfileModal(linkedUser,azobssGooglePendingProfile,false);
+        return;
+      }
+      if(!azobssGoogleProfileIsComplete(profile,identity)||!normalizeAzobssPhone(profile.phone||profile.phoneNumber||'')){
+        profile=await azobssPersistGoogleProfileCompletion(profile.usernameKey,linkedUser,profile,identity,phone);
+      }
+      await finalizeGoogleSession(linkedUser,profile);
+      return;
+    }
+    if(matches.ambiguous){
+      const profile=await azobssCreateGoogleProfile(firebaseUser,{inviteCode:signup?getSignupInviteCodeValue():'',googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL});
+      azobssGooglePendingProfile={...profile,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL};
+      openGoogleProfileModal(firebaseUser,azobssGooglePendingProfile,true);
+      const copy=$('siteGoogleProfileCopy');if(copy)copy.textContent='More than one AZOBSS profile appears to use this email. For safety, choose Link existing account and verify the correct username with its password.';
+      return;
+    }
+    if(matches.contact){
+      // Contact email is editable profile data, so it is not strong enough for
+      // automatic account ownership. Require the old password.
+      azobssPrepareMatchedSecureLink(identity,matches.contact,`AZOBSS found ${matches.contact.usernameKey} using this Google email as a contact email. Enter that account password to confirm ownership before linking.`);
+      return;
+    }
+
+    const inviteCode=signup?getSignupInviteCodeValue():'';
+    let profile=await azobssCreateGoogleProfile(firebaseUser,{inviteCode,googleEmail:identity.email,googleDisplayName:identity.displayName,googlePhotoURL:identity.photoURL});
+    const phone=normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'');
+    if(!phone||azobssGoogleProfileNeedsChoice(profile)){openGoogleProfileModal(firebaseUser,profile,true);return}
+    await finalizeGoogleSession(firebaseUser,profile);
+  }catch(error){
+    console.warn('AZOBSS Google sign-in failed:',error?.code||error?.message||error);
+    window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+    const code=String(error?.code||'');
+    if(err){
+      err.style.color='';
+      if(code==='auth/popup-closed-by-user') err.textContent='Google sign-in was cancelled.';
+      else if(code==='auth/popup-blocked') err.textContent='Google sign-in popup was blocked. Please allow popups for azobss.com and try again.';
+      else if(code==='auth/account-exists-with-different-credential'){
+        const pending=GoogleAuthProvider.credentialFromError(error);
+        if(pending){
+          azobssGooglePendingCredential=pending;
+          const googleEmail=String(error?.customData?.email||'').trim().toLowerCase();
+          const identity={email:googleEmail,displayName:googleEmail?googleEmail.split('@')[0]:'Google User',photoURL:''};
+          const matches=await azobssFindGoogleEmailProfileMatches(googleEmail);
+          if(matches.strong){azobssPrepareMatchedSecureLink(identity,matches.strong);err.textContent='';}
+          else{
+            azobssGooglePendingProfile={googleEmail,email:googleEmail,_profileMissing:true};
+            openGoogleProfileModal(identity,azobssGooglePendingProfile,true);
+            setGoogleLinkMode(true);
+            err.textContent='';
+          }
+        }else err.textContent='This email already has an AZOBSS sign-in. Use the secure Link existing account option.';
+      }
+      else if(code==='auth/operation-not-allowed') err.textContent='Google Sign-In is not enabled in Firebase yet. Enable Google under Firebase Authentication > Sign-in method.';
+      else if(code==='auth/unauthorized-domain') err.textContent='This AZOBSS domain is not yet authorized for Google Sign-In in Firebase.';
+      else err.textContent='Google sign-in failed: '+(error?.message||'Please try again.');
+    }
+  }finally{
+    azobssGoogleAuthBusy=false;
+    if(btn){btn.disabled=false;if(original)btn.innerHTML=original}
+  }
+}
+
+// Firebase persistent admin/user records.
+const AZOBSS_LOGIN_HISTORY_COLLECTION = 'loginHistory';
+const AZOBSS_ONLINE_USERS_COLLECTION = 'onlineUsers';
+const AZOBSS_GUEST_HISTORY_COLLECTION = 'guestHistory';
+const AZOBSS_ADMIN_PAGE_SIZE = 6;
+let azobssRegisteredUsersPage = 1;
+let azobssLiveUsersPage = 1;
+let azobssLoginHistoryPage = 1;
+let azobssGuestHistoryPage = 1;
+const AZOBSS_REAL_ONLINE_MS = 180000; // only show users seen within the last 3 minutes
+let azobssPresenceHeartbeatTimer = null;
+
+
+async function azobssCleanupCollection(collectionName){
+ try{
+ const snap=await getDocs(query(collection(db,collectionName),orderBy("createdAt","desc")));
+ if(snap.size<=25) return;
+ const extra=snap.docs.slice(25);
+ for(const d of extra){ await deleteDoc(d.ref);} 
+ }catch(e){console.warn("cleanup",e)}
+}
+function firestoreMs(value){
+  if(!value) return 0;
+  if(typeof value.toMillis === 'function') return value.toMillis();
+  if(typeof value === 'number') return value;
+  const parsed = Date.parse(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+let azobssLastRegisteredUsers = [];
+function recordDisplayName(record){
+  return escHtml(record.displayName || record.usernameKey || record.name || 'User');
+}
+function userDocId(user){
+  return String(user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
+}
+function dedupeRegisteredUsers(users){
+  const best = new Map();
+  const scoreUser = (u)=>{
+    const id = normalizeUsername(u?.id || u?.usernameKey || u?.username || u?.name || '');
+    const email = String(u?.email || u?.authEmail || '').toLowerCase();
+    const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+    let s = 0;
+    if(id && id !== emailLocalKey) s += 100;
+    if(id && normalizeUsername(u?.usernameKey || u?.username || u?.name || '') === id) s += 50;
+    if(u?.phone) s += 5;
+    if(u?.email || u?.authEmail) s += 3;
+    s += Number(firestoreMs(u?.createdAt) || u?.createdAtMs || 0) / 10000000000000;
+    return s;
+  };
+  (users || []).forEach(u=>{
+    const key = String(u?.uid || u?.email || u?.authEmail || userDocId(u) || '').trim().toLowerCase();
+    if(!key) return;
+    const prev = best.get(key);
+    if(!prev || scoreUser(u) > scoreUser(prev)) best.set(key,u);
+  });
+  return Array.from(best.values());
+}
+function userCanonicalKey(user){
+  return String(user?.uid || user?.email || user?.authEmail || user?.contactEmail || user?.id || user?.usernameKey || user?.name || '').trim().toLowerCase();
+}
+function mergeDuplicateUserRecords(existing, incoming){
+  if(!existing) return incoming;
+  const pickScore = (u)=>{
+    const id = normalizeUsername(u?.id || u?.usernameKey || u?.username || u?.name || '');
+    const email = String(u?.email || u?.authEmail || '').toLowerCase();
+    const emailLocalKey = normalizeUsername(email ? email.split('@')[0] : '');
+    let s = 0;
+    if(id && id !== emailLocalKey) s += 100;
+    if(id && normalizeUsername(u?.usernameKey || u?.username || u?.name || '') === id) s += 50;
+    if(u?.phone) s += 5;
+    if(u?.email || u?.authEmail) s += 3;
+    return s;
+  };
+  const existingMs = firestoreMs(existing.updatedAt || existing.createdAt || existing.createdAtClient || existing.updatedAtClient);
+  const incomingMs = firestoreMs(incoming.updatedAt || incoming.createdAt || incoming.createdAtClient || incoming.updatedAtClient);
+  const base = incomingMs >= existingMs ? { ...existing, ...incoming } : { ...incoming, ...existing };
+  const preferred = pickScore(incoming) >= pickScore(existing) ? incoming : existing;
+  base.id = normalizeUsername(preferred.id || preferred.usernameKey || preferred.username || preferred.name || base.id || '');
+  base.usernameKey = normalizeUsername(preferred.usernameKey || preferred.username || preferred.name || preferred.id || base.usernameKey || '');
+  return base;
+}
+function userProfileHtml(user){
+  const role = String(user.role || 'user').toLowerCase();
+  const hasAccess = registeredUserHasPaAccess(user);
+  const id = escHtml(userDocId(user));
+  const isSelf = String(getSavedUser()?.usernameKey || '').toLowerCase() === String(id).toLowerCase();
+  const createdDate = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
+  const registeredText = createdDate && !isNaN(createdDate) ? createdDate.toLocaleDateString() + " • " + createdDate.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",hour12:true}) : "Unknown";
+  return `<div class="az-admin-user-row-card az-admin-user-compact-card">
+    <div class="az-admin-user-compact-name"><strong>${recordDisplayName(user)}</strong></div>
+    <span class="az-admin-user-access-badge ${hasAccess ? 'is-allowed' : 'is-blocked'}">${hasAccess ? 'PA/BM allowed' : 'PA/BM off'}</span>
+    <span class="az-admin-register-date">${registeredText}</span>
+    <div class="az-admin-user-row-actions">
+      <button class="az-admin-small-btn az-admin-edit-small" type="button" data-admin-edit-user="${id}">Edit</button>
+      <button class="az-admin-small-btn az-admin-delete-small" type="button" data-admin-delete-user="${id}" ${isSelf ? 'disabled title="Cannot delete current admin"' : ''}>Delete</button>
+    </div>
+  </div>`;
+}
+function openAdminUserEdit(userId){
+  if(!isAzobssAdmin(getSavedUser())) return;
+  const id = String(userId || '').toLowerCase();
+  const user = azobssLastRegisteredUsers.find(u => userDocId(u) === id);
+  if(!user) return;
+  const modal = $('adminUserEditModal');
+  if(!modal) return;
+  $('adminUserEditDocId').value = userDocId(user);
+  $('adminUserEditUsername').value = user.usernameKey || user.name || '';
+  const adminPhoneParts = splitPhoneToDialLocal(user.phone || user.phoneNumber || '');
+  setPhoneDial('adminUserEdit', adminPhoneParts.dial);
+  $('adminUserEditPhone').value = formatPhoneGuide(adminPhoneParts.local || '');
+  $('adminUserEditEmail').value = user.email || '';
+  { const rr=String(user.role||'user').trim().toLowerCase().replace(/[\s_-]+/g,''); $('adminUserEditRole').value=rr==='admin'?'admin':rr==='semiadmin'?'semiAdmin':rr==='staff'?'staff':'user'; }
+  $('adminUserEditPaAccess').value = registeredUserHasPaAccess(user) ? 'yes' : 'no';
+  const err = $('adminUserEditError');
+  if(err){ err.textContent=''; err.style.color=''; }
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeAdminUserEdit(){
+  const modal = $('adminUserEditModal');
+  if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+}
+async function saveAdminUserEdit(){
+  const err = $('adminUserEditError');
+  if(err){ err.textContent=''; err.style.color=''; }
+  if(!isAzobssAdmin(getSavedUser())){ if(err) err.textContent='Admin only.'; return; }
+  const docId = String($('adminUserEditDocId')?.value || '').trim().toLowerCase();
+  let usernameKey = normalizeUsername($('adminUserEditUsername')?.value);
+  if(!docId || !usernameKey){ if(err) err.textContent='Username is required.'; return; }
+  const allowPaAccess = String($('adminUserEditPaAccess')?.value || 'no') === 'yes';
+  const existingAdminUser = azobssLastRegisteredUsers.find(u => userDocId(u) === docId) || {};
+  const adminEditedPhone = getPhoneWithDial('adminUserEdit');
+  const adminFinalPhone = mergePhonePreserve(existingAdminUser.phone || existingAdminUser.phoneNumber || '', adminEditedPhone);
+  const payload = {
+    usernameKey,
+    name: usernameKey,
+    displayName: usernameKey,
+    phone: adminFinalPhone,
+    phoneNumber: adminFinalPhone,
+    email: String($('adminUserEditEmail')?.value || '').trim().toLowerCase(),
+    role: String($('adminUserEditRole')?.value || 'user').trim(),
+    adminPaBmOverride: true,
+    adminPaBmAllowed: allowPaAccess,
+    paBmManagedBy: 'admin',
+    paBmAccess: allowPaAccess,
+    paBmAllowed: allowPaAccess,
+    allowPABM: allowPaAccess,
+    allowPaBm: allowPaAccess,
+    allowPabm: allowPaAccess,
+    allowPaBmTab: allowPaAccess,
+    paBmTabAllowed: allowPaAccess,
+    paBmTab: allowPaAccess,
+    showPaBmTab: allowPaAccess,
+    canAccessPaBm: allowPaAccess,
+    paAccess: allowPaAccess ? 'yes' : 'no',
+    pa_bm_access: allowPaAccess ? 'yes' : 'no',
+    pa_bm_allowed: allowPaAccess,
+    allow_pa_bm: allowPaAccess,
+    updatedAt: serverTimestamp(),
+    updatedAtClient: new Date().toISOString(),
+    updatedByAdmin: getSavedUser()?.usernameKey || 'admin'
+  };
+  try{
+    const oldRef = doc(db, 'users', docId);
+    const newRef = doc(db, 'users', usernameKey);
+    const existingUser = azobssLastRegisteredUsers.find(u => userDocId(u) === docId) || {};
+    const safePayload = {
+      ...existingUser,
+      ...payload,
+      usernameKey,
+      name: usernameKey,
+      displayName: usernameKey
+    };
+    delete safePayload.id;
+
+    // Always save using usernameKey as the Firestore document ID.
+    // This prevents duplicate records such as /users/zedann0001 and /users/zedan0001.
+    await setDoc(newRef, safePayload, { merge:true });
+
+    // If admin renamed / corrected username, remove the old profile document.
+    if(docId !== usernameKey){
+      try{ await deleteDoc(oldRef); }catch(moveError){ console.warn('Old duplicate user profile delete skipped:', moveError); }
+      try{ await deleteDoc(doc(db, 'usernameAuthEmails', docId)); }catch(e){}
+    }
+
+    // Keep username -> email login mapping aligned with the final usernameKey.
+    if(safePayload.email || safePayload.authEmail){
+      try{
+        await setDoc(doc(db, 'usernameAuthEmails', usernameKey), {
+          uid: safePayload.uid || existingUser.uid || '',
+          email: String(safePayload.authEmail || safePayload.email || '').trim().toLowerCase(),
+          usernameKey,
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+      }catch(mapError){ console.warn('Username email mapping update skipped:', mapError); }
+    }
+
+    const current = getSavedUser();
+    if(current && String(current.usernameKey || '').toLowerCase() === docId){
+      const updated = { ...current, ...safePayload };
+      delete updated.updatedAt;
+      saveUser(updated);
+      syncHeader(updated);
+    }
+    if(err){ err.style.color='#62e6a5'; err.textContent='User updated successfully.'; }
+    await renderFirebaseAdminRecords();
+    setTimeout(closeAdminUserEdit, 650);
+  }catch(error){
+    console.warn('Admin user edit failed:', error);
+    if(err) err.textContent='Failed to save user. Check Firebase rules / internet connection.';
+  }
+}
+async function deleteAdminRegisteredUser(userId){
+  if(!isAzobssAdmin(getSavedUser())) return;
+  const docId = String(userId || '').trim().toLowerCase();
+  if(!docId) return;
+  if(String(getSavedUser()?.usernameKey || '').toLowerCase() === docId){
+    alert('Current admin account cannot be deleted here.');
+    return;
+  }
+  const user = azobssLastRegisteredUsers.find(u => userDocId(u) === docId);
+  const name = user ? recordDisplayName(user).replace(/<[^>]+>/g,'') : docId;
+  if(!confirm(`Delete registered user record for ${name}?
+
+This removes the website profile record from Firestore. Firebase Auth login account may still need removal from Firebase Console if required.`)) return;
+  try{
+    await deleteDoc(doc(db, 'users', docId));
+    try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, docId)); }catch(e){}
+    try{ await deleteDoc(doc(db,'purchaseSummaries',docId)); }catch(e){}
+    try{
+      const cols=['loginHistory','purchaseLogs'];
+      for(const c of cols){
+        const qs=await getDocs(query(collection(db,c), where('usernameKey','==',docId)));
+        for(const d of qs.docs){ await deleteDoc(d.ref); }
+      }
+    }catch(e){ console.warn('Cascade delete warning',e);}
+    azobssLastRegisteredUsers = azobssLastRegisteredUsers.filter(u => userDocId(u) !== docId);
+    const maxPage = Math.max(1, Math.ceil(azobssLastRegisteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(azobssRegisteredUsersPage, maxPage);
+    await renderFirebaseAdminRecords();
+  }catch(error){
+    console.warn('Admin delete user failed:', error);
+    alert('Failed to delete user record. Check Firebase rules / internet connection.');
+  }
+}
+function azobssIsRealOnline(user){
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return ms > 0 && (Date.now() - ms) <= AZOBSS_REAL_ONLINE_MS;
+}
+function azobssInlineTime(ms){
+  return ms ? new Date(ms).toLocaleString('en-MY',{hour12:false}) : '-';
+}
+function liveUserHtml(user){
+  const ms = firestoreMs(user.lastSeenAt) || firestoreMs(user.lastSeenClient) || firestoreMs(user.lastLoginAt);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${recordDisplayName(user)}</strong>
+      <span>Email: ${escHtml(user.email || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(user.phone || user.phoneNumber || '') || '-')}</span>
+      <span>Status: <b class="az-status-online">online</b></span>
+      <span>Seen: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function loginHistoryHtml(row){
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>${recordDisplayName(row)}</strong>
+      <span>${row.action === 'signup' ? 'Sign up' : 'Login'}</span>
+      <span>Email: ${escHtml(row.email || '-')}</span>
+      <span>Phone: ${escHtml(normalizeAzobssPhone(row.phone || row.phoneNumber || '') || '-')}</span>
+      <span>Time: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function guestHistoryHtml(row){
+  const ms = firestoreMs(row.createdAt) || firestoreMs(row.createdAtClient) || Number(row.createdAtMs || 0);
+  const ip = row.ipAddress || row.ip || '-';
+  const device = row.deviceId || row.deviceFingerprint || '-';
+  const page = row.page || row.path || '/';
+  return `<div class="purchase-summary-item admin-purchase-user-card az-admin-inline-card">
+    <div class="az-admin-inline-row">
+      <strong>Guest</strong>
+      <span>IP: ${escHtml(ip)}</span>
+      <span>Device ID: ${escHtml(device)}</span>
+      <span>Page: ${escHtml(page)}</span>
+      <span>Time: ${azobssInlineTime(ms)}</span>
+    </div>
+  </div>`;
+}
+function azobssBuildCompactPagerHtml(current, totalPages){
+  const button = (label, page, disabled, active, title) =>
+    `<button class="guest-history-page-btn is-compact${active ? ' is-active' : ''}" type="button" data-page="${page}" title="${title || label}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  const pages = [];
+  pages.push(button('&lt;&lt;', 1, current <= 1, false, 'First page'));
+  pages.push(button('P', Math.max(1, current - 1), current <= 1, false, 'Previous page'));
+
+  // Maximum 10 buttons total: <<, P, 6 page numbers, N, >>
+  const maxNumberButtons = 6;
+  let start = Math.max(1, current - Math.floor(maxNumberButtons / 2));
+  let end = Math.min(totalPages, start + maxNumberButtons - 1);
+  start = Math.max(1, end - maxNumberButtons + 1);
+
+  for(let i = start; i <= end; i++){
+    pages.push(button(String(i), i, false, current === i, 'Page ' + i));
+  }
+
+  pages.push(button('N', Math.min(totalPages, current + 1), current >= totalPages, false, 'Next page'));
+  pages.push(button('&gt;&gt;', totalPages, current >= totalPages, false, 'Last page'));
+  return pages.join('');
+}
+function adminPager(el, page, total, size, onPage){
+  if(!el) return;
+  const totalPages = Math.max(1, Math.ceil((total || 0) / size));
+  if(total <= size){ el.innerHTML = ''; return; }
+  page = Math.min(Math.max(1, page), totalPages);
+  el.innerHTML = azobssBuildCompactPagerHtml(page, totalPages);
+  el.querySelectorAll('button[data-page]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      onPage(Number(btn.dataset.page) || page);
+    });
+  });
+}
+async function upsertOnlineUser(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{
+    await setDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase()), {
+      uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'user',
+      invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
+      status: 'online',
+      lastSeenAt: serverTimestamp(), lastSeenClient: new Date().toISOString(), lastSeenMs: Date.now()
+    }, { merge:true });
+  }catch(error){ console.warn('Firebase online user save failed:', error); }
+}
+async function removeOnlineUser(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{ await deleteDoc(doc(db, AZOBSS_ONLINE_USERS_COLLECTION, String(u.usernameKey).toLowerCase())); }
+  catch(error){ console.warn('Firebase online user remove failed:', error); }
+}
+function startAzobssPresenceHeartbeat(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer);
+  upsertOnlineUser(u);
+  azobssPresenceHeartbeatTimer = setInterval(()=>{
+    if(document.visibilityState !== 'hidden') upsertOnlineUser(getSavedUser() || u);
+  }, 60000);
+}
+async function recordLoginHistory(user, action='login'){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  const sessionKey = `azobssLoginHistorySaved:${action}:${u.usernameKey}`;
+  if(sessionStorage.getItem(sessionKey)) return;
+  sessionStorage.setItem(sessionKey, '1');
+  try{
+    await addDoc(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION), {
+      uid: u.uid || '', usernameKey: String(u.usernameKey).toLowerCase(), displayName: u.usernameKey || u.name || '',
+      email: u.email || '', phone: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), phoneNumber: normalizeAzobssPhone(u.phone || u.phoneNumber || ''), role: u.role || 'user', action,
+      invitedByCode: u.invitedByCode || '', memberCode: u.memberCode || '', paMemberCode: u.paMemberCode || '',
+      createdAt: serverTimestamp(), createdAtClient: new Date().toISOString(), createdAtMs: Date.now()
+    });
+  }catch(error){ console.warn('Firebase login history save failed:', error); }
+}
+async function saveProfileToFirebase(user){
+  const u = user || getSavedUser();
+  if(!u || !u.usernameKey) return;
+  try{
+    const preservedPhone = normalizeAzobssPhone(u.phone || u.phoneNumber || '');
+    const normalizedUser = {...u, phone: preservedPhone, phoneNumber: preservedPhone};
+    await setDoc(doc(db, 'users', String(u.usernameKey).toLowerCase()), {
+      ...normalizedUser,
+      usernameKey: String(u.usernameKey).toLowerCase(),
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString()
+    }, { merge:true });
+  }catch(error){ console.warn('Firebase profile save failed:', error); }
+}
+
+let azobssOnlineUserIds = new Set();
+function getRegisteredUserControls(){
+  return {
+    search: document.getElementById('registeredUserSearch'),
+    sort: document.getElementById('registeredUserSort'),
+    refresh: document.getElementById('refreshUsersButton')
+  };
+}
+function compactSearchValue(value){
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s\-()+.]/g, '');
+}
+function registeredUserSearchText(user){
+  const rawValues = [
+    user.id, user.uid,
+    user.usernameKey, user.username, user.displayName, user.name,
+    user.email, user.contactEmail, user.emailAddress, user.userEmail,
+    user.phone, user.phoneNumber, user.whatsapp, user.whatsApp, user.whatsappNumber, user.mobile, user.mobileNumber,
+    user.memberCode, user.invitedByCode, user.paMemberCode, user.accessCode, user.signupCode,
+    user.role
+  ].filter(v => v !== undefined && v !== null);
+  const normalText = rawValues.map(v => String(v).toLowerCase()).join(' ');
+  const compactText = rawValues.map(compactSearchValue).join(' ');
+  const digitsOnly = rawValues.map(v => String(v || '').replace(/\D/g, '')).filter(Boolean).join(' ');
+  return `${normalText} ${compactText} ${digitsOnly}`;
+}
+function registeredUserHasPaAccess(user){
+  if(!user) return false;
+  const role = String(user.role || 'user').toLowerCase();
+  if(role === 'admin') return true;
+  const adminAllowed = getAdminPaBmAllowed(user);
+  return adminAllowed === true;
+}
+function registeredUserCreatedMs(user){
+  return firestoreMs(user.createdAt) || firestoreMs(user.createdAtClient) || Number(user.createdAtMs || 0) || firestoreMs(user.updatedAt) || firestoreMs(user.updatedAtClient);
+}
+function getFilteredRegisteredUsers(users){
+  const controls = getRegisteredUserControls();
+  const q = String(controls.search?.value || '').trim().toLowerCase();
+  const sort = String(controls.sort?.value || 'username');
+  let rows = Array.isArray(users) ? users.slice() : [];
+
+  if(q){
+    const compactQ = compactSearchValue(q);
+    const digitQ = q.replace(/\D/g, '');
+    rows = rows.filter(user => {
+      const haystack = registeredUserSearchText(user);
+      return haystack.includes(q) || (compactQ && haystack.includes(compactQ)) || (digitQ && haystack.includes(digitQ));
+    });
+  }
+
+  if(sort === 'onlineOnly'){
+    rows = rows.filter(user => azobssOnlineUserIds.has(userDocId(user)));
+  }else if(sort === 'paAllowed'){
+    rows = rows.filter(registeredUserHasPaAccess);
+  }
+
+  if(sort === 'dateNewest'){
+    rows.sort((a,b)=>registeredUserCreatedMs(b)-registeredUserCreatedMs(a));
+  }else if(sort === 'dateOldest'){
+    rows.sort((a,b)=>registeredUserCreatedMs(a)-registeredUserCreatedMs(b));
+  }else{
+    rows.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
+  }
+  return rows;
+}
+function updateRegisteredUserStats(users){
+  const todayEl = document.getElementById('registeredUsersToday');
+  const monthEl = document.getElementById('registeredUsersMonth');
+  if(!todayEl && !monthEl) return;
+  const now = new Date();
+  let today = 0, month = 0;
+  (users || []).forEach(user => {
+    const ms = registeredUserCreatedMs(user);
+    if(!ms) return;
+    const d = new Date(ms);
+    if(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()){
+      month++;
+      if(d.getDate() === now.getDate()) today++;
+    }
+  });
+  if(todayEl) todayEl.textContent = String(today);
+  if(monthEl) monthEl.textContent = String(month);
+}
+
+function renderRegisteredUsersFromCacheOnly(){
+  try{
+    const users = Array.isArray(azobssLastRegisteredUsers) ? azobssLastRegisteredUsers : [];
+    updateRegisteredUserStats(users);
+    const filteredUsers = getFilteredRegisteredUsers(users);
+    const maxPage = Math.max(1, Math.ceil(filteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(Math.max(1, azobssRegisteredUsersPage), maxPage);
+    const regList = document.getElementById('registeredUsersList');
+    if(regList){
+      const rows = filteredUsers.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users found.</div>';
+      regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
+      regList.querySelectorAll('[data-admin-delete-user]').forEach(btn=>btn.addEventListener('click',()=>deleteAdminRegisteredUser(btn.dataset.adminDeleteUser)));
+      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, filteredUsers.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderRegisteredUsersFromCacheOnly();});
+    }
+    const registeredCount = document.getElementById('registeredUserCount');
+    if(registeredCount) registeredCount.textContent = String(users.length);
+  }catch(error){
+    console.warn('Registered users local filter failed:', error);
+  }
+}
+
+function bindRegisteredUsersControls(){
+  const controls = getRegisteredUserControls();
+  [controls.search, controls.sort, controls.refresh].forEach(el => {
+    if(!el || el.dataset.azobssRegisteredUsersBind) return;
+    el.dataset.azobssRegisteredUsersBind = '1';
+    const refreshHandler = () => {
+      azobssRegisteredUsersPage = 1;
+      renderFirebaseAdminRecords();
+    };
+    const localFilterHandler = () => {
+      azobssRegisteredUsersPage = 1;
+      renderRegisteredUsersFromCacheOnly();
+    };
+    if(el.tagName === 'BUTTON') el.addEventListener('click', refreshHandler);
+    else {
+      // Do not re-read Firestore on every search keystroke. Filter cached admin rows only.
+      el.addEventListener('input', localFilterHandler);
+      el.addEventListener('change', localFilterHandler);
+    }
+  });
+}
+
+
+function getAzobssDeviceId(){
+  const key = 'azobssDeviceId';
+  let id = localStorage.getItem(key);
+  if(!id){
+    id = 'device-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+async function getAzobssPublicIp(){
+  const cacheKey = 'azobssPublicIpCache';
+  try{
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+    if(cached && cached.ip && Date.now() - Number(cached.time || 0) < 3600000) return cached.ip;
+  }catch(_e){}
+  try{
+    const res = await fetch('https://api.ipify.org?format=json', { cache:'no-store' });
+    const data = await res.json();
+    const ip = String(data.ip || '').trim();
+    if(ip) sessionStorage.setItem(cacheKey, JSON.stringify({ ip, time: Date.now() }));
+    return ip || '-';
+  }catch(error){
+    console.warn('Public IP lookup failed:', error);
+    return '-';
+  }
+}
+async function recordGuestHistory(){
+  try{
+    if(getSavedUser()) return;
+    const page = window.location.pathname || '/';
+    const sessionKey = 'azobssGuestHistorySaved';
+    if(sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
+    const deviceId = getAzobssDeviceId();
+    const ipAddress = await getAzobssPublicIp();
+    await addDoc(collection(db, AZOBSS_GUEST_HISTORY_COLLECTION), {
+      page,
+      ipAddress,
+      deviceId,
+      platform: navigator.platform || '',
+      userAgent: navigator.userAgent || '',
+      createdAt: serverTimestamp(),
+      createdAtClient: new Date().toISOString(),
+      createdAtMs: Date.now()
+    });
+  }catch(error){ console.warn('Firebase guest history save failed:', error); }
+}
+async function renderFirebaseAdminRecords(){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  // AZOBSS 704: homepage and public pages have no admin record panels.
+  // Avoid downloading full users/presence/history collections when those panels do not exist.
+  const hasAdminRecordsUi = [
+    'registeredUsersList','registeredUserCount','liveUsersList','onlineUserCount',
+    'loginHistoryList','guestHistoryList','registeredUsersPagination',
+    'liveUsersPagination','loginHistoryPagination','guestHistoryPagination'
+  ].some(id => document.getElementById(id));
+  if(!hasAdminRecordsUi) return;
+  bindRegisteredUsersControls();
+
+  let live = [];
+  try{
+    const liveSnapPre = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+    liveSnapPre.forEach(d=>live.push({ id:d.id, ...d.data() }));
+    azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
+  }catch(error){
+    console.warn('Firebase online users pre-read failed:', error);
+    azobssOnlineUserIds = new Set();
+  }
+
+  try{
+    const rawUsers = [];
+    const userSnap = await getDocs(collection(db, 'users'));
+    userSnap.forEach(d=>rawUsers.push({ id:d.id, ...d.data() }));
+    const userMap = new Map();
+    rawUsers.forEach(item=>{
+      if(item.hiddenFromRegisteredUsers===true||item.googleProfileLinkedAway===true)return;
+      const key = userCanonicalKey(item) || String(item.id || '').toLowerCase();
+      userMap.set(key, mergeDuplicateUserRecords(userMap.get(key), item));
+    });
+    const users = dedupeRegisteredUsers(Array.from(userMap.values()));
+    users.sort((a,b)=>recordDisplayName(a).localeCompare(recordDisplayName(b), undefined, {sensitivity:'base'}));
+    azobssLastRegisteredUsers = users;
+    updateRegisteredUserStats(users);
+    const filteredUsers = getFilteredRegisteredUsers(users);
+    const maxPage = Math.max(1, Math.ceil(filteredUsers.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssRegisteredUsersPage = Math.min(Math.max(1, azobssRegisteredUsersPage), maxPage);
+    const regList = document.getElementById('registeredUsersList');
+    if(regList){
+      const rows = filteredUsers.slice((azobssRegisteredUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssRegisteredUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      regList.innerHTML = rows.map(userProfileHtml).join('') || '<div class="purchase-summary-item">No registered users found.</div>';
+      regList.querySelectorAll('[data-admin-edit-user]').forEach(btn=>btn.addEventListener('click',()=>openAdminUserEdit(btn.dataset.adminEditUser)));
+      regList.querySelectorAll('[data-admin-delete-user]').forEach(btn=>btn.addEventListener('click',()=>deleteAdminRegisteredUser(btn.dataset.adminDeleteUser)));
+      adminPager(document.getElementById('registeredUsersPagination'), azobssRegisteredUsersPage, filteredUsers.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssRegisteredUsersPage=page; renderFirebaseAdminRecords();});
+    }
+    const registeredCount = document.getElementById('registeredUserCount');
+    if(registeredCount) registeredCount.textContent = String(users.length);
+  }catch(error){ console.warn('Firebase registered users read failed:', error); }
+
+  try{
+    if(!live.length){
+      const liveSnap = await getDocs(collection(db, AZOBSS_ONLINE_USERS_COLLECTION));
+      liveSnap.forEach(d=>live.push({ id:d.id, ...d.data() }));
+      azobssOnlineUserIds = new Set(live.map(userDocId).filter(Boolean));
+    }
+    live = live.filter(azobssIsRealOnline);
+    live.sort((a,b)=>(firestoreMs(b.lastSeenAt)||firestoreMs(b.lastSeenClient))-(firestoreMs(a.lastSeenAt)||firestoreMs(a.lastSeenClient)));
+    const liveMaxPage = Math.max(1, Math.ceil(live.length / AZOBSS_ADMIN_PAGE_SIZE));
+    azobssLiveUsersPage = Math.min(Math.max(1, azobssLiveUsersPage), liveMaxPage);
+    const liveList = document.getElementById('liveUsersList');
+    if(liveList){
+      const rows = live.slice((azobssLiveUsersPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLiveUsersPage*AZOBSS_ADMIN_PAGE_SIZE);
+      liveList.innerHTML = rows.map(liveUserHtml).join('') || '<div class="purchase-summary-item">No users are online right now.</div>';
+      adminPager(document.getElementById('liveUsersPagination'), azobssLiveUsersPage, live.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLiveUsersPage=page; renderFirebaseAdminRecords();});
+    }
+    const onlineUserCount = document.getElementById('onlineUserCount');
+    if(onlineUserCount) onlineUserCount.textContent = String(live.length);
+  }catch(error){ console.warn('Firebase live users read failed:', error); }
+
+  try{
+    const rows = [];
+    const historySnap = await getDocs(collection(db, AZOBSS_LOGIN_HISTORY_COLLECTION));
+    historySnap.forEach(d=>rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
+    const list = document.getElementById('loginHistoryList');
+    if(list){
+      const visible = rows.slice((azobssLoginHistoryPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssLoginHistoryPage*AZOBSS_ADMIN_PAGE_SIZE);
+      list.innerHTML = visible.map(loginHistoryHtml).join('') || '<div class="purchase-summary-item">No login history yet.</div>';
+      adminPager(document.getElementById('loginHistoryPagination'), azobssLoginHistoryPage, rows.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssLoginHistoryPage=page; renderFirebaseAdminRecords();});
+    }
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0,10);
+    const monthKey = now.toISOString().slice(0,7);
+    const today = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,10)===todayKey).length;
+    const month = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,7)===monthKey).length;
+    const todayEl = document.getElementById('loginHistoryToday'); if(todayEl) todayEl.textContent = String(today);
+    const monthEl = document.getElementById('loginHistoryMonth'); if(monthEl) monthEl.textContent = String(month);
+  }catch(error){ console.warn('Firebase login history read failed:', error); }
+
+  try{
+    const rows = [];
+    const guestSnap = await getDocs(collection(db, AZOBSS_GUEST_HISTORY_COLLECTION));
+    guestSnap.forEach(d=>rows.push({ id:d.id, ...d.data() }));
+    rows.sort((a,b)=>(firestoreMs(b.createdAt)||Number(b.createdAtMs||0))-(firestoreMs(a.createdAt)||Number(a.createdAtMs||0)));
+    const list = document.getElementById('guestHistoryList');
+    if(list){
+      const maxPage = Math.max(1, Math.ceil(rows.length / AZOBSS_ADMIN_PAGE_SIZE));
+      azobssGuestHistoryPage = Math.min(Math.max(1, azobssGuestHistoryPage), maxPage);
+      const visible = rows.slice((azobssGuestHistoryPage-1)*AZOBSS_ADMIN_PAGE_SIZE, azobssGuestHistoryPage*AZOBSS_ADMIN_PAGE_SIZE);
+      list.innerHTML = visible.map(guestHistoryHtml).join('') || '<div class="purchase-summary-item">No guest history yet.</div>';
+      adminPager(document.getElementById('guestHistoryPagination'), azobssGuestHistoryPage, rows.length, AZOBSS_ADMIN_PAGE_SIZE, page=>{azobssGuestHistoryPage=page; renderFirebaseAdminRecords();});
+    }
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0,10);
+    const monthKey = now.toISOString().slice(0,7);
+    const today = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,10)===todayKey).length;
+    const month = rows.filter(r=>new Date(firestoreMs(r.createdAt)||Number(r.createdAtMs||0)).toISOString().slice(0,7)===monthKey).length;
+    const todayEl = document.getElementById('guestVisitsToday'); if(todayEl) todayEl.textContent = String(today);
+    const monthEl = document.getElementById('guestVisitsMonth'); if(monthEl) monthEl.textContent = String(month);
+  }catch(error){ console.warn('Firebase guest history read failed:', error); }
+}
+window.azobssRenderFirebaseAdminRecords = renderFirebaseAdminRecords;
+
+
+// PA/BM purchase records: one shared source for PA + BM/SBM downloads.
+const AZOBSS_PURCHASE_LOCAL_KEY = 'azobssPurchaseRecords';
+const AZOBSS_PURCHASE_COLLECTION = 'purchaseLogs';
+const AZOBSS_PURCHASE_SUMMARIES_COLLECTION = 'purchaseSummaries';
+const AZOBSS_PA_BM_MAX_DOWNLOADS = 5;
+const AZOBSS_PA_BM_VALID_DAYS = 7;
+const AZOBSS_PA_BM_VALID_MS = AZOBSS_PA_BM_VALID_DAYS * 24 * 60 * 60 * 1000;
+function clearLegacyPurchaseBrowserCache(){
+  try { localStorage.removeItem(AZOBSS_PURCHASE_LOCAL_KEY); } catch {}
+}
+function readLocalPurchaseRecords(){
+  // Firestore is the single source of truth for PA/BM records.
+  // Old browser cache caused deleted/old items to reappear and inflate Total.
+  clearLegacyPurchaseBrowserCache();
+  return [];
+}
+function writeLocalPurchaseRecords(records){
+  // Do not persist PA/BM purchase records in old browser storage.
+  // Use a short-lived stable cache only to prevent admin UI flicker when Firestore/backend is still warming up.
+  clearLegacyPurchaseBrowserCache();
+  try{
+    const rows = Array.isArray(records) ? records.filter(Boolean).slice(0, 1000) : [];
+    if(rows.length){
+      sessionStorage.setItem('azobssPaBmPurchaseStableCacheV2', JSON.stringify({ at: Date.now(), rows }));
+      window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__ = rows;
+    }
+  }catch(e){}
+}
+function readStablePurchaseRecords(){
+  try{
+    if(Array.isArray(window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__) && window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__.length){
+      return window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__.slice();
+    }
+  }catch(e){}
+  try{
+    const raw = sessionStorage.getItem('azobssPaBmPurchaseStableCacheV2') || '';
+    if(!raw) return [];
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.rows)) return [];
+    const age = Date.now() - Number(parsed.at || 0);
+    if(age > 10 * 60 * 1000) return [];
+    return parsed.rows.slice();
+  }catch(e){ return []; }
+}
+function getCurrentAdminStablePurchaseRows(key){
+  const rows = readStablePurchaseRecords();
+  if(!key) return rows;
+  return rows.filter(item => String(item.usernameKey || '').toLowerCase() === key || String(item.displayName || '').toLowerCase() === key || String(item.username || '').toLowerCase() === key);
+}
+function purchaseRecordUser(user){
+  const u = user || getSavedUser() || {};
+  return {
+    uid: String(u.uid || ''),
+    usernameKey: String(u.usernameKey || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase(),
+    displayName: String(u.usernameKey || u.name || u.usernameKey || u.username || 'Guest').trim(),
+    phone: String(u.phone || u.phoneNumber || ''),
+    email: String(u.email || '')
+  };
+}
+function normalizePurchasePayload(payload){
+  const userInfo = purchaseRecordUser();
+  const type = String(payload?.productType || payload?.product || payload?.type || 'PA').trim().toUpperCase();
+  const rawCode = String(payload?.itemCode || payload?.code || payload?.station || payload?.stationNo || payload?.stesen || payload?.pa || payload?.noPA || payload?.productId || payload?.id || '').trim();
+  const code = type === 'NDCDB' || type === 'NDCDB_C3' ? rawCode : rawCode.toUpperCase();
+  const negeri = String(payload?.negeri || payload?.state || payload?.stateName || '').trim();
+  const amount = Number(payload?.amount || payload?.price || (type === 'PA' ? 5 : 3));
+  const now = new Date();
+  return {
+    id: 'local-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8),
+    productType: type,
+    itemCode: code,
+    stationNo: String(payload?.stationNo || payload?.stesen || payload?.station || '').trim().toUpperCase(),
+    productId: String(payload?.productId || payload?.id || '').trim(),
+    jenis: String(payload?.jenis || (type === 'SBM' ? '2' : '1')).trim() === '2' ? '2' : '1',
+    daerah: String(payload?.daerah || '').trim(),
+    bandar: String(payload?.bandar || '').trim(),
+    huraian: String(payload?.huraian || '').trim(),
+    negeri,
+    amount: Number.isFinite(amount) ? amount : (type === 'PA' ? 5 : 3),
+    status: String(payload?.status || 'pending').trim().toLowerCase(),
+    downloadUrl: String(payload?.downloadUrl || payload?.url || ''),
+    filename: String(payload?.filename || ''),
+    azobssCartValidated: payload?.azobssCartValidated === true || payload?.cartValidated === true || payload?.skipFileVerify === true,
+    azobssCartValidatedBy: String(payload?.azobssCartValidatedBy || payload?.cartValidatedBy || '').trim(),
+    uid: userInfo.uid,
+    usernameKey: userInfo.usernameKey,
+    displayName: userInfo.displayName,
+    phone: userInfo.phone,
+    email: userInfo.email,
+    createdAtClient: now.toISOString(),
+    createdAtMs: now.getTime(),
+    downloadCount: 0,
+    maxDownloads: AZOBSS_PA_BM_MAX_DOWNLOADS
+  };
+}
+function isSamePurchase(a,b){
+  return String(a.id||'') && String(a.id||'') === String(b.id||'') ||
+    (String(a.usernameKey||'') === String(b.usernameKey||'') &&
+     String(a.productType||'') === String(b.productType||'') &&
+     String(a.itemCode||'') === String(b.itemCode||'') &&
+     Math.abs(Number(a.createdAtMs||0)-Number(b.createdAtMs||0)) < 3000);
+}
+function purchasePersistDocId(user){
+  const key = getUserKey(user || getSavedUser());
+  const uid = String((user || getSavedUser() || {}).uid || '').trim();
+  return key || uid || '';
+}
+function purchaseFirestoreSafeRecord(record){
+  const safe = { ...record };
+  delete safe.id;
+  delete safe.firestoreId;
+  Object.keys(safe).forEach(key => {
+    if(safe[key] === undefined) delete safe[key];
+  });
+  return safe;
+}
+async function savePurchaseToFirestoreEverywhere(record){
+  const current = getSavedUser() || {};
+  const docId = purchasePersistDocId(current);
+  const safeRecord = purchaseFirestoreSafeRecord(record);
+  const embeddedRecord = {
+    ...safeRecord,
+    id: record.id || ('purchase-' + Date.now()),
+    createdAtMs: Number(record.createdAtMs || Date.now()),
+    createdAtClient: record.createdAtClient || new Date().toISOString()
+  };
+
+  // 1) Global collection for admin dashboard/reporting and controlled download.
+  // This document id is the source for /api/pa-bm-download?recordId=...
+  try{
+    const ref = await addDoc(collection(db, AZOBSS_PURCHASE_COLLECTION), { ...safeRecord, createdAt: serverTimestamp() });
+    record.firestoreId = ref.id;
+    embeddedRecord.firestoreId = ref.id;
+    embeddedRecord.purchaseLogId = ref.id;
+  }catch(error){
+    console.warn('Firestore global purchase collection save failed:', error);
+  }
+
+  // 2) User profile embedded backup. This fixes records disappearing after browser close
+  // even when Firestore rules block collection queries but allow the user's own profile doc.
+  // If purchaseLogs create succeeded, embed the firestoreId so backend can still migrate/verify.
+  if(docId){
+    try{
+      await setDoc(doc(db, 'users', docId), {
+        usernameKey: docId,
+        uid: String(current.uid || record.uid || ''),
+        purchaseRecords: arrayUnion(embeddedRecord),
+        purchaseRecordsUpdatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }catch(error){
+      console.warn('Firestore user embedded purchase save failed:', error);
+    }
+  }
+}
+
+async function azobssVerifyPurchaseFileExists(record){
+  const type = String(record && record.productType || '').trim().toUpperCase();
+  const url = String(record && record.downloadUrl || '').trim();
+  if(!/^PA$|^BM|^SBM/.test(type)) return true;
+
+  // Cart should never download/convert the real file just to add an item.
+  // PA and BM/SBM files are re-validated by the backend after payment via the controlled download route.
+  // This prevents false "tiada dalam simpanan" caused by Render cold-start, JUPEM temporary errors,
+  // or PDF/TIF conversion timing while the user is only adding to cart.
+  if(record && record.azobssCartValidated){
+    return true;
+  }
+
+  // BM/SBM rows already come from /stesen-tanda-aras-records.json on this page.
+  // If a row has productId/stationNo or a backend download URL, treat it as cart-valid and defer real file fetch until paid download.
+  if(type === 'BM' || type === 'SBM'){
+    const hasLocalRow = !!(record.productId || record.stationNo || record.itemCode || /\/api\/download-stesen-tanda-aras/i.test(url));
+    if(hasLocalRow) return true;
+    throw new Error('BM/SBM tiada dalam simpanan');
+  }
+
+  // For PA, use the lightweight check endpoint where possible. Do not call /api/pa-pdf here.
+  if(type === 'PA'){
+    const code = String(record.itemCode || '').replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+    const negeri = String(record.negeri || '').trim();
+    if(!code || !negeri) throw new Error('PA tiada dalam simpanan');
+    try{
+      const checkUrl = 'https://azobss-backend.onrender.com/api/check-pa?noPA=' + encodeURIComponent('PA' + code + '.TIF') + '&negeri=' + encodeURIComponent(negeri);
+      const response = await fetch(checkUrl, { cache: 'no-store' });
+      if(response && response.ok){
+        const data = await response.json().catch(function(){ return null; });
+        if(data && data.ok === true) return true;
+      }
+    }catch(error){
+      console.warn('AZOBSS PA cart lightweight check skipped:', error);
+    }
+    // Do not block cart on a temporary JUPEM/check endpoint issue.
+    // Actual paid download will still verify the PA file from JUPEM.
+    return true;
+  }
+
+  if(!url){
+    throw new Error(type === 'PA' ? 'PA tiada dalam simpanan' : 'BM/SBM tiada dalam simpanan');
+  }
+  return true;
+}
+
+function azobssPurchaseItemKey(item){
+  item = item || {};
+  return [
+    String(item.usernameKey || '').trim().toLowerCase(),
+    String(item.uid || '').trim(),
+    String(item.productType || item.product || '').trim().toUpperCase(),
+    String(item.itemCode || item.stationNo || item.stesen || item.code || '').trim().toUpperCase(),
+    String(item.negeri || item.state || '').trim().toUpperCase()
+  ].join('|');
+}
+
+function azobssSameCartItem(a, b){
+  return azobssPurchaseItemKey(a) === azobssPurchaseItemKey(b);
+}
+
+async function azobssFindExistingCartPurchase(record){
+  const resetMap = readAzobssPurchaseTotalResetMap ? readAzobssPurchaseTotalResetMap() : {};
+  const resetAt = Number((resetMap || {})[String(record.usernameKey || '').toLowerCase()] || 0);
+  const current = getSavedUser() || {};
+  const candidates = [];
+
+  function pushItem(item){
+    if(!item) return;
+    let ms = Number(item.createdAtMs || 0);
+    if(!ms && item.createdAtClient) ms = Date.parse(item.createdAtClient) || 0;
+    if(!ms && item.createdAt && typeof item.createdAt.toMillis === 'function') ms = item.createdAt.toMillis();
+    candidates.push({ ...item, createdAtMs: ms });
+  }
+
+  function pushSnap(snap){
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      let ms = Number(data.createdAtMs || 0);
+      if(!ms && data.createdAtClient) ms = Date.parse(data.createdAtClient) || 0;
+      if(!ms && data.createdAt && typeof data.createdAt.toMillis === 'function') ms = data.createdAt.toMillis();
+      candidates.push({ id: docSnap.id, firestoreId: docSnap.id, ...data, createdAtMs: ms });
+    });
+  }
+
+  try{
+    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+    if(current && current.uid){
+      pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
+    }
+    if(record.usernameKey){
+      pushSnap(await getDocs(query(purchaseCol, where('usernameKey', '==', String(record.usernameKey)))));
+    }
+  }catch(error){}
+
+  try{
+    const key = getUserKey(current);
+    if(key){
+      const userSnap = await getDoc(doc(db, 'users', key));
+      if(userSnap.exists()){
+        const data = userSnap.data() || {};
+        (Array.isArray(data.purchaseRecords) ? data.purchaseRecords : []).forEach(pushItem);
+      }
+
+      const summarySnap = await getDoc(doc(db, AZOBSS_PURCHASE_SUMMARIES_COLLECTION, key));
+      if(summarySnap.exists()){
+        const data = summarySnap.data() || {};
+        (Array.isArray(data.records) ? data.records : []).forEach(pushItem);
+      }
+    }
+  }catch(error){}
+
+  return candidates.find(item =>
+    azobssSameCartItem(item, record)
+    && purchaseRecordMs(item) > resetAt
+    && ['paid','cancelled','deleted'].indexOf(String(item.status || 'pending').toLowerCase()) === -1
+  ) || null;
+}
+
+async function recordAzobssPurchase(payload){
+  const user = getSavedUser();
+  if(!user){
+    openSiteAuth('signin');
+    throw new Error('Please login first before add to cart.');
+  }
+  const record = normalizePurchasePayload(payload || {});
+  // Final safety guard: PA/BM/SBM mesti wujud dahulu sebelum masuk cart/total.
+  await azobssVerifyPurchaseFileExists(record);
+
+  // Firestore is the source of truth. If the item is already pending in cart,
+  // do not add it again and do not increase total.
+  const existingUnpaid = await azobssFindExistingCartPurchase(record);
+  if(existingUnpaid){
+    const alreadyRecord = { ...existingUnpaid, __azobssAlreadyInCart: true };
+    window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: alreadyRecord }));
+    try{ window.dispatchEvent(new Event('storage')); }catch{}
+    return alreadyRecord;
+  }
+
+  await savePurchaseToFirestoreEverywhere(record);
+  window.dispatchEvent(new CustomEvent('azobssPurchaseRecorded', { detail: record }));
+  try{ window.dispatchEvent(new Event('storage')); }catch{}
+  return record;
+}
+async function loadAzobssPurchaseRecords(){
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  const merged = [];
+  const mergedIds = new Set();
+  function push(record){
+    if(!record) return;
+    const normalized = { ...record };
+    normalized.createdAtMs = Number(normalized.createdAtMs || (normalized.createdAtClient ? Date.parse(normalized.createdAtClient) : 0) || 0);
+    normalized.usernameKey = String(normalized.usernameKey || '').trim().toLowerCase();
+    normalized.uid = String(normalized.uid || '');
+    const recordId = String(normalized.firestoreId || normalized.id || normalized.purchaseLogId || '').trim();
+    if(recordId){
+      if(mergedIds.has(recordId)) return;
+      mergedIds.add(recordId);
+      merged.push(normalized);
+      return;
+    }
+    if(!merged.some(item => isSamePurchase(item, normalized))) merged.push(normalized);
+  }
+  function pushSnap(snap){
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      let ms = Number(data.createdAtMs || 0);
+      if(!ms && data.createdAtClient) ms = Date.parse(data.createdAtClient) || 0;
+      if(!ms && data.createdAt && typeof data.createdAt.toMillis === 'function') ms = data.createdAt.toMillis();
+      push({ id: docSnap.id, firestoreId: docSnap.id, ...data, createdAtMs: ms });
+    });
+  }
+
+  // Browser cache is intentionally ignored here.
+  // Firestore/admin records are the only source for Purchase Records Saya and Total.
+  clearLegacyPurchaseBrowserCache();
+
+  let adminUsersSnap = null;
+  try{
+    const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+    if(isAdminUser){
+      // These were previously awaited one after another, which made admin load time grow quickly.
+      const [purchaseResult, usersResult] = await Promise.allSettled([
+        getDocs(purchaseCol),
+        getDocs(collection(db, 'users'))
+      ]);
+      if(purchaseResult.status === 'fulfilled') pushSnap(purchaseResult.value);
+      else console.warn('Firestore admin purchase collection read failed:', purchaseResult.reason);
+      if(usersResult.status === 'fulfilled') adminUsersSnap = usersResult.value;
+      else console.warn('Firestore admin users collection read failed:', usersResult.reason);
+    }else if(current?.uid){
+      // Normal users should only query their own records. This works with stricter Firestore rules.
+      pushSnap(await getDocs(query(purchaseCol, where('uid', '==', String(current.uid)))));
+    }
+
+    const key = getUserKey(current);
+    if(!isAdminUser && key){
+      // Compatibility for older records saved before uid was available.
+      try{
+        pushSnap(await getDocs(query(purchaseCol, where('usernameKey', '==', key))));
+      }catch(usernameQueryError){
+        console.warn('Firestore purchase usernameKey compatibility query failed:', usernameQueryError);
+      }
+    }
+  }catch(error){
+    console.warn('Firestore purchase collection read fallback:', error);
+  }
+
+  // Robust persistence path: read embedded records from user profile docs too.
+  try{
+    if(isAdminUser){
+      const resetMap = {};
+      if(adminUsersSnap) adminUsersSnap.forEach(userDoc => {
+        const userData = userDoc.data() || {};
+        const userKey = String(userData.usernameKey || userData.username || userDoc.id || '').trim().toLowerCase();
+        const resetAtMs = Number(userData.purchaseTotalResetAtMs || 0) || (userData.purchaseTotalResetAtClient ? Date.parse(userData.purchaseTotalResetAtClient) : 0) || 0;
+        if(userKey && resetAtMs) resetMap[userKey] = resetAtMs;
+        const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+        embedded.forEach(r => push({
+          ...r,
+          usernameKey: r.usernameKey || userData.usernameKey || userDoc.id,
+          displayName: r.displayName || userData.usernameKey || userDoc.id,
+          phone: r.phone || r.phoneNumber || userData.phone || userData.phoneNumber || '',
+          email: r.email || userData.email || ''
+        }));
+      });
+      window.__AZOBSS_ADMIN_PURCHASE_RESET_MAP__ = resetMap;
+      window.__AZOBSS_ADMIN_USERS_SNAPSHOT_READY__ = !!adminUsersSnap;
+    }else{
+      const docId = purchasePersistDocId(current);
+      if(docId){
+        const userSnap = await getDoc(doc(db, 'users', docId));
+        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+        const embedded = Array.isArray(userData.purchaseRecords) ? userData.purchaseRecords : [];
+        embedded.forEach(r => push({
+          ...r,
+          usernameKey: r.usernameKey || userData.usernameKey || docId,
+          displayName: r.displayName || userData.usernameKey || docId,
+          phone: r.phone || r.phoneNumber || userData.phone || userData.phoneNumber || '',
+          email: r.email || userData.email || ''
+        }));
+      }
+    }
+  }catch(error){
+    console.warn('Firestore embedded purchase records read fallback:', error);
+  }
+
+  if(isAdminUser && !merged.length){
+    try{
+      const backendRows = await azobssLoadAdminPaBmPurchaseRecordsFromBackend(false);
+      backendRows.forEach(push);
+    }catch(backendError){
+      console.warn('Admin PA/BM backend records fallback skipped:', backendError);
+    }
+  }
+
+  const key = getUserKey(current);
+  const rows = merged
+    .filter(item => isAdminUser || String(item.usernameKey || '').toLowerCase() === key || (current?.uid && String(item.uid||'') === String(current.uid)))
+    .sort((a,b) => Number(b.createdAtMs||0) - Number(a.createdAtMs||0));
+
+  // Keep latest successful result in a short-lived stable cache so admin UI does not randomly blank during auth/backend warm-up.
+  if(rows.length){
+    writeLocalPurchaseRecords(rows.slice(0, 500));
+    return rows;
+  }
+  if(isAdminUser){
+    const stableRows = readStablePurchaseRecords();
+    if(stableRows.length){
+      console.warn('AZOBSS PA/BM admin records using stable cache because live read returned empty.');
+      return stableRows;
+    }
+  }
+  return rows;
+}
+function escHtml(value){
+  return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+function formatPurchaseDate(record){
+  const ms = Number(record.createdAtMs || (record.createdAtClient ? Date.parse(record.createdAtClient) : 0));
+  if(!ms) return '-';
+  return new Date(ms).toLocaleString('en-MY', { hour12:true, hour:'numeric', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+}
+const AZOBSS_PURCHASE_PAGE_SIZE = 6;
+const AZOBSS_ADMIN_PURCHASE_PAGE_SIZE = 6;
+const AZOBSS_PURCHASE_DETAIL_PAGE_SIZE = 6;
+const azobssPurchaseDetailPages = (window.__AZOBSS_PABM_PURCHASE_DETAIL_PAGES__ = window.__AZOBSS_PABM_PURCHASE_DETAIL_PAGES__ || {});
+const azobssPurchaseOpenKeys = (window.__AZOBSS_PABM_PURCHASE_OPEN_KEYS__ = window.__AZOBSS_PABM_PURCHASE_OPEN_KEYS__ || {});
+let azobssAdminPurchasePage = 1;
+let azobssUserPurchasePage = 1;
+function clampPage(page, totalPages){
+  return Math.max(1, Math.min(Number(page)||1, Math.max(1, totalPages||1)));
+}
+function renderAzobssPager(container, currentPage, totalItems, pageSize, onPage){
+  if(!container) return;
+  const totalPages = Math.max(1, Math.ceil((Number(totalItems)||0) / pageSize));
+  if(totalItems <= pageSize){
+    container.innerHTML = '';
+    container.hidden = true;
+    return;
+  }
+  currentPage = clampPage(currentPage, totalPages);
+  container.hidden = false;
+  container.classList.add('azobss-record-pagination');
+  container.innerHTML = azobssBuildCompactPagerHtml(currentPage, totalPages);
+  container.querySelectorAll('button[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => onPage(Number(btn.dataset.page) || currentPage));
+  });
+}
+function renderAzobssPurchaseDetailPager(key, currentPage, totalItems){
+  const totalPages = Math.max(1, Math.ceil((Number(totalItems)||0) / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE));
+  if(totalItems <= AZOBSS_PURCHASE_DETAIL_PAGE_SIZE) return '';
+  currentPage = clampPage(currentPage, totalPages);
+  return `<div class="guest-history-pagination az-purchase-detail-pagination" data-purchase-detail-key="${escHtml(key)}">${azobssBuildCompactPagerHtml(currentPage, totalPages)}</div>`;
+}
+function azobssIsPurchasePaidForDownload(r){
+  /*
+    095 strict paid logic:
+    Download must only appear for records that are explicitly paid/verified.
+    Do NOT treat downloadUrl, fileUrl, or user purchaseTotalResetAtMs as paid.
+    Those older fallbacks caused unpaid rows to show "Download 0/5".
+  */
+  try{
+    if(!r) return false;
+    if(azobssIsPurchaseStatusPaid(r)) return true;
+
+    const status = String(r?.status || r?.paymentStatus || r?.payment_status || '').trim().toLowerCase();
+    if(['paid','success','completed','settled','verified','approved'].includes(status)) return true;
+
+    if(r?.paid === true || r?.verified === true || r?.isPaid === true || r?.paymentVerified === true) return true;
+
+    const paidAt = Number(r?.paidAtMs || r?.verifiedAtMs || r?.paymentVerifiedAtMs || 0)
+      || (r?.paidAtClient ? Date.parse(r.paidAtClient) : 0)
+      || (r?.verifiedAtClient ? Date.parse(r.verifiedAtClient) : 0);
+    if(paidAt && Number.isFinite(paidAt)) return true;
+
+    return false;
+  }catch(e){
+    return false;
+  }
+}
+
+function azobssCanUncartPurchase(r){
+  try{
+    const current = getSavedUser() || {};
+    if(isAzobssAdmin && isAzobssAdmin(current)) return false; // admin already has Delete controls in admin view
+    const status = String(r?.status || 'pending').trim().toLowerCase();
+    if(['paid','success','completed','settled','cancelled','deleted'].includes(status)) return false;
+    if(azobssIsPurchasePaidForDownload(r)) return false;
+    const currentKey = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
+    const rowKey = String(r?.usernameKey || r?.displayName || '').trim().toLowerCase();
+    const uidOk = current.uid && String(r?.uid || '') === String(current.uid);
+    return !!(uidOk || (currentKey && rowKey && currentKey === rowKey));
+  }catch(e){ return false; }
+}
+
+function azobssBuildPaidPurchaseDownloadUrl(r, format){
+  r = r || {};
+  const recordId = String(r.firestoreId || r.id || '').trim();
+  const type = String(r.productType || r.product || '').trim().toUpperCase();
+  const isLot = type === 'NDCDB' || type === 'NDCDB_C3';
+  let downloadFormat = String(format || r.downloadFormat || 'original').trim().toLowerCase();
+  if(downloadFormat === 'zip') downloadFormat = 'original';
+  if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
+  if(recordId){
+    let url = 'https://azobss-backend.onrender.com/api/pa-bm-download?recordId=' + encodeURIComponent(recordId);
+    if(isLot) url += '&format=' + encodeURIComponent(downloadFormat);
+    return url;
+  }
+  // Fallback only for legacy paid records without Firestore document id.
+  if(type === 'PA'){
+    const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+    const negeri = String(r.negeri || r.state || '').trim();
+    if(itemCode && negeri){
+      return 'https://azobss-backend.onrender.com/api/pa-pdf?noPA=PA' + encodeURIComponent(itemCode) + '.TIF&negeri=' + encodeURIComponent(negeri);
+    }
+  }
+  return String(r.downloadUrl || r.url || '').trim();
+}
+function azobssLotDownloadTimestampToken(nowValue){
+  const now = nowValue instanceof Date ? nowValue : new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const minute = String(now.getMinutes()).padStart(2, '0');
+  const hour24 = now.getHours();
+  const period = hour24 >= 12 ? 'pm' : 'am';
+  const hour12 = hour24 % 12 || 12;
+  return `${year}-${month}-${day}-${hour12}.${minute}${period}`;
+}
+function azobssLotDownloadPercentToken(r){
+  try{
+    const label = typeof azobssLotPurchasePercentLabel === 'function' ? azobssLotPurchasePercentLabel(r || {}) : '';
+    if(label){
+      const clean = String(label).replace(/%/g, '').trim();
+      if(clean) return clean;
+    }
+  }catch(_e){}
+  const direct = Number(r && (r.areaRatio || r.selectionAreaRatio || r.lotAreaRatio || r.area_ratio) || 0);
+  if(Number.isFinite(direct) && direct > 0){
+    const percent = direct > 1.1 ? direct : direct * 100;
+    return (Math.round(percent * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+  }
+  return '0';
+}
+function azobssPaidPurchaseDownloadFilename(r, format){
+  r = r || {};
+  const type = String(r.productType || r.product || '').trim().toUpperCase();
+  if(type === 'PA'){
+    const itemCode = String(r.itemCode || r.pa || r.noPA || '').trim().replace(/^PA/i, '').replace(/\.TIF$/i, '').replace(/[^0-9]/g, '');
+    return itemCode ? ('PA' + itemCode + '.pdf') : 'PA.pdf';
+  }
+  if(type === 'NDCDB' || type === 'NDCDB_C3'){
+    let downloadFormat = String(format || r.downloadFormat || 'original').trim().toLowerCase();
+    if(downloadFormat === 'zip') downloadFormat = 'original';
+    const ext = downloadFormat === 'dwg' ? 'dwg' : (downloadFormat === 'dxf' ? 'dxf' : 'zip');
+    const prefix = type === 'NDCDB_C3' ? 'LotKadasterBerdigit-C3' : 'LotKadasterBerdigit';
+    const timestamp = azobssLotDownloadTimestampToken(new Date());
+    const percent = azobssLotDownloadPercentToken(r);
+    return `${prefix}-${timestamp}-${percent}percent.${ext}`;
+  }
+  const sourceCode = r.itemCode || r.stationNo || r.stesen || r.productId || '';
+  const code = String(sourceCode).trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-');
+  const prefix = type || (String(r.jenis || '1') === '2' ? 'SBM' : 'BM');
+  return (prefix + (code ? '-' + code : '') + '.pdf').replace(/-+/g, '-');
+}
+
+function azobssPurchasePaidAtMs(r){
+  return Number(r?.paidAtMs || 0)
+    || (r?.paidAtClient ? Date.parse(r.paidAtClient) : 0)
+    || (r?.updatedAt && typeof r.updatedAt.toMillis === 'function' ? r.updatedAt.toMillis() : 0)
+    || purchaseRecordMs(r)
+    || Date.now();
+}
+function azobssPurchaseDownloadMax(r){
+  const max = Number(r?.maxDownloads || r?.maxDownload || 0);
+  return max > 0 ? max : AZOBSS_PA_BM_MAX_DOWNLOADS;
+}
+function azobssPurchaseDownloadCount(r){
+  // v1109: 0 is a real counter value. Using `||` made downloadCount:0 fall
+  // through to a stale legacy usedCount/downloadsUsed value (often 1), so the
+  // first download after 0/5 could be written as 2/5.
+  const raw = r?.downloadCount ?? r?.usedCount ?? r?.downloadsUsed ?? 0;
+  const value = Number(raw);
+  return Math.max(0, Number.isFinite(value) ? value : 0);
+}
+function azobssPurchaseDownloadExpiresAtMs(r){
+  const explicit = Number(r?.downloadExpiresAtMs || r?.expiresAtMs || 0)
+    || (r?.downloadExpiresAtClient ? Date.parse(r.downloadExpiresAtClient) : 0)
+    || (r?.expiresAt ? Date.parse(r.expiresAt) : 0);
+  if(explicit) return explicit;
+  return azobssPurchasePaidAtMs(r) + AZOBSS_PA_BM_VALID_MS;
+}
+function azobssPurchaseDownloadRemainingDays(r){
+  const ms = azobssPurchaseDownloadExpiresAtMs(r) - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+}
+function azobssPurchaseDownloadExpired(r){
+  return Date.now() > azobssPurchaseDownloadExpiresAtMs(r);
+}
+function azobssPurchaseDownloadLimitReached(r){
+  return azobssPurchaseDownloadCount(r) >= azobssPurchaseDownloadMax(r);
+}
+function azobssPurchaseDownloadAllowed(r){
+  return azobssIsPurchasePaidForDownload(r) && !azobssPurchaseDownloadExpired(r) && !azobssPurchaseDownloadLimitReached(r);
+}
+function azobssBuildControlledPurchaseDownloadUrl(r){
+  // Actual PA/BM file URL. The 5x / 7-day limit is enforced before opening it.
+  return azobssBuildPaidPurchaseDownloadUrl(r);
+}
+function azobssPurchaseDownloadPayload(r, format){
+  try{
+    const computedPaid = azobssIsPurchasePaidForDownload(r);
+    const createdAtMs = purchaseRecordMs ? purchaseRecordMs(r) : Number(r?.createdAtMs || 0);
+    const type = String(r?.productType || r?.product || '').trim().toUpperCase();
+    const isLot = type === 'NDCDB' || type === 'NDCDB_C3';
+    let downloadFormat = String(format || r?.downloadFormat || 'original').trim().toLowerCase();
+    if(downloadFormat === 'zip') downloadFormat = 'original';
+    if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
+    return encodeURIComponent(JSON.stringify({
+      firestoreId: r?.firestoreId || r?.id || '',
+      id: r?.id || '',
+      uid: r?.uid || '',
+      usernameKey: r?.usernameKey || '',
+      displayName: r?.displayName || '',
+      productType: r?.productType || r?.product || '',
+      itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
+      productId: r?.productId || '',
+      areaRatio: Number(r?.areaRatio || r?.selectionAreaRatio || r?.lotAreaRatio || r?.area_ratio || 0) || 0,
+      negeri: r?.negeri || r?.state || '',
+      amount: r?.amount || '',
+      downloadUrl: r?.downloadUrl || r?.url || '',
+      downloadFormat: isLot ? downloadFormat : 'original',
+      status: computedPaid ? 'paid' : (r?.status || ''),
+      createdAtMs: createdAtMs || Number(r?.createdAtMs || 0) || 0,
+      createdAtClient: r?.createdAtClient || '',
+      downloadCount: azobssPurchaseDownloadCount(r),
+      maxDownloads: azobssPurchaseDownloadMax(r),
+      paidAtMs: azobssPurchasePaidAtMs(r),
+      downloadExpiresAtMs: azobssPurchaseDownloadExpiresAtMs(r)
+    }));
+  }catch(e){ return ''; }
+}
+
+function azobssPurchaseResetPayload(r){
+  try{
+    return encodeURIComponent(JSON.stringify({
+      recordId: r?.firestoreId || r?.id || r?.purchaseLogId || '',
+      firestoreId: r?.firestoreId || '',
+      id: r?.id || '',
+      purchaseLogId: r?.purchaseLogId || '',
+      uid: r?.uid || '',
+      displayName: r?.displayName || r?.username || '',
+      productType: r?.productType || r?.product || '',
+      itemCode: r?.itemCode || r?.pa || r?.noPA || r?.stesen || r?.stationNo || '',
+      negeri: r?.negeri || r?.state || '',
+      usernameKey: r?.usernameKey || '',
+      createdAtMs: Number(r?.createdAtMs || 0) || (r?.createdAtClient ? Date.parse(r.createdAtClient) : 0) || 0
+    }));
+  }catch(e){ return ''; }
+}
+
+async function azobssGetFirebaseAuthHeaders(forceRefresh){
+  try{
+    const u = auth && auth.currentUser ? auth.currentUser : null;
+    if(!u || typeof u.getIdToken !== 'function') return {};
+    const token = await u.getIdToken(!!forceRefresh);
+    return token ? { Authorization: 'Bearer ' + token } : {};
+  }catch(e){
+    return {};
+  }
+}
+try{ window.azobssGetFirebaseAuthHeaders = azobssGetFirebaseAuthHeaders; }catch(_e){}
+
+async function azobssLoadAdminPaBmPurchaseRecordsFromBackend(forceRefresh){
+  const current = getSavedUser && getSavedUser() || {};
+  if(!isAzobssAdmin(current)) return [];
+  try{
+    const base = (typeof azobssGetBackendBaseUrl === 'function') ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com';
+    const headers = Object.assign({ 'Accept':'application/json' }, await azobssGetFirebaseAuthHeaders(!!forceRefresh));
+    const response = await fetch(base + '/api/admin/pa-bm-purchase-records?limit=2000', { method:'GET', headers, cache:'no-store' });
+    if((response.status === 401 || response.status === 403) && !forceRefresh){
+      return azobssLoadAdminPaBmPurchaseRecordsFromBackend(true);
+    }
+    const data = await response.json().catch(function(){ return null; });
+    if(!response.ok || !data || data.ok === false){
+      console.warn('Admin PA/BM purchase backend fallback failed:', data && (data.error || data.message) || response.status);
+      return [];
+    }
+    if(data.resetMap && typeof data.resetMap === 'object'){
+      window.__AZOBSS_ADMIN_PURCHASE_RESET_MAP__ = data.resetMap;
+      window.__AZOBSS_ADMIN_USERS_SNAPSHOT_READY__ = true;
+    }
+    const rows = Array.isArray(data.records) ? data.records : [];
+    return rows.map(function(r){
+      return Object.assign({}, r, {
+        id: r.firestoreId || r.id || r.purchaseLogId || '',
+        firestoreId: r.firestoreId || r.id || r.purchaseLogId || '',
+        usernameKey: String(r.usernameKey || r.username || r.displayName || '').trim().toLowerCase(),
+        createdAtMs: Number(r.createdAtMs || 0) || (r.createdAtClient ? Date.parse(r.createdAtClient) : 0) || 0
+      });
+    });
+  }catch(error){
+    console.warn('Admin PA/BM purchase backend fallback error:', error);
+    return [];
+  }
+}
+
+async function azobssAdminResetPaBmDownloadCounter(encodedPayload, btn){
+  let payload = {};
+  try{ payload = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ payload = {}; }
+  const recordId = String(payload.recordId || payload.firestoreId || payload.id || '').trim();
+  if(!recordId && !(payload.productType && payload.itemCode && (payload.uid || payload.usernameKey))){ alert('Rekod pembelian tidak dapat dikenal pasti.'); return false; }
+  const current = getSavedUser && getSavedUser() || {};
+  if(!isAzobssAdmin(current)){ alert('Admin sahaja boleh reset download count.'); return false; }
+  if(!confirm('Reset download count untuk item ini kembali ke 0/5 dan renew tempoh 7 hari?')) return false;
+  const oldText = btn ? btn.textContent : '';
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = 'Resetting...'; }
+    let headers = Object.assign({ 'Content-Type':'application/json' }, await azobssGetFirebaseAuthHeaders(false));
+    let response = await fetch('https://azobss-backend.onrender.com/api/pa-bm-download/reset-count', {
+      method:'POST',
+      headers,
+      body: JSON.stringify(Object.assign({}, payload, { recordId }))
+    });
+    if(response.status === 401 || response.status === 403){
+      headers = Object.assign({ 'Content-Type':'application/json' }, await azobssGetFirebaseAuthHeaders(true));
+      response = await fetch('https://azobss-backend.onrender.com/api/pa-bm-download/reset-count', {
+        method:'POST',
+        headers,
+        body: JSON.stringify(Object.assign({}, payload, { recordId }))
+      });
+    }
+    const data = await response.json().catch(function(){ return null; });
+    if(!response.ok || !data || data.ok === false){
+      alert((data && (data.error || data.message)) || 'Reset download count gagal.');
+      return false;
+    }
+    const resetMax = Math.max(1, Number(data.maxDownloads || data.maxDownload || 5) || 5);
+    try{
+      const row = btn && btn.closest ? btn.closest('.az-purchase-detail-line') : null;
+      const badge = row && row.querySelector ? row.querySelector('.az-purchase-admin-download-usage') : null;
+      if(badge){ badge.textContent = `⬇ 0/${resetMax}`; badge.title = 'Muat turun berjaya / had maksimum'; }
+    }catch(_e){}
+    alert(`Download count sudah reset ke 0/${resetMax}. Tempoh download diperbaharui 7 hari. Link pembelian sedia ada kekal boleh digunakan.`);
+    try{ azobssSchedulePurchaseRecordsRefresh('admin reset download count'); }catch(e){}
+    try{ await renderAzobssPurchaseRecords(); }catch(e){}
+    setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('admin reset download count delayed'); }catch(e){} }, 900);
+    return false;
+  }catch(error){
+    console.error('Admin reset PA/BM download count failed:', error);
+    alert('Reset download count gagal. Sila cuba lagi.');
+    return false;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = oldText || 'Reset 0/5'; }
+  }
+}
+window.azobssAdminResetPaBmDownloadCounter = azobssAdminResetPaBmDownloadCounter;
+
+function azobssCanShowPaBmAdminReset(){
+  try{
+    const saved = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+    if(typeof isAzobssAdmin === 'function' && isAzobssAdmin(saved)) return true;
+    if(typeof window.azobssIsAdminUser === 'function' && window.azobssIsAdminUser(saved)) return true;
+    const email = String((auth && auth.currentUser && auth.currentUser.email) || saved.email || saved.authEmail || '').trim().toLowerCase();
+    const username = String(saved.usernameKey || saved.username || saved.name || (email ? email.split('@')[0] : '') || '').trim().toLowerCase();
+    const role = String(saved.role || saved.accountRole || saved.userRole || '').trim().toLowerCase();
+    if(role === 'admin') return true;
+    if(['zedan91','zedan9107'].includes(username)) return true;
+    if(['zedan91@azobss.local','zedan9107@gmail.com'].includes(email)) return true;
+    try{
+      const rawKeys = ['azobss_user','azobssUser','siteUser','currentUser','azobss_current_user'];
+      for(const key of rawKeys){
+        const raw = localStorage.getItem(key) || sessionStorage.getItem(key) || '';
+        if(!raw) continue;
+        const u = JSON.parse(raw);
+        const k = String(u.usernameKey || u.username || u.name || (u.email ? String(u.email).split('@')[0] : '') || '').trim().toLowerCase();
+        const r = String(u.role || u.accountRole || u.userRole || '').trim().toLowerCase();
+        const e = String(u.email || u.authEmail || '').trim().toLowerCase();
+        if(r === 'admin' || ['zedan91','zedan9107'].includes(k) || ['zedan91@azobss.local','zedan9107@gmail.com'].includes(e)) return true;
+      }
+    }catch(_){ }
+  }catch(_){ }
+  return false;
+}
+window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
+
+function azobssSetLotDownloadBusyVisual(candidate){
+  try{
+    if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download') || candidate.classList.contains('is-locked')) return false;
+    // v1146: use a real child element, not ::before/::after.
+    // Older PA/BM patches also use pseudo-elements for busy buttons and were
+    // overriding the newer spinner. A real DOM spinner avoids that cascade race.
+    candidate.dataset.busy = '1';
+    candidate.classList.add('azobss-download-button-spinning');
+    candidate.setAttribute('aria-busy', 'true');
+    candidate.setAttribute('aria-label', 'Sedang menyediakan fail');
+    if(!candidate.querySelector('.azobss-btn-spinner-v1146')){
+      candidate.innerHTML = '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>';
+    }
+    return true;
+  }catch(_){ return false; }
+}
+
+function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
+  try{
+    if(document.body) document.body.classList.toggle('az-pabm-download-active', !!active);
+    document.querySelectorAll('.user-pa-download').forEach(function(candidate){
+      const candidateKey = String(candidate.getAttribute('data-download-payload') || candidate.getAttribute('data-download-url') || '');
+      const isOwner = !!active && (candidate === owner || (!!activeKey && candidateKey === activeKey));
+      const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
+      if(isOwner){
+        candidate.dataset.busy = '1';
+        candidate.classList.add('azobss-download-button-spinning');
+        if(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.phase === 'preparing') candidate.dataset.preparing = '1';
+        else delete candidate.dataset.preparing;
+        delete candidate.dataset.downloadLocked;
+        candidate.removeAttribute('aria-disabled');
+        candidate.setAttribute('aria-busy', 'true');
+        if(!azobssSetLotDownloadBusyVisual(candidate)) candidate.textContent = String(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.label || 'Downloading...');
+        candidate.style.pointerEvents = 'none';
+      }else if(active){
+        candidate.dataset.downloadLocked = '1';
+        candidate.setAttribute('aria-disabled', 'true');
+      }else{
+        delete candidate.dataset.downloadLocked;
+        candidate.removeAttribute('aria-disabled');
+        if(candidate.dataset.busy === '1'){
+          delete candidate.dataset.busy;
+          delete candidate.dataset.preparing;
+          candidate.classList.remove('azobss-download-button-spinning');
+          candidate.removeAttribute('aria-busy');
+          candidate.textContent = defaultLabel;
+          candidate.setAttribute('aria-label', defaultLabel);
+          candidate.style.pointerEvents = '';
+        }
+      }
+    });
+  }catch(_){ }
+}
+
+
+// AZOBSS v1146: single DOM spinner for Download + Test; verified Render /health wake check; PA/BM page pre-wakes backend from <head>.
+// IMPORTANT v1144: deploy-server.js exposes /health. Do not use /api/health.
+// The wake check is quota-free; the paid-download endpoint is only called after health is ready.
+function azobssEnsureDownloadButtonSpinnerStyle(){
+  try{
+    if(document.getElementById('azobssDownloadButtonSpinnerStyleV1146')) return;
+    const style = document.createElement('style');
+    style.id = 'azobssDownloadButtonSpinnerStyleV1146';
+    style.textContent = `
+      /* v1146: one spinner system only. Disable legacy busy pseudo-elements. */
+      body.pa-bm-page .user-pa-download[data-busy="1"]::before,
+      body.pa-bm-page .user-pa-download[data-busy="1"]::after,
+      body.pa-bm-page .user-pa-download.azobss-download-button-spinning::before,
+      body.pa-bm-page .user-pa-download.azobss-download-button-spinning::after{
+        content:none!important;display:none!important;animation:none!important;
+      }
+      body.pa-bm-page .user-pa-download[data-busy="1"],
+      body.pa-bm-page .user-pa-download.azobss-download-button-spinning,
+      body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-download-btn[data-busy="1"]{
+        position:relative!important;
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        cursor:wait!important;
+        line-height:1!important;
+      }
+      .azobss-btn-spinner-v1146{
+        display:inline-block!important;
+        width:13px!important;height:13px!important;
+        min-width:13px!important;min-height:13px!important;
+        box-sizing:border-box!important;
+        border:2px solid rgba(255,255,255,.38)!important;
+        border-top-color:#fff!important;
+        border-right-color:#fff!important;
+        border-radius:50%!important;
+        animation:azobssDownloadButtonSpin1146 .58s linear infinite!important;
+        transform-origin:50% 50%!important;
+        pointer-events:none!important;
+        vertical-align:middle!important;
+      }
+      /* v1149: v949 used to hide every busy child except .az-lot-busy-spinner-v949.
+         Keep the v1146 real DOM spinner visible for generic PA/BM downloads too. */
+      #userPaPurchaseList .az-lot-format-download[data-busy="1"] > .azobss-btn-spinner-v1146{
+        display:inline-block!important;visibility:visible!important;opacity:1!important;
+      }
+      body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-download-btn .azobss-btn-spinner-v1146{
+        width:12px!important;height:12px!important;min-width:12px!important;min-height:12px!important;
+      }
+      @keyframes azobssDownloadButtonSpin1146{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+      @media (prefers-reduced-motion:reduce){.azobss-btn-spinner-v1146{animation-duration:1s!important}}
+    `;
+    // Put the style at the END of body so old v945/v1138 styles cannot override it.
+    (document.body || document.documentElement).appendChild(style);
+  }catch(_e){}
+}
+
+async function azobssForceDownloadBusyPaint(){
+  // Give Chrome/Firefox two paint frames before the network request starts.
+  // This guarantees the moving spinner is visible even on a warm backend.
+  await new Promise(function(resolve){
+    let finished = false;
+    const done = function(){ if(finished) return; finished = true; resolve(); };
+    try{
+      if(typeof window.requestAnimationFrame === 'function'){
+        window.requestAnimationFrame(function(){ window.requestAnimationFrame(done); });
+        window.setTimeout(done, 120);
+      }else{
+        window.setTimeout(done, 0);
+      }
+    }catch(_e){ window.setTimeout(done, 0); }
+  });
+}
+
+async function azobssWaitForDownloadHandoffPaint(){
+  // v1150: after a Blob download is clicked, keep the spinner alive for two browser
+  // paint frames plus a short handoff window. Browsers do not expose a reliable API
+  // that tells a webpage when the Downloads shelf/filesystem entry becomes visible,
+  // but at this point the full file is already in memory and the save click has fired.
+  await new Promise(function(resolve){
+    let finished = false;
+    const done = function(){
+      if(finished) return;
+      finished = true;
+      window.setTimeout(resolve, 350);
+    };
+    try{
+      if(typeof window.requestAnimationFrame === 'function'){
+        window.requestAnimationFrame(function(){ window.requestAnimationFrame(done); });
+        window.setTimeout(done, 180);
+      }else{
+        done();
+      }
+    }catch(_e){ done(); }
+  });
+}
+
+async function azobssFetchWithTimeout(url, options, timeoutMs){
+  const opts = Object.assign({}, options || {});
+  const ms = Math.max(1000, Number(timeoutMs || 12000));
+  const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const existingSignal = opts.signal;
+  let timer = 0;
+  if(controller){
+    opts.signal = controller.signal;
+    timer = window.setTimeout(function(){ try{ controller.abort(); }catch(_e){} }, ms);
+    if(existingSignal && typeof existingSignal.addEventListener === 'function'){
+      if(existingSignal.aborted){ try{ controller.abort(); }catch(_e){} }
+      else existingSignal.addEventListener('abort', function(){ try{ controller.abort(); }catch(_e){} }, { once:true });
+    }
+  }
+  try{
+    return await fetch(url, opts);
+  }finally{
+    if(timer) window.clearTimeout(timer);
+  }
+}
+
+async function azobssWaitForDownloadBackendReady(downloadUrl){
+  let needsBackend = false;
+  try{
+    const parsed = new URL(String(downloadUrl || ''), window.location.href);
+    needsBackend = String(parsed.hostname || '').toLowerCase() === 'azobss-backend.onrender.com';
+  }catch(_e){}
+  if(!needsBackend) return true;
+
+  // v1155 Firefox compatibility:
+  // /health is only a best-effort wake hint. It must never block a real download
+  // for minutes when Firefox/ETP/CORS refuses the health request.
+  const healthUrl = 'https://azobss-backend.onrender.com/health';
+  const startedAt = Date.now();
+  const timeoutMs = 9000;
+  let sawHttpResponse = false;
+
+  while((Date.now() - startedAt) < timeoutMs){
+    try{
+      const response = await azobssFetchWithTimeout(
+        healthUrl + '?downloadWake=1&_=' + Date.now(),
+        { method:'GET', cache:'no-store', credentials:'omit', headers:{'Accept':'application/json'} },
+        3500
+      );
+      sawHttpResponse = true;
+      const type = String(response && response.headers && response.headers.get('content-type') || '').toLowerCase();
+      let data = null;
+      if(response && response.ok && type.includes('application/json')){
+        try{ data = await response.json(); }catch(_e){ data = null; }
+      }
+      if(response && response.ok && data && data.ok === true) return true;
+
+      if(response && [502,503,504].includes(Number(response.status || 0))){
+        await new Promise(function(resolve){ window.setTimeout(resolve, 800); });
+        continue;
+      }
+
+      return true;
+    }catch(error){
+      const name = String(error && error.name || '');
+      const message = String(error && error.message || '');
+      console.warn('AZOBSS v1155 health wake bypass:', name || message || error);
+      // Firefox CORS/ETP/network failures on /health fail open.
+      return true;
+    }
+  }
+
+  if(!sawHttpResponse) console.warn('AZOBSS v1155: /health timed out; continuing to download endpoint.');
+  return true;
+}
+
+
+// AZOBSS v1147: trigger attachment downloads without navigating the PA/BM tab
+// to the Render backend. If Render ever returns its waking page unexpectedly,
+// it stays inside an invisible iframe instead of replacing www.azobss.com/PA-BM/.
+function azobssTriggerHiddenAttachmentDownload(url){
+  const targetUrl = String(url || '').trim();
+  if(!targetUrl) return false;
+  try{
+    const parsed = new URL(targetUrl, window.location.href);
+    const isAzobssAttachment = String(parsed.hostname || '').toLowerCase() === 'azobss-backend.onrender.com'
+      && /\/api\/pa-bm-download(?:\/|$)/i.test(String(parsed.pathname || ''))
+      && (parsed.searchParams.get('download') === '1' || /\.(?:zip|dxf|pdf)(?:$|[?#])/i.test(parsed.href));
+
+    // v1155: use a native anchor instead of a cross-origin iframe.
+    // Firefox can strand iframe delivery when X-Frame-Options or ETP is involved.
+    const a = document.createElement('a');
+    a.href = parsed.href;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    if(isAzobssAttachment){
+      a.setAttribute('download', '');
+    }else{
+      a.target = '_blank';
+    }
+    document.body.appendChild(a);
+    a.click();
+    window.setTimeout(function(){ try{ a.remove(); }catch(_e){} }, 0);
+    return true;
+  }catch(_e){
+    return false;
+  }
+}
+
+function azobssOpenDownloadFallbackWithoutLeavingPage(url){
+  const value = String(url || '').trim();
+  if(!value) return false;
+  try{
+    const parsed = new URL(value, window.location.href);
+    if(!/^https?:$/i.test(parsed.protocol)) return false;
+    // v1148: all controlled download fallbacks stay off the top-level PA/BM tab.
+    // Render attachments and JUPEM fallback links are triggered inside a disposable
+    // hidden frame so a cold-start/error page can never replace azobss.com/PA-BM/.
+    return azobssTriggerHiddenAttachmentDownload(parsed.href);
+  }catch(_e){ return false; }
+}
+
+async function azobssLegacyUrlOnlyDownload(url, link){
+  const value = String(url || '').trim();
+  if(!value) return false;
+  const startedAt = Date.now();
+  try{
+    if(link){
+      azobssEnsureDownloadButtonSpinnerStyle();
+      link.dataset.busy = '1';
+      link.classList.add('azobss-download-button-spinning');
+      if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Preparing...';
+      link.style.pointerEvents = 'none';
+      link.setAttribute('aria-busy','true');
+      link.setAttribute('href','#');
+      link.removeAttribute('download');
+      link.removeAttribute('target');
+    }
+    await azobssForceDownloadBusyPaint();
+    const ready = await azobssWaitForDownloadBackendReady(value);
+    if(!ready){
+      alert('Server mengambil masa terlalu lama untuk tersedia. Sila cuba semula sebentar lagi.');
+      return false;
+    }
+    if(!azobssOpenDownloadFallbackWithoutLeavingPage(value)){
+      throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
+    }
+    return true;
+  }catch(error){
+    console.error('Legacy URL-only download failed:', error);
+    alert('Download gagal dimulakan. Sila cuba semula sebentar lagi.');
+    return false;
+  }finally{
+    try{
+      const elapsed = Date.now() - startedAt;
+      if(elapsed < 900) await new Promise(function(resolve){ window.setTimeout(resolve, 900 - elapsed); });
+    }catch(_e){}
+    if(link){
+      try{ link.dataset.busy = ''; }catch(_e){}
+      try{ link.classList.remove('azobss-download-button-spinning'); }catch(_e){}
+      try{ link.querySelectorAll('.azobss-btn-spinner-v1146').forEach(function(node){ node.remove(); }); }catch(_e){}
+      try{ link.style.pointerEvents = ''; link.removeAttribute('aria-busy'); }catch(_e){}
+    }
+  }
+}
+
+async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent){
+  try{
+    const ev = clickEvent || (window.event || null);
+    if(ev){
+      if(typeof ev.preventDefault === 'function') ev.preventDefault();
+      if(typeof ev.stopPropagation === 'function') ev.stopPropagation();
+      if(typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+    }
+  }catch(e){}
+  let r = {};
+  try{ r = JSON.parse(decodeURIComponent(String(encodedPayload || ''))); }catch(e){ r = {}; }
+
+  const link = linkEl || (clickEvent && clickEvent.currentTarget) || (window.event && window.event.currentTarget) || null;
+  const originalText = link ? link.textContent : '';
+  const defaultLabel = link ? String(link.getAttribute('data-default-label') || originalText || 'Download') : 'Download';
+  const downloadKey = String(encodedPayload || (link && (link.getAttribute('data-download-payload') || link.getAttribute('data-download-url'))) || '');
+  const activeDownload = window.__azobssPaBmActiveDownload;
+  if(activeDownload){
+    if(activeDownload.key !== downloadKey){
+      alert('Satu muat turun sedang berjalan. Tunggu sehingga selesai sebelum memuat turun fail lain.');
+    }
+    return false;
+  }
+  if(link && link.dataset && link.dataset.busy === '1') return false;
+
+  const used = azobssPurchaseDownloadCount(r);
+  const max = azobssPurchaseDownloadMax(r);
+  const expiresAtMs = azobssPurchaseDownloadExpiresAtMs(r);
+  if(Date.now() > expiresAtMs){
+    alert('Tempoh download telah tamat.');
+    try{ azobssSchedulePurchaseRecordsRefresh('expired download click'); }catch(e){}
+    return false;
+  }
+  if(used >= max){
+    alert('Had download telah digunakan.');
+    try{ azobssSchedulePurchaseRecordsRefresh('limit download click'); }catch(e){}
+    return false;
+  }
+
+  const recordType = String(r.productType || r.product || '').trim().toUpperCase();
+  const isLotDownload = recordType === 'NDCDB' || recordType === 'NDCDB_C3';
+  let downloadFormat = String(r.downloadFormat || 'original').trim().toLowerCase();
+  if(downloadFormat === 'zip') downloadFormat = 'original';
+  if(!['original','dxf','dwg'].includes(downloadFormat)) downloadFormat = 'original';
+  if(!isLotDownload) downloadFormat = 'original';
+
+  let directUrl = azobssBuildPaidPurchaseDownloadUrl(r, downloadFormat);
+  if(!directUrl){
+    alert('Link download tidak tersedia.');
+    return false;
+  }
+
+  // v1111: one physical click = one quota use.
+  // Keep one idempotency key for every request/retry created by this click.
+  // If the browser repeats the same GET, the backend will return the file again
+  // without increasing 0/5 -> 2/5.
+  let downloadAttemptId = '';
+  try{
+    if(window.crypto && typeof window.crypto.randomUUID === 'function'){
+      downloadAttemptId = window.crypto.randomUUID();
+    }else{
+      downloadAttemptId = 'pabm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+    }
+  }catch(_e){
+    downloadAttemptId = 'pabm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+  if(downloadAttemptId && /\/api\/pa-bm-download(?:\?|$)/i.test(directUrl)){
+    directUrl += (directUrl.includes('?') ? '&' : '?') + 'downloadAttemptId=' + encodeURIComponent(downloadAttemptId);
+  }
+
+  // v1114: distinguish a real failed request from an error that happens
+  // after the browser download has already been triggered.
+  let downloadTriggered = false;
+
+  const downloadOwner = {
+    key: downloadKey || directUrl,
+    link: link || null,
+    startedAt: Date.now(),
+    phase: isLotDownload ? 'preparing' : 'downloading',
+    label: isLotDownload ? 'Sedang Proses...' : 'Downloading...'
+  };
+  window.__azobssPaBmActiveDownload = downloadOwner;
+
+  try{
+    if(link){
+      azobssEnsureDownloadButtonSpinnerStyle();
+      link.dataset.busy = '1';
+      link.classList.add('azobss-download-button-spinning');
+      if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+      link.style.pointerEvents = 'none';
+      link.setAttribute('aria-busy', 'true');
+      link.setAttribute('href', '#');
+      link.removeAttribute('download');
+      link.removeAttribute('target');
+    }
+    azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+    await azobssForceDownloadBusyPaint();
+
+    // v1144: pre-wake Render with the quota-free /health endpoint.
+    // Only the clicked Download/Test button shows a spinner; there is no page overlay.
+    // This prevents Render's SERVICE WAKING UP page from replacing AZOBSS.
+    downloadOwner.phase = 'waking';
+    downloadOwner.label = 'Preparing...';
+    if(link){
+      if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+    }
+    const backendReadyForDownload = await azobssWaitForDownloadBackendReady(directUrl);
+    if(!backendReadyForDownload){
+      alert('Server mengambil masa terlalu lama untuk tersedia. Sila cuba semula sebentar lagi. Kuota muat turun tidak digunakan.');
+      return false;
+    }
+
+    // v1150: keep the PA spinner active until the actual PDF bytes have arrived.
+    // The old hidden-iframe/native branch returned immediately after assigning the URL,
+    // so the spinner could stop while Render/JUPEM was still generating or transferring
+    // the file. PA now falls through to the fetch -> Blob -> browser-download handoff
+    // pipeline below. That keeps the clicked button busy for the full network transfer.
+    if(recordType === 'PA' && !isLotDownload){
+      downloadOwner.phase = 'downloading';
+      downloadOwner.label = 'Downloading...';
+      if(link){
+        if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+      }
+      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+    }
+
+    if(isLotDownload){
+      downloadOwner.phase = 'preparing';
+      downloadOwner.label = downloadFormat === 'original' ? 'Sedia ZIP...' : ('Sedia ' + downloadFormat.toUpperCase() + '...');
+      if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+
+      let readiness = null;
+      const statusUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'prepare=1';
+      const readinessDeadline = Date.now() + (3 * 60 * 1000);
+      for(let attempt = 0; Date.now() < readinessDeadline; attempt += 1){
+        let statusResponse = null;
+        try{
+          statusResponse = await azobssFetchWithTimeout(statusUrl + '&_=' + Date.now(), { method:'GET', cache:'no-store' }, 15000);
+          readiness = await statusResponse.json().catch(function(){ return {}; });
+        }catch(fetchError){
+          readiness = { ok:true, ready:false, preparing:true };
+        }
+        if(statusResponse && statusResponse.ok && readiness && readiness.ready === true && /^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+          break;
+        }
+        if(statusResponse && (statusResponse.status === 400 || statusResponse.status === 403 || statusResponse.status === 409 || statusResponse.status === 410 || statusResponse.status === 503 || (readiness && readiness.ok === false))){
+          alert((readiness && (readiness.error || readiness.message)) || 'Backend gagal menyediakan format Lot Kadaster yang dipilih.');
+          return false;
+        }
+        downloadOwner.label = downloadFormat === 'original' ? 'Sedia ZIP...' : ('Sedia ' + downloadFormat.toUpperCase() + '...');
+        if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+        await new Promise(function(resolve){ window.setTimeout(resolve, attempt < 12 ? 2500 : 5000); });
+      }
+      if(!readiness || readiness.ready !== true || !/^esriJobSucceeded$/i.test(String(readiness.jobStatus || ''))){
+        alert('JUPEM masih menyediakan fail Lot Kadaster. Kuota download tidak digunakan.');
+        return false;
+      }
+
+      if(downloadFormat === 'original'){
+        // v1090: download ZIP through the AZOBSS backend attachment endpoint so the
+        // browser receives the controlled friendly filename instead of JUPEM's long Job ID.
+        // Navigation is used instead of fetch/blob so large ZIP files can stream directly
+        // into the browser's download manager without buffering the whole ZIP in JavaScript.
+        downloadOwner.phase = 'downloading';
+        downloadOwner.label = 'Muat ZIP...';
+        if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+        const zipUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'download=1&_=' + Date.now();
+        if(!azobssTriggerHiddenAttachmentDownload(zipUrl)){
+          throw new Error('Browser gagal memulakan muat turun ZIP tanpa meninggalkan halaman AZOBSS.');
+        }
+        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download'); }catch(e){}
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed'); }catch(e){} }, 1800);
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed 2'); }catch(e){} }, 4200);
+        return false;
+      }
+
+      // DXF: after the source ZIP is ready, the AZOBSS backend returns a real binary attachment.
+      downloadOwner.phase = 'downloading';
+      downloadOwner.label = 'Muat ' + downloadFormat.toUpperCase() + '...';
+      if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+      azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+    }
+
+    let response = null;
+    let lastPreparingData = null;
+    const finalDownloadDeadline = Date.now() + (2 * 60 * 1000);
+    for(let attempt = 0; Date.now() < finalDownloadDeadline; attempt += 1){
+      try{
+        response = await azobssFetchWithTimeout(directUrl, { method:'GET', cache:'no-store' }, 30000);
+      }catch(fetchError){
+        console.warn('AZOBSS v1155 download request retry:', fetchError);
+        response = null;
+        await new Promise(function(resolve){ window.setTimeout(resolve, Math.min(5000, 1200 + attempt * 500)); });
+        continue;
+      }
+      const pollType = String(response.headers.get('content-type') || '').toLowerCase();
+      if(response.status !== 202 || !pollType.includes('application/json')) break;
+
+      try{ lastPreparingData = await response.clone().json(); }catch(e){ lastPreparingData = null; }
+      if(!lastPreparingData || !lastPreparingData.preparing) break;
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - downloadOwner.startedAt) / 1000));
+      const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+      const elapsedRemainder = String(elapsedSeconds % 60).padStart(2, '0');
+      downloadOwner.label = (isLotDownload ? ('Muat ' + downloadFormat.toUpperCase()) : 'Downloading') + `... ${elapsedMinutes}:${elapsedRemainder}`;
+      if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
+      const waitMs = Math.max(1500, Math.min(10000, Number(lastPreparingData.retryAfterMs || 4000)));
+      await new Promise(function(resolve){ setTimeout(resolve, waitMs); });
+    }
+
+    if(response && response.status === 202){
+      alert((lastPreparingData && (lastPreparingData.error || lastPreparingData.message)) || 'Fail masih disediakan. Sila cuba semula sebentar lagi. Kuota muat turun tidak digunakan.');
+      return false;
+    }
+
+    const fallbackFlag = String(response && response.headers.get('x-azobss-browser-fallback') || '').trim();
+    if(fallbackFlag === '1'){
+      const encodedOpenUrl = response.headers.get('x-azobss-open-url') || '';
+      let openUrl = '';
+      try{ openUrl = decodeURIComponent(encodedOpenUrl); }catch(e){ openUrl = encodedOpenUrl; }
+      if(!openUrl){
+        try{
+          const fallbackHtml = await response.text();
+          const m = fallbackHtml.match(/id=["']openBtn["'][^>]*href=["']([^"']+)/i) || fallbackHtml.match(/url=([^"'<>\s]+)/i);
+          if(m && m[1]) openUrl = m[1].replace(/&amp;/g,'&');
+        }catch(e){}
+      }
+      if(openUrl){
+        try{ if(link){ if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; } }catch(e){}
+        try{ azobssOpenDownloadFallbackWithoutLeavingPage(openUrl); }
+        catch(e){
+          const a = document.createElement('a');
+          a.href = openUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+      }else{
+        try{ azobssOpenDownloadFallbackWithoutLeavingPage(directUrl); }catch(e){}
+      }
+      try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
+      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
+      return false;
+    }
+
+    if(!response){
+      alert('Download gagal dimulakan. Sila cuba lagi.');
+      return false;
+    }
+
+    const responseType = String(response.headers.get('content-type') || '').toLowerCase();
+    if(responseType.includes('application/json')){
+      let data = null;
+      try{ data = await response.json(); }catch(e){ data = null; }
+      if(data && data.openUrl){
+        try{ if(link && !azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Opening Download...'; azobssOpenDownloadFallbackWithoutLeavingPage(data.openUrl); }
+        catch(e){
+          const a = document.createElement('a');
+          a.href = data.openUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+        try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
+        setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
+        return false;
+      }
+      if(!response.ok || (data && data.ok === false)){
+        alert((data && (data.error || data.message)) || 'Download gagal. Sila cuba lagi.');
+        return false;
+      }
+    }
+
+    if(!response.ok){
+      let message = 'Download gagal. Sila cuba lagi.';
+      try{
+        const data = await response.json();
+        if(data && (data.error || data.message)) message = data.error || data.message;
+      }catch(e){}
+      alert(message);
+      return false;
+    }
+
+    const blob = await response.blob();
+    if(!blob || !blob.size){
+      alert('Fail download kosong. Sila cuba lagi.');
+      return false;
+    }
+
+    let filename = azobssPaidPurchaseDownloadFilename(r, downloadFormat);
+    const disposition = response.headers.get('content-disposition') || response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
+    if(match){
+      try{ filename = decodeURIComponent(match[1] || match[2] || filename); }catch(e){ filename = match[1] || match[2] || filename; }
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    downloadTriggered = true;
+    a.remove();
+    // v1150: do not clear the button immediately after a.click(). The file bytes are
+    // already fully received here; wait for the browser download handoff to paint first.
+    await azobssWaitForDownloadHandoffPaint();
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 15000);
+
+    try{ azobssSchedulePurchaseRecordsRefresh('download success'); }catch(e){}
+    setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download success delayed'); }catch(e){} }, 1200);
+    return false;
+  }catch(error){
+    console.error('Controlled download failed:', error);
+    if(!downloadTriggered){
+      alert('Download sedang disediakan atau server sedang bangun. Sila cuba semula sebentar lagi.');
+    }else{
+      console.warn('AZOBSS download was already triggered; suppressing misleading post-download error popup.');
+    }
+    return false;
+  }finally{
+    // v1144: guarantee a visible moving spinner for at least 900 ms per click.
+    // This applies to customer Download and Administrator Test ↓ alike.
+    try{
+      const busyElapsed = Date.now() - Number(downloadOwner.startedAt || Date.now());
+      if(busyElapsed < 900){
+        await new Promise(function(resolve){ window.setTimeout(resolve, 900 - busyElapsed); });
+      }
+    }catch(_e){}
+    if(window.__azobssPaBmActiveDownload === downloadOwner){
+      window.__azobssPaBmActiveDownload = null;
+      azobssSetPaBmDownloadUiLock(false, null, '');
+    }
+    if(link){
+      link.dataset.busy = '';
+      link.classList.remove('azobss-download-button-spinning');
+      try{ link.querySelectorAll('.azobss-btn-spinner-v1146').forEach(function(node){ node.remove(); }); }catch(_e){}
+      link.textContent = defaultLabel;
+      link.style.pointerEvents = '';
+      link.removeAttribute('aria-busy');
+    }
+  }
+}
+window.azobssClientControlledDownload = azobssClientControlledDownload;
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1155';
+
+(function(){
+  if(window.__azobssPaBmDownloadCaptureInstalled) return;
+  window.__azobssPaBmDownloadCaptureInstalled = true;
+  function findDownloadLink(target){
+    try{
+      if(!target) return null;
+      if(target.closest) return target.closest('.user-pa-download[data-download-url], .user-pa-download[data-download-payload]');
+      while(target && target !== document){
+        if(target.classList && target.classList.contains('user-pa-download')) return target;
+        target = target.parentNode;
+      }
+    }catch(e){}
+    return null;
+  }
+  document.addEventListener('click', function(ev){
+    const link = findDownloadLink(ev.target);
+    if(!link || link.classList.contains('is-locked') || link.classList.contains('is-pending-status')) return;
+    const payload = link.getAttribute('data-download-payload') || '';
+    const url = link.getAttribute('data-download-url') || '';
+    if(!payload && !url) return;
+    try{
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }catch(e){}
+    if(window.azobssClientControlledDownload){
+      if(payload){
+        // v1114: this capture handler is the single click owner.
+        // Mark the DOM element immediately so no second path can start the same click.
+        if(link.dataset && link.dataset.azobssClickClaimed === '1') return false;
+        if(link.dataset) link.dataset.azobssClickClaimed = '1';
+        Promise.resolve(window.azobssClientControlledDownload(payload, link, ev)).finally(function(){
+          try{ if(link && link.dataset) delete link.dataset.azobssClickClaimed; }catch(_e){}
+        });
+      }else{
+        // v1148 legacy URL-only safety: use the same health gate + hidden delivery path.
+        // Never navigate the current PA/BM tab to Render or a source fallback page.
+        Promise.resolve(azobssLegacyUrlOnlyDownload(url, link));
+      }
+    }
+    return false;
+  }, true);
+})();
+function azobssPurchaseDownloadMetaHtml(r){
+  if(!azobssIsPurchasePaidForDownload(r)) return '';
+  const used = azobssPurchaseDownloadCount(r);
+  const max = azobssPurchaseDownloadMax(r);
+  const days = azobssPurchaseDownloadRemainingDays(r);
+  return `<div class="az-download-meta">Downloads: <strong>${used}/${max}</strong><br>Tempoh sah: <strong>${days} hari</strong></div>`;
+}
+
+
+function azobssShortStateNameForPurchaseMobile(state){
+  const raw = String(state || '').trim();
+  const s = raw.toUpperCase().replace(/\s+/g,' ');
+  if(!raw) return '-';
+  if(s.includes('KUALA LUMPUR')) return 'W.P Kuala Lumpur';
+  if(s.includes('PUTRAJAYA')) return 'W.P Putrajaya';
+  if(s.includes('LABUAN')) return 'W.P Labuan';
+  return raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/\bWp\b/g,'W.P').replace(/\bW\.p\b/g,'W.P');
+}
+
+function azobssPurchaseSelectionMap(){
+  if(!(window.__AZOBSS_ADMIN_PURCHASE_SELECTIONS__ instanceof Map)) window.__AZOBSS_ADMIN_PURCHASE_SELECTIONS__ = new Map();
+  return window.__AZOBSS_ADMIN_PURCHASE_SELECTIONS__;
+}
+function azobssPurchaseSelectionKey(r){
+  const direct = String(r?.firestoreId || r?.id || r?.purchaseLogId || '').trim();
+  if(direct) return 'id:' + direct;
+  return ['record', r?.usernameKey, r?.uid, r?.productType, r?.itemCode, r?.negeri, r?.createdAtMs, r?.amount]
+    .map(v => String(v || '').trim().toLowerCase()).join('|');
+}
+function azobssPurchaseSelectionCellHtml(r){
+  if(!isAzobssAdmin(getSavedUser && getSavedUser() || {})) return '<div class="col-select" aria-hidden="true"></div>';
+  const key = azobssPurchaseSelectionKey(r);
+  const selected = azobssPurchaseSelectionMap().has(key);
+  return `<div class="col-select"><input class="purchase-row-select" type="checkbox" aria-label="Select ${escHtml(String(r?.productType || 'item'))} ${escHtml(String(r?.itemCode || ''))}" data-record-key="${escHtml(key)}" data-record-payload="${azobssPurchaseDeletePayload(r)}"${selected ? ' checked' : ''}></div>`;
+}
+
+
+
+function azobssLotPurchaseReadinessKey(r){
+  const recordId = String(r && (r.firestoreId || r.id || r.purchaseLogId || r.recordId) || '').trim();
+  if(recordId) return 'id:' + recordId;
+  return ['lot-ready', r && (r.productType || r.product), r && (r.productId || r.itemCode || r.jobId), r && (r.negeri || r.state)]
+    .map(function(v){ return String(v || '').trim().toLowerCase(); }).join('|');
+}
+function azobssIsLotPurchaseRecord(r){
+  const type = String(r && (r.productType || r.product) || '').trim().toUpperCase();
+  return type === 'NDCDB' || type === 'NDCDB_C3';
+}
+function azobssLotPurchaseReadinessMap(){
+  if(!window.__azobssLotPurchaseReadiness) window.__azobssLotPurchaseReadiness = Object.create(null);
+  return window.__azobssLotPurchaseReadiness;
+}
+function azobssLotPurchaseStatusUrl(r){
+  const base = azobssBuildControlledPurchaseDownloadUrl(r);
+  if(!base) return '';
+  return base + (base.includes('?') ? '&' : '?') + 'prepare=1&_=' + Date.now();
+}
+function azobssQueueLotPurchaseReadiness(r){
+  if(!azobssIsLotPurchaseRecord(r)) return;
+  const key = azobssLotPurchaseReadinessKey(r);
+  const map = azobssLotPurchaseReadinessMap();
+  const existing = map[key];
+  if(existing && (existing.status === 'checking' || existing.status === 'ready')) return;
+  const entry = map[key] = { status:'checking', attempts:0, jobStatus:'', timer:0 };
+
+  const check = async function(){
+    if(entry.status === 'ready') return;
+    entry.attempts += 1;
+    try{
+      const url = azobssLotPurchaseStatusUrl(r);
+      if(!url) throw new Error('Status URL unavailable');
+      const response = await fetch(url, { method:'GET', cache:'no-store' });
+      const data = await response.json().catch(function(){ return {}; });
+      entry.jobStatus = String(data && data.jobStatus || '');
+      if(response.ok && data && data.ready === true && /^esriJobSucceeded$/i.test(entry.jobStatus)){
+        entry.status = 'ready';
+        entry.readyAt = Date.now();
+        try{ azobssSchedulePurchaseRecordsRefresh('NDCDB job succeeded'); }catch(e){}
+        return;
+      }
+      if(response.status === 409 || response.status === 410 || (data && data.ok === false && /Failed|Cancelled|TimedOut|Deleted/i.test(entry.jobStatus))){
+        entry.status = 'failed';
+        entry.error = String(data.error || data.message || 'JUPEM job failed');
+        return;
+      }
+      entry.status = 'checking';
+    }catch(error){
+      entry.status = 'checking';
+      entry.error = String(error && error.message || error || '');
+    }
+    // v1152: background readiness must not poll forever. A click can always
+    // start a fresh foreground check later, but idle pages stop after ~6 minutes.
+    if(entry.attempts >= 72){
+      entry.status = 'paused';
+      entry.error = entry.error || 'Semakan automatik dihentikan sementara. Tekan Download untuk semak semula.';
+      return;
+    }
+    const delay = entry.attempts < 10 ? 2500 : 5000;
+    entry.timer = window.setTimeout(check, delay);
+  };
+  check();
+}
+function azobssLotPurchaseIsReady(r){
+  if(!azobssIsLotPurchaseRecord(r)) return true;
+  const entry = azobssLotPurchaseReadinessMap()[azobssLotPurchaseReadinessKey(r)];
+  if(entry && entry.status === 'ready') return true;
+  azobssQueueLotPurchaseReadiness(r);
+  return false;
+}
+
+
+function azobssLotPurchasePercentLabel(record){
+  const r = record || {};
+  const sources = [r, r.raw || {}, r.item || {}, r.purchase || {}];
+  let ratio = 0;
+  for(const source of sources){
+    if(!source || typeof source !== 'object') continue;
+    const direct = [source.areaRatio, source.selectionAreaRatio, source.lotAreaRatio, source.area_ratio];
+    for(const value of direct){
+      const number = Number(value);
+      if(Number.isFinite(number) && number > 0){ ratio = number > 1.1 ? number / 100 : number; break; }
+    }
+    if(ratio > 0) break;
+    const percentValues = [source.ratioPercent, source.selectionPercent, source.lotPercent, source.areaPercent];
+    for(const value of percentValues){
+      const number = Number(value);
+      if(Number.isFinite(number) && number > 0){ ratio = number / 100; break; }
+    }
+    if(ratio > 0) break;
+    const token = String(source.selectionToken || '').trim();
+    if(token){
+      try{
+        const body = token.split('.')[0];
+        const base64 = body.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(body.length / 4) * 4, '=');
+        const decoded = JSON.parse(decodeURIComponent(Array.from(atob(base64), function(char){
+          return '%' + char.charCodeAt(0).toString(16).padStart(2, '0');
+        }).join('')));
+        const number = Number(decoded && decoded.areaRatio);
+        if(Number.isFinite(number) && number > 0){ ratio = number > 1.1 ? number / 100 : number; break; }
+      }catch(_error){}
+    }
+  }
+  if(!Number.isFinite(ratio) || ratio <= 0) return '';
+  const percent = Math.min(110, ratio * 100);
+  return (Math.round(percent * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + '%';
+}
+
+function purchaseDetailRowHtml(r){
+  const itemType = String(r.productType || r.product || 'PA').trim().toUpperCase();
+  const itemCode = (itemType === 'NDCDB' || itemType === 'NDCDB_C3') && r.productId
+    ? r.productId
+    : (r.itemCode || '-');
+  const itemLabel = itemType === 'NDCDB'
+    ? 'Lot Kadaster Berdigit'
+    : (itemType === 'NDCDB_C3' ? 'Lot Kadaster Berdigit C3' : (r.productType || 'PA'));
+  const lotPercentLabel = azobssLotPurchasePercentLabel(r);
+  const item = itemType === 'NDCDB' || itemType === 'NDCDB_C3'
+    ? `${itemLabel}${lotPercentLabel ? ' ' + lotPercentLabel : ''}`
+    : `${itemLabel} ${itemCode}`.trim();
+  const amount = Number(r.amount || 0);
+  const canUncart = azobssCanUncartPurchase(r);
+  const isLotRecord = itemType === 'NDCDB' || itemType === 'NDCDB_C3';
+  const paidDownloadUrl = azobssBuildControlledPurchaseDownloadUrl(r);
+  const paidDownloadName = azobssPaidPurchaseDownloadFilename(r);
+  const paidDownloadPayload = azobssPurchaseDownloadPayload(r);
+  const activeDownload = window.__azobssPaBmActiveDownload;
+  const isActiveDownload = !!(activeDownload && activeDownload.key === paidDownloadPayload);
+  const isOtherDownloadActive = !!(activeDownload && !isActiveDownload);
+  const paid = azobssIsPurchasePaidForDownload(r);
+  const allowed = azobssPurchaseDownloadAllowed(r);
+  const expired = paid && azobssPurchaseDownloadExpired(r);
+  const limitReached = paid && azobssPurchaseDownloadLimitReached(r);
+  const used = azobssPurchaseDownloadCount(r);
+  const max = azobssPurchaseDownloadMax(r);
+  const days = azobssPurchaseDownloadRemainingDays(r);
+  let actionHtml = '';
+  const dlMetaHtml = `<span class="az-action-download-count" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
+  const adminResetHtml = (paid && (window.azobssCanShowPaBmAdminReset ? window.azobssCanShowPaBmAdminReset() : isAzobssAdmin(getSavedUser && getSavedUser() || {})))
+    ? `<button type="button" class="az-admin-reset-download-count" title="Admin reset download count to 0/5" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${azobssPurchaseResetPayload(r)}', this);">Reset 0/5</button>`
+    : '';
+
+  // Lot Kadaster keeps the original source ZIP and exposes DXF as the CAD download.
+  // Every successful ZIP/DXF download uses one slot from the same existing 5x/7-day quota.
+  if(isLotRecord && paid && allowed){
+    try{ azobssQueueLotPurchaseReadiness(r); }catch(_error){}
+  }
+
+  if(paid && paidDownloadUrl && allowed){
+    if(isLotRecord){
+      const formatDefs = [
+        { key:'original', label:'ZIP', title:'Download data asal JUPEM (.zip)' },
+        { key:'dxf', label:'DXF', title:'Download DXF (.dxf)' }
+      ];
+      const formatButtons = formatDefs.map(function(def){
+        const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);
+        const payload = azobssPurchaseDownloadPayload(r, def.key);
+        const filename = azobssPaidPurchaseDownloadFilename(r, def.key);
+        const active = !!(activeDownload && activeDownload.key === payload);
+        const lockedByOther = !!(activeDownload && !active);
+        const shownLabel = active ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : escHtml(def.label);
+        return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}${active ? ' azobss-download-button-spinning' : ''}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a>`;
+      }).join('');
+      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action"><span class="az-lot-download-format-group" aria-label="Pilihan format Lot Kadaster">${formatButtons}</span>${dlMetaHtml}${adminResetHtml}</div>`;
+    }else{
+      const readyLabel = '↓';
+      const shownLabel = isActiveDownload ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : readyLabel;
+      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-generic-download-action-v955"><span class="az-lot-download-format-group"><a class="user-pa-download az-lot-format-download az-lot-format-original az-generic-download-button-v955${isActiveDownload ? ' azobss-download-button-spinning' : ''}" href="#" title="Download" aria-label="Download" data-default-label="${readyLabel}" data-download-url="${escHtml(paidDownloadUrl)}" data-download-name="${escHtml(paidDownloadName)}" data-download-payload="${paidDownloadPayload}"${isActiveDownload ? ' data-busy="1" aria-busy="true"' : ''}${isActiveDownload && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${isOtherDownloadActive ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a></span>${dlMetaHtml}${adminResetHtml}</div>`;
+    }
+  }else if(paid){
+    if(limitReached){
+      actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-download-limit-action-v957"><span class="az-lot-download-format-group"><span class="user-pa-download is-locked az-lot-format-download az-lot-format-original az-download-limit-used-v957" title="Had download telah digunakan" aria-label="Had download telah digunakan">🔒</span></span>${dlMetaHtml}${adminResetHtml}</div>`;
+    }else{
+      const reason = expired ? 'Tamat' : 'Expired';
+      actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
+    }
+  }else{
+    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
+  }
+  const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
+  return `
+    <div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-row">
+      ${azobssPurchaseSelectionCellHtml(r)}
+      <div class="col-no">${idx}</div>
+      <div class="col-item"><strong>${escHtml(item)}</strong></div>
+      <div class="col-state"><strong>${escHtml(azobssShortStateNameForPurchaseMobile(r.negeri || r.state || '-'))}</strong></div>
+      <div class="col-price">RM${escHtml(amount || '')}</div>
+      <div class="col-date">${escHtml(formatPurchaseDate(r))}</div>
+      <div class="col-exp" title="Tempoh">🕒 <strong>${escHtml(String(days))} hari</strong></div>
+      <div class="col-action">${actionHtml}</div>
+    </div>`;
+}
+function azobssPurchaseTableHeaderHtml(){
+  return `<div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-header">
+    <div class="col-select"><input class="purchase-table-select-all" type="checkbox" aria-label="Select all records on this page"></div>
+    <div class="col-no">#</div>
+    <div class="col-item">Item</div>
+    <div class="col-state">📍 Negeri</div>
+    <div class="col-price">RM Harga</div>
+    <div class="col-date">📅 Tarikh / Masa</div>
+    <div class="col-exp">🕒 Tempoh</div>
+    <div class="col-action">Tindakan</div>
+  </div>`;
+}
+
+function applyPurchaseSort(records, sort){
+  const rows = records.slice();
+  if(sort === 'oldest') rows.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
+  else if(sort === 'paAsc') rows.sort((a,b)=>String(a.itemCode||'').localeCompare(String(b.itemCode||'')));
+  else if(sort === 'paDesc') rows.sort((a,b)=>String(b.itemCode||'').localeCompare(String(a.itemCode||'')));
+  else if(sort === 'state') rows.sort((a,b)=>String(a.negeri||'').localeCompare(String(b.negeri||'')) || Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  else rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  return rows;
+}
+const AZOBSS_PURCHASE_TOTAL_RESET_KEY = 'azobss_purchase_total_reset_map_v1';
+function readAzobssPurchaseTotalResetMap(){
+  try{ return JSON.parse(localStorage.getItem(AZOBSS_PURCHASE_TOTAL_RESET_KEY) || '{}') || {}; }
+  catch(e){ return {}; }
+}
+function writeAzobssPurchaseTotalResetMap(map){
+  try{ localStorage.setItem(AZOBSS_PURCHASE_TOTAL_RESET_KEY, JSON.stringify(map || {})); }
+  catch(e){}
+}
+function purchaseRecordMs(record){
+  return Number(record?.createdAtMs || record?.timestampMs || record?.createdAtClientMs || 0) || (record?.createdAtClient ? Date.parse(record.createdAtClient) : 0) || (record?.createdAt ? Date.parse(record.createdAt) : 0) || 0;
+}
+function azobssPurchaseStatus(r){
+  return String(r?.status || 'pending').trim().toLowerCase();
+}
+function azobssIsPurchaseStatusPaid(r){
+  return ['paid','success','completed','settled','verified','approved']
+    .includes(azobssPurchaseStatus(r));
+}
+
+function azobssPurchaseHasDownloadReadyUrl(r){
+  const url = String(
+    r?.downloadUrl ||
+    r?.secureDownloadLink ||
+    r?.downloadLink ||
+    r?.fileUrl ||
+    r?.url ||
+    ''
+  ).trim();
+  if(!url) return false;
+
+  const max = Number(r?.maxDownloads || r?.downloadLimit || 5) || 5;
+  const usedRaw = r?.downloadCount ?? r?.usedCount ?? r?.downloadsUsed ?? 0;
+  const used = Math.max(0, Number(usedRaw) || 0);
+  if(used >= max) return false;
+
+  const rawMs = Number(r?.createdAtMs || r?.paidAtMs || r?.verifiedAtMs || r?.updatedAtMs || 0) || 0;
+  const createdMs = rawMs > 0 ? rawMs : Date.parse(r?.createdAtClient || r?.paidAtClient || r?.verifiedAtClient || r?.updatedAtClient || '');
+  if(createdMs && Number.isFinite(createdMs)){
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    if(Date.now() - createdMs > sevenDays) return false;
+  }
+
+  return true;
+}
+function countablePurchaseRows(rows, usernameKey, resetMap){
+  const key = String(usernameKey || '').trim().toLowerCase();
+  const resetAt = Number((resetMap || {})[key] || 0);
+  return (rows || []).filter(r => {
+    const status = azobssPurchaseStatus(r);
+    if(['paid','success','completed','settled','cancelled','deleted'].includes(status)) return false;
+    return !resetAt || purchaseRecordMs(r) > resetAt;
+  });
+}
+async function loadAzobssPurchaseTotalResetMap(){
+  const map = readAzobssPurchaseTotalResetMap();
+  const current = getSavedUser() || {};
+  const isAdminUser = isAzobssAdmin(current);
+
+  if(isAdminUser && window.__AZOBSS_ADMIN_USERS_SNAPSHOT_READY__){
+    Object.assign(map, window.__AZOBSS_ADMIN_PURCHASE_RESET_MAP__ || {});
+    writeAzobssPurchaseTotalResetMap(map);
+    return map;
+  }
+
+  function applyUserDoc(docSnap){
+    if(!docSnap || !docSnap.exists || !docSnap.exists()) return;
+    const data = docSnap.data() || {};
+    const key = String(data.usernameKey || data.username || docSnap.id || '').trim().toLowerCase();
+    const ms = Number(data.purchaseTotalResetAtMs || 0) || (data.purchaseTotalResetAtClient ? Date.parse(data.purchaseTotalResetAtClient) : 0);
+    if(key && ms) map[key] = ms;
+  }
+
+  try{
+    if(isAdminUser){
+      const snap = await getDocs(collection(db, 'users'));
+      snap.forEach(applyUserDoc);
+    }else{
+      const docIds = Array.from(new Set([
+        purchasePersistDocId(current),
+        String(current.usernameKey || current.username || current.displayName || '').trim().toLowerCase()
+      ].filter(Boolean)));
+      for(const id of docIds){
+        try{ applyUserDoc(await getDoc(doc(db, 'users', id))); }catch(e){}
+      }
+    }
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(error){
+    console.warn('Load purchase total reset map failed:', error);
+  }
+  return map;
+}
+
+function sortAdminPurchaseGroups(groupedRows, sort, resetMap){
+  const metric = (key, rows) => {
+    const paidRows = (rows || []).filter(r => azobssIsPurchasePaidForDownload(r));
+    return {
+      units: paidRows.length,
+      amount: paidRows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0),
+      updated: Math.max(0, ...paidRows.map(r=>Number(r.paidAtMs || r.verifiedAtMs || r.createdAtMs || 0)))
+    };
+  };
+  return groupedRows.slice().sort((a,b)=>{
+    const am = metric(a[0], a[1]), bm = metric(b[0], b[1]);
+    if(sort === 'amountAsc') return am.amount - bm.amount;
+    if(sort === 'amountDesc') return bm.amount - am.amount;
+    if(sort === 'unitsAsc') return am.units - bm.units;
+    if(sort === 'unitsDesc') return bm.units - am.units;
+    if(sort === 'username') return String(a[0]).localeCompare(String(b[0]));
+    return bm.updated - am.updated;
+  });
+}
+function renderUserPurchaseSummary(records, resetMap){
+  const current = getSavedUser() || {};
+  const latest = records.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))[0] || {};
+  const currentKey = String(current.usernameKey || current.displayName || latest.usernameKey || latest.displayName || '').trim().toLowerCase();
+  const countableRowsForTotal = countablePurchaseRows(records, currentKey, resetMap);
+  const total = countableRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+  const username = current.displayName || current.username || current.usernameKey || latest.displayName || latest.usernameKey || 'User';
+  const phone = current.phone || latest.phone || '';
+  const lastItem = latest.itemCode ? `${latest.productType || 'PA'} ${latest.itemCode}` : '-';
+  return `<div class="purchase-summary-item user-purchase-summary-card">
+    <div><strong>${escHtml(username)}</strong>${phone ? `<span>${escHtml(phone)}</span>` : ''}</div>
+    <div class="user-purchase-summary-meta">
+      <span>Last: <strong>${escHtml(lastItem)}</strong></span>
+      <span>Unit: <strong>${escHtml(countableRowsForTotal.length)}</strong></span>
+      <span>Total: <strong>RM${escHtml(total)}</strong></span>
+    </div>
+  </div>`;
+}
+
+
+function azobssGetBackendBaseUrl(){
+  return String(window.AZOBSS_BACKEND_URL || window.API_BASE_URL || localStorage.getItem('azobssPremiumBackendUrl') || localStorage.getItem('azobssSoftwareStatsBackendUrl') || 'https://azobss-backend.onrender.com').replace(/\/$/, '');
+}
+function azobssPurchasePaymentRows(records, resetMap){
+  const current = getSavedUser() || {};
+  const key = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
+  const rows = countablePurchaseRows((records || []).filter(r => {
+    const rk = String(r.usernameKey || r.displayName || '').trim().toLowerCase();
+    const uidOk = current.uid && String(r.uid || '') === String(current.uid);
+    return !key || rk === key || uidOk;
+  }), key, resetMap || {});
+  return rows;
+}
+async function azobssRefreshPaBmToyyibTotal(records, resetMap){
+  const el = document.getElementById('paBmToyyibTotal');
+  if(!el) return 0;
+  try{
+    const rows = azobssPurchasePaymentRows(records || await loadAzobssPurchaseRecords(), resetMap || await loadAzobssPurchaseTotalResetMap());
+    const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+    el.textContent = 'RM' + Number(total || 0).toFixed(2);
+    return total;
+  }catch(e){
+    console.warn('Refresh PA/BM ToyyibPay total failed:', e);
+    return 0;
+  }
+}
+async function azobssResetCurrentPurchaseTotalAfterPaid(orderId){
+  const current = getSavedUser() || {};
+  const key = String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase();
+  if(!key) return;
+  const resetAtMs = Date.now();
+  const resetAtClient = new Date(resetAtMs).toISOString();
+  try{
+    const map = readAzobssPurchaseTotalResetMap();
+    map[key] = resetAtMs;
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(e){ console.warn('Local payment reset failed:', e); }
+  try{
+    await setDoc(doc(db, 'users', key), {
+      purchaseTotalResetAtMs: resetAtMs,
+      purchaseTotalResetAtClient: resetAtClient,
+      purchaseTotalResetBy: 'toyyibpay',
+      lastPaBmPaymentOrderId: String(orderId || ''),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(e){ console.warn('Firebase payment reset failed:', e); }
+  const totalEl = document.getElementById('paBmToyyibTotal');
+  if(totalEl) totalEl.textContent = 'RM0.00';
+  // Only the backend may mark the purchaseLogs contained in the verified
+  // ToyyibPay order as paid. Never promote every pending row in the browser.
+  try{ await renderAzobssPurchaseRecords(); }catch(e){}
+  try{ azobssSchedulePurchaseRecordsRefresh('payment paid'); }catch(e){}
+}
+
+
+
+function azobssCleanPaBmPaymentReturnUrl(){
+  try{
+    const url = new URL(window.location.href);
+    ['payment','status_id','status','billcode','billCode','BillCode','orderId','order_id','transaction_id','payment_id'].forEach(key => url.searchParams.delete(key));
+    const next = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '') + url.hash;
+    window.history.replaceState({}, document.title, next);
+  }catch(e){ console.warn('Payment return URL cleanup failed:', e); }
+}
+function azobssPaBmReturnKey(orderId, billCode){
+  return String(orderId || billCode || '').trim();
+}
+function azobssPaBmReturnConsumed(key){
+  if(!key) return false;
+  try{ return localStorage.getItem('azobss_pa_bm_return_consumed_' + key) === '1'; }
+  catch(e){ return false; }
+}
+function azobssMarkPaBmReturnConsumed(key){
+  if(!key) return;
+  try{ localStorage.setItem('azobss_pa_bm_return_consumed_' + key, '1'); }catch(e){}
+}
+function azobssSavePaBmPendingReturn(orderId, billCode){
+  const cleanOrderId = String(orderId || '').trim();
+  const cleanBillCode = String(billCode || '').trim();
+  try{
+    if(cleanOrderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', cleanOrderId);
+    if(cleanBillCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', cleanBillCode);
+  }catch(e){}
+  try{
+    localStorage.setItem('azobss_pa_bm_pending_return', JSON.stringify({
+      orderId: cleanOrderId,
+      billCode: cleanBillCode,
+      savedAt: Date.now()
+    }));
+  }catch(e){}
+}
+function azobssReadPaBmPendingReturn(){
+  let orderId = '';
+  let billCode = '';
+  try{
+    orderId = sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
+    billCode = sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || '';
+  }catch(e){}
+  if(!orderId && !billCode){
+    try{
+      const saved = JSON.parse(localStorage.getItem('azobss_pa_bm_pending_return') || '{}');
+      const savedAt = Number(saved.savedAt || 0);
+      if(!savedAt || (Date.now() - savedAt) <= (6 * 60 * 60 * 1000)){
+        orderId = String(saved.orderId || '').trim();
+        billCode = String(saved.billCode || '').trim();
+      }
+    }catch(e){}
+  }
+  return { orderId:String(orderId || '').trim(), billCode:String(billCode || '').trim() };
+}
+function azobssClearPaBmPendingReturn(){
+  try{
+    sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+  }catch(e){}
+  try{ localStorage.removeItem('azobss_pa_bm_pending_return'); }catch(e){}
+}
+function azobssSchedulePaBmReturnCheck(delay){
+  try{
+    clearTimeout(window.__azobssPaBmReturnCheckTimer);
+    window.__azobssPaBmReturnCheckTimer = setTimeout(function(){
+      window.__azobssPaBmReturnCheckTimer = 0;
+      azobssCheckPaBmToyyibReturn();
+    }, Math.max(100, Number(delay || 1200)));
+  }catch(e){}
+}
+function azobssShowPaBmPaymentSuccessPopup(verifiedKey){
+  try{
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+    const safeKey = String(verifiedKey || window.__azobssPaBmPaymentVerifiedKey || '').trim();
+    const verifiedAt = Number(window.__azobssPaBmPaymentVerifiedAt || 0);
+    if(!safeKey || !verifiedAt || (Date.now() - verifiedAt) > 30000) return;
+    const seenKey = 'azobss_pa_bm_success_popup_seen_' + safeKey;
+    try{
+      if(localStorage.getItem(seenKey) === '1') return;
+      localStorage.setItem(seenKey, '1');
+    }catch(e){}
+    let modal = document.getElementById('azobssPaBmPaymentSuccessModal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'azobssPaBmPaymentSuccessModal';
+      modal.className = 'azobss-payment-success-modal';
+      modal.innerHTML = `
+        <div class="azobss-payment-success-backdrop" data-close="1"></div>
+        <div class="azobss-payment-success-box" role="dialog" aria-modal="true" aria-labelledby="azobssPaymentSuccessTitle">
+          <button type="button" class="azobss-payment-success-close" aria-label="Close">×</button>
+          <div class="azobss-payment-success-icon">✅</div>
+          <h3 id="azobssPaymentSuccessTitle">Pembayaran Berjaya!</h3>
+          <p>Terima kasih atas pembelian anda.</p>
+          <p>Sila muat turun fail anda di bahagian <strong>'Latest Purchase List'</strong>.</p>
+          <button type="button" class="azobss-payment-success-go">Go to Latest Purchase List</button>
+        </div>`;
+      document.body.appendChild(modal);
+      const close = () => modal.classList.remove('show');
+      modal.querySelector('.azobss-payment-success-close')?.addEventListener('click', close);
+      modal.querySelector('.azobss-payment-success-backdrop')?.addEventListener('click', close);
+      modal.querySelector('.azobss-payment-success-go')?.addEventListener('click', () => {
+        close();
+        const target = document.getElementById('userPaPurchasePanel') || document.getElementById('userPaPurchaseList');
+        if(target){ target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      });
+    }
+    requestAnimationFrame(function(){ modal.classList.add('show'); });
+  }catch(e){ console.warn('Payment success popup failed:', e); }
+}
+
+
+function azobssResetPaBmPaymentStatusIfIdle(force){
+  try{
+    const status = document.getElementById('paBmToyyibStatus');
+    if(!status) return;
+    const text = String(status.textContent || '').trim();
+    const transient = [
+      'Mengesahkan pembayaran...',
+      'Sedang menyambung semula pengesahan pembayaran...',
+      'Mengesan rujukan pembayaran...',
+      'Pembayaran diterima. Menunggu pengesahan ToyyibPay...'
+    ];
+    if(force || transient.includes(text)) status.textContent = 'Pergi ke halaman pembayaran';
+  }catch(e){}
+}
+
+async function azobssCheckPaBmToyyibReturn(){
+  if(window.__azobssPaBmReturnCheckActive) return;
+  window.__azobssPaBmReturnCheckActive = true;
+  const status = document.getElementById('paBmToyyibStatus');
+  let shouldRetry = false;
+  let retryDelay = 1800;
+  try{
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+
+    if(Date.now() < Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0)){
+      azobssResetPaBmPaymentStatusIfIdle(true);
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search || '');
+    const urlOrderId = params.get('orderId') || params.get('order_id') || '';
+    const urlBillCode = params.get('billCode') || params.get('billcode') || params.get('BillCode') || '';
+    const pending = azobssReadPaBmPendingReturn();
+    const orderId = urlOrderId || pending.orderId;
+    const billCode = urlBillCode || pending.billCode;
+    const returnKey = azobssPaBmReturnKey(orderId, billCode);
+    const hasCallbackSignal = params.get('payment') === 'return' || !!params.get('status_id') || !!params.get('status') || !!urlOrderId || !!urlBillCode;
+    const hasPendingCheckout = !!pending.orderId || !!pending.billCode;
+
+    if(!hasCallbackSignal && !hasPendingCheckout){
+      azobssResetPaBmPaymentStatusIfIdle(false);
+      return;
+    }
+
+    if(returnKey && azobssPaBmReturnConsumed(returnKey)){
+      azobssClearPaBmPendingReturn();
+      azobssCleanPaBmPaymentReturnUrl();
+      azobssResetPaBmPaymentStatusIfIdle(true);
+      try{ azobssSchedulePurchaseRecordsRefresh('consumed payment return'); }catch(e){}
+      return;
+    }
+
+    [250, 700, 1500, 3000, 6000].forEach(function(ms){
+      setTimeout(function(){
+        try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
+        try{ azobssSchedulePurchaseRecordsRefresh('toyyib return live retry'); }catch(e){}
+      }, ms);
+    });
+
+    if(!returnKey){
+      if(status) status.textContent = 'Mengesan rujukan pembayaran...';
+      window.__azobssPaBmMissingReturnAttempts = Number(window.__azobssPaBmMissingReturnAttempts || 0) + 1;
+      if(window.__azobssPaBmMissingReturnAttempts <= 12){
+        shouldRetry = true;
+        retryDelay = 1000;
+      }else{
+        azobssCleanPaBmPaymentReturnUrl();
+        azobssClearPaBmPendingReturn();
+        azobssResetPaBmPaymentStatusIfIdle(true);
+      }
+      return;
+    }
+
+    if(window.__azobssPaBmPaymentPollKey !== returnKey){
+      window.__azobssPaBmPaymentPollKey = returnKey;
+      window.__azobssPaBmPaymentPollStartedAt = Date.now();
+      window.__azobssPaBmPaymentPollAttempts = 0;
+    }
+    window.__azobssPaBmPaymentPollAttempts = Number(window.__azobssPaBmPaymentPollAttempts || 0) + 1;
+
+    if(status) status.textContent = 'Mengesahkan pembayaran...';
+    const verifyUrl = azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId || '') + '&billCode=' + encodeURIComponent(billCode || '') + '&_=' + Date.now();
+    const res = await fetch(verifyUrl, { cache:'no-store', headers:{'Cache-Control':'no-cache'} });
+    const data = await res.json().catch(()=>({}));
+    const paid = !!(data && (data.paid || data.status === 'paid' || data.status === 'success'));
+    const failed = !!(data && ['failed','cancelled','canceled','rejected'].includes(String(data.status || '').toLowerCase()));
+
+    if(paid){
+      await azobssResetCurrentPurchaseTotalAfterPaid(orderId || returnKey);
+      try{ sessionStorage.setItem('azobss_pa_bm_paid_reset_' + returnKey, '1'); }catch(e){}
+      azobssMarkPaBmReturnConsumed(returnKey);
+      azobssClearPaBmPendingReturn();
+      window.__azobssPaBmPaymentVerifiedKey = returnKey;
+      window.__azobssPaBmPaymentVerifiedAt = Date.now();
+      if(status) status.textContent = 'Pembayaran berjaya. Senarai pembelian dikemaskini.';
+      azobssShowPaBmPaymentSuccessPopup(returnKey);
+      azobssCleanPaBmPaymentReturnUrl();
+      [250, 700, 1500, 3000].forEach(ms => setTimeout(() => azobssSchedulePurchaseRecordsRefresh('paid verify immediate'), ms));
+      setTimeout(function(){ azobssResetPaBmPaymentStatusIfIdle(true); }, 1800);
+    }else if(failed){
+      azobssMarkPaBmReturnConsumed(returnKey);
+      azobssClearPaBmPendingReturn();
+      azobssCleanPaBmPaymentReturnUrl();
+      if(status) status.textContent = 'Pembayaran tidak berjaya atau telah dibatalkan.';
+    }else{
+      const elapsed = Date.now() - Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
+      if(status) status.textContent = 'Pembayaran diterima. Menunggu pengesahan ToyyibPay...';
+      if(elapsed < 120000){
+        shouldRetry = true;
+        retryDelay = Math.min(5000, 1200 + (Number(window.__azobssPaBmPaymentPollAttempts || 1) * 450));
+      }else{
+        azobssClearPaBmPendingReturn();
+        azobssCleanPaBmPaymentReturnUrl();
+        azobssResetPaBmPaymentStatusIfIdle(true);
+      }
+    }
+  }catch(e){
+    console.warn('PA/BM payment return check failed:', e);
+    const pendingNow = azobssReadPaBmPendingReturn();
+    const paramsNow = new URLSearchParams(window.location.search || '');
+    const hasCallbackNow = paramsNow.get('payment') === 'return' || !!paramsNow.get('status_id') || !!paramsNow.get('status') || !!paramsNow.get('orderId') || !!paramsNow.get('order_id') || !!paramsNow.get('billCode') || !!paramsNow.get('billcode') || !!paramsNow.get('BillCode');
+    const suppressed = Date.now() < Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0);
+    if(suppressed || ((!pendingNow.orderId && !pendingNow.billCode) && !hasCallbackNow)){
+      shouldRetry = false;
+      azobssResetPaBmPaymentStatusIfIdle(true);
+    }else{
+      if(status) status.textContent = 'Sedang menyambung semula pengesahan pembayaran...';
+      const startedAt = Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
+      if((Date.now() - startedAt) < 120000){
+        shouldRetry = true;
+        retryDelay = 2500;
+      }else{
+        azobssClearPaBmPendingReturn();
+        azobssCleanPaBmPaymentReturnUrl();
+        azobssResetPaBmPaymentStatusIfIdle(true);
+      }
+    }
+  }finally{
+    window.__azobssPaBmReturnCheckActive = false;
+    if(shouldRetry && Date.now() >= Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0)){
+      azobssSchedulePaBmReturnCheck(retryDelay);
+    }else if(!shouldRetry){
+      const pendingNow = azobssReadPaBmPendingReturn();
+      const paramsNow = new URLSearchParams(window.location.search || '');
+      const hasCallbackNow = paramsNow.get('payment') === 'return' || !!paramsNow.get('status_id') || !!paramsNow.get('status') || !!paramsNow.get('orderId') || !!paramsNow.get('order_id') || !!paramsNow.get('billCode') || !!paramsNow.get('billcode') || !!paramsNow.get('BillCode');
+      if((!pendingNow.orderId && !pendingNow.billCode) && !hasCallbackNow){
+        azobssResetPaBmPaymentStatusIfIdle(false);
+      }
+    }
+  }
+}
+
+
+// AZOBSS 1055: PA/BM payment recovery does not depend on the ToyyibPay return tab.
+// After Firebase login is ready, ask the backend to find this user's recent PA/BM order
+// and verify it directly with ToyyibPay. This also recovers payments after browser/app switches.
+async function azobssRecoverPaBmPaymentFromServer1055(force){
+  try{
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return null;
+    if(!auth || !auth.currentUser) return null;
+    const now = Date.now();
+    const last = Number(window.__azobssPaBmServerRecoveryLast1055 || 0);
+    if(!force && last && (now - last) < 30000) return null;
+    if(window.__azobssPaBmServerRecoveryBusy1055) return null;
+    window.__azobssPaBmServerRecoveryBusy1055 = true;
+    window.__azobssPaBmServerRecoveryLast1055 = now;
+
+    const call = async(refreshToken) => {
+      const token = await auth.currentUser.getIdToken(!!refreshToken);
+      return fetch(azobssGetBackendBaseUrl() + '/api/pa-bm/payment-recovery?_=' + Date.now(), {
+        method:'GET',
+        cache:'no-store',
+        headers:{ Authorization:'Bearer ' + token, 'Cache-Control':'no-cache' }
+      });
+    };
+    let res = await call(false);
+    if(res.status === 401 || res.status === 403) res = await call(true);
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data || data.ok !== true) return data || null;
+
+    if(data.status === 'pending' && (data.orderId || data.billCode)){
+      // Keep a durable browser hint too, but recovery itself remains server-side.
+      azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+    }
+
+    if(data.paid){
+      const verifiedKey = String(data.orderId || data.billCode || data.receiptNo || '').trim();
+      if(verifiedKey){
+        window.__azobssPaBmPaymentVerifiedKey = verifiedKey;
+        window.__azobssPaBmPaymentVerifiedAt = Date.now();
+      }
+      try{ await azobssResetCurrentPurchaseTotalAfterPaid(data.orderId || verifiedKey); }catch(e){}
+      azobssClearPaBmPendingReturn();
+      try{ azobssCleanPaBmPaymentReturnUrl(); }catch(e){}
+      try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
+      try{ azobssSchedulePurchaseRecordsRefresh(data.recovered ? 'server payment recovery 1055' : 'server paid sync 1055'); }catch(e){}
+      [250,700,1500,3000].forEach(function(ms){
+        setTimeout(function(){
+          try{ if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords(); }catch(e){}
+          try{ if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow(); }catch(e){}
+          try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
+        }, ms);
+      });
+      if(data.recovered && verifiedKey){
+        const status = document.getElementById('paBmToyyibStatus');
+        if(status) status.textContent = 'Pembayaran berjaya dipulihkan. Senarai pembelian dikemaskini.';
+        azobssShowPaBmPaymentSuccessPopup(verifiedKey);
+        window.dispatchEvent(new CustomEvent('azobss:pabm-payment-verified', { detail:{ key:verifiedKey, orderId:String(data.orderId || ''), recovered:true, version:1055 } }));
+      }
+    }
+    return data;
+  }catch(e){
+    console.warn('PA/BM server payment recovery 1055 failed:', e);
+    return null;
+  }finally{
+    window.__azobssPaBmServerRecoveryBusy1055 = false;
+  }
+}
+window.azobssRecoverPaBmPaymentNow = function(){ return azobssRecoverPaBmPaymentFromServer1055(true); };
+function azobssInstallPaBmServerRecovery1055(){
+  if(window.__azobssPaBmServerRecoveryInstalled1055) return;
+  window.__azobssPaBmServerRecoveryInstalled1055 = true;
+  const run = function(force){
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+    setTimeout(function(){ azobssRecoverPaBmPaymentFromServer1055(!!force); }, 350);
+  };
+  window.addEventListener('azobss-auth-changed', function(){ run(true); });
+  window.addEventListener('pageshow', function(){ run(false); });
+  window.addEventListener('focus', function(){ run(false); });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) run(false); });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ run(true); });
+  else run(true);
+}
+azobssInstallPaBmServerRecovery1055();
+
+function azobssInstallPaBmPaymentReturnResumeWatch(){
+  if(window.__azobssPaBmPaymentReturnResumeWatchInstalled) return;
+  window.__azobssPaBmPaymentReturnResumeWatchInstalled = true;
+  const resume = function(){
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+    [0, 500, 1500].forEach(function(ms){ setTimeout(azobssCheckPaBmToyyibReturn, ms); });
+  };
+  window.addEventListener('pageshow', resume);
+  window.addEventListener('focus', resume);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) resume(); });
+}
+
+async function azobssPayPaBmToyyib(){
+  const btn = document.getElementById('payPaBmToyyibButton');
+  const status = document.getElementById('paBmToyyibStatus');
+  const current = getSavedUser();
+  if(!current){ openSiteAuth('signin'); return; }
+  const oldText = btn ? btn.textContent : '';
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = 'Preparing payment...'; }
+    if(status) status.textContent = 'Sila tunggu. Sistem sedang kira semula total...';
+    const records = await loadAzobssPurchaseRecords();
+    const resetMap = await loadAzobssPurchaseTotalResetMap();
+    const rows = azobssPurchasePaymentRows(records, resetMap);
+    const total = rows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+    if(!rows.length || total <= 0) throw new Error('Tiada total pembelian PA/BM untuk dibayar.');
+    if(status) status.textContent = 'Total RM' + total + ' dihantar ke payment gateway...';
+    const payload = {
+      usernameKey: String(current.usernameKey || current.displayName || current.username || '').trim().toLowerCase(),
+      uid: String(current.uid || ''),
+      user: current,
+      items: rows.map(r => ({ id:r.firestoreId || r.id || '', productType:r.productType || 'PA', itemCode:r.itemCode || '', negeri:r.negeri || '', amount:Number(r.amount)||0, createdAtMs:Number(r.createdAtMs)||0 }))
+    };
+    const res = await fetch(azobssGetBackendBaseUrl() + '/api/toyyib/create-pa-bm-bill', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || 'Gagal create payment bill.');
+    azobssSavePaBmPendingReturn(data.orderId, data.billCode);
+    if(status) status.textContent = 'Redirect to payment page...';
+    window.location.href = data.paymentUrl || data.url || data.redirectUrl;
+  }catch(error){
+    console.error('PA/BM payment failed:', error);
+    if(status) status.textContent = error.message || 'Gagal create payment bill.';
+    alert(error.message || 'Gagal create payment bill.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = oldText || 'Proceed to Payment'; }
+  }
+}
+function bindAzobssPaBmToyyibButton(){
+  const btn = document.getElementById('payPaBmToyyibButton');
+  if(btn && !btn.dataset.azobssToyyibBind){
+    btn.dataset.azobssToyyibBind = '1';
+    btn.addEventListener('click', azobssPayPaBmToyyib);
+  }
+  azobssRefreshPaBmToyyibTotal();
+  azobssInstallPaBmPaymentReturnResumeWatch();
+  azobssCheckPaBmToyyibReturn();
+}
+window.azobssPayPaBmToyyib = azobssPayPaBmToyyib;
+
+function filterPurchaseRows(records, keyword){
+  const q = String(keyword || '').trim().toLowerCase();
+  if(!q) return records.slice();
+  return records.filter(r => [r.usernameKey,r.displayName,r.phone,r.email,r.productType,r.itemCode,r.negeri,formatPurchaseDate(r)].join(' ').toLowerCase().includes(q));
+}
+
+function azobssPurchaseBelongsToCurrentUser(record, current){
+  const currentUid = String(current?.uid || '').trim();
+  const recordUid = String(record?.uid || record?.userUid || '').trim();
+  if(currentUid && recordUid && currentUid === recordUid) return true;
+  const currentKey = getUserKey(current);
+  const recordKey = String(record?.usernameKey || record?.username || record?.displayName || '').trim().toLowerCase();
+  return !!(currentKey && recordKey && currentKey === recordKey);
+}
+
+async function resetAzobssPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  if(!confirm('Reset total pembelian untuk ' + key + '?\n\nPurchase history tidak akan dipadam.')) return;
+
+  const resetAtMs = Date.now();
+  const resetAtClient = new Date(resetAtMs).toISOString();
+
+  try{
+    const map = readAzobssPurchaseTotalResetMap();
+    map[key] = resetAtMs;
+    writeAzobssPurchaseTotalResetMap(map);
+  }catch(e){ console.warn('Local purchase total reset failed:', e); }
+
+  try{
+    await setDoc(doc(db, 'users', key), {
+      purchaseTotalResetAtMs: resetAtMs,
+      purchaseTotalResetAtClient: resetAtClient,
+      purchaseTotalResetBy: current.usernameKey || current.displayName || 'admin',
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(error){
+    console.warn('Firestore purchase total reset failed:', error);
+    alert('Reset saved locally only. Firebase update failed.');
+  }
+
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+window.azobssResetPurchaseRecordsForUser = resetAzobssPurchaseRecordsForUser;
+window.azobssTogglePurchaseDetails = toggleAzobssPurchaseDetails;
+
+function azobssPurchaseDeletePayload(r){
+  return encodeURIComponent(JSON.stringify({
+    firestoreId: r.firestoreId || '',
+    id: r.id || '',
+    usernameKey: r.usernameKey || '',
+    uid: r.uid || '',
+    productType: r.productType || 'PA',
+    itemCode: r.itemCode || '',
+    negeri: r.negeri || '',
+    amount: Number(r.amount) || 0,
+    status: r.status || 'pending',
+    createdAtMs: Number(r.createdAtMs) || 0,
+    createdAtClient: r.createdAtClient || ''
+  }));
+}
+function azobssPurchaseSameForDelete(a,b){
+  if(!a || !b) return false;
+  const aid = String(a.firestoreId || a.id || '');
+  const bid = String(b.firestoreId || b.id || '');
+  if(aid && bid && aid === bid) return true;
+  return String(a.usernameKey || '').toLowerCase() === String(b.usernameKey || '').toLowerCase()
+    && String(a.productType || '').toUpperCase() === String(b.productType || '').toUpperCase()
+    && String(a.itemCode || '').toUpperCase() === String(b.itemCode || '').toUpperCase()
+    && String(a.negeri || '').toUpperCase() === String(b.negeri || '').toUpperCase()
+    && Number(a.createdAtMs || 0) === Number(b.createdAtMs || 0)
+    && Number(a.amount || 0) === Number(b.amount || 0);
+}
+async function azobssDeletePurchaseRecordByPayload(rawPayload, silent){
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  let target = null;
+  try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
+  if(!target) return false;
+  const key = String(target.usernameKey || target.displayName || '').trim().toLowerCase();
+  const currentKey = String(current?.usernameKey || current?.displayName || current?.username || '').trim().toLowerCase();
+  const uidOk = current?.uid && String(target.uid || '') === String(current.uid);
+  const userOwnPending = !isAdminUser
+    && (uidOk || (currentKey && key && currentKey === key))
+    && !['paid','cancelled','deleted'].includes(String(target.status || 'pending').trim().toLowerCase())
+    && !azobssIsPurchasePaidForDownload(target);
+  if(!isAdminUser && !userOwnPending){
+    if(!silent) alert('Item ini tidak boleh dibuang kerana bukan pending cart anda.');
+    return false;
+  }
+  const confirmText = isAdminUser
+    ? ('Buang rekod ini?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''))
+    : ('Buang item ini daripada cart?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''));
+  if(!silent && !confirm(confirmText)) return false;
+
+  try{
+    const local = readLocalPurchaseRecords().filter(r => !azobssPurchaseSameForDelete(r, target));
+    writeLocalPurchaseRecords(local.slice(0, 500));
+  }catch(e){ console.warn('Local purchase delete failed:', e); }
+
+  try{
+    const directId = String(target.firestoreId || target.id || '');
+    if(directId) await deleteDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, directId));
+  }catch(e){ console.warn('Direct purchase delete skipped:', e); }
+
+  try{
+    const snap = await getDocs(collection(db, AZOBSS_PURCHASE_COLLECTION));
+    const deletions = [];
+    snap.forEach(d => {
+      const data = d.data() || {};
+      const candidate = { id:d.id, firestoreId:d.id, ...data, createdAtMs:Number(data.createdAtMs || (data.createdAtClient ? Date.parse(data.createdAtClient) : 0) || 0) };
+      if(azobssPurchaseSameForDelete(candidate, target)) deletions.push(deleteDoc(d.ref));
+    });
+    if(deletions.length) await Promise.allSettled(deletions);
+  }catch(e){ console.warn('Purchase collection search delete skipped:', e); }
+
+  if(key){
+    try{
+      const userRef = doc(db, 'users', key);
+      const snap = await getDoc(userRef);
+      if(snap.exists()){
+        const data = snap.data() || {};
+        const embedded = Array.isArray(data.purchaseRecords) ? data.purchaseRecords : [];
+        const filtered = embedded.filter(r => !azobssPurchaseSameForDelete({ ...r, usernameKey:r.usernameKey || key }, target));
+        if(filtered.length !== embedded.length){
+          await setDoc(userRef, { purchaseRecords: filtered, purchaseRecordsUpdatedAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge:true });
+        }
+      }
+    }catch(e){ console.warn('Embedded purchase delete skipped:', e); }
+  }
+  if(!silent) await renderAzobssPurchaseRecords();
+  return true;
+}
+async function azobssDeleteOnePurchaseRecord(rawPayload){
+  await azobssDeletePurchaseRecordByPayload(rawPayload, false);
+}
+async function azobssUncartPurchaseRecord(rawPayload){
+  const ok = await azobssDeletePurchaseRecordByPayload(rawPayload, false);
+  if(ok){
+    const status = document.getElementById('paBmToyyibStatus');
+    if(status) status.textContent = 'Item telah dibuang daripada cart. Total telah dikemaskini.';
+  }
+}
+async function azobssRemovePendingCartItems(rawPayload){
+  const current = getSavedUser();
+  if(!current) return 0;
+  let target = null;
+  try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
+  const removeAll = target?.all === true;
+  const normalizedTarget = removeAll ? null : normalizePurchasePayload(target || {});
+  const records = await loadAzobssPurchaseRecords();
+  const pending = records.filter(record => {
+    const status = String(record.status || 'pending').trim().toLowerCase();
+    if(!azobssPurchaseBelongsToCurrentUser(record, current)) return false;
+    if(['paid','cancelled','deleted'].includes(status) || azobssIsPurchasePaidForDownload(record)) return false;
+    return removeAll || azobssSameCartItem(record, normalizedTarget);
+  });
+  for(const record of pending){
+    await azobssDeletePurchaseRecordByPayload(azobssPurchaseDeletePayload(record), true);
+  }
+  if(pending.length){
+    await renderAzobssPurchaseRecords();
+    window.dispatchEvent(new CustomEvent('azobssPendingCartRemoved', { detail:{ count:pending.length } }));
+  }
+  return pending.length;
+}
+async function azobssDeletePendingPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  const records = (await loadAzobssPurchaseRecords()).filter(r => String(r.usernameKey || r.displayName || '').trim().toLowerCase() === key);
+  const resetMap = await loadAzobssPurchaseTotalResetMap();
+  const pending = countablePurchaseRows(records, key, resetMap);
+  if(!pending.length){ alert('Tiada rekod pending untuk ' + key + '.'); return; }
+  if(!confirm('Buang semua Pending Payment untuk ' + key + '?\n\nJumlah rekod: ' + pending.length + '\nTindakan ini tidak boleh undo.')) return;
+  for(const r of pending){ await azobssDeletePurchaseRecordByPayload(azobssPurchaseDeletePayload(r), true); }
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+async function azobssDeleteAllPurchaseRecordsForUser(usernameKey){
+  const current = getSavedUser();
+  if(!isAzobssAdmin(current)) return;
+  const key = String(usernameKey || '').trim().toLowerCase();
+  if(!key) return;
+  const records = (await loadAzobssPurchaseRecords()).filter(r => String(r.usernameKey || r.displayName || '').trim().toLowerCase() === key);
+  if(!records.length){ alert('Tiada rekod untuk ' + key + '.'); return; }
+  if(!confirm('Buang SEMUA rekod purchase list untuk ' + key + '?\n\nJumlah rekod: ' + records.length + '\nTindakan ini tidak boleh undo.')) return;
+  for(const r of records){ await azobssDeletePurchaseRecordByPayload(azobssPurchaseDeletePayload(r), true); }
+  azobssAdminPurchasePage = 1;
+  await renderAzobssPurchaseRecords();
+}
+function azobssUpdatePurchaseBulkControls(){
+  const selections = azobssPurchaseSelectionMap();
+  const visible = Array.isArray(window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ : [];
+  const allRecords = Array.isArray(window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ : [];
+  const selectedVisible = visible.filter(item => selections.has(item.key)).length;
+  const allVisible = visible.length > 0 && selectedVisible === visible.length;
+  const partialVisible = selectedVisible > 0 && !allVisible;
+  const selectedAll = allRecords.filter(item => selections.has(item.key)).length;
+  const everyRecordSelected = allRecords.length > 0 && selectedAll === allRecords.length;
+  const master = document.getElementById('userPaSelectAllRecords');
+  const tableMaster = document.querySelector('#userPaPurchaseList .purchase-table-select-all');
+  if(master){
+    master.checked = everyRecordSelected;
+    master.indeterminate = selectedAll > 0 && !everyRecordSelected;
+    master.disabled = !allRecords.length;
+  }
+  if(tableMaster){
+    tableMaster.checked = allVisible;
+    tableMaster.indeterminate = partialVisible;
+    tableMaster.disabled = !visible.length;
+  }
+  const button = document.getElementById('userPaDeleteSelectedRecords');
+  if(button){
+    button.disabled = selections.size < 1;
+    button.textContent = `Delete Selected (${selections.size})`;
+  }
+}
+function azobssSetVisiblePurchaseSelection(checked){
+  const selections = azobssPurchaseSelectionMap();
+  const visible = Array.isArray(window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ : [];
+  visible.forEach(item => checked ? selections.set(item.key, item.payload) : selections.delete(item.key));
+  document.querySelectorAll('#userPaPurchaseList .purchase-row-select').forEach(input => { input.checked = !!checked; });
+  azobssUpdatePurchaseBulkControls();
+}
+function azobssSetAllPurchaseSelection(checked){
+  const selections = azobssPurchaseSelectionMap();
+  const allRecords = Array.isArray(window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__) ? window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ : [];
+  allRecords.forEach(item => checked ? selections.set(item.key, item.payload) : selections.delete(item.key));
+  document.querySelectorAll('#userPaPurchaseList .purchase-row-select').forEach(input => { input.checked = !!checked; });
+  azobssUpdatePurchaseBulkControls();
+}
+function azobssSyncPurchaseBulkControls(visibleRecords, isAdminUser, allRecords){
+  const tools = document.getElementById('userPaBulkDeleteTools');
+  if(tools) tools.hidden = !isAdminUser;
+  if(!isAdminUser){
+    azobssPurchaseSelectionMap().clear();
+    window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ = [];
+    window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ = [];
+    return;
+  }
+  window.__AZOBSS_ADMIN_VISIBLE_PURCHASE_SELECTIONS__ = (visibleRecords || []).map(r => ({
+    key: azobssPurchaseSelectionKey(r),
+    payload: azobssPurchaseDeletePayload(r)
+  }));
+  window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__ = (allRecords || visibleRecords || []).map(r => ({
+    key: azobssPurchaseSelectionKey(r),
+    payload: azobssPurchaseDeletePayload(r)
+  }));
+  const allowedKeys = new Set(window.__AZOBSS_ADMIN_ALL_PURCHASE_SELECTIONS__.map(item => item.key));
+  azobssPurchaseSelectionMap().forEach((_payload, key) => { if(!allowedKeys.has(key)) azobssPurchaseSelectionMap().delete(key); });
+  const list = document.getElementById('userPaPurchaseList');
+  if(list && !list.dataset.azobssBulkSelectBound){
+    list.dataset.azobssBulkSelectBound = '1';
+    list.addEventListener('change', event => {
+      const input = event.target;
+      if(input?.classList?.contains('purchase-table-select-all')){
+        azobssSetVisiblePurchaseSelection(input.checked);
+        return;
+      }
+      if(!input?.classList?.contains('purchase-row-select')) return;
+      const key = String(input.dataset.recordKey || '');
+      const payload = String(input.dataset.recordPayload || '');
+      if(key) input.checked ? azobssPurchaseSelectionMap().set(key, payload) : azobssPurchaseSelectionMap().delete(key);
+      azobssUpdatePurchaseBulkControls();
+    });
+  }
+  const master = document.getElementById('userPaSelectAllRecords');
+  if(master && !master.dataset.azobssBulkSelectBound){
+    master.dataset.azobssBulkSelectBound = '1';
+    master.addEventListener('change', () => azobssSetAllPurchaseSelection(master.checked));
+  }
+  const button = document.getElementById('userPaDeleteSelectedRecords');
+  if(button && !button.dataset.azobssBulkDeleteBound){
+    button.dataset.azobssBulkDeleteBound = '1';
+    button.addEventListener('click', () => azobssDeleteSelectedPurchaseRecords(button));
+  }
+  azobssUpdatePurchaseBulkControls();
+}
+async function azobssDeleteSelectedPurchaseRecords(button){
+  const current = getSavedUser && getSavedUser() || {};
+  if(!isAzobssAdmin(current)){ alert('Admin sahaja boleh memadam rekod pembelian.'); return; }
+  const selections = azobssPurchaseSelectionMap();
+  const targets = Array.from(selections.values()).map(raw => {
+    try{ return JSON.parse(decodeURIComponent(String(raw || ''))); }catch(e){ return null; }
+  }).filter(Boolean);
+  if(!targets.length) return;
+  if(!confirm(`Delete ${targets.length} selected purchase record(s)?\n\nThis action cannot be undone.`)) return;
+  const oldText = button?.textContent || '';
+  const errors = [];
+  try{
+    if(button){ button.disabled = true; button.textContent = 'Deleting...'; }
+    const stableRows = readStablePurchaseRecords().filter(row => !targets.some(target => azobssPurchaseSameForDelete(row, target)));
+    window.__AZOBSS_PABM_LAST_GOOD_PURCHASE_ROWS__ = stableRows;
+    try{
+      if(stableRows.length) sessionStorage.setItem('azobssPaBmPurchaseStableCacheV2', JSON.stringify({ at:Date.now(), rows:stableRows }));
+      else sessionStorage.removeItem('azobssPaBmPurchaseStableCacheV2');
+    }catch(e){}
+
+    const directIds = Array.from(new Set(targets.map(target => String(target.firestoreId || target.id || '').trim()).filter(Boolean)));
+    const directResults = await Promise.allSettled(directIds.map(id => deleteDoc(doc(db, AZOBSS_PURCHASE_COLLECTION, id))));
+    directResults.forEach(result => { if(result.status === 'rejected') errors.push(result.reason); });
+
+    const noDirectId = targets.filter(target => !String(target.firestoreId || target.id || '').trim());
+    if(noDirectId.length){
+      try{
+        const snap = await getDocs(collection(db, AZOBSS_PURCHASE_COLLECTION));
+        const fallbackDeletes = [];
+        snap.forEach(d => {
+          const data = d.data() || {};
+          const candidate = { id:d.id, firestoreId:d.id, ...data, createdAtMs:Number(data.createdAtMs || (data.createdAtClient ? Date.parse(data.createdAtClient) : 0) || 0) };
+          if(noDirectId.some(target => azobssPurchaseSameForDelete(candidate, target))) fallbackDeletes.push(deleteDoc(d.ref));
+        });
+        const fallbackResults = await Promise.allSettled(fallbackDeletes);
+        fallbackResults.forEach(result => { if(result.status === 'rejected') errors.push(result.reason); });
+      }catch(error){ errors.push(error); }
+    }
+
+    const targetGroups = new Map();
+    targets.forEach(target => {
+      const key = String(target.usernameKey || target.displayName || '').trim().toLowerCase();
+      if(!key) return;
+      if(!targetGroups.has(key)) targetGroups.set(key, []);
+      targetGroups.get(key).push(target);
+    });
+    const embeddedResults = await Promise.allSettled(Array.from(targetGroups.entries()).map(async ([key, userTargets]) => {
+      const userRef = doc(db, 'users', key);
+      const snap = await getDoc(userRef);
+      if(!snap.exists()) return;
+      const data = snap.data() || {};
+      const embedded = Array.isArray(data.purchaseRecords) ? data.purchaseRecords : [];
+      const filtered = embedded.filter(row => !userTargets.some(target => azobssPurchaseSameForDelete({ ...row, usernameKey:row.usernameKey || key }, target)));
+      if(filtered.length !== embedded.length){
+        await setDoc(userRef, { purchaseRecords:filtered, purchaseRecordsUpdatedAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true });
+      }
+    }));
+    embeddedResults.forEach(result => { if(result.status === 'rejected') errors.push(result.reason); });
+
+    selections.clear();
+    azobssUserPurchasePage = 1;
+    await renderAzobssPurchaseRecords();
+    alert(errors.length ? `Deleted with ${errors.length} cleanup warning(s). Please refresh and check the list.` : `${targets.length} purchase record(s) deleted.`);
+  }catch(error){
+    console.error('Bulk purchase delete failed:', error);
+    alert('Unable to delete the selected records. Please try again.');
+  }finally{
+    if(button){ button.disabled = false; button.textContent = oldText || 'Delete Selected (0)'; }
+    azobssUpdatePurchaseBulkControls();
+  }
+}
+window.azobssDeleteOnePurchaseRecord = azobssDeleteOnePurchaseRecord;
+window.azobssUncartPurchaseRecord = azobssUncartPurchaseRecord;
+window.azobssRemovePendingCartItems = azobssRemovePendingCartItems;
+window.azobssDeletePendingPurchaseRecordsForUser = azobssDeletePendingPurchaseRecordsForUser;
+window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsForUser;
+window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
+
+function azobssAdminPurchaseDownloadResetHtml(r){
+  try{
+    if(!azobssCanShowPaBmAdminReset()) return '';
+    const used = azobssPurchaseDownloadCount(r);
+    const max = azobssPurchaseDownloadMax(r);
+    const resetPayload = azobssPurchaseResetPayload(r);
+
+    // v1138: administrator Test Download in Purchase Records Users.
+    // Reuse the exact customer-controlled download payload, URL, quota and expiry.
+    const testPayload = azobssPurchaseDownloadPayload(r);
+    const testUrl = azobssBuildControlledPurchaseDownloadUrl(r);
+    const testName = azobssPaidPurchaseDownloadFilename(r);
+    const testAllowed = azobssPurchaseDownloadAllowed(r) && !!testPayload && !!testUrl;
+    const activeDownload = window.__azobssPaBmActiveDownload;
+    const testActive = !!(activeDownload && activeDownload.key === testPayload);
+    const testLockedByOther = !!(activeDownload && !testActive);
+    let testTitle = 'Uji muat turun sama seperti POV customer. Ujian berjaya menggunakan 1 kuota download sebenar.';
+    if(!testAllowed){
+      if(azobssPurchaseDownloadExpired(r)) testTitle = 'POV customer: tempoh download telah tamat. Reset 0/' + max + ' dahulu untuk ujian baharu.';
+      else if(azobssPurchaseDownloadLimitReached(r)) testTitle = 'POV customer: had download telah digunakan. Reset 0/' + max + ' dahulu untuk ujian baharu.';
+      else testTitle = 'POV customer: link download belum tersedia untuk rekod ini.';
+    }
+    const testHtml = testAllowed
+      ? `<button type="button" class="az-purchase-detail-test-download-btn user-pa-download${testActive ? ' azobss-download-button-spinning' : ''}" title="${escHtml(testTitle)}" aria-label="${testActive ? 'Sedang menyediakan fail' : 'Test download seperti customer'}" data-default-label="Test ↓" data-download-url="${escHtml(testUrl)}" data-download-name="${escHtml(testName)}" data-download-payload="${testPayload}"${testActive ? ' data-busy="1" aria-busy="true"' : ''}${testLockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''}>${testActive ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : 'Test ↓'}</button>`
+      : `<button type="button" class="az-purchase-detail-test-download-btn is-disabled" title="${escHtml(testTitle)}" aria-label="Test download tidak tersedia" disabled>Test 🔒</button>`;
+
+    const usageHtml = `<span class="az-purchase-admin-download-usage" title="Muat turun berjaya / had maksimum">⬇ ${escHtml(String(used))}/${escHtml(String(max))}</span>`;
+    const resetHtml = resetPayload
+      ? `<button type="button" class="az-purchase-detail-reset-btn" title="Reset kuota item ini kepada 0/${escHtml(String(max))} dan aktifkan semula tempoh 7 hari" onclick="if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation();} return window.azobssAdminResetPaBmDownloadCounter && window.azobssAdminResetPaBmDownloadCounter('${resetPayload}', this);">Reset 0/${escHtml(String(max))}</button>`
+      : '';
+    return `${testHtml}${usageHtml}${resetHtml}`;
+  }catch(e){ return ''; }
+}
+
+function toggleAzobssPurchaseDetails(button){
+  const card = button && button.closest('.admin-purchase-user-card');
+  if(!card) return;
+  const key = String(card.dataset.userKey || '').toLowerCase();
+  const details = card.querySelector('.admin-purchase-user-details');
+  if(!details) return;
+  const opening = details.hidden || details.style.display === 'none' || !card.classList.contains('is-open');
+  if(key) azobssPurchaseOpenKeys[key] = opening;
+  details.hidden = !opening;
+  details.style.display = opening ? 'grid' : 'none';
+  card.classList.toggle('is-open', opening);
+  button.textContent = opening ? 'Hide' : 'Show';
+}
+
+
+window.azobssSetPurchaseDetailPage = function(key, page){
+  const cleanKey = String(key || '').toLowerCase();
+  if(!cleanKey) return;
+  azobssPurchaseDetailPages[cleanKey] = Math.max(1, Number(page) || 1);
+  azobssPurchaseOpenKeys[cleanKey] = true;
+  renderAzobssPurchaseRecords();
+};
+
+async function renderAzobssPurchaseRecords(){
+  const list = document.getElementById('purchaseSummaryList');
+  const userList = document.getElementById('userPaPurchaseList');
+  if(!list && !userList) return;
+  const renderSeq = (window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ = (Number(window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ || 0) + 1));
+  const current = getSavedUser();
+  const isAdminUser = isAzobssAdmin(current);
+  const adminSearch = String(document.getElementById('purchaseRecordSearch')?.value || '').trim().toLowerCase();
+  const adminSort = String(document.getElementById('purchaseRecordSort')?.value || 'updatedNewest');
+  const userSearch = String(document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
+  const userSort = String(document.getElementById('userPaPurchaseSort')?.value || 'newest');
+  let records = await loadAzobssPurchaseRecords();
+  const purchaseResetMap = await loadAzobssPurchaseTotalResetMap();
+  if(renderSeq !== Number(window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ || 0)) return;
+
+  if(isAdminUser){
+    const adminPaidRecords = filterPurchaseRows(
+      records.filter(r => azobssIsPurchasePaidForDownload(r)),
+      adminSearch
+    );
+    const groups = new Map();
+    adminPaidRecords.forEach(r => {
+      const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
+      if(!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    const groupedRows = sortAdminPurchaseGroups(Array.from(groups.entries()), adminSort, purchaseResetMap);
+    const totalPages = Math.max(1, Math.ceil(groupedRows.length / AZOBSS_ADMIN_PURCHASE_PAGE_SIZE));
+    azobssAdminPurchasePage = clampPage(azobssAdminPurchasePage, totalPages);
+    const pageRows = groupedRows.slice((azobssAdminPurchasePage - 1) * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, azobssAdminPurchasePage * AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
+    if(list){
+      if(!pageRows.length){
+        const hasExistingGoodRows = !!list.querySelector('.admin-purchase-user-card[data-paid-only="1"]');
+        const stableRows = readStablePurchaseRecords().filter(r => azobssIsPurchasePaidForDownload(r));
+        if(hasExistingGoodRows || stableRows.length){
+          if(!hasExistingGoodRows && stableRows.length){
+            records = stableRows;
+            const stableGroups = new Map();
+            filterPurchaseRows(records, adminSearch).forEach(r => {
+              const k = String(r.usernameKey || r.displayName || 'unknown').toLowerCase();
+              if(!stableGroups.has(k)) stableGroups.set(k, []);
+              stableGroups.get(k).push(r);
+            });
+            const stableGroupedRows = sortAdminPurchaseGroups(Array.from(stableGroups.entries()), adminSort, purchaseResetMap);
+            const stablePageRows = stableGroupedRows.slice(0, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE);
+            if(stablePageRows.length){ pageRows.splice(0, pageRows.length, ...stablePageRows); }
+          }
+          if(!pageRows.length){
+            list.innerHTML = '<div class="purchase-summary-item">No successful / verified purchase records yet.</div>';
+            renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, 0, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => { azobssAdminPurchasePage = page; renderAzobssPurchaseRecords(); });
+            return;
+          }
+        }
+      }
+      list.innerHTML = pageRows.map(([key, rows]) => {
+        rows.sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+        const first = rows[0] || {};
+        const paidRowsForTotal = rows.filter(r => azobssIsPurchasePaidForDownload(r));
+        const total = paidRowsForTotal.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+        const unitCount = paidRowsForTotal.length;
+        const lastItem = first.itemCode ? `${first.productType || 'PA'} ${first.itemCode}` : '-';
+        const isDetailOpen = !!azobssPurchaseOpenKeys[key];
+        return `<div class="purchase-summary-item admin-purchase-user-card az-purchase-mini-card${isDetailOpen ? ' is-open' : ''}" data-paid-only="1" data-user-key="${escHtml(key)}">
+          <div class="admin-purchase-user-top az-purchase-mini-top">
+            <div class="az-purchase-mini-user"><strong>${escHtml(first.displayName || key)}</strong></div>
+            <span class="az-purchase-mini-date">Last buy: <strong>${escHtml(formatPurchaseDate(first)||'-')}</strong></span>
+            <span class="az-purchase-mini-last">Last: <strong>${escHtml(lastItem)}</strong></span>
+            <span class="az-purchase-mini-unit">Unit: <strong>${unitCount}</strong></span>
+            <span class="az-purchase-mini-total">Total: <strong>RM${total}</strong></span>
+            <div class="az-purchase-mini-actions">
+              <button type="button" class="az-purchase-show-btn" onclick="window.azobssTogglePurchaseDetails && window.azobssTogglePurchaseDetails(this)">${isDetailOpen ? 'Hide' : 'Show'}</button>
+              <button type="button" class="az-purchase-delete-all-btn" onclick="window.azobssDeleteAllPurchaseRecordsForUser && window.azobssDeleteAllPurchaseRecordsForUser('${escHtml(key)}')">All</button>
+            </div>
+          </div>
+          <div class="admin-purchase-user-details az-purchase-mini-details" ${isDetailOpen ? '' : 'hidden'} style="display:${isDetailOpen ? 'grid' : 'none'};">
+            ${(() => {
+              const detailPage = clampPage(azobssPurchaseDetailPages[key] || 1, Math.max(1, Math.ceil(rows.length / AZOBSS_PURCHASE_DETAIL_PAGE_SIZE)));
+              azobssPurchaseDetailPages[key] = detailPage;
+              const detailRows = rows.slice((detailPage - 1) * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE, detailPage * AZOBSS_PURCHASE_DETAIL_PAGE_SIZE);
+              return detailRows.map(r => `<div class="az-purchase-detail-line"><span class="az-purchase-detail-text">• ${escHtml(r.productType)} ${escHtml(r.itemCode || '-')} · ${escHtml(r.negeri || '-')} · RM${escHtml(r.amount || '')} · ${escHtml(formatPurchaseDate(r))}</span><div class="az-purchase-detail-actions">${azobssAdminPurchaseDownloadResetHtml(r)}<button type="button" class="az-purchase-detail-delete-btn" onclick="window.azobssDeleteOnePurchaseRecord && window.azobssDeleteOnePurchaseRecord('${azobssPurchaseDeletePayload(r)}')">Delete</button></div></div>`).join('') + renderAzobssPurchaseDetailPager(key, detailPage, rows.length);
+            })()}
+          </div>
+        </div>`;
+      }).join('') || '<div class="purchase-summary-item">No successful / verified purchase records yet.</div>';
+    }
+    list?.querySelectorAll('.az-purchase-detail-pagination button[data-page]').forEach(btn => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const holder = btn.closest('.az-purchase-detail-pagination');
+        const key = holder?.dataset.purchaseDetailKey || '';
+        window.azobssSetPurchaseDetailPage && window.azobssSetPurchaseDetailPage(key, Number(btn.dataset.page) || 1);
+      });
+    });
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), azobssAdminPurchasePage, groupedRows.length, AZOBSS_ADMIN_PURCHASE_PAGE_SIZE, page => {
+      azobssAdminPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    });
+    const ownRecords = applyPurchaseSort(
+      filterPurchaseRows(records.filter(record => azobssPurchaseBelongsToCurrentUser(record, current)), userSearch),
+      userSort
+    );
+    const ownTotalPages = Math.max(1, Math.ceil(ownRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, ownTotalPages);
+    const ownVisibleRecords = ownRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    if(userList){
+      window.__azPurchaseRowIndex = (azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE;
+      userList.innerHTML = ownVisibleRecords.length
+        ? (azobssPurchaseTableHeaderHtml() + ownVisibleRecords.map(purchaseDetailRowHtml).join(''))
+        : '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+    }
+    azobssSyncPurchaseBulkControls(ownVisibleRecords, true, ownRecords);
+    const userPanelForAdmin = document.getElementById('userPaPurchasePanel');
+    if(userPanelForAdmin){
+      userPanelForAdmin.hidden = false;
+      userPanelForAdmin.style.display = '';
+    }
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, ownRecords.length, AZOBSS_PURCHASE_PAGE_SIZE, page => {
+      azobssUserPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    });
+  }else{
+    const userPanelForUser = document.getElementById('userPaPurchasePanel');
+    if(userPanelForUser) userPanelForUser.style.display = '';
+    const topRecords = filterPurchaseRows(records, adminSearch);
+    if(list){
+      list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords, purchaseResetMap) : '<div class="purchase-summary-item">No purchase records yet.</div>';
+    }
+    const detailRecords = applyPurchaseSort(filterPurchaseRows(records, userSearch), userSort);
+    const totalPages = Math.max(1, Math.ceil(detailRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
+    azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
+    const visibleRecords = detailRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
+    if(userList){ window.__azPurchaseRowIndex=(azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE;
+      userList.innerHTML = visibleRecords.length ? (azobssPurchaseTableHeaderHtml() + visibleRecords.map(purchaseDetailRowHtml).join('')) : '<div class="purchase-summary-item">No PA purchase list yet.</div>';
+    }
+    azobssSyncPurchaseBulkControls(visibleRecords, false);
+    const onUserPage = page => {
+      azobssUserPurchasePage = page;
+      renderAzobssPurchaseRecords();
+    };
+    renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, detailRecords.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
+    renderAzobssPager(document.getElementById('purchaseRecordsPagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
+  }
+  azobssRefreshPaBmToyyibTotal(records, purchaseResetMap);
+}
+
+let azobssPurchaseRealtimeUnsubs = [];
+let azobssPurchaseRealtimeKey = '';
+let azobssPurchaseRenderTimer = null;
+function azobssSchedulePurchaseRecordsRefresh(reason){
+  try{
+    clearTimeout(azobssPurchaseRenderTimer);
+    azobssPurchaseRenderTimer = setTimeout(async function(){
+      try{ await renderAzobssPurchaseRecords(); }catch(e){ console.warn('Purchase refresh failed:', reason, e); }
+      try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
+    }, 250);
+  }catch(e){}
+}
+function startAzobssPurchaseRealtimeSync(){
+  const current = getSavedUser() || {};
+  const uid = String(current.uid || '').trim();
+  const key = String(current.usernameKey || current.username || current.displayName || '').trim().toLowerCase();
+  const syncKey = uid + '|' + key;
+  if(!uid && !key) return;
+  if(azobssPurchaseRealtimeKey === syncKey && azobssPurchaseRealtimeUnsubs.length) return;
+  azobssPurchaseRealtimeUnsubs.forEach(unsub => { try{ unsub(); }catch(e){} });
+  azobssPurchaseRealtimeUnsubs = [];
+  azobssPurchaseRealtimeKey = syncKey;
+  const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
+  try{
+    if(uid){
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('uid', '==', uid)), function(){
+        azobssSchedulePurchaseRecordsRefresh('purchaseLogs uid snapshot');
+      }, function(e){ console.warn('purchase uid snapshot failed:', e); }));
+    }
+  }catch(e){ console.warn('start uid purchase listener failed:', e); }
+  try{
+    if(key){
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('usernameKey', '==', key)), function(){
+        azobssSchedulePurchaseRecordsRefresh('purchaseLogs username snapshot');
+      }, function(e){ console.warn('purchase username snapshot failed:', e); }));
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(doc(db, 'users', key), function(userSnap){
+        // v1130: Admin Dashboard PA/BM allow/deny is reflected in the user's open browser
+        // without requiring a new registration, invite code, Membership purchase, or re-login.
+        try{
+          if(userSnap && userSnap.exists()){
+            const beforeUser = getSavedUser() || {};
+            const beforeAccess = hasPaBmTabAccess(beforeUser);
+            const latestUser = {...beforeUser, ...(userSnap.data() || {}), profileDocId:userSnap.id, usernameKey:key};
+            const afterAccess = hasPaBmTabAccess(latestUser);
+            saveUser(latestUser);
+            syncHeader(latestUser);
+            if(isPaBmProtectedPage()) enforcePaBmPageAccess(latestUser, true);
+            if(beforeAccess !== afterAccess){
+              try{ document.dispatchEvent(new CustomEvent('azobss:pabm-admin-access-changed',{detail:{allowed:afterAccess}})); }catch(_e){}
+            }
+          }
+        }catch(accessSyncError){ console.warn('user PA/BM access snapshot sync failed:', accessSyncError); }
+        azobssSchedulePurchaseRecordsRefresh('user purchase reset snapshot');
+      }, function(e){ console.warn('user reset snapshot failed:', e); }));
+    }
+  }catch(e){ console.warn('start key purchase listener failed:', e); }
+}
+window.azobssRefreshPaBmPurchasesNow = function(){
+  azobssSchedulePurchaseRecordsRefresh('manual');
+};
+function bindAzobssPurchaseRecordsUI(){
+  window.__AZOBSS_PABM_PURCHASE_UI_OWNER__ = 'global-auth';
+  try{
+    const adminSortEl = document.getElementById('purchaseRecordSort');
+    if(adminSortEl && !window.__AZOBSS_PURCHASE_DEFAULT_SORT_APPLIED__){
+      adminSortEl.value = String(adminSortEl.dataset.defaultSort || 'updatedNewest');
+      window.__AZOBSS_PURCHASE_DEFAULT_SORT_APPLIED__ = true;
+    }
+  }catch(e){}
+  try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
+  ['refreshPurchaseButton','purchaseRecordSearch','purchaseRecordSort','userPaPurchaseSearch','userPaPurchaseSort'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el || el.dataset.azobssPurchaseBind) return;
+    el.dataset.azobssPurchaseBind = '1';
+    const handler = () => {
+      if(id !== 'refreshPurchaseButton'){
+        azobssAdminPurchasePage = 1;
+        azobssUserPurchasePage = 1;
+      }
+      renderAzobssPurchaseRecords();
+    };
+    el.addEventListener(el.tagName === 'BUTTON' ? 'click' : 'input', handler);
+    if(el.tagName === 'SELECT') el.addEventListener('change', handler);
+  });
+  if(document.getElementById('purchaseSummaryList') || document.getElementById('userPaPurchaseList')){
+    renderAzobssPurchaseRecords();
+  }
+}
+window.azobssRecordPurchase = recordAzobssPurchase;
+window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;
+window.azobssRenderPurchaseRecords = renderAzobssPurchaseRecords;
+window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
+window.addEventListener('storage', renderAzobssPurchaseRecords);
+
+function bindAuth() {
+  addStyle(); injectModal(); injectGoogleProfileModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser()); azobssInstallNavbarUsernameGuard();
+  bindAzobssPurchaseRecordsUI(); bindAzobssPaBmToyyibButton(); renderFirebaseAdminRecords();
+
+  document.addEventListener('click', async (event) => {
+    if (event.target.closest('#logoutButton')) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      azobssLogoutOnce();
+      return;
+    }
+
+    if (event.target.closest('#profileSettingsButton')) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+      openProfileSettings();
+      return;
+    }
+
+    const opener = event.target.closest('[data-auth-open], [data-auth], #siteSignInButton, #siteSignUpButton, a[href$="#login"], a[href$="#signin"], a[href$="#signup"], a[href$="#register"]');
+    if (opener) {
+      event.preventDefault(); event.stopPropagation();
+      const value = opener.dataset.authOpen || opener.dataset.auth || opener.getAttribute('href') || opener.id || '';
+      openSiteAuth(/sign.?up|register|signup/i.test(value) ? 'signup' : 'signin');
+      return;
+    }
+    if (event.target.closest('#siteAuthClose')) closeSiteAuth();
+    if (event.target.closest('#profileSettingsClose') || event.target.closest('#profileSettingsCancelButton')) closeProfileSettings();
+    if (event.target.closest('#switchToSiteSignup')) openSiteAuth('signup');
+    if (event.target.closest('#switchToSiteSignin')) openSiteAuth('signin');
+    const menu = event.target.closest('#userMenu, .user-menu');
+    if (menu) {
+      if (event.target.closest('.user-dropdown a, .user-dropdown button')) return;
+      if (event.target.closest('.user-dropdown')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{ if(el!==menu){ el.classList.remove('is-open'); el.setAttribute('aria-expanded','false'); } });
+      menu.classList.toggle('is-open');
+      menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
+    }
+    else document.querySelectorAll('.user-menu.is-open').forEach(el=>{ el.classList.remove('is-open'); el.setAttribute('aria-expanded','false'); });
+  }, false);
+
+  document.addEventListener('keydown', (event)=>{
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.user-menu.is-open').forEach(el=>{el.classList.remove('is-open'); el.setAttribute('aria-expanded','false');});
+      closeSiteAuth();
+      closeProfileSettings();
+      if (typeof closeAdminUserEdit === 'function') closeAdminUserEdit();
+    }
+  });
+
+  document.querySelectorAll('#userMenu, .user-menu').forEach((menu)=>{
+    menu.addEventListener('keydown', (event)=>{
+      if (event.target.closest('.user-dropdown')) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        menu.classList.toggle('is-open');
+        menu.setAttribute('aria-expanded', menu.classList.contains('is-open') ? 'true' : 'false');
+      }
+    });
+  });
+
+
+  $('siteGoogleSignInButton')?.addEventListener('click',()=>handleGoogleAuth('signin'));
+  $('siteGoogleSignUpButton')?.addEventListener('click',()=>handleGoogleAuth('signup'));
+  $('siteGoogleProfileCancel')?.addEventListener('click',()=>{azobssAbortGoogleProfile().catch(()=>{})});
+  $('siteGoogleRepairButton')?.addEventListener('click',()=>{azobssRunGoogleRepair().catch((error)=>{const err=$('siteGoogleProfileError');if(err)err.textContent=error?.message||'Unable to repair Google sign-in.'})});
+  $('siteGoogleLinkToggle')?.addEventListener('click',()=>setGoogleLinkMode(!azobssGooglePendingLinkMode));
+  $('siteGoogleProfileForm')?.addEventListener('submit',async(event)=>{
+    event.preventDefault();
+    const err=$('siteGoogleProfileError');if(err){err.textContent='';err.style.color=''}
+    const submit=event.submitter||$('siteGoogleProfileForm')?.querySelector('button[type="submit"]');
+    const firebaseUser=azobssGooglePendingFirebaseUser||auth.currentUser;
+    const phone=normalizeAzobssPhone(getPhoneWithDial('siteGoogle'));
+    if(!phone){if(err)err.textContent='Please enter your phone number.';return}
+    try{
+      if(submit){submit.disabled=true;submit.textContent=azobssGooglePendingLinkMode?'Verifying & Linking...':'Saving...'}
+      if(azobssGooglePendingLinkMode){
+        const username=$('siteGoogleUsername')?.value||'';
+        const password=$('siteGoogleLinkPassword')?.value||'';
+        const linked=await azobssSecureLinkExistingGoogleAccount(firebaseUser,username,password,phone);
+        const linkedIdentity=azobssGoogleProviderIdentity(linked.firebaseUser,null,linked.profile||{});
+        linked.profile=await azobssPersistGoogleProfileCompletion(linked.profile?.usernameKey||username,linked.firebaseUser,linked.profile||{},linkedIdentity,phone);
+        azobssGooglePendingProfile=linked.profile;
+        azobssGooglePendingFirebaseUser=linked.firebaseUser;
+        await finalizeGoogleSession(linked.firebaseUser,linked.profile);
+      }else{
+        if(!firebaseUser){throw new Error('Google session expired. Please sign in with Google again.')}
+        let profile=azobssGooglePendingProfile||{};
+        const usernameKey=normalizeUsername(profile.usernameKey||profile.username||profile.name||profile.id||'');
+        if(!usernameKey) throw new Error('AZOBSS username could not be resolved.');
+        const identity=azobssGoogleProviderIdentity(firebaseUser,null,profile);
+        const email=String(identity.email||profile.googleEmail||profile.email||profile.authEmail||'').trim().toLowerCase();
+        const preserveAuthEmail=String(profile.authEmail||'').trim().toLowerCase();
+        if(preserveAuthEmail||email){
+          await setDoc(doc(db,'users',usernameKey),{email:String(profile.email||email),authEmail:preserveAuthEmail||email,authProvider:String(profile.authProvider||'google.com'),photoURL:String(identity.photoURL||profile.photoURL||'')},{merge:true});
+        }
+        profile=await azobssPersistGoogleProfileCompletion(usernameKey,firebaseUser,profile,identity,phone);
+        azobssGooglePendingProfile=profile;
+        await finalizeGoogleSession(firebaseUser,profile);
+      }
+      azobssGooglePendingFirebaseUser=null;azobssGooglePendingProfile=null;azobssGooglePendingCredential=null;azobssGooglePendingTempUid='';azobssGooglePendingLinkMode=false;azobssGooglePendingMatchedUsername='';azobssGooglePendingRepairMatch=null;azobssGooglePendingRepairIdentity=null;
+      if($('siteGoogleLinkPassword'))$('siteGoogleLinkPassword').value='';
+    }catch(error){
+      console.warn('AZOBSS secure Google profile/link failed:',error?.code||error?.message||error);
+      if(err){
+        if(error?.code==='auth/wrong-password'||error?.code==='auth/invalid-credential')err.textContent='Existing AZOBSS username or password is incorrect.';
+        else err.textContent=error?.message||'Unable to complete Google account setup. Please try again.';
+      }
+    }finally{
+      if(submit){submit.disabled=false;submit.textContent=azobssGooglePendingLinkMode?'Verify, Link & Continue':'Save & Continue'}
+    }
+  });
+
+  $('siteSignInForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    if(event.stopImmediatePropagation) event.stopImmediatePropagation();
+    const err=$('siteLoginError'); if(err) err.textContent='';
+    const submitButton = event.submitter || $('siteSignInForm')?.querySelector('button[type="submit"]') || $('siteSignInForm')?.querySelector('button');
+    const loginInputRaw=String(fieldValue('siteLoginUsername','siteLoginName')).trim().toLowerCase();
+    const inputIsEmail = loginInputRaw.includes('@');
+    let usernameKey= inputIsEmail ? normalizeUsername(localStorage.getItem('azobssSignupUsernameByEmail:' + loginInputRaw) || localStorage.getItem('azobssUsernameLock:email:' + loginInputRaw) || '') : normalizeUsername(loginInputRaw);
+    const password=fieldValue('siteLoginPassword');
+    if(!loginInputRaw || !password){ if(err) err.textContent='Please enter username/email and password.'; return; }
+    try{
+      if(err){
+        err.style.color='#ffd54a';
+        err.textContent='⏳ Please wait... Setting up your AZOBSS account...';
+      }
+      if(submitButton){
+        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Login';
+        submitButton.disabled = true;
+        submitButton.textContent = '⏳ Please wait...';
+      }
+      // Give the browser one frame to paint the Please wait message before Firebase starts.
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
+      await setPersistence(auth,browserLocalPersistence);
+      const lookupEmail = inputIsEmail ? loginInputRaw : await getAuthEmailForUsername(usernameKey);
+      const loginEmail = lookupEmail || buildUserEmail(usernameKey);
+      let credential;
+      try{
+        credential = await signInWithEmailAndPassword(auth, loginEmail, password);
+      }catch(primaryError){
+        if(lookupEmail && usernameKey){
+          credential = await signInWithEmailAndPassword(auth, buildUserEmail(usernameKey), password);
+        }else{
+          throw primaryError;
+        }
+      }
+      try{ await credential.user.reload(); }catch(e){}
+      const authUser = auth.currentUser || credential.user;
+      let profile;
+      try{
+        profile = await ensureUserProfile(authUser,{usernameKey, email: lookupEmail || authUser.email || ''});
+      }catch(profileError){
+        console.warn('AZOBSS login profile recovery skipped:', profileError?.code || profileError?.message || profileError);
+        profile = {uid:authUser.uid, usernameKey, username:usernameKey, email: lookupEmail || authUser.email || '', authEmail: lookupEmail || authUser.email || '', role:'user'};
+      }
+      const realEmail = String(profile.authEmail || profile.email || authUser.email || '').trim().toLowerCase();
+      const resolvedLoginUsername = azobssResolveUsername({uid:authUser.uid, email:realEmail, authEmail:realEmail, ...profile, usernameKey: profile.usernameKey || profile.username || profile.id || usernameKey});
+      if(resolvedLoginUsername) usernameKey = resolvedLoginUsername;
+      const isOwnerBypass = usernameKey === 'zedan91' || realEmail === 'zedan91@azobss.local';
+      if(!authUser.emailVerified && !isOwnerBypass){
+        await signOut(auth);
+        clearSavedUser();
+        syncHeader(null);
+        if(err) err.textContent='Please verify your email first.';
+        return;
+      }
+      if(usernameKey && realEmail && realEmail.includes('@')){
+        try{
+          localStorage.setItem('azobssAuthEmailMap:' + usernameKey, realEmail);
+          localStorage.setItem('azobssSignupUsernameByEmail:' + realEmail, usernameKey);
+          localStorage.setItem('azobssUsernameLock:email:' + realEmail, usernameKey);
+          localStorage.setItem('azobssUsernameLock:uid:' + authUser.uid, usernameKey);
+        }catch(_){}
+        await saveUsernameAuthEmail(usernameKey, realEmail, authUser.uid);
+      }
+      let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || '');
+      try{
+        if(usernameKey){
+          const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
+          const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
+          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + (realEmail || authUser.email || '')) || '');
+          var mergedPaBmForLogin = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + (realEmail || authUser.email || '')) || '');
+          const loginProfilePatch={uid:authUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!authUser.emailVerified || isOwnerBypass, emailVerified: !!authUser.emailVerified || isOwnerBypass, verifiedAt: (!!authUser.emailVerified || isOwnerBypass) ? serverTimestamp() : null, authEmail: realEmail || authUser.email || '', email: realEmail || authUser.email || '', ...mergedPaBmForLogin};
+          if(preservedPhone){loginProfilePatch.phone=preservedPhone;loginProfilePatch.phoneNumber=preservedPhone;}
+          await setDoc(doc(db,'users',usernameKey), loginProfilePatch, {merge:true});
+          profile = {...profile, ...(preservedPhone?{phone:preservedPhone,phoneNumber:preservedPhone}:{}), ...mergedPaBmForLogin};
+        }
+      }catch(loginProfileUpdateError){
+        console.warn('AZOBSS login profile update skipped:', loginProfileUpdateError?.code || loginProfileUpdateError?.message || loginProfileUpdateError);
+      }
+      const signedInUser={uid:authUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
+      saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
+    }catch(error){
+      console.warn('AZOBSS login failed:', error?.code || error?.message || error);
+      if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));
+      if(submitButton){
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || 'Login';
+      }
+    }
+  });
+
+
+
+  {
+    const forgotButton=$('siteForgotPasswordButton');
+    if(forgotButton && forgotButton.dataset.azobssForgotBound!=='1'){
+      forgotButton.dataset.azobssForgotBound='1';
+      forgotButton.addEventListener('click', (event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        const box=$('siteForgotPasswordBox');
+        const err=$('siteLoginError');
+        if(err) err.textContent='';
+        if(box) box.hidden = !box.hidden;
+        setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); $('siteForgotPasswordInput')?.focus(); }catch(e){} }, 80);
+      });
+    }
+  }
+
+  $('siteSendPasswordResetButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('siteLoginError');
+    if(err){ err.style.color=''; err.textContent=''; }
+
+    const raw=String($('siteForgotPasswordInput')?.value || fieldValue('siteLoginUsername') || '').trim().toLowerCase();
+    if(!isAzobssCaptchaVerified($('siteForgotPasswordBox') || $('siteSignInForm'))){ if(err){ err.style.color=''; err.textContent='Please confirm you are not a robot.'; } return; }
+    if(err && /confirm you are not a robot/i.test(err.textContent || '')) err.textContent='';
+    if(!raw){ if(err) err.textContent='Please enter your username or registered email.'; return; }
+
+    try{
+      let resetEmail = raw;
+      if(!raw.includes('@')){
+        let usernameKey = normalizeUsername(raw);
+        if(!usernameKey){ if(err) err.textContent='Please enter a valid username or registered email.'; return; }
+        resetEmail = await getAuthEmailForUsername(usernameKey);
+        if(!resetEmail){
+          if(err) err.textContent='No email is linked to this username yet. Please enter your registered email, or login once so the system can sync your email.';
+          return;
+        }
+      }
+
+      await sendPasswordResetEmail(auth, resetEmail);
+      resetAzobssCaptcha($('siteForgotPasswordBox') || $('siteSignInForm'));
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password reset link sent to '+resetEmail+'. Please check inbox/spam folder.'; }
+    }catch(error){
+      if(err){
+        err.style.color='';
+        err.textContent = error?.code==='auth/user-not-found'
+          ? 'This email is not found in Firebase Authentication. Try your registered email or contact admin.'
+          : 'Unable to send reset email: '+(error?.message || 'Please try again or contact admin.');
+      }
+    }
+  });
+
+  $('siteSignUpForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    if(event.stopImmediatePropagation) event.stopImmediatePropagation();
+    const err=$('siteSignupError'); if(err) err.textContent='';
+    const enablePasswordGoogleButton=$('siteEnablePasswordWithGoogleButton');
+    if(enablePasswordGoogleButton) enablePasswordGoogleButton.hidden=true;
+    let usernameKey=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
+    const password=fieldValue('siteSignupPassword');
+    const phone=getSignupPhoneWithDial();
+    const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
+    const invitedByCode=''; // v1128: invite/benefit code removed from registration
+    if(!isAzobssCaptchaVerified($('siteSignUpForm'))){ if(err){ err.style.color=''; err.textContent='Please confirm you are not a robot.'; } return; }
+    if(err && /confirm you are not a robot/i.test(err.textContent || '')) err.textContent='';
+    if(!usernameKey || password.length<8 || !phone || !email){ if(err) err.textContent='Please complete all required fields. Password minimum 8 characters.'; return; }
+    if(window.__AZOBSS_SIGNUP_BUSY__) return;
+    window.__AZOBSS_SIGNUP_BUSY__ = true;
+    const submitButton = event.submitter || $('siteSignUpForm')?.querySelector('button[type="submit"]');
+    if(submitButton) submitButton.disabled = true;
+    try{
+      if(err){
+        err.style.color='#ffd54a';
+        err.textContent='⏳ Please wait... Setting up your AZOBSS account...';
+      }
+      if(submitButton){
+        submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || 'Create Account';
+        submitButton.textContent = '⏳ Please wait...';
+      }
+      // Give the browser one frame to paint the Please wait message before Firebase starts.
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
+      await setPersistence(auth,browserLocalPersistence);
+
+      // IMPORTANT FIX:
+      // Some Firestore rules block public reads on /users before login.
+      // The previous build treated that permission error as a full signup failure.
+      // We now try the safe username lookup first, and ignore blocked pre-check reads.
+      const existingAuthEmail = await getAuthEmailForUsername(usernameKey);
+      if(existingAuthEmail){
+        if(String(existingAuthEmail).trim().toLowerCase()===email){
+          if(err) err.textContent='This AZOBSS username/email already exists. If it is your Google account, verify Google once below to enable password login on the SAME account.';
+          const linkBtn=$('siteEnablePasswordWithGoogleButton'); if(linkBtn) linkBtn.hidden=false;
+        }else if(err) err.textContent='Username already exists. Please choose another username.';
+        return;
+      }
+      try{
+        const existingUsername = await getDoc(doc(db,'users',usernameKey));
+        if(existingUsername.exists()){
+          const existingData=existingUsername.data()||{};
+          const existingEmail=String(existingData.authEmail||existingData.email||existingData.googleEmail||'').trim().toLowerCase();
+          if(existingEmail&&existingEmail===email){
+            if(err) err.textContent='This AZOBSS username/email already exists. Verify Google once below to enable password login on the SAME account.';
+            const linkBtn=$('siteEnablePasswordWithGoogleButton'); if(linkBtn) linkBtn.hidden=false;
+          }else if(err) err.textContent='Username already exists. Please choose another username.';
+          return;
+        }
+      }catch(precheckError){
+        console.warn('AZOBSS username pre-check skipped:', precheckError?.code || precheckError?.message || precheckError);
+      }
+
+      const credential=await createUserWithEmailAndPassword(auth,email,password);
+      const newUser = credential.user;
+      try{
+        localStorage.setItem('azobssAuthEmailMap:' + usernameKey, email);
+        localStorage.setItem('azobssSignupUsernameByEmail:' + email, usernameKey);
+      }catch(_){}
+
+      // IMPORTANT FIX:
+      // Auth account can appear in Firebase before Firestore accepts /users/{username}.
+      // Wait for auth state + refresh token, then retry profile writes a few times.
+      // Verification email is sent only after profile documents are saved successfully.
+      const wait = (ms)=>new Promise(resolve=>setTimeout(resolve,ms));
+      try{ await newUser.getIdToken(true); await newUser.reload(); }catch(tokenError){ console.warn('AZOBSS token refresh after signup skipped:', tokenError?.code || tokenError?.message || tokenError); }
+      await wait(1200);
+      if(auth.currentUser?.uid !== newUser.uid){
+        await new Promise(resolve=>{
+          const off = onAuthStateChanged(auth, u=>{
+            if(u?.uid === newUser.uid){ off(); resolve(); }
+          });
+          setTimeout(()=>{ try{ off(); }catch(_){} resolve(); }, 2500);
+        });
+      }
+      try{ await auth.currentUser?.getIdToken(true); }catch(_){}
+
+      const finalSignupInviteCode = ''; // v1128: benefit codes are redeemed only after login
+      const finalSignupPhone = normalizeAzobssPhone(getSignupPhoneWithDial() || phone || '');
+      try{
+        localStorage.setItem('azobssSignupPhone:' + usernameKey, finalSignupPhone || '');
+        localStorage.setItem('azobssSignupInviteCode:' + usernameKey, finalSignupInviteCode || '');
+        localStorage.setItem('azobssSignupPhoneByEmail:' + email, finalSignupPhone || '');
+        localStorage.setItem('azobssSignupInviteCodeByEmail:' + email, finalSignupInviteCode || '');
+      }catch(_){}
+      const paBmSignupPayload = getPaBmPayloadFromCode(finalSignupInviteCode);
+      const profile={
+        uid:newUser.uid,
+        username:usernameKey,
+        usernameKey,
+        email,
+        authEmail:email,
+        contactEmail:email,
+        phone: finalSignupPhone,
+        phoneNumber: finalSignupPhone,
+        ...paBmSignupPayload,
+        role:'user',
+        verified:false,
+        emailVerified:false,
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      };
+
+      async function writeSignupProfileWithRetry(){
+        let lastError=null;
+        for(let attempt=1; attempt<=4; attempt++){
+          try{
+            await setDoc(doc(db,'users',usernameKey),profile,{merge:true});
+            await saveUsernameAuthEmail(usernameKey, email, newUser.uid);
+            return;
+          }catch(profileError){
+            lastError=profileError;
+            console.warn('AZOBSS signup profile write retry '+attempt+' failed:', profileError?.code || profileError?.message || profileError);
+            try{ await newUser.getIdToken(true); }catch(_){}
+            await wait(700 * attempt);
+          }
+        }
+        throw lastError;
+      }
+
+      let verificationEmailSent = false;
+      try{
+        // Send verification first and never auto-delete the Auth account.
+        // Previous build deleted the Auth user when Firestore was slow/blocked,
+        // causing the user to disappear after ~30 seconds and no Gmail verification.
+        if(err){err.style.color='#87ceeb'; err.textContent='📧 Sending verification email...';}
+        await sendEmailVerification(newUser, {
+          url: location.origin + '/?azobssVerified=1',
+          handleCodeInApp: false
+        });
+        verificationEmailSent = true;
+      }catch(verifyError){
+        console.warn('AZOBSS verification email send failed:', verifyError?.code || verifyError?.message || verifyError);
+      }
+
+      let profileSaved = true;
+      try{
+        await writeSignupProfileWithRetry();
+      }catch(profileError){
+        profileSaved = false;
+        console.error('AZOBSS signup profile create failed after retries. Auth user is kept; verification email already sent if allowed:', profileError);
+        // IMPORTANT: do NOT deleteUser(newUser) here. Keep Auth user for recovery/reset.
+        // Continue the flow so the user can verify email and login with Gmail/password.
+        // Username lookup will work after Firestore rules are published or after login recovery saves the profile.
+      }
+      try{ localStorage.removeItem('azobssPaMemberCode'); sessionStorage.removeItem('azobssPaMemberCode'); }catch(_){}
+      try{ await saveUsernameAuthEmail(usernameKey, email, newUser.uid); }catch(mapError){ console.warn('AZOBSS username email map save skipped:', mapError?.code || mapError?.message || mapError); }
+      await signOut(auth);
+      clearSavedUser();
+      syncHeader(null);
+      if(err){
+        err.style.color='#62e6a5';
+        err.textContent = '✅ Account created! Please check your Gmail and verify your account before login.';
+      }
+      if(submitButton){
+        submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
+      }
+      try{ $('siteSignUpForm')?.reset(); resetAzobssCaptcha($('siteSignUpForm')); }catch(_){}
+      // STOP here after signup success. Do not auto-switch/open the login section.
+      return;
+    }catch(error){
+      console.error('AZOBSS signup error:', error);
+      if(err){
+        err.style.color='';
+        const code = String(error?.code || '');
+        if(code === 'auth/email-already-in-use'){
+          err.textContent = 'This email is already registered. If it is your Google account, verify Google once below to enable BOTH Google and password login on the same account. If password login is already enabled, use Sign in or Forgot Password.';
+          const linkBtn=$('siteEnablePasswordWithGoogleButton');
+          if(linkBtn) linkBtn.hidden=false;
+        }
+        else if(code === 'auth/invalid-email') err.textContent = 'Invalid email address. Please check your email.';
+        else if(code === 'auth/weak-password') err.textContent = 'Password is too weak. Use at least 8 characters with uppercase, lowercase and number.';
+        else if(code === 'permission-denied') err.textContent = 'Firebase permission blocked one step. Publish the included Firestore rules, then login with your Gmail email first.';
+        else if(String(error?.message || '').toLowerCase().includes('permission')) err.textContent = 'Firebase permission blocked one step. Publish the included Firestore rules, then login with your Gmail email first.';
+        else err.textContent = 'Sign up failed: ' + (error?.message || 'Please try again.');
+      }
+    }finally{
+      window.__AZOBSS_SIGNUP_BUSY__ = false;
+      if(submitButton){
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || 'Create Account';
+      }
+    }
+  });
+
+  $('siteEnablePasswordWithGoogleButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('siteSignupError');
+    const btn=$('siteEnablePasswordWithGoogleButton');
+    const email=String(fieldValue('siteSignupEmail')).trim().toLowerCase();
+    const password=String(fieldValue('siteSignupPassword')||'');
+    const requestedUsername=normalizeUsername(fieldValue('siteSignupUsername','siteSignupName'));
+    const phone=normalizeAzobssPhone(getSignupPhoneWithDial()||'');
+    if(!email||!email.includes('@')){if(err)err.textContent='Enter the registered Google email first.';return;}
+    if(password.length<8){if(err)err.textContent='Enter the password you want to use (minimum 8 characters).';return;}
+    const original=btn?.textContent||'Verify Google & Enable Password Login';
+    try{
+      window.__AZOBSS_GOOGLE_AUTH_FLOW__=true;
+      if(btn){btn.disabled=true;btn.textContent='Opening Google...';}
+      if(err){err.style.color='#ffd54a';err.textContent='Verify ownership with the SAME Google email. AZOBSS will link password login to that existing account; it will not create a second Firebase user.';}
+      try{if(auth.currentUser)await signOut(auth)}catch(_e){}
+      await setPersistence(auth,browserLocalPersistence);
+      const provider=new GoogleAuthProvider();
+      provider.setCustomParameters({login_hint:email,prompt:'select_account'});
+      const result=await signInWithPopup(auth,provider);
+      const firebaseUser=result.user;
+      const identity=azobssGoogleProviderIdentity(firebaseUser,result,{});
+      if(String(identity.email||'').trim().toLowerCase()!==email){
+        try{await signOut(auth)}catch(_e){}
+        throw Object.assign(new Error('Please choose the same Google account: '+email),{code:'azobss/google-email-mismatch'});
+      }
+      try{await firebaseUser.reload()}catch(_e){}
+      const liveUser=auth.currentUser||firebaseUser;
+      if(azobssHasPasswordProvider(liveUser)){
+        if(err){err.style.color='#62e6a5';err.textContent='This Firebase account already supports password login. Use Sign in, or Forgot Password if you do not remember the password.';}
+        if(btn)btn.hidden=true;
+        return;
+      }
+      const passwordCredential=EmailAuthProvider.credential(email,password);
+      const linked=await linkWithCredential(liveUser,passwordCredential);
+      const linkedUser=linked.user||liveUser;
+      try{await linkedUser.reload()}catch(_e){}
+
+      let profile=null;
+      try{profile=await azobssGetTrustedAlreadyLinkedGoogleProfile(linkedUser,identity)}catch(_e){}
+      if(!profile){
+        try{profile=await findExistingUserProfileForAuth(linkedUser)}catch(_e){}
+      }
+      if(!profile||profile._profileMissing){
+        profile=await ensureUserProfile(linkedUser,{usernameKey:requestedUsername,email,phone});
+      }
+      const profileKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||requestedUsername||'');
+      if(profileKey){
+        const patch={passwordLoginEnabled:true,passwordLinkedAt:serverTimestamp(),updatedAt:serverTimestamp()};
+        if(phone&&!normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'')){patch.phone=phone;patch.phoneNumber=phone;}
+        try{await setDoc(doc(db,'users',profileKey),patch,{merge:true});profile={...profile,...patch,...(patch.phone?{phone:patch.phone,phoneNumber:patch.phoneNumber}:{})};}catch(_e){}
+        try{await saveUsernameAuthEmail(profileKey,email,linkedUser.uid)}catch(_e){}
+      }
+      if(err){err.style.color='#62e6a5';err.textContent='✅ Password login enabled on the SAME account. You can now sign in with Google OR '+email+' + your password.';}
+      if(btn)btn.hidden=true;
+      try{resetAzobssCaptcha($('siteSignUpForm'));}catch(_e){}
+      if(profileKey&&profile&&!profile._profileMissing){
+        try{await finalizeGoogleSession(linkedUser,{...profile,usernameKey:profileKey,authEmail:email,email:profile.email||email,authProvider:'password+google.com',googleAuthLinked:true,googleSignIn:true});}catch(_e){}
+      }
+    }catch(error){
+      console.warn('AZOBSS enable password with Google failed:',error?.code||error?.message||error);
+      if(err){
+        err.style.color='';
+        const code=String(error?.code||'');
+        if(code==='auth/popup-closed-by-user')err.textContent='Google verification was cancelled. No account changes were made.';
+        else if(code==='auth/popup-blocked')err.textContent='Google popup was blocked. Allow popups for azobss.com and try again.';
+        else if(code==='auth/provider-already-linked')err.textContent='Password login is already linked. Use Sign in or Forgot Password.';
+        else if(code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')err.textContent='These password credentials are already attached to another Firebase account. Use Sign in / Forgot Password instead of creating another account.';
+        else err.textContent=error?.message||'Unable to enable password login. Please try again.';
+      }
+    }finally{
+      window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+      if(btn){btn.disabled=false;btn.textContent=original;}
+    }
+  });
+
+  $('profileResetPasswordButton')?.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const err=$('profileSettingsError'); if(err) err.textContent='';
+    const currentPassword=String($('profileCurrentPassword')?.value||'');
+    const newPassword=String($('profileNewPassword')?.value||'');
+    const confirmPassword=String($('profileConfirmPassword')?.value||'');
+    const saved=getSavedUser() || {};
+    let usernameKey=normalizeUsername(saved.usernameKey || saved.name || (auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : ''));
+    if(!auth.currentUser || !usernameKey){ if(err) err.textContent='Please login again before changing password sign-in.'; return; }
+    const googleOnly=isGoogleFirebaseUser(auth.currentUser)&&!azobssHasPasswordProvider(auth.currentUser);
+    if(!newPassword || !confirmPassword || (!googleOnly&&!currentPassword)){ if(err) err.textContent=googleOnly?'Please enter and confirm the new password.':'Please enter current password and new password.'; return; }
+    if(newPassword.length < 8){ if(err) err.textContent='New password must be at least 8 characters.'; return; }
+    if(newPassword !== confirmPassword){ if(err) err.textContent='Confirm password does not match.'; return; }
+    try{
+      if(googleOnly){
+        const email=String(auth.currentUser.email||saved.authEmail||saved.email||'').trim().toLowerCase();
+        if(!email)throw new Error('No verified email is available for this Google account.');
+        const credential=EmailAuthProvider.credential(email,newPassword);
+        try{
+          await linkWithCredential(auth.currentUser,credential);
+        }catch(linkError){
+          if(String(linkError?.code||'')==='auth/requires-recent-login'){
+            const provider=new GoogleAuthProvider();provider.setCustomParameters({login_hint:email,prompt:'select_account'});
+            await reauthenticateWithPopup(auth.currentUser,provider);
+            await linkWithCredential(auth.currentUser,credential);
+          }else throw linkError;
+        }
+        try{await auth.currentUser.reload()}catch(_e){}
+        try{await setDoc(doc(db,'users',usernameKey),{passwordLoginEnabled:true,passwordLinkedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});}catch(_e){}
+        ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+        azobssSyncProfilePasswordMode();
+        if(err){ err.style.color='#62e6a5'; err.textContent='Password login enabled. You can now use either Google Sign-In or email/password for this same account.'; }
+        return;
+      }
+      const credential=EmailAuthProvider.credential(auth.currentUser.email || buildUserEmail(usernameKey), currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, newPassword);
+      ['profileCurrentPassword','profileNewPassword','profileConfirmPassword'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+      if(err){ err.style.color='#62e6a5'; err.textContent='Password updated successfully.'; setTimeout(()=>{ if(err.textContent==='Password updated successfully.'){ err.textContent=''; err.style.color=''; } }, 3500); }
+    }catch(error){
+      if(err){
+        err.style.color='';
+        const code=String(error?.code||'');
+        if(code==='auth/wrong-password'||code==='auth/invalid-credential')err.textContent='Current password is wrong.';
+        else if(code==='auth/provider-already-linked')err.textContent='Password login is already enabled for this account.';
+        else if(code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')err.textContent='This email/password credential is already attached to another Firebase user. Contact admin before merging accounts.';
+        else err.textContent='Password update failed: '+(error?.message||'Please login again and try.');
+      }
+    }
+  });
+
+  $('adminUserEditClose')?.addEventListener('click', closeAdminUserEdit);
+  $('adminUserEditCancel')?.addEventListener('click', closeAdminUserEdit);
+  // AZOBSS FIX: keep Edit Registered User modal open when clicking/dragging outside. Close only X/Cancel/ESC.
+  $('adminUserEditForm')?.addEventListener('submit', async (event)=>{ event.preventDefault(); await saveAdminUserEdit(); });
+
+  $('profileRedeemReferralCodeButton')?.addEventListener('click', ()=>redeemAzobssReferralCode().catch(()=>{}));
+  $('profileCopyReferralLinkButton')?.addEventListener('click', async ()=>{const el=$('profileReferralLink');if(!el||!el.value)return;try{await navigator.clipboard.writeText(el.value);const st=$('profileReferralStatus');if(st)st.textContent='Invite link copied.';}catch(_e){el.focus();el.select();}});
+  document.addEventListener('click',(e)=>{const btn=e.target.closest('[data-buy-membership]');if(btn)buyAzobssMembership(btn.getAttribute('data-buy-membership'));});
+
+  $('profileSettingsForm')?.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const current=getSavedUser() || {};
+    const editedProfilePhone = getPhoneWithDial('profileEdit');
+    const finalProfilePhone = mergePhonePreserve(current.phone || current.phoneNumber || '', editedProfilePhone);
+    const updated={...current,
+      usernameKey: normalizeUsername($('profileEditName')?.value) || current.usernameKey || current.name || '',
+      phone: finalProfilePhone,
+      phoneNumber: finalProfilePhone,
+      email: String($('profileEditEmail')?.value||'').trim().toLowerCase()
+    };
+    saveUser(updated); await saveProfileToFirebase(updated); startAzobssPresenceHeartbeat(updated); syncHeader(updated); renderFirebaseAdminRecords(); closeProfileSettings();
+  });
+
+  onAuthStateChanged(auth, async (firebaseUser)=>{
+    if(window.__AZOBSS_GOOGLE_AUTH_FLOW__) return;
+    if(!firebaseUser){
+      if(window.__AZOBSS_LOGGING_OUT__ || azobssLogoutInProgress) return;
+      if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
+      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); recordGuestHistory(); renderFirebaseAdminRecords(); return;
+    }
+    try{
+      try{ await firebaseUser.reload(); }catch(e){}
+      const freshUser = auth.currentUser || firebaseUser;
+      const ownerBypass = String(freshUser.email || '').toLowerCase() === 'zedan91@azobss.local';
+      if(!freshUser.emailVerified && !ownerBypass){
+        await signOut(auth);
+        clearUser();
+        syncHeader(null);
+        enforcePaBmPageAccess(null, true);
+        return;
+      }
+      let profile=await ensureUserProfile(freshUser);
+      if(isGoogleFirebaseUser(freshUser)){
+        const stateIdentity=azobssGoogleProviderIdentity(freshUser,null,profile||{});
+        const trustedStateProfile=await azobssGetTrustedAlreadyLinkedGoogleProfile(freshUser,stateIdentity);
+        if(trustedStateProfile)profile=trustedStateProfile;
+      }
+      if(isGoogleFirebaseUser(freshUser)&&profile?._profileMissing){
+        profile=await azobssCreateGoogleProfile(freshUser,{});
+      }
+      if(isGoogleFirebaseUser(freshUser)&&profile?._googleNeedsExistingUsername){
+        clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,true);return;
+      }
+      if(isGoogleFirebaseUser(freshUser)){
+        const googleIdentityForState=azobssGoogleProviderIdentity(freshUser,null,profile||{});
+        const recoveredGooglePhone=azobssGoogleCompletionPhone(profile||{},googleIdentityForState);
+        if(!recoveredGooglePhone){
+          clearUser(true);syncHeader(null);openGoogleProfileModal(freshUser,profile,false);return;
+        }
+        if(!azobssGoogleProfileIsComplete(profile,googleIdentityForState)||!normalizeAzobssPhone(profile?.phone||profile?.phoneNumber||'')){
+          const stateKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
+          if(stateKey){
+            try{profile=await azobssPersistGoogleProfileCompletion(stateKey,freshUser,profile,googleIdentityForState,recoveredGooglePhone)}
+            catch(error){console.warn('AZOBSS Google profile completion repair skipped:',error?.code||error?.message||error)}
+          }
+        }
+      }
+      let usernameKey = normalizeUsername(profile.usernameKey || profile.username || profile.name || profile.id || '');
+      let preservedPhone = normalizeAzobssPhone(profile.phone || profile.phoneNumber || profile.googleLastConfirmedPhone || '');
+      try{
+        if(usernameKey && !profile._profileMissing){
+          const oldProfileSnap = await getDoc(doc(db,'users',usernameKey));
+          const oldProfileData = oldProfileSnap.exists() ? (oldProfileSnap.data() || {}) : {};
+          const profileEmailForState = String(profile.authEmail || profile.email || freshUser.email || '').trim().toLowerCase();
+          preservedPhone = normalizeAzobssPhone(oldProfileData.phone || oldProfileData.phoneNumber || profile.phone || profile.phoneNumber || localStorage.getItem('azobssSignupPhone:' + usernameKey) || localStorage.getItem('azobssSignupPhoneByEmail:' + profileEmailForState) || '');
+          var mergedPaBmForState = mergePaBmAccessPreserve(oldProfileData, profile.inviteCode || profile.memberCode || profile.paMemberCode || profile.inviteCodeUsed || profile.invitedByCode || localStorage.getItem('azobssSignupInviteCode:' + usernameKey) || localStorage.getItem('azobssSignupInviteCodeByEmail:' + profileEmailForState) || '');
+          const statePatch={uid:freshUser.uid, username:usernameKey, usernameKey, displayName:usernameKey, name:usernameKey, verified: !!freshUser.emailVerified || ownerBypass, emailVerified: !!freshUser.emailVerified || ownerBypass, verifiedAt: (!!freshUser.emailVerified || ownerBypass) ? serverTimestamp() : null, ...mergedPaBmForState};
+          // v1083: never erase a previously saved phone during auth-state sync.
+          if(preservedPhone){statePatch.phone=preservedPhone;statePatch.phoneNumber=preservedPhone;}
+          await setDoc(doc(db,'users',usernameKey), statePatch, {merge:true});
+          profile = {...profile, ...(preservedPhone?{phone:preservedPhone,phoneNumber:preservedPhone}:{}), ...mergedPaBmForState};
+        }
+      }catch(stateProfileUpdateError){
+        console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
+      }
+      const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
+      saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
+      setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
+    }
+    catch{ const fallback=getSavedUser(); syncHeader(fallback); if(isPaBmProtectedPage() && !window.__AZOBSS_PABM_ACCESS_GRANTED__){ enforcePaBmPageAccess(null, true); return; } enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
+  });
+
+  const params = new URLSearchParams(location.search || '');
+  if(params.get('azobssVerified') === '1') {
+    try{ sessionStorage.setItem('azobssAccessDeniedMessage','Email verified successfully. Please login.'); }catch(e){}
+    history.replaceState(null,'',location.pathname + '#login');
+    setTimeout(()=>openSiteAuth('signin'), 80);
+  }
+  const hash = String(location.hash || '').toLowerCase();
+  if (['#login','#signin'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signin'); }
+  if (['#signup','#register'].includes(hash)) { history.replaceState(null,'',location.pathname+location.search); openSiteAuth('signup'); }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAuth);
+else bindAuth();
+
+
+// AZOBSS_FINAL_MOBILE_DROPDOWN_FIX_JS
+(function injectAzobssFinalMobileDropdownFix(){
+  try{
+    var css = '\n/* AZOBSS FINAL MOBILE ACCOUNT DROPDOWN FIX */\n.market-sticky-bar,\n.market-bar-inner,\n.market-main-row,\n.market-user-tools,\n.user-menu{\n  overflow:visible !important;\n}\n.user-menu{\n  position:relative !important;\n  z-index:100000 !important;\n}\n.user-menu .user-dropdown,\n#userDropdown{\n  position:absolute !important;\n  top:calc(100% + 10px) !important;\n  right:0 !important;\n  left:auto !important;\n  width:220px !important;\n  min-width:220px !important;\n  max-width:calc(100vw - 16px) !important;\n  padding:8px !important;\n  border-radius:14px !important;\n  background:#08111f !important;\n  border:1px solid rgba(148,163,184,.28) !important;\n  box-shadow:0 18px 50px rgba(0,0,0,.58) !important;\n  z-index:100001 !important;\n  transform:none !important;\n}\n.user-menu:not(.is-open) .user-dropdown{display:none !important;}\n.user-menu.is-open .user-dropdown{display:block !important;}\n.user-dropdown-section{\n  padding:7px 10px 4px !important;\n  font-size:11px !important;\n  line-height:1.1 !important;\n}\n.user-dropdown-item{\n  min-height:38px !important;\n  padding:9px 10px !important;\n  font-size:13px !important;\n  line-height:1.15 !important;\n  border-radius:10px !important;\n}\n@media (max-width:768px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    position:fixed !important;\n    top:92px !important;\n    right:8px !important;\n    left:auto !important;\n    width:210px !important;\n    min-width:210px !important;\n    max-width:calc(100vw - 16px) !important;\n    max-height:68vh !important;\n    overflow-y:auto !important;\n    border-radius:14px !important;\n  }\n  .user-dropdown-section{\n    padding:7px 10px 4px !important;\n    font-size:10.5px !important;\n  }\n  .user-dropdown-item{\n    padding:9px 10px !important;\n    font-size:13px !important;\n    min-height:36px !important;\n  }\n}\n@media (max-width:420px){\n  .user-menu .user-dropdown,\n  #userDropdown{\n    top:88px !important;\n    right:6px !important;\n    width:196px !important;\n    min-width:196px !important;\n  }\n}\n';
+    function apply(){
+      if(document.getElementById('azobss-final-mobile-dropdown-fix-js')) return;
+      var style=document.createElement('style');
+      style.id='azobss-final-mobile-dropdown-fix-js';
+      style.textContent=css;
+      document.head.appendChild(style);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+  }catch(e){}
+})();
+
+
+// AZOBSS_HOME_STICKBAR_1TO1_GLOBAL_FIX
+(function injectAzobssHomeStickbarOneToOne(){
+  try{
+    var css = `
+/* AZOBSS HOME STICKBAR 1:1 GLOBAL FIX - source: Home navbar */
+html,body{overflow-x:hidden!important;}
+body{padding-top:58px!important;}
+.market-sticky-bar{
+  position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;
+  min-height:49px!important;height:auto!important;z-index:5000!important;
+  background:#050807!important;border-bottom:1px solid rgba(234,179,8,.55)!important;
+  overflow:visible!important;box-sizing:border-box!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.28)!important;
+}
+.market-bar-inner{width:100%!important;max-width:none!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;}
+.market-main-row{
+  display:flex!important;align-items:center!important;gap:7px!important;min-height:48px!important;height:48px!important;
+  flex-wrap:nowrap!important;overflow:visible!important;width:100%!important;box-sizing:border-box!important;
+}
+.market-brand{
+  flex:0 0 auto!important;width:154px!important;min-width:154px!important;max-width:154px!important;height:38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;border-radius:999px!important;overflow:hidden!important;text-decoration:none!important;
+  background:transparent!important;border:0!important;margin:0!important;box-sizing:border-box!important;
+}
+.market-brand img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;display:block!important;margin:0!important;padding:0!important;}
+.market-nav{
+  flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:center!important;gap:7px!important;
+  white-space:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
+  -webkit-overflow-scrolling:touch!important;padding:0 2px!important;
+}
+.market-nav::-webkit-scrollbar{display:none!important;}
+.market-nav a,.market-nav button{
+  flex:0 0 auto!important;height:34px!important;min-height:34px!important;max-height:34px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0 12px!important;border-radius:999px!important;box-sizing:border-box!important;
+  font-size:13px!important;font-weight:900!important;line-height:1!important;text-decoration:none!important;white-space:nowrap!important;
+  background:#0e1729!important;border:1px solid rgba(148,163,184,.28)!important;color:#e5e7eb!important;text-shadow:0 1px 8px rgba(0,0,0,.45)!important;
+}
+.market-nav a:hover,.market-icon-btn:hover{color:#14b8a6!important;}
+body:not(.has-pa-access) .market-nav .nav-pa-bm-link,body:not(.has-pa-access) a#paBmNavButton,.market-nav .nav-pa-bm-link[hidden],.market-nav .nav-pa-bm-link.is-hidden,a#paBmNavButton[hidden],a#paBmNavButton.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body:not(.can-buy-public-pa) .market-nav .nav-public-pa-link,.market-nav .nav-public-pa-link[hidden],.market-nav .nav-public-pa-link.is-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+.market-nav a:has(.nav-whatsapp-circle){width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
+.nav-whatsapp-circle{position:relative!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#22c55e!important;color:#fff!important;font-size:0!important;box-shadow:0 8px 20px rgba(34,197,94,.25)!important;overflow:visible!important;}
+.nav-whatsapp-circle::before{content:""!important;display:block!important;width:18px!important;height:14px!important;border-radius:999px!important;background:#fff!important;line-height:1!important;}
+.nav-whatsapp-circle::after{content:""!important;position:absolute!important;left:21px!important;top:23px!important;width:7px!important;height:7px!important;background:#fff!important;clip-path:polygon(0 0,100% 0,0 100%)!important;transform:rotate(-12deg)!important;}
+.site-auth-actions{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;margin-left:auto!important;margin-right:0!important;flex:0 0 auto!important;z-index:auto!important;}
+.site-auth-btn{height:34px!important;min-height:34px!important;padding:0 12px!important;font-size:13px!important;font-weight:900!important;line-height:1!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;}
+.market-user-tools{
+  flex:0 0 auto!important;display:flex!important;align-items:center!important;gap:11px!important;margin-left:auto!important;
+  min-width:max-content!important;white-space:nowrap!important;overflow:visible!important;color:#fff!important;
+}
+.user-menu{height:34px!important;display:inline-flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;position:relative!important;top:auto!important;right:auto!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;z-index:100000!important;transform:none!important;cursor:pointer!important;}
+.user-avatar{width:28px!important;height:28px!important;min-width:28px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#020617!important;border:1px solid rgba(20,184,166,.38)!important;color:#d1d5db!important;font-size:12px!important;font-weight:900!important;line-height:1!important;}
+.user-name{font-size:14px!important;font-weight:900!important;line-height:1!important;color:#fff!important;white-space:nowrap!important;max-width:140px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.user-menu::after{content:""!important;width:7px!important;height:7px!important;border-right:2px solid currentColor!important;border-bottom:2px solid currentColor!important;color:#9ca3af!important;transform:rotate(45deg)!important;transition:transform .18s ease!important;}
+.user-menu.is-open::after{transform:rotate(225deg)!important;}
+.market-icon-btn{width:24px!important;height:34px!important;min-width:24px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;flex:0 0 auto!important;color:#e5e7eb!important;background:transparent!important;border:0!important;margin:0!important;text-decoration:none!important;border-radius:999px!important;}
+.market-icon-btn svg{width:23px!important;height:23px!important;stroke:currentColor!important;fill:none!important;stroke-width:2.2!important;stroke-linecap:round!important;stroke-linejoin:round!important;}
+.market-icon-btn svg path{stroke:currentColor!important;fill:none!important;}
+.market-icon-btn.is-likes-active svg path{fill:#facc15!important;stroke:#facc15!important;}
+
+@media(max-width:980px){
+  body{padding-top:92px!important;}
+  .market-main-row{height:auto!important;min-height:48px!important;flex-wrap:wrap!important;align-content:center!important;padding:5px 0!important;}
+  .market-brand{width:132px!important;min-width:132px!important;max-width:132px!important;height:34px!important;}
+  .market-user-tools{margin-left:auto!important;gap:9px!important;}
+  .user-name{max-width:115px!important;font-size:13px!important;}
+  .market-nav{order:3!important;flex:0 0 100%!important;width:100%!important;padding:4px 0 2px!important;}
+  .market-nav a,.market-nav button{height:32px!important;min-height:32px!important;padding:0 10px!important;font-size:12px!important;}
+  .market-nav a:has(.nav-whatsapp-circle){width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;}
+  .nav-whatsapp-circle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;}
+}
+@media(max-width:560px){
+  body{padding-top:96px!important;}
+  .market-bar-inner{padding:0 6px!important;}
+  .market-brand{width:120px!important;min-width:120px!important;max-width:120px!important;height:32px!important;}
+  .market-user-tools{gap:7px!important;}
+  .user-name{display:none!important;}
+  .market-icon-btn{width:22px!important;min-width:22px!important;}
+  .market-icon-btn svg{width:21px!important;height:21px!important;}
+  .site-auth-btn{font-size:12px!important;padding:0 9px!important;}
+}
+`;
+    function apply(){
+      if(document.getElementById('azobss-home-stickbar-1to1-global-fix')) return;
+      var style=document.createElement('style');
+      style.id='azobss-home-stickbar-1to1-global-fix';
+      style.textContent=css;
+      document.head.appendChild(style);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+  }catch(e){}
+})();
+
+
+// AZOBSS compact one-line admin live/history rows
+(function injectAzobssCompactAdminHistoryRows(){
+  try{
+    if(document.getElementById('azobss-compact-admin-history-style')) return;
+    const style=document.createElement('style');
+    style.id='azobss-compact-admin-history-style';
+    style.textContent=`
+      #liveUsersList .az-admin-inline-card,
+      #loginHistoryList .az-admin-inline-card,
+      #guestHistoryList .az-admin-inline-card{
+        display:block!important;
+        padding:4px 8px!important;
+        min-height:0!important;
+        border-radius:9px!important;
+        margin:0 0 5px!important;
+      }
+      .az-admin-inline-row{
+        display:flex!important;
+        align-items:center!important;
+        gap:7px!important;
+        flex-wrap:wrap!important;
+        width:100%!important;
+        font-size:11px!important;
+        line-height:1.15!important;
+      }
+      .az-admin-inline-row strong{
+        color:#f8fafc!important;
+        font-size:11.5px!important;
+        margin-right:2px!important;
+        line-height:1.15!important;
+      }
+      .az-admin-inline-row span{
+        color:#b9c5d8!important;
+        white-space:nowrap!important;
+        line-height:1.15!important;
+      }
+      .az-status-online{color:#4ade80!important;font-weight:900!important;}
+      #liveUsersList .admin-purchase-user-top,
+      #loginHistoryList .admin-purchase-user-top,
+      #guestHistoryList .admin-purchase-user-top,
+      #liveUsersList .admin-purchase-user-details,
+      #loginHistoryList .admin-purchase-user-details,
+      #guestHistoryList .admin-purchase-user-details{display:none!important;}
+      @media(max-width:640px){
+        .az-admin-inline-row{gap:5px!important;font-size:10px!important;}
+        .az-admin-inline-row strong{font-size:10.5px!important;}
+      }
+    `;
+    document.head.appendChild(style);
+  }catch(_e){}
+})();
+
+
+// auto-init country selectors for dynamic admin modal
+setupCountryPhoneSelectors(document);
+new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
+
+setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection("guestHistory");azobssCleanupCollection("purchaseLogs");},5000);
+
+
+
+
+/* AZOBSS phone local display helper disabled here.
+   The single active formatter is bindAzobssPhoneDisplayFormatter() near the top of this file.
+   This prevents Backspace from getting stuck on dash/space separators. */
+window.azobssFormatLocalPhoneForDisplay = function(value){
+  return formatPhoneGuide(value);
+};
+
+/* AZOBSS ULTRA-STABLE USER MENU CLICK FIX
+   Fixes Hello, username dropdown toggle + dropdown actions after signup/auth patches. */
+(function azobssUltraStableUserMenuFix(){
+  if (window.__azobssUltraStableUserMenuFixInstalled) return;
+  window.__azobssUltraStableUserMenuFixInstalled = true;
+
+  function closeMenus(except){
+    document.querySelectorAll('#userMenu, .user-menu').forEach(function(menu){
+      if (except && menu === except) return;
+      menu.classList.remove('is-open');
+      menu.setAttribute('aria-expanded','false');
+    });
+  }
+
+  function openSettings(){
+    try {
+      if (typeof openProfileSettings === 'function') return openProfileSettings();
+      if (typeof window.openProfileSettings === 'function') return window.openProfileSettings();
+      var btn = document.querySelector('[data-open-profile-settings], #profileSettingsOpenButton, #settingsButton');
+      if (btn) btn.click();
+    } catch(_e) {}
+  }
+
+  function logout(){
+    try {
+      if (typeof azobssLogoutOnce === 'function') return azobssLogoutOnce();
+      if (typeof window.azobssLogoutUser === 'function') return window.azobssLogoutUser();
+      var old = document.querySelector('[data-auth-logout], #siteLogoutButton');
+      if (old) return old.click();
+    } catch(_e) {}
+  }
+
+  document.addEventListener('click', function(event){
+    var dropdownItem = event.target.closest('#userDropdown .user-dropdown-item, .user-dropdown .user-dropdown-item');
+    if (dropdownItem) {
+      var menuForItem = dropdownItem.closest('#userMenu, .user-menu');
+      event.stopPropagation();
+      if (dropdownItem.id === 'profileSettingsButton' || /settings/i.test(dropdownItem.textContent || '')) {
+        event.preventDefault();
+        if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+        closeMenus();
+        openSettings();
+        return;
+      }
+      if (dropdownItem.id === 'logoutButton' || /log\s*out/i.test(dropdownItem.textContent || '')) {
+        event.preventDefault();
+        if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+        closeMenus();
+        logout();
+        return;
+      }
+      closeMenus();
+      return;
+    }
+
+    var menu = event.target.closest('#userMenu, .user-menu');
+    if (menu) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      var willOpen = !menu.classList.contains('is-open');
+      closeMenus(menu);
+      menu.classList.toggle('is-open', willOpen);
+      menu.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      return;
+    }
+
+    closeMenus();
+  }, true);
+
+  document.addEventListener('keydown', function(event){
+    var menu = event.target.closest && event.target.closest('#userMenu, .user-menu');
+    if (menu && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      var willOpen = !menu.classList.contains('is-open');
+      closeMenus(menu);
+      menu.classList.toggle('is-open', willOpen);
+      menu.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+    if (event.key === 'Escape') closeMenus();
+  }, true);
+})();
+
+
+
+
+/* AZOBSS patch 100/101: My Purchases for Software + CAD only (simple text list).
+   Safe scope: does not change login/register/auth flow and does not touch PA/BM purchase records. */
+(function(){
+  if(window.__azobssMyPurchasesSimpleReady) return;
+  window.__azobssMyPurchasesSimpleReady = true;
+
+  const LOCAL_KEY_PREFIX = 'azobss_shop_purchase_history_';
+
+  function myPurchasesUserKey(){
+    try{
+      const u = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+      const authUid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      return String(authUid || u.uid || u.usernameKey || u.username || u.displayName || 'guest').trim().toLowerCase() || 'guest';
+    }catch(_e){ return 'guest'; }
+  }
+
+  function myPurchasesLocalKey(){
+    return LOCAL_KEY_PREFIX + myPurchasesUserKey();
+  }
+
+  function readMyShopPurchases(){
+    try{
+      const rows = JSON.parse(localStorage.getItem(myPurchasesLocalKey()) || '[]');
+      return Array.isArray(rows) ? rows.filter(Boolean) : [];
+    }catch(_e){ return []; }
+  }
+
+  function writeMyShopPurchases(rows){
+    try{ localStorage.setItem(myPurchasesLocalKey(), JSON.stringify((Array.isArray(rows) ? rows : []).slice(0,250))); }catch(_e){}
+  }
+
+  function cleanMoneyNumber(value){
+    const n = Number(String(value || '').replace(/[^0-9.]/g,''));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatRM(value){
+    const n = Number(value || 0);
+    return 'RM' + (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.00$/,''));
+  }
+
+  function esc(value){
+    return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  }
+
+  function currentShopSource(product){
+    const raw = String(product?.source || product?.category || '').trim();
+    if(/cad/i.test(raw)) return 'CAD Tools';
+    if(/software/i.test(raw)) return 'Software';
+    const path = String(location.pathname || '').toLowerCase();
+    return path.includes('cad-tools') ? 'CAD Tools' : 'Software';
+  }
+
+  function isConfirmedShopPurchase(product){
+    const p = product || {};
+    const status = String(p.status || p.paymentStatus || p.orderStatus || '').trim().toLowerCase();
+    const paidStatuses = ['paid','verified','success','successful','completed','complete','settled','approved'];
+    return !!(
+      p.isPaid === true ||
+      p.paymentConfirmed === true ||
+      p.verified === true ||
+      p.toyyibVerifiedAt ||
+      p.paymentVerificationSource === 'toyyibpay-api' ||
+      p.paidAt || p.paidAtMs || p.completedAt || p.completedAtMs ||
+      paidStatuses.includes(status)
+    );
+  }
+
+  function normalizeShopPurchase(product){
+    const p = product || {};
+    const qty = Math.max(1, Number(p.qty || p.quantity || 1) || 1);
+    const unit = cleanMoneyNumber(p.price || p.amount || p.unitPrice || 0);
+    const source = currentShopSource(p);
+    const name = String(p.name || p.title || p.productName || 'Premium Item').trim() || 'Premium Item';
+    const id = String(p.id || p.productId || name).trim();
+    const confirmed = isConfirmedShopPurchase(p);
+    const rawStatus = String(p.status || p.paymentStatus || '').trim().toLowerCase();
+    return {
+      id,
+      name,
+      source,
+      qty,
+      unitPrice: unit,
+      priceText: p.price ? String(p.price) : formatRM(unit),
+      totalPrice: unit * qty,
+      orderId: String(p.orderId || p.billCode || p.paymentReference || '').trim(),
+      status: confirmed ? (rawStatus || 'paid') : (rawStatus || 'pending'),
+      isPaid: confirmed,
+      paidAtMs: Number(p.paidAtMs || p.completedAtMs || 0) || (p.paidAt ? Date.parse(String(p.paidAt)) || 0 : 0),
+      createdAtMs: Date.now()
+    };
+  }
+
+  function aggregatePurchases(rows){
+    const map = new Map();
+    (rows || []).forEach(row => {
+      const r = normalizeShopPurchase(row);
+      const key = [r.source, r.id || r.name, r.unitPrice].join('::').toLowerCase();
+      const old = map.get(key);
+      if(!old){ map.set(key, r); return; }
+      old.qty += r.qty;
+      old.totalPrice += r.totalPrice;
+      old.createdAtMs = Math.max(Number(old.createdAtMs || 0), Number(r.createdAtMs || 0));
+    });
+    return Array.from(map.values()).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0));
+  }
+
+  async function syncMyPurchasesToCloud(rows){
+    try{
+      const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      if(!uid) return;
+      await setDoc(doc(db, 'userCarts', uid), {
+        uid,
+        purchaseHistory: (Array.isArray(rows) ? rows : []).slice(0,250),
+        purchaseHistoryUpdatedAtMs: Date.now(),
+        purchaseHistoryUpdatedAt: serverTimestamp()
+      }, { merge:true });
+    }catch(e){ console.warn('AZOBSS My Purchases cloud sync skipped:', e); }
+  }
+
+  async function pullMyPurchasesFromCloudIfNeeded(){
+    try{
+      const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      if(!uid) return readMyShopPurchases();
+      const snap = await getDoc(doc(db, 'userCarts', uid));
+      if(snap.exists()){
+        const data = snap.data() || {};
+        const cloudRows = Array.isArray(data.purchaseHistory) ? data.purchaseHistory.filter(Boolean) : [];
+        if(cloudRows.length){
+          const localRows = readMyShopPurchases();
+          const merged = [...cloudRows, ...localRows].slice(0,250);
+          writeMyShopPurchases(merged);
+          return merged;
+        }
+      }
+    }catch(e){ console.warn('AZOBSS My Purchases cloud load skipped:', e); }
+    return readMyShopPurchases();
+  }
+
+  window.azobssRecordShopPurchase = async function(product){
+    const record = normalizeShopPurchase(product || {});
+    // STRICT FIX 376:
+    // Do not save a Software/CAD item to local My Purchases when user only opens checkout
+    // or creates a ToyyibPay bill. Backend /api/my-purchases is the source of truth.
+    // This prevents unpaid/cancelled checkout from appearing as PAID with a fake receipt.
+    if(!record.isPaid) return record;
+    const rows = readMyShopPurchases();
+    // Avoid exact duplicate order/bill rows, but keep separate purchases if order id is different/empty.
+    if(record.orderId && rows.some(r => String(r.orderId || '') === record.orderId)) return record;
+    rows.unshift(record);
+    writeMyShopPurchases(rows);
+    syncMyPurchasesToCloud(rows);
+    try{ window.dispatchEvent(new Event('azobss-my-purchases-updated')); }catch(_e){}
+    return record;
+  };
+
+  function ensureMyPurchasesModal(){
+    let modal = document.getElementById('azobssMyPurchasesModal');
+    if(modal) return modal;
+    const style = document.createElement('style');
+    style.id = 'azobss-my-purchases-simple-css';
+    style.textContent = `
+      #azobssMyPurchasesModal{position:fixed;inset:0;z-index:9999999;background:rgba(2,6,23,.72);display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(10px)}
+      #azobssMyPurchasesModal.is-open{display:flex}
+      .az-my-purchases-card{width:min(560px,100%);max-height:82vh;overflow:auto;background:#07101f;color:#fff;border:1px solid rgba(148,163,184,.32);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.48);padding:16px}
+      .az-my-purchases-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+      .az-my-purchases-head h3{margin:0;font-size:20px;font-weight:950}
+      .az-my-purchases-close{width:34px;height:34px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer}
+      .az-my-purchases-note{font-size:13px;color:#cbd5e1;margin:0 0 12px;line-height:1.45}
+      .az-my-purchases-list{display:grid;gap:8px}
+      .az-my-purchases-row{display:grid;grid-template-columns:1fr 70px 95px;gap:10px;align-items:center;padding:10px 12px;border:1px solid rgba(148,163,184,.22);border-radius:12px;background:rgba(15,23,42,.72)}
+      .az-my-purchases-row.is-head{background:rgba(30,41,59,.95);color:#cbd5e1;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+      .az-my-purchases-name{min-width:0;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.az-my-purchases-src{display:block;font-size:12px;color:#93c5fd;font-weight:800;margin-top:2px}.az-my-purchases-qty,.az-my-purchases-price{text-align:right;font-weight:900}.az-my-purchases-empty{padding:18px;border:1px dashed rgba(148,163,184,.3);border-radius:12px;text-align:center;color:#cbd5e1}
+      @media(max-width:520px){.az-my-purchases-row{grid-template-columns:1fr 48px 74px;font-size:13px;padding:9px}.az-my-purchases-head h3{font-size:18px}}
+    `;
+    document.head.appendChild(style);
+    modal = document.createElement('div');
+    modal.id = 'azobssMyPurchasesModal';
+    modal.innerHTML = `<div class="az-my-purchases-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesTitle"><div class="az-my-purchases-head"><h3 id="azMyPurchasesTitle"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></h3><button type="button" class="az-my-purchases-close" aria-label="Close">×</button></div><p class="az-my-purchases-note">Senarai ringkas pembelian Software dan CAD Tools sahaja. Resit dan link download dihantar melalui email customer.</p><div class="az-my-purchases-list" id="azMyPurchasesList"><div class="az-my-purchases-empty">Loading...</div></div></div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target === modal || e.target.closest('.az-my-purchases-close')) closeMyPurchasesModal(); });
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMyPurchasesModal(); });
+    return modal;
+  }
+
+  function closeMyPurchasesModal(){
+    const modal = document.getElementById('azobssMyPurchasesModal');
+    if(modal) modal.classList.remove('is-open');
+  }
+
+  async function renderMyPurchasesList(){
+    const list = document.getElementById('azMyPurchasesList');
+    if(!list) return;
+    list.innerHTML = '<div class="az-my-purchases-empty">Loading...</div>';
+    const rows = aggregatePurchases(await pullMyPurchasesFromCloudIfNeeded());
+    if(!rows.length){
+      list.innerHTML = '<div class="az-my-purchases-empty">Belum ada rekod pembelian Software / CAD Tools.</div>';
+      return;
+    }
+    list.innerHTML = '<div class="az-my-purchases-row is-head"><div>Nama Barang</div><div class="az-my-purchases-qty">Qty</div><div class="az-my-purchases-price">Harga</div></div>' + rows.map(r => `<div class="az-my-purchases-row"><div class="az-my-purchases-name">${esc(r.name)}<span class="az-my-purchases-src">${esc(r.source)}</span></div><div class="az-my-purchases-qty">${esc(r.qty)}</div><div class="az-my-purchases-price">${esc(formatRM(r.totalPrice || r.unitPrice || 0))}</div></div>`).join('');
+  }
+
+  window.azobssOpenMyPurchases = async function(){
+    const modal = ensureMyPurchasesModal();
+    modal.classList.add('is-open');
+    await renderMyPurchasesList();
+  };
+
+  document.addEventListener('click', function(e){
+    const a = e.target && e.target.closest ? e.target.closest('a.user-dropdown-item[href="/#purchases"], a[href="/#purchases"]') : null;
+    if(!a) return;
+    if(!/my\s+purchases/i.test(a.textContent || '')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try{ document.querySelectorAll('.user-menu.is-open').forEach(el => el.classList.remove('is-open')); }catch(_e){}
+    window.azobssOpenMyPurchases();
+  }, true);
+
+  window.addEventListener('azobss-my-purchases-updated', renderMyPurchasesList);
+})();
+
+/* AZOBSS PATCH 307: Customer My Purchases Pro.
+   Shows PA/BM + Software + CAD purchase records with filters, receipt PDF, and active downloads. */
+(function(){
+  if(window.__azobssMyPurchasesProReady) return;
+  window.__azobssMyPurchasesProReady = true;
+
+  const state = { rows: [], q: '', category: 'all', status: 'all', loading: false, error: '' };
+  const SHOP_LOCAL_PREFIX = 'azobss_shop_purchase_history_';
+  const HIDDEN_LOCAL_PREFIX = 'azobss_my_purchases_hidden_';
+  // AZOBSS FIX 382: My Purchases should not get stuck on "Loading purchases..." when Render/Firebase is slow.
+  const CACHE_LOCAL_PREFIX = 'azobss_my_purchases_cached_paid_v415_';
+  const FETCH_TIMEOUT_MS = 9000;
+  const MIN_REFRESH_GAP_MS = 2500;
+  let loadPromise = null;
+  let lastLoadStartedAt = 0;
+  let refreshTimer = null;
+
+  function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function money(v){ const n = Number(v || 0); return 'RM' + (Number.isFinite(n) ? n.toFixed(2).replace(/\.00$/,'') : '0'); }
+  function msDate(ms){ ms = Number(ms || 0); return ms ? new Date(ms).toLocaleString('en-MY', {hour12:true, day:'2-digit', month:'2-digit', year:'numeric', hour:'numeric', minute:'2-digit'}) : '-'; }
+  function userKey(){
+    try{
+      const u = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+      const uid = auth && auth.currentUser ? auth.currentUser.uid : '';
+      return String(uid || u.uid || u.usernameKey || u.username || u.displayName || 'guest').trim().toLowerCase() || 'guest';
+    }catch(_){ return 'guest'; }
+  }
+  function currentMyPurchasesNeedles(){
+    try{
+      const u = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+      const cur = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+      const vals = [
+        cur && cur.uid,
+        cur && cur.email,
+        u.uid,
+        u.email,
+        u.authEmail,
+        u.profileEmail,
+        u.username,
+        u.usernameKey,
+        u.displayName
+      ];
+      return new Set(vals.map(v => String(v || '').trim().toLowerCase()).filter(Boolean));
+    }catch(_){ return new Set(); }
+  }
+  function myPurchasesOwnerValues(row){
+    const r = row || {};
+    const raw = r.raw && typeof r.raw === 'object' ? r.raw : {};
+    return [
+      r.uid, r.userUid, r.buyerUid,
+      r.email, r.buyerEmail, r.customerEmail,
+      r.username, r.usernameKey, r.displayName,
+      raw.uid, raw.userUid, raw.buyerUid,
+      raw.email, raw.buyerEmail, raw.customerEmail,
+      raw.username, raw.usernameKey, raw.displayName
+    ].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+  }
+  function myPurchasesBelongsToCurrentUser(row){
+    if(row && String(row.source || '').toLowerCase() === 'localhistory') return true;
+    const needles = currentMyPurchasesNeedles();
+    if(!needles.size) return false;
+    const vals = myPurchasesOwnerValues(row);
+    if(!vals.length) return false;
+    return vals.some(v => needles.has(v));
+  }
+  function rowKey(r){ return String((r && r.source || '') + '::' + (r && (r.recordId || r.productId || r.productName) || '')).toLowerCase(); }
+  function readHiddenKeys(){
+    try{ return new Set(JSON.parse(localStorage.getItem(HIDDEN_LOCAL_PREFIX + userKey()) || '[]').map(v => String(v || '').toLowerCase())); }catch(_){ return new Set(); }
+  }
+  function writeHiddenKeys(set){
+    try{ localStorage.setItem(HIDDEN_LOCAL_PREFIX + userKey(), JSON.stringify(Array.from(set || []))); }catch(_){ }
+  }
+  function readCachedRows(){
+    try{
+      const raw = localStorage.getItem(CACHE_LOCAL_PREFIX + userKey()) || '[]';
+      const rows = JSON.parse(raw);
+      return Array.isArray(rows) ? rows.filter(Boolean) : [];
+    }catch(_){ return []; }
+  }
+  function writeCachedRows(rows){
+    try{ localStorage.setItem(CACHE_LOCAL_PREFIX + userKey(), JSON.stringify((rows || []).slice(0, 500))); }catch(_){ }
+  }
+  function scheduleLoadRows(delay){
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(function(){ loadRows({silent: true}); }, Number(delay || 700));
+  }
+  function isLocallyHidden(r){ return readHiddenKeys().has(rowKey(r)); }
+  function markLocallyHidden(r){ const set = readHiddenKeys(); set.add(rowKey(r)); writeHiddenKeys(set); }
+  function cleanCategory(v){
+    const s = String(v || '').toLowerCase();
+    if(s.includes('cad')) return 'CAD Tools';
+    if(s.includes('software')) return 'Software';
+    if(s.includes('pa') || s.includes('bm')) return 'PA/BM';
+    return String(v || 'Digital Product');
+  }
+  function isPaid(row){ return row && (row.isPaid === true || ['paid','verified','success','completed','settled','approved'].includes(String(row.status || '').toLowerCase())); }
+  function shouldShowCustomerPurchase(row){
+    // AZOBSS FIX 377: hide pending/abandoned checkout from customer My Purchases.
+    // Backend still keeps pending ToyyibPay orders for callback/verification.
+    return !!(row && isPaid(row));
+  }
+  function normalizeLocalShop(row){
+    const p = row || {};
+    const amount = Number(String(p.totalPrice || p.saleAmount || p.amount || p.unitPrice || p.price || 0).replace(/[^0-9.]/g,'')) || 0;
+    const category = cleanCategory(p.source || p.category || p.type || 'Software');
+    const rawStatus = String(p.status || p.paymentStatus || '').trim().toLowerCase();
+    const paidStatuses = ['paid','verified','success','successful','completed','complete','settled','approved'];
+    const confirmed = !!(p.isPaid === true || p.paymentConfirmed === true || p.verified === true || p.toyyibVerifiedAt || p.paymentVerificationSource === 'toyyibpay-api' || p.paidAt || p.paidAtMs || p.completedAt || p.completedAtMs || paidStatuses.includes(rawStatus));
+    return {
+      recordId: String(p.orderId || p.billCode || p.id || p.productId || p.name || ('local-' + Math.random().toString(36).slice(2))).trim(),
+      source: 'localHistory', category, status: confirmed ? (rawStatus || 'paid') : (rawStatus || 'pending'), isPaid: confirmed,
+      productName: String(p.name || p.title || p.productName || 'Premium Item'),
+      productId: String(p.productId || p.id || ''),
+      amount, amountText: amount ? money(amount) : String(p.priceText || p.price || 'RM0'),
+      username: '', email: '', createdAtMs: Number(p.createdAtMs || Date.now()), paidAtMs: Number(p.paidAtMs || p.completedAtMs || 0) || (p.paidAt ? Date.parse(String(p.paidAt)) || 0 : 0),
+      downloadUsed: Number(p.downloadCount || p.usedCount || p.downloadsUsed || 0), downloadMax: Number(p.maxDownload || p.maxDownloads || p.downloadLimit || 1), downloadActive: false,
+      receiptUrl: '', receiptPdfUrl: '', downloadUrl: ''
+    };
+  }
+  function readLocalShopHistory(){
+    try{
+      const rows = JSON.parse(localStorage.getItem(SHOP_LOCAL_PREFIX + userKey()) || '[]');
+      // Hide old/local checkout rows unless they contain real paid proof.
+      // Pending ToyyibPay orders come from backend /api/my-purchases instead.
+      return Array.isArray(rows) ? rows.filter(Boolean).map(normalizeLocalShop).filter(r => r && r.isPaid) : [];
+    }catch(_){ return []; }
+  }
+  function normalizePaBmFallback(r){
+    const paid = (typeof azobssIsPurchasePaidForDownload === 'function') ? azobssIsPurchasePaidForDownload(r) : isPaid(r);
+    const allowed = (typeof azobssPurchaseDownloadAllowed === 'function') ? azobssPurchaseDownloadAllowed(r) : paid;
+    const amount = Number(r.amount || 0) || 0;
+    const id = String(r.firestoreId || r.purchaseLogId || r.id || r.orderId || r.itemCode || '').trim();
+    return {
+      recordId: id, source: 'purchaseLogs', category: 'PA/BM', status: paid ? 'paid' : (r.status || 'pending'), isPaid: paid,
+      productName: `${r.productType || 'PA'} ${r.itemCode || '-'}`.trim(), productId: String(r.itemCode || ''), itemCode: String(r.itemCode || ''), state: String(r.negeri || r.state || ''),
+      amount, amountText: money(amount), username: String(r.usernameKey || r.displayName || ''), email: String(r.email || ''), createdAtMs: Number(r.createdAtMs || 0), paidAtMs: Number(r.paidAtMs || 0),
+      downloadUsed: Number(r.downloadCount || 0), downloadMax: Number(r.maxDownloads || 5), downloadExpiresAtMs: Number(r.downloadExpiresAtMs || 0), downloadExpired: (typeof azobssPurchaseDownloadExpired === 'function') ? azobssPurchaseDownloadExpired(r) : false,
+      downloadActive: !!(paid && allowed), downloadUrl: '', receiptUrl: id ? `/api/my-purchases/receipt/${encodeURIComponent(id)}?source=purchaseLogs` : '', receiptPdfUrl: id ? `/api/my-purchases/receipt/${encodeURIComponent(id)}?source=purchaseLogs&format=pdf` : '', raw: r
+    };
+  }
+  async function tokenHeader(){
+    const current = auth && auth.currentUser ? auth.currentUser : null;
+    if(!current) throw new Error('Please login first.');
+    const token = await current.getIdToken();
+    return { 'Authorization':'Bearer ' + token };
+  }
+  async function fetchBackendPurchases(){
+    const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+    const headers = await tokenHeader();
+    const controller = new AbortController();
+    const timer = setTimeout(function(){ try{ controller.abort(); }catch(_){ } }, FETCH_TIMEOUT_MS);
+    try{
+      const res = await fetch(base + '/api/my-purchases?limit=300&_=' + Date.now(), { headers, cache:'no-store', signal: controller.signal });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || !data.ok) throw new Error(data.error || 'Unable to load My Purchases.');
+      return Array.isArray(data.records) ? data.records : [];
+    }catch(err){
+      if(err && err.name === 'AbortError') throw new Error('My Purchases server slow/idle. Showing cached records; press Refresh again in a moment.');
+      throw err;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  function premiumTokenFromRow(r){
+    try{
+      var raw = String((r && (r.downloadToken || r.token || r.downloadUrl)) || '');
+      if(!raw) return '';
+      var m = raw.match(/\/api\/premium\/download\/([^?#\/]+)/i);
+      var token = m ? decodeURIComponent(m[1]) : raw;
+      token = String(token || '').replace(/[^a-zA-Z0-9_-]/g,'');
+      return token.indexOf('dl-') === 0 ? token : '';
+    }catch(_){ return ''; }
+  }
+  async function refreshPremiumTokenStatusRows(rows){
+    if(!Array.isArray(rows) || !rows.length) return rows || [];
+    var base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+    var headers = null;
+    try{ headers = await tokenHeader(); }catch(_){ headers = {}; }
+    var tokens = [];
+    rows.forEach(function(r){
+      if(!r || String(r.source || '').toLowerCase() !== 'premiumorders') return;
+      var t = premiumTokenFromRow(r);
+      if(t && tokens.indexOf(t) < 0) tokens.push(t);
+    });
+    tokens = tokens.slice(0, 80);
+    if(!tokens.length) return rows;
+    var statusMap = new Map();
+    await Promise.all(tokens.map(async function(t){
+      var controller = new AbortController();
+      var timer = setTimeout(function(){ try{ controller.abort(); }catch(_){ } }, 6500);
+      try{
+        var res = await fetch(base + '/api/premium/download-status/' + encodeURIComponent(t) + '?_=' + Date.now(), { headers:headers, cache:'no-store', signal:controller.signal });
+        var data = await res.json().catch(function(){ return null; });
+        if(res.ok && data && data.ok) statusMap.set(t, data);
+      }catch(_){
+      }finally{
+        clearTimeout(timer);
+      }
+    }));
+    if(!statusMap.size) return rows;
+    rows.forEach(function(r){
+      var t = premiumTokenFromRow(r);
+      var st = t ? statusMap.get(t) : null;
+      if(!st) return;
+      var used = Math.max(0, Number(st.usedCount || st.downloadCount || st.downloadsUsed || 0) || 0);
+      var max = Math.max(1, Number(st.maxDownload || st.maxDownloads || st.downloadLimit || r.downloadMax || 1) || 1);
+      r.downloadToken = t;
+      r.downloadUsed = used;
+      r.downloadMax = max;
+      r.downloadExpiresAtMs = Number(st.downloadExpiresAtMs || st.tokenExpiresAtMs || st.expiresAtMs || r.downloadExpiresAtMs || 0) || 0;
+      r.downloadExpired = !!(st.downloadExpired || st.expiredByTime || st.exhausted || used >= max);
+      r.downloadActive = !!(st.downloadActive && !r.downloadExpired && used < max);
+      r.downloadStatus = st.downloadStatus || (used >= max ? 'used' : (r.downloadExpired ? 'expired' : 'active'));
+      r.downloadUrl = r.downloadActive ? (st.downloadUrl || (base + '/api/premium/download/' + encodeURIComponent(t))) : '';
+    });
+    return rows;
+  }
+
+  async function loadRows(options){
+    options = options || {};
+    if(loadPromise) return loadPromise;
+    const started = Date.now();
+    if(options.silent && state.rows.length && started - lastLoadStartedAt < MIN_REFRESH_GAP_MS) return Promise.resolve(state.rows);
+    lastLoadStartedAt = started;
+
+    loadPromise = (async function(){
+      const cached = readCachedRows().filter(r => !isLocallyHidden(r)).filter(myPurchasesBelongsToCurrentUser);
+      if(!state.rows.length && cached.length){
+        state.rows = cached;
+        state.error = '';
+        state.loading = false;
+        render();
+      }
+
+      state.loading = true;
+      state.error = '';
+      render();
+      try{
+        let rows = [];
+        try{ rows = await fetchBackendPurchases(); }
+        catch(err){
+          state.error = err && err.message ? err.message : String(err);
+          if(cached.length) rows = cached;
+        }
+        if(!rows.length && typeof loadAzobssPurchaseRecords === 'function'){
+          try{ rows = rows.concat((await loadAzobssPurchaseRecords()).map(normalizePaBmFallback)); }catch(_){ }
+        }
+        rows = rows.concat(readLocalShopHistory());
+        rows = rows.filter(myPurchasesBelongsToCurrentUser);
+        const map = new Map();
+        rows.filter(Boolean).filter(shouldShowCustomerPurchase).filter(r => !isLocallyHidden(r)).forEach(r => {
+          const key = rowKey(r);
+          if(!map.has(key)) map.set(key, r);
+        });
+        var nextRows = Array.from(map.values()).sort((a,b)=>Number(b.paidAtMs || b.createdAtMs || 0)-Number(a.paidAtMs || a.createdAtMs || 0));
+        state.rows = await refreshPremiumTokenStatusRows(nextRows);
+        if(state.rows.length) writeCachedRows(state.rows);
+      }finally{
+        state.loading = false;
+        loadPromise = null;
+        render();
+      }
+      return state.rows;
+    })();
+    return loadPromise;
+  }
+  function ensureModal(){
+    let modal = document.getElementById('azobssMyPurchasesProModal');
+    if(modal) return modal;
+    const style = document.createElement('style');
+    style.id = 'azobss-my-purchases-pro-css';
+    style.textContent = `
+      #azobssMyPurchasesProModal{position:fixed;inset:0;z-index:9999999;background:rgba(2,6,23,.76);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(10px)}
+      #azobssMyPurchasesProModal.is-open{display:flex}.az-mypro-card{width:min(980px,100%);max-height:88vh;overflow:auto;background:#07101f;color:#fff;border:1px solid rgba(148,163,184,.30);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.52)}
+      .az-mypro-head{position:sticky;top:0;z-index:3;background:rgba(7,16,31,.96);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid rgba(148,163,184,.20)}.az-mypro-head h3{margin:0;font-size:21px;font-weight:950}.az-mypro-close{width:36px;height:36px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;cursor:pointer}
+      .az-mypro-body{padding:14px 16px 18px}.az-mypro-note{margin:0 0 12px;color:#cbd5e1;font-size:13px;line-height:1.45}.az-mypro-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0 12px}.az-mypro-kpi{border:1px solid rgba(148,163,184,.22);border-radius:14px;background:rgba(15,23,42,.72);padding:10px}.az-mypro-kpi span{display:block;color:#94a3b8;font-size:11px;font-weight:850;text-transform:uppercase}.az-mypro-kpi strong{display:block;font-size:18px;margin-top:4px}
+      .az-mypro-tools{display:grid;grid-template-columns:1.2fr .8fr .8fr auto;gap:8px;margin:10px 0 12px}.az-mypro-tools input,.az-mypro-tools select{width:100%;border:1px solid rgba(148,163,184,.28);background:rgba(2,6,23,.58);color:#fff;border-radius:12px;padding:10px 11px;font-weight:750}.az-mypro-tools button,.az-mypro-action{border:0;border-radius:12px;padding:10px 12px;background:#2563eb;color:#fff;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}.az-mypro-action.secondary{background:rgba(148,163,184,.18);color:#e2e8f0}.az-mypro-action.good{background:#16a34a}.az-mypro-action.warn{background:#b45309}.az-mypro-action.danger{background:#dc2626;color:#fff}.az-mypro-action:disabled{opacity:.55;cursor:wait}.az-mypro-status-note{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(148,163,184,.24);background:rgba(148,163,184,.12);color:#cbd5e1;border-radius:12px;padding:10px 12px;font-weight:900;font-size:12px}.az-mypro-status-note.ok{background:rgba(22,163,74,.13);border-color:rgba(22,163,74,.28);color:#bbf7d0}.az-mypro-status-note.pending{background:rgba(180,83,9,.13);border-color:rgba(251,191,36,.28);color:#fde68a}.az-mypro-status-note.bad{background:rgba(220,38,38,.13);border-color:rgba(220,38,38,.28);color:#fecaca}
+      .az-mypro-list{display:grid;gap:10px}.az-mypro-row{border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);border-radius:16px;padding:12px}.az-mypro-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.az-mypro-title{min-width:0}.az-mypro-title strong{display:block;font-size:15px}.az-mypro-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;color:#cbd5e1;font-size:12px}.az-mypro-badge{display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,.24);background:rgba(2,6,23,.45);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;color:#dbeafe}.az-mypro-badge.paid{color:#bbf7d0;background:rgba(22,163,74,.14);border-color:rgba(22,163,74,.28)}.az-mypro-badge.pending{color:#fde68a;background:rgba(180,83,9,.14);border-color:rgba(180,83,9,.28)}.az-mypro-badge.bad{color:#fecaca;background:rgba(220,38,38,.14);border-color:rgba(220,38,38,.28)}.az-mypro-amount{font-size:17px;font-weight:950;color:#fef3c7;white-space:nowrap}.az-mypro-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.az-mypro-empty{padding:18px;text-align:center;color:#cbd5e1;border:1px dashed rgba(148,163,184,.30);border-radius:14px}.az-mypro-activation{margin-top:10px;border:1px solid rgba(250,204,21,.35);background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.08));border-radius:12px;padding:10px}.az-mypro-activation-label{font-size:11px;text-transform:uppercase;color:#fde68a;font-weight:1000}.az-mypro-activation-code{font-family:Consolas,monospace;font-size:17px;font-weight:1000;color:#facc15;letter-spacing:.8px;margin-top:4px;word-break:break-all}.az-mypro-activation small{display:block;color:#cbd5e1;margin-top:5px}.az-mypro-error{padding:10px 12px;background:rgba(180,83,9,.16);border:1px solid rgba(251,191,36,.28);border-radius:12px;color:#fde68a;margin-bottom:10px;font-size:13px}
+      @media(max-width:720px){.az-mypro-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.az-mypro-tools{grid-template-columns:1fr 1fr}.az-mypro-tools input{grid-column:1/-1}.az-mypro-top{display:block}.az-mypro-amount{margin-top:8px}.az-mypro-card{max-height:92vh}.az-mypro-body{padding:12px}.az-mypro-actions .az-mypro-action{flex:1 1 120px}}
+    `;
+    document.head.appendChild(style);
+    modal = document.createElement('div');
+    modal.id = 'azobssMyPurchasesProModal';
+    modal.innerHTML = `<div class="az-mypro-card" role="dialog" aria-modal="true" aria-labelledby="azMyPurchasesProTitle"><div class="az-mypro-head"><h3 id="azMyPurchasesProTitle"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span> Pro</h3><button type="button" class="az-mypro-close" aria-label="Close">×</button></div><div class="az-mypro-body"><p class="az-mypro-note">Hanya pembelian akaun ini yang sudah berjaya/verified dipaparkan di sini. Admin boleh lihat semua transaksi melalui Payment Logs / Sales Overview.</p><div id="azMyProError"></div><div class="az-mypro-kpis" id="azMyProKpis"></div><div class="az-mypro-tools"><input id="azMyProSearch" placeholder="Search product / order ID / state..."><select id="azMyProCategory"><option value="all">All Categories</option><option value="PA/BM">PA/BM</option><option value="Software">Software</option><option value="CAD Tools">CAD Tools</option></select><select id="azMyProStatus"><option value="all">All Status</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="active">Download Active</option><option value="expired">Expired / Used</option><option value="failed">Failed / Cancelled</option></select><button id="azMyProRefresh" type="button">Refresh</button></div><div class="az-mypro-list" id="azMyProList"><div class="az-mypro-empty">Loading...</div></div></div></div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target === modal || e.target.closest('.az-mypro-close')) modal.classList.remove('is-open'); });
+    modal.querySelector('#azMyProSearch')?.addEventListener('input', e => { state.q = e.target.value || ''; render(); });
+    modal.querySelector('#azMyProCategory')?.addEventListener('change', e => { state.category = e.target.value || 'all'; render(); });
+    modal.querySelector('#azMyProStatus')?.addEventListener('change', e => { state.status = e.target.value || 'all'; render(); });
+    modal.querySelector('#azMyProRefresh')?.addEventListener('click', loadRows);
+    modal.addEventListener('click', handleActionClick);
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') modal.classList.remove('is-open'); });
+    return modal;
+  }
+  function filteredRows(){
+    const q = String(state.q || '').trim().toLowerCase();
+    return state.rows.filter(r => {
+      if(state.category !== 'all' && cleanCategory(r.category) !== state.category) return false;
+      const st = String(r.status || '').toLowerCase();
+      if(state.status === 'paid' && !isPaid(r)) return false;
+      if(state.status === 'pending' && (isPaid(r) || st.includes('fail') || st.includes('cancel'))) return false;
+      if(state.status === 'active' && !r.downloadActive) return false;
+      if(state.status === 'expired' && !(isPaid(r) && !r.downloadActive)) return false;
+      if(state.status === 'failed' && !(st.includes('fail') || st.includes('cancel') || st.includes('reject') || st.includes('expired'))) return false;
+      if(!q) return true;
+      return [r.recordId,r.category,r.status,r.productName,r.productId,r.itemCode,r.state,r.amountText,r.dateText].join(' ').toLowerCase().includes(q);
+    });
+  }
+  function renderKpis(rows){
+    const paidRows = rows.filter(isPaid);
+    const total = paidRows.reduce((sum,r)=>sum + (Number(r.amount)||0), 0);
+    const active = rows.filter(r=>r.downloadActive).length;
+    const kpis = document.getElementById('azMyProKpis');
+    if(kpis) kpis.innerHTML = `<div class="az-mypro-kpi"><span>Total Paid</span><strong>${esc(money(total))}</strong></div><div class="az-mypro-kpi"><span>Records</span><strong>${esc(rows.length)}</strong></div><div class="az-mypro-kpi"><span>Active Downloads</span><strong>${esc(active)}</strong></div><div class="az-mypro-kpi"><span>Paid Orders</span><strong>${esc(paidRows.length)}</strong></div>`;
+  }
+  function statusBadge(r){
+    const st = String(r.status || (isPaid(r) ? 'paid' : 'pending')).toLowerCase();
+    const cls = isPaid(r) ? 'paid' : ((st.includes('fail') || st.includes('cancel') || st.includes('reject')) ? 'bad' : 'pending');
+    return `<span class="az-mypro-badge ${cls}">${esc(st.toUpperCase())}</span>`;
+  }
+  function downloadStateHtml(r, i){
+    const used = Number(r.downloadUsed || 0);
+    const max = Math.max(1, Number(r.downloadMax || 1) || 1);
+    const st = String(r.status || '').toLowerCase();
+    const paid = isPaid(r);
+    const failed = st.includes('fail') || st.includes('cancel') || st.includes('reject');
+    if(used >= max){
+      return `<span class="az-mypro-status-note ok">Downloaded ${used}/${max}</span>`;
+    }
+    if(r.downloadExpired){
+      return `<span class="az-mypro-status-note bad">Download expired</span>`;
+    }
+    if(r.downloadActive){
+      return `<button class="az-mypro-action good" data-mypro-action="download" data-index="${i}">Download ${used}/${max}</button>`;
+    }
+    if(!paid){
+      if(failed) return `<span class="az-mypro-status-note bad">Payment not completed</span>`;
+      return `<span class="az-mypro-status-note pending">Pending payment — download will appear after verified</span>`;
+    }
+    return `<span class="az-mypro-status-note bad">Download unavailable</span>`;
+  }
+  function activationCodeHtml(r){
+    if(!r || !r.activationCode) return '';
+    const exp = r.activationCodeExpiresAtMs ? msDate(r.activationCodeExpiresAtMs) : (r.activationCodeExpiresAt || '-');
+    return `<div class="az-mypro-activation"><div class="az-mypro-activation-label">Pro Activation Code</div><div class="az-mypro-activation-code">${esc(r.activationCode)}</div><small>${esc(r.activationPlanLabel || 'Subscription Activation Code')} · Valid until: ${esc(exp)}</small></div>`;
+  }
+  function rowHtml(r, i){
+    const exp = (isPaid(r) && r.downloadExpiresAtMs) ? `Expiry: ${msDate(r.downloadExpiresAtMs)}` : '';
+    return `<div class="az-mypro-row" data-row-index="${i}"><div class="az-mypro-top"><div class="az-mypro-title"><strong>${esc(r.productName || 'AZOBSS Digital Product')}</strong><div class="az-mypro-meta"><span class="az-mypro-badge">${esc(cleanCategory(r.category))}</span>${statusBadge(r)}${r.productId?`<span class="az-mypro-badge">ID: ${esc(r.productId)}</span>`:''}${r.state?`<span class="az-mypro-badge">${esc(r.state)}</span>`:''}<span class="az-mypro-badge">${esc(r.recordId || '-')}</span><span class="az-mypro-badge">${esc(msDate(r.paidAtMs || r.createdAtMs))}</span>${exp?`<span class="az-mypro-badge">${esc(exp)}</span>`:''}</div></div><div class="az-mypro-amount">${esc(r.amountText || money(r.amount))}</div></div>${activationCodeHtml(r)}<div class="az-mypro-actions">${r.receiptUrl?`<button class="az-mypro-action secondary" data-mypro-action="receipt" data-index="${i}">View Receipt</button><button class="az-mypro-action secondary" data-mypro-action="pdf" data-index="${i}">PDF Receipt</button>`:''}${downloadStateHtml(r, i)}<button class="az-mypro-action warn" data-mypro-action="support" data-index="${i}">Contact Admin</button><button class="az-mypro-action danger" data-mypro-action="delete" data-index="${i}">Delete</button></div></div>`;
+  }
+  function render(){
+    ensureModal();
+    const list = document.getElementById('azMyProList');
+    const err = document.getElementById('azMyProError');
+    if(err) err.innerHTML = state.error ? `<div class="az-mypro-error">${esc(state.error)}${state.rows.length ? '<br>Showing available local records.' : ''}</div>` : '';
+    const rows = filteredRows();
+    renderKpis(rows);
+    if(!list) return;
+    if(state.loading && !rows.length) { list.innerHTML = '<div class="az-mypro-empty">Loading purchases...<br><small>If Render is waking up, cached records will be shown automatically.</small></div>'; return; }
+    if(!rows.length){ list.innerHTML = '<div class="az-mypro-empty">Belum ada rekod pembelian untuk filter ini.</div>'; return; }
+    const refreshing = state.loading ? '<div class="az-mypro-error">Refreshing purchases in background...</div>' : '';
+    list.innerHTML = refreshing + rows.map(rowHtml).join('');
+  }
+  async function fetchReceiptBlob(row, format, download){
+    const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+    let url = base + (format === 'pdf' ? (row.receiptPdfUrl || row.receiptUrl + '&format=pdf') : row.receiptUrl);
+    if(format === 'pdf' && download && !/[?&]download=1/.test(url)) url += (url.includes('?') ? '&' : '?') + 'download=1';
+    const headers = await tokenHeader();
+    const res = await fetch(url, { headers, cache:'no-store' });
+    if(!res.ok) throw new Error((await res.text().catch(()=>'')) || 'Receipt request failed.');
+    return await res.blob();
+  }
+  async function openReceipt(row, format){
+    const blob = await fetchReceiptBlob(row, format, format === 'pdf');
+    const url = URL.createObjectURL(blob);
+    if(format === 'pdf'){
+      const a = document.createElement('a');
+      a.href = url; a.download = (row.recordId || 'azobss-receipt').replace(/[^a-z0-9_-]+/gi,'-') + '.pdf'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 15000);
+    }else{
+      window.open(url, '_blank', 'noopener');
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    }
+  }
+  async function softDeletePurchase(row){
+    if(!row) return;
+    if(!confirm('Delete this record from My Purchases? This only removes it from your purchase list view.')) return;
+    markLocallyHidden(row);
+    state.rows = state.rows.filter(x => rowKey(x) !== rowKey(row));
+    render();
+    if(row.source !== 'localHistory' && row.recordId){
+      try{
+        const base = (typeof azobssGetBackendBaseUrl === 'function' ? azobssGetBackendBaseUrl() : 'https://azobss-backend.onrender.com');
+        const headers = await tokenHeader();
+        await fetch(base + '/api/my-purchases/delete/' + encodeURIComponent(row.recordId) + '?source=' + encodeURIComponent(row.source || ''), { method:'DELETE', headers, cache:'no-store' });
+      }catch(err){ console.warn('AZOBSS My Purchases cloud delete skipped:', err); }
+    }else{
+      try{
+        const rows = JSON.parse(localStorage.getItem(SHOP_LOCAL_PREFIX + userKey()) || '[]');
+        const next = Array.isArray(rows) ? rows.filter(x => rowKey(normalizeLocalShop(x)) !== rowKey(row)) : [];
+        localStorage.setItem(SHOP_LOCAL_PREFIX + userKey(), JSON.stringify(next));
+      }catch(_){ }
+    }
+  }
+  async function handleActionClick(e){
+    const btn = e.target && e.target.closest ? e.target.closest('[data-mypro-action]') : null;
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    const rows = filteredRows();
+    const row = rows[Number(btn.dataset.index || 0)];
+    if(!row) return;
+    const action = btn.dataset.myproAction;
+    const old = btn.textContent;
+    try{
+      btn.disabled = true; btn.textContent = 'Please wait...';
+      if(action === 'receipt') await openReceipt(row, 'html');
+      else if(action === 'pdf') await openReceipt(row, 'pdf');
+      else if(action === 'download'){
+        if(row.source === 'purchaseLogs' && row.raw && typeof azobssClientControlledDownload === 'function' && typeof azobssPurchaseDownloadPayload === 'function'){
+          await azobssClientControlledDownload(azobssPurchaseDownloadPayload(row.raw), btn, e);
+          scheduleLoadRows(1400);
+        }else if(row.downloadUrl){
+          window.open(row.downloadUrl, '_blank', 'noopener');
+          // AZOBSS PATCH 378: premium token usage is counted by backend only after Start Download creates a secure session.
+          // Auto-refresh a few times so My Purchases changes from Download 0/1 to Downloaded 1/1/Expired after the real session starts.
+          scheduleLoadRows(3000);
+          scheduleLoadRows(15000);
+          scheduleLoadRows(45000);
+        }
+      }else if(action === 'delete'){
+        btn.disabled = false; btn.textContent = old;
+        await softDeletePurchase(row);
+        return;
+      }else if(action === 'support'){
+        try{
+          const chat = document.querySelector('[title="Contact Admin / Support"],[title="Contact Admin"],[title="Support"],[aria-label="Contact Admin / Support"]');
+          if(chat) chat.click(); else location.href = '/#support';
+        }catch(_){ location.href = '/#support'; }
+      }
+    }catch(err){ alert(err && err.message ? err.message : String(err)); }
+    finally{ btn.disabled = false; btn.textContent = old; }
+  }
+  window.azobssOpenMyPurchases = async function(){
+    const modal = ensureModal();
+    try{ document.getElementById('azobssMyPurchasesModal')?.classList.remove('is-open'); }catch(_){ }
+    modal.classList.add('is-open');
+    await loadRows();
+  };
+  window.addEventListener('azobss-my-purchases-updated', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(700); });
+  window.addEventListener('focus', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(500); });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(500); });
+})();
+
+
+
+// AZOBSS PATCH 215: PA/BM owner-only admin records UI final guard helper
+(function(){
+  if(window.__azobssPabmOwnerOnlyGuard215Installed) return;
+  window.__azobssPabmOwnerOnlyGuard215Installed = true;
+  window.azobssIsPaBmOwnerAdmin = window.azobssIsPaBmOwnerAdmin || function(){
+    var keys=['zedan91','zedan9107'], emails=['zedan9107@gmail.com','zedan91@azobss.local'];
+    function clean(v){return String(v||'').trim().toLowerCase();}
+    function parse(raw){try{return raw?JSON.parse(raw):null;}catch(_){return null;}}
+    var u={};
+    try{ if(typeof window.getSavedUser==='function') u=window.getSavedUser()||{}; }catch(_){ }
+    if(!u || !Object.keys(u).length){
+      ['azobssUser','azobss_user','azobssCurrentUser','azobss_current_user','siteUser','currentUser'].some(function(k){var o=parse(localStorage.getItem(k)||sessionStorage.getItem(k)||''); if(o){u=o; return true;} return false;});
+    }
+    var email=clean(u.email||u.authEmail||'');
+    try{ if(!email && window.firebase && window.firebase.auth) email=clean(window.firebase.auth().currentUser && window.firebase.auth().currentUser.email); }catch(_){ }
+    var key=clean(u.usernameKey||u.username||u.displayName||u.name||(email?email.split('@')[0]:''));
+    var shown=clean((document.getElementById('signedInName')||{}).textContent||'');
+    return keys.indexOf(key)!==-1 || keys.indexOf(shown)!==-1 || emails.indexOf(email)!==-1;
+  };
+})();

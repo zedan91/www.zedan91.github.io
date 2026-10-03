@@ -1,0 +1,28 @@
+{
+  "baseline": "(1011)-AZOBSS-AZOBSSTV-ANIME-RELIABLE-EMBED-WATCHDOG-SAFE-FALLBACK-FIX_20260821.zip",
+  "version": "1.0.1012",
+  "scope": "AZOBSSTV Anime resolver hard timeout, visible checking state, and fresh iframe per attempt; no frame-policy bypass.",
+  "touched_files": [
+    "AZOBSSTV/assets/azobsstv.js",
+    "AZOBSSTV/assets/azobsstv.css",
+    "AZOBSSTV/index.html",
+    "AZOBSSTV/sw.js",
+    "package.json",
+    "README_PATCH_1012.md"
+  ],
+  "behavior": [
+    "Frontend resolver request is bounded to 9.5 seconds with a 10-second UI deadline.",
+    "Checking state shows a compact Preparing player spinner instead of an apparently empty panel.",
+    "Every Anime playback attempt creates a fresh iframe, preventing stale about:blank load events from being mistaken for the real player.",
+    "v1011 12-second iframe load watchdog remains in place for verified HTML embed candidates.",
+    "Blocked/timeout fallback opens source in a new tab and keeps AZOBSSTV open.",
+    "No X-Frame-Options/CSP bypass, DRM bypass, token extraction, direct media extraction, or nested WCOFun iframe."
+  ],
+  "checks": {
+    "azobsstv_js_node_check": "pass",
+    "backend_handler_node_check": "pass",
+    "deploy_server_node_check": "pass",
+    "package_version": "1.0.1012",
+    "service_worker_cache": "azobsstv-v1012"
+  }
+}

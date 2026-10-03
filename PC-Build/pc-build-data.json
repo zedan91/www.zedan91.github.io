@@ -1,0 +1,1402 @@
+{
+  "version": 5,
+  "market": "Malaysia",
+  "currency": "MYR",
+  "priceChecked": "2026-10-01",
+  "priceNote": "Harga kad cuba diselaraskan secara live daripada sumber rujukan Malaysia. v1183 menambah lineup Office, Package PC, RTX/Radeon dan Workstation/AI berdasarkan semakan semasa Ideal Tech desktop PCs; harga AZOBSS masih menggunakan markup bertingkat dan fallback jika sumber gagal.",
+  "sources": [
+    {
+      "name": "Ideal Tech AMD Standard Office PC",
+      "url": "https://idealtech.com.my/product/amd-officepc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "ALL IT Office Plus",
+      "url": "https://www.allithypermarket.com.my/products/office-plus-pre-built-custom-pc-rtx-3050-oc-amd-ryzen-5-3400g",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Intel Standard Office PC",
+      "url": "https://idealtech.com.my/product/intel-officepc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Novice RTX 3050",
+      "url": "https://idealtech.com.my/product/amd-rtx3050-packagepc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Adept RX 9050",
+      "url": "https://idealtech.com.my/product/rx9050-gamingpcs/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Rush RTX 5060",
+      "url": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "ALL IT Aura Gaming RTX 5060",
+      "url": "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Prime RTX 5060 Ti",
+      "url": "https://idealtech.com.my/product/amd-rtx5060ti-gamingpc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "ALL IT Nova Gaming RX 9060 XT",
+      "url": "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Stellar RTX 5070",
+      "url": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "ALL IT Phantom Gaming RX 9070 XT",
+      "url": "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen?variant=49856424706276",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Creator Workstation",
+      "url": "https://idealtech.com.my/product/rtx5060ti-workstation/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Zenith RTX 5070 Ti",
+      "url": "https://idealtech.com.my/product/amd-rtx5070ti-gamingpc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Adept Workstation",
+      "url": "https://idealtech.com.my/product/rtx5070ti-workstation/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Apex RTX 5080",
+      "url": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Anvil AI Workstation",
+      "url": "https://idealtech.com.my/product/rtx-pro-4000-blackwell-ai-workstation/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Artisan AI Workstation",
+      "url": "https://idealtech.com.my/product/rtx-pro-4500-blackwell-ai-workstation/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    },
+    {
+      "name": "Ideal Tech Radiance Crown RTX 5090",
+      "url": "https://idealtech.com.my/product/amd-rtx5090-gamingpc/",
+      "note": "Sumber live untuk harga build; hanya Administrator melihat sumber/kos pada UI"
+    }
+  ],
+  "builds": [
+    {
+      "id": "office-amd-standard",
+      "tier": "Low",
+      "name": "AZOBSS Office AMD",
+      "tagline": "Office / POS / Study",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1499,
+      "sourceName": "Ideal Tech AMD Standard Office PC",
+      "sourceUrl": "https://idealtech.com.my/product/amd-officepc/",
+      "badge": "OFFICE AMD",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600G"
+        ],
+        [
+          "GPU",
+          "AMD Radeon Graphics (Integrated)"
+        ],
+        [
+          "Motherboard",
+          "A520M / B550M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "500W 80+"
+        ],
+        [
+          "Case",
+          "mATX office airflow"
+        ]
+      ],
+      "bestFor": [
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
+      ],
+      "note": "Build pejabat ekonomi dengan APU. Sesuai untuk kerja harian; untuk 3D, rendering atau gaming berat pilih dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "AZOBSS Office AMD compact office PC with integrated graphics",
+      "imageNote": "Visual rujukan: office • iGPU • mATX",
+      "segment": "office",
+      "cpuBrand": "amd",
+      "platform": "AM4",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Radeon",
+      "resolutionTags": [
+        "office"
+      ]
+    },
+    {
+      "id": "essential-office",
+      "tier": "Low",
+      "name": "AZOBSS Essential",
+      "tagline": "Office / Study / Daily Use",
+      "category": "office",
+      "resolution": "Office & light creative",
+      "price": 1699,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Office Plus",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/office-plus-pre-built-custom-pc-rtx-3050-oc-amd-ryzen-5-3400g",
+      "badge": "LOW / VALUE",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500GT"
+        ],
+        [
+          "GPU",
+          "AMD Radeon Graphics (Integrated)"
+        ],
+        [
+          "Motherboard",
+          "A520M mATX"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "512GB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "500W 80+ / reputable brand"
+        ],
+        [
+          "Case",
+          "mATX airflow case"
+        ]
+      ],
+      "bestFor": [
+        "Office & kerja harian",
+        "Belajar / Microsoft Office",
+        "AutoCAD 2D ringan & pelan asas",
+        "Browsing, video & multitasking"
+      ],
+      "note": "Sesuai untuk kerja pejabat dan CAD 2D ringan. Untuk Civil 3D, Revit, 3D atau rendering, pilih build dengan dedicated GPU dan sekurang-kurangnya 32GB RAM.",
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD 2018–2026 (2D ringan)",
+        "MapInfo Pro / QGIS ringan",
+        "Global Mapper ringan",
+        "PDF / Canva / Photoshop ringan"
+      ],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "AZOBSS Essential mATX office build with integrated graphics and airflow case",
+      "imageNote": "Visual rujukan ikut konfigurasi: mATX • iGPU • airflow",
+      "segment": "office",
+      "cpuBrand": "amd",
+      "platform": "AM4",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Radeon",
+      "resolutionTags": [
+        "office"
+      ]
+    },
+    {
+      "id": "office-intel-standard",
+      "tier": "Low",
+      "name": "AZOBSS Office Intel",
+      "tagline": "Office / Business / Multi-task",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1799,
+      "sourceName": "Ideal Tech Intel Standard Office PC",
+      "sourceUrl": "https://idealtech.com.my/product/intel-officepc/",
+      "badge": "OFFICE INTEL",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-12400"
+        ],
+        [
+          "GPU",
+          "Intel UHD Graphics"
+        ],
+        [
+          "Motherboard",
+          "H610M / B660M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "500W 80+"
+        ],
+        [
+          "Case",
+          "mATX office airflow"
+        ]
+      ],
+      "bestFor": [
+        "Office & business",
+        "Multi-tasking harian",
+        "AutoCAD 2D",
+        "PC kaunter / admin"
+      ],
+      "note": "Pilihan Intel untuk pejabat dan kerja teknikal ringan. Dedicated GPU masih disarankan untuk model 3D dan rendering.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D",
+        "MapInfo / QGIS asas",
+        "Photoshop ringan"
+      ],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "AZOBSS Office Intel compact business PC",
+      "imageNote": "Visual rujukan: office • Intel iGPU • mATX",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "LGA1700",
+      "gpuBrand": "integrated",
+      "gpuModel": "Intel UHD",
+      "resolutionTags": [
+        "office"
+      ]
+    },
+    {
+      "id": "starter-rtx3050",
+      "tier": "Low-Mid",
+      "name": "AZOBSS Starter RTX",
+      "tagline": "1080p Entry / CAD GPU",
+      "category": "gaming",
+      "resolution": "1080p",
+      "price": 2599,
+      "sourceName": "Ideal Tech Radiance Novice RTX 3050",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx3050-packagepc/",
+      "badge": "RTX 3050",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050"
+        ],
+        [
+          "Motherboard",
+          "A520M / B550M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "550W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "mATX airflow + 3 fans"
+        ]
+      ],
+      "bestFor": [
+        "1080p entry gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp asas",
+        "CUDA entry-level"
+      ],
+      "note": "Entry dedicated GPU untuk pengguna yang perlukan CUDA atau grafik lebih baik berbanding iGPU.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / Global Mapper",
+        "Photoshop",
+        "Blender ringan"
+      ],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AZOBSS Starter RTX build with entry NVIDIA GPU",
+      "imageNote": "Visual rujukan: RTX entry • mATX • airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM4",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050",
+      "resolutionTags": [
+        "1080p"
+      ]
+    },
+    {
+      "id": "value-rx9050",
+      "tier": "Low-Mid",
+      "name": "AZOBSS Value RX",
+      "tagline": "1080p Gaming / Value",
+      "category": "gaming",
+      "resolution": "1080p",
+      "price": 2999,
+      "sourceName": "Ideal Tech Radiance Adept RX 9050",
+      "sourceUrl": "https://idealtech.com.my/product/rx9050-gamingpcs/",
+      "badge": "RX 9050",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9050"
+        ],
+        [
+          "Motherboard",
+          "B550M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "PSU",
+          "600W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "mATX gaming airflow"
+        ]
+      ],
+      "bestFor": [
+        "1080p gaming",
+        "CAD/GIS harian",
+        "Esports",
+        "General creator"
+      ],
+      "note": "Pilihan value Radeon untuk gaming 1080p dan kerja grafik umum.",
+      "softwareFit": [
+        "AutoCAD",
+        "MapInfo / QGIS / Global Mapper",
+        "SketchUp",
+        "DaVinci Resolve ringan"
+      ],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "AZOBSS Value RX build with Radeon GPU",
+      "imageNote": "Visual rujukan: Radeon entry • airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM4",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9050",
+      "resolutionTags": [
+        "1080p"
+      ]
+    },
+    {
+      "id": "rush-rtx5060",
+      "tier": "Mid",
+      "name": "AZOBSS Rush RTX",
+      "tagline": "1080p Ultra / RTX Value",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3299,
+      "sourceName": "Ideal Tech Radiance Rush RTX 5060",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/",
+      "badge": "RTX 5060 VALUE",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ],
+        [
+          "Motherboard",
+          "B550M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "1TB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "650W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "mATX gaming airflow"
+        ]
+      ],
+      "bestFor": [
+        "1080p Ultra gaming",
+        "1440p entry",
+        "AutoCAD / Civil 3D ringan",
+        "CUDA creator"
+      ],
+      "note": "Build DDR4 value dengan RTX 5060; naik taraf ke 32GB untuk BIM/Civil 3D lebih besar.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D ringan",
+        "SketchUp",
+        "Premiere Pro",
+        "Blender CUDA"
+      ],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AZOBSS Rush RTX build with RTX 5060 class GPU",
+      "imageNote": "Visual rujukan: RTX 5060 • DDR4 value • airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM4",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ]
+    },
+    {
+      "id": "entry-rtx",
+      "tier": "Low-Mid",
+      "name": "AZOBSS Entry RTX",
+      "tagline": "1080p Gaming / General Creator",
+      "category": "gaming",
+      "resolution": "1080p High",
+      "price": 3749,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Aura Gaming RTX 5060",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
+      "badge": "1080P VALUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ],
+        [
+          "Motherboard",
+          "A520M / B550M"
+        ],
+        [
+          "RAM",
+          "16GB DDR4 3200MHz"
+        ],
+        [
+          "Storage",
+          "500GB–1TB NVMe SSD"
+        ],
+        [
+          "PSU",
+          "650W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "mATX airflow + 3 fans"
+        ]
+      ],
+      "bestFor": [
+        "AutoCAD 2D/3D & kerja teknikal",
+        "1080p gaming High settings",
+        "Esports high FPS",
+        "Creator ringan–sederhana"
+      ],
+      "note": "RTX 5060 sesuai untuk CAD/creator entry-level dan CUDA. Untuk Civil 3D/Revit projek besar, 32GB RAM dan SSD 1TB lebih selesa.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D (projek ringan–sederhana)",
+        "MapInfo Pro / Global Mapper / QGIS",
+        "SketchUp",
+        "Photoshop / Premiere",
+        "Blender CUDA entry-level"
+      ],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AZOBSS Entry RTX mATX gaming build with RTX-class GPU and three-fan airflow case",
+      "imageNote": "Visual rujukan ikut konfigurasi: mATX • RTX • 3-fan airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM4",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p"
+      ]
+    },
+    {
+      "id": "creator-rtx5060ti",
+      "tier": "Mid-High",
+      "name": "AZOBSS Creator RTX",
+      "tagline": "1440p / Creator / BIM",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 4799,
+      "sourceName": "Ideal Tech Radiance Prime RTX 5060 Ti",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5060ti-gamingpc/",
+      "badge": "RTX 5060 Ti 16GB",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 16GB"
+        ],
+        [
+          "Motherboard",
+          "B650M AM5"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "1TB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Tower air cooler"
+        ],
+        [
+          "PSU",
+          "650W–750W 80+ Gold"
+        ],
+        [
+          "Case",
+          "ARGB airflow case"
+        ]
+      ],
+      "bestFor": [
+        "1440p gaming",
+        "Civil 3D / Revit",
+        "Adobe creator",
+        "GPU rendering / CUDA"
+      ],
+      "note": "VRAM 16GB + 32GB RAM menjadikannya lebih sesuai untuk creator, BIM dan projek teknikal berbanding build entry.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere / After Effects",
+        "Blender CUDA",
+        "Agisoft Metashape"
+      ],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "AZOBSS Creator RTX build with RTX 5060 Ti class GPU",
+      "imageNote": "Visual rujukan: RTX 5060 Ti • 32GB • creator",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti",
+      "resolutionTags": [
+        "1440p"
+      ]
+    },
+    {
+      "id": "mainstream-rx",
+      "tier": "Mid",
+      "name": "AZOBSS Mainstream RX",
+      "tagline": "1080p Ultra / 1440p Gaming",
+      "category": "gaming",
+      "resolution": "1440p",
+      "price": 5049,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Nova Gaming RX 9060 XT",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
+      "badge": "BEST BALANCE",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ],
+        [
+          "Motherboard",
+          "A620M AM5"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 5600MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "240mm AIO / equivalent"
+        ],
+        [
+          "PSU",
+          "650W 80+ Silver"
+        ],
+        [
+          "Case",
+          "mATX airflow case"
+        ]
+      ],
+      "bestFor": [
+        "CAD / GIS dan kerja ukur",
+        "1440p gaming",
+        "AAA games dengan VRAM 16GB",
+        "Streaming & multitasking"
+      ],
+      "note": "VRAM 16GB membantu kerja grafik dan gaming. Untuk Revit/Civil 3D lebih berat, naik taraf ke 32GB RAM dan SSD 1TB.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D (sederhana)",
+        "MapInfo Pro / Global Mapper / QGIS / ArcGIS Pro",
+        "SketchUp",
+        "Revit asas–sederhana",
+        "DaVinci Resolve"
+      ],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "AZOBSS Mainstream RX AM5 gaming build with Radeon GPU and AIO cooling",
+      "imageNote": "Visual rujukan ikut konfigurasi: Radeon • AIO • airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ]
+    },
+    {
+      "id": "performance-rtx",
+      "tier": "Mid-High",
+      "name": "AZOBSS Performance RTX",
+      "tagline": "1440p High Refresh / Creator",
+      "category": "performance",
+      "resolution": "1440p High Refresh",
+      "price": 6299,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "Ideal Tech Radiance Stellar RTX 5070",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/",
+      "badge": "RTX 5070",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ],
+        [
+          "Motherboard",
+          "MSI B650M Gaming WiFi / equivalent"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Tower air cooler"
+        ],
+        [
+          "PSU",
+          "750W 80+ Bronze"
+        ],
+        [
+          "Case",
+          "ARGB airflow case"
+        ]
+      ],
+      "bestFor": [
+        "CAD/BIM profesional",
+        "1440p high-refresh gaming",
+        "Rendering GPU / CUDA",
+        "Gaming + streaming"
+      ],
+      "note": "Pilihan seimbang untuk CAD/BIM dan creator. 32GB RAM + 1TB SSD sangat disarankan untuk Civil 3D, Revit dan Adobe projek besar.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D / Revit",
+        "MapInfo Pro / Global Mapper / ArcGIS Pro",
+        "3ds Max / SketchUp + V-Ray",
+        "Blender CUDA",
+        "Premiere Pro / After Effects",
+        "Lumion / Twinmotion sederhana",
+        "Agisoft Metashape sederhana"
+      ],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "AZOBSS Performance RTX build with RTX-class GPU, tower air cooler and ARGB airflow case",
+      "imageNote": "Visual rujukan ikut konfigurasi: RTX • tower air • ARGB",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ]
+    },
+    {
+      "id": "highend-rx",
+      "tier": "High",
+      "name": "AZOBSS High-End RX",
+      "tagline": "1440p Ultra / 4K Gaming",
+      "category": "highend",
+      "resolution": "4K capable",
+      "price": 7649,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "ALL IT Phantom Gaming RX 9070 XT",
+      "sourceUrl": "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen?variant=49856424706276",
+      "badge": "HIGH-END",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7800X3D"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT 16GB"
+        ],
+        [
+          "Motherboard",
+          "ASUS Prime B850M-F WiFi / equivalent"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 5600MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "240mm AIO"
+        ],
+        [
+          "PSU",
+          "750W 80+ Gold"
+        ],
+        [
+          "Case",
+          "mATX premium airflow"
+        ]
+      ],
+      "bestFor": [
+        "CAD/GIS berat & multitasking",
+        "1440p Ultra high FPS",
+        "4K gaming",
+        "AAA gaming jangka panjang"
+      ],
+      "note": "CPU X3D sangat kuat untuk gaming dan GPU 16GB sesuai untuk visualisasi. Untuk workstation utama, 32–64GB RAM + SSD 1–2TB disarankan.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D / Revit",
+        "MapInfo Pro / Global Mapper / ArcGIS Pro / QGIS",
+        "SketchUp",
+        "Lumion / Twinmotion",
+        "DaVinci Resolve",
+        "Blender",
+        "Agisoft Metashape"
+      ],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "AZOBSS High-End RX build with large Radeon GPU, liquid cooling and premium airflow",
+      "imageNote": "Visual rujukan ikut konfigurasi: Radeon • AIO • premium airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 XT",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ]
+    },
+    {
+      "id": "workstation-creator",
+      "tier": "Workstation",
+      "name": "AZOBSS Creator Workstation",
+      "tagline": "CAD / BIM / 3D / Creator",
+      "category": "workstation",
+      "resolution": "Workstation",
+      "price": 7699,
+      "sourceName": "Ideal Tech Creator Workstation",
+      "sourceUrl": "https://idealtech.com.my/product/rtx5060ti-workstation/",
+      "badge": "WORKSTATION 5060 Ti",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 16GB"
+        ],
+        [
+          "Motherboard",
+          "B860 workstation-ready"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Tower air cooler"
+        ],
+        [
+          "PSU",
+          "750W 80+ Gold"
+        ],
+        [
+          "Case",
+          "ATX airflow case"
+        ]
+      ],
+      "bestFor": [
+        "AutoCAD / Civil 3D",
+        "Revit / BIM",
+        "3D rendering",
+        "4K video editing"
+      ],
+      "note": "Workstation creator berasaskan kelas rujukan RTX 5060 Ti 16GB. Untuk dataset besar, tambah SSD 1–2TB.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max",
+        "Blender CUDA",
+        "Premiere / After Effects",
+        "Agisoft Metashape"
+      ],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "AZOBSS Creator Workstation with RTX 5060 Ti class GPU",
+      "imageNote": "Visual rujukan: workstation • 32GB • RTX 5060 Ti",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "LGA1851",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti",
+      "resolutionTags": [
+        "workstation",
+        "1440p"
+      ]
+    },
+    {
+      "id": "pro-rtx5070ti",
+      "tier": "High",
+      "name": "AZOBSS Pro RTX",
+      "tagline": "1440p Ultra / 4K / Pro Creator",
+      "category": "highend",
+      "resolution": "1440p Ultra / 4K",
+      "price": 8299,
+      "sourceName": "Ideal Tech Radiance Zenith RTX 5070 Ti",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070ti-gamingpc/",
+      "badge": "RTX 5070 Ti",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7700"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti 16GB"
+        ],
+        [
+          "Motherboard",
+          "B650 / B850 WiFi"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "1TB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "240mm AIO / premium air"
+        ],
+        [
+          "PSU",
+          "850W 80+ Gold"
+        ],
+        [
+          "Case",
+          "ATX premium airflow"
+        ]
+      ],
+      "bestFor": [
+        "1440p Ultra gaming",
+        "4K gaming",
+        "BIM / rendering",
+        "Heavy creator"
+      ],
+      "note": "GPU 16GB dan 32GB RAM sesuai untuk workstation creator yang juga digunakan untuk gaming berprestasi tinggi.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "Lumion / Twinmotion",
+        "3ds Max / V-Ray",
+        "Blender CUDA",
+        "Adobe Creative Cloud",
+        "Agisoft Metashape"
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS Pro RTX build with RTX 5070 Ti class GPU",
+      "imageNote": "Visual rujukan: RTX 5070 Ti • AIO • premium airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ]
+    },
+    {
+      "id": "workstation-adept",
+      "tier": "Workstation",
+      "name": "AZOBSS Adept Workstation",
+      "tagline": "Heavy BIM / Rendering / Simulation",
+      "category": "workstation",
+      "resolution": "Workstation",
+      "price": 9399,
+      "sourceName": "Ideal Tech Adept Workstation",
+      "sourceUrl": "https://idealtech.com.my/product/rtx5070ti-workstation/",
+      "badge": "WORKSTATION 5070 Ti",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti 16GB"
+        ],
+        [
+          "Motherboard",
+          "B860 workstation-ready"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "240mm AIO / premium air"
+        ],
+        [
+          "PSU",
+          "850W 80+ Gold"
+        ],
+        [
+          "Case",
+          "ATX premium airflow"
+        ]
+      ],
+      "bestFor": [
+        "Heavy Civil 3D / Revit",
+        "3D rendering",
+        "Photogrammetry",
+        "4K creator"
+      ],
+      "note": "Lebih sesuai untuk projek BIM, render dan photogrammetry yang memerlukan GPU lebih kuat.",
+      "softwareFit": [
+        "Civil 3D / Revit",
+        "3ds Max / V-Ray",
+        "Blender CUDA",
+        "Lumion / Twinmotion",
+        "Agisoft Metashape",
+        "ArcGIS Pro"
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS Adept Workstation with RTX 5070 Ti class GPU",
+      "imageNote": "Visual rujukan: workstation • RTX 5070 Ti • 32GB",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "LGA1851",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti",
+      "resolutionTags": [
+        "workstation",
+        "4k"
+      ]
+    },
+    {
+      "id": "flagship-rtx",
+      "tier": "Very High",
+      "name": "AZOBSS 4K RTX",
+      "tagline": "4K Ultra / AI / Professional Creator",
+      "category": "flagship",
+      "resolution": "4K Ultra",
+      "price": 10299,
+      "priceType": "Harga live sumber / fallback terakhir",
+      "sourceName": "Ideal Tech Radiance Apex RTX 5080",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/",
+      "badge": "RTX 5080 / 4K",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080 16GB"
+        ],
+        [
+          "Motherboard",
+          "AM5 performance motherboard"
+        ],
+        [
+          "RAM",
+          "16GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Performance air / AIO"
+        ],
+        [
+          "PSU",
+          "850W 80+ Gold ATX 3.1"
+        ],
+        [
+          "Case",
+          "High-airflow ARGB case"
+        ]
+      ],
+      "bestFor": [
+        "4K Ultra gaming",
+        "CAD/BIM + rendering berat",
+        "3D rendering / CUDA / AI",
+        "Professional content creation"
+      ],
+      "note": "GPU kelas tinggi untuk 4K, rendering dan AI. Untuk workstation sebenar, naik taraf ke 32–64GB RAM, SSD 1–2TB dan CPU lebih tinggi jika kerja CPU-heavy.",
+      "softwareFit": [
+        "AutoCAD 2022–2026",
+        "Civil 3D / Revit",
+        "MapInfo Pro / Global Mapper / ArcGIS Pro",
+        "3ds Max / Blender CUDA",
+        "Lumion / Twinmotion",
+        "Premiere Pro / After Effects",
+        "DaVinci Resolve",
+        "Agisoft Metashape",
+        "Local AI / CUDA workloads"
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS 4K RTX flagship build with large RTX 5080-class GPU, liquid cooling and high-airflow ARGB case",
+      "imageNote": "Visual rujukan ikut konfigurasi: RTX 5080-class • high-airflow • AIO",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080",
+      "resolutionTags": [
+        "4k",
+        "ai"
+      ]
+    },
+    {
+      "id": "workstation-anvil",
+      "tier": "AI Workstation",
+      "name": "AZOBSS Anvil AI Workstation",
+      "tagline": "Professional AI / 3D / Engineering",
+      "category": "workstation",
+      "resolution": "AI Workstation",
+      "price": 20999,
+      "sourceName": "Ideal Tech Anvil AI Workstation",
+      "sourceUrl": "https://idealtech.com.my/product/rtx-pro-4000-blackwell-ai-workstation/",
+      "badge": "RTX PRO 4000",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA RTX PRO 4000 Blackwell 24GB"
+        ],
+        [
+          "Motherboard",
+          "Professional LGA1851 platform"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Premium workstation cooling"
+        ],
+        [
+          "PSU",
+          "1000W 80+ Gold"
+        ],
+        [
+          "Case",
+          "Professional ATX airflow"
+        ]
+      ],
+      "bestFor": [
+        "AI / machine learning",
+        "3D rendering profesional",
+        "Engineering / simulation",
+        "Large CAD/BIM scenes"
+      ],
+      "note": "Kelas RTX PRO untuk pengguna profesional yang mengutamakan VRAM, driver profesional dan workload compute.",
+      "softwareFit": [
+        "Autodesk suite",
+        "3ds Max / V-Ray",
+        "Blender / CUDA",
+        "AI frameworks",
+        "Engineering simulation",
+        "Adobe Pro workflows"
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS Anvil AI Workstation with RTX PRO GPU",
+      "imageNote": "Visual rujukan: RTX PRO • AI workstation • professional airflow",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "LGA1851",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX PRO 4000 Blackwell",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ]
+    },
+    {
+      "id": "workstation-artisan",
+      "tier": "AI Workstation",
+      "name": "AZOBSS Artisan AI Workstation",
+      "tagline": "High VRAM AI / Pro Visualization",
+      "category": "workstation",
+      "resolution": "AI Workstation",
+      "price": 29999,
+      "sourceName": "Ideal Tech Artisan AI Workstation",
+      "sourceUrl": "https://idealtech.com.my/product/rtx-pro-4500-blackwell-ai-workstation/",
+      "badge": "RTX PRO 4500",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA RTX PRO 4500 Blackwell 32GB"
+        ],
+        [
+          "Motherboard",
+          "Professional LGA1851 platform"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "Premium workstation cooling"
+        ],
+        [
+          "PSU",
+          "1000W–1200W 80+ Gold"
+        ],
+        [
+          "Case",
+          "Professional full-size airflow"
+        ]
+      ],
+      "bestFor": [
+        "Large AI models",
+        "High VRAM visualization",
+        "Professional rendering",
+        "Engineering / scientific workloads"
+      ],
+      "note": "Workstation high-VRAM untuk pengguna profesional. RAM dan storage boleh dinaik taraf mengikut dataset sebenar.",
+      "softwareFit": [
+        "AI / ML frameworks",
+        "Autodesk suite",
+        "3ds Max / V-Ray",
+        "Blender CUDA",
+        "Professional visualization",
+        "Scientific compute"
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS Artisan AI Workstation with high VRAM RTX PRO GPU",
+      "imageNote": "Visual rujukan: RTX PRO 32GB • AI workstation • full-size",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "LGA1851",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX PRO 4500 Blackwell",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ]
+    },
+    {
+      "id": "ultimate-rtx5090",
+      "tier": "Ultra",
+      "name": "AZOBSS Ultimate RTX",
+      "tagline": "4K Ultra / AI / Extreme Creator",
+      "category": "flagship",
+      "resolution": "4K Ultra / AI",
+      "price": 32999,
+      "sourceName": "Ideal Tech Radiance Crown RTX 5090",
+      "sourceUrl": "https://idealtech.com.my/product/amd-rtx5090-gamingpc/",
+      "badge": "RTX 5090",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9 9950X3D-class"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5090 32GB"
+        ],
+        [
+          "Motherboard",
+          "X870 / premium AM5"
+        ],
+        [
+          "RAM",
+          "64GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "2TB Gen4/Gen5 NVMe SSD"
+        ],
+        [
+          "Cooler",
+          "360mm AIO"
+        ],
+        [
+          "PSU",
+          "1200W 80+ Gold/Platinum"
+        ],
+        [
+          "Case",
+          "Full-size premium airflow"
+        ]
+      ],
+      "bestFor": [
+        "4K Ultra high refresh",
+        "AI / local models",
+        "8K / heavy creator",
+        "GPU rendering profesional"
+      ],
+      "note": "Flagship untuk pengguna yang benar-benar perlukan GPU kelas tertinggi. Komponen akhir perlu disahkan mengikut stok dan clearance casing.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "Unreal Engine",
+        "3ds Max / V-Ray",
+        "Blender CUDA/OptiX",
+        "Adobe Creative Cloud",
+        "AI / machine learning"
+      ],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "AZOBSS Ultimate RTX build with RTX 5090 class GPU",
+      "imageNote": "Visual rujukan: RTX 5090 • 360 AIO • flagship airflow",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "AM5",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5090",
+      "resolutionTags": [
+        "4k",
+        "ai"
+      ]
+    }
+  ],
+  "livePriceApi": "https://azobss-backend.onrender.com/api/pc-build/live-prices",
+  "liveRefreshSeconds": 300
+}
