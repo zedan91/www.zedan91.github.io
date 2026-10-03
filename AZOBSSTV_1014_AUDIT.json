@@ -1,0 +1,23 @@
+{
+  "baseline": "(1013)-AZOBSS-AZOBSSTV-LIVE-TV-LOCAL-ARTWORK-PERSISTENCE-FIX_20260821.zip",
+  "version": "1.0.1014",
+  "scope": "AZOBSSTV Movies external-source integration",
+  "source": {
+    "name": "7Movies",
+    "url": "https://7movies.in/",
+    "mode": "external-new-tab",
+    "kind": "movies"
+  },
+  "changes": [
+    "Added built-in 7Movies Movies source card",
+    "Added local 7Movies SVG artwork",
+    "Preserved built-in Movies sources across Live catalogue replacement",
+    "Added built-in Movies source to first paint and playlist loads",
+    "Bumped app/service-worker/cache-busters to 1014"
+  ],
+  "boundaries": [
+    "No direct stream extraction",
+    "No DRM/token/CSP/X-Frame-Options bypass",
+    "No forced third-party iframe"
+  ]
+}
