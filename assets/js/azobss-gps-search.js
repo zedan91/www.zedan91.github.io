@@ -1,0 +1,343 @@
+(function () {
+  'use strict';
+
+  const ROWS_PER_PAGE = 5;
+  const DATA_URL = '/stesen-gps-records.json?v=20260826-gps-live-fallback-1042';
+  const LIVE_URL = 'https://azobss-backend.onrender.com/api/stesen-gps';
+  const stateEl = document.getElementById('gpsState');
+  const inputEl = document.getElementById('gpsStation');
+  const generalEl = document.getElementById('gpsGeneralSearch');
+  const searchButton = document.getElementById('gpsSearchButton');
+  const quickAddButton = document.getElementById('gpsQuickAddButton');
+  const errorEl = document.getElementById('gpsSearchError');
+  const statusEl = document.getElementById('gpsSearchStatus');
+  const resultWrap = document.getElementById('gpsResultWrap');
+  const resultsBody = document.getElementById('gpsResultsBody');
+  const pagination = document.getElementById('gpsPagination');
+  if (!stateEl || !inputEl || !generalEl || !searchButton || !resultWrap || !resultsBody || !pagination) return;
+
+  let recordsCache = null;
+  let allRows = [];
+  let matchingRows = [];
+  let currentPage = 1;
+  const gpsSorter = window.azobssTableSort && window.azobssTableSort.create({
+    root: resultWrap,
+    attribute: 'data-gps-sort',
+    onChange: () => {
+      matchingRows = gpsSorter.sort(matchingRows);
+      renderResults(1);
+    }
+  });
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    })[char]);
+  }
+
+  function normalize(value) {
+    return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  function encodeRecord(record) {
+    const stationNo = String(record.stationNo || '').trim().toUpperCase();
+    return encodeURIComponent(JSON.stringify({
+      productType: 'GPS',
+      itemCode: stationNo,
+      stationNo,
+      productId: String(record.productId || '').trim(),
+      negeri: String(record.negeri || stateEl.value || '').trim().toUpperCase(),
+      amount: 9,
+      downloadUrl: String(record.downloadUrl || '').trim(),
+      filename: stationNo + '.pdf',
+      azobssCartValidated: true,
+      azobssCartValidatedBy: 'official-stesen-gps-index'
+    }));
+  }
+
+  function buildGoogleMapsUrl(record) {
+    const latitude = Number(record && record.latitude);
+    const longitude = Number(record && record.longitude);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`;
+    }
+    return String(record && (record.googleMapsUrl || record.mapsUrl) || '').trim();
+  }
+
+  function setQuickStatus(message, state) {
+    if (!statusEl) return;
+    statusEl.style.removeProperty('display');
+    statusEl.textContent = message || '';
+    statusEl.classList.remove('is-checking', 'is-success', 'is-unavailable');
+    if (state) statusEl.classList.add(`is-${state}`);
+  }
+
+  async function loadRecords() {
+    if (recordsCache) return recordsCache;
+    const response = await fetch(DATA_URL, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Pangkalan data stesen GPS tidak tersedia.');
+    const data = await response.json();
+    if (!Array.isArray(data)) throw new Error('Format pangkalan data stesen GPS tidak sah.');
+    recordsCache = data;
+    return recordsCache;
+  }
+
+  async function fetchLiveRecords(negeri, query) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 28000);
+    try {
+      const url = `${LIVE_URL}?negeri=${encodeURIComponent(negeri)}&q=${encodeURIComponent(String(query || '').trim())}`;
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) throw new Error(`JUPEM live GPS returned ${response.status}.`);
+      const data = await response.json();
+      return Array.isArray(data && data.results) ? data.results : [];
+    } finally { clearTimeout(timer); }
+  }
+
+  function uniqueGpsRows(rows) {
+    const seen = new Set();
+    return (rows || []).filter((record) => {
+      const key = [String(record.productId || ''), normalize(record.stationNo), String(record.negeri || '').trim().toUpperCase()].join('|');
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+  }
+
+  function renderPagination(totalPages) {
+    if (totalPages <= 1) {
+      pagination.hidden = true;
+      pagination.innerHTML = '';
+      return;
+    }
+    pagination.hidden = false;
+    const buttons = [];
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-gps-page="first" ${currentPage === 1 ? 'disabled' : ''}>&lt;&lt;</button>`);
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-gps-page="prev" ${currentPage === 1 ? 'disabled' : ''}>P</button>`);
+    let start = Math.max(1, currentPage - 4);
+    let end = Math.min(totalPages, start + 9);
+    start = Math.max(1, end - 9);
+    for (let page = start; page <= end; page += 1) {
+      buttons.push(`<button class="benchmark-page-btn${page === currentPage ? ' is-active' : ''}" type="button" data-gps-page="${page}">${page}</button>`);
+    }
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-gps-page="next" ${currentPage === totalPages ? 'disabled' : ''}>N</button>`);
+    buttons.push(`<button class="benchmark-page-btn" type="button" data-gps-page="last" ${currentPage === totalPages ? 'disabled' : ''}>&gt;&gt;</button>`);
+    pagination.innerHTML = buttons.join('');
+  }
+
+  function renderResults(page) {
+    if (gpsSorter) matchingRows = gpsSorter.sort(matchingRows);
+    const totalPages = Math.max(1, Math.ceil(matchingRows.length / ROWS_PER_PAGE));
+    currentPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
+    if (!matchingRows.length) {
+      resultWrap.hidden = true;
+      resultsBody.innerHTML = '';
+      renderPagination(1);
+      return;
+    }
+
+    resultWrap.hidden = false;
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    resultsBody.innerHTML = matchingRows.slice(startIndex, startIndex + ROWS_PER_PAGE).map((record, index) => {
+      const mapLink = record.mapUrl
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(record.mapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat lokasi ${escapeHtml(record.stationNo || 'stesen GPS')} dalam JUPEM eBiz" title="JUPEM eBiz"><span aria-hidden="true">&#128269;</span></a>`
+        : '-';
+      const googleMapsUrl = buildGoogleMapsUrl(record);
+      const googleMapsLink = googleMapsUrl
+        ? `<a class="btn pabm-location-text-button pabm-location-icon-button" href="${escapeHtml(googleMapsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Buka ${escapeHtml(record.stationNo || 'stesen GPS')} dalam Google Maps" title="Google Maps"><span aria-hidden="true">&#128269;</span></a>`
+        : '-';
+      return `<tr>
+        <td>${startIndex + index + 1}</td>
+        <td class="pabm-action-cell pabm-cart-action-cell"><button class="btn blue pabm-table-cart-button" type="button" data-gps-record="${encodeRecord(record)}" aria-label="Tambah ${escapeHtml(record.stationNo || 'stesen GPS')} ke troli" title="Tambah ke Troli"><span aria-hidden="true">&#128722;</span></button></td>
+        <td><strong>${escapeHtml(record.stationNo || '-')}</strong></td>
+        <td class="pabm-state-data-cell">${escapeHtml(record.negeri || '-')}</td>
+        <td class="pabm-district-data-cell">${escapeHtml(record.daerah || '-')}</td>
+        <td class="pabm-place-data-cell">${escapeHtml(record.tempat || '-')}</td>
+        <td class="pabm-action-cell pabm-location-text-cell">${mapLink}</td>
+        <td class="pabm-action-cell pabm-location-text-cell">${googleMapsLink}</td>
+      </tr>`;
+    }).join('');
+    renderPagination(totalPages);
+  }
+
+  function clearResults() {
+    allRows = [];
+    matchingRows = [];
+    currentPage = 1;
+    generalEl.value = '';
+    generalEl.disabled = true;
+    renderResults(1);
+  }
+
+  function updateStatus() {
+    if (!statusEl) return;
+    const query = normalize(generalEl.value);
+    statusEl.textContent = query
+      ? `${matchingRows.length.toLocaleString('en-MY')} daripada ${allRows.length.toLocaleString('en-MY')} rekod stesen GPS ditemui`
+      : `${allRows.length.toLocaleString('en-MY')} rekod stesen GPS ditemui`;
+  }
+
+  function applyGeneralFilter() {
+    const query = normalize(generalEl.value);
+    matchingRows = !query ? allRows.slice() : allRows.filter((record) => [
+      normalize(record.stationNo),
+      normalize(record.stationNo).replace(/^[A-Z]+/, ''),
+      normalize(record.negeri),
+      normalize(record.daerah),
+      normalize(record.tempat),
+      normalize(record.productId)
+    ].some((value) => value.includes(query)));
+    renderResults(1);
+    updateStatus();
+  }
+
+  async function addGpsRecord(record, direct) {
+    if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
+    const payload = JSON.parse(decodeURIComponent(encodeRecord(record)));
+    const saved = await window.azobssRecordPurchase(payload);
+    setQuickStatus(saved && saved.__azobssAlreadyInCart
+      ? 'Stesen GPS ini sudah ada dalam troli anda.'
+      : (direct
+        ? `Berjaya: ${payload.itemCode} telah ditambah ke troli anda.`
+        : `${payload.itemCode} ditambah ke troli anda.`), 'success');
+    return saved;
+  }
+
+  async function search() {
+    const selectedState = String(stateEl.value || '').trim().toUpperCase();
+    const query = normalize(inputEl.value);
+    if (errorEl) errorEl.textContent = '';
+    setQuickStatus('', '');
+    if (!selectedState) {
+      if (errorEl) errorEl.textContent = 'Pilih negeri sebelum membuat carian.';
+      return;
+    }
+
+    searchButton.disabled = true;
+    if (statusEl) statusEl.textContent = 'Sedang mencari dalam pangkalan data stesen GPS...';
+    try {
+      const records = await loadRecords();
+      let localRows = records.filter((record) => {
+        if (String(record.negeri || '').trim().toUpperCase() !== selectedState) return false;
+        if (!query) return true;
+        return [record.stationNo, record.daerah, record.tempat, record.productId]
+          .some((value) => normalize(value).includes(query));
+      });
+      let liveRows = [];
+      if (!localRows.length) {
+        if (statusEl) statusEl.textContent = 'Rekod tempatan tidak dijumpai. Sedang menyemak JUPEM live...';
+        try { liveRows = await fetchLiveRecords(selectedState, inputEl.value); } catch (_) { liveRows = []; }
+      }
+      allRows = uniqueGpsRows([...localRows, ...liveRows]).map((record, index) => ({ ...record, _sourceIndex: index, harga: 9 }));
+      matchingRows = allRows.slice();
+      generalEl.disabled = !allRows.length;
+      renderResults(1);
+      if (statusEl) {
+        statusEl.textContent = allRows.length
+          ? `${allRows.length.toLocaleString('en-MY')} rekod stesen GPS ditemui`
+          : 'Tiada rekod stesen GPS ditemui';
+      }
+    } catch (error) {
+      clearResults();
+      if (errorEl) errorEl.textContent = error.message || 'Carian stesen GPS gagal.';
+      if (statusEl) statusEl.textContent = '';
+    } finally {
+      searchButton.disabled = false;
+    }
+  }
+
+  async function quickAdd() {
+    const selectedState = String(stateEl.value || '').trim().toUpperCase();
+    const query = normalize(inputEl.value);
+    if (errorEl) errorEl.textContent = '';
+    setQuickStatus('', '');
+    if (!selectedState) {
+      setQuickStatus('Pilih negeri sebelum menambah terus ke troli.', 'unavailable');
+      return;
+    }
+    if (!query) {
+      setQuickStatus('Masukkan kod stesen GPS sebelum menambah terus ke troli.', 'unavailable');
+      return;
+    }
+    const label = quickAddButton?.querySelector('span');
+    const oldText = label?.textContent || 'Tambah Terus ke Troli';
+    try {
+      if (quickAddButton) quickAddButton.disabled = true;
+      if (label) label.textContent = 'Checking GPS...';
+      const requestedCode = String(inputEl.value || '').trim().toUpperCase();
+      setQuickStatus(`Sedang menyemak ketersediaan GPS ${requestedCode}. Sila tunggu...`, 'checking');
+      const records = await loadRecords();
+      let exact = records.find((record) =>
+        String(record.negeri || '').trim().toUpperCase() === selectedState
+        && (normalize(record.stationNo) === query || normalize(record.productId) === query)
+      );
+      if (!exact) {
+        const liveRows = await fetchLiveRecords(selectedState, requestedCode);
+        exact = liveRows.find((record) => normalize(record.stationNo) === query || normalize(record.productId) === query) || null;
+      }
+      if (!exact) {
+        const unavailable = new Error(`Stesen GPS ${requestedCode} tidak tersedia di ${selectedState}.`);
+        unavailable.isUnavailable = true;
+        throw unavailable;
+      }
+      await addGpsRecord(exact, true);
+    } catch (error) {
+      setQuickStatus(error?.isUnavailable
+        ? error.message
+        : 'Unable to check GPS availability right now. Please try again.', 'unavailable');
+    } finally {
+      if (quickAddButton) quickAddButton.disabled = false;
+      if (label) label.textContent = oldText;
+    }
+  }
+
+  searchButton.addEventListener('click', search);
+  quickAddButton?.addEventListener('click', quickAdd);
+  generalEl.addEventListener('input', applyGeneralFilter);
+  generalEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') event.preventDefault();
+  });
+  inputEl.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    search();
+  });
+  stateEl.addEventListener('change', () => {
+    clearResults();
+    if (errorEl) errorEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+  });
+  inputEl.addEventListener('input', () => {
+    clearResults();
+    if (errorEl) errorEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+  });
+
+  pagination.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-gps-page]');
+    if (!button || button.disabled) return;
+    const totalPages = Math.max(1, Math.ceil(matchingRows.length / ROWS_PER_PAGE));
+    const target = button.dataset.gpsPage;
+    if (target === 'first') currentPage = 1;
+    else if (target === 'prev') currentPage -= 1;
+    else if (target === 'next') currentPage += 1;
+    else if (target === 'last') currentPage = totalPages;
+    else currentPage = Number(target) || currentPage;
+    renderResults(currentPage);
+    resultWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  resultsBody.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-gps-record]');
+    if (!button) return;
+    if (errorEl) errorEl.textContent = '';
+    try {
+      button.disabled = true;
+      const payload = JSON.parse(decodeURIComponent(button.dataset.gpsRecord || ''));
+      await addGpsRecord(payload, false);
+    } catch (error) {
+      if (errorEl) errorEl.textContent = error.message || 'Stesen GPS ini tidak dapat ditambah ke troli anda.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
