@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 128 128" role="img" aria-label="AZDM">
-  <rect x="4" y="4" width="120" height="120" rx="30" fill="#087f72"/>
-  <path fill="#fff" fill-rule="evenodd" d="M56 23h16c4 0 7 2 9 6l25 61c3 7-1 13-8 13h-5c-4 0-7-2-9-6L65 46c-.4-1-1.6-1-2 0L44 97c-2 4-5 6-9 6h-5c-7 0-11-6-8-13l25-61c2-4 5-6 9-6Z"/>
-  <path fill="#fff" d="M57 58h14v20h12L64 97 45 78h12Z"/>
-</svg>
