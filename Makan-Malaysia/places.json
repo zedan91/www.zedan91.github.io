@@ -1,0 +1,500 @@
+[
+  {
+    "id": "wanjo",
+    "name": "Nasi Lemak Wanjo Kampung Baru",
+    "state": "Kuala Lumpur",
+    "city": "Kampung Baru",
+    "address": "8, Jalan Raja Muda Musa, Kampung Baru, 50300 Kuala Lumpur",
+    "specialty": "Nasi Lemak & Ayam Goreng Berempah",
+    "category": "Nasi Lemak",
+    "tags": [
+      "Halal",
+      "Iconic",
+      "Breakfast",
+      "Local Favourite"
+    ],
+    "rank": 1,
+    "why": "A long-running Kampung Baru nasi lemak institution that remains one of KL's most frequently recommended local breakfast stops.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "Owner states 100% halal"
+  },
+  {
+    "id": "village-park",
+    "name": "Village Park Restaurant",
+    "state": "Selangor",
+    "city": "Petaling Jaya",
+    "address": "5, Jalan SS 21/37, Damansara Utama, 47400 Petaling Jaya, Selangor",
+    "specialty": "Nasi Lemak Ayam Goreng",
+    "category": "Nasi Lemak",
+    "tags": [
+      "Halal",
+      "Iconic",
+      "Popular",
+      "Breakfast"
+    ],
+    "rank": 2,
+    "why": "One of the Klang Valley's best-known nasi lemak destinations, especially for ayam goreng berempah.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "Halal ingredients / Muslim-friendly operation"
+  },
+  {
+    "id": "lemang-toki",
+    "name": "Lemang To'Ki",
+    "state": "Pahang",
+    "city": "Bentong",
+    "address": "Batu 2, Jalan Tras, 28700 Bentong, Pahang",
+    "specialty": "Lemang, Rendang & Malay Dishes",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Iconic",
+      "Lemang",
+      "Road Trip"
+    ],
+    "rank": 3,
+    "why": "A Bentong landmark with thousands of public reviews, especially popular for lemang and rendang.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "hameediyah",
+    "name": "Hameediyah Restaurant",
+    "state": "Pulau Pinang",
+    "city": "George Town",
+    "address": "164, Lebuh Campbell, 10100 George Town, Pulau Pinang",
+    "specialty": "Nasi Kandar",
+    "category": "Nasi Kandar",
+    "tags": [
+      "Halal",
+      "Heritage",
+      "Iconic",
+      "Curry"
+    ],
+    "rank": 4,
+    "why": "A historic Penang nasi kandar institution with a heritage stretching back more than a century.",
+    "halalOnly": true,
+    "halalStatus": "Halal · Muslim-owned",
+    "halalBasis": "Muslim-owned nasi kandar"
+  },
+  {
+    "id": "line-clear",
+    "name": "Restoran Nasi Kandar Line Clear",
+    "state": "Pulau Pinang",
+    "city": "George Town",
+    "address": "161 & 177, Jalan Penang, 10000 George Town, Pulau Pinang",
+    "specialty": "Nasi Kandar Kuah Banjir",
+    "category": "Nasi Kandar",
+    "tags": [
+      "Halal",
+      "Iconic",
+      "Supper",
+      "Heritage"
+    ],
+    "rank": 5,
+    "why": "A famous Penang Road nasi kandar stop known for mixed curries and its enduring alleyway atmosphere.",
+    "halalOnly": true,
+    "halalStatus": "Halal · Muslim-owned",
+    "halalBasis": "Muslim-owned nasi kandar"
+  },
+  {
+    "id": "nasi-dagang-atas-tol",
+    "name": "Nasi Dagang Atas Tol",
+    "state": "Terengganu",
+    "city": "Kuala Terengganu",
+    "address": "37, Jalan Masjid Abidin, 20200 Kuala Terengganu, Terengganu",
+    "specialty": "Nasi Dagang",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Breakfast",
+      "Terengganu",
+      "Local Favourite"
+    ],
+    "rank": 6,
+    "why": "A well-known nasi dagang breakfast name in Kuala Terengganu, associated with one of the state's signature dishes.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "nasi-ulam-cikgu",
+    "name": "Restoran Nasi Ulam Cikgu",
+    "state": "Kelantan",
+    "city": "Kota Bharu",
+    "address": "Kampung Kraftangan, Jalan Hilir Kota, 15300 Kota Bharu, Kelantan",
+    "specialty": "Nasi Ulam & Kelantanese Dishes",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Kelantan",
+      "Ulam",
+      "Lunch"
+    ],
+    "rank": 7,
+    "why": "A popular Kota Bharu stop for nasi ulam, budu, herbs and a broad spread of Kelantanese dishes.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "sate-kajang",
+    "name": "Sate Kajang Haji Samuri",
+    "state": "Selangor",
+    "city": "Kajang",
+    "address": "Bangunan Dato Nazir, Jalan Kelab, 43000 Kajang, Selangor",
+    "specialty": "Sate Kajang",
+    "category": "Satay",
+    "tags": [
+      "Halal",
+      "Iconic",
+      "Family",
+      "Local Favourite"
+    ],
+    "rank": 8,
+    "why": "Kajang is synonymous with satay, and Haji Samuri is one of the most recognisable names associated with it.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "JAKIM-listed Sate Kajang Hj Samuri products / halal operation"
+  },
+  {
+    "id": "gobang-maju",
+    "name": "Go' Bang Maju Patin Tempoyak",
+    "state": "Pahang",
+    "city": "Temerloh",
+    "address": "Lot 5086, Kampung Raja, 28000 Temerloh, Pahang",
+    "specialty": "Patin Tempoyak",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Patin",
+      "Tempoyak",
+      "Temerloh"
+    ],
+    "rank": 9,
+    "why": "One of Temerloh's best-known names for patin tempoyak and other Pahang-style patin dishes.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "tanglin",
+    "name": "Nasi Lemak Tanglin",
+    "state": "Kuala Lumpur",
+    "city": "Tasik Perdana",
+    "address": "Gerai No. 6, Kompleks Makan Tanglin, Jalan Cenderasari, 50480 Kuala Lumpur",
+    "specialty": "Nasi Lemak",
+    "category": "Nasi Lemak",
+    "tags": [
+      "Halal",
+      "Breakfast",
+      "Heritage",
+      "Local Favourite"
+    ],
+    "rank": 10,
+    "why": "A classic morning nasi lemak stop in central KL with a long local following.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "Listed by halal dining directories"
+  },
+  {
+    "id": "mee-bandung-muar",
+    "name": "Mee Bandung Abu Bakar Hanipah",
+    "state": "Johor",
+    "city": "Muar",
+    "address": "69A, Jalan Abdullah, Pekan Muar, 84000 Muar, Johor",
+    "specialty": "Mee Bandung Muar",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Halal",
+      "Muar",
+      "Iconic",
+      "Noodles"
+    ],
+    "rank": 11,
+    "why": "A recognised Muar name for the town's signature rich and savoury mee bandung.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "asam-pedas-claypot",
+    "name": "Asam Pedas Claypot · Kota Laksamana",
+    "state": "Melaka",
+    "city": "Melaka City",
+    "address": "86, Jalan Laksamana 5, Taman Kota Laksamana, 75200 Melaka",
+    "specialty": "Asam Pedas Claypot",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Asam Pedas",
+      "Dinner",
+      "Melaka"
+    ],
+    "rank": 12,
+    "why": "A heavily visited Kota Laksamana stop serving Melaka-style asam pedas bubbling in claypots.",
+    "halalOnly": true,
+    "halalStatus": "Halal · Muslim-owned",
+    "halalBasis": "Muslim-owned halal listing"
+  },
+  {
+    "id": "selera-nogori",
+    "name": "Restoran Selera Nogori",
+    "state": "Negeri Sembilan",
+    "city": "Seremban",
+    "address": "604, Jalan Haruan 4/8, Oakland Commercial Centre, 70300 Seremban, Negeri Sembilan",
+    "specialty": "Masakan Kampung & Masak Lemak",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Negeri Sembilan",
+      "Masak Lemak",
+      "Lunch"
+    ],
+    "rank": 13,
+    "why": "A highly visited Seremban restaurant for Negeri Sembilan-style kampung dishes and masak lemak.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "warung-pok-nong",
+    "name": "Warung Pok Nong",
+    "state": "Terengganu",
+    "city": "Kuala Terengganu",
+    "address": "145 A1693, Jalan Pantai, Kampung Teliput, 21030 Kuala Terengganu, Terengganu",
+    "specialty": "Celup Tepung & Seafood",
+    "category": "Seafood",
+    "tags": [
+      "Halal",
+      "Beach",
+      "Seafood",
+      "Local Favourite"
+    ],
+    "rank": 14,
+    "why": "A popular coastal stop for celup tepung and casual seafood, often recommended for a Terengganu food run.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "itik-salai-masthar",
+    "name": "Itik Salai Masthar Sg Merab",
+    "state": "Selangor",
+    "city": "Kajang",
+    "address": "Jalan Aman, 43000 Kajang, Selangor",
+    "specialty": "Itik Salai Masak Lemak",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Smoked Duck",
+      "Masak Lemak",
+      "Popular"
+    ],
+    "rank": 15,
+    "why": "A popular Kajang-area stop for smoky itik salai with rich masak lemak gravy.",
+    "halalOnly": true,
+    "halalStatus": "Halal · Muslim-owned",
+    "halalBasis": "Muslim-owned halal listing"
+  },
+  {
+    "id": "kacang-pool-haji",
+    "name": "Kacang Pool Haji · Selera Johor",
+    "state": "Johor",
+    "city": "Johor Bahru",
+    "address": "14, Jalan Garuda, Larkin, 80350 Johor Bahru, Johor",
+    "specialty": "Kacang Pool",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Johor",
+      "Breakfast",
+      "Local Favourite"
+    ],
+    "rank": 16,
+    "why": "A popular Johor breakfast stop for kacang pool served with toast and egg.",
+    "halalOnly": true,
+    "halalStatus": "Halal · Muslim-owned",
+    "halalBasis": "Muslim-owned halal listing"
+  },
+  {
+    "id": "yati-ayam-percik",
+    "name": "Yati Ayam Percik",
+    "state": "Kelantan",
+    "city": "Kota Bharu",
+    "address": "Jalan Long Yunus, 15200 Kota Bharu, Kelantan",
+    "specialty": "Ayam Percik",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Kelantan",
+      "Ayam Percik",
+      "Local Classic"
+    ],
+    "rank": 17,
+    "why": "A familiar Kota Bharu name for ayam percik, one of Kelantan's best-known grilled dishes.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "haji-shariff-cendol",
+    "name": "Haji Shariff Cendol",
+    "state": "Negeri Sembilan",
+    "city": "Seremban",
+    "address": "44, Jalan Yam Tuan, Bandar Seremban, 70100 Seremban, Negeri Sembilan",
+    "specialty": "Cendol",
+    "category": "Dessert",
+    "tags": [
+      "Halal",
+      "Dessert",
+      "Historic",
+      "Seremban"
+    ],
+    "rank": 18,
+    "why": "A long-standing Seremban cendol stop popular for a quick traditional dessert break.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "Listed as halal restaurant"
+  },
+  {
+    "id": "laksa-teluk-kechai",
+    "name": "Zakaria Laksa Teluk Kechai",
+    "state": "Kedah",
+    "city": "Alor Setar",
+    "address": "250, Jalan Kuala Kedah, Kampung Klong Hoi, 06600 Alor Setar, Kedah",
+    "specialty": "Laksa Kedah",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Halal",
+      "Laksa",
+      "Kedah",
+      "Lunch"
+    ],
+    "rank": 19,
+    "why": "A long-running local stop for Kedah-style laksa near the Kuala Kedah route.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "kak-nong-sabah",
+    "name": "Kak Nong",
+    "state": "Sabah",
+    "city": "Kota Kinabalu",
+    "address": "B26 & 27, Level 1, Block B, Jalan Sembulan, 88100 Kota Kinabalu, Sabah",
+    "specialty": "Malaysian, Indonesian & Baba Nyonya Dishes",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Muslim Restaurant",
+      "Local Favourite"
+    ],
+    "rank": 20,
+    "why": "A Muslim restaurant in Kota Kinabalu serving mixed Malaysian, Indonesian and Baba Nyonya dishes.",
+    "halalOnly": true,
+    "halalStatus": "Halal · Muslim restaurant",
+    "halalBasis": "Halal assurance / Muslim restaurant listing."
+  },
+  {
+    "id": "capati-arau",
+    "name": "Restoran Capati Arau",
+    "state": "Perlis",
+    "city": "Arau",
+    "address": "26 & 28, Jalan 4, Kompleks Tok Arau, Jalan Arau-Kodiang, 02600 Arau, Perlis",
+    "specialty": "Capati & Northern Breakfast",
+    "category": "Breakfast",
+    "tags": [
+      "Halal",
+      "Perlis",
+      "Capati",
+      "Breakfast"
+    ],
+    "rank": 21,
+    "why": "A well-known Arau breakfast choice, especially for soft capati with dhal, curry and northern-style accompaniments.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "king-laksa-sarawak",
+    "name": "King Laksa Sarawak · ICOM Square",
+    "state": "Sarawak",
+    "city": "Kuching",
+    "address": "Unit A101 & A102, Ground Floor, Block A, ICOM Square, Jalan Pending, 93450 Kuching, Sarawak",
+    "specialty": "Halal Sarawak Laksa & Chicken Kolo Mee",
+    "category": "Laksa & Noodles",
+    "tags": [
+      "Halal",
+      "Sarawak Laksa",
+      "Muslim-Friendly"
+    ],
+    "rank": 22,
+    "why": "A halal Kuching option for Sarawak laksa and chicken-based local noodle dishes.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "Recent halal dining guides identify the ICOM Square outlet as halal."
+  },
+  {
+    "id": "anjung-keli",
+    "name": "Restoran Anjung Keli",
+    "state": "Perlis",
+    "city": "Kangar",
+    "address": "Medan Sri Pulai, Jalan Behor Pulai, 01000 Kangar, Perlis",
+    "specialty": "Masakan Kampung & Ikan Keli",
+    "category": "Regional Malay",
+    "tags": [
+      "Halal",
+      "Perlis",
+      "Lunch",
+      "Local Food"
+    ],
+    "rank": 23,
+    "why": "A recognised Kangar stop for kampung-style dishes and local Perlis flavours.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "umai-cafe",
+    "name": "Umai Cafe",
+    "state": "Putrajaya",
+    "city": "Presint 6",
+    "address": "Kompleks Sukan Air, Presint 6, 62200 Putrajaya",
+    "specialty": "Malaysian Meals with Lakeside Setting",
+    "category": "Cafe & Restaurant",
+    "tags": [
+      "Halal",
+      "Putrajaya",
+      "Family",
+      "Lakeside"
+    ],
+    "rank": 24,
+    "why": "A popular Putrajaya casual dining stop with a lakeside setting and broad Malaysian menu.",
+    "halalOnly": true,
+    "halalStatus": "Halal / Muslim-owned",
+    "halalBasis": "Malay/Muslim food premise selected for the halal-only guide; re-check current status before a special trip."
+  },
+  {
+    "id": "anjung-ketam-labuan",
+    "name": "Anjung Ketam",
+    "state": "Labuan",
+    "city": "Labuan",
+    "address": "Kampung Tanjung Aru, Jalan Tanjung Aru, 87007 Labuan",
+    "specialty": "Seafood & Crab",
+    "category": "Seafood",
+    "tags": [
+      "Halal",
+      "Labuan",
+      "Seafood",
+      "Local Cuisine"
+    ],
+    "rank": 25,
+    "why": "A Labuan seafood stop known for crab and local seafood dishes near the coast.",
+    "halalOnly": true,
+    "halalStatus": "Halal",
+    "halalBasis": "Listed as halal / pork-free seafood dining"
+  }
+]

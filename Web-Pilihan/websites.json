@@ -1,0 +1,19 @@
+[
+  {
+    "id": "seostudio-tools",
+    "name": "SEOStudio Tools",
+    "url": "https://seostudio.tools/",
+    "domain": "seostudio.tools",
+    "category": "SEO & Web Tools",
+    "description": "Free online tools for SEO, text, images, YouTube, website management, web development, converters and calculators.",
+    "tags": [
+      "SEO",
+      "YouTube",
+      "Text",
+      "Image",
+      "Web Dev"
+    ],
+    "badge": "Free",
+    "featured": true
+  }
+]
