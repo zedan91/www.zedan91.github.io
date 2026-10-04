@@ -1,0 +1,16 @@
+AZOBSS PATCH 802
+SERVICE BOOKINGS ADMIN AUTH BRIDGE FIX
+Date: 2026-08-05
+
+Problem:
+Admin > Service Bookings displayed "Gagal memuatkan rekod: Admin authorization required."
+
+Root cause:
+The Admin Dashboard main controller is loaded as type="module". Functions declared in an ES module do not become window properties. The classic Service Bookings script checked window.azAdminFetchJson, did not find it, then used plain fetch without a Firebase Authorization header.
+
+Changes:
+1. Exposed azAdminAuthHeaders, azAdminFetchJson and azAdminFetchBlob on window.
+2. Service Bookings now waits up to about 2 seconds for the authenticated helper.
+3. Removed unauthenticated fetch fallback.
+4. Existing forced Firebase ID-token refresh on 401/403 remains active.
+5. Patch 801 shortcut and all earlier functions are retained.

@@ -1,0 +1,15 @@
+AZOBSS v1045 - Invoice / Receipt Customer Address
+
+Baseline: v1044
+
+Changes:
+- Added optional Customer Address field to Admin > Sales & Receipts manual invoice/receipt form.
+- Address is saved as customerAddress and restored when editing.
+- Invoice and receipt PDFs now show ADDRESS in the customer information box.
+- Browser print view also shows customer address.
+- Service Booking -> invoice prefill automatically uses Floor/Unit + Full Address.
+- Website purchase records can display existing customerAddress/billingAddress/buyerAddress/fullAddress/address fields when available.
+- Sales & Receipts search and CSV export now include Address.
+- Updated admin asset cache-busters to v1045.
+
+No changes to payment totals, ToyyibPay logic, purchase/download flow, pricing, PA/BM access guard, map, or backend APIs.

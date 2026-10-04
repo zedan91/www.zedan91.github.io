@@ -1,0 +1,14 @@
+AZOBSS PATCH 773
+
+- Replaced fixed LCD prices with size/type ranges:
+  13.3/13.4 standard RM250-RM380, touch RM550-RM850
+  14.0 standard RM260-RM400, touch RM500-RM750
+  15.6 standard RM270-RM450, touch RM550-RM850
+  16.0 standard RM400-RM600, touch RM700-RM1000+
+  17.3 standard RM350-RM650, touch RM850-RM1200+
+- Added screen type field and dynamic min/max estimate.
+- Added fixed AZOBSS pickup fee RM30 and return delivery fee RM30.
+- Added delivery combinations RM0/RM30/RM60 and included them in estimate, WhatsApp and Firestore.
+- Added strong note that admin confirms actual/final price.
+- Admin Service Bookings and CSV now show min/max estimate, screen type and logistics fees.
+- deploy-server.js changed: Manual Deploy/Restart Render required.

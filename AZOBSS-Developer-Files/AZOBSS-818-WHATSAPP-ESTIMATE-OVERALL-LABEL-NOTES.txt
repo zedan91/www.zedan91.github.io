@@ -1,0 +1,9 @@
+AZOBSS Patch 818 — WhatsApp Estimate Overall Label
+
+Baseline: Patch 817
+
+Changes:
+1. Renamed the WhatsApp service-booking label from `Anggaran julat:` to `Anggaran Keseluruhan:`.
+2. The estimated RM value after the colon remains bold.
+3. Applied consistently to both the backend-generated WhatsApp message and the frontend fallback message.
+4. All Patch 817 functions are retained.

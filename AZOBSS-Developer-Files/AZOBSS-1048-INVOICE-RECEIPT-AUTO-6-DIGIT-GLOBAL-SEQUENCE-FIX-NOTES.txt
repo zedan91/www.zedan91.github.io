@@ -1,0 +1,29 @@
+AZOBSS PATCH 1048
+=================
+Baseline: 1047
+
+1047 applied AZI/AZR 6-digit global sequence to Manual Invoice/Receipt.
+1048 extends the same numbering to automatic website transactions.
+
+AUTO:
+- PA/BM / JUPEM
+- Software / CAD ToyyibPay
+- Stripe
+- premiumOrders / purchaseLogs
+
+FORMAT:
+Invoice = AZI-YYYYMMDD-000001
+Receipt = AZR-YYYYMMDD-000001
+
+The numeric suffix is one global sequence and never resets daily.
+Invoice and Receipt for the same transaction keep the same suffix.
+
+Legacy transaction/order references remain internal and are NOT deleted.
+Admin Sales & Receipts performs an authenticated backfill for older automatic
+records that previously displayed INV-pabm-* or INV-stripe-*.
+
+Backend counter:
+systemCounters/salesDocuments
+
+IMPORTANT:
+deploy-server.js changed, therefore Render backend must be redeployed.

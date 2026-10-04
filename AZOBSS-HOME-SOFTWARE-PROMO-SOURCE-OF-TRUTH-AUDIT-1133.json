@@ -1,0 +1,48 @@
+{
+  "patch": 1133,
+  "packageVersion": "1.0.1133",
+  "date": "2026-09-16",
+  "baseline": 1132,
+  "purpose": "Fix homepage Software Promo source-of-truth so paid discount promos are not shown as FREE and non-promoted software is excluded.",
+  "changedFiles": [
+    {
+      "path": "index.html",
+      "bytes": 672223,
+      "sha256": "8d8497909ee56928dfe5811c3a3dd22e7330502a7bceba2d1a77b9c39adc6605"
+    },
+    {
+      "path": "Software-Tools/index.html",
+      "bytes": 831708,
+      "sha256": "c855b80ef0c775e0157b71b8e87f3fced26f41bec7293ca775e126adf8422587"
+    },
+    {
+      "path": "deploy-server.js",
+      "bytes": 1126881,
+      "sha256": "aaacfd053017ad5836e20deac9028f48a2c9b6904557aab6a1ec0b56514225d0"
+    },
+    {
+      "path": "package.json",
+      "bytes": 814,
+      "sha256": "8396b7c79a91eda301996dab73fb87a966cc65416257c27ebf58dc92e66b5e86"
+    },
+    {
+      "path": "README_PATCH_1133.md",
+      "bytes": 1287,
+      "sha256": "cb35d9f43e244569769970ac854ac48d99ccaf4201a0b8035599c084781e2113"
+    }
+  ],
+  "semanticChecks": {
+    "homepagePromoRequiresDiscountOrFreePromo": true,
+    "canonicalPromoFreeFlagPrecedence": true,
+    "staleLegacyFreeFlagCannotOverrideCanonicalFalse": true,
+    "backendPromoFreeGuardUsesSameCanonicalPrecedence": true,
+    "solatTimeExpectedPaidPromoExample": "RM20 when price=RM20 and originalPrice=RM30",
+    "windowsUpdateOneClickExpectedHomepagePromo": false
+  },
+  "validation": {
+    "npmRunCheck": "passed",
+    "inlineScriptsChecked": 113,
+    "semanticTestCases": 4,
+    "semanticTestCasesPassed": 4
+  }
+}

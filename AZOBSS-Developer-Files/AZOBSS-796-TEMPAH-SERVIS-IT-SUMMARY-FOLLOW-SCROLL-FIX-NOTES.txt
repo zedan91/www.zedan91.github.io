@@ -1,0 +1,16 @@
+AZOBSS 796 - TEMPAH SERVIS IT SUMMARY FOLLOW SCROLL FIX
+
+Baseline: 795.
+
+PUNCA
+- `position: sticky` sahaja boleh gagal atau kelihatan seperti elemen biasa pada sesetengah kombinasi grid, tinggi elemen dan pelayar.
+- Panel sidebar sebelum ini juga merupakan grid item itu sendiri, jadi tiada rail khas yang mengekalkan kawasan pergerakan sepanjang borang.
+
+PEMBAIKAN
+1. Tambah pembungkus `.summary-rail` yang meregang setinggi baris borang.
+2. Desktop/tablet menggunakan fallback JavaScript:
+   - sebelum sampai stickybar: panel berada pada lokasi asal;
+   - selepas sampai stickybar: panel menjadi fixed dan mengikut skrol;
+   - apabila sampai hujung borang: panel dock di bawah rail dan tidak menindih footer.
+3. Lebar dan kedudukan kiri panel diukur semula ketika resize/orientation berubah.
+4. Mod floating bawah skrin untuk telefon daripada patch 795 dikekalkan tanpa perubahan.

@@ -1,0 +1,10 @@
+AZOBSS PATCH 893
+Compact Software Key Cards + Sort + Customer Reference
+
+- Compact responsive Software Key card grid.
+- Customer name and phone are shown next to the computer name.
+- Admin-only customer edit action: update-customer.
+- Search matches customer name and normalized phone digits.
+- Sort modes: updated/created date, customer, PC name and completion status.
+- CSV includes customer and both created/updated timestamps.
+- Patch 892 System ID/Systemcode mapping and Onetimecode removal remain active.

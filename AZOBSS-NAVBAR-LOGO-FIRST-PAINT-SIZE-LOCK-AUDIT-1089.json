@@ -1,0 +1,23 @@
+{
+  "version": "1.0.1089",
+  "patch": "Navbar Logo First-Paint Size Lock",
+  "baseline": "1.0.1088",
+  "html_pages_patched": 27,
+  "desktop_logo": "154x38",
+  "tablet_logo": "132x34 <=980px",
+  "mobile_logo": "120x32 <=560px",
+  "changes": [
+    "Strong prepaint market-brand geometry added before page CSS on all navbar pages.",
+    "Logo image uses object-fit contain from first paint.",
+    "Logo transform/animation/transition disabled to prevent brief scaling.",
+    "Shared stickybar CSS receives the same final guard."
+  ],
+  "not_changed": [
+    "Authentication logic",
+    "PA/BM logic",
+    "Payments",
+    "Lot processing",
+    "Pricing",
+    "Backend"
+  ]
+}

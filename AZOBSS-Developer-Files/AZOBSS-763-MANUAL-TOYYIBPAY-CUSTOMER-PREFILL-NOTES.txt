@@ -1,0 +1,17 @@
+AZOBSS PATCH 763 - MANUAL TOYYIBPAY CUSTOMER PREFILL
+Date: 2026-08-04
+Baseline: (762)
+
+Changes:
+- Manual Pending ToyyibPay bills now always use billPayorInfo=1.
+- billTo, billPhone and billEmail are sent from the manual invoice customer fields.
+- Customer name and phone are prefilled on the ToyyibPay payment page.
+- Email remains blank/editable when the invoice has no email, because ToyyibPay requires the payer to enter it.
+- Existing Pending bills created before patch 763 are superseded and regenerated once so their new payment page contains the payer prefill.
+- Changing customer name, phone, email or invoice amount regenerates the bill with current details.
+- RM1 automatic ToyyibPay payment fee from patch 762 is preserved.
+
+Deployment:
+- Upload the full ZIP contents.
+- Restart / Manual Deploy the Render backend because deploy-server.js changed.
+- Generate/download the invoice PDF again; the regenerated QR uses the new Bill Code.

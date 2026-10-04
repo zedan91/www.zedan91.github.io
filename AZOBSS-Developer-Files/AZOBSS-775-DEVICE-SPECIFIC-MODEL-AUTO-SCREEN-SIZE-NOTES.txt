@@ -1,0 +1,9 @@
+AZOBSS Patch 775
+
+- Autocomplete jenama/model ditapis mengikut Jenis Peranti.
+- Laptop hanya menunjukkan model laptop; Desktop PC hanya model desktop; AIO hanya model AIO.
+- Katalog model diperluas dan hasil carian boleh diskrol sehingga 100 padanan.
+- Pilihan model laptop mengisi saiz skrin secara automatik berdasarkan katalog.
+- Desktop PC mematikan Saiz Skrin dan Jenis Skrin kerana monitor berasingan.
+- Model yang belum ada masih boleh ditaip manual; saiz boleh dipilih manual.
+- Tiada perubahan backend diperlukan.

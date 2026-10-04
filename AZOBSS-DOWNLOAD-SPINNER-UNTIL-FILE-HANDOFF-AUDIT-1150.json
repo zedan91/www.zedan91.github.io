@@ -1,0 +1,16 @@
+{
+  "patch": 1150,
+  "packageVersion": "1.0.1150",
+  "date": "2026-09-17",
+  "baseline": "(1149)-AZOBSS-DOWNLOAD-SPINNER-LEGACY-CSS-CONFLICT-FIX_20260917.zip",
+  "scope": [
+    "PA-BM/index.html",
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-firebase-live-likes-sync.js",
+    "package.json",
+    "README_PATCH_1150.md"
+  ],
+  "behavior": "PA spinner remains active through full PDF fetch/blob transfer and browser download handoff.",
+  "backendChanged": false,
+  "quotaLogicChanged": false
+}

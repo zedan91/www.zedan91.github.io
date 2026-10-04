@@ -1,0 +1,11 @@
+AZOBSS PATCH 800 — MOBILE LOCATION MODAL SUMMARY CLEARANCE
+
+Baseline: (799)
+
+Perubahan utama:
+1. Modal Cari Lokasi kini menggunakan z-index 5200 supaya sentiasa berada di atas Ringkasan Tempahan terapung.
+2. Apabila modal lokasi dibuka pada telefon, body menerima kelas az-location-picker-open.
+3. Ringkasan Tempahan digerakkan sepenuhnya ke luar skrin, disembunyikan dan pointer-events dimatikan sepanjang modal lokasi dibuka.
+4. Selepas modal ditutup atau lokasi disahkan, ringkasan kembali secara automatik.
+5. Butang Batal dan Gunakan Lokasi pada bahagian bawah modal kini boleh ditekan tanpa dihalang floating summary.
+6. Semua fungsi autocomplete model, draf invois, quota saver dan floating desktop daripada (799) dikekalkan.

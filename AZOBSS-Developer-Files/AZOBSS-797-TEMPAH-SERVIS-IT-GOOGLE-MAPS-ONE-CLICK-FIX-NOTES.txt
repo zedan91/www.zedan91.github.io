@@ -1,0 +1,10 @@
+AZOBSS Patch 797 — Tempah Servis IT Google Maps One-Click Fix
+Date: 2026-08-05
+Baseline: Patch 796
+
+Changes:
+- Fixed "Lihat Arah ke Kedai" requiring multiple clicks and opening an about:blank tab.
+- Replaced the asynchronous geolocation + blank-popup flow with a direct Google Maps directions link.
+- Google Maps now opens immediately from the first click using the AZOBSS shop coordinates.
+- Added dir_action=navigate and kept target=_blank with noopener/noreferrer.
+- All Patch 796 floating summary and mobile behavior remains unchanged.

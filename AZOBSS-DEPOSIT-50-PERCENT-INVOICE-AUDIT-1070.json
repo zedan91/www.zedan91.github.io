@@ -1,0 +1,17 @@
+{
+  "version": "1.0.1070",
+  "baseline": "1.0.1069",
+  "patch": "50 Percent Deposit Invoice Status and Balance",
+  "changes": [
+    "Added Manual Invoice status: Deposit 50% Paid.",
+    "Deposit-paid records remain invoices until fully Paid.",
+    "Admin PAID / DUE shows 50% received and 50% outstanding.",
+    "Deposit-paid records are still excluded from full Gross Sales, Costs and Net Profit until fully Paid.",
+    "Pending Records KPI includes Pending and Deposit 50% Paid invoices.",
+    "PDF Pending invoice includes a neutral Deposit Terms section.",
+    "PDF Deposit 50% Paid invoice shows Deposit 50% Paid and Balance Due in totals.",
+    "PDF status badge shows DEPOSIT 50% PAID.",
+    "Maybank QR remains available for the remaining balance after a 50% deposit.",
+    "CSV Paid Gross column records the actual received deposit for deposit-paid invoices."
+  ]
+}

@@ -1,0 +1,10 @@
+AZOBSS PATCH 767 — MANUAL TOYYIBPAY OPTIONAL EMAIL / OPEN BILL
+Date: 2026-08-04
+
+Changes
+- Manual invoice Email is optional again and the email field aligns with Customer Name and Phone.
+- If customer name, phone and a valid email are all available, ToyyibPay uses billPayorInfo=1 and prefills all three fields.
+- If any payer detail is missing, ToyyibPay uses billPayorInfo=0 and billTo/billPhone/billEmail are intentionally blank, so the customer completes all mandatory payer fields on ToyyibPay.
+- A non-empty but invalid email is rejected by the admin form; a blank email is accepted.
+- The payer mode is stored on the invoice/order and a pending bill is recreated only when the payer mode actually changes.
+- All fixes from patches 762-766 remain included, including RM1 payment fee, RM270 amount sync, receipt-sent marker, customer prefill when complete, and left-aligned PDF descriptions.

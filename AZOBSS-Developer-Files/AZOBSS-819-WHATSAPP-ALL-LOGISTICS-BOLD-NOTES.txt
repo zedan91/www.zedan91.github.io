@@ -1,0 +1,6 @@
+AZOBSS Patch 819
+
+1. Wraps every generated logistics line with WhatsApp bold markers.
+2. Applies to backend and frontend fallback messages.
+3. Keeps the existing bold no-logistics line.
+4. Baseline: patch 818.

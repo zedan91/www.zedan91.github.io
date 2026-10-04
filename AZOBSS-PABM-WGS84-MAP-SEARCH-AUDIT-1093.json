@@ -1,0 +1,31 @@
+{
+  "patch": 1093,
+  "baseline": 1092,
+  "packageVersion": "1.0.1093",
+  "scope": [
+    "PA search by Lot Number or WGS84 opens PA selection map",
+    "BM search by WGS84 opens nearest-station selection map",
+    "SBM search by WGS84 opens nearest-station selection map"
+  ],
+  "backendEndpoints": [
+    "/api/pabm-pa-map-search",
+    "/api/pabm-benchmark-nearby"
+  ],
+  "tests": {
+    "rootNpmCheck": "passed",
+    "newFrontendJavaScriptSyntax": "passed",
+    "htmlElementIdsUnique": "passed",
+    "frontendScriptIncluded": "passed",
+    "localBackendStartup": "passed with AZOBSS_DISABLE_RUNTIME_NPM=1 and AZOBSS_PREPARE_DWG_ON_START=0",
+    "bmWgs84Runtime": "passed: Sabah test coordinate returned 30 nearest BM rows; closest 0.372 km",
+    "paInputValidationRuntime": "passed",
+    "liveJupemPaAndSbmRuntime": "not fully exercised in sandbox because ebiz.jupem.gov.my DNS/network access is unavailable; production Docker installs undici and existing JUPEM TLS dispatcher remains in use"
+  },
+  "unchangedScope": [
+    "GPS",
+    "Syit Piawai",
+    "Lot Kadaster Berdigit",
+    "Lot Kadaster Berdigit C3",
+    "payment flow"
+  ]
+}

@@ -1,0 +1,35 @@
+AZOBSS PATCH 747 — MANUAL INVOICE TOYYIBPAY QR + AUTO PAID RECEIPT
+Date: 2026-08-04
+Baseline: Patch 746
+
+WHAT CHANGED
+1. Manual Sales & Receipts invoice with Status = Pending and Payment Method = ToyyibPay creates a ToyyibPay bill through the existing backend integration.
+2. Invoice PDF includes a scannable ToyyibPay payment QR, amount and Bill Code.
+3. A Pay icon appears on eligible pending manual invoices.
+4. ToyyibPay callback/API verification updates the SAME Firestore receipts document:
+   - Pending Invoice (AZI-...) -> Paid Receipt (AZR-...)
+   - paid gross, recognized costs and net profit become active
+   - payment reference, Bill Code and verified time are recorded
+5. The active Sales & Receipts page listens for changes to manual receipts and refreshes automatically after payment confirmation.
+6. Manual invoice payment orders are excluded from website-order rows to prevent duplicate ledger entries.
+7. If the invoice amount changes after a bill was created, a new bill/order reference is generated. A stale old bill is not allowed to convert the latest invoice.
+
+RENDER / BACKEND
+- deploy-server.js changed, so Render must redeploy.
+- package.json now includes qrcode 1.5.4. Render will install it during deployment.
+- Existing ToyyibPay variables are reused. No new required secret is introduced.
+- Optional expiry setting:
+  AZOBSS_MANUAL_INVOICE_EXPIRY_DAYS=7
+
+HOW TO USE
+1. Create a manual record.
+2. Set Status = Pending.
+3. Set Payment Method = ToyyibPay.
+4. Enter a total above RM0 and save.
+5. Download/share/print the Invoice. The QR appears in the PDF.
+6. Customer scans and pays.
+7. After ToyyibPay verification, the same record changes to Paid Receipt automatically.
+
+NO CHANGE REQUIRED
+- Cloudflare Worker
+- Firebase Rules

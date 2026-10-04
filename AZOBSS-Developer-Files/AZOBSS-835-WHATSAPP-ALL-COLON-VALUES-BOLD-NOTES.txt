@@ -1,0 +1,6 @@
+AZOBSS patch 835 - WhatsApp all colon values bold
+
+- Semua nilai selepas label bertanda titik dua (:) dalam mesej Tempah Servis IT kini diboldkan.
+- Termasuk ID Tempahan, Nama, Telefon, E-mel, Alamat, Jarak, Lokasi Kedai, Cara serahan, Peranti, Saiz skrin, Jenis skrin, Serial, Keadaan, Anggaran Keseluruhan, Masalah, Tarikh/masa, Keutamaan, Data/backup, Catatan masalah dan Permintaan tambahan.
+- Format diselaraskan pada mesej rasmi backend dan fallback frontend.
+- Semua fungsi baseline (834) dikekalkan.

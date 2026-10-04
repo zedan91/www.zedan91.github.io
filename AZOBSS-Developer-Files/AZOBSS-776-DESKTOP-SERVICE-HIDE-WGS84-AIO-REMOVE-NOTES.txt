@@ -1,0 +1,9 @@
+AZOBSS Patch 776
+
+Perubahan:
+- Pilihan All-in-One PC dibuang daripada Jenis Peranti.
+- Medan Koordinat WGS84 tidak lagi dipaparkan kepada pelanggan; nilai koordinat masih disimpan secara tersembunyi untuk peta, WhatsApp dan rekod admin.
+- Apabila Desktop PC dipilih, kad Tukar LCD Laptop dan Tukar Keyboard Laptop disembunyikan serta pilihan lama dinyah-tanda secara automatik.
+- Jadual rujukan harga LCD dan nota pengesahan LCD turut disembunyikan untuk Desktop PC.
+- Saiz Skrin dan Jenis Skrin kekal dimatikan untuk Desktop PC.
+- Semua fungsi peta, lokasi semasa, anggaran, WhatsApp, Firestore dan Admin dikekalkan.

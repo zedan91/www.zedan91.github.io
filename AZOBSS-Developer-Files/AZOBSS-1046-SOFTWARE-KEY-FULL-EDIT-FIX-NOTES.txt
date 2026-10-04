@@ -1,0 +1,9 @@
+AZOBSS v1046 - Software Key Full Edit
+
+Admin > Software Key Edit now supports Computer Name, Customer Name, Customer Phone, System ID, Systemcode, Motherboard ID, Key Serial, Motherboard Manufacturer and Motherboard Product / Model.
+
+System ID and Systemcode remain strict 12-digit values. Motherboard ID is required. Key Serial may be empty for pending records.
+
+If System ID / Systemcode / Motherboard ID changes, the backend recalculates the fingerprint Record ID and atomically migrates the Firestore document. Collision with an existing fingerprint is rejected with HTTP 409. Legacy update-customer remains supported.
+
+Copy, search, sort, pagination, CSV, delete/bulk delete and installer capture are unchanged. No Sales & Receipts, PA/BM, payment, download or pricing changes.

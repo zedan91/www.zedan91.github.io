@@ -1,0 +1,15 @@
+AZOBSS Patch 750 — Temporary PDF Failed-to-fetch fix
+
+Root cause:
+- Browser preflight requested X-AZOBSS-Filename and X-AZOBSS-Document-No.
+- Backend CORS allow-list did not include those headers.
+- Cleanup uses DELETE, but DELETE was missing from Access-Control-Allow-Methods.
+
+Fix:
+- Added DELETE to allowed CORS methods.
+- Added X-AZOBSS-Filename and X-AZOBSS-Document-No to allowed CORS headers.
+- Added clearer frontend error when Render has not redeployed yet.
+
+Deployment:
+- Render backend rebuild/redeploy is required because deploy-server.js changed.
+- Cloudflare Worker and Firebase Rules are unchanged.

@@ -1,0 +1,8 @@
+AZOBSS Patch 752
+
+- Every manual Pending invoice now automatically uses ToyyibPay.
+- The Invoice PDF preparation step creates/reuses the unique ToyyibPay Bill Code and embeds its QR.
+- Older Pending manual invoices also receive a QR the next time Invoice Download, Share, Print, Copy Link, or Open Payment is used.
+- The payment-method selector is locked to ToyyibPay while status is Pending.
+- Paid/Refunded/Cancelled records keep their normal editable payment method.
+- After ToyyibPay callback verification, the same Firestore record changes from Pending Invoice to Paid Receipt.

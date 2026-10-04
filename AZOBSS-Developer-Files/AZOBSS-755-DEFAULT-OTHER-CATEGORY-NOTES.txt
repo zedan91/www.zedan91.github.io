@@ -1,0 +1,11 @@
+AZOBSS Patch 755
+Date: 2026-08-04
+
+Change:
+- New Create Manual Invoice/Receipt item rows now default to category Other.
+- The first item in a new form defaults to Other.
+- Additional rows added with + Add Item also default to Other.
+- Existing saved records keep their original category when edited.
+- Sales & Receipts module cache version updated to 755.
+
+No backend, Cloudflare Worker, Firebase Rules, or environment variable changes are required.

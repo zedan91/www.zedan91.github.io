@@ -1,0 +1,16 @@
+AZOBSS PATCH 786
+Date: 2026-08-05
+
+1. Receipt delivery default
+- Source Website + Paid defaults to RECEIPT SENT when no explicit delivery-state document exists.
+- Source Manual + Paid defaults to RECEIPT NOT SENT.
+- Explicit admin/share state from admin-receipt-delivery-state always overrides the default, so a Website receipt can still be manually marked NOT SENT and a Manual receipt can be marked SENT.
+
+2. Status filter
+- Added Paid (Not Sent).
+- It matches any Paid row whose effective receiptSent state is not true.
+
+Deployment
+- Frontend/Admin only.
+- Upload all files and press Ctrl + F5.
+- Render restart is not required.

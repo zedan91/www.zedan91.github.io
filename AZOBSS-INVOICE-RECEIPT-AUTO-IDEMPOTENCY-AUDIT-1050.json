@@ -1,0 +1,27 @@
+{
+  "source": "(1049)-AZOBSS-INVOICE-RECEIPT-NEW-TRANSACTIONS-ONLY-FIX_20260829.zip",
+  "version": "1.0.1050",
+  "scope": "Automatic ToyyibPay checkout idempotency and exact invoice-to-receipt order sync",
+  "changed_files": [
+    "deploy-server.js",
+    "admin/index.html",
+    "assets/js/azobss-admin-sales-receipts.js",
+    "package.json"
+  ],
+  "automatic_flows": [
+    "PA/BM/JUPEM",
+    "Public PA",
+    "Software/CAD digital ToyyibPay"
+  ],
+  "protections": [
+    "SHA-256 buyer/cart/product/amount checkout fingerprint",
+    "reuse matching pending ToyyibPay bill for up to 72 hours",
+    "per-fingerprint backend creation lock",
+    "purchaseLogs exact paymentOrderId/orderId lookup before fuzzy item matching",
+    "supersede/cancel duplicate pending automatic orders after a matching payment is finalized"
+  ],
+  "historical_auto_ids_preserved": true,
+  "manual_sequence_unchanged": true,
+  "expected_pair": "AZI-YYYYMMDD-###### -> AZR-YYYYMMDD-same######",
+  "render_redeploy_required": true
+}

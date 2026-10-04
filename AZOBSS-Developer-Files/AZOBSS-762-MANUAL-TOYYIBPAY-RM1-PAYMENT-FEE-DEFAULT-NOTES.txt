@@ -1,0 +1,22 @@
+AZOBSS PATCH 762 — MANUAL TOYYIBPAY RM1 PAYMENT FEE DEFAULT
+Date: 2026-08-04
+Baseline: Patch 761
+
+REQUEST
+- Manual ToyyibPay invoices should have RM1 transaction cost entered automatically because ToyyibPay charges RM1 per transaction.
+
+WHAT CHANGED
+1. New manual Pending invoices now open with Payment Fee (RM) = 1 automatically.
+2. Pending status continues to force ToyyibPay, and the RM1 fee is applied automatically when the current fee is zero.
+3. When a Paid manual receipt uses ToyyibPay, selecting ToyyibPay also applies RM1 automatically if the fee is zero.
+4. Changing away from ToyyibPay removes only the automatically inserted RM1 fee; a fee manually typed by the admin is preserved.
+5. Existing ToyyibPay manual invoices with a zero fee receive the RM1 default when opened for editing.
+6. Costs and net profit calculations use this RM1 fee after the invoice becomes Paid.
+
+FILES CHANGED
+- admin/index.html
+- assets/js/azobss-admin-sales-receipts.js
+
+DEPLOYMENT
+- Static website update only. Upload the baseline and refresh the Admin page with Ctrl + F5.
+- No new Render environment variable is required.

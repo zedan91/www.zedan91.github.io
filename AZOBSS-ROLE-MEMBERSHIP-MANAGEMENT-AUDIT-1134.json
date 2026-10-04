@@ -1,0 +1,26 @@
+{
+  "version": "1.0.1134",
+  "roleDisplayOrder": [
+    "User",
+    "Staff",
+    "Manager",
+    "Administrator"
+  ],
+  "internalManagerRole": "semiAdmin",
+  "membershipSeparateFromRole": true,
+  "membershipAdminSection": true,
+  "membershipFunctionalBenefits": [
+    "softwareDiscount",
+    "cadToolsDiscount"
+  ],
+  "membershipFlexibleBenefitsList": true,
+  "manualMembershipAdminActions": [
+    "grant/extend",
+    "revoke"
+  ],
+  "paBmGrantedByMembership": false,
+  "deploy": [
+    "frontend",
+    "main-render-backend"
+  ]
+}

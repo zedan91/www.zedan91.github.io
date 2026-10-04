@@ -1,0 +1,14 @@
+AZOBSS PATCH 1049
+=================
+
+Purpose:
+Keep historical automatic Invoice / Receipt records unchanged. Apply the 6-digit AZI/AZR scheme only to new automatic transactions after this patch is deployed.
+
+Rules:
+- No historical backfill.
+- Admin load does not write/renumber old records.
+- Opening an old receipt does not allocate a new number.
+- Existing old premiumOrders remain with legacy IDs.
+- New premiumOrders receive AZI at first persist.
+- Paid newly-numbered order receives matching AZR sequence.
+- Internal payment references remain untouched.

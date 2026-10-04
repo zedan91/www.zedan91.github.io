@@ -1,0 +1,14 @@
+{
+  "packageVersion": "1.0.1148",
+  "baseline": "1147",
+  "fixes": [
+    "render hostname health gate corrected",
+    "no top-level navigation for controlled/legacy download fallback",
+    "legacy URL-only download uses health gate + spinner",
+    "downloadTriggered set after successful hidden trigger",
+    "strict quota counter writes before file delivery",
+    "fallback counter idempotency via downloadAttemptId",
+    "removed obsolete v1144 pseudo spinner CSS",
+    "removed redundant v1040 prewarm on PA-BM"
+  ]
+}

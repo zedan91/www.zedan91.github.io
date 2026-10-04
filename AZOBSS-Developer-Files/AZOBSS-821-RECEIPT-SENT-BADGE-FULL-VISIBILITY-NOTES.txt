@@ -1,0 +1,14 @@
+AZOBSS Patch 821
+
+Purpose
+- Fix the "RECEIPT SENT" status badge being clipped in Admin > Sales & Receipts.
+
+Changes
+- Slightly widens the Status column while keeping the table at 100% total width.
+- Reduces adjacent Source/Category and Items/Payment columns by a small amount.
+- Makes the sent badge use the available cell width with border-box sizing.
+- Uses a compact single-line sent label so the final word is always visible.
+- Keeps the longer "RECEIPT NOT SENT" badge allowed to wrap.
+
+Baseline
+- Built directly from patch 820.

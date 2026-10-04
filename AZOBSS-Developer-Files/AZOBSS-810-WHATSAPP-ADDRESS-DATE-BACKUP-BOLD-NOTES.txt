@@ -1,0 +1,7 @@
+AZOBSS PATCH 810 — WHATSAPP ADDRESS + DATE/BACKUP BOLD
+
+1. Adds the selected/auto-filled full address to the service booking WhatsApp message.
+2. Keeps customer area and WGS84 hidden from the message.
+3. Bolds only the values after Tarikh / masa and Data / backup.
+4. Applies the same format to the backend official message and frontend timeout fallback message.
+5. Built from patch 809 and retains all previous functions.

@@ -1,0 +1,25 @@
+AZOBSS PATCH 772 — TEMPAH SERVIS IT LOCATION MAP / WGS84 / CURRENT LOCATION
+
+Baseline: Patch 771
+
+Perubahan utama:
+1. Medan kawasan lama digantikan dengan pemilih lokasi berasaskan peta OpenStreetMap/Leaflet.
+2. Pelanggan boleh mencari nama taman/jalan/tempat, memilih hasil carian, klik terus pada peta atau menggerakkan pin.
+3. Butang “Guna Lokasi Semasa” menggunakan Geolocation API pelayar. Laman mesti dibuka melalui HTTPS dan pelanggan perlu membenarkan Location.
+4. Nama tempat, alamat terperinci dan koordinat WGS84 (latitud, longitud) diisi automatik.
+5. Lingkaran radius 10 km dari pusat rujukan Batu Caves dipaparkan pada peta. Lokasi di luar radius tidak boleh disahkan.
+6. Backend mengira semula jarak menggunakan formula Haversine; koordinat palsu atau lokasi melebihi 10 km ditolak walaupun sekatan frontend diubah.
+7. Rekod Firestore serviceBookings menyimpan locationName, locationLatitude, locationLongitude, locationWgs84, locationDistanceKm, locationRadiusKm dan locationMapUrl.
+8. Ringkasan WhatsApp memaparkan WGS84, jarak dan pautan Google Maps.
+9. Admin Service Bookings memaparkan WGS84, jarak dan butang buka pin; Export CSV turut mengandungi maklumat lokasi.
+10. Data lokasi pelanggan yang berjaya dihantar disimpan secara setempat untuk membantu tempahan seterusnya.
+
+Sumber peta/geocoding:
+- Leaflet 1.9.4 melalui unpkg CDN
+- OpenStreetMap tiles
+- Nominatim search/reverse geocoding
+
+Deployment:
+- Upload semua fail ke GitHub.
+- Manual Deploy/Restart Render diperlukan kerana deploy-server.js berubah.
+- Selepas deploy, lakukan Ctrl+F5.

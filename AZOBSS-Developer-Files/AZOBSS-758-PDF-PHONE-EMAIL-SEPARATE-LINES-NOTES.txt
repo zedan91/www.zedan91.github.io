@@ -1,0 +1,7 @@
+AZOBSS Patch 758
+
+- Uses Patch 757 as baseline.
+- Invoice/receipt PDF customer contact is no longer combined as PHONE / EMAIL.
+- Phone is shown on its own line.
+- Email is shown below it and wraps up to two lines for long addresses.
+- PDF script cache updated to v=758.

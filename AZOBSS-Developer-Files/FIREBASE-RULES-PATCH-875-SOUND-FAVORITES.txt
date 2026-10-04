@@ -1,0 +1,21 @@
+AZOBSS Patch 875 - Firestore Sound Favorites rule
+
+Add this inside: service cloud.firestore { match /databases/{database}/documents { ... } }
+
+    match /users/{username}/soundFavorites/{docId} {
+      allow read, create, update, delete: if request.auth != null
+        && (isAdmin() || isThisUser(username) || request.resource.data.uid == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+
+The website stores one document at:
+users/{usernameKey}/soundFavorites/state
+
+Fields:
+- soundIds: array of sound IDs
+- usernameKey
+- uid
+- updatedAt
+
+Guest favorites never touch Firestore; they stay in browser localStorage.
+Logged-in users read the one favorites document once when entering the Sound Effects page, then writes happen only when they toggle a heart.
+No realtime listener is used.

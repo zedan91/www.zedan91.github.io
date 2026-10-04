@@ -1,0 +1,11 @@
+AZOBSS PATCH 746 — Temporary Backend PDF/ZIP Share
+
+- Generated invoice/receipt PDF and bulk ZIP files are uploaded to the Render backend temporary directory only.
+- No Firestore or Cloudflare R2 storage is used by the new temporary share/print flow.
+- Short URL format: /t/<short-id>/<filename>.pdf
+- Native Share fetches the temporary file, shares the actual file, then deletes the backend copy after navigator.share() succeeds.
+- Print and Download fetch the temporary file into browser memory, then delete the backend copy immediately.
+- WhatsApp, Telegram, Copy Link and Copy Message use the short temporary URL with no forced local download.
+- Link files are auto-deleted 30 minutes after first access, or after 120 minutes maximum if never accessed.
+- Defaults can be changed with optional ENV: AZOBSS_SALES_TEMP_MAX_MB, AZOBSS_SALES_TEMP_MAX_MINUTES, AZOBSS_SALES_TEMP_AFTER_ACCESS_MINUTES.
+- No new ENV is required.

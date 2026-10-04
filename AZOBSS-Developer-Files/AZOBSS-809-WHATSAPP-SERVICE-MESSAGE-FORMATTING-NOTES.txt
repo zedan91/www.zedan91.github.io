@@ -1,0 +1,10 @@
+AZOBSS Patch 809
+Baseline: 808
+
+Tempah Servis IT WhatsApp message:
+1. Removed customer area and WGS84 lines.
+2. Device labels now use spacing before colon.
+3. Device values after colon are bold via WhatsApp asterisks.
+4. Added Serial to the frontend fallback message.
+5. Every selected service line is fully bold.
+6. Backend-generated and frontend-fallback messages use the same formatting.

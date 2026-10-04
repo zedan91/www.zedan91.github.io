@@ -1,0 +1,9 @@
+AZOBSS PATCH 760
+
+- /admin/ opens Sales & Receipts by default after admin authentication.
+- Sales & Receipts moved above Overview in the sidebar.
+- Overview no longer loads Firestore data automatically.
+- Overview data loads only when the admin presses Load Overview Data.
+- Existing automatic loadOverview() calls now enter manual idle mode and perform no reads.
+- Repeated manual refresh remains available through the same button.
+- Based on Patch 759 and preserves Firestore quota-saving changes.

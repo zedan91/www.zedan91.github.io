@@ -1,0 +1,10 @@
+AZOBSS PATCH 771
+
+- Service area is limited to Batu Caves, Gombak and nearby Kuala Lumpur selections around 10 km.
+- Frontend uses a fixed area dropdown and backend validates the same allowlist.
+- Added searchable brand autocomplete, including IBM — International Business Machines.
+- Added searchable model autocomplete filtered by brand; queries such as A5 surface Acer A514/A515 series.
+- LCD prices: 14 inch RM250, 15/15.6 inch RM300, 16 inch RM350++.
+- Keyboard price: RM150.
+- New estimateSuffix field preserves ++ in WhatsApp and Admin Service Bookings.
+- Existing patch 770 booking, WhatsApp, Firestore and Admin functions are retained.

@@ -1,0 +1,12 @@
+AZOBSS PATCH 768 - INVOICE / RECEIPT WHITE ITEM ROWS
+
+Baseline: Patch 767
+
+Changes:
+- Removed alternating/zebra background colours from Invoice and Receipt PDF item rows.
+- Every item row now uses a plain white background.
+- Table borders, header background, green amount text and left-aligned Description remain unchanged.
+- Print uses the same generated PDF, so it follows the same white-row layout.
+- Bumped PDF script cache version in admin/index.html to v=768.
+
+All fixes from patches 762-767 remain included.

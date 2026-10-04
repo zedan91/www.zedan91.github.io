@@ -1,0 +1,8 @@
+AZOBSS Patch 744 - Print Same Generated PDF
+Date: 2026-08-04
+
+- Print now uses AZOBSSAdminSalesReceiptPDF.createBlob().
+- The same PDF bytes/design used by Download and Share are opened for printing.
+- The old temporary HTML/about:blank print layout is no longer used by the Print button.
+- Automatic print is attempted after the PDF viewer loads, with a timed fallback.
+- Cache version updated to v=744.

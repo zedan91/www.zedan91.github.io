@@ -1,0 +1,9 @@
+AZOBSS PATCH 777 — SERVICE DELIVERY FRIENDLY WORDING
+
+Perubahan:
+- Label Cara serahan & penghantaran ditukar kepada ayat lebih mudah: "Bagaimana kamu mahu serahkan peranti?"
+- Pilihan dropdown menggunakan ayat dari sudut pelanggan dan menerangkan siapa hantar/ambil peranti.
+- Nilai dalaman option dikekalkan supaya backend, caj RM30/RM60, WhatsApp, Firestore dan Admin terus serasi.
+- Ringkasan anggaran menggunakan label yang lebih jelas.
+
+Tiada perubahan backend. Render tidak perlu restart.

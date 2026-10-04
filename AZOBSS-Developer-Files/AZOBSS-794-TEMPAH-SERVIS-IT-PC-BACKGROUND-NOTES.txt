@@ -1,0 +1,8 @@
+AZOBSS Patch 794 — Tempah Servis IT PC Background
+
+- Menambah latar belakang bertema bengkel PC pada /Tempah-Servis-IT/.
+- Aset baharu: /images/pc-service-background.webp.
+- Latar menggunakan overlay gelap supaya teks dan borang kekal jelas.
+- Kad borang, ringkasan dan harga dijadikan sedikit lut sinar dengan blur lembut supaya visual PC dapat dilihat tanpa mengganggu kebolehbacaan.
+- Paparan telefon menggunakan background-position khusus dan background-attachment scroll untuk prestasi lebih baik.
+- Semua fungsi patch 793 dan terdahulu dikekalkan.

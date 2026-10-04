@@ -1,0 +1,16 @@
+{
+  "version": "1.0.1165",
+  "baseline": "1.0.1164",
+  "scope": "Admin > Sales & Receipts > Share Invoice/Receipt",
+  "issue": "Firefox desktop does not expose compatible Web Share PDF-file attachment support, causing WhatsApp Actual PDF to fail while Chrome succeeds.",
+  "fix": [
+    "Detect PDF file-share capability before invoking actual-file share",
+    "Fallback unsupported browsers to WhatsApp with secure temporary PDF link and payment/message text",
+    "Pre-open WhatsApp/Telegram window from click gesture before async backend work",
+    "Disable native actual-file share button when browser file sharing is unsupported",
+    "Preserve Chrome actual-PDF native share behavior"
+  ],
+  "backendChanged": false,
+  "paymentChanged": false,
+  "firestoreChanged": false
+}

@@ -1,0 +1,15 @@
+AZOBSS PATCH 807
+
+BASELINE
+- (806)-AZOBSS-TEMPAH-SERVIS-IT-WHATSAPP-FAST-OPEN-BACKGROUND-SAVE-FIX_20260805.zip
+
+PERUBAHAN
+1. Popup tempahan kekal di bawah kawalan origin AZOBSS.
+2. URL WhatsApp ditukar kepada deep link whatsapp://send untuk membuka aplikasi secara terus.
+3. Launcher cuba menutup popup secara automatik selepas aplikasi WhatsApp mengambil fokus.
+4. Fallback WhatsApp Web dan butang tutup manual disediakan jika aplikasi tidak tersedia.
+5. Background booking save dan deduplication daripada patch 806 dikekalkan.
+
+BATASAN PELAYAR
+- Website tidak boleh membaca sama ada pengguna benar-benar menekan Send di WhatsApp kerana sekatan cross-origin dan privasi.
+- Auto-close dibuat selepas aplikasi dibuka, bukan berdasarkan status penghantaran mesej.

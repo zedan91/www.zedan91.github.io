@@ -1,0 +1,6 @@
+AZOBSS Patch 830 - Default Important Data Backup
+
+Change:
+- Default radio option for backup requirement is now "Ya, ada data penting".
+- Other options remain selectable.
+- Based on Patch 829.

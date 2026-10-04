@@ -1,0 +1,19 @@
+{
+  "packageVersion": "1.0.1149",
+  "baseline": "1148",
+  "fixes": [
+    "Latest Purchase List Download spinner is no longer hidden by legacy v949 busy-child CSS",
+    "v949 hide selector now permits both the old v949 spinner and the current v1146 DOM spinner",
+    "dynamic spinner CSS includes an explicit visibility override for the current DOM spinner",
+    "PA/BM global-auth and live-sync cache busters advanced to 1149"
+  ],
+  "rootCause": "The current download code correctly inserted .azobss-btn-spinner-v1146, but the later v949 CSS rule hid every child of a busy .az-lot-format-download except .az-lot-busy-spinner-v949. Because generic PA/BM Download uses the v1146 DOM spinner, the spinner existed in the DOM but was display:none.",
+  "scope": [
+    "PA-BM/index.html",
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-firebase-live-likes-sync.js"
+  ],
+  "downloadLogicChanged": false,
+  "quotaLogicChanged": false,
+  "backendChanged": false
+}

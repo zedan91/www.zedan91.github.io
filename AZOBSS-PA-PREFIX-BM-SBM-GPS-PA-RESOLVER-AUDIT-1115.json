@@ -1,0 +1,19 @@
+{
+  "version": "1.0.1115",
+  "baseline": "(1114)-AZOBSS-DOWNLOAD-SUCCESS-FALSE-ERROR-POPUP-FIX_20260914_20260914_205520.zip",
+  "title": "PA Prefix Map Search + BM/SBM/GPS PA Resolver Fix",
+  "changes": [
+    "PA prefix required for PA map search; pa2131/PA2131 normalize to PA2131; bare 2131 stays Lot.",
+    "Resolve PA using official PelanAkui detail lot list before cadastral geometry lookup.",
+    "Merge multi-lot PA geometry for BM/SBM/GPS nearest-station origin.",
+    "Peta Pilihan PA accepts PAxxxx directly.",
+    "Map search cache bumped to v1115."
+  ],
+  "files": [
+    "deploy-server.js",
+    "assets/js/azobss-pabm-map-search.js",
+    "PA-BM/index.html",
+    "package.json",
+    "README_PATCH_1115.md"
+  ]
+}

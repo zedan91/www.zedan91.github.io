@@ -1,0 +1,24 @@
+AZOBSS v1047 - Invoice / Receipt 6-Digit Global Running Sequence
+
+Scope
+- Admin > Sales & Receipts manual invoice / receipt numbering.
+
+New format
+- Invoice: AZI-YYYYMMDD-000001
+- Receipt: AZR-YYYYMMDD-000001
+
+Behaviour
+1. The YYYYMMDD section remains so the document date is visible directly in the number.
+2. The final numeric sequence is now 6 digits.
+3. The sequence no longer resets every day. It continues globally across dates.
+4. Example: AZI-20260828-000047 -> next new document on 29 Aug becomes AZI-20260829-000048.
+5. A paid receipt derived from an invoice keeps the same date/sequence suffix and changes AZI -> AZR, preserving invoice/receipt pairing.
+6. Existing legacy 4-digit numbers remain readable and are not automatically renumbered merely by opening/editing the same document.
+7. Duplicate-number repair now allocates replacement numbers from the global maximum sequence and writes 6 digits.
+
+Files
+- assets/js/azobss-admin-sales-receipts.js
+- admin/index.html (cache buster)
+- package.json
+
+Package version: 1.0.1047

@@ -1,0 +1,17 @@
+AZOBSS 795 - TEMPAH SERVIS IT ADMIN + FLOATING SUMMARY + MOBILE FIX
+
+Baseline: 794.
+
+1. Admin Dashboard
+- Global auth meletakkan kelas `is-admin` pada body.
+- CSS stickybar lama menunggu `az-role-is-admin`.
+- Patch ini menambah selector `body.is-admin` supaya ikon Admin Dashboard muncul dengan betul.
+
+2. Ringkasan Tempahan
+- Desktop/tablet: panel sticky dengan had tinggi viewport dan scroll dalaman.
+- Telefon: panel terapung kompak di bawah skrin, boleh dikembangkan.
+- Ketika input telefon fokus, panel mengecil supaya papan kekunci tidak menutup borang.
+
+3. Background
+- Rujukan `/images/pc-service-background.webp` dibuang.
+- Fail imej background bengkel turut dikeluarkan daripada patch 795.

@@ -1,0 +1,5 @@
+AZOBSS Patch 783
+
+- Live location suggestions now start from the first typed character.
+- Minimum query length changed from 2 to 1 in both manual and input-triggered search paths.
+- Existing 500 ms debounce and Photon request controls remain unchanged.
