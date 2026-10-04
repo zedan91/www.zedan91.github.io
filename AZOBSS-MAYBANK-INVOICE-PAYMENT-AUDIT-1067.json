@@ -1,0 +1,27 @@
+{
+  "version": "1.0.1067",
+  "baseline": "1.0.1066",
+  "patch": "Manual Invoice Maybank Payment Method",
+  "changes": [
+    "Added Maybank to Admin > Sales & Receipts > Manual Invoice Payment Method.",
+    "Pending manual invoices no longer force ToyyibPay; ToyyibPay and Maybank are selectable.",
+    "ToyyibPay bill generation only runs when ToyyibPay is selected.",
+    "Maybank Pending invoice payment fee remains RM0 unless admin enters another cost manually.",
+    "Invoice PDF shows Payment Method instead of generic Payment Terms.",
+    "Pending Maybank invoice PDF includes the supplied Maybank QR, account holder name and account number.",
+    "Share message includes Maybank payment details for Pending Maybank invoices.",
+    "ToyyibPay behavior remains unchanged when ToyyibPay is selected.",
+    "v1066 logout/navbar fix and v1064 customer autocomplete remain intact."
+  ],
+  "maybank": {
+    "label": "Maybank",
+    "account_holder": "Ahmad Zaidan Bin Omar",
+    "account_number": "162405194110",
+    "qr_asset": "/assets/images/maybank-payment-qr.jpg"
+  },
+  "verification": {
+    "javascript_syntax": "passed",
+    "sample_invoice_pdf": "rendered successfully as A4 one-page PDF",
+    "maybank_qr": "decoded successfully from a 300 DPI render"
+  }
+}

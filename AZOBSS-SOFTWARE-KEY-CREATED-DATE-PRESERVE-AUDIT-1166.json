@@ -1,0 +1,10 @@
+{
+  "patch": 1166,
+  "baseline": "1.0.1165",
+  "version": "1.0.1166",
+  "scope": "Admin > Software Key displayed date/time",
+  "rootCause": "Card renderer used updatedAtMs/updatedAt before createdAtMs/createdAt, so every edit made the visible date/time look like key generation time had changed.",
+  "fix": "Card renderer now prefers createdAtMs/createdAt and only falls back to updatedAt for legacy records.",
+  "backend": "No backend timestamp rewrite required; update-record already preserves existing createdAt while updating updatedAt.",
+  "sorting": "Updated-date sort remains unchanged."
+}

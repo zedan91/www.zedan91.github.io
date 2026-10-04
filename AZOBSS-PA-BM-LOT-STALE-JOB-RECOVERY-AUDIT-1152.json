@@ -1,0 +1,13 @@
+{
+  "patch": 1152,
+  "packageVersion": "1.0.1152",
+  "baseline": 1151,
+  "changes": [
+    "direct ZIP probe before GP job status",
+    "terminal GP status returns 409/410 instead of 202",
+    "persist exact selected object IDs for new paid Lot Kadaster records",
+    "automatic stale-job regeneration using exact paid lot IDs",
+    "bounded foreground and background polling",
+    "no download quota use on readiness/regeneration failure"
+  ]
+}

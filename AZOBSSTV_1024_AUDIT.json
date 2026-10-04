@@ -1,0 +1,50 @@
+{
+  "version": "1.0.1024",
+  "movieFix": {
+    "strictTitleFields": [
+      "title",
+      "original_title",
+      "originalTitle"
+    ],
+    "requiresArtwork": true,
+    "frontendCompatibilityFilter": true
+  },
+  "radio": {
+    "source": "https://mana2.my/radio",
+    "fallbackCount": 22,
+    "names": [
+      "MANIS FM",
+      "SURIA FM",
+      "FLY FM",
+      "RAKITA FM",
+      "HOT FM",
+      "IKIMfm",
+      "988 FM",
+      "MOLEK FM",
+      "EIGHT FM",
+      "KOOL FM",
+      "NASIONAL FM",
+      "TRAXX FM",
+      "MINNAL FM",
+      "AI FM",
+      "RADIO KLASIK",
+      "SABAH FM",
+      "SABAHV FM",
+      "SARAWAK FM",
+      "BERNAMA RADIO",
+      "WAI FM",
+      "ASYIK FM",
+      "BEST FM"
+    ],
+    "backendChannelTypes": [
+      "radio",
+      "audio"
+    ],
+    "localArtwork": true
+  },
+  "security": [
+    "no direct media extraction",
+    "no DRM/token bypass",
+    "no X-Frame-Options/CSP bypass"
+  ]
+}

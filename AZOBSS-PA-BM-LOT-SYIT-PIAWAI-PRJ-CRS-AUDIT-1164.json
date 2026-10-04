@@ -1,0 +1,22 @@
+{
+  "patch": 1164,
+  "packageVersion": "1.0.1164",
+  "baseline": 1163,
+  "date": "2026-09-26",
+  "fix": "Use paired NDCDB SHP .PRJ WKT as exact ArcGIS outSR for Syit Piawai CAD overlay",
+  "cadConverterVersion": "1164.1",
+  "fallbackIncludes": {
+    "PeninsulaRSO": 3375,
+    "Selangor": [
+      3375,
+      3380,
+      4393
+    ]
+  },
+  "validationStrategy": [
+    "project exact selected ArcGIS lots to SHP PRJ WKT",
+    "compare projected lot bbox with downloaded SHP bbox",
+    "only then request Syit geometry using same output spatial reference",
+    "retain converter overlap guard"
+  ]
+}

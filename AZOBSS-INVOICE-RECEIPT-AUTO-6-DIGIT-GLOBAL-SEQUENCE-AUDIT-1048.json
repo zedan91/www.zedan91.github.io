@@ -1,0 +1,36 @@
+{
+  "patch": 1048,
+  "packageVersion": "1.0.1048",
+  "baseline": "1047",
+  "scope": "Manual + Automatic Invoice / Receipt numbering",
+  "format": {
+    "invoice": "AZI-YYYYMMDD-000001",
+    "receipt": "AZR-YYYYMMDD-000001",
+    "sequenceDigits": 6,
+    "sequenceScope": "global",
+    "dailyReset": false,
+    "pairedTransactionSequence": true
+  },
+  "automaticSources": [
+    "premiumOrders",
+    "purchaseLogs",
+    "PA/BM",
+    "ToyyibPay Software/CAD",
+    "Stripe"
+  ],
+  "legacyAutoExamplesReplaced": [
+    "INV-pabm-*",
+    "INV-stripe-*"
+  ],
+  "internalPaymentIdsPreserved": true,
+  "backendCounter": "systemCounters/salesDocuments",
+  "backfillEndpoint": "/api/admin/sales-document-sequence action=backfill",
+  "reserveEndpoint": "/api/admin/sales-document-sequence action=reserve",
+  "modifiedFiles": [
+    "assets/js/azobss-admin-sales-receipts.js",
+    "admin/index.html",
+    "deploy-server.js",
+    "package.json"
+  ],
+  "requiresRenderRedeploy": true
+}

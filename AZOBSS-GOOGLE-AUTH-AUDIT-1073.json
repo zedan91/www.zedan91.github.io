@@ -1,0 +1,18 @@
+{
+  "version": "1.0.1073",
+  "baseline": "1.0.1072",
+  "html_cache_busted": 31,
+  "features": [
+    "GoogleAuthProvider + signInWithPopup",
+    "Google buttons on login/register",
+    "phone completion modal",
+    "Firestore phone persistence",
+    "member-only default role",
+    "existing role preservation",
+    "legacy account duplicate guard"
+  ],
+  "manual_setup": [
+    "Enable Google provider in Firebase Authentication",
+    "Authorize azobss.com and www.azobss.com"
+  ]
+}

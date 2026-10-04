@@ -1,0 +1,24 @@
+{
+  "version": "1.0.1112",
+  "baseline": "(1111)-AZOBSS-PA-BM-DOWNLOAD-EXACT-ONCE-COUNTER-FIX_20260914.zip",
+  "scope": [
+    "PA",
+    "BM",
+    "SBM",
+    "GPS"
+  ],
+  "behavior": {
+    "PA map click WGS84": "preserve current zoom",
+    "BM/SBM map double-click WGS84": "preserve current zoom",
+    "GPS map double-click WGS84": "preserve current zoom",
+    "typed/input search": "existing auto-fit behavior preserved",
+    "manual result selection": "existing focus behavior preserved"
+  },
+  "backend_change_in_v1112": false,
+  "frontend_change_in_v1112": true,
+  "changed_files": [
+    "package.json",
+    "assets/js/azobss-pabm-map-search.js",
+    "PA-BM/index.html"
+  ]
+}

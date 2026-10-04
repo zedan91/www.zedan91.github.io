@@ -1,0 +1,30 @@
+.az-package-editor{border:1px solid #27564d;border-radius:14px;background:#101e27;padding:16px;margin:12px 0;min-width:0}
+.az-package-editor legend{font-size:17px;font-weight:800;color:#86efac;padding:0 6px}
+.az-package-toggle{display:flex!important;align-items:center;gap:10px;font-weight:700;margin:8px 0!important}
+.az-package-toggle input{width:18px!important;height:18px!important;min-height:0!important;flex:none}
+#softwarePackageFields[hidden]{display:none!important}
+.az-package-hint,.az-package-plan small,.az-package-editor small{font-size:12px;color:#b4c6d3;line-height:1.5;display:block;margin:6px 0}
+.az-package-plan{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;padding:14px 0;border-bottom:1px solid #334155}
+.az-package-plan label,.az-package-grid label{min-width:0;font-size:13px}
+.az-package-plan input,.az-package-grid input{width:100%;min-width:0;box-sizing:border-box}
+.az-package-plan small{grid-column:1/4}.az-package-plan button{align-self:center;min-height:34px}
+.az-package-editor button{border:1px solid #277967;border-radius:8px;background:#11382e;color:#a7f3d0;padding:8px 12px;cursor:pointer;font:inherit;font-size:12px}
+#softwarePackageAdd{margin:12px 0}.az-package-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.az-package-dialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(600px,calc(100vw - 28px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #258c79;border-radius:18px;background:#101b2b;color:#e5eefb;padding:22px;z-index:10000001;font-family:inherit}
+.az-package-dialog:not([open]){display:none}.az-package-dialog::backdrop{background:rgba(2,6,23,.82);backdrop-filter:blur(5px)}
+.az-package-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.az-package-dialog-head h2{margin:0;font-size:21px;color:#f1f5f9}
+.az-package-dialog button,.az-package-contact a{font:inherit;cursor:pointer;padding:10px 14px;border-radius:9px;border:1px solid #287a70;background:#0f766e;color:#f1f5f9;min-height:42px;text-decoration:none}
+.az-package-dialog button:disabled{opacity:.5;cursor:default}.az-package-dialog-head button{background:transparent;min-width:42px;font-size:23px;padding:4px;flex:none}
+.az-package-dialog #azdm-license{margin:0;padding:0;background:none;border:0;max-width:none}
+.az-package-dialog p{line-height:1.5;color:#bed0df}.azdm-form{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:16px;margin:22px 0 14px}
+.azdm-form label{display:grid;gap:7px;min-width:0}.azdm-form input,.azdm-form select{box-sizing:border-box;width:100%;max-width:100%;min-height:45px;border-radius:9px;border:1px solid #526b78;background:#080f1d;color:#fff;padding:10px;font:inherit}
+.azdm-summary{font-size:21px;color:#a5f3fc;font-weight:800;margin:18px 0 5px}
+[data-azdm-message]{color:#fde68a!important;min-height:24px;overflow-wrap:anywhere}
+.az-package-contact{display:grid;gap:10px;margin-top:18px}.az-package-contact a{background:transparent;overflow-wrap:anywhere}
+html body .download-card .az-package-card-actions{display:flex!important;align-items:stretch;gap:6px;width:100%;min-width:0}
+html body .download-card .az-package-card-actions>.az-software-buy-cart-row{flex:1;min-width:0;width:auto!important}
+html body .download-card .az-package-card-actions>.download-btn{flex:1;min-width:0;width:auto!important}
+html body .download-card .az-package-card-actions>.az-package-support-btn{flex:none;width:64px;min-height:40px;padding:6px;border:1px solid #258c79;border-radius:10px;background:#0b3033;color:#a7f3d0;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+html body .download-card .az-package-card-actions .az-software-buy-cart-row>.download-btn{min-width:0!important;padding-left:5px!important;padding-right:5px!important;gap:4px!important}
+.az-package-dialog :focus-visible,.az-package-editor :focus-visible,.az-package-support-btn:focus-visible{outline:3px solid #5eead4;outline-offset:3px}
+@media(max-width:620px){.az-package-plan{grid-template-columns:1fr 1fr}.az-package-plan label:first-child{grid-column:1/-1}.az-package-plan small{grid-column:1/-1}.az-package-grid{grid-template-columns:1fr}.az-package-dialog{padding:18px}.azdm-form{grid-template-columns:1fr}.az-package-dialog-head h2{font-size:19px}}

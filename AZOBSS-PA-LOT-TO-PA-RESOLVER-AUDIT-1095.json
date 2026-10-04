@@ -1,0 +1,17 @@
+{
+  "version": "1.0.1095",
+  "scope": "PA WGS84/map-click Lot -> PA resolver",
+  "changedFiles": [
+    "deploy-server.js",
+    "assets/js/azobss-pabm-map-search.js",
+    "PA-BM/index.html",
+    "package.json",
+    "README_PATCH_1095.md"
+  ],
+  "behavior": {
+    "stage1": "JUPEM map layer identifies lot/state/district/mukim/section",
+    "stage2": "JUPEM Lot Kadaster search resolves PA by exact lot + jurisdiction context",
+    "ambiguity": "never guess when multiple different PA values remain",
+    "cart": "enabled only after a PA number is safely resolved"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "baseline": "1.0.1058",
+  "version": "1.0.1059",
+  "scope": ["admin/index.html", "package.json"],
+  "feature": "Sales & Receipts Net Profit gold-bar highlight",
+  "logic_changes": false,
+  "backend_changes": false,
+  "render_redeploy_required": false
+}
