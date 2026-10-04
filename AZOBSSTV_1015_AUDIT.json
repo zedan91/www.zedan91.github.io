@@ -1,0 +1,22 @@
+{
+  "baseline": "(1014)-AZOBSS-AZOBSSTV-7MOVIES-EXTERNAL-MOVIES-SOURCE-FIX_20260821.zip",
+  "version": "1.0.1015",
+  "scope": "Live TV A/V sync recovery",
+  "changes": [
+    "A/V one-click resync button",
+    "official iframe reload resync",
+    "auto resync after >12s background",
+    "auto resync after network reconnect",
+    "direct HLS low-latency/live-edge guard",
+    "stall recovery"
+  ],
+  "no_bypass": [
+    "DRM",
+    "token",
+    "CSP",
+    "X-Frame-Options",
+    "direct stream extraction"
+  ],
+  "anime_unchanged": true,
+  "movies_unchanged": true
+}

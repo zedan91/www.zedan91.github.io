@@ -1,0 +1,54 @@
+#softwarekeys .azdm-key-tabs{display:flex;justify-content:center;gap:8px;margin:14px 0 18px}
+#softwarekeys .azdm-key-tabs button{border:1px solid #475569;background:#172235;color:#cbd5e1;padding:11px 25px;border-radius:10px;font:700 14px inherit;min-width:128px;cursor:pointer}
+#softwarekeys .azdm-key-tabs button[aria-selected="true"]{background:#087f72;border-color:#2dd4bf;color:#fff}
+#softwarekeys .azdm-key-tabs button:focus-visible,#azdmAdminPanel button:focus-visible,#azdmAdminPanel a:focus-visible{outline:3px solid #5eead4;outline-offset:3px}
+#surveycadKeyPanel[hidden],#azdmAdminPanel[hidden]{display:none!important}
+#azdmAdminPanel{color:#e2e8f0;text-align:left;min-width:0}
+#azdmAdminPanel *{box-sizing:border-box}
+#azdmAdminPanel [hidden]{display:none!important}
+#azdmAdminPanel .azdm-admin-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#azdmAdminPanel .azdm-admin-heading img{width:44px;height:44px;flex:none}
+#azdmAdminPanel .azdm-admin-heading h3{margin:0;color:#fff;font-size:20px}
+#azdmAdminPanel .azdm-admin-heading p{margin:4px 0;color:#a6b6ca;font-size:12px}
+#azdmAdminPanel .azdm-admin-source{margin-left:auto;color:#5eead4;font-size:12px;text-decoration:none;padding:8px}
+#azdmAdminPanel .azdm-admin-card{border:1px solid #344761;background:#1e293b;border-radius:14px;margin-bottom:16px;padding:20px}
+#azdmAdminPanel .azdm-admin-card h3{margin:0 0 8px;color:#f1f5f9;font-size:17px}
+#azdmAdminPanel label{display:block;font-size:12px;font-weight:700;margin-bottom:7px;color:#bfdbfe}
+#azdmAdminPanel input,#azdmAdminPanel select,#azdmAdminPanel textarea{background:#0b1220;color:#f8fafc;border:1px solid #475569;border-radius:8px;padding:10px 12px;min-height:40px;font:inherit;max-width:100%}
+#azdmAdminPanel input:focus-visible,#azdmAdminPanel select:focus-visible,#azdmAdminPanel textarea:focus-visible{outline:2px solid #5eead4;outline-offset:2px}
+#azdmAdminPanel textarea{width:100%;font-family:Consolas,monospace;overflow-wrap:anywhere}
+#azdmAdminPanel button{font:700 12px inherit;padding:10px 13px;min-height:38px;border:1px solid #475569;border-radius:8px;background:#334155;color:#f1f5f9;cursor:pointer;white-space:nowrap}
+#azdmAdminPanel button.azdm-primary{background:#087f72;border-color:#2dd4bf}
+#azdmAdminPanel button.azdm-danger{background:#7f1d1d;border-color:#f87171}
+#azdmAdminPanel button:disabled{opacity:.45;cursor:default}
+#azdmAdminPanel .azdm-admin-issue{display:grid;grid-template-columns:minmax(190px,1fr) 175px auto;gap:12px;align-items:end}
+#azdmAdminPanel .azdm-admin-issue input,#azdmAdminPanel .azdm-admin-issue select{width:100%}
+#azdmAdminPanel .azdm-admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+#azdmAdminPanel .azdm-admin-stat{border:1px solid #344761;background:#142232;border-radius:10px;padding:14px}
+#azdmAdminPanel .azdm-admin-stat strong{display:block;color:#f8fafc;font-size:22px;margin-bottom:5px}
+#azdmAdminPanel .azdm-admin-stat small,#azdmAdminPanel .azdm-admin-muted{color:#a6b6ca;font-size:12px;line-height:1.5}
+#azdmAdminPanel .azdm-admin-list-head{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+#azdmAdminPanel .azdm-admin-search{display:flex;gap:7px;flex-wrap:wrap}
+#azdmAdminPanel .azdm-admin-search input{width:260px}
+#azdmAdminPanel .azdm-admin-table{overflow-x:auto;width:100%}
+#azdmAdminPanel table{border-collapse:collapse;width:100%;font-size:12px;min-width:680px}
+#azdmAdminPanel th{background:#142b2c;color:#99f6e4;font-size:11px;letter-spacing:.02em}
+#azdmAdminPanel td,#azdmAdminPanel th{padding:12px 9px;text-align:left;border-bottom:1px solid #344761;vertical-align:middle}
+#azdmAdminPanel td strong{display:block;color:#f8fafc}
+#azdmAdminPanel td small{display:block;color:#94a3b8;font:10px Consolas,monospace;margin-top:4px;overflow-wrap:anywhere}
+#azdmAdminPanel td .azdm-admin-actions{display:flex;gap:5px}
+#azdmAdminPanel .azdm-admin-actions button{font-size:11px;min-height:32px;padding:7px 9px}
+#azdmAdminPanel .azdm-admin-pager{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12px;color:#94a3b8}
+#azdmAdminPanel .azdm-admin-pager div{display:flex;gap:7px}
+#azdmAdminPanel .azdm-admin-notice{border:1px solid #6b5a32;background:#302818;color:#fde68a;padding:12px 14px;border-radius:10px;margin-bottom:14px;overflow-wrap:anywhere;font-size:13px}
+#azdmAdminPanel .azdm-admin-empty{padding:20px;color:#a6b6ca;text-align:center}
+#azdmAdminPanel .azdm-admin-note{font-size:12px;color:#a6b6ca;line-height:1.6;margin:10px 0 20px}
+#azdmAdminPanel dialog{width:min(550px,calc(100vw - 28px));max-height:85vh;overflow:auto;border:1px solid #475569;border-radius:15px;background:#172235;color:#e2e8f0;padding:24px;text-align:left}
+#azdmAdminPanel dialog::backdrop{background:rgba(2,6,23,.8)}
+#azdmAdminPanel dialog h3{color:#f8fafc;margin:0 0 12px}
+#azdmAdminPanel dialog p{line-height:1.6;font-size:13px;overflow-wrap:anywhere}
+#azdmAdminPanel dialog input{width:100%;margin-bottom:15px}
+#azdmAdminPanel .azdm-dialog-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+#azdmAdminPanel .azdm-lifetime-label{display:flex;align-items:center;gap:8px;margin:10px 0}
+#azdmAdminPanel .azdm-lifetime-label input{width:auto;min-height:auto;margin:0}
+@media(max-width:720px){#azdmAdminPanel .azdm-admin-issue{grid-template-columns:1fr}#azdmAdminPanel .azdm-admin-stats{grid-template-columns:1fr}#azdmAdminPanel .azdm-admin-card{padding:14px}#azdmAdminPanel .azdm-admin-search{width:100%}#azdmAdminPanel .azdm-admin-search input{width:100%}#azdmAdminPanel .azdm-admin-source{margin-left:0}}
