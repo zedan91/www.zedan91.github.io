@@ -12,32 +12,87 @@ async function azdmVerifiedAccount(req) {
     const email=String(value||'').trim().toLowerCase();
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)&&!email.endsWith('@azobss.local')&&!email.endsWith('.local')?email:'';
   };
+  const localUsername=value=>{
+    const email=String(value||'').trim().toLowerCase();
+    const m=email.match(/^([a-z0-9._-]{1,80})@azobss\.local$/i);
+    return m?m[1]:'';
+  };
+
+  // v1214: a Firebase ID token can keep the old email_verified=false claim after
+  // the browser has already reloaded a newly-verified Firebase user. Check the
+  // authoritative Auth record so a stale token does not make a logged-in user
+  // look unverified for AZDM checkout.
+  if(result.uid && result.emailVerified!==true){
+    try{
+      const authRecord=await firebaseAdmin.auth().getUser(result.uid);
+      const authEmail=validRealEmail(authRecord?.email||'');
+      if(authRecord?.emailVerified===true){
+        result.emailVerified=true;
+        if(authEmail){result.email=authEmail;result.emailSource='firebase-auth-record';}
+      }
+      result.name=result.name||String(authRecord?.displayName||'');
+      result.phone=result.phone||String(authRecord?.phoneNumber||'');
+    }catch{/* Firestore compatibility lookup below can still resolve legacy AZOBSS accounts. */}
+  }
+
   const db=getAzobssBackendDb();
   if(db&&result.uid){
-    let profileVerified=false,profileEmail='';
+    let profileVerified=false,profileEmail='',profileMatched=false;
+    const aliasUsername=localUsername(decoded.email||result.email||'');
+    const seen=new Set();
+    const absorbProfile=(profile,docId='')=>{
+      if(!profile||typeof profile!=='object')return;
+      const key=String(docId||'').trim().toLowerCase();
+      const profileUid=String(profile.uid||profile.authUid||profile.firebaseUid||profile.userUid||'').trim();
+      const profileUsername=String(profile.usernameKey||profile.username||key||'').trim().toLowerCase();
+      const uidMatch=!!profileUid&&profileUid===result.uid;
+      const aliasMatch=!!aliasUsername&&(key===aliasUsername||profileUsername===aliasUsername);
+      if(!uidMatch&&!aliasMatch)return;
+      profileMatched=true;
+      result.name=result.name||String(profile.displayName||profile.name||profile.username||profile.usernameKey||'');
+      result.phone=result.phone||String(profile.phoneNumber||profile.phone||profile.mobile||'');
+      profileVerified=profileVerified||profile.emailVerified===true||profile.verified===true||!!profile.verifiedAt;
+      if(!profileEmail)profileEmail=validRealEmail(profile.contactEmail||profile.googleEmail||profile.realEmail||profile.authEmail||profile.email||profile.emailAddress||'');
+    };
+    const absorbSnap=snap=>{if(!snap||!snap.exists)return;const k=String(snap.id||'');if(seen.has(k))return;seen.add(k);absorbProfile(snap.data()||{},k);};
     try{
-      const found=await db.collection('users').where('uid','==',result.uid).limit(2).get();
-      found.forEach(doc=>{
-        const profile=doc.data()||{};
-        result.name=result.name||String(profile.displayName||profile.name||profile.username||'');
-        result.phone=result.phone||String(profile.phoneNumber||profile.phone||'');
-        profileVerified=profileVerified||profile.emailVerified===true||profile.verified===true;
-        if(!profileEmail)profileEmail=validRealEmail(profile.authEmail||profile.email||profile.contactEmail||profile.emailAddress||'');
-      });
-    }catch{/* Firebase token still supplies identity; legacy profile lookup is optional. */}
-
-    // Legacy AZOBSS username accounts can authenticate with username@azobss.local even
-    // though the real receiving email is already stored in users/usernameAuthEmails.
-    // Accept that real email only when the Firestore record is tied to this verified UID
-    // and the AZOBSS profile has already been marked verified. Never trust browser email.
-    if((!validRealEmail(result.email)||result.emailVerified!==true)&&profileVerified){
-      if(!profileEmail){
-        try{
-          const mapped=await db.collection('usernameAuthEmails').where('uid','==',result.uid).limit(3).get();
-          mapped.forEach(doc=>{if(!profileEmail){const x=doc.data()||{};profileEmail=validRealEmail(x.authEmail||x.email||x.contactEmail||'');}});
-        }catch{/* Mapping is a compatibility fallback only. */}
+      // Current profiles normally use uid. Older AZOBSS records have also used
+      // authUid/firebaseUid/userUid or the username itself as the document id.
+      for(const field of ['uid','authUid','firebaseUid','userUid']){
+        try{const found=await db.collection('users').where(field,'==',result.uid).limit(2).get();found.forEach(absorbSnap);}catch{}
       }
-      if(profileEmail){result.email=profileEmail;result.emailVerified=true;result.emailSource='azobss-profile';}
+      if(aliasUsername){try{absorbSnap(await db.collection('users').doc(aliasUsername).get());}catch{}}
+    }catch{/* Auth identity above remains authoritative if profile recovery is unavailable. */}
+
+    // Resolve the real receiving email from the UID-bound username map as a
+    // compatibility fallback. A direct username document is accepted only for
+    // the same legacy @azobss.local alias that authenticated this Firebase UID.
+    if(!profileEmail){
+      try{
+        const maps=[];
+        const mapped=await db.collection('usernameAuthEmails').where('uid','==',result.uid).limit(3).get();
+        mapped.forEach(doc=>maps.push({id:doc.id,data:doc.data()||{}}));
+        if(aliasUsername){
+          try{const direct=await db.collection('usernameAuthEmails').doc(aliasUsername).get();if(direct.exists)maps.push({id:direct.id,data:direct.data()||{}});}catch{}
+        }
+        for(const row of maps){
+          const x=row.data||{},mapUid=String(x.uid||x.authUid||x.firebaseUid||'').trim();
+          const key=String(row.id||x.usernameKey||x.username||'').trim().toLowerCase();
+          if(mapUid&&mapUid!==result.uid)continue;
+          if(!mapUid&&(!aliasUsername||key!==aliasUsername))continue;
+          const candidate=validRealEmail(x.contactEmail||x.googleEmail||x.realEmail||x.authEmail||x.email||'');
+          if(candidate){profileEmail=candidate;break;}
+        }
+      }catch{/* Mapping is optional. */}
+    }
+
+    // For normal accounts Firebase Auth verification is enough. Legacy local-
+    // alias accounts additionally rely on the verified AZOBSS profile tied to
+    // this UID/username. Never accept an arbitrary browser-supplied email.
+    if(profileEmail && (result.emailVerified===true || (profileMatched&&profileVerified))){
+      result.email=profileEmail;
+      result.emailVerified=true;
+      result.emailSource=result.emailSource==='firebase-auth-record'?'firebase-auth+azobss-profile':'azobss-profile';
     }
   }
   return result;

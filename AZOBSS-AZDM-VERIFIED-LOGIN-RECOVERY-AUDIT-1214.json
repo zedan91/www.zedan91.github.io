@@ -1,0 +1,11 @@
+{
+  "version": 1214,
+  "scope": "AZDM authenticated purchase email resolver",
+  "fixes": [
+    "Firebase Admin getUser() recovers authoritative emailVerified state when the ID token claim is stale",
+    "Legacy users are resolved by uid/authUid/firebaseUid/userUid and direct username document",
+    "usernameAuthEmails mapping is accepted only when bound to the authenticated UID or matching local username alias",
+    "AZDM checkout/orders force-refresh the Firebase ID token",
+    "browser-supplied identity remains ignored"
+  ]
+}
