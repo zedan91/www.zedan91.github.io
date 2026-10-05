@@ -25,7 +25,7 @@ test('copied credentials tolerate surrounding whitespace without changing the se
   assert.equal(f.calls[0].options.headers.Authorization,'Bearer '+secret);
 });
 test('allowed license operations and email retries are forwarded without SurveyCAD operations',async()=>{
-  for(const action of ['issue','update','reset','revoke','restore','orders','order-email-retry']) {
+  for(const action of ['issue','update','reset','revoke','restore','delete','orders','order-email-retry']) {
     const f=fixture();await f.handler({method:'POST',body:'{"customer":"Example"}'},{},{pathname:'/api/azdm/admin/'+action});assert.equal(f.calls.length,1);assert.match(f.calls[0].url,new RegExp('/admin/'+action+'$'));
   }
   const f=fixture();assert.equal(await f.handler({method:'POST'},{},{pathname:'/api/admin/software-keys-action'}),false);

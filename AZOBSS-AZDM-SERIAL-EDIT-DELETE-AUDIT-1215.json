@@ -1,0 +1,15 @@
+{
+  "patch": 1215,
+  "title": "AZDM Serial Visibility, Unique Edit & Delete Customer",
+  "base": 1214,
+  "changes": [
+    "encrypted serial vault",
+    "serial visibility/copy",
+    "unique serial edit",
+    "PC/token reset on serial change",
+    "delete customer with exact-name confirmation",
+    "Worker self-migration"
+  ],
+  "worker_source": "AZOBSS-Developer-Files/AZDM-Cloudflare-Worker-v1215.js",
+  "migration": "AZOBSS-Developer-Files/AZDM-D1-MIGRATION-v1215.sql"
+}

@@ -31,7 +31,7 @@
 #azdmAdminPanel .azdm-admin-search{display:flex;gap:7px;flex-wrap:wrap}
 #azdmAdminPanel .azdm-admin-search input{width:260px}
 #azdmAdminPanel .azdm-admin-table{overflow-x:auto;width:100%}
-#azdmAdminPanel table{border-collapse:collapse;width:100%;font-size:12px;min-width:680px}
+#azdmAdminPanel table{border-collapse:collapse;width:100%;font-size:12px;min-width:980px}
 #azdmAdminPanel th{background:#142b2c;color:#99f6e4;font-size:11px;letter-spacing:.02em}
 #azdmAdminPanel td,#azdmAdminPanel th{padding:12px 9px;text-align:left;border-bottom:1px solid #344761;vertical-align:middle}
 #azdmAdminPanel td strong{display:block;color:#f8fafc}
@@ -52,3 +52,9 @@
 #azdmAdminPanel .azdm-lifetime-label{display:flex;align-items:center;gap:8px;margin:10px 0}
 #azdmAdminPanel .azdm-lifetime-label input{width:auto;min-height:auto;margin:0}
 @media(max-width:720px){#azdmAdminPanel .azdm-admin-issue{grid-template-columns:1fr}#azdmAdminPanel .azdm-admin-stats{grid-template-columns:1fr}#azdmAdminPanel .azdm-admin-card{padding:14px}#azdmAdminPanel .azdm-admin-search{width:100%}#azdmAdminPanel .azdm-admin-search input{width:100%}#azdmAdminPanel .azdm-admin-source{margin-left:0}}
+
+#azdmAdminPanel .azdm-serial-key{display:block;font:700 11px Consolas,monospace;color:#ccfbf1;white-space:nowrap;margin-bottom:6px}
+#azdmAdminPanel .azdm-serial-legacy{color:#fbbf24;font-family:inherit}
+#azdmAdminPanel .azdm-serial-input{text-transform:uppercase;font-family:Consolas,monospace;letter-spacing:.02em}
+#azdmAdminPanel td:nth-child(2){min-width:310px}
+#azdmAdminPanel td:nth-child(2) button{font-size:10px;min-height:28px;padding:5px 8px}

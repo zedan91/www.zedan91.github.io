@@ -30,6 +30,7 @@
   }
   function cell(row,value){const td=document.createElement('td');td.textContent=value;row.append(td);return td;}
   function button(text,fn,danger=false){const el=document.createElement('button');el.type='button';el.textContent=text;if(danger)el.className='azdm-danger';el.addEventListener('click',fn);return el;}
+  async function copySerial(serial){try{await navigator.clipboard.writeText(serial);notice('Serial disalin.');}catch{notice('Tidak dapat salin automatik. Pilih serial dan tekan Ctrl+C.');}}
   async function loadLicenses(){
     const current=generation,result=await api('list',{limit:25,search,cursor:cursors[page]});
     if(current!==generation)return;
@@ -37,13 +38,16 @@
     for(const item of result.licenses){
       const row=document.createElement('tr'),name=cell(row,'');const title=document.createElement('strong');title.textContent=item.customer;
       const id=document.createElement('small');id.textContent=item.id;name.append(title,id);
+      const serialCell=cell(row,'');
+      if(item.serial){const key=document.createElement('code');key.className='azdm-serial-key';key.textContent=item.serial;serialCell.append(key,button('Salin',()=>copySerial(item.serial)));}
+      else{const legacy=document.createElement('small');legacy.className='azdm-serial-legacy';legacy.textContent=item.serial_state==='unreadable'?'Serial tersimpan tetapi tidak dapat dibaca':'Legacy — key lama tidak dapat dipulihkan';serialCell.append(legacy);}
       cell(row,item.status==='revoked'?'Disekat':item.expires&&item.expires<=Date.now()/1000?'Tamat':'Aktif');
       cell(row,item.device_count+' / 1');cell(row,date(item.expires));cell(row,date(item.created));
       const td=cell(row,''),actions=document.createElement('div');actions.className='azdm-admin-actions';td.append(actions);
-      actions.append(button('Edit',()=>openEdit(item)),button('Reset PC',()=>confirm(item,'reset')),button(item.status==='revoked'?'Buka sekatan':'Sekat',()=>confirm(item,item.status==='revoked'?'restore':'revoke'),item.status!=='revoked'));
+      actions.append(button('Edit',()=>openEdit(item)),button('Reset PC',()=>confirm(item,'reset')),button(item.status==='revoked'?'Buka sekatan':'Sekat',()=>confirm(item,item.status==='revoked'?'restore':'revoke'),item.status!=='revoked'),button('Delete',()=>openDelete(item),true));
       $('rows').append(row);
     }
-    if(!result.licenses.length){const row=document.createElement('tr');const td=cell(row,search?'Tiada lesen sepadan dengan carian.':'Belum ada lesen AZDM.');td.colSpan=6;td.className='azdm-admin-empty';$('rows').append(row);}
+    if(!result.licenses.length){const row=document.createElement('tr');const td=cell(row,search?'Tiada lesen sepadan dengan carian.':'Belum ada lesen AZDM.');td.colSpan=7;td.className='azdm-admin-empty';$('rows').append(row);}
     $('page-label').textContent='Halaman '+(page+1)+' · '+result.licenses.length+' lesen';updatePages();
   }
   async function loadOrders(suppress=true){
@@ -96,14 +100,23 @@
   $('next').addEventListener('click',()=>action(async()=>{const old=page;cursors[page+1]=next;page++;try{await loadLicenses();}catch(error){page=old;throw error;}}));
   $('previous').addEventListener('click',()=>action(async()=>{const old=page;page--;try{await loadLicenses();}catch(error){page=old;throw error;}}));
   function openEdit(item){
-    editing=item;$('edit-name').value=item.customer;$('edit-lifetime').checked=!item.expires;
+    editing=item;$('edit-name').value=item.customer;$('edit-serial').value=item.serial||'';$('edit-serial').dataset.original=item.serial||'';$('edit-serial-note').textContent=item.serial?'Jika Serial Key tidak diubah, key semasa kekal. Jika ditukar, PC lama akan dilepaskan.':'Key asal ialah legacy dan tidak boleh dipulihkan. Masukkan key baru jika mahu mula menyimpan/paparkan serial.';$('edit-lifetime').checked=!item.expires;
     const d=new Date((item.expires||Math.floor(Date.now()/1000)+365*86400)*1000);
     $('edit-expiry').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);$('edit-expiry').disabled=!item.expires;$('edit-expiry').required=!!item.expires;$('edit-dialog').showModal();
   }
   $('edit-lifetime').addEventListener('change',()=>{$('edit-expiry').disabled=$('edit-lifetime').checked;$('edit-expiry').required=!$('edit-lifetime').checked;});
   $('edit-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
-    await api('update',{license_id:editing.id,customer:$('edit-name').value.trim(),expires:$('edit-lifetime').checked?0:Math.floor(new Date($('edit-expiry').value).getTime()/1000)});
-    $('edit-dialog').close();await loadLicenses();notice('Maklumat lesen disimpan.');
+    const payload={license_id:editing.id,customer:$('edit-name').value.trim(),expires:$('edit-lifetime').checked?0:Math.floor(new Date($('edit-expiry').value).getTime()/1000)};
+    const entered=$('edit-serial').value.trim().toUpperCase(),original=$('edit-serial').dataset.original||'';if(entered&&entered!==original)payload.serial=entered;
+    await api('update',payload);
+    $('edit-dialog').close();await loadLicenses();notice(payload.serial?'Lesen disimpan dan Serial Key ditukar. PC lama sudah dilepaskan.':'Maklumat lesen disimpan.');
+  });});
+  function openDelete(item){
+    pending={item,operation:'delete'};$('delete-customer').textContent=item.customer;$('delete-confirm-name').value='';$('delete-dialog').showModal();setTimeout(()=>$('delete-confirm-name').focus(),0);
+  }
+  $('delete-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
+    const typed=$('delete-confirm-name').value.trim();if(typed.toLowerCase()!==pending.item.customer.trim().toLowerCase())throw new Error('Nama customer tidak sepadan. Taip nama customer seperti yang dipaparkan.');
+    await api('delete',{license_id:pending.item.id,confirm_customer:typed});$('delete-dialog').close();await loadLicenses();notice('Customer / lesen AZDM sudah dipadam.');
   });});
   function confirm(item,operation){
     pending={item,operation};const descriptions={reset:'Customer boleh mengaktifkan serial asal pada PC baharu.',revoke:'Lesen disekat pada semakan online seterusnya.',restore:'Customer boleh mengaktifkan semula serial selepas sekatan dibuka.','order-email-retry':'Serial asal akan dihantar semula. Customer mungkin menerima email berulang jika cubaan terdahulu sudah berjaya.'};
