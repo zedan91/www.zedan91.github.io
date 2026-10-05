@@ -7,13 +7,38 @@ async function azdmVerifiedAccount(req) {
   if(!/^Bearer /i.test(header))return null;
   let decoded;
   try{decoded=await firebaseAdmin.auth().verifyIdToken(header.slice(7),true);}catch{return null;}
-  const result={uid:String(decoded.uid||''),email:String(decoded.email||'').trim(),emailVerified:decoded.email_verified===true,name:String(decoded.name||''),phone:String(decoded.phone_number||'')};
+  const result={uid:String(decoded.uid||''),email:String(decoded.email||'').trim().toLowerCase(),emailVerified:decoded.email_verified===true,name:String(decoded.name||''),phone:String(decoded.phone_number||''),emailSource:'firebase-token'};
+  const validRealEmail=value=>{
+    const email=String(value||'').trim().toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)&&!email.endsWith('@azobss.local')&&!email.endsWith('.local')?email:'';
+  };
   const db=getAzobssBackendDb();
   if(db&&result.uid){
+    let profileVerified=false,profileEmail='';
     try{
-      const found=await db.collection('users').where('uid','==',result.uid).limit(1).get();
-      found.forEach(doc=>{const profile=doc.data()||{};result.name=result.name||String(profile.displayName||profile.name||profile.username||'');result.phone=result.phone||String(profile.phoneNumber||profile.phone||'');});
-    }catch{/* Firebase token still supplies verified identity; profile is optional. */}
+      const found=await db.collection('users').where('uid','==',result.uid).limit(2).get();
+      found.forEach(doc=>{
+        const profile=doc.data()||{};
+        result.name=result.name||String(profile.displayName||profile.name||profile.username||'');
+        result.phone=result.phone||String(profile.phoneNumber||profile.phone||'');
+        profileVerified=profileVerified||profile.emailVerified===true||profile.verified===true;
+        if(!profileEmail)profileEmail=validRealEmail(profile.authEmail||profile.email||profile.contactEmail||profile.emailAddress||'');
+      });
+    }catch{/* Firebase token still supplies identity; legacy profile lookup is optional. */}
+
+    // Legacy AZOBSS username accounts can authenticate with username@azobss.local even
+    // though the real receiving email is already stored in users/usernameAuthEmails.
+    // Accept that real email only when the Firestore record is tied to this verified UID
+    // and the AZOBSS profile has already been marked verified. Never trust browser email.
+    if((!validRealEmail(result.email)||result.emailVerified!==true)&&profileVerified){
+      if(!profileEmail){
+        try{
+          const mapped=await db.collection('usernameAuthEmails').where('uid','==',result.uid).limit(3).get();
+          mapped.forEach(doc=>{if(!profileEmail){const x=doc.data()||{};profileEmail=validRealEmail(x.authEmail||x.email||x.contactEmail||'');}});
+        }catch{/* Mapping is a compatibility fallback only. */}
+      }
+      if(profileEmail){result.email=profileEmail;result.emailVerified=true;result.emailSource='azobss-profile';}
+    }
   }
   return result;
 }

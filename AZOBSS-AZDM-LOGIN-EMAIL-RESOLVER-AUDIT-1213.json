@@ -1,0 +1,23 @@
+{
+  "patch": 1213,
+  "version": "1.0.1213",
+  "baseline": "(1212)-AZOBSS-FULL-PACKAGE-AZDM-PURCHASE-COMPLETION_20261004.zip",
+  "title": "AZDM logged-in legacy real-email resolver fix",
+  "changes": [
+    "Resolve verified real customer email from users/<uid-linked-profile> when Firebase token uses @azobss.local legacy alias.",
+    "Fallback to usernameAuthEmails only when the mapping UID matches and AZOBSS profile is already verified.",
+    "Keep rejecting accounts with no real email; browser-supplied customer email remains ignored.",
+    "Clarify the error message so logged-in state is not mistaken for sign-in failure."
+  ],
+  "validation": {
+    "node_check": true,
+    "azdm_tests_passed": 18,
+    "azdm_tests_failed": 0
+  },
+  "sha256": {
+    "deploy-server.js": "add7fcdbd9ea38c79975b62bc8e067b0eb2f812c5a2ad9fcbdbc1ac285647d01",
+    "lib/azobss-azdm.js": "0523fccba8443721c993d752a373d2f5431ad99496d3d0eab58241894b393742",
+    "package.json": "ea916c186667dcb5a31e722adb7517348221d5def7cfcd6826def8aea26a2785",
+    "README_PATCH_1213.md": "4de3140f07b4fcb0093b616985a8f9e321e663ff3667468646b36198f1c6271b"
+  }
+}
