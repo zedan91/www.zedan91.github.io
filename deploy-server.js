@@ -3412,7 +3412,9 @@ async function azFulfillAzdmOrder(order = {}, req, options = {}) {
       for (let i=serials.length;i<quantity;i++) {
         const customer = cleanPremiumText(latest.azdmCustomer || latest.user?.username || latest.email || 'AZOBSS Customer', 90) || 'AZOBSS Customer';
         const suffix = quantity > 1 ? ` (${i+1}/${quantity})` : '';
-        const issued = await azAzdmAdminCall('issue',{customer:(customer + suffix).slice(0,120),days});
+        const email = cleanToyyibEmail(latest.email || latest.buyerEmail || latest.user?.email || '');
+        const phone = cleanToyyibPhone(latest.phone || latest.buyerPhone || latest.user?.phone || '');
+        const issued = await azAzdmAdminCall('issue',{customer:(customer + suffix).slice(0,120),email,phone,days});
         const serial = String(issued.serial || '').trim();
         if (!serial) throw new Error('Servis lesen tidak memulangkan serial.');
         serials.push({serial,license_id:String(issued.license_id || issued.id || ''),expires:Number(issued.expires || 0) || 0});

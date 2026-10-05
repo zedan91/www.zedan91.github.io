@@ -24,6 +24,8 @@
 html body .download-card .az-package-card-actions{display:flex!important;align-items:stretch;gap:6px;width:100%;min-width:0}
 html body .download-card .az-package-card-actions>.az-software-buy-cart-row{flex:1;min-width:0;width:auto!important}
 html body .download-card .az-package-card-actions>.download-btn{flex:1;min-width:0;width:auto!important}
+html body .download-card .az-package-card-actions>.azdm-setup-download-btn{flex:0 0 76px!important;width:76px!important;min-width:76px!important;min-height:40px!important;padding:6px 7px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #22d3ee!important;border-radius:10px!important;background:#0e7490!important;color:#ecfeff!important;font-size:11px!important;font-weight:800!important;line-height:1.1!important;text-decoration:none!important}
+html body .download-card .az-package-card-actions>.azdm-setup-download-btn:hover{filter:brightness(1.08)}
 html body .download-card .az-package-card-actions>.az-package-support-btn{flex:none;width:64px;min-height:40px;padding:6px;border:1px solid #258c79;border-radius:10px;background:#0b3033;color:#a7f3d0;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
 html body .download-card .az-package-card-actions .az-software-buy-cart-row>.download-btn{min-width:0!important;padding-left:5px!important;padding-right:5px!important;gap:4px!important}
 .az-package-dialog :focus-visible,.az-package-editor :focus-visible,.az-package-support-btn:focus-visible{outline:3px solid #5eead4;outline-offset:3px}

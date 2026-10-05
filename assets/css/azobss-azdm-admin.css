@@ -58,3 +58,50 @@
 #azdmAdminPanel .azdm-serial-input{text-transform:uppercase;font-family:Consolas,monospace;letter-spacing:.02em}
 #azdmAdminPanel td:nth-child(2){min-width:310px}
 #azdmAdminPanel td:nth-child(2) button{font-size:10px;min-height:28px;padding:5px 8px}
+
+
+/* AZOBSS 1218 — Gmail/phone + sort/search while keeping all AZDM columns visible on desktop */
+#azdmAdminPanel .azdm-admin-issue{grid-template-columns:minmax(145px,1fr) minmax(185px,1.15fr) minmax(135px,.8fr) 125px auto}
+#azdmAdminPanel .azdm-admin-search{align-items:center}
+#azdmAdminPanel .azdm-admin-search input{width:min(300px,32vw)}
+#azdmAdminPanel .azdm-sort-field{display:flex;align-items:center;gap:6px;margin:0;color:#94a3b8;font-size:11px;font-weight:700}
+#azdmAdminPanel .azdm-sort-field span{white-space:nowrap}
+#azdmAdminPanel .azdm-sort-field select{min-height:36px;padding:7px 9px;max-width:205px;font-size:11px}
+#azdmAdminPanel .azdm-license-table-wrap{overflow-x:visible}
+#azdmAdminPanel .azdm-license-table{table-layout:fixed;min-width:0;width:100%;font-size:10.5px}
+#azdmAdminPanel .azdm-license-table th,#azdmAdminPanel .azdm-license-table td{padding:9px 5px}
+#azdmAdminPanel .azdm-license-table th:nth-child(1),#azdmAdminPanel .azdm-license-table td:nth-child(1){width:13%}
+#azdmAdminPanel .azdm-license-table th:nth-child(2),#azdmAdminPanel .azdm-license-table td:nth-child(2){width:18%}
+#azdmAdminPanel .azdm-license-table td:nth-child(2){min-width:0}
+#azdmAdminPanel .azdm-license-table th:nth-child(3),#azdmAdminPanel .azdm-license-table td:nth-child(3){width:22%;min-width:0}
+#azdmAdminPanel .azdm-license-table th:nth-child(4),#azdmAdminPanel .azdm-license-table td:nth-child(4){width:5.5%}
+#azdmAdminPanel .azdm-license-table th:nth-child(5),#azdmAdminPanel .azdm-license-table td:nth-child(5){width:4.5%}
+#azdmAdminPanel .azdm-license-table th:nth-child(6),#azdmAdminPanel .azdm-license-table td:nth-child(6){width:7%}
+#azdmAdminPanel .azdm-license-table th:nth-child(7),#azdmAdminPanel .azdm-license-table td:nth-child(7){width:7%}
+#azdmAdminPanel .azdm-license-table th:nth-child(8),#azdmAdminPanel .azdm-license-table td:nth-child(8){width:23%}
+#azdmAdminPanel .azdm-license-table .azdm-serial-key{white-space:normal;overflow-wrap:anywhere;word-break:break-word;font-size:9.5px;line-height:1.35;margin-bottom:4px}
+#azdmAdminPanel .azdm-license-table td small{overflow-wrap:anywhere;word-break:break-word}
+#azdmAdminPanel .azdm-contact-cell{min-width:0}
+#azdmAdminPanel .azdm-contact-email{display:block;color:#93c5fd;text-decoration:none;overflow-wrap:anywhere;word-break:break-word;line-height:1.3}
+#azdmAdminPanel .azdm-contact-email:hover{text-decoration:underline}
+#azdmAdminPanel .azdm-contact-phone{font-family:inherit!important;color:#cbd5e1!important;line-height:1.3}
+#azdmAdminPanel .azdm-contact-empty{font-family:inherit!important;color:#64748b!important}
+#azdmAdminPanel .azdm-license-table .azdm-admin-actions{gap:3px;flex-wrap:nowrap;align-items:center}
+#azdmAdminPanel .azdm-license-table .azdm-admin-actions button{font-size:9.5px;min-height:29px;padding:5px 6px}
+#azdmAdminPanel .azdm-license-table td:nth-child(4),#azdmAdminPanel .azdm-license-table td:nth-child(5),#azdmAdminPanel .azdm-license-table td:nth-child(6),#azdmAdminPanel .azdm-license-table td:nth-child(7){line-height:1.2}
+@media(max-width:1120px){
+  #azdmAdminPanel .azdm-admin-issue{grid-template-columns:1fr 1fr 1fr}
+  #azdmAdminPanel .azdm-admin-issue button{align-self:end}
+  #azdmAdminPanel .azdm-license-table{font-size:9.5px}
+  #azdmAdminPanel .azdm-license-table th,#azdmAdminPanel .azdm-license-table td{padding:7px 4px}
+  #azdmAdminPanel .azdm-license-table .azdm-admin-actions{flex-wrap:wrap}
+  #azdmAdminPanel .azdm-license-table .azdm-admin-actions button{font-size:9px;padding:4px 5px;min-height:27px}
+}
+@media(max-width:720px){
+  #azdmAdminPanel .azdm-admin-issue{grid-template-columns:1fr}
+  #azdmAdminPanel .azdm-admin-search input{width:100%}
+  #azdmAdminPanel .azdm-sort-field{width:100%}
+  #azdmAdminPanel .azdm-sort-field select{flex:1;max-width:none}
+  #azdmAdminPanel .azdm-license-table-wrap{overflow-x:auto}
+  #azdmAdminPanel .azdm-license-table{min-width:1050px;table-layout:auto}
+}

@@ -4,7 +4,7 @@
   if(!root)return;
   const $=id=>root.querySelector('#azdm-'+id);
   const tabs=[...document.querySelectorAll('[data-software-key-product]')];
-  let product='azdm',loaded=false,loading=null,page=0,cursors=[null],next=null,search='';
+  let product='azdm',loaded=false,loading=null,page=0,cursors=[null],next=null,search='',sort='created-desc';
   let orderPage=0,orderCursors=[null],orderNext=null,serialRecord=null,editing=null,pending=null,generation=0;
   const apiBase='https://azobss-backend.onrender.com/api/azdm/admin/';
   const date=seconds=>seconds?new Date(seconds*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}):'Lifetime';
@@ -32,12 +32,16 @@
   function button(text,fn,danger=false){const el=document.createElement('button');el.type='button';el.textContent=text;if(danger)el.className='azdm-danger';el.addEventListener('click',fn);return el;}
   async function copySerial(serial){try{await navigator.clipboard.writeText(serial);notice('Serial disalin.');}catch{notice('Tidak dapat salin automatik. Pilih serial dan tekan Ctrl+C.');}}
   async function loadLicenses(){
-    const current=generation,result=await api('list',{limit:25,search,cursor:cursors[page]});
+    const current=generation,result=await api('list',{limit:25,search,sort,cursor:cursors[page]});
     if(current!==generation)return;
     next=result.next_cursor;$('rows').replaceChildren();
     for(const item of result.licenses){
       const row=document.createElement('tr'),name=cell(row,'');const title=document.createElement('strong');title.textContent=item.customer;
       const id=document.createElement('small');id.textContent=item.id;name.append(title,id);
+      const contact=cell(row,'');contact.className='azdm-contact-cell';
+      if(item.email){const email=document.createElement('a');email.className='azdm-contact-email';email.href='mailto:'+item.email;email.textContent=item.email;contact.append(email);}
+      if(item.phone){const phone=document.createElement('small');phone.className='azdm-contact-phone';phone.textContent='☎ '+item.phone;contact.append(phone);}
+      if(!item.email&&!item.phone){const blank=document.createElement('small');blank.className='azdm-contact-empty';blank.textContent='—';contact.append(blank);}
       const serialCell=cell(row,'');
       if(item.serial){const key=document.createElement('code');key.className='azdm-serial-key';key.textContent=item.serial;serialCell.append(key,button('Salin',()=>copySerial(item.serial)));}
       else{const legacy=document.createElement('small');legacy.className='azdm-serial-legacy';legacy.textContent=item.serial_state==='unreadable'?'Serial tersimpan tetapi tidak dapat dibaca':'Legacy — key lama tidak dapat dipulihkan';serialCell.append(legacy);}
@@ -47,7 +51,7 @@
       actions.append(button('Edit',()=>openEdit(item)),button('Reset PC',()=>confirm(item,'reset')),button(item.status==='revoked'?'Buka sekatan':'Sekat',()=>confirm(item,item.status==='revoked'?'restore':'revoke'),item.status!=='revoked'),button('Delete',()=>openDelete(item),true));
       $('rows').append(row);
     }
-    if(!result.licenses.length){const row=document.createElement('tr');const td=cell(row,search?'Tiada lesen sepadan dengan carian.':'Belum ada lesen AZDM.');td.colSpan=7;td.className='azdm-admin-empty';$('rows').append(row);}
+    if(!result.licenses.length){const row=document.createElement('tr');const td=cell(row,search?'Tiada lesen sepadan dengan carian.':'Belum ada lesen AZDM.');td.colSpan=8;td.className='azdm-admin-empty';$('rows').append(row);}
     $('page-label').textContent='Halaman '+(page+1)+' · '+result.licenses.length+' lesen';updatePages();
   }
   async function loadOrders(suppress=true){
@@ -91,22 +95,23 @@
   window.azSoftwareKeyTabsLoad=()=>product==='azdm'?load():typeof window.azSoftwareKeysLoad==='function'?window.azSoftwareKeysLoad({force:false}):Promise.resolve();
   $('refresh').addEventListener('click',()=>load(true));
   $('issue-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
-    const customer=$('customer').value.trim();const result=await api('issue',{customer,days:Number($('duration').value)});
-    serialRecord={...result,customer};$('serial-customer').textContent=customer+' · '+date(result.expires);$('serial-value').value=result.serial;$('serial-dialog').showModal();$('customer').value='';
+    const customer=$('customer').value.trim(),email=$('email').value.trim(),phone=$('phone').value.trim();const result=await api('issue',{customer,email,phone,days:Number($('duration').value)});
+    serialRecord={...result,customer,email,phone};$('serial-customer').textContent=[customer,email,phone,date(result.expires)].filter(Boolean).join(' · ');$('serial-value').value=result.serial;$('serial-dialog').showModal();$('customer').value='';$('email').value='';$('phone').value='';
     search='';$('search').value='';page=0;cursors=[null];await loadLicenses();
   });});
   $('search-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{search=$('search').value.trim();page=0;cursors=[null];await loadLicenses();});});
   $('clear-search').addEventListener('click',()=>action(async()=>{search='';$('search').value='';page=0;cursors=[null];await loadLicenses();}));
+  $('sort').addEventListener('change',()=>action(async()=>{sort=$('sort').value||'created-desc';page=0;cursors=[null];await loadLicenses();}));
   $('next').addEventListener('click',()=>action(async()=>{const old=page;cursors[page+1]=next;page++;try{await loadLicenses();}catch(error){page=old;throw error;}}));
   $('previous').addEventListener('click',()=>action(async()=>{const old=page;page--;try{await loadLicenses();}catch(error){page=old;throw error;}}));
   function openEdit(item){
-    editing=item;$('edit-name').value=item.customer;$('edit-serial').value=item.serial||'';$('edit-serial').dataset.original=item.serial||'';$('edit-serial-note').textContent=item.serial?'Jika Serial Key tidak diubah, key semasa kekal. Jika ditukar, PC lama akan dilepaskan.':'Key asal ialah legacy dan tidak boleh dipulihkan. Masukkan key baru jika mahu mula menyimpan/paparkan serial.';$('edit-lifetime').checked=!item.expires;
+    editing=item;$('edit-name').value=item.customer;$('edit-email').value=item.email||'';$('edit-phone').value=item.phone||'';$('edit-serial').value=item.serial||'';$('edit-serial').dataset.original=item.serial||'';$('edit-serial-note').textContent=item.serial?'Jika Serial Key tidak diubah, key semasa kekal. Jika ditukar, PC lama akan dilepaskan.':'Key asal ialah legacy dan tidak boleh dipulihkan. Masukkan key baru jika mahu mula menyimpan/paparkan serial.';$('edit-lifetime').checked=!item.expires;
     const d=new Date((item.expires||Math.floor(Date.now()/1000)+365*86400)*1000);
     $('edit-expiry').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);$('edit-expiry').disabled=!item.expires;$('edit-expiry').required=!!item.expires;$('edit-dialog').showModal();
   }
   $('edit-lifetime').addEventListener('change',()=>{$('edit-expiry').disabled=$('edit-lifetime').checked;$('edit-expiry').required=!$('edit-lifetime').checked;});
   $('edit-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
-    const payload={license_id:editing.id,customer:$('edit-name').value.trim(),expires:$('edit-lifetime').checked?0:Math.floor(new Date($('edit-expiry').value).getTime()/1000)};
+    const payload={license_id:editing.id,customer:$('edit-name').value.trim(),email:$('edit-email').value.trim(),phone:$('edit-phone').value.trim(),expires:$('edit-lifetime').checked?0:Math.floor(new Date($('edit-expiry').value).getTime()/1000)};
     const entered=$('edit-serial').value.trim().toUpperCase(),original=$('edit-serial').dataset.original||'';if(entered&&entered!==original)payload.serial=entered;
     await api('update',payload);
     $('edit-dialog').close();await loadLicenses();notice(payload.serial?'Lesen disimpan dan Serial Key ditukar. PC lama sudah dilepaskan.':'Maklumat lesen disimpan.');

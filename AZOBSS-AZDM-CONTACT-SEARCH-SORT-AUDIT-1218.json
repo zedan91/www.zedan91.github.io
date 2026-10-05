@@ -1,0 +1,13 @@
+{
+  "patch": 1218,
+  "baseline": 1217,
+  "feature": "AZDM Gmail/phone display, edit, search and sort",
+  "worker_source": "AZOBSS-Developer-Files/AZDM-Cloudflare-Worker-v1218.txt",
+  "d1_auto_migration": ["email", "email_key", "phone", "phone_key"],
+  "search_fields": ["customer", "email", "phone", "license_id"],
+  "sort_modes": ["created-desc", "created-asc", "customer-asc", "customer-desc", "email-asc", "email-desc", "phone-asc", "phone-desc", "expires-asc", "expires-desc", "status-active", "status-revoked"],
+  "desktop_table_horizontal_scroll": false,
+  "mobile_horizontal_scroll": true,
+  "tests": 25,
+  "tests_passed": 25
+}
