@@ -41,3 +41,21 @@ test('catalog is readable without login and visibly disabled before setup; unrel
   assert.equal(sent[0].s,200);assert.equal(sent[0].b.enabled,false);assert.equal(sent[0].b.support.email,'zedan9107@gmail.com');
   assert.equal(await handler({method:'POST'},{},{pathname:'/api/toyyib/create-bill',query:{}}),false);
 });
+test('Render-local AZDM shop can replace the undeployed Cloudflare integration without exposing a service token',async()=>{
+  const sent=[],calls=[];
+  const offer={enabled:true,product_id:'AZDM',name:'AZDM',fulfilment:'azdm',max_quantity:100,bulk_minimum:2,bulk_unit_cents:4000,plans:[{id:'annual',label:'1 Tahun',days:365,quantity:0,amount_cents:2500},{id:'lifetime',label:'Lifetime',days:0,quantity:0,amount_cents:5000}]};
+  const handler=createAzdmHandler({
+    getIdentity:async()=>({uid:'buyer',email:'buyer@example.com',emailVerified:true,name:'Buyer'}),
+    getOffer:async()=>offer,readBody:async req=>req.body||'{}',rateLimit:()=>false,env:{},
+    send:(r,s,b)=>sent.push({status:s,body:JSON.parse(b)}),
+    localShop:{
+      catalog:async ctx=>{calls.push(['catalog',ctx]);return {enabled:true,sandbox:false};},
+      checkout:async ctx=>{calls.push(['checkout',ctx]);return {order_id:'azdm-local',payment_url:'https://toyyibpay.com/example',status:'pending'};},
+      status:async()=>({status:'pending'}),orders:async()=>({orders:[]})
+    }
+  });
+  await handler({method:'GET'},{},{pathname:'/api/azdm/catalog',query:{product_id:'AZDM'}});
+  assert.equal(sent[0].status,200);assert.equal(sent[0].body.enabled,true);assert.equal(calls[0][0],'catalog');
+  await handler({method:'POST',body:JSON.stringify({software_id:'AZDM',plan:'lifetime',quantity:2,request_id:randomUUID(),amount_cents:1})},{},{pathname:'/api/azdm/checkout',query:{}});
+  assert.equal(sent[1].status,200);assert.equal(calls[1][1].body.account_uid,'buyer');assert.equal(calls[1][1].body.email,'buyer@example.com');assert.equal(calls[1][1].body.trusted_quote.total_cents,8000);assert.equal(calls[1][1].body.software_id,'AZDM');
+});

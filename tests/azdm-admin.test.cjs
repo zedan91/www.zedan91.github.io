@@ -36,3 +36,14 @@ test('unknown operations, GET mutations, large or malformed bodies and missing s
   }
   const f=fixture(undefined,{});await f.handler({method:'POST'},{},{pathname:'/api/azdm/admin/list'});assert.equal(f.replies[0].status,503);
 });
+test('AZDM order list and retry can be served from Render-local order storage instead of missing Worker admin routes',async()=>{
+  const replies=[],localCalls=[];
+  const handler=createAzdmAdminHandler({getAdminIdentity:async()=>({uid:'owner',isAdmin:true}),env:{},rateLimit:()=>false,readBody:async req=>req.body||'{}',send:(r,status,raw)=>replies.push({status,body:JSON.parse(raw)}),localAdmin:{
+    orders:async ctx=>{localCalls.push(['orders',ctx]);return {enabled:true,orders:[{id:'azdm-1'}],next_cursor:null};},
+    'order-email-retry':async ctx=>{localCalls.push(['retry',ctx]);return {order:{id:'azdm-1',email_status:'accepted'}};}
+  }});
+  await handler({method:'POST',body:'{"limit":25}'},{},{pathname:'/api/azdm/admin/orders'});
+  assert.equal(replies[0].status,200);assert.equal(replies[0].body.orders[0].id,'azdm-1');
+  await handler({method:'POST',body:'{"order_id":"azdm-1"}'},{},{pathname:'/api/azdm/admin/order-email-retry'});
+  assert.equal(replies[1].status,200);assert.equal(localCalls.length,2);
+});

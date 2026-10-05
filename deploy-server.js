@@ -17,14 +17,14 @@ async function azdmVerifiedAccount(req) {
   }
   return result;
 }
-const handleAzdm=createAzdmHandler({getIdentity:azdmVerifiedAccount,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend});
+const handleAzdm=createAzdmHandler({getIdentity:azdmVerifiedAccount,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend,localShop:{catalog:azAzdmLocalCatalog,checkout:azAzdmLocalCheckout,status:azAzdmLocalStatus,orders:azAzdmLocalOrders}});
 const {createAzdmAdminHandler}=require('./lib/azobss-azdm-admin');
 async function azdmAdminIdentity(req) {
   const verified=await azdmVerifiedAccount(req);
   if(!verified?.uid)return null;
   return {...verified,isAdmin:azIdentityTrustedForBackendAdmin({uid:verified.uid,authEmail:verified.email})};
 }
-const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend});
+const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,localAdmin:{orders:azAzdmAdminLocalOrders,'order-email-retry':azAzdmAdminLocalRetryEmail}});
 const {createOfferHandler,model:azSoftwarePackageModel}=require('./lib/azobss-azdm-offers');
 async function azSoftwarePackageProduct(productId){
   const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
@@ -3189,6 +3189,266 @@ async function azSendEmailWithOptionalPdf({ to, subject, html, text, pdfBuffer, 
   });
 }
 
+
+// AZOBSS v1212: finish the AZDM customer purchase flow on the existing Render backend.
+// This deliberately reuses the ToyyibPay, Firebase, email and AZDM admin connection that
+// are already configured for AZOBSS, so the customer shop no longer depends on a second
+// undeployed Cloudflare /integration/* shop service. License signing keys remain only in
+// the existing AZDM Worker; Render asks that Worker to issue licenses through its server-only
+// admin API after ToyyibPay has been verified by the normal AZOBSS callback flow.
+function azIsAzdmPremiumOrder(order = {}) {
+  const kind = String(order.automaticCheckoutKind || order.source || '').toLowerCase();
+  const pid = String(order.productId || order.product?.productId || '').toUpperCase();
+  return order.azdmOrder === true || kind === 'azdm' || pid === 'AZDM' || String(order.fulfilment || '').toLowerCase() === 'azdm';
+}
+function azAzdmShopReadiness() {
+  const token = String(process.env.AZDM_ADMIN_TOKEN || '').trim();
+  const db = getAzobssBackendDb();
+  const sender = String(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || '').trim();
+  const ready = !!(TOYYIB_SECRET_KEY && TOYYIB_CATEGORY_CODE && token.length >= 32 && token.length <= 400 && db && mailReady() && sender);
+  return {
+    ready,
+    sandbox: /dev\.toyyibpay\.com/i.test(String(TOYYIB_BASE_URL || '')) || String(process.env.TOYYIB_SANDBOX || '').toLowerCase() === 'true'
+  };
+}
+function azAzdmCipherKey() {
+  const secret = String(process.env.AZDM_ORDER_CIPHER_KEY || process.env.AZDM_ADMIN_TOKEN || '').trim();
+  if (secret.length < 32) throw new Error('AZDM secure order storage is not configured.');
+  return crypto.createHash('sha256').update('AZOBSS-AZDM-ORDER-CIPHER-v1212|' + secret).digest();
+}
+function azAzdmEncryptSerials(rows = []) {
+  const iv = crypto.randomBytes(12), cipher = crypto.createCipheriv('aes-256-gcm', azAzdmCipherKey(), iv);
+  const plain = Buffer.from(JSON.stringify(Array.isArray(rows) ? rows : []), 'utf8');
+  const encrypted = Buffer.concat([cipher.update(plain), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return ['v1', iv.toString('base64url'), tag.toString('base64url'), encrypted.toString('base64url')].join('.');
+}
+function azAzdmDecryptSerials(value = '') {
+  if (!value) return [];
+  const parts = String(value).split('.');
+  if (parts.length !== 4 || parts[0] !== 'v1') throw new Error('AZDM secure order data cannot be read.');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', azAzdmCipherKey(), Buffer.from(parts[1], 'base64url'));
+  decipher.setAuthTag(Buffer.from(parts[2], 'base64url'));
+  const plain = Buffer.concat([decipher.update(Buffer.from(parts[3], 'base64url')), decipher.final()]).toString('utf8');
+  const rows = JSON.parse(plain);
+  return Array.isArray(rows) ? rows : [];
+}
+function azAzdmSafeHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+async function azAzdmAdminCall(action, body = {}) {
+  const token = String(process.env.AZDM_ADMIN_TOKEN || '').trim();
+  if (token.length < 32 || token.length > 400) throw new Error('Sambungan admin AZDM belum ditetapkan.');
+  const origin = new URL(process.env.AZDM_LICENSE_URL || 'https://azdm-license.zedan9107.workers.dev');
+  if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash) throw new Error('AZDM license URL tidak sah.');
+  const response = await fetch(origin.origin + '/admin/' + action, {
+    method:'POST', headers:{Authorization:'Bearer ' + token, 'Content-Type':'application/json'},
+    body:JSON.stringify(body || {}), signal:AbortSignal.timeout(25000), redirect:'error'
+  });
+  let result = null;
+  try { result = await response.json(); } catch (_) { result = {}; }
+  if (!response.ok) throw new Error(result?.error || `Servis lesen AZDM gagal (${response.status}).`);
+  return result || {};
+}
+function azAzdmOrderUid(order = {}) {
+  return String(order.azdmAccountUid || order.user?.uid || order.accountUid || '').trim();
+}
+function azAzdmPublicOrder(order = {}, admin = false) {
+  const amountSen = Number(order.amountSen || 0) || 0;
+  const row = {
+    id:String(order.orderId || ''), order_id:String(order.orderId || ''),
+    product_id:String(order.productId || order.product?.productId || 'AZDM'),
+    product_name:String(order.productName || order.product?.name || 'AZDM'),
+    plan_id:String(order.softwarePackageId || order.azdmPlanId || ''),
+    quantity:Math.max(1, Number(order.packageQuantity || order.azdmQuantity || order.quantity || 1) || 1),
+    amount_cents:amountSen,
+    status:String(order.status || 'pending'),
+    email_status:String(order.email_status || (order.emailSentAt ? 'accepted' : order.azdmFulfillmentError ? 'review' : 'queued')),
+    email:String(order.email || order.buyerEmail || order.user?.email || ''),
+    customer:String(order.azdmCustomer || order.user?.username || order.username || order.email || 'AZOBSS Customer'),
+    created_at:String(order.createdAt || ''), paid_at:String(order.paidAt || ''),
+    bill_code:String(order.billCode || ''), payment_url:String(order.paymentUrl || '')
+  };
+  if (admin) {
+    row.invoice_no = String(order.invoiceNo || '');
+    row.receipt_no = String(order.receiptNo || '');
+    row.issued_count = Math.max(0, Number(order.azdmIssuedCount || 0) || 0);
+    row.fulfillment_state = String(order.azdmFulfillmentState || '');
+    row.fulfillment_error = String(order.azdmFulfillmentError || order.emailError || '');
+  }
+  return row;
+}
+async function azAzdmLoadOrdersRaw(limit = 200) {
+  const out = [], seen = new Set(), add = row => {
+    if (!row || !azIsAzdmPremiumOrder(row)) return;
+    const key = String(row.orderId || row.billCode || '').trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key); out.push(row);
+  };
+  const db = getAzobssBackendDb();
+  if (db) {
+    try {
+      let snap;
+      try { snap = await db.collection('premiumOrders').orderBy('createdAtMs','desc').limit(Math.max(50, Math.min(500, limit))).get(); }
+      catch (_) { snap = await db.collection('premiumOrders').limit(Math.max(50, Math.min(500, limit))).get(); }
+      snap.forEach(doc => add({docId:doc.id, ...(doc.data() || {})}));
+    } catch (err) { console.warn('AZDM order list Firestore read skipped:', err && (err.message || err)); }
+  }
+  try { (readPremiumOrders() || []).forEach(add); } catch (_) {}
+  out.sort((a,b)=>(Number(b.createdAtMs || Date.parse(b.createdAt || '') || 0)-Number(a.createdAtMs || Date.parse(a.createdAt || '') || 0)));
+  return out.slice(0, Math.max(1, Math.min(500, limit)));
+}
+async function azAzdmSendSerialEmail(order, serialRows = []) {
+  const email = cleanToyyibEmail(order.email || order.buyerEmail || order.user?.email || '');
+  if (!email) throw new Error('Email customer tidak sah.');
+  if (!mailReady()) throw new Error('Servis email AZOBSS belum tersedia.');
+  const name = cleanPremiumText(order.azdmCustomer || order.user?.username || order.username || 'Customer', 120) || 'Customer';
+  const productName = cleanPremiumText(order.productName || order.product?.name || 'AZDM', 160) || 'AZDM';
+  const orderId = cleanPremiumText(order.orderId || '', 160);
+  const lines = serialRows.map((row,i)=>`${i+1}. ${row.serial}${row.expires ? `\n   Tamat: ${new Date(Number(row.expires)*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'})}` : '\n   Tamat: Lifetime'}`);
+  const text = `Salam ${name},\n\nBayaran ${productName} telah disahkan. Berikut serial lesen anda:\n\n${lines.join('\n\n')}\n\nSetiap serial adalah untuk 1 PC.\nNo. pesanan: ${orderId}\n\nJika perlukan bantuan, WhatsApp +60 11-3560 0723 atau balas melalui support AZOBSS.\n`;
+  const htmlRows = serialRows.map((row,i)=>`<li style="margin:0 0 14px"><b>PC ${i+1}</b><br><code style="font-size:16px;word-break:break-all">${azAzdmSafeHtml(row.serial)}</code><br><small>${row.expires ? 'Tamat: '+azAzdmSafeHtml(new Date(Number(row.expires)*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'})) : 'Lifetime'}</small></li>`).join('');
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#132238"><h2>Serial lesen ${azAzdmSafeHtml(productName)}</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda telah disahkan.</p><ol>${htmlRows}</ol><p>Setiap serial adalah untuk <b>1 PC</b>.</p><p>No. pesanan: <b>${azAzdmSafeHtml(orderId)}</b></p><p>Support: +60 11-3560 0723 · zedan9107@gmail.com</p></div>`;
+  await azSendEmailWithOptionalPdf({to:email, subject:`AZOBSS ${productName} — Serial lesen anda`, html, text});
+  return email;
+}
+async function azFulfillAzdmOrder(order = {}, req, options = {}) {
+  let latest = await azReloadPremiumOrder(order);
+  if (!azIsAzdmPremiumOrder(latest) || String(latest.status || '').toLowerCase() !== 'paid') return latest;
+  const quantity = Math.max(1, Math.min(100, Number(latest.packageQuantity || latest.azdmQuantity || latest.quantity || 1) || 1));
+  const days = Math.max(0, Math.min(36500, Number(latest.softwarePackageDays ?? latest.azdmDays ?? 0) || 0));
+  let serials = [];
+  try { serials = azAzdmDecryptSerials(latest.azdmSerialCipher || ''); }
+  catch (err) {
+    latest = upsertPremiumOrder({...latest,azdmFulfillmentState:'review',azdmFulfillmentError:err.message,email_status:'review'});
+    try { await azPersistPremiumOrder(latest); } catch (_) {}
+    return latest;
+  }
+  if (serials.length > quantity) serials = serials.slice(0, quantity);
+  if (serials.length < quantity) {
+    latest = upsertPremiumOrder({...latest,azdmFulfillmentState:'issuing',email_status:'queued',azdmFulfillmentError:''});
+    try { await azPersistPremiumOrder(latest); } catch (_) {}
+    try {
+      for (let i=serials.length;i<quantity;i++) {
+        const customer = cleanPremiumText(latest.azdmCustomer || latest.user?.username || latest.email || 'AZOBSS Customer', 90) || 'AZOBSS Customer';
+        const suffix = quantity > 1 ? ` (${i+1}/${quantity})` : '';
+        const issued = await azAzdmAdminCall('issue',{customer:(customer + suffix).slice(0,120),days});
+        const serial = String(issued.serial || '').trim();
+        if (!serial) throw new Error('Servis lesen tidak memulangkan serial.');
+        serials.push({serial,license_id:String(issued.license_id || issued.id || ''),expires:Number(issued.expires || 0) || 0});
+        latest = upsertPremiumOrder({...latest,azdmSerialCipher:azAzdmEncryptSerials(serials),azdmIssuedCount:serials.length,azdmFulfillmentState:'issuing',email_status:'queued',azdmFulfillmentError:''});
+        try { await azPersistPremiumOrder(latest); } catch (persistError) { console.warn('AZDM issued serial persist warning:', persistError && (persistError.message || persistError)); }
+      }
+    } catch (err) {
+      latest = upsertPremiumOrder({...latest,azdmSerialCipher:serials.length?azAzdmEncryptSerials(serials):latest.azdmSerialCipher,azdmIssuedCount:serials.length,azdmFulfillmentState:'review',azdmFulfillmentError:err.message,email_status:'review',emailError:err.message});
+      try { await azPersistPremiumOrder(latest); } catch (_) {}
+      return latest;
+    }
+  }
+  if (serials.length === quantity && (!latest.emailSentAt || options.forceEmail === true)) {
+    try {
+      const to = await azAzdmSendSerialEmail(latest, serials);
+      const now = new Date().toISOString();
+      latest = upsertPremiumOrder({...latest,emailSentAt:now,emailTo:to,emailError:null,email_status:'accepted',azdmEmailSentAt:now,azdmFulfillmentState:'complete',azdmFulfillmentError:'',azdmIssuedCount:serials.length,paBmPaidSyncedAt:latest.paBmPaidSyncedAt || now,paBmPaidSyncedCount:0});
+      try { await azPersistPremiumOrder(latest); } catch (_) {}
+    } catch (err) {
+      latest = upsertPremiumOrder({...latest,email_status:'review',emailError:err.message,azdmFulfillmentState:'review',azdmFulfillmentError:err.message,azdmIssuedCount:serials.length});
+      try { await azPersistPremiumOrder(latest); } catch (_) {}
+    }
+  }
+  return findPremiumOrderByAny({orderId:latest.orderId,billCode:latest.billCode}) || latest;
+}
+async function azAzdmLocalCatalog({offer}) {
+  const state = azAzdmShopReadiness();
+  return {enabled:state.ready,sandbox:state.sandbox,service:'render-native-v1212',support:{email:'zedan9107@gmail.com',whatsapp:'601135600723'},offer};
+}
+async function azAzdmLocalCheckout({req,body,offer}) {
+  const state = azAzdmShopReadiness();
+  if (!state.ready) return {statusCode:503,body:{ok:false,error:'Pembelian lesen belum dibuka. Hubungi support AZDM.'}};
+  const uid = String(body.account_uid || '').trim(), email = cleanToyyibEmail(body.email || ''), requestId = String(body.request_id || '').trim();
+  if (!uid || !email) return {statusCode:401,body:{ok:false,error:'Sila sign in menggunakan akaun AZOBSS dengan email yang disahkan.'}};
+  const quote = body.trusted_quote || {};
+  const amountSen = Math.round(Number(quote.total_cents || 0));
+  const quantity = Math.max(1, Math.min(100, Number(quote.quantity || body.quantity || 1) || 1));
+  if (!amountSen || amountSen < 1) return {statusCode:400,body:{ok:false,error:'Harga pakej tidak sah. Muatkan pilihan pakej semula.'}};
+  const softwareId = cleanPremiumText(body.software_id || offer?.product_id || 'AZDM',100) || 'AZDM';
+  const planId = cleanPremiumText(body.product_id || '',40);
+  const days = Math.max(0, Math.min(36500, Number(quote.days || 0) || 0));
+  const orderId = `azdm-${requestId}`;
+  let existing = await findPremiumOrderByAnyDeep({orderId});
+  if (existing) {
+    if (azAzdmOrderUid(existing) !== uid) return {statusCode:409,body:{ok:false,error:'Pesanan ini milik akaun lain.'}};
+    if (String(existing.status || '').toLowerCase() === 'paid') return {statusCode:409,body:{ok:false,error:'Pesanan ini sudah dibayar. Semak pesanan anda.'}};
+    if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId) return {statusCode:409,body:{ok:false,error:'Pesanan sudah berubah. Mulakan checkout baharu.'}};
+    if (existing.paymentUrl && existing.billCode) return {ok:true,reused:true,order_id:orderId,payment_url:existing.paymentUrl,status:'pending',sandbox:state.sandbox};
+    if (String(existing.status || '') === 'creation_failed') return {statusCode:409,body:{ok:false,error:'Bil terdahulu gagal. Cuba semula dengan checkout baharu.'}};
+    const age = Date.now() - Number(existing.createdAtMs || Date.parse(existing.createdAt || '') || Date.now());
+    if (age < 120000) return {statusCode:409,body:{ok:false,error:'Bil sedang disediakan. Tunggu sebentar dan semak pesanan.'}};
+    existing = upsertPremiumOrder({...existing,status:'creation_failed',azdmFulfillmentError:'Checkout creation timed out before BillCode was saved.'});
+    try { await azPersistPremiumOrder(existing); } catch (_) {}
+    return {statusCode:409,body:{ok:false,error:'Bil terdahulu gagal. Cuba semula dengan checkout baharu.'}};
+  }
+  const customer = cleanPremiumText(body.customer || email,120) || email;
+  const productName = cleanPremiumText(quote.name || `${offer?.name || 'AZDM'} · ${planId}`,200) || 'AZDM';
+  let order = upsertPremiumOrder({
+    orderId,azdmOrder:true,automaticCheckoutKind:'azdm',source:'azdm',fulfilment:'azdm',productId:softwareId,productName,
+    softwarePackageId:planId,softwarePackageDays:days,packageQuantity:quantity,azdmPlanId:planId,azdmDays:days,azdmQuantity:quantity,
+    amountSen,saleAmount:amountSen/100,amount:`RM${(amountSen/100).toFixed(2)}`,status:'creating',paymentMethod:'toyyibpay',paymentReference:'',
+    azdmAccountUid:uid,azdmCustomer:customer,user:{uid,username:customer,email,phone:cleanToyyibPhone(body.phone || '')},email,buyerEmail:email,
+    product:{id:softwareId,productId:softwareId,name:productName,softwarePackageId:planId,packageQuantity:quantity,softwarePackageDays:days,fulfilment:'azdm'},
+    email_status:'queued',azdmFulfillmentState:'awaiting_payment',createdAt:new Date().toISOString(),createdAtMs:Date.now()
+  });
+  try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM creating order Firestore persist warning:', err && (err.message || err)); }
+  try {
+    const apiBase = publicBaseUrlFromReq(req), returnUrl = `${FRONTEND_BASE_URL}/Software-Tools/?azdm_order=${encodeURIComponent(orderId)}&azdm_software=${encodeURIComponent(softwareId)}`;
+    const billPayload = {
+      userSecretKey:TOYYIB_SECRET_KEY, categoryCode:TOYYIB_CATEGORY_CODE,
+      billName:cleanToyyibBillText(`${offer?.name || 'AZDM'} ${planId}`,30) || 'AZDM License',
+      billDescription:cleanToyyibBillText(`AZOBSS AZDM license ${productName}`,100) || 'AZOBSS AZDM License',
+      billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`,billExternalReferenceNo:orderId,
+      billTo:cleanForToyyib(customer,30) || 'AZOBSS Customer',billEmail:email,billPhone:cleanToyyibPhone(body.phone || '') || '01135600723',billSplitPayment:0,billSplitPaymentArgs:'',billPaymentChannel:0,
+      billContentEmail:`Thank you for purchasing ${cleanForToyyib(productName,60)} from AZOBSS. Serial license will be sent after payment verification.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0
+    };
+    const apiResult = await postToyyib('createBill',billPayload), billCode = azToyyibExtractBillCode(apiResult);
+    if (!billCode) throw new Error(azToyyibApiMessage(apiResult,'ToyyibPay tidak memulangkan BillCode.'));
+    const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
+    order = upsertPremiumOrder({...order,status:'pending',billCode,paymentUrl,returnUrl,azdmFulfillmentState:'awaiting_payment'});
+    try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM pending order Firestore persist warning:', err && (err.message || err)); }
+    return {ok:true,order_id:orderId,bill_code:billCode,payment_url:paymentUrl,status:'pending',sandbox:state.sandbox};
+  } catch (err) {
+    order = upsertPremiumOrder({...order,status:'creation_failed',azdmFulfillmentState:'review',azdmFulfillmentError:err.message});
+    try { await azPersistPremiumOrder(order); } catch (_) {}
+    return {statusCode:502,body:{ok:false,error:'Bil terdahulu gagal. '+cleanPremiumText(err.message || 'ToyyibPay gagal menyediakan bil.',240)}};
+  }
+}
+async function azAzdmLocalStatus({req,body}) {
+  const orderId = String(body.order_id || '').trim(), uid = String(body.account_uid || '').trim();
+  let order = await findPremiumOrderByAnyDeep({orderId});
+  if (!order || !azIsAzdmPremiumOrder(order) || azAzdmOrderUid(order)!==uid) return {statusCode:404,body:{ok:false,error:'Pesanan tidak ditemui.'}};
+  if (order.billCode && String(order.status || '').toLowerCase() !== 'paid') order = await refreshToyyibOrder(order,req);
+  if (String(order.status || '').toLowerCase() === 'paid' && (!order.emailSentAt || order.azdmFulfillmentState !== 'complete')) order = await azFulfillAzdmOrder(order,req);
+  return {ok:true,...azAzdmPublicOrder(order,false),enabled:azAzdmShopReadiness().ready};
+}
+async function azAzdmLocalOrders({body}) {
+  const uid = String(body.account_uid || '').trim();
+  const rows = (await azAzdmLoadOrdersRaw(250)).filter(row=>azAzdmOrderUid(row)===uid).slice(0,50).map(row=>azAzdmPublicOrder(row,false));
+  return {ok:true,orders:rows,enabled:azAzdmShopReadiness().ready};
+}
+async function azAzdmAdminLocalOrders({body}) {
+  const limit = Math.max(1, Math.min(50, Number(body.limit || 25) || 25)), offset = Math.max(0, Number(body.cursor || 0) || 0);
+  const all = await azAzdmLoadOrdersRaw(500), slice = all.slice(offset,offset+limit).map(row=>azAzdmPublicOrder(row,true));
+  return {ok:true,enabled:azAzdmShopReadiness().ready,orders:slice,next_cursor:offset+limit<all.length?String(offset+limit):null};
+}
+async function azAzdmAdminLocalRetryEmail({req,body}) {
+  const orderId = cleanPremiumText(body.order_id || body.orderId || '',180);
+  let order = await findPremiumOrderByAnyDeep({orderId});
+  if (!order || !azIsAzdmPremiumOrder(order)) return {statusCode:404,body:{ok:false,error:'Pesanan AZDM tidak ditemui.'}};
+  if (String(order.status || '').toLowerCase() !== 'paid') return {statusCode:409,body:{ok:false,error:'Bayaran pesanan belum disahkan.'}};
+  order = await azFulfillAzdmOrder(order,req,{forceEmail:true});
+  if (order.email_status !== 'accepted' && !order.emailSentAt) return {statusCode:503,body:{ok:false,error:order.azdmFulfillmentError || order.emailError || 'Email serial belum berjaya dihantar.'}};
+  return {ok:true,order:azAzdmPublicOrder(order,true)};
+}
+
 async function azHydratePremiumOrderExpiryFromCurrentProduct(order = {}) {
   try {
     if (!order || isPaBmPremiumOrder(order)) return order;
@@ -3618,6 +3878,8 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       }
     } else if (azIsMembershipOrder(latest)) {
       latest = await azActivateMembershipOrder(latest);
+    } else if (azIsAzdmPremiumOrder(latest)) {
+      latest = await azFulfillAzdmOrder(latest, req);
     } else if (!isPaBmPremiumOrder(latest)) {
       latest = await azHydratePremiumOrderExpiryFromCurrentProduct(latest);
       if (!latest.downloadToken) latest = makeDownloadForOrder(latest);

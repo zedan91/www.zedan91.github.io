@@ -38,8 +38,6 @@ services:
     envVars:
       - key: AZDM_ADMIN_TOKEN
         sync: false
-      - key: AZDM_SHOP_SERVICE_TOKEN
-        sync: false
       - key: AZDM_LICENSE_URL
         value: https://azdm-license.zedan9107.workers.dev
       - key: ADMIN_KEY

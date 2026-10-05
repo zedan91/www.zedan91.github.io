@@ -1,0 +1,38 @@
+{
+  "patch": 1212,
+  "version": "1.0.1212",
+  "baseline": "(1211)-AZOBSS-FULL-PACKAGE-SOFTWARE-KEY-AZDM-DEFAULT-VIEW_20261004.zip",
+  "title": "AZDM Render-native purchase completion",
+  "resolved": [
+    "customer AZDM checkout disabled",
+    "Cloudflare /integration shop dependency not deployed",
+    "Admin AZDM orders endpoint Not found",
+    "automatic serial issue + email retry path incomplete"
+  ],
+  "security": [
+    "server-trusted package quote",
+    "Firebase verified account",
+    "ToyyibPay API verification before fulfillment",
+    "AZDM admin token remains server-side",
+    "AES-256-GCM encrypted serial recovery payload"
+  ],
+  "tests": {
+    "azdm_node_tests": "18/18 pass",
+    "node_check": [
+      "deploy-server.js",
+      "lib/azobss-azdm.js",
+      "lib/azobss-azdm-admin.js"
+    ],
+    "live_payment_performed": false,
+    "production_license_modified": false
+  },
+  "sha256": {
+    "deploy-server.js": "48ea1c215959d32e6de9abe8603ccbf19e080db8758401f797faedbc8f532113",
+    "lib/azobss-azdm.js": "e8beddaca2b4c2f4db6e9746fbab7fa243992a58dd80de3d67f1ea801954ab1f",
+    "lib/azobss-azdm-admin.js": "0f6090e7a48e5f9568012e9f21e2ce8403b81a638c08be9e2612f973c46f025f",
+    "tests/azdm-bridge.test.cjs": "054152918683a7df1f92397326364ced8c86f72060165352548081938ca12266",
+    "tests/azdm-admin.test.cjs": "7dab5696d22aeeada39019eceab08731105cb694c0c4b37acec91a914d5fb612",
+    "package.json": "305895b5218167c25d91489c8506561065eb1806cce9f1e8d0466040ba6064af",
+    "README_PATCH_1212.md": "5b99fabc25c18368b9ec4cffff230d5d59c54ea837c53bbb0a057ad1a96be13d"
+  }
+}
