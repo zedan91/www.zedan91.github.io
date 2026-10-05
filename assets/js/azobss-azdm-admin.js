@@ -112,11 +112,10 @@
     $('edit-dialog').close();await loadLicenses();notice(payload.serial?'Lesen disimpan dan Serial Key ditukar. PC lama sudah dilepaskan.':'Maklumat lesen disimpan.');
   });});
   function openDelete(item){
-    pending={item,operation:'delete'};$('delete-customer').textContent=item.customer;$('delete-confirm-name').value='';$('delete-dialog').showModal();setTimeout(()=>$('delete-confirm-name').focus(),0);
+    pending={item,operation:'delete'};$('delete-customer').textContent=item.customer;$('delete-dialog').showModal();
   }
   $('delete-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
-    const typed=$('delete-confirm-name').value.trim();if(typed.toLowerCase()!==pending.item.customer.trim().toLowerCase())throw new Error('Nama customer tidak sepadan. Taip nama customer seperti yang dipaparkan.');
-    await api('delete',{license_id:pending.item.id,confirm_customer:typed});$('delete-dialog').close();await loadLicenses();notice('Customer / lesen AZDM sudah dipadam.');
+    await api('delete',{license_id:pending.item.id,confirm_customer:pending.item.customer});$('delete-dialog').close();await loadLicenses();notice('Customer / lesen AZDM sudah dipadam.');
   });});
   function confirm(item,operation){
     pending={item,operation};const descriptions={reset:'Customer boleh mengaktifkan serial asal pada PC baharu.',revoke:'Lesen disekat pada semakan online seterusnya.',restore:'Customer boleh mengaktifkan semula serial selepas sekatan dibuka.','order-email-retry':'Serial asal akan dihantar semula. Customer mungkin menerima email berulang jika cubaan terdahulu sudah berjaya.'};
