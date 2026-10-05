@@ -13,11 +13,11 @@
    const h=typeof window.azobssGetFirebaseAuthHeaders==='function'?await window.azobssGetFirebaseAuthHeaders(!!wait):{};
    if(h?.Authorization)return {...h,'Content-Type':'application/json'};
    if(wait)await new Promise(r=>setTimeout(r,200));
-  }throw Error('Sila sign in ke akaun AZOBSS dahulu.');
+  }throw Error('Please sign in to your AZOBSS account first.');
  }
  async function call(path,options={}){
   const r=await fetch(base+path,{...options,cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(30000)});
-  const d=await r.json();if(!r.ok||d.ok===false)throw Error(d.error||'Servis belum tersedia.');return d;
+  const d=await r.json();if(!r.ok||d.ok===false)throw Error(d.error||'Service is currently unavailable.');return d;
  }
  function signIn(){document.querySelector('#siteSignInButton,#loginButton,#loginBtn,[data-open-login]')?.click();}
  function row(p){
@@ -46,7 +46,7 @@
   const plans=[...rows.children].map(x=>{const v=k=>x.querySelector('[data-package-field="'+k+'"]').value;return {id:x.dataset.planId,label:v('label'),days:Number(v('days')),quantity:Number(v('quantity')),amount_cents:Math.round(Number(v('price'))*100)};});
   const value={enabled:enabled.checked,product_id:id,name,fulfilment:document.getElementById('softwarePackageFulfilment').value,max_quantity:Number(document.getElementById('softwarePackageMax').value),bulk_minimum:Number(document.getElementById('softwarePackageBulkMin').value),bulk_unit_cents:Math.round(Number(document.getElementById('softwarePackageBulkPrice').value)*100),plans};
   const result=enabled.checked?model.normalize(value):null;
-  if(result&&document.getElementById('softwareAdminSubscriptionEnabled')?.checked)throw Error('Pilih satu cara jualan: pakej software atau kod aktivasi sedia ada.');
+  if(result&&document.getElementById('softwareAdminSubscriptionEnabled')?.checked)throw Error('Choose one sales method: software plans or the existing activation-code system.');
   return {softwarePackages:result,supportEnabled:document.getElementById('softwareSupportEnabled').checked};
  }
  async function saveEditor(item){
@@ -57,30 +57,30 @@
  }
  window.azdmSoftwareEditorLoad=loadEditor;window.azdmSoftwareEditorRead=readEditor;window.azdmSoftwareEditorSave=saveEditor;
  enabled.addEventListener('change',()=>{toggleEditorFields();if(enabled.checked){const type=document.getElementById('softwareAdminType');if(type.value!=='premium'){type.value='premium';type.dispatchEvent(new Event('change'));}}});
- document.getElementById('softwarePackageAdd').addEventListener('click',()=>{if(rows.children.length<10)row({id:'pack-'+crypto.randomUUID().slice(0,12),label:'Pakej baharu',days:0,quantity:0,amount_cents:1000});});loadEditor(null);
+ document.getElementById('softwarePackageAdd').addEventListener('click',()=>{if(rows.children.length<10)row({id:'pack-'+crypto.randomUUID().slice(0,12),label:'New Plan',days:0,quantity:0,amount_cents:1000});});loadEditor(null);
  function calculate(){
   if(!offer){buy.disabled=true;return;}const p=offer.plans.find(x=>x.id===plan.value);if(!p){buy.disabled=true;return;}
   quantity.min=1;quantity.max=offer.max_quantity;quantity.disabled=p.quantity>0;if(p.quantity)quantity.value=p.quantity;
   try{const q=model.quote(offer,plan.value,Number(quantity.value));
    $('[data-azdm-summary]').textContent=q.fixed?`${q.quantity} PC = ${money(q.total_cents)}`:`${q.quantity} PC × ${money(q.unit_cents)} = ${money(q.total_cents)}`;
-   $('[data-azdm-saving]').textContent=q.discount?'Harga diskaun pembelian banyak PC digunakan.':!p.quantity&&p.days===0&&offer.bulk_minimum?`Beli ${offer.bulk_minimum} PC atau lebih sekaligus: ${money(offer.bulk_unit_cents)} setiap PC.`:'';buy.disabled=!available;
+   $('[data-azdm-saving]').textContent=q.discount?'Bulk purchase discount applied.':!p.quantity&&p.days===0&&offer.bulk_minimum?`Buy ${offer.bulk_minimum} PCs or more in one purchase: ${money(offer.bulk_unit_cents)} per PC.`:'';buy.disabled=!available;
   }catch(e){$('[data-azdm-summary]').textContent=e.message;buy.disabled=true;}
  }
  function support(name='Software'){
-  const d=document.getElementById('softwareSupportDialog');d.querySelector('[data-support-name]').textContent='Bantuan untuk '+name;
+  const d=document.getElementById('softwareSupportDialog');d.querySelector('[data-support-name]').textContent='Support for '+name;
   d.querySelector('[data-support-email]').href='mailto:zedan9107@gmail.com?subject='+encodeURIComponent('Support '+name);
-  d.querySelector('[data-support-whatsapp]').href='https://wa.me/601135600723?text='+encodeURIComponent('Saya perlukan bantuan '+name+'.');d.showModal();
+  d.querySelector('[data-support-whatsapp]').href='https://wa.me/601135600723?text='+encodeURIComponent('I need help with '+name+'.');d.showModal();
  }
  async function open(productId,name='',mode='download'){
-  const current=++generation;offer=null;available=false;plan.replaceChildren();message.textContent='Memuatkan pilihan pakej…';$('[data-azdm-summary]').textContent='';buy.disabled=true;
-  document.getElementById('softwarePackageTitle').textContent=name?name+' · Pilihan pakej':'Pilihan pakej';if(!dialog.open)dialog.showModal();
+  const current=++generation;offer=null;available=false;plan.replaceChildren();message.textContent='Loading plan options…';$('[data-azdm-summary]').textContent='';buy.disabled=true;
+  document.getElementById('softwarePackageTitle').textContent=name?name+' · Choose Plan':'Choose Plan';if(!dialog.open)dialog.showModal();
   try{const d=await call((mode==='azdm'?'/api/azdm/catalog':'/api/software-packages/catalog')+'?product_id='+encodeURIComponent(productId));if(current!==generation)return;
    offer=model.normalize(d.offer);available=d.enabled===true;
    for(const p of offer.plans){const o=document.createElement('option');o.value=p.id;o.textContent=p.label+(p.quantity?' · '+p.quantity+' PC':'')+' · '+money(p.amount_cents)+(p.quantity?'':' / PC');plan.append(o);}
-   document.getElementById('softwarePackageTitle').textContent=offer.name+' · Pilihan pakej';quantity.value=1;
+   document.getElementById('softwarePackageTitle').textContent=offer.name+' · Choose Plan';quantity.value=1;
    $('[data-package-order-box]').hidden=offer.fulfilment!=='azdm';$('[data-azdm-orders]').replaceChildren();
-   $('[data-package-activation]').textContent=offer.fulfilment==='azdm'?'Selepas bayaran disahkan, setiap PC mendapat satu serial melalui email akaun AZOBSS anda.':'Pembayaran dan download menggunakan akaun AZOBSS anda. Harga khas akaun, jika ada, disahkan semasa pembayaran.';
-   message.textContent=!available?'Pembelian belum dibuka. Hubungi Support untuk bantuan.':d.sandbox?'Mod ujian pembayaran.':'';calculate();syncAccount();
+   $('[data-package-activation]').textContent=offer.fulfilment==='azdm'?'After payment is verified, each PC receives one unique serial key via your AZOBSS account email.':'Payment and download use your AZOBSS account. Any account-specific pricing will be verified during checkout.';
+   message.textContent=!available?'Purchasing is not available yet. Contact Support for assistance.':d.sandbox?'Payment test mode.':'';calculate();syncAccount();
   }catch(e){if(current===generation)message.textContent=e.message;}
  }
  window.azSoftwarePackagesOpen=open;
@@ -90,20 +90,20 @@
  },true);
  root.querySelector('[data-package-close]').addEventListener('click',()=>dialog.close());document.querySelector('[data-support-close]').addEventListener('click',()=>document.getElementById('softwareSupportDialog').close());
  $('[data-package-support]').addEventListener('click',()=>support(offer?.name||'Software'));$('[data-azdm-signin]').addEventListener('click',signIn);plan.addEventListener('change',calculate);quantity.addEventListener('input',calculate);
- const states={paid:'Bayaran disahkan.',pending:'Bayaran belum disahkan.',creating:'Bil sedang disediakan.',creation_failed:'Bil belum berjaya dicipta.'};
- async function refreshOrders(){try{const d=await call('/api/azdm/orders',{headers:await headers(true)}),out=$('[data-azdm-orders]');out.replaceChildren();for(const r of d.orders){const p=document.createElement('p');p.textContent=r.product_name+' · '+r.quantity+' PC · '+money(r.amount_cents)+' — '+(states[r.status]||r.status);out.append(p);}if(!d.orders.length)out.textContent='Belum ada pesanan.';}catch(e){$('[data-azdm-orders]').textContent=e.message;}}
- async function checkStatus(id){clearTimeout(pollTimer);try{const d=await call('/api/azdm/status?azdm_order='+encodeURIComponent(id),{headers:await headers(true)});message.textContent=(states[d.status]||d.status)+' No. pesanan: '+id;if(d.status==='paid'){requestId='';await refreshOrders();}else if(d.status==='pending'&&pollCount++<12)pollTimer=setTimeout(()=>checkStatus(id),5000);}catch(e){message.textContent=e.message;}}
+ const states={paid:'Payment verified.',pending:'Payment not yet verified.',creating:'Payment bill is being prepared.',creation_failed:'Payment bill could not be created.'};
+ async function refreshOrders(){try{const d=await call('/api/azdm/orders',{headers:await headers(true)}),out=$('[data-azdm-orders]');out.replaceChildren();for(const r of d.orders){const p=document.createElement('p');p.textContent=r.product_name+' · '+r.quantity+' PC · '+money(r.amount_cents)+' — '+(states[r.status]||r.status);out.append(p);}if(!d.orders.length)out.textContent='No orders yet.';}catch(e){$('[data-azdm-orders]').textContent=e.message;}}
+ async function checkStatus(id){clearTimeout(pollTimer);try{const d=await call('/api/azdm/status?azdm_order='+encodeURIComponent(id),{headers:await headers(true)});message.textContent=(states[d.status]||d.status)+' Order ID: '+id;if(d.status==='paid'){requestId='';await refreshOrders();}else if(d.status==='pending'&&pollCount++<12)pollTimer=setTimeout(()=>checkStatus(id),5000);}catch(e){message.textContent=e.message;}}
  $('[data-azdm-refresh]').addEventListener('click',refreshOrders);
  buy.addEventListener('click',async()=>{
   if(!offer||!available)return;buy.disabled=true;
-  try{const h=await headers(true),q=model.quote(offer,plan.value,Number(quantity.value));message.textContent='Menyediakan pembayaran…';let result;
+  try{const h=await headers(true),q=model.quote(offer,plan.value,Number(quantity.value));message.textContent='Preparing payment…';let result;
    if(offer.fulfilment==='azdm'){
     const selection=JSON.stringify([offer,plan.value,q.quantity]);if(!requestId||requestSelection!==selection){requestId=crypto.randomUUID();requestSelection=selection;}
     try{const old=JSON.parse(sessionStorage.getItem('azdm-package-request')||'null');if(old?.selection===selection&&Date.now()-old.created<3*86400000)requestId=old.id;sessionStorage.setItem('azdm-package-request',JSON.stringify({id:requestId,selection,created:Date.now()}));}catch{}
     result=await call('/api/azdm/checkout',{method:'POST',headers:h,body:JSON.stringify({software_id:offer.product_id,plan:plan.value,quantity:q.quantity,request_id:requestId})});
    }else result=await call('/api/create-payment',{method:'POST',headers:h,body:JSON.stringify({product:{productId:offer.product_id},softwarePackageId:plan.value,packageQuantity:q.quantity})});
-   const url=new URL(result.payment_url||result.paymentUrl||result.url);if(url.protocol!=='https:'||!['toyyibpay.com','dev.toyyibpay.com'].includes(url.hostname))throw Error('Pautan pembayaran tidak sah.');location.assign(url.href);
-  }catch(e){message.textContent=e.message;if(/sign in/i.test(e.message))signIn();if(/Pesanan sudah berubah|sudah dibayar|terdahulu/.test(e.message)){requestId='';try{sessionStorage.removeItem('azdm-package-request');}catch{}}calculate();}
+   const url=new URL(result.payment_url||result.paymentUrl||result.url);if(url.protocol!=='https:'||!['toyyibpay.com','dev.toyyibpay.com'].includes(url.hostname))throw Error('Invalid payment link.');location.assign(url.href);
+  }catch(e){message.textContent=e.message;if(/sign in/i.test(e.message))signIn();if(/order has changed|already been paid|previous bill/i.test(e.message)){requestId='';try{sessionStorage.removeItem('azdm-package-request');}catch{}}calculate();}
  });
  async function syncAccount(){try{await headers();$('[data-azdm-signin]').hidden=true;}catch{$('[data-azdm-signin]').hidden=false;$('[data-azdm-orders]').replaceChildren();clearTimeout(pollTimer);requestId='';}}
  window.addEventListener('azobss-auth-changed',()=>{generation++;clearTimeout(pollTimer);$('[data-azdm-orders]').replaceChildren();message.textContent='';requestId='';syncAccount();});dialog.addEventListener('close',()=>{generation++;clearTimeout(pollTimer);});

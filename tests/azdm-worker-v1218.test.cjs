@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const worker=fs.readFileSync(path.join(__dirname,'..','AZOBSS-Developer-Files','AZDM-Cloudflare-Worker-v1218.txt'),'utf8');
+const worker=fs.readFileSync(path.join(__dirname,'..','AZOBSS-Developer-Files','AZDM-Cloudflare-Worker-v1220.txt'),'utf8');
 const ui=fs.readFileSync(path.join(__dirname,'..','assets','js','azobss-azdm-admin.js'),'utf8');
 const html=fs.readFileSync(path.join(__dirname,'..','admin','index.html'),'utf8');
 

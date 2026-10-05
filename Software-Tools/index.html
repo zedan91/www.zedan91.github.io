@@ -3255,9 +3255,9 @@ html body .downloads-section{
 <script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
 
 <!-- AZOBSS v1210: universal per-software packages and support -->
-<link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1219">
-<script src="/assets/js/azobss-azdm-offer-model.js?v=1210" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1214" defer></script>
+<link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1221">
+<script src="/assets/js/azobss-azdm-offer-model.js?v=1221" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1221" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -5394,7 +5394,7 @@ function normalizeItem(item){
     const azdmInstallerBtnHtml = item.softwarePackages?.enabled && item.softwarePackages.fulfilment === 'azdm'
       ? `<a class="download-btn azdm-setup-download-btn" data-azobss-premium-buy="0" data-product-id="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-download-link="${esc(azdmInstallerUrl)}" href="${esc(azdmInstallerUrl)}" target="_blank" rel="noopener" title="Download AZDM Setup" aria-label="Download AZDM Setup">Download</a>`
       : '';
-    const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Pilihan pakej</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
+    const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Choose Plan</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
@@ -5434,7 +5434,7 @@ function normalizeItem(item){
   function mergeSoftwareDirectorySources470(remoteItems,localItems,bundledItems){
     const live=dedupeSoftwareItems([...(remoteItems||[]),...(localItems||[])]);
     if(!live.some(x=>(x.softwarePackages?.enabled&&x.softwarePackages.fulfilment==='azdm')||String(x.productId||x.id).toUpperCase()==='AZDM')){
-      live.unshift(normalizeItem({id:'AZDM',productId:'AZDM',name:'AZDM',desc:'Pilih pakej lesen AZDM untuk PC anda. Setiap PC mendapat satu serial sendiri.',type:'premium',price:'RM25',status:'active',category:'Downloads & Torrents',platforms:['Windows'],imageUrl:'/assets/images/azdm-logo.svg',icon:'A',ownerUsername:'zedan91',createdAtMs:1791032400000,softwarePackages:window.azdmOfferModel?.defaults(),supportEnabled:true}));
+      live.unshift(normalizeItem({id:'AZDM',productId:'AZDM',name:'AZDM',desc:'Choose an AZDM license plan for your PC. Each PC receives its own unique serial key.',type:'premium',price:'RM25',status:'active',category:'Downloads & Torrents',platforms:['Windows'],imageUrl:'/assets/images/azdm-logo.svg',icon:'A',ownerUsername:'zedan91',createdAtMs:1791032400000,softwarePackages:window.azdmOfferModel?.defaults(),supportEnabled:true}));
     }
 
     const seen=new Set();
@@ -17402,25 +17402,25 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
 
 <dialog id="softwarePackageDialog" class="az-package-dialog" aria-labelledby="softwarePackageTitle">
  <div id="azdm-license">
-  <div class="az-package-dialog-head"><h2 id="softwarePackageTitle">Pilihan pakej</h2><button type="button" data-package-close aria-label="Tutup pilihan pakej">×</button></div>
-  <p>Pilih pakej dan bilangan PC untuk software ini.</p>
+  <div class="az-package-dialog-head"><h2 id="softwarePackageTitle">Choose Plan</h2><button type="button" data-package-close aria-label="Close plan selection">×</button></div>
+  <p>Select a plan and the number of PCs for this software.</p>
   <div class="azdm-form">
-   <label>Pakej<select name="azdm-plan"></select></label>
-   <label>Bilangan PC<input name="azdm-quantity" type="number" inputmode="numeric" value="1" min="1" max="100" step="1"></label>
+   <label>Plan<select name="azdm-plan"></select></label>
+   <label>Number of PCs<input name="azdm-quantity" type="number" inputmode="numeric" value="1" min="1" max="100" step="1"></label>
   </div>
   <div class="azdm-summary" data-azdm-summary></div><p data-azdm-saving></p>
   <p data-package-activation></p>
-  <button type="button" data-azdm-buy disabled>Bayar melalui ToyyibPay</button>
+  <button type="button" data-azdm-buy disabled>Pay via ToyyibPay</button>
   <button type="button" data-azdm-signin>Sign in AZOBSS</button>
   <button type="button" data-package-support>Support</button>
   <p data-azdm-message role="status" aria-live="polite"></p>
-  <div data-package-order-box hidden><h3>Pesanan saya</h3><button type="button" data-azdm-refresh>Semak pesanan / bayaran</button><div data-azdm-orders></div></div>
+  <div data-package-order-box hidden><h3>My Orders</h3><button type="button" data-azdm-refresh>Check Order / Payment</button><div data-azdm-orders></div></div>
  </div>
 </dialog>
 <dialog id="softwareSupportDialog" class="az-package-dialog" aria-labelledby="softwareSupportTitle">
- <div class="az-package-dialog-head"><h2 id="softwareSupportTitle">Support software</h2><button type="button" data-support-close aria-label="Tutup Support">×</button></div>
+ <div class="az-package-dialog-head"><h2 id="softwareSupportTitle">Support software</h2><button type="button" data-support-close aria-label="Close Support">×</button></div>
  <p data-support-name></p>
- <div class="az-package-contact"><a data-support-email href="mailto:zedan9107@gmail.com">Email: zedan9107@gmail.com</a><a data-support-whatsapp href="https://wa.me/601135600723" target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">Chat support AZOBSS</a></div>
+ <div class="az-package-contact"><a data-support-email href="mailto:zedan9107@gmail.com">Email: zedan9107@gmail.com</a><a data-support-whatsapp href="https://wa.me/601135600723" target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">AZOBSS Chat Support</a></div>
 </dialog>
 </body>
 </html>

@@ -7,7 +7,7 @@ var UUID = /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/;
 var HEX = /^[a-f0-9]{64}$/;
 var MAIL = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,63}$/;
 var plans = [
-  { id: "annual", name: "AZDM 1 Tahun", days: 365, amount_cents: 2500 },
+  { id: "annual", name: "AZDM 1 Year", days: 365, amount_cents: 2500 },
   { id: "lifetime", name: "AZDM Lifetime", days: 0, amount_cents: 5e3, bulk_minimum: 2, bulk_unit_cents: 4e3 }
 ];
 var PaymentError = class extends Error {
@@ -34,13 +34,13 @@ function ready(env) {
 }
 __name(ready, "ready");
 function requireReady(env) {
-  if (!ready(env)) throw new PaymentError(503, "Pembelian lesen belum dibuka. Hubungi support AZDM.");
+  if (!ready(env)) throw new PaymentError(503, "License purchasing is not available yet. Contact AZDM Support.");
 }
 __name(requireReady, "requireReady");
 var support = /* @__PURE__ */ __name((env) => ({ email: env.SUPPORT_EMAIL || "zedan9107@gmail.com", whatsapp: env.SUPPORT_WHATSAPP || "601135600723", website: "https://www.azobss.com/?azdmSupport=1" }), "support");
 function quote(planId, quantity) {
   const plan = plans.find((p) => p.id === planId);
-  if (!plan || !Number.isInteger(quantity) || quantity < 1 || quantity > 100) throw new PaymentError(400, "Pilih pakej dan bilangan PC antara 1 hingga 100.");
+  if (!plan || !Number.isInteger(quantity) || quantity < 1 || quantity > 100) throw new PaymentError(400, "Select a plan and a number of PCs between 1 and 100.");
   const unit = plan.id === "lifetime" && quantity >= 2 ? 4e3 : plan.amount_cents;
   return { ...plan, quantity, unit_cents: unit, total_cents: unit * quantity };
 }
@@ -49,29 +49,29 @@ function quoteFromTrustedBackend(body) {
   if (!body.trusted_quote) return quote(body.product_id, body.quantity);
   const q = body.trusted_quote;
   if (!q || !/^[-A-Za-z0-9_:]{1,144}$/.test(q.id || "") || typeof q.name !== "string" || !q.name.trim() || q.name.length > 160 || /[\x00-\x1f]/.test(q.name) || !Number.isInteger(q.days) || q.days < 0 || q.days > 36500 || !Number.isInteger(q.quantity) || q.quantity !== body.quantity || q.quantity < 1 || q.quantity > 100 || !Number.isInteger(q.unit_cents) || q.unit_cents < 0 || q.unit_cents > 1e7 || !Number.isInteger(q.total_cents) || q.total_cents < 100 || q.total_cents > 1e9)
-    throw new PaymentError(400, "Tetapan pakej server tidak sah.");
+    throw new PaymentError(400, "Server plan settings are invalid.");
   return { id: q.id, name: q.name, days: q.days, quantity: q.quantity, unit_cents: q.unit_cents, total_cents: q.total_cents };
 }
 __name(quoteFromTrustedBackend, "quoteFromTrustedBackend");
 function accountUid(value) {
-  if (typeof value !== "string" || !value || value.length > 128 || /[\x00-\x1f\x7f]/.test(value)) throw new PaymentError(401, "Sila sign in ke akaun AZOBSS.");
+  if (typeof value !== "string" || !value || value.length > 128 || /[\x00-\x1f\x7f]/.test(value)) throw new PaymentError(401, "Please sign in to your AZOBSS account.");
   return value;
 }
 __name(accountUid, "accountUid");
 async function requireService(request, env) {
-  if (!HEX.test(env.SHOP_SERVICE_TOKEN || "")) throw new PaymentError(503, "Sambungan pembelian belum tersedia.");
+  if (!HEX.test(env.SHOP_SERVICE_TOKEN || "")) throw new PaymentError(503, "Purchase connection is currently unavailable.");
   const supplied = request.headers.get("Authorization") || "";
   const [actual, expected] = await Promise.all([crypto.subtle.digest("SHA-256", encoder.encode(supplied.slice(0, 513))), crypto.subtle.digest("SHA-256", encoder.encode("Bearer " + env.SHOP_SERVICE_TOKEN))]);
   if (supplied.length > 512 || !crypto.subtle.timingSafeEqual(actual, expected) || request.headers.has("Origin")) throw new PaymentError(401, "Unauthorized.");
 }
 __name(requireService, "requireService");
 function checkName(value) {
-  if (typeof value !== "string" || !value.trim() || value.length > 120 || /[\x00-\x1f\x7f]/.test(value)) throw new PaymentError(400, "Masukkan nama yang sah.");
+  if (typeof value !== "string" || !value.trim() || value.length > 120 || /[\x00-\x1f\x7f]/.test(value)) throw new PaymentError(400, "Enter a valid name.");
   return value.trim();
 }
 __name(checkName, "checkName");
 function checkEmail(value) {
-  if (typeof value !== "string" || value.length > 254 || !MAIL.test(value.trim())) throw new PaymentError(400, "Masukkan satu alamat email yang sah.");
+  if (typeof value !== "string" || value.length > 254 || !MAIL.test(value.trim())) throw new PaymentError(400, "Enter a valid email address.");
   return value.trim();
 }
 __name(checkEmail, "checkEmail");
@@ -138,16 +138,16 @@ async function formFor(request) {
 __name(formFor, "formFor");
 async function api(env, action, fields) {
   const response = await fetch(gateway(env) + "/index.php/api/" + action, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(fields), signal: AbortSignal.timeout(15e3), redirect: "manual" });
-  if (!response.ok) throw new PaymentError(503, "Servis bayaran belum tersedia. Cuba semula sebentar lagi.");
+  if (!response.ok) throw new PaymentError(503, "Payment service is currently unavailable. Please try again shortly.");
   const raw = await response.text();
-  if (raw.length > 128e3) throw new PaymentError(503, "Respons bayaran tidak sah.");
+  if (raw.length > 128e3) throw new PaymentError(503, "Invalid payment response.");
   let result;
   try {
     result = JSON.parse(raw);
   } catch {
-    throw new PaymentError(503, "Servis bayaran belum tersedia.");
+    throw new PaymentError(503, "Payment service is currently unavailable.");
   }
-  if (!Array.isArray(result)) throw new PaymentError(503, "Servis bayaran belum tersedia.");
+  if (!Array.isArray(result)) throw new PaymentError(503, "Payment service is currently unavailable.");
   return result;
 }
 __name(api, "api");
@@ -173,60 +173,60 @@ function serialKey() {
 }
 __name(serialKey, "serialKey");
 function emailMessage(env, order, serials, expires) {
-  const expiry = expires ? new Date(expires * 1e3).toLocaleDateString("ms-MY", { timeZone: "Asia/Kuala_Lumpur", day: "2-digit", month: "long", year: "numeric" }) : "Lifetime";
+  const expiry = expires ? new Date(expires * 1e3).toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur", day: "2-digit", month: "long", year: "numeric" }) : "Lifetime";
   const contact = support(env);
   const keys = serials.map((serial, i) => `PC ${i + 1}: ${serial}`).join("\n");
-  const text = `Hai ${order.customer},
+  const text = `Hi ${order.customer},
 
-Bayaran ${order.product_name}, ${order.quantity} PC, sebanyak RM${(order.amount_cents / 100).toFixed(2)} sudah diterima.
+Your payment for ${order.product_name}, ${order.quantity} PC, totaling RM${(order.amount_cents / 100).toFixed(2)} has been received.
 
 ${keys}
 
-Tarikh tamat: ${expiry}
-No. pesanan: ${order.id}
+Expiry date: ${expiry}
+Order ID: ${order.id}
 
-Cara aktifkan:
-1. Sign in di https://www.azobss.com/ dan download AZDM.
-2. Pasang dan buka AZDM pada PC anda. Sambungkan internet.
-3. Masukkan satu serial bagi setiap PC dan tekan Activate.
-4. Selepas berjaya, tekan Continue.
+How to Activate:
+1. Sign in to https://www.azobss.com/Software-Tools/ and download AZDM.
+2. Install and open AZDM on your PC, then connect to the internet.
+3. Enter one serial for each PC and click Activate.
+4. After successful activation, click Continue.
 
-Satu serial untuk satu PC aktif. Tempoh lesen bermula apabila bayaran disahkan. Simpan email ini.
+One serial is valid for one active PC. The license period starts when payment is verified. Keep this email for your records.
 
 Support: ${contact.email}
 WhatsApp: https://wa.me/${contact.whatsapp}
-Nyatakan no. pesanan apabila meminta bantuan.
+Include your Order ID when requesting support.
 
-Terima kasih,
+Thank you,
 AZDM / AZOBSS`;
-  const html = `<!doctype html><html lang="ms"><body style="margin:0;background:#f4f8f7;font-family:Arial,sans-serif;color:#173c3a"><div style="max-width:600px;margin:32px auto;padding:32px;background:white;border-radius:16px"><h1 style="color:#087f72">AZDM</h1><h2>Serial anda sudah siap</h2><p>Hai ${safe(order.customer)}, bayaran <strong>${safe(order.product_name)}, ${order.quantity} PC</strong> sebanyak <strong>RM${(order.amount_cents / 100).toFixed(2)}</strong> sudah diterima.</p>${serials.map((serial, i) => `<p>PC ${i + 1}</p><p style="padding:16px;background:#edf7f4;border-radius:8px;font-family:monospace;font-weight:bold;overflow-wrap:anywhere">${serial}</p>`).join("")}<p>Tarikh tamat: <strong>${safe(expiry)}</strong><br>No. pesanan: ${order.id}</p><h3>Cara aktifkan</h3><ol><li>Sign in di <a href="https://www.azobss.com/Software-Tools/">AZOBSS</a> dan download AZDM.</li><li>Pasang dan buka AZDM. Sambungkan internet.</li><li>Masukkan satu serial bagi setiap PC dan tekan <strong>Activate</strong>.</li><li>Tekan <strong>Continue</strong> selepas berjaya.</li></ol><p>Satu serial untuk satu PC aktif. Tempoh lesen bermula apabila bayaran disahkan. Simpan email ini.</p><h3>Perlukan bantuan?</h3><p><a href="mailto:${safe(contact.email)}">${safe(contact.email)}</a> \xC2\xB7 <a href="https://wa.me/${contact.whatsapp}">WhatsApp support</a><br>Nyatakan no. pesanan apabila meminta bantuan.</p><p>Terima kasih,<br>AZDM / AZOBSS</p></div></body></html>`;
-  return { from: `AZDM <${env.EMAIL_FROM}>`, to: [order.email], reply_to: contact.email, subject: `Serial AZDM anda \xE2\u20AC\u201D ${order.product_name} (${order.quantity} PC)`, text, html };
+  const html = `<!doctype html><html lang="en"><body style="margin:0;background:#f4f8f7;font-family:Arial,sans-serif;color:#173c3a"><div style="max-width:600px;margin:32px auto;padding:32px;background:white;border-radius:16px"><h1 style="color:#087f72">AZDM</h1><h2>Your Serial Is Ready</h2><p>Hi ${safe(order.customer)}, your payment for <strong>${safe(order.product_name)}, ${order.quantity} PC</strong> totaling <strong>RM${(order.amount_cents / 100).toFixed(2)}</strong> has been received.</p>${serials.map((serial, i) => `<p>PC ${i + 1}</p><p style="padding:16px;background:#edf7f4;border-radius:8px;font-family:monospace;font-weight:bold;overflow-wrap:anywhere">${serial}</p>`).join("")}<p>Expiry date: <strong>${safe(expiry)}</strong><br>Order ID: ${order.id}</p><h3>How to Activate</h3><ol><li>Sign in to <a href="https://www.azobss.com/Software-Tools/">AZOBSS</a> and download AZDM.</li><li>Install and open AZDM, then connect to the internet.</li><li>Enter one serial for each PC and click <strong>Activate</strong>.</li><li>Click <strong>Continue</strong> after activation succeeds.</li></ol><p>One serial is valid for one active PC. The license period starts when payment is verified. Keep this email for your records.</p><h3>Need Help?</h3><p><a href="mailto:${safe(contact.email)}">${safe(contact.email)}</a> \xC2\xB7 <a href="https://wa.me/${contact.whatsapp}">WhatsApp support</a><br>Include your Order ID when requesting support.</p><p>Thank you,<br>AZDM / AZOBSS</p></div></body></html>`;
+  return { from: `AZDM <${env.EMAIL_FROM}>`, to: [order.email], reply_to: contact.email, subject: `AZDM License Serial — ${order.product_name} (${order.quantity} PC)`, text, html };
 }
 __name(emailMessage, "emailMessage");
 async function checkout(request, env) {
   requireReady(env);
   const body = await bodyFor(request), plan = quoteFromTrustedBackend(body);
-  if (!UUID.test(body.request_id || "")) throw new PaymentError(400, "Pesanan tidak sah.");
+  if (!UUID.test(body.request_id || "")) throw new PaymentError(400, "Invalid order.");
   const uid = accountUid(body.account_uid), customer = checkName(body.customer), email = checkEmail(body.email);
-  if (email.endsWith(".local")) throw new PaymentError(400, "Sila sahkan email sebenar dalam akaun AZOBSS.");
+  if (email.endsWith(".local")) throw new PaymentError(400, "Please verify a real email address in your AZOBSS account.");
   const phone = typeof body.phone === "string" ? body.phone.replace(/[^0-9]/g, "") : "";
-  if (phone && !/^\d{8,15}$/.test(phone)) throw new PaymentError(400, "Semak nombor telefon dalam akaun AZOBSS.");
+  if (phone && !/^\d{8,15}$/.test(phone)) throw new PaymentError(400, "Check the phone number in your AZOBSS account.");
   const id = crypto.randomUUID(), licenseId = crypto.randomUUID(), time = now();
   await env.DB.prepare("INSERT OR IGNORE INTO purchase_orders(id,request_id,status_hash,product_id,product_name,days,amount_cents,customer,email,phone,license_id,status,created,account_uid,quantity,unit_cents,entitlement_days) VALUES(?,?,'',?,?,?,?,?,?,?,?,'creating',?,?,?,?,?)").bind(id, body.request_id, plan.id, plan.name, plan.days ? 365 : 0, plan.total_cents, customer, email, phone, licenseId, time, uid, plan.quantity, plan.unit_cents, plan.days).run();
   const order = await env.DB.prepare("SELECT * FROM purchase_orders WHERE request_id=?").bind(body.request_id).first();
-  if (order.account_uid !== uid || order.product_id !== plan.id || order.quantity !== plan.quantity) throw new PaymentError(409, "Pesanan sudah berubah. Mulakan pesanan baharu.");
-  if (body.trusted_quote && (order.amount_cents !== plan.total_cents || (order.entitlement_days ?? order.days) !== plan.days)) throw new PaymentError(409, "Pesanan sudah berubah. Muatkan pakej semula untuk pembelian baharu.");
-  if (order.status === "paid") throw new PaymentError(409, "Pesanan ini sudah dibayar. Semak pesanan anda sebelum membuat pembelian baharu.");
-  if (time - order.created >= 4 * 86400) throw new PaymentError(409, "Bil terdahulu tamat. Cuba pembelian baharu.");
+  if (order.account_uid !== uid || order.product_id !== plan.id || order.quantity !== plan.quantity) throw new PaymentError(409, "The order has changed. Start a new order.");
+  if (body.trusted_quote && (order.amount_cents !== plan.total_cents || (order.entitlement_days ?? order.days) !== plan.days)) throw new PaymentError(409, "The order has changed. Reload the plans before starting a new purchase.");
+  if (order.status === "paid") throw new PaymentError(409, "This order has already been paid. Check your orders before starting a new purchase.");
+  if (time - order.created >= 4 * 86400) throw new PaymentError(409, "The previous payment bill has expired. Start a new purchase.");
   if (order.bill_code) return { order_id: order.id, payment_url: gateway(env) + "/" + order.bill_code, amount_cents: order.amount_cents };
-  if (order.status === "creation_failed") throw new PaymentError(409, "Bil terdahulu gagal dicipta. Cuba pembelian baharu.");
-  if (order.id !== id) throw new PaymentError(409, "Pesanan sedang diproses. Semak pesanan anda sebelum cuba semula.");
+  if (order.status === "creation_failed") throw new PaymentError(409, "The previous payment bill could not be created. Start a new purchase.");
+  if (order.id !== id) throw new PaymentError(409, "The order is being processed. Check your orders before trying again.");
   const slots = Array.from({ length: plan.quantity }, (_, slot) => ({ slot, id: slot === 0 ? licenseId : crypto.randomUUID() }));
   await env.DB.prepare("INSERT INTO order_licenses(order_id,slot,license_id) SELECT ?,json_extract(value,'$.slot'),json_extract(value,'$.id') FROM json_each(?)").bind(id, JSON.stringify(slots)).run();
   try {
-    const result = await api(env, "createBill", { userSecretKey: env.TOYYIBPAY_SECRET, categoryCode: env.TOYYIBPAY_CATEGORY, billName: plan.name.slice(0, 30), billDescription: (plan.name + " " + plan.quantity + " PC").slice(0, 100), billPriceSetting: "1", billPayorInfo: "1", billAmount: String(plan.total_cents), billReturnUrl: "https://www.azobss.com/Software-Tools/?azdm_order=" + id + "&azdm_software=" + encodeURIComponent(plan.id.includes(":") ? plan.id.split(":")[0] : "AZDM") + "#azdm-license", billCallbackUrl: new URL(request.url).origin + "/payments/toyyibpay/callback", billExternalReferenceNo: id, billTo: customer.slice(0, 30), billEmail: email, billPhone: phone, billPaymentChannel: "0", billExpiryDays: "3", billContentEmail: "Serial AZDM akan dihantar ke email akaun selepas bayaran disahkan." });
+    const result = await api(env, "createBill", { userSecretKey: env.TOYYIBPAY_SECRET, categoryCode: env.TOYYIBPAY_CATEGORY, billName: plan.name.slice(0, 30), billDescription: (plan.name + " " + plan.quantity + " PC").slice(0, 100), billPriceSetting: "1", billPayorInfo: "1", billAmount: String(plan.total_cents), billReturnUrl: "https://www.azobss.com/Software-Tools/?azdm_order=" + id + "&azdm_software=" + encodeURIComponent(plan.id.includes(":") ? plan.id.split(":")[0] : "AZDM") + "#azdm-license", billCallbackUrl: new URL(request.url).origin + "/payments/toyyibpay/callback", billExternalReferenceNo: id, billTo: customer.slice(0, 30), billEmail: email, billPhone: phone, billPaymentChannel: "0", billExpiryDays: "3", billContentEmail: "Your AZDM serial will be sent to your account email after payment is verified." });
     const code = result[0]?.BillCode;
-    if (result.length !== 1 || typeof code !== "string" || !/^[a-zA-Z0-9_-]{4,80}$/.test(code)) throw new PaymentError(503, "Servis bayaran belum tersedia.");
+    if (result.length !== 1 || typeof code !== "string" || !/^[a-zA-Z0-9_-]{4,80}$/.test(code)) throw new PaymentError(503, "Payment service is currently unavailable.");
     await env.DB.prepare("UPDATE purchase_orders SET bill_code=?,status='pending' WHERE id=? AND status='creating'").bind(code, id).run();
     return { order_id: id, payment_url: gateway(env) + "/" + code, amount_cents: plan.total_cents };
   } catch (error) {
@@ -337,18 +337,18 @@ async function adminPayments(path, body, env) {
     const orders = results.slice(0, limit), last = orders.at(-1);
     return { enabled: ready(env), orders, next_cursor: results.length > limit ? btoa(JSON.stringify([last.created, last.id])) : null };
   }
-  if (!UUID.test(body.order_id || "")) throw new PaymentError(400, "Pesanan tidak sah.");
+  if (!UUID.test(body.order_id || "")) throw new PaymentError(400, "Invalid order.");
   const entry = await env.DB.prepare("UPDATE email_outbox SET state='queued',attempts=0,first_attempt=NULL,next_attempt=?,lease_until=0 WHERE order_id=? AND state='review' AND payload_cipher<>'' RETURNING order_id").bind(now(), body.order_id).first();
-  if (!entry) throw new PaymentError(409, "Email sedang diproses atau sudah dihantar.");
+  if (!entry) throw new PaymentError(409, "The email is being processed or has already been sent.");
   await deliverOrder(env, body.order_id);
   return { ok: true };
 }
 __name(adminPayments, "adminPayments");
 async function status(request, env) {
   const body = await bodyFor(request), uid = accountUid(body.account_uid);
-  if (!UUID.test(body.order_id || "")) throw new PaymentError(404, "Pesanan tidak ditemui.");
+  if (!UUID.test(body.order_id || "")) throw new PaymentError(404, "Order not found.");
   let order = await env.DB.prepare("SELECT * FROM purchase_orders WHERE id=? AND account_uid=?").bind(body.order_id, uid).first();
-  if (!order) throw new PaymentError(404, "Pesanan tidak ditemui.");
+  if (!order) throw new PaymentError(404, "Order not found.");
   if (order.status === "pending" && fulfilReady(env)) {
     const claimed = await env.DB.prepare("UPDATE purchase_orders SET last_check=? WHERE id=? AND status='pending' AND last_check<? RETURNING id").bind(now(), order.id, now() - 30).first();
     if (claimed) {

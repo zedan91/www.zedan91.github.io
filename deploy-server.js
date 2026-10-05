@@ -114,6 +114,16 @@ async function azSoftwarePackageProduct(productId){
   if(found.empty)return null;
   return azNormalizeTrustedProduct({...found.docs[0].data(),docId:found.docs[0].id},'firestore:softwareTools');
 }
+function azEnglishAzdmOffer(offer = {}) {
+  if (!offer || typeof offer !== 'object') return offer;
+  return {
+    ...offer,
+    plans: Array.isArray(offer.plans) ? offer.plans.map(plan => ({
+      ...plan,
+      label: String(plan?.id || '').toLowerCase() === 'annual' ? '1 Year' : (String(plan?.label || '').trim() || 'Plan')
+    })) : offer.plans
+  };
+}
 async function azSoftwarePackageOffer(productId){
   if(!/^[A-Za-z0-9_-]{1,100}$/.test(productId))throw Error('Invalid product');
   const trusted=await azSoftwarePackageProduct(productId);
@@ -125,8 +135,8 @@ async function azSoftwarePackageOffer(productId){
   if(!db)throw Error('Catalogue unavailable');
   const snap=await db.collection('settings').doc('azdmSoftwareOffers').get();
   const stored=snap.data()?.items?.[productId];
-  if(stored&&(productId==='AZDM'||(trusted?.softwarePackages?.enabled&&trusted.softwarePackages.fulfilment==='azdm')))return azSoftwarePackageModel.normalize(stored);
-  if(productId==='AZDM')return azSoftwarePackageModel.normalize(azSoftwarePackageModel.defaults());
+  if(stored&&(productId==='AZDM'||(trusted?.softwarePackages?.enabled&&trusted.softwarePackages.fulfilment==='azdm')))return azSoftwarePackageModel.normalize(productId==='AZDM'?azEnglishAzdmOffer(stored):stored);
+  if(productId==='AZDM')return azSoftwarePackageModel.normalize(azEnglishAzdmOffer(azSoftwarePackageModel.defaults()));
   throw Error('Offer not found');
 }
 const handleSoftwarePackages=createOfferHandler({getIdentity:azdmAdminIdentity,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend,
@@ -3318,7 +3328,7 @@ function azAzdmSafeHtml(value = '') {
 }
 async function azAzdmAdminCall(action, body = {}) {
   const token = String(process.env.AZDM_ADMIN_TOKEN || '').trim();
-  if (token.length < 32 || token.length > 400) throw new Error('Sambungan admin AZDM belum ditetapkan.');
+  if (token.length < 32 || token.length > 400) throw new Error('AZDM admin connection is not configured.');
   const origin = new URL(process.env.AZDM_LICENSE_URL || 'https://azdm-license.zedan9107.workers.dev');
   if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash) throw new Error('AZDM license URL tidak sah.');
   const response = await fetch(origin.origin + '/admin/' + action, {
@@ -3327,7 +3337,7 @@ async function azAzdmAdminCall(action, body = {}) {
   });
   let result = null;
   try { result = await response.json(); } catch (_) { result = {}; }
-  if (!response.ok) throw new Error(result?.error || `Servis lesen AZDM gagal (${response.status}).`);
+  if (!response.ok) throw new Error(result?.error || `AZDM license service failed (${response.status}).`);
   return result || {};
 }
 function azAzdmOrderUid(order = {}) {
@@ -3381,15 +3391,17 @@ async function azAzdmLoadOrdersRaw(limit = 200) {
 async function azAzdmSendSerialEmail(order, serialRows = []) {
   const email = cleanToyyibEmail(order.email || order.buyerEmail || order.user?.email || '');
   if (!email) throw new Error('Email customer tidak sah.');
-  if (!mailReady()) throw new Error('Servis email AZOBSS belum tersedia.');
+  if (!mailReady()) throw new Error('AZOBSS email service is currently unavailable.');
   const name = cleanPremiumText(order.azdmCustomer || order.user?.username || order.username || 'Customer', 120) || 'Customer';
   const productName = cleanPremiumText(order.productName || order.product?.name || 'AZDM', 160) || 'AZDM';
   const orderId = cleanPremiumText(order.orderId || '', 160);
-  const lines = serialRows.map((row,i)=>`${i+1}. ${row.serial}${row.expires ? `\n   Tamat: ${new Date(Number(row.expires)*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'})}` : '\n   Tamat: Lifetime'}`);
-  const text = `Salam ${name},\n\nBayaran ${productName} telah disahkan. Berikut serial lesen anda:\n\n${lines.join('\n\n')}\n\nSetiap serial adalah untuk 1 PC.\nNo. pesanan: ${orderId}\n\nJika perlukan bantuan, WhatsApp +60 11-3560 0723 atau balas melalui support AZOBSS.\n`;
-  const htmlRows = serialRows.map((row,i)=>`<li style="margin:0 0 14px"><b>PC ${i+1}</b><br><code style="font-size:16px;word-break:break-all">${azAzdmSafeHtml(row.serial)}</code><br><small>${row.expires ? 'Tamat: '+azAzdmSafeHtml(new Date(Number(row.expires)*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'})) : 'Lifetime'}</small></li>`).join('');
-  const html = `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#132238"><h2>Serial lesen ${azAzdmSafeHtml(productName)}</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda telah disahkan.</p><ol>${htmlRows}</ol><p>Setiap serial adalah untuk <b>1 PC</b>.</p><p>No. pesanan: <b>${azAzdmSafeHtml(orderId)}</b></p><p>Support: +60 11-3560 0723 · zedan9107@gmail.com</p></div>`;
-  await azSendEmailWithOptionalPdf({to:email, subject:`AZOBSS ${productName} — Serial lesen anda`, html, text});
+  const lines = serialRows.map((row,i)=>`${i+1}. ${row.serial}${row.expires ? `\n   Expires: ${new Date(Number(row.expires)*1000).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})}` : '\n   Expires: Lifetime'}`);
+  const azdmDownloadUrl = 'https://files.azobss.com/AZDM-Setup.exe';
+  const text = `Hi ${name},\n\nYour payment for ${productName} has been verified. Here is your license serial:\n\n${lines.join('\n\n')}\n\nEach serial is valid for 1 PC.\nOrder ID: ${orderId}\n\nDownload AZDM:\n${azdmDownloadUrl}\n\nIf you need help, WhatsApp +60 11-3560 0723 or contact AZOBSS Support.\n`;
+  const htmlRows = serialRows.map((row,i)=>`<li style="margin:0 0 14px"><b>PC ${i+1}</b><br><code style="font-size:16px;word-break:break-all">${azAzdmSafeHtml(row.serial)}</code><br><small>${row.expires ? 'Expires: '+azAzdmSafeHtml(new Date(Number(row.expires)*1000).toLocaleDateString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})) : 'Lifetime'}</small></li>`).join('');
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#132238"><h2>${azAzdmSafeHtml(productName)} License Serial</h2><p>Hi ${azAzdmSafeHtml(name)}, your payment has been verified.</p><ol>${htmlRows}</ol><p>Each serial is valid for <b>1 PC</b>.</p><p>Order ID: <b>${azAzdmSafeHtml(orderId)}</b></p><p style="margin:22px 0"><a href="${azdmDownloadUrl}" style="display:inline-block;background:#087f72;color:#fff;text-decoration:none;padding:12px 20px;border-radius:9px;font-weight:700">Download AZDM</a></p><p style="font-size:12px;color:#64748b;word-break:break-all">Direct installer: <a href="${azdmDownloadUrl}">${azdmDownloadUrl}</a></p><p>Support: +60 11-3560 0723 · zedan9107@gmail.com</p></div>`;
+  const emailSubject = `${/^AZOBSS\b/i.test(productName) ? '' : 'AZOBSS '}${productName} — Your License Serial`;
+  await azSendEmailWithOptionalPdf({to:email, subject:emailSubject, html, text});
   return email;
 }
 async function azFulfillAzdmOrder(order = {}, req, options = {}) {
@@ -3416,7 +3428,7 @@ async function azFulfillAzdmOrder(order = {}, req, options = {}) {
         const phone = cleanToyyibPhone(latest.phone || latest.buyerPhone || latest.user?.phone || '');
         const issued = await azAzdmAdminCall('issue',{customer:(customer + suffix).slice(0,120),email,phone,days});
         const serial = String(issued.serial || '').trim();
-        if (!serial) throw new Error('Servis lesen tidak memulangkan serial.');
+        if (!serial) throw new Error('The license service did not return a serial key.');
         serials.push({serial,license_id:String(issued.license_id || issued.id || ''),expires:Number(issued.expires || 0) || 0});
         latest = upsertPremiumOrder({...latest,azdmSerialCipher:azAzdmEncryptSerials(serials),azdmIssuedCount:serials.length,azdmFulfillmentState:'issuing',email_status:'queued',azdmFulfillmentError:''});
         try { await azPersistPremiumOrder(latest); } catch (persistError) { console.warn('AZDM issued serial persist warning:', persistError && (persistError.message || persistError)); }
@@ -3446,29 +3458,29 @@ async function azAzdmLocalCatalog({offer}) {
 }
 async function azAzdmLocalCheckout({req,body,offer}) {
   const state = azAzdmShopReadiness();
-  if (!state.ready) return {statusCode:503,body:{ok:false,error:'Pembelian lesen belum dibuka. Hubungi support AZDM.'}};
+  if (!state.ready) return {statusCode:503,body:{ok:false,error:'License purchasing is not available yet. Contact AZDM Support.'}};
   const uid = String(body.account_uid || '').trim(), email = cleanToyyibEmail(body.email || ''), requestId = String(body.request_id || '').trim();
-  if (!uid || !email) return {statusCode:401,body:{ok:false,error:'Sila sign in menggunakan akaun AZOBSS dengan email yang disahkan.'}};
+  if (!uid || !email) return {statusCode:401,body:{ok:false,error:'Please sign in with an AZOBSS account that has a verified email address.'}};
   const quote = body.trusted_quote || {};
   const amountSen = Math.round(Number(quote.total_cents || 0));
   const quantity = Math.max(1, Math.min(100, Number(quote.quantity || body.quantity || 1) || 1));
-  if (!amountSen || amountSen < 1) return {statusCode:400,body:{ok:false,error:'Harga pakej tidak sah. Muatkan pilihan pakej semula.'}};
+  if (!amountSen || amountSen < 1) return {statusCode:400,body:{ok:false,error:'The plan price is invalid. Reload the plan options and try again.'}};
   const softwareId = cleanPremiumText(body.software_id || offer?.product_id || 'AZDM',100) || 'AZDM';
   const planId = cleanPremiumText(body.product_id || '',40);
   const days = Math.max(0, Math.min(36500, Number(quote.days || 0) || 0));
   const orderId = `azdm-${requestId}`;
   let existing = await findPremiumOrderByAnyDeep({orderId});
   if (existing) {
-    if (azAzdmOrderUid(existing) !== uid) return {statusCode:409,body:{ok:false,error:'Pesanan ini milik akaun lain.'}};
-    if (String(existing.status || '').toLowerCase() === 'paid') return {statusCode:409,body:{ok:false,error:'Pesanan ini sudah dibayar. Semak pesanan anda.'}};
-    if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId) return {statusCode:409,body:{ok:false,error:'Pesanan sudah berubah. Mulakan checkout baharu.'}};
+    if (azAzdmOrderUid(existing) !== uid) return {statusCode:409,body:{ok:false,error:'This order belongs to another account.'}};
+    if (String(existing.status || '').toLowerCase() === 'paid') return {statusCode:409,body:{ok:false,error:'This order has already been paid. Check your orders.'}};
+    if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId) return {statusCode:409,body:{ok:false,error:'The order has changed. Start a new checkout.'}};
     if (existing.paymentUrl && existing.billCode) return {ok:true,reused:true,order_id:orderId,payment_url:existing.paymentUrl,status:'pending',sandbox:state.sandbox};
-    if (String(existing.status || '') === 'creation_failed') return {statusCode:409,body:{ok:false,error:'Bil terdahulu gagal. Cuba semula dengan checkout baharu.'}};
+    if (String(existing.status || '') === 'creation_failed') return {statusCode:409,body:{ok:false,error:'The previous payment bill failed. Start a new checkout and try again.'}};
     const age = Date.now() - Number(existing.createdAtMs || Date.parse(existing.createdAt || '') || Date.now());
-    if (age < 120000) return {statusCode:409,body:{ok:false,error:'Bil sedang disediakan. Tunggu sebentar dan semak pesanan.'}};
+    if (age < 120000) return {statusCode:409,body:{ok:false,error:'The payment bill is being prepared. Wait a moment and check your order.'}};
     existing = upsertPremiumOrder({...existing,status:'creation_failed',azdmFulfillmentError:'Checkout creation timed out before BillCode was saved.'});
     try { await azPersistPremiumOrder(existing); } catch (_) {}
-    return {statusCode:409,body:{ok:false,error:'Bil terdahulu gagal. Cuba semula dengan checkout baharu.'}};
+    return {statusCode:409,body:{ok:false,error:'The previous payment bill failed. Start a new checkout and try again.'}};
   }
   const customer = cleanPremiumText(body.customer || email,120) || email;
   const productName = cleanPremiumText(quote.name || `${offer?.name || 'AZDM'} · ${planId}`,200) || 'AZDM';
@@ -3492,7 +3504,7 @@ async function azAzdmLocalCheckout({req,body,offer}) {
       billContentEmail:`Thank you for purchasing ${cleanForToyyib(productName,60)} from AZOBSS. Serial license will be sent after payment verification.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0
     };
     const apiResult = await postToyyib('createBill',billPayload), billCode = azToyyibExtractBillCode(apiResult);
-    if (!billCode) throw new Error(azToyyibApiMessage(apiResult,'ToyyibPay tidak memulangkan BillCode.'));
+    if (!billCode) throw new Error(azToyyibApiMessage(apiResult,'ToyyibPay did not return a BillCode.'));
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
     order = upsertPremiumOrder({...order,status:'pending',billCode,paymentUrl,returnUrl,azdmFulfillmentState:'awaiting_payment'});
     try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM pending order Firestore persist warning:', err && (err.message || err)); }
@@ -3500,13 +3512,13 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   } catch (err) {
     order = upsertPremiumOrder({...order,status:'creation_failed',azdmFulfillmentState:'review',azdmFulfillmentError:err.message});
     try { await azPersistPremiumOrder(order); } catch (_) {}
-    return {statusCode:502,body:{ok:false,error:'Bil terdahulu gagal. '+cleanPremiumText(err.message || 'ToyyibPay gagal menyediakan bil.',240)}};
+    return {statusCode:502,body:{ok:false,error:'The previous payment bill failed. '+cleanPremiumText(err.message || 'ToyyibPay could not create the payment bill.',240)}};
   }
 }
 async function azAzdmLocalStatus({req,body}) {
   const orderId = String(body.order_id || '').trim(), uid = String(body.account_uid || '').trim();
   let order = await findPremiumOrderByAnyDeep({orderId});
-  if (!order || !azIsAzdmPremiumOrder(order) || azAzdmOrderUid(order)!==uid) return {statusCode:404,body:{ok:false,error:'Pesanan tidak ditemui.'}};
+  if (!order || !azIsAzdmPremiumOrder(order) || azAzdmOrderUid(order)!==uid) return {statusCode:404,body:{ok:false,error:'Order not found.'}};
   if (order.billCode && String(order.status || '').toLowerCase() !== 'paid') order = await refreshToyyibOrder(order,req);
   if (String(order.status || '').toLowerCase() === 'paid' && (!order.emailSentAt || order.azdmFulfillmentState !== 'complete')) order = await azFulfillAzdmOrder(order,req);
   return {ok:true,...azAzdmPublicOrder(order,false),enabled:azAzdmShopReadiness().ready};
@@ -3524,10 +3536,10 @@ async function azAzdmAdminLocalOrders({body}) {
 async function azAzdmAdminLocalRetryEmail({req,body}) {
   const orderId = cleanPremiumText(body.order_id || body.orderId || '',180);
   let order = await findPremiumOrderByAnyDeep({orderId});
-  if (!order || !azIsAzdmPremiumOrder(order)) return {statusCode:404,body:{ok:false,error:'Pesanan AZDM tidak ditemui.'}};
-  if (String(order.status || '').toLowerCase() !== 'paid') return {statusCode:409,body:{ok:false,error:'Bayaran pesanan belum disahkan.'}};
+  if (!order || !azIsAzdmPremiumOrder(order)) return {statusCode:404,body:{ok:false,error:'AZDM order not found.'}};
+  if (String(order.status || '').toLowerCase() !== 'paid') return {statusCode:409,body:{ok:false,error:'The order payment has not been verified yet.'}};
   order = await azFulfillAzdmOrder(order,req,{forceEmail:true});
-  if (order.email_status !== 'accepted' && !order.emailSentAt) return {statusCode:503,body:{ok:false,error:order.azdmFulfillmentError || order.emailError || 'Email serial belum berjaya dihantar.'}};
+  if (order.email_status !== 'accepted' && !order.emailSentAt) return {statusCode:503,body:{ok:false,error:order.azdmFulfillmentError || order.emailError || 'The serial email has not been sent successfully yet.'}};
   return {ok:true,order:azAzdmPublicOrder(order,true)};
 }
 
