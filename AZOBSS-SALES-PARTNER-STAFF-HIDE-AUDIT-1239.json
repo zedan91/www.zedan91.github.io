@@ -1,0 +1,12 @@
+{
+  "version": "1.0.1239",
+  "issue": "Sales Partner application banner could reappear for Staff accounts because the module trusted a stale saved-user role while Software Tools had already resolved the live role as Staff.",
+  "fixes": [
+    "Uses live Software Tools affiliate bar as an authoritative Staff+ signal",
+    "Scans session/local user objects and direct role cache keys",
+    "Checks software role globals and staff cache",
+    "Prevents showPartnerSection from rendering whenever any Staff+ signal is present",
+    "Observes affiliate bar role state so banner hides immediately after role resolution"
+  ],
+  "firestoreRulesChangeRequired": false
+}
