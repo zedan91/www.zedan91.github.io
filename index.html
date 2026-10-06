@@ -9830,9 +9830,9 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 }
 </style>
 
-<style id="az1227-tbana-stream-home-card">
-/* AZOBSS 1227: TBana Stream promo image refreshed and fills the card image area edge-to-edge.
-   The card only links to the existing software page; package / checkout controls stay there. */
+<style id="az1229-tbana-stream-home-card">
+/* AZOBSS 1229: show the complete TBana Stream promo artwork without cropping.
+   The image uses its natural 1512:931 ratio, so all top/bottom text and graphics remain visible. */
 .services-grid .az1227-tbana-stream-card{
   flex:0 1 300px !important;
   width:300px !important;
@@ -9851,9 +9851,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   outline:none !important;
 }
 .services-grid .az1227-tbana-stream-card img{
+  display:block !important;
   width:100% !important;
-  height:120px !important;
-  object-fit:cover !important;
+  height:auto !important;
+  aspect-ratio:1512 / 931 !important;
+  object-fit:contain !important;
   object-position:center !important;
   background:transparent !important;
 }
@@ -9869,7 +9871,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
     min-width:230px !important;
     max-width:none !important;
   }
-  .services-grid .az1227-tbana-stream-card img{height:150px !important;}
+  .services-grid .az1227-tbana-stream-card img{height:auto !important;}
 }
 @media (max-width:520px){
   .services-grid .az1227-tbana-stream-card{
