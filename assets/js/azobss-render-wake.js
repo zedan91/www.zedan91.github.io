@@ -178,7 +178,7 @@
 
   // If the customer is actively using a page for a long time, refresh before the backend
   // becomes cold. An unattended/background tab does not keep Render awake indefinitely.
-  setInterval(function(){
+  window.azobssLongSessionInterval(function(){
     if (document.visibilityState !== 'visible') return;
     if ((now() - lastUserActivityAt) > ACTIVE_WINDOW) return;
     if (!isStillWarm('main')) wakeAll('active-session-refresh', false, false);

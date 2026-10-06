@@ -106,7 +106,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge,60000);
+  window.azobssLongSessionInterval(updateBadge,60000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();

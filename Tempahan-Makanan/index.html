@@ -2,6 +2,8 @@
 
 <html lang="ms">
 <head>
+<script src="/assets/js/azobss-long-session-stability.js?v=1223"></script>
+
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
 html body .market-brand{
@@ -1940,7 +1942,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
     // Allow a short delay for auth UI/localStorage to initialize before blocking.
     var tries = 0;
-    var timer = setInterval(function(){
+    var timer = window.azobssLongSessionInterval(function(){
       tries++;
       role = applyButtons();
       if(role === required){
@@ -1974,7 +1976,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
     if(!mode)return;
     const id=mode==='register'?'siteSignUpButton':'siteSignInButton';
     let attempts=0;
-    const timer=setInterval(function(){
+    const timer=window.azobssLongSessionInterval(function(){
       const button=document.getElementById(id);
       if(button){clearInterval(timer);button.click();}
       else if(++attempts>20)clearInterval(timer);
@@ -2040,7 +2042,7 @@ a{color:inherit}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rg
 
   function start(){
     window.clearInterval(timer);
-    timer = window.setInterval(tick, intervalMs);
+    timer = window.window.azobssLongSessionInterval(tick, intervalMs);
   }
 
   function pause(ms){

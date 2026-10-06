@@ -777,7 +777,7 @@
     bindAdmin();
     refreshAdminState();
 
-    setInterval(() => {
+    window.azobssLongSessionInterval(() => {
       refreshAdminState();
       ensureCardAdminButtons();
     }, 5000);

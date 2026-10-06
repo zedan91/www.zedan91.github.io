@@ -104,6 +104,6 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
     if(list) mo.observe(list,{childList:true,subtree:true});
   }
 
-  setInterval(addDeleteButtons, 30000);
+  window.azobssLongSessionInterval(addDeleteButtons, 30000);
 })();
 //# sourceURL=/assets/js/home-deferred/support-delete-message-v705.js

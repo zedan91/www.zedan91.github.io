@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/assets/js/azobss-long-session-stability.js?v=1223"></script>
+
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
 html body .market-brand{
@@ -1992,7 +1994,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   document.addEventListener('DOMContentLoaded',()=>{ensureModals();bindIcons();});
   if(document.readyState!=='loading'){ensureModals();bindIcons();}
   [300,800,1500,3000].forEach(t=>setTimeout(()=>{ensureModals();bindIcons();},t));
-  new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(()=>{clearTimeout(window.__az1223ModalBindTimer);window.__az1223ModalBindTimer=setTimeout(()=>{if(!document.hidden){ensureModals();bindIcons();}},120);}).observe(document.body||document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 
@@ -2646,7 +2648,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
     // Allow a short delay for auth UI/localStorage to initialize before blocking.
     var tries = 0;
-    var timer = setInterval(function(){
+    var timer = window.azobssLongSessionInterval(function(){
       tries++;
       role = applyButtons();
       if(role === required){

@@ -1710,7 +1710,7 @@ function startAzobssPresenceHeartbeat(user){
   if(!u || !u.usernameKey) return;
   if(azobssPresenceHeartbeatTimer) clearInterval(azobssPresenceHeartbeatTimer);
   upsertOnlineUser(u);
-  azobssPresenceHeartbeatTimer = setInterval(()=>{
+  azobssPresenceHeartbeatTimer = window.azobssLongSessionInterval(()=>{
     if(document.visibilityState !== 'hidden') upsertOnlineUser(getSavedUser() || u);
   }, 60000);
 }
@@ -5657,7 +5657,8 @@ body:not(.has-pa-access) .market-nav .nav-pa-bm-link,body:not(.has-pa-access) a#
 
 // auto-init country selectors for dynamic admin modal
 setupCountryPhoneSelectors(document);
-new MutationObserver(()=>setupCountryPhoneSelectors(document)).observe(document.body,{childList:true,subtree:true});
+var __az1223CountrySelectorTimer = 0;
+new MutationObserver(()=>{clearTimeout(__az1223CountrySelectorTimer);__az1223CountrySelectorTimer=setTimeout(()=>{if(!document.hidden)setupCountryPhoneSelectors(document);},140);}).observe(document.body,{childList:true,subtree:true});
 
 setTimeout(()=>{azobssCleanupCollection("loginHistory");azobssCleanupCollection("guestHistory");azobssCleanupCollection("purchaseLogs");},5000);
 

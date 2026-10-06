@@ -115,6 +115,6 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  if(document.readyState!=='loading') setTimeout(update,1500);
  setTimeout(update,3000);
  setTimeout(update,6000);
- setInterval(update,60000);
+ window.azobssLongSessionInterval(update,60000);
 })();
 //# sourceURL=/assets/js/home-deferred/chat-badge-v705.js

@@ -81,7 +81,7 @@
     }, true);
     window.addEventListener('storage',()=>{updateCartBadge();updateBellBadge();});
     window.addEventListener('azobss-shop-cart-updated',()=>{renderCart();updateCartBadge();});
-    setInterval(updateCartBadge,1500);
+    window.azobssLongSessionInterval(updateCartBadge,1500);
   }
   document.addEventListener('DOMContentLoaded',bind); if(document.readyState!=='loading') bind();
 })();

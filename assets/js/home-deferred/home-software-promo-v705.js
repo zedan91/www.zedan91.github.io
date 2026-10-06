@@ -168,7 +168,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
   function restart(){
     clearInterval(timer);
     if(promos.length>1&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
-      timer=setInterval(()=>render(index+1,true),4600);
+      timer=window.azobssLongSessionInterval(()=>render(index+1,true),4600);
     }
   }
   function move(step){render(index+step,true);restart();}

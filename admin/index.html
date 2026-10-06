@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/assets/js/azobss-long-session-stability.js?v=1223"></script>
+
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
 html body .market-brand{
@@ -8158,7 +8160,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   document.addEventListener('DOMContentLoaded',()=>{ensureModals();bindIcons();});
   if(document.readyState!=='loading'){ensureModals();bindIcons();}
   [300,800,1500,3000].forEach(t=>setTimeout(()=>{ensureModals();bindIcons();},t));
-  new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(()=>{clearTimeout(window.__az1223ModalBindTimer);window.__az1223ModalBindTimer=setTimeout(()=>{if(!document.hidden){ensureModals();bindIcons();}},120);}).observe(document.body||document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 
@@ -8828,7 +8830,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
  function update(){cacheUpdate();setTimeout(liveUpdate,300)}
  document.addEventListener('DOMContentLoaded',update);if(document.readyState!=='loading')update();
  window.addEventListener('focus',update);window.addEventListener('storage',update);window.addEventListener('azobss-notification-updated',update);window.addEventListener('azobss-support-updated',update);
- setTimeout(update,500);setTimeout(update,1800);setTimeout(update,3500);setInterval(update,60000);
+ setTimeout(update,500);setTimeout(update,1800);setTimeout(update,3500);window.azobssLongSessionInterval(update,60000);
 })();
 </script>
 
@@ -8972,7 +8974,7 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
     // Allow a short delay for auth UI/localStorage to initialize before blocking.
     var tries = 0;
-    var timer = setInterval(function(){
+    var timer = window.azobssLongSessionInterval(function(){
       tries++;
       role = applyButtons();
       if(role === required && (required !== 'admin' || window.__azobssVerifiedAdmin === true)){
@@ -9671,7 +9673,7 @@ document.addEventListener('click', async function(e){
     if(e.target.closest('#deleteSelectedSoftwareKeys')){try{await remove([...selected]);}catch(err){alert(err.message||err);}return;}
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('manualSoftwareKeyModal')?.classList.contains('is-open'))manualModal(false);if($('softwareKeyCustomerModal')?.classList.contains('is-open'))customerModal(false);}});
-  setInterval(()=>{const tab=$('softwarekeys');if(document.visibilityState==='visible'&&tab?.classList.contains('active')&&!$('surveycadKeyPanel')?.hidden&&!loadingPromise)load({force:true});},AUTO_REFRESH_MS);
+  window.azobssLongSessionInterval(()=>{const tab=$('softwarekeys');if(document.visibilityState==='visible'&&tab?.classList.contains('active')&&!$('surveycadKeyPanel')?.hidden&&!loadingPromise)load({force:true});},AUTO_REFRESH_MS);
   document.addEventListener('visibilitychange',()=>{const tab=$('softwarekeys');if(document.visibilityState==='visible'&&tab?.classList.contains('active')&&!$('surveycadKeyPanel')?.hidden)load({force:true});});
   window.azSoftwareKeysLoad=load;
 })();

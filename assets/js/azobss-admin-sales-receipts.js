@@ -1772,7 +1772,7 @@ function startManualReceiptPaymentWatch(){
   // invoice exists. The former 15-second full reload could consume the free
   // Firestore daily read quota very quickly.
   if(manualReceiptPollTimer)return;
-  manualReceiptPollTimer=setInterval(async()=>{
+  manualReceiptPollTimer=window.azobssLongSessionInterval(async()=>{
     const section=el('salesreceipts');
     const dialogOpen=el('salesReceiptDialog')?.hidden===false;
     const hasPendingManual=manualRows.some(row=>row.source==='manual'&&normalizeStatus(row.status)==='pending');

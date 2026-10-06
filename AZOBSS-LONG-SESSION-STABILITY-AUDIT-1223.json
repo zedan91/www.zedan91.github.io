@@ -1,0 +1,25 @@
+{
+  "version": 1223,
+  "baseline": 1222,
+  "fix": "Firefox long-session stability / click-block self-heal",
+  "html_pages_injected": 42,
+  "html_interval_calls_routed": 108,
+  "shared_js_interval_files_routed": 12,
+  "auth_full_body_observers_debounced": [
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-firebase-live-likes-sync.js"
+  ],
+  "recovery": [
+    "pause AZOBSS interval callbacks while hidden",
+    "idle-throttle high-frequency DOM polling",
+    "orphan hidden overlay pointer-event recovery",
+    "soft resume resize/focus events",
+    "Firebase token refresh after >=5 min background sleep",
+    "no automatic page reload"
+  ],
+  "tests": {
+    "npm_run_check": "pass",
+    "npm_run_test_azdm": "25/25 pass",
+    "custom_regression": "pass"
+  }
+}

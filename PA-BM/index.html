@@ -2,6 +2,8 @@
 
 <html>
 <head>
+<script src="/assets/js/azobss-long-session-stability.js?v=1223"></script>
+
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
 html body .market-brand{
@@ -10228,7 +10230,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-test-d
     bindAdmin();
     refreshAdminState();
 
-    setInterval(() => {
+    window.azobssLongSessionInterval(() => {
       refreshAdminState();
       ensureCardAdminButtons();
     }, 500);
@@ -12180,7 +12182,7 @@ window.AZOBSS_LUCKY_DRAW_API = window.AZOBSS_LUCKY_DRAW_API || localStorage.getI
   document.addEventListener('DOMContentLoaded', function(){
     loadPrizeFromBackend();
     loadEntriesFromBackend();
-    setInterval(loadEntriesFromBackend, 30000);
+    window.azobssLongSessionInterval(loadEntriesFromBackend, 30000);
   });
 
   document.addEventListener('click', savePrizeToBackend, true);
@@ -13830,7 +13832,7 @@ body.azobss-support-admin .azobss-admin-only-lite{display:block}
   document.addEventListener('DOMContentLoaded',()=>{ensureModals();bindIcons();});
   if(document.readyState!=='loading'){ensureModals();bindIcons();}
   [300,800,1500,3000].forEach(t=>setTimeout(()=>{ensureModals();bindIcons();},t));
-  new MutationObserver(()=>{ensureModals();bindIcons();}).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(()=>{clearTimeout(window.__az1223ModalBindTimer);window.__az1223ModalBindTimer=setTimeout(()=>{if(!document.hidden){ensureModals();bindIcons();}},120);}).observe(document.body||document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 
@@ -13948,7 +13950,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
   if(document.readyState!=='loading') setTimeout(updateBadge,1000);
   window.addEventListener('resize',positionBadge);
   window.addEventListener('scroll',positionBadge,true);
-  setInterval(updateBadge,60000);
+  window.azobssLongSessionInterval(updateBadge,60000);
   setTimeout(updateBadge,2500);
   setTimeout(updateBadge,5000);
 })();
@@ -14083,7 +14085,7 @@ import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 
  if(document.readyState!=='loading') setTimeout(update,1500);
  setTimeout(update,3000);
  setTimeout(update,6000);
- setInterval(update,60000);
+ window.azobssLongSessionInterval(update,60000);
 })();
 </script>
 
@@ -14194,7 +14196,7 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, deleteDoc, do
   document.addEventListener('DOMContentLoaded', ensureButton);
   if(document.readyState !== 'loading') ensureButton();
   [500,1500,3000,5000].forEach(t=>setTimeout(ensureButton,t));
-  new MutationObserver(ensureButton).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(()=>{clearTimeout(window.__az1223EnsureButtonTimer);window.__az1223EnsureButtonTimer=setTimeout(()=>{if(!document.hidden)ensureButton();},120);}).observe(document.body||document.documentElement,{childList:true,subtree:true});
 
   window.azobssClearNotifications = clearNotifications;
 })();
@@ -14419,7 +14421,7 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
     if(list) mo.observe(list,{childList:true,subtree:true});
   }
 
-  setInterval(addDeleteButtons, 30000);
+  window.azobssLongSessionInterval(addDeleteButtons, 30000);
 })();
 </script>
 
@@ -15264,7 +15266,7 @@ return;
 
     // Allow a short delay for auth UI/localStorage to initialize before blocking.
     var tries = 0;
-    var timer = setInterval(function(){
+    var timer = window.azobssLongSessionInterval(function(){
       tries++;
       role = applyButtons();
       if(role === required){
@@ -15652,7 +15654,7 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{
   document.addEventListener('azobss:user-ready', apply);
   document.addEventListener('azobss:auth-ready', apply);
   [50,200,700,1500,3000,5000].forEach(function(ms){ setTimeout(apply, ms); });
-  setInterval(apply, 4000);
+  window.azobssLongSessionInterval(apply, 4000);
 })();
 </script>
 
