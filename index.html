@@ -9830,32 +9830,53 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 }
 </style>
 
-<style id="az1225-tbana-stream-home-card">
-/* AZOBSS 1225: simple TBana Stream promo card only.
-   Package / checkout controls stay in the separate TBana Stream system. */
-.services-grid .az1225-tbana-stream-card{
+<style id="az1226-tbana-stream-home-card">
+/* AZOBSS 1226: TBana Stream home card matches the larger Brownies slot.
+   The card only links to the existing software page; package / checkout controls stay there. */
+.services-grid .az1226-tbana-stream-card{
+  flex:0 1 300px !important;
+  width:300px !important;
+  min-width:280px !important;
+  max-width:300px !important;
   border:1px solid rgba(34,211,238,.58) !important;
   background:linear-gradient(155deg,rgba(2,26,57,.98),rgba(15,23,42,.98)) !important;
   box-shadow:0 0 0 1px rgba(34,211,238,.05) inset !important;
+  color:#e5e7eb !important;
+  text-decoration:none !important;
 }
-.services-grid .az1225-tbana-stream-card:hover{
+.services-grid .az1226-tbana-stream-card:hover,
+.services-grid .az1226-tbana-stream-card:focus-visible{
   border-color:#22d3ee !important;
   box-shadow:0 14px 30px rgba(8,145,178,.18) !important;
+  outline:none !important;
 }
-.services-grid .az1225-tbana-stream-card img{
+.services-grid .az1226-tbana-stream-card img{
   width:100% !important;
   height:120px !important;
   object-fit:contain !important;
   object-position:center !important;
   background:#020617 !important;
 }
-.services-grid .az1225-tbana-stream-card > p{
+.services-grid .az1226-tbana-stream-card > p{
   margin:0 !important;
   color:#ecfeff !important;
   font-weight:800 !important;
 }
 @media (max-width:900px){
-  .services-grid .az1225-tbana-stream-card img{height:150px !important;}
+  .services-grid .az1226-tbana-stream-card{
+    flex:1 1 260px !important;
+    width:auto !important;
+    min-width:230px !important;
+    max-width:none !important;
+  }
+  .services-grid .az1226-tbana-stream-card img{height:150px !important;}
+}
+@media (max-width:520px){
+  .services-grid .az1226-tbana-stream-card{
+    flex:1 1 100% !important;
+    min-width:0 !important;
+    width:100% !important;
+  }
 }
 </style>
 <div class="grid services-grid">
@@ -9936,10 +9957,10 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 </a>
 
-<div aria-label="TBana Stream untuk TikTok Live" class="card az1225-tbana-stream-card">
-<img alt="TBana Stream untuk TikTok Live - percuma 1 bulan untuk 5 pengguna pertama" src="images/tbana-stream-tiktok-live.webp?v=1225" width="960" height="640" loading="eager" decoding="async" fetchpriority="auto"/>
+<a aria-label="Open TBana Stream in Software Tools" class="card service-card az1226-tbana-stream-card" href="https://www.azobss.com/Software-Tools/?p=AZSW-601490&amp;k=f&amp;nc=1">
+<img alt="TBana Stream untuk TikTok Live - percuma 1 bulan untuk 5 pengguna pertama" src="images/tbana-stream-tiktok-live.webp?v=1226" width="960" height="640" loading="eager" decoding="async" fetchpriority="auto"/>
 <p>TBana Stream</p>
-</div>
+</a>
 </div>
 </div>
 <div class="section" id="software">

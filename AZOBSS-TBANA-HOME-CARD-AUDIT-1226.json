@@ -1,0 +1,9 @@
+{
+  "version": "1.0.1226",
+  "change": "TBana Stream larger clickable Home service card",
+  "target": "https://www.azobss.com/Software-Tools/?p=AZSW-601490&k=f&nc=1",
+  "desktop_width_px": 300,
+  "package_checkout_duplicated_on_home": false,
+  "npm_check": "passed",
+  "azdm_tests": "25/25 passed"
+}
