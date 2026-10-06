@@ -1,0 +1,13 @@
+{
+  "version": "1242",
+  "issue": "Apply Now appeared briefly after refresh, then disappeared for an ordinary User.",
+  "rootCause": "A delayed Firestore read of salesStaffApplications/{uid} could return historical status=approved. v1241 treated that old approval as stronger than the current users/{username} role=User and hid the banner about a second after initial render.",
+  "fixes": [
+    "Current Firestore user role is authoritative over historical application status.",
+    "If current role is User/member/customer and old application status is approved, banner stays visible and button is Apply Now.",
+    "Current Staff/Manager/Admin/Administrator/Owner still hide the banner.",
+    "Pending remains Application Pending; rejected remains Reapply.",
+    "Cache buster bumped to 1242."
+  ],
+  "firestoreRulesChangeRequired": false
+}

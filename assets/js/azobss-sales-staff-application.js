@@ -1,4 +1,4 @@
-/* AZOBSS v1241 Sales Partner -> Staff application workflow */
+/* AZOBSS v1242 Sales Partner -> Staff application workflow */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -35,6 +35,24 @@ function resolvedStaff(u,profile){
   // A successfully loaded Firestore user profile is authoritative for the current account.
   if(profile&&typeof profile==='object') return isStaffLike(profile);
   return isStaffLike(u)||staffSignal(u);
+}
+function resolvedRoleState(u,profile){
+  // v1242: keep current account role authoritative over an old application status.
+  // This matters when an account was previously approved as Staff, then later changed back to User.
+  if(profile&&typeof profile==='object'){
+    if(isStaffLike(profile)) return 'staff';
+    if(isOrdinaryRole(profile)) return 'ordinary';
+  }
+  if(u&&typeof u==='object'){
+    if(isOrdinaryRole(u)) return 'ordinary';
+    if(isStaffLike(u)) return 'staff';
+  }
+  const liveRole=String(document.body?.getAttribute('data-az-current-role')||'').trim();
+  if(liveRole){
+    if(isStaffLike({role:liveRole})) return 'staff';
+    if(isOrdinaryRole({role:liveRole})) return 'ordinary';
+  }
+  return staffSignal(u)?'staff':'unknown';
 }
 function toast(msg,ok=true){let el=$('#azSalesPartnerToast1228');if(!el){el=document.createElement('div');el.id='azSalesPartnerToast1228';el.style.cssText='position:fixed;left:50%;bottom:26px;z-index:2147483646;transform:translateX(-50%);max-width:min(92vw,620px);padding:11px 16px;border-radius:999px;background:#0f172a;color:#fff;border:1px solid rgba(148,163,184,.4);box-shadow:0 18px 55px rgba(0,0,0,.45);font:800 13px/1.35 Arial,sans-serif;text-align:center';document.body.appendChild(el)}el.textContent=msg;el.style.borderColor=ok?'rgba(52,211,153,.65)':'rgba(248,113,113,.72)';el.hidden=false;clearTimeout(window.__azSalesPartnerToastTimer1228);window.__azSalesPartnerToastTimer1228=setTimeout(()=>el.hidden=true,3500)}
 function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
@@ -82,16 +100,22 @@ function injectSoftwareUi(){
    if(fu){
      profile=await authoritativeProfile(u,fu);
      if(generation!==syncGeneration)return;
-     if(resolvedStaff(u,profile)){hidePartnerSection(true);return}
-   }else if(resolvedStaff(u,null)){
-     hidePartnerSection(true);return;
    }
+   const roleState=resolvedRoleState(u,profile);
+   if(roleState==='staff'){hidePartnerSection(true);return}
    if(!fu){showPartnerSection();btn.textContent='Apply Now';btn.disabled=false;btn.style.setProperty('pointer-events','auto','important');return}
    try{
      const snap=await getDoc(doc(db,'salesStaffApplications',fu.uid));if(generation!==syncGeneration)return;
      if(snap.exists()){
        const st=String(snap.data().status||'pending').toLowerCase();
-       if(st==='approved'){hidePartnerSection(true);return}
+       // v1242: an old APPROVED application must not hide the banner when the CURRENT
+       // authoritative account role is User/member/customer. Approval is historical; role is current.
+       if(st==='approved'){
+         if(roleState==='ordinary'){
+           showPartnerSection();btn.textContent='Apply Now';btn.disabled=false;btn.style.setProperty('pointer-events','auto','important');return;
+         }
+         hidePartnerSection(true);return;
+       }
        showPartnerSection();
        if(st==='pending'){btn.textContent='Application Pending';btn.disabled=true;btn.style.setProperty('pointer-events','none','important')}
        else{btn.textContent='Reapply';btn.disabled=false;btn.style.setProperty('pointer-events','auto','important')}

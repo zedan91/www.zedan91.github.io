@@ -3370,9 +3370,29 @@ html body .downloads-section{
   <button type="button" id="azSoftwareAffiliateShareButton" class="az-software-affiliate-share-btn">Share Link</button>
 </div>
 <style id="azobss-software-affiliate-share-1188-css">
-.az-software-affiliate-share-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 16px;padding:12px 14px;border:1px solid rgba(250,204,21,.32);border-radius:14px;background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.08));box-shadow:0 12px 30px rgba(0,0,0,.16)}
-.az-software-affiliate-share-bar[hidden]{display:none!important}.az-software-affiliate-share-copy{display:grid;gap:4px}.az-software-affiliate-share-copy strong{display:flex;align-items:center;gap:7px;color:#fde68a;font-size:13px;font-weight:950}.az-software-affiliate-share-copy span{color:#bfdbfe;font-size:12px;line-height:1.45}.az-software-affiliate-share-copy span b{color:#fef08a}.az-commission-legend-symbol{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1px solid rgba(250,204,21,.60);background:linear-gradient(145deg,rgba(113,63,18,.92),rgba(22,101,52,.86));box-shadow:0 5px 14px rgba(0,0,0,.22);font-size:14px;line-height:1}.az-software-affiliate-share-btn{flex:0 0 auto;border:1px solid rgba(96,165,250,.68);border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:9px 14px;font-size:12px;font-weight:950;cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.24)}.az-software-affiliate-share-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
-@media(max-width:700px){.az-software-affiliate-share-bar{align-items:stretch;flex-direction:column}.az-software-affiliate-share-btn{width:100%}}
+.az-software-affiliate-share-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 12px;padding:8px 11px;border:1px solid rgba(250,204,21,.30);border-radius:12px;background:linear-gradient(135deg,rgba(250,204,21,.085),rgba(34,197,94,.065));box-shadow:0 9px 22px rgba(0,0,0,.13)}
+.az-software-affiliate-share-bar[hidden]{display:none!important}
+body.az-software-full-admin .az-software-affiliate-share-bar,body.az-role-is-admin .az-software-affiliate-share-bar,body.is-admin .az-software-affiliate-share-bar{display:none!important}
+.az-software-affiliate-share-copy{display:grid;gap:2px;min-width:0}.az-software-affiliate-share-copy strong{display:flex;align-items:center;gap:6px;color:#fde68a;font-size:12px;font-weight:950}.az-software-affiliate-share-copy span{color:#bfdbfe;font-size:11px;line-height:1.32}.az-software-affiliate-share-copy span b{color:#fef08a}.az-commission-legend-symbol{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1px solid rgba(250,204,21,.58);background:linear-gradient(145deg,rgba(113,63,18,.92),rgba(22,101,52,.86));box-shadow:0 4px 11px rgba(0,0,0,.20);font-size:12px;line-height:1}.az-software-affiliate-share-btn{flex:0 0 auto;border:1px solid rgba(96,165,250,.68);border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:7px 12px;font-size:11px;font-weight:950;cursor:pointer;box-shadow:0 6px 16px rgba(37,99,235,.21)}.az-software-affiliate-share-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+@media(max-width:700px){.az-software-affiliate-share-bar{align-items:stretch;flex-direction:column;padding:9px 10px}.az-software-affiliate-share-btn{width:100%}}
+</style>
+<style id="azobss-software-platform-single-row-1243-css">
+/* v1243: keep the desktop platform/type/account controls on one compact row. */
+@media(min-width:1000px){
+  html body .software-platform-card{padding:9px 11px!important;}
+  html body .software-platform-filter{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:7px!important;width:100%!important;}
+  html body .software-platform-filter > .software-platform-btn{flex:0 0 auto!important;padding:8px 11px!important;font-size:12px!important;min-height:34px!important;white-space:nowrap!important;}
+  html body .software-platform-right{margin-left:auto!important;display:flex!important;flex:0 1 auto!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;min-width:0!important;white-space:nowrap!important;}
+  html body .software-platform-right .software-platform-btn{flex:0 0 auto!important;padding:8px 10px!important;font-size:12px!important;min-height:34px!important;white-space:nowrap!important;}
+  html body .software-platform-right .software-owner-account-filter{height:34px!important;max-width:190px!important;min-width:168px!important;padding:0 9px!important;font-size:11px!important;}
+}
+@media(min-width:1000px) and (max-width:1120px){
+  html body .software-platform-filter{gap:5px!important;}
+  html body .software-platform-filter > .software-platform-btn,
+  html body .software-platform-right .software-platform-btn{padding-left:8px!important;padding-right:8px!important;font-size:11px!important;}
+  html body .software-platform-right{gap:5px!important;}
+  html body .software-platform-right .software-owner-account-filter{max-width:172px!important;min-width:150px!important;font-size:10.5px!important;}
+}
 </style>
 <style id="azobss-commission-eligible-1233-css">
 .az-commission-eligible-badge-1233{display:inline-flex;align-items:center;justify-content:center;gap:5px;align-self:center;margin:2px auto 7px;padding:4px 8px;border:1px solid rgba(34,197,94,.55);border-radius:999px;background:linear-gradient(135deg,rgba(20,83,45,.48),rgba(6,95,70,.34));color:#bbf7d0;font-size:10px;font-weight:950;line-height:1.1;letter-spacing:.01em;box-shadow:0 5px 16px rgba(34,197,94,.10)}
@@ -3418,16 +3438,23 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
   function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
   function roleKey(v){return String(v||'').toLowerCase().replace(/[\s_-]+/g,'')}
   function uname(u){return String((u&&(u.usernameKey||u.username||u.name))||document.getElementById('signedInName')?.textContent||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40)}
-  function eligible(u){const r=roleKey(u&&(u.role||u.userRole||u.accountRole||u.memberRole));return ['staff','manager','semiadmin','semistaff','seller','editor','admin','administrator','owner','superadmin'].includes(r)}
+  function roleState(u){
+    const r=roleKey(u&&(u.role||u.userRole||u.accountRole||u.memberRole));
+    const body=document.body;
+    const isAdmin=['admin','administrator','owner','superadmin'].includes(r)||!!(body&&(body.classList.contains('az-software-full-admin')||body.classList.contains('az-role-is-admin')||body.classList.contains('is-admin')));
+    const canEarn=['staff','manager','semiadmin','semistaff','seller','editor'].includes(r)||!!(body&&(body.classList.contains('az-software-staff-role-ok')||body.classList.contains('az-role-is-staff')||body.classList.contains('az-role-is-stafflike')));
+    return {role:r,isAdmin,canEarn:canEarn&&!isAdmin};
+  }
+  function eligible(u){return roleState(u).canEarn}
   function captureIncoming(){try{const q=new URLSearchParams(location.search);const ref=String(q.get('r')||q.get('ref')||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);if(!ref)return;const now=Date.now();localStorage.setItem(CATALOG_REF_KEY,JSON.stringify({username:ref,ref,sourcePage:'Software',source:'software-catalog-share',openedAt:new Date(now).toISOString(),expiresAtMs:now+30*24*60*60*1000}));}catch(_e){}}
   function shareUrl(){const u=readUser();const ref=uname(u);const url=new URL('https://www.azobss.com/Software-Tools/');url.searchParams.set('ref',ref);url.searchParams.set('src','staff-manager-share');return url.toString()}
   async function copy(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return true}}catch(_e){}try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(_e){return false}}
   function toast(msg){let el=document.getElementById('azSoftwareAffiliateToast1188');if(!el){el=document.createElement('div');el.id='azSoftwareAffiliateToast1188';el.style.cssText='position:fixed;left:50%;bottom:24px;z-index:1000001;transform:translateX(-50%);background:#0f172a;color:#ecfdf5;border:1px solid rgba(52,211,153,.45);border-radius:999px;padding:10px 14px;font:800 12px/1.2 inherit;box-shadow:0 16px 40px rgba(0,0,0,.35)';document.body.appendChild(el)}el.textContent=msg;el.hidden=false;clearTimeout(window.__azSoftwareAffiliateToastTimer1188);window.__azSoftwareAffiliateToastTimer1188=setTimeout(()=>{el.hidden=true},2600)}
   async function doShare(){const u=readUser();if(!eligible(u)||!uname(u))return;const url=shareUrl();const payload={title:'AZOBSS Software Tools',text:'Software & tools from AZOBSS',url};try{if(navigator.share){await navigator.share(payload);return}}catch(err){if(err&&err.name==='AbortError')return}const ok=await copy(url);toast(ok?'Affiliate link Software Tools copied.':'Copy link gagal.');}
-  function sync(){const bar=document.getElementById('azSoftwareAffiliateShareBar');const btn=document.getElementById('azSoftwareAffiliateShareButton');if(!bar||!btn)return;const u=readUser();const show=eligible(u)&&!!uname(u);bar.hidden=!show;if(show){btn.onclick=doShare;btn.title='Share affiliate link Software Tools';}}
+  function sync(){const bar=document.getElementById('azSoftwareAffiliateShareBar');const btn=document.getElementById('azSoftwareAffiliateShareButton');if(!bar||!btn)return;const u=readUser();const state=roleState(u);const show=state.canEarn&&!!uname(u);bar.hidden=!show;bar.setAttribute('aria-hidden',show?'false':'true');if(show){btn.onclick=doShare;btn.title='Share affiliate link Software Tools';}else{btn.onclick=null;}}
   captureIncoming();
   document.addEventListener('DOMContentLoaded',sync);if(document.readyState!=='loading')sync();window.addEventListener('focus',sync);window.addEventListener('storage',sync);[300,900,1800,3500].forEach(ms=>setTimeout(sync,ms));
-  try{new MutationObserver(()=>{clearTimeout(window.__azSoftwareAffiliateSync1188);window.__azSoftwareAffiliateSync1188=setTimeout(sync,100)}).observe(document.documentElement,{childList:true,subtree:true})}catch(_e){}
+  try{new MutationObserver(()=>{clearTimeout(window.__azSoftwareAffiliateSync1188);window.__azSoftwareAffiliateSync1188=setTimeout(sync,80)}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}catch(_e){}
 })();
 </script>
 <div class="software-platform-card" aria-label="Software platform filter card">
@@ -17528,6 +17555,6 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
  <p data-support-name></p>
  <div class="az-package-contact"><a data-support-email href="mailto:zedan9107@gmail.com">Email: zedan9107@gmail.com</a><a data-support-whatsapp href="https://wa.me/601135600723" target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">AZOBSS Chat Support</a></div>
 </dialog>
-<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1241"></script>
+<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1242"></script>
 </body>
 </html>
