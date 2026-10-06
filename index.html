@@ -8995,16 +8995,17 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   height:100%!important;
   object-fit:contain!important;
   object-position:center!important;
-  background:linear-gradient(145deg,#061426,#0b2039)!important;
-  filter:brightness(1.16) saturate(1.18) contrast(1.04)!important;
+  background:radial-gradient(circle at 68% 36%,rgba(34,211,238,.18),transparent 38%),linear-gradient(145deg,#061426,#0b2039)!important;
+  filter:brightness(1.12) saturate(1.14) contrast(1.03)!important;
 }
 .az-home-software-promo.has-wide-art .az-home-software-promo-image{
   object-fit:cover!important;
 }
 .az-home-software-promo.has-logo-art .az-home-software-promo-image{
   object-fit:contain!important;
-  padding:7px 18px 22px!important;
+  padding:14px 52px 26px!important;
   box-sizing:border-box!important;
+  filter:brightness(1.22) saturate(1.18) contrast(1.04) drop-shadow(0 8px 18px rgba(0,0,0,.42))!important;
 }
 .az-home-software-promo-link::after{
   content:""!important;
@@ -18793,10 +18794,13 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
     return {enabled,limit,claimed,remaining,active:remaining>0&&validFreeDownloadSource(item)};
   }
   function imageCandidates(item){
+    // v1235: prefer the same product/logo artwork that is known to render on Software Tools.
+    // Some legacy promoImageUrl values are transparent decorative overlays (for example a sale streak),
+    // which made the Home promo look as if the image had disappeared.
     const values=[
-      item?.promoImageUrl,item?.promotionImageUrl,
       item?.imageUrl,item?.image,item?.logoUrl,
-      item?.gifUrl,item?.gif
+      item?.gifUrl,item?.gif,
+      item?.promoImageUrl,item?.promotionImageUrl
     ].map(v=>text(v||'',1200)).filter(Boolean);
     const local='/Software-Tools/images/logo/'+encodeURIComponent(safeLogoName(safeProductId(item)||item.name))+'.png';
     const out=[];
@@ -18889,7 +18893,16 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
   root.addEventListener('focusin',()=>clearInterval(timer));
   root.addEventListener('focusout',restart);
   image.addEventListener('load',()=>{
-    const ratio=(image.naturalWidth&&image.naturalHeight)?image.naturalWidth/image.naturalHeight:0;
+    const w=Number(image.naturalWidth)||0, h=Number(image.naturalHeight)||0;
+    const ratio=(w&&h)?w/h:0;
+    // Reject broken/tiny decorative assets and continue to the next candidate.
+    if((w>0&&w<56)||(h>0&&h<56)){
+      const item=promos[index];
+      const candidates=Array.isArray(item?._images)&&item._images.length?item._images:['/favicon-512x512.png'];
+      item._imageTry=Math.min((Number(item._imageTry)||0)+1,candidates.length-1);
+      const next=candidates[item._imageTry];
+      if(next&&image.getAttribute('src')!==next){image.src=next;return;}
+    }
     root.classList.toggle('has-wide-art',ratio>=1.35);
     root.classList.toggle('has-logo-art',ratio>0&&ratio<1.35);
   });

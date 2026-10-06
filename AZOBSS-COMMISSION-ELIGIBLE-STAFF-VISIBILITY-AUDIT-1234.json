@@ -1,0 +1,11 @@
+{
+  "version": "1.0.1234",
+  "scope": "Software-Tools cards / Staff commission marker",
+  "normalUserSeesCommissionMarker": false,
+  "staffManagerAdministratorSeeCommissionMarker": true,
+  "standaloneBadgeInCardFlexFlow": false,
+  "markerPlacement": "integrated inside existing absolute OWNED chip",
+  "paidOnly": true,
+  "activeFreePromoExcluded": true,
+  "azdmStillCommissionEligible": true
+}

@@ -3364,19 +3364,51 @@ html body .downloads-section{
 </div>
 <div class="az-software-affiliate-share-bar" id="azSoftwareAffiliateShareBar" hidden>
   <div class="az-software-affiliate-share-copy">
-    <strong>💰 Share Software Tools &amp; Earn</strong>
-    <span>Staff / Manager: hanya software berbayar yang bertanda 💰 Commission Eligible layak menerima komisen melalui link anda. Software percuma tidak memberi komisen.</span>
+    <strong><span class="az-commission-legend-symbol" aria-hidden="true">💰</span> Commission &amp; Share Link</strong>
+    <span><b>💰 pada kad</b> bermaksud software itu layak menerima komisen. Komisen hanya direkod apabila customer membeli melalui share link anda dan pembayaran berjaya. Software percuma tidak memberi komisen.</span>
   </div>
   <button type="button" id="azSoftwareAffiliateShareButton" class="az-software-affiliate-share-btn">Share Link</button>
 </div>
 <style id="azobss-software-affiliate-share-1188-css">
 .az-software-affiliate-share-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 16px;padding:12px 14px;border:1px solid rgba(250,204,21,.32);border-radius:14px;background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.08));box-shadow:0 12px 30px rgba(0,0,0,.16)}
-.az-software-affiliate-share-bar[hidden]{display:none!important}.az-software-affiliate-share-copy{display:grid;gap:3px}.az-software-affiliate-share-copy strong{color:#fde68a;font-size:13px;font-weight:950}.az-software-affiliate-share-copy span{color:#bfdbfe;font-size:12px;line-height:1.4}.az-software-affiliate-share-btn{flex:0 0 auto;border:1px solid rgba(96,165,250,.68);border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:9px 14px;font-size:12px;font-weight:950;cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.24)}.az-software-affiliate-share-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.az-software-affiliate-share-bar[hidden]{display:none!important}.az-software-affiliate-share-copy{display:grid;gap:4px}.az-software-affiliate-share-copy strong{display:flex;align-items:center;gap:7px;color:#fde68a;font-size:13px;font-weight:950}.az-software-affiliate-share-copy span{color:#bfdbfe;font-size:12px;line-height:1.45}.az-software-affiliate-share-copy span b{color:#fef08a}.az-commission-legend-symbol{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1px solid rgba(250,204,21,.60);background:linear-gradient(145deg,rgba(113,63,18,.92),rgba(22,101,52,.86));box-shadow:0 5px 14px rgba(0,0,0,.22);font-size:14px;line-height:1}.az-software-affiliate-share-btn{flex:0 0 auto;border:1px solid rgba(96,165,250,.68);border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:9px 14px;font-size:12px;font-weight:950;cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.24)}.az-software-affiliate-share-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 @media(max-width:700px){.az-software-affiliate-share-bar{align-items:stretch;flex-direction:column}.az-software-affiliate-share-btn{width:100%}}
 </style>
 <style id="azobss-commission-eligible-1233-css">
 .az-commission-eligible-badge-1233{display:inline-flex;align-items:center;justify-content:center;gap:5px;align-self:center;margin:2px auto 7px;padding:4px 8px;border:1px solid rgba(34,197,94,.55);border-radius:999px;background:linear-gradient(135deg,rgba(20,83,45,.48),rgba(6,95,70,.34));color:#bbf7d0;font-size:10px;font-weight:950;line-height:1.1;letter-spacing:.01em;box-shadow:0 5px 16px rgba(34,197,94,.10)}
 .az-commission-eligible-badge-1233 b{color:#fef08a;font-weight:950}
+</style>
+
+<!-- AZOBSS 1234: standalone commission badge removed from card flow.
+     Staff+ see Commission Eligible inside the existing absolute OWNED chip (PATCH 335), so no product content is pushed down. -->
+<style id="azobss-commission-eligible-1234-css">
+html body .az-commission-eligible-badge-1233{display:none!important;}
+</style>
+<style id="azobss-commission-symbol-1235-css">
+/* v1235: compact, absolute commission marker. It never participates in card layout. */
+html body .az-card-commission-symbol-1235{
+  position:absolute!important;
+  top:12px!important;
+  right:58px!important;
+  z-index:13!important;
+  display:grid!important;
+  place-items:center!important;
+  width:26px!important;
+  height:26px!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(250,204,21,.72)!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,rgba(120,53,15,.95),rgba(20,83,45,.92))!important;
+  color:#fff!important;
+  font-size:14px!important;
+  line-height:1!important;
+  box-shadow:0 7px 18px rgba(0,0,0,.30),0 0 0 1px rgba(250,204,21,.08) inset!important;
+  pointer-events:auto!important;
+  cursor:help!important;
+}
+html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol-1235{top:12px!important;right:58px!important;}
+@media(max-width:520px){html body .az-card-commission-symbol-1235{width:24px!important;height:24px!important;right:54px!important;font-size:13px!important;}}
 </style>
 <script id="azobss-software-catalog-affiliate-share-1188-js">
 (function(){
@@ -3386,7 +3418,7 @@ html body .downloads-section{
   function readUser(){return parse(sessionStorage.getItem('azobssCurrentUser'))||parse(localStorage.getItem('azobssCurrentUser'))||parse(sessionStorage.getItem('azobssUser'))||parse(localStorage.getItem('azobssUser'))||{};}
   function roleKey(v){return String(v||'').toLowerCase().replace(/[\s_-]+/g,'')}
   function uname(u){return String((u&&(u.usernameKey||u.username||u.name))||document.getElementById('signedInName')?.textContent||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40)}
-  function eligible(u){const r=roleKey(u&&(u.role||u.userRole||u.accountRole||u.memberRole));return ['staff','manager','semiadmin','semistaff','seller','editor'].includes(r)}
+  function eligible(u){const r=roleKey(u&&(u.role||u.userRole||u.accountRole||u.memberRole));return ['staff','manager','semiadmin','semistaff','seller','editor','admin','administrator','owner','superadmin'].includes(r)}
   function captureIncoming(){try{const q=new URLSearchParams(location.search);const ref=String(q.get('r')||q.get('ref')||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);if(!ref)return;const now=Date.now();localStorage.setItem(CATALOG_REF_KEY,JSON.stringify({username:ref,ref,sourcePage:'Software',source:'software-catalog-share',openedAt:new Date(now).toISOString(),expiresAtMs:now+30*24*60*60*1000}));}catch(_e){}}
   function shareUrl(){const u=readUser();const ref=uname(u);const url=new URL('https://www.azobss.com/Software-Tools/');url.searchParams.set('ref',ref);url.searchParams.set('src','staff-manager-share');return url.toString()}
   async function copy(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return true}}catch(_e){}try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(_e){return false}}
@@ -5374,7 +5406,7 @@ function normalizeItem(item){
     const promoPriceHtml = isPremium && !promoFreeInfo.active ? azPromoPriceHtml(item) : '';
     const promoFreeHtml = isPremium ? azPromoFreeCardHtml(item) : '';
     const promoFreeNormalPriceHtml = isPremium && promoFreeInfo.active ? azPromoFreeNormalPriceHtml(item) : '';
-    const commissionEligibleHtml = isPremium && !promoFreeInfo.active ? `<div class="az-commission-eligible-badge-1233" title="Paid software eligible for Staff / Manager referral commission">💰 <b>Commission Eligible</b></div>` : '';
+    const commissionEligibleHtml = ''; // AZOBSS 1234: eligibility is shown inside the Staff+ OWNED chip, never as a layout row.
     const stableLikeHtml = azStableLikeHtml287(item);
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
@@ -5402,7 +5434,7 @@ function normalizeItem(item){
       ? `<a class="download-btn azdm-setup-download-btn" data-azobss-premium-buy="0" data-product-id="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-download-link="${esc(azdmInstallerUrl)}" href="${esc(azdmInstallerUrl)}" target="_blank" rel="noopener" title="Download AZDM Setup" aria-label="Download AZDM Setup">Download</a>`
       : '';
     const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Choose Plan</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-commission-eligible="${isPremium && !promoFreeInfo.active ? '1' : '0'}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -13719,11 +13751,59 @@ html body .az-owner-source-chip.no-promo{
 html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
   top:72px!important;
 }
+/* v1234: paid commission eligibility is integrated into the existing absolute Staff+ owner chip.
+   It uses the same footprint instead of creating an extra flex row, so card logo/title/meta/description never move. */
+html body .az-owner-source-chip.is-commission-eligible{
+  min-height:38px!important;
+  gap:2px!important;
+  padding:5px 7px!important;
+}
+html body .az-owner-source-chip .az-owner-source-ownerline{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:3px!important;
+  width:100%!important;
+  min-width:0!important;
+  white-space:nowrap!important;
+}
+html body .az-owner-source-chip .az-owner-source-ownerline .az-owner-source-title{
+  display:inline!important;
+  flex:0 0 auto!important;
+  font-size:7.2px!important;
+}
+html body .az-owner-source-chip .az-owner-source-ownerline .az-owner-source-name{
+  display:block!important;
+  flex:0 1 auto!important;
+  min-width:0!important;
+  max-width:76px!important;
+  font-size:8.5px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+html body .az-owner-source-chip .az-owner-source-commission{
+  display:block!important;
+  width:100%!important;
+  color:#fef08a!important;
+  font-size:6.9px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  letter-spacing:.12px!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+}
 @media(max-width:520px){
   html body .az-owner-source-chip{top:66px!important;left:10px!important;font-size:8px!important;padding:5px 7px!important;max-width:124px!important;min-height:35px!important;}
   html body .az-owner-source-chip.has-promo{top:66px!important;}
   html body .az-owner-source-chip.no-promo{top:10px!important;}
 }
+
+/* v1235: commission info is now symbol-only and separated from the owner chip. */
+html body .az-owner-source-chip.is-commission-eligible{min-height:0!important;gap:3px!important;padding:5px 7px!important;}
+html body .az-owner-source-chip .az-owner-source-commission{display:none!important;}
 </style>
 <script id="az-owner-source-label-script-335">
 (function(){
@@ -13752,8 +13832,8 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
     var role=norm(u.role||localStorage.getItem('azobssRole')||sessionStorage.getItem('azobssRole'));
     var username=norm(u.usernameKey||u.username||u.id||u.name||localStorage.getItem('azobssUsername')||sessionStorage.getItem('azobssUsername'));
     var email=norm(u.email||u.authEmail||u.contactEmail||localStorage.getItem('azobssEmail')||sessionStorage.getItem('azobssEmail')||localStorage.getItem('email')||sessionStorage.getItem('email'));
-    var admin=role==='admin'||ADMIN_NAMES[username]||ADMIN_EMAILS[email]||document.body.classList.contains('az-software-full-admin');
-    var staff=role==='staff'||role==='semiadmin'||document.body.classList.contains('az-software-staff-role-ok');
+    var admin=role==='admin'||role==='administrator'||role==='owner'||role==='superadmin'||ADMIN_NAMES[username]||ADMIN_EMAILS[email]||document.body.classList.contains('az-software-full-admin')||document.body.classList.contains('az-role-is-admin')||document.body.classList.contains('is-admin');
+    var staff=role==='staff'||role==='manager'||role==='semiadmin'||role==='semi-admin'||role==='semistaff'||document.body.classList.contains('az-software-staff-role-ok')||document.body.classList.contains('az-role-is-staff')||document.body.classList.contains('az-role-is-stafflike');
     return {admin:!!admin,staff:!!staff,ok:!!(admin||staff),username:username,email:email,role:role};
   }
   function ownerFromCard(card){
@@ -13788,6 +13868,8 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
     var owner=ownerFromCard(card);
     if(!info.ok || !cardHasPremiumOrOwner(card,owner)){
       if(old) old.remove();
+      var staleCoin=card.querySelector(':scope > .az-card-commission-symbol-1235');
+      if(staleCoin) staleCoin.remove();
       return;
     }
     var az=isAzobssOwner(owner);
@@ -13800,9 +13882,25 @@ html body .az-promo-price-block.az-promo-no-sale-text + .az-owner-source-chip{
       else { card.insertBefore(old,card.firstChild); }
     }
     var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
+    var commissionEligible=String(card.dataset.commissionEligible||'')==='1';
     old.className='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo');
     old.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerText)+'</span>';
     old.title=az ? 'Owned by AZOBSS' : ('Owned by '+staffName(owner));
+
+    var coin=card.querySelector(':scope > .az-card-commission-symbol-1235');
+    if(commissionEligible && info.ok){
+      if(!coin){
+        coin=document.createElement('span');
+        coin.className='az-card-commission-symbol-1235';
+        coin.setAttribute('aria-label','Commission eligible');
+        coin.setAttribute('role','img');
+        card.appendChild(coin);
+      }
+      coin.textContent='💰';
+      coin.title='Commission eligible — sales from your Staff/Manager share link can earn commission after successful payment.';
+    }else if(coin){
+      coin.remove();
+    }
   }
   function run(){
     var info=roleInfo();
