@@ -1,4 +1,4 @@
-/* AZOBSS v1240 Sales Partner -> Staff application workflow */
+/* AZOBSS v1241 Sales Partner -> Staff application workflow */
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -14,22 +14,27 @@ function roleKey(u){return String(u&&(u.role||u.userRole||u.accountRole||u.staff
 function usernameOf(u,firebaseUser){return String((u&&(u.usernameKey||u.username||u.name||u.displayName||u.profileDocId))||window.azobssCurrentUsername||(firebaseUser&&firebaseUser.displayName)||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40)}
 function isStaffLike(u){const r=roleKey(u);return ['staff','manager','semiadmin','semistaff','seller','editor','admin','administrator','owner','superadmin'].includes(r)||r.includes('staff')}
 function domSaysStaff(){const b=document.body;if(!b)return false;return b.classList.contains('az-role-is-staff')||b.classList.contains('az-role-is-admin')||b.classList.contains('az-role-is-stafflike')||b.classList.contains('az-software-staff-role-ok')||b.classList.contains('az-software-full-admin')||b.classList.contains('is-admin')}
-function staffSignal(){
+function isOrdinaryRole(u){const r=roleKey(u);return ['user','member','customer','guest','normaluser'].includes(r)}
+function staffSignal(u){
   try{
-    if(domSaysStaff()) return true;
+    // v1241: current-account role wins. Do not trust old account-wide staff cache values,
+    // because the same browser can switch from a Staff account to an ordinary User account.
+    if(u&&isStaffLike(u)) return true;
+    if(u&&isOrdinaryRole(u)) return false;
     const affiliateBar=document.getElementById('azSoftwareAffiliateShareBar');
     if(affiliateBar && affiliateBar.hidden===false) return true;
-    const directKeys=['azobssRole','azobss_user_role','azobss_staff_role','azobssCurrentRole','azobss_account_role'];
-    const objectKeys=['azobssCurrentUser','azobssUser','azobss_user','azobss_current_user','siteUser','currentUser','azobssProfile','azobssUserProfile','azobssSavedUser'];
-    for(const store of [sessionStorage,localStorage]){
-      for(const k of directKeys){const r=roleKey({role:store.getItem(k)||''});if(isStaffLike({role:r}))return true}
-      for(const k of objectKeys){const u=parse(store.getItem(k)||'');if(u&&isStaffLike(u))return true}
-      if(store.getItem('azobss_staff_role_cache')==='1') return true;
-    }
+    const liveRole=String(document.body?.getAttribute('data-az-current-role')||'').trim();
+    if(liveRole&&isStaffLike({role:liveRole})) return true;
     const globals=[window.__azSoftwareForcedRole,window.__azobssSoftwareRole,window.azobssRole,window.currentUserRole];
     if(globals.some(r=>isStaffLike({role:r}))) return true;
+    if(!liveRole&&domSaysStaff()) return true;
   }catch(_){}
   return false;
+}
+function resolvedStaff(u,profile){
+  // A successfully loaded Firestore user profile is authoritative for the current account.
+  if(profile&&typeof profile==='object') return isStaffLike(profile);
+  return isStaffLike(u)||staffSignal(u);
 }
 function toast(msg,ok=true){let el=$('#azSalesPartnerToast1228');if(!el){el=document.createElement('div');el.id='azSalesPartnerToast1228';el.style.cssText='position:fixed;left:50%;bottom:26px;z-index:2147483646;transform:translateX(-50%);max-width:min(92vw,620px);padding:11px 16px;border-radius:999px;background:#0f172a;color:#fff;border:1px solid rgba(148,163,184,.4);box-shadow:0 18px 55px rgba(0,0,0,.45);font:800 13px/1.35 Arial,sans-serif;text-align:center';document.body.appendChild(el)}el.textContent=msg;el.style.borderColor=ok?'rgba(52,211,153,.65)':'rgba(248,113,113,.72)';el.hidden=false;clearTimeout(window.__azSalesPartnerToastTimer1228);window.__azSalesPartnerToastTimer1228=setTimeout(()=>el.hidden=true,3500)}
 function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
@@ -50,7 +55,7 @@ function injectSoftwareUi(){
  let lockedIdentity={fullName:'',email:'',phone:'',phoneLocked:false};
  function closeModalUi(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');modal.style.setProperty('pointer-events','none','important')}
  function hidePartnerSection(forceClose=false){bar.hidden=true;bar.setAttribute('aria-hidden','true');bar.style.setProperty('display','none','important');bar.style.setProperty('visibility','hidden','important');bar.style.setProperty('pointer-events','none','important');if(forceClose||!modalIntentOpen)closeModalUi()}
- function showPartnerSection(){if(staffSignal()){hidePartnerSection(true);return}bar.hidden=false;bar.removeAttribute('aria-hidden');bar.style.setProperty('display','flex','important');bar.style.setProperty('visibility','visible','important');bar.style.setProperty('pointer-events','auto','important');btn.style.setProperty('pointer-events',btn.disabled?'none':'auto','important')}
+ function showPartnerSection(){bar.hidden=false;bar.removeAttribute('aria-hidden');bar.style.setProperty('display','flex','important');bar.style.setProperty('visibility','visible','important');bar.style.setProperty('pointer-events','auto','important');btn.style.setProperty('pointer-events',btn.disabled?'none':'auto','important')}
  function setLockedField(el,value,locked){if(!el)return;el.value=String(value||'');el.readOnly=!!locked;el.setAttribute('aria-readonly',locked?'true':'false');el.classList.toggle('az-account-locked',!!locked);el.title=locked?'Locked to your AZOBSS account information':''}
  function applyIdentityLocks(u,fu){
    const fullName=String(u?.fullName||u?.displayName||u?.name||fu?.displayName||u?.username||u?.usernameKey||'').trim();
@@ -73,9 +78,14 @@ function injectSoftwareUi(){
    if(modalIntentOpen&&modal.classList.contains('is-open'))return;
    const generation=++syncGeneration;
    const u=savedUser(),fu=auth.currentUser;
-   if(staffSignal()||isStaffLike(u)){hidePartnerSection(true);return}
    let profile=null;
-   if(fu){profile=await authoritativeProfile(u,fu);if(generation!==syncGeneration)return;if(profile&&isStaffLike(profile)){hidePartnerSection(true);return}}
+   if(fu){
+     profile=await authoritativeProfile(u,fu);
+     if(generation!==syncGeneration)return;
+     if(resolvedStaff(u,profile)){hidePartnerSection(true);return}
+   }else if(resolvedStaff(u,null)){
+     hidePartnerSection(true);return;
+   }
    if(!fu){showPartnerSection();btn.textContent='Apply Now';btn.disabled=false;btn.style.setProperty('pointer-events','auto','important');return}
    try{
      const snap=await getDoc(doc(db,'salesStaffApplications',fu.uid));if(generation!==syncGeneration)return;
@@ -97,7 +107,7 @@ function injectSoftwareUi(){
    if(!fu&&Object.keys(cached||{}).length)fu=await waitForFirebaseUser(1800);
    if(!fu){toast('Please sign in first before applying.',false);try{window.openSiteAuth&&window.openSiteAuth('signin')}catch(_){}return}
    const profile=await authoritativeProfile(cached,fu);
-   if(staffSignal()||isStaffLike(cached)||isStaffLike(profile)){hidePartnerSection(true);return}
+   if(resolvedStaff(cached,profile)){hidePartnerSection(true);return}
    const u={...cached,...(profile||{})};
    applyIdentityLocks(u,fu);
    $('#azSalesPartnerError1228').textContent='';
@@ -119,7 +129,7 @@ function injectSoftwareUi(){
    submit.disabled=true;submit.textContent='Checking account...';err.textContent='';
    try{
      const profile=await authoritativeProfile(cached,fu);
-     if(staffSignal()||isStaffLike(cached)||isStaffLike(profile)){modalIntentOpen=false;hidePartnerSection(true);return}
+     if(resolvedStaff(cached,profile)){modalIntentOpen=false;hidePartnerSection(true);return}
      const u={...cached,...(profile||{})};
      const officialFullName=String(u.fullName||u.displayName||u.name||fu.displayName||u.username||u.usernameKey||lockedIdentity.fullName||'').trim();
      const officialEmail=String(u.email||u.authEmail||fu.email||lockedIdentity.email||'').trim().toLowerCase();

@@ -3365,7 +3365,7 @@ html body .downloads-section{
 <div class="az-software-affiliate-share-bar" id="azSoftwareAffiliateShareBar" hidden>
   <div class="az-software-affiliate-share-copy">
     <strong><span class="az-commission-legend-symbol" aria-hidden="true">💰</span> Commission &amp; Share Link</strong>
-    <span><b>💰 pada kad</b> bermaksud software itu layak menerima komisen. Komisen hanya direkod apabila customer membeli melalui share link anda dan pembayaran berjaya. Software percuma tidak memberi komisen.</span>
+    <span><b>💰 on a software card</b> means that product is commission-eligible. Commission is recorded only when a customer purchases through your share link and the payment is successfully confirmed. Free software does not earn commission.</span>
   </div>
   <button type="button" id="azSoftwareAffiliateShareButton" class="az-software-affiliate-share-btn">Share Link</button>
 </div>
@@ -3423,7 +3423,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
   function shareUrl(){const u=readUser();const ref=uname(u);const url=new URL('https://www.azobss.com/Software-Tools/');url.searchParams.set('ref',ref);url.searchParams.set('src','staff-manager-share');return url.toString()}
   async function copy(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return true}}catch(_e){}try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(_e){return false}}
   function toast(msg){let el=document.getElementById('azSoftwareAffiliateToast1188');if(!el){el=document.createElement('div');el.id='azSoftwareAffiliateToast1188';el.style.cssText='position:fixed;left:50%;bottom:24px;z-index:1000001;transform:translateX(-50%);background:#0f172a;color:#ecfdf5;border:1px solid rgba(52,211,153,.45);border-radius:999px;padding:10px 14px;font:800 12px/1.2 inherit;box-shadow:0 16px 40px rgba(0,0,0,.35)';document.body.appendChild(el)}el.textContent=msg;el.hidden=false;clearTimeout(window.__azSoftwareAffiliateToastTimer1188);window.__azSoftwareAffiliateToastTimer1188=setTimeout(()=>{el.hidden=true},2600)}
-  async function doShare(){const u=readUser();if(!eligible(u)||!uname(u))return;const url=shareUrl();const payload={title:'AZOBSS Software Tools',text:'Software & tools daripada AZOBSS',url};try{if(navigator.share){await navigator.share(payload);return}}catch(err){if(err&&err.name==='AbortError')return}const ok=await copy(url);toast(ok?'Affiliate link Software Tools copied.':'Copy link gagal.');}
+  async function doShare(){const u=readUser();if(!eligible(u)||!uname(u))return;const url=shareUrl();const payload={title:'AZOBSS Software Tools',text:'Software & tools from AZOBSS',url};try{if(navigator.share){await navigator.share(payload);return}}catch(err){if(err&&err.name==='AbortError')return}const ok=await copy(url);toast(ok?'Affiliate link Software Tools copied.':'Copy link gagal.');}
   function sync(){const bar=document.getElementById('azSoftwareAffiliateShareBar');const btn=document.getElementById('azSoftwareAffiliateShareButton');if(!bar||!btn)return;const u=readUser();const show=eligible(u)&&!!uname(u);bar.hidden=!show;if(show){btn.onclick=doShare;btn.title='Share affiliate link Software Tools';}}
   captureIncoming();
   document.addEventListener('DOMContentLoaded',sync);if(document.readyState!=='loading')sync();window.addEventListener('focus',sync);window.addEventListener('storage',sync);[300,900,1800,3500].forEach(ms=>setTimeout(sync,ms));
@@ -17528,6 +17528,6 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
  <p data-support-name></p>
  <div class="az-package-contact"><a data-support-email href="mailto:zedan9107@gmail.com">Email: zedan9107@gmail.com</a><a data-support-whatsapp href="https://wa.me/601135600723" target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">AZOBSS Chat Support</a></div>
 </dialog>
-<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1240"></script>
+<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1241"></script>
 </body>
 </html>
