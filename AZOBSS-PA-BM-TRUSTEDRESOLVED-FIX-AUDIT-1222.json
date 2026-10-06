@@ -1,0 +1,8 @@
+{
+  "version": 1222,
+  "area": "PA/BM and Lot Kadaster ToyyibPay checkout",
+  "error": "trustedResolved is not defined",
+  "rootCause": "PA/BM checkout referenced a variable scoped only to digital-product checkout",
+  "fix": "Removed trustedResolved.account from PA/BM billPhone resolution",
+  "cloudflareWorkerUpdateRequired": false
+}

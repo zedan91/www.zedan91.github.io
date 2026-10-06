@@ -19049,7 +19049,7 @@ async function handler(req, res) {
           billExternalReferenceNo: orderId,
           billTo: cleanForToyyib(user.username || usernameKey || user.email || "AZOBSS Customer", 30),
           billEmail: cleanForToyyib(user.email || data.buyerEmail || data.email || "customer@azobss.com", 80),
-          billPhone: cleanForToyyib(trustedResolved.account ? user.phone : (user.phone || data.buyerPhone || data.phone || "01135600723"), 20),
+          billPhone: cleanForToyyib(user.phone || data.buyerPhone || data.phone || "01135600723", 20),
           billSplitPayment: 0,
           billSplitPaymentArgs: "",
           billPaymentChannel: 0,
