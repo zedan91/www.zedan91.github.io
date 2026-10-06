@@ -1631,7 +1631,10 @@ function showAccessDeniedMessage(){
 
 function azobssPublicPaRoleBlocked(user){
   const role = String(user && (user.role || user.userRole || user.accountRole || user.staffRole) || '').toLowerCase().replace(/[\s_-]+/g,'');
-  return role.includes('staff') || role === 'semiadmin' || role === 'admin';
+  // v1245: Ukur Tanah is a public service tab. Becoming Staff/Semi-admin must
+  // not remove it from the navbar. Admin remains handled separately by
+  // isAzobssAdmin() / PA-BM access logic.
+  return role === 'admin';
 }
 function azobssEnsurePublicPaNavButtons(){
   const found = [];

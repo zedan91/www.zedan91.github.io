@@ -89,7 +89,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
     var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
-    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicBlocked=roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
     html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
     html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
@@ -896,7 +896,7 @@ body{background:radial-gradient(circle at top,#102746 0,#07111f 48%,#040914 100%
 
 <div class="az-market-modal" id="azMarketDetailModal" aria-hidden="true"><div class="az-market-modal-box az-market-detail"><div class="az-market-modal-head"><h2>Listing Details</h2><button class="az-market-close" type="button" data-market-detail-close>×</button></div><div id="azMarketDetailBody"></div></div></div>
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1228"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1245"></script>
 <script type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';

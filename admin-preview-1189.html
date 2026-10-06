@@ -89,7 +89,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
     var pa=!!u&&(isAdmin||(adminManaged?adminAllowed:false));
     var roleFlat=role.replace(/[\s_-]+/g,'');
-    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicBlocked=roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
     html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
     html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
@@ -7568,7 +7568,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1228"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1245"></script>
 <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1136"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 

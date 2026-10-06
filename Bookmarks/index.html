@@ -89,7 +89,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     ].map(function(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'')});
     var pa=!!u&&(isAdmin||(adminManaged&&adminAllowed));
     var roleFlat=role.replace(/[\s_-]+/g,'');
-    var publicBlocked=roleFlat.indexOf('staff')>=0||roleFlat==='semiadmin'||roleFlat==='admin';
+    var publicBlocked=roleFlat==='admin';
     var publicPa=!pa&&!isAdmin&&!publicBlocked;
     html.setAttribute('data-azobss-pre-auth',auth?'1':'0');
     html.setAttribute('data-azobss-pre-pabm',pa?'1':'0');
@@ -880,7 +880,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     </div>
     <div id="azobssLikesList"><div class="az-like-empty">Loading bookmarks...</div></div>
   </main>
-  <script type="module" src="/assets/js/azobss-global-auth.js?v=1228"></script>
+  <script type="module" src="/assets/js/azobss-global-auth.js?v=1245"></script>
   <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1184"></script>
 <script>document.addEventListener("click",e=>{if(e.target.closest('.az-like-unlike-btn,.az-bookmark-add-cart-btn,[data-bookmark-add-cart]'))return; const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/'; else if(cat.includes('pcbuild')) window.location='/PC-Build/';});</script><script id="azobss-shop-cart-js">
 (function(){
