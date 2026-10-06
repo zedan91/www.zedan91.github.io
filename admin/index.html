@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1223"></script>
+<script src="/assets/js/azobss-long-session-stability.js?v=1228"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
@@ -7440,6 +7440,7 @@ async function initSection(id){
   }
   if(id==='activity')return loadAdminActivity();
   if(id==='commissions')return Promise.all([loadAdminCommissions(),loadAdminPayoutRequests(),loadAdminPayoutGatewayStatus()]);
+  if(id==='salesstaffapps' && typeof window.azSalesStaffApplicationsLoad==='function') return window.azSalesStaffApplicationsLoad();
   if(id==='auditlogs')return loadAdminAuditLogs();
   if(id==='exports'){ const n=$('#adminExportNotice'); if(n) n.textContent='Choose a report, then download. All export requests are recorded in Audit Logs.'; return; }
   if(id==='systemhealth')return loadSystemHealth();
@@ -7756,7 +7757,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1199"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1228"></script>
 <script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1136"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -9678,5 +9679,6 @@ document.addEventListener('click', async function(e){
   window.azSoftwareKeysLoad=load;
 })();
 </script>
+<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1228"></script>
 </body>
 </html>

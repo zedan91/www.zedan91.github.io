@@ -1,0 +1,9 @@
+{
+  "version": "1.0.1228",
+  "baseline": "1.0.1227",
+  "loginFix": true,
+  "salesPartnerApplication": true,
+  "approvedRole": "staff",
+  "collection": "salesStaffApplications",
+  "firestoreRules": "FIREBASE-RULES-AZOBSS-PRODUCTION-LOCKED-v1228-SALES-STAFF-APPLICATIONS.txt"
+}

@@ -244,8 +244,8 @@ function addStyle() {
   const style = document.createElement('style');
   style.id = 'azobss-global-auth-style';
   style.textContent = `
-.auth-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
-.auth-modal.is-open{display:flex;}
+.auth-modal{position:fixed;inset:0;z-index:2147483600;display:none;align-items:flex-start;justify-content:center;padding:6px 16px 18px;background:rgba(3,8,20,.72);backdrop-filter:blur(8px);overflow:auto;}
+.auth-modal.is-open{display:flex;pointer-events:auto!important;}
 #siteAuthModal.auth-modal{align-items:center!important;padding:22px!important;}
 #siteAuthModal .auth-modal-card{margin:auto!important;font-size:16px!important;line-height:1.35!important;}
 /* AZOBSS 647: Keep login/register typography identical on every page.
@@ -1800,10 +1800,14 @@ function openSiteAuth(mode='signin'){
   if(signupError) signupError.textContent='';
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden','false');
+  // v1228: v1223 long-session recovery may have left an inline pointer-events:none!important
+  // while this modal was hidden. Clear it before the user interacts so clicks cannot pass
+  // through to buttons/links behind the login dialog.
+  try{ modal.style.removeProperty('pointer-events'); modal.style.setProperty('pointer-events','auto','important'); modal.style.setProperty('z-index','2147483600','important'); }catch(_e){}
   setTimeout(()=>{ try{ renderAzobssRecaptchaWidgets(); }catch(e){} }, 80);
   setTimeout(()=>{(isSignup?($('siteSignupUsername')||$('siteSignupName')):($('siteLoginUsername')||$('siteLoginName')))?.focus();},40);
 }
-function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}}
+function closeSiteAuth(){const modal=$('siteAuthModal'); if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');try{modal.style.removeProperty('z-index');modal.style.setProperty('pointer-events','none','important')}catch(_e){}}}
 const AZOBSS_BACKEND_BASE='https://azobss-backend.onrender.com';
 function azobssMembershipStatusText(user){
   const u=user||{};const exp=Number(u.membershipBenefitExpiresAtMs||0)||0;const active=!!u.membershipBenefitActive&&exp>Date.now();

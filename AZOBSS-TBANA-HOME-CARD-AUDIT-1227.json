@@ -1,0 +1,14 @@
+{
+  "version": "1.0.1227",
+  "feature": "TBana Stream latest promo image full-fill Home card",
+  "image": "images/tbana-stream-tiktok-live.webp?v=1227",
+  "source_dimensions": "1536x1024",
+  "optimized_dimensions": "1512x931",
+  "fit": "cover",
+  "background": "transparent",
+  "target_url": "https://www.azobss.com/Software-Tools/?p=AZSW-601490&k=f&nc=1",
+  "checks": {
+    "npm_run_check": "pass",
+    "azdm_tests": "25/25 pass"
+  }
+}

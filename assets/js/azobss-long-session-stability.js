@@ -1,4 +1,4 @@
-/* AZOBSS v1223 Long Session Stability Fix
+/* AZOBSS v1228 Long Session Stability + Active Modal Pointer Fix
  * Firefox/Chromium long-idle self-heal:
  * - pauses/throttles AZOBSS polling while hidden/idle
  * - refreshes auth token after a long background sleep
@@ -7,8 +7,8 @@
  */
 (function(){
   'use strict';
-  if(window.__AZOBSS_LONG_SESSION_STABILITY_1223__) return;
-  window.__AZOBSS_LONG_SESSION_STABILITY_1223__ = true;
+  if(window.__AZOBSS_LONG_SESSION_STABILITY_1228__) return;
+  window.__AZOBSS_LONG_SESSION_STABILITY_1228__ = true;
 
   var nativeSetInterval = window.setInterval.bind(window);
   var nativeSetTimeout = window.setTimeout.bind(window);
@@ -57,14 +57,29 @@
 
   function markNoPointer(el){
     if(!el || el === document.body || el === document.documentElement) return false;
+    try{ if(el.matches && el.matches('.auth-modal.is-open[aria-hidden="false"]')) return false; }catch(_e){}
     try{
-      el.style.setProperty('pointer-events','none','important');
-      el.dataset.azobssOrphanOverlayRecovered = '1223';
+      el.style.setProperty('pointer-events','none');
+      el.dataset.azobssOrphanOverlayRecovered = '1228';
       return true;
     }catch(_e){ return false; }
   }
 
+  function restoreActiveModalPointers(){
+    try{
+      document.querySelectorAll('.auth-modal.is-open[aria-hidden="false"],.azobss-modal-lite.is-open').forEach(function(el){
+        try{
+          if(el.dataset && el.dataset.azobssOrphanOverlayRecovered){
+            el.style.removeProperty('pointer-events');
+            delete el.dataset.azobssOrphanOverlayRecovered;
+          }
+        }catch(_e){}
+      });
+    }catch(_e){}
+  }
+
   function cleanupKnownHiddenOverlays(){
+    restoreActiveModalPointers();
     var fixed = 0;
     var selectors = [
       '.auth-modal[aria-hidden="true"]',
@@ -161,7 +176,7 @@
     try{ window.dispatchEvent(new Event('resize')); }catch(_e){}
     try{ window.dispatchEvent(new Event('focus')); }catch(_e){}
     try{
-      document.dispatchEvent(new CustomEvent('azobss:session-resume', {detail:{reason:reason || 'resume', sleptMs:Number(sleptMs)||0, version:1223}}));
+      document.dispatchEvent(new CustomEvent('azobss:session-resume', {detail:{reason:reason || 'resume', sleptMs:Number(sleptMs)||0, version:1228}}));
     }catch(_e){}
     if((Number(sleptMs)||0) >= LONG_SLEEP_MS) refreshAuthAfterSleep();
     nativeSetTimeout(function(){ cleanupKnownHiddenOverlays(); cleanupViewportBlocker(); restorePagePointerState(); }, 350);
@@ -189,10 +204,10 @@
   }, 30000);
 
   function installCssGuard(){
-    if(document.getElementById('azobss-long-session-style-1223')) return;
+    if(document.getElementById('azobss-long-session-style-1228')) return;
     var style = document.createElement('style');
-    style.id = 'azobss-long-session-style-1223';
-    style.textContent = '[hidden]{pointer-events:none!important}.auth-modal[aria-hidden="true"],.auth-modal:not(.is-open),.azobss-modal-lite:not(.is-open),#azobssMyPurchasesModal:not(.is-open){pointer-events:none!important}';
+    style.id = 'azobss-long-session-style-1228';
+    style.textContent = '[hidden]{pointer-events:none!important}.auth-modal[aria-hidden="true"],.auth-modal:not(.is-open),.azobss-modal-lite:not(.is-open),#azobssMyPurchasesModal:not(.is-open){pointer-events:none!important}.auth-modal.is-open[aria-hidden="false"]{pointer-events:auto!important;z-index:2147483600!important}.auth-modal.is-open[aria-hidden="false"]>.auth-modal-card{pointer-events:auto!important;position:relative!important;z-index:1!important}';
     (document.head || document.documentElement).appendChild(style);
   }
   installCssGuard();
