@@ -4,6 +4,29 @@
  if(!model||!dialog||!root)return;
  const $=s=>root.querySelector(s),plan=$('[name="azdm-plan"]'),quantity=$('[name="azdm-quantity"]'),buy=$('[data-azdm-buy]'),message=$('[data-azdm-message]');
  const base='https://azobss-backend.onrender.com',money=v=>'RM'+(v/100).toFixed(2);
+ function cleanRef(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);}
+ function parse(v){try{return v?JSON.parse(v):null}catch(_e){return null}}
+ function staffReferral(productId){
+  try{
+   const id=String(productId||'').trim();
+   const qs=new URLSearchParams(location.search);
+   const urlProduct=String(qs.get('p')||qs.get('product')||'').trim();
+   const urlRef=cleanRef(qs.get('r')||qs.get('ref')||'');
+   if(urlRef&&(!urlProduct||!id||urlProduct===id)) return {username:urlRef,ref:urlRef,productId:id||urlProduct,sourcePage:'Software',openedAt:new Date().toISOString(),source:'package-url-ref'};
+   if(id){
+    const direct=parse(localStorage.getItem('azobssStaffShareReferral_'+id)||sessionStorage.getItem('azobssStaffShareReferral_'+id)||'');
+    const ref=cleanRef(direct?.username||direct?.ref||'');if(ref)return {...direct,username:ref,ref,productId:id,sourcePage:'Software'};
+   }
+   const catalog=parse(localStorage.getItem('azobssSoftwareCatalogReferral')||'');
+   const catalogRef=cleanRef(catalog?.username||catalog?.ref||'');
+   const exp=Number(catalog?.expiresAtMs||0)||0;
+   if(catalogRef&&(!exp||exp>Date.now()))return {...catalog,username:catalogRef,ref:catalogRef,productId:id||catalog?.productId||'',sourcePage:'Software',source:catalog?.source||'software-catalog-share'};
+   const last=parse(localStorage.getItem('azobssLuckyLastProductShareOpen')||'');
+   const lastRef=cleanRef(last?.ref||'');
+   if(lastRef&&(!id||!last?.productId||String(last.productId)===id)&&last?.noCommission!==true&&last?.shareKind!=='free')return {username:lastRef,ref:lastRef,productId:id||last?.productId||'',sourcePage:last?.sourcePage||'Software',openedAt:last?.at||'',source:'last-product-open'};
+  }catch(_e){}
+  return null;
+ }
  let offer=null,available=false,requestId='',requestSelection='',pollTimer,pollCount=0,generation=0;
  const rows=document.getElementById('softwarePackageRows'),enabled=document.getElementById('softwarePackagesEnabled'),fields=document.getElementById('softwarePackageFields');
  let oldOffer=null;
@@ -100,8 +123,8 @@
    if(offer.fulfilment==='azdm'){
     const selection=JSON.stringify([offer,plan.value,q.quantity]);if(!requestId||requestSelection!==selection){requestId=crypto.randomUUID();requestSelection=selection;}
     try{const old=JSON.parse(sessionStorage.getItem('azdm-package-request')||'null');if(old?.selection===selection&&Date.now()-old.created<3*86400000)requestId=old.id;sessionStorage.setItem('azdm-package-request',JSON.stringify({id:requestId,selection,created:Date.now()}));}catch{}
-    result=await call('/api/azdm/checkout',{method:'POST',headers:h,body:JSON.stringify({software_id:offer.product_id,plan:plan.value,quantity:q.quantity,request_id:requestId})});
-   }else result=await call('/api/create-payment',{method:'POST',headers:h,body:JSON.stringify({product:{productId:offer.product_id},softwarePackageId:plan.value,packageQuantity:q.quantity})});
+    result=await call('/api/azdm/checkout',{method:'POST',headers:h,body:JSON.stringify({software_id:offer.product_id,plan:plan.value,quantity:q.quantity,request_id:requestId,staff_referral:staffReferral(offer.product_id)})});
+   }else{const ref=staffReferral(offer.product_id);result=await call('/api/create-payment',{method:'POST',headers:h,body:JSON.stringify({product:{productId:offer.product_id,staffReferral:ref},productId:offer.product_id,softwarePackageId:plan.value,packageQuantity:q.quantity,staffReferral:ref,returnUrl:location.href.split('#')[0]})});}
    const url=new URL(result.payment_url||result.paymentUrl||result.url);if(url.protocol!=='https:'||!['toyyibpay.com','dev.toyyibpay.com'].includes(url.hostname))throw Error('Invalid payment link.');location.assign(url.href);
   }catch(e){message.textContent=e.message;if(/sign in/i.test(e.message))signIn();if(/order has changed|already been paid|previous bill/i.test(e.message)){requestId='';try{sessionStorage.removeItem('azdm-package-request');}catch{}}calculate();}
  });

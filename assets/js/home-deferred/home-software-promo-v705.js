@@ -94,10 +94,20 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
     const remaining=Math.max(0,limit-claimed);
     return {enabled,limit,claimed,remaining,active:remaining>0&&validFreeDownloadSource(item)};
   }
-  function imageUrl(item){
-    const direct=text(item.promoImageUrl||item.promotionImageUrl||item.imageUrl||item.image||item.logoUrl||item.gifUrl||item.gif||'',1200);
-    if(direct) return direct;
-    return '/Software-Tools/images/logo/'+encodeURIComponent(safeLogoName(safeProductId(item)||item.name))+'.png';
+  function imageCandidates(item){
+    const values=[
+      item?.promoImageUrl,item?.promotionImageUrl,
+      item?.imageUrl,item?.image,item?.logoUrl,
+      item?.gifUrl,item?.gif
+    ].map(v=>text(v||'',1200)).filter(Boolean);
+    const local='/Software-Tools/images/logo/'+encodeURIComponent(safeLogoName(safeProductId(item)||item.name))+'.png';
+    const out=[];
+    for(const value of [...values,local,'/favicon-512x512.png']){
+      if(!value||out.includes(value)) continue;
+      if(/^blob:/i.test(value)) continue;
+      out.push(value);
+    }
+    return out;
   }
   function isActive(item){
     const status=text(item.status||'active',40).toLowerCase();
@@ -119,7 +129,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
       ...item,
       _id:safeProductId(item),
       _name:text(item.name||item.title||'Software Promotion',100),
-      _image:imageUrl(item),
+      _images:imageCandidates(item),
       _price:freePromo?'FREE':(saleRaw||'PROMO'),
       _save:save,
       _free:freePromo,
@@ -153,7 +163,9 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
     if(animate) root.classList.add('is-changing');
     setTimeout(()=>{
       if(token!==renderToken) return;
-      image.src=item._image;
+      item._imageTry=0;
+      const candidates=Array.isArray(item._images)&&item._images.length?item._images:['/favicon-512x512.png'];
+      image.src=candidates[0];
       image.alt=item._name;
       title.textContent=item._name;
       price.textContent=item._price;
@@ -178,11 +190,19 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
   root.addEventListener('mouseleave',restart);
   root.addEventListener('focusin',()=>clearInterval(timer));
   root.addEventListener('focusout',restart);
+  image.addEventListener('load',()=>{
+    const ratio=(image.naturalWidth&&image.naturalHeight)?image.naturalWidth/image.naturalHeight:0;
+    root.classList.toggle('has-wide-art',ratio>=1.35);
+    root.classList.toggle('has-logo-art',ratio>0&&ratio<1.35);
+  });
   image.addEventListener('error',()=>{
     const item=promos[index];
-    const fallback='/Software-Tools/images/logo/'+encodeURIComponent(safeLogoName(item?._id||item?._name))+'.png';
-    if(image.src.indexOf(fallback)===-1){image.src=fallback;return;}
-    image.src='/favicon-512x512.png';
+    if(!item) return;
+    const candidates=Array.isArray(item._images)&&item._images.length?item._images:['/favicon-512x512.png'];
+    item._imageTry=Math.min((Number(item._imageTry)||0)+1,candidates.length-1);
+    const next=candidates[item._imageTry];
+    if(next&&image.getAttribute('src')!==next){image.src=next;return;}
+    if(image.getAttribute('src')!=='/favicon-512x512.png') image.src='/favicon-512x512.png';
   });
 
   async function fromFirestore(){

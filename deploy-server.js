@@ -3484,12 +3484,16 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   }
   const customer = cleanPremiumText(body.customer || email,120) || email;
   const productName = cleanPremiumText(quote.name || `${offer?.name || 'AZDM'} · ${planId}`,200) || 'AZDM';
+  const referralRaw = body.staff_referral && typeof body.staff_referral === 'object' ? body.staff_referral : {};
+  const referralUsername = azCommissionUsername(referralRaw.username || referralRaw.ref || '');
+  const azdmReferral = referralUsername ? {username:referralUsername,ref:referralUsername,productId:softwareId,sourcePage:'Software',source:'azdm-package-share'} : {};
   let order = upsertPremiumOrder({
     orderId,azdmOrder:true,automaticCheckoutKind:'azdm',source:'azdm',fulfilment:'azdm',productId:softwareId,productName,
     softwarePackageId:planId,softwarePackageDays:days,packageQuantity:quantity,azdmPlanId:planId,azdmDays:days,azdmQuantity:quantity,
     amountSen,saleAmount:amountSen/100,amount:`RM${(amountSen/100).toFixed(2)}`,status:'creating',paymentMethod:'toyyibpay',paymentReference:'',
     azdmAccountUid:uid,azdmCustomer:customer,user:{uid,username:customer,email,phone:cleanToyyibPhone(body.phone || '')},email,buyerEmail:email,
-    product:{id:softwareId,productId:softwareId,name:productName,softwarePackageId:planId,packageQuantity:quantity,softwarePackageDays:days,fulfilment:'azdm'},
+    staffReferral:azdmReferral,shareReferral:azdmReferral,
+    product:{id:softwareId,productId:softwareId,name:productName,softwarePackageId:planId,packageQuantity:quantity,softwarePackageDays:days,fulfilment:'azdm',staffReferral:azdmReferral,shareReferral:azdmReferral},
     email_status:'queued',azdmFulfillmentState:'awaiting_payment',createdAt:new Date().toISOString(),createdAtMs:Date.now()
   });
   try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM creating order Firestore persist warning:', err && (err.message || err)); }

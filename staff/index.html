@@ -885,7 +885,7 @@ body[data-dashboard-page="staff"] textarea{padding:8px 9px;border-radius:9px;fon
 <div class="az1191-toolbar"><input id="salesSearch" placeholder="Cari produk / Order ID..."><select id="salesPayoutFilter"><option value="all">Semua status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><select id="salesTypeFilter"><option value="all">Semua jenis</option><option value="direct">Direct Sale</option><option value="split">Split Sale</option><option value="legacy">Legacy</option></select></div>
 <div id="salesList" class="list"></div></section>
 <section id="share" class="section">
-<div class="az-section-head"><div><h2>🔗 Share Link</h2><div class="muted">Link referral Staff/Manager dan komisen share yang sah.</div></div><button class="btn" id="refreshShareCom">↻ Refresh</button></div>
+<div class="az-section-head"><div><h2>🔗 Share Link</h2><div class="muted">Link referral Staff/Manager dan komisen share yang sah.</div></div><button class="btn" id="refreshShareCom">↻ Refresh</button></div><div class="az-commission-alert">💰 <b>Commission Eligible:</b> Hanya software berbayar yang mempunyai tanda <b>Commission Eligible</b> pada kad Software Tools boleh memberi komisen melalui share link. Software percuma tidak memberi komisen. AZOBSS Download Manager (AZDM) turut termasuk apabila pembelian dibuat melalui referral Staff/Manager yang sah.</div>
 <div class="az1191-refbox"><div><b>Link Software Tools anda</b><br><code id="softwareReferralLink">Memuatkan...</code></div><div class="az1191-ref-actions"><button class="btn" type="button" id="copySoftwareReferral">Copy</button><button class="btn green" type="button" id="shareSoftwareReferral">Share</button></div></div>
 <div class="az1191-refbox"><div><b>Link CAD Tools anda</b><br><code id="cadReferralLink">Memuatkan...</code></div><div class="az1191-ref-actions"><button class="btn" type="button" id="copyCadReferral">Copy</button></div></div>
 <div class="az1192-sync-note"><span class="az1192-sync-chip">↔ Admin: Referral Records</span><span>Referral di sini sama dengan rekod <b>Share/Referral</b> dalam Commission Manager.</span></div><div id="shareSummary" class="az1191-summaryline"></div>
@@ -1008,12 +1008,14 @@ function azRenderStaffRoleUI(){
    if(box){
      if(semi){
        box.innerHTML=[
+        '<div><b>Kelayakan:</b> hanya software berbayar yang ditanda 💰 Commission Eligible memberi komisen. Software percuma tidak layak.</div>',
         '<div><b>Produk sendiri terjual:</b> semiAdmin/owner dapat 90%, AZOBSS dapat 10%.</div>',
         '<div><b>Produk semiAdmin dijual melalui share staff lain:</b> owner dapat 90%, sharer dapat 4%, AZOBSS dapat 6%.</div>',
         '<div><b>Share produk admin/AZOBSS:</b> sharer dapat 20%, AZOBSS dapat 80%.</div>'
        ].join('');
      }else{
        box.innerHTML=[
+        '<div><b>Kelayakan:</b> hanya software berbayar yang ditanda 💰 Commission Eligible memberi komisen. Software percuma tidak layak.</div>',
         '<div><b>Produk sendiri terjual:</b> staff/owner dapat 70%, AZOBSS dapat 30%.</div>',
         '<div><b>Share produk admin/AZOBSS:</b> sharer dapat 20%, AZOBSS dapat 80%.</div>',
         '<div><b>Share produk staff lain:</b> owner dapat 60%, sharer dapat 10%, AZOBSS dapat 30%.</div>'

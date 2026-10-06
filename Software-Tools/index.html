@@ -3259,7 +3259,7 @@ html body .downloads-section{
 <!-- AZOBSS v1210: universal per-software packages and support -->
 <link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1221">
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1221" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1221" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1233" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3365,7 +3365,7 @@ html body .downloads-section{
 <div class="az-software-affiliate-share-bar" id="azSoftwareAffiliateShareBar" hidden>
   <div class="az-software-affiliate-share-copy">
     <strong>💰 Share Software Tools &amp; Earn</strong>
-    <span>Staff / Manager: komisen auto apabila pembelian berbayar datang melalui link anda.</span>
+    <span>Staff / Manager: hanya software berbayar yang bertanda 💰 Commission Eligible layak menerima komisen melalui link anda. Software percuma tidak memberi komisen.</span>
   </div>
   <button type="button" id="azSoftwareAffiliateShareButton" class="az-software-affiliate-share-btn">Share Link</button>
 </div>
@@ -3373,6 +3373,10 @@ html body .downloads-section{
 .az-software-affiliate-share-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 16px;padding:12px 14px;border:1px solid rgba(250,204,21,.32);border-radius:14px;background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.08));box-shadow:0 12px 30px rgba(0,0,0,.16)}
 .az-software-affiliate-share-bar[hidden]{display:none!important}.az-software-affiliate-share-copy{display:grid;gap:3px}.az-software-affiliate-share-copy strong{color:#fde68a;font-size:13px;font-weight:950}.az-software-affiliate-share-copy span{color:#bfdbfe;font-size:12px;line-height:1.4}.az-software-affiliate-share-btn{flex:0 0 auto;border:1px solid rgba(96,165,250,.68);border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:9px 14px;font-size:12px;font-weight:950;cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.24)}.az-software-affiliate-share-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 @media(max-width:700px){.az-software-affiliate-share-bar{align-items:stretch;flex-direction:column}.az-software-affiliate-share-btn{width:100%}}
+</style>
+<style id="azobss-commission-eligible-1233-css">
+.az-commission-eligible-badge-1233{display:inline-flex;align-items:center;justify-content:center;gap:5px;align-self:center;margin:2px auto 7px;padding:4px 8px;border:1px solid rgba(34,197,94,.55);border-radius:999px;background:linear-gradient(135deg,rgba(20,83,45,.48),rgba(6,95,70,.34));color:#bbf7d0;font-size:10px;font-weight:950;line-height:1.1;letter-spacing:.01em;box-shadow:0 5px 16px rgba(34,197,94,.10)}
+.az-commission-eligible-badge-1233 b{color:#fef08a;font-weight:950}
 </style>
 <script id="azobss-software-catalog-affiliate-share-1188-js">
 (function(){
@@ -5370,6 +5374,7 @@ function normalizeItem(item){
     const promoPriceHtml = isPremium && !promoFreeInfo.active ? azPromoPriceHtml(item) : '';
     const promoFreeHtml = isPremium ? azPromoFreeCardHtml(item) : '';
     const promoFreeNormalPriceHtml = isPremium && promoFreeInfo.active ? azPromoFreeNormalPriceHtml(item) : '';
+    const commissionEligibleHtml = isPremium && !promoFreeInfo.active ? `<div class="az-commission-eligible-badge-1233" title="Paid software eligible for Staff / Manager referral commission">💰 <b>Commission Eligible</b></div>` : '';
     const stableLikeHtml = azStableLikeHtml287(item);
     const stableShareHtml = azStableShareHtml287(item, isPremium);
     const stablePreviewHtml = azStablePreviewHtml287(item);
@@ -5402,6 +5407,7 @@ function normalizeItem(item){
       ${mediaHtml}
       ${badgeExtra}
       <h3>${esc(item.name)}</h3>
+      ${commissionEligibleHtml}
       ${metaHtml}
       ${descHtml}
       ${moreHtml497}
@@ -17424,6 +17430,6 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
  <p data-support-name></p>
  <div class="az-package-contact"><a data-support-email href="mailto:zedan9107@gmail.com">Email: zedan9107@gmail.com</a><a data-support-whatsapp href="https://wa.me/601135600723" target="_blank" rel="noopener">WhatsApp: +60 11-3560 0723</a><a href="/?azdmSupport=1">AZOBSS Chat Support</a></div>
 </dialog>
-<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1228"></script>
+<script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1231"></script>
 </body>
 </html>
