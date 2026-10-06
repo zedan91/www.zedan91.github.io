@@ -169,7 +169,7 @@ function injectSoftwareUi(){
      submit.textContent='Submitting...';
      await setDoc(doc(db,'salesStaffApplications',fu.uid),payload,{merge:true});
      modalIntentOpen=false;closeModalUi();toast('Application submitted. AZOBSS Admin will review it.');await sync();
-   }catch(ex){console.error(ex);err.textContent=ex?.code==='permission-denied'?'Application could not be saved. Deploy the v1228 Firestore rules first.':(ex?.message||'Unable to submit application.')}
+   }catch(ex){console.error(ex);err.textContent=ex?.code==='permission-denied'?'Application could not be saved because Firestore denied the request. Deploy the latest AZOBSS v1244 Firestore rules and try again.':(ex?.message||'Unable to submit application.')}
    finally{submit.disabled=false;submit.textContent='Submit Application'}
  });
  onAuthStateChanged(auth,()=>scheduleSync(80));
