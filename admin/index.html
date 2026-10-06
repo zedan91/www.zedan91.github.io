@@ -5054,7 +5054,7 @@ async function loadOverview(forceLoad=false){
   const logins=await safeGet(query(collection(db,'loginHistory'),orderBy('createdAtMs','desc'),limit(200)),'Overview: loginHistory');
   const guests=await safeGet(query(collection(db,'guestHistory'),orderBy('createdAtMs','desc'),limit(200)),'Overview: guestHistory');
   const support=await safeGet(query(collection(db,'supportMessages'),orderBy('createdAtMs','desc'),limit(50)),'Overview: supportMessages');
-  const notif=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Overview: active notifications');
+  const notif=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)),'Overview: notifications');
   const purchases=await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(300)),'Overview: purchaseLogs');
   const premiumOverviewOrders=await azAdminLoadPremiumOrdersViaBackend(500);
   const paymentAlertOverview=await azAdminLoadPaymentAlertSummaryOnly();
@@ -5128,7 +5128,7 @@ async function loadOverview(forceLoad=false){
     if(azAdminIsActivePendingPayment(x)) pendingPurchaseCount++;
   });
   $('#statSupport').textContent=openSupportCount;
-  $('#statNotifications').textContent=notif?.size??0;
+  let azOverviewActiveNotifications=0; notif?.forEach(d=>{if(d.data()?.active===true)azOverviewActiveNotifications++;}); $('#statNotifications').textContent=String(azOverviewActiveNotifications);
   azAdminSetPaymentAlertBadge(paymentAlertOverview?.unreadCount||0);
   $('#statPurchases').textContent=pendingPurchaseCount;
   $('#statGuests').textContent=overviewTotalVisits === null ? (guests?.size??0) : overviewTotalVisits;
@@ -5215,8 +5215,7 @@ async function loadSupport(){
   azAdminApplyPager('#supportList',{key:'supportList',pageSize:8,label:'support',reset:true});
 }
 async function loadNotifications(){
-  let snap=await safeGet(query(collection(db,'notifications'),where('active','==',true),orderBy('createdAtMs','desc'),limit(50)),'Notifications: active');
-  if(!snap)snap=await safeGet(query(collection(db,'notifications'),limit(50)),'Notifications: fallback latest');
+  let snap=await safeGet(query(collection(db,'notifications'),orderBy('createdAtMs','desc'),limit(50)),'Notifications: latest');
   const rows=[];
   snap?.forEach(d=>{const x=d.data();if(x.active!==true)return;rows.push(item(esc(x.title||'Notification'),`${esc(x.body||'')} • ${esc(x.type||'system')} • ${fmtDate(x.createdAtMs||x.createdAt)}`,`<button class="btn red" data-del-notif="${d.id}">Delete</button>`))});
   $('#notificationsList').innerHTML=rows.join('')||'<div class="item">No notifications available.</div>';
@@ -7733,11 +7732,13 @@ onAuthStateChanged(auth, async user => {
     $('#adminAvatar').textContent=($('#adminName').textContent||'Z').slice(0,1).toUpperCase();
     azAdminPrepareOverviewManualMode();
     let az1192Target='salesreceipts';
-    try{const q=new URL(location.href).searchParams; if(q.get('tab')==='commissions') az1192Target='commissions';}catch(_e){}
-    if(az1192Target==='commissions'){
-      const btn=[...document.querySelectorAll('.sidebar .nav [data-tab="commissions"], [data-tab="commissions"]')][0];
-      if(btn) btn.click(); else await initSection('commissions');
-    }else await initSection('salesreceipts');
+    try{
+      const requested=String(new URL(location.href).searchParams.get('tab')||'').trim().toLowerCase();
+      const allowed=new Set(['salesreceipts','users','overview','support','servicebookings','notifications','commissions','salesstaffapps','subscriptions','membership','softwarekeys','activity','exports','systemhealth','maintenance','settings','online','staffroles','auditlogs','payments','purchases','adminalerts','frontendcheck','sitereport']);
+      if(allowed.has(requested)) az1192Target=requested;
+    }catch(_e){}
+    const targetBtn=[...document.querySelectorAll('[data-tab="'+az1192Target+'"]')][0];
+    if(targetBtn) targetBtn.click(); else await initSection(az1192Target);
   }catch(e){
     azAdminAuthResolved = true;
     clearTimeout(azAdminAuthWatchdog);

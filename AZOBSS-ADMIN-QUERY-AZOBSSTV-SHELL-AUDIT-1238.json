@@ -1,0 +1,17 @@
+{
+  "version": "1.0.1238",
+  "patch": 1238,
+  "adminQueryCollections": [
+    "supportMessages",
+    "notifications",
+    "commissionRecords",
+    "staffSoftwareSubmissions",
+    "staffCADSubmissions",
+    "foodOrderStaffAccess"
+  ],
+  "notificationQuery": "single-field createdAtMs order + client active filter",
+  "azobsstvAdminNavbar": true,
+  "azobsstvAdminSidebar": true,
+  "adminTabDeepLinks": true,
+  "firestoreRulesFile": "AZOBSS-Developer-Files/FIREBASE-RULES-AZOBSS-PRODUCTION-LOCKED-v1238-ADMIN-QUERY-FIX.txt"
+}

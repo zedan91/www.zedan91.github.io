@@ -1,5 +1,0 @@
-node_modules/
-
-# AZDM local credentials
-.env.azdm
-.azdm-secrets*

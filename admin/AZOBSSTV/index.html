@@ -1,16 +1,70 @@
 <!doctype html>
-<html lang="ms">
+<html lang="en">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1228"></script>
-
-  <script src="/assets/js/azobss-render-wake.js?v=1056"></script>
-
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><title>AZOBSSTV Admin | AZOBSS</title>
+<script src="/assets/js/azobss-long-session-stability.js?v=1238"></script>
+<script src="/assets/js/azobss-render-wake.js?v=1056"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<title>AZOBSSTV Admin | AZOBSS</title>
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
 <style>
 :root{--bg:#07101c;--panel:#0e1929;--panel2:#111f33;--line:#273952;--text:#f8fafc;--muted:#9db0ca;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#12304a55,transparent 32%),linear-gradient(180deg,#07101c,#050b14);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}.wrap{max-width:1280px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}.top h1{margin:0;font-size:28px}.top p{margin:5px 0 0;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap}.link,.btn{border:0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer;text-decoration:none;color:#fff;background:#334155}.btn.primary{background:var(--blue)}.btn.green{background:var(--green);color:#052e16}.btn.red{background:var(--red)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{background:#0e1929e8;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 16px 36px #0004}.card.full{grid-column:1/-1}h2{margin:0 0 11px;font-size:19px}.muted{color:var(--muted)}.status{padding:10px 12px;border-radius:11px;background:#08111e;border:1px solid #20334b;margin-top:10px}.ok{color:#86efac}.warn{color:#fde68a}.bad{color:#fecaca}label{display:block;margin:10px 0;color:#c7d2e5;font-size:13px;font-weight:700}input,textarea,select{width:100%;margin-top:6px;border:1px solid #31445f;background:#07111f;color:#fff;border-radius:10px;padding:10px 11px;outline:none}textarea{min-height:105px;resize:vertical}.check{display:flex;gap:9px;align-items:center}.check input{width:auto;margin:0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:10px}.stat{background:#08111e;border:1px solid #20334b;border-radius:12px;padding:11px}.stat b{display:block;font-size:22px;color:#72f0aa}.list{display:grid;gap:8px;max-height:500px;overflow:auto}.item{border:1px solid #20334b;background:#091423;border-radius:12px;padding:11px}.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.item strong{color:#e7f4ff}.meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}.pill{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;background:#334155}.pill.online{background:#14532d;color:#bbf7d0}.pill.offline{background:#3f3f46;color:#d4d4d8}.token-wrap{margin-top:10px;padding-top:10px;border-top:1px solid #20334b}.notice-compose{display:grid;grid-template-columns:220px 1fr auto;gap:8px;align-items:end}.notice-compose textarea{min-height:44px;height:44px}.empty{padding:20px;text-align:center;color:var(--muted)}@media(max-width:850px){.grid{grid-template-columns:1fr}.card.full{grid-column:auto}.top{align-items:flex-start;flex-direction:column}.notice-compose{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr 1fr}}@media(max-width:520px){.wrap{padding:10px}.stats{grid-template-columns:1fr}.actions{width:100%}.actions>*{flex:1;text-align:center}}
+
+
+:root{--az-nav-h:50px}
+body{padding-top:var(--az-nav-h);overflow-x:hidden}
+.az-admin-global-nav{position:fixed;top:0;left:0;right:0;height:50px;z-index:9000;background:#020508;border-bottom:1px solid rgba(218,165,32,.55);display:flex;align-items:center;gap:10px;padding:5px 24px;color:#fff;box-shadow:0 8px 25px #0007}
+.az-global-brand{flex:0 0 120px;height:38px;display:flex;align-items:center;justify-content:center;overflow:hidden}.az-global-brand img{width:100%;height:100%;object-fit:contain;display:block}
+.az-global-links{display:flex;align-items:center;gap:7px;min-width:0;flex:1;overflow:visible;white-space:nowrap}.az-global-links>a,.az-top-menu>button{height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;border:1px solid #26344b;border-radius:999px;background:#101a2b;color:#f8fafc;font:800 13px/1 Inter,Segoe UI,Arial,sans-serif;text-decoration:none;cursor:pointer}.az-global-links>a:hover,.az-top-menu>button:hover{border-color:#22c55e;color:#22c55e}.az-global-links .az-round-tool{width:34px;padding:0;border-radius:50%}.az-top-menu{position:relative}.az-top-drop{display:none;position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);min-width:210px;padding:7px;background:#08111f;border:1px solid #26344b;border-radius:13px;box-shadow:0 18px 45px #000a;z-index:9100}.az-top-menu:hover .az-top-drop,.az-top-menu:focus-within .az-top-drop{display:grid}.az-top-drop a{padding:10px;border-radius:9px;color:#e5eefc;text-decoration:none;font-weight:750}.az-top-drop a:hover{background:#132238;color:#5cff9d}.az-global-user{display:flex;align-items:center;gap:9px;white-space:nowrap;font-weight:800;font-size:13px}.az-global-user a{text-decoration:none;color:#fff;font-size:17px}.az-user-avatar{width:30px;height:30px;border-radius:50%;border:1px solid #0891b2;display:grid;place-items:center;background:#07111f}.az-radio-dot{color:#facc15;font-size:19px}
+.admin-shell{display:grid;grid-template-columns:212px minmax(0,1fr);min-height:calc(100vh - var(--az-nav-h))}.sidebar{position:sticky;top:var(--az-nav-h);height:calc(100vh - var(--az-nav-h));overflow:auto;background:rgba(5,10,18,.96);border-right:1px solid rgba(148,163,184,.24);padding:8px;backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:9px;font-weight:950;font-size:20px;margin:6px 5px 14px}.brand .logo{width:29px;height:29px;border-radius:9px;background:linear-gradient(135deg,#0ea5e9,#22c55e);display:grid;place-items:center}.nav{display:grid;gap:2px}.nav-group{margin:11px 7px 4px;color:#7dd3fc;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.12em}.home-link{border:1px solid transparent;background:transparent;color:#dbeafe;text-align:left;border-radius:11px;padding:9px 10px;font-weight:850;cursor:pointer;font-size:13px;display:flex;gap:8px;align-items:center;text-decoration:none}.home-link:hover{background:rgba(30,41,59,.75);border-color:rgba(148,163,184,.24)}.home-link.active{background:linear-gradient(135deg,rgba(34,197,94,.24),rgba(59,130,246,.16));border-color:rgba(34,197,94,.55);color:#fff}.az-tv-main{min-width:0;padding:0}.az-tv-main .wrap{max-width:none;margin:0;padding:20px 20px 36px}.az-tv-main .top{margin-top:0}.az-tv-main .top h1{font-size:28px}
+@media(max-width:1100px){.az-global-user span#azTvAdminName{display:none}.az-global-links{overflow-x:auto;overflow-y:hidden}.az-top-drop{position:fixed;top:48px;transform:none;left:auto}}
+@media(max-width:850px){:root{--az-nav-h:92px}.az-admin-global-nav{height:92px;flex-wrap:wrap;padding:5px 10px}.az-global-brand{flex-basis:126px}.az-global-links{order:3;flex-basis:100%;overflow-x:auto;overflow-y:hidden}.az-global-user{margin-left:auto}.admin-shell{grid-template-columns:1fr}.sidebar{position:relative;top:0;height:auto}.sidebar .nav{grid-template-columns:repeat(2,minmax(0,1fr))}.nav-group{grid-column:1/-1}.az-tv-main .wrap{padding:14px}}
+@media(max-width:560px){.sidebar .nav{grid-template-columns:1fr}.az-global-user a{display:none}}
 </style>
 </head>
 <body>
+<header class="az-admin-global-nav" aria-label="AZOBSS navigation">
+  <a class="az-global-brand" href="/"><img src="/images/logo-azobss.jpg" alt="AZOBSS"></a>
+  <nav class="az-global-links" aria-label="AZOBSS quick navigation">
+    <a class="az-round-tool" href="/admin/" title="Admin Dashboard">🛠️</a>
+    <a href="/PA-BM/">PA / BM</a>
+    <a href="/Software-Tools/">Software</a>
+    <a href="/CAD-Tools-&-Resources/">CAD Tools</a>
+    <div class="az-top-menu"><button type="button">Shop ▾</button><div class="az-top-drop"><a href="/AZOBSS-Market/">AZOBSS Market</a><a href="/affiliate-shop/">Affiliate Shop</a></div></div>
+    <div class="az-top-menu"><button type="button">PC &amp; IT Services ▾</button><div class="az-top-drop"><a href="/PC-IT-Services/">All PC &amp; IT Services</a><a href="/PC-Build/">PC Build &amp; Hardware</a><a href="/Tempah-Servis-IT/">Servis PC &amp; Laptop</a><a href="/Troubleshoot-PC-Online/">Troubleshoot PC Online</a></div></div>
+    <a href="/lucky-draw/">Lucky Draw</a>
+    <div class="az-top-menu"><button type="button">••• More ▾</button><div class="az-top-drop"><a href="/AZOBSSTV/">AZOBSSTV</a><a href="/tools/">Mini Web Tools</a><a href="/Web-Pilihan/">Web Picks</a><a href="/Sound-Effects/">Sound Effects</a><a href="/Tempah-Website/">Bina Website</a></div></div>
+  </nav>
+  <div class="az-global-user"><span class="az-radio-dot">◉</span><span class="az-user-avatar" id="azTvAdminAvatar">A</span><span id="azTvAdminName">Admin</span><a href="/Bookmarks/" title="Bookmarks">🔖</a><a href="/admin/?tab=notifications" title="Notifications">🔔</a><a href="/admin/?tab=support" title="Support">💬</a></div>
+</header>
+<div class="admin-shell">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
+  <nav class="nav">
+    <div class="nav-group">Main</div>
+    <a class="home-link" href="/admin/?tab=salesreceipts">🧾 Sales &amp; Receipts</a>
+    <a class="home-link" href="/admin/?tab=users">👥 Users</a>
+    <a class="home-link" href="/admin/?tab=overview">📊 Dashboard</a>
+    <div class="nav-group">Support &amp; Sales</div>
+    <a class="home-link" href="/admin/?tab=support">💬 Support Inbox</a>
+    <a class="home-link" href="/admin/?tab=servicebookings">🛠️ Service Bookings</a>
+    <a class="home-link" href="/admin/?tab=notifications">🔔 Notifications</a>
+    <a class="home-link" href="/admin/?tab=commissions">💸 Commission Manager</a>
+    <a class="home-link" href="/admin/?tab=salesstaffapps">🤝 Sales Staff Applications</a>
+    <a class="home-link" href="/admin/?tab=subscriptions">🔑 Subscription Codes</a>
+    <a class="home-link" href="/admin/?tab=membership">⭐ Membership</a>
+    <a class="home-link" href="/admin/?tab=softwarekeys">🗝️ Software Key</a>
+    <a class="home-link active" href="/admin/AZOBSSTV/">📺 AZOBSSTV</a>
+    <div class="nav-group">System</div>
+    <a class="home-link" href="/admin/?tab=activity">📚 Logs &amp; Activity</a>
+    <a class="home-link" href="/admin/?tab=exports">📦 Backup / Export</a>
+    <a class="home-link" href="/admin/?tab=systemhealth">🩺 System Health</a>
+    <a class="home-link" href="/admin/?tab=maintenance">🧰 Maintenance</a>
+    <a class="home-link" href="/admin/?tab=settings">⚙️ Settings</a>
+  </nav>
+</aside>
+<main class="az-tv-main">
 <div class="wrap">
   <div class="top"><div><h1>📺 AZOBSSTV Admin</h1><p>Remote Config • Notifications • Active Devices • Heartbeat</p></div><div class="actions"><a class="link" href="/admin/">← Admin Dashboard</a><a class="link" href="/AZOBSSTV/" target="_blank" rel="noopener">Open AZOBSSTV</a><button class="btn primary" id="reloadBtn">Refresh</button></div></div>
   <div class="grid">
@@ -22,6 +76,8 @@
     <section class="card"><h2>Notifications</h2><div id="notifications" class="list"><div class="empty">Belum dimuatkan.</div></div></section>
     <section class="card full"><h2>Recent Heartbeats</h2><div id="heartbeats" class="list"><div class="empty">Belum dimuatkan.</div></div></section>
   </div>
+</div>
+</main>
 </div>
 <script type="module">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
@@ -41,6 +97,6 @@ async function loadAll(){try{setState('Loading…');const [c,d,h,n]=await Promis
 $('#reloadBtn').onclick=loadAll;$('#saveBtn').onclick=async()=>{try{const body={allow_all_domains:$('#all').checked,allowed_domains:$('#domains').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean),free_playlist_url:$('#playlist').value.trim(),epg_url:$('#epg').value.trim(),notification_url:$('#notify').value.trim(),device_ping_url:$('#ping').value.trim(),website_url:$('#website').value.trim(),telegram_url:$('#telegram').value.trim(),subscribe_url:$('#subscribe').value.trim()};await req('/admin/config',{method:'POST',body:JSON.stringify(body)});setState('Config saved');await loadAll()}catch(e){setState(e.message,true)}};
 $('#sendBtn').onclick=async()=>{try{const msg=$('#nmsg').value.trim();if(!msg)return;await req('/admin/notifications',{method:'POST',body:JSON.stringify({title:$('#ntitle').value.trim()||'AZOBSSTV',message:msg})});$('#nmsg').value='';setState('Notification sent');await loadAll()}catch(e){setState(e.message,true)}};
 $('#token').addEventListener('change',loadAll);
-onAuthStateChanged(auth,u=>{currentUser=u||null;if(u){$('#authState').textContent='Firebase session: '+(u.email||u.uid);$('#authState').className='status ok';loadAll()}else{$('#authState').innerHTML='Tiada Firebase session. <a href="/admin/" style="color:#7dd3fc">Login melalui Admin Dashboard</a> atau gunakan fallback token.';$('#authState').className='status warn'}});
+onAuthStateChanged(auth,u=>{currentUser=u||null;if(u){$('#authState').textContent='Firebase session: '+(u.email||u.uid);$('#authState').className='status ok';const nm=(u.email||u.displayName||'Admin').split('@')[0];const nameEl=$('#azTvAdminName');const avEl=$('#azTvAdminAvatar');if(nameEl)nameEl.textContent=nm;if(avEl)avEl.textContent=(nm||'A').slice(0,1).toUpperCase();loadAll()}else{$('#authState').innerHTML='Tiada Firebase session. <a href="/admin/" style="color:#7dd3fc">Login melalui Admin Dashboard</a> atau gunakan fallback token.';$('#authState').className='status warn'}});
 </script>
 </body></html>
