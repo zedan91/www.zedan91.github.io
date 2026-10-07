@@ -128,10 +128,6 @@ async function postPaBmCheckoutWithAuthRetry(payload) {
   });
   let response = await send(token);
   if (response.status !== 401) return response;
-
-  // v1256: a long-lived/incognito tab can keep a visible saved AZOBSS profile while
-  // Firebase rotates/refreshes the ID token underneath it. Refresh once and retry
-  // before telling the user to sign in again.
   token = await getFreshCheckoutAuthToken();
   if (!token) return response;
   return send(token);
@@ -150,29 +146,18 @@ function savedUser() {
   }
 }
 
-let stableCartOwnerKey = '';
 function userKey() {
-  if (stableCartOwnerKey) return stableCartOwnerKey;
   const firebaseUser = auth && auth.currentUser;
   const localUser = savedUser() || {};
-  // v1257: getSavedUser() normalises username/usernameKey. Use that human
-  // account key first so the cart owner cannot switch when Firebase hydrates
-  // or when a UID later appears in the saved profile.
-  const resolved = String(localUser.usernameKey || localUser.username || localUser.name || localUser.uid || (firebaseUser && firebaseUser.uid) || '').trim();
-  if (resolved) stableCartOwnerKey = resolved;
-  return resolved;
+  // v1253: keep the cart owner key stable while Firebase Auth is hydrating.
+  // Previously firebase uid was preferred first. A click made before auth.currentUser
+  // became available could write to the username/local key, then the next render
+  // switched to the uid key and the newly-added item appeared to vanish.
+  return String(localUser.uid || localUser.usernameKey || localUser.username || (firebaseUser && firebaseUser.uid) || '').trim();
 }
 
 function cartKey() {
   return CART_PREFIX + (userKey() || 'guest');
-}
-
-function possibleLegacyCartKeys() {
-  const firebaseUser = auth && auth.currentUser;
-  const localUser = savedUser() || {};
-  const keys = [localUser.uid, localUser.usernameKey, localUser.username, localUser.name, firebaseUser && firebaseUser.uid]
-    .map((value) => String(value || '').trim()).filter(Boolean);
-  return Array.from(new Set(keys.map((key) => CART_PREFIX + key))).filter((key) => key !== cartKey());
 }
 
 function openLogin() {
@@ -184,21 +169,18 @@ function openLogin() {
   if (button) button.click();
 }
 
-function hasActiveCartLogin() {
-  return !!((auth && auth.currentUser) || savedUser() || (typeof window.hasSavedLogin === 'function' && window.hasSavedLogin()));
-}
-
 function requireLogin() {
-  // Local cart actions accept the saved AZOBSS session while Firebase restores.
-  // Checkout remains strict and requires a fresh Firebase token.
-  if (hasActiveCartLogin()) return true;
+  // v1253: adding to the local cart must not fail just because Firebase Auth has
+  // not finished restoring its session yet. AZOBSS already has a saved signed-in
+  // profile at this point; checkout still performs the stricter Firebase token check.
+  if ((auth && auth.currentUser) || savedUser() || (typeof window.hasSavedLogin === 'function' && window.hasSavedLogin())) return true;
   openLogin();
   return false;
 }
 
 function guardCartAction(event) {
   const target = event.target.closest('#downloadTifButton, [data-benchmark-record], [data-pabm-product-add]');
-  if (!target || hasActiveCartLogin()) return;
+  if (!target || (auth && auth.currentUser) || savedUser() || (typeof window.hasSavedLogin === 'function' && window.hasSavedLogin())) return;
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
@@ -305,23 +287,9 @@ function normalizeItem(payload) {
 
 function readCart() {
   try {
-    const primaryKey = cartKey();
-    let rows = JSON.parse(localStorage.getItem(primaryKey) || '[]');
-    if (!Array.isArray(rows)) rows = [];
-    // v1257: if an older build wrote the cart under a Firebase UID while the
-    // current build uses the stable username key, recover that cart once.
-    if (!rows.length) {
-      for (const legacyKey of possibleLegacyCartKeys()) {
-        let legacy = [];
-        try { legacy = JSON.parse(localStorage.getItem(legacyKey) || '[]'); } catch (_) { legacy = []; }
-        if (Array.isArray(legacy) && legacy.length) {
-          rows = legacy;
-          try { localStorage.setItem(primaryKey, JSON.stringify(legacy)); } catch (_) {}
-          break;
-        }
-      }
-    }
+    const rows = JSON.parse(localStorage.getItem(cartKey()) || '[]');
     const now = Date.now();
+    if (!Array.isArray(rows)) return [];
     let migrated = false;
     const cleanRows = rows
       .filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS)
@@ -567,32 +535,6 @@ async function removePendingPurchaseItems(payload) {
   return remover(payload);
 }
 
-function removeCartItemImmediately(event) {
-  const button = event.target && event.target.closest ? event.target.closest('[data-pabm-remove]') : null;
-  if (!button) return;
-  const items = readCart();
-  const index = Number(button.dataset.pabmRemove);
-  if (!Number.isInteger(index) || index < 0 || index >= items.length) return;
-  const removedItem = items[index];
-
-  // Own the X button at capture phase. This keeps local cart removal independent
-  // from Firestore/payment-history cleanup and from any later bubbling handler.
-  event.preventDefault();
-  event.stopPropagation();
-  event.stopImmediatePropagation();
-  items.splice(index, 1);
-  writeCart(items);
-  setCartSyncStatus('Item telah dibuang daripada Troli Anda.');
-
-  // Pending-record cleanup is best-effort only. v1250+ no longer creates unpaid
-  // purchase-history rows, so a cleanup failure must never put the cart item back.
-  Promise.resolve(removePendingPurchaseItems(items.length ? removedItem : { all: true }))
-    .then((removedCount) => {
-      if (removedCount) setCartSyncStatus('Item dan rekod pembayaran belum selesai telah dibuang.');
-    })
-    .catch(() => {});
-}
-
 async function reconcileEmptyStoredCart() {
   if (!hasStoredCartSnapshot() || readCart().length || !(auth && auth.currentUser)) return 0;
   const remover = await waitForPendingCartRemover();
@@ -625,6 +567,22 @@ function cartTotal(items = readCart()) {
   return items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 }
 
+function removeCartIndexDirect(index) {
+  const items = readCart();
+  const i = Number(index);
+  if (!Number.isInteger(i) || i < 0 || i >= items.length) return false;
+  const removedItem = items[i];
+  items.splice(i, 1);
+  writeCart(items);
+  setCartSyncStatus('Item telah dibuang daripada Troli Anda.');
+  Promise.resolve(removePendingPurchaseItems(items.length ? removedItem : { all: true }))
+    .then((removedCount) => {
+      if (removedCount) setCartSyncStatus('Item dan rekod pembayaran belum selesai telah dibuang.');
+    })
+    .catch(() => {});
+  return true;
+}
+
 function renderCart() {
   const items = readCart();
   const list = document.getElementById('pabmStoreCartItems');
@@ -649,6 +607,14 @@ function renderCart() {
           <button class="pabm-cart-remove" type="button" data-pabm-remove="${index}" aria-label="Buang ${escapeHtml(item.productType)} ${escapeHtml(item.itemCode)}" title="Buang">&times;</button>
         </div>
       </div>`).join('') : '<div class="pabm-cart-empty">Troli anda kosong.</div>';
+    // Direct per-button binding: no document-wide capture/bubble dependency.
+    list.querySelectorAll('[data-pabm-remove]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        removeCartIndexDirect(button.dataset.pabmRemove);
+      });
+    });
   }
 
   if (paymentButton) {
@@ -1230,17 +1196,18 @@ function publishPaBmStoreCartApi(){
     clearPaymentBackup: clearPaymentCartBackup,
     removeRecord: removeRecordFromStoreCart
   };
-  // Dedicated cart API. Current PA/BM callers use this instead of the old
-  // collision-prone azobssRecordPurchase global.
-  window.azobssAddToPaBmCart = addToStoreCart;
-  window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ = addToStoreCart;
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1257 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1254 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
 
 async function init() {
+  // v1258: hard singleton. Even if an old cached script tries to import this
+  // file again with a different query string, only one storefront instance may
+  // own cart globals/listeners on /PA-BM/.
+  if (window.__AZOBSS_PABM_STOREFRONT_ACTIVE__) return;
+  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1258';
   // v1249: the storefront UI and Add to Cart must never wait for the async
   // profile price-adjustment lookup. Use the cached adjustment immediately,
   // bind the current state-button picker/cart handlers now, then refresh prices
@@ -1263,14 +1230,10 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
-  // Keep the old name only for backwards compatibility. New callers prefer
-  // azobssAddToPaBmCart so purchase-history scripts cannot hijack Add to Cart.
+  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1258';
   window.azobssRecordPurchase = addToStoreCart;
-  window.azobssAddToPaBmCart = addToStoreCart;
-  window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();
-  document.addEventListener('click', removeCartItemImmediately, true);
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {

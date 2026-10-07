@@ -5026,7 +5026,7 @@ function bindAzobssPurchaseRecordsUI(){
 }
 if(!azobssPurchaseUiOwnedByGlobalAuth()){
   window.azobssCreatePurchaseLog = recordAzobssPurchase;
-  if(!(/^\/PA-BM(?:\/|$)/i.test(location.pathname)) && (!document.body || !document.body.classList.contains('pa-bm-page'))){
+  if(!document.body || !document.body.classList.contains('pa-bm-page')){
     window.azobssRecordPurchase = recordAzobssPurchase;
   }
   window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;

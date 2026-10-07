@@ -6174,10 +6174,9 @@ async function azobssWaitForPaBmStoreCart(timeoutMs){
   // v1249: the purchase list can become interactive before the PA/BM storefront
   // finishes its async startup. Wait for the cart API instead of telling the user
   // to reload the whole page.
-  try{
-    await import('/assets/js/azobss-pabm-storefront.js?v=1257');
-  }catch(_){ }
-
+  // v1258: /PA-BM/index.html is the only owner that loads the storefront module.
+  // Do not dynamic-import a second query-version copy here; just wait for the
+  // already declared storefront to publish its API.
   const afterImport = azobssReadyPaBmStoreCart();
   if(afterImport) return afterImport;
 
@@ -6833,7 +6832,7 @@ function bindAzobssPurchaseRecordsUI(){
 // v1251: on /PA-BM/ this global name belongs exclusively to the cart.
 // The old purchase-log writer must never overwrite Add to Cart.
 window.azobssCreatePurchaseLog = recordAzobssPurchase;
-if(!(/^\/PA-BM(?:\/|$)/i.test(location.pathname)) && (!document.body || !document.body.classList.contains('pa-bm-page'))){
+if(!(window.__AZOBSS_PABM_PAGE__ === true || /^\/PA-BM(?:\/|$)/i.test(location.pathname) || (document.body && document.body.classList.contains('pa-bm-page')))){
   window.azobssRecordPurchase = recordAzobssPurchase;
 }
 window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;

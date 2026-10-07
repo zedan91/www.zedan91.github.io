@@ -240,12 +240,11 @@
   }
 
   async function addSheetRecord(record, direct) {
-    const cartAdder = typeof window.azobssWaitForPaBmCartAdder === 'function' ? await window.azobssWaitForPaBmCartAdder(8000) : (window.azobssAddToPaBmCart || window.azobssRecordPurchase);
-    if (typeof cartAdder !== 'function') throw new Error('Troli belum sedia. Sila cuba sekali lagi.');
+    if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
     const payload = record?.productType === 'SYIT_PIAWAI'
       ? record
       : JSON.parse(decodeURIComponent(encodeRecord(record)));
-    const saved = await cartAdder(payload);
+    const saved = await window.azobssRecordPurchase(payload);
     setQuickStatus(saved && saved.__azobssAlreadyInCart
       ? 'Syit Piawai ini sudah ada dalam troli anda.'
       : (direct
