@@ -976,6 +976,112 @@ function azIdentityTrustedForBackendAdmin(identity = {}) {
   return false;
 }
 
+
+const AZOBSS_FIREBASE_AUTH_PROJECT_ID = String(process.env.AZOBSS_FIREBASE_AUTH_PROJECT_ID || "azobss").trim();
+let azFirebaseSecureTokenCertCache = { certs: null, expiresAt: 0, fetchedAt: 0 };
+
+function azFirebaseJwtJson(segment) {
+  try {
+    const raw = String(segment || "").replace(/-/g, "+").replace(/_/g, "/");
+    const padded = raw + "=".repeat((4 - (raw.length % 4)) % 4);
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch (_) {
+    return null;
+  }
+}
+function azFirebaseJwtSignature(segment) {
+  try {
+    const raw = String(segment || "").replace(/-/g, "+").replace(/_/g, "/");
+    const padded = raw + "=".repeat((4 - (raw.length % 4)) % 4);
+    return Buffer.from(padded, "base64");
+  } catch (_) {
+    return null;
+  }
+}
+function azFirebaseCertMaxAge(cacheControl) {
+  const match = String(cacheControl || "").match(/(?:^|,)\s*max-age=(\d+)/i);
+  const seconds = match ? Number(match[1]) : 3600;
+  return Math.max(300, Math.min(Number.isFinite(seconds) ? seconds : 3600, 86400)) * 1000;
+}
+async function azFirebaseSecureTokenCerts() {
+  const now = Date.now();
+  if (azFirebaseSecureTokenCertCache.certs && now < azFirebaseSecureTokenCertCache.expiresAt) {
+    return azFirebaseSecureTokenCertCache.certs;
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+  try {
+    const response = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal: controller.signal
+    });
+    const certs = await response.json().catch(() => null);
+    if (!response.ok || !certs || typeof certs !== "object" || Array.isArray(certs)) {
+      throw new Error(`Google Secure Token cert fetch failed (${response.status || 0})`);
+    }
+    azFirebaseSecureTokenCertCache = {
+      certs,
+      fetchedAt: now,
+      expiresAt: now + azFirebaseCertMaxAge(response.headers && response.headers.get ? response.headers.get("cache-control") : "")
+    };
+    return certs;
+  } catch (err) {
+    // A previously-fetched Google certificate remains safe to use for a short grace
+    // period if Google is temporarily unreachable. Signature + aud/iss/exp are still
+    // verified below; this never trusts data from the browser by itself.
+    const cached = azFirebaseSecureTokenCertCache.certs;
+    const age = now - Number(azFirebaseSecureTokenCertCache.fetchedAt || 0);
+    if (cached && age >= 0 && age < 6 * 60 * 60 * 1000) return cached;
+    console.warn("Firebase Secure Token certificate fetch failed:", err && (err.message || err));
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function azVerifyFirebaseIdTokenViaGoogleCerts(token) {
+  try {
+    const parts = String(token || "").split(".");
+    if (parts.length !== 3) return null;
+    const header = azFirebaseJwtJson(parts[0]);
+    const payload = azFirebaseJwtJson(parts[1]);
+    const signature = azFirebaseJwtSignature(parts[2]);
+    if (!header || !payload || !signature) return null;
+    if (String(header.alg || "") !== "RS256" || !String(header.kid || "")) return null;
+
+    const projectId = AZOBSS_FIREBASE_AUTH_PROJECT_ID;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const skew = 300;
+    const subject = String(payload.sub || "").trim();
+    if (!projectId || String(payload.aud || "") !== projectId) return null;
+    if (String(payload.iss || "") !== `https://securetoken.google.com/${projectId}`) return null;
+    if (!subject || subject.length > 128) return null;
+    if (!Number.isFinite(Number(payload.exp)) || Number(payload.exp) < nowSec - skew) return null;
+    if (!Number.isFinite(Number(payload.iat)) || Number(payload.iat) > nowSec + skew) return null;
+    if (payload.auth_time != null && Number(payload.auth_time) > nowSec + skew) return null;
+
+    const certs = await azFirebaseSecureTokenCerts();
+    const cert = certs && certs[String(header.kid || "")];
+    if (!cert) return null;
+    const verifier = crypto.createVerify("RSA-SHA256");
+    verifier.update(`${parts[0]}.${parts[1]}`);
+    verifier.end();
+    if (!verifier.verify(cert, signature)) return null;
+
+    return {
+      uid: subject,
+      email: String(payload.email || "").trim().toLowerCase(),
+      emailVerified: payload.email_verified === true,
+      name: String(payload.name || ""),
+      authTime: Number(payload.auth_time || 0),
+      verifier: "google-securetoken-certs"
+    };
+  } catch (err) {
+    console.warn("Firebase Secure Token certificate verification failed:", err && (err.message || err));
+    return null;
+  }
+}
+
 const AZOBSS_FIREBASE_WEB_API_KEY = String(process.env.FIREBASE_WEB_API_KEY || process.env.AZOBSS_FIREBASE_WEB_API_KEY || "AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8").trim();
 async function azVerifyFirebaseIdTokenViaIdentityToolkit(token) {
   if (!token || !AZOBSS_FIREBASE_WEB_API_KEY) return null;
@@ -1013,6 +1119,10 @@ async function azCommissionIdentityFromRequest(req) {
       } catch (err) {
         console.warn("Commission Firebase Admin token verify failed; trying secure Identity Toolkit fallback:", err && (err.message || err));
       }
+    }
+    if (!decoded) {
+      const verifiedByCert = await azVerifyFirebaseIdTokenViaGoogleCerts(token);
+      if (verifiedByCert) decoded = { uid: verifiedByCert.uid, email: verifiedByCert.email, email_verified: verifiedByCert.emailVerified };
     }
     if (!decoded) {
       const verified = await azVerifyFirebaseIdTokenViaIdentityToolkit(token);
