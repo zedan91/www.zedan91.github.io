@@ -5420,7 +5420,7 @@ function purchaseDetailRowHtml(r){
       actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else{
-    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-recart-btn" title="Masukkan semula Pending Payment ke Troli Anda" aria-label="Re-cart Pending Payment" onclick="window.azobssRecartPurchaseRecord && window.azobssRecartPurchaseRecord('${azobssPurchaseDeletePayload(r)}', this)">↩ Re-cart</button><button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
+    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-recart-btn" title="Tambah semula Pending Payment ke Troli Anda" aria-label="Tambah semula ke Troli Anda" onclick="window.azobssRecartPurchaseRecord && window.azobssRecartPurchaseRecord('${azobssPurchaseDeletePayload(r)}', this)">↩ Tambah Semula</button><button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
   }
   const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
   return `
@@ -6153,16 +6153,60 @@ async function azobssPendingCartBackendAction(action, target){
   return data;
 }
 
+function azobssReadyPaBmStoreCart(){
+  const api = window.azobssPaBmStoreCart;
+  return api && typeof api.restorePendingOrder === 'function' ? api : null;
+}
+
+async function azobssWaitForPaBmStoreCart(timeoutMs){
+  const first = azobssReadyPaBmStoreCart();
+  if(first) return first;
+  const timeout = Math.max(3000, Number(timeoutMs || 15000));
+
+  // v1248: the purchase list can become interactive before the PA/BM storefront
+  // finishes its async startup. Wait for the cart API instead of telling the user
+  // to reload the whole page.
+  try{
+    await import('/assets/js/azobss-pabm-storefront.js?v=1248');
+  }catch(_){ }
+
+  const afterImport = azobssReadyPaBmStoreCart();
+  if(afterImport) return afterImport;
+
+  return await new Promise((resolve) => {
+    let settled = false;
+    let timer = 0;
+    let poller = 0;
+    const finish = (api) => {
+      if(settled) return;
+      settled = true;
+      if(timer) window.clearTimeout(timer);
+      if(poller) window.clearInterval(poller);
+      window.removeEventListener('azobss:pabm-store-cart-ready', onReady);
+      resolve(api || null);
+    };
+    const check = () => {
+      const api = azobssReadyPaBmStoreCart();
+      if(api) finish(api);
+    };
+    const onReady = () => check();
+    window.addEventListener('azobss:pabm-store-cart-ready', onReady);
+    poller = window.setInterval(check, 100);
+    timer = window.setTimeout(() => finish(azobssReadyPaBmStoreCart()), timeout);
+    check();
+  });
+}
+
 async function azobssRecartPurchaseRecord(rawPayload, button){
   let target = null;
   try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
   if(!target) return false;
   const oldText = button ? button.textContent : '';
   try{
-    if(button){ button.disabled = true; button.textContent = '...'; }
+    if(button){ button.disabled = true; button.textContent = 'Memuat...'; }
     const data = await azobssPendingCartBackendAction('resume', target);
-    const cartApi = window.azobssPaBmStoreCart;
-    if(!cartApi || typeof cartApi.restorePendingOrder !== 'function') throw new Error('Sistem troli belum tersedia. Muat semula halaman dan cuba lagi.');
+    const cartApi = await azobssWaitForPaBmStoreCart(15000);
+    if(!cartApi) throw new Error('Troli tidak dapat dimuatkan. Sila cuba tekan Tambah Semula sekali lagi.');
     const restored = await cartApi.restorePendingOrder(data.order || {});
     const status = document.getElementById('paBmToyyibStatus');
     if(status) status.textContent = `Pending Payment dipulihkan ke troli (${restored.length} item). Tekan Teruskan Pembayaran untuk sambung bil yang sama.`;
@@ -6172,7 +6216,7 @@ async function azobssRecartPurchaseRecord(rawPayload, button){
     alert(error.message || 'Pending Payment tidak dapat dimasukkan semula ke troli.');
     return false;
   }finally{
-    if(button){ button.disabled = false; button.textContent = oldText || '↩ Re-cart'; }
+    if(button){ button.disabled = false; button.textContent = oldText || '↩ Tambah Semula'; }
   }
 }
 window.azobssRecartPurchaseRecord = azobssRecartPurchaseRecord;

@@ -1049,14 +1049,34 @@ function watchPaymentTotal() {
   totalObserver.observe(total, { childList: true, characterData: true, subtree: true });
 }
 
+function publishPaBmStoreCartApi(){
+  window.azobssPaBmStoreCart = {
+    read: readCart,
+    add: addToStoreCart,
+    clear: () => writeCart([]),
+    render: renderCart,
+    restorePendingOrder: restorePendingOrderToCart,
+    removeRecord: removeRecordFromStoreCart
+  };
+  try{
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1248 } }));
+  }catch(_){ }
+  return window.azobssPaBmStoreCart;
+}
+
 async function init() {
+  // v1248: publish the cart API before waiting for profile price adjustment.
+  // This removes the race where Pending Payment is visible/clickable but the cart
+  // API is still hidden behind the asynchronous price-adjustment startup.
+  const apps = getApps();
+  auth = apps.length ? getAuth(apps[0]) : null;
+  publishPaBmStoreCartApi();
+
   const adjustment = await waitForPriceAdjustment().catch(() => ({percentByCategory:{}}));
   priceAdjustmentPercents = {
     paBm: Number(adjustment?.percentByCategory?.paBm || 0),
     lotKadaster: Number(adjustment?.percentByCategory?.lotKadaster ?? adjustment?.percentByCategory?.paBm ?? 0)
   };
-  const apps = getApps();
-  auth = apps.length ? getAuth(apps[0]) : null;
   document.body.classList.add('pabm-store-ready');
   watchTableCartButtons();
   hydrateStateSelects();
@@ -1071,14 +1091,7 @@ async function init() {
   bindAdminTestPaymentButton();
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
-  window.azobssPaBmStoreCart = {
-    read: readCart,
-    add: addToStoreCart,
-    clear: () => writeCart([]),
-    render: renderCart,
-    restorePendingOrder: restorePendingOrderToCart,
-    removeRecord: removeRecordFromStoreCart
-  };
+  publishPaBmStoreCartApi();
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {

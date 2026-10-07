@@ -1,0 +1,15 @@
+{
+  "version": 1248,
+  "name": "Pending Payment Cart Ready Race Fix",
+  "symptom": "Tambah Semula could show Sistem troli belum tersedia because purchase UI became interactive before storefront async init exposed the cart API.",
+  "rootCause": "azobss-pabm-storefront init awaited user price adjustment before assigning window.azobssPaBmStoreCart.",
+  "fixes": [
+    "publish cart API before price-adjustment await",
+    "dispatch azobss:pabm-store-cart-ready event",
+    "wait/poll up to 15 seconds from global-auth",
+    "dynamic import storefront v1248 as startup fallback",
+    "disable recart button while restoring"
+  ],
+  "backendChanged": false,
+  "checkoutResumeSemanticsChanged": false
+}
