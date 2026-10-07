@@ -536,12 +536,21 @@ async function removePendingPurchaseItems(payload) {
 }
 
 async function reconcileEmptyStoredCart() {
-  if (!hasStoredCartSnapshot() || readCart().length || !(auth && auth.currentUser)) return 0;
-  const remover = await waitForPendingCartRemover();
-  if (!remover) return 0;
-  const count = await remover({ all: true });
-  if (count) setCartSyncStatus(`${count} rekod Pending Payment telah dibuang.`);
-  return count;
+  // v1263: an empty browser cart is NOT proof that the customer intentionally
+  // discarded a pending payment. The tab/browser may have been closed while on
+  // ToyyibPay, localStorage may have been cleared, or the cart owner key may have
+  // changed during auth restore. Never auto-delete server pending orders here.
+  if (readCart().length) return readCart().length;
+
+  const restoredLocal = restorePaymentCartBackup();
+  if (restoredLocal.length) return restoredLocal.length;
+
+  // Ask the authenticated server recovery path to restore the latest unresolved
+  // PA/BM order. global-auth v1263 writes the returned order back into this cart.
+  if (auth && auth.currentUser && typeof window.azobssRecoverPaBmPaymentNow === 'function') {
+    try { await window.azobssRecoverPaBmPaymentNow(); } catch (_) {}
+  }
+  return readCart().length;
 }
 
 function formatMoney(value) {
@@ -1146,7 +1155,7 @@ function bindPaymentButton() {
   const clone = current.cloneNode(true);
   current.replaceWith(clone);
   paymentButton = clone;
-  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1262';
+  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1263';
   paymentButton.addEventListener('click', proceedToPayment);
 }
 
@@ -1198,7 +1207,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1262 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1263 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1208,7 +1217,7 @@ async function init() {
   // file again with a different query string, only one storefront instance may
   // own cart globals/listeners on /PA-BM/.
   if (window.__AZOBSS_PABM_STOREFRONT_ACTIVE__) return;
-  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1262';
+  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1263';
   // v1249: the storefront UI and Add to Cart must never wait for the async
   // profile price-adjustment lookup. Use the cached adjustment immediately,
   // bind the current state-button picker/cart handlers now, then refresh prices
@@ -1216,6 +1225,11 @@ async function init() {
   const apps = getApps();
   auth = apps.length ? getAuth(apps[0]) : null;
   publishPaBmStoreCartApi();
+
+  // v1263: the checkout backup is durable localStorage specifically so a cart
+  // survives leaving AZOBSS for ToyyibPay. Restore it on every fresh page load,
+  // not only after a ToyyibPay return event.
+  restorePaymentCartBackup();
 
   // Restore the current PA/BM state-picker UI immediately. Without this class
   // the raw legacy <select> remains visible until Firestore/profile lookup ends.
@@ -1231,7 +1245,7 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
-  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1262';
+  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1263';
   window.azobssAddToPaBmCart = addToStoreCart;
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
@@ -1261,6 +1275,15 @@ async function init() {
   window.addEventListener('azobss:pabm-payment-paid', () => {
     clearPaymentCartBackup();
   });
+  window.addEventListener('azobss:pabm-pending-order-recovered', async (event) => {
+    if (readCart().length) return;
+    const order = event && event.detail && event.detail.order ? event.detail.order : null;
+    if (!order || !Array.isArray(order.items) || !order.items.length || !order.paymentUrl) return;
+    try {
+      const restored = await restorePendingOrderToCart(order);
+      if (restored.length) setCartSyncStatus(`Pembayaran belum selesai. ${restored.length} item dipulihkan semula ke Troli Anda.`);
+    } catch (_) {}
+  });
   window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercents = { paBm:Number(event.detail?.percentByCategory?.paBm || 0), lotKadaster:Number(event.detail?.percentByCategory?.lotKadaster ?? event.detail?.percentByCategory?.paBm ?? 0) }; const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
@@ -1280,6 +1303,7 @@ async function init() {
   }).catch(() => {});
 
   if (auth) onAuthStateChanged(auth, (user) => {
+    if (user) restorePaymentCartBackup();
     renderCart();
     if (user) setTimeout(() => reconcileEmptyStoredCart().catch(() => {}), 500);
   });

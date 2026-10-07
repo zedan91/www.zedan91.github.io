@@ -5877,6 +5877,23 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
   }
 
   if (latestPending) {
+    const pendingItems = (Array.isArray(latestPending.paBmItems) ? latestPending.paBmItems : []).slice(0, 50).map(item => ({
+      productType:cleanPremiumText(item && item.productType || "PA",20).toUpperCase(),
+      itemCode:cleanPremiumText(item && (item.itemCode || item.stationNo || item.productId) || "",100),
+      negeri:cleanPremiumText(item && item.negeri || "",100).toUpperCase(),
+      baseAmount:Number(item && item.baseAmount || 0),
+      amount:Number(item && item.amount || 0),
+      priceAdjustmentCategory:cleanPremiumText(item && item.priceAdjustmentCategory || "",40),
+      priceAdjustmentPercent:Number(item && item.priceAdjustmentPercent || 0),
+      productId:cleanPremiumText(item && item.productId || "",160),
+      stationNo:cleanPremiumText(item && item.stationNo || "",100),
+      jenis:cleanPremiumText(item && item.jenis || "",10),
+      filename:cleanPremiumText(item && item.filename || "",180),
+      downloadUrl:cleanPremiumUrl(item && item.downloadUrl || ""),
+      variant:cleanPremiumText(item && item.variant || "",40).toUpperCase(),
+      areaRatio:Number(item && item.areaRatio || 0),
+      createdAtMs:Number(item && item.createdAtMs || azAutomaticCheckoutCreatedMs(latestPending) || Date.now())
+    })).filter(item => item.itemCode && item.negeri);
     return {
       ok:true,
       recovered:false,
@@ -5885,7 +5902,11 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
       orderId:cleanPremiumText(latestPending.orderId || "",160),
       billCode:cleanPremiumText(latestPending.billCode || "",120),
       invoiceNo:cleanPremiumText(latestPending.invoiceNo || "",180),
-      recoveryVersion:1055,
+      paymentUrl:cleanPremiumUrl(latestPending.paymentUrl || ""),
+      amountSen:Number(latestPending.amountSen || 0),
+      items:pendingItems,
+      cartRecoverable:!!(pendingItems.length && cleanPremiumUrl(latestPending.paymentUrl || "")),
+      recoveryVersion:1263,
       recoverySource:"server-user-lookup"
     };
   }

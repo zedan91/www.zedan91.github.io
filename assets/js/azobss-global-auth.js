@@ -5920,6 +5920,72 @@ async function azobssCheckPaBmToyyibReturn(){
 // AZOBSS 1055: PA/BM payment recovery does not depend on the ToyyibPay return tab.
 // After Firebase login is ready, ask the backend to find this user's recent PA/BM order
 // and verify it directly with ToyyibPay. This also recovers payments after browser/app switches.
+function azobssPaBmPendingRecoveryItems1263(data){
+  const raw = Array.isArray(data && data.items) ? data.items : [];
+  const orderId = String(data && data.orderId || '').trim();
+  const billCode = String(data && data.billCode || '').trim();
+  const paymentUrl = String(data && data.paymentUrl || '').trim();
+  const expectedCount = raw.length;
+  const ids = raw.map(function(item){
+    const type = String(item && item.productType || 'PA').trim().toUpperCase();
+    let code = String(item && (item.itemCode || item.stationNo || item.productId) || '').trim();
+    if(type === 'PA') code = code.replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'');
+    const state = String(item && item.negeri || '').trim().toUpperCase();
+    const variant = String(item && item.variant || '').trim().toUpperCase();
+    return [type,code,state,variant].filter(Boolean).join('|');
+  }).filter(Boolean).sort();
+  const resumeCartKey = orderId + '|' + ids.join('~');
+  return raw.map(function(item){
+    const type = String(item && item.productType || 'PA').trim().toUpperCase();
+    let code = String(item && (item.itemCode || item.stationNo || item.productId) || '').trim();
+    if(type === 'PA') code = code.replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'');
+    const state = String(item && item.negeri || '').trim().toUpperCase();
+    const variant = String(item && item.variant || '').trim().toUpperCase();
+    return {
+      ...(item || {}),
+      id:[type,code,state,variant].filter(Boolean).join('|'),
+      productType:type,
+      itemCode:code,
+      negeri:state,
+      variant:variant,
+      addedAtMs:Number(item && (item.addedAtMs || item.createdAtMs) || Date.now()),
+      resumeOrderId:orderId,
+      resumeBillCode:billCode,
+      resumePaymentUrl:paymentUrl,
+      resumeItemCount:expectedCount,
+      resumeCartKey:resumeCartKey,
+      restoredFromPending:true
+    };
+  }).filter(function(item){ return item.id && item.negeri; });
+}
+
+async function azobssRestorePaBmPendingCart1263(data){
+  try{
+    if(!data || data.status !== 'pending' || !data.paymentUrl || !Array.isArray(data.items) || !data.items.length) return false;
+    let current=[];
+    try{
+      if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.read === 'function') current=window.azobssPaBmStoreCart.read()||[];
+      else if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.read === 'function') current=window.azobssPaBmCartCore.read()||[];
+    }catch(_e){}
+    if(current.length) return false;
+
+    const order={ orderId:String(data.orderId||''), billCode:String(data.billCode||''), paymentUrl:String(data.paymentUrl||''), items:data.items };
+    if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.restorePendingOrder === 'function'){
+      const rows=await window.azobssPaBmStoreCart.restorePendingOrder(order);
+      if(rows && rows.length) return true;
+    }
+
+    const rows=azobssPaBmPendingRecoveryItems1263(data);
+    if(rows.length && window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.write === 'function'){
+      window.azobssPaBmCartCore.write(rows);
+      const status=document.getElementById('paBmToyyibStatus');
+      if(status) status.textContent='Pembayaran belum selesai. '+rows.length+' item dipulihkan semula ke Troli Anda.';
+      return true;
+    }
+  }catch(e){ console.warn('PA/BM pending cart restore v1263 failed:', e); }
+  return false;
+}
+
 async function azobssRecoverPaBmPaymentFromServer1055(force){
   try{
     if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return null;
@@ -5945,8 +6011,13 @@ async function azobssRecoverPaBmPaymentFromServer1055(force){
     if(!res.ok || !data || data.ok !== true) return data || null;
 
     if(data.status === 'pending' && (data.orderId || data.billCode)){
-      // Keep a durable browser hint too, but recovery itself remains server-side.
+      // Keep a durable browser hint too, and v1263 rebuilds the cart from the
+      // server-side pending order when the browser/local cart is empty.
       azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+      try{ await azobssRestorePaBmPendingCart1263(data); }catch(_e){}
+      try{
+        window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered', { detail:{ order:data, version:1263 } }));
+      }catch(_e){}
     }
 
     if(data.paid){
@@ -6066,6 +6137,38 @@ async function azobssPayPaBmDedicatedFallback1262(event){
   const items = readCart();
   if(!items.length){
     if(status) status.textContent = 'Troli anda kosong.';
+    return;
+  }
+
+  // v1263: when server recovery rebuilt an unresolved payment cart, resume the
+  // exact same ToyyibPay bill even if the storefront ES module is not ready yet.
+  const firstResume = items[0] || {};
+  const resumeOrderId = String(firstResume.resumeOrderId || '').trim();
+  const resumeBillCode = String(firstResume.resumeBillCode || '').trim();
+  const resumePaymentUrl = String(firstResume.resumePaymentUrl || '').trim();
+  const resumeCount = Number(firstResume.resumeItemCount || 0);
+  const resumeKey = String(firstResume.resumeCartKey || '').trim();
+  const sameResume = !!(resumeOrderId && resumePaymentUrl && resumeKey && resumeCount === items.length)
+    && items.every(function(item){
+      return String(item && item.resumeOrderId || '').trim() === resumeOrderId
+        && String(item && item.resumePaymentUrl || '').trim() === resumePaymentUrl
+        && String(item && item.resumeCartKey || '').trim() === resumeKey
+        && Number(item && item.resumeItemCount || 0) === resumeCount;
+    });
+  if(sameResume){
+    try{
+      azobssSavePaBmPendingReturn(resumeOrderId, resumeBillCode);
+      const current = getSavedUser() || {};
+      const cartOwner = String(current.usernameKey || current.username || current.uid || 'guest').trim();
+      localStorage.setItem('azobss_pabm_payment_cart_backup_v1_' + cartOwner, JSON.stringify({
+        items:items,
+        orderId:resumeOrderId,
+        billCode:resumeBillCode,
+        savedAt:Date.now()
+      }));
+    }catch(_e){}
+    if(status) status.textContent = 'Membuka semula Pending Payment yang sama...';
+    window.location.href = resumePaymentUrl;
     return;
   }
 
@@ -6189,9 +6292,9 @@ function bindAzobssPaBmToyyibButton(){
       // for the dedicated storefront ES module. Bind a secure global-auth fallback
       // now; if storefront loads successfully it replaces/clones this button and
       // becomes the sole checkout owner automatically.
-      if(btn.dataset.azobssDedicatedCheckoutFallback !== '1262'){
-        btn.dataset.azobssDedicatedCheckoutFallback = '1262';
-        btn.dataset.azobssCheckoutOwner = 'global-auth-secure-fallback-v1262';
+      if(btn.dataset.azobssDedicatedCheckoutFallback !== '1263'){
+        btn.dataset.azobssDedicatedCheckoutFallback = '1263';
+        btn.dataset.azobssCheckoutOwner = 'global-auth-secure-fallback-v1263';
         btn.addEventListener('click', azobssPayPaBmDedicatedFallback1262);
       }
     }
