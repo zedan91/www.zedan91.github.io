@@ -3,6 +3,8 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=1129';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
+const PAYMENT_CART_BACKUP_PREFIX = 'azobss_pabm_payment_cart_backup_v1_';
+const PAYMENT_CART_BACKUP_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
   /^(?:127\.0\.0\.1|localhost)$/.test(window.location.hostname)
     ? window.location.origin
@@ -290,8 +292,64 @@ function readCart() {
 function writeCart(items) {
   const clean = Array.isArray(items) ? items.filter(Boolean).slice(0, MAX_CART_ITEMS) : [];
   localStorage.setItem(cartKey(), JSON.stringify(clean));
+  if (!clean.length) clearPaymentCartBackup();
   renderCart();
   window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated', { detail: { count: clean.length } }));
+}
+
+function paymentCartBackupKey() {
+  return PAYMENT_CART_BACKUP_PREFIX + (userKey() || 'guest');
+}
+
+function savePaymentCartBackup(items, meta = {}) {
+  try {
+    const rows = Array.isArray(items) ? items.filter(Boolean).slice(0, MAX_CART_ITEMS) : [];
+    if (!rows.length) return false;
+    localStorage.setItem(paymentCartBackupKey(), JSON.stringify({
+      items: rows,
+      orderId: String(meta.orderId || ''),
+      billCode: String(meta.billCode || ''),
+      savedAt: Date.now()
+    }));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function readPaymentCartBackup() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(paymentCartBackupKey()) || '{}');
+    const savedAt = Number(saved && saved.savedAt || 0);
+    if (!savedAt || Date.now() - savedAt > PAYMENT_CART_BACKUP_MAX_AGE_MS) {
+      localStorage.removeItem(paymentCartBackupKey());
+      return null;
+    }
+    const items = Array.isArray(saved && saved.items) ? saved.items.filter(Boolean).slice(0, MAX_CART_ITEMS) : [];
+    return items.length ? { ...saved, items } : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function restorePaymentCartBackup() {
+  const backup = readPaymentCartBackup();
+  if (!backup || !backup.items.length) {
+    renderCart();
+    return readCart();
+  }
+  const current = readCart();
+  if (current.length) {
+    renderCart();
+    return current;
+  }
+  writeCart(backup.items);
+  setCartSyncStatus(`Pembayaran belum selesai. ${backup.items.length} item kekal dalam Troli Anda.`);
+  return backup.items;
+}
+
+function clearPaymentCartBackup() {
+  try { localStorage.removeItem(paymentCartBackupKey()); } catch (_) {}
 }
 
 const TABLE_CART_BUTTON_SELECTOR = [
@@ -860,6 +918,7 @@ async function proceedToPayment() {
           savedAt: Date.now()
         }));
       } catch (_) {}
+      savePaymentCartBackup(items, { orderId: resumable.orderId, billCode: resumable.billCode });
       window.location.href = resumable.paymentUrl;
       return;
     }
@@ -882,6 +941,7 @@ async function proceedToPayment() {
         savedAt: Date.now()
       }));
     } catch (_) {}
+    savePaymentCartBackup(items, { orderId: String(data.orderId || ''), billCode: String(data.billCode || '') });
     if (status) status.textContent = 'Sedang pergi ke ToyyibPay...';
     window.location.href = data.paymentUrl || data.url || data.redirectUrl;
   } catch (error) {
@@ -1033,6 +1093,7 @@ async function clearCartAfterPaidReturn() {
     const data = await response.json().catch(() => ({}));
     if (data && (data.paid || data.status === 'paid' || data.status === 'success')) {
       localStorage.removeItem(cartKey());
+      clearPaymentCartBackup();
       renderCart();
     }
   } catch (_) {}
@@ -1056,27 +1117,27 @@ function publishPaBmStoreCartApi(){
     clear: () => writeCart([]),
     render: renderCart,
     restorePendingOrder: restorePendingOrderToCart,
+    restorePaymentBackup: restorePaymentCartBackup,
+    clearPaymentBackup: clearPaymentCartBackup,
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1248 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1250 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
 
 async function init() {
-  // v1248: publish the cart API before waiting for profile price adjustment.
-  // This removes the race where Pending Payment is visible/clickable but the cart
-  // API is still hidden behind the asynchronous price-adjustment startup.
+  // v1249: the storefront UI and Add to Cart must never wait for the async
+  // profile price-adjustment lookup. Use the cached adjustment immediately,
+  // bind the current state-button picker/cart handlers now, then refresh prices
+  // in the background when the authoritative profile adjustment arrives.
   const apps = getApps();
   auth = apps.length ? getAuth(apps[0]) : null;
   publishPaBmStoreCartApi();
 
-  const adjustment = await waitForPriceAdjustment().catch(() => ({percentByCategory:{}}));
-  priceAdjustmentPercents = {
-    paBm: Number(adjustment?.percentByCategory?.paBm || 0),
-    lotKadaster: Number(adjustment?.percentByCategory?.lotKadaster ?? adjustment?.percentByCategory?.paBm ?? 0)
-  };
+  // Restore the current PA/BM state-picker UI immediately. Without this class
+  // the raw legacy <select> remains visible until Firestore/profile lookup ends.
   document.body.classList.add('pabm-store-ready');
   watchTableCartButtons();
   hydrateStateSelects();
@@ -1127,9 +1188,31 @@ async function init() {
   });
   window.addEventListener('storage', renderCart);
   window.addEventListener('azobss:pabm-cart-updated', renderCart);
+  window.addEventListener('azobss:pabm-payment-unpaid', () => {
+    const rows = restorePaymentCartBackup();
+    if (rows.length) setCartSyncStatus(`Pembayaran dibatalkan / belum berjaya. ${rows.length} item kekal dalam Troli Anda.`);
+  });
+  window.addEventListener('azobss:pabm-payment-paid', () => {
+    clearPaymentCartBackup();
+  });
   window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercents = { paBm:Number(event.detail?.percentByCategory?.paBm || 0), lotKadaster:Number(event.detail?.percentByCategory?.lotKadaster ?? event.detail?.percentByCategory?.paBm ?? 0) }; const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
+
+  // Fetch the latest per-user adjustment in the background. This must not block
+  // state-picker rendering or Add to Cart. The cached value above remains usable
+  // until this resolves (or the existing price-adjustment event updates it).
+  waitForPriceAdjustment().then((adjustment) => {
+    priceAdjustmentPercents = {
+      paBm: Number(adjustment?.percentByCategory?.paBm || 0),
+      lotKadaster: Number(adjustment?.percentByCategory?.lotKadaster ?? adjustment?.percentByCategory?.paBm ?? 0)
+    };
+    const rows = readCart();
+    try { localStorage.setItem(cartKey(), JSON.stringify(rows)); } catch (_) {}
+    document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice);
+    renderCart();
+  }).catch(() => {});
+
   if (auth) onAuthStateChanged(auth, (user) => {
     renderCart();
     if (user) setTimeout(() => reconcileEmptyStoredCart().catch(() => {}), 500);

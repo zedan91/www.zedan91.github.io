@@ -4577,6 +4577,14 @@ async function azobssResetEmbeddedPurchaseDownloadCounter(record = {}, adminIden
 
 async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", extra = {}) {
   if (!order || !Array.isArray(order.paBmItems) || !order.paBmItems.length) return { ok: false, updated: 0, reason: "no_pa_bm_items" };
+  const paid = azobssPaidStatus(status);
+  // v1250: Senarai Pembelian Terkini is purchase HISTORY, not payment-attempt history.
+  // Pending / cancelled / failed ToyyibPay attempts stay in the user's cart and in
+  // premiumOrders for payment recovery, but must never create purchaseLogs rows.
+  if (!paid) {
+    console.log("PA/BM purchaseLogs unpaid sync skipped:", JSON.stringify({ orderId:order.orderId || "", billCode:order.billCode || "", status:String(status || "pending") }).slice(0, 400));
+    return { ok:true, updated:0, skipped:true, reason:"unpaid_not_purchase_history" };
+  }
   if (!initFirebaseAdmin()) {
     console.warn("PA/BM purchaseLogs update skipped: Firebase Admin not configured.", firebaseAdminInitError || "");
     return { ok: false, updated: 0, reason: "firebase_admin_not_configured" };
@@ -4585,7 +4593,6 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
   const db = firebaseAdmin.firestore();
   const nowMs = Number(extra.nowMs || Date.now());
   const paidAtMs = Number(extra.paidAtMs || nowMs);
-  const paid = azobssPaidStatus(status);
   const baseUpdate = {
     paymentOrderId: String(order.orderId || ""),
     orderId: String(order.orderId || ""),

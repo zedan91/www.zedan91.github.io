@@ -1,0 +1,25 @@
+{
+  "version": "1.0.1249",
+  "date": "2026-10-07",
+  "baseline": "1248",
+  "scope": "PA/BM storefront initialization regression only",
+  "fixes": [
+    "Bind Add to Cart handlers immediately instead of waiting for async price adjustment",
+    "Restore current state button-grid UI immediately by applying pabm-store-ready before async price adjustment",
+    "Refresh user price adjustment in background after storefront is interactive",
+    "Preserve v1248 Pending Payment Tambah Semula/resume/remove behavior"
+  ],
+  "intentional_non_changes": [
+    "No change to state list",
+    "No change to PA/BM product search flow",
+    "No change to pricing formula",
+    "No change to Pending Payment server API"
+  ],
+  "validation": {
+    "node_check_storefront": true,
+    "node_check_global_auth": true,
+    "npm_run_check": true,
+    "azdm_tests": "25/25 passed",
+    "init_order_guard": true
+  }
+}

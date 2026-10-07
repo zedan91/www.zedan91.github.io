@@ -5841,7 +5841,11 @@ async function azobssCheckPaBmToyyibReturn(){
     const res = await fetch(verifyUrl, { cache:'no-store', headers:{'Cache-Control':'no-cache'} });
     const data = await res.json().catch(()=>({}));
     const paid = !!(data && (data.paid || data.status === 'paid' || data.status === 'success'));
-    const failed = !!(data && ['failed','cancelled','canceled','rejected'].includes(String(data.status || '').toLowerCase()));
+    const gatewayStatusId = String(params.get('status_id') || '').trim();
+    const gatewayStatusText = String(params.get('status') || '').trim().toLowerCase();
+    const failed = gatewayStatusId === '3'
+      || ['failed','cancelled','canceled','rejected','unsuccessful'].includes(gatewayStatusText)
+      || !!(data && ['failed','cancelled','canceled','rejected','unsuccessful'].includes(String(data.status || '').toLowerCase()));
 
     if(paid){
       await azobssResetCurrentPurchaseTotalAfterPaid(orderId || returnKey);
@@ -5851,15 +5855,17 @@ async function azobssCheckPaBmToyyibReturn(){
       window.__azobssPaBmPaymentVerifiedKey = returnKey;
       window.__azobssPaBmPaymentVerifiedAt = Date.now();
       if(status) status.textContent = 'Pembayaran berjaya. Senarai pembelian dikemaskini.';
+      try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-paid', { detail:{ orderId:String(orderId || returnKey), billCode:String(billCode || '') } })); }catch(e){}
       azobssShowPaBmPaymentSuccessPopup(returnKey);
       azobssCleanPaBmPaymentReturnUrl();
       [250, 700, 1500, 3000].forEach(ms => setTimeout(() => azobssSchedulePurchaseRecordsRefresh('paid verify immediate'), ms));
       setTimeout(function(){ azobssResetPaBmPaymentStatusIfIdle(true); }, 1800);
     }else if(failed){
+      try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid', { detail:{ orderId:String(orderId || returnKey), billCode:String(billCode || ''), reason:'failed_or_cancelled' } })); }catch(e){}
       azobssMarkPaBmReturnConsumed(returnKey);
       azobssClearPaBmPendingReturn();
       azobssCleanPaBmPaymentReturnUrl();
-      if(status) status.textContent = 'Pembayaran tidak berjaya atau telah dibatalkan.';
+      if(status) status.textContent = 'Pembayaran dibatalkan / tidak berjaya. Item kekal dalam Troli Anda.';
     }else{
       const elapsed = Date.now() - Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
       if(status) status.textContent = 'Pembayaran diterima. Menunggu pengesahan ToyyibPay...';
@@ -5867,9 +5873,10 @@ async function azobssCheckPaBmToyyibReturn(){
         shouldRetry = true;
         retryDelay = Math.min(5000, 1200 + (Number(window.__azobssPaBmPaymentPollAttempts || 1) * 450));
       }else{
+        try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid', { detail:{ orderId:String(orderId || returnKey), billCode:String(billCode || ''), reason:'not_completed' } })); }catch(e){}
         azobssClearPaBmPendingReturn();
         azobssCleanPaBmPaymentReturnUrl();
-        azobssResetPaBmPaymentStatusIfIdle(true);
+        if(status) status.textContent = 'Pembayaran belum selesai. Item kekal dalam Troli Anda.';
       }
     }
   }catch(e){
@@ -5888,9 +5895,10 @@ async function azobssCheckPaBmToyyibReturn(){
         shouldRetry = true;
         retryDelay = 2500;
       }else{
+        try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid', { detail:{ orderId:String(pendingNow.orderId || ''), billCode:String(pendingNow.billCode || ''), reason:'verification_timeout' } })); }catch(_e){}
         azobssClearPaBmPendingReturn();
         azobssCleanPaBmPaymentReturnUrl();
-        azobssResetPaBmPaymentStatusIfIdle(true);
+        if(status) status.textContent = 'Pembayaran belum disahkan. Item kekal dalam Troli Anda.';
       }
     }
   }finally{
@@ -6163,11 +6171,11 @@ async function azobssWaitForPaBmStoreCart(timeoutMs){
   if(first) return first;
   const timeout = Math.max(3000, Number(timeoutMs || 15000));
 
-  // v1248: the purchase list can become interactive before the PA/BM storefront
+  // v1249: the purchase list can become interactive before the PA/BM storefront
   // finishes its async startup. Wait for the cart API instead of telling the user
   // to reload the whole page.
   try{
-    await import('/assets/js/azobss-pabm-storefront.js?v=1248');
+    await import('/assets/js/azobss-pabm-storefront.js?v=1249');
   }catch(_){ }
 
   const afterImport = azobssReadyPaBmStoreCart();
@@ -6597,6 +6605,10 @@ async function renderAzobssPurchaseRecords(){
   const userSearch = String(document.getElementById('userPaPurchaseSearch')?.value || '').trim().toLowerCase();
   const userSort = String(document.getElementById('userPaPurchaseSort')?.value || 'newest');
   let records = await loadAzobssPurchaseRecords();
+  // v1250: Latest Purchase List contains successful / verified purchases only.
+  // Pending, cancelled and failed payment attempts remain in Troli Anda and are
+  // intentionally excluded even if legacy purchaseLogs rows still exist.
+  const recentPurchaseRecords = records.filter(r => azobssIsPurchasePaidForDownload(r));
   const purchaseResetMap = await loadAzobssPurchaseTotalResetMap();
   if(renderSeq !== Number(window.__AZOBSS_PABM_PURCHASE_RENDER_SEQ__ || 0)) return;
 
@@ -6683,7 +6695,7 @@ async function renderAzobssPurchaseRecords(){
       renderAzobssPurchaseRecords();
     });
     const ownRecords = applyPurchaseSort(
-      filterPurchaseRows(records.filter(record => azobssPurchaseBelongsToCurrentUser(record, current)), userSearch),
+      filterPurchaseRows(recentPurchaseRecords.filter(record => azobssPurchaseBelongsToCurrentUser(record, current)), userSearch),
       userSort
     );
     const ownTotalPages = Math.max(1, Math.ceil(ownRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
@@ -6708,11 +6720,11 @@ async function renderAzobssPurchaseRecords(){
   }else{
     const userPanelForUser = document.getElementById('userPaPurchasePanel');
     if(userPanelForUser) userPanelForUser.style.display = '';
-    const topRecords = filterPurchaseRows(records, adminSearch);
+    const topRecords = filterPurchaseRows(recentPurchaseRecords, adminSearch);
     if(list){
       list.innerHTML = topRecords.length ? renderUserPurchaseSummary(topRecords, purchaseResetMap) : '<div class="purchase-summary-item">No purchase records yet.</div>';
     }
-    const detailRecords = applyPurchaseSort(filterPurchaseRows(records, userSearch), userSort);
+    const detailRecords = applyPurchaseSort(filterPurchaseRows(recentPurchaseRecords, userSearch), userSort);
     const totalPages = Math.max(1, Math.ceil(detailRecords.length / AZOBSS_PURCHASE_PAGE_SIZE));
     azobssUserPurchasePage = clampPage(azobssUserPurchasePage, totalPages);
     const visibleRecords = detailRecords.slice((azobssUserPurchasePage - 1) * AZOBSS_PURCHASE_PAGE_SIZE, azobssUserPurchasePage * AZOBSS_PURCHASE_PAGE_SIZE);
