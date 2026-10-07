@@ -6048,6 +6048,125 @@ async function azobssPayPaBmToyyib(){
     if(btn){ btn.disabled = false; btn.textContent = oldText || 'Proceed to Payment'; }
   }
 }
+async function azobssPayPaBmDedicatedFallback1262(event){
+  if(event){
+    try{ event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); }catch(_e){}
+  }
+  const btn = document.getElementById('payPaBmToyyibButton');
+  const status = document.getElementById('paBmToyyibStatus');
+  if(!btn || btn.dataset.azobssCheckoutBusy === '1') return;
+
+  const readCart = function(){
+    try{
+      if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.read === 'function') return window.azobssPaBmCartCore.read() || [];
+      if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.read === 'function') return window.azobssPaBmStoreCart.read() || [];
+    }catch(_e){}
+    return [];
+  };
+  const items = readCart();
+  if(!items.length){
+    if(status) status.textContent = 'Troli anda kosong.';
+    return;
+  }
+
+  const oldText = btn.textContent || 'Teruskan Pembayaran';
+  btn.dataset.azobssCheckoutBusy = '1';
+  btn.disabled = true;
+  btn.textContent = 'Menyediakan Pembayaran...';
+  if(status) status.textContent = 'Menyemak sesi log masuk dan menyediakan bil pembayaran...';
+
+  try{
+    // v1262: this secure fallback is owned by the already-loaded global-auth module.
+    // It exists specifically for the case where the dedicated storefront ES module
+    // fails before bindPaymentButton(). Unlike the removed legacy handler, it sends
+    // a real Firebase ID token in Authorization and reads the current local cart.
+    let firebaseUser = auth && auth.currentUser ? auth.currentUser : null;
+    if(!firebaseUser){
+      for(let i=0;i<40 && !firebaseUser;i+=1){
+        await new Promise(resolve => setTimeout(resolve, 100));
+        firebaseUser = auth && auth.currentUser ? auth.currentUser : null;
+      }
+    }
+    if(!firebaseUser || typeof firebaseUser.getIdToken !== 'function'){
+      throw new Error('Sesi Firebase belum tersedia. Sila tunggu beberapa saat dan cuba lagi.');
+    }
+    try{ await firebaseUser.reload(); }catch(_e){}
+    let token = '';
+    try{ token = await firebaseUser.getIdToken(true); }catch(_e){}
+    if(!token){ try{ token = await firebaseUser.getIdToken(false); }catch(_e){} }
+    if(!token) throw new Error('Token log masuk pembayaran tidak tersedia. Sila log masuk semula.');
+
+    const current = getSavedUser() || {};
+    const usernameKey = String(current.usernameKey || current.username || current.displayName || '').trim().toLowerCase();
+    const payload = {
+      usernameKey,
+      uid: String(firebaseUser.uid || current.uid || ''),
+      priceProfileDocId: String(current.priceProfileDocId || current.profileDocId || '').trim(),
+      user: current,
+      // Do not submit expectedAmountSen in the fallback. If the storefront module
+      // failed, its live per-user price-adjustment module may also be unavailable;
+      // the protected backend remains authoritative for the final amount.
+      items: items.map(item => ({
+        productType: item.productType || 'PA',
+        itemCode: item.itemCode || item.stationNo || '',
+        negeri: item.negeri || '',
+        baseAmount: Number(item.baseAmount || item.amount || 0),
+        amount: Number(item.amount || 0),
+        priceAdjustmentCategory: item.priceAdjustmentCategory || '',
+        priceAdjustmentPercent: Number(item.priceAdjustmentPercent || 0),
+        productId: item.productId || '',
+        stationNo: item.stationNo || '',
+        jenis: item.jenis || '',
+        downloadUrl: item.downloadUrl || '',
+        filename: item.filename || '',
+        selectionToken: item.selectionToken || '',
+        variant: item.variant || '',
+        areaRatio: Number(item.areaRatio || 0),
+        createdAtMs: Number(item.addedAtMs || item.createdAtMs || Date.now())
+      }))
+    };
+
+    const send = async(authToken) => fetch(azobssGetBackendBaseUrl() + '/api/toyyib/create-pa-bm-bill', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + authToken },
+      body:JSON.stringify(payload)
+    });
+    let response = await send(token);
+    if(response.status === 401){
+      try{ token = await firebaseUser.getIdToken(true); }catch(_e){}
+      if(token) response = await send(token);
+    }
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok || !data || data.ok === false) throw new Error(data && (data.error || data.message) || 'Bil pembayaran tidak dapat dibuat.');
+    const paymentUrl = String(data.paymentUrl || data.url || data.redirectUrl || '').trim();
+    if(!paymentUrl) throw new Error('Payment gateway tidak memulangkan pautan pembayaran.');
+    if(Number(data.unit || 0) > 0 && Number(data.unit) !== items.length){
+      throw new Error('Jumlah item pembayaran tidak sepadan. Sila cuba semula.');
+    }
+
+    azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+    try{
+      const cartOwner = String(current.usernameKey || current.username || current.uid || firebaseUser.uid || 'guest').trim();
+      localStorage.setItem('azobss_pabm_payment_cart_backup_v1_' + cartOwner, JSON.stringify({
+        items,
+        orderId:String(data.orderId || ''),
+        billCode:String(data.billCode || ''),
+        savedAt:Date.now()
+      }));
+    }catch(_e){}
+    if(status) status.textContent = 'Sedang pergi ke ToyyibPay...';
+    window.location.href = paymentUrl;
+  }catch(error){
+    console.error('PA/BM dedicated checkout fallback v1262 failed:', error);
+    if(status) status.textContent = error && error.message ? error.message : 'Bil pembayaran tidak dapat dibuat.';
+    alert(error && error.message ? error.message : 'Bil pembayaran tidak dapat dibuat.');
+  }finally{
+    btn.dataset.azobssCheckoutBusy = '';
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
 function azobssIsDedicatedPaBmStorefrontPage(){
   return window.__AZOBSS_PABM_PAGE__ === true
     || /^\/PA-BM(?:\/|$)/i.test(window.location.pathname || '')
@@ -6066,10 +6185,16 @@ function bindAzobssPaBmToyyibButton(){
     if(btn){
       try{ btn.removeEventListener('click', azobssPayPaBmToyyib); }catch(_e){}
       try{ delete btn.dataset.azobssToyyibBind; }catch(_e){}
-      btn.dataset.azobssCheckoutOwner = 'pabm-storefront';
+      // v1262: never leave the checkout button with zero listeners while waiting
+      // for the dedicated storefront ES module. Bind a secure global-auth fallback
+      // now; if storefront loads successfully it replaces/clones this button and
+      // becomes the sole checkout owner automatically.
+      if(btn.dataset.azobssDedicatedCheckoutFallback !== '1262'){
+        btn.dataset.azobssDedicatedCheckoutFallback = '1262';
+        btn.dataset.azobssCheckoutOwner = 'global-auth-secure-fallback-v1262';
+        btn.addEventListener('click', azobssPayPaBmDedicatedFallback1262);
+      }
     }
-    // Keep only payment-return recovery from global-auth. The cart total and
-    // checkout click itself are exclusively managed by azobss-pabm-storefront.js.
     azobssInstallPaBmPaymentReturnResumeWatch();
     azobssCheckPaBmToyyibReturn();
     return;

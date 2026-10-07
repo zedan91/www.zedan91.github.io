@@ -1146,7 +1146,7 @@ function bindPaymentButton() {
   const clone = current.cloneNode(true);
   current.replaceWith(clone);
   paymentButton = clone;
-  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1261';
+  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1262';
   paymentButton.addEventListener('click', proceedToPayment);
 }
 
@@ -1198,7 +1198,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1261 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1262 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1208,7 +1208,7 @@ async function init() {
   // file again with a different query string, only one storefront instance may
   // own cart globals/listeners on /PA-BM/.
   if (window.__AZOBSS_PABM_STOREFRONT_ACTIVE__) return;
-  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1261';
+  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1262';
   // v1249: the storefront UI and Add to Cart must never wait for the async
   // profile price-adjustment lookup. Use the cached adjustment immediately,
   // bind the current state-button picker/cart handlers now, then refresh prices
@@ -1231,7 +1231,7 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
-  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1261';
+  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1262';
   window.azobssAddToPaBmCart = addToStoreCart;
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
