@@ -191,9 +191,9 @@
   }
 
   async function addGpsRecord(record, direct) {
-    if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
+    if (typeof window.azobssAddToPaBmCart !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
     const payload = JSON.parse(decodeURIComponent(encodeRecord(record)));
-    const saved = await window.azobssRecordPurchase(payload);
+    const saved = await window.azobssAddToPaBmCart(payload);
     setQuickStatus(saved && saved.__azobssAlreadyInCart
       ? 'Stesen GPS ini sudah ada dalam troli anda.'
       : (direct

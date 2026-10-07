@@ -5025,7 +5025,10 @@ function bindAzobssPurchaseRecordsUI(){
   }
 }
 if(!azobssPurchaseUiOwnedByGlobalAuth()){
-  window.azobssRecordPurchase = recordAzobssPurchase;
+  window.azobssCreatePurchaseLog = recordAzobssPurchase;
+  if(!document.body || !document.body.classList.contains('pa-bm-page')){
+    window.azobssRecordPurchase = recordAzobssPurchase;
+  }
   window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;
   window.azobssRenderPurchaseRecords = renderAzobssPurchaseRecords;
   window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);

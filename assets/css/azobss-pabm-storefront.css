@@ -481,6 +481,21 @@ body.pa-bm-page .benchmark-form label {
   font-weight: 800;
 }
 
+/* v1251: state selectors must never fall back to the legacy dropdown UI.
+   The real <select> remains in the DOM for accessibility/form compatibility, but
+   the visible control is always the all-state button grid. */
+body.pa-bm-page .request-form select.pabm-state-select,
+body.pa-bm-page .benchmark-form select.pabm-state-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 body.pa-bm-page.pabm-store-ready .request-form select,
 body.pa-bm-page.pabm-store-ready .benchmark-form select {
   position: absolute !important;

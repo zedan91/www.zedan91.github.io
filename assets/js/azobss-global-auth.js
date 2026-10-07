@@ -6830,7 +6830,12 @@ function bindAzobssPurchaseRecordsUI(){
     renderAzobssPurchaseRecords();
   }
 }
-window.azobssRecordPurchase = recordAzobssPurchase;
+// v1251: on /PA-BM/ this global name belongs exclusively to the cart.
+// The old purchase-log writer must never overwrite Add to Cart.
+window.azobssCreatePurchaseLog = recordAzobssPurchase;
+if(!document.body || !document.body.classList.contains('pa-bm-page')){
+  window.azobssRecordPurchase = recordAzobssPurchase;
+}
 window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;
 window.azobssRenderPurchaseRecords = renderAzobssPurchaseRecords;
 window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);

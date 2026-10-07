@@ -706,11 +706,11 @@
   }
 
   async function addToCart(payload, ui, externalStatus) {
-    if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Troli belum sedia. Refresh halaman dan cuba semula.');
+    if (typeof window.azobssAddToPaBmCart !== 'function') throw new Error('Troli belum sedia. Refresh halaman dan cuba semula.');
     ui.cartButton.disabled = true;
     setFootStatus(ui, 'Sedang menambah ke troli...', '');
     try {
-      const saved = await window.azobssRecordPurchase(payload);
+      const saved = await window.azobssAddToPaBmCart(payload);
       const label = payload.productType === 'PA'
         ? `PA${payload.itemCode}`
         : `${payload.productType} ${payload.stationNo || payload.productId}`;

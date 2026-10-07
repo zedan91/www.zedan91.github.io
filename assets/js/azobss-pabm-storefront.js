@@ -679,6 +679,11 @@ function setupStatePicker(holder) {
   holder.innerHTML = options.map((option) => `
     <button class="pabm-state-button${select.value === option.value ? ' is-active' : ''}" type="button" data-state-value="${escapeHtml(option.value)}">${escapeHtml(STATE_LABELS[option.value] || option.textContent)}</button>
   `).join('');
+  // v1251: the classic early bridge may already own this holder so the state
+  // grid is interactive before Firebase/module loading finishes. Reuse that
+  // delegated listener instead of binding a duplicate click handler.
+  if (holder.dataset.pabmStateBound === '1') return;
+  holder.dataset.pabmStateBound = '1';
   holder.addEventListener('click', (event) => {
     const button = event.target.closest('[data-state-value]');
     if (!button) return;
@@ -1122,7 +1127,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1250 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1251 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1150,6 +1155,7 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
+  window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ = addToStoreCart;
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();

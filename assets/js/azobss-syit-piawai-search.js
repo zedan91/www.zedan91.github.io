@@ -240,11 +240,11 @@
   }
 
   async function addSheetRecord(record, direct) {
-    if (typeof window.azobssRecordPurchase !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
+    if (typeof window.azobssAddToPaBmCart !== 'function') throw new Error('Cart is not ready. Refresh the page and try again.');
     const payload = record?.productType === 'SYIT_PIAWAI'
       ? record
       : JSON.parse(decodeURIComponent(encodeRecord(record)));
-    const saved = await window.azobssRecordPurchase(payload);
+    const saved = await window.azobssAddToPaBmCart(payload);
     setQuickStatus(saved && saved.__azobssAlreadyInCart
       ? 'Syit Piawai ini sudah ada dalam troli anda.'
       : (direct
