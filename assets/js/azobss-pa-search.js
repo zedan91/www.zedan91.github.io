@@ -539,8 +539,11 @@
       setQuickStatus('Masukkan nombor PA sebelum menambah terus ke troli.', 'unavailable');
       return;
     }
-    if (typeof window.azobssRecordPurchase !== 'function') {
-      setQuickStatus('Cart is not ready. Refresh the page and try again.', 'unavailable');
+    const cartAdder = typeof window.azobssWaitForPaBmCartAdder === 'function'
+      ? await window.azobssWaitForPaBmCartAdder(8000)
+      : (window.azobssAddToPaBmCart || window.azobssRecordPurchase);
+    if (typeof cartAdder !== 'function') {
+      setQuickStatus('Troli belum sedia. Sila cuba sekali lagi.', 'unavailable');
       return;
     }
 
@@ -563,7 +566,7 @@
         throw unavailable;
       }
       const payload = buildPaCartRecord(exact, state);
-      const saved = await window.azobssRecordPurchase(payload);
+      const saved = await cartAdder(payload);
       setQuickStatus(saved && saved.__azobssAlreadyInCart
         ? `PA${payload.itemCode} sudah ada dalam troli anda.`
         : `Berjaya: PA${payload.itemCode} telah ditambah ke troli anda.`, 'success');
@@ -657,11 +660,14 @@
     if (errorEl) errorEl.textContent = '';
     try {
       button.disabled = true;
-      if (typeof window.azobssRecordPurchase !== 'function') {
-        throw new Error('Cart is not ready. Refresh the page and try again.');
+      const cartAdder = typeof window.azobssWaitForPaBmCartAdder === 'function'
+        ? await window.azobssWaitForPaBmCartAdder(8000)
+        : (window.azobssAddToPaBmCart || window.azobssRecordPurchase);
+      if (typeof cartAdder !== 'function') {
+        throw new Error('Troli belum sedia. Sila cuba sekali lagi.');
       }
       const payload = JSON.parse(decodeURIComponent(button.dataset.paSearchRecord || ''));
-      const saved = await window.azobssRecordPurchase(payload);
+      const saved = await cartAdder(payload);
       if (statusEl) {
         statusEl.textContent = saved && saved.__azobssAlreadyInCart
           ? `PA${payload.itemCode} sudah ada dalam troli anda.`

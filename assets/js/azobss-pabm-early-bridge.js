@@ -80,10 +80,43 @@
     document.querySelectorAll('[data-state-picker-for]').forEach(bindStatePicker);
   }
 
-  // v1255: this classic bridge is STATE-PICKER ONLY.
-  // Cart click handling is intentionally restored to the proven v1245 path:
-  // result-table handler -> window.azobssRecordPurchase -> storefront addToStoreCart.
-  // Do not capture/stop cart clicks here.
+  function currentCartAdder() {
+    return window.azobssAddToPaBmCart || window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ || window.azobssRecordPurchase || null;
+  }
+
+  // v1257: search results can become clickable before the Firebase-backed
+  // storefront module finishes loading. Wait for the real cart API instead of
+  // dropping the first click or telling the user to refresh.
+  window.azobssWaitForPaBmCartAdder = function (timeoutMs) {
+    const immediate = currentCartAdder();
+    if (typeof immediate === 'function') return Promise.resolve(immediate);
+    const maxWait = Math.max(500, Number(timeoutMs || 8000));
+    return new Promise(function (resolve) {
+      const started = Date.now();
+      let timer = null;
+      let poll = null;
+      const finish = function (fn) {
+        if (timer) clearTimeout(timer);
+        if (poll) clearInterval(poll);
+        window.removeEventListener('azobss:pabm-store-cart-ready', onReady);
+        resolve(typeof fn === 'function' ? fn : null);
+      };
+      const check = function () {
+        const fn = currentCartAdder();
+        if (typeof fn === 'function') finish(fn);
+        else if (Date.now() - started >= maxWait) finish(null);
+      };
+      const onReady = function () { check(); };
+      window.addEventListener('azobss:pabm-store-cart-ready', onReady);
+      poll = setInterval(check, 50);
+      timer = setTimeout(function () { finish(currentCartAdder()); }, maxWait + 50);
+      check();
+    });
+  };
+
+  // This classic bridge remains STATE-PICKER ONLY for click ownership. It does
+  // not capture/stop cart clicks. v1257 only exposes a wait helper so the proven
+  // result-table/quick-add handlers can wait for the storefront cart API.
   activateStateGrid();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', activateStateGrid, { once:true });

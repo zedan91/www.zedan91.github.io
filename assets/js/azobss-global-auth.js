@@ -6175,7 +6175,7 @@ async function azobssWaitForPaBmStoreCart(timeoutMs){
   // finishes its async startup. Wait for the cart API instead of telling the user
   // to reload the whole page.
   try{
-    await import('/assets/js/azobss-pabm-storefront.js?v=1256');
+    await import('/assets/js/azobss-pabm-storefront.js?v=1257');
   }catch(_){ }
 
   const afterImport = azobssReadyPaBmStoreCart();
@@ -6833,7 +6833,7 @@ function bindAzobssPurchaseRecordsUI(){
 // v1251: on /PA-BM/ this global name belongs exclusively to the cart.
 // The old purchase-log writer must never overwrite Add to Cart.
 window.azobssCreatePurchaseLog = recordAzobssPurchase;
-if(!document.body || !document.body.classList.contains('pa-bm-page')){
+if(!(/^\/PA-BM(?:\/|$)/i.test(location.pathname)) && (!document.body || !document.body.classList.contains('pa-bm-page'))){
   window.azobssRecordPurchase = recordAzobssPurchase;
 }
 window.azobssLoadPurchaseRecords = loadAzobssPurchaseRecords;

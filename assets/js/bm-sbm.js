@@ -345,8 +345,8 @@
             statusEl.textContent = successMessage;
           }
 
-          if (typeof window.azobssRecordPurchase === 'function') {
-            const savedRecord = await window.azobssRecordPurchase(payload);
+          if (typeof (window.azobssAddToPaBmCart || window.azobssRecordPurchase) === 'function') {
+            const savedRecord = await (window.azobssAddToPaBmCart || window.azobssRecordPurchase)(payload);
             if (savedRecord && savedRecord.__azobssAlreadyInCart) {
               successMessage = benchmarkCartAlreadyText(payload);
             }

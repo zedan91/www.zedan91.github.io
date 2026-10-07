@@ -150,18 +150,29 @@ function savedUser() {
   }
 }
 
+let stableCartOwnerKey = '';
 function userKey() {
+  if (stableCartOwnerKey) return stableCartOwnerKey;
   const firebaseUser = auth && auth.currentUser;
   const localUser = savedUser() || {};
-  // v1253: keep the cart owner key stable while Firebase Auth is hydrating.
-  // Previously firebase uid was preferred first. A click made before auth.currentUser
-  // became available could write to the username/local key, then the next render
-  // switched to the uid key and the newly-added item appeared to vanish.
-  return String(localUser.uid || localUser.usernameKey || localUser.username || (firebaseUser && firebaseUser.uid) || '').trim();
+  // v1257: getSavedUser() normalises username/usernameKey. Use that human
+  // account key first so the cart owner cannot switch when Firebase hydrates
+  // or when a UID later appears in the saved profile.
+  const resolved = String(localUser.usernameKey || localUser.username || localUser.name || localUser.uid || (firebaseUser && firebaseUser.uid) || '').trim();
+  if (resolved) stableCartOwnerKey = resolved;
+  return resolved;
 }
 
 function cartKey() {
   return CART_PREFIX + (userKey() || 'guest');
+}
+
+function possibleLegacyCartKeys() {
+  const firebaseUser = auth && auth.currentUser;
+  const localUser = savedUser() || {};
+  const keys = [localUser.uid, localUser.usernameKey, localUser.username, localUser.name, firebaseUser && firebaseUser.uid]
+    .map((value) => String(value || '').trim()).filter(Boolean);
+  return Array.from(new Set(keys.map((key) => CART_PREFIX + key))).filter((key) => key !== cartKey());
 }
 
 function openLogin() {
@@ -173,18 +184,21 @@ function openLogin() {
   if (button) button.click();
 }
 
+function hasActiveCartLogin() {
+  return !!((auth && auth.currentUser) || savedUser() || (typeof window.hasSavedLogin === 'function' && window.hasSavedLogin()));
+}
+
 function requireLogin() {
-  // v1253: adding to the local cart must not fail just because Firebase Auth has
-  // not finished restoring its session yet. AZOBSS already has a saved signed-in
-  // profile at this point; checkout still performs the stricter Firebase token check.
-  if ((auth && auth.currentUser) || savedUser() || (typeof window.hasSavedLogin === 'function' && window.hasSavedLogin())) return true;
+  // Local cart actions accept the saved AZOBSS session while Firebase restores.
+  // Checkout remains strict and requires a fresh Firebase token.
+  if (hasActiveCartLogin()) return true;
   openLogin();
   return false;
 }
 
 function guardCartAction(event) {
   const target = event.target.closest('#downloadTifButton, [data-benchmark-record], [data-pabm-product-add]');
-  if (!target || (auth && auth.currentUser)) return;
+  if (!target || hasActiveCartLogin()) return;
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
@@ -291,9 +305,23 @@ function normalizeItem(payload) {
 
 function readCart() {
   try {
-    const rows = JSON.parse(localStorage.getItem(cartKey()) || '[]');
+    const primaryKey = cartKey();
+    let rows = JSON.parse(localStorage.getItem(primaryKey) || '[]');
+    if (!Array.isArray(rows)) rows = [];
+    // v1257: if an older build wrote the cart under a Firebase UID while the
+    // current build uses the stable username key, recover that cart once.
+    if (!rows.length) {
+      for (const legacyKey of possibleLegacyCartKeys()) {
+        let legacy = [];
+        try { legacy = JSON.parse(localStorage.getItem(legacyKey) || '[]'); } catch (_) { legacy = []; }
+        if (Array.isArray(legacy) && legacy.length) {
+          rows = legacy;
+          try { localStorage.setItem(primaryKey, JSON.stringify(legacy)); } catch (_) {}
+          break;
+        }
+      }
+    }
     const now = Date.now();
-    if (!Array.isArray(rows)) return [];
     let migrated = false;
     const cleanRows = rows
       .filter((item) => item && now - Number(item.addedAtMs || now) <= CART_MAX_AGE_MS)
@@ -1202,8 +1230,12 @@ function publishPaBmStoreCartApi(){
     clearPaymentBackup: clearPaymentCartBackup,
     removeRecord: removeRecordFromStoreCart
   };
+  // Dedicated cart API. Current PA/BM callers use this instead of the old
+  // collision-prone azobssRecordPurchase global.
+  window.azobssAddToPaBmCart = addToStoreCart;
+  window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ = addToStoreCart;
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1256 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1257 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1231,7 +1263,11 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
+  // Keep the old name only for backwards compatibility. New callers prefer
+  // azobssAddToPaBmCart so purchase-history scripts cannot hijack Add to Cart.
   window.azobssRecordPurchase = addToStoreCart;
+  window.azobssAddToPaBmCart = addToStoreCart;
+  window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();
   document.addEventListener('click', removeCartItemImmediately, true);
