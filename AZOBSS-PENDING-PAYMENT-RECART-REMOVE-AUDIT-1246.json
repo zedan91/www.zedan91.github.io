@@ -1,0 +1,25 @@
+{
+  "patch": 1246,
+  "name": "Pending Payment Re-cart + Remove Fix",
+  "baseline": 1245,
+  "filesChanged": [
+    "assets/js/azobss-global-auth.js",
+    "assets/js/azobss-pabm-storefront.js",
+    "deploy-server.js",
+    "PA-BM/index.html",
+    "index.html",
+    "package.json"
+  ],
+  "backendEndpoint": "POST /api/pa-bm/pending-cart-action",
+  "actions": [
+    "resume",
+    "remove"
+  ],
+  "security": [
+    "Firebase ID token required",
+    "own-account verification",
+    "paid/verified rows blocked from remove/re-cart"
+  ],
+  "cartBehavior": "Re-cart restores original pending order and resumes same ToyyibPay bill",
+  "firestoreReason": "Normal users cannot update/delete purchaseLogs under production rules; removal moved to authenticated backend."
+}

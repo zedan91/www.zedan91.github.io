@@ -5420,7 +5420,7 @@ function purchaseDetailRowHtml(r){
       actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else{
-    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
+    actionHtml = `<div class="user-pa-pending-action"><span class="user-pa-download is-locked is-pending-status">⏱ Pending Payment</span>${canUncart ? `<button type="button" class="user-pa-recart-btn" title="Masukkan semula Pending Payment ke Troli Anda" aria-label="Re-cart Pending Payment" onclick="window.azobssRecartPurchaseRecord && window.azobssRecartPurchaseRecord('${azobssPurchaseDeletePayload(r)}', this)">↩ Re-cart</button><button type="button" class="user-pa-uncart-btn is-cart-remove-btn" title="Remove from cart" aria-label="Remove from cart" onclick="window.azobssUncartPurchaseRecord && window.azobssUncartPurchaseRecord('${azobssPurchaseDeletePayload(r)}')"><span class="cart-x-icon">🛒<span class="cart-x-mark">×</span></span></button>` : ''}</div>`;
   }
   const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
   return `
@@ -6112,6 +6112,17 @@ function azobssPurchaseDeletePayload(r){
     negeri: r.negeri || '',
     amount: Number(r.amount) || 0,
     status: r.status || 'pending',
+    paymentOrderId: r.paymentOrderId || r.orderId || '',
+    orderId: r.orderId || r.paymentOrderId || '',
+    billCode: r.billCode || '',
+    paymentUrl: r.paymentUrl || '',
+    productId: r.productId || '',
+    stationNo: r.stationNo || '',
+    jenis: r.jenis || '',
+    filename: r.filename || '',
+    downloadUrl: r.downloadUrl || r.url || '',
+    variant: r.variant || r.areaSize || '',
+    areaRatio: Number(r.areaRatio || r.selectionAreaRatio || 0) || 0,
     createdAtMs: Number(r.createdAtMs) || 0,
     createdAtClient: r.createdAtClient || ''
   }));
@@ -6128,6 +6139,44 @@ function azobssPurchaseSameForDelete(a,b){
     && Number(a.createdAtMs || 0) === Number(b.createdAtMs || 0)
     && Number(a.amount || 0) === Number(b.amount || 0);
 }
+async function azobssPendingCartBackendAction(action, target){
+  const firebaseUser = auth && auth.currentUser;
+  if(!firebaseUser) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
+  const token = await firebaseUser.getIdToken();
+  const response = await fetch(azobssGetBackendBaseUrl() + '/api/pa-bm/pending-cart-action', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + token },
+    body:JSON.stringify({ action:String(action || ''), ...(target || {}) })
+  });
+  const data = await response.json().catch(function(){ return {}; });
+  if(!response.ok || !data.ok) throw new Error(data.error || 'Pending Payment tidak dapat dikemas kini.');
+  return data;
+}
+
+async function azobssRecartPurchaseRecord(rawPayload, button){
+  let target = null;
+  try{ target = typeof rawPayload === 'string' ? JSON.parse(decodeURIComponent(rawPayload)) : rawPayload; }catch(e){ target = null; }
+  if(!target) return false;
+  const oldText = button ? button.textContent : '';
+  try{
+    if(button){ button.disabled = true; button.textContent = '...'; }
+    const data = await azobssPendingCartBackendAction('resume', target);
+    const cartApi = window.azobssPaBmStoreCart;
+    if(!cartApi || typeof cartApi.restorePendingOrder !== 'function') throw new Error('Sistem troli belum tersedia. Muat semula halaman dan cuba lagi.');
+    const restored = await cartApi.restorePendingOrder(data.order || {});
+    const status = document.getElementById('paBmToyyibStatus');
+    if(status) status.textContent = `Pending Payment dipulihkan ke troli (${restored.length} item). Tekan Teruskan Pembayaran untuk sambung bil yang sama.`;
+    try{ if(typeof window.azShowToast === 'function') window.azShowToast('Pending Payment berjaya dimasukkan semula ke troli.'); }catch(e){}
+    return true;
+  }catch(error){
+    alert(error.message || 'Pending Payment tidak dapat dimasukkan semula ke troli.');
+    return false;
+  }finally{
+    if(button){ button.disabled = false; button.textContent = oldText || '↩ Re-cart'; }
+  }
+}
+window.azobssRecartPurchaseRecord = azobssRecartPurchaseRecord;
+
 async function azobssDeletePurchaseRecordByPayload(rawPayload, silent){
   const current = getSavedUser();
   const isAdminUser = isAzobssAdmin(current);
@@ -6149,6 +6198,28 @@ async function azobssDeletePurchaseRecordByPayload(rawPayload, silent){
     ? ('Buang rekod ini?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''))
     : ('Buang item ini daripada cart?\n\n' + String(target.productType || 'PA') + ' ' + String(target.itemCode || '-') + ' · RM' + String(target.amount || ''));
   if(!silent && !confirm(confirmText)) return false;
+
+  // Normal users are not allowed to delete purchaseLogs directly by Firestore rules.
+  // Use the authenticated backend so ownership + unpaid status are verified server-side.
+  if(!isAdminUser){
+    try{
+      const result = await azobssPendingCartBackendAction('remove', target);
+      try{
+        const cartApi = window.azobssPaBmStoreCart;
+        if(cartApi && typeof cartApi.removeRecord === 'function') cartApi.removeRecord(target);
+      }catch(e){}
+      try{
+        const local = readLocalPurchaseRecords().filter(r => !azobssPurchaseSameForDelete(r, target));
+        writeLocalPurchaseRecords(local.slice(0, 500));
+      }catch(e){}
+      if(!silent) await renderAzobssPurchaseRecords();
+      return result.removed !== false;
+    }catch(error){
+      console.warn('Backend pending cart remove failed:', error);
+      if(!silent) alert(error.message || 'Pending Payment tidak dapat dibuang.');
+      return false;
+    }
+  }
 
   try{
     const local = readLocalPurchaseRecords().filter(r => !azobssPurchaseSameForDelete(r, target));

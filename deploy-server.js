@@ -8250,6 +8250,176 @@ async function azSoftDeleteMyPurchaseForIdentity(identifier = "", source = "", i
 
   return { ok:true, hidden, localFallback:true };
 }
+function azPaBmPendingCartIsPaid(row = {}) {
+  const status = String(row.status || row.paymentStatus || row.payment_status || "").trim().toLowerCase();
+  if (["paid","success","completed","settled","verified","approved"].includes(status)) return true;
+  if (row.paid === true || row.verified === true || row.isPaid === true || row.paymentVerified === true) return true;
+  return azReceiptStatusBucket(row) === "paid";
+}
+function azPaBmPendingCartIsRemovable(row = {}) {
+  const status = String(row.status || row.paymentStatus || "pending").trim().toLowerCase();
+  if (azPaBmPendingCartIsPaid(row)) return false;
+  return !["cancelled","canceled","deleted","void","refunded"].includes(status);
+}
+function azPaBmPendingCartMatchPayload(row = {}, payload = {}) {
+  const rowId = String(row.firestoreId || row.purchaseLogId || row.id || "").trim();
+  const targetId = String(payload.firestoreId || payload.purchaseLogId || payload.recordId || payload.id || "").trim();
+  if (rowId && targetId && rowId === targetId) return true;
+  const rowOrder = String(row.paymentOrderId || row.orderId || "").trim();
+  const targetOrder = String(payload.paymentOrderId || payload.orderId || "").trim();
+  const rowType = String(row.productType || row.product || "").trim().toUpperCase();
+  const targetType = String(payload.productType || payload.product || "").trim().toUpperCase();
+  const rowCode = String(row.itemCode || row.stationNo || row.stesen || row.productId || "").trim().toUpperCase();
+  const targetCode = String(payload.itemCode || payload.stationNo || payload.stesen || payload.productId || "").trim().toUpperCase();
+  const rowState = String(row.negeri || row.state || "").trim().toUpperCase();
+  const targetState = String(payload.negeri || payload.state || "").trim().toUpperCase();
+  if (rowOrder && targetOrder && rowOrder === targetOrder && rowType === targetType && rowCode === targetCode && (!targetState || !rowState || rowState === targetState)) return true;
+  return !!(rowType && targetType && rowType === targetType && rowCode && targetCode && rowCode === targetCode && (!targetState || !rowState || rowState === targetState));
+}
+function azPaBmPendingCartExactRecordMatch(row = {}, target = {}) {
+  const rowId = String(row.firestoreId || row.purchaseLogId || row.id || "").trim();
+  const targetId = String(target.firestoreId || target.purchaseLogId || target.id || "").trim();
+  if (rowId && targetId) return rowId === targetId;
+  const rowOrder = String(row.paymentOrderId || row.orderId || "").trim();
+  const targetOrder = String(target.paymentOrderId || target.orderId || "").trim();
+  if (rowOrder && targetOrder) return rowOrder === targetOrder && azPaBmPendingCartMatchPayload(row, target);
+  const rowMs = Number(row.createdAtMs || 0) || (row.createdAtClient ? Date.parse(String(row.createdAtClient)) || 0 : 0);
+  const targetMs = Number(target.createdAtMs || 0) || (target.createdAtClient ? Date.parse(String(target.createdAtClient)) || 0 : 0);
+  return !!(rowMs && targetMs && Math.abs(rowMs - targetMs) < 5000 && azPaBmPendingCartMatchPayload(row, target));
+}
+async function azPaBmPendingCartOwnedDocs(payload = {}, identity = {}) {
+  const db = getAzobssBackendDb();
+  if (!db || !identity || !identity.uid) return [];
+  const docs = new Map();
+  const add = (docSnap) => {
+    if (!docSnap || !docSnap.exists) return;
+    const row = { id:docSnap.id, firestoreId:docSnap.id, ...(docSnap.data() || {}) };
+    if (!azMyPurchasesBelongsToIdentity(row, identity)) return;
+    if (!azPaBmPendingCartMatchPayload(row, payload)) return;
+    docs.set(docSnap.id, { doc:docSnap, row });
+  };
+  const directId = cleanPremiumText(payload.firestoreId || payload.purchaseLogId || payload.recordId || payload.id || "", 180);
+  if (directId) {
+    try { add(await db.collection("purchaseLogs").doc(directId).get()); } catch (_) {}
+  }
+  const queryPairs = [
+    ["paymentOrderId", payload.paymentOrderId || payload.orderId],
+    ["orderId", payload.orderId || payload.paymentOrderId],
+    ["billCode", payload.billCode],
+    ["itemCode", payload.itemCode]
+  ];
+  for (const [field, rawValue] of queryPairs) {
+    const value = cleanPremiumText(rawValue || "", 180);
+    if (!value) continue;
+    try {
+      const snap = await db.collection("purchaseLogs").where(field, "==", value).limit(80).get();
+      snap.forEach(add);
+    } catch (_) {}
+    if (docs.size && (field === "paymentOrderId" || field === "orderId" || field === "billCode")) break;
+  }
+  return Array.from(docs.values());
+}
+function azPaBmPendingCartPublicItem(row = {}) {
+  return {
+    productType: cleanPremiumText(row.productType || row.product || "PA", 40).toUpperCase(),
+    itemCode: cleanPremiumText(row.itemCode || row.stationNo || row.stesen || row.productId || "", 180),
+    negeri: cleanPremiumText(row.negeri || row.state || "", 120).toUpperCase(),
+    baseAmount: Number(row.baseAmount || row.amount || 0) || 0,
+    amount: Number(row.amount || 0) || 0,
+    priceAdjustmentCategory: cleanPremiumText(row.priceAdjustmentCategory || "", 80),
+    priceAdjustmentPercent: Number(row.priceAdjustmentPercent || 0) || 0,
+    productId: cleanPremiumText(row.productId || "", 180),
+    stationNo: cleanPremiumText(row.stationNo || "", 120),
+    jenis: cleanPremiumText(row.jenis || "", 10),
+    filename: cleanPremiumText(row.filename || "", 220),
+    downloadUrl: azobssSafeJupemDownloadUrl(row.downloadUrl || row.url || "", row.productType || row.product) || "",
+    variant: cleanPremiumText(row.variant || row.areaSize || "", 40).toUpperCase(),
+    areaRatio: Number(row.areaRatio || row.selectionAreaRatio || 0) || 0,
+    createdAtMs: Number(row.createdAtMs || 0) || Date.now()
+  };
+}
+async function azPaBmPendingCartAction(body = {}, identity = {}) {
+  if (!identity || !identity.uid) return { ok:false, statusCode:403, error:"Login token required." };
+  const action = String(body.action || "").trim().toLowerCase();
+  if (!["resume","remove"].includes(action)) return { ok:false, statusCode:400, error:"Unsupported pending cart action." };
+  const db = getAzobssBackendDb();
+  if (!db) return { ok:false, statusCode:503, error:"Purchase database is unavailable." };
+  const owned = await azPaBmPendingCartOwnedDocs(body, identity);
+  let target = owned.find(x => azPaBmPendingCartMatchPayload(x.row, body)) || owned[0] || null;
+
+  // Embedded fallback for very old rows that never received a purchaseLogs document.
+  let userSnap = null;
+  let embedded = [];
+  if (identity.userDocId) {
+    try {
+      userSnap = await db.collection("users").doc(identity.userDocId).get();
+      if (userSnap.exists) embedded = Array.isArray((userSnap.data() || {}).purchaseRecords) ? (userSnap.data() || {}).purchaseRecords : [];
+    } catch (_) {}
+  }
+  const embeddedTarget = embedded.find(row => azPaBmPendingCartMatchPayload(row || {}, body) && azPaBmPendingCartIsRemovable(row || {})) || null;
+  if (!target && embeddedTarget) target = { doc:null, row:{ ...embeddedTarget } };
+  if (!target) return { ok:false, statusCode:404, error:"Pending Payment record not found for this account." };
+  if (!azPaBmPendingCartIsRemovable(target.row)) {
+    return { ok:false, statusCode:409, error:azPaBmPendingCartIsPaid(target.row) ? "Payment is already verified and cannot be removed or re-carted." : "Pending Payment is no longer active." };
+  }
+
+  if (action === "remove") {
+    let removed = 0;
+    if (target.doc && target.doc.ref) {
+      try { await target.doc.ref.delete(); removed += 1; } catch (err) { throw err; }
+    }
+    if (userSnap && userSnap.exists && embedded.length) {
+      const next = embedded.filter(row => !azPaBmPendingCartExactRecordMatch(row || {}, target.row));
+      if (next.length !== embedded.length) {
+        await userSnap.ref.set({ purchaseRecords:next, purchaseRecordsUpdatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp(), updatedAt:firebaseAdmin.firestore.FieldValue.serverTimestamp() }, { merge:true });
+        removed += embedded.length - next.length;
+      }
+    }
+    return { ok:true, action:"remove", removed:removed > 0, removedCount:removed, recordId:String(target.row.firestoreId || target.row.id || "") };
+  }
+
+  const orderId = cleanPremiumText(target.row.paymentOrderId || target.row.orderId || body.paymentOrderId || body.orderId || "", 180);
+  const billCode = cleanPremiumText(target.row.billCode || body.billCode || "", 120);
+  let order = null;
+  try { order = await findPremiumOrderByAnyDeep({ orderId, billCode }); } catch (_) {}
+  if (order && !azMyPurchasesBelongsToIdentity(order, identity)) order = null;
+  if (order && azPaBmPendingCartIsPaid(order)) return { ok:false, statusCode:409, error:"Payment is already verified." };
+
+  let rowsForOrder = owned.map(x => x.row).filter(row => azPaBmPendingCartIsRemovable(row));
+  if (orderId) {
+    try {
+      const byOrder = new Map();
+      for (const field of ["paymentOrderId","orderId"]) {
+        const snap = await db.collection("purchaseLogs").where(field, "==", orderId).limit(100).get();
+        snap.forEach(d => {
+          const row = { id:d.id, firestoreId:d.id, ...(d.data() || {}) };
+          if (azMyPurchasesBelongsToIdentity(row, identity) && azPaBmPendingCartIsRemovable(row)) byOrder.set(d.id, row);
+        });
+      }
+      if (byOrder.size) rowsForOrder = Array.from(byOrder.values());
+    } catch (_) {}
+  }
+
+  const rawItems = order && Array.isArray(order.paBmItems) && order.paBmItems.length ? order.paBmItems : rowsForOrder;
+  const items = rawItems.map(azPaBmPendingCartPublicItem).filter(item => item.itemCode && item.negeri && item.amount > 0);
+  const resolvedOrderId = cleanPremiumText((order && order.orderId) || orderId || target.row.orderId || "", 180);
+  const resolvedBillCode = cleanPremiumText((order && order.billCode) || billCode || target.row.billCode || "", 120);
+  const paymentUrl = cleanPremiumUrl((order && order.paymentUrl) || target.row.paymentUrl || (resolvedBillCode ? `${TOYYIB_BASE_URL}/${encodeURIComponent(resolvedBillCode)}` : ""));
+  if (!resolvedOrderId || !paymentUrl || !items.length) return { ok:false, statusCode:409, error:"Pending Payment information is incomplete. Please remove it and create a new cart." };
+  return {
+    ok:true,
+    action:"resume",
+    order:{
+      orderId:resolvedOrderId,
+      billCode:resolvedBillCode,
+      paymentUrl,
+      amount:Number((order && (order.saleAmount || order.amount)) || items.reduce((sum,item)=>sum+Number(item.amount||0),0)) || 0,
+      itemCount:items.length,
+      items
+    }
+  };
+}
+
 function azMyPurchasesMs(row = {}) {
   const direct = Number(row.paidAtMs || row.completedAtMs || row.updatedAtMs || row.createdAtMs || row.createdMs || row.timestampMs || 0);
   if (Number.isFinite(direct) && direct > 0) return direct;
@@ -18027,6 +18197,7 @@ async function handler(req, res) {
     if (pathname.startsWith("/api/premium/download-session/") && (req.method === "GET" || req.method === "HEAD") && azRateLimitOrSend(req, res, "premium-download-session", 500, 60 * 1000)) return;
     if (pathname.startsWith("/api/premium/receipt/") && req.method === "GET" && azRateLimitOrSend(req, res, "premium-receipt", 40, 5 * 60 * 1000)) return;
     if (pathname === "/api/my-purchases" && req.method === "GET" && azRateLimitOrSend(req, res, "my-purchases-read", 80, 10 * 60 * 1000)) return;
+    if (pathname === "/api/pa-bm/pending-cart-action" && req.method === "POST" && azRateLimitOrSend(req, res, "pa-bm-pending-cart-action", 40, 10 * 60 * 1000)) return;
     if (pathname === "/api/stesen-tanda-aras/maps" && req.method === "GET" && azRateLimitOrSend(req, res, "benchmark-maps", 120, 10 * 60 * 1000)) return;
     if (pathname === "/api/stesen-gps/maps" && req.method === "GET" && azRateLimitOrSend(req, res, "gps-maps", 120, 10 * 60 * 1000)) return;
     if (pathname.startsWith("/api/my-purchases/delete/") && req.method === "DELETE" && azRateLimitOrSend(req, res, "my-purchases-delete", 40, 10 * 60 * 1000)) return;
@@ -19698,6 +19869,22 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({ ok:true, scope:"own-account-only", patch:"415", count:records.length, records }, null, 2), "application/json");
       } catch (err) {
         return send(res, 500, JSON.stringify({ ok:false, error: err && err.message ? err.message : String(err), records:[] }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/pa-bm/pending-cart-action" && req.method === "POST") {
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity || !identity.uid) return send(res, 403, JSON.stringify({ ok:false, error:"Login token required." }, null, 2), "application/json");
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body." }, null, 2), "application/json"); }
+        const result = await azPaBmPendingCartAction(body, identity);
+        const status = Number(result.statusCode || 0) || (result.ok ? 200 : 400);
+        const clean = { ...result }; delete clean.statusCode;
+        return send(res, status, JSON.stringify(clean, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : String(err) }, null, 2), "application/json");
       }
     }
 

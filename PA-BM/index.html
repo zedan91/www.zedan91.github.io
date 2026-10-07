@@ -12822,7 +12822,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
 }
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1245" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1155"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1246" type="module"></script><script type="module" src="/assets/js/azobss-firebase-live-likes-sync.js?v=1155"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -13122,7 +13122,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
 <style id="azobss-pa-bm-compact-table-final-fix">
 /* AZOBSS Latest Purchase List compact table final */
 #userPaPurchaseList.user-pa-list{display:block!important;overflow-x:auto!important;border:1px solid rgba(148,163,184,.20)!important;border-radius:12px!important;background:rgba(10,20,36,.50)!important;}
-#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 90px 155px!important;align-items:center!important;gap:0!important;min-width:920px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
+#userPaPurchaseList .compact-purchase-row{display:grid!important;grid-template-columns:44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 90px 225px!important;align-items:center!important;gap:0!important;min-width:990px!important;min-height:38px!important;padding:0 12px!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(148,163,184,.22)!important;background:transparent!important;box-shadow:none!important;}
 #userPaPurchaseList .compact-purchase-row:last-child{border-bottom:0!important;}
 #userPaPurchaseList .compact-table-header{min-height:32px!important;background:rgba(8,16,30,.70)!important;color:#dbeafe!important;font-size:12px!important;font-weight:900!important;text-transform:none!important;position:sticky!important;top:0!important;z-index:2!important;}
 #userPaPurchaseList .compact-table-row{font-size:12px!important;color:#e5e7eb!important;}
@@ -13139,6 +13139,9 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
 #userPaPurchaseList .user-pa-download.is-locked{background:#334155!important;color:#e5e7eb!important;min-width:92px!important;}
 #userPaPurchaseList .user-pa-pending-action{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;}
 #userPaPurchaseList .user-pa-uncart-btn{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:7px!important;font-size:11px!important;font-weight:900!important;}
+#userPaPurchaseList .user-pa-recart-btn{height:28px!important;min-height:28px!important;padding:0 8px!important;border:1px solid #22c55e!important;border-radius:7px!important;background:#0f5132!important;color:#dcfce7!important;font-size:10px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;cursor:pointer!important;box-shadow:0 2px 0 #073b24!important;}
+#userPaPurchaseList .user-pa-recart-btn:hover{filter:brightness(1.12)!important;transform:translateY(-1px)!important;}
+#userPaPurchaseList .user-pa-recart-btn:disabled{opacity:.65!important;cursor:wait!important;transform:none!important;}
 .az-purchase-bulk-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:8px 0 10px;padding:8px 10px;border:1px solid rgba(96,165,250,.28);border-radius:7px;background:rgba(15,30,52,.72);}
 .az-purchase-bulk-tools[hidden]{display:none!important;}
 .az-purchase-select-all-label{display:inline-flex;align-items:center;gap:7px;color:#dbeafe;font-size:12px;font-weight:900;cursor:pointer;}
@@ -13146,7 +13149,7 @@ body.pa-bm-page.pabm-owner-admin #purchaseSummaryList .az-purchase-detail-delete
 #userPaDeleteSelectedRecords{min-height:30px;padding:5px 12px;border:1px solid #ef4444;border-radius:6px;background:#b91c1c;color:#fff;font-size:12px;font-weight:900;box-shadow:0 2px 0 #641414;cursor:pointer;}
 #userPaDeleteSelectedRecords:disabled{border-color:#475569;background:#334155;color:#94a3b8;box-shadow:none;cursor:not-allowed;}
 #userPaPurchaseList .col-select{display:none!important;align-items:center!important;justify-content:center!important;overflow:visible!important;}
-body.pabm-owner-admin #userPaPurchaseList .compact-purchase-row{grid-template-columns:32px 44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 155px!important;}
+body.pabm-owner-admin #userPaPurchaseList .compact-purchase-row{grid-template-columns:32px 44px minmax(120px,1.05fr) minmax(120px,.95fr) 85px minmax(165px,1.15fr) 95px 225px!important;}
 body.pabm-owner-admin #userPaPurchaseList .col-select{display:flex!important;}
 
 /* AZOBSS desktop action one-line fix: keep Pending Payment + uncart icon in one row */
@@ -15700,7 +15703,7 @@ body:not(.pa-bm-page) button{
 
 <script src="/assets/js/azobss-lot-selection-map.js?v=1204" defer></script>
 <script src="/assets/js/azobss-pabm-map-search.js?v=1135" defer></script>
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=1122"></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=1246"></script>
 <script src="/assets/js/azobss-pabm-result-layout.js?v=3" defer></script>
 <script src="/assets/js/azobss-pa-search.js?v=1125" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=12" defer></script>

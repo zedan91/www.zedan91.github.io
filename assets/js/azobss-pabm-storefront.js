@@ -258,6 +258,16 @@ function readCart() {
       .map((item) => {
         const type = String(item.productType || '').trim().toUpperCase();
         if (!PRODUCT_TYPES.has(type)) return item;
+        // A re-carted Pending Payment must keep the exact server-side bill amount.
+        // Do not re-price it from a newer profile while the same ToyyibPay bill is being resumed.
+        if (item.restoredFromPending === true && item.resumeOrderId && item.resumePaymentUrl) {
+          const areaRatio = selectionAreaRatio(item);
+          if (Number(item.areaRatio || 0) !== areaRatio) {
+            migrated = true;
+            return { ...item, areaRatio };
+          }
+          return item;
+        }
         const suppliedBase = Number(item.baseAmount || 0) > 0 ? Number(item.baseAmount) : Number(item.amount || 0);
         const baseAmount = baseProductPrice(type, item.variant, suppliedBase);
         const priceAdjustmentCategory = priceCategoryForType(type);
@@ -518,6 +528,77 @@ async function addToStoreCart(payload) {
   return { ...item, __azobssAlreadyInCart: exists };
 }
 
+function pendingResumeCartKey(orderId, items) {
+  const ids = (items || []).map((item) => String(item && item.id || '')).filter(Boolean).sort();
+  return String(orderId || '') + '|' + ids.join('~');
+}
+
+async function restorePendingOrderToCart(order) {
+  if (!requireLogin()) throw new Error('Sila log masuk sebelum memulihkan troli anda.');
+  const rawItems = Array.isArray(order && order.items) ? order.items : [];
+  const orderId = String(order && order.orderId || '').trim();
+  const billCode = String(order && order.billCode || '').trim();
+  const paymentUrl = String(order && order.paymentUrl || '').trim();
+  if (!orderId || !paymentUrl || !rawItems.length) throw new Error('Rekod Pending Payment ini tidak mempunyai maklumat pembayaran yang lengkap.');
+  const normalized = rawItems.map((raw) => {
+    const item = normalizeItem({ ...(raw || {}), addedAtMs: Number(raw && raw.createdAtMs || Date.now()) });
+    const pendingAmount = Number(raw && raw.amount || 0);
+    const pendingBaseAmount = Number(raw && raw.baseAmount || 0);
+    return {
+      ...item,
+      baseAmount: pendingBaseAmount > 0 ? pendingBaseAmount : item.baseAmount,
+      amount: pendingAmount > 0 ? pendingAmount : item.amount,
+      priceAdjustmentCategory: String(raw && raw.priceAdjustmentCategory || item.priceAdjustmentCategory || ''),
+      priceAdjustmentPercent: Number(raw && raw.priceAdjustmentPercent ?? item.priceAdjustmentPercent ?? 0)
+    };
+  });
+  const resumeCartKey = pendingResumeCartKey(orderId, normalized);
+  const restored = normalized.map((item) => ({
+    ...item,
+    resumeOrderId: orderId,
+    resumeBillCode: billCode,
+    resumePaymentUrl: paymentUrl,
+    resumeItemCount: normalized.length,
+    resumeCartKey,
+    restoredFromPending: true
+  }));
+  writeCart(restored);
+  setCartSyncStatus(`Pending Payment dipulihkan semula ke troli (${restored.length} item).`);
+  const cartPanel = document.getElementById('pabmStoreCartPanel');
+  if (cartPanel) {
+    cartPanel.classList.remove('is-cart-updated');
+    window.requestAnimationFrame(() => cartPanel.classList.add('is-cart-updated'));
+    window.setTimeout(() => cartPanel.classList.remove('is-cart-updated'), 1800);
+    try { cartPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {}
+  }
+  return restored;
+}
+
+function removeRecordFromStoreCart(payload) {
+  let targetId = '';
+  try { targetId = normalizeItem(payload || {}).id; } catch (_) {}
+  if (!targetId) return 0;
+  const items = readCart();
+  const next = items.filter((item) => String(item && item.id || '') !== targetId);
+  if (next.length === items.length) return 0;
+  writeCart(next);
+  return items.length - next.length;
+}
+
+function resumablePendingCheckout(items) {
+  if (!Array.isArray(items) || !items.length) return null;
+  const first = items[0] || {};
+  const orderId = String(first.resumeOrderId || '').trim();
+  const paymentUrl = String(first.resumePaymentUrl || '').trim();
+  const billCode = String(first.resumeBillCode || '').trim();
+  const expectedCount = Number(first.resumeItemCount || 0);
+  const expectedKey = String(first.resumeCartKey || '').trim();
+  if (!orderId || !paymentUrl || expectedCount !== items.length || !expectedKey) return null;
+  if (items.some((item) => String(item.resumeOrderId || '') !== orderId || String(item.resumePaymentUrl || '') !== paymentUrl || Number(item.resumeItemCount || 0) !== expectedCount || String(item.resumeCartKey || '') !== expectedKey)) return null;
+  if (pendingResumeCartKey(orderId, items) !== expectedKey) return null;
+  return { orderId, billCode, paymentUrl };
+}
+
 function hydrateStateSelects() {
   const source = document.getElementById('negeri');
   if (!source) return;
@@ -767,6 +848,21 @@ async function proceedToPayment() {
       paymentButton.textContent = 'Menyediakan Pembayaran...';
     }
     if (status) status.textContent = 'Menyemak troli dan menyediakan bil pembayaran selamat...';
+    const resumable = resumablePendingCheckout(items);
+    if (resumable) {
+      if (status) status.textContent = 'Membuka semula Pending Payment yang sama...';
+      if (resumable.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', resumable.orderId);
+      if (resumable.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', resumable.billCode);
+      try {
+        localStorage.setItem('azobss_pa_bm_pending_return', JSON.stringify({
+          orderId: resumable.orderId,
+          billCode: resumable.billCode,
+          savedAt: Date.now()
+        }));
+      } catch (_) {}
+      window.location.href = resumable.paymentUrl;
+      return;
+    }
     await ensureCheckoutBackend(items);
     const token = await auth.currentUser.getIdToken();
     const response = await fetch(`${BACKEND_BASE}/api/toyyib/create-pa-bm-bill`, {
@@ -975,7 +1071,14 @@ async function init() {
   bindAdminTestPaymentButton();
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
-  window.azobssPaBmStoreCart = { read: readCart, add: addToStoreCart, clear: () => writeCart([]), render: renderCart };
+  window.azobssPaBmStoreCart = {
+    read: readCart,
+    add: addToStoreCart,
+    clear: () => writeCart([]),
+    render: renderCart,
+    restorePendingOrder: restorePendingOrderToCart,
+    removeRecord: removeRecordFromStoreCart
+  };
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {
