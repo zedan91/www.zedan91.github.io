@@ -30,15 +30,27 @@
     });
   }
 
+  function syncStateButtonActive(holder, select) {
+    if (!holder || !select) return;
+    const selected = String(select.value || '');
+    holder.querySelectorAll('.pabm-state-button').forEach(function (row) {
+      const isActive = String(row.getAttribute('data-state-value') || '') === selected;
+      row.classList.toggle('is-active', isActive);
+      row.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
   function renderStateButtons(holder, select) {
     if (!holder || !select) return;
     const options = Array.from(select.options || []).filter(function (option) { return option.value; });
     if (!options.length) return;
     holder.innerHTML = options.map(function (option) {
-      const active = select.value === option.value ? ' is-active' : '';
-      return '<button class="pabm-state-button' + active + '" type="button" data-state-value="' + escapeHtml(option.value) + '">' +
+      const isActive = select.value === option.value;
+      const active = isActive ? ' is-active' : '';
+      return '<button class="pabm-state-button' + active + '" type="button" aria-pressed="' + (isActive ? 'true' : 'false') + '" data-state-value="' + escapeHtml(option.value) + '">' +
         escapeHtml(STATE_LABELS[option.value] || option.textContent) + '</button>';
     }).join('');
+    syncStateButtonActive(holder, select);
   }
 
   function bindStatePicker(holder) {
@@ -52,10 +64,12 @@
       if (!button || !holder.contains(button)) return;
       event.preventDefault();
       select.value = button.getAttribute('data-state-value') || '';
+      // v1252: mark by VALUE before dispatching change. The change listener
+      // rebuilds the button DOM synchronously, so comparing against the old
+      // clicked node after dispatch caused every button to lose is-active.
+      syncStateButtonActive(holder, select);
       select.dispatchEvent(new Event('change', { bubbles:true }));
-      holder.querySelectorAll('.pabm-state-button').forEach(function (row) {
-        row.classList.toggle('is-active', row === button);
-      });
+      syncStateButtonActive(holder, select);
     });
     select.addEventListener('change', function () { renderStateButtons(holder, select); });
   }

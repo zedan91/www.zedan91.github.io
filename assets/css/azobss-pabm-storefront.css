@@ -481,7 +481,7 @@ body.pa-bm-page .benchmark-form label {
   font-weight: 800;
 }
 
-/* v1251: state selectors must never fall back to the legacy dropdown UI.
+/* v1252: state selectors must never fall back to the legacy dropdown UI.
    The real <select> remains in the DOM for accessibility/form compatibility, but
    the visible control is always the all-state button grid. */
 body.pa-bm-page .request-form select.pabm-state-select,
@@ -535,9 +535,19 @@ body.pa-bm-page .pabm-product-button:hover {
 
 body.pa-bm-page .pabm-state-button.is-active,
 body.pa-bm-page .pabm-product-button.is-active {
-  border-color: #60a5fa;
+  border-color: #93c5fd;
   background: #2563eb;
   color: #fff;
+  box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.55), 0 2px 0 #07101d;
+}
+
+/* v1252: keep the selected state visually obvious even after other PA/BM
+   change handlers run. aria-pressed mirrors is-active for accessibility. */
+body.pa-bm-page .pabm-state-button[aria-pressed="true"] {
+  border-color: #93c5fd;
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.55), 0 2px 0 #07101d;
 }
 
 body.pa-bm-page .pabm-product-switch {

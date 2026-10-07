@@ -672,14 +672,27 @@ function hydrateStateSelects() {
   });
 }
 
+function syncStatePickerActive(holder, select) {
+  const selected = String(select?.value || '');
+  holder.querySelectorAll('.pabm-state-button').forEach((row) => {
+    const isActive = String(row.dataset.stateValue || '') === selected;
+    row.classList.toggle('is-active', isActive);
+    row.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
 function setupStatePicker(holder) {
   const select = document.getElementById(holder.dataset.statePickerFor || '');
   if (!select) return;
   const options = Array.from(select.options).filter((option) => option.value);
-  holder.innerHTML = options.map((option) => `
-    <button class="pabm-state-button${select.value === option.value ? ' is-active' : ''}" type="button" data-state-value="${escapeHtml(option.value)}">${escapeHtml(STATE_LABELS[option.value] || option.textContent)}</button>
-  `).join('');
-  // v1251: the classic early bridge may already own this holder so the state
+  holder.innerHTML = options.map((option) => {
+    const isActive = select.value === option.value;
+    return `
+    <button class="pabm-state-button${isActive ? ' is-active' : ''}" type="button" aria-pressed="${isActive ? 'true' : 'false'}" data-state-value="${escapeHtml(option.value)}">${escapeHtml(STATE_LABELS[option.value] || option.textContent)}</button>
+  `;
+  }).join('');
+  syncStatePickerActive(holder, select);
+  // v1252: the classic early bridge may already own this holder so the state
   // grid is interactive before Firebase/module loading finishes. Reuse that
   // delegated listener instead of binding a duplicate click handler.
   if (holder.dataset.pabmStateBound === '1') return;
@@ -688,8 +701,9 @@ function setupStatePicker(holder) {
     const button = event.target.closest('[data-state-value]');
     if (!button) return;
     select.value = button.dataset.stateValue || '';
+    syncStatePickerActive(holder, select);
     select.dispatchEvent(new Event('change', { bubbles: true }));
-    holder.querySelectorAll('.pabm-state-button').forEach((row) => row.classList.toggle('is-active', row === button));
+    syncStatePickerActive(holder, select);
   });
 }
 
@@ -1127,7 +1141,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1251 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1252 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
