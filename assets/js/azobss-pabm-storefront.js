@@ -425,50 +425,25 @@ async function toggleTableCartButton(event) {
   const payload = decodeCartButtonPayload(button);
   if (!payload) return;
 
-  // v1253: the storefront capture handler is now the single owner of ALL table
-  // cart-button clicks (PA/GPS/BM/SBM/Syit). Previously it only handled removal;
-  // first-time Add to Cart was left to each search module's bubbling handler.
-  // Any timing/module failure there meant the blue cart button reacted but Troli
-  // Anda stayed at 0. Handle both ADD and REMOVE here before bubbling can diverge.
-  event.preventDefault();
-  event.stopPropagation();
-  event.stopImmediatePropagation();
-
   let itemId = '';
   try {
     itemId = normalizeItem(payload).id;
-  } catch (error) {
-    setCartSyncStatus(error && error.message ? error.message : 'Item ini tidak dapat ditambah ke troli.');
+  } catch (_) {
     return;
   }
 
   const items = readCart();
   const index = items.findIndex((item) => String(item && item.id || '') === itemId);
-  button.dataset.cartToggleBusy = '1';
-  button.disabled = true;
+  if (index < 0) return;
 
-  if (index < 0) {
-    try {
-      const saved = await addToStoreCart(payload);
-      const message = saved && saved.__azobssAlreadyInCart
-        ? 'Item ini sudah ada dalam Troli Anda.'
-        : 'Item berjaya ditambah ke Troli Anda.';
-      setCartSyncStatus(message);
-      if (typeof window.azShowToast === 'function') window.azShowToast(message);
-    } catch (error) {
-      const message = error && error.message ? error.message : 'Item ini tidak dapat ditambah ke troli.';
-      setCartSyncStatus(message);
-      if (typeof window.azShowToast === 'function') window.azShowToast(message);
-    } finally {
-      delete button.dataset.cartToggleBusy;
-      button.disabled = false;
-      scheduleTableCartButtonSync();
-    }
-    return;
-  }
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
 
   const removedItem = items[index];
   items.splice(index, 1);
+  button.dataset.cartToggleBusy = '1';
+  button.disabled = true;
   writeCart(items);
   setCartSyncStatus('Item berjaya dibuang daripada troli.');
 
@@ -1201,12 +1176,11 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
-  window.__AZOBSS_PABM_CART_RECORD_PURCHASE__ = addToStoreCart;
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();
   document.addEventListener('click', guardCartAction, true);
-  if (!window.__AZOBSS_PABM_EARLY_CART_OWNER__) document.addEventListener('click', toggleTableCartButton, true);
+  document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {
     const mapButton = event.target.closest('[data-jupem-lot-map]');
     if (mapButton) {
