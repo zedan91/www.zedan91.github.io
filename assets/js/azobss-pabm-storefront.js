@@ -120,7 +120,11 @@ function savedUser() {
 function userKey() {
   const firebaseUser = auth && auth.currentUser;
   const localUser = savedUser() || {};
-  return String((firebaseUser && firebaseUser.uid) || localUser.uid || localUser.usernameKey || localUser.username || '').trim();
+  // v1253: keep the cart owner key stable while Firebase Auth is hydrating.
+  // Previously firebase uid was preferred first. A click made before auth.currentUser
+  // became available could write to the username/local key, then the next render
+  // switched to the uid key and the newly-added item appeared to vanish.
+  return String(localUser.uid || localUser.usernameKey || localUser.username || (firebaseUser && firebaseUser.uid) || '').trim();
 }
 
 function cartKey() {
@@ -137,7 +141,10 @@ function openLogin() {
 }
 
 function requireLogin() {
-  if (auth && auth.currentUser) return true;
+  // v1253: adding to the local cart must not fail just because Firebase Auth has
+  // not finished restoring its session yet. AZOBSS already has a saved signed-in
+  // profile at this point; checkout still performs the stricter Firebase token check.
+  if ((auth && auth.currentUser) || savedUser() || (typeof window.hasSavedLogin === 'function' && window.hasSavedLogin())) return true;
   openLogin();
   return false;
 }
@@ -418,25 +425,50 @@ async function toggleTableCartButton(event) {
   const payload = decodeCartButtonPayload(button);
   if (!payload) return;
 
+  // v1253: the storefront capture handler is now the single owner of ALL table
+  // cart-button clicks (PA/GPS/BM/SBM/Syit). Previously it only handled removal;
+  // first-time Add to Cart was left to each search module's bubbling handler.
+  // Any timing/module failure there meant the blue cart button reacted but Troli
+  // Anda stayed at 0. Handle both ADD and REMOVE here before bubbling can diverge.
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+
   let itemId = '';
   try {
     itemId = normalizeItem(payload).id;
-  } catch (_) {
+  } catch (error) {
+    setCartSyncStatus(error && error.message ? error.message : 'Item ini tidak dapat ditambah ke troli.');
     return;
   }
 
   const items = readCart();
   const index = items.findIndex((item) => String(item && item.id || '') === itemId);
-  if (index < 0) return;
+  button.dataset.cartToggleBusy = '1';
+  button.disabled = true;
 
-  event.preventDefault();
-  event.stopPropagation();
-  event.stopImmediatePropagation();
+  if (index < 0) {
+    try {
+      const saved = await addToStoreCart(payload);
+      const message = saved && saved.__azobssAlreadyInCart
+        ? 'Item ini sudah ada dalam Troli Anda.'
+        : 'Item berjaya ditambah ke Troli Anda.';
+      setCartSyncStatus(message);
+      if (typeof window.azShowToast === 'function') window.azShowToast(message);
+    } catch (error) {
+      const message = error && error.message ? error.message : 'Item ini tidak dapat ditambah ke troli.';
+      setCartSyncStatus(message);
+      if (typeof window.azShowToast === 'function') window.azShowToast(message);
+    } finally {
+      delete button.dataset.cartToggleBusy;
+      button.disabled = false;
+      scheduleTableCartButtonSync();
+    }
+    return;
+  }
 
   const removedItem = items[index];
   items.splice(index, 1);
-  button.dataset.cartToggleBusy = '1';
-  button.disabled = true;
   writeCart(items);
   setCartSyncStatus('Item berjaya dibuang daripada troli.');
 
@@ -1141,7 +1173,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1252 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1253 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
