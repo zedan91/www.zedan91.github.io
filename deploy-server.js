@@ -975,13 +975,50 @@ function azIdentityTrustedForBackendAdmin(identity = {}) {
   if (uid && uids.has(uid)) return true;
   return false;
 }
+
+const AZOBSS_FIREBASE_WEB_API_KEY = String(process.env.FIREBASE_WEB_API_KEY || process.env.AZOBSS_FIREBASE_WEB_API_KEY || "AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8").trim();
+async function azVerifyFirebaseIdTokenViaIdentityToolkit(token) {
+  if (!token || !AZOBSS_FIREBASE_WEB_API_KEY) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+  try {
+    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(AZOBSS_FIREBASE_WEB_API_KEY)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken: token }),
+      signal: controller.signal
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !Array.isArray(data.users) || !data.users.length) return null;
+    const row = data.users[0] || {};
+    const uid = String(row.localId || "").trim();
+    if (!uid) return null;
+    return { uid, email: String(row.email || "").trim().toLowerCase() };
+  } catch (err) {
+    console.warn("Firebase Identity Toolkit token fallback failed:", err && (err.message || err));
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function azCommissionIdentityFromRequest(req) {
   try {
-    if (!initFirebaseAdmin() || !firebaseAdmin || !firebaseAdmin.auth) return null;
     const h = String(req.headers.authorization || "");
     const token = h.replace(/^Bearer\s+/i, "").trim();
     if (!token) return null;
-    const decoded = await firebaseAdmin.auth().verifyIdToken(token);
+    let decoded = null;
+    if (initFirebaseAdmin() && firebaseAdmin && firebaseAdmin.auth) {
+      try {
+        decoded = await firebaseAdmin.auth().verifyIdToken(token);
+      } catch (err) {
+        console.warn("Commission Firebase Admin token verify failed; trying secure Identity Toolkit fallback:", err && (err.message || err));
+      }
+    }
+    if (!decoded) {
+      const verified = await azVerifyFirebaseIdTokenViaIdentityToolkit(token);
+      if (!verified) return null;
+      decoded = { uid: verified.uid, email: verified.email };
+    }
     const db = getAzobssBackendDb();
     const decodedEmail = String(decoded.email || "").toLowerCase();
     const identity = {

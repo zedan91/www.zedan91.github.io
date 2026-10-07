@@ -103,6 +103,39 @@ async function getPaBmAuthToken(forceRefresh = false) {
   }
   return user ? user.getIdToken(Boolean(forceRefresh)) : '';
 }
+
+async function getFreshCheckoutAuthToken() {
+  if (!auth) return '';
+  let user = auth.currentUser;
+  if (!user) {
+    await getPaBmAuthToken(false).catch(() => '');
+    user = auth.currentUser;
+  }
+  if (!user) return '';
+  try { await user.reload(); } catch (_) {}
+  try { return await user.getIdToken(true); } catch (_) {}
+  try { return await user.getIdToken(false); } catch (_) {}
+  return '';
+}
+
+async function postPaBmCheckoutWithAuthRetry(payload) {
+  let token = await getFreshCheckoutAuthToken();
+  if (!token) throw new Error('Sesi log masuk pembayaran belum tersedia. Sila log masuk semula.');
+  const send = (authToken) => fetch(`${BACKEND_BASE}/api/toyyib/create-pa-bm-bill`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken },
+    body: JSON.stringify(payload)
+  });
+  let response = await send(token);
+  if (response.status !== 401) return response;
+
+  // v1256: a long-lived/incognito tab can keep a visible saved AZOBSS profile while
+  // Firebase rotates/refreshes the ID token underneath it. Refresh once and retry
+  // before telling the user to sign in again.
+  token = await getFreshCheckoutAuthToken();
+  if (!token) return response;
+  return send(token);
+}
 let paymentButton = null;
 let adminTestPaymentButton = null;
 let totalObserver = null;
@@ -504,6 +537,32 @@ async function removePendingPurchaseItems(payload) {
   const remover = await waitForPendingCartRemover();
   if (!remover) throw new Error('Sistem rekod pembelian belum tersedia. Sila muat semula halaman.');
   return remover(payload);
+}
+
+function removeCartItemImmediately(event) {
+  const button = event.target && event.target.closest ? event.target.closest('[data-pabm-remove]') : null;
+  if (!button) return;
+  const items = readCart();
+  const index = Number(button.dataset.pabmRemove);
+  if (!Number.isInteger(index) || index < 0 || index >= items.length) return;
+  const removedItem = items[index];
+
+  // Own the X button at capture phase. This keeps local cart removal independent
+  // from Firestore/payment-history cleanup and from any later bubbling handler.
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  items.splice(index, 1);
+  writeCart(items);
+  setCartSyncStatus('Item telah dibuang daripada Troli Anda.');
+
+  // Pending-record cleanup is best-effort only. v1250+ no longer creates unpaid
+  // purchase-history rows, so a cleanup failure must never put the cart item back.
+  Promise.resolve(removePendingPurchaseItems(items.length ? removedItem : { all: true }))
+    .then((removedCount) => {
+      if (removedCount) setCartSyncStatus('Item dan rekod pembayaran belum selesai telah dibuang.');
+    })
+    .catch(() => {});
 }
 
 async function reconcileEmptyStoredCart() {
@@ -926,7 +985,8 @@ async function proceedToPayment() {
   const status = document.getElementById('paBmToyyibStatus');
   const oldText = paymentButton ? paymentButton.textContent : '';
   try {
-    if (!auth || !auth.currentUser) throw new Error('Sesi log masuk anda belum tersedia. Sila log masuk semula.');
+    const checkoutToken = await getFreshCheckoutAuthToken();
+    if (!checkoutToken) throw new Error('Sesi log masuk pembayaran belum tersedia. Sila log masuk semula.');
     if (paymentButton) {
       paymentButton.disabled = true;
       paymentButton.textContent = 'Menyediakan Pembayaran...';
@@ -949,12 +1009,7 @@ async function proceedToPayment() {
       return;
     }
     await ensureCheckoutBackend(items);
-    const token = await auth.currentUser.getIdToken();
-    const response = await fetch(`${BACKEND_BASE}/api/toyyib/create-pa-bm-bill`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify(checkoutPayload(items))
-    });
+    const response = await postPaBmCheckoutWithAuthRetry(checkoutPayload(items));
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok) throw new Error(data.error || 'Bil pembayaran tidak dapat dibuat.');
     assertCheckoutResponse(data, items);
@@ -1148,7 +1203,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1254 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1256 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1179,6 +1234,7 @@ async function init() {
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();
+  document.addEventListener('click', removeCartItemImmediately, true);
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {
@@ -1193,23 +1249,6 @@ async function init() {
       event.preventDefault();
       addConfiguredProduct(addButton);
       return;
-    }
-    const button = event.target.closest('[data-pabm-remove]');
-    if (!button) return;
-    const items = readCart();
-    const index = Number(button.dataset.pabmRemove);
-    const removedItem = items[index];
-    if (!removedItem) return;
-    items.splice(index, 1);
-    writeCart(items);
-    setCartSyncStatus('Sedang membuang rekod Pending Payment...');
-    try {
-      const removedCount = await removePendingPurchaseItems(items.length ? removedItem : { all: true });
-      setCartSyncStatus(removedCount
-        ? 'Item dan rekod Pending Payment telah dibuang.'
-        : 'Item telah dibuang daripada troli.');
-    } catch (error) {
-      setCartSyncStatus(error.message || 'Troli telah dikemas kini, tetapi rekod pembelian belum dapat disegerakkan.');
     }
   });
   window.addEventListener('storage', renderCart);
