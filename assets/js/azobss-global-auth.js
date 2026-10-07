@@ -6048,8 +6048,33 @@ async function azobssPayPaBmToyyib(){
     if(btn){ btn.disabled = false; btn.textContent = oldText || 'Proceed to Payment'; }
   }
 }
+function azobssIsDedicatedPaBmStorefrontPage(){
+  return window.__AZOBSS_PABM_PAGE__ === true
+    || /^\/PA-BM(?:\/|$)/i.test(window.location.pathname || '')
+    || !!(document.body && document.body.classList.contains('pa-bm-page'));
+}
 function bindAzobssPaBmToyyibButton(){
   const btn = document.getElementById('payPaBmToyyibButton');
+
+  // v1261: /PA-BM/ has a dedicated cart/storefront checkout owner.
+  // The legacy global-auth payment handler builds its amount from purchaseLogs
+  // and sends create-pa-bm-bill WITHOUT a Firebase Authorization header. When
+  // both handlers bind the same button, the legacy request is the one that
+  // produces the misleading backend 401 "Please login again..." even though
+  // the navbar is logged in. Never let global-auth own this button on /PA-BM/.
+  if(azobssIsDedicatedPaBmStorefrontPage()){
+    if(btn){
+      try{ btn.removeEventListener('click', azobssPayPaBmToyyib); }catch(_e){}
+      try{ delete btn.dataset.azobssToyyibBind; }catch(_e){}
+      btn.dataset.azobssCheckoutOwner = 'pabm-storefront';
+    }
+    // Keep only payment-return recovery from global-auth. The cart total and
+    // checkout click itself are exclusively managed by azobss-pabm-storefront.js.
+    azobssInstallPaBmPaymentReturnResumeWatch();
+    azobssCheckPaBmToyyibReturn();
+    return;
+  }
+
   if(btn && !btn.dataset.azobssToyyibBind){
     btn.dataset.azobssToyyibBind = '1';
     btn.addEventListener('click', azobssPayPaBmToyyib);
@@ -6058,7 +6083,9 @@ function bindAzobssPaBmToyyibButton(){
   azobssInstallPaBmPaymentReturnResumeWatch();
   azobssCheckPaBmToyyibReturn();
 }
-window.azobssPayPaBmToyyib = azobssPayPaBmToyyib;
+if(!azobssIsDedicatedPaBmStorefrontPage()){
+  window.azobssPayPaBmToyyib = azobssPayPaBmToyyib;
+}
 
 function filterPurchaseRows(records, keyword){
   const q = String(keyword || '').trim().toLowerCase();
