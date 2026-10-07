@@ -1173,7 +1173,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1253 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1254 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1206,7 +1206,7 @@ async function init() {
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();
   document.addEventListener('click', guardCartAction, true);
-  document.addEventListener('click', toggleTableCartButton, true);
+  if (!window.__AZOBSS_PABM_EARLY_CART_OWNER__) document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {
     const mapButton = event.target.closest('[data-jupem-lot-map]');
     if (mapButton) {

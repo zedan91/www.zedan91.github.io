@@ -6175,7 +6175,7 @@ async function azobssWaitForPaBmStoreCart(timeoutMs){
   // finishes its async startup. Wait for the cart API instead of telling the user
   // to reload the whole page.
   try{
-    await import('/assets/js/azobss-pabm-storefront.js?v=1249');
+    await import('/assets/js/azobss-pabm-storefront.js?v=1254');
   }catch(_){ }
 
   const afterImport = azobssReadyPaBmStoreCart();

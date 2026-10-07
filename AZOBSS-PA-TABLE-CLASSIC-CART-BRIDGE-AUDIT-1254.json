@@ -1,0 +1,25 @@
+{
+  "version": 1254,
+  "date": "2026-10-08",
+  "issue": "PA Carian Umum blue cart button can be clicked while Troli Anda remains at 0 item",
+  "rootCause": "v1253's table-cart click owner still lived inside azobss-pabm-storefront.js (an ES module). The PA results table can become interactive before that module finishes its Firebase/price-adjustment import chain, leaving the cart button temporarily without an effective owner. The early bridge only waited for the module and was not a real cart writer.",
+  "fix": [
+    "Move immediate table cart ownership to classic azobss-pabm-early-bridge.js",
+    "Handle PA/BM/SBM/GPS/Syit table ADD and REMOVE synchronously in capture phase",
+    "Write the exact same azobss_pabm_store_cart_v1_<user> localStorage format used by storefront",
+    "Render Troli Anda count/items/total immediately without waiting for Firebase/module init",
+    "Make window.azobssAddToPaBmCart use immediate bridge fallback when storefront API is not ready",
+    "Prevent storefront from installing a duplicate table-click owner when early bridge is active",
+    "Keep storefront takeover for authoritative price adjustment and checkout after module init",
+    "Bump all PA/BM v1253 cache references to v1254 and stale global-auth dynamic import to v1254"
+  ],
+  "tests": {
+    "nodeSyntaxEarlyBridge": "pass",
+    "nodeSyntaxStorefront": "pass",
+    "nodeSyntaxPaSearch": "pass",
+    "npmRunCheck": "pass",
+    "azdm": "25/25 pass",
+    "classicBridgeDirectAdd": "pass - PA2438 writes 1 item and renders RM5",
+    "paTableClickAddRemove": "pass - first click adds, second click removes, UI count updates"
+  }
+}
