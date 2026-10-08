@@ -1275,7 +1275,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1273 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1272 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1320,7 +1320,7 @@ async function init() {
     window.azobssAddToPaBmCart = addToStoreCart;
     window.azobssRecordPurchase = addToStoreCart;
   } else {
-    window.__AZOBSS_PABM_CART_OWNER__ = 'classic-core-v1273';
+    window.__AZOBSS_PABM_CART_OWNER__ = 'classic-core-v1272';
   }
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();

@@ -30,8 +30,8 @@ test('cart is backed up before ToyyibPay and restored on unpaid return', () => {
 
 test('PA-BM cache-busts stabilization runtimes and never loads the legacy combined likes/auth module', () => {
   const html = read('PA-BM/index.html');
-  assert.match(html, /azobss-global-auth\.js\?v=1273/);
-  assert.match(html, /azobss-pabm-storefront\.js\?v=1273/);
-  assert.match(html, /azobss-pabm-early-bridge\.js\?v=1273/);
+  assert.match(html, /azobss-global-auth\.js\?v=1272/);
+  assert.match(html, /azobss-pabm-storefront\.js\?v=1272/);
+  assert.match(html, /azobss-pabm-early-bridge\.js\?v=1272/);
   assert.doesNotMatch(html, /azobss-firebase-live-likes-sync\.js/);
 });

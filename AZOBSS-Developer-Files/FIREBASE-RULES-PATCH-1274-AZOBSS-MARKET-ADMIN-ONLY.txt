@@ -1,0 +1,6 @@
+// AZOBSS v1274 — replace the existing marketListings rule block with this block.
+// Keeps public browsing. Only the existing isAdmin() helper may create/update/delete listings.
+match /marketListings/{listingId} {
+  allow read: if true;
+  allow create, update, delete: if isAdmin();
+}
