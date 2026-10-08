@@ -194,7 +194,7 @@
         window.azShowToast('Sesi akaun masih sedang disediakan. Cuba sekali lagi selepas beberapa saat.');
       }
     } catch (_) {}
-    if (lastError) console.warn('AZOBSS v1268 Lot Kadaster auth wait failed:', lastError);
+    if (lastError) console.warn('AZOBSS v1272 Lot Kadaster auth wait failed:', lastError);
     return '';
   }
 
@@ -272,7 +272,7 @@
     event.preventDefault();
     event.stopPropagation();
     if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-    window.__AZOBSS_PABM_LOT_MAP_OWNER__ = 'early-bridge-v1268';
+    window.__AZOBSS_PABM_LOT_MAP_OWNER__ = 'early-bridge-v1272';
     openLotSelectionMapClassic1268(button);
   }, true);
 

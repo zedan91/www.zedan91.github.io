@@ -856,6 +856,13 @@ function setPanelStatus(status, message, state) {
   if (state) status.classList.add(`is-${state}`);
 }
 
+async function addViaCanonicalCart1272(payload) {
+  const core = window.azobssPaBmCartCore;
+  if (core && typeof core.add === 'function') return core.add(payload);
+  // Emergency fallback only when the inline classic core truly failed to load.
+  return addToStoreCart(payload);
+}
+
 async function addConfiguredProduct(button) {
   const panel = button.closest('[data-pa-bm-panel]');
   const error = panel?.querySelector('.request-error');
@@ -866,7 +873,7 @@ async function addConfiguredProduct(button) {
   if (error) error.textContent = '';
   try {
     button.disabled = true;
-    const item = await addToStoreCart({
+    const item = await addViaCanonicalCart1272({
       productType: button.dataset.productType || '',
       itemCode: input?.value || '',
       negeri: state?.value || '',
@@ -888,7 +895,7 @@ window.azobssAddPreparedLotSelectionToCart = async function (prepared, fallbackS
   if (!prepared || !prepared.jobId || !prepared.selectionToken) {
     throw new Error('Pilihan Lot Kadaster tidak lengkap dan tidak dapat dimasukkan ke troli.');
   }
-  const item = await addToStoreCart({
+  const item = await addViaCanonicalCart1272({
     productType: prepared.productType,
     itemCode: prepared.jobId,
     negeri: prepared.negeri || fallbackStateName,
@@ -1214,7 +1221,7 @@ function bindPaymentButton() {
   const clone = current.cloneNode(true);
   current.replaceWith(clone);
   paymentButton = clone;
-  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1265';
+  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1272';
   paymentButton.addEventListener('click', proceedToPayment);
 }
 
@@ -1224,7 +1231,7 @@ function bindAdminTestPaymentButton() {
   const clone = current.cloneNode(true);
   current.replaceWith(clone);
   adminTestPaymentButton = clone;
-  adminTestPaymentButton.dataset.azobssAdminTestOwner = 'storefront-v1270';
+  adminTestPaymentButton.dataset.azobssAdminTestOwner = 'storefront-v1272';
   adminTestPaymentButton.addEventListener('click', proceedAdminTestPayment);
 }
 
@@ -1256,18 +1263,19 @@ function watchPaymentTotal() {
 }
 
 function publishPaBmStoreCartApi(){
+  const core = window.azobssPaBmCartCore;
   window.azobssPaBmStoreCart = {
-    read: readCart,
-    add: addToStoreCart,
-    clear: () => writeCart([]),
-    render: renderCart,
+    read: () => (core && typeof core.read === 'function' ? core.read() : readCart()),
+    add: (payload) => (core && typeof core.add === 'function' ? core.add(payload) : addToStoreCart(payload)),
+    clear: () => (core && typeof core.write === 'function' ? core.write([]) : writeCart([])),
+    render: () => (core && typeof core.render === 'function' ? core.render() : renderCart()),
     restorePendingOrder: restorePendingOrderToCart,
     restorePaymentBackup: restorePaymentCartBackup,
     clearPaymentBackup: clearPaymentCartBackup,
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1265 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1272 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1277,7 +1285,7 @@ async function init() {
   // file again with a different query string, only one storefront instance may
   // own cart globals/listeners on /PA-BM/.
   if (window.__AZOBSS_PABM_STOREFRONT_ACTIVE__) return;
-  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1265';
+  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1272';
   // v1249: the storefront UI and Add to Cart must never wait for the async
   // profile price-adjustment lookup. Use the cached adjustment immediately,
   // bind the current state-button picker/cart handlers now, then refresh prices
@@ -1305,20 +1313,21 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
-  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1265';
-  window.azobssAddToPaBmCart = addToStoreCart;
-  window.azobssRecordPurchase = addToStoreCart;
+  // v1272 stabilization: the inline classic cart core is the sole normal cart owner.
+  // Storefront may become an emergency owner only if that core failed to initialize.
+  if (!window.azobssPaBmCartCore || typeof window.azobssPaBmCartCore.add !== 'function') {
+    window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-fallback-v1272';
+    window.azobssAddToPaBmCart = addToStoreCart;
+    window.azobssRecordPurchase = addToStoreCart;
+  } else {
+    window.__AZOBSS_PABM_CART_OWNER__ = 'classic-core-v1272';
+  }
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
   publishPaBmStoreCartApi();
   document.addEventListener('click', guardCartAction, true);
   document.addEventListener('click', toggleTableCartButton, true);
   document.addEventListener('click', async (event) => {
-    const mapButton = event.target.closest('[data-jupem-lot-map]');
-    if (mapButton) {
-      event.preventDefault();
-      openJupemLotMap(mapButton);
-      return;
-    }
+    // v1272: Lot Kadaster map clicks are owned exclusively by azobss-pabm-early-bridge.js.
     const addButton = event.target.closest('[data-pabm-product-add]');
     if (addButton) {
       event.preventDefault();

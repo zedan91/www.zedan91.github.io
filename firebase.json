@@ -18,7 +18,26 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "functions/**"
+      "functions/**",
+      "package.json",
+      "package-lock.json",
+      "deploy-server.js",
+      "Dockerfile",
+      ".dockerignore",
+      ".npmrc",
+      "backend/**",
+      "lib/**",
+      "scripts/**",
+      "tests/**",
+      "AZOBSS-Developer-Files/**",
+      ".azobss-libredwg/**",
+      "README*.md",
+      "**/README*.md",
+      "*-AUDIT-*.json",
+      "*_AUDIT.json",
+      "FIREBASE-RULES-*.txt",
+      "admin-preview-*.html",
+      "_badge-test.html"
     ]
   }
 }

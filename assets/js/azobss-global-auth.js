@@ -1,5 +1,8 @@
 /* AZOBSS core stability fix 036 */
 
+// v1272 stabilization: one canonical auth/navbar/purchase runtime across the whole site.
+window.__AZOBSS_GLOBAL_AUTH_OWNER__ = 'global-auth-v1272';
+
 /* AZOBSS NAVBAR SINGLE OWNER 1065 */
 window.__AZOBSS_NAVBAR_OWNER__='global-auth';
 // v1139: single canonical owner for PA/BM Purchase Records UI/actions.
@@ -9113,3 +9116,8 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     return keys.indexOf(key)!==-1 || keys.indexOf(shown)!==-1 || emails.indexOf(email)!==-1;
   };
 })();
+
+
+// v1272: readiness signal for optional feature modules; auth itself remains the single owner.
+window.__AZOBSS_GLOBAL_AUTH_READY__ = true;
+try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:{ version:1272 } })); } catch (_e) {}

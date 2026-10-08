@@ -1,7 +1,7 @@
 {
   "name": "azobss-docs",
   "description": "AZOBSS documentation, PC services, PA downloader, digital tools, and AutoCAD LISP.",
-  "version": "1.0.1271",
+  "version": "1.0.1272",
   "private": true,
   "homepage": ".",
   "keywords": [
@@ -16,7 +16,10 @@
     "start": "node deploy-server.js",
     "check": "node --check deploy-server.js && node --check lib/azobss-lot-cad-converter.js",
     "libredwg:install": "bash scripts/install-libredwg.sh",
-    "test:azdm": "node --test tests/azdm-bridge.test.cjs tests/azdm-admin.test.cjs tests/software-packages.test.cjs tests/azdm-worker-v1215.test.cjs tests/azdm-worker-v1218.test.cjs"
+    "test:azdm": "node --test tests/azdm-bridge.test.cjs tests/azdm-admin.test.cjs tests/software-packages.test.cjs tests/azdm-worker-v1215.test.cjs tests/azdm-worker-v1218.test.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "test:pabm": "node --test tests/pabm-v1250-guard.test.cjs tests/runtime-ownership-v1272.test.cjs",
+    "verify": "npm run check && npm test"
   },
   "dependencies": {
     "selfsigned": "^5.5.0",
