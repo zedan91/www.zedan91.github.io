@@ -12425,10 +12425,26 @@ async function azobssSubmitLotGpJob(estimate) {
       // AOI cannot pull in neighbouring lots. Keep the literal selected feature set as
       // fallback for GP variants that reject a layer-reference input.
       const exactSelectedFeatureSet = azobssLotGpFeatureSetValueForType(estimate.featureSet, naturalInput.dataType);
-      const candidates = [
-        { kind: 'layer-reference-exact-aoi', value: naturalInput.value },
-        { kind: 'exact-selected-feature-set-exact-aoi', value: exactSelectedFeatureSet }
-      ];
+      // v1269: Small/medium selections use the literal selected feature-set first.
+      // v928 switched to a layer URL + OBJECTID filter first. JUPEM accepts that input,
+      // but on some states the GP task can remain esriJobExecuting for a long time because
+      // the service still opens/scans the source cadastral layer before clipping. The exact
+      // feature-set path was the proven pre-v928 export path and is dramatically lighter for
+      // small selections because the GP receives only the selected lots. Keep the compact
+      // layer-reference path first for large selections where an inline feature-set can be big.
+      const selectedFeatureCount = Array.isArray(estimate && estimate.featureSet && estimate.featureSet.features)
+        ? estimate.featureSet.features.length
+        : Number(estimate && estimate.lotCount || 0);
+      const preferExactSelectedFeatureSet = selectedFeatureCount > 0 && selectedFeatureCount <= 100;
+      const candidates = preferExactSelectedFeatureSet
+        ? [
+            { kind: 'exact-selected-feature-set-fast-v1269', value: exactSelectedFeatureSet },
+            { kind: 'layer-reference-exact-aoi', value: naturalInput.value }
+          ]
+        : [
+            { kind: 'layer-reference-exact-aoi', value: naturalInput.value },
+            { kind: 'exact-selected-feature-set-exact-aoi', value: exactSelectedFeatureSet }
+          ];
       let candidateError = null;
       for (const candidate of candidates) {
         try {
@@ -12469,7 +12485,8 @@ async function azobssSubmitLotGpJob(estimate) {
             clipInputKind: candidate.kind,
             clipDataType: naturalInput.dataType,
             selectedObjectIdCount: naturalInput.selectedObjectIdCount,
-            naturalLotGeometry: true
+            naturalLotGeometry: true,
+            fastExactFeatureSet: preferExactSelectedFeatureSet && candidate.kind === 'exact-selected-feature-set-fast-v1269'
           };
         } catch (error) {
           candidateError = error;
@@ -22409,6 +22426,7 @@ async function handler(req, res) {
           clipLayers: Array.isArray(job.clipLayers) ? job.clipLayers.slice(0, 8) : [],
           clipInputKind: String(job.clipInputKind || ""),
           clipDataType: String(job.clipDataType || ""),
+          fastExactFeatureSet: Boolean(job.fastExactFeatureSet),
           exactBoundaryClip: false,
           naturalLotGeometry: true,
           positiveAreaReferenceIntersection: true,
@@ -22436,6 +22454,7 @@ async function handler(req, res) {
           clipLayerCount: Array.isArray(job.clipLayers) ? job.clipLayers.length : 0,
           clipInputKind: String(job.clipInputKind || ""),
           clipDataType: String(job.clipDataType || ""),
+          fastExactFeatureSet: Boolean(job.fastExactFeatureSet),
           exactBoundaryClip: false,
           naturalLotGeometry: true,
           positiveAreaReferenceIntersection: true,
@@ -22515,6 +22534,8 @@ async function handler(req, res) {
               variant: waitingPayload.variant,
               amount: waitingPayload.amount,
               exportMode: waitingPayload.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
+              clipInputKind: String(waitingPayload.clipInputKind || ""),
+              fastExactFeatureSet: Boolean(waitingPayload.fastExactFeatureSet),
               exactBoundaryClip: false,
               naturalLotGeometry: Boolean(waitingPayload.naturalLotGeometry),
               lotCount: waitingPayload.lotCount || 0,
@@ -22561,6 +22582,8 @@ async function handler(req, res) {
           variant: readyPayload.variant,
           amount: readyPayload.amount,
           exportMode: readyPayload.exportMode || AZOBSS_LOT_GP_EXPORT_MODE,
+          clipInputKind: String(readyPayload.clipInputKind || ""),
+          fastExactFeatureSet: Boolean(readyPayload.fastExactFeatureSet),
           exactBoundaryClip: false,
           naturalLotGeometry: Boolean(readyPayload.naturalLotGeometry),
           downloadUrl,

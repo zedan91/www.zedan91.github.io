@@ -127,7 +127,7 @@
       }
       const script = document.createElement('script');
       script.id = 'azobssLotSelectionMapRecovery1267';
-      script.src = '/assets/js/azobss-lot-selection-map.js?v=1267';
+      script.src = '/assets/js/azobss-lot-selection-map.js?v=1269';
       script.async = true;
       script.addEventListener('load', function () { resolve(window.azobssOpenLotSelectionMap || null); }, { once:true });
       script.addEventListener('error', function () { reject(new Error('Komponen peta pilihan tidak dapat dimuatkan.')); }, { once:true });

@@ -133,7 +133,7 @@
     const elapsed = Math.max(0, Number(elapsedSeconds || 0));
     const lowRemaining = Math.max(0, Number(timing.low || 0) - elapsed);
     const highRemaining = Math.max(0, Number(timing.high || 0) - elapsed);
-    if (highRemaining <= 0) return 'Melebihi anggaran biasa • masih diproses';
+    if (highRemaining <= 0) return 'JUPEM masih memproses • bukan hang, menunggu job selesai';
     if (lowRemaining <= 5) return `Baki anggaran ≤ ${formatProcessingDuration(highRemaining, true)}`;
     return `Baki anggaran ${formatProcessingDuration(lowRemaining, true)}–${formatProcessingDuration(highRemaining, true)}`;
   }
@@ -2106,9 +2106,12 @@
             const estimateSource = processingTiming.learned
               ? `Purata ${processingTiming.sampleCount} proses sebelum ini`
               : 'Anggaran awal';
+            const routeLabel = prepared && prepared.fastExactFeatureSet
+              ? ' • Laluan pantas lot terpilih'
+              : '';
             setStatus(
               status,
-              `Sedang menyediakan ${processingLotCount.toLocaleString('ms-MY')} lot...\nStatus: ${currentJobStatus} • Progress anggaran ${progress}%\n${estimateSource}: ${lotProcessingRangeText(processingTiming)} • Berlalu ${elapsedText} • ${remainingText}`,
+              `Sedang menyediakan ${processingLotCount.toLocaleString('ms-MY')} lot...\nStatus: ${currentJobStatus} • Progress anggaran ${progress}%${routeLabel}\n${estimateSource}: ${lotProcessingRangeText(processingTiming)} • Berlalu ${elapsedText} • ${remainingText}`,
               'loading'
             );
           };
