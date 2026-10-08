@@ -5959,9 +5959,70 @@ function azobssPaBmPendingRecoveryItems1263(data){
   }).filter(function(item){ return item.id && item.negeri; });
 }
 
+function azobssPaBmCanonicalOwnerReady1264(){
+  try{
+    const user=getSavedUser && getSavedUser();
+    return !!normalizeUsername(user && (user.usernameKey || user.username || user.name || user.id || ''));
+  }catch(_e){ return false; }
+}
+
+function azobssAdoptGuestPaBmStorage1264(){
+  try{
+    if(!azobssPaBmCanonicalOwnerReady1264()) return false;
+    const user=getSavedUser() || {};
+    const owner=normalizeUsername(user.usernameKey || user.username || user.name || user.id || '');
+    if(!owner) return false;
+
+    const cartGuestKey='azobss_pabm_store_cart_v1_guest';
+    const cartOwnerKey='azobss_pabm_store_cart_v1_' + owner;
+    const backupGuestKey='azobss_pabm_payment_cart_backup_v1_guest';
+    const backupOwnerKey='azobss_pabm_payment_cart_backup_v1_' + owner;
+
+    let changed=false;
+    try{
+      const ownerRows=JSON.parse(localStorage.getItem(cartOwnerKey) || '[]');
+      const guestRows=JSON.parse(localStorage.getItem(cartGuestKey) || '[]');
+      if((!Array.isArray(ownerRows) || !ownerRows.length) && Array.isArray(guestRows) && guestRows.length){
+        localStorage.setItem(cartOwnerKey, JSON.stringify(guestRows));
+        changed=true;
+      }
+      if(Array.isArray(guestRows) && guestRows.length) localStorage.removeItem(cartGuestKey);
+    }catch(_e){}
+
+    try{
+      const ownerBackup=JSON.parse(localStorage.getItem(backupOwnerKey) || 'null');
+      const guestBackup=JSON.parse(localStorage.getItem(backupGuestKey) || 'null');
+      const ownerHas=!!(ownerBackup && Array.isArray(ownerBackup.items) && ownerBackup.items.length);
+      const guestHas=!!(guestBackup && Array.isArray(guestBackup.items) && guestBackup.items.length);
+      if(!ownerHas && guestHas){
+        localStorage.setItem(backupOwnerKey, JSON.stringify(guestBackup));
+        changed=true;
+      }
+      if(guestHas) localStorage.removeItem(backupGuestKey);
+    }catch(_e){}
+
+    if(changed){
+      try{ if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.render === 'function') window.azobssPaBmCartCore.render(); }catch(_e){}
+      try{ window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated',{detail:{source:'auth-owner-adopt-v1264'}})); }catch(_e){}
+    }
+    return changed;
+  }catch(_e){ return false; }
+}
+
 async function azobssRestorePaBmPendingCart1263(data){
   try{
     if(!data || data.status !== 'pending' || !data.paymentUrl || !Array.isArray(data.items) || !data.items.length) return false;
+
+    // v1264: after a full browser/private-window restart Firebase can restore
+    // before the AZOBSS username profile has been saved. Never write a recovered
+    // pending cart to the temporary `guest` key; defer until the canonical
+    // username owner is ready, then restore under that durable owner key.
+    if(!azobssPaBmCanonicalOwnerReady1264()){
+      window.__azobssDeferredPaBmPendingRecovery1264=data;
+      return false;
+    }
+
+    azobssAdoptGuestPaBmStorage1264();
     let current=[];
     try{
       if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.read === 'function') current=window.azobssPaBmStoreCart.read()||[];
@@ -5978,6 +6039,7 @@ async function azobssRestorePaBmPendingCart1263(data){
     const rows=azobssPaBmPendingRecoveryItems1263(data);
     if(rows.length && window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.write === 'function'){
       window.azobssPaBmCartCore.write(rows);
+      window.__azobssDeferredPaBmPendingRecovery1264=null;
       const status=document.getElementById('paBmToyyibStatus');
       if(status) status.textContent='Pembayaran belum selesai. '+rows.length+' item dipulihkan semula ke Troli Anda.';
       return true;
@@ -7760,6 +7822,25 @@ function bindAuth() {
       }
       const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
+
+      // v1264: browser-restart recovery must run only AFTER saveUser(fullUser),
+      // otherwise the pending cart can be restored into the temporary guest key
+      // and appear to vanish as soon as the username owner becomes available.
+      if(/^\/PA-BM\/?$/i.test(window.location.pathname || '')){
+        setTimeout(async ()=>{
+          try{
+            azobssAdoptGuestPaBmStorage1264();
+            const deferred=window.__azobssDeferredPaBmPendingRecovery1264;
+            if(deferred){
+              const restored=await azobssRestorePaBmPendingCart1263(deferred);
+              if(restored){
+                try{ window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered',{detail:{order:deferred,version:1264,deferred:true}})); }catch(_e){}
+              }
+            }
+            await azobssRecoverPaBmPaymentFromServer1055(true);
+          }catch(_e){}
+        },120);
+      }
       setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
     }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); if(isPaBmProtectedPage() && !window.__AZOBSS_PABM_ACCESS_GRANTED__){ enforcePaBmPageAccess(null, true); return; } enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }
