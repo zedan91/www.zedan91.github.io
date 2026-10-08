@@ -6016,7 +6016,7 @@ function azobssAdoptGuestPaBmStorage1264(){
 
 async function azobssRestorePaBmPendingCart1263(data){
   try{
-    if(!data || data.status !== 'pending' || !Array.isArray(data.items) || !data.items.length) return false;
+    if(!data || !['pending','cart'].includes(String(data.status || '').toLowerCase()) || !Array.isArray(data.items) || !data.items.length) return false;
 
     // v1264: after a full browser/private-window restart Firebase can restore
     // before the AZOBSS username profile has been saved. Never write a recovered
@@ -6053,6 +6053,78 @@ async function azobssRestorePaBmPendingCart1263(data){
   return false;
 }
 
+// AZOBSS v1266: classic-cart -> authenticated server draft bridge.
+// The visible Add-to-Cart path is intentionally a classic inline core so it can
+// work before Firebase modules finish loading. v1265 only synced the server from
+// the optional storefront ES module; if that module was late/failed, closing an
+// Incognito/private browser erased the only copy. Global Auth already owns the
+// real Firebase session, so it is the reliable place to mirror every cart write.
+let azobssPaBmDraftSyncTimer1266 = 0;
+let azobssPaBmDraftSyncBusy1266 = false;
+let azobssPaBmDraftSyncQueued1266 = false;
+let azobssPaBmDraftSyncPendingUntilAuth1266 = false;
+function azobssReadPaBmCart1266(){
+  try{
+    if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.read === 'function') return window.azobssPaBmCartCore.read() || [];
+    if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.read === 'function') return window.azobssPaBmStoreCart.read() || [];
+  }catch(_e){}
+  return [];
+}
+async function azobssSyncPaBmCartDraft1266(options={}){
+  try{
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return false;
+    const firebaseUser = auth && auth.currentUser ? auth.currentUser : null;
+    if(!firebaseUser){ azobssPaBmDraftSyncPendingUntilAuth1266 = true; return false; }
+    if(azobssPaBmDraftSyncBusy1266){ azobssPaBmDraftSyncQueued1266 = true; return false; }
+    azobssPaBmDraftSyncBusy1266 = true;
+    const rows = azobssReadPaBmCart1266().filter(Boolean).slice(0,50);
+    let token = await firebaseUser.getIdToken(!!options.forceToken);
+    const buildRequest = (authToken) => {
+      const request = {
+        method: rows.length ? 'POST' : 'DELETE',
+        cache:'no-store',
+        headers:{ Authorization:'Bearer ' + authToken, 'Cache-Control':'no-cache' }
+      };
+      if(rows.length){
+        request.headers['Content-Type']='application/json';
+        request.body=JSON.stringify({ items:rows, status:'cart', source:'global-auth-v1266' });
+      }
+      return request;
+    };
+    let response = await fetch(azobssGetBackendBaseUrl() + '/api/pa-bm/cart-draft', buildRequest(token));
+    if(response.status === 401 || response.status === 403){
+      token = await firebaseUser.getIdToken(true);
+      response = await fetch(azobssGetBackendBaseUrl() + '/api/pa-bm/cart-draft', buildRequest(token));
+    }
+    if(!response.ok){
+      const detail = await response.text().catch(()=> '');
+      console.warn('PA/BM v1266 server cart sync rejected:', response.status, detail.slice(0,180));
+      return false;
+    }
+    azobssPaBmDraftSyncPendingUntilAuth1266 = false;
+    return true;
+  }catch(error){
+    console.warn('PA/BM v1266 server cart sync failed:', error);
+    return false;
+  }finally{
+    azobssPaBmDraftSyncBusy1266 = false;
+    if(azobssPaBmDraftSyncQueued1266){
+      azobssPaBmDraftSyncQueued1266 = false;
+      setTimeout(()=>azobssSyncPaBmCartDraft1266({}),180);
+    }
+  }
+}
+function azobssSchedulePaBmCartDraftSync1266(delay=220){
+  if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
+  clearTimeout(azobssPaBmDraftSyncTimer1266);
+  azobssPaBmDraftSyncTimer1266 = setTimeout(()=>{
+    azobssPaBmDraftSyncTimer1266 = 0;
+    azobssSyncPaBmCartDraft1266({});
+  }, Math.max(0,Number(delay||0)));
+}
+window.addEventListener('azobss:pabm-cart-updated', ()=>azobssSchedulePaBmCartDraftSync1266(120));
+window.azobssSyncPaBmCartDraftNow = ()=>azobssSyncPaBmCartDraft1266({forceToken:true});
+
 async function azobssRecoverPaBmPaymentFromServer1055(force){
   try{
     if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return null;
@@ -6077,14 +6149,17 @@ async function azobssRecoverPaBmPaymentFromServer1055(force){
     const data = await res.json().catch(()=>({}));
     if(!res.ok || !data || data.ok !== true) return data || null;
 
-    if(data.status === 'pending' && (data.orderId || data.billCode)){
-      // Active pending bills can resume the same ToyyibPay URL.  Failed/cancelled
-      // drafts still restore their items, but must not keep a stale return watcher.
-      if(data.resumeAllowed === false) azobssClearPaBmPendingReturn();
-      else azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+    const recoverableCart1266 = Array.isArray(data.items) && data.items.length > 0
+      && (data.cartRecoverable === true || data.serverCartDraft === true)
+      && ['pending','cart'].includes(String(data.status || '').toLowerCase());
+    if(recoverableCart1266){
+      // v1266: restore a server cart even when checkout never created an order yet.
+      // Only store a pending-return hint when there is a real resumable payment.
+      if(data.resumeAllowed === true && (data.orderId || data.billCode)) azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+      else if(data.status === 'pending') azobssClearPaBmPendingReturn();
       try{ await azobssRestorePaBmPendingCart1263(data); }catch(_e){}
       try{
-        window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered', { detail:{ order:data, version:1265 } }));
+        window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered', { detail:{ order:data, version:1266 } }));
       }catch(_e){}
     }
 
@@ -7774,6 +7849,12 @@ function bindAuth() {
     try{
       try{ await firebaseUser.reload(); }catch(e){}
       const freshUser = auth.currentUser || firebaseUser;
+      // v1266: start server recovery immediately from the authenticated UID. If
+      // the AZOBSS username profile is not ready yet, restore is safely deferred
+      // in memory and flushed after saveUser(fullUser) below.
+      if(/^\/PA-BM\/?$/i.test(window.location.pathname || '')){
+        setTimeout(()=>{ try{ azobssRecoverPaBmPaymentFromServer1055(true); }catch(_e){} }, 0);
+      }
       const ownerBypass = String(freshUser.email || '').toLowerCase() === 'zedan91@azobss.local';
       if(!freshUser.emailVerified && !ownerBypass){
         await signOut(auth);
@@ -7827,26 +7908,24 @@ function bindAuth() {
         console.warn('AZOBSS auth-state profile update skipped:', stateProfileUpdateError?.code || stateProfileUpdateError?.message || stateProfileUpdateError);
       }
       const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
-      saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser); await recordLoginHistory(fullUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
-
-      // v1264: browser-restart recovery must run only AFTER saveUser(fullUser),
-      // otherwise the pending cart can be restored into the temporary guest key
-      // and appear to vanish as soon as the username owner becomes available.
+      saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser);
+      // v1266: never put cart recovery behind analytics/login-history writes.
+      // A failure or slow Firestore history write must not leave Troli Anda empty.
       if(/^\/PA-BM\/?$/i.test(window.location.pathname || '')){
         setTimeout(async ()=>{
           try{
             azobssAdoptGuestPaBmStorage1264();
             const deferred=window.__azobssDeferredPaBmPendingRecovery1264;
-            if(deferred){
-              const restored=await azobssRestorePaBmPendingCart1263(deferred);
-              if(restored){
-                try{ window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered',{detail:{order:deferred,version:1264,deferred:true}})); }catch(_e){}
-              }
-            }
+            if(deferred) await azobssRestorePaBmPendingCart1263(deferred);
             await azobssRecoverPaBmPaymentFromServer1055(true);
-          }catch(_e){}
-        },120);
+            const localRows=azobssReadPaBmCart1266();
+            if(localRows.length || azobssPaBmDraftSyncPendingUntilAuth1266) azobssSchedulePaBmCartDraftSync1266(80);
+          }catch(error){ console.warn('PA/BM v1266 auth-ready recovery failed:', error); }
+        },20);
       }
+      try{ await recordLoginHistory(fullUser, 'login'); }catch(loginHistoryError){ console.warn('Login history write skipped:', loginHistoryError?.message || loginHistoryError); }
+      bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); renderFirebaseAdminRecords();
+
       setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
     }
     catch{ const fallback=getSavedUser(); syncHeader(fallback); if(isPaBmProtectedPage() && !window.__AZOBSS_PABM_ACCESS_GRANTED__){ enforcePaBmPageAccess(null, true); return; } enforcePaBmPageAccess(fallback, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); }

@@ -4970,6 +4970,7 @@ const PREMIUM_ORDERS_FILE = path.join(ROOT, "premium-orders.json");
 const PREMIUM_TOKENS_FILE = path.join(ROOT, "premium-download-tokens.json");
 const PREMIUM_DOWNLOAD_SESSIONS_FILE = path.join(ROOT, "premium-download-sessions.json");
 const COMMISSION_RECORDS_FILE = path.join(ROOT, "commission-records.json");
+const PA_BM_CART_DRAFTS_FILE = path.join(ROOT, "pa-bm-cart-drafts.json"); // v1266 durable fallback when Firestore Admin is unavailable
 
 function readPremiumJson(file, fallback) {
   try {
@@ -5815,12 +5816,12 @@ function azNormalizePaBmCartDraftItems(items = [], fallbackCreatedAtMs = Date.no
 async function azPersistPaBmCartDraft(identity = {}, data = {}) {
   const db = getAzobssBackendDb();
   const docId = azPaBmCartDraftDocId(identity);
-  if (!db || !docId || !identity.uid) return { ok:false, stored:false, reason:'database_or_identity_unavailable' };
+  if (!docId || !identity.uid) return { ok:false, stored:false, reason:'identity_unavailable' };
   const nowMs = Date.now();
   const items = azNormalizePaBmCartDraftItems(data.items || data.paBmItems || [], nowMs);
   if (!items.length) return { ok:false, stored:false, reason:'empty_cart' };
   const row = {
-    version:1265,
+    version:1266,
     active:true,
     uid:cleanPremiumText(identity.uid || '',180),
     username:cleanPremiumText(identity.username || data.username || '',100).toLowerCase(),
@@ -5835,55 +5836,108 @@ async function azPersistPaBmCartDraft(identity = {}, data = {}) {
     updatedAt:new Date(nowMs).toISOString(),
     expiresAtMs:nowMs + 10 * 24 * 60 * 60 * 1000
   };
+
+  // v1266: Firestore remains the primary durable store, but never make browser-
+  // restart recovery depend on Firebase Admin being configured correctly on
+  // Render. The backend already keeps premium-orders.json as a local fallback;
+  // keep the latest cart draft the same way. This survives browser/private-window
+  // restarts even when Admin SDK writes are temporarily unavailable.
+  let localStored = false;
   try {
-    await db.collection('paBmCartDrafts').doc(docId).set(row, { merge:true });
-    return { ok:true, stored:true, docId, count:items.length };
+    const all = readPremiumJson(PA_BM_CART_DRAFTS_FILE, {}) || {};
+    all[docId] = row;
+    fs.writeFileSync(PA_BM_CART_DRAFTS_FILE, JSON.stringify(all, null, 2), 'utf8');
+    localStored = true;
   } catch (err) {
-    console.warn('PA/BM cart draft persist failed:', err && (err.message || err));
-    return { ok:false, stored:false, error:err && err.message ? err.message : String(err) };
+    console.warn('PA/BM local cart draft persist failed:', err && (err.message || err));
   }
+
+  let firestoreStored = false;
+  if (db) {
+    try {
+      await db.collection('paBmCartDrafts').doc(docId).set(row, { merge:true });
+      firestoreStored = true;
+    } catch (err) {
+      console.warn('PA/BM Firestore cart draft persist failed:', err && (err.message || err));
+    }
+  }
+  return {
+    ok:localStored || firestoreStored,
+    stored:localStored || firestoreStored,
+    localStored,
+    firestoreStored,
+    docId,
+    count:items.length
+  };
 }
 async function azLoadPaBmCartDraft(identity = {}) {
   const db = getAzobssBackendDb();
   const docId = azPaBmCartDraftDocId(identity);
-  if (!db || !docId || !identity.uid) return null;
+  if (!docId || !identity.uid) return null;
+  const candidates = [];
+
   try {
-    const snap = await db.collection('paBmCartDrafts').doc(docId).get();
-    if (!snap.exists) return null;
-    const row = { docId:snap.id, ...(snap.data() || {}) };
-    if (row.active === false) return null;
-    if (String(row.uid || '') !== String(identity.uid || '')) return null;
-    const expiresAtMs = Number(row.expiresAtMs || 0);
-    if (expiresAtMs && expiresAtMs < Date.now()) return null;
-    const items = azNormalizePaBmCartDraftItems(row.items || [], Number(row.updatedAtMs || Date.now()));
-    if (!items.length) return null;
-    return { ...row, items };
+    const all = readPremiumJson(PA_BM_CART_DRAFTS_FILE, {}) || {};
+    if (all && all[docId]) candidates.push({ ...all[docId], recoveryStore:'local-json' });
   } catch (err) {
-    console.warn('PA/BM cart draft read failed:', err && (err.message || err));
-    return null;
+    console.warn('PA/BM local cart draft read failed:', err && (err.message || err));
   }
+
+  if (db) {
+    try {
+      const snap = await db.collection('paBmCartDrafts').doc(docId).get();
+      if (snap.exists) candidates.push({ docId:snap.id, ...(snap.data() || {}), recoveryStore:'firestore' });
+    } catch (err) {
+      console.warn('PA/BM Firestore cart draft read failed:', err && (err.message || err));
+    }
+  }
+
+  const valid = candidates.filter(row => {
+    if (!row || row.active === false) return false;
+    if (String(row.uid || '') !== String(identity.uid || '')) return false;
+    const expiresAtMs = Number(row.expiresAtMs || 0);
+    if (expiresAtMs && expiresAtMs < Date.now()) return false;
+    return azNormalizePaBmCartDraftItems(row.items || [], Number(row.updatedAtMs || Date.now())).length > 0;
+  });
+  if (!valid.length) return null;
+  valid.sort((a,b) => Number(b.updatedAtMs || 0) - Number(a.updatedAtMs || 0));
+  const row = valid[0];
+  return { ...row, items:azNormalizePaBmCartDraftItems(row.items || [], Number(row.updatedAtMs || Date.now())) };
 }
 async function azClearPaBmCartDraft(identity = {}, reason = 'cleared', extra = {}) {
   const db = getAzobssBackendDb();
   const docId = azPaBmCartDraftDocId(identity);
-  if (!db || !docId || !identity.uid) return false;
+  if (!docId || !identity.uid) return false;
   const nowMs = Date.now();
+  const clearedRow = {
+    active:false,
+    items:[],
+    clearReason:cleanPremiumText(reason || 'cleared',100),
+    clearedAtMs:nowMs,
+    clearedAt:new Date(nowMs).toISOString(),
+    updatedAtMs:nowMs,
+    updatedAt:new Date(nowMs).toISOString(),
+    ...azJsonSafe(extra || {})
+  };
+  let localCleared = false;
   try {
-    await db.collection('paBmCartDrafts').doc(docId).set({
-      active:false,
-      items:[],
-      clearReason:cleanPremiumText(reason || 'cleared',100),
-      clearedAtMs:nowMs,
-      clearedAt:new Date(nowMs).toISOString(),
-      updatedAtMs:nowMs,
-      updatedAt:new Date(nowMs).toISOString(),
-      ...azJsonSafe(extra || {})
-    }, { merge:true });
-    return true;
+    const all = readPremiumJson(PA_BM_CART_DRAFTS_FILE, {}) || {};
+    all[docId] = { ...(all[docId] || {}), uid:cleanPremiumText(identity.uid || '',180), ...clearedRow };
+    fs.writeFileSync(PA_BM_CART_DRAFTS_FILE, JSON.stringify(all, null, 2), 'utf8');
+    localCleared = true;
   } catch (err) {
-    console.warn('PA/BM cart draft clear failed:', err && (err.message || err));
-    return false;
+    console.warn('PA/BM local cart draft clear failed:', err && (err.message || err));
   }
+  let firestoreCleared = false;
+  if (db) {
+    try {
+      await db.collection('paBmCartDrafts').doc(docId).set(clearedRow, { merge:true });
+      firestoreCleared = true;
+    } catch (err) {
+      console.warn('PA/BM Firestore cart draft clear failed:', err && (err.message || err));
+    }
+  }
+  return localCleared || firestoreCleared;
 }
 
 async function azLoadRecentPaBmOrdersForIdentity(identity = {}, limitRows = 120) {
@@ -5978,14 +6032,19 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
     const resumableStatuses = new Set(['pending','unpaid','new','created','processing']);
     const draftPaymentUrl = cleanPremiumUrl((draftOrder && draftOrder.paymentUrl) || serverDraft.paymentUrl || '');
     const resumeAllowed = resumableStatuses.has(originalStatus) && !!draftPaymentUrl;
+    const recoveredOrderId = cleanPremiumText((draftOrder && draftOrder.orderId) || serverDraft.orderId || '',160);
+    const recoveredBillCode = cleanPremiumText((draftOrder && draftOrder.billCode) || serverDraft.billCode || '',120);
+    const hasPaymentOrder = !!(recoveredOrderId || recoveredBillCode);
     return {
       ok:true,
       recovered:true,
       paid:false,
-      status:'pending',
-      originalStatus:originalStatus || 'pending',
-      orderId:cleanPremiumText((draftOrder && draftOrder.orderId) || serverDraft.orderId || '',160),
-      billCode:cleanPremiumText((draftOrder && draftOrder.billCode) || serverDraft.billCode || '',120),
+      // v1266: a cart saved before checkout has no orderId/billCode. It is still
+      // a valid recoverable cart and must be restored after a full browser close.
+      status:hasPaymentOrder ? 'pending' : 'cart',
+      originalStatus:originalStatus || (hasPaymentOrder ? 'pending' : 'cart'),
+      orderId:recoveredOrderId,
+      billCode:recoveredBillCode,
       invoiceNo:cleanPremiumText((draftOrder && draftOrder.invoiceNo) || '',180),
       paymentUrl:resumeAllowed ? draftPaymentUrl : '',
       amountSen:Number((draftOrder && draftOrder.amountSen) || 0),
@@ -5993,7 +6052,8 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
       cartRecoverable:true,
       serverCartDraft:true,
       resumeAllowed,
-      recoveryVersion:1265,
+      recoveryVersion:1266,
+      recoveryStore:cleanPremiumText(serverDraft.recoveryStore || '',40),
       recoverySource:'server-cart-draft'
     };
   }
@@ -19576,8 +19636,23 @@ async function handler(req, res) {
         try {
           const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
           if (reusableOrder) {
+            // v1266: the early-return reuse path previously skipped the durable cart
+            // draft write. That meant a user could reach ToyyibPay successfully but
+            // have nothing for the server to restore after closing the browser.
+            try {
+              await azPersistPaBmCartDraft(identity, {
+                items,
+                orderId:reusableOrder.orderId || '',
+                billCode:reusableOrder.billCode || '',
+                paymentUrl:reusableOrder.paymentUrl || '',
+                status:'pending',
+                checkoutFingerprint
+              });
+            } catch (draftError) {
+              console.warn('PA/BM reusable-order cart draft persist skipped:', draftError && (draftError.message || draftError));
+            }
             return send(res, 200, JSON.stringify({
-              ok:true, success:true, reused:true, idempotent:true, patch:1055,
+              ok:true, success:true, reused:true, idempotent:true, patch:1266,
               orderId:reusableOrder.orderId, billCode:reusableOrder.billCode,
               paymentUrl:reusableOrder.paymentUrl, url:reusableOrder.paymentUrl, redirectUrl:reusableOrder.paymentUrl,
               invoiceNo:reusableOrder.invoiceNo || "", status:"pending",
@@ -19747,7 +19822,7 @@ async function handler(req, res) {
     }
 
     if (pathname === "/api/pa-bm/cart-draft" && ["GET","POST","DELETE"].includes(req.method)) {
-      if (azRateLimitOrSend(req, res, "pa-bm-cart-draft-1265", 80, 10 * 60 * 1000)) return;
+      if (azRateLimitOrSend(req, res, "pa-bm-cart-draft-1266", 80, 10 * 60 * 1000)) return;
       const identity = await azCommissionIdentityFromRequest(req);
       if (!identity || !identity.uid) {
         return send(res, 401, JSON.stringify({ ok:false, error:"Login session required for cart sync." }, null, 2), "application/json", { "Cache-Control":"no-store" });
@@ -19755,11 +19830,11 @@ async function handler(req, res) {
       try {
         if (req.method === "GET") {
           const draft = await azLoadPaBmCartDraft(identity);
-          return send(res, 200, JSON.stringify({ ok:true, draft:draft || null, version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+          return send(res, 200, JSON.stringify({ ok:true, draft:draft || null, version:1266 }, null, 2), "application/json", { "Cache-Control":"no-store" });
         }
         if (req.method === "DELETE") {
           const cleared = await azClearPaBmCartDraft(identity, "explicit-cart-empty");
-          return send(res, 200, JSON.stringify({ ok:true, cleared, version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+          return send(res, 200, JSON.stringify({ ok:true, cleared, version:1266 }, null, 2), "application/json", { "Cache-Control":"no-store" });
         }
         let body = {};
         try { body = parseRequestBody(await readBody(req)); }
@@ -19767,7 +19842,7 @@ async function handler(req, res) {
         const items = azNormalizePaBmCartDraftItems(body.items || [], Date.now());
         if (!items.length) {
           const cleared = await azClearPaBmCartDraft(identity, "client-cart-empty");
-          return send(res, 200, JSON.stringify({ ok:true, cleared, count:0, version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+          return send(res, 200, JSON.stringify({ ok:true, cleared, count:0, version:1266 }, null, 2), "application/json", { "Cache-Control":"no-store" });
         }
         const saved = await azPersistPaBmCartDraft(identity, {
           items,
@@ -19777,10 +19852,10 @@ async function handler(req, res) {
           status:body.status || "cart",
           checkoutFingerprint:body.checkoutFingerprint || ""
         });
-        return send(res, saved && saved.stored ? 200 : 500, JSON.stringify({ ok:!!(saved && saved.stored), count:items.length, version:1265, result:saved }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, saved && saved.stored ? 200 : 500, JSON.stringify({ ok:!!(saved && saved.stored), count:items.length, version:1266, result:saved }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {
         console.error("PA/BM cart draft sync failed:", err && (err.stack || err.message || err));
-        return send(res, 500, JSON.stringify({ ok:false, error:"Cart sync failed.", version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        return send(res, 500, JSON.stringify({ ok:false, error:"Cart sync failed.", version:1266 }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 
