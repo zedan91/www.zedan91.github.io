@@ -8351,7 +8351,7 @@ body.pabm-owner-admin #purchaseRecordsPagination{visibility:visible!important;po
 body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </style>
 
-<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=1272"/>
+<link rel="stylesheet" href="/assets/css/azobss-pabm-storefront.css?v=1273"/>
 
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
@@ -12823,12 +12823,12 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
 </style>
 
 <script>window.__AZOBSS_PABM_PAGE__=true;</script>
-<script id="azobss-pabm-cart-core-inline-v1259">
+<script id="azobss-pabm-cart-core-inline-v1273">
 (function(){
   'use strict';
 
-  if(window.__AZOBSS_PABM_CART_CORE_V1259__) return;
-  window.__AZOBSS_PABM_CART_CORE_V1259__ = true;
+  if(window.__AZOBSS_PABM_CART_CORE_V1273__) return;
+  window.__AZOBSS_PABM_CART_CORE_V1273__ = true;
 
   var CART_PREFIX = 'azobss_pabm_store_cart_v1_';
   var MAX_CART_ITEMS = 50;
@@ -12952,6 +12952,63 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   }
   function money(value){ var n=Number(value||0); return 'RM'+(Number.isInteger(n)?String(n):n.toFixed(2)); }
   function title(item){ var label=TYPE_LABELS[item.productType]||item.productType; return label+' '+String(item.itemCode||''); }
+
+  // v1273: cart button visual state belongs to the canonical classic cart core too.
+  // Previously only the optional storefront ES module applied .is-in-cart, so the
+  // cart could update correctly while the clicked table button stayed blue.
+  var TABLE_CART_BUTTON_SELECTOR = [
+    '.pabm-table-cart-button[data-benchmark-record]',
+    '.pabm-table-cart-button[data-pa-search-record]',
+    '.pabm-table-cart-button[data-gps-record]',
+    '.pabm-table-cart-button[data-syit-record]'
+  ].join(',');
+  var cartButtonSyncTimer = null;
+  var cartButtonObserver = null;
+  function decodeCartButtonPayload(button){
+    if(!button) return null;
+    var raw = button.dataset.benchmarkRecord || button.dataset.paSearchRecord || button.dataset.gpsRecord || button.dataset.syitRecord || '';
+    if(!raw) return null;
+    try{ return JSON.parse(decodeURIComponent(raw)); }catch(_){ return null; }
+  }
+  function cartButtonItemId(button){
+    var payload=decodeCartButtonPayload(button);
+    if(!payload) return '';
+    try{ return normalizeItem(payload).id; }catch(_){ return ''; }
+  }
+  function syncTableCartButtons(){
+    var cartIds={};
+    readCart().forEach(function(item){ var id=String(item&&item.id||''); if(id) cartIds[id]=1; });
+    document.querySelectorAll(TABLE_CART_BUTTON_SELECTOR).forEach(function(button){
+      var itemId=cartButtonItemId(button);
+      var active=!!itemId && !!cartIds[itemId];
+      button.classList.toggle('is-in-cart',active);
+      button.setAttribute('aria-pressed',active?'true':'false');
+      button.title=active?'Dalam Troli - tekan lagi untuk buang':'Tambah ke Troli';
+      if(active){
+        if(!button.dataset.cartOriginalAriaLabel) button.dataset.cartOriginalAriaLabel=String(button.getAttribute('aria-label')||'Tambah ke Troli');
+        button.setAttribute('aria-label','Item sudah dalam troli. Tekan lagi untuk buang daripada troli');
+      }else{
+        button.setAttribute('aria-label',button.dataset.cartOriginalAriaLabel||String(button.getAttribute('aria-label')||'Tambah ke Troli'));
+        delete button.dataset.cartOriginalAriaLabel;
+      }
+    });
+  }
+  function scheduleTableCartButtonSync(){
+    if(cartButtonSyncTimer) clearTimeout(cartButtonSyncTimer);
+    cartButtonSyncTimer=setTimeout(function(){ cartButtonSyncTimer=null; syncTableCartButtons(); },0);
+  }
+  function watchTableCartButtons(){
+    if(!window.MutationObserver || cartButtonObserver || !document.body) return;
+    cartButtonObserver=new MutationObserver(function(mutations){
+      var found=mutations.some(function(m){
+        return Array.prototype.some.call(m.addedNodes||[],function(node){
+          return node && node.nodeType===1 && ((node.matches&&node.matches(TABLE_CART_BUTTON_SELECTOR)) || (node.querySelector&&node.querySelector(TABLE_CART_BUTTON_SELECTOR)));
+        });
+      });
+      if(found) scheduleTableCartButtonSync();
+    });
+    cartButtonObserver.observe(document.body,{childList:true,subtree:true});
+  }
   function render(){
     var items=readCart();
     var list=document.getElementById('pabmStoreCartItems');
@@ -12969,6 +13026,7 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
       }).join(''):'<div class="pabm-cart-empty">Troli anda kosong.</div>';
     }
     if(pay) pay.disabled=!items.length;
+    scheduleTableCartButtonSync();
     try{ window.dispatchEvent(new CustomEvent('azobss:pabm-cart-core-rendered',{detail:{count:items.length,total:sum,key:primaryCartKey()}})); }catch(_){ }
     return items;
   }
@@ -13015,10 +13073,10 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
     var merged=readCart(); if(merged.length) persistCart(merged);
   })();
 
-  window.azobssPaBmCartCore={read:readCart,write:writeCart,render:render,add:add,removeIndex:removeIndex,keys:cartKeys,version:1272};
+  window.azobssPaBmCartCore={read:readCart,write:writeCart,render:render,add:add,removeIndex:removeIndex,keys:cartKeys,syncTableCartButtons:syncTableCartButtons,version:1273};
   window.azobssAddToPaBmCart=add;
   window.azobssRecordPurchase=add;
-  window.__AZOBSS_PABM_CART_OWNER__='classic-core-v1272';
+  window.__AZOBSS_PABM_CART_OWNER__='classic-core-v1273';
 
   document.addEventListener('click',function(event){
     var b=event.target&&event.target.closest?event.target.closest('[data-pabm-core-remove]'):null;
@@ -13027,11 +13085,11 @@ body.az-pabm-download-active #userPaPurchaseList .user-pa-download[data-busy="1"
   },true);
   window.addEventListener('storage',render);
   window.addEventListener('azobss:pabm-cart-updated',function(){ setTimeout(render,0); });
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',render,{once:true}); else render();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ watchTableCartButtons(); render(); },{once:true}); else { watchTableCartButtons(); render(); }
 })();
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1272" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1273" type="module"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 <script>
 (function(){
@@ -15910,10 +15968,10 @@ body:not(.pa-bm-page) button{
 </script>
 
 
-<script src="/assets/js/azobss-lot-selection-map.js?v=1272" defer></script>
+<script src="/assets/js/azobss-lot-selection-map.js?v=1273" defer></script>
 <script src="/assets/js/azobss-pabm-map-search.js?v=1255" defer></script>
-<script src="/assets/js/azobss-pabm-early-bridge.js?v=1272"></script>
-<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=1272"></script>
+<script src="/assets/js/azobss-pabm-early-bridge.js?v=1273"></script>
+<script type="module" src="/assets/js/azobss-pabm-storefront.js?v=1273"></script>
 <script src="/assets/js/azobss-pabm-result-layout.js?v=3" defer></script>
 <script src="/assets/js/azobss-pa-search.js?v=1259" defer></script>
 <script src="/assets/js/azobss-lot-kadaster-search.js?v=1255" defer></script>

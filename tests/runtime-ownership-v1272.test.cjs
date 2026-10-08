@@ -27,10 +27,10 @@ test('likes-only runtime contains no canonical auth/cart/purchase ownership assi
 test('PA-BM classic core remains canonical cart owner and storefront does not normally overwrite it', () => {
   const html=read('PA-BM/index.html');
   const sf=read('assets/js/azobss-pabm-storefront.js');
-  assert.match(html, /__AZOBSS_PABM_CART_OWNER__='classic-core-v1272'/);
-  assert.match(html, /azobssPaBmCartCore=.*version:1272/);
+  assert.match(html, /__AZOBSS_PABM_CART_OWNER__='classic-core-v1273'/);
+  assert.match(html, /azobssPaBmCartCore=.*version:1273/);
   assert.match(sf, /if \(!window\.azobssPaBmCartCore \|\| typeof window\.azobssPaBmCartCore\.add !== 'function'\)/);
-  assert.match(sf, /__AZOBSS_PABM_CART_OWNER__ = 'classic-core-v1272'/);
+  assert.match(sf, /__AZOBSS_PABM_CART_OWNER__ = 'classic-core-v1273'/);
 });
 
 test('Lot Kadaster map has one effective click owner', () => {
