@@ -959,6 +959,66 @@ body{background:radial-gradient(circle at top,#102746 0,#07111f 48%,#040914 100%
   .az-market-sell{padding:10px 14px!important}
 }
 </style>
+
+<style id="azobss-market-v1277">
+/* AZOBSS v1277: extra-slim market hero + neutral image stage. */
+.az-market-wrap{margin-top:70px!important}
+.az-market-hero{
+  gap:12px!important;
+  padding:9px 16px!important;
+  border-radius:15px!important;
+  min-height:0!important;
+  align-items:center!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.22)!important;
+}
+.az-market-hero>div{min-width:0!important;flex:1 1 auto!important}
+.az-market-hero h1{
+  font-size:clamp(24px,2.55vw,32px)!important;
+  line-height:1!important;
+  margin:0 0 4px!important;
+}
+.az-market-hero p{
+  max-width:none!important;
+  font-size:11.5px!important;
+  line-height:1.25!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.az-market-badge{
+  padding:3px 7px!important;
+  font-size:9px!important;
+  line-height:1.15!important;
+  margin-bottom:5px!important;
+}
+.az-market-sell{
+  flex:0 0 auto!important;
+  border-radius:10px!important;
+  padding:9px 13px!important;
+  font-size:11px!important;
+  box-shadow:0 6px 16px rgba(22,163,74,.18)!important;
+}
+/* A transparent PNG/WebP should never visually become a black panel. */
+.az-market-photo,.az-market-detail-photo,.az-market-edit-photo{background:#e5e7eb!important}
+.az-market-photo img,.az-market-detail-photo img,.az-market-edit-photo img{background:#fff!important}
+@media(max-width:980px){
+  .az-market-hero{flex-direction:row!important;align-items:center!important;padding:9px 14px!important}
+  .az-market-hero p{white-space:nowrap!important}
+}
+@media(max-width:720px){
+  .az-market-wrap{margin-top:64px!important}
+  .az-market-hero{padding:9px 11px!important;gap:8px!important;border-radius:13px!important}
+  .az-market-hero h1{font-size:clamp(21px,6.7vw,28px)!important;margin-bottom:3px!important}
+  .az-market-hero p{font-size:10.5px!important}
+  .az-market-badge{font-size:8.5px!important;margin-bottom:4px!important}
+  .az-market-sell{padding:8px 10px!important;font-size:10px!important}
+}
+@media(max-width:520px){
+  .az-market-hero p{display:none!important}
+  .az-market-hero h1{margin-bottom:0!important}
+  .az-market-badge{margin-bottom:4px!important}
+}
+</style>
 </head>
 <body>
   <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1059,7 +1119,7 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 const firebaseConfig={apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',authDomain:'azobss.firebaseapp.com',projectId:'azobss',storageBucket:'azobss.firebasestorage.app',messagingSenderId:'159277716405',appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
-const COLLECTION='marketListings', MAX_IMAGES=8, MAX_IMAGE_CHARS=70000, MAX_TOTAL_IMAGE_CHARS=620000;
+const COLLECTION='marketListings', MAX_IMAGES=8, MAX_IMAGE_CHARS=420000, MAX_TOTAL_IMAGE_CHARS=820000;
 const ADMIN_EMAILS=new Set(['zedan91@azobss.local','zedan9107@gmail.com']), ADMIN_KEYS=new Set(['zedan91','zedan9107']);
 let currentUser=null, allListings=[], editingListingId=null, editorExistingImages=[], selectedPreviewUrls=[], zoomImages=[], zoomIndex=0, activeDetailId='';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -1093,9 +1153,11 @@ function clearListingParam(){const u=new URL(location.href);if(u.searchParams.ha
 function closeDetail(){setModal(detailModal,false);activeDetailId='';clearListingParam()}
 document.querySelectorAll('[data-market-detail-close]').forEach(b=>b.addEventListener('click',closeDetail));
 sellModal.addEventListener('click',e=>{if(e.target===sellModal)closeEditor()});detailModal.addEventListener('click',e=>{if(e.target===detailModal)closeDetail()});
-function loadImage(file){return new Promise((resolve,reject)=>{if(!file||!file.type?.startsWith('image/'))return reject(new Error('Please choose image files only.'));const url=URL.createObjectURL(file),img=new Image();img.onload=()=>resolve({img,url});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error(`Unable to read ${file.name||'photo'}.`))};img.src=url})}
-async function imageFromFile(file){const {img,url}=await loadImage(file);try{let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;if(!w||!h)throw new Error('Invalid image size.');let max=1280,scale=Math.min(1,max/Math.max(w,h));w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));let q=.80,data='';for(let pass=0;pass<12;pass++){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{alpha:false});ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(img,0,0,w,h);data=c.toDataURL('image/jpeg',q);if(data.length<=MAX_IMAGE_CHARS)break;if(q>.42)q-=.08;else{w=Math.max(420,Math.round(w*.84));h=Math.max(320,Math.round(h*.84));q=.62}}if(!data||data.length>MAX_IMAGE_CHARS*1.18)throw new Error(`${file.name||'Photo'} is too large to compress safely.`);return data}finally{URL.revokeObjectURL(url)}}
-async function compressSelectedFiles(files){const out=[];for(const file of files)out.push(await imageFromFile(file));return out}
+function readFileDataUrl(file){return new Promise((resolve,reject)=>{if(!file||!file.type?.startsWith('image/'))return reject(new Error('Please choose image files only.'));const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error(`Unable to read ${file.name||'photo'}.`));reader.readAsDataURL(file)})}
+function loadDataUrlImage(dataUrl,name='photo'){return new Promise((resolve,reject)=>{const img=new Image();img.decoding='async';img.onload=()=>resolve(img);img.onerror=()=>reject(new Error(`Unable to decode ${name}.`));img.src=dataUrl})}
+function canvasToJpegDataUrl(canvas,quality){return new Promise((resolve,reject)=>{canvas.toBlob(blob=>{if(!blob)return reject(new Error('Browser could not encode the photo.'));const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(new Error('Browser could not read the compressed photo.'));r.readAsDataURL(blob)},'image/jpeg',quality)})}
+async function imageFromFile(file,targetChars=MAX_IMAGE_CHARS){const raw=await readFileDataUrl(file);if(!raw.startsWith('data:image/'))throw new Error(`${file.name||'Photo'} is not a supported image.`);/* Preserve the original bytes whenever the Firestore budget allows. This completely avoids the Firefox canvas-black-image path for normal/small photos. */if(raw.length<=targetChars)return raw;let source=null,bitmap=null;try{if(typeof createImageBitmap==='function'){try{bitmap=await createImageBitmap(file);source=bitmap}catch(_){}}if(!source)source=await loadDataUrlImage(raw,file.name||'photo');let w=source.width||source.naturalWidth||0,h=source.height||source.naturalHeight||0;if(!w||!h)throw new Error('Invalid image size.');let max=1280,scale=Math.min(1,max/Math.max(w,h));w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));let q=.84,data='';for(let pass=0;pass<12;pass++){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{alpha:true,willReadFrequently:true});if(!ctx)throw new Error('Browser image canvas is unavailable.');ctx.save();ctx.globalCompositeOperation='source-over';ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,0,0,w,h);ctx.restore();/* Force Firefox to flush the decoded pixels before asynchronous JPEG encoding. */try{ctx.getImageData(Math.max(0,Math.floor(w/2)),Math.max(0,Math.floor(h/2)),1,1)}catch(_){}await new Promise(r=>setTimeout(r,0));data=await canvasToJpegDataUrl(c,q);if(data.length<=targetChars)break;if(q>.46)q-=.08;else{w=Math.max(480,Math.round(w*.84));h=Math.max(360,Math.round(h*.84));q=.64}}if(!data||data.length>targetChars*1.18)throw new Error(`${file.name||'Photo'} is too large to compress safely.`);return data}finally{try{bitmap?.close?.()}catch(_){}}}
+async function compressSelectedFiles(files,budget=MAX_TOTAL_IMAGE_CHARS){const out=[];let left=Math.max(60000,Number(budget)||MAX_TOTAL_IMAGE_CHARS);for(let i=0;i<files.length;i++){const remaining=Math.max(1,files.length-i),target=Math.max(60000,Math.min(MAX_IMAGE_CHARS,Math.floor(left/remaining)));const data=await imageFromFile(files[i],target);out.push(data);left=Math.max(0,left-data.length)}return out}
 async function loadListings(){try{const snap=await getDocs(collection(db,COLLECTION));allListings=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.status!=='deleted');render();const wanted=new URL(location.href).searchParams.get('listing');if(wanted&&allListings.some(x=>x.id===wanted))openDetail(wanted,false)}catch(err){console.error(err);$('#azMarketGrid').innerHTML='<div class="az-market-empty">AZOBSS Market is being prepared. Unable to load listings right now.<br><small>'+esc(err.code||err.message||'')+'</small></div>';$('#azMarketCount').textContent='0 listings'}}
 function createdMs(x){const c=x.createdAt;return c?.toMillis?c.toMillis():Number(c||0)}
 function filtered(){const q=$('#azMarketSearch').value.trim().toLowerCase(),cond=$('#azMarketCondition').value,cat=$('#azMarketCategory').value,loc=$('#azMarketLocation').value.trim().toLowerCase();let a=allListings.filter(x=>(!cond||x.condition===cond)&&(!cat||x.category===cat)&&(!loc||String(x.location||'').toLowerCase().includes(loc))&&(!q||[x.title,x.category,x.location,x.description].join(' ').toLowerCase().includes(q)));const sort=$('#azMarketSort').value;if(sort==='price-low')a.sort((a,b)=>Number(a.price)-Number(b.price));else if(sort==='price-high')a.sort((a,b)=>Number(b.price)-Number(a.price));else if(sort==='az')a.sort((a,b)=>String(a.title).localeCompare(String(b.title)));else a.sort((a,b)=>createdMs(b)-createdMs(a));return a}
@@ -1111,7 +1173,7 @@ function closeImageViewer(){setModal(imageViewer,false);zoomImages=[];$('#azMark
 $('#azMarketImageClose').addEventListener('click',closeImageViewer);imageViewer.addEventListener('click',e=>{if(e.target===imageViewer)closeImageViewer()});$('#azMarketImagePrev').addEventListener('click',()=>{if(zoomImages.length){zoomIndex=(zoomIndex-1+zoomImages.length)%zoomImages.length;renderImageViewer()}});$('#azMarketImageNext').addEventListener('click',()=>{if(zoomImages.length){zoomIndex=(zoomIndex+1)%zoomImages.length;renderImageViewer()}});
 document.addEventListener('keydown',e=>{const shareSheet=document.querySelector('.az-market-share-modal-backdrop');if(e.key==='Escape'&&shareSheet){shareSheet.remove();return}if(imageViewer.classList.contains('open')){if(e.key==='Escape')closeImageViewer();else if(e.key==='ArrowLeft')$('#azMarketImagePrev').click();else if(e.key==='ArrowRight')$('#azMarketImageNext').click()}else if(e.key==='Escape'&&detailModal.classList.contains('open'))closeDetail()});
 ['#azMarketSearch','#azMarketCondition','#azMarketCategory','#azMarketLocation','#azMarketSort'].forEach(s=>$(s).addEventListener('input',render));
-form.addEventListener('submit',async e=>{e.preventDefault();if(!adminSession()){alert('Only AZOBSS Administrator can publish or edit Market listings.');return}const btn=$('#azMarketPublishBtn'),isEdit=!!editingListingId;btn.disabled=true;btn.textContent=isEdit?'Saving...':'Publishing...';try{const fd=new FormData(form),profile=localProfile()||{},files=Array.from(photoInput.files||[]);if(editorExistingImages.length+files.length>MAX_IMAGES)throw new Error(`Maximum ${MAX_IMAGES} photos per listing.`);const added=await compressSelectedFiles(files),images=editorExistingImages.concat(added).slice(0,MAX_IMAGES);if(images.reduce((n,v)=>n+v.length,0)>MAX_TOTAL_IMAGE_CHARS)throw new Error('Combined photos are still too large. Remove one or more photos and try again.');const title=String(fd.get('title')||'').trim(),price=Number(fd.get('price')),phone=String(fd.get('phone')||'').trim();if(!title||!Number.isFinite(price)||price<0||!phone)throw new Error('Please complete all required fields.');const common={title,price,condition:String(fd.get('condition')||''),category:String(fd.get('category')||''),location:String(fd.get('location')||'').trim(),description:String(fd.get('description')||'').trim(),imagesData:images,imageData:images[0]||'',sellerPhone:phone,status:'active',updatedAt:serverTimestamp()};if(isEdit){await updateDoc(doc(db,COLLECTION,editingListingId),common)}else{await addDoc(collection(db,COLLECTION),{...common,sellerUid:currentUser.uid,sellerName:profile.name||profile.username||currentUser.displayName||currentUser.email?.split('@')[0]||'AZOBSS Administrator',sellerEmail:currentUser.email||profile.email||'',createdAt:serverTimestamp()})}closeEditor();await loadListings();alert(isEdit?'Listing updated.':'Listing published.') }catch(err){console.error(err);alert('Unable to save listing: '+(err.message||err.code||err))}finally{btn.disabled=false;btn.textContent=editingListingId?'Save Changes':'Publish Listing'}});
+form.addEventListener('submit',async e=>{e.preventDefault();if(!adminSession()){alert('Only AZOBSS Administrator can publish or edit Market listings.');return}const btn=$('#azMarketPublishBtn'),isEdit=!!editingListingId;btn.disabled=true;btn.textContent=isEdit?'Saving...':'Publishing...';try{const fd=new FormData(form),profile=localProfile()||{},files=Array.from(photoInput.files||[]);if(editorExistingImages.length+files.length>MAX_IMAGES)throw new Error(`Maximum ${MAX_IMAGES} photos per listing.`);const existingChars=editorExistingImages.reduce((n,v)=>n+String(v||'').length,0),added=await compressSelectedFiles(files,Math.max(60000,MAX_TOTAL_IMAGE_CHARS-existingChars)),images=editorExistingImages.concat(added).slice(0,MAX_IMAGES);if(images.reduce((n,v)=>n+v.length,0)>MAX_TOTAL_IMAGE_CHARS)throw new Error('Combined photos are still too large. Remove one or more photos and try again.');const title=String(fd.get('title')||'').trim(),price=Number(fd.get('price')),phone=String(fd.get('phone')||'').trim();if(!title||!Number.isFinite(price)||price<0||!phone)throw new Error('Please complete all required fields.');const common={title,price,condition:String(fd.get('condition')||''),category:String(fd.get('category')||''),location:String(fd.get('location')||'').trim(),description:String(fd.get('description')||'').trim(),imagesData:images,imageData:images[0]||'',sellerPhone:phone,status:'active',updatedAt:serverTimestamp()};if(isEdit){await updateDoc(doc(db,COLLECTION,editingListingId),common)}else{await addDoc(collection(db,COLLECTION),{...common,sellerUid:currentUser.uid,sellerName:profile.name||profile.username||currentUser.displayName||currentUser.email?.split('@')[0]||'AZOBSS Administrator',sellerEmail:currentUser.email||profile.email||'',createdAt:serverTimestamp()})}closeEditor();await loadListings();alert(isEdit?'Listing updated.':'Listing published.') }catch(err){console.error(err);alert('Unable to save listing: '+(err.message||err.code||err))}finally{btn.disabled=false;btn.textContent=editingListingId?'Save Changes':'Publish Listing'}});
 window.addEventListener('popstate',()=>{const id=new URL(location.href).searchParams.get('listing');if(id)openDetail(id,false);else if(detailModal.classList.contains('open')){setModal(detailModal,false);activeDetailId=''}});
 onAuthStateChanged(auth,u=>{currentUser=u||null;updateAdminUI();if(activeDetailId&&detailModal.classList.contains('open'))openDetail(activeDetailId,false)});updateAdminUI();loadListings();
 </script>

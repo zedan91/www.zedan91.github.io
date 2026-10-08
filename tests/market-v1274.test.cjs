@@ -30,5 +30,5 @@ test('Market supports multi-photo upload, edit, zoom gallery and direct sharing'
 test('Firefox-safe image conversion flattens transparency before JPEG compression',()=>{
   assert.match(html,/ctx\.fillStyle='#ffffff'/);
   assert.match(html,/ctx\.fillRect\(0,0,w,h\)/);
-  assert.match(html,/toDataURL\('image\/jpeg',q\)/);
+  assert.match(html,/canvas\.toBlob\(/);
 });
