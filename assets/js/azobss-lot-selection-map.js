@@ -2089,6 +2089,7 @@
           const processingLotCount = Math.max(1, Number(estimate.lotCount || 1));
           const processingTiming = getLotProcessingTiming(processingLotCount);
           let processingJobStatus = 'esriJobSubmitted';
+          let prepared = null;
           const updateProcessingUi = () => {
             const elapsedSeconds = Math.max(0, Math.round((Date.now() - processingStartedAt) / 1000));
             const elapsedText = elapsedSeconds >= 60
@@ -2123,7 +2124,7 @@
           if (Number(lotCapabilities.version || 0) < 7 || String(lotCapabilities.exportMode || '') !== 'natural-exact-aoi-line-selected-lots-v928' || !lotCapabilities.naturalLotGeometry || !lotCapabilities.strictReferenceIntersection || !lotCapabilities.positiveAreaReferenceIntersection || !lotCapabilities.excludesBoundaryOnlyTouches || (!Number.isFinite(Number(lotCapabilities.referenceInsetToleranceM)) || Number(lotCapabilities.referenceInsetToleranceM) < 0.5) || !lotCapabilities.exactVisibleLineCrossing || !lotCapabilities.exactSelectedFeatureSetExport || !lotCapabilities.exactSelectedLotAoi || !lotCapabilities.envelopeAoiDisabled) {
             throw new Error('Backend Lot Kadaster masih versi lama. Redeploy Render menggunakan v928 supaya lot luar hanya dipilih apabila garisan rujukan benar-benar melintasinya dan AOI eksport tidak lagi menarik lot jiran.');
           }
-          let prepared = await postJson('/api/jupem-lot-selection/prepare', {
+          prepared = await postJson('/api/jupem-lot-selection/prepare', {
             productCode,
             stateCode: activeStateCode,
             geometry: selectedGeometry,
