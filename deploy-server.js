@@ -4111,6 +4111,13 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
         if (syncResult && syncResult.ok) latest = upsertPremiumOrder({ ...latest, paBmPaidSyncedAt: new Date().toISOString(), paBmPaidSyncedCount: syncResult.updated || 0 });
       } catch (syncError) { console.warn("PA/BM purchaseLogs paid sync failed:", syncError && (syncError.message || syncError)); }
     }
+    if (isPaBmPremiumOrder(latest)) {
+      const paidUid = cleanPremiumText((latest.user && latest.user.uid) || latest.uid || latest.userUid || '', 180);
+      if (paidUid) {
+        try { await azClearPaBmCartDraft({ uid:paidUid }, 'paid', { orderId:latest.orderId || '', billCode:latest.billCode || '' }); }
+        catch (draftClearError) { console.warn('PA/BM paid cart draft clear skipped:', draftClearError && (draftClearError.message || draftClearError)); }
+      }
+    }
 
     latest = azEnsureSubscriptionActivation(latest);
     if (azIsManualSalesInvoiceOrder(latest)) {
@@ -5775,6 +5782,110 @@ async function azResolveToyyibRecoveryEventsForOrder(order = {}) {
     return { ok:false, updated:0, error:err && err.message ? err.message : String(err) };
   }
 }
+
+// AZOBSS v1265: persistent PA/BM cart draft.
+// A browser/private-window restart can legitimately erase localStorage.  The checkout
+// backend already has an authenticated Firebase identity, so keep the latest cart
+// snapshot in Firestore as a durable own-account recovery source.  This is not a
+// purchase-history record and does not make an unpaid order downloadable.
+function azPaBmCartDraftDocId(identity = {}) {
+  const uid = cleanPremiumText(identity && identity.uid || '', 180);
+  if (!uid) return '';
+  return 'pabmcart_' + crypto.createHash('sha256').update(uid).digest('hex').slice(0, 40);
+}
+function azNormalizePaBmCartDraftItems(items = [], fallbackCreatedAtMs = Date.now()) {
+  return (Array.isArray(items) ? items : []).slice(0, 50).map(item => ({
+    productType:cleanPremiumText(item && (item.productType || item.product) || 'PA',20).toUpperCase(),
+    itemCode:cleanPremiumText(item && (item.itemCode || item.stationNo || item.stesen || item.productId) || '',100),
+    negeri:cleanPremiumText(item && (item.negeri || item.state) || '',100).toUpperCase(),
+    baseAmount:Number(item && (item.baseAmount ?? item.amount) || 0) || 0,
+    amount:Number(item && item.amount || 0) || 0,
+    priceAdjustmentCategory:cleanPremiumText(item && item.priceAdjustmentCategory || '',40),
+    priceAdjustmentPercent:Number(item && item.priceAdjustmentPercent || 0) || 0,
+    productId:cleanPremiumText(item && item.productId || '',160),
+    stationNo:cleanPremiumText(item && (item.stationNo || item.stesen) || '',100),
+    jenis:cleanPremiumText(item && item.jenis || '',10),
+    filename:cleanPremiumText(item && item.filename || '',180),
+    downloadUrl:cleanPremiumUrl(item && (item.downloadUrl || item.url) || ''),
+    variant:cleanPremiumText(item && (item.variant || item.areaSize) || '',40).toUpperCase(),
+    areaRatio:Number(item && (item.areaRatio || item.selectionAreaRatio) || 0) || 0,
+    createdAtMs:Number(item && (item.createdAtMs || item.addedAtMs) || fallbackCreatedAtMs) || fallbackCreatedAtMs
+  })).filter(item => item.itemCode && item.negeri);
+}
+async function azPersistPaBmCartDraft(identity = {}, data = {}) {
+  const db = getAzobssBackendDb();
+  const docId = azPaBmCartDraftDocId(identity);
+  if (!db || !docId || !identity.uid) return { ok:false, stored:false, reason:'database_or_identity_unavailable' };
+  const nowMs = Date.now();
+  const items = azNormalizePaBmCartDraftItems(data.items || data.paBmItems || [], nowMs);
+  if (!items.length) return { ok:false, stored:false, reason:'empty_cart' };
+  const row = {
+    version:1265,
+    active:true,
+    uid:cleanPremiumText(identity.uid || '',180),
+    username:cleanPremiumText(identity.username || data.username || '',100).toLowerCase(),
+    email:cleanPremiumText(identity.authEmail || identity.email || data.email || '',180).toLowerCase(),
+    items,
+    orderId:cleanPremiumText(data.orderId || '',180),
+    billCode:cleanPremiumText(data.billCode || '',120),
+    paymentUrl:cleanPremiumUrl(data.paymentUrl || ''),
+    orderStatus:cleanPremiumText(data.status || data.orderStatus || 'cart',80).toLowerCase(),
+    checkoutFingerprint:cleanPremiumText(data.checkoutFingerprint || '',120),
+    updatedAtMs:nowMs,
+    updatedAt:new Date(nowMs).toISOString(),
+    expiresAtMs:nowMs + 10 * 24 * 60 * 60 * 1000
+  };
+  try {
+    await db.collection('paBmCartDrafts').doc(docId).set(row, { merge:true });
+    return { ok:true, stored:true, docId, count:items.length };
+  } catch (err) {
+    console.warn('PA/BM cart draft persist failed:', err && (err.message || err));
+    return { ok:false, stored:false, error:err && err.message ? err.message : String(err) };
+  }
+}
+async function azLoadPaBmCartDraft(identity = {}) {
+  const db = getAzobssBackendDb();
+  const docId = azPaBmCartDraftDocId(identity);
+  if (!db || !docId || !identity.uid) return null;
+  try {
+    const snap = await db.collection('paBmCartDrafts').doc(docId).get();
+    if (!snap.exists) return null;
+    const row = { docId:snap.id, ...(snap.data() || {}) };
+    if (row.active === false) return null;
+    if (String(row.uid || '') !== String(identity.uid || '')) return null;
+    const expiresAtMs = Number(row.expiresAtMs || 0);
+    if (expiresAtMs && expiresAtMs < Date.now()) return null;
+    const items = azNormalizePaBmCartDraftItems(row.items || [], Number(row.updatedAtMs || Date.now()));
+    if (!items.length) return null;
+    return { ...row, items };
+  } catch (err) {
+    console.warn('PA/BM cart draft read failed:', err && (err.message || err));
+    return null;
+  }
+}
+async function azClearPaBmCartDraft(identity = {}, reason = 'cleared', extra = {}) {
+  const db = getAzobssBackendDb();
+  const docId = azPaBmCartDraftDocId(identity);
+  if (!db || !docId || !identity.uid) return false;
+  const nowMs = Date.now();
+  try {
+    await db.collection('paBmCartDrafts').doc(docId).set({
+      active:false,
+      items:[],
+      clearReason:cleanPremiumText(reason || 'cleared',100),
+      clearedAtMs:nowMs,
+      clearedAt:new Date(nowMs).toISOString(),
+      updatedAtMs:nowMs,
+      updatedAt:new Date(nowMs).toISOString(),
+      ...azJsonSafe(extra || {})
+    }, { merge:true });
+    return true;
+  } catch (err) {
+    console.warn('PA/BM cart draft clear failed:', err && (err.message || err));
+    return false;
+  }
+}
+
 async function azLoadRecentPaBmOrdersForIdentity(identity = {}, limitRows = 120) {
   if (!identity || !identity.uid) return [];
   const rows = [];
@@ -5784,7 +5895,7 @@ async function azLoadRecentPaBmOrdersForIdentity(identity = {}, limitRows = 120)
     if (!azMyPurchasesBelongsToIdentity(row, identity)) return;
     if (row.superseded === true || row.autoDuplicateSuperseded === true) return;
     const status = String(row.status || row.paymentStatus || "").trim().toLowerCase();
-    if (["cancelled","canceled","deleted","failed","rejected"].includes(status)) return;
+    if (["deleted","refunded"].includes(status)) return;
     const key = String(row.orderId || row.billCode || row.docId || row.id || "").trim();
     if (!key || seen.has(key)) return;
     const createdMs = azAutomaticCheckoutCreatedMs(row);
@@ -5807,7 +5918,86 @@ async function azLoadRecentPaBmOrdersForIdentity(identity = {}, limitRows = 120)
   rows.sort((a,b) => azAutomaticCheckoutCreatedMs(b) - azAutomaticCheckoutCreatedMs(a));
   return rows.slice(0, limitRows);
 }
+function azPaBmCartRecoveryStatus(status = "") {
+  return ["pending","unpaid","new","created","processing","cancelled","canceled","failed","rejected","expired","void","declined"].includes(String(status || "").trim().toLowerCase());
+}
+function azPaBmCartResumeStatus(status = "") {
+  return ["pending","unpaid","new","created","processing"].includes(String(status || "").trim().toLowerCase());
+}
 async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
+  // v1265: first use the UID-keyed server cart draft.  This path survives a
+  // complete browser/private-session restart and does not depend on localStorage
+  // or username/profile hydration timing.
+  const serverDraft = await azLoadPaBmCartDraft(identity);
+  if (serverDraft && Array.isArray(serverDraft.items) && serverDraft.items.length) {
+    let draftOrder = null;
+    try {
+      if (serverDraft.orderId || serverDraft.billCode) {
+        draftOrder = await findPremiumOrderByAnyDeep({ orderId:serverDraft.orderId || '', billCode:serverDraft.billCode || '' });
+        if (draftOrder && !azMyPurchasesBelongsToIdentity(draftOrder, identity)) draftOrder = null;
+      }
+    } catch (_) { draftOrder = null; }
+
+    const originalStatus = String((draftOrder && (draftOrder.status || draftOrder.paymentStatus)) || serverDraft.orderStatus || 'pending').trim().toLowerCase();
+    const verifiedAlready = !!(draftOrder && (draftOrder.toyyibVerifiedAt || draftOrder.paymentVerificationSource === 'toyyibpay-api' || draftOrder.paymentVerificationSource === 'toyyibpay-api-recovery'));
+
+    if (draftOrder && originalStatus === 'paid' && verifiedAlready) {
+      await azClearPaBmCartDraft(identity, 'paid', { orderId:draftOrder.orderId || '', billCode:draftOrder.billCode || '' });
+    } else if (draftOrder && cleanPremiumText(draftOrder.billCode || serverDraft.billCode || '',120) && String(draftOrder.paymentMethod || 'toyyibpay').toLowerCase().includes('toyyib')) {
+      try {
+        const verified = await azVerifyToyyibPaidTransaction(draftOrder);
+        if (verified && verified.paid) {
+          draftOrder = await azFinalizePaidOrderOnce(draftOrder, req, {
+            verified:true,
+            paymentMethod:'toyyibpay',
+            verificationSource:'toyyibpay-api-recovery',
+            toyyibTransaction:verified.tx,
+            paymentReference:verified.paymentReference || draftOrder.paymentReference || ''
+          });
+          await azClearPaBmCartDraft(identity, 'paid', { orderId:draftOrder.orderId || '', billCode:draftOrder.billCode || '' });
+          await azResolveToyyibRecoveryEventsForOrder(draftOrder);
+          return {
+            ok:true, recovered:true, paid:true, status:'paid',
+            orderId:cleanPremiumText(draftOrder.orderId || '',160),
+            billCode:cleanPremiumText(draftOrder.billCode || '',120),
+            invoiceNo:cleanPremiumText(draftOrder.invoiceNo || '',180),
+            receiptNo:cleanPremiumText(draftOrder.receiptNo || '',180),
+            purchaseUpdated:Number(draftOrder.paBmPaidSyncedCount || 0),
+            recoveryVersion:1265,
+            recoverySource:'server-cart-draft-toyyibpay-verify'
+          };
+        }
+      } catch (verifyError) {
+        console.warn('PA/BM server cart draft ToyyibPay verify skipped:', verifyError && (verifyError.message || verifyError));
+      }
+    }
+
+    // Pending/unpaid orders may safely resume the same bill.  A failed/cancelled
+    // attempt still restores its items, but starts a fresh checkout instead of
+    // forcing the customer back to a dead payment URL.
+    const resumableStatuses = new Set(['pending','unpaid','new','created','processing']);
+    const draftPaymentUrl = cleanPremiumUrl((draftOrder && draftOrder.paymentUrl) || serverDraft.paymentUrl || '');
+    const resumeAllowed = resumableStatuses.has(originalStatus) && !!draftPaymentUrl;
+    return {
+      ok:true,
+      recovered:true,
+      paid:false,
+      status:'pending',
+      originalStatus:originalStatus || 'pending',
+      orderId:cleanPremiumText((draftOrder && draftOrder.orderId) || serverDraft.orderId || '',160),
+      billCode:cleanPremiumText((draftOrder && draftOrder.billCode) || serverDraft.billCode || '',120),
+      invoiceNo:cleanPremiumText((draftOrder && draftOrder.invoiceNo) || '',180),
+      paymentUrl:resumeAllowed ? draftPaymentUrl : '',
+      amountSen:Number((draftOrder && draftOrder.amountSen) || 0),
+      items:azNormalizePaBmCartDraftItems(serverDraft.items, Number(serverDraft.updatedAtMs || Date.now())),
+      cartRecoverable:true,
+      serverCartDraft:true,
+      resumeAllowed,
+      recoveryVersion:1265,
+      recoverySource:'server-cart-draft'
+    };
+  }
+
   const rows = await azLoadRecentPaBmOrdersForIdentity(identity, 120);
   if (!rows.length) return { ok:true, recovered:false, paid:false, status:"no_recent_order", recoveryVersion:1055 };
 
@@ -5870,8 +6060,8 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
           recoverySource:"toyyibpay-api-recovery"
         };
       }
-      if (!latestPending && ["pending","unpaid","new","created","processing"].includes(status)) latestPending = order;
-    } else if (!latestPending && ["pending","unpaid","new","created","processing"].includes(status)) {
+      if (!latestPending && azPaBmCartRecoveryStatus(status)) latestPending = order;
+    } else if (!latestPending && azPaBmCartRecoveryStatus(status)) {
       latestPending = order;
     }
   }
@@ -5894,19 +6084,23 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
       areaRatio:Number(item && item.areaRatio || 0),
       createdAtMs:Number(item && item.createdAtMs || azAutomaticCheckoutCreatedMs(latestPending) || Date.now())
     })).filter(item => item.itemCode && item.negeri);
+    const originalStatus = String(latestPending.status || latestPending.paymentStatus || 'pending').trim().toLowerCase();
+    const resumeAllowed = azPaBmCartResumeStatus(originalStatus) && !!cleanPremiumUrl(latestPending.paymentUrl || '');
     return {
       ok:true,
       recovered:false,
       paid:false,
       status:"pending",
+      originalStatus,
       orderId:cleanPremiumText(latestPending.orderId || "",160),
       billCode:cleanPremiumText(latestPending.billCode || "",120),
       invoiceNo:cleanPremiumText(latestPending.invoiceNo || "",180),
-      paymentUrl:cleanPremiumUrl(latestPending.paymentUrl || ""),
+      paymentUrl:resumeAllowed ? cleanPremiumUrl(latestPending.paymentUrl || "") : '',
       amountSen:Number(latestPending.amountSen || 0),
       items:pendingItems,
-      cartRecoverable:!!(pendingItems.length && cleanPremiumUrl(latestPending.paymentUrl || "")),
-      recoveryVersion:1263,
+      cartRecoverable:!!pendingItems.length,
+      resumeAllowed,
+      recoveryVersion:1265,
       recoverySource:"server-user-lookup"
     };
   }
@@ -19219,6 +19413,18 @@ async function handler(req, res) {
         try {
           const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
           if (reusableOrder) {
+            try {
+              await azPersistPaBmCartDraft(identity, {
+                items,
+                orderId:reusableOrder.orderId || '',
+                billCode:reusableOrder.billCode || '',
+                paymentUrl:reusableOrder.paymentUrl || '',
+                status:'pending',
+                checkoutFingerprint
+              });
+            } catch (draftError) {
+              console.warn('PA/BM reusable cart draft persist skipped:', draftError && (draftError.message || draftError));
+            }
             return send(res, 200, JSON.stringify({
               ok:true,success:true,reused:true,idempotent:true,patch:1050,
               orderId:reusableOrder.orderId,billCode:reusableOrder.billCode,paymentUrl:reusableOrder.paymentUrl,
@@ -19421,8 +19627,15 @@ async function handler(req, res) {
         const priceAdjustmentPercent = usedPercents.length === 1 ? usedPercents[0] : 0;
         const paBmOrder = upsertPremiumOrder({ orderId, productId:"pa-bm-purchase-records", productName, amount:azAdjustedMoneyText(totalAmount), amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), saleAmount:totalAmount, saleAmountText:azAdjustedMoneyText(totalAmount), priceAdjustmentPercent, priceAdjustmentByCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, user:{...user, username: usernameKey || user.username, uid}, paBmItems:items, maxDownload:0, expiryHours:0, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"pa-bm", paymentRecoveryVersion:1055, createdAt:new Date().toISOString(), createdAtMs:Date.now() });
         try { await azPersistPremiumOrder(paBmOrder); } catch (persistError) { console.warn("PA/BM premium order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
+        try {
+          await azPersistPaBmCartDraft(identity, {
+            items, orderId, billCode, paymentUrl, status:'pending', checkoutFingerprint
+          });
+        } catch (draftError) {
+          console.warn('PA/BM cart draft persist skipped before redirect:', draftError && (draftError.message || draftError));
+        }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1055, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1265, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
         } finally {
           releaseCheckoutLock();
         }
@@ -19530,6 +19743,44 @@ async function handler(req, res) {
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
         return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");
+      }
+    }
+
+    if (pathname === "/api/pa-bm/cart-draft" && ["GET","POST","DELETE"].includes(req.method)) {
+      if (azRateLimitOrSend(req, res, "pa-bm-cart-draft-1265", 80, 10 * 60 * 1000)) return;
+      const identity = await azCommissionIdentityFromRequest(req);
+      if (!identity || !identity.uid) {
+        return send(res, 401, JSON.stringify({ ok:false, error:"Login session required for cart sync." }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      }
+      try {
+        if (req.method === "GET") {
+          const draft = await azLoadPaBmCartDraft(identity);
+          return send(res, 200, JSON.stringify({ ok:true, draft:draft || null, version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
+        if (req.method === "DELETE") {
+          const cleared = await azClearPaBmCartDraft(identity, "explicit-cart-empty");
+          return send(res, 200, JSON.stringify({ ok:true, cleared, version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
+        let body = {};
+        try { body = parseRequestBody(await readBody(req)); }
+        catch (_) { return send(res, 400, JSON.stringify({ ok:false, error:"Invalid request body." }), "application/json"); }
+        const items = azNormalizePaBmCartDraftItems(body.items || [], Date.now());
+        if (!items.length) {
+          const cleared = await azClearPaBmCartDraft(identity, "client-cart-empty");
+          return send(res, 200, JSON.stringify({ ok:true, cleared, count:0, version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
+        }
+        const saved = await azPersistPaBmCartDraft(identity, {
+          items,
+          orderId:body.orderId || "",
+          billCode:body.billCode || "",
+          paymentUrl:body.paymentUrl || "",
+          status:body.status || "cart",
+          checkoutFingerprint:body.checkoutFingerprint || ""
+        });
+        return send(res, saved && saved.stored ? 200 : 500, JSON.stringify({ ok:!!(saved && saved.stored), count:items.length, version:1265, result:saved }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (err) {
+        console.error("PA/BM cart draft sync failed:", err && (err.stack || err.message || err));
+        return send(res, 500, JSON.stringify({ ok:false, error:"Cart sync failed.", version:1265 }, null, 2), "application/json", { "Cache-Control":"no-store" });
       }
     }
 

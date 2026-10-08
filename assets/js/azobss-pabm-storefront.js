@@ -137,6 +137,9 @@ let adminTestPaymentButton = null;
 let totalObserver = null;
 let cartButtonObserver = null;
 let cartButtonSyncTimer = null;
+let cartDraftSyncTimer = null;
+let cartDraftSyncBusy = false;
+let cartDraftSyncQueued = false;
 
 function savedUser() {
   try {
@@ -330,7 +333,53 @@ function writeCart(items) {
   localStorage.setItem(cartKey(), JSON.stringify(clean));
   if (!clean.length) clearPaymentCartBackup();
   renderCart();
+  scheduleServerCartDraftSync(clean);
   window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated', { detail: { count: clean.length } }));
+}
+
+async function syncServerCartDraftNow(items) {
+  if (cartDraftSyncBusy) { cartDraftSyncQueued = true; return false; }
+  if (!auth || !auth.currentUser) return false;
+  cartDraftSyncBusy = true;
+  try {
+    let token = await getPaBmAuthToken(false);
+    if (!token) token = await getPaBmAuthToken(true);
+    if (!token) return false;
+    const rows = Array.isArray(items) ? items.filter(Boolean).slice(0, MAX_CART_ITEMS) : readCart();
+    const method = rows.length ? 'POST' : 'DELETE';
+    const options = {
+      method,
+      cache:'no-store',
+      headers:{ Authorization:'Bearer ' + token, 'Cache-Control':'no-cache' }
+    };
+    if (rows.length) {
+      options.headers['Content-Type']='application/json';
+      options.body=JSON.stringify({ items:rows, status:'cart' });
+    }
+    let response = await fetch(`${BACKEND_BASE}/api/pa-bm/cart-draft`, options);
+    if (response.status === 401 || response.status === 403) {
+      token = await getPaBmAuthToken(true);
+      if (token) { options.headers.Authorization='Bearer ' + token; response = await fetch(`${BACKEND_BASE}/api/pa-bm/cart-draft`, options); }
+    }
+    return response.ok;
+  } catch (error) {
+    console.warn('PA/BM server cart draft sync skipped:', error);
+    return false;
+  } finally {
+    cartDraftSyncBusy = false;
+    if (cartDraftSyncQueued) {
+      cartDraftSyncQueued = false;
+      scheduleServerCartDraftSync(readCart(), 250);
+    }
+  }
+}
+function scheduleServerCartDraftSync(items = null, delay = 450) {
+  if (cartDraftSyncTimer) window.clearTimeout(cartDraftSyncTimer);
+  const snapshot = Array.isArray(items) ? items.map(item => ({...item})) : null;
+  cartDraftSyncTimer = window.setTimeout(() => {
+    cartDraftSyncTimer = null;
+    syncServerCartDraftNow(snapshot || readCart());
+  }, Math.max(0, Number(delay || 0)));
 }
 
 function paymentCartBackupKey() {
@@ -536,7 +585,7 @@ async function removePendingPurchaseItems(payload) {
 }
 
 async function reconcileEmptyStoredCart() {
-  // v1263: an empty browser cart is NOT proof that the customer intentionally
+  // v1265: an empty browser cart is NOT proof that the customer intentionally
   // discarded a pending payment. The tab/browser may have been closed while on
   // ToyyibPay, localStorage may have been cleared, or the cart owner key may have
   // changed during auth restore. Never auto-delete server pending orders here.
@@ -546,7 +595,7 @@ async function reconcileEmptyStoredCart() {
   if (restoredLocal.length) return restoredLocal.length;
 
   // Ask the authenticated server recovery path to restore the latest unresolved
-  // PA/BM order. global-auth v1263 writes the returned order back into this cart.
+  // PA/BM order. global-auth v1265 writes the returned order back into this cart.
   if (auth && auth.currentUser && typeof window.azobssRecoverPaBmPaymentNow === 'function') {
     try { await window.azobssRecoverPaBmPaymentNow(); } catch (_) {}
   }
@@ -1155,7 +1204,7 @@ function bindPaymentButton() {
   const clone = current.cloneNode(true);
   current.replaceWith(clone);
   paymentButton = clone;
-  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1263';
+  paymentButton.dataset.azobssCheckoutOwner = 'storefront-v1265';
   paymentButton.addEventListener('click', proceedToPayment);
 }
 
@@ -1207,7 +1256,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1263 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1265 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1217,7 +1266,7 @@ async function init() {
   // file again with a different query string, only one storefront instance may
   // own cart globals/listeners on /PA-BM/.
   if (window.__AZOBSS_PABM_STOREFRONT_ACTIVE__) return;
-  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1263';
+  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1265';
   // v1249: the storefront UI and Add to Cart must never wait for the async
   // profile price-adjustment lookup. Use the cached adjustment immediately,
   // bind the current state-button picker/cart handlers now, then refresh prices
@@ -1226,7 +1275,7 @@ async function init() {
   auth = apps.length ? getAuth(apps[0]) : null;
   publishPaBmStoreCartApi();
 
-  // v1263: the checkout backup is durable localStorage specifically so a cart
+  // v1265: the checkout backup is durable localStorage specifically so a cart
   // survives leaving AZOBSS for ToyyibPay. Restore it on every fresh page load,
   // not only after a ToyyibPay return event.
   restorePaymentCartBackup();
@@ -1245,7 +1294,7 @@ async function init() {
   });
   bindPaymentButton();
   bindAdminTestPaymentButton();
-  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1263';
+  window.__AZOBSS_PABM_CART_OWNER__ = 'storefront-v1265';
   window.azobssAddToPaBmCart = addToStoreCart;
   window.azobssRecordPurchase = addToStoreCart;
   window.azobssGetPaBmAuthToken = getPaBmAuthToken;
@@ -1287,6 +1336,8 @@ async function init() {
   window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercents = { paBm:Number(event.detail?.percentByCategory?.paBm || 0), lotKadaster:Number(event.detail?.percentByCategory?.lotKadaster ?? event.detail?.percentByCategory?.paBm ?? 0) }; const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
+  const initialCartRows = readCart();
+  if (initialCartRows.length || hasStoredCartSnapshot()) scheduleServerCartDraftSync(initialCartRows, 1200);
 
   // Fetch the latest per-user adjustment in the background. This must not block
   // state-picker rendering or Add to Cart. The cached value above remains usable

@@ -5925,6 +5925,7 @@ function azobssPaBmPendingRecoveryItems1263(data){
   const orderId = String(data && data.orderId || '').trim();
   const billCode = String(data && data.billCode || '').trim();
   const paymentUrl = String(data && data.paymentUrl || '').trim();
+  const resumeAllowed = data && data.resumeAllowed !== false && !!orderId && !!paymentUrl;
   const expectedCount = raw.length;
   const ids = raw.map(function(item){
     const type = String(item && item.productType || 'PA').trim().toUpperCase();
@@ -5934,14 +5935,14 @@ function azobssPaBmPendingRecoveryItems1263(data){
     const variant = String(item && item.variant || '').trim().toUpperCase();
     return [type,code,state,variant].filter(Boolean).join('|');
   }).filter(Boolean).sort();
-  const resumeCartKey = orderId + '|' + ids.join('~');
+  const resumeCartKey = resumeAllowed ? (orderId + '|' + ids.join('~')) : '';
   return raw.map(function(item){
     const type = String(item && item.productType || 'PA').trim().toUpperCase();
     let code = String(item && (item.itemCode || item.stationNo || item.productId) || '').trim();
     if(type === 'PA') code = code.replace(/^PA/i,'').replace(/\.TIF$/i,'').replace(/[^0-9]/g,'');
     const state = String(item && item.negeri || '').trim().toUpperCase();
     const variant = String(item && item.variant || '').trim().toUpperCase();
-    return {
+    const row = {
       ...(item || {}),
       id:[type,code,state,variant].filter(Boolean).join('|'),
       productType:type,
@@ -5949,13 +5950,17 @@ function azobssPaBmPendingRecoveryItems1263(data){
       negeri:state,
       variant:variant,
       addedAtMs:Number(item && (item.addedAtMs || item.createdAtMs) || Date.now()),
-      resumeOrderId:orderId,
-      resumeBillCode:billCode,
-      resumePaymentUrl:paymentUrl,
-      resumeItemCount:expectedCount,
-      resumeCartKey:resumeCartKey,
-      restoredFromPending:true
+      restoredFromServerDraft:!!(data && data.serverCartDraft)
     };
+    if(resumeAllowed){
+      row.resumeOrderId=orderId;
+      row.resumeBillCode=billCode;
+      row.resumePaymentUrl=paymentUrl;
+      row.resumeItemCount=expectedCount;
+      row.resumeCartKey=resumeCartKey;
+      row.restoredFromPending=true;
+    }
+    return row;
   }).filter(function(item){ return item.id && item.negeri; });
 }
 
@@ -6011,7 +6016,7 @@ function azobssAdoptGuestPaBmStorage1264(){
 
 async function azobssRestorePaBmPendingCart1263(data){
   try{
-    if(!data || data.status !== 'pending' || !data.paymentUrl || !Array.isArray(data.items) || !data.items.length) return false;
+    if(!data || data.status !== 'pending' || !Array.isArray(data.items) || !data.items.length) return false;
 
     // v1264: after a full browser/private-window restart Firebase can restore
     // before the AZOBSS username profile has been saved. Never write a recovered
@@ -6031,7 +6036,7 @@ async function azobssRestorePaBmPendingCart1263(data){
     if(current.length) return false;
 
     const order={ orderId:String(data.orderId||''), billCode:String(data.billCode||''), paymentUrl:String(data.paymentUrl||''), items:data.items };
-    if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.restorePendingOrder === 'function'){
+    if(data.resumeAllowed !== false && order.paymentUrl && window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.restorePendingOrder === 'function'){
       const rows=await window.azobssPaBmStoreCart.restorePendingOrder(order);
       if(rows && rows.length) return true;
     }
@@ -6041,10 +6046,10 @@ async function azobssRestorePaBmPendingCart1263(data){
       window.azobssPaBmCartCore.write(rows);
       window.__azobssDeferredPaBmPendingRecovery1264=null;
       const status=document.getElementById('paBmToyyibStatus');
-      if(status) status.textContent='Pembayaran belum selesai. '+rows.length+' item dipulihkan semula ke Troli Anda.';
+      if(status) status.textContent=(data.serverCartDraft?'Troli dipulihkan daripada simpanan server. ':'Pembayaran belum selesai. ')+rows.length+' item dipulihkan semula ke Troli Anda.';
       return true;
     }
-  }catch(e){ console.warn('PA/BM pending cart restore v1263 failed:', e); }
+  }catch(e){ console.warn('PA/BM pending cart restore v1265 failed:', e); }
   return false;
 }
 
@@ -6073,12 +6078,13 @@ async function azobssRecoverPaBmPaymentFromServer1055(force){
     if(!res.ok || !data || data.ok !== true) return data || null;
 
     if(data.status === 'pending' && (data.orderId || data.billCode)){
-      // Keep a durable browser hint too, and v1263 rebuilds the cart from the
-      // server-side pending order when the browser/local cart is empty.
-      azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
+      // Active pending bills can resume the same ToyyibPay URL.  Failed/cancelled
+      // drafts still restore their items, but must not keep a stale return watcher.
+      if(data.resumeAllowed === false) azobssClearPaBmPendingReturn();
+      else azobssSavePaBmPendingReturn(data.orderId || '', data.billCode || '');
       try{ await azobssRestorePaBmPendingCart1263(data); }catch(_e){}
       try{
-        window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered', { detail:{ order:data, version:1263 } }));
+        window.dispatchEvent(new CustomEvent('azobss:pabm-pending-order-recovered', { detail:{ order:data, version:1265 } }));
       }catch(_e){}
     }
 
@@ -6354,9 +6360,9 @@ function bindAzobssPaBmToyyibButton(){
       // for the dedicated storefront ES module. Bind a secure global-auth fallback
       // now; if storefront loads successfully it replaces/clones this button and
       // becomes the sole checkout owner automatically.
-      if(btn.dataset.azobssDedicatedCheckoutFallback !== '1263'){
-        btn.dataset.azobssDedicatedCheckoutFallback = '1263';
-        btn.dataset.azobssCheckoutOwner = 'global-auth-secure-fallback-v1263';
+      if(btn.dataset.azobssDedicatedCheckoutFallback !== '1265'){
+        btn.dataset.azobssDedicatedCheckoutFallback = '1265';
+        btn.dataset.azobssCheckoutOwner = 'global-auth-secure-fallback-v1265';
         btn.addEventListener('click', azobssPayPaBmDedicatedFallback1262);
       }
     }
