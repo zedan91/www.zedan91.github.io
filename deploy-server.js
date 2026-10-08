@@ -19353,6 +19353,14 @@ async function handler(req, res) {
           paBmPaidSyncedCount:Number(syncResult && syncResult.updated || 0)
         });
         await azPersistPremiumOrder(order);
+        // v1270: Admin Test Payment is already a confirmed paid purchase. Clear
+        // the durable cart draft for this authenticated admin so browser-restart
+        // recovery cannot resurrect the just-paid test cart.
+        try {
+          await azClearPaBmCartDraft({ uid:String(adminIdentity.uid || checkout.user.uid || '') }, 'admin-test-paid', { orderId, paymentReference });
+        } catch (cartDraftError) {
+          console.warn('Admin test cart draft cleanup failed:', cartDraftError && (cartDraftError.message || cartDraftError));
+        }
         azFireAndForget(
           azWriteAdminAuditLog(req, adminIdentity, "admin_test_pa_bm_payment", "premiumOrders", orderId, {
             itemCount:checkout.items.length,

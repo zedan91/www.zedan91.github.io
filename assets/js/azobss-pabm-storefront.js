@@ -1116,7 +1116,14 @@ async function proceedAdminTestPayment() {
   } catch (_) {}
 
   try {
-    if (!auth || !auth.currentUser) throw new Error('Your admin login session is not ready. Please login again.');
+    // v1270: Admin Test Payment must tolerate the same Firebase hydration window
+    // as normal checkout/map actions. The navbar/saved profile can already show
+    // Admin while auth.currentUser is still restoring after a reload.
+    let adminTestToken = await getFreshCheckoutAuthToken();
+    if (!adminTestToken && typeof window.azobssWaitForFirebaseAuthToken === 'function') {
+      adminTestToken = await window.azobssWaitForFirebaseAuthToken(false, 10000).catch(() => '');
+    }
+    if (!adminTestToken) throw new Error('Sesi Admin Firebase belum tersedia. Sila tunggu beberapa saat dan cuba lagi.');
     if (adminTestPaymentButton) {
       adminTestPaymentButton.disabled = true;
       adminTestPaymentButton.textContent = 'Creating Test Payment...';
@@ -1126,16 +1133,19 @@ async function proceedAdminTestPayment() {
     // the real ToyyibPay route. This prevents an older Render backend from
     // accepting the test request with pre-discount Lot Kadaster pricing.
     await ensureCheckoutBackend(items);
-    const sendTestPayment = async (forceTokenRefresh = false) => {
-      const token = await auth.currentUser.getIdToken(forceTokenRefresh);
-      return fetch(`${BACKEND_BASE}/api/admin/test-pa-bm-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify(checkoutPayload(items))
-      });
-    };
-    let response = await sendTestPayment(false);
-    if (response.status === 401 || response.status === 403) response = await sendTestPayment(true);
+    const sendTestPayment = async (token) => fetch(`${BACKEND_BASE}/api/admin/test-pa-bm-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify(checkoutPayload(items))
+    });
+    let response = await sendTestPayment(adminTestToken);
+    if (response.status === 401 || response.status === 403) {
+      adminTestToken = await getFreshCheckoutAuthToken();
+      if (!adminTestToken && typeof window.azobssWaitForFirebaseAuthToken === 'function') {
+        adminTestToken = await window.azobssWaitForFirebaseAuthToken(true, 10000).catch(() => '');
+      }
+      if (adminTestToken) response = await sendTestPayment(adminTestToken);
+    }
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok || !data.paid) throw new Error(data.error || 'Unable to complete the admin test payment.');
     assertCheckoutResponse(data, items);
@@ -1214,6 +1224,7 @@ function bindAdminTestPaymentButton() {
   const clone = current.cloneNode(true);
   current.replaceWith(clone);
   adminTestPaymentButton = clone;
+  adminTestPaymentButton.dataset.azobssAdminTestOwner = 'storefront-v1270';
   adminTestPaymentButton.addEventListener('click', proceedAdminTestPayment);
 }
 

@@ -6458,6 +6458,165 @@ function azobssIsDedicatedPaBmStorefrontPage(){
     || /^\/PA-BM(?:\/|$)/i.test(window.location.pathname || '')
     || !!(document.body && document.body.classList.contains('pa-bm-page'));
 }
+
+async function azobssAdminTestPaBmFallback1270(event){
+  if(event){
+    try{ event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); }catch(_e){}
+  }
+  const btn = document.getElementById('adminTestPaBmPaymentButton');
+  const status = document.getElementById('paBmToyyibStatus');
+  if(!btn || btn.dataset.azobssAdminTestBusy === '1') return;
+
+  const current = getSavedUser() || {};
+  if(!isAzobssAdmin(current)){
+    const msg = 'Fungsi Test Payment hanya untuk Administrator.';
+    if(status) status.textContent = msg;
+    alert(msg);
+    return;
+  }
+  const readCart = function(){
+    try{
+      if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.read === 'function') return window.azobssPaBmCartCore.read() || [];
+      if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.read === 'function') return window.azobssPaBmStoreCart.read() || [];
+    }catch(_e){}
+    return [];
+  };
+  const items = readCart();
+  if(!items.length){
+    if(status) status.textContent = 'Troli anda kosong.';
+    return;
+  }
+
+  const oldText = btn.textContent || 'Test Payment (Admin)';
+  btn.dataset.azobssAdminTestBusy = '1';
+  btn.disabled = true;
+  btn.textContent = 'Creating Test Payment...';
+  if(status) status.textContent = 'Menyemak sesi Admin dan membuat paid test order...';
+
+  try{
+    // Keep the same minimum checkout backend capability used by storefront.
+    let capResponse;
+    try{
+      capResponse = await fetch(azobssGetBackendBaseUrl() + '/api/pa-bm-checkout-capabilities?_=' + Date.now(), { cache:'no-store' });
+    }catch(_e){
+      throw new Error('Perkhidmatan pembayaran tidak tersedia buat sementara waktu.');
+    }
+    const cap = await capResponse.json().catch(()=>({}));
+    if(!capResponse.ok || !cap || cap.ok === false || Number(cap.version || 0) < 11 || cap.adminTestPayment !== true){
+      throw new Error('Backend Admin Test Payment belum menggunakan versi yang diperlukan. Redeploy full package terbaru.');
+    }
+
+    let token = '';
+    if(typeof window.azobssWaitForFirebaseAuthToken === 'function'){
+      token = await window.azobssWaitForFirebaseAuthToken(false, 10000).catch(()=> '');
+    }
+    if(!token){
+      const headers = await azobssGetFirebaseAuthHeaders(false);
+      token = String(headers && headers.Authorization || '').replace(/^Bearer\s+/i,'');
+    }
+    if(!token) throw new Error('Sesi Admin Firebase belum tersedia. Sila tunggu beberapa saat dan cuba lagi.');
+
+    const amount = items.reduce((sum,item)=>sum + Number(item && item.amount || 0), 0);
+    const payload = {
+      usernameKey:String(current.usernameKey || current.username || current.displayName || '').trim().toLowerCase(),
+      uid:String((auth && auth.currentUser && auth.currentUser.uid) || current.uid || ''),
+      priceProfileDocId:String(current.priceProfileDocId || current.profileDocId || '').trim(),
+      expectedAmountSen:Math.round(amount * 100),
+      user:current,
+      items:items.map(function(item){ return {
+        productType:item.productType || 'PA',
+        itemCode:item.itemCode || item.stationNo || '',
+        negeri:item.negeri || '',
+        baseAmount:Number(item.baseAmount || item.amount || 0),
+        amount:Number(item.amount || 0),
+        priceAdjustmentCategory:item.priceAdjustmentCategory || '',
+        priceAdjustmentPercent:Number(item.priceAdjustmentPercent || 0),
+        productId:item.productId || '',
+        stationNo:item.stationNo || '',
+        jenis:item.jenis || '',
+        downloadUrl:item.downloadUrl || '',
+        filename:item.filename || '',
+        selectionToken:item.selectionToken || '',
+        variant:item.variant || '',
+        areaRatio:Number(item.areaRatio || 0),
+        createdAtMs:Number(item.addedAtMs || item.createdAtMs || Date.now())
+      };})
+    };
+
+    const send = async function(authToken){
+      return fetch(azobssGetBackendBaseUrl() + '/api/admin/test-pa-bm-payment', {
+        method:'POST',
+        cache:'no-store',
+        headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + authToken },
+        body:JSON.stringify(payload)
+      });
+    };
+    let response = await send(token);
+    if(response.status === 401 || response.status === 403){
+      if(typeof window.azobssWaitForFirebaseAuthToken === 'function'){
+        token = await window.azobssWaitForFirebaseAuthToken(true, 10000).catch(()=> token);
+      }else{
+        const headers = await azobssGetFirebaseAuthHeaders(true);
+        token = String(headers && headers.Authorization || '').replace(/^Bearer\s+/i,'') || token;
+      }
+      response = await send(token);
+    }
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok || !data || data.ok === false || data.paid !== true){
+      throw new Error(data && (data.error || data.message) || 'Admin Test Payment gagal.');
+    }
+    const receivedAmountSen = Number(data.amountSen || 0) || Math.round(Number(data.amount || 0) * 100);
+    if(receivedAmountSen !== Math.round(amount * 100) || (Number(data.unit || 0) > 0 && Number(data.unit) !== items.length)){
+      throw new Error('Jumlah Admin Test Payment tidak sepadan dengan Troli Anda.');
+    }
+
+    try{
+      if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.write === 'function') window.azobssPaBmCartCore.write([]);
+      else if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.clear === 'function') window.azobssPaBmStoreCart.clear();
+    }catch(_e){}
+    try{
+      sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+      sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+      localStorage.removeItem('azobss_pa_bm_pending_return');
+    }catch(_e){}
+
+    if(status) status.textContent = 'Admin test payment berjaya. Mengemas kini Senarai Pembelian Terkini...';
+    try{
+      if(typeof window.azobssRenderPurchaseRecords === 'function') await window.azobssRenderPurchaseRecords();
+      else if(typeof window.azobssRefreshPaBmPurchasesNow === 'function') window.azobssRefreshPaBmPurchasesNow();
+    }catch(_e){}
+
+    const verifiedKey = String(data.orderId || data.recordId || data.paymentReference || ('admin-test-' + Date.now())).trim();
+    try{
+      window.__azobssPaBmPaymentVerifiedKey = verifiedKey;
+      window.__azobssPaBmPaymentVerifiedAt = Date.now();
+      if(typeof window.azobssShowPaBmPaymentSuccessPopup === 'function') window.azobssShowPaBmPaymentSuccessPopup(verifiedKey);
+      window.dispatchEvent(new CustomEvent('azobss:pabm-payment-verified', { detail:{ key:verifiedKey, orderId:String(data.orderId || ''), testPayment:true } }));
+    }catch(_e){}
+    if(status) status.textContent = 'Admin test payment berjaya.';
+  }catch(error){
+    console.error('Admin Test Payment secure fallback v1270 failed:', error);
+    const msg = error && error.message ? error.message : 'Admin Test Payment gagal.';
+    if(status) status.textContent = msg;
+    alert(msg);
+  }finally{
+    btn.dataset.azobssAdminTestBusy = '';
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
+function azobssBindAdminTestPaBmFallback1270(){
+  if(!azobssIsDedicatedPaBmStorefrontPage()) return;
+  const btn = document.getElementById('adminTestPaBmPaymentButton');
+  if(!btn) return;
+  if(btn.dataset.azobssAdminTestOwner === 'storefront-v1270') return;
+  if(btn.dataset.azobssAdminTestFallback !== '1270'){
+    btn.dataset.azobssAdminTestFallback = '1270';
+    btn.dataset.azobssAdminTestOwner = 'global-auth-secure-fallback-v1270';
+    btn.addEventListener('click', azobssAdminTestPaBmFallback1270);
+  }
+}
 function bindAzobssPaBmToyyibButton(){
   const btn = document.getElementById('payPaBmToyyibButton');
 
@@ -6481,6 +6640,7 @@ function bindAzobssPaBmToyyibButton(){
         btn.addEventListener('click', azobssPayPaBmDedicatedFallback1262);
       }
     }
+    azobssBindAdminTestPaBmFallback1270();
     azobssInstallPaBmPaymentReturnResumeWatch();
     azobssCheckPaBmToyyibReturn();
     return;
