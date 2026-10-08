@@ -2113,7 +2113,7 @@
             );
           };
           updateProcessingUi();
-          processingUiTimer = window.window.azobssLongSessionInterval(updateProcessingUi, 1000);
+          processingUiTimer = (typeof window.azobssLongSessionInterval === 'function' ? window.azobssLongSessionInterval : window.setInterval)(updateProcessingUi, 1000);
           const token = typeof options.getAuthToken === 'function' ? await options.getAuthToken() : '';
           if (!token) throw new Error('Sesi log masuk tidak tersedia. Sila log masuk semula.');
           const lotCapabilities = await getJson('/api/jupem-lot-selection/capabilities', token, operationController.signal);

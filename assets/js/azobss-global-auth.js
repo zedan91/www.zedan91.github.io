@@ -4386,6 +4386,46 @@ async function azobssGetFirebaseAuthHeaders(forceRefresh){
 }
 try{ window.azobssGetFirebaseAuthHeaders = azobssGetFirebaseAuthHeaders; }catch(_e){}
 
+// v1268: secure token waiter for classic PA/BM fallbacks. The saved AZOBSS
+// profile/header may render before Firebase Auth finishes hydrating currentUser
+// after a reload/browser restart. Consumers that need an authenticated backend
+// call should wait for the real Firebase user instead of treating that short
+// hydration window as a logout.
+async function azobssWaitForFirebaseAuthToken1268(forceRefresh, timeoutMs){
+  const timeout = Math.max(1000, Number(timeoutMs || 10000));
+  let u = auth && auth.currentUser ? auth.currentUser : null;
+  if(!u){
+    u = await new Promise(function(resolve){
+      let settled = false;
+      let off = null;
+      const finish = function(user){
+        if(settled) return;
+        settled = true;
+        try{ if(typeof off === 'function') off(); }catch(_e){}
+        resolve(user || null);
+      };
+      const timer = window.setTimeout(function(){ finish(auth && auth.currentUser ? auth.currentUser : null); }, timeout);
+      try{
+        off = onAuthStateChanged(auth, function(user){
+          window.clearTimeout(timer);
+          finish(user);
+        }, function(){
+          window.clearTimeout(timer);
+          finish(null);
+        });
+      }catch(_e){
+        window.clearTimeout(timer);
+        finish(auth && auth.currentUser ? auth.currentUser : null);
+      }
+    });
+  }
+  if(!u || typeof u.getIdToken !== 'function') return '';
+  try{ return await u.getIdToken(!!forceRefresh); }catch(_e){}
+  if(forceRefresh){ try{ return await u.getIdToken(false); }catch(_e){} }
+  return '';
+}
+try{ window.azobssWaitForFirebaseAuthToken = azobssWaitForFirebaseAuthToken1268; }catch(_e){}
+
 async function azobssLoadAdminPaBmPurchaseRecordsFromBackend(forceRefresh){
   const current = getSavedUser && getSavedUser() || {};
   if(!isAzobssAdmin(current)) return [];

@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__AZOBSS_PABM_CART_CORE_V1267__) return;
-  window.__AZOBSS_PABM_CART_CORE_V1267__ = true;
+  if(window.__AZOBSS_PABM_CART_CORE_V1259__) return;
+  window.__AZOBSS_PABM_CART_CORE_V1259__ = true;
 
   var CART_PREFIX = 'azobss_pabm_store_cart_v1_';
   var MAX_CART_ITEMS = 50;
@@ -100,66 +100,6 @@
     };
   }
 
-  var TABLE_CART_BUTTON_SELECTOR = [
-    '.pabm-table-cart-button[data-benchmark-record]',
-    '.pabm-table-cart-button[data-pa-search-record]',
-    '.pabm-table-cart-button[data-gps-record]',
-    '.pabm-table-cart-button[data-syit-record]'
-  ].join(',');
-  var tableCartSyncTimer = 0;
-  var tableCartObserver = null;
-
-  function decodeButtonPayload(button){
-    if(!button) return null;
-    var raw = (button.dataset && (button.dataset.benchmarkRecord || button.dataset.paSearchRecord || button.dataset.gpsRecord || button.dataset.syitRecord)) || '';
-    if(!raw) return null;
-    try{ return JSON.parse(decodeURIComponent(raw)); }catch(_){ return null; }
-  }
-  function buttonItemId(button){
-    var payload=decodeButtonPayload(button);
-    if(!payload) return '';
-    try{ return normalizeItem(payload).id; }catch(_){ return ''; }
-  }
-  function syncTableCartButtons(){
-    var ids={};
-    readCart().forEach(function(item){ var id=String(item&&item.id||''); if(id) ids[id]=1; });
-    document.querySelectorAll(TABLE_CART_BUTTON_SELECTOR).forEach(function(button){
-      var id=buttonItemId(button);
-      var active=!!(id && ids[id]);
-      button.classList.toggle('is-in-cart',active);
-      button.setAttribute('aria-pressed',active?'true':'false');
-      button.setAttribute('data-cart-selected',active?'1':'0');
-      if(active){
-        if(!button.dataset.cartOriginalTitle) button.dataset.cartOriginalTitle=button.getAttribute('title')||'Tambah ke Troli';
-        if(!button.dataset.cartOriginalAriaLabel) button.dataset.cartOriginalAriaLabel=button.getAttribute('aria-label')||'Tambah ke Troli';
-        button.setAttribute('title','Sudah dalam Troli — tekan lagi untuk buang');
-        button.setAttribute('aria-label','Item sudah dalam troli. Tekan lagi untuk buang daripada troli');
-      }else{
-        button.setAttribute('title',button.dataset.cartOriginalTitle||'Tambah ke Troli');
-        button.setAttribute('aria-label',button.dataset.cartOriginalAriaLabel||button.getAttribute('aria-label')||'Tambah ke Troli');
-        delete button.dataset.cartOriginalTitle;
-        delete button.dataset.cartOriginalAriaLabel;
-      }
-    });
-  }
-  function scheduleTableCartButtonSync(delay){
-    if(tableCartSyncTimer) clearTimeout(tableCartSyncTimer);
-    tableCartSyncTimer=setTimeout(function(){ tableCartSyncTimer=0; syncTableCartButtons(); },Math.max(0,Number(delay)||0));
-  }
-  function watchTableCartButtons(){
-    if(tableCartObserver || !window.MutationObserver || !document.body) return;
-    tableCartObserver=new MutationObserver(function(mutations){
-      var changed=mutations.some(function(m){
-        return Array.prototype.some.call(m.addedNodes||[],function(node){
-          if(!node || node.nodeType!==1) return false;
-          return (node.matches && node.matches(TABLE_CART_BUTTON_SELECTOR)) || (node.querySelector && node.querySelector(TABLE_CART_BUTTON_SELECTOR));
-        });
-      });
-      if(changed) scheduleTableCartButtonSync(0);
-    });
-    tableCartObserver.observe(document.body,{childList:true,subtree:true});
-  }
-
   function readKey(key){
     try{ var rows=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(rows)?rows.filter(Boolean):[]; }catch(_){ return []; }
   }
@@ -203,13 +143,12 @@
       }).join(''):'<div class="pabm-cart-empty">Troli anda kosong.</div>';
     }
     if(pay) pay.disabled=!items.length;
-    scheduleTableCartButtonSync(0);
     try{ window.dispatchEvent(new CustomEvent('azobss:pabm-cart-core-rendered',{detail:{count:items.length,total:sum,key:primaryCartKey()}})); }catch(_){ }
     return items;
   }
   function writeCart(items){
     var rows=persistCart(items); render();
-    try{ window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated',{detail:{count:rows.length,source:'classic-core-v1267'}})); }catch(_){ }
+    try{ window.dispatchEvent(new CustomEvent('azobss:pabm-cart-updated',{detail:{count:rows.length,source:'classic-core-v1259'}})); }catch(_){ }
     return rows;
   }
   function hasLogin(){
@@ -250,10 +189,10 @@
     var merged=readCart(); if(merged.length) persistCart(merged);
   })();
 
-  window.azobssPaBmCartCore={read:readCart,write:writeCart,render:render,add:add,removeIndex:removeIndex,keys:cartKeys,syncTableButtons:syncTableCartButtons,version:1267};
+  window.azobssPaBmCartCore={read:readCart,write:writeCart,render:render,add:add,removeIndex:removeIndex,keys:cartKeys,version:1259};
   window.azobssAddToPaBmCart=add;
   window.azobssRecordPurchase=add;
-  window.__AZOBSS_PABM_CART_OWNER__='classic-core-v1267';
+  window.__AZOBSS_PABM_CART_OWNER__='classic-core-v1259';
 
   document.addEventListener('click',function(event){
     var b=event.target&&event.target.closest?event.target.closest('[data-pabm-core-remove]'):null;
@@ -262,5 +201,5 @@
   },true);
   window.addEventListener('storage',render);
   window.addEventListener('azobss:pabm-cart-updated',function(){ setTimeout(render,0); });
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ watchTableCartButtons(); render(); },{once:true}); else { watchTableCartButtons(); render(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',render,{once:true}); else render();
 })();
