@@ -9055,6 +9055,30 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   }
 }
 </style>
+<style id="azobss-home-banner-center-safe-1284">
+/* AZOBSS v1284: reserve a protected center lane for the social icons.
+   The Exabytes banner may be widened, but its right edge is capped before the centered social group. */
+@media (min-width:761px){
+  .hero{
+    --az-social-safe-half:125px;
+    --az-banner-center-gap:14px;
+  }
+  .hero .az-home-exabytes-promo{
+    box-sizing:border-box!important;
+    max-width:calc(50% - var(--az-social-safe-half) - var(--az-banner-center-gap))!important;
+  }
+  .hero .social-strip{
+    z-index:14!important;
+    isolation:isolate!important;
+  }
+}
+@media (min-width:761px) and (max-width:1050px){
+  .hero{
+    --az-social-safe-half:112px;
+    --az-banner-center-gap:12px;
+  }
+}
+</style>
 
 <style id="azobss-home-lucky-draw-floating-510">
 .hero{position:relative!important;}
