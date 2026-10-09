@@ -8975,30 +8975,83 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   .az-home-exabytes-promo{transition:none!important;}
 }
 </style>
-<style id="azobss-home-social-strip-position-1281">
-/* AZOBSS v1281: move social links below the Exabytes banner so the center area stays visually clean. */
+<style id="azobss-home-social-icons-center-1282">
+/* AZOBSS v1282: social links are icons only, centered, compact and completely static. */
+.hero .social-strip{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:max-content!important;
+  max-width:none!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  animation:none!important;
+  transition:none!important;
+}
+.hero .social-strip a{
+  flex:0 0 auto!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+  transition:none!important;
+  animation:none!important;
+}
+.hero .social-strip a:hover,
+.hero .social-strip a:focus,
+.hero .social-strip a:active{
+  transform:none!important;
+  animation:none!important;
+  opacity:1!important;
+}
+.hero .social-strip img{
+  display:block!important;
+  object-fit:contain!important;
+  transform:none!important;
+  animation:none!important;
+}
 @media (min-width:761px){
-  .hero{min-height:188px!important;}
+  .hero{min-height:170px!important;}
   .hero .social-strip{
     position:absolute!important;
-    top:132px!important;
-    left:142px!important;
+    top:35px!important;
+    left:50%!important;
     right:auto!important;
     z-index:13!important;
     margin:0!important;
+    gap:13px!important;
+    transform:translateX(-50%)!important;
   }
-}
-@media (min-width:761px) and (max-width:1050px){
-  .hero{min-height:170px!important;}
-  .hero .social-strip{
-    top:112px!important;
-    left:88px!important;
+  .hero .social-strip a{
+    width:22px!important;
+    height:22px!important;
+  }
+  .hero .social-strip img{
+    width:19px!important;
+    height:19px!important;
   }
 }
 @media (max-width:760px){
   .hero .social-strip{
     position:static!important;
-    margin:12px auto!important;
+    margin:8px auto 10px!important;
+    gap:13px!important;
+    transform:none!important;
+  }
+  .hero .social-strip a{
+    width:24px!important;
+    height:24px!important;
+  }
+  .hero .social-strip img{
+    width:20px!important;
+    height:20px!important;
   }
 }
 </style>
