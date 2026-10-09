@@ -9147,6 +9147,55 @@ body.az-home-banner-admin-editing .az-home-managed-banner.az-banner-admin-select
   .az-home-banner-resize-handle{display:none!important;}
 }
 </style>
+<style id="azobss-home-banner-drag-resize-fix-1286">
+/* AZOBSS v1286: keep the admin editor docked so the live banner remains directly draggable/resizable. */
+.az-home-banner-admin-modal{
+  align-items:flex-start!important;
+  justify-content:flex-end!important;
+  place-items:unset!important;
+  padding:76px 14px 14px!important;
+  background:transparent!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  pointer-events:none!important;
+}
+.az-home-banner-admin-panel{
+  width:min(430px,calc(100vw - 28px))!important;
+  max-height:calc(100vh - 92px)!important;
+  pointer-events:auto!important;
+  box-shadow:0 18px 52px rgba(0,0,0,.52)!important;
+}
+.az-home-banner-admin-body{grid-template-columns:1fr!important;gap:12px!important;}
+.az-home-banner-admin-fields{grid-template-columns:1fr 1fr!important;}
+body.az-home-banner-admin-editing .az-home-managed-banner{
+  touch-action:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  -webkit-user-drag:none!important;
+}
+body.az-home-banner-admin-editing .az-home-managed-banner img{
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  -webkit-user-drag:none!important;
+}
+body.az-home-banner-admin-editing .az-home-banner-resize-handle{
+  touch-action:none!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+}
+@media(max-width:980px) and (min-width:761px){
+  .az-home-banner-admin-panel{width:min(380px,calc(100vw - 24px))!important;}
+}
+@media(max-width:760px){
+  .az-home-banner-admin-modal{
+    align-items:flex-end!important;
+    justify-content:center!important;
+    padding:10px!important;
+  }
+  .az-home-banner-admin-panel{width:min(560px,100%)!important;max-height:72vh!important;}
+  .az-home-banner-admin-fields{grid-template-columns:1fr!important;}
+}
+</style>
 
 
 <style id="azobss-home-lucky-draw-floating-510">
@@ -19378,7 +19427,8 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 </style>
 
 
-\n<script type="module" id="azobss-home-banner-manager-1285">
+\n<!-- AZOBSS v1286 drag/resize fix: docked non-blocking editor -->
+<script type="module" id="azobss-home-banner-manager-1285">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -19438,7 +19488,7 @@ function storedAdmin(){
   const role=String(u.role||u.userRole||u.accountRole||u.staffRole||'').trim().toLowerCase();
   const key=String(u.usernameKey||u.username||u.name||'').trim().toLowerCase();
   const email=String(u.email||u.authEmail||'').trim().toLowerCase();
-  return role==='admin'||key==='zedan91'||key==='zedan9107'||ADMIN_EMAILS.has(email);
+  return role==='admin'||role==='administrator'||key==='zedan91'||key==='zedan9107'||ADMIN_EMAILS.has(email);
 }
 function firebaseAdmin(user){return !!user&&ADMIN_EMAILS.has(String(user.email||'').trim().toLowerCase())}
 function setAdmin(flag){
@@ -19475,8 +19525,9 @@ function bannerEl(id){return layer?.querySelector(`[data-az-banner-id="${CSS.esc
 function createBannerEl(m){
   const a=document.createElement('a');
   a.className='az-home-exabytes-promo az-home-managed-banner az-home-custom-banner';
+  a.draggable=false;
   a.dataset.azBannerId=m.id;
-  const img=document.createElement('img'); img.loading='eager';img.decoding='async';img.alt=m.name||'AZOBSS promotion';
+  const img=document.createElement('img'); img.loading='eager';img.decoding='async';img.draggable=false;img.alt=m.name||'AZOBSS promotion';
   a.appendChild(img); layer.appendChild(a);
   bindBannerAdminEvents(a);
   return a;
@@ -19634,11 +19685,16 @@ async function deleteSelected(){
 }
 function bindBannerAdminEvents(el){
   if(el.dataset.azAdminBound==='1')return;el.dataset.azAdminBound='1';
+  el.draggable=false;
+  el.querySelectorAll('img').forEach(img=>{img.draggable=false});
+  el.addEventListener('dragstart',e=>{if(state.editorOpen&&state.isAdmin)e.preventDefault()});
   el.addEventListener('click',e=>{if(state.editorOpen&&state.isAdmin){e.preventDefault();e.stopPropagation();const id=el.dataset.azBannerId;if(id&&state.items.has(id)){state.selectedId=id;fillSelect();fillForm()}}});
   el.addEventListener('pointerdown',e=>{
     if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;
-    const id=el.dataset.azBannerId,m=state.items.get(id);if(!m)return;e.preventDefault();state.selectedId=id;fillSelect();
-    state.op={type:'move',id,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};el.setPointerCapture?.(e.pointerId);
+    const id=el.dataset.azBannerId,m=state.items.get(id);if(!m)return;
+    e.preventDefault();e.stopPropagation();state.selectedId=id;fillSelect();
+    state.op={type:'move',id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};
+    try{el.setPointerCapture?.(e.pointerId)}catch(_){}
   });
 }
 function bindExisting(){layer?.querySelectorAll('.az-home-managed-banner').forEach(bindBannerAdminEvents)}
@@ -19662,9 +19718,9 @@ fileInput?.addEventListener('change',async()=>{
 });
 resizeHandle?.addEventListener('pointerdown',e=>{
   if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;const m=state.items.get(state.selectedId);if(!m)return;e.preventDefault();e.stopPropagation();
-  state.op={type:'resize',id:m.id,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};resizeHandle.setPointerCapture?.(e.pointerId);
+  state.op={type:'resize',id:m.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};try{resizeHandle.setPointerCapture?.(e.pointerId)}catch(_){}
 });
-document.addEventListener('pointermove',onPointerMove,{passive:true});document.addEventListener('pointerup',onPointerUp);document.addEventListener('pointercancel',onPointerUp);
+document.addEventListener('pointermove',e=>{if(state.op)e.preventDefault();onPointerMove(e)},{passive:false});document.addEventListener('pointerup',onPointerUp);document.addEventListener('pointercancel',onPointerUp);
 window.addEventListener('resize',()=>{renderAll()},{passive:true});
 window.addEventListener('storage',()=>setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser)));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.editorOpen)closeEditor()});
@@ -19674,7 +19730,7 @@ onAuthStateChanged(auth,user=>setAdmin(storedAdmin()||firebaseAdmin(user)));
 loadCloud();
 </script>\n
 
-<div class="az-home-banner-admin-modal" id="azHomeBannerAdminModal1285" hidden role="dialog" aria-modal="true" aria-labelledby="azHomeBannerAdminTitle1285">
+<div class="az-home-banner-admin-modal" id="azHomeBannerAdminModal1285" hidden role="dialog" aria-modal="false" aria-labelledby="azHomeBannerAdminTitle1285">
   <div class="az-home-banner-admin-panel">
     <div class="az-home-banner-admin-head">
       <strong id="azHomeBannerAdminTitle1285">Homepage Banner Manager</strong>
@@ -19714,7 +19770,7 @@ loadCloud();
           <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
           <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
         </div>
-        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Semasa panel ini dibuka, drag banner untuk alih kedudukan dan drag kotak kuning di bucu kanan bawah untuk resize. Nilai X/Y/saiz juga boleh ditaip terus. Mobile akan susun banner secara automatik supaya tidak bertindih.</p>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Panel kini dock di kanan dan halaman di belakang kekal aktif. Drag terus pada banner untuk alih kedudukan; drag kotak kuning di bucu kanan bawah untuk resize. Nilai X/Y/saiz juga boleh ditaip terus. Tekan Simpan selepas selesai.</p>
       </div>
     </div>
     <div class="az-home-banner-admin-actions">
