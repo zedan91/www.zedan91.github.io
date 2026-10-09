@@ -1,0 +1,5 @@
+// Add inside service cloud.firestore > match /databases/{database}/documents { ... }
+match /homeBanners/{bannerId} {
+  allow read: if true;
+  allow create, update, delete: if isAdmin();
+}

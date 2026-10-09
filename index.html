@@ -9079,6 +9079,75 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
   }
 }
 </style>
+<style id="azobss-home-banner-admin-manager-1285">
+/* AZOBSS v1285: admin-only multi-banner manager. Public visitors only see enabled banners. */
+.az-home-banner-layer{pointer-events:none!important;}
+.az-home-banner-layer .az-home-managed-banner{pointer-events:auto!important;}
+.az-home-banner-layer .az-home-managed-banner img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;pointer-events:none!important;}
+@media(min-width:761px){
+  .hero .az-home-banner-layer{position:absolute!important;inset:0!important;z-index:11!important;width:100%!important;height:100%!important;}
+  .hero .az-home-banner-layer .az-home-managed-banner{
+    position:absolute!important;
+    left:var(--az-banner-x,18px)!important;top:var(--az-banner-y,18px)!important;
+    width:var(--az-banner-w,455px)!important;height:var(--az-banner-h,103px)!important;
+    max-width:none!important;aspect-ratio:auto!important;margin:0!important;
+  }
+  .hero{min-height:max(170px,var(--az-banner-hero-min,170px))!important;}
+}
+@media(max-width:760px){
+  .hero .az-home-banner-layer{position:relative!important;inset:auto!important;z-index:11!important;display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important;height:auto!important;margin:0 auto 8px!important;}
+  .hero .az-home-banner-layer .az-home-managed-banner{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    width:min(92%,var(--az-banner-mobile-w,420px))!important;height:auto!important;
+    aspect-ratio:var(--az-banner-ratio,4.4 / 1)!important;margin:0 auto!important;
+    max-width:560px!important;
+  }
+}
+body.az-home-banner-admin-editing .az-home-managed-banner{cursor:move!important;outline:2px dashed rgba(34,211,238,.96)!important;outline-offset:3px!important;transform:none!important;transition:none!important;}
+body.az-home-banner-admin-editing .az-home-managed-banner.az-banner-admin-selected{outline-color:#facc15!important;box-shadow:0 0 0 3px rgba(250,204,21,.18),0 12px 30px rgba(0,0,0,.38)!important;}
+.az-home-banner-admin-toggle{
+  position:absolute!important;left:10px!important;bottom:8px!important;z-index:45!important;
+  min-height:30px!important;padding:5px 9px!important;border:1px solid rgba(34,211,238,.78)!important;border-radius:9px!important;
+  background:rgba(3,15,28,.9)!important;color:#e6faff!important;font-size:10px!important;font-weight:800!important;cursor:pointer!important;
+}
+.az-home-banner-admin-toggle:hover,.az-home-banner-admin-toggle:focus-visible{background:#0e7490!important;outline:none!important;}
+.az-home-banner-resize-handle{
+  position:absolute!important;z-index:46!important;width:18px!important;height:18px!important;padding:0!important;
+  border:2px solid #07111f!important;border-radius:5px!important;background:#facc15!important;box-shadow:0 2px 9px rgba(0,0,0,.42)!important;cursor:nwse-resize!important;
+}
+.az-home-banner-resize-handle::before{content:"";position:absolute;right:3px;bottom:3px;width:6px;height:6px;border-right:2px solid #07111f;border-bottom:2px solid #07111f;}
+.az-home-banner-admin-modal[hidden]{display:none!important;}
+.az-home-banner-admin-modal{position:fixed!important;inset:0!important;z-index:100050!important;display:grid!important;place-items:center!important;padding:18px!important;background:rgba(2,6,23,.72)!important;backdrop-filter:blur(8px)!important;}
+.az-home-banner-admin-panel{width:min(760px,96vw)!important;max-height:88vh!important;overflow:auto!important;border:1px solid rgba(34,211,238,.45)!important;border-radius:18px!important;background:#07111f!important;color:#e5edf7!important;box-shadow:0 24px 70px rgba(0,0,0,.58)!important;text-align:left!important;}
+.az-home-banner-admin-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:14px 16px!important;border-bottom:1px solid rgba(148,163,184,.2)!important;}
+.az-home-banner-admin-head strong{font-size:16px!important;}
+.az-home-banner-admin-close{width:34px!important;height:34px!important;border:0!important;border-radius:9px!important;background:#172033!important;color:#fff!important;font-size:22px!important;cursor:pointer!important;}
+.az-home-banner-admin-body{display:grid!important;grid-template-columns:minmax(210px,.9fr) minmax(320px,1.35fr)!important;gap:16px!important;padding:16px!important;}
+.az-home-banner-admin-preview{min-height:170px!important;display:grid!important;place-items:center!important;border:1px dashed rgba(148,163,184,.35)!important;border-radius:14px!important;background:#020617!important;overflow:hidden!important;}
+.az-home-banner-admin-preview img{max-width:100%!important;max-height:220px!important;object-fit:contain!important;}
+.az-home-banner-admin-preview span{padding:16px!important;color:#94a3b8!important;font-size:12px!important;text-align:center!important;}
+.az-home-banner-admin-fields{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;}
+.az-home-banner-admin-fields label{display:grid!important;gap:5px!important;color:#b7c5d7!important;font-size:11px!important;font-weight:750!important;}
+.az-home-banner-admin-fields label.az-wide{grid-column:1/-1!important;}
+.az-home-banner-admin-fields input[type="text"],.az-home-banner-admin-fields input[type="url"],.az-home-banner-admin-fields input[type="number"],.az-home-banner-admin-fields select{width:100%!important;min-height:36px!important;box-sizing:border-box!important;border:1px solid #334155!important;border-radius:9px!important;background:#0b1728!important;color:#fff!important;padding:7px 9px!important;font-size:12px!important;}
+.az-home-banner-admin-fields input[type="file"]{width:100%!important;color:#cbd5e1!important;font-size:11px!important;}
+.az-home-banner-checks{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap!important;gap:12px!important;padding-top:2px!important;}
+.az-home-banner-checks label{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:7px!important;color:#dbe7f5!important;}
+.az-home-banner-admin-actions{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:0 16px 14px!important;}
+.az-home-banner-admin-actions button{min-height:36px!important;border:0!important;border-radius:9px!important;padding:7px 12px!important;font-size:11px!important;font-weight:850!important;cursor:pointer!important;}
+#azHomeBannerNew1285{background:#1e293b!important;color:#fff!important;}
+#azHomeBannerSave1285{background:#16a34a!important;color:#fff!important;}
+#azHomeBannerDelete1285{background:#b91c1c!important;color:#fff!important;}
+.az-home-banner-admin-status{margin:0 16px 16px!important;min-height:18px!important;color:#93c5fd!important;font-size:11px!important;line-height:1.45!important;}
+.az-home-banner-admin-help{grid-column:1/-1!important;margin:0!important;padding:9px 10px!important;border-radius:10px!important;background:rgba(14,116,144,.13)!important;color:#bfe8f5!important;font-size:10.5px!important;line-height:1.45!important;}
+@media(max-width:700px){
+  .az-home-banner-admin-body{grid-template-columns:1fr!important;}
+  .az-home-banner-admin-fields{grid-template-columns:1fr!important;}
+  .az-home-banner-admin-fields label.az-wide,.az-home-banner-checks,.az-home-banner-admin-help{grid-column:1!important;}
+  .az-home-banner-resize-handle{display:none!important;}
+}
+</style>
+
 
 <style id="azobss-home-lucky-draw-floating-510">
 .hero{position:relative!important;}
@@ -9856,9 +9925,11 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 </div>
 <div class="hero">
 <h1 class="hero-azobss-title-hidden">AZOBSS</h1>
-<a class="az-home-exabytes-promo" href="https://billing.exabytes.my/mypanel/aff.php?aff=8106115&amp;page=home" target="_blank" rel="noopener sponsored" aria-label="Exabytes Double Day 10.10 domain promotion - .MY domains for RM1">
+<div class="az-home-banner-layer" id="azHomeBannerLayer1285" aria-label="AZOBSS promotional banners">
+<a class="az-home-exabytes-promo az-home-managed-banner" id="azHomeBannerLegacyExabytes1285" data-az-banner-id="legacy-exabytes" data-az-banner-default="1" href="https://billing.exabytes.my/mypanel/aff.php?aff=8106115&amp;page=home" target="_blank" rel="noopener sponsored" aria-label="Exabytes Double Day 10.10 domain promotion - .MY domains for RM1">
   <img src="/images/exabytes-1010-my-domain-promo-v1278.webp" alt="Exabytes Double Day 10.10 Domain Discount - Purchase .MY Domains for RM1 only, promotion 9 to 13 October 2026" loading="eager" decoding="async"/>
 </a>
+</div>
 <div aria-label="AZOBSS social links" class="social-strip">
 <a aria-label="Facebook" href="https://www.facebook.com/profile.php?id=61572521488242" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/facebook.svg"/></a>
 <a aria-label="TikTok" href="https://www.tiktok.com/@alphatime07" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/tiktok.svg"/></a>
@@ -9867,6 +9938,8 @@ body.pa-bm-page.pabm-owner-admin #userPaPurchasePanel{display:none!important;}
 <a aria-label="Carousell" href="https://www.carousell.com.my/u/azobss_07/" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/carousell.svg"/></a>
 <a aria-label="Gmail" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=zedan9107@gmail.com" rel="noopener" target="_blank"><img alt="" loading="lazy" src="images/email.svg"/></a>
 </div>
+<button class="az-home-banner-admin-toggle" id="azHomeBannerAdminToggle1285" type="button" hidden aria-haspopup="dialog" aria-controls="azHomeBannerAdminModal1285">⚙ Banner</button>
+<button class="az-home-banner-resize-handle" id="azHomeBannerResizeHandle1285" type="button" hidden aria-label="Resize selected banner" title="Drag to resize banner"></button>
 
 <div class="az-home-software-promo" id="azHomeSoftwarePromo529" hidden aria-label="Software tengah promosi" aria-live="polite">
   <a class="az-home-software-promo-link" id="azHomeSoftwarePromoLink529" href="/Software-Tools/" aria-label="Buka software tengah promosi">
@@ -19304,6 +19377,354 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 }
 </style>
 
+
+\n<script type="module" id="azobss-home-banner-manager-1285">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+const firebaseConfig={
+  apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
+  authDomain:'azobss.firebaseapp.com',
+  projectId:'azobss',
+  storageBucket:'azobss.firebasestorage.app',
+  messagingSenderId:'159277716405',
+  appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
+};
+const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const COLLECTION='homeBanners';
+const ADMIN_EMAILS=new Set(['zedan91@azobss.local','zedan9107@gmail.com']);
+const DEFAULT_ID='legacy-exabytes';
+const DEFAULT_BANNER={
+  id:DEFAULT_ID,name:'Exabytes 10.10 / .MY RM1',
+  imageUrl:'/images/exabytes-1010-my-domain-promo-v1278.webp',imageData:'',
+  targetUrl:'https://billing.exabytes.my/mypanel/aff.php?aff=8106115&page=home',
+  x:18,y:18,width:455,height:103,enabled:true,openNewTab:true,avoidSocial:true,order:10
+};
+const state={items:new Map([[DEFAULT_ID,{...DEFAULT_BANNER}]]),selectedId:DEFAULT_ID,isAdmin:false,editorOpen:false,dirty:false,op:null};
+const $=id=>document.getElementById(id);
+const hero=document.querySelector('.hero');
+const layer=$('azHomeBannerLayer1285');
+const social=document.querySelector('.hero .social-strip');
+const toggle=$('azHomeBannerAdminToggle1285');
+const modal=$('azHomeBannerAdminModal1285');
+const closeBtn=$('azHomeBannerAdminClose1285');
+const resizeHandle=$('azHomeBannerResizeHandle1285');
+const select=$('azHomeBannerSelect1285');
+const nameInput=$('azHomeBannerName1285');
+const fileInput=$('azHomeBannerFile1285');
+const linkInput=$('azHomeBannerLink1285');
+const xInput=$('azHomeBannerX1285');
+const yInput=$('azHomeBannerY1285');
+const wInput=$('azHomeBannerW1285');
+const hInput=$('azHomeBannerH1285');
+const enabledInput=$('azHomeBannerEnabled1285');
+const newTabInput=$('azHomeBannerNewTab1285');
+const avoidSocialInput=$('azHomeBannerAvoidSocial1285');
+const preview=$('azHomeBannerPreview1285');
+const statusEl=$('azHomeBannerStatus1285');
+const newBtn=$('azHomeBannerNew1285');
+const saveBtn=$('azHomeBannerSave1285');
+const deleteBtn=$('azHomeBannerDelete1285');
+
+function parseStored(raw){try{return JSON.parse(raw||'null')}catch(_){return null}}
+function currentStoredUser(){
+  return parseStored(sessionStorage.getItem('azobssCurrentUser'))||parseStored(localStorage.getItem('azobssCurrentUser'))||parseStored(sessionStorage.getItem('azobssUser'))||parseStored(localStorage.getItem('azobssUser'));
+}
+function storedAdmin(){
+  const u=currentStoredUser(); if(!u)return false;
+  const role=String(u.role||u.userRole||u.accountRole||u.staffRole||'').trim().toLowerCase();
+  const key=String(u.usernameKey||u.username||u.name||'').trim().toLowerCase();
+  const email=String(u.email||u.authEmail||'').trim().toLowerCase();
+  return role==='admin'||key==='zedan91'||key==='zedan9107'||ADMIN_EMAILS.has(email);
+}
+function firebaseAdmin(user){return !!user&&ADMIN_EMAILS.has(String(user.email||'').trim().toLowerCase())}
+function setAdmin(flag){
+  state.isAdmin=!!flag;
+  if(toggle)toggle.hidden=!state.isAdmin;
+  if(!state.isAdmin&&state.editorOpen)closeEditor();
+}
+function num(v,fallback,min,max){const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback}
+function cleanModel(id,data={}){
+  const base=id===DEFAULT_ID?DEFAULT_BANNER:{id,name:'New Banner',imageUrl:'',imageData:'',targetUrl:'',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()};
+  return {
+    id,
+    name:String(data.name??base.name).slice(0,80),
+    imageUrl:String(data.imageUrl ?? base.imageUrl ?? ''),
+    imageData:String(data.imageData ?? base.imageData ?? ''),
+    targetUrl:String(data.targetUrl ?? base.targetUrl ?? ''),
+    x:num(data.x,base.x,0,5000),y:num(data.y,base.y,0,3000),
+    width:num(data.width,base.width,80,1800),height:num(data.height,base.height,40,900),
+    enabled:data.enabled!==undefined?data.enabled!==false:base.enabled,
+    openNewTab:data.openNewTab!==undefined?data.openNewTab!==false:base.openNewTab,
+    avoidSocial:data.avoidSocial!==undefined?data.avoidSocial!==false:base.avoidSocial,
+    order:num(data.order,base.order,0,9999999999999)
+  };
+}
+function imageSrc(m){return String(m.imageData||m.imageUrl||'')}
+function normalizeTarget(value){
+  let v=String(value||'').trim(); if(!v)return '#';
+  if(/^https?:\/\//i.test(v)||/^mailto:/i.test(v)||/^tel:/i.test(v)||v.startsWith('#'))return v;
+  if(!v.startsWith('/'))v='/'+v.replace(/^\.?\//,'');
+  return v;
+}
+function isExternal(url){return /^https?:\/\//i.test(url)}
+function bannerEl(id){return layer?.querySelector(`[data-az-banner-id="${CSS.escape(id)}"]`)||null}
+function createBannerEl(m){
+  const a=document.createElement('a');
+  a.className='az-home-exabytes-promo az-home-managed-banner az-home-custom-banner';
+  a.dataset.azBannerId=m.id;
+  const img=document.createElement('img'); img.loading='eager';img.decoding='async';img.alt=m.name||'AZOBSS promotion';
+  a.appendChild(img); layer.appendChild(a);
+  bindBannerAdminEvents(a);
+  return a;
+}
+function effectiveDesktop(m){
+  const hr=hero.getBoundingClientRect();
+  let x=Math.max(0,m.x),y=Math.max(0,m.y),w=Math.max(80,m.width),h=Math.max(40,m.height);
+  const rightLimit=Math.max(80,hr.width-x-8); w=Math.min(w,rightLimit);
+  if(m.avoidSocial&&social){
+    const sr=social.getBoundingClientRect(),gap=14;
+    const sL=sr.left-hr.left-gap,sR=sr.right-hr.left+gap,sT=sr.top-hr.top-gap,sB=sr.bottom-hr.top+gap;
+    const vertical=y<sB&&y+h>sT;
+    if(vertical){
+      if(x<sL){
+        const room=sL-x;
+        if(room>=80)w=Math.min(w,room);
+        else y=Math.max(y,sB);
+      }else if(x<sR){
+        const shifted=sR;
+        if(shifted+w<=hr.width-8)x=shifted; else y=Math.max(y,sB);
+      }
+    }
+  }
+  return {x:Math.round(x),y:Math.round(y),width:Math.round(w),height:Math.round(h)};
+}
+function applyBanner(m){
+  let el=bannerEl(m.id);
+  if(!el){if(!imageSrc(m))return;el=createBannerEl(m)}
+  const src=imageSrc(m),img=el.querySelector('img');
+  if(img&&src&&img.getAttribute('src')!==src)img.src=src;
+  if(img)img.alt=m.name||'AZOBSS promotion';
+  el.setAttribute('aria-label',m.name||'AZOBSS promotion');
+  const href=normalizeTarget(m.targetUrl); el.href=href;
+  if(m.openNewTab&&href!=='#'){el.target='_blank';el.rel=(m.id===DEFAULT_ID?'noopener sponsored':'noopener');}
+  else{el.removeAttribute('target');el.rel=m.id===DEFAULT_ID?'sponsored':'';}
+  el.hidden=!m.enabled||!src;
+  const ratio=Math.max(.2,m.width/Math.max(1,m.height));
+  el.style.setProperty('--az-banner-ratio',`${m.width} / ${m.height}`);
+  el.style.setProperty('--az-banner-mobile-w',`${Math.min(560,Math.max(220,m.width))}px`);
+  if(innerWidth>760){
+    const e=effectiveDesktop(m);
+    el.style.setProperty('--az-banner-x',`${e.x}px`);el.style.setProperty('--az-banner-y',`${e.y}px`);
+    el.style.setProperty('--az-banner-w',`${e.width}px`);el.style.setProperty('--az-banner-h',`${e.height}px`);
+  }
+  el.classList.toggle('az-banner-admin-selected',state.editorOpen&&state.selectedId===m.id);
+}
+function removeOrphanEls(){
+  layer?.querySelectorAll('.az-home-managed-banner[data-az-banner-id]').forEach(el=>{
+    const id=el.dataset.azBannerId;if(!state.items.has(id)&&id!==DEFAULT_ID)el.remove();
+  });
+}
+function updateHeroHeight(){
+  if(!hero||innerWidth<=760){hero?.style.removeProperty('--az-banner-hero-min');return;}
+  let needed=170;
+  state.items.forEach(m=>{if(m.enabled&&imageSrc(m)){const e=effectiveDesktop(m);needed=Math.max(needed,e.y+e.height+14)}});
+  hero.style.setProperty('--az-banner-hero-min',`${Math.ceil(needed)}px`);
+}
+function updateResizeHandle(){
+  if(!resizeHandle)return;
+  const m=state.items.get(state.selectedId),el=m&&bannerEl(m.id);
+  if(!state.editorOpen||!state.isAdmin||innerWidth<=760||!m||!el||el.hidden){resizeHandle.hidden=true;return;}
+  const hr=hero.getBoundingClientRect(),er=el.getBoundingClientRect();
+  resizeHandle.hidden=false;
+  resizeHandle.style.left=`${Math.round(er.right-hr.left-9)}px`;resizeHandle.style.top=`${Math.round(er.bottom-hr.top-9)}px`;
+}
+function renderAll(){
+  [...state.items.values()].sort((a,b)=>a.order-b.order).forEach(applyBanner);
+  removeOrphanEls();updateHeroHeight();requestAnimationFrame(updateResizeHandle);
+}
+function fillSelect(){
+  if(!select)return; select.innerHTML='';
+  [...state.items.values()].sort((a,b)=>a.order-b.order).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=(m.enabled?'':'[Hidden] ')+(m.name||m.id);select.appendChild(o)});
+  if(state.items.has(state.selectedId))select.value=state.selectedId;
+}
+function updatePreview(m){
+  preview.innerHTML='';const src=m&&imageSrc(m);
+  if(src){const img=document.createElement('img');img.src=src;img.alt='Banner preview';preview.appendChild(img)}
+  else{const span=document.createElement('span');span.textContent='Belum ada gambar. Upload gambar banner.';preview.appendChild(span)}
+}
+function fillForm(){
+  const m=state.items.get(state.selectedId);if(!m)return;
+  nameInput.value=m.name||'';linkInput.value=m.targetUrl||'';xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height);
+  enabledInput.checked=!!m.enabled;newTabInput.checked=!!m.openNewTab;avoidSocialInput.checked=m.avoidSocial!==false;fileInput.value='';updatePreview(m);
+  renderAll();
+}
+function setStatus(msg,isError=false){if(statusEl){statusEl.textContent=msg||'';statusEl.style.color=isError?'#fca5a5':'#93c5fd'}}
+function markDirty(msg='Perubahan belum disimpan.'){state.dirty=true;setStatus(msg)}
+function readFormToModel(){
+  const m=state.items.get(state.selectedId);if(!m)return null;
+  m.name=String(nameInput.value||'Banner').trim().slice(0,80)||'Banner';m.targetUrl=String(linkInput.value||'').trim();
+  m.x=num(xInput.value,m.x,0,5000);m.y=num(yInput.value,m.y,0,3000);m.width=num(wInput.value,m.width,80,1800);m.height=num(hInput.value,m.height,40,900);
+  m.enabled=enabledInput.checked;m.openNewTab=newTabInput.checked;m.avoidSocial=avoidSocialInput.checked;return m;
+}
+function syncFormNumbers(m){xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height)}
+function openEditor(){
+  if(!state.isAdmin)return;state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Drag banner atau ubah nilai, kemudian tekan Simpan.');
+}
+function closeEditor(){state.editorOpen=false;modal.hidden=true;document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
+async function readFileDataUrl(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=()=>rej(new Error('Gagal membaca gambar.'));r.readAsDataURL(file)})}
+async function loadImage(raw,name){return await new Promise((res,rej)=>{const im=new Image();im.decoding='async';im.onload=()=>res(im);im.onerror=()=>rej(new Error(`Gagal decode ${name||'gambar'}.`));im.src=raw})}
+async function canvasBlobUrl(canvas,type,quality){
+  const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('Gagal compress gambar.')),type,quality));
+  return await readFileDataUrl(blob);
+}
+async function prepareImage(file){
+  if(!file||!String(file.type||'').startsWith('image/'))throw new Error('Pilih fail gambar sahaja.');
+  const raw=await readFileDataUrl(file);if(raw.length<=420000)return raw;
+  let source=null,bitmap=null;
+  try{
+    if(typeof createImageBitmap==='function'){try{bitmap=await createImageBitmap(file);source=bitmap}catch(_){}}
+    if(!source)source=await loadImage(raw,file.name);
+    let sw=source.width||source.naturalWidth,sh=source.height||source.naturalHeight;if(!sw||!sh)throw new Error('Saiz gambar tidak sah.');
+    const maxSide=1600,scale=Math.min(1,maxSide/Math.max(sw,sh));let w=Math.max(1,Math.round(sw*scale)),h=Math.max(1,Math.round(sh*scale));let q=.86,out='';
+    for(let i=0;i<10;i++){
+      const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{alpha:true,willReadFrequently:true});if(!ctx)throw new Error('Canvas browser tidak tersedia.');
+      ctx.clearRect(0,0,w,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,0,0,w,h);try{ctx.getImageData(Math.floor(w/2),Math.floor(h/2),1,1)}catch(_){}
+      await new Promise(r=>setTimeout(r,0));out=await canvasBlobUrl(c,'image/webp',q);if(out.length<=560000)break;
+      if(q>.48)q-=.08;else{w=Math.max(640,Math.round(w*.84));h=Math.max(320,Math.round(h*.84));q=.68}
+    }
+    if(!out||out.length>650000)throw new Error('Gambar terlalu besar. Cuba gambar lebih kecil.');return out;
+  }finally{try{bitmap?.close?.()}catch(_){}}
+}
+async function loadCloud(){
+  try{
+    const snap=await getDocs(collection(db,COLLECTION));
+    snap.forEach(ds=>{state.items.set(ds.id,cleanModel(ds.id,ds.data()||{}))});
+    renderAll();if(state.editorOpen){fillSelect();fillForm()}
+  }catch(err){console.warn('[AZOBSS banner] cloud read unavailable',err);renderAll()}
+}
+async function saveSelected(){
+  if(!state.isAdmin)return setStatus('Administrator sahaja boleh menyimpan banner.',true);
+  const m=readFormToModel();if(!m)return;
+  if(!imageSrc(m))return setStatus('Upload gambar banner dahulu.',true);
+  if(!m.targetUrl)return setStatus('Masukkan link tujuan banner.',true);
+  saveBtn.disabled=true;setStatus('Menyimpan banner...');
+  try{
+    const payload={name:m.name,imageUrl:m.imageUrl||'',imageData:m.imageData||'',targetUrl:m.targetUrl,x:m.x,y:m.y,width:m.width,height:m.height,enabled:m.enabled,openNewTab:m.openNewTab,avoidSocial:m.avoidSocial,order:m.order,updatedAt:serverTimestamp()};
+    if(m.id!==DEFAULT_ID)payload.createdAt=serverTimestamp();
+    await setDoc(doc(db,COLLECTION,m.id),payload,{merge:true});state.dirty=false;renderAll();fillSelect();setStatus('Banner berjaya disimpan dan akan digunakan untuk semua pengunjung.');
+  }catch(err){console.error(err);setStatus('Gagal simpan. Semak Firebase Rules v1285 dan pastikan login Administrator.',true)}finally{saveBtn.disabled=false}
+}
+function newBanner(){
+  if(!state.isAdmin)return;const id=`banner-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+  const m=cleanModel(id,{name:'New Banner',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()});state.items.set(id,m);state.selectedId=id;state.dirty=true;fillSelect();fillForm();setStatus('Banner baru. Upload gambar, masukkan link dan tekan Simpan.');
+}
+async function deleteSelected(){
+  if(!state.isAdmin)return;const m=state.items.get(state.selectedId);if(!m)return;
+  if(!confirm(m.id===DEFAULT_ID?'Hide banner Exabytes ini untuk semua pengunjung?':'Delete banner ini secara kekal?'))return;
+  deleteBtn.disabled=true;
+  try{
+    if(m.id===DEFAULT_ID){m.enabled=false;await setDoc(doc(db,COLLECTION,m.id),{enabled:false,updatedAt:serverTimestamp()},{merge:true});}
+    else{await deleteDoc(doc(db,COLLECTION,m.id));state.items.delete(m.id);bannerEl(m.id)?.remove();state.selectedId=DEFAULT_ID;}
+    state.dirty=false;fillSelect();fillForm();renderAll();setStatus('Banner dikemas kini.');
+  }catch(err){console.error(err);setStatus('Gagal delete/hide. Semak akses Administrator dan Firebase Rules.',true)}finally{deleteBtn.disabled=false}
+}
+function bindBannerAdminEvents(el){
+  if(el.dataset.azAdminBound==='1')return;el.dataset.azAdminBound='1';
+  el.addEventListener('click',e=>{if(state.editorOpen&&state.isAdmin){e.preventDefault();e.stopPropagation();const id=el.dataset.azBannerId;if(id&&state.items.has(id)){state.selectedId=id;fillSelect();fillForm()}}});
+  el.addEventListener('pointerdown',e=>{
+    if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;
+    const id=el.dataset.azBannerId,m=state.items.get(id);if(!m)return;e.preventDefault();state.selectedId=id;fillSelect();
+    state.op={type:'move',id,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};el.setPointerCapture?.(e.pointerId);
+  });
+}
+function bindExisting(){layer?.querySelectorAll('.az-home-managed-banner').forEach(bindBannerAdminEvents)}
+function onPointerMove(e){
+  const op=state.op;if(!op)return;const m=state.items.get(op.id);if(!m)return;
+  const dx=e.clientX-op.startX,dy=e.clientY-op.startY;
+  if(op.type==='move'){m.x=Math.max(0,op.x+dx);m.y=Math.max(0,op.y+dy)}
+  else{m.width=Math.max(80,op.w+dx);m.height=Math.max(40,op.h+dy)}
+  const eff=effectiveDesktop(m);m.x=eff.x;m.y=eff.y;m.width=eff.width;m.height=eff.height;syncFormNumbers(m);renderAll();state.dirty=true;
+}
+function onPointerUp(){if(state.op){state.op=null;markDirty('Kedudukan/saiz berubah. Tekan Simpan untuk kekalkan perubahan.')}}
+
+if(toggle)toggle.addEventListener('click',openEditor);if(closeBtn)closeBtn.addEventListener('click',closeEditor);
+modal?.addEventListener('click',e=>{if(e.target===modal)closeEditor()});
+select?.addEventListener('change',()=>{state.selectedId=select.value;fillForm()});
+newBtn?.addEventListener('click',newBanner);saveBtn?.addEventListener('click',saveSelected);deleteBtn?.addEventListener('click',deleteSelected);
+[nameInput,linkInput,xInput,yInput,wInput,hInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){renderAll();markDirty()}}));
+fileInput?.addEventListener('change',async()=>{
+  const file=fileInput.files?.[0],m=state.items.get(state.selectedId);if(!file||!m)return;setStatus('Memproses gambar...');fileInput.disabled=true;
+  try{m.imageData=await prepareImage(file);m.imageUrl='';updatePreview(m);renderAll();markDirty('Gambar siap. Masukkan link dan tekan Simpan.')}catch(err){setStatus(err.message||'Gagal memproses gambar.',true)}finally{fileInput.disabled=false}
+});
+resizeHandle?.addEventListener('pointerdown',e=>{
+  if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;const m=state.items.get(state.selectedId);if(!m)return;e.preventDefault();e.stopPropagation();
+  state.op={type:'resize',id:m.id,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};resizeHandle.setPointerCapture?.(e.pointerId);
+});
+document.addEventListener('pointermove',onPointerMove,{passive:true});document.addEventListener('pointerup',onPointerUp);document.addEventListener('pointercancel',onPointerUp);
+window.addEventListener('resize',()=>{renderAll()},{passive:true});
+window.addEventListener('storage',()=>setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser)));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.editorOpen)closeEditor()});
+
+bindExisting();renderAll();setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser));
+onAuthStateChanged(auth,user=>setAdmin(storedAdmin()||firebaseAdmin(user)));
+loadCloud();
+</script>\n
+
+<div class="az-home-banner-admin-modal" id="azHomeBannerAdminModal1285" hidden role="dialog" aria-modal="true" aria-labelledby="azHomeBannerAdminTitle1285">
+  <div class="az-home-banner-admin-panel">
+    <div class="az-home-banner-admin-head">
+      <strong id="azHomeBannerAdminTitle1285">Homepage Banner Manager</strong>
+      <button class="az-home-banner-admin-close" id="azHomeBannerAdminClose1285" type="button" aria-label="Close banner manager">×</button>
+    </div>
+    <div class="az-home-banner-admin-body">
+      <div>
+        <div class="az-home-banner-admin-preview" id="azHomeBannerPreview1285"><span>Pilih banner atau upload gambar.</span></div>
+      </div>
+      <div class="az-home-banner-admin-fields">
+        <label class="az-wide">Banner
+          <select id="azHomeBannerSelect1285" aria-label="Select banner"></select>
+        </label>
+        <label class="az-wide">Nama / label admin
+          <input id="azHomeBannerName1285" type="text" maxlength="80" placeholder="Contoh: Promo Software AutoCAD"/>
+        </label>
+        <label class="az-wide">Upload gambar
+          <input id="azHomeBannerFile1285" type="file" accept="image/*"/>
+        </label>
+        <label class="az-wide">Link bila banner ditekan
+          <input id="azHomeBannerLink1285" type="text" inputmode="url" placeholder="/Software-Tools/ atau https://..."/>
+        </label>
+        <label>Kedudukan X (px)
+          <input id="azHomeBannerX1285" type="number" min="0" step="1"/>
+        </label>
+        <label>Kedudukan Y (px)
+          <input id="azHomeBannerY1285" type="number" min="0" step="1"/>
+        </label>
+        <label>Lebar (px)
+          <input id="azHomeBannerW1285" type="number" min="80" max="1800" step="1"/>
+        </label>
+        <label>Tinggi (px)
+          <input id="azHomeBannerH1285" type="number" min="40" max="900" step="1"/>
+        </label>
+        <div class="az-home-banner-checks">
+          <label><input id="azHomeBannerEnabled1285" type="checkbox" checked/> Paparkan banner</label>
+          <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
+          <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
+        </div>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Semasa panel ini dibuka, drag banner untuk alih kedudukan dan drag kotak kuning di bucu kanan bawah untuk resize. Nilai X/Y/saiz juga boleh ditaip terus. Mobile akan susun banner secara automatik supaya tidak bertindih.</p>
+      </div>
+    </div>
+    <div class="az-home-banner-admin-actions">
+      <button id="azHomeBannerNew1285" type="button">+ Add Banner</button>
+      <button id="azHomeBannerSave1285" type="button">Simpan</button>
+      <button id="azHomeBannerDelete1285" type="button">Delete / Hide</button>
+    </div>
+    <p class="az-home-banner-admin-status" id="azHomeBannerStatus1285" aria-live="polite"></p>
+  </div>
+</div>
 
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body>
