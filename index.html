@@ -9465,6 +9465,68 @@ body.az-home-banner-admin-editing .az-home-software-promo-arrow{
 }
 </style>
 
+<style id="azobss-home-banner-inline-dock-1289">
+/* AZOBSS v1289: desktop Banner Manager lives in normal page flow directly below the hero.
+   It never overlays or blocks any banner while the admin drags/resizes on the hero. */
+@media(min-width:761px){
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289,
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289.az-banner-panel-left{
+    position:relative!important;
+    inset:auto!important;
+    z-index:24!important;
+    display:block!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:10px 14px 16px!important;
+    box-sizing:border-box!important;
+    background:transparent!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    pointer-events:auto!important;
+    align-items:unset!important;
+    justify-content:unset!important;
+    place-items:unset!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289[hidden]{display:none!important;}
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-panel{
+    width:min(1180px,calc(100% - 8px))!important;
+    max-height:none!important;
+    margin:0 auto!important;
+    overflow:visible!important;
+    pointer-events:auto!important;
+    border-radius:14px!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-body{
+    grid-template-columns:minmax(150px,190px) minmax(0,1fr)!important;
+    gap:12px!important;
+    padding:12px 14px!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-preview{
+    min-height:108px!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-preview img{
+    max-height:132px!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-fields{
+    grid-template-columns:repeat(4,minmax(95px,1fr))!important;
+    gap:8px!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-fields label.az-wide,
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-checks,
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-help,
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-managed-note{
+    grid-column:1/-1!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-actions{
+    padding:0 14px 10px!important;
+  }
+  .az-home-banner-admin-modal.az-banner-inline-dock-1289 .az-home-banner-admin-status{
+    margin:0 14px 12px!important;
+  }
+}
+</style>
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -19492,7 +19554,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 
 
 \n<!-- AZOBSS v1286 drag/resize fix: docked non-blocking editor -->
-<script type="module" id="azobss-home-banner-manager-1288">
+<script type="module" id="azobss-home-banner-manager-1289">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -19721,8 +19783,19 @@ function updatePreview(m){
   if(src){const img=document.createElement('img');img.src=src;img.alt='Banner preview';preview.appendChild(img)}
   else{const span=document.createElement('span');span.textContent=isSoftware(m)?'Software Promo menggunakan gambar produk promo secara automatik.':'Belum ada gambar. Upload gambar banner.';preview.appendChild(span)}
 }
+function placeEditorDock(){
+  if(!modal||!hero)return;
+  if(innerWidth>760){
+    if(modal.previousElementSibling!==hero)hero.insertAdjacentElement('afterend',modal);
+    modal.classList.add('az-banner-inline-dock-1289');
+    modal.classList.remove('az-banner-panel-left');
+  }else{
+    modal.classList.remove('az-banner-inline-dock-1289');
+  }
+}
 function updatePanelDock(m){
   if(!modal||!hero||innerWidth<=760||!m){modal?.classList.remove('az-banner-panel-left');return;}
+  if(modal.classList.contains('az-banner-inline-dock-1289')){modal.classList.remove('az-banner-panel-left');return;}
   const e=effectiveDesktop(m),rightSide=(e.x+e.width/2)>(hero.getBoundingClientRect().width/2);
   modal.classList.toggle('az-banner-panel-left',rightSide);
 }
@@ -19749,7 +19822,7 @@ function readFormToModel(){
 }
 function syncFormNumbers(m){xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height)}
 function openEditor(){
-  if(!state.isAdmin)return;state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Pilih mana-mana banner, drag/resize, kemudian tekan Simpan.');
+  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Manager berada di bawah kawasan banner supaya tidak menutup banner. Drag/resize terus pada banner, kemudian tekan Simpan.');
 }
 function closeEditor(){state.editorOpen=false;modal.hidden=true;modal?.classList.remove('az-banner-panel-left');document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
 async function readFileDataUrl(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=()=>rej(new Error('Gagal membaca gambar.'));r.readAsDataURL(file)})}
@@ -19849,12 +19922,12 @@ resizeHandle?.addEventListener('pointerdown',e=>{
   state.op={type:'resize',id:m.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};try{resizeHandle.setPointerCapture?.(e.pointerId)}catch(_){}
 });
 document.addEventListener('pointermove',e=>{if(state.op)e.preventDefault();onPointerMove(e)},{passive:false});document.addEventListener('pointerup',onPointerUp);document.addEventListener('pointercancel',onPointerUp);
-window.addEventListener('resize',()=>{renderAll();const m=state.items.get(state.selectedId);if(m&&state.editorOpen)updatePanelDock(m)},{passive:true});
+window.addEventListener('resize',()=>{placeEditorDock();renderAll();const m=state.items.get(state.selectedId);if(m&&state.editorOpen)updatePanelDock(m)},{passive:true});
 window.addEventListener('storage',()=>setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser)));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.editorOpen)closeEditor()});
 if(softwarePromo){new MutationObserver(()=>{updateHeroHeight();requestAnimationFrame(updateResizeHandle)}).observe(softwarePromo,{attributes:true,attributeFilter:['hidden']})}
 
-ensureBuiltinModels();bindExisting();renderAll();setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser));
+placeEditorDock();ensureBuiltinModels();bindExisting();renderAll();setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser));
 onAuthStateChanged(auth,user=>setAdmin(storedAdmin()||firebaseAdmin(user)));
 loadCloud();
 </script>\n
@@ -19900,7 +19973,7 @@ loadCloud();
           <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
           <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
         </div>
-        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Exabytes, Software Promo dan Lucky Draw kini boleh dipilih dalam senarai yang sama. Bila pilih banner di sebelah kanan, panel akan dock ke kiri supaya banner tidak terlindung. Drag banner untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Pada desktop, Banner Manager berada terus di bawah kawasan hero dan tidak menindih mana-mana banner. Pilih banner, drag terus untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
       </div>
     </div>
     <div class="az-home-banner-admin-actions">
