@@ -9195,6 +9195,14 @@ body.az-home-banner-admin-editing .az-home-banner-resize-handle{
   .az-home-banner-admin-panel{width:min(560px,100%)!important;max-height:72vh!important;}
   .az-home-banner-admin-fields{grid-template-columns:1fr!important;}
 }
+
+/* v1287: prevent the default HTML banner size from flashing before Firestore settings arrive. */
+.az-home-banner-layer:not(.az-banner-config-ready) .az-home-managed-banner{
+  visibility:hidden!important;
+}
+.az-home-banner-layer.az-banner-config-ready .az-home-managed-banner{
+  visibility:visible;
+}
 </style>
 
 
@@ -19496,6 +19504,9 @@ function setAdmin(flag){
   if(toggle)toggle.hidden=!state.isAdmin;
   if(!state.isAdmin&&state.editorOpen)closeEditor();
 }
+function setBannerConfigReady(){
+  if(layer)layer.classList.add('az-banner-config-ready');
+}
 function num(v,fallback,min,max){const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback}
 function cleanModel(id,data={}){
   const base=id===DEFAULT_ID?DEFAULT_BANNER:{id,name:'New Banner',imageUrl:'',imageData:'',targetUrl:'',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()};
@@ -19655,7 +19666,13 @@ async function loadCloud(){
     const snap=await getDocs(collection(db,COLLECTION));
     snap.forEach(ds=>{state.items.set(ds.id,cleanModel(ds.id,ds.data()||{}))});
     renderAll();if(state.editorOpen){fillSelect();fillForm()}
-  }catch(err){console.warn('[AZOBSS banner] cloud read unavailable',err);renderAll()}
+  }catch(err){
+    console.warn('[AZOBSS banner] cloud read unavailable',err);
+    renderAll();
+  }finally{
+    /* Reveal only after the final stored dimensions have been applied. */
+    requestAnimationFrame(()=>requestAnimationFrame(setBannerConfigReady));
+  }
 }
 async function saveSelected(){
   if(!state.isAdmin)return setStatus('Administrator sahaja boleh menyimpan banner.',true);
