@@ -9409,6 +9409,62 @@ body.az-home-banner-admin-editing .az-home-banner-resize-handle{
 }
 </style>
 
+<style id="azobss-home-right-banners-managed-1288">
+/* AZOBSS v1288: the two built-in banners on the right are managed by the same admin banner editor. */
+.hero:not(.az-system-banner-config-ready) .az-home-system-managed-banner{
+  visibility:hidden!important;
+}
+.hero.az-system-banner-config-ready .az-home-system-managed-banner{
+  visibility:visible;
+}
+.az-home-system-managed-banner.az-banner-admin-disabled{
+  display:none!important;
+}
+@media(min-width:761px){
+  .hero .az-home-system-managed-banner{
+    position:absolute!important;
+    left:var(--az-banner-x)!important;
+    top:var(--az-banner-y)!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:var(--az-banner-w)!important;
+    height:var(--az-banner-h)!important;
+    max-width:none!important;
+    aspect-ratio:auto!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+  }
+  .hero .az-home-lucky-float.az-home-system-managed-banner img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+  }
+}
+body.az-home-banner-admin-editing .az-home-system-managed-banner,
+body.az-home-banner-admin-editing .az-home-system-managed-banner:hover,
+body.az-home-banner-admin-editing .az-home-system-managed-banner:focus-within{
+  animation:none!important;
+  transform:none!important;
+}
+body.az-home-banner-admin-editing .az-home-software-promo-arrow{
+  pointer-events:none!important;
+}
+.az-home-banner-admin-modal.az-banner-panel-left{
+  justify-content:flex-start!important;
+}
+.az-home-banner-managed-note{
+  grid-column:1/-1!important;
+  margin:-2px 0 0!important;
+  color:#fcd34d!important;
+  font-size:10px!important;
+  line-height:1.35!important;
+}
+.az-home-banner-admin-fields input:disabled{
+  opacity:.62!important;
+  cursor:not-allowed!important;
+}
+</style>
+
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
 .site-auth-actions{
@@ -9998,7 +10054,7 @@ body.az-home-banner-admin-editing .az-home-banner-resize-handle{
 <button class="az-home-banner-admin-toggle" id="azHomeBannerAdminToggle1285" type="button" hidden aria-haspopup="dialog" aria-controls="azHomeBannerAdminModal1285">⚙ Banner</button>
 <button class="az-home-banner-resize-handle" id="azHomeBannerResizeHandle1285" type="button" hidden aria-label="Resize selected banner" title="Drag to resize banner"></button>
 
-<div class="az-home-software-promo" id="azHomeSoftwarePromo529" hidden aria-label="Software tengah promosi" aria-live="polite">
+<div class="az-home-software-promo az-home-managed-banner az-home-system-managed-banner" id="azHomeSoftwarePromo529" data-az-banner-id="builtin-software-promo" data-az-banner-kind="software" hidden aria-label="Software tengah promosi" aria-live="polite">
   <a class="az-home-software-promo-link" id="azHomeSoftwarePromoLink529" href="/Software-Tools/" aria-label="Buka software tengah promosi">
     <img class="az-home-software-promo-image" id="azHomeSoftwarePromoImage529" src="" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer"/>
     <span class="az-home-software-promo-badge">Software Promo</span>
@@ -10010,7 +10066,7 @@ body.az-home-banner-admin-editing .az-home-banner-resize-handle{
   <button class="az-home-software-promo-arrow prev" id="azHomeSoftwarePromoPrev529" type="button" aria-label="Promosi sebelumnya">‹</button>
   <button class="az-home-software-promo-arrow next" id="azHomeSoftwarePromoNext529" type="button" aria-label="Promosi seterusnya">›</button>
 </div>
-<a class="az-home-lucky-float" href="/lucky-draw/" aria-label="Open Monthly Lucky Draw">
+<a class="az-home-lucky-float az-home-managed-banner az-home-system-managed-banner" id="azHomeLuckyFloat1288" data-az-banner-id="builtin-lucky-draw" data-az-banner-kind="lucky" href="/lucky-draw/" aria-label="Open Monthly Lucky Draw">
 <img src="images/lucky-draw-floating.svg" alt="Monthly Lucky Draw" loading="eager" decoding="async"/>
 </a>
 <div class="hero-actions">
@@ -19436,7 +19492,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 
 
 \n<!-- AZOBSS v1286 drag/resize fix: docked non-blocking editor -->
-<script type="module" id="azobss-home-banner-manager-1285">
+<script type="module" id="azobss-home-banner-manager-1288">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -19455,17 +19511,23 @@ const db=getFirestore(app);
 const COLLECTION='homeBanners';
 const ADMIN_EMAILS=new Set(['zedan91@azobss.local','zedan9107@gmail.com']);
 const DEFAULT_ID='legacy-exabytes';
+const SOFTWARE_ID='builtin-software-promo';
+const LUCKY_ID='builtin-lucky-draw';
+const BUILTIN_IDS=new Set([DEFAULT_ID,SOFTWARE_ID,LUCKY_ID]);
 const DEFAULT_BANNER={
-  id:DEFAULT_ID,name:'Exabytes 10.10 / .MY RM1',
+  id:DEFAULT_ID,kind:'image',name:'Exabytes 10.10 / .MY RM1',
   imageUrl:'/images/exabytes-1010-my-domain-promo-v1278.webp',imageData:'',
   targetUrl:'https://billing.exabytes.my/mypanel/aff.php?aff=8106115&page=home',
   x:18,y:18,width:455,height:103,enabled:true,openNewTab:true,avoidSocial:true,order:10
 };
-const state={items:new Map([[DEFAULT_ID,{...DEFAULT_BANNER}]]),selectedId:DEFAULT_ID,isAdmin:false,editorOpen:false,dirty:false,op:null};
+const state={items:new Map(),selectedId:DEFAULT_ID,isAdmin:false,editorOpen:false,dirty:false,op:null};
 const $=id=>document.getElementById(id);
 const hero=document.querySelector('.hero');
 const layer=$('azHomeBannerLayer1285');
 const social=document.querySelector('.hero .social-strip');
+const softwarePromo=$('azHomeSoftwarePromo529');
+const softwareImage=$('azHomeSoftwarePromoImage529');
+const luckyPromo=$('azHomeLuckyFloat1288');
 const toggle=$('azHomeBannerAdminToggle1285');
 const modal=$('azHomeBannerAdminModal1285');
 const closeBtn=$('azHomeBannerAdminClose1285');
@@ -19474,6 +19536,7 @@ const select=$('azHomeBannerSelect1285');
 const nameInput=$('azHomeBannerName1285');
 const fileInput=$('azHomeBannerFile1285');
 const linkInput=$('azHomeBannerLink1285');
+const managedNote=$('azHomeBannerManagedNote1288');
 const xInput=$('azHomeBannerX1285');
 const yInput=$('azHomeBannerY1285');
 const wInput=$('azHomeBannerW1285');
@@ -19506,78 +19569,85 @@ function setAdmin(flag){
 }
 function setBannerConfigReady(){
   if(layer)layer.classList.add('az-banner-config-ready');
+  if(hero)hero.classList.add('az-system-banner-config-ready');
 }
 function num(v,fallback,min,max){const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):fallback}
+function baseFor(id){
+  if(id===DEFAULT_ID)return {...DEFAULT_BANNER};
+  const heroWidth=Math.max(761,Math.round(hero?.getBoundingClientRect().width||innerWidth||1200));
+  const compact=innerWidth<=900;
+  if(id===SOFTWARE_ID){
+    const width=compact?190:226,height=compact?112:132,right=compact?144:206,y=compact?16:18;
+    return {id,kind:'software',name:'Software Promo (Auto)',imageUrl:'',imageData:'',targetUrl:'',x:Math.max(0,heroWidth-right-width),y,width,height,enabled:true,openNewTab:false,avoidSocial:true,order:20};
+  }
+  if(id===LUCKY_ID){
+    const width=compact?112:150,height=Math.round(width*190/220),right=compact?14:34,y=compact?16:18;
+    return {id,kind:'lucky',name:'Monthly Lucky Draw',imageUrl:'images/lucky-draw-floating.svg',imageData:'',targetUrl:'/lucky-draw/',x:Math.max(0,heroWidth-right-width),y,width,height,enabled:true,openNewTab:false,avoidSocial:true,order:30};
+  }
+  return {id,kind:'image',name:'New Banner',imageUrl:'',imageData:'',targetUrl:'',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()};
+}
 function cleanModel(id,data={}){
-  const base=id===DEFAULT_ID?DEFAULT_BANNER:{id,name:'New Banner',imageUrl:'',imageData:'',targetUrl:'',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()};
+  const base=baseFor(id);
+  const software=id===SOFTWARE_ID;
   return {
     id,
+    kind:software?'software':(id===LUCKY_ID?'lucky':String(data.kind||base.kind||'image')),
     name:String(data.name??base.name).slice(0,80),
-    imageUrl:String(data.imageUrl ?? base.imageUrl ?? ''),
-    imageData:String(data.imageData ?? base.imageData ?? ''),
-    targetUrl:String(data.targetUrl ?? base.targetUrl ?? ''),
+    imageUrl:software?'':String(data.imageUrl ?? base.imageUrl ?? ''),
+    imageData:software?'':String(data.imageData ?? base.imageData ?? ''),
+    targetUrl:software?'':String(data.targetUrl ?? base.targetUrl ?? ''),
     x:num(data.x,base.x,0,5000),y:num(data.y,base.y,0,3000),
     width:num(data.width,base.width,80,1800),height:num(data.height,base.height,40,900),
     enabled:data.enabled!==undefined?data.enabled!==false:base.enabled,
-    openNewTab:data.openNewTab!==undefined?data.openNewTab!==false:base.openNewTab,
+    openNewTab:software?false:(data.openNewTab!==undefined?data.openNewTab!==false:base.openNewTab),
     avoidSocial:data.avoidSocial!==undefined?data.avoidSocial!==false:base.avoidSocial,
     order:num(data.order,base.order,0,9999999999999)
   };
 }
-function imageSrc(m){return String(m.imageData||m.imageUrl||'')}
+function ensureBuiltinModels(){
+  for(const id of [DEFAULT_ID,SOFTWARE_ID,LUCKY_ID])if(!state.items.has(id))state.items.set(id,cleanModel(id,baseFor(id)));
+}
+function isBuiltIn(m){return !!m&&BUILTIN_IDS.has(m.id)}
+function isSoftware(m){return !!m&&m.id===SOFTWARE_ID}
+function imageSrc(m){return String(m?.imageData||m?.imageUrl||'')}
+function liveSystemImage(m){
+  if(!m)return '';
+  if(m.id===SOFTWARE_ID)return String(softwareImage?.currentSrc||softwareImage?.getAttribute('src')||'');
+  if(m.id===LUCKY_ID)return imageSrc(m)||String(luckyPromo?.querySelector('img')?.getAttribute('src')||'');
+  return imageSrc(m);
+}
+function hasVisual(m){return isSoftware(m)||!!imageSrc(m)}
 function normalizeTarget(value){
   let v=String(value||'').trim(); if(!v)return '#';
   if(/^https?:\/\//i.test(v)||/^mailto:/i.test(v)||/^tel:/i.test(v)||v.startsWith('#'))return v;
   if(!v.startsWith('/'))v='/'+v.replace(/^\.?\//,'');
   return v;
 }
-function isExternal(url){return /^https?:\/\//i.test(url)}
-function bannerEl(id){return layer?.querySelector(`[data-az-banner-id="${CSS.escape(id)}"]`)||null}
+function bannerEl(id){return hero?.querySelector(`[data-az-banner-id="${CSS.escape(id)}"]`)||null}
 function createBannerEl(m){
   const a=document.createElement('a');
   a.className='az-home-exabytes-promo az-home-managed-banner az-home-custom-banner';
-  a.draggable=false;
-  a.dataset.azBannerId=m.id;
-  const img=document.createElement('img'); img.loading='eager';img.decoding='async';img.draggable=false;img.alt=m.name||'AZOBSS promotion';
-  a.appendChild(img); layer.appendChild(a);
-  bindBannerAdminEvents(a);
-  return a;
+  a.draggable=false;a.dataset.azBannerId=m.id;
+  const img=document.createElement('img');img.loading='eager';img.decoding='async';img.draggable=false;img.alt=m.name||'AZOBSS promotion';
+  a.appendChild(img);layer.appendChild(a);bindBannerAdminEvents(a);return a;
 }
 function effectiveDesktop(m){
   const hr=hero.getBoundingClientRect();
   let x=Math.max(0,m.x),y=Math.max(0,m.y),w=Math.max(80,m.width),h=Math.max(40,m.height);
-  const rightLimit=Math.max(80,hr.width-x-8); w=Math.min(w,rightLimit);
+  const rightLimit=Math.max(80,hr.width-x-8);w=Math.min(w,rightLimit);
   if(m.avoidSocial&&social){
     const sr=social.getBoundingClientRect(),gap=14;
     const sL=sr.left-hr.left-gap,sR=sr.right-hr.left+gap,sT=sr.top-hr.top-gap,sB=sr.bottom-hr.top+gap;
     const vertical=y<sB&&y+h>sT;
     if(vertical){
-      if(x<sL){
-        const room=sL-x;
-        if(room>=80)w=Math.min(w,room);
-        else y=Math.max(y,sB);
-      }else if(x<sR){
-        const shifted=sR;
-        if(shifted+w<=hr.width-8)x=shifted; else y=Math.max(y,sB);
-      }
+      if(x<sL){const room=sL-x;if(room>=80)w=Math.min(w,room);else y=Math.max(y,sB)}
+      else if(x<sR){const shifted=sR;if(shifted+w<=hr.width-8)x=shifted;else y=Math.max(y,sB)}
     }
   }
   return {x:Math.round(x),y:Math.round(y),width:Math.round(w),height:Math.round(h)};
 }
-function applyBanner(m){
-  let el=bannerEl(m.id);
-  if(!el){if(!imageSrc(m))return;el=createBannerEl(m)}
-  const src=imageSrc(m),img=el.querySelector('img');
-  if(img&&src&&img.getAttribute('src')!==src)img.src=src;
-  if(img)img.alt=m.name||'AZOBSS promotion';
-  el.setAttribute('aria-label',m.name||'AZOBSS promotion');
-  const href=normalizeTarget(m.targetUrl); el.href=href;
-  if(m.openNewTab&&href!=='#'){el.target='_blank';el.rel=(m.id===DEFAULT_ID?'noopener sponsored':'noopener');}
-  else{el.removeAttribute('target');el.rel=m.id===DEFAULT_ID?'sponsored':'';}
-  el.hidden=!m.enabled||!src;
-  const ratio=Math.max(.2,m.width/Math.max(1,m.height));
-  el.style.setProperty('--az-banner-ratio',`${m.width} / ${m.height}`);
-  el.style.setProperty('--az-banner-mobile-w',`${Math.min(560,Math.max(220,m.width))}px`);
+function applyGeometry(el,m){
+  if(!el)return;
   if(innerWidth>760){
     const e=effectiveDesktop(m);
     el.style.setProperty('--az-banner-x',`${e.x}px`);el.style.setProperty('--az-banner-y',`${e.y}px`);
@@ -19585,63 +19655,107 @@ function applyBanner(m){
   }
   el.classList.toggle('az-banner-admin-selected',state.editorOpen&&state.selectedId===m.id);
 }
+function applySystemBanner(m){
+  const el=bannerEl(m.id);if(!el)return;
+  el.classList.toggle('az-banner-admin-disabled',!m.enabled);
+  if(m.id===LUCKY_ID){
+    const img=el.querySelector('img'),src=imageSrc(m);
+    if(img&&src&&img.getAttribute('src')!==src)img.src=src;
+    if(img)img.alt=m.name||'Monthly Lucky Draw';
+    const href=normalizeTarget(m.targetUrl);el.href=href;
+    if(m.openNewTab&&href!=='#'){el.target='_blank';el.rel='noopener'}else{el.removeAttribute('target');el.removeAttribute('rel')}
+    el.setAttribute('aria-label',m.name||'Monthly Lucky Draw');
+  }
+  applyGeometry(el,m);
+}
+function applyBanner(m){
+  if(m.id===SOFTWARE_ID||m.id===LUCKY_ID){applySystemBanner(m);return;}
+  let el=bannerEl(m.id);if(!el){if(!imageSrc(m))return;el=createBannerEl(m)}
+  const src=imageSrc(m),img=el.querySelector('img');
+  if(img&&src&&img.getAttribute('src')!==src)img.src=src;
+  if(img)img.alt=m.name||'AZOBSS promotion';
+  el.setAttribute('aria-label',m.name||'AZOBSS promotion');
+  const href=normalizeTarget(m.targetUrl);el.href=href;
+  if(m.openNewTab&&href!=='#'){el.target='_blank';el.rel=(m.id===DEFAULT_ID?'noopener sponsored':'noopener')}
+  else{el.removeAttribute('target');el.rel=m.id===DEFAULT_ID?'sponsored':''}
+  el.hidden=!m.enabled||!src;
+  el.style.setProperty('--az-banner-ratio',`${m.width} / ${m.height}`);
+  el.style.setProperty('--az-banner-mobile-w',`${Math.min(560,Math.max(220,m.width))}px`);
+  applyGeometry(el,m);
+}
 function removeOrphanEls(){
-  layer?.querySelectorAll('.az-home-managed-banner[data-az-banner-id]').forEach(el=>{
-    const id=el.dataset.azBannerId;if(!state.items.has(id)&&id!==DEFAULT_ID)el.remove();
-  });
+  layer?.querySelectorAll('.az-home-managed-banner[data-az-banner-id]').forEach(el=>{const id=el.dataset.azBannerId;if(!state.items.has(id)&&id!==DEFAULT_ID)el.remove()});
 }
 function updateHeroHeight(){
   if(!hero||innerWidth<=760){hero?.style.removeProperty('--az-banner-hero-min');return;}
   let needed=170;
-  state.items.forEach(m=>{if(m.enabled&&imageSrc(m)){const e=effectiveDesktop(m);needed=Math.max(needed,e.y+e.height+14)}});
+  state.items.forEach(m=>{
+    if(!m.enabled||!hasVisual(m))return;
+    if(m.id===SOFTWARE_ID&&softwarePromo?.hidden)return;
+    const e=effectiveDesktop(m);needed=Math.max(needed,e.y+e.height+14);
+  });
   hero.style.setProperty('--az-banner-hero-min',`${Math.ceil(needed)}px`);
 }
 function updateResizeHandle(){
   if(!resizeHandle)return;
   const m=state.items.get(state.selectedId),el=m&&bannerEl(m.id);
-  if(!state.editorOpen||!state.isAdmin||innerWidth<=760||!m||!el||el.hidden){resizeHandle.hidden=true;return;}
+  if(!state.editorOpen||!state.isAdmin||innerWidth<=760||!m||!el||el.hidden||el.classList.contains('az-banner-admin-disabled')){resizeHandle.hidden=true;return;}
   const hr=hero.getBoundingClientRect(),er=el.getBoundingClientRect();
-  resizeHandle.hidden=false;
-  resizeHandle.style.left=`${Math.round(er.right-hr.left-9)}px`;resizeHandle.style.top=`${Math.round(er.bottom-hr.top-9)}px`;
+  resizeHandle.hidden=false;resizeHandle.style.left=`${Math.round(er.right-hr.left-9)}px`;resizeHandle.style.top=`${Math.round(er.bottom-hr.top-9)}px`;
 }
 function renderAll(){
   [...state.items.values()].sort((a,b)=>a.order-b.order).forEach(applyBanner);
   removeOrphanEls();updateHeroHeight();requestAnimationFrame(updateResizeHandle);
 }
 function fillSelect(){
-  if(!select)return; select.innerHTML='';
-  [...state.items.values()].sort((a,b)=>a.order-b.order).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=(m.enabled?'':'[Hidden] ')+(m.name||m.id);select.appendChild(o)});
+  if(!select)return;select.innerHTML='';
+  [...state.items.values()].sort((a,b)=>a.order-b.order).forEach(m=>{
+    const o=document.createElement('option');o.value=m.id;
+    const tag=m.id===SOFTWARE_ID?' [AUTO]':m.id===LUCKY_ID?' [LUCKY]':'';
+    o.textContent=(m.enabled?'':'[Hidden] ')+(m.name||m.id)+tag;select.appendChild(o);
+  });
   if(state.items.has(state.selectedId))select.value=state.selectedId;
 }
 function updatePreview(m){
-  preview.innerHTML='';const src=m&&imageSrc(m);
+  preview.innerHTML='';const src=m&&liveSystemImage(m);
   if(src){const img=document.createElement('img');img.src=src;img.alt='Banner preview';preview.appendChild(img)}
-  else{const span=document.createElement('span');span.textContent='Belum ada gambar. Upload gambar banner.';preview.appendChild(span)}
+  else{const span=document.createElement('span');span.textContent=isSoftware(m)?'Software Promo menggunakan gambar produk promo secara automatik.':'Belum ada gambar. Upload gambar banner.';preview.appendChild(span)}
+}
+function updatePanelDock(m){
+  if(!modal||!hero||innerWidth<=760||!m){modal?.classList.remove('az-banner-panel-left');return;}
+  const e=effectiveDesktop(m),rightSide=(e.x+e.width/2)>(hero.getBoundingClientRect().width/2);
+  modal.classList.toggle('az-banner-panel-left',rightSide);
 }
 function fillForm(){
   const m=state.items.get(state.selectedId);if(!m)return;
-  nameInput.value=m.name||'';linkInput.value=m.targetUrl||'';xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height);
-  enabledInput.checked=!!m.enabled;newTabInput.checked=!!m.openNewTab;avoidSocialInput.checked=m.avoidSocial!==false;fileInput.value='';updatePreview(m);
-  renderAll();
+  const auto=isSoftware(m);
+  nameInput.value=m.name||'';
+  linkInput.value=auto?'Auto – ikut software yang sedang dipromosikan':(m.targetUrl||'');
+  xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height);
+  enabledInput.checked=!!m.enabled;newTabInput.checked=!!m.openNewTab;avoidSocialInput.checked=m.avoidSocial!==false;fileInput.value='';
+  fileInput.disabled=auto;linkInput.disabled=auto;newTabInput.disabled=auto;
+  if(managedNote){managedNote.hidden=!auto;managedNote.textContent=auto?'Software Promo kekal automatik: gambar, nama produk, harga dan link ikut promosi Software Tools semasa. Admin masih boleh drag, resize, ubah X/Y dan show/hide.':''}
+  if(deleteBtn)deleteBtn.textContent=isBuiltIn(m)?'Hide Banner':'Delete / Hide';
+  updatePreview(m);updatePanelDock(m);renderAll();
 }
 function setStatus(msg,isError=false){if(statusEl){statusEl.textContent=msg||'';statusEl.style.color=isError?'#fca5a5':'#93c5fd'}}
 function markDirty(msg='Perubahan belum disimpan.'){state.dirty=true;setStatus(msg)}
 function readFormToModel(){
   const m=state.items.get(state.selectedId);if(!m)return null;
-  m.name=String(nameInput.value||'Banner').trim().slice(0,80)||'Banner';m.targetUrl=String(linkInput.value||'').trim();
+  m.name=String(nameInput.value||'Banner').trim().slice(0,80)||'Banner';
+  if(!isSoftware(m))m.targetUrl=String(linkInput.value||'').trim();
   m.x=num(xInput.value,m.x,0,5000);m.y=num(yInput.value,m.y,0,3000);m.width=num(wInput.value,m.width,80,1800);m.height=num(hInput.value,m.height,40,900);
-  m.enabled=enabledInput.checked;m.openNewTab=newTabInput.checked;m.avoidSocial=avoidSocialInput.checked;return m;
+  m.enabled=enabledInput.checked;m.openNewTab=isSoftware(m)?false:newTabInput.checked;m.avoidSocial=avoidSocialInput.checked;return m;
 }
 function syncFormNumbers(m){xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height)}
 function openEditor(){
-  if(!state.isAdmin)return;state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Drag banner atau ubah nilai, kemudian tekan Simpan.');
+  if(!state.isAdmin)return;state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Pilih mana-mana banner, drag/resize, kemudian tekan Simpan.');
 }
-function closeEditor(){state.editorOpen=false;modal.hidden=true;document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
+function closeEditor(){state.editorOpen=false;modal.hidden=true;modal?.classList.remove('az-banner-panel-left');document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
 async function readFileDataUrl(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=()=>rej(new Error('Gagal membaca gambar.'));r.readAsDataURL(file)})}
 async function loadImage(raw,name){return await new Promise((res,rej)=>{const im=new Image();im.decoding='async';im.onload=()=>res(im);im.onerror=()=>rej(new Error(`Gagal decode ${name||'gambar'}.`));im.src=raw})}
 async function canvasBlobUrl(canvas,type,quality){
-  const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('Gagal compress gambar.')),type,quality));
-  return await readFileDataUrl(blob);
+  const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('Gagal compress gambar.')),type,quality));return await readFileDataUrl(blob);
 }
 async function prepareImage(file){
   if(!file||!String(file.type||'').startsWith('image/'))throw new Error('Pilih fail gambar sahaja.');
@@ -19665,26 +19779,22 @@ async function loadCloud(){
   try{
     const snap=await getDocs(collection(db,COLLECTION));
     snap.forEach(ds=>{state.items.set(ds.id,cleanModel(ds.id,ds.data()||{}))});
-    renderAll();if(state.editorOpen){fillSelect();fillForm()}
-  }catch(err){
-    console.warn('[AZOBSS banner] cloud read unavailable',err);
-    renderAll();
-  }finally{
-    /* Reveal only after the final stored dimensions have been applied. */
-    requestAnimationFrame(()=>requestAnimationFrame(setBannerConfigReady));
-  }
+    ensureBuiltinModels();renderAll();if(state.editorOpen){fillSelect();fillForm()}
+  }catch(err){console.warn('[AZOBSS banner] cloud read unavailable',err);ensureBuiltinModels();renderAll()}
+  finally{requestAnimationFrame(()=>requestAnimationFrame(setBannerConfigReady))}
 }
 async function saveSelected(){
   if(!state.isAdmin)return setStatus('Administrator sahaja boleh menyimpan banner.',true);
   const m=readFormToModel();if(!m)return;
-  if(!imageSrc(m))return setStatus('Upload gambar banner dahulu.',true);
-  if(!m.targetUrl)return setStatus('Masukkan link tujuan banner.',true);
+  if(!isSoftware(m)&&!imageSrc(m))return setStatus('Upload gambar banner dahulu.',true);
+  if(!isSoftware(m)&&!m.targetUrl)return setStatus('Masukkan link tujuan banner.',true);
   saveBtn.disabled=true;setStatus('Menyimpan banner...');
   try{
-    const payload={name:m.name,imageUrl:m.imageUrl||'',imageData:m.imageData||'',targetUrl:m.targetUrl,x:m.x,y:m.y,width:m.width,height:m.height,enabled:m.enabled,openNewTab:m.openNewTab,avoidSocial:m.avoidSocial,order:m.order,updatedAt:serverTimestamp()};
-    if(m.id!==DEFAULT_ID)payload.createdAt=serverTimestamp();
+    const payload={kind:m.kind,name:m.name,x:m.x,y:m.y,width:m.width,height:m.height,enabled:m.enabled,openNewTab:m.openNewTab,avoidSocial:m.avoidSocial,order:m.order,updatedAt:serverTimestamp()};
+    if(!isSoftware(m)){payload.imageUrl=m.imageUrl||'';payload.imageData=m.imageData||'';payload.targetUrl=m.targetUrl||''}
+    if(!isBuiltIn(m))payload.createdAt=serverTimestamp();
     await setDoc(doc(db,COLLECTION,m.id),payload,{merge:true});state.dirty=false;renderAll();fillSelect();setStatus('Banner berjaya disimpan dan akan digunakan untuk semua pengunjung.');
-  }catch(err){console.error(err);setStatus('Gagal simpan. Semak Firebase Rules v1285 dan pastikan login Administrator.',true)}finally{saveBtn.disabled=false}
+  }catch(err){console.error(err);setStatus('Gagal simpan. Semak Firebase Rules v1288 dan pastikan login Administrator.',true)}finally{saveBtn.disabled=false}
 }
 function newBanner(){
   if(!state.isAdmin)return;const id=`banner-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
@@ -19692,34 +19802,35 @@ function newBanner(){
 }
 async function deleteSelected(){
   if(!state.isAdmin)return;const m=state.items.get(state.selectedId);if(!m)return;
-  if(!confirm(m.id===DEFAULT_ID?'Hide banner Exabytes ini untuk semua pengunjung?':'Delete banner ini secara kekal?'))return;
+  const builtIn=isBuiltIn(m);
+  if(!confirm(builtIn?'Hide banner ini untuk semua pengunjung?':'Delete banner ini secara kekal?'))return;
   deleteBtn.disabled=true;
   try{
-    if(m.id===DEFAULT_ID){m.enabled=false;await setDoc(doc(db,COLLECTION,m.id),{enabled:false,updatedAt:serverTimestamp()},{merge:true});}
-    else{await deleteDoc(doc(db,COLLECTION,m.id));state.items.delete(m.id);bannerEl(m.id)?.remove();state.selectedId=DEFAULT_ID;}
-    state.dirty=false;fillSelect();fillForm();renderAll();setStatus('Banner dikemas kini.');
+    if(builtIn){m.enabled=false;await setDoc(doc(db,COLLECTION,m.id),{enabled:false,updatedAt:serverTimestamp()},{merge:true})}
+    else{await deleteDoc(doc(db,COLLECTION,m.id));state.items.delete(m.id);bannerEl(m.id)?.remove();state.selectedId=DEFAULT_ID}
+    state.dirty=false;fillSelect();fillForm();renderAll();setStatus(builtIn?'Banner disembunyikan. Tick Paparkan banner + Simpan untuk hidupkan semula.':'Banner dipadam.');
   }catch(err){console.error(err);setStatus('Gagal delete/hide. Semak akses Administrator dan Firebase Rules.',true)}finally{deleteBtn.disabled=false}
 }
+function selectBannerFromElement(el){
+  const id=el?.dataset?.azBannerId;if(id&&state.items.has(id)){state.selectedId=id;fillSelect();fillForm()}
+}
 function bindBannerAdminEvents(el){
-  if(el.dataset.azAdminBound==='1')return;el.dataset.azAdminBound='1';
-  el.draggable=false;
-  el.querySelectorAll('img').forEach(img=>{img.draggable=false});
+  if(el.dataset.azAdminBound==='1')return;el.dataset.azAdminBound='1';el.draggable=false;el.querySelectorAll('img').forEach(img=>{img.draggable=false});
   el.addEventListener('dragstart',e=>{if(state.editorOpen&&state.isAdmin)e.preventDefault()});
-  el.addEventListener('click',e=>{if(state.editorOpen&&state.isAdmin){e.preventDefault();e.stopPropagation();const id=el.dataset.azBannerId;if(id&&state.items.has(id)){state.selectedId=id;fillSelect();fillForm()}}});
+  el.addEventListener('click',e=>{if(state.editorOpen&&state.isAdmin){e.preventDefault();e.stopPropagation();selectBannerFromElement(el)}},true);
   el.addEventListener('pointerdown',e=>{
     if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;
     const id=el.dataset.azBannerId,m=state.items.get(id);if(!m)return;
-    e.preventDefault();e.stopPropagation();state.selectedId=id;fillSelect();
+    e.preventDefault();e.stopPropagation();state.selectedId=id;fillSelect();fillForm();
     state.op={type:'move',id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};
     try{el.setPointerCapture?.(e.pointerId)}catch(_){}
-  });
+  },true);
 }
-function bindExisting(){layer?.querySelectorAll('.az-home-managed-banner').forEach(bindBannerAdminEvents)}
+function bindExisting(){hero?.querySelectorAll('.az-home-managed-banner[data-az-banner-id]').forEach(bindBannerAdminEvents)}
 function onPointerMove(e){
   const op=state.op;if(!op)return;const m=state.items.get(op.id);if(!m)return;
   const dx=e.clientX-op.startX,dy=e.clientY-op.startY;
-  if(op.type==='move'){m.x=Math.max(0,op.x+dx);m.y=Math.max(0,op.y+dy)}
-  else{m.width=Math.max(80,op.w+dx);m.height=Math.max(40,op.h+dy)}
+  if(op.type==='move'){m.x=Math.max(0,op.x+dx);m.y=Math.max(0,op.y+dy)}else{m.width=Math.max(80,op.w+dx);m.height=Math.max(40,op.h+dy)}
   const eff=effectiveDesktop(m);m.x=eff.x;m.y=eff.y;m.width=eff.width;m.height=eff.height;syncFormNumbers(m);renderAll();state.dirty=true;
 }
 function onPointerUp(){if(state.op){state.op=null;markDirty('Kedudukan/saiz berubah. Tekan Simpan untuk kekalkan perubahan.')}}
@@ -19728,21 +19839,22 @@ if(toggle)toggle.addEventListener('click',openEditor);if(closeBtn)closeBtn.addEv
 modal?.addEventListener('click',e=>{if(e.target===modal)closeEditor()});
 select?.addEventListener('change',()=>{state.selectedId=select.value;fillForm()});
 newBtn?.addEventListener('click',newBanner);saveBtn?.addEventListener('click',saveSelected);deleteBtn?.addEventListener('click',deleteSelected);
-[nameInput,linkInput,xInput,yInput,wInput,hInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){renderAll();markDirty()}}));
+[nameInput,linkInput,xInput,yInput,wInput,hInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){renderAll();updatePanelDock(m);markDirty()}}));
 fileInput?.addEventListener('change',async()=>{
-  const file=fileInput.files?.[0],m=state.items.get(state.selectedId);if(!file||!m)return;setStatus('Memproses gambar...');fileInput.disabled=true;
-  try{m.imageData=await prepareImage(file);m.imageUrl='';updatePreview(m);renderAll();markDirty('Gambar siap. Masukkan link dan tekan Simpan.')}catch(err){setStatus(err.message||'Gagal memproses gambar.',true)}finally{fileInput.disabled=false}
+  const file=fileInput.files?.[0],m=state.items.get(state.selectedId);if(!file||!m||isSoftware(m))return;setStatus('Memproses gambar...');fileInput.disabled=true;
+  try{m.imageData=await prepareImage(file);m.imageUrl='';updatePreview(m);renderAll();markDirty('Gambar siap. Masukkan link dan tekan Simpan.')}catch(err){setStatus(err.message||'Gagal memproses gambar.',true)}finally{fileInput.disabled=isSoftware(m)}
 });
 resizeHandle?.addEventListener('pointerdown',e=>{
   if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;const m=state.items.get(state.selectedId);if(!m)return;e.preventDefault();e.stopPropagation();
   state.op={type:'resize',id:m.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:m.x,y:m.y,w:m.width,h:m.height};try{resizeHandle.setPointerCapture?.(e.pointerId)}catch(_){}
 });
 document.addEventListener('pointermove',e=>{if(state.op)e.preventDefault();onPointerMove(e)},{passive:false});document.addEventListener('pointerup',onPointerUp);document.addEventListener('pointercancel',onPointerUp);
-window.addEventListener('resize',()=>{renderAll()},{passive:true});
+window.addEventListener('resize',()=>{renderAll();const m=state.items.get(state.selectedId);if(m&&state.editorOpen)updatePanelDock(m)},{passive:true});
 window.addEventListener('storage',()=>setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser)));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.editorOpen)closeEditor()});
+if(softwarePromo){new MutationObserver(()=>{updateHeroHeight();requestAnimationFrame(updateResizeHandle)}).observe(softwarePromo,{attributes:true,attributeFilter:['hidden']})}
 
-bindExisting();renderAll();setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser));
+ensureBuiltinModels();bindExisting();renderAll();setAdmin(storedAdmin()||firebaseAdmin(auth.currentUser));
 onAuthStateChanged(auth,user=>setAdmin(storedAdmin()||firebaseAdmin(user)));
 loadCloud();
 </script>\n
@@ -19770,6 +19882,7 @@ loadCloud();
         <label class="az-wide">Link bila banner ditekan
           <input id="azHomeBannerLink1285" type="text" inputmode="url" placeholder="/Software-Tools/ atau https://..."/>
         </label>
+        <p class="az-home-banner-managed-note" id="azHomeBannerManagedNote1288" hidden></p>
         <label>Kedudukan X (px)
           <input id="azHomeBannerX1285" type="number" min="0" step="1"/>
         </label>
@@ -19787,7 +19900,7 @@ loadCloud();
           <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
           <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
         </div>
-        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Panel kini dock di kanan dan halaman di belakang kekal aktif. Drag terus pada banner untuk alih kedudukan; drag kotak kuning di bucu kanan bawah untuk resize. Nilai X/Y/saiz juga boleh ditaip terus. Tekan Simpan selepas selesai.</p>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Exabytes, Software Promo dan Lucky Draw kini boleh dipilih dalam senarai yang sama. Bila pilih banner di sebelah kanan, panel akan dock ke kiri supaya banner tidak terlindung. Drag banner untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
       </div>
     </div>
     <div class="az-home-banner-admin-actions">

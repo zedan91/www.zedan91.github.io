@@ -9,7 +9,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const rules = fs.readFileSync(path.join(root, 'FIREBASE-RULES-AZOBSS-v1285-HOME-BANNER-ADMIN-MANAGER.txt'), 'utf8');
 
 test('v1285 package version', () => {
-  assert.ok(/^1\.0\.(1285|1286|1287)$/.test(pkg.version));
+  assert.ok(/^1\.0\.(1285|1286|1287|1288)$/.test(pkg.version));
 });
 
 test('homepage has admin-only banner manager UI', () => {
@@ -26,8 +26,8 @@ test('banner manager supports multiple uploaded linked banners', () => {
   assert.match(html, /id="azHomeBannerLink1285"/);
   assert.match(html, /function newBanner\(\)/);
   assert.match(html, /setDoc\(doc\(db,COLLECTION,m\.id\)/);
-  assert.match(html, /imageData:m\.imageData/);
-  assert.match(html, /targetUrl:m\.targetUrl/);
+  assert.match(html, /(?:imageData:m\.imageData|payload\.imageData=m\.imageData)/);
+  assert.match(html, /(?:targetUrl:m\.targetUrl|payload\.targetUrl=m\.targetUrl)/);
 });
 
 test('banner manager supports drag move and resize plus numeric controls', () => {
