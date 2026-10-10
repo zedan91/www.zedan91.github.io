@@ -9526,12 +9526,12 @@ body.az-home-banner-admin-editing .az-home-software-promo-arrow{
   }
 }
 </style>
-<style id="azobss-home-banner-fixed-canvas-1290">
-/* AZOBSS v1290: desktop banner area has a fixed canvas height.
+<style id="azobss-home-banner-fixed-canvas-1291">
+/* AZOBSS v1291: desktop banner area uses a slightly shorter fixed canvas height.
    Moving/resizing banners no longer changes the page-flow position of Our Services. */
 @media(min-width:761px){
   .hero{
-    --az-banner-canvas-h:360px;
+    --az-banner-canvas-h:330px;
     height:var(--az-banner-canvas-h)!important;
     min-height:var(--az-banner-canvas-h)!important;
     max-height:var(--az-banner-canvas-h)!important;
@@ -19569,7 +19569,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 
 
 \n<!-- AZOBSS v1286 drag/resize fix: docked non-blocking editor -->
-<script type="module" id="azobss-home-banner-manager-1290">
+<script type="module" id="azobss-home-banner-manager-1291">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -19591,7 +19591,7 @@ const DEFAULT_ID='legacy-exabytes';
 const SOFTWARE_ID='builtin-software-promo';
 const LUCKY_ID='builtin-lucky-draw';
 const BUILTIN_IDS=new Set([DEFAULT_ID,SOFTWARE_ID,LUCKY_ID]);
-const DESKTOP_BANNER_CANVAS_HEIGHT=360;
+const DESKTOP_BANNER_CANVAS_HEIGHT=330;
 const DEFAULT_BANNER={
   id:DEFAULT_ID,kind:'image',name:'Exabytes 10.10 / .MY RM1',
   imageUrl:'/images/exabytes-1010-my-domain-promo-v1278.webp',imageData:'',
@@ -19836,7 +19836,7 @@ function readFormToModel(){
 function syncFormNumbers(m){xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height)}
 function clampFormModelToCanvas(m){if(!m||innerWidth<=760)return m;const e=effectiveDesktop(m);m.x=e.x;m.y=e.y;m.width=e.width;m.height=e.height;syncFormNumbers(m);return m}
 function openEditor(){
-  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Kawasan banner desktop dikunci pada tinggi tetap supaya Our Services tidak ikut turun. Drag/resize dalam kawasan banner, kemudian tekan Simpan.');
+  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Kawasan banner desktop direndahkan sedikit supaya Our Services naik, tetapi masih kekal statik semasa drag/resize. Drag/resize dalam kawasan banner, kemudian tekan Simpan.');
 }
 function closeEditor(){state.editorOpen=false;modal.hidden=true;modal?.classList.remove('az-banner-panel-left');document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
 async function readFileDataUrl(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=()=>rej(new Error('Gagal membaca gambar.'));r.readAsDataURL(file)})}
@@ -19987,7 +19987,7 @@ loadCloud();
           <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
           <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
         </div>
-        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Kawasan banner desktop mempunyai tinggi tetap supaya kandungan Our Services di bawah tidak bergerak apabila banner dialih atau dibesarkan. Banner akan dikekang dalam kawasan ini. Pilih banner, drag untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Kawasan banner desktop mempunyai tinggi tetap yang lebih padat supaya Our Services berada sedikit lebih atas dan tidak bergerak apabila banner dialih atau dibesarkan. Banner akan dikekang dalam kawasan ini. Pilih banner, drag untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
       </div>
     </div>
     <div class="az-home-banner-admin-actions">

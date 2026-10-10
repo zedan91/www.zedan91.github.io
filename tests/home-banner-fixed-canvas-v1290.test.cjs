@@ -5,14 +5,14 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-test('v1290 fixes desktop banner area height so services do not follow banner geometry', () => {
-  assert.match(html, /id="azobss-home-banner-fixed-canvas-1290"/);
-  assert.match(html, /--az-banner-canvas-h:360px/);
+test('v1291 keeps a compact fixed desktop banner area so services stay stable', () => {
+  assert.match(html, /id="azobss-home-banner-fixed-canvas-1291"/);
+  assert.match(html, /--az-banner-canvas-h:330px/);
   assert.match(html, /height:var\(--az-banner-canvas-h\)!important/);
-  assert.match(html, /const DESKTOP_BANNER_CANVAS_HEIGHT=360/);
+  assert.match(html, /const DESKTOP_BANNER_CANVAS_HEIGHT=330/);
 });
 
-test('v1290 no longer computes hero height from banner y plus height', () => {
+test('v1291 no longer computes hero height from banner y plus height', () => {
   const start = html.indexOf('function updateHeroHeight(){');
   const end = html.indexOf('function updateResizeHandle(){', start);
   assert.ok(start >= 0 && end > start);
@@ -21,7 +21,7 @@ test('v1290 no longer computes hero height from banner y plus height', () => {
   assert.match(fn, /DESKTOP_BANNER_CANVAS_HEIGHT/);
 });
 
-test('v1290 clamps banners inside fixed desktop canvas', () => {
+test('v1291 clamps banners inside fixed desktop canvas', () => {
   const start = html.indexOf('function effectiveDesktop(m){');
   const end = html.indexOf('function applyGeometry', start);
   assert.ok(start >= 0 && end > start);
