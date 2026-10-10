@@ -9526,6 +9526,21 @@ body.az-home-banner-admin-editing .az-home-software-promo-arrow{
   }
 }
 </style>
+<style id="azobss-home-banner-fixed-canvas-1290">
+/* AZOBSS v1290: desktop banner area has a fixed canvas height.
+   Moving/resizing banners no longer changes the page-flow position of Our Services. */
+@media(min-width:761px){
+  .hero{
+    --az-banner-canvas-h:360px;
+    height:var(--az-banner-canvas-h)!important;
+    min-height:var(--az-banner-canvas-h)!important;
+    max-height:var(--az-banner-canvas-h)!important;
+    box-sizing:border-box!important;
+    overflow:visible!important;
+  }
+}
+</style>
+
 
 <style id="azobss-auth-buttons-match-public-pa-fix-527">
 /* Match every public Register/Login control to the Beli Pelan Akui navbar style. */
@@ -19554,7 +19569,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 
 
 \n<!-- AZOBSS v1286 drag/resize fix: docked non-blocking editor -->
-<script type="module" id="azobss-home-banner-manager-1289">
+<script type="module" id="azobss-home-banner-manager-1290">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -19576,6 +19591,7 @@ const DEFAULT_ID='legacy-exabytes';
 const SOFTWARE_ID='builtin-software-promo';
 const LUCKY_ID='builtin-lucky-draw';
 const BUILTIN_IDS=new Set([DEFAULT_ID,SOFTWARE_ID,LUCKY_ID]);
+const DESKTOP_BANNER_CANVAS_HEIGHT=360;
 const DEFAULT_BANNER={
   id:DEFAULT_ID,kind:'image',name:'Exabytes 10.10 / .MY RM1',
   imageUrl:'/images/exabytes-1010-my-domain-promo-v1278.webp',imageData:'',
@@ -19695,15 +19711,18 @@ function createBannerEl(m){
 }
 function effectiveDesktop(m){
   const hr=hero.getBoundingClientRect();
+  const canvasH=DESKTOP_BANNER_CANVAS_HEIGHT;
   let x=Math.max(0,m.x),y=Math.max(0,m.y),w=Math.max(80,m.width),h=Math.max(40,m.height);
   const rightLimit=Math.max(80,hr.width-x-8);w=Math.min(w,rightLimit);
+  h=Math.min(h,Math.max(40,canvasH-8));
+  y=Math.min(y,Math.max(0,canvasH-h-8));
   if(m.avoidSocial&&social){
     const sr=social.getBoundingClientRect(),gap=14;
     const sL=sr.left-hr.left-gap,sR=sr.right-hr.left+gap,sT=sr.top-hr.top-gap,sB=sr.bottom-hr.top+gap;
     const vertical=y<sB&&y+h>sT;
     if(vertical){
-      if(x<sL){const room=sL-x;if(room>=80)w=Math.min(w,room);else y=Math.max(y,sB)}
-      else if(x<sR){const shifted=sR;if(shifted+w<=hr.width-8)x=shifted;else y=Math.max(y,sB)}
+      if(x<sL){const room=sL-x;if(room>=80)w=Math.min(w,room);else y=Math.min(Math.max(y,sB),Math.max(0,canvasH-h-8))}
+      else if(x<sR){const shifted=sR;if(shifted+w<=hr.width-8)x=shifted;else y=Math.min(Math.max(y,sB),Math.max(0,canvasH-h-8))}
     }
   }
   return {x:Math.round(x),y:Math.round(y),width:Math.round(w),height:Math.round(h)};
@@ -19750,13 +19769,7 @@ function removeOrphanEls(){
 }
 function updateHeroHeight(){
   if(!hero||innerWidth<=760){hero?.style.removeProperty('--az-banner-hero-min');return;}
-  let needed=170;
-  state.items.forEach(m=>{
-    if(!m.enabled||!hasVisual(m))return;
-    if(m.id===SOFTWARE_ID&&softwarePromo?.hidden)return;
-    const e=effectiveDesktop(m);needed=Math.max(needed,e.y+e.height+14);
-  });
-  hero.style.setProperty('--az-banner-hero-min',`${Math.ceil(needed)}px`);
+  hero.style.setProperty('--az-banner-hero-min',`${DESKTOP_BANNER_CANVAS_HEIGHT}px`);
 }
 function updateResizeHandle(){
   if(!resizeHandle)return;
@@ -19821,8 +19834,9 @@ function readFormToModel(){
   m.enabled=enabledInput.checked;m.openNewTab=isSoftware(m)?false:newTabInput.checked;m.avoidSocial=avoidSocialInput.checked;return m;
 }
 function syncFormNumbers(m){xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height)}
+function clampFormModelToCanvas(m){if(!m||innerWidth<=760)return m;const e=effectiveDesktop(m);m.x=e.x;m.y=e.y;m.width=e.width;m.height=e.height;syncFormNumbers(m);return m}
 function openEditor(){
-  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Manager berada di bawah kawasan banner supaya tidak menutup banner. Drag/resize terus pada banner, kemudian tekan Simpan.');
+  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Kawasan banner desktop dikunci pada tinggi tetap supaya Our Services tidak ikut turun. Drag/resize dalam kawasan banner, kemudian tekan Simpan.');
 }
 function closeEditor(){state.editorOpen=false;modal.hidden=true;modal?.classList.remove('az-banner-panel-left');document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
 async function readFileDataUrl(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=()=>rej(new Error('Gagal membaca gambar.'));r.readAsDataURL(file)})}
@@ -19858,7 +19872,7 @@ async function loadCloud(){
 }
 async function saveSelected(){
   if(!state.isAdmin)return setStatus('Administrator sahaja boleh menyimpan banner.',true);
-  const m=readFormToModel();if(!m)return;
+  const m=readFormToModel();if(!m)return;clampFormModelToCanvas(m);
   if(!isSoftware(m)&&!imageSrc(m))return setStatus('Upload gambar banner dahulu.',true);
   if(!isSoftware(m)&&!m.targetUrl)return setStatus('Masukkan link tujuan banner.',true);
   saveBtn.disabled=true;setStatus('Menyimpan banner...');
@@ -19912,7 +19926,7 @@ if(toggle)toggle.addEventListener('click',openEditor);if(closeBtn)closeBtn.addEv
 modal?.addEventListener('click',e=>{if(e.target===modal)closeEditor()});
 select?.addEventListener('change',()=>{state.selectedId=select.value;fillForm()});
 newBtn?.addEventListener('click',newBanner);saveBtn?.addEventListener('click',saveSelected);deleteBtn?.addEventListener('click',deleteSelected);
-[nameInput,linkInput,xInput,yInput,wInput,hInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){renderAll();updatePanelDock(m);markDirty()}}));
+[nameInput,linkInput,xInput,yInput,wInput,hInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){clampFormModelToCanvas(m);renderAll();updatePanelDock(m);markDirty()}}));
 fileInput?.addEventListener('change',async()=>{
   const file=fileInput.files?.[0],m=state.items.get(state.selectedId);if(!file||!m||isSoftware(m))return;setStatus('Memproses gambar...');fileInput.disabled=true;
   try{m.imageData=await prepareImage(file);m.imageUrl='';updatePreview(m);renderAll();markDirty('Gambar siap. Masukkan link dan tekan Simpan.')}catch(err){setStatus(err.message||'Gagal memproses gambar.',true)}finally{fileInput.disabled=isSoftware(m)}
@@ -19973,7 +19987,7 @@ loadCloud();
           <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
           <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
         </div>
-        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Pada desktop, Banner Manager berada terus di bawah kawasan hero dan tidak menindih mana-mana banner. Pilih banner, drag terus untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Kawasan banner desktop mempunyai tinggi tetap supaya kandungan Our Services di bawah tidak bergerak apabila banner dialih atau dibesarkan. Banner akan dikekang dalam kawasan ini. Pilih banner, drag untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
       </div>
     </div>
     <div class="az-home-banner-admin-actions">

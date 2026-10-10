@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1286 package version', () => {
-  assert.ok(/^1\.0\.(1286|1287|1288|1289)$/.test(pkg.version));
+  assert.ok(/^1\.0\.(1286|1287|1288|1289|1290)$/.test(pkg.version));
 });
 
 test('admin banner editor no longer blocks homepage pointer interaction', () => {
