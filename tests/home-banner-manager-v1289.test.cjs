@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1289 package version', () => {
-  assert.ok(/^1\.0\.(1289|1290|1291)$/.test(pkg.version));
+  assert.ok(/^1\.0\.(1289|1290|1291|1292)$/.test(pkg.version));
 });
 
 test('desktop banner manager uses an in-flow non-overlapping dock', () => {

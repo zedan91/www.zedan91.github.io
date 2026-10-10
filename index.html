@@ -9526,9 +9526,9 @@ body.az-home-banner-admin-editing .az-home-software-promo-arrow{
   }
 }
 </style>
-<style id="azobss-home-banner-fixed-canvas-1291">
-/* AZOBSS v1291: desktop banner area uses a slightly shorter fixed canvas height.
-   Moving/resizing banners no longer changes the page-flow position of Our Services. */
+<style id="azobss-home-banner-fixed-canvas-1292">
+/* AZOBSS v1292: keep banner canvas fixed, then pull the whole Services flow upward directly.
+   This is independent from banner drag/resize so Our Services cannot be pushed down by banners. */
 @media(min-width:761px){
   .hero{
     --az-banner-canvas-h:330px;
@@ -9537,6 +9537,10 @@ body.az-home-banner-admin-editing .az-home-software-promo-arrow{
     max-height:var(--az-banner-canvas-h)!important;
     box-sizing:border-box!important;
     overflow:visible!important;
+  }
+  .services-section#Software{
+    margin-top:-48px!important;
+    padding-top:18px!important;
   }
 }
 </style>
@@ -19569,10 +19573,10 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
 
 
 \n<!-- AZOBSS v1286 drag/resize fix: docked non-blocking editor -->
-<script type="module" id="azobss-home-banner-manager-1291">
+<script type="module" id="azobss-home-banner-manager-1292">
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig={
   apiKey:'AIzaSyDuf03esBSpddXAOwuP-uOmHVRp54pZyr8',
@@ -19598,7 +19602,7 @@ const DEFAULT_BANNER={
   targetUrl:'https://billing.exabytes.my/mypanel/aff.php?aff=8106115&page=home',
   x:18,y:18,width:455,height:103,enabled:true,openNewTab:true,avoidSocial:true,order:10
 };
-const state={items:new Map(),selectedId:DEFAULT_ID,isAdmin:false,editorOpen:false,dirty:false,op:null};
+const state={items:new Map(),selectedId:DEFAULT_ID,isAdmin:false,editorOpen:false,dirty:false,nonGeometryDirty:false,op:null,cloudReady:false,saving:false,saveSeq:0};
 const $=id=>document.getElementById(id);
 const hero=document.querySelector('.hero');
 const layer=$('azHomeBannerLayer1285');
@@ -19836,7 +19840,7 @@ function readFormToModel(){
 function syncFormNumbers(m){xInput.value=Math.round(m.x);yInput.value=Math.round(m.y);wInput.value=Math.round(m.width);hInput.value=Math.round(m.height)}
 function clampFormModelToCanvas(m){if(!m||innerWidth<=760)return m;const e=effectiveDesktop(m);m.x=e.x;m.y=e.y;m.width=e.width;m.height=e.height;syncFormNumbers(m);return m}
 function openEditor(){
-  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Kawasan banner desktop direndahkan sedikit supaya Our Services naik, tetapi masih kekal statik semasa drag/resize. Drag/resize dalam kawasan banner, kemudian tekan Simpan.');
+  if(!state.isAdmin)return;placeEditorDock();state.editorOpen=true;modal.hidden=false;document.body.classList.add('az-home-banner-admin-editing');fillSelect();fillForm();setStatus('Our Services kini dinaikkan terus. Drag/resize banner akan auto-save apabila mouse dilepaskan; butang Simpan masih boleh digunakan untuk simpan semua setting.');
 }
 function closeEditor(){state.editorOpen=false;modal.hidden=true;modal?.classList.remove('az-banner-panel-left');document.body.classList.remove('az-home-banner-admin-editing');state.op=null;renderAll();if(resizeHandle)resizeHandle.hidden=true}
 async function readFileDataUrl(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=()=>rej(new Error('Gagal membaca gambar.'));r.readAsDataURL(file)})}
@@ -19862,12 +19866,42 @@ async function prepareImage(file){
     if(!out||out.length>650000)throw new Error('Gambar terlalu besar. Cuba gambar lebih kecil.');return out;
   }finally{try{bitmap?.close?.()}catch(_){}}
 }
+function geometryPayload(m){
+  return {x:Math.round(m.x),y:Math.round(m.y),width:Math.round(m.width),height:Math.round(m.height)};
+}
+function geometryMatches(data,m){
+  if(!data||!m)return false;
+  const g=geometryPayload(m);
+  return Math.round(Number(data.x))===g.x && Math.round(Number(data.y))===g.y && Math.round(Number(data.width))===g.width && Math.round(Number(data.height))===g.height;
+}
+async function persistGeometry(m,{auto=false}={}){
+  if(!state.isAdmin||!m)return false;
+  const seq=++state.saveSeq;
+  state.saving=true;
+  if(auto)setStatus('Auto-save kedudukan/saiz...');
+  try{
+    const payload={...geometryPayload(m),updatedAt:serverTimestamp()};
+    await setDoc(doc(db,COLLECTION,m.id),payload,{merge:true});
+    const verify=await getDoc(doc(db,COLLECTION,m.id));
+    if(!verify.exists()||!geometryMatches(verify.data(),m))throw new Error('Pengesahan Firestore tidak sepadan.');
+    if(seq===state.saveSeq){if(!state.nonGeometryDirty)state.dirty=false;setStatus(state.nonGeometryDirty?'Kedudukan & saiz disimpan automatik. Setting lain masih belum disimpan.':(auto?'Kedudukan & saiz disimpan automatik.':'Banner berjaya disimpan.'));}
+    return true;
+  }catch(err){
+    console.error('[AZOBSS banner] geometry save failed',err);
+    if(seq===state.saveSeq){state.dirty=true;setStatus('TAK DISIMPAN: Firestore menolak/terputus. Tekan Simpan selepas semak login Administrator & Firebase Rules.',true);}
+    return false;
+  }finally{if(seq===state.saveSeq)state.saving=false;}
+}
 async function loadCloud(){
   try{
     const snap=await getDocs(collection(db,COLLECTION));
-    snap.forEach(ds=>{state.items.set(ds.id,cleanModel(ds.id,ds.data()||{}))});
-    ensureBuiltinModels();renderAll();if(state.editorOpen){fillSelect();fillForm()}
-  }catch(err){console.warn('[AZOBSS banner] cloud read unavailable',err);ensureBuiltinModels();renderAll()}
+    const dirtyId=state.dirty?state.selectedId:'';
+    snap.forEach(ds=>{
+      if(dirtyId&&ds.id===dirtyId)return; // never overwrite a local drag/resize that happened while cloud was still loading
+      state.items.set(ds.id,cleanModel(ds.id,ds.data()||{}));
+    });
+    ensureBuiltinModels();state.cloudReady=true;renderAll();if(state.editorOpen){fillSelect();fillForm()}
+  }catch(err){console.warn('[AZOBSS banner] cloud read unavailable',err);state.cloudReady=true;ensureBuiltinModels();renderAll()}
   finally{requestAnimationFrame(()=>requestAnimationFrame(setBannerConfigReady))}
 }
 async function saveSelected(){
@@ -19875,17 +19909,20 @@ async function saveSelected(){
   const m=readFormToModel();if(!m)return;clampFormModelToCanvas(m);
   if(!isSoftware(m)&&!imageSrc(m))return setStatus('Upload gambar banner dahulu.',true);
   if(!isSoftware(m)&&!m.targetUrl)return setStatus('Masukkan link tujuan banner.',true);
-  saveBtn.disabled=true;setStatus('Menyimpan banner...');
+  const seq=++state.saveSeq;state.saving=true;saveBtn.disabled=true;setStatus('Menyimpan banner...');
   try{
-    const payload={kind:m.kind,name:m.name,x:m.x,y:m.y,width:m.width,height:m.height,enabled:m.enabled,openNewTab:m.openNewTab,avoidSocial:m.avoidSocial,order:m.order,updatedAt:serverTimestamp()};
+    const payload={kind:m.kind,name:m.name,...geometryPayload(m),enabled:m.enabled,openNewTab:m.openNewTab,avoidSocial:m.avoidSocial,order:m.order,updatedAt:serverTimestamp()};
     if(!isSoftware(m)){payload.imageUrl=m.imageUrl||'';payload.imageData=m.imageData||'';payload.targetUrl=m.targetUrl||''}
     if(!isBuiltIn(m))payload.createdAt=serverTimestamp();
-    await setDoc(doc(db,COLLECTION,m.id),payload,{merge:true});state.dirty=false;renderAll();fillSelect();setStatus('Banner berjaya disimpan dan akan digunakan untuk semua pengunjung.');
-  }catch(err){console.error(err);setStatus('Gagal simpan. Semak Firebase Rules v1288 dan pastikan login Administrator.',true)}finally{saveBtn.disabled=false}
+    await setDoc(doc(db,COLLECTION,m.id),payload,{merge:true});
+    const verify=await getDoc(doc(db,COLLECTION,m.id));
+    if(!verify.exists()||!geometryMatches(verify.data(),m))throw new Error('Pengesahan Firestore tidak sepadan selepas save.');
+    state.dirty=false;state.nonGeometryDirty=false;renderAll();fillSelect();setStatus('DISIMPAN ✓ Kedudukan, saiz dan setting sudah disahkan semula dari Firestore.');
+  }catch(err){console.error('[AZOBSS banner] full save failed',err);state.dirty=true;setStatus('TAK DISIMPAN: semak Firebase Rules v1288/v1292 dan pastikan Firebase login Administrator aktif.',true)}finally{if(seq===state.saveSeq)state.saving=false;saveBtn.disabled=false}
 }
 function newBanner(){
   if(!state.isAdmin)return;const id=`banner-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-  const m=cleanModel(id,{name:'New Banner',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()});state.items.set(id,m);state.selectedId=id;state.dirty=true;fillSelect();fillForm();setStatus('Banner baru. Upload gambar, masukkan link dan tekan Simpan.');
+  const m=cleanModel(id,{name:'New Banner',x:18,y:56,width:360,height:90,enabled:true,openNewTab:true,avoidSocial:true,order:Date.now()});state.items.set(id,m);state.selectedId=id;state.dirty=true;state.nonGeometryDirty=true;fillSelect();fillForm();setStatus('Banner baru. Upload gambar, masukkan link dan tekan Simpan.');
 }
 async function deleteSelected(){
   if(!state.isAdmin)return;const m=state.items.get(state.selectedId);if(!m)return;
@@ -19895,7 +19932,7 @@ async function deleteSelected(){
   try{
     if(builtIn){m.enabled=false;await setDoc(doc(db,COLLECTION,m.id),{enabled:false,updatedAt:serverTimestamp()},{merge:true})}
     else{await deleteDoc(doc(db,COLLECTION,m.id));state.items.delete(m.id);bannerEl(m.id)?.remove();state.selectedId=DEFAULT_ID}
-    state.dirty=false;fillSelect();fillForm();renderAll();setStatus(builtIn?'Banner disembunyikan. Tick Paparkan banner + Simpan untuk hidupkan semula.':'Banner dipadam.');
+    state.dirty=false;state.nonGeometryDirty=false;fillSelect();fillForm();renderAll();setStatus(builtIn?'Banner disembunyikan. Tick Paparkan banner + Simpan untuk hidupkan semula.':'Banner dipadam.');
   }catch(err){console.error(err);setStatus('Gagal delete/hide. Semak akses Administrator dan Firebase Rules.',true)}finally{deleteBtn.disabled=false}
 }
 function selectBannerFromElement(el){
@@ -19920,16 +19957,18 @@ function onPointerMove(e){
   if(op.type==='move'){m.x=Math.max(0,op.x+dx);m.y=Math.max(0,op.y+dy)}else{m.width=Math.max(80,op.w+dx);m.height=Math.max(40,op.h+dy)}
   const eff=effectiveDesktop(m);m.x=eff.x;m.y=eff.y;m.width=eff.width;m.height=eff.height;syncFormNumbers(m);renderAll();state.dirty=true;
 }
-function onPointerUp(){if(state.op){state.op=null;markDirty('Kedudukan/saiz berubah. Tekan Simpan untuk kekalkan perubahan.')}}
+function onPointerUp(){if(state.op){const id=state.op.id;state.op=null;markDirty('Kedudukan/saiz berubah. Auto-save sedang dibuat...');const m=state.items.get(id);if(m)persistGeometry(m,{auto:true});}}
 
 if(toggle)toggle.addEventListener('click',openEditor);if(closeBtn)closeBtn.addEventListener('click',closeEditor);
 modal?.addEventListener('click',e=>{if(e.target===modal)closeEditor()});
 select?.addEventListener('change',()=>{state.selectedId=select.value;fillForm()});
 newBtn?.addEventListener('click',newBanner);saveBtn?.addEventListener('click',saveSelected);deleteBtn?.addEventListener('click',deleteSelected);
-[nameInput,linkInput,xInput,yInput,wInput,hInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){clampFormModelToCanvas(m);renderAll();updatePanelDock(m);markDirty()}}));
+[xInput,yInput,wInput,hInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){clampFormModelToCanvas(m);renderAll();updatePanelDock(m);markDirty()}}));
+[nameInput,linkInput,enabledInput,newTabInput,avoidSocialInput].forEach(el=>el?.addEventListener('input',()=>{const m=readFormToModel();if(m){state.nonGeometryDirty=true;renderAll();updatePanelDock(m);markDirty('Setting berubah. Tekan Simpan untuk simpan semua setting.')}}));
+[xInput,yInput,wInput,hInput].forEach(el=>el?.addEventListener('change',()=>{const m=readFormToModel();if(m){clampFormModelToCanvas(m);renderAll();persistGeometry(m,{auto:true});}}));
 fileInput?.addEventListener('change',async()=>{
   const file=fileInput.files?.[0],m=state.items.get(state.selectedId);if(!file||!m||isSoftware(m))return;setStatus('Memproses gambar...');fileInput.disabled=true;
-  try{m.imageData=await prepareImage(file);m.imageUrl='';updatePreview(m);renderAll();markDirty('Gambar siap. Masukkan link dan tekan Simpan.')}catch(err){setStatus(err.message||'Gagal memproses gambar.',true)}finally{fileInput.disabled=isSoftware(m)}
+  try{m.imageData=await prepareImage(file);m.imageUrl='';state.nonGeometryDirty=true;updatePreview(m);renderAll();markDirty('Gambar siap. Masukkan link dan tekan Simpan.')}catch(err){setStatus(err.message||'Gagal memproses gambar.',true)}finally{fileInput.disabled=isSoftware(m)}
 });
 resizeHandle?.addEventListener('pointerdown',e=>{
   if(!state.editorOpen||!state.isAdmin||innerWidth<=760||e.button!==0)return;const m=state.items.get(state.selectedId);if(!m)return;e.preventDefault();e.stopPropagation();
@@ -19987,7 +20026,7 @@ loadCloud();
           <label><input id="azHomeBannerNewTab1285" type="checkbox" checked/> Buka link tab baru</label>
           <label><input id="azHomeBannerAvoidSocial1285" type="checkbox" checked/> Elak ikon sosial tengah</label>
         </div>
-        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Kawasan banner desktop mempunyai tinggi tetap yang lebih padat supaya Our Services berada sedikit lebih atas dan tidak bergerak apabila banner dialih atau dibesarkan. Banner akan dikekang dalam kawasan ini. Pilih banner, drag untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Tekan Simpan selepas selesai.</p>
+        <p class="az-home-banner-admin-help">Admin sahaja boleh edit. Our Services dinaikkan terus dan tidak bergantung pada saiz banner. Pilih banner, drag untuk alih; drag kotak kuning di bucu kanan bawah untuk resize. Kedudukan dan saiz auto-save apabila mouse dilepaskan. Butang Simpan menyimpan semua setting lain juga.</p>
       </div>
     </div>
     <div class="az-home-banner-admin-actions">
