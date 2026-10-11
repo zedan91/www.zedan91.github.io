@@ -1,0 +1,40 @@
+{
+  "packageVersion": "1.0.1294",
+  "baseline": "1.0.1293",
+  "feature": "Shopee Manual Get Link + Save & Publish fallback",
+  "date": "2026-10-12",
+  "changedFiles": [
+    "affiliate-shop/index.html",
+    "package.json",
+    "tests/home-banner-manager-v1285.test.cjs",
+    "tests/home-banner-manager-v1286.test.cjs",
+    "tests/home-banner-manager-v1287.test.cjs",
+    "tests/home-banner-manager-v1288.test.cjs",
+    "tests/home-banner-manager-v1289.test.cjs",
+    "tests/home-banner-manager-v1292.test.cjs",
+    "tests/shopee-affiliate-v1293.test.cjs"
+  ],
+  "addedFiles": [
+    "README_PATCH_1294.md",
+    "tests/shopee-affiliate-manual-v1294.test.cjs",
+    "AZOBSS-SHOPEE-AFFILIATE-MANUAL-GET-LINK-AUDIT-1294.json"
+  ],
+  "manualFlow": [
+    "Open Shopee Product Offer",
+    "Get Link in Shopee",
+    "Paste s.shopee.com.my affiliate URL",
+    "Add to AZOBSS",
+    "Save & Publish",
+    "Customer Buy Now -> affiliate URL"
+  ],
+  "openApiPreserved": true,
+  "openApiCredentialsRequiredForManualFlow": false,
+  "safety": "Normal Shopee product URLs are blocked from manual publish as affiliate Buy Now links.",
+  "checks": {
+    "npmCheck": "PASS",
+    "npmTest": "PASS (84/84)",
+    "backendNodeSyntax": "PASS",
+    "affiliateInlineModuleSyntax": "PASS (8 module scripts)",
+    "duplicateProductionHtmlIds": "PASS via test suite"
+  }
+}
