@@ -1,14 +1,28 @@
-# AZOBSS v1293 — Software Tools Long-Session Freeze Fix
+# AZOBSS v1293 — Shopee Affiliate Product Offer + Auto Get Link
 
-This patch targets `/Software-Tools/` only.
+## Baseline
+Built from AZOBSS v1292.
 
-## Root cause
-The Software Tools admin UI had a 1.5-second long-session timer that called `refreshAdminState()`. That function called `syncStaticAdminButtons()`, and the old implementation removed and recreated the admin action wrapper on every static software card every cycle. Those DOM changes woke several MutationObservers across the same page, creating constant mutation/rescan work while the page was otherwise idle. On an admin account this was especially expensive and could make a long-open tab increasingly sluggish or freeze.
+## What changed
+- `/affiliate-shop/` Admin gets a new **Shopee Product Offer** button.
+- Product Offer search is loaded through the official Shopee Affiliate Open API (`productOfferV2`).
+- `Add to AZOBSS` prefills title, image, price, shop/sales/rating metadata and uses Shopee `offerLink` as the customer **Buy Now** link.
+- Add/Edit Item now has **Original Shopee Product Link** + **Auto Get Link**.
+- If an original Shopee product URL is present when Save Product is pressed, AZOBSS automatically calls backend `generateShortLink` and stores the resulting affiliate short link before saving.
+- Existing affiliate short links (`s.shopee.com.my` / `shope.ee`) are preserved.
+- Added optional product image support on affiliate cards.
+- Shopee App ID/Secret stay on backend only; they are never embedded in customer HTML.
 
-## Fixes
-- Static admin action wrappers are now idempotent: create/update only when needed; never destroy/rebuild every refresh.
-- 1.5-second admin-role polling replaced by focus/storage/session-resume events plus a 30-second signature-only safety check.
-- Admin action observer now watches structural child changes only, not every style/class change.
-- Support delete-button scan reduced from 1.2 seconds to 30 seconds; its list MutationObserver remains active.
-- Mobile one-card patch no longer watches the whole document and no longer rewrites layout every 1.2 seconds; observation is scoped to software/CAD grids.
-- Existing Software Tools features, filters, admin edit/delete/logo controls, stats, payment and sharing remain intact.
+## Render ENV required for full automation
+```
+SHOPEE_AFFILIATE_APP_ID=YOUR_APP_ID
+SHOPEE_AFFILIATE_SECRET=YOUR_SECRET
+SHOPEE_AFFILIATE_ENDPOINT=https://open-api.affiliate.shopee.com.my/graphql
+```
+
+Without the Open API credentials, Admin can still use **Open Shopee Product Offer** and paste the manually generated affiliate link into the final link field.
+
+## New backend routes
+- `GET /api/shopee-affiliate/status` (Admin)
+- `POST /api/shopee-affiliate/generate-link` (Admin)
+- `GET /api/shopee-affiliate/product-offers` (Admin)

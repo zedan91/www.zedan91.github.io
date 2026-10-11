@@ -1,0 +1,40 @@
+{
+  "packageVersion": "1.0.1293",
+  "baseline": "1.0.1292",
+  "feature": "Shopee Affiliate Product Offer + Auto Get Link",
+  "date": "2026-10-12",
+  "changedFiles": [
+    "affiliate-shop/index.html",
+    "backend/server.js",
+    "backend/.env.example",
+    "package.json",
+    "tests/home-banner-manager-v1285.test.cjs",
+    "tests/home-banner-manager-v1286.test.cjs",
+    "tests/home-banner-manager-v1287.test.cjs",
+    "tests/home-banner-manager-v1288.test.cjs",
+    "tests/home-banner-manager-v1289.test.cjs",
+    "tests/home-banner-manager-v1292.test.cjs"
+  ],
+  "addedFiles": [
+    "README_PATCH_1293.md",
+    "tests/shopee-affiliate-v1293.test.cjs"
+  ],
+  "checks": {
+    "backendNodeSyntax": "PASS",
+    "affiliateInlineModuleSyntax": "PASS (8 module scripts)",
+    "npmCheck": "PASS",
+    "npmTest": "PASS (82/82)",
+    "duplicateProductionHtmlIds": "PASS via test suite",
+    "credentialHandling": "SHOPEE_AFFILIATE_SECRET is read from backend environment; no credential value is embedded in frontend"
+  },
+  "renderEnvRequired": [
+    "SHOPEE_AFFILIATE_APP_ID",
+    "SHOPEE_AFFILIATE_SECRET"
+  ],
+  "defaultEndpoint": "https://open-api.affiliate.shopee.com.my/graphql",
+  "backendRoutes": [
+    "GET /api/shopee-affiliate/status",
+    "POST /api/shopee-affiliate/generate-link",
+    "GET /api/shopee-affiliate/product-offers"
+  ]
+}

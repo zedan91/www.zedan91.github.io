@@ -2225,6 +2225,109 @@ async function imageUrlExists(url) {
     return /^image\//i.test(type);
   } catch(e) { return false; }
 }
+// AZOBSS v1293: Shopee Affiliate Open API bridge.
+// Keep App ID + Secret on the backend only. Never expose the Secret to browser code.
+const SHOPEE_AFFILIATE_APP_ID = String(process.env.SHOPEE_AFFILIATE_APP_ID || process.env.SHOPEE_APP_ID || "").trim();
+const SHOPEE_AFFILIATE_SECRET = String(process.env.SHOPEE_AFFILIATE_SECRET || process.env.SHOPEE_APP_SECRET || "").trim();
+const SHOPEE_AFFILIATE_ENDPOINT = String(process.env.SHOPEE_AFFILIATE_ENDPOINT || "https://open-api.affiliate.shopee.com.my/graphql").trim();
+
+function azShopeeAffiliateConfigured(){ return !!(SHOPEE_AFFILIATE_APP_ID && SHOPEE_AFFILIATE_SECRET && SHOPEE_AFFILIATE_ENDPOINT); }
+function azShopeeUrl(value){
+  try {
+    const u = new URL(String(value || "").trim());
+    if (!/^https?:$/.test(u.protocol)) return "";
+    const h = u.hostname.toLowerCase();
+    const ok = h === "shopee.my" || h.endsWith(".shopee.my") || h === "shopee.com.my" || h.endsWith(".shopee.com.my") || h === "shope.ee";
+    return ok ? u.toString() : "";
+  } catch { return ""; }
+}
+function azShopeeAffiliateAlready(value){
+  try {
+    const u = new URL(String(value || "").trim());
+    return u.hostname.toLowerCase() === "s.shopee.com.my" || u.hostname.toLowerCase() === "shope.ee" || /\/an_redir$/i.test(u.pathname);
+  } catch { return false; }
+}
+function azShopeeSubIds(values){
+  const list = Array.isArray(values) ? values : String(values || "").split(/[,\n]+/);
+  return list.map(v => String(v || "").trim().replace(/[^a-zA-Z0-9_-]+/g, "").slice(0,64)).filter(Boolean).slice(0,5);
+}
+async function azShopeeAffiliateGraphql(queryText){
+  if (!azShopeeAffiliateConfigured()) {
+    const err = new Error("Shopee Affiliate Open API belum dikonfigurasi. Set SHOPEE_AFFILIATE_APP_ID dan SHOPEE_AFFILIATE_SECRET di Render ENV.");
+    err.statusCode = 503;
+    throw err;
+  }
+  const payload = JSON.stringify({ query: String(queryText || "") });
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = crypto.createHash("sha256").update(`${SHOPEE_AFFILIATE_APP_ID}${timestamp}${payload}${SHOPEE_AFFILIATE_SECRET}`, "utf8").digest("hex");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(SHOPEE_AFFILIATE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": `SHA256 Credential=${SHOPEE_AFFILIATE_APP_ID}, Timestamp=${timestamp}, Signature=${signature}`,
+        "User-Agent": "AZOBSS-Shopee-Affiliate/1.0"
+      },
+      body: payload,
+      signal: controller.signal
+    });
+    const raw = await response.text();
+    let data = {};
+    try { data = raw ? JSON.parse(raw) : {}; } catch { data = {}; }
+    if (!response.ok) {
+      const err = new Error(data?.message || data?.error || `Shopee Affiliate API HTTP ${response.status}`);
+      err.statusCode = 502; throw err;
+    }
+    if (Array.isArray(data?.errors) && data.errors.length) {
+      const msg = data.errors.map(x => x?.message || x?.extensions?.message || "Shopee GraphQL error").filter(Boolean).join(" | ");
+      const err = new Error(msg || "Shopee Affiliate GraphQL error"); err.statusCode = 502; throw err;
+    }
+    return data?.data || {};
+  } finally { clearTimeout(timer); }
+}
+
+app.get("/api/shopee-affiliate/status", requireAdmin, (req, res) => {
+  res.json({ ok:true, configured:azShopeeAffiliateConfigured(), endpoint:SHOPEE_AFFILIATE_ENDPOINT, appIdLast4:SHOPEE_AFFILIATE_APP_ID ? SHOPEE_AFFILIATE_APP_ID.slice(-4) : "" });
+});
+
+app.post("/api/shopee-affiliate/generate-link", requireAdmin, async (req, res) => {
+  try {
+    const originUrl = azShopeeUrl(req.body?.originUrl);
+    if (!originUrl) return res.status(400).json({ok:false,error:"invalid_shopee_url",message:"URL Shopee tidak sah."});
+    if (azShopeeAffiliateAlready(originUrl)) return res.json({ok:true,shortLink:originUrl,passthrough:true});
+    const subIds = azShopeeSubIds(req.body?.subIds);
+    const subIdsGraphql = subIds.map(v => JSON.stringify(v)).join(",");
+    const queryText = `mutation { generateShortLink(input: { originUrl: ${JSON.stringify(originUrl)}, subIds: [${subIdsGraphql}] }) { shortLink } }`;
+    const data = await azShopeeAffiliateGraphql(queryText);
+    const shortLink = String(data?.generateShortLink?.shortLink || "").trim();
+    if (!shortLink) return res.status(502).json({ok:false,error:"no_short_link",message:"Shopee API tidak memulangkan affiliate short link."});
+    return res.json({ok:true,shortLink,originUrl,subIds});
+  } catch (err) {
+    const status = Number(err?.statusCode || 500);
+    return res.status(status).json({ok:false,error:"shopee_affiliate_generate_failed",message:String(err?.message || err || "Shopee Affiliate API failed")});
+  }
+});
+
+app.get("/api/shopee-affiliate/product-offers", requireAdmin, async (req, res) => {
+  try {
+    const keyword = String(req.query.keyword || "").trim().slice(0,120);
+    const sortType = Math.min(5, Math.max(1, Number(req.query.sortType || 5) || 5));
+    const page = Math.max(1, Number(req.query.page || 1) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20) || 20));
+    const args = [keyword ? `keyword: ${JSON.stringify(keyword)}` : "", `sortType: ${sortType}`, `page: ${page}`, `limit: ${limit}`].filter(Boolean).join(", ");
+    const queryText = `query { productOfferV2(${args}) { nodes { itemId commissionRate sellerCommissionRate shopeeCommissionRate commission sales priceMax priceMin productCatIds ratingStar priceDiscountRate imageUrl productName shopId shopName shopType productLink offerLink periodStartTime periodEndTime } pageInfo { page limit hasNextPage } } }`;
+    const data = await azShopeeAffiliateGraphql(queryText);
+    const result = data?.productOfferV2 || {};
+    return res.json({ok:true,items:Array.isArray(result.nodes)?result.nodes:[],pageInfo:result.pageInfo||{page,limit,hasNextPage:false}});
+  } catch (err) {
+    const status = Number(err?.statusCode || 500);
+    return res.status(status).json({ok:false,error:"shopee_product_offer_failed",message:String(err?.message || err || "Shopee Product Offer API failed")});
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({
     ok: true,

@@ -5661,48 +5661,14 @@ function normalizeItem(item){
     });
     return new Set(ids.filter(Boolean));
   }
-  // AZOBSS v1293: idempotent admin controls.
-  // Old code removed + recreated the admin wrapper on every 1.5 s role refresh.
-  // That generated a permanent mutation storm which woke many page-wide observers.
   function syncStaticAdminButtons(){
     const admin = isAdmin();
     getStaticCards().forEach(card => {
       const id = staticProductId(card);
-      const wraps = Array.from(card.querySelectorAll(':scope > .software-card-admin-actions'));
-      let wrap = wraps[0] || null;
-      wraps.slice(1).forEach(el => el.remove());
-
-      if(!admin){
-        if(wrap && wrap.hasAttribute('data-software-static-edit-wrap')) wrap.remove();
-        return;
+      card.querySelectorAll('[data-software-static-edit-wrap]').forEach(el => el.remove());
+      if(admin){
+        card.insertAdjacentHTML('beforeend', `<div class="software-card-admin-actions" data-software-static-edit-wrap="1" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(id)}" title="Delete software" aria-label="Delete">🗑️</button></div>`);
       }
-
-      if(!wrap){
-        wrap = document.createElement('div');
-        wrap.className = 'software-card-admin-actions';
-        wrap.setAttribute('aria-label','Admin card actions');
-        card.appendChild(wrap);
-      }
-      wrap.setAttribute('data-software-static-edit-wrap','1');
-
-      function ensureBtn(cls, attr, icon, title, label){
-        let btn = wrap.querySelector('.' + cls);
-        if(!btn){
-          btn = document.createElement('button');
-          btn.className = cls;
-          btn.type = 'button';
-          btn.textContent = icon;
-          wrap.appendChild(btn);
-        }
-        btn.setAttribute(attr, id);
-        btn.title = title;
-        btn.setAttribute('aria-label', label);
-        return btn;
-      }
-      ensureBtn('software-logo-admin-btn','data-software-logo-regen','🪄','Generate logo from website link','Generate logo');
-      ensureBtn('software-card-edit-btn','data-software-edit','✏️','Edit software','Edit');
-      ensureBtn('software-card-delete-btn','data-software-delete','🗑️','Delete software','Delete software');
-      // Do not delete extra controls (for example Product ID) added by the later admin-restorer.
     });
   }
 
@@ -6825,22 +6791,8 @@ function normalizeItem(item){
     await loadItems();
   });
 
-  // AZOBSS v1293: role UI is event-driven. The old 1.5 s polling rebuilt
-  // admin controls forever and was the main long-session freeze source.
-  let azSoftwareAdminStateSig1293 = '';
-  function azSoftwareAdminStateCheck1293(force){
-    const info = azGetSoftwareRoleInfo();
-    const sig = [info.role,info.username,info.email,info.isFullAdmin?1:0,info.isStaffLike?1:0,isAdmin()?1:0].join('|');
-    if(!force && sig === azSoftwareAdminStateSig1293) return;
-    azSoftwareAdminStateSig1293 = sig;
-    refreshAdminState();
-  }
-  azSoftwareAdminStateCheck1293(true);
-  window.addEventListener('focus',()=>azSoftwareAdminStateCheck1293(false),{passive:true});
-  window.addEventListener('storage',()=>azSoftwareAdminStateCheck1293(false),{passive:true});
-  document.addEventListener('azobss:session-resume',()=>azSoftwareAdminStateCheck1293(true));
-  // Slow safety check only; it does nothing unless the role signature changed.
-  window.azobssLongSessionInterval(()=>azSoftwareAdminStateCheck1293(false), 30000);
+  window.azobssLongSessionInterval(refreshAdminState, 1500);
+  refreshAdminState();
   loadItems();
 </script>
 
@@ -7898,17 +7850,7 @@ line-height:1.6;
     [50,150,400,800,1500,2500,4000,7000].forEach(t=>setTimeout(addActions,t));
     const root = document.querySelector('#softwareGrid') || document.querySelector('#softwareDownloadsGrid') || document.querySelector('.downloads-grid') || document.body;
     if(root){
-      // AZOBSS v1293: observe structural card changes only. Watching style/class
-      // made filter/layout updates repeatedly rescan every card.
-      new MutationObserver((records)=>{
-        const relevant = records.some(r => Array.from(r.addedNodes || []).some(n => n && n.nodeType === 1 && (
-          (n.matches && n.matches('.download-card,.software-card-admin-actions')) ||
-          (n.querySelector && n.querySelector('.download-card'))
-        )));
-        if(!relevant) return;
-        clearTimeout(window.__azAdminActionTimer);
-        window.__azAdminActionTimer=setTimeout(addActions,80);
-      }).observe(root,{childList:true,subtree:true});
+      new MutationObserver(()=>{ clearTimeout(window.__azAdminActionTimer); window.__azAdminActionTimer=setTimeout(addActions,80); }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
     }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
@@ -9594,11 +9536,7 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
     if(list) mo.observe(list,{childList:true,subtree:true});
   }
 
-  // AZOBSS v1293: the support list already has a MutationObserver, so there is
-  // no need to scan it every 1.2 seconds for the lifetime of the page.
-  window.addEventListener('focus', addDeleteButtons, {passive:true});
-  document.addEventListener('azobss:session-resume', addDeleteButtons);
-  window.azobssLongSessionInterval(addDeleteButtons, 30000);
+  window.azobssLongSessionInterval(addDeleteButtons, 1200);
 })();
 </script>
 
@@ -11068,20 +11006,14 @@ html.azobss-shared-product-mode-332 .cad-item{
   window.addEventListener('azobss-software-rendered', schedule);
   window.addEventListener('azobss-cad-rendered', schedule);
 
-  // AZOBSS v1293: do not observe the whole document or rewrite grid styles every
-  // 1.2 seconds. Render/resize events plus scoped grid observers are sufficient.
   try{
-    document.querySelectorAll('#softwareDownloadsGrid,#softwareGrid,.downloads-grid,.software-grid,.software-products-grid,.software-list,#cadToolGrid,.cad-card-grid,.cad-grid,.cad-tools-grid,.cad-tools-shop').forEach(function(grid){
-      if(grid.dataset.azOneCardObserved1293 === '1') return;
-      grid.dataset.azOneCardObserved1293 = '1';
-      new MutationObserver(function(records){
-        const added = records.some(r => r.addedNodes && r.addedNodes.length);
-        if(!added) return;
-        clearTimeout(window.__azobssOneCard153Timer);
-        window.__azobssOneCard153Timer = setTimeout(forceOneCardRow, 90);
-      }).observe(grid, {childList:true, subtree:false});
-    });
+    new MutationObserver(function(){
+      clearTimeout(window.__azobssOneCard153Timer);
+      window.__azobssOneCard153Timer = setTimeout(forceOneCardRow, 90);
+    }).observe(document.documentElement, {childList:true, subtree:true});
   }catch(e){}
+
+  window.azobssLongSessionInterval(forceOneCardRow, 1200);
 })();
 </script>
 

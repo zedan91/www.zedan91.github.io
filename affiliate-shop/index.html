@@ -1028,6 +1028,18 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1176">
 <script defer src="/assets/js/azobss-more-nav.js?v=1176"></script>
+
+<style id="azobss-shopee-affiliate-open-api-1293">
+.admin-shopee-btn{background:linear-gradient(135deg,#ee4d2d,#ff7337)!important;color:#fff!important;border-color:#ff8b6b!important;font-weight:800!important}
+.admin-shopee-autolink{border:1px solid rgba(255,115,55,.5);background:rgba(238,77,45,.08);border-radius:14px;padding:13px;display:grid;gap:10px}
+.admin-shopee-autolink-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.admin-shopee-autolink-head strong{color:#ff9a78}.admin-shopee-autolink-head a,.admin-shopee-official{color:#ffad91;text-decoration:none;font-weight:800}.admin-shopee-autolink-head a:hover,.admin-shopee-official:hover{text-decoration:underline}
+.admin-shopee-generate-wrap{display:flex;align-items:end}.admin-shopee-generate{width:100%;min-height:44px;border:0;border-radius:10px;background:#ee4d2d;color:#fff;font-weight:900;cursor:pointer;padding:10px 14px}.admin-shopee-generate:disabled{opacity:.6;cursor:wait}
+.admin-shopee-status{font-size:12px;line-height:1.45;color:#b9c7d8;min-height:18px}.admin-shopee-status.is-ok{color:#62e6a5}.admin-shopee-status.is-error{color:#ff8f8f}
+.admin-shopee-offers-box{width:min(1120px,96vw)!important;max-height:90vh;overflow:auto}.admin-shopee-help{margin:0 0 12px;color:#b9c7d8;line-height:1.5}.admin-shopee-searchbar{display:grid;grid-template-columns:minmax(240px,1fr) 180px auto auto;gap:10px;align-items:center}.admin-shopee-searchbar input,.admin-shopee-searchbar select{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-official{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid rgba(255,115,55,.5);border-radius:10px;padding:0 12px}
+.admin-shopee-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.admin-shopee-offer-card{display:grid;grid-template-columns:110px 1fr;gap:12px;border:1px solid rgba(255,255,255,.12);background:#0d1523;border-radius:14px;padding:12px}.admin-shopee-offer-card img{width:110px;height:110px;object-fit:cover;border-radius:12px;background:#172033}.admin-shopee-offer-title{font-weight:900;line-height:1.35;color:#fff}.admin-shopee-offer-meta{font-size:12px;color:#9eb0c5;margin-top:6px;line-height:1.45}.admin-shopee-offer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.admin-shopee-offer-actions button,.admin-shopee-offer-actions a{min-height:36px;border-radius:9px;border:0;padding:0 11px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}.admin-shopee-offer-actions button{background:#22c55e;color:#06130b}.admin-shopee-offer-actions a{background:#17243a;color:#dce8f8;border:1px solid rgba(255,255,255,.12)}
+.card .icon img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}.card .icon.has-image{overflow:hidden;padding:0;background:#111b2a}
+@media(max-width:800px){.admin-shopee-searchbar{grid-template-columns:1fr}.admin-shopee-results{grid-template-columns:1fr}.admin-shopee-offer-card{grid-template-columns:82px 1fr}.admin-shopee-offer-card img{width:82px;height:82px}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1231,6 +1243,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   </select>
 </label>
 <button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
+<button class="chip admin-shopee-btn" id="adminShopeeOffersButton" type="button" hidden>🛒 Shopee Product Offer</button>
 <button class="chip admin-json-btn" id="adminImportJsonButton" type="button" hidden>Import JSON</button>
 <button class="chip admin-json-btn" id="adminExportJsonButton" type="button" hidden>Export JSON</button>
 <input id="adminImportJsonInput" type="file" accept="application/json,.json" hidden/>
@@ -1299,10 +1312,31 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
             <option value="Open">Open</option>
           </select>
         </label>
-        <label>Link
-          <input id="adminProductLink" required placeholder="https://..."/>
+        <label>Product Image URL (optional)
+          <input id="adminProductImage" placeholder="https://...image..."/>
         </label>
       </div>
+      <div class="admin-shopee-autolink">
+        <div class="admin-shopee-autolink-head">
+          <strong>🛒 Shopee Affiliate Auto Get Link</strong>
+          <a href="https://affiliate.shopee.com.my/offer/product_offer" target="_blank" rel="noopener">Open Shopee Product Offer ↗</a>
+        </div>
+        <label>Original Shopee Product Link
+          <input id="adminShopeeOriginLink" placeholder="https://shopee.my/..."/>
+        </label>
+        <div class="admin-product-grid">
+          <label>Sub IDs (optional, max 5)
+            <input id="adminShopeeSubIds" value="azobss,affiliate-shop" placeholder="azobss,affiliate-shop"/>
+          </label>
+          <div class="admin-shopee-generate-wrap">
+            <button id="adminShopeeGenerateLink" class="admin-shopee-generate" type="button">Auto Get Link</button>
+          </div>
+        </div>
+        <div class="admin-shopee-status" id="adminShopeeLinkStatus">Paste Shopee link, kemudian Auto Get Link. Link affiliate akan masuk ke Buy Now.</div>
+      </div>
+      <label>Final Buy / Open Link
+        <input id="adminProductLink" required placeholder="Affiliate link akan diisi automatik"/>
+      </label>
       <div class="admin-product-actions">
         <button class="admin-product-cancel" id="adminProductCancel" type="button">Cancel</button>
         <button class="admin-product-save" type="submit">Save Product</button>
@@ -1310,9 +1344,33 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     </form>
   </div>
 </div>
+<div class="admin-product-modal" id="adminShopeeOffersModal" aria-hidden="true">
+  <div class="admin-product-box admin-shopee-offers-box" role="dialog" aria-modal="true" aria-labelledby="adminShopeeOffersTitle">
+    <div class="admin-product-head">
+      <h2 id="adminShopeeOffersTitle">Shopee Product Offer → AZOBSS Affiliate</h2>
+      <button class="admin-product-close" id="adminShopeeOffersClose" type="button" aria-label="Close">×</button>
+    </div>
+    <p class="admin-shopee-help">Cari terus dari Shopee Affiliate Open API. Tekan <b>Add to AZOBSS</b> dan customer akan guna <b>Buy Now</b> dengan offerLink affiliate Shopee.</p>
+    <div class="admin-shopee-searchbar">
+      <input id="adminShopeeOfferKeyword" type="search" placeholder="Contoh: SSD NVMe, keyboard, laptop..."/>
+      <select id="adminShopeeOfferSort" aria-label="Shopee offer sort">
+        <option value="5">Commission tinggi</option>
+        <option value="2">Paling banyak terjual</option>
+        <option value="4">Harga rendah</option>
+        <option value="3">Harga tinggi</option>
+        <option value="1">Relevan</option>
+      </select>
+      <button id="adminShopeeOfferSearch" class="admin-product-save" type="button">Search Offers</button>
+      <a class="admin-shopee-official" href="https://affiliate.shopee.com.my/offer/product_offer" target="_blank" rel="noopener">Open Official ↗</a>
+    </div>
+    <div class="admin-shopee-status" id="adminShopeeOffersStatus">Open API memerlukan SHOPEE_AFFILIATE_APP_ID + SHOPEE_AFFILIATE_SECRET di Render.</div>
+    <div class="admin-shopee-results" id="adminShopeeOffersResults"></div>
+  </div>
+</div>
 </main>
 <script type="module">
     import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
     import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -1325,7 +1383,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     };
 
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
+    const AZOBSS_BACKEND = String(window.AZOBSS_BACKEND_URL || 'https://azobss-backend.onrender.com').replace(/\/+$/, '');
     const ADMIN_PRODUCTS_COLLECTION = 'affiliateProducts';
     const LOCAL_ADMIN_PRODUCTS_KEY = 'azobss_admin_added_products_v1';
     const LOCAL_ADMIN_HIDDEN_PRODUCTS_KEY = 'azobss_admin_hidden_affiliate_products_v1';
@@ -1337,6 +1397,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const categorySortSelect = document.getElementById('categorySortSelect');
     const myFavouriteButton = document.getElementById('myFavouriteButton');
     const adminAddItemButton = document.getElementById('adminAddItemButton');
+    const adminShopeeOffersButton = document.getElementById('adminShopeeOffersButton');
     const adminImportJsonButton = document.getElementById('adminImportJsonButton');
     const adminExportJsonButton = document.getElementById('adminExportJsonButton');
     const adminImportJsonInput = document.getElementById('adminImportJsonInput');
@@ -1394,7 +1455,9 @@ function esc(value){
         icon: item.icon || (isFree ? 'FREE' : '🛒'),
         category: item.category || 'affiliate-shop',
         meta: item.meta || item.category || 'Affiliate item',
-        link: item.link || item.url || '#',
+        image: item.image || item.imageUrl || '',
+        originLink: item.originLink || item.productLink || '',
+        link: item.link || item.offerLink || item.url || '#',
         buttonText: item.buttonText || (isFree ? 'Download Now' : 'Buy Now'),
         source: item.source || 'static'
       };
@@ -1455,7 +1518,7 @@ function esc(value){
         <article class="card" data-product-id="${esc(item.id)}" data-product-source="${esc(item.source || 'static')}" data-category="${esc(item.category)}">
           ${adminMode ? `<div class="card-admin-actions" aria-label="Admin product actions"><button class="card-admin-btn edit" type="button" data-aff-edit="${esc(item.id)}" title="Edit">✎</button><button class="card-admin-btn delete" type="button" data-aff-delete="${esc(item.id)}" title="Delete">🗑</button></div>` : ''}
           <div class="top">
-            <div class="icon">${esc(item.icon || 'AZ')}</div>
+            <div class="icon${item.image ? ' has-image' : ''}">${item.image ? `<img src="${esc(item.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : esc(item.icon || 'AZ')}</div>
             <span class="badge">${esc(item.badge || item.price || 'Affiliate')}</span>
           </div>
           <h2>${esc(item.title)}</h2>
@@ -1473,6 +1536,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     function refreshAdminState(){
       const adminMode = isAdmin();
       adminAddItemButton.hidden = !adminMode;
+      if(adminShopeeOffersButton) adminShopeeOffersButton.hidden = !adminMode;
       if(adminImportJsonButton) adminImportJsonButton.hidden = !adminMode;
       if(adminExportJsonButton) adminExportJsonButton.hidden = !adminMode;
       const wasAdmin = document.body.classList.contains('az-aff-admin');
@@ -1556,6 +1620,165 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       render();
     }));
 
+    function shopeeStatus(el, message, type = ''){
+      if(!el) return;
+      el.className = 'admin-shopee-status' + (type ? ' is-' + type : '');
+      el.textContent = message;
+    }
+    function isShopeeUrl(value){
+      try{
+        const host = new URL(String(value || '').trim()).hostname.toLowerCase();
+        return host === 'shopee.my' || host.endsWith('.shopee.my') || host === 'shopee.com.my' || host.endsWith('.shopee.com.my') || host === 'shope.ee';
+      }catch(e){ return false; }
+    }
+    function isShopeeAffiliateUrl(value){
+      try{
+        const u = new URL(String(value || '').trim());
+        const host = u.hostname.toLowerCase();
+        return host === 's.shopee.com.my' || host === 'shope.ee' || /\/an_redir$/i.test(u.pathname);
+      }catch(e){ return false; }
+    }
+    function parseShopeeSubIds(){
+      const raw = document.getElementById('adminShopeeSubIds')?.value || '';
+      return raw.split(/[,\n]+/).map(v => v.trim()).filter(Boolean).slice(0,5);
+    }
+    async function adminBackendHeaders(){
+      const headers = {'Content-Type':'application/json'};
+      try{
+        if(auth.currentUser) headers.Authorization = 'Bearer ' + await auth.currentUser.getIdToken();
+      }catch(e){}
+      try{
+        const key = sessionStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssAdminApiKey') || localStorage.getItem('azobssLuckyDrawAdminKey') || '';
+        if(key) headers['x-admin-key'] = key;
+      }catch(e){}
+      return headers;
+    }
+    async function generateShopeeAffiliateLink(originUrl, options = {}){
+      const cleanUrl = String(originUrl || '').trim();
+      if(!cleanUrl || !isShopeeUrl(cleanUrl)) throw new Error('Link mesti URL Shopee yang sah.');
+      if(isShopeeAffiliateUrl(cleanUrl)) return {shortLink: cleanUrl, passthrough:true};
+      const res = await fetch(AZOBSS_BACKEND + '/api/shopee-affiliate/generate-link', {
+        method:'POST',
+        headers: await adminBackendHeaders(),
+        body: JSON.stringify({originUrl:cleanUrl, subIds:options.subIds || parseShopeeSubIds()})
+      });
+      const out = await res.json().catch(() => ({}));
+      if(!res.ok || !out.ok || !out.shortLink) throw new Error(out.message || out.error || 'Shopee Affiliate API gagal menjana link.');
+      return out;
+    }
+    async function runShopeeAutoGetLink(){
+      if(!isAdmin()) return alert('Admin only.');
+      const origin = document.getElementById('adminShopeeOriginLink')?.value.trim() || '';
+      const target = document.getElementById('adminProductLink');
+      const status = document.getElementById('adminShopeeLinkStatus');
+      const btn = document.getElementById('adminShopeeGenerateLink');
+      if(!origin){ shopeeStatus(status, 'Paste original Shopee product link dahulu.', 'error'); return null; }
+      try{
+        if(btn) btn.disabled = true;
+        shopeeStatus(status, 'Generating affiliate link daripada Shopee Open API...');
+        const out = await generateShopeeAffiliateLink(origin);
+        if(target) target.value = out.shortLink;
+        const type = document.getElementById('adminProductButtonText');
+        if(type) type.value = 'Buy Now';
+        shopeeStatus(status, out.passthrough ? '✅ Link ini memang sudah affiliate link. Buy Now akan guna link ini.' : '✅ Affiliate link siap. Buy Now akan terus guna link Shopee affiliate ini.', 'ok');
+        return out.shortLink;
+      }catch(err){
+        shopeeStatus(status, '❌ ' + (err.message || err) + ' Fallback: buka Shopee Product Offer, Get Link dan paste pada Final Buy / Open Link.', 'error');
+        return null;
+      }finally{ if(btn) btn.disabled = false; }
+    }
+    document.getElementById('adminShopeeGenerateLink')?.addEventListener('click', runShopeeAutoGetLink);
+
+    const shopeeOffersModal = document.getElementById('adminShopeeOffersModal');
+    const shopeeOffersResults = document.getElementById('adminShopeeOffersResults');
+    const shopeeOffersStatus = document.getElementById('adminShopeeOffersStatus');
+    const closeShopeeOffers = () => { shopeeOffersModal?.classList.remove('is-open'); shopeeOffersModal?.setAttribute('aria-hidden','true'); };
+    const openShopeeOffers = () => {
+      if(!isAdmin()) return alert('Admin only.');
+      shopeeOffersModal?.classList.add('is-open'); shopeeOffersModal?.setAttribute('aria-hidden','false');
+      document.getElementById('adminShopeeOfferKeyword')?.focus();
+    };
+    adminShopeeOffersButton?.addEventListener('click', openShopeeOffers);
+    document.getElementById('adminShopeeOffersClose')?.addEventListener('click', closeShopeeOffers);
+    shopeeOffersModal?.addEventListener('click', e => { if(e.target === shopeeOffersModal) e.preventDefault(); });
+
+    function formatShopeePrice(min, max){
+      const a = Number(min || 0), b = Number(max || 0);
+      const validA = Number.isFinite(a) && a > 0, validB = Number.isFinite(b) && b > 0;
+      const money = n => 'RM' + n.toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(validA && validB && Math.abs(a-b) > 0.009) return money(a) + ' – ' + money(b);
+      if(validA) return money(a);
+      if(validB) return money(b);
+      return 'Affiliate';
+    }
+    function formatCommission(rate){
+      const n = Number(rate || 0);
+      if(!Number.isFinite(n) || n <= 0) return '';
+      return (n <= 1 ? n * 100 : n).toFixed(1).replace(/\.0$/,'') + '% commission';
+    }
+    function renderShopeeOffers(items){
+      if(!shopeeOffersResults) return;
+      if(!items.length){ shopeeOffersResults.innerHTML = ''; shopeeStatus(shopeeOffersStatus,'Tiada Product Offer ditemui untuk carian ini.'); return; }
+      shopeeOffersResults.innerHTML = items.map((item,index) => {
+        const title = esc(item.productName || 'Shopee Product');
+        const image = esc(item.imageUrl || '');
+        const price = esc(formatShopeePrice(item.priceMin, item.priceMax));
+        const commission = esc(formatCommission(item.commissionRate));
+        const meta = [item.shopName ? 'Shop: '+item.shopName : '', item.sales != null ? 'Sold: '+item.sales : '', item.ratingStar ? '⭐ '+item.ratingStar : '', commission].filter(Boolean).join(' • ');
+        const offer = esc(item.offerLink || item.productLink || '#');
+        return `<article class="admin-shopee-offer-card" data-shopee-offer-index="${index}">
+          ${image ? `<img src="${image}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<div style="width:110px;height:110px;border-radius:12px;display:grid;place-items:center;background:#172033;font-size:36px">🛒</div>`}
+          <div><div class="admin-shopee-offer-title">${title}</div><div class="admin-shopee-offer-meta">${price}${meta ? '<br>'+esc(meta) : ''}</div><div class="admin-shopee-offer-actions"><button type="button" data-shopee-add="${index}">Add to AZOBSS</button><a href="${offer}" target="_blank" rel="noopener">Test Link ↗</a></div></div>
+        </article>`;
+      }).join('');
+      shopeeOffersResults.__items = items;
+      shopeeStatus(shopeeOffersStatus, `✅ ${items.length} Product Offer loaded. Offer Link ialah affiliate link Shopee.`, 'ok');
+    }
+    async function searchShopeeOffers(){
+      if(!isAdmin()) return alert('Admin only.');
+      const keyword = document.getElementById('adminShopeeOfferKeyword')?.value.trim() || '';
+      const sortType = Number(document.getElementById('adminShopeeOfferSort')?.value || 5);
+      const btn = document.getElementById('adminShopeeOfferSearch');
+      try{
+        if(btn) btn.disabled = true;
+        shopeeStatus(shopeeOffersStatus,'Loading Product Offer daripada Shopee Affiliate Open API...');
+        const qs = new URLSearchParams({keyword, sortType:String(sortType), page:'1', limit:'20'});
+        const res = await fetch(AZOBSS_BACKEND + '/api/shopee-affiliate/product-offers?' + qs.toString(), {headers:await adminBackendHeaders(), cache:'no-store'});
+        const out = await res.json().catch(() => ({}));
+        if(!res.ok || !out.ok) throw new Error(out.message || out.error || 'Shopee Product Offer API gagal.');
+        renderShopeeOffers(Array.isArray(out.items) ? out.items : []);
+      }catch(err){
+        shopeeOffersResults.innerHTML = '';
+        shopeeStatus(shopeeOffersStatus,'❌ '+(err.message || err)+' Pastikan App ID + Secret Shopee Affiliate Open API sudah dimasukkan di Render.', 'error');
+      }finally{ if(btn) btn.disabled = false; }
+    }
+    document.getElementById('adminShopeeOfferSearch')?.addEventListener('click', searchShopeeOffers);
+    document.getElementById('adminShopeeOfferKeyword')?.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); searchShopeeOffers(); } });
+    shopeeOffersResults?.addEventListener('click', e => {
+      const btn = e.target.closest('[data-shopee-add]');
+      if(!btn) return;
+      const items = shopeeOffersResults.__items || [];
+      const item = items[Number(btn.dataset.shopeeAdd)];
+      if(!item) return;
+      const rate = formatCommission(item.commissionRate);
+      const price = formatShopeePrice(item.priceMin,item.priceMax);
+      closeShopeeOffers();
+      openModal({
+        title:item.productName || 'Shopee Product',
+        desc:[item.shopName ? 'Shop: '+item.shopName : '', item.sales != null ? 'Sold: '+item.sales : '', item.ratingStar ? 'Rating: '+item.ratingStar : '', rate].filter(Boolean).join(' • '),
+        category:'others',
+        price,
+        badge:rate || price,
+        icon:'🛒',
+        image:item.imageUrl || '',
+        originLink:item.productLink || '',
+        link:item.offerLink || item.productLink || '',
+        buttonText:'Buy Now',
+        meta:'Shopee Product Offer'
+      });
+      shopeeStatus(document.getElementById('adminShopeeLinkStatus'), item.offerLink ? '✅ Product Offer imported. Offer Link affiliate Shopee sudah digunakan sebagai Buy Now.' : 'Product imported. Tekan Auto Get Link untuk jana affiliate link.', item.offerLink ? 'ok' : '');
+    });
+
     const modal = document.getElementById('adminProductModal');
     const form = document.getElementById('adminProductForm');
     const closeModal = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); };
@@ -1568,8 +1791,12 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       document.getElementById('adminProductCategory').value = item?.category || 'computer';
       document.getElementById('adminProductPrice').value = item?.price || item?.badge || 'FREE';
       document.getElementById('adminProductIcon').value = item?.icon || '🛒';
+      document.getElementById('adminProductImage').value = item?.image || '';
       document.getElementById('adminProductButtonText').value = item?.buttonText || (/^free$/i.test(item?.price || item?.badge || '') ? 'Download Now' : 'Buy Now');
+      document.getElementById('adminShopeeOriginLink').value = item?.originLink || '';
       document.getElementById('adminProductLink').value = item?.link || '';
+      const linkStatus = document.getElementById('adminShopeeLinkStatus');
+      if(linkStatus){ linkStatus.className = 'admin-shopee-status'; linkStatus.textContent = item?.originLink ? 'Produk Shopee ini sudah mempunyai link asal. Auto Get Link boleh dijalankan semula jika perlu.' : 'Paste Shopee link, kemudian Auto Get Link. Link affiliate akan masuk ke Buy Now.'; }
       modal.classList.add('is-open');
       modal.setAttribute('aria-hidden','false');
     };
@@ -1584,6 +1811,13 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       if(!isAdmin()) return alert('Admin only.');
       const existingId = document.getElementById('adminProductId').value.trim();
       const oldItem = existingId ? products.find(x => String(x.id) === existingId) : null;
+      const originLink = document.getElementById('adminShopeeOriginLink').value.trim();
+      let finalLink = document.getElementById('adminProductLink').value.trim();
+      if(originLink && isShopeeUrl(originLink) && (!finalLink || finalLink === originLink || !isShopeeAffiliateUrl(finalLink))){
+        const generated = await runShopeeAutoGetLink();
+        if(!generated) return;
+        finalLink = generated;
+      }
       const product = normalizeProduct({
         id: existingId || undefined,
         title: document.getElementById('adminProductName').value.trim(),
@@ -1592,8 +1826,10 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
         price: document.getElementById('adminProductPrice').value.trim() || 'FREE',
         badge: document.getElementById('adminProductPrice').value.trim() || 'FREE',
         icon: document.getElementById('adminProductIcon').value.trim() || '🛒',
+        image: document.getElementById('adminProductImage').value.trim(),
+        originLink,
         buttonText: document.getElementById('adminProductButtonText').value,
-        link: document.getElementById('adminProductLink').value.trim(),
+        link: finalLink,
         meta: document.getElementById('adminProductCategory').selectedOptions[0]?.textContent || 'Affiliate item',
         source: oldItem?.source || 'local'
       });
@@ -1678,7 +1914,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
 
     adminExportJsonButton?.addEventListener('click', () => {
       if(!isAdmin()) return alert('Admin only.');
-      const exportData = products.map(({id,title,desc,badge,price,icon,category,meta,link,buttonText,source}) => ({id,title,desc,badge,price,icon,category,meta,link,buttonText,source}));
+      const exportData = products.map(({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source}) => ({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source}));
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
