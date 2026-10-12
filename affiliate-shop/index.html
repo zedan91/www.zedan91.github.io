@@ -1876,9 +1876,11 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           meta:'Shopee Affiliate Auto Import'+(m.shopName ? ' • '+m.shopName : '')
         });
         const detail=[m.title?'nama':'',m.image?'gambar':'',m.description?'description':'',m.priceLabel?'harga':''].filter(Boolean).join(', ');
-        const via=out.cached?'cache':(out.source==='browser'?'browser resolver':'direct resolver');
+        const via=out.cached?'cache':(out.source==='browser'?'browser resolver':'server resolver');
+        const resolved=(out.shopId && out.itemId) ? ` Produk dikesan: shop ${out.shopId} / item ${out.itemId}.` : '';
+        const priceNote=!m.priceLabel ? ' Harga tidak dipulangkan oleh Shopee; boleh isi harga secara manual jika perlu.' : '';
         shopeeStatus(document.getElementById('adminShopeeLinkStatus'),
-          `✅ Auto import siap${detail ? ': '+detail : ''} melalui ${via}. Affiliate Buy Now dikekalkan. Semak jika perlu, kemudian hanya tekan Save & Publish.`,
+          `✅ Auto import siap${detail ? ': '+detail : ''} melalui ${via}.${resolved}${priceNote} Affiliate Buy Now dikekalkan. Semak jika perlu, kemudian hanya tekan Save & Publish.`,
           out.partial ? '' : 'ok');
       }catch(err){
         if(seq!==manualShopeeImportSeq) return;
@@ -2084,7 +2086,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     refreshAdminState();
     loadProducts();
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=1298" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1299" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

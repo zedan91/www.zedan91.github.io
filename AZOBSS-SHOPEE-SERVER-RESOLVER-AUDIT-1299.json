@@ -1,0 +1,18 @@
+{
+  "patch": 1299,
+  "version": "1.0.1299",
+  "date": "2026-10-12",
+  "baseline": 1298,
+  "runtime": "deploy-server.js",
+  "changes": [
+    "backend-first affiliate URL resolver",
+    "origin_link decode",
+    "canonical product identity",
+    "HTTP then Chromium fallback",
+    "optional price import",
+    "admin badge v1299"
+  ],
+  "affiliateLinkPreserved": true,
+  "thirdPartyPrivateEndpointUsed": false,
+  "secretExposed": false
+}

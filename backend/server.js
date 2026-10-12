@@ -2290,7 +2290,7 @@ async function azShopeeAffiliateGraphql(queryText){
 }
 
 
-// AZOBSS v1296: Shopee public product metadata importer + short-link resolver V2 (works without Open API credentials).
+// AZOBSS v1299: Shopee public product metadata importer + server-side tracking landing resolver (works without Open API credentials).
 // Security: only Shopee Malaysia hosts are accepted/followed, preventing arbitrary URL fetches.
 function azShopeePublicHost(value){
   try {
@@ -2299,6 +2299,39 @@ function azShopeePublicHost(value){
     const h = u.hostname.toLowerCase();
     return h === "shopee.my" || h.endsWith(".shopee.my") || h === "shopee.com.my" || h.endsWith(".shopee.com.my") || h === "shope.ee";
   } catch { return false; }
+}
+
+// AZOBSS v1299: server-side Shopee affiliate landing resolver.
+// Official Shopee MY tracking links can carry the real product landing URL in origin_link.
+// Every decoded destination is validated as a Shopee Malaysia host before it is followed.
+function azShopeeDecodeRepeated(value, rounds=4){
+  let out=azDecodeHtml(String(value || '').trim());
+  for(let i=0;i<rounds;i++){
+    try{ const next=decodeURIComponent(out); if(next===out) break; out=next; }
+    catch{ break; }
+  }
+  return out.replace(/\\u002[fF]/g,'/').replace(/\\\//g,'/').replace(/&amp;/gi,'&').trim();
+}
+function azShopeeTrackingLanding(value){
+  let current=String(value || '').trim();
+  if(!current) return '';
+  const original=current;
+  for(let depth=0;depth<4;depth++){
+    let u; try{u=new URL(current);}catch{return '';}
+    if(!azShopeePublicHost(u.toString())) return '';
+    let next='';
+    for(const key of ['origin_link','originLink','origin_url','originUrl','landing_url','landingUrl','target','url','redirect','redirect_url','redirectUrl','destination','dest','deep_link','deeplink','fallback_url','fallback']){
+      const raw=u.searchParams.get(key); if(!raw) continue;
+      const decoded=azShopeeDecodeRepeated(raw);
+      try{
+        const candidate=new URL(decoded,u).toString();
+        if(azShopeePublicHost(candidate)){ next=candidate; break; }
+      }catch{}
+    }
+    if(!next || next===current) break;
+    current=next;
+  }
+  return current!==original ? current : '';
 }
 function azDecodeHtml(value){
   return String(value || "")
@@ -2368,6 +2401,8 @@ function azShopeeProductUrl(ids){
 }
 function azShopeeRedirectCandidate(baseUrl, html){
   const candidates=[];
+  const directLanding=azShopeeTrackingLanding(baseUrl);
+  if(directLanding) candidates.push({url:directLanding,score:260});
   const add=v=>{
     let raw=azDecodeHtml(String(v || '').trim()); if(!raw) return;
     for(let i=0;i<2;i++){ try{ const d=decodeURIComponent(raw); if(d===raw) break; raw=d; }catch{break;} }
@@ -2388,7 +2423,7 @@ function azShopeeRedirectCandidate(baseUrl, html){
   };
   try{
     const b=new URL(baseUrl);
-    for(const k of ['url','u','target','redirect','redirect_url','redirectUrl','destination','dest','deep_link','deeplink','fallback_url','fallback']){
+    for(const k of ['origin_link','originLink','origin_url','originUrl','landing_url','landingUrl','url','u','target','redirect','redirect_url','redirectUrl','destination','dest','deep_link','deeplink','fallback_url','fallback']){
       if(b.searchParams.get(k)) add(b.searchParams.get(k));
     }
   }catch{}
@@ -2450,6 +2485,8 @@ async function azFetchShopeePage(startUrl){
   let current=String(startUrl || ''); const seen=new Set();
   for(let hop=0;hop<10;hop++){
     if(!azShopeePublicHost(current)) throw Object.assign(new Error('Redirect keluar daripada domain Shopee telah disekat.'),{statusCode:400});
+    const trackingLanding=azShopeeTrackingLanding(current);
+    if(trackingLanding && trackingLanding!==current){ current=trackingLanding; continue; }
     if(seen.has(current)) throw Object.assign(new Error('Shopee redirect loop dikesan.'),{statusCode:502}); seen.add(current);
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
     let response;
@@ -2507,10 +2544,11 @@ app.post('/api/shopee-affiliate/product-metadata', requireAdmin, async (req,res)
   try{
     const affiliateUrl=azShopeeUrl(req.body?.url);
     if(!affiliateUrl) return res.status(400).json({ok:false,error:'invalid_shopee_url',message:'URL Shopee tidak sah.'});
-    const first=await azFetchShopeePage(affiliateUrl);
+    const directLanding=azShopeeTrackingLanding(affiliateUrl);
+    const first=await azFetchShopeePage(directLanding || affiliateUrl);
     let productUrl=first.url, html=first.html;
     const meta1=azHtmlMetaMap(html);
-    const candidate=meta1['og:url'] || azCanonicalUrl(html,productUrl);
+    const candidate=meta1['og:url'] || azCanonicalUrl(html,productUrl) || azShopeeRedirectCandidate(productUrl,html);
     if(candidate && azShopeePublicHost(candidate) && candidate!==productUrl){
       try{ const second=await azFetchShopeePage(candidate); productUrl=second.url; html=second.html; }catch{}
     }
@@ -2539,7 +2577,7 @@ app.post('/api/shopee-affiliate/product-metadata', requireAdmin, async (req,res)
     const priceLabel=azShopeePriceLabel(priceMin,priceMax,offer?.priceCurrency || 'MYR');
     const metadata={title,description,image,priceMin,priceMax,priceLabel,shopName,rating,sold,itemId:ids.itemId,shopId:ids.shopId,productUrl,currency:'MYR'};
     const completeness=['title','image','priceLabel','description'].filter(k=>metadata[k]).length;
-    return res.json({ok:true,affiliateUrl,metadata,completeness,partial:completeness<3,message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata tidak dapat dibaca; Shopee mungkin menghadkan public page dari server.'});
+    return res.json({ok:true,affiliateUrl,metadata,completeness,partial:completeness<3,resolvedProductUrl:productUrl,shopId:ids.shopId,itemId:ids.itemId,priceAvailable:!!priceLabel,message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata tidak dapat dibaca; Shopee mungkin menghadkan public page dari server.'});
   }catch(err){
     const status=Number(err?.statusCode || (err?.name==='AbortError'?504:500));
     return res.status(status).json({ok:false,error:'shopee_metadata_failed',message:String(err?.message || err || 'Gagal membaca maklumat produk Shopee.')});
