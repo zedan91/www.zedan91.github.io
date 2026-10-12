@@ -1,0 +1,8 @@
+const test=require('node:test'); const assert=require('node:assert/strict'); const fs=require('node:fs'); const path=require('node:path');
+const ROOT=path.resolve(__dirname,'..');
+const pkg=JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8'));
+const runtime=fs.readFileSync(path.join(ROOT,'deploy-server.js'),'utf8');
+const html=fs.readFileSync(path.join(ROOT,'affiliate-shop','index.html'),'utf8');
+test('v1296 uses the actual Render runtime for Shopee routes',()=>{ assert.equal(pkg.version,'1.0.1296'); assert.match(runtime,/pathname === "\/api\/shopee-affiliate\/product-metadata"/); assert.match(runtime,/runtime:'deploy-server\.js',patch:1296/); });
+test('v1296 resolver supports short-link HTML redirects and ID recovery',()=>{ assert.match(runtime,/function azShopeeRedirectCandidate/); assert.match(runtime,/function azShopeeIdsFromText/); assert.match(runtime,/api\/v4\/pdp\/get_pc/); assert.match(runtime,/meta\\b/); });
+test('v1296 keeps affiliate short link as Buy Now source',()=>{ assert.match(html,/link:check\.link/); assert.match(html,/Affiliate Buy Now dikekalkan/); });

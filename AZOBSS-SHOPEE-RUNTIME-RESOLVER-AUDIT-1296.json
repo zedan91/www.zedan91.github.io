@@ -1,0 +1,23 @@
+{
+  "version": "1.0.1296",
+  "rootCause": "Render starts deploy-server.js while v1295 metadata route was only in backend/server.js",
+  "runtimeRoutes": [
+    "/api/shopee-affiliate/status",
+    "/api/shopee-affiliate/product-metadata",
+    "/api/shopee-affiliate/generate-link",
+    "/api/shopee-affiliate/product-offers"
+  ],
+  "resolver": [
+    "HTTP 3xx",
+    "meta refresh",
+    "JS location",
+    "encoded Shopee URLs",
+    "deep links",
+    "HTML shopId/itemId",
+    "JSON-LD",
+    "embedded state",
+    "item API",
+    "PDP API"
+  ],
+  "affiliateLinkPreserved": true
+}

@@ -1351,7 +1351,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <h2 id="adminShopeeOffersTitle">Shopee Product Offer → AZOBSS Affiliate</h2>
       <button class="admin-product-close" id="adminShopeeOffersClose" type="button" aria-label="Close">×</button>
     </div>
-    <p class="admin-shopee-help"><b>Tak perlu Open API untuk import maklumat produk.</b> Buka Product Offer, Get Link, kemudian paste link affiliate. AZOBSS akan cuba ambil gambar, nama, description, harga dan maklumat produk secara automatik.</p>
+    <p class="admin-shopee-help"><b>Tak perlu Open API untuk import maklumat produk.</b> Buka Product Offer, Get Link, kemudian paste link affiliate. AZOBSS akan resolve short-link Shopee dan auto ambil gambar, nama, description, harga dan maklumat produk secara automatik.</p>
     <div class="admin-shopee-manual" id="adminShopeeManualPanel">
       <strong>✅ Paste Get Link → Auto Import — tak perlu App ID / Secret</strong>
       <div class="admin-shopee-manual-copy">1. Buka Shopee Product Offer → 2. Get Link → 3. paste <b>s.shopee.com.my</b>. Selepas paste, AZOBSS auto isi nama, gambar, description dan harga; kamu cuma tekan Save & Publish.</div>
@@ -1881,7 +1881,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           out.partial ? '' : 'ok');
       }catch(err){
         if(seq!==manualShopeeImportSeq) return;
-        shopeeStatus(manualAffiliateStatus,'⚠️ '+(err.message || err)+' Link affiliate masih sah. Tekan Import / Retry atau guna form manual jika Shopee block metadata dari server.','error');
+        shopeeStatus(manualAffiliateStatus,'⚠️ '+(err.message || err)+' Link affiliate masih sah. Tekan Import / Retry jika perlu.','error');
         if(!auto){
           closeShopeeOffers();
           openModal({title:'Shopee Product',desc:'',category:'others',price:'Affiliate',badge:'Affiliate',icon:'🛒',image:'',originLink:'',link:check.link,buttonText:'Buy Now',meta:'Shopee Affiliate Manual Get Link'});

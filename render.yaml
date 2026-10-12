@@ -76,6 +76,12 @@ services:
         sync: false
       - key: TOYYIB_CATEGORY_CODE
         value: wqrblyk7
+      - key: SHOPEE_AFFILIATE_APP_ID
+        sync: false
+      - key: SHOPEE_AFFILIATE_SECRET
+        sync: false
+      - key: SHOPEE_AFFILIATE_ENDPOINT
+        value: https://open-api.affiliate.shopee.com.my/graphql
       - key: FRONTEND_BASE_URL
         value: https://www.azobss.com
       - key: TOYYIB_BASE_URL
