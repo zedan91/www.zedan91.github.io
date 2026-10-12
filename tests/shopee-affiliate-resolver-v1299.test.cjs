@@ -9,13 +9,13 @@ const backend=fs.readFileSync(path.join(root,'backend','server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 
 test('v1299 uses a backend-first Shopee affiliate landing resolver',()=>{
-  assert.equal(pkg.version,'1.0.1299');
+  assert.ok(['1.0.1299','1.0.1300'].includes(pkg.version));
   assert.match(runtime,/function azShopeeTrackingLanding/);
   assert.match(runtime,/origin_link/);
   assert.match(runtime,/const directLanding=azShopeeTrackingLanding\(affiliateUrl\)/);
   assert.match(runtime,/resolvedProductUrl/);
   assert.match(runtime,/priceAvailable/);
-  assert.match(runtime,/patch:1299/);
+  assert.match(runtime,/patch:1300/);
 });
 
 test('v1299 recognizes official an_redir landing parameters but preserves the affiliate Buy Now URL',()=>{

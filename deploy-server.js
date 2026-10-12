@@ -18522,7 +18522,7 @@ async function azobssPcFullCatalog(force=false){
 }
 
 
-// AZOBSS v1299 RUNTIME: Shopee Affiliate bridge + server-side canonical resolver + rendered-browser fallback lives in deploy-server.js.
+// AZOBSS v1300 RUNTIME: Shopee Affiliate bridge + server-side canonical resolver + rendered-browser fallback lives in deploy-server.js.
 // Keep App ID + Secret on the backend only. Never expose the Secret to browser code.
 const SHOPEE_AFFILIATE_APP_ID = String(process.env.SHOPEE_AFFILIATE_APP_ID || process.env.SHOPEE_APP_ID || "").trim();
 const SHOPEE_AFFILIATE_SECRET = String(process.env.SHOPEE_AFFILIATE_SECRET || process.env.SHOPEE_APP_SECRET || "").trim();
@@ -18598,7 +18598,7 @@ function azShopeePublicHost(value){
   } catch { return false; }
 }
 
-// AZOBSS v1299: server-side Shopee affiliate landing resolver.
+// AZOBSS v1300: server-side Shopee affiliate landing resolver.
 // Official Shopee MY tracking links can carry the real product landing URL in origin_link.
 // Every decoded destination is validated as a Shopee Malaysia host before it is followed.
 function azShopeeDecodeRepeated(value, rounds=4){
@@ -19071,50 +19071,7 @@ async function azShopeeResolveMetadataAuto(affiliateUrl,{force=false}={}){
   try{return await work;}finally{if(!force)azShopeeMetadataInflight.delete(key);}
 }
 
-app.post('/api/shopee-affiliate/product-metadata', requireAdmin, async (req,res)=>{
-  try{
-    const affiliateUrl=azShopeeUrl(req.body?.url);
-    if(!affiliateUrl) return res.status(400).json({ok:false,error:'invalid_shopee_url',message:'URL Shopee tidak sah.'});
-    const first=await azFetchShopeePage(affiliateUrl);
-    let productUrl=first.url, html=first.html;
-    const meta1=azHtmlMetaMap(html);
-    const candidate=meta1['og:url'] || azCanonicalUrl(html,productUrl);
-    if(candidate && azShopeePublicHost(candidate) && candidate!==productUrl){
-      try{ const second=await azFetchShopeePage(candidate); productUrl=second.url; html=second.html; }catch{}
-    }
-    let meta=azHtmlMetaMap(html), jsonld=azFindProductJsonLd(html);
-    let ids=azShopeeIds(productUrl);
-    if(!ids.itemId) ids=azShopeeIdsFromText(html);
-    if(ids.itemId && !azShopeeIds(productUrl).itemId){
-      const canonicalProduct=azShopeeProductUrl(ids);
-      try{ const productPage=await azFetchShopeePage(canonicalProduct); productUrl=productPage.url; html=productPage.html; meta=azHtmlMetaMap(html); jsonld=azFindProductJsonLd(html); }catch{ productUrl=canonicalProduct; }
-    }
-    const embedded=azShopeeEmbeddedFields(html,ids);
-    const apiData=await azShopeeItemApi(productUrl,ids);
-    const offer=(Array.isArray(jsonld?.offers)?jsonld.offers[0]:jsonld?.offers) || {};
-    const agg=jsonld?.aggregateRating || {};
-    const apiMin=azShopeeMoney(apiData?.price_min ?? apiData?.price ?? embedded.priceMin), apiMax=azShopeeMoney(apiData?.price_max ?? apiData?.price ?? embedded.priceMax);
-    const ldMin=Number(offer?.lowPrice || offer?.price || meta['product:price:amount'] || meta['og:price:amount'] || 0);
-    const ldMax=Number(offer?.highPrice || offer?.price || meta['product:price:amount'] || meta['og:price:amount'] || 0);
-    const priceMin=apiMin || (Number.isFinite(ldMin)?ldMin:0), priceMax=apiMax || (Number.isFinite(ldMax)?ldMax:0);
-    const imageRaw=apiData?.image || (Array.isArray(apiData?.images)?apiData.images[0]:'') || embedded.image || (Array.isArray(jsonld?.image)?jsonld.image[0]:jsonld?.image) || meta['og:image'] || meta['twitter:image'] || '';
-    const title=azCleanShopeeTitle(apiData?.name || embedded.name || jsonld?.name || meta['og:title'] || meta['twitter:title'] || '');
-    const description=azCleanText(apiData?.description || embedded.description || jsonld?.description || meta['og:description'] || meta['description'] || '',1600);
-    const shopName=azCleanText(apiData?.shop_name || embedded.shopName || offer?.seller?.name || jsonld?.brand?.name || '',160);
-    const rating=Number(apiData?.item_rating?.rating_star || embedded.rating || agg?.ratingValue || 0) || 0;
-    const sold=Number(apiData?.historical_sold ?? apiData?.sold ?? embedded.sold ?? 0) || 0;
-    const image=azShopeeImageUrl(imageRaw);
-    const priceLabel=azShopeePriceLabel(priceMin,priceMax,offer?.priceCurrency || 'MYR');
-    const metadata={title,description,image,priceMin,priceMax,priceLabel,shopName,rating,sold,itemId:ids.itemId,shopId:ids.shopId,productUrl,currency:'MYR'};
-    const completeness=['title','image','priceLabel','description'].filter(k=>metadata[k]).length;
-    return res.json({ok:true,affiliateUrl,metadata,completeness,partial:completeness<3,message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata tidak dapat dibaca; Shopee mungkin menghadkan public page dari server.'});
-  }catch(err){
-    const status=Number(err?.statusCode || (err?.name==='AbortError'?504:500));
-    return res.status(status).json({ok:false,error:'shopee_metadata_failed',message:String(err?.message || err || 'Gagal membaca maklumat produk Shopee.')});
-  }
-});
-
-
+// AZOBSS v1300: deploy-server.js uses the native handler(req,res) router below; do not register Express app routes here.
 
 async function handler(req, res) {
 
@@ -19199,7 +19156,7 @@ async function handler(req, res) {
     if (pathname === "/api/shopee-affiliate/status" && req.method === "GET") {
       const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
       if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json",{"Cache-Control":"no-store"});
-      return send(res,200,JSON.stringify({ok:true,configured:azShopeeAffiliateConfigured(),endpoint:SHOPEE_AFFILIATE_ENDPOINT,appIdLast4:SHOPEE_AFFILIATE_APP_ID?SHOPEE_AFFILIATE_APP_ID.slice(-4):"",runtime:"deploy-server.js",patch:1299}),"application/json",{"Cache-Control":"no-store"});
+      return send(res,200,JSON.stringify({ok:true,configured:azShopeeAffiliateConfigured(),endpoint:SHOPEE_AFFILIATE_ENDPOINT,appIdLast4:SHOPEE_AFFILIATE_APP_ID?SHOPEE_AFFILIATE_APP_ID.slice(-4):"",runtime:"deploy-server.js",patch:1300}),"application/json",{"Cache-Control":"no-store"});
     }
     if (pathname === "/api/shopee-affiliate/product-metadata" && req.method === "POST") {
       try{
@@ -19215,11 +19172,11 @@ async function handler(req, res) {
           ok:true,affiliateUrl,metadata,completeness,partial:completeness<3,
           source:result.method||'http',cached:!!result.cached,challenge:!!result.challenge,networkPayloads:Number(result.networkPayloads||0),
           resolvedProductUrl:String(result.resolvedProductUrl||metadata.productUrl||''),shopId:String(result.shopId||metadata.shopId||''),itemId:String(result.itemId||metadata.itemId||''),priceAvailable:!!String(metadata.priceLabel||'').trim(),
-          message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata berjaya dibaca.',runtime:'deploy-server.js',patch:1299
+          message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata berjaya dibaca.',runtime:'deploy-server.js',patch:1300
         }),"application/json",{"Cache-Control":"no-store"});
       }catch(err){
         const status=Number(err?.statusCode||(err?.name==='AbortError'?504:500));
-        return send(res,status,JSON.stringify({ok:false,error:'shopee_metadata_failed',message:String(err?.message||err||'Gagal membaca maklumat produk Shopee.'),runtime:'deploy-server.js',patch:1299}),"application/json",{"Cache-Control":"no-store"});
+        return send(res,status,JSON.stringify({ok:false,error:'shopee_metadata_failed',message:String(err?.message||err||'Gagal membaca maklumat produk Shopee.'),runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});
       }
     }
     if (pathname === "/api/shopee-affiliate/generate-link" && req.method === "POST") {
@@ -19228,13 +19185,13 @@ async function handler(req, res) {
         if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json",{"Cache-Control":"no-store"});
         const body=parseRequestBody(await readBody(req)), originUrl=azShopeeUrl(body?.originUrl);
         if(!originUrl) return send(res,400,JSON.stringify({ok:false,error:'invalid_shopee_url',message:'URL Shopee tidak sah.'}),"application/json");
-        if(azShopeeAffiliateAlready(originUrl)) return send(res,200,JSON.stringify({ok:true,shortLink:originUrl,passthrough:true,runtime:'deploy-server.js',patch:1299}),"application/json");
+        if(azShopeeAffiliateAlready(originUrl)) return send(res,200,JSON.stringify({ok:true,shortLink:originUrl,passthrough:true,runtime:'deploy-server.js',patch:1300}),"application/json");
         const subIds=azShopeeSubIds(body?.subIds), subIdsGraphql=subIds.map(v=>JSON.stringify(v)).join(',');
         const queryText=`mutation { generateShortLink(input: { originUrl: ${JSON.stringify(originUrl)}, subIds: [${subIdsGraphql}] }) { shortLink } }`;
         const data=await azShopeeAffiliateGraphql(queryText), shortLink=String(data?.generateShortLink?.shortLink||'').trim();
         if(!shortLink) return send(res,502,JSON.stringify({ok:false,error:'no_short_link',message:'Shopee API tidak memulangkan affiliate short link.'}),"application/json");
-        return send(res,200,JSON.stringify({ok:true,shortLink,originUrl,subIds,runtime:'deploy-server.js',patch:1299}),"application/json",{"Cache-Control":"no-store"});
-      }catch(err){return send(res,Number(err?.statusCode||500),JSON.stringify({ok:false,error:'shopee_affiliate_generate_failed',message:String(err?.message||err||'Shopee Affiliate API failed'),runtime:'deploy-server.js',patch:1299}),"application/json",{"Cache-Control":"no-store"});}
+        return send(res,200,JSON.stringify({ok:true,shortLink,originUrl,subIds,runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});
+      }catch(err){return send(res,Number(err?.statusCode||500),JSON.stringify({ok:false,error:'shopee_affiliate_generate_failed',message:String(err?.message||err||'Shopee Affiliate API failed'),runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});}
     }
     if (pathname === "/api/shopee-affiliate/product-offers" && req.method === "GET") {
       try{
@@ -19243,8 +19200,8 @@ async function handler(req, res) {
         const keyword=String(parsed.query?.keyword||'').trim().slice(0,120), limit=Math.max(1,Math.min(50,Number(parsed.query?.limit||20)||20)), sortType=Math.max(1,Math.min(5,Number(parsed.query?.sortType||2)||2));
         const queryText=`query { productOfferV2(keyword: ${JSON.stringify(keyword)}, limit: ${limit}, sortType: ${sortType}) { nodes { itemId productName productLink offerLink imageUrl priceMin priceMax commissionRate commission sellerCommissionRate shopName ratingStar sales } } }`;
         const data=await azShopeeAffiliateGraphql(queryText), raw=data?.productOfferV2, nodes=Array.isArray(raw?.nodes)?raw.nodes:(Array.isArray(raw)?raw:[]);
-        return send(res,200,JSON.stringify({ok:true,items:nodes,runtime:'deploy-server.js',patch:1299}),"application/json",{"Cache-Control":"no-store"});
-      }catch(err){return send(res,Number(err?.statusCode||500),JSON.stringify({ok:false,error:'shopee_affiliate_offers_failed',message:String(err?.message||err||'Shopee Affiliate Product Offer API failed'),runtime:'deploy-server.js',patch:1299}),"application/json",{"Cache-Control":"no-store"});}
+        return send(res,200,JSON.stringify({ok:true,items:nodes,runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});
+      }catch(err){return send(res,Number(err?.statusCode||500),JSON.stringify({ok:false,error:'shopee_affiliate_offers_failed',message:String(err?.message||err||'Shopee Affiliate Product Offer API failed'),runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});}
     }
 
     // AZOBSS PATCH 963: route AZOBSSTV requests through its isolated handler.

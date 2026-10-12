@@ -9123,12 +9123,12 @@ window.__AZOBSS_GLOBAL_AUTH_READY__ = true;
 try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:{ version:1272 } })); } catch (_e) {}
 
 
-// AZOBSS v1299: Administrator-only small website version label below navbar.
+// AZOBSS v1300: Administrator-only small website version label below navbar.
 (function(){
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1299';
+  var VERSION_TEXT = 'v1300';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 

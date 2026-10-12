@@ -1,0 +1,15 @@
+{
+  "patch": 1300,
+  "version": "1.0.1300",
+  "date": "2026-10-12",
+  "baseline": 1299,
+  "runtime": "deploy-server.js",
+  "rootCause": "v1299 accidentally registered an Express app.post route in deploy-server.js, but this runtime has no Express app variable.",
+  "fixes": [
+    "removed stray app.post /api/shopee-affiliate/product-metadata registration",
+    "kept the existing native handler(req,res) Shopee metadata route",
+    "bumped runtime diagnostics to patch 1300",
+    "administrator version badge v1300"
+  ],
+  "shopeeResolverPreserved": true
+}
