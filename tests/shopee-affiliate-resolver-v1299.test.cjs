@@ -9,7 +9,7 @@ const backend=fs.readFileSync(path.join(root,'backend','server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 
 test('v1299 uses a backend-first Shopee affiliate landing resolver',()=>{
-  assert.ok(['1.0.1299','1.0.1300','1.0.1302'].includes(pkg.version));
+  assert.ok(['1.0.1299','1.0.1300','1.0.1302','1.0.1303'].includes(pkg.version));
   assert.match(runtime,/function azShopeeTrackingLanding/);
   assert.match(runtime,/origin_link/);
   assert.match(runtime,/const directLanding=azShopeeTrackingLanding\(affiliateUrl\)/);
@@ -22,7 +22,7 @@ test('v1299 recognizes official an_redir landing parameters but preserves the af
   assert.match(runtime,/\['origin_link','originLink','origin_url','originUrl'/);
   assert.match(runtime,/const trackingLanding=azShopeeTrackingLanding\(current\)/);
   assert.match(backend,/function azShopeeTrackingLanding/);
-  assert.match(html,/originLink:m\.productUrl \|\| ''/);
+  assert.match(html,/originLink:m\.(?:sourceUrl \|\| m\.)?productUrl \|\| ''/);
   assert.match(html,/link:check\.link/);
 });
 
@@ -32,7 +32,7 @@ test('v1299 browser fallback starts from the decoded Shopee product landing when
 });
 
 test('v1299 lets metadata import succeed without a price and reports the resolved product identity',()=>{
-  assert.match(html,/Harga tidak dipulangkan oleh Shopee/);
+  assert.match(html,/(?:Harga tidak dipulangkan oleh Shopee|Medan optional belum ada)/);
   assert.match(html,/Produk dikesan: shop/);
   assert.match(runtime,/priceAvailable:!!String\(metadata\.priceLabel/);
 });

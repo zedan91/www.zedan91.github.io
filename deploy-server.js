@@ -18871,6 +18871,22 @@ function azShopeeLooksLikeInternalToken(value){
   if(/^shopee[_-][a-z0-9_:-]{2,}$/i.test(raw)) return true;
   return ['shopee','shopee language','shopee mart','shopee_language','shopee_mart'].includes(flat);
 }
+// AZOBSS v1303: ViralKaya-style minimal product contract.
+// A Shopee import is useful once a real product title is known. Price/rating/sold/shop are enrichments,
+// not blockers. This prevents a missing price from turning a valid product into a failed import.
+function azShopeeMetadataHasRequiredProduct(m){
+  const title=String(m?.title||'').trim();
+  return !!title && !azShopeeLooksLikeInternalToken(title);
+}
+function azShopeeMetadataMissing(m){
+  const x=m||{}, missing=[];
+  if(!azShopeeMetadataHasRequiredProduct(x)) missing.push('title');
+  if(!String(x.description||'').trim()) missing.push('description');
+  if(!/^https?:\/\//i.test(String(x.image||'').trim())) missing.push('image');
+  if(!String(x.priceLabel||'').trim()) missing.push('price');
+  if(!/^https?:\/\//i.test(String(x.sourceUrl||x.productUrl||'').trim())) missing.push('sourceUrl');
+  return missing;
+}
 function azShopeeMetadataCompleteness(m){
   const x=m||{}; let score=0;
   const title=String(x.title||'').trim(), description=String(x.description||'').trim();
@@ -18878,7 +18894,17 @@ function azShopeeMetadataCompleteness(m){
   if(/^https?:\/\//i.test(String(x.image||'').trim())) score++;
   if(String(x.priceLabel||'').trim()) score++;
   if(description.length>=12 && !azShopeeLooksLikeInternalToken(description)) score++;
+  if(/^https?:\/\//i.test(String(x.sourceUrl||x.productUrl||'').trim())) score++;
   return score;
+}
+function azShopeeTitleFromProductUrl(productUrl){
+  try{
+    const u=new URL(String(productUrl||''));
+    const m=decodeURIComponent(u.pathname).match(/^\/([^/]+)-i\.\d+\.\d+\/?$/i);
+    if(!m) return '';
+    const title=azCleanShopeeTitle(m[1].replace(/[-_]+/g,' '));
+    return title && !azShopeeLooksLikeInternalToken(title) ? title : '';
+  }catch{return '';}
 }
 function azShopeeMetadataMerge(primary, secondary){
   const a=primary||{}, b=secondary||{};
@@ -18944,12 +18970,14 @@ function azShopeeMetadataFromArtifacts({productUrl='',html='',apiData={},rendere
   let description=azCleanText(apiData?.description||apiData?.item_description||embedded.description||jsonld?.description||meta['og:description']||meta['description']||rendered?.description||'',1800);
   let shopName=azCleanText(apiData?.shop_name||apiData?.shopName||embedded.shopName||offer?.seller?.name||jsonld?.brand?.name||rendered?.shopName||'',160);
   if(azShopeeLooksLikeInternalToken(title)) title='';
+  if(!title) title=azShopeeTitleFromProductUrl(productUrl);
   if(azShopeeLooksLikeInternalToken(description)) description='';
   if(azShopeeLooksLikeInternalToken(shopName)) shopName='';
   const rating=Number(apiData?.item_rating?.rating_star||apiData?.rating_star||embedded.rating||agg?.ratingValue||rendered?.rating||0)||0;
   const sold=Number(apiData?.historical_sold??apiData?.sold??embedded.sold??rendered?.sold??0)||0;
   const image=azShopeeImageUrl(imageRaw), priceLabel=azShopeePriceLabel(priceMin,priceMax,offer?.priceCurrency||'MYR');
-  return {title,description,image,priceMin,priceMax,priceLabel,shopName,rating,sold,itemId:ids.itemId,shopId:ids.shopId,productUrl:productUrl||azShopeeProductUrl(ids),currency:'MYR'};
+  const canonicalUrl=productUrl||azShopeeProductUrl(ids);
+  return {title,description,image,priceMin,priceMax,priceLabel,shopName,rating,sold,itemId:ids.itemId,shopId:ids.shopId,productUrl:canonicalUrl,sourceUrl:canonicalUrl,currency:'MYR'};
 }
 async function azShopeeResolveHttpMetadata(affiliateUrl){
   const directLanding=azShopeeTrackingLanding(affiliateUrl);
@@ -19077,21 +19105,31 @@ async function azShopeeResolveMetadataAuto(affiliateUrl,{force=false}={}){
   const work=(async()=>{
     let httpResult=null,httpError=null; try{httpResult=await azShopeeResolveHttpMetadata(affiliateUrl);}catch(e){httpError=e;}
     let best=httpResult, bestScore=azShopeeMetadataCompleteness(httpResult?.metadata);
-    if(bestScore<3){
+    // Always try the rendered resolver when the required title is still missing. Optional price must never
+    // decide whether the browser fallback runs.
+    if(!azShopeeMetadataHasRequiredProduct(httpResult?.metadata) || bestScore<3){
       try{
         const browserResult=await azShopeeBrowserMetadata(affiliateUrl), merged=azShopeeMetadataMerge(browserResult.metadata,httpResult?.metadata);
         const score=azShopeeMetadataCompleteness(merged);
-        if(score>=bestScore) best={...browserResult,metadata:merged};
+        if(score>=bestScore || azShopeeMetadataHasRequiredProduct(merged)) best={...browserResult,metadata:merged};
       }catch(e){ if(!httpError) httpError=e; }
     }
-    if(!best||azShopeeMetadataCompleteness(best.metadata)===0){
-      const err=httpError||new Error('Shopee menyekat metadata produk pada HTTP dan browser resolver.'); err.statusCode=err.statusCode||502; throw err;
-    }
+    if(!best) best={metadata:{},method:'none'};
     const resolvedIds={shopId:String(best?.metadata?.shopId||''),itemId:String(best?.metadata?.itemId||'')};
     if(resolvedIds.shopId && resolvedIds.itemId && !azShopeeHasCanonicalProductPath(best?.metadata?.productUrl||'',resolvedIds)){
       best.metadata.productUrl=azShopeeProductUrl(resolvedIds);
     }
-    const result={...best,completeness:azShopeeMetadataCompleteness(best.metadata),cached:false,
+    best.metadata.sourceUrl=String(best?.metadata?.sourceUrl||best?.metadata?.productUrl||'');
+    best.metadata.affiliateUrl=key;
+    // Match the useful ViralKaya contract: title is required; description/image/price are optional.
+    // If Shopee blocks every source, keep the affiliate URL and any resolved identity in the error payload
+    // so the Admin manual editor can continue without losing commission tracking.
+    if(!azShopeeMetadataHasRequiredProduct(best.metadata)){
+      const err=new Error('SCRAPE_FAILED: Nama produk Shopee tidak dapat dibaca secara automatik. Link affiliate masih dikekalkan.');
+      err.code='SCRAPE_FAILED'; err.statusCode=502; err.partialResult=best; err.httpCause=httpError||null; throw err;
+    }
+    const missing=azShopeeMetadataMissing(best.metadata);
+    const result={...best,completeness:azShopeeMetadataCompleteness(best.metadata),cached:false,partial:missing.length>0,missing,
       resolvedProductUrl:String(best?.metadata?.productUrl||''),shopId:resolvedIds.shopId,itemId:resolvedIds.itemId,
       priceAvailable:!!String(best?.metadata?.priceLabel||'').trim()};
     const cacheKeys=[key,result.metadata?.productUrl,result.metadata?.itemId&&result.metadata?.shopId?`${result.metadata.shopId}:${result.metadata.itemId}`:''].filter(Boolean);
@@ -19189,24 +19227,30 @@ async function handler(req, res) {
       return send(res,200,JSON.stringify({ok:true,configured:azShopeeAffiliateConfigured(),endpoint:SHOPEE_AFFILIATE_ENDPOINT,appIdLast4:SHOPEE_AFFILIATE_APP_ID?SHOPEE_AFFILIATE_APP_ID.slice(-4):"",runtime:"deploy-server.js",patch:1300}),"application/json",{"Cache-Control":"no-store"});
     }
     if (pathname === "/api/shopee-affiliate/product-metadata" && req.method === "POST") {
+      let affiliateUrl='';
       try{
         const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
         if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."}),"application/json",{"Cache-Control":"no-store"});
         if(azRateLimitOrSend(req,res,"shopee-affiliate-metadata",40,10*60*1000)) return;
         const body=parseRequestBody(await readBody(req));
-        const affiliateUrl=azShopeeUrl(body?.url);
+        affiliateUrl=azShopeeUrl(body?.url);
         if(!affiliateUrl) return send(res,400,JSON.stringify({ok:false,error:'invalid_shopee_url',message:'URL Shopee tidak sah.'}),"application/json",{"Cache-Control":"no-store"});
         const result=await azShopeeResolveMetadataAuto(affiliateUrl,{force:!!body?.force});
         const metadata=result.metadata||{}, completeness=Number(result.completeness||azShopeeMetadataCompleteness(metadata));
+        const missing=Array.isArray(result.missing)?result.missing:azShopeeMetadataMissing(metadata);
+        const partial=missing.length>0;
         return send(res,200,JSON.stringify({
-          ok:true,affiliateUrl,metadata,completeness,partial:completeness<3,
+          ok:true,affiliateUrl,metadata:{...metadata,sourceUrl:String(metadata.sourceUrl||metadata.productUrl||''),affiliateUrl},completeness,partial,missing,
+          product:{title:String(metadata.title||''),description:String(metadata.description||''),image:String(metadata.image||'')||null,price:String(metadata.priceLabel||'')||null,sourceUrl:String(metadata.sourceUrl||metadata.productUrl||'')},
           source:result.method||'http',cached:!!result.cached,challenge:!!result.challenge,networkPayloads:Number(result.networkPayloads||0),
           resolvedProductUrl:String(result.resolvedProductUrl||metadata.productUrl||''),shopId:String(result.shopId||metadata.shopId||''),itemId:String(result.itemId||metadata.itemId||''),priceAvailable:!!String(metadata.priceLabel||'').trim(),
-          message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata berjaya dibaca.',runtime:'deploy-server.js',patch:1300
+          message:partial?'Produk dikesan. Medan yang Shopee tidak pulangkan boleh diisi manual.':'Maklumat produk Shopee berjaya dibaca.',runtime:'deploy-server.js',patch:1303
         }),"application/json",{"Cache-Control":"no-store"});
       }catch(err){
         const status=Number(err?.statusCode||(err?.name==='AbortError'?504:500));
-        return send(res,status,JSON.stringify({ok:false,error:'shopee_metadata_failed',message:String(err?.message||err||'Gagal membaca maklumat produk Shopee.'),runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});
+        const partial=err?.partialResult||{}, metadata=partial?.metadata||{};
+        return send(res,status,JSON.stringify({ok:false,error:String(err?.code||'shopee_metadata_failed'),message:String(err?.message||err||'Gagal membaca maklumat produk Shopee.'),affiliateUrl,
+          metadata:{...metadata,sourceUrl:String(metadata.sourceUrl||metadata.productUrl||''),affiliateUrl},resolvedProductUrl:String(metadata.productUrl||''),shopId:String(metadata.shopId||''),itemId:String(metadata.itemId||''),missing:azShopeeMetadataMissing(metadata),runtime:'deploy-server.js',patch:1303}),"application/json",{"Cache-Control":"no-store"});
       }
     }
     if (pathname === "/api/shopee-affiliate/generate-link" && req.method === "POST") {
