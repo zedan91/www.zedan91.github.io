@@ -9,7 +9,7 @@ const backend=fs.readFileSync(path.join(root,'backend','server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 
 test('v1299 uses a backend-first Shopee affiliate landing resolver',()=>{
-  assert.ok(['1.0.1299','1.0.1300'].includes(pkg.version));
+  assert.ok(['1.0.1299','1.0.1300','1.0.1301'].includes(pkg.version));
   assert.match(runtime,/function azShopeeTrackingLanding/);
   assert.match(runtime,/origin_link/);
   assert.match(runtime,/const directLanding=azShopeeTrackingLanding\(affiliateUrl\)/);

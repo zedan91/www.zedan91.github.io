@@ -8,9 +8,9 @@ const auth=fs.readFileSync(path.join(root,'assets/js/azobss-global-auth.js'),'ut
 const home=fs.readFileSync(path.join(root,'index.html'),'utf8');
 
 test('v1298 package exposes admin-only version badge',()=>{
-  assert.ok(['1.0.1299','1.0.1300'].includes(pkg.version));
-  assert.match(auth,/AZOBSS v1300: Administrator-only small website version label below navbar/);
-  assert.match(auth,/VERSION_TEXT = 'v1300'/);
+  assert.ok(['1.0.1299','1.0.1300','1.0.1301'].includes(pkg.version));
+  assert.match(auth,/AZOBSS v1301: Administrator-only website version label, slightly larger and lower below navbar/);
+  assert.match(auth,/VERSION_TEXT = 'v1301'/);
   assert.match(auth,/body\.az-role-is-admin/);
   assert.match(auth,/body\[data-az-current-role="admin"\]/);
   assert.match(auth,/display:none/);
@@ -19,11 +19,11 @@ test('v1298 package exposes admin-only version badge',()=>{
 
 test('v1298 badge is small and positioned below navbar without taking layout space',()=>{
   assert.match(auth,/position:fixed/);
-  assert.match(auth,/font:600 10px/);
-  assert.match(auth,/bottom\+4/);
-  assert.match(auth,/pointer-events:none/);
+  assert.match(auth,/bottom\+7/);
+  assert.match(auth,/font:600 12px/);
+    assert.match(auth,/pointer-events:none/);
 });
 
 test('v1298 home forces fresh global auth asset',()=>{
-  assert.match(home,/azobss-global-auth\.js\?v=1300/);
+  assert.match(home,/azobss-global-auth\.js\?v=1301/);
 });

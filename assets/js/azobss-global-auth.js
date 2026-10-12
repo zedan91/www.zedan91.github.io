@@ -9123,12 +9123,12 @@ window.__AZOBSS_GLOBAL_AUTH_READY__ = true;
 try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:{ version:1272 } })); } catch (_e) {}
 
 
-// AZOBSS v1300: Administrator-only small website version label below navbar.
+// AZOBSS v1301: Administrator-only website version label, slightly larger and lower below navbar.
 (function(){
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1300';
+  var VERSION_TEXT = 'v1301';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
@@ -9137,9 +9137,9 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
     var style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent='\n'
-      +'#'+BADGE_ID+'{position:fixed;left:8px;top:var(--azobss-admin-version-top,72px);z-index:2147480000;display:none;align-items:center;justify-content:center;padding:2px 5px;border-radius:5px;border:1px solid rgba(148,163,184,.16);background:rgba(2,6,23,.62);color:rgba(203,213,225,.78);font:600 10px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.025em;white-space:nowrap;pointer-events:none;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,.12);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}\n'
+      +'#'+BADGE_ID+'{position:fixed;left:8px;top:var(--azobss-admin-version-top,72px);z-index:2147480000;display:none;align-items:center;justify-content:center;padding:3px 6px;border-radius:5px;border:1px solid rgba(148,163,184,.16);background:rgba(2,6,23,.62);color:rgba(203,213,225,.78);font:600 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.025em;white-space:nowrap;pointer-events:none;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,.12);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}\n'
       +'body.az-role-is-admin #'+BADGE_ID+',body.is-admin #'+BADGE_ID+',body[data-role="admin"] #'+BADGE_ID+',body[data-az-current-role="admin"] #'+BADGE_ID+'{display:inline-flex;}\n'
-      +'@media (max-width:640px){#'+BADGE_ID+'{left:5px;padding:2px 4px;font-size:9px;}}\n';
+      +'@media (max-width:640px){#'+BADGE_ID+'{left:5px;padding:3px 5px;font-size:11px;}}\n';
     (document.head||document.documentElement).appendChild(style);
   }
 
@@ -9181,7 +9181,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
     var badge=ensureBadge();
     if(!badge) return;
     var bottom=navbarBottom();
-    var top=Math.max(4,Math.round(bottom>0 ? bottom+4 : 6));
+    var top=Math.max(4,Math.round(bottom>0 ? bottom+7 : 9));
     badge.style.setProperty('--azobss-admin-version-top',top+'px');
   }
 

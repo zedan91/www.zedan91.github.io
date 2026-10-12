@@ -10,7 +10,7 @@ const env = fs.readFileSync(path.join(root, 'backend', '.env.example'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1293 package exposes admin Shopee Product Offer integration', () => {
-  assert.ok(['1.0.1293','1.0.1294','1.0.1295','1.0.1296','1.0.1297','1.0.1298','1.0.1299','1.0.1300'].includes(pkg.version));
+  assert.ok(['1.0.1293','1.0.1294','1.0.1295','1.0.1296','1.0.1297','1.0.1298','1.0.1299','1.0.1300','1.0.1301'].includes(pkg.version));
   assert.match(html, /id="adminShopeeOffersButton"/);
   assert.match(html, /Shopee Product Offer → AZOBSS Affiliate/);
   assert.match(html, /\/api\/shopee-affiliate\/product-offers/);
