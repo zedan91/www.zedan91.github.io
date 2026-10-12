@@ -1,0 +1,18 @@
+{
+  "version": "1.0.1295",
+  "feature": "Shopee affiliate auto product metadata import without Open API",
+  "endpoint": "POST /api/shopee-affiliate/product-metadata",
+  "auto_fields": [
+    "product name",
+    "image",
+    "description",
+    "price/price range",
+    "shop",
+    "rating",
+    "sold",
+    "resolved product URL"
+  ],
+  "affiliate_link_preserved": true,
+  "open_api_preserved": true,
+  "fallback": "manual form if Shopee public metadata is blocked"
+}

@@ -7,8 +7,8 @@ const html = fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8
 const pkg = JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
 test('v1294 exposes manual Shopee Get Link workflow without Open API', () => {
-  assert.equal(pkg.version, '1.0.1294');
-  assert.match(html, /Manual Get Link — tak perlu App ID \/ Secret/);
+  assert.ok(['1.0.1294','1.0.1295'].includes(pkg.version));
+  assert.match(html, /Paste Get Link → Auto Import — tak perlu App ID \/ Secret/);
   assert.match(html, /adminShopeeManualAffiliateLink/);
   assert.match(html, /adminShopeeUseManualLink/);
   assert.match(html, /Save &amp; Publish/);

@@ -1319,7 +1319,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       </div>
       <div class="admin-shopee-autolink">
         <div class="admin-shopee-autolink-head">
-          <strong>🛒 Shopee Affiliate — Manual Get Link + Auto API</strong>
+          <strong>🛒 Shopee Affiliate — Auto Product Info + Get Link</strong>
           <a href="https://affiliate.shopee.com.my/offer/product_offer" target="_blank" rel="noopener">Open Shopee Product Offer ↗</a>
         </div>
         <label>Original Shopee Product Link
@@ -1351,16 +1351,16 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <h2 id="adminShopeeOffersTitle">Shopee Product Offer → AZOBSS Affiliate</h2>
       <button class="admin-product-close" id="adminShopeeOffersClose" type="button" aria-label="Close">×</button>
     </div>
-    <p class="admin-shopee-help"><b>Manual mode boleh digunakan sekarang tanpa Open API.</b> Buka Product Offer, tekan Get Link di Shopee, paste link affiliate di bawah, kemudian Add to AZOBSS.</p>
+    <p class="admin-shopee-help"><b>Tak perlu Open API untuk import maklumat produk.</b> Buka Product Offer, Get Link, kemudian paste link affiliate. AZOBSS akan cuba ambil gambar, nama, description, harga dan maklumat produk secara automatik.</p>
     <div class="admin-shopee-manual" id="adminShopeeManualPanel">
-      <strong>✅ Manual Get Link — tak perlu App ID / Secret</strong>
-      <div class="admin-shopee-manual-copy">1. Buka Shopee Product Offer → 2. pilih produk dan Get Link → 3. copy link <b>s.shopee.com.my</b> → 4. paste di sini.</div>
+      <strong>✅ Paste Get Link → Auto Import — tak perlu App ID / Secret</strong>
+      <div class="admin-shopee-manual-copy">1. Buka Shopee Product Offer → 2. Get Link → 3. paste <b>s.shopee.com.my</b>. Selepas paste, AZOBSS auto isi nama, gambar, description dan harga; kamu cuma tekan Save & Publish.</div>
       <a class="admin-shopee-manual-open" href="https://affiliate.shopee.com.my/offer/product_offer" target="_blank" rel="noopener">1. Open Shopee Product Offer ↗</a>
       <div class="admin-shopee-manual-row">
-        <input id="adminShopeeManualAffiliateLink" type="url" inputmode="url" autocomplete="off" placeholder="2. Paste Get Link: https://s.shopee.com.my/..."/>
-        <button id="adminShopeeUseManualLink" class="admin-shopee-manual-use" type="button">3. Add to AZOBSS</button>
+        <input id="adminShopeeManualAffiliateLink" type="url" inputmode="url" autocomplete="off" placeholder="2. Paste Get Link — auto import maklumat produk"/>
+        <button id="adminShopeeUseManualLink" class="admin-shopee-manual-use" type="button">Import / Retry</button>
       </div>
-      <div class="admin-shopee-status" id="adminShopeeManualStatus">Link akan disemak supaya link Shopee biasa tidak tersimpan sebagai Buy Now tanpa tracking affiliate.</div>
+      <div class="admin-shopee-status" id="adminShopeeManualStatus">Paste affiliate Get Link. AZOBSS akan auto baca maklumat produk; butang Import / Retry disediakan jika auto import perlu dicuba semula.</div>
     </div>
     <div class="admin-shopee-api-label">Open API automation — aktif selepas Shopee approve</div>
     <div id="adminShopeeApiArea">
@@ -1732,7 +1732,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       shopeeOffersModal?.classList.add('is-open'); shopeeOffersModal?.setAttribute('aria-hidden','false');
       const manualInput = document.getElementById('adminShopeeManualAffiliateLink');
       if(manualInput) manualInput.value = '';
-      shopeeStatus(document.getElementById('adminShopeeManualStatus'),'Link akan disemak supaya link Shopee biasa tidak tersimpan sebagai Buy Now tanpa tracking affiliate.');
+      shopeeStatus(document.getElementById('adminShopeeManualStatus'),'Paste affiliate Get Link. AZOBSS akan auto baca maklumat produk; butang Import / Retry disediakan jika auto import perlu dicuba semula.');
       refreshShopeeApiStatus();
       manualInput?.focus();
     };
@@ -1826,20 +1826,92 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       if(!isShopeeAffiliateUrl(link)) return {ok:false, message:'Ini nampak seperti link produk Shopee biasa, bukan affiliate Get Link. Generate/Get Link di Shopee dahulu supaya komisen boleh track.'};
       return {ok:true, link};
     }
+    let manualShopeeAutoTimer = 0;
+    let manualShopeeImportSeq = 0;
+    function guessShopeeCategory(text){
+      const t=String(text || '').toLowerCase();
+      if(/ssd|nvme|ram|laptop|computer|pc|keyboard|mouse|monitor|printer|router|wifi|usb|hard disk|hdd/.test(t)) return 'computer';
+      if(/gaming|gamepad|console|playstation|xbox|nintendo/.test(t)) return 'gaming';
+      if(/camera|drone|cctv/.test(t)) return 'camera';
+      if(/watch|smartwatch/.test(t)) return 'watches';
+      if(/car|motor|automotive|dashcam/.test(t)) return 'automotive';
+      if(/home|kitchen|vacuum|air fryer|fan|appliance/.test(t)) return 'home-appliances';
+      if(/beauty|skincare|health|supplement/.test(t)) return 'beauty';
+      if(/sport|fitness|gym/.test(t)) return 'sports';
+      return 'others';
+    }
+    function buildShopeeAutoDescription(m){
+      const bits=[];
+      if(m.shopName) bits.push('Shop: '+m.shopName);
+      if(Number(m.rating)>0) bits.push('Rating: '+Number(m.rating).toFixed(1).replace(/\.0$/,''));
+      if(Number(m.sold)>0) bits.push('Sold: '+Number(m.sold).toLocaleString('en-MY'));
+      const prefix=bits.join(' • ');
+      const desc=String(m.description || '').trim();
+      return [prefix,desc].filter(Boolean).join(prefix && desc ? '\n\n' : '').slice(0,1800);
+    }
+    async function importManualShopeeMetadata(linkValue, {auto=false} = {}){
+      if(!isAdmin()) return;
+      const check=validateManualShopeeAffiliateLink(linkValue);
+      if(!check.ok){ shopeeStatus(manualAffiliateStatus,'❌ '+check.message,'error'); return; }
+      const seq=++manualShopeeImportSeq;
+      const btn=document.getElementById('adminShopeeUseManualLink');
+      try{
+        if(btn){btn.disabled=true;btn.textContent='Reading Product...';}
+        shopeeStatus(manualAffiliateStatus,'🔎 Link affiliate sah. AZOBSS sedang resolve produk dan ambil nama, gambar, description serta harga...');
+        const res=await fetch(AZOBSS_BACKEND + '/api/shopee-affiliate/product-metadata',{
+          method:'POST', headers:{...(await adminBackendHeaders()),'Content-Type':'application/json'},
+          body:JSON.stringify({url:check.link}), cache:'no-store'
+        });
+        const out=await res.json().catch(()=>({}));
+        if(seq!==manualShopeeImportSeq) return;
+        if(!res.ok || !out.ok) throw new Error(out.message || out.error || 'Metadata Shopee gagal dibaca.');
+        const m=out.metadata || {};
+        closeShopeeOffers();
+        openModal({
+          title:m.title || 'Shopee Product',
+          desc:buildShopeeAutoDescription(m),
+          category:guessShopeeCategory((m.title||'')+' '+(m.description||'')),
+          price:m.priceLabel || 'Affiliate', badge:m.priceLabel || 'Affiliate', icon:'🛒', image:m.image || '',
+          originLink:m.productUrl || '', link:check.link, buttonText:'Buy Now',
+          meta:'Shopee Affiliate Auto Import'+(m.shopName ? ' • '+m.shopName : '')
+        });
+        const detail=[m.title?'nama':'',m.image?'gambar':'',m.description?'description':'',m.priceLabel?'harga':''].filter(Boolean).join(', ');
+        shopeeStatus(document.getElementById('adminShopeeLinkStatus'),
+          `✅ Auto import siap${detail ? ': '+detail : ''}. Affiliate Buy Now dikekalkan. Semak jika perlu, kemudian hanya tekan Save & Publish.`,
+          out.partial ? '' : 'ok');
+      }catch(err){
+        if(seq!==manualShopeeImportSeq) return;
+        shopeeStatus(manualAffiliateStatus,'⚠️ '+(err.message || err)+' Link affiliate masih sah. Tekan Import / Retry atau guna form manual jika Shopee block metadata dari server.','error');
+        if(!auto){
+          closeShopeeOffers();
+          openModal({title:'Shopee Product',desc:'',category:'others',price:'Affiliate',badge:'Affiliate',icon:'🛒',image:'',originLink:'',link:check.link,buttonText:'Buy Now',meta:'Shopee Affiliate Manual Get Link'});
+          shopeeStatus(document.getElementById('adminShopeeLinkStatus'),'⚠️ Affiliate link sudah dipasang tetapi metadata Shopee tidak dapat dibaca secara automatik. Isi maklumat yang kosong jika perlu.','error');
+        }
+      }finally{
+        if(btn){btn.disabled=false;btn.textContent='Import / Retry';}
+      }
+    }
     manualAffiliateInput?.addEventListener('input', () => {
-      const check = validateManualShopeeAffiliateLink(manualAffiliateInput.value);
-      shopeeStatus(manualAffiliateStatus, check.ok ? '✅ Affiliate link sah. Tekan Add to AZOBSS.' : check.message, check.ok ? 'ok' : (manualAffiliateInput.value.trim() ? 'error' : ''));
+      clearTimeout(manualShopeeAutoTimer);
+      const check=validateManualShopeeAffiliateLink(manualAffiliateInput.value);
+      if(!check.ok){
+        ++manualShopeeImportSeq;
+        shopeeStatus(manualAffiliateStatus,check.message,manualAffiliateInput.value.trim()?'error':'');
+        return;
+      }
+      shopeeStatus(manualAffiliateStatus,'✅ Affiliate link sah. Auto import akan bermula...','ok');
+      manualShopeeAutoTimer=setTimeout(()=>importManualShopeeMetadata(check.link,{auto:true}),650);
+    });
+    manualAffiliateInput?.addEventListener('paste', () => {
+      clearTimeout(manualShopeeAutoTimer);
+      manualShopeeAutoTimer=setTimeout(()=>{
+        const check=validateManualShopeeAffiliateLink(manualAffiliateInput?.value || '');
+        if(check.ok) importManualShopeeMetadata(check.link,{auto:true});
+      },120);
     });
     document.getElementById('adminShopeeUseManualLink')?.addEventListener('click', () => {
-      if(!isAdmin()) return alert('Admin only.');
-      const check = validateManualShopeeAffiliateLink(manualAffiliateInput?.value || '');
-      if(!check.ok){ shopeeStatus(manualAffiliateStatus, '❌ ' + check.message, 'error'); return; }
-      closeShopeeOffers();
-      openModal({
-        title:'Shopee Product', desc:'', category:'others', price:'Affiliate', badge:'Affiliate', icon:'🛒', image:'',
-        originLink:'', link:check.link, buttonText:'Buy Now', meta:'Shopee Affiliate Manual Get Link'
-      });
-      shopeeStatus(document.getElementById('adminShopeeLinkStatus'),'✅ Affiliate Get Link sudah dipasang. Lengkapkan nama / harga / gambar jika perlu, kemudian tekan Save & Publish.', 'ok');
+      clearTimeout(manualShopeeAutoTimer);
+      importManualShopeeMetadata(manualAffiliateInput?.value || '',{auto:false});
     });
 
     const modal = document.getElementById('adminProductModal');
