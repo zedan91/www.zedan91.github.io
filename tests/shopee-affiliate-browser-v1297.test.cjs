@@ -1,0 +1,13 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'..');
+const pkg=require(path.join(root,'package.json'));
+const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
+const docker=fs.readFileSync(path.join(root,'Dockerfile'),'utf8');
+const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
+test('v1297 package and Docker retain Chromium browser support',()=>{assert.equal(pkg.version,'1.0.1297');assert.match(docker,/\bchromium\b/);assert.match(pkg.dependencies['puppeteer-core'],/25\./);});
+test('v1297 Shopee metadata uses rendered-browser fallback and same-origin API observation',()=>{assert.match(runtime,/async function azShopeeBrowserMetadata/);assert.match(runtime,/AutomationControlled/);assert.match(runtime,/page\.on\('response'/);assert.match(runtime,/fetch\(p,\{credentials:'include'/);assert.match(runtime,/azShopeeResolveMetadataAuto/);});
+test('v1297 caches metadata and manual Retry bypasses cache',()=>{assert.match(runtime,/AZOBSS_SHOPEE_META_CACHE_MS/);assert.match(runtime,/azShopeeMetadataCache/);assert.match(html,/force:!auto/);});
+test('v1297 keeps affiliate link untouched while importing product metadata',()=>{assert.match(html,/link:check\.link/);assert.match(html,/Affiliate Buy Now dikekalkan/);assert.match(runtime,/patch:1297/);});

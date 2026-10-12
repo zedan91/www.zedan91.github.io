@@ -1860,7 +1860,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
         shopeeStatus(manualAffiliateStatus,'🔎 Link affiliate sah. AZOBSS sedang resolve produk dan ambil nama, gambar, description serta harga...');
         const res=await fetch(AZOBSS_BACKEND + '/api/shopee-affiliate/product-metadata',{
           method:'POST', headers:{...(await adminBackendHeaders()),'Content-Type':'application/json'},
-          body:JSON.stringify({url:check.link}), cache:'no-store'
+          body:JSON.stringify({url:check.link,force:!auto}), cache:'no-store'
         });
         const out=await res.json().catch(()=>({}));
         if(seq!==manualShopeeImportSeq) return;
@@ -1876,8 +1876,9 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           meta:'Shopee Affiliate Auto Import'+(m.shopName ? ' • '+m.shopName : '')
         });
         const detail=[m.title?'nama':'',m.image?'gambar':'',m.description?'description':'',m.priceLabel?'harga':''].filter(Boolean).join(', ');
+        const via=out.cached?'cache':(out.source==='browser'?'browser resolver':'direct resolver');
         shopeeStatus(document.getElementById('adminShopeeLinkStatus'),
-          `✅ Auto import siap${detail ? ': '+detail : ''}. Affiliate Buy Now dikekalkan. Semak jika perlu, kemudian hanya tekan Save & Publish.`,
+          `✅ Auto import siap${detail ? ': '+detail : ''} melalui ${via}. Affiliate Buy Now dikekalkan. Semak jika perlu, kemudian hanya tekan Save & Publish.`,
           out.partial ? '' : 'ok');
       }catch(err){
         if(seq!==manualShopeeImportSeq) return;
