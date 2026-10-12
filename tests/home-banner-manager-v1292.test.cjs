@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1292 package version', () => {
-  assert.ok(/^1\.0\.(1292|1293|1294|1295|1296|1297|1298|1299|1300|1301)$/.test(pkg.version));
+  assert.ok(/^1\.0\.(1292|1293|1294|1295|1296|1297|1298|1299|1300|1301|1302)$/.test(pkg.version));
 });
 
 test('drag and resize auto-save geometry on pointer release', () => {

@@ -1,7 +1,7 @@
 # AZOBSS v1301 — Admin Version Label Size / Position
 
 Date: 2026-10-12
-Package: 1.0.1301
+Package: 1.0.1302
 Baseline: v1300
 
 ## Changes

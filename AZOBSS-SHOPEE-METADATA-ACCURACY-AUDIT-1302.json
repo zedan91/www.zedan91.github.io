@@ -1,0 +1,15 @@
+{
+  "patch": 1302,
+  "version": "1.0.1302",
+  "baseline": 1301,
+  "rootCause": "openapp product identity was not recognized; global Shopee config could be misread as product metadata",
+  "sample": {
+    "shopId": "1788321926",
+    "itemId": "55218001609"
+  },
+  "rejectedInternalTokens": [
+    "shopee_language",
+    "shopee_mart"
+  ],
+  "affiliateLinkPreserved": true
+}
