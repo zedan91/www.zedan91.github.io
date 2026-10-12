@@ -9121,3 +9121,93 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
 // v1272: readiness signal for optional feature modules; auth itself remains the single owner.
 window.__AZOBSS_GLOBAL_AUTH_READY__ = true;
 try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:{ version:1272 } })); } catch (_e) {}
+
+
+// AZOBSS v1298: Administrator-only small website version label below navbar.
+(function(){
+  if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
+  window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
+
+  var VERSION_TEXT = 'v1298';
+  var BADGE_ID = 'azobssAdminVersionBadge1298';
+  var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
+
+  function ensureStyle(){
+    if(document.getElementById(STYLE_ID)) return;
+    var style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent='\n'
+      +'#'+BADGE_ID+'{position:fixed;left:8px;top:var(--azobss-admin-version-top,72px);z-index:2147480000;display:none;align-items:center;justify-content:center;padding:2px 5px;border-radius:5px;border:1px solid rgba(148,163,184,.16);background:rgba(2,6,23,.62);color:rgba(203,213,225,.78);font:600 10px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.025em;white-space:nowrap;pointer-events:none;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,.12);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}\n'
+      +'body.az-role-is-admin #'+BADGE_ID+',body.is-admin #'+BADGE_ID+',body[data-role="admin"] #'+BADGE_ID+',body[data-az-current-role="admin"] #'+BADGE_ID+'{display:inline-flex;}\n'
+      +'@media (max-width:640px){#'+BADGE_ID+'{left:5px;padding:2px 4px;font-size:9px;}}\n';
+    (document.head||document.documentElement).appendChild(style);
+  }
+
+  function ensureBadge(){
+    ensureStyle();
+    var badge=document.getElementById(BADGE_ID);
+    if(badge) return badge;
+    badge=document.createElement('div');
+    badge.id=BADGE_ID;
+    badge.textContent=VERSION_TEXT;
+    badge.setAttribute('aria-label','AZOBSS website '+VERSION_TEXT);
+    badge.setAttribute('title','AZOBSS '+VERSION_TEXT);
+    (document.body||document.documentElement).appendChild(badge);
+    return badge;
+  }
+
+  function navbarBottom(){
+    var selectors=['.market-nav','.azobss-navbar','nav.navbar','.navbar','[data-az-navbar]'];
+    var best=0;
+    for(var i=0;i<selectors.length;i++){
+      var nodes=document.querySelectorAll(selectors[i]);
+      for(var j=0;j<nodes.length;j++){
+        var el=nodes[j];
+        if(!el || !el.getBoundingClientRect) continue;
+        var cs;
+        try{cs=getComputedStyle(el);}catch(_e){cs=null;}
+        if(cs && (cs.display==='none'||cs.visibility==='hidden')) continue;
+        var r=el.getBoundingClientRect();
+        if(r.width<40 || r.height<24) continue;
+        // Prefer the visible navigation nearest the top of the viewport.
+        if(r.top<=140 && r.bottom>0 && r.bottom<260) best=Math.max(best,r.bottom);
+      }
+      if(best>0) break;
+    }
+    return best;
+  }
+
+  function positionBadge(){
+    var badge=ensureBadge();
+    if(!badge) return;
+    var bottom=navbarBottom();
+    var top=Math.max(4,Math.round(bottom>0 ? bottom+4 : 6));
+    badge.style.setProperty('--azobss-admin-version-top',top+'px');
+  }
+
+  function sync(){
+    ensureBadge();
+    positionBadge();
+  }
+
+  function start(){
+    sync();
+    window.addEventListener('resize',positionBadge,{passive:true});
+    window.addEventListener('scroll',positionBadge,{passive:true});
+    window.addEventListener('load',positionBadge,{once:true});
+    try{
+      var mo=new MutationObserver(function(mutations){
+        for(var i=0;i<mutations.length;i++){
+          if(mutations[i].type==='attributes') { sync(); return; }
+        }
+      });
+      mo.observe(document.body,{attributes:true,attributeFilter:['class','data-role','data-az-current-role']});
+    }catch(_e){}
+    setTimeout(sync,250);
+    setTimeout(sync,900);
+    setTimeout(sync,2200);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
