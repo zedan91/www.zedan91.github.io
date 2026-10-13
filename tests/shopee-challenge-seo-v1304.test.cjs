@@ -1,0 +1,40 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
+const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+
+test('v1304 package',()=>assert.equal(pkg.version,'1.0.1304'));
+test('challenge URLs recover the Shopee next product URL without trusting external hosts',()=>{
+  assert.match(runtime,/function azShopeeChallengeInfo/);
+  assert.match(runtime,/\['next','redirect','redirect_url','url','target'\]/);
+  assert.match(runtime,/azShopeePublicHost\(candidate\)/);
+});
+test('HTTP resolver accepts useful SEO metadata before Shopee internal APIs',()=>{
+  assert.match(runtime,/function azShopeeSeoMetadataFromPage/);
+  assert.match(runtime,/const firstSeo=azShopeeSeoMetadataFromPage\(first\.url,first\.html\)/);
+  assert.match(runtime,/if\(azShopeeMetadataHasRequiredProduct\(firstSeo\.metadata\)\)/);
+  const seoPos=runtime.indexOf('const firstSeo=azShopeeSeoMetadataFromPage(first.url,first.html)');
+  const apiPos=runtime.indexOf('const apiData=await azShopeeItemApi(productUrl,ids)',seoPos);
+  assert.ok(seoPos>=0 && apiPos>seoPos,'SEO-first branch must appear before item API fallback');
+});
+test('challenge-page canonical/og metadata remains the product sourceUrl',()=>{
+  assert.match(runtime,/const htmlCanonical=azCanonicalUrl\(html,productUrl\)\|\|meta\['og:url'\]\|\|challenge\.nextUrl/);
+  assert.match(runtime,/meta\['og:title'\]/);
+  assert.match(runtime,/meta\['og:description'\]/);
+  assert.match(runtime,/meta\['og:image'\]/);
+  assert.match(runtime,/sourceUrl:canonicalUrl/);
+});
+test('browser fallback no longer treats traffic challenge as automatic metadata failure',()=>{
+  assert.match(runtime,/azShopeeChallengeInfo\(current\)\.isChallenge/);
+  assert.match(runtime,/browser-seo-challenge/);
+  assert.match(runtime,/seoRecovered/);
+});
+test('secondary Express backend carries the same SEO challenge helpers',()=>{
+  assert.match(backend,/function azShopeeSeoMetadataFromPage/);
+  assert.match(backend,/http-seo-challenge/);
+  assert.match(backend,/patch:1304/);
+});

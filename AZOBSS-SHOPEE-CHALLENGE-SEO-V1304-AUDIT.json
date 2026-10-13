@@ -1,0 +1,27 @@
+{
+  "patch": 1304,
+  "packageVersion": "1.0.1304",
+  "name": "Shopee Challenge-Page SEO Metadata Resolver",
+  "baseline": "v1303",
+  "changes": [
+    "SEO-first metadata extraction before Shopee internal API/browser fallback",
+    "Traffic challenge /verify/traffic/error is no longer an automatic metadata failure",
+    "Canonical product URL can be recovered from rel=canonical, og:url, or challenge next= query",
+    "Extracts product title, description, image and sourceUrl from SEO tags",
+    "Removes Shopee Malaysia title suffix and rejects generic Shopee titles",
+    "Price remains optional",
+    "Original affiliate short-link remains separate as Buy Now URL",
+    "Adds seoRecovered diagnostic and challenge-aware source method",
+    "Keeps Shopee-host validation for decoded destinations"
+  ],
+  "tests": {
+    "npmTest": "118/118 PASS",
+    "npmVerify": "PASS",
+    "deployServerSyntax": "PASS",
+    "backendServerSyntax": "PASS"
+  },
+  "security": [
+    "No ViralKaya cookie, Authorization token, credential, or private endpoint is used",
+    "Decoded redirect/challenge destinations must pass azShopeePublicHost()"
+  ]
+}

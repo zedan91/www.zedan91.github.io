@@ -2362,6 +2362,51 @@ function azCanonicalUrl(html, base){
   }
   return '';
 }
+// AZOBSS v1304: Shopee challenge-page SEO recovery.
+// Shopee can redirect public product requests to /verify/traffic/error while still exposing
+// useful product SEO tags (canonical/og:title/description/og:image) in the returned HTML.
+// Treat those tags as valid metadata instead of rejecting the page only because it is a challenge.
+function azHtmlTitle(html){
+  const m=String(html||'').match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+  return m ? azCleanText(m[1],400) : '';
+}
+function azShopeeChallengeInfo(value){
+  try{
+    const u=new URL(String(value||''));
+    const isChallenge=/\/verify\/traffic\/(?:error|captcha)|\/verify\//i.test(u.pathname||'');
+    let nextUrl='';
+    for(const key of ['next','redirect','redirect_url','url','target']){
+      const raw=u.searchParams.get(key); if(!raw) continue;
+      const decoded=azShopeeDecodeRepeated(raw);
+      try{const candidate=new URL(decoded,u).toString(); if(azShopeePublicHost(candidate)){nextUrl=candidate;break;}}catch{}
+    }
+    return {isChallenge,nextUrl};
+  }catch{return {isChallenge:false,nextUrl:''};}
+}
+function azShopeeLooksGenericSeoTitle(value){
+  const t=azCleanShopeeTitle(value).toLowerCase().replace(/\s+/g,' ').trim();
+  if(!t) return true;
+  return t==='shopee' || t==='shopee malaysia' || /^shopee\s*[|–-]/i.test(t) || /^buy\s+everything\s+on\s+shopee/i.test(t);
+}
+function azShopeeSeoMetadataFromPage(pageUrl,html){
+  const meta=azHtmlMetaMap(html), challenge=azShopeeChallengeInfo(pageUrl);
+  const choices=[azCanonicalUrl(html,pageUrl),meta['og:url'],challenge.nextUrl].filter(Boolean);
+  let sourceUrl='';
+  for(const raw of choices){
+    try{const u=new URL(raw,pageUrl).toString(); if(!azShopeePublicHost(u)) continue; if(azShopeeIds(u).itemId){sourceUrl=u;break;} if(!sourceUrl) sourceUrl=u;}catch{}
+  }
+  let ids=azShopeeIds(sourceUrl); if(!ids.itemId) ids=azShopeeIds(challenge.nextUrl); if(!ids.itemId) ids=azShopeeIdsFromText(html);
+  if(ids.itemId&&ids.shopId&&(!sourceUrl||!azShopeeHasCanonicalProductPath(sourceUrl,ids))) sourceUrl=azShopeeProductUrl(ids);
+  let title=azCleanShopeeTitle(meta['og:title']||meta['twitter:title']||azHtmlTitle(html)||'');
+  if(azShopeeLooksGenericSeoTitle(title)||azShopeeLooksLikeInternalToken(title)) title='';
+  let description=azCleanText(meta['og:description']||meta['description']||meta['twitter:description']||'',1600);
+  if(azShopeeLooksLikeInternalToken(description)) description='';
+  const image=azShopeeImageUrl(meta['og:image']||meta['twitter:image']||'');
+  const rawPrice=Number(meta['product:price:amount']||meta['og:price:amount']||0), priceMin=Number.isFinite(rawPrice)&&rawPrice>0?rawPrice:0;
+  const priceMax=priceMin, priceLabel=azShopeePriceLabel(priceMin,priceMax,'MYR');
+  return {metadata:{title,description,image,priceMin,priceMax,priceLabel,shopName:'',rating:0,sold:0,itemId:ids.itemId,shopId:ids.shopId,productUrl:sourceUrl,sourceUrl,currency:'MYR'},challenge:challenge.isChallenge,nextUrl:challenge.nextUrl};
+}
+
 function azFindProductJsonLd(html){
   const scripts = String(html || '').match(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
   const candidates=[];
@@ -2518,11 +2563,9 @@ async function azFetchShopeePage(startUrl){
       current=new URL(loc,current).toString(); continue;
     }
     if(!response.ok) throw Object.assign(new Error(`Shopee page HTTP ${response.status}`),{statusCode:502});
-    const type=String(response.headers.get('content-type') || '');
-    const html=(await response.text()).slice(0,6_000_000);
-    const ids=azShopeeIds(current);
-    if(!ids.itemId){ const embedded=azShopeeRedirectCandidate(current,html); if(embedded && !seen.has(embedded)){ current=embedded; continue; } }
-    return {url:current,html,type};
+    const metadata=azShopeeMetadataFromArtifacts({productUrl:current,html,apiData,rendered});
+    const challenge=azShopeeChallengeInfo(current).isChallenge||/captcha|verify\s+(?:to\s+)?continue|unusual\s+activity|robot|security\s+verification/i.test(String(rendered.bodySnippet||''));
+    return {metadata,productUrl:metadata.productUrl||current,method:challenge&&azShopeeMetadataHasRequiredProduct(metadata)?'browser-seo-challenge':'browser',challenge,seoRecovered:challenge&&azShopeeMetadataHasRequiredProduct(metadata),networkPayloads:networkPayloads.length};
   }
   throw Object.assign(new Error('Terlalu banyak redirect daripada Shopee.'),{statusCode:502});
 }
@@ -2562,50 +2605,65 @@ function azShopeeLooksLikeInternalToken(value){
   return ['shopee','shopee language','shopee mart','shopee_language','shopee_mart'].includes(flat);
 }
 
+function azShopeeMetadataHasRequiredProduct(m){
+  const title=String(m?.title||'').trim();
+  return !!title && !azShopeeLooksLikeInternalToken(title) && !azShopeeLooksGenericSeoTitle(title);
+}
+function azShopeeMetadataMissing(m){
+  const x=m||{}, missing=[];
+  if(!azShopeeMetadataHasRequiredProduct(x)) missing.push('title');
+  if(!String(x.description||'').trim()) missing.push('description');
+  if(!/^https?:\/\//i.test(String(x.image||'').trim())) missing.push('image');
+  if(!String(x.priceLabel||'').trim()) missing.push('price');
+  if(!/^https?:\/\//i.test(String(x.sourceUrl||x.productUrl||'').trim())) missing.push('sourceUrl');
+  return missing;
+}
+function azShopeeMetadataCompleteness(m){
+  const x=m||{}; let score=0;
+  const title=String(x.title||'').trim(), description=String(x.description||'').trim();
+  if(title && !azShopeeLooksLikeInternalToken(title) && !azShopeeLooksGenericSeoTitle(title)) score++;
+  if(/^https?:\/\//i.test(String(x.image||'').trim())) score++;
+  if(String(x.priceLabel||'').trim()) score++;
+  if(description.length>=12 && !azShopeeLooksLikeInternalToken(description)) score++;
+  if(/^https?:\/\//i.test(String(x.sourceUrl||x.productUrl||'').trim())) score++;
+  return score;
+}
+function azShopeeMetadataMerge(primary, secondary){
+  const a=primary||{}, b=secondary||{}, out={...b,...a};
+  for(const k of ['title','description','image','priceLabel','shopName','itemId','shopId','productUrl','sourceUrl','currency']){
+    if(!String(a[k]||'').trim() && String(b[k]||'').trim()) out[k]=b[k];
+  }
+  for(const k of ['priceMin','priceMax','rating','sold']){
+    const av=Number(a[k]||0), bv=Number(b[k]||0); out[k]=av>0?av:bv;
+  }
+  if(!out.priceLabel) out.priceLabel=azShopeePriceLabel(out.priceMin,out.priceMax,out.currency||'MYR');
+  return out;
+}
+
 app.post('/api/shopee-affiliate/product-metadata', requireAdmin, async (req,res)=>{
   try{
     const affiliateUrl=azShopeeUrl(req.body?.url);
     if(!affiliateUrl) return res.status(400).json({ok:false,error:'invalid_shopee_url',message:'URL Shopee tidak sah.'});
     const directLanding=azShopeeTrackingLanding(affiliateUrl);
     const first=await azFetchShopeePage(directLanding || affiliateUrl);
-    let productUrl=first.url, html=first.html;
-    const meta1=azHtmlMetaMap(html);
-    const candidate=meta1['og:url'] || azCanonicalUrl(html,productUrl) || azShopeeRedirectCandidate(productUrl,html);
-    if(candidate && azShopeePublicHost(candidate) && candidate!==productUrl){
-      try{ const second=await azFetchShopeePage(candidate); productUrl=second.url; html=second.html; }catch{}
+    const seo=azShopeeSeoMetadataFromPage(first.url,first.html);
+    let metadata=seo.metadata, source=seo.challenge?'http-seo-challenge':'http-seo';
+    if(!azShopeeMetadataHasRequiredProduct(metadata)){
+      let productUrl=metadata.productUrl||first.url, html=first.html, ids=azShopeeIds(productUrl); if(!ids.itemId) ids=azShopeeIdsFromText(html);
+      if(ids.itemId && ids.shopId && !azShopeeHasCanonicalProductPath(productUrl,ids)) productUrl=metadata.productUrl||azShopeeProductUrl(ids);
+      const apiData=await azShopeeItemApi(productUrl,ids);
+      const fallbackMeta=azHtmlMetaMap(html), jsonld=azFindProductJsonLd(html), embedded=azShopeeEmbeddedFields(html,ids), offer=(Array.isArray(jsonld?.offers)?jsonld.offers[0]:jsonld?.offers)||{};
+      const apiMin=azShopeeMoney(apiData?.price_min??apiData?.price??embedded.priceMin), apiMax=azShopeeMoney(apiData?.price_max??apiData?.price??embedded.priceMax);
+      const imageRaw=apiData?.image||(Array.isArray(apiData?.images)?apiData.images[0]:'')||embedded.image||(Array.isArray(jsonld?.image)?jsonld.image[0]:jsonld?.image)||fallbackMeta['og:image']||'';
+      const fallback={title:azCleanShopeeTitle(apiData?.name||embedded.name||jsonld?.name||fallbackMeta['og:title']||azHtmlTitle(html)||''),description:azCleanText(apiData?.description||embedded.description||jsonld?.description||fallbackMeta['og:description']||fallbackMeta['description']||'',1600),image:azShopeeImageUrl(imageRaw),priceMin:apiMin,priceMax:apiMax||apiMin,priceLabel:azShopeePriceLabel(apiMin,apiMax||apiMin,offer?.priceCurrency||'MYR'),shopName:'',rating:0,sold:0,itemId:ids.itemId,shopId:ids.shopId,productUrl:metadata.productUrl||productUrl,sourceUrl:metadata.productUrl||productUrl,currency:'MYR'};
+      metadata=azShopeeMetadataMerge(fallback,metadata); source='http';
     }
-    let meta=azHtmlMetaMap(html), jsonld=azFindProductJsonLd(html);
-    let ids=azShopeeIds(productUrl);
-    if(!ids.itemId) ids=azShopeeIdsFromText(html);
-    if(ids.itemId && ids.shopId && !azShopeeHasCanonicalProductPath(productUrl,ids)){
-      const canonicalProduct=azShopeeProductUrl(ids);
-      try{ const productPage=await azFetchShopeePage(canonicalProduct); productUrl=productPage.url; html=productPage.html; meta=azHtmlMetaMap(html); jsonld=azFindProductJsonLd(html); }catch{ productUrl=canonicalProduct; }
-    }
-    const embedded=azShopeeEmbeddedFields(html,ids);
-    const apiData=await azShopeeItemApi(productUrl,ids);
-    const offer=(Array.isArray(jsonld?.offers)?jsonld.offers[0]:jsonld?.offers) || {};
-    const agg=jsonld?.aggregateRating || {};
-    const apiMin=azShopeeMoney(apiData?.price_min ?? apiData?.price ?? embedded.priceMin), apiMax=azShopeeMoney(apiData?.price_max ?? apiData?.price ?? embedded.priceMax);
-    const ldMin=Number(offer?.lowPrice || offer?.price || meta['product:price:amount'] || meta['og:price:amount'] || 0);
-    const ldMax=Number(offer?.highPrice || offer?.price || meta['product:price:amount'] || meta['og:price:amount'] || 0);
-    const priceMin=apiMin || (Number.isFinite(ldMin)?ldMin:0), priceMax=apiMax || (Number.isFinite(ldMax)?ldMax:0);
-    const imageRaw=apiData?.image || (Array.isArray(apiData?.images)?apiData.images[0]:'') || embedded.image || (Array.isArray(jsonld?.image)?jsonld.image[0]:jsonld?.image) || meta['og:image'] || meta['twitter:image'] || '';
-    let title=azCleanShopeeTitle(apiData?.name || embedded.name || jsonld?.name || meta['og:title'] || meta['twitter:title'] || '');
-    let description=azCleanText(apiData?.description || embedded.description || jsonld?.description || meta['og:description'] || meta['description'] || '',1600);
-    let shopName=azCleanText(apiData?.shop_name || embedded.shopName || offer?.seller?.name || jsonld?.brand?.name || '',160);
-    if(azShopeeLooksLikeInternalToken(title)) title='';
-    if(azShopeeLooksLikeInternalToken(description)) description='';
-    if(azShopeeLooksLikeInternalToken(shopName)) shopName='';
-    const rating=Number(apiData?.item_rating?.rating_star || embedded.rating || agg?.ratingValue || 0) || 0;
-    const sold=Number(apiData?.historical_sold ?? apiData?.sold ?? embedded.sold ?? 0) || 0;
-    const image=azShopeeImageUrl(imageRaw);
-    const priceLabel=azShopeePriceLabel(priceMin,priceMax,offer?.priceCurrency || 'MYR');
-    const metadata={title,description,image,priceMin,priceMax,priceLabel,shopName,rating,sold,itemId:ids.itemId,shopId:ids.shopId,productUrl,currency:'MYR'};
-    const completeness=(title?1:0)+(image?1:0)+(priceLabel?1:0)+(description&&description.length>=12?1:0);
-    return res.json({ok:true,affiliateUrl,metadata,completeness,partial:completeness<3,resolvedProductUrl:productUrl,shopId:ids.shopId,itemId:ids.itemId,priceAvailable:!!priceLabel,message:completeness>=3?'Maklumat produk Shopee berjaya dibaca.':'Sebahagian metadata tidak dapat dibaca; Shopee mungkin menghadkan public page dari server.'});
+    const completeness=azShopeeMetadataCompleteness(metadata), missing=azShopeeMetadataMissing(metadata);
+    if(!azShopeeMetadataHasRequiredProduct(metadata)) return res.status(502).json({ok:false,error:'SCRAPE_FAILED',message:'Nama produk Shopee tidak dapat dibaca secara automatik.',affiliateUrl,metadata,missing,patch:1304});
+    return res.json({ok:true,affiliateUrl,metadata:{...metadata,affiliateUrl},product:{title:metadata.title,description:metadata.description||'',image:metadata.image||null,price:metadata.priceLabel||null,sourceUrl:metadata.sourceUrl||metadata.productUrl||''},completeness,partial:missing.length>0,missing,source,challenge:!!seo.challenge,seoRecovered:azShopeeMetadataHasRequiredProduct(seo.metadata),resolvedProductUrl:metadata.productUrl||'',shopId:metadata.shopId||'',itemId:metadata.itemId||'',priceAvailable:!!metadata.priceLabel,patch:1304});
   }catch(err){
     const status=Number(err?.statusCode || (err?.name==='AbortError'?504:500));
-    return res.status(status).json({ok:false,error:'shopee_metadata_failed',message:String(err?.message || err || 'Gagal membaca maklumat produk Shopee.')});
+    return res.status(status).json({ok:false,error:'shopee_metadata_failed',message:String(err?.message || err || 'Gagal membaca maklumat produk Shopee.'),patch:1304});
   }
 });
 
