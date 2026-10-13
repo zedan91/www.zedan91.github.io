@@ -1864,7 +1864,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
         });
         const out=await res.json().catch(()=>({}));
         if(seq!==manualShopeeImportSeq) return;
-        if(!res.ok || !out.ok) throw new Error(out.message || out.error || 'Metadata Shopee gagal dibaca.');
+        if(!res.ok || !out.ok){ const detail=Array.isArray(out.attempts)?out.attempts.filter(x=>!x.ok&&x.message).map(x=>x.source+': '+x.message).join(' | '):''; throw new Error((out.message || out.error || 'Metadata Shopee gagal dibaca.')+(detail?' ['+detail+']':'')); }
         const m=out.metadata || {};
         closeShopeeOffers();
         openModal({
@@ -1876,7 +1876,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           meta:'Shopee Affiliate Auto Import'+(m.shopName ? ' • '+m.shopName : '')
         });
         const detail=[m.title?'nama':'',m.image?'gambar':'',m.description?'description':'',m.priceLabel?'harga':''].filter(Boolean).join(', ');
-        const via=out.cached?'cache':(out.source==='browser'?'browser resolver':'server resolver');
+        const via=out.cached?'cache':(out.source==='jina-reader'?'Reader fallback':(out.source==='browser'?'browser resolver':'server resolver'));
         const resolved=(out.shopId && out.itemId) ? ` Produk dikesan: shop ${out.shopId} / item ${out.itemId}.` : '';
         const missing=Array.isArray(out.missing)?out.missing:[];
         const optionalMissing=missing.filter(x=>x!=='title');
@@ -2088,7 +2088,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     refreshAdminState();
     loadProducts();
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=1304" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1305" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

@@ -1,0 +1,12 @@
+{
+  "patch": 1305,
+  "packageVersion": "1.0.1305",
+  "features": [
+    "Native HTTP/SEO first",
+    "Jina Reader public URL fallback second",
+    "Chromium final fallback only if title still missing",
+    "No Shopee/AZOBSS cookies or auth forwarded to Reader",
+    "Affiliate URL preserved for Buy Now tracking",
+    "Safe per-attempt diagnostics"
+  ]
+}

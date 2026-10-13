@@ -7,7 +7,7 @@ const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 const pkg=require(path.join(root,'package.json'));
 
-test('v1303 behavior remains in current package',()=>assert.ok(['1.0.1303','1.0.1304'].includes(pkg.version)));
+test('v1303 behavior remains in current package',()=>assert.ok(['1.0.1303','1.0.1304','1.0.1305'].includes(pkg.version)));
 test('title is the required Shopee product field',()=>{
   assert.match(runtime,/function azShopeeMetadataHasRequiredProduct/);
   assert.match(runtime,/if\(!azShopeeMetadataHasRequiredProduct\(best\.metadata\)\)/);
@@ -18,8 +18,10 @@ test('price and other enrichment fields are optional',()=>{
   assert.match(runtime,/missing\.push\('price'\)/);
   assert.match(runtime,/price:String\(metadata\.priceLabel\|\|''\)\|\|null/);
 });
-test('browser fallback is not skipped when title is missing',()=>{
-  assert.match(runtime,/if\(!azShopeeMetadataHasRequiredProduct\(httpResult\?\.metadata\) \|\| bestScore<3\)/);
+test('fallback chain continues when title is missing',()=>{
+  assert.match(runtime,/if\(!azShopeeMetadataHasRequiredProduct\(best\?\.metadata\)\)/);
+  assert.match(runtime,/azShopeeReaderMetadata/);
+  assert.match(runtime,/azShopeeBrowserMetadata/);
 });
 test('affiliate and canonical URLs stay separate',()=>{
   assert.match(runtime,/affiliateUrl=key/);
