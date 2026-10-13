@@ -1,0 +1,13 @@
+{
+  "patch": 1307,
+  "packageVersion": "1.0.1307",
+  "features": [
+    "mobile HEAD short-link probe",
+    "CONFIG.httpUrl parser",
+    "nested redirect unwrap",
+    "canonical-first Reader",
+    "canonical-first Chromium",
+    "safe attempts diagnostics",
+    "affiliate Buy Now preserved"
+  ]
+}

@@ -8,7 +8,7 @@ const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
-test('v1305 package',()=>assert.ok(['1.0.1305','1.0.1306'].includes(pkg.version)));
+test('v1305 package',()=>assert.ok(['1.0.1305','1.0.1306','1.0.1307'].includes(pkg.version)));
 test('Reader fallback is public-URL-only and optional',()=>{
   assert.match(runtime,/AZOBSS_SHOPEE_READER_ENDPOINT/);
   assert.match(runtime,/AZOBSS_SHOPEE_READER_ENABLED/);
@@ -30,10 +30,10 @@ test('Reader result can satisfy minimal title contract without price',()=>{
   assert.match(runtime,/priceLabel:''/);
 });
 test('Express fallback mirrors Reader support and diagnostics',()=>{
-  assert.match(backend,/azShopeeReaderMetadata\(affiliateUrl/);
+  assert.match(backend,/azShopeeReaderMetadata\((?:affiliateUrl|readerTarget)/);
   assert.match(backend,/externalFallback:String\(source\|\|''\)\.startsWith\('jina-reader'\)/);
   assert.match(backend,/attempts/);
-  assert.match(backend,/patch:130(?:5|6)/);
+  assert.match(backend,/patch:130(?:5|6|7)/);
 });
 test('Admin reports Reader fallback and safe failed-attempt messages',()=>{
   assert.match(html,/Reader fallback/);

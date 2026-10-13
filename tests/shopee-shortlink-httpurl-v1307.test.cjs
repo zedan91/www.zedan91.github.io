@@ -1,0 +1,16 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
+const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+test('v1307 package',()=>assert.equal(pkg.version,'1.0.1307'));
+test('CONFIG.httpUrl short-link landing recovery exists',()=>{assert.match(runtime,/function azShopeeEmbeddedHttpUrl/);assert.match(runtime,/CONFIG\\\.httpUrl|CONFIG\.httpUrl/);assert.match(runtime,/embeddedHttp.*score:520/);});
+test('mobile HEAD short-link probe runs before page GET loop',()=>{assert.match(runtime,/async function azShopeeResolveHeadHint/);assert.match(runtime,/method:'HEAD'/);assert.match(runtime,/Android 10/);assert.match(runtime,/const headHint=await azShopeeResolveHeadHint/);});
+test('Reader supports short -> canonical retry',()=>{assert.match(runtime,/pass<3/);assert.match(runtime,/const httpUrlHint=azShopeeEmbeddedHttpUrl/);assert.match(runtime,/queue\.unshift\(httpUrlHint\)/);});
+test('Reader and browser prefer recovered canonical URL',()=>{assert.match(runtime,/const readerTarget=\(best\?\.metadata\?\.productUrl/);assert.match(runtime,/const browserTarget=\(best\?\.metadata\?\.productUrl/);});
+test('live failure returns safe attempt diagnostics',()=>{assert.match(runtime,/attempts=Array\.isArray\(partial\?\.attempts\)/);assert.match(runtime,/missing:azShopeeMetadataMissing\(metadata\),attempts,runtime:'deploy-server\.js',patch:1307/);assert.match(html,/x\.target/);});
+test('backend mirror includes short-link recovery',()=>{assert.match(backend,/function azShopeeEmbeddedHttpUrl/);assert.match(backend,/async function azShopeeResolveHeadHint/);assert.match(backend,/patch:1307/);});
