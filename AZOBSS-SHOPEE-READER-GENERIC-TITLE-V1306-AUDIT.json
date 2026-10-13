@@ -1,0 +1,11 @@
+{
+  "patch": 1306,
+  "packageVersion": "1.0.1306",
+  "features": [
+    "Generic Shopee title rejected in live runtime",
+    "Reader canonical URL decoding",
+    "Two-pass Reader retry",
+    "Chromium escalation after generic Reader page",
+    "Affiliate Buy Now URL preserved"
+  ]
+}
