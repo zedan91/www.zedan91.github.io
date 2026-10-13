@@ -1,0 +1,15 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+test('v1308 package',()=>assert.equal(pkg.version,'1.0.1308'));
+test('mobile browser redirect-chain resolver exists',()=>{assert.match(runtime,/async function azShopeeBrowserResolveShortLink/);assert.match(runtime,/Android 10/);assert.match(runtime,/h\?\.location/);assert.match(runtime,/resourceType\(\)/);});
+test('redirect destination ranking unwraps challenge and embedded httpUrl',()=>{assert.match(runtime,/function azShopeeBestDestination/);assert.match(runtime,/azShopeeChallengeInfo/);assert.match(runtime,/azShopeeEmbeddedHttpUrl/);});
+test('redirect browser runs before reader',()=>{const a=runtime.indexOf('await azShopeeBrowserResolveShortLink(affiliateUrl)');const b=runtime.indexOf('await azShopeeReaderMetadata(readerTarget');assert.ok(a>0&&b>a);});
+test('browser no-title diagnostics are visible',()=>assert.match(runtime,/Chromium selesai tetapi Shopee masih tidak beri title sebenar/));
+test('frontend cache bust bumped',()=>assert.match(html,/azobss-global-auth\.js\?v=1308/));
+test('live response patch bumped',()=>assert.match(runtime,/patch:1308/));

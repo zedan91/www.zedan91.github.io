@@ -7,7 +7,7 @@ const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
-test('v1304 package',()=>assert.ok(['1.0.1304','1.0.1305','1.0.1306','1.0.1307'].includes(pkg.version)));
+test('v1304 package',()=>assert.ok(['1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308'].includes(pkg.version)));
 test('challenge URLs recover the Shopee next product URL without trusting external hosts',()=>{
   assert.match(runtime,/function azShopeeChallengeInfo/);
   assert.match(runtime,/\['next','redirect','redirect_url','url','target'\]/);
@@ -36,5 +36,5 @@ test('browser fallback no longer treats traffic challenge as automatic metadata 
 test('secondary Express backend carries the same SEO challenge helpers',()=>{
   assert.match(backend,/function azShopeeSeoMetadataFromPage/);
   assert.match(backend,/http-seo-challenge/);
-  assert.match(backend,/patch:13(?:04|05|06|07)/);
+  assert.match(backend,/patch:13(?:04|05|06|07|08)/);
 });

@@ -2333,7 +2333,7 @@ function azShopeeTrackingLanding(value){
   }
   return current!==original ? current : '';
 }
-// AZOBSS v1307: short-link destination recovery before metadata scraping.
+// AZOBSS v1308: short-link destination recovery before metadata scraping.
 // Some Shopee short-link landing pages expose the real target in JS CONFIG.httpUrl
 // even when a datacenter request does not receive a normal HTTP redirect.
 function azShopeeDecodeJsUrl(value){
@@ -2484,7 +2484,7 @@ function azShopeeTitleFromProductUrl(productUrl){
 }
 
 
-// AZOBSS v1307: short-link HEAD + CONFIG.httpUrl resolver + canonical retry for Shopee metadata.
+// AZOBSS v1308: short-link HEAD + CONFIG.httpUrl resolver + canonical retry for Shopee metadata.
 // Only the public Shopee URL is sent. AZOBSS does not forward browser cookies,
 // Shopee authorization headers, AZOBSS admin credentials, or private session data.
 const AZOBSS_SHOPEE_READER_ENDPOINT = String(process.env.AZOBSS_SHOPEE_READER_ENDPOINT || 'https://r.jina.ai/').trim();
@@ -2887,11 +2887,11 @@ app.post('/api/shopee-affiliate/product-metadata', requireAdmin, async (req,res)
       catch(e){attempts.push({source:'jina-reader',target:readerTarget===affiliateUrl?'affiliate':'canonical',ok:false,message:String(e?.message||e||'').slice(0,180)});}
     }
     const completeness=azShopeeMetadataCompleteness(metadata), missing=azShopeeMetadataMissing(metadata);
-    if(!azShopeeMetadataHasRequiredProduct(metadata)) return res.status(502).json({ok:false,error:'SCRAPE_FAILED',message:'Nama produk Shopee tidak dapat dibaca secara automatik.',affiliateUrl,metadata,missing,attempts,patch:1307});
-    return res.json({ok:true,affiliateUrl,metadata:{...metadata,affiliateUrl},product:{title:metadata.title,description:metadata.description||'',image:metadata.image||null,price:metadata.priceLabel||null,sourceUrl:metadata.sourceUrl||metadata.productUrl||''},completeness,partial:missing.length>0,missing,source,challenge:!!seo.challenge,seoRecovered:azShopeeMetadataHasRequiredProduct(seo.metadata),externalFallback:String(source||'').startsWith('jina-reader'),attempts,resolvedProductUrl:metadata.productUrl||'',shopId:metadata.shopId||'',itemId:metadata.itemId||'',priceAvailable:!!metadata.priceLabel,patch:1307});
+    if(!azShopeeMetadataHasRequiredProduct(metadata)) return res.status(502).json({ok:false,error:'SCRAPE_FAILED',message:'Nama produk Shopee tidak dapat dibaca secara automatik.',affiliateUrl,metadata,missing,attempts,patch:1308});
+    return res.json({ok:true,affiliateUrl,metadata:{...metadata,affiliateUrl},product:{title:metadata.title,description:metadata.description||'',image:metadata.image||null,price:metadata.priceLabel||null,sourceUrl:metadata.sourceUrl||metadata.productUrl||''},completeness,partial:missing.length>0,missing,source,challenge:!!seo.challenge,seoRecovered:azShopeeMetadataHasRequiredProduct(seo.metadata),externalFallback:String(source||'').startsWith('jina-reader'),attempts,resolvedProductUrl:metadata.productUrl||'',shopId:metadata.shopId||'',itemId:metadata.itemId||'',priceAvailable:!!metadata.priceLabel,patch:1308});
   }catch(err){
     const status=Number(err?.statusCode || (err?.name==='AbortError'?504:500));
-    return res.status(status).json({ok:false,error:'shopee_metadata_failed',message:String(err?.message || err || 'Gagal membaca maklumat produk Shopee.'),attempts,patch:1307});
+    return res.status(status).json({ok:false,error:'shopee_metadata_failed',message:String(err?.message || err || 'Gagal membaca maklumat produk Shopee.'),attempts,patch:1308});
   }
 });
 
