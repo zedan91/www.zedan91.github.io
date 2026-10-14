@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AZOBSS Shopee Browser Capture",
-  "version": "1.1.0",
-  "description": "Capture Shopee product metadata in the user browser and bridge it back to AZOBSS Affiliate Shop.",
+  "version": "1.2.0",
+  "description": "Capture Shopee product metadata and SPayLater/SLoan finance summaries locally, then bridge selected fields back to AZOBSS.",
   "permissions": [
     "activeTab",
     "downloads",
@@ -26,7 +26,9 @@
         "https://*.shopee.com.my/*",
         "https://s.shopee.com.my/*",
         "https://azobss.com/affiliate-shop/*",
-        "https://www.azobss.com/affiliate-shop/*"
+        "https://www.azobss.com/affiliate-shop/*",
+        "https://azobss.com/admin/*",
+        "https://www.azobss.com/admin/*"
       ],
       "js": [
         "content.js"

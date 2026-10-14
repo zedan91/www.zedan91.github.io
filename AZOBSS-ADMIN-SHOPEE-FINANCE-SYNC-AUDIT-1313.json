@@ -1,0 +1,31 @@
+{
+  "patch": 1313,
+  "baseline": 1312,
+  "feature": "Admin Debt & Loan SPayLater / SLoan auto reconcile",
+  "storage": {
+    "currentKey": "azobssAdminDebtLoanTrackerV1313",
+    "legacyKey": "azobssAdminDebtLoanTrackerV1312",
+    "cloudDoc": "adminFinance/debtLoanTracker"
+  },
+  "financeTypes": ["spaylater", "sloan"],
+  "browserCapture": {
+    "extensionVersion": "1.2.0",
+    "financeStorageKey": "azobssShopeeFinancePendingV1313",
+    "adminBridge": "azobss-shopee-finance-bridge-v1313",
+    "selectedFieldsOnly": true,
+    "passwordOrCookieBridge": false
+  },
+  "reconcile": {
+    "firstCapture": "sets opening balance without payment event",
+    "lowerBalance": "difference becomes automatic payment",
+    "higherBalance": "balance adjustment, not payment",
+    "dedupe": "captureId"
+  },
+  "bankDetection": {
+    "mode": "local CSV/TXT import",
+    "matching": "explicit debt keywords + debit/payment amount",
+    "liveBankApi": false,
+    "result": "provisional until Shopee reconcile"
+  },
+  "tests": "168/168 passed"
+}

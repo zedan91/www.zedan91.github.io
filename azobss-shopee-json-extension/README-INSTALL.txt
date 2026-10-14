@@ -1,26 +1,19 @@
-AZOBSS Shopee Browser Capture v1309
-=======================================
+AZOBSS Shopee Browser Capture v1313
 
-TUJUAN
-- Guna browser pengguna sendiri untuk membaca metadata produk Shopee.
-- Metadata dihantar melalui chrome.storage.local kepada halaman https://www.azobss.com/affiliate-shop/.
-- Tiada cookie Shopee, password, token, Authorization atau session dihantar ke AZOBSS backend.
-- Affiliate short-link yang kamu paste dalam AZOBSS kekal sebagai Buy Now URL.
+Fungsi:
+1. Affiliate Shop: capture metadata produk seperti v1309.
+2. Admin > Debt & Loan: capture ringkasan SPayLater/SLoan secara lokal untuk auto reconcile baki.
 
-INSTALL (Chrome/Edge)
-1. Buka chrome://extensions atau edge://extensions.
-2. Hidupkan Developer mode.
-3. Load unpacked.
-4. Pilih folder azobss-shopee-json-extension.
+Install / update:
+1. Chrome/Edge > Extensions > Developer mode.
+2. Jika versi lama sudah ada, tekan Reload selepas replace folder ini.
+3. Jika belum ada, Load unpacked dan pilih folder azobss-shopee-json-extension.
+4. Buka AZOBSS Admin > Debt & Loan; status mesti tunjuk Extension v1313 ready.
+5. Buka Shopee web dalam browser yang sama dan login sendiri.
+6. Pergi ke halaman SPayLater atau SLoan. Bila angka finance kelihatan, extension akan capture field terpilih sahaja.
+7. Kembali ke Admin > Debt & Loan. Baki akan reconcile; jika baki turun, beza direkod sebagai bayaran automatik.
 
-GUNA
-1. Di AZOBSS Affiliate Shop, paste s.shopee.com.my Get Link.
-2. Jika server import gagal, tekan “Open Browser Capture”.
-3. Shopee dibuka dalam browser normal kamu.
-4. Extension membaca SEO metadata produk dan menyimpan capture secara local.
-5. Kembali ke tab AZOBSS. Form Edit Item / Card akan diisi automatik.
-6. Semak dan tekan Save & Publish.
-
-NOTA
-- Extension tidak bypass login/CAPTCHA/anti-bot. Ia hanya membaca metadata yang browser kamu sendiri telah menerima.
-- Jika Shopee page langsung tidak mengandungi nama produk, extension juga tidak akan meneka nama.
+Privacy:
+- Extension tidak membaca atau menghantar password/cookie Shopee kepada AZOBSS.
+- Hanya field ringkasan seperti baki, current due, due date, remaining installment dan timestamp dihantar melalui browser storage lokal.
+- Jika halaman Shopee web tidak memaparkan finance data, guna fallback paste text atau edit manual dalam Debt & Loan.

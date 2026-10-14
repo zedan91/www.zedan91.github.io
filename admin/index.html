@@ -2238,20 +2238,20 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-azdm-admin.css?v=1218">
 <script src="/assets/js/azobss-azdm-admin.js?v=1218" defer></script>
 
-<style id="azobss-admin-debt-loan-v1312">
+<style id="azobss-admin-debt-loan-v1313">
 .az-debt-section{--az-debt-border:#2d506f;--az-debt-soft:#0f1b2d;--az-debt-card:#162337}
 .az-debt-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
 .az-debt-heading h2{margin:0 0 6px}.az-debt-heading p{margin:0;color:#b7c8dc}
 .az-debt-private{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #294665;border-radius:999px;background:#0d1828;color:#bcd6ef;font-size:12px;font-weight:800;white-space:nowrap}
-.az-debt-kpis{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.az-debt-kpis .card{min-height:112px;padding:14px 13px}.az-debt-kpis .stat-value{font-size:25px;line-height:1.1}
+.az-debt-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.az-debt-kpis .card{min-height:108px;padding:14px 13px}.az-debt-kpis .stat-value{font-size:24px;line-height:1.1}
 .az-debt-kpis .az-kpi-note{font-size:11px;line-height:1.35}
 .az-debt-kpi-total{border-color:#d7a82b!important;background:linear-gradient(135deg,#2b2515,#1c2a3d)!important}
-.az-debt-kpi-person{border-color:#8a5bc7!important}.az-debt-kpi-monthly{border-color:#19a7a0!important}
+.az-debt-kpi-person{border-color:#8a5bc7!important}.az-debt-kpi-monthly{border-color:#19a7a0!important}.az-debt-kpi-spay{border-color:#f59e0b!important}.az-debt-kpi-sloan{border-color:#f97316!important}
 .az-debt-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr);gap:12px;align-items:start}
 .az-debt-card{background:#162337;border:1px solid var(--az-debt-border);border-radius:16px;padding:16px;margin-bottom:12px}
 .az-debt-card h3{margin:0 0 10px;font-size:17px}.az-debt-card .tabs-note{margin-top:5px}
-.az-debt-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.az-debt-breakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
 .az-debt-breakdown-item{border:1px solid #2b4664;border-radius:12px;padding:11px;background:#0e1a2a}
 .az-debt-breakdown-item b{display:block;font-size:18px;margin-top:3px}.az-debt-breakdown-item small{color:#9eb4cb}
 .az-debt-bar{height:9px;border-radius:999px;background:#0a1320;overflow:hidden;margin-top:8px;border:1px solid #223b58}
@@ -2260,16 +2260,20 @@ body[data-dashboard-page="admin"] .topbar{
 .az-debt-metric{border:1px solid #2a4766;border-radius:12px;background:#0d1828;padding:10px;min-height:72px}
 .az-debt-metric span{display:block;color:#9fb6cf;font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.03em}.az-debt-metric b{display:block;margin-top:5px;font-size:16px;color:#f4f8ff;word-break:break-word}
 .az-debt-metric.is-money b{color:#46f0ad}.az-debt-metric.is-warn b{color:#ffd45c}
+.az-debt-sync-card{border-color:#8a641f;background:linear-gradient(135deg,#1b2331,#242015)}
+.az-debt-sync-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.az-debt-sync-status{padding:5px 9px;border-radius:999px;border:1px solid #6b7280;background:#111827;color:#cbd5e1;font-size:11px;font-weight:900}.az-debt-sync-status.ready{border-color:#1d976f;background:#0e3128;color:#6df0bd}.az-debt-sync-status.wait{border-color:#8a6b24;background:#352a11;color:#ffd96b}
+.az-debt-sync-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.az-debt-sync-box{border:1px solid #365675;border-radius:13px;background:#0d1828;padding:12px}.az-debt-sync-box h4{margin:0 0 8px;font-size:15px}.az-debt-sync-box .sync-money{font-size:23px;font-weight:950;color:#4cf0b0}.az-debt-sync-meta{display:grid;grid-template-columns:1fr auto;gap:5px 12px;margin-top:8px;font-size:11px;color:#9db3ca}.az-debt-sync-meta b{color:#e6f0fb}.az-debt-sync-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.az-debt-manual-sync{display:grid;grid-template-columns:1fr;gap:7px;margin-top:10px}.az-debt-manual-sync textarea{width:100%;min-height:74px;resize:vertical}.az-debt-bank-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:10px}.az-debt-bank-row input[type=file]{width:100%}
 .az-debt-planner-row{display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:end}.az-debt-planner-row input{width:100%}
 .az-debt-plan-table{display:grid;gap:8px;margin-top:12px}.az-debt-plan-line{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border-bottom:1px dashed #2c425b;padding:7px 0}.az-debt-plan-line:last-child{border-bottom:0}.az-debt-plan-line strong{font-size:15px}.az-debt-plan-line em{font-style:normal;color:#8fa8c2;font-size:12px}
 .az-debt-plan-total{margin-top:10px;padding:11px 12px;border-radius:12px;border:1px solid #1c856e;background:#102a29;display:flex;justify-content:space-between;gap:10px;align-items:center}.az-debt-plan-total b{font-size:20px;color:#4cf0b0}
-.az-debt-table-wrap{overflow:auto;border:1px solid #2a4664;border-radius:14px}.az-debt-table{width:100%;border-collapse:collapse;min-width:920px}.az-debt-table th{background:#0a1525;color:#a8c9e9;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:10px;text-align:left;position:sticky;top:0}.az-debt-table td{padding:11px 10px;border-top:1px solid #263e58;vertical-align:top}.az-debt-name{font-weight:900;color:#f2f7ff}.az-debt-sub{font-size:11px;color:#96acc3;margin-top:3px}.az-debt-amount{font-weight:900;color:#4cf0b0;white-space:nowrap}.az-debt-actions{display:flex;gap:5px;flex-wrap:wrap}.az-debt-actions .btn{padding:6px 8px;font-size:11px}
-.az-debt-pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#102842;border:1px solid #2f5b83;font-size:11px;font-weight:800}.az-debt-pill.person{background:#2b1d3c;border-color:#714da0}.az-debt-pill.paid{background:#113a2f;border-color:#238a6d;color:#68f0bc}
+.az-debt-table-wrap{overflow:auto;border:1px solid #2a4664;border-radius:14px}.az-debt-table{width:100%;border-collapse:collapse;min-width:980px}.az-debt-table th{background:#0a1525;color:#a8c9e9;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:10px;text-align:left;position:sticky;top:0}.az-debt-table td{padding:11px 10px;border-top:1px solid #263e58;vertical-align:top}.az-debt-name{font-weight:900;color:#f2f7ff}.az-debt-sub{font-size:11px;color:#96acc3;margin-top:3px}.az-debt-amount{font-weight:900;color:#4cf0b0;white-space:nowrap}.az-debt-actions{display:flex;gap:5px;flex-wrap:wrap}.az-debt-actions .btn{padding:6px 8px;font-size:11px}
+.az-debt-pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#102842;border:1px solid #2f5b83;font-size:11px;font-weight:800}.az-debt-pill.person{background:#2b1d3c;border-color:#714da0}.az-debt-pill.spaylater{background:#392a0c;border-color:#b97817;color:#ffd56c}.az-debt-pill.sloan{background:#3b1d0b;border-color:#d76520;color:#ffb27b}.az-debt-pill.paid{background:#113a2f;border-color:#238a6d;color:#68f0bc}.az-debt-pill.unlinked{background:#242b36;border-color:#546170;color:#b9c4d0}
 .az-debt-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.az-debt-form label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:800;color:#a9c1d8}.az-debt-form .wide{grid-column:span 2}.az-debt-form .full{grid-column:1/-1}.az-debt-form input,.az-debt-form select,.az-debt-form textarea{width:100%}.az-debt-form textarea{min-height:70px;resize:vertical}
 .az-debt-history{display:grid;gap:7px}.az-debt-history-row{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid #29445f;background:#0d1828;border-radius:10px}.az-debt-history-row small{color:#90a8c0}.az-debt-storage{font-size:11px;color:#91a8c0;margin-left:auto}
 .az-debt-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:11px}.az-debt-toolbar .spacer{flex:1}
-@media(max-width:1180px){.az-debt-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.az-debt-layout{grid-template-columns:1fr}.az-debt-loan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.az-debt-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.az-debt-breakdown{grid-template-columns:1fr}.az-debt-form{grid-template-columns:1fr 1fr}.az-debt-form .wide,.az-debt-form .full{grid-column:1/-1}.az-debt-planner-row{grid-template-columns:1fr}.az-debt-loan-grid{grid-template-columns:1fr}.az-debt-heading{flex-direction:column}.az-debt-history-row{grid-template-columns:1fr auto}.az-debt-history-row>div:nth-child(2){grid-column:1/-1;grid-row:2}}
+@media(max-width:1180px){.az-debt-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.az-debt-layout{grid-template-columns:1fr}.az-debt-loan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.az-debt-kpis{grid-template-columns:1fr 1fr}.az-debt-breakdown,.az-debt-sync-grid{grid-template-columns:1fr}.az-debt-form{grid-template-columns:1fr 1fr}.az-debt-form .wide,.az-debt-form .full{grid-column:1/-1}.az-debt-planner-row,.az-debt-bank-row{grid-template-columns:1fr}.az-debt-loan-grid{grid-template-columns:1fr}.az-debt-heading{flex-direction:column}.az-debt-history-row{grid-template-columns:1fr auto}.az-debt-history-row>div:nth-child(2){grid-column:1/-1;grid-row:2}}
 </style>
 </head>
 
@@ -3114,58 +3118,76 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="az-debt-heading">
         <div>
           <h2>💳 Hutang &amp; Loan</h2>
-          <p>Ringkasan hutang peribadi dan loan supaya senang nampak baki, komitmen bulanan, tarikh bayaran dan sasaran pelangsaian.</p>
+          <p>Tracker hutang peribadi, loan kereta, SPayLater dan SLoan — termasuk auto-reconcile selepas baki Shopee berubah.</p>
         </div>
         <span class="az-debt-private">🔒 Admin only</span>
       </div>
 
       <div class="grid az-debt-kpis">
-        <div class="card az-kpi-card az-debt-kpi-total"><div><div class="stat-label">Total Baki Hutang</div><div id="azDebtTotal" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Loan bank + hutang orang yang masih aktif.</div></div>
-        <div class="card az-kpi-card"><div><div class="stat-label">Loan Kereta</div><div id="azDebtVehicleTotal" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Outstanding balance semasa.</div></div>
+        <div class="card az-kpi-card az-debt-kpi-total"><div><div class="stat-label">Total Baki Hutang</div><div id="azDebtTotal" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Semua baki yang sudah diketahui.</div></div>
+        <div class="card az-kpi-card"><div><div class="stat-label">Loan Kereta</div><div id="azDebtVehicleTotal" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Outstanding AmBank semasa.</div></div>
+        <div class="card az-kpi-card az-debt-kpi-spay"><div><div class="stat-label">SPayLater</div><div id="azDebtSpayLaterTotal" class="stat-value">—</div></div><div id="azDebtSpayLaterNote" class="az-kpi-note">Belum linked.</div></div>
+        <div class="card az-kpi-card az-debt-kpi-sloan"><div><div class="stat-label">SLoan / SPay Loan</div><div id="azDebtSloanTotal" class="stat-value">—</div></div><div id="azDebtSloanNote" class="az-kpi-note">Belum linked.</div></div>
         <div class="card az-kpi-card az-debt-kpi-person"><div><div class="stat-label">Aku Hutang Orang</div><div id="azDebtPeopleTotal" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Pinjaman / bayaran kepada individu.</div></div>
-        <div class="card az-kpi-card az-debt-kpi-monthly"><div><div class="stat-label">Komitmen Bulanan Tetap</div><div id="azDebtMonthlyKnown" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Bayaran bulanan yang sudah diketahui.</div></div>
+        <div class="card az-kpi-card az-debt-kpi-monthly"><div><div class="stat-label">Komitmen Bulanan</div><div id="azDebtMonthlyKnown" class="stat-value">RM0.00</div></div><div class="az-kpi-note">Ansuran tetap / due yang diketahui.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Next Due</div><div id="azDebtNextDue" class="stat-value" style="font-size:19px">-</div></div><div id="azDebtNextDueNote" class="az-kpi-note">Tiada tarikh ditetapkan.</div></div>
         <div class="card az-kpi-card"><div><div class="stat-label">Target Bayaran / Bulan</div><div id="azDebtTargetMonthly" class="stat-value">RM0.00</div></div><div id="azDebtTargetNote" class="az-kpi-note">Termasuk target hutang orang.</div></div>
+      </div>
+
+      <div class="az-debt-card az-debt-sync-card">
+        <div class="az-debt-sync-top">
+          <h3 style="margin:0">🟠 Shopee Finance Auto Sync</h3>
+          <span id="azDebtShopeeBridgeStatus" class="az-debt-sync-status wait">Extension belum dikesan</span>
+          <span class="az-debt-storage" id="azDebtStorageMode">Loading…</span>
+        </div>
+        <div class="tabs-note">Flow: buka SPayLater/SLoan dalam browser yang login → extension baca ringkasan kewangan secara lokal → AZOBSS reconcile baki. Jika baki baru lebih rendah, beza direkod sebagai bayaran automatik. Tiada password/cookie Shopee dihantar ke AZOBSS.</div>
+        <div class="az-debt-sync-grid" style="margin-top:10px">
+          <div class="az-debt-sync-box">
+            <h4>🟠 SPayLater</h4><div id="azDebtSpaySyncMoney" class="sync-money">Belum linked</div>
+            <div id="azDebtSpaySyncMeta" class="az-debt-sync-meta"></div>
+            <div class="az-debt-sync-actions"><button class="btn" type="button" data-open-shopee="spaylater">🌐 Open Shopee</button><button class="btn gray" type="button" data-debt-action="reset-sync" data-id="shopee-spaylater">Reset Link</button></div>
+          </div>
+          <div class="az-debt-sync-box">
+            <h4>🟡 SLoan / SPay Loan</h4><div id="azDebtSloanSyncMoney" class="sync-money">Belum linked</div>
+            <div id="azDebtSloanSyncMeta" class="az-debt-sync-meta"></div>
+            <div class="az-debt-sync-actions"><button class="btn" type="button" data-open-shopee="sloan">🌐 Open Shopee</button><button class="btn gray" type="button" data-debt-action="reset-sync" data-id="shopee-sloan">Reset Link</button></div>
+          </div>
+        </div>
+        <div class="az-debt-manual-sync">
+          <label style="font-size:11px;font-weight:800;color:#a9c1d8">Fallback manual — paste teks ringkasan daripada halaman Shopee jika auto capture tak dapat baca</label>
+          <textarea id="azDebtShopeePaste" placeholder="Paste teks SPayLater atau SLoan di sini. Hanya angka kewangan yang diperlukan akan disimpan."></textarea>
+          <div class="toolbar" style="margin:0"><button class="btn gray" id="azDebtParseSpay" type="button">Parse as SPayLater</button><button class="btn gray" id="azDebtParseSloan" type="button">Parse as SLoan</button><button class="btn" id="azDebtSyncNow" type="button">↻ Check Capture Now</button></div>
+        </div>
+        <div class="az-debt-bank-row">
+          <div><b style="font-size:12px">🏦 Bank payment detection (CSV)</b><div class="tabs-note">Import statement CSV/TXT. Auto-match hanya transaksi dengan keyword khusus seperti SPAYLATER / SLOAN; transaksi berulang didedupe. Live Open Finance belum diaktifkan.</div></div>
+          <input id="azDebtBankCsv" type="file" accept=".csv,.txt,text/csv,text/plain">
+        </div>
       </div>
 
       <div class="az-debt-layout">
         <div>
           <div class="az-debt-card">
-            <div class="az-debt-toolbar">
-              <h3 style="margin:0">🚗 Loan Kereta — AmBank HP Act - Fixed</h3>
-              <span class="az-debt-storage" id="azDebtStorageMode">Loading…</span>
-            </div>
+            <div class="az-debt-toolbar"><h3 style="margin:0">🚗 Loan Kereta — AmBank HP Act - Fixed</h3></div>
             <div id="azDebtCarMetrics" class="az-debt-loan-grid"></div>
-            <div class="tabs-note" style="margin-top:10px">Nota: total hutang menggunakan <b>Outstanding Balance</b> bank. Late charge dipaparkan berasingan dan tidak ditambah kali kedua.</div>
+            <div class="tabs-note" style="margin-top:10px">Total hutang menggunakan <b>Outstanding Balance</b> bank. Late charge dipaparkan berasingan dan tidak ditambah kali kedua.</div>
           </div>
 
           <div class="az-debt-card">
-            <div class="az-debt-toolbar">
-              <h3 style="margin:0">📋 Senarai Hutang</h3>
-              <div class="spacer"></div>
-              <button class="btn" id="azDebtAddNew" type="button">＋ Add Hutang</button>
-              <button class="btn gray" id="azDebtExportCsv" type="button">⇩ Export CSV</button>
-            </div>
-            <div class="az-debt-table-wrap">
-              <table class="az-debt-table">
-                <thead><tr><th>Jenis / Pemiutang</th><th>Keterangan</th><th>Baki</th><th>Bulanan</th><th>Due</th><th>Progress</th><th>Tindakan</th></tr></thead>
-                <tbody id="azDebtTableBody"></tbody>
-              </table>
-            </div>
+            <div class="az-debt-toolbar"><h3 style="margin:0">📋 Senarai Hutang</h3><div class="spacer"></div><button class="btn" id="azDebtAddNew" type="button">＋ Add Hutang</button><button class="btn gray" id="azDebtExportCsv" type="button">⇩ Export CSV</button></div>
+            <div class="az-debt-table-wrap"><table class="az-debt-table"><thead><tr><th>Jenis / Pemiutang</th><th>Keterangan</th><th>Baki</th><th>Bulanan / Due</th><th>Tarikh Due</th><th>Sync / Progress</th><th>Tindakan</th></tr></thead><tbody id="azDebtTableBody"></tbody></table></div>
           </div>
 
           <div class="az-debt-card" id="azDebtEditorCard">
             <div class="az-debt-toolbar"><h3 id="azDebtEditorTitle" style="margin:0">＋ Tambah Hutang</h3><div class="spacer"></div><button class="btn gray" id="azDebtEditorClear" type="button">Clear</button></div>
             <input id="azDebtEditId" type="hidden">
             <div class="az-debt-form">
-              <label>Jenis
-                <select id="azDebtType"><option value="person">Hutang Orang</option><option value="vehicle">Loan Kereta</option><option value="other">Lain-lain</option></select>
-              </label>
+              <label>Jenis<select id="azDebtType"><option value="person">Hutang Orang</option><option value="vehicle">Loan Kereta</option><option value="spaylater">SPayLater</option><option value="sloan">SLoan / SPay Loan</option><option value="other">Lain-lain</option></select></label>
               <label>Pemiutang / Nama<input id="azDebtCreditor" placeholder="Contoh: Nava Shankara"></label>
               <label class="wide">Keterangan<input id="azDebtTitle" placeholder="Contoh: Bayaran POS Sistem"></label>
               <label>Baki semasa (RM)<input id="azDebtBalance" type="number" min="0" step="0.01" placeholder="0.00"></label>
               <label>Jumlah asal / rujukan (RM)<input id="azDebtOriginal" type="number" min="0" step="0.01" placeholder="Optional"></label>
               <label>Bayaran bulanan (RM)<input id="azDebtMonthly" type="number" min="0" step="0.01" placeholder="0.00"></label>
+              <label>Current due / bil (RM)<input id="azDebtCurrentDue" type="number" min="0" step="0.01" placeholder="SPayLater/SLoan"></label>
               <label>Next due<input id="azDebtDue" type="date"></label>
               <label>Principal balance (RM)<input id="azDebtPrincipal" type="number" min="0" step="0.01" placeholder="Loan sahaja"></label>
               <label>Interest rate (%)<input id="azDebtRate" type="number" min="0" step="0.01" placeholder="Loan sahaja"></label>
@@ -3173,40 +3195,23 @@ body[data-dashboard-page="admin"] .topbar{
               <label>Original tenure<input id="azDebtTenure" type="number" min="0" step="1" placeholder="Loan sahaja"></label>
               <label>Late charges (RM)<input id="azDebtLate" type="number" min="0" step="0.01" placeholder="0.00"></label>
               <label>Last payment date<input id="azDebtLastPayment" type="date"></label>
+              <label class="wide">Bank match keywords<input id="azDebtBankKeywords" placeholder="Contoh: SPAYLATER|SPAY LATER"></label>
               <label class="wide">Nota<textarea id="azDebtNote" placeholder="Catatan tambahan"></textarea></label>
-              <div class="full toolbar" style="margin:0"><button class="btn green" id="azDebtSave" type="button">Save Hutang</button><span class="tabs-note">Untuk loan bank, kamu boleh kemas kini baki sebenar selepas statement bank berubah.</span></div>
+              <div class="full toolbar" style="margin:0"><button class="btn green" id="azDebtSave" type="button">Save Hutang</button><span class="tabs-note">Untuk SPayLater/SLoan, Auto Sync akan overwrite baki apabila capture Shopee berjaya.</span></div>
             </div>
           </div>
         </div>
 
         <div>
-          <div class="az-debt-card">
-            <h3>📊 Pembahagian Hutang</h3>
-            <div id="azDebtBreakdown" class="az-debt-breakdown"></div>
-          </div>
-
+          <div class="az-debt-card"><h3>📊 Pembahagian Hutang</h3><div id="azDebtBreakdown" class="az-debt-breakdown"></div></div>
           <div class="az-debt-card">
             <h3>🎯 Pelan Bayaran Hutang Orang</h3>
-            <div class="az-debt-planner-row">
-              <label style="font-size:11px;font-weight:800;color:#a9c1d8">Selesaikan dalam (bulan)
-                <input id="azDebtPlannerMonths" type="number" min="1" max="120" step="1" value="12">
-              </label>
-              <div class="toolbar" style="margin:0"><button class="btn gray az-debt-plan-preset" data-months="6" type="button">6 bulan</button><button class="btn gray az-debt-plan-preset" data-months="12" type="button">12 bulan</button><button class="btn gray az-debt-plan-preset" data-months="24" type="button">24 bulan</button></div>
-            </div>
-            <div id="azDebtPlanTable" class="az-debt-plan-table"></div>
-            <div class="az-debt-plan-total"><span>Total target sebulan</span><b id="azDebtPlanTotal">RM0.00</b></div>
-            <div class="tabs-note" style="margin-top:8px">Formula: komitmen bulanan loan yang diketahui + baki hutang orang ÷ tempoh sasaran.</div>
+            <div class="az-debt-planner-row"><label style="font-size:11px;font-weight:800;color:#a9c1d8">Selesaikan dalam (bulan)<input id="azDebtPlannerMonths" type="number" min="1" max="120" step="1" value="12"></label><div class="toolbar" style="margin:0"><button class="btn gray az-debt-plan-preset" data-months="6" type="button">6 bulan</button><button class="btn gray az-debt-plan-preset" data-months="12" type="button">12 bulan</button><button class="btn gray az-debt-plan-preset" data-months="24" type="button">24 bulan</button></div></div>
+            <div id="azDebtPlanTable" class="az-debt-plan-table"></div><div class="az-debt-plan-total"><span>Total target sebulan</span><b id="azDebtPlanTotal">RM0.00</b></div>
+            <div class="tabs-note" style="margin-top:8px">Formula: komitmen bulanan yang diketahui + baki hutang orang ÷ tempoh sasaran.</div>
           </div>
-
-          <div class="az-debt-card">
-            <h3>🧾 Kiraan Detail Loan Kereta</h3>
-            <div id="azDebtLoanCalc" class="az-debt-plan-table"></div>
-          </div>
-
-          <div class="az-debt-card">
-            <div class="az-debt-toolbar"><h3 style="margin:0">🕘 Rekod Bayaran</h3><div class="spacer"></div><button class="btn red" id="azDebtClearHistory" type="button">Clear History</button></div>
-            <div id="azDebtHistory" class="az-debt-history"></div>
-          </div>
+          <div class="az-debt-card"><h3>🧾 Kiraan Detail Loan Kereta</h3><div id="azDebtLoanCalc" class="az-debt-plan-table"></div></div>
+          <div class="az-debt-card"><div class="az-debt-toolbar"><h3 style="margin:0">🕘 Rekod Bayaran &amp; Auto Reconcile</h3><div class="spacer"></div><button class="btn red" id="azDebtClearHistory" type="button">Clear History</button></div><div id="azDebtHistory" class="az-debt-history"></div></div>
         </div>
       </div>
     </section>
@@ -7566,261 +7571,96 @@ function printWebsiteReport(){
 }
 
 
-/* AZOBSS PATCH 1312: Admin Debt & Loan tracker. */
-const AZ_DEBT_STORAGE_KEY='azobssAdminDebtLoanTrackerV1312';
+/* AZOBSS PATCH 1313: Debt & Loan tracker + Shopee finance reconcile. */
+const AZ_DEBT_STORAGE_KEY='azobssAdminDebtLoanTrackerV1313';
+const AZ_DEBT_LEGACY_STORAGE_KEY='azobssAdminDebtLoanTrackerV1312';
 const AZ_DEBT_CLOUD_COLLECTION='adminFinance';
 const AZ_DEBT_CLOUD_DOC='debtLoanTracker';
+const AZ_DEBT_SHOPEE_BRIDGE_ID='azobss-shopee-finance-bridge-v1313';
+const AZ_DEBT_SHOPEE_READY_EVENT='azobss-shopee-finance-ready';
+const AZ_DEBT_SHOPEE_ACK_EVENT='azobss-shopee-finance-ack';
 let azDebtState=null;
 let azDebtCloudAttempted=false;
+let azDebtBridgeTimer=0;
 
+function azDebtDefaultFinance(kind){
+  const sp=kind==='spaylater';
+  return {id:sp?'shopee-spaylater':'shopee-sloan',type:kind,creditor:'Shopee Finance',title:sp?'SPayLater':'SLoan / SPay Loan',balance:0,balanceAvailable:false,originalAmount:0,monthly:0,currentDue:0,nextDue:'',principalBalance:0,interestRate:0,remainingInstallments:0,originalTenure:0,lateCharges:0,lastPaymentDate:'',note:sp?'Auto sync melalui Shopee Browser Capture.':'Auto sync melalui Shopee Browser Capture.',status:'unlinked',linked:false,managedSync:true,syncProvider:'shopee-browser',lastSyncAtMs:0,lastCaptureId:'',syncConfidence:'',bankMatchKeywords:sp?'SPAYLATER|SPAY LATER':'SLOAN|SPAY LOAN|SHOPEE LOAN'};
+}
 function azDebtDefaultState(){
   return {
-    version:1,
-    plannerMonths:12,
-    updatedAtMs:Date.now(),
+    version:2,plannerMonths:12,updatedAtMs:Date.now(),
     debts:[
-      {id:'ambank-vdd5378',type:'vehicle',creditor:'AmBank',title:'HP Act - Fixed • VDD5378',balance:11896.15,originalAmount:0,monthly:479,nextDue:'2026-11-14',principalBalance:11188.35,interestRate:3.61,remainingInstallments:26,originalTenure:114,lateCharges:8.15,lastPaymentDate:'2026-10-14',note:'Loan kereta. Baki bank semasa berdasarkan paparan AmOnline 14 Oct 2026.',status:'active'},
-      {id:'nava-pos',type:'person',creditor:'Nava Shankara',title:'Bayaran POS Sistem',balance:600,originalAmount:600,monthly:0,nextDue:'',principalBalance:0,interestRate:0,remainingInstallments:0,originalTenure:0,lateCharges:0,lastPaymentDate:'',note:'Aku kena bayar Nava Shankara untuk bayaran POS Sistem.',status:'active'},
-      {id:'omar-family',type:'person',creditor:'Omar bin Akasah',title:'Pinjaman Ayah',balance:5000,originalAmount:5000,monthly:0,nextDue:'',principalBalance:0,interestRate:0,remainingInstallments:0,originalTenure:0,lateCharges:0,lastPaymentDate:'',note:'Pinjaman Ayah.',status:'active'}
-    ],
-    payments:[]
+      {id:'ambank-vdd5378',type:'vehicle',creditor:'AmBank',title:'HP Act - Fixed • VDD5378',balance:11896.15,balanceAvailable:true,originalAmount:0,monthly:479,currentDue:479,nextDue:'2026-11-14',principalBalance:11188.35,interestRate:3.61,remainingInstallments:26,originalTenure:114,lateCharges:8.15,lastPaymentDate:'2026-10-14',note:'Loan kereta. Baki bank semasa berdasarkan paparan AmOnline 14 Oct 2026.',status:'active',linked:true,managedSync:false,bankMatchKeywords:'AMBANK HP|HIRE PURCHASE'},
+      azDebtDefaultFinance('spaylater'),azDebtDefaultFinance('sloan'),
+      {id:'nava-pos',type:'person',creditor:'Nava Shankara',title:'Bayaran POS Sistem',balance:600,balanceAvailable:true,originalAmount:600,monthly:0,currentDue:0,nextDue:'',principalBalance:0,interestRate:0,remainingInstallments:0,originalTenure:0,lateCharges:0,lastPaymentDate:'',note:'Aku kena bayar Nava Shankara untuk bayaran POS Sistem.',status:'active',linked:true,managedSync:false,bankMatchKeywords:''},
+      {id:'omar-family',type:'person',creditor:'Omar bin Akasah',title:'Pinjaman Ayah',balance:5000,balanceAvailable:true,originalAmount:5000,monthly:0,currentDue:0,nextDue:'',principalBalance:0,interestRate:0,remainingInstallments:0,originalTenure:0,lateCharges:0,lastPaymentDate:'',note:'Pinjaman Ayah.',status:'active',linked:true,managedSync:false,bankMatchKeywords:''}
+    ],payments:[],syncEvents:[],bankImports:[]
   };
 }
 function azDebtClone(x){try{return JSON.parse(JSON.stringify(x));}catch(_e){return x;}}
 function azDebtEsc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function azDebtNum(v){const n=Number(v);return Number.isFinite(n)?n:0;}
 function azDebtMoney(v){return 'RM'+azDebtNum(v).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function azDebtDate(v){
-  if(!v)return '-';
-  const d=new Date(String(v)+'T00:00:00');
-  if(Number.isNaN(d.getTime()))return String(v);
-  return d.toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
-}
-function azDebtMonthYear(v){
-  if(!v)return '-';
-  const d=new Date(String(v)+'T00:00:00');
-  if(Number.isNaN(d.getTime()))return '-';
-  return d.toLocaleDateString('en-MY',{month:'short',year:'numeric'});
-}
-function azDebtAddMonths(dateStr,months){
-  if(!dateStr)return '';
-  const d=new Date(String(dateStr)+'T00:00:00'); if(Number.isNaN(d.getTime()))return '';
-  const day=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+Number(months||0));
-  const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); d.setDate(Math.min(day,last));
-  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`;
-}
+function azDebtDate(v){if(!v)return '-';const d=new Date(String(v)+'T00:00:00');if(Number.isNaN(d.getTime()))return String(v);return d.toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});}
+function azDebtDateTime(ms){const d=new Date(azDebtNum(ms)||0);if(!azDebtNum(ms)||Number.isNaN(d.getTime()))return '-';return d.toLocaleString('en-MY',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function azDebtMonthYear(v){if(!v)return '-';const d=new Date(String(v)+'T00:00:00');if(Number.isNaN(d.getTime()))return '-';return d.toLocaleDateString('en-MY',{month:'short',year:'numeric'});}
+function azDebtAddMonths(dateStr,months){if(!dateStr)return '';const d=new Date(String(dateStr)+'T00:00:00');if(Number.isNaN(d.getTime()))return '';const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+Number(months||0));const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;}
+function azDebtToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function azDebtHash(s){let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
+function azDebtEnsureManaged(debts){const arr=Array.isArray(debts)?debts:[];for(const kind of ['spaylater','sloan']){const seed=azDebtDefaultFinance(kind);const i=arr.findIndex(x=>String(x?.id)===seed.id||x?.type===kind);if(i<0)arr.push(seed);else arr[i]={...seed,...arr[i],id:seed.id,type:kind,managedSync:true};}return arr;}
 function azDebtSafeState(raw){
-  const def=azDebtDefaultState();
-  if(!raw||typeof raw!=='object')return def;
-  const out={...def,...raw};
-  out.plannerMonths=Math.max(1,Math.min(120,parseInt(out.plannerMonths||12,10)||12));
+  const def=azDebtDefaultState();if(!raw||typeof raw!=='object')return def;const out={...def,...raw};out.version=2;out.plannerMonths=Math.max(1,Math.min(120,parseInt(out.plannerMonths||12,10)||12));
+  const allowed=['person','vehicle','spaylater','sloan','other'];
   out.debts=Array.isArray(raw.debts)?raw.debts.map((d,i)=>({
-    id:String(d?.id||('debt-'+Date.now()+'-'+i)),type:['person','vehicle','other'].includes(d?.type)?d.type:'other',creditor:String(d?.creditor||''),title:String(d?.title||''),
-    balance:Math.max(0,azDebtNum(d?.balance)),originalAmount:Math.max(0,azDebtNum(d?.originalAmount)),monthly:Math.max(0,azDebtNum(d?.monthly)),nextDue:String(d?.nextDue||''),
-    principalBalance:Math.max(0,azDebtNum(d?.principalBalance)),interestRate:Math.max(0,azDebtNum(d?.interestRate)),remainingInstallments:Math.max(0,Math.round(azDebtNum(d?.remainingInstallments))),originalTenure:Math.max(0,Math.round(azDebtNum(d?.originalTenure))),lateCharges:Math.max(0,azDebtNum(d?.lateCharges)),lastPaymentDate:String(d?.lastPaymentDate||''),note:String(d?.note||''),status:String(d?.status||((azDebtNum(d?.balance)<=0)?'paid':'active'))
+    id:String(d?.id||('debt-'+Date.now()+'-'+i)),type:allowed.includes(d?.type)?d.type:'other',creditor:String(d?.creditor||''),title:String(d?.title||''),balance:Math.max(0,azDebtNum(d?.balance)),balanceAvailable:d?.balanceAvailable!==false,originalAmount:Math.max(0,azDebtNum(d?.originalAmount)),monthly:Math.max(0,azDebtNum(d?.monthly)),currentDue:Math.max(0,azDebtNum(d?.currentDue)),nextDue:String(d?.nextDue||''),principalBalance:Math.max(0,azDebtNum(d?.principalBalance)),interestRate:Math.max(0,azDebtNum(d?.interestRate)),remainingInstallments:Math.max(0,Math.round(azDebtNum(d?.remainingInstallments))),originalTenure:Math.max(0,Math.round(azDebtNum(d?.originalTenure))),lateCharges:Math.max(0,azDebtNum(d?.lateCharges)),lastPaymentDate:String(d?.lastPaymentDate||''),note:String(d?.note||''),status:String(d?.status||((azDebtNum(d?.balance)<=0)?'paid':'active')),linked:d?.linked!==false,managedSync:!!d?.managedSync,syncProvider:String(d?.syncProvider||''),lastSyncAtMs:Math.max(0,azDebtNum(d?.lastSyncAtMs)),lastCaptureId:String(d?.lastCaptureId||''),syncConfidence:String(d?.syncConfidence||''),bankMatchKeywords:String(d?.bankMatchKeywords||'')
   })):def.debts;
-  out.payments=Array.isArray(raw.payments)?raw.payments.slice(0,200):[];
-  return out;
+  out.debts=azDebtEnsureManaged(out.debts);out.payments=Array.isArray(raw.payments)?raw.payments.slice(0,300):[];out.syncEvents=Array.isArray(raw.syncEvents)?raw.syncEvents.slice(0,200):[];out.bankImports=Array.isArray(raw.bankImports)?raw.bankImports.slice(0,1000):[];return out;
 }
-function azDebtReadLocal(){
-  try{const raw=localStorage.getItem(AZ_DEBT_STORAGE_KEY);return raw?azDebtSafeState(JSON.parse(raw)):null;}catch(_e){return null;}
-}
-function azDebtWriteLocal(){
-  if(!azDebtState)return;
-  azDebtState.updatedAtMs=Date.now();
-  try{localStorage.setItem(AZ_DEBT_STORAGE_KEY,JSON.stringify(azDebtState));}catch(_e){}
-}
-async function azDebtSaveCloud(){
-  if(!azDebtState||!currentUser)return false;
-  try{
-    await setDoc(doc(db,AZ_DEBT_CLOUD_COLLECTION,AZ_DEBT_CLOUD_DOC),{
-      ...azDebtClone(azDebtState),updatedAtMs:Date.now(),updatedAt:serverTimestamp(),updatedBy:currentUser.email||currentUser.uid||'admin'
-    },{merge:false});
-    const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='☁ Synced to Firestore';
-    return true;
-  }catch(e){
-    const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='💻 Browser local (Firestore not available)';
-    return false;
-  }
-}
+function azDebtReadLocal(){try{let raw=localStorage.getItem(AZ_DEBT_STORAGE_KEY);if(!raw)raw=localStorage.getItem(AZ_DEBT_LEGACY_STORAGE_KEY);return raw?azDebtSafeState(JSON.parse(raw)):null;}catch(_e){return null;}}
+function azDebtWriteLocal(){if(!azDebtState)return;azDebtState.updatedAtMs=Date.now();try{localStorage.setItem(AZ_DEBT_STORAGE_KEY,JSON.stringify(azDebtState));}catch(_e){}}
+async function azDebtSaveCloud(){if(!azDebtState||!currentUser)return false;try{await setDoc(doc(db,AZ_DEBT_CLOUD_COLLECTION,AZ_DEBT_CLOUD_DOC),{...azDebtClone(azDebtState),updatedAtMs:Date.now(),updatedAt:serverTimestamp(),updatedBy:currentUser.email||currentUser.uid||'admin'},{merge:false});const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='☁ Synced to Firestore';return true;}catch(e){const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='💻 Browser local (Firestore not available)';return false;}}
 async function azDebtSave(){azDebtWriteLocal();azDebtRender();await azDebtSaveCloud();}
-async function azDebtLoadCloud(){
-  if(azDebtCloudAttempted||!currentUser)return;
-  azDebtCloudAttempted=true;
-  try{
-    const snap=await getDoc(doc(db,AZ_DEBT_CLOUD_COLLECTION,AZ_DEBT_CLOUD_DOC));
-    if(snap.exists()){
-      const cloud=azDebtSafeState(snap.data());
-      const local=azDebtReadLocal();
-      azDebtState=(!local||azDebtNum(cloud.updatedAtMs)>=azDebtNum(local.updatedAtMs))?cloud:local;
-      azDebtWriteLocal();
-      const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='☁ Synced to Firestore';
-      azDebtRender();
-      if(local&&azDebtNum(local.updatedAtMs)>azDebtNum(cloud.updatedAtMs))await azDebtSaveCloud();
-    }else{
-      await azDebtSaveCloud();
-    }
-  }catch(e){
-    const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='💻 Browser local (Firestore not available)';
-  }
-}
-function azDebtActive(){return (azDebtState?.debts||[]).filter(d=>azDebtNum(d.balance)>0&&d.status!=='paid');}
+async function azDebtLoadCloud(){if(azDebtCloudAttempted||!currentUser)return;azDebtCloudAttempted=true;try{const snap=await getDoc(doc(db,AZ_DEBT_CLOUD_COLLECTION,AZ_DEBT_CLOUD_DOC));if(snap.exists()){const cloud=azDebtSafeState(snap.data());const local=azDebtReadLocal();azDebtState=(!local||azDebtNum(cloud.updatedAtMs)>=azDebtNum(local.updatedAtMs))?cloud:local;azDebtWriteLocal();const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='☁ Synced to Firestore';azDebtRender();if(local&&azDebtNum(local.updatedAtMs)>azDebtNum(cloud.updatedAtMs))await azDebtSaveCloud();}else await azDebtSaveCloud();}catch(e){const n=document.getElementById('azDebtStorageMode');if(n)n.textContent='💻 Browser local (Firestore not available)';}}
+function azDebtActive(){return (azDebtState?.debts||[]).filter(d=>d.balanceAvailable!==false&&azDebtNum(d.balance)>0&&d.status!=='paid');}
 function azDebtFind(id){return (azDebtState?.debts||[]).find(d=>String(d.id)===String(id));}
-function azDebtCalc(){
-  const debts=azDebtActive();
-  const total=debts.reduce((a,d)=>a+azDebtNum(d.balance),0);
-  const vehicle=debts.filter(d=>d.type==='vehicle').reduce((a,d)=>a+azDebtNum(d.balance),0);
-  const people=debts.filter(d=>d.type==='person').reduce((a,d)=>a+azDebtNum(d.balance),0);
-  const other=debts.filter(d=>d.type==='other').reduce((a,d)=>a+azDebtNum(d.balance),0);
-  const monthlyKnown=debts.reduce((a,d)=>a+azDebtNum(d.monthly),0);
-  const months=Math.max(1,parseInt(azDebtState?.plannerMonths||12,10)||12);
-  const peopleTarget=people/months;
-  const targetMonthly=monthlyKnown+peopleTarget;
-  const due=debts.filter(d=>d.nextDue).sort((a,b)=>String(a.nextDue).localeCompare(String(b.nextDue)))[0]||null;
-  return {debts,total,vehicle,people,other,monthlyKnown,months,peopleTarget,targetMonthly,due};
-}
+function azDebtCalc(){const debts=azDebtActive();const total=debts.reduce((a,d)=>a+azDebtNum(d.balance),0);const vehicle=debts.filter(d=>d.type==='vehicle').reduce((a,d)=>a+azDebtNum(d.balance),0);const spaylater=debts.filter(d=>d.type==='spaylater').reduce((a,d)=>a+azDebtNum(d.balance),0);const sloan=debts.filter(d=>d.type==='sloan').reduce((a,d)=>a+azDebtNum(d.balance),0);const people=debts.filter(d=>d.type==='person').reduce((a,d)=>a+azDebtNum(d.balance),0);const other=debts.filter(d=>d.type==='other').reduce((a,d)=>a+azDebtNum(d.balance),0);const monthlyKnown=debts.reduce((a,d)=>a+Math.max(azDebtNum(d.monthly),azDebtNum(d.currentDue)),0);const months=Math.max(1,parseInt(azDebtState?.plannerMonths||12,10)||12);const peopleTarget=people/months;const fixedNonPeople=debts.filter(d=>d.type!=='person').reduce((a,d)=>a+Math.max(azDebtNum(d.monthly),azDebtNum(d.currentDue)),0);const targetMonthly=fixedNonPeople+peopleTarget;const due=debts.filter(d=>d.nextDue).sort((a,b)=>String(a.nextDue).localeCompare(String(b.nextDue)))[0]||null;return {debts,total,vehicle,spaylater,sloan,people,other,monthlyKnown,months,peopleTarget,targetMonthly,due};}
 function azDebtSetText(id,text){const n=document.getElementById(id);if(n)n.textContent=text;}
-function azDebtTypeLabel(t){return t==='vehicle'?'Loan Kereta':t==='person'?'Hutang Orang':'Lain-lain';}
-function azDebtProgress(d){
-  if(d.type==='vehicle'&&azDebtNum(d.originalTenure)>0){const done=Math.max(0,azDebtNum(d.originalTenure)-azDebtNum(d.remainingInstallments));return Math.min(100,(done/azDebtNum(d.originalTenure))*100);}
-  const orig=azDebtNum(d.originalAmount); if(orig>0)return Math.min(100,Math.max(0,((orig-azDebtNum(d.balance))/orig)*100));
-  return azDebtNum(d.balance)<=0?100:0;
-}
+function azDebtTypeLabel(t){return t==='vehicle'?'Loan Kereta':t==='person'?'Hutang Orang':t==='spaylater'?'SPayLater':t==='sloan'?'SLoan / SPay Loan':'Lain-lain';}
+function azDebtProgress(d){if(d.type==='vehicle'&&azDebtNum(d.originalTenure)>0){const done=Math.max(0,azDebtNum(d.originalTenure)-azDebtNum(d.remainingInstallments));return Math.min(100,(done/azDebtNum(d.originalTenure))*100);}const orig=azDebtNum(d.originalAmount);if(orig>0&&d.balanceAvailable!==false)return Math.min(100,Math.max(0,((orig-azDebtNum(d.balance))/orig)*100));return d.balanceAvailable!==false&&azDebtNum(d.balance)<=0?100:0;}
+function azDebtSyncBox(kind){const d=(azDebtState?.debts||[]).find(x=>x.type===kind);const money=document.getElementById(kind==='spaylater'?'azDebtSpaySyncMoney':'azDebtSloanSyncMoney');const meta=document.getElementById(kind==='spaylater'?'azDebtSpaySyncMeta':'azDebtSloanSyncMeta');if(!d||!money||!meta)return;money.textContent=d.balanceAvailable!==false?(azDebtMoney(d.balance)):(d.linked?'Baki belum dikesan':'Belum linked');meta.innerHTML=`<span>Current due</span><b>${azDebtNum(d.currentDue)>0?azDebtMoney(d.currentDue):'-'}</b><span>Next due</span><b>${d.nextDue?azDebtDate(d.nextDue):'-'}</b><span>Last sync</span><b>${d.lastSyncAtMs?azDebtDateTime(d.lastSyncAtMs):'-'}</b><span>Confidence</span><b>${azDebtEsc(d.syncConfidence||'-')}</b>`;}
 function azDebtRender(){
-  if(!azDebtState)azDebtState=azDebtReadLocal()||azDebtDefaultState();
-  const c=azDebtCalc();
+  if(!azDebtState)azDebtState=azDebtReadLocal()||azDebtDefaultState();const c=azDebtCalc();
   azDebtSetText('azDebtTotal',azDebtMoney(c.total));azDebtSetText('azDebtVehicleTotal',azDebtMoney(c.vehicle));azDebtSetText('azDebtPeopleTotal',azDebtMoney(c.people));azDebtSetText('azDebtMonthlyKnown',azDebtMoney(c.monthlyKnown));azDebtSetText('azDebtTargetMonthly',azDebtMoney(c.targetMonthly));
-  azDebtSetText('azDebtTargetNote',`Loan tetap + hutang orang ÷ ${c.months} bulan.`);
-  azDebtSetText('azDebtNextDue',c.due?azDebtDate(c.due.nextDue):'-');azDebtSetText('azDebtNextDueNote',c.due?`${c.due.creditor||azDebtTypeLabel(c.due.type)} • ${c.due.title||''}`:'Tiada tarikh ditetapkan.');
-  const pm=document.getElementById('azDebtPlannerMonths');if(pm&&document.activeElement!==pm)pm.value=String(c.months);
-
-  const car=(azDebtState.debts||[]).find(d=>d.type==='vehicle'&&azDebtNum(d.balance)>0)||(azDebtState.debts||[]).find(d=>d.type==='vehicle');
-  const carMetrics=document.getElementById('azDebtCarMetrics');
-  const loanCalc=document.getElementById('azDebtLoanCalc');
-  if(car&&carMetrics){
-    const completed=Math.max(0,azDebtNum(car.originalTenure)-azDebtNum(car.remainingInstallments));
-    const tenurePct=azDebtNum(car.originalTenure)>0?(completed/azDebtNum(car.originalTenure))*100:0;
-    const scheduled=azDebtNum(car.monthly)*azDebtNum(car.remainingInstallments);
-    const gap=azDebtNum(car.balance)-azDebtNum(car.principalBalance);
-    const scheduleGap=scheduled-azDebtNum(car.balance);
-    const finalDue=car.nextDue&&azDebtNum(car.remainingInstallments)>0?azDebtAddMonths(car.nextDue,Math.max(0,azDebtNum(car.remainingInstallments)-1)):'';
-    carMetrics.innerHTML=`
-      <div class="az-debt-metric is-money"><span>Outstanding Balance</span><b>${azDebtMoney(car.balance)}</b></div>
-      <div class="az-debt-metric"><span>Principal Balance</span><b>${azDebtMoney(car.principalBalance)}</b></div>
-      <div class="az-debt-metric is-money"><span>Installment / Month</span><b>${azDebtMoney(car.monthly)}</b></div>
-      <div class="az-debt-metric"><span>Interest Rate</span><b>${azDebtNum(car.interestRate).toFixed(2)}%</b></div>
-      <div class="az-debt-metric"><span>Remaining Installment</span><b>${Math.round(azDebtNum(car.remainingInstallments))}</b></div>
-      <div class="az-debt-metric"><span>Original Tenure</span><b>${Math.round(azDebtNum(car.originalTenure))} bulan</b></div>
-      <div class="az-debt-metric is-warn"><span>Late Payment Charges</span><b>${azDebtMoney(car.lateCharges)}</b></div>
-      <div class="az-debt-metric"><span>Next Payment Due</span><b>${azDebtDate(car.nextDue)}</b></div>
-      <div class="az-debt-metric"><span>Last Payment Date</span><b>${azDebtDate(car.lastPaymentDate)}</b></div>
-      <div class="az-debt-metric"><span>Tenure Selesai</span><b>${completed}/${Math.round(azDebtNum(car.originalTenure))} (${tenurePct.toFixed(1)}%)</b></div>
-      <div class="az-debt-metric"><span>Anggaran Bayaran Akhir</span><b>${azDebtMonthYear(finalDue)}</b></div>
-      <div class="az-debt-metric"><span>Vehicle</span><b>${String(car.title||'').includes('VDD5378')?'VDD5378':'Loan Kereta'}</b></div>`;
-    if(loanCalc)loanCalc.innerHTML=`
-      <div class="az-debt-plan-line"><span><strong>Baki bank semasa</strong><br><em>Outstanding Balance</em></span><b>${azDebtMoney(car.balance)}</b></div>
-      <div class="az-debt-plan-line"><span><strong>Baki principal</strong><br><em>Principal Balance</em></span><b>${azDebtMoney(car.principalBalance)}</b></div>
-      <div class="az-debt-plan-line"><span><strong>Perbezaan outstanding vs principal</strong><br><em>Bukan ditambah semula ke total hutang</em></span><b>${azDebtMoney(gap)}</b></div>
-      <div class="az-debt-plan-line"><span><strong>${Math.round(azDebtNum(car.remainingInstallments))} × ${azDebtMoney(car.monthly)}</strong><br><em>Jumlah jadual ansuran berbaki jika amaun kekal sama</em></span><b>${azDebtMoney(scheduled)}</b></div>
-      <div class="az-debt-plan-line"><span><strong>Jadual ansuran − outstanding</strong><br><em>Perbezaan kiraan, bukan caj tambahan</em></span><b>${azDebtMoney(scheduleGap)}</b></div>
-      <div class="az-debt-plan-line"><span><strong>Progress tenure</strong><br><em>${completed} bulan selesai, ${Math.round(azDebtNum(car.remainingInstallments))} berbaki</em></span><b>${tenurePct.toFixed(1)}%</b></div>`;
-  }else{if(carMetrics)carMetrics.innerHTML='<div class="tabs-note">Tiada loan kereta aktif.</div>';if(loanCalc)loanCalc.innerHTML='<div class="tabs-note">Tiada data loan kereta.</div>';}
-
-  const breakdown=document.getElementById('azDebtBreakdown');
-  if(breakdown){
-    const parts=[['Loan Kereta',c.vehicle],['Hutang Orang',c.people],['Lain-lain',c.other]].filter(x=>x[1]>0||x[0]!=='Lain-lain');
-    breakdown.innerHTML=parts.map(([name,val])=>{const pct=c.total>0?(val/c.total*100):0;return `<div class="az-debt-breakdown-item"><small>${name}</small><b>${azDebtMoney(val)}</b><small>${pct.toFixed(1)}% daripada total</small><div class="az-debt-bar"><span style="width:${Math.min(100,pct).toFixed(1)}%"></span></div></div>`}).join('');
-  }
-
-  const tbody=document.getElementById('azDebtTableBody');
-  if(tbody){
-    const rows=[...(azDebtState.debts||[])].sort((a,b)=>(azDebtNum(b.balance)>0?1:0)-(azDebtNum(a.balance)>0?1:0)||azDebtNum(b.balance)-azDebtNum(a.balance));
-    tbody.innerHTML=rows.length?rows.map(d=>{const pct=azDebtProgress(d),paid=azDebtNum(d.balance)<=0;return `<tr data-debt-id="${String(d.id).replace(/"/g,'&quot;')}">
-      <td><span class="az-debt-pill ${d.type==='person'?'person':''} ${paid?'paid':''}">${paid?'Paid':azDebtTypeLabel(d.type)}</span><div class="az-debt-name" style="margin-top:6px">${azDebtEsc(d.creditor||'-')}</div></td>
-      <td><div class="az-debt-name">${azDebtEsc(d.title||'-')}</div><div class="az-debt-sub">${azDebtEsc(d.note||'')}</div></td>
-      <td class="az-debt-amount">${azDebtMoney(d.balance)}</td>
-      <td>${azDebtNum(d.monthly)>0?azDebtMoney(d.monthly):'<span class="az-debt-sub">Belum ditetapkan</span>'}</td>
-      <td>${d.nextDue?azDebtDate(d.nextDue):'<span class="az-debt-sub">Belum ditetapkan</span>'}</td>
-      <td><b>${pct.toFixed(1)}%</b><div class="az-debt-bar" style="width:115px"><span style="width:${pct.toFixed(1)}%"></span></div></td>
-      <td><div class="az-debt-actions"><button class="btn green" type="button" data-debt-action="pay" data-id="${azDebtEsc(String(d.id))}" ${paid?'disabled':''}>Bayar</button><button class="btn" type="button" data-debt-action="edit" data-id="${azDebtEsc(String(d.id))}">Edit</button><button class="btn red" type="button" data-debt-action="delete" data-id="${azDebtEsc(String(d.id))}">Delete</button></div></td>
-    </tr>`}).join(''):'<tr><td colspan="7" class="tabs-note">Tiada rekod hutang.</td></tr>';
-  }
-
-  const plan=document.getElementById('azDebtPlanTable');
-  if(plan){
-    const people=azDebtActive().filter(d=>d.type==='person');
-    const lines=[];
-    const fixedLoans=azDebtActive().filter(d=>d.type!=='person'&&azDebtNum(d.monthly)>0);
-    fixedLoans.forEach(d=>lines.push(`<div class="az-debt-plan-line"><span><strong>${azDebtEsc(d.creditor||azDebtTypeLabel(d.type))}</strong><br><em>${azDebtEsc(d.title||'Komitmen tetap')}</em></span><b>${azDebtMoney(d.monthly)}/bln</b></div>`));
-    people.forEach(d=>lines.push(`<div class="az-debt-plan-line"><span><strong>${azDebtEsc(d.creditor||'Hutang Orang')}</strong><br><em>${azDebtEsc(d.title||'')} • baki ${azDebtMoney(d.balance)} ÷ ${c.months} bulan</em></span><b>${azDebtMoney(azDebtNum(d.balance)/c.months)}/bln</b></div>`));
-    if(!lines.length)lines.push('<div class="tabs-note">Tiada komitmen aktif.</div>');
-    plan.innerHTML=lines.join('');
-  }
-  azDebtSetText('azDebtPlanTotal',azDebtMoney(c.targetMonthly));
-
-  const hist=document.getElementById('azDebtHistory');
-  if(hist){
-    const items=(azDebtState.payments||[]).slice().sort((a,b)=>azDebtNum(b.atMs)-azDebtNum(a.atMs)).slice(0,12);
-    hist.innerHTML=items.length?items.map(x=>`<div class="az-debt-history-row"><small>${new Date(azDebtNum(x.atMs)||Date.now()).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'})}</small><div><b>${azDebtEsc(x.creditor||'')}</b><div class="az-debt-sub">${azDebtEsc(x.title||'')} ${x.note?'• '+azDebtEsc(x.note):''}</div></div><b class="az-debt-amount">-${azDebtMoney(x.amount)}</b></div>`).join(''):'<div class="tabs-note">Belum ada rekod bayaran yang dicatat dalam tracker ini.</div>';
-  }
+  const sp=azDebtFind('shopee-spaylater'),sl=azDebtFind('shopee-sloan');azDebtSetText('azDebtSpayLaterTotal',sp?.balanceAvailable!==false?azDebtMoney(sp.balance):'—');azDebtSetText('azDebtSloanTotal',sl?.balanceAvailable!==false?azDebtMoney(sl.balance):'—');azDebtSetText('azDebtSpayLaterNote',sp?.linked?(sp.lastSyncAtMs?'Last sync '+azDebtDateTime(sp.lastSyncAtMs):'Linked'):'Belum linked.');azDebtSetText('azDebtSloanNote',sl?.linked?(sl.lastSyncAtMs?'Last sync '+azDebtDateTime(sl.lastSyncAtMs):'Linked'):'Belum linked.');
+  azDebtSetText('azDebtTargetNote',`Komitmen finance + hutang orang ÷ ${c.months} bulan.`);azDebtSetText('azDebtNextDue',c.due?azDebtDate(c.due.nextDue):'-');azDebtSetText('azDebtNextDueNote',c.due?`${c.due.creditor||azDebtTypeLabel(c.due.type)} • ${c.due.title||''}`:'Tiada tarikh ditetapkan.');const pm=document.getElementById('azDebtPlannerMonths');if(pm&&document.activeElement!==pm)pm.value=String(c.months);azDebtSyncBox('spaylater');azDebtSyncBox('sloan');azDebtRefreshBridgeStatus();
+  const car=(azDebtState.debts||[]).find(d=>d.type==='vehicle'&&azDebtNum(d.balance)>0)||(azDebtState.debts||[]).find(d=>d.type==='vehicle');const carMetrics=document.getElementById('azDebtCarMetrics'),loanCalc=document.getElementById('azDebtLoanCalc');
+  if(car&&carMetrics){const completed=Math.max(0,azDebtNum(car.originalTenure)-azDebtNum(car.remainingInstallments));const tenurePct=azDebtNum(car.originalTenure)>0?(completed/azDebtNum(car.originalTenure))*100:0;const scheduled=azDebtNum(car.monthly)*azDebtNum(car.remainingInstallments);const gap=azDebtNum(car.balance)-azDebtNum(car.principalBalance);const scheduleGap=scheduled-azDebtNum(car.balance);const finalDue=car.nextDue&&azDebtNum(car.remainingInstallments)>0?azDebtAddMonths(car.nextDue,Math.max(0,azDebtNum(car.remainingInstallments)-1)):'';carMetrics.innerHTML=`<div class="az-debt-metric is-money"><span>Outstanding Balance</span><b>${azDebtMoney(car.balance)}</b></div><div class="az-debt-metric"><span>Principal Balance</span><b>${azDebtMoney(car.principalBalance)}</b></div><div class="az-debt-metric is-money"><span>Installment / Month</span><b>${azDebtMoney(car.monthly)}</b></div><div class="az-debt-metric"><span>Interest Rate</span><b>${azDebtNum(car.interestRate).toFixed(2)}%</b></div><div class="az-debt-metric"><span>Remaining Installment</span><b>${Math.round(azDebtNum(car.remainingInstallments))}</b></div><div class="az-debt-metric"><span>Original Tenure</span><b>${Math.round(azDebtNum(car.originalTenure))} bulan</b></div><div class="az-debt-metric is-warn"><span>Late Payment Charges</span><b>${azDebtMoney(car.lateCharges)}</b></div><div class="az-debt-metric"><span>Next Payment Due</span><b>${azDebtDate(car.nextDue)}</b></div><div class="az-debt-metric"><span>Last Payment Date</span><b>${azDebtDate(car.lastPaymentDate)}</b></div><div class="az-debt-metric"><span>Tenure Selesai</span><b>${completed}/${Math.round(azDebtNum(car.originalTenure))} (${tenurePct.toFixed(1)}%)</b></div><div class="az-debt-metric"><span>Anggaran Bayaran Akhir</span><b>${azDebtMonthYear(finalDue)}</b></div><div class="az-debt-metric"><span>Vehicle</span><b>${String(car.title||'').includes('VDD5378')?'VDD5378':'Loan Kereta'}</b></div>`;if(loanCalc)loanCalc.innerHTML=`<div class="az-debt-plan-line"><span><strong>Baki bank semasa</strong><br><em>Outstanding Balance</em></span><b>${azDebtMoney(car.balance)}</b></div><div class="az-debt-plan-line"><span><strong>Baki principal</strong><br><em>Principal Balance</em></span><b>${azDebtMoney(car.principalBalance)}</b></div><div class="az-debt-plan-line"><span><strong>Perbezaan outstanding vs principal</strong><br><em>Bukan ditambah semula ke total hutang</em></span><b>${azDebtMoney(gap)}</b></div><div class="az-debt-plan-line"><span><strong>${Math.round(azDebtNum(car.remainingInstallments))} × ${azDebtMoney(car.monthly)}</strong><br><em>Jumlah jadual ansuran berbaki jika amaun kekal sama</em></span><b>${azDebtMoney(scheduled)}</b></div><div class="az-debt-plan-line"><span><strong>Jadual ansuran − outstanding</strong><br><em>Perbezaan kiraan, bukan caj tambahan</em></span><b>${azDebtMoney(scheduleGap)}</b></div><div class="az-debt-plan-line"><span><strong>Progress tenure</strong><br><em>${completed} bulan selesai, ${Math.round(azDebtNum(car.remainingInstallments))} berbaki</em></span><b>${tenurePct.toFixed(1)}%</b></div>`;}else{if(carMetrics)carMetrics.innerHTML='<div class="tabs-note">Tiada loan kereta aktif.</div>';if(loanCalc)loanCalc.innerHTML='<div class="tabs-note">Tiada data loan kereta.</div>';}
+  const breakdown=document.getElementById('azDebtBreakdown');if(breakdown){const parts=[['Loan Kereta',c.vehicle],['SPayLater',c.spaylater],['SLoan',c.sloan],['Hutang Orang',c.people],['Lain-lain',c.other]].filter(x=>x[1]>0||['Loan Kereta','Hutang Orang'].includes(x[0]));breakdown.innerHTML=parts.map(([name,val])=>{const pct=c.total>0?(val/c.total*100):0;return `<div class="az-debt-breakdown-item"><small>${name}</small><b>${azDebtMoney(val)}</b><small>${pct.toFixed(1)}% daripada total</small><div class="az-debt-bar"><span style="width:${Math.min(100,pct).toFixed(1)}%"></span></div></div>`}).join('');}
+  const tbody=document.getElementById('azDebtTableBody');if(tbody){const rows=[...(azDebtState.debts||[])].sort((a,b)=>(a.managedSync?0:1)-(b.managedSync?0:1)||(azDebtNum(b.balance)>0?1:0)-(azDebtNum(a.balance)>0?1:0)||azDebtNum(b.balance)-azDebtNum(a.balance));tbody.innerHTML=rows.length?rows.map(d=>{const pct=azDebtProgress(d),known=d.balanceAvailable!==false,paid=known&&azDebtNum(d.balance)<=0&&d.linked!==false,unlinked=d.managedSync&&!d.linked;const pill=unlinked?'unlinked':(d.type==='person'?'person':d.type);const state=unlinked?'Unlinked':paid?'Paid':azDebtTypeLabel(d.type);const sync=d.managedSync?(d.lastSyncAtMs?`Synced ${azDebtDateTime(d.lastSyncAtMs)}`:'Waiting capture'):`${pct.toFixed(1)}%`;const amount=known?azDebtMoney(d.balance):'<span class="az-debt-sub">Belum dikesan</span>';const dueAmt=Math.max(azDebtNum(d.monthly),azDebtNum(d.currentDue));return `<tr data-debt-id="${azDebtEsc(String(d.id))}"><td><span class="az-debt-pill ${pill} ${paid?'paid':''}">${state}</span><div class="az-debt-name" style="margin-top:6px">${azDebtEsc(d.creditor||'-')}</div></td><td><div class="az-debt-name">${azDebtEsc(d.title||'-')}</div><div class="az-debt-sub">${azDebtEsc(d.note||'')}</div></td><td class="az-debt-amount">${amount}</td><td>${dueAmt>0?azDebtMoney(dueAmt):'<span class="az-debt-sub">Belum ditetapkan</span>'}</td><td>${d.nextDue?azDebtDate(d.nextDue):'<span class="az-debt-sub">Belum ditetapkan</span>'}</td><td><b>${azDebtEsc(sync)}</b>${d.managedSync?`<div class="az-debt-sub">${azDebtEsc(d.syncConfidence||'')}</div>`:`<div class="az-debt-bar" style="width:115px"><span style="width:${pct.toFixed(1)}%"></span></div>`}</td><td><div class="az-debt-actions"><button class="btn green" type="button" data-debt-action="pay" data-id="${azDebtEsc(String(d.id))}" ${!known||paid?'disabled':''}>Bayar</button><button class="btn" type="button" data-debt-action="edit" data-id="${azDebtEsc(String(d.id))}">Edit</button>${d.managedSync?`<button class="btn gray" type="button" data-debt-action="reset-sync" data-id="${azDebtEsc(String(d.id))}">Reset</button>`:`<button class="btn red" type="button" data-debt-action="delete" data-id="${azDebtEsc(String(d.id))}">Delete</button>`}</div></td></tr>`}).join(''):'<tr><td colspan="7" class="tabs-note">Tiada rekod hutang.</td></tr>';}
+  const plan=document.getElementById('azDebtPlanTable');if(plan){const people=azDebtActive().filter(d=>d.type==='person');const lines=[];const fixed=azDebtActive().filter(d=>d.type!=='person'&&Math.max(azDebtNum(d.monthly),azDebtNum(d.currentDue))>0);fixed.forEach(d=>{const amt=Math.max(azDebtNum(d.monthly),azDebtNum(d.currentDue));lines.push(`<div class="az-debt-plan-line"><span><strong>${azDebtEsc(d.creditor||azDebtTypeLabel(d.type))}</strong><br><em>${azDebtEsc(d.title||'Komitmen tetap')}</em></span><b>${azDebtMoney(amt)}/bln</b></div>`)});people.forEach(d=>lines.push(`<div class="az-debt-plan-line"><span><strong>${azDebtEsc(d.creditor||'Hutang Orang')}</strong><br><em>${azDebtEsc(d.title||'')} • baki ${azDebtMoney(d.balance)} ÷ ${c.months} bulan</em></span><b>${azDebtMoney(azDebtNum(d.balance)/c.months)}/bln</b></div>`));if(!lines.length)lines.push('<div class="tabs-note">Tiada komitmen aktif.</div>');plan.innerHTML=lines.join('');}azDebtSetText('azDebtPlanTotal',azDebtMoney(c.targetMonthly));
+  const hist=document.getElementById('azDebtHistory');if(hist){const items=(azDebtState.payments||[]).slice().sort((a,b)=>azDebtNum(b.atMs)-azDebtNum(a.atMs)).slice(0,16);hist.innerHTML=items.length?items.map(x=>`<div class="az-debt-history-row"><small>${new Date(azDebtNum(x.atMs)||Date.now()).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'})}</small><div><b>${azDebtEsc(x.creditor||'')}</b><div class="az-debt-sub">${azDebtEsc(x.title||'')} ${x.note?'• '+azDebtEsc(x.note):''}</div></div><b class="az-debt-amount">-${azDebtMoney(x.amount)}</b></div>`).join(''):'<div class="tabs-note">Belum ada rekod bayaran.</div>';}
 }
-function azDebtClearEditor(){
-  const vals={azDebtEditId:'',azDebtType:'person',azDebtCreditor:'',azDebtTitle:'',azDebtBalance:'',azDebtOriginal:'',azDebtMonthly:'',azDebtDue:'',azDebtPrincipal:'',azDebtRate:'',azDebtRemaining:'',azDebtTenure:'',azDebtLate:'',azDebtLastPayment:'',azDebtNote:''};
-  Object.entries(vals).forEach(([id,v])=>{const n=document.getElementById(id);if(n)n.value=v;}); azDebtSetText('azDebtEditorTitle','＋ Tambah Hutang');
-}
-function azDebtEdit(id){
-  const d=azDebtFind(id);if(!d)return;
-  const vals={azDebtEditId:d.id,azDebtType:d.type,azDebtCreditor:d.creditor,azDebtTitle:d.title,azDebtBalance:d.balance,azDebtOriginal:d.originalAmount||'',azDebtMonthly:d.monthly||'',azDebtDue:d.nextDue||'',azDebtPrincipal:d.principalBalance||'',azDebtRate:d.interestRate||'',azDebtRemaining:d.remainingInstallments||'',azDebtTenure:d.originalTenure||'',azDebtLate:d.lateCharges||'',azDebtLastPayment:d.lastPaymentDate||'',azDebtNote:d.note||''};
-  Object.entries(vals).forEach(([id2,v])=>{const n=document.getElementById(id2);if(n)n.value=v;});azDebtSetText('azDebtEditorTitle','✏️ Edit Hutang');document.getElementById('azDebtEditorCard')?.scrollIntoView({behavior:'smooth',block:'start'});
-}
-async function azDebtSaveEditor(){
-  if(!azDebtState)azDebtState=azDebtDefaultState();
-  const id=String(document.getElementById('azDebtEditId')?.value||'').trim();
-  const creditor=String(document.getElementById('azDebtCreditor')?.value||'').trim();
-  const title=String(document.getElementById('azDebtTitle')?.value||'').trim();
-  const balance=Math.max(0,azDebtNum(document.getElementById('azDebtBalance')?.value));
-  if(!creditor)return toast('Masukkan nama pemiutang / orang.');
-  if(!title)return toast('Masukkan keterangan hutang.');
-  const obj={
-    id:id||('debt-'+Date.now()),type:String(document.getElementById('azDebtType')?.value||'other'),creditor,title,balance,
-    originalAmount:Math.max(0,azDebtNum(document.getElementById('azDebtOriginal')?.value)),monthly:Math.max(0,azDebtNum(document.getElementById('azDebtMonthly')?.value)),nextDue:String(document.getElementById('azDebtDue')?.value||''),
-    principalBalance:Math.max(0,azDebtNum(document.getElementById('azDebtPrincipal')?.value)),interestRate:Math.max(0,azDebtNum(document.getElementById('azDebtRate')?.value)),remainingInstallments:Math.max(0,Math.round(azDebtNum(document.getElementById('azDebtRemaining')?.value))),originalTenure:Math.max(0,Math.round(azDebtNum(document.getElementById('azDebtTenure')?.value))),lateCharges:Math.max(0,azDebtNum(document.getElementById('azDebtLate')?.value)),lastPaymentDate:String(document.getElementById('azDebtLastPayment')?.value||''),note:String(document.getElementById('azDebtNote')?.value||'').trim(),status:balance<=0?'paid':'active'
-  };
-  if(!obj.originalAmount&&obj.type!=='vehicle')obj.originalAmount=balance;
-  const idx=(azDebtState.debts||[]).findIndex(d=>String(d.id)===String(obj.id));if(idx>=0)azDebtState.debts[idx]={...azDebtState.debts[idx],...obj};else azDebtState.debts.push(obj);
-  azDebtClearEditor();await azDebtSave();toast(idx>=0?'Hutang dikemas kini.':'Hutang ditambah.');
-}
-async function azDebtPay(id){
-  const d=azDebtFind(id);if(!d||azDebtNum(d.balance)<=0)return;
-  const raw=prompt(`Bayaran untuk ${d.creditor} — ${d.title}\nBaki sekarang: ${azDebtMoney(d.balance)}\n\nMasukkan jumlah bayaran (RM):`,d.monthly>0?String(d.monthly):'');
-  if(raw===null)return;const amount=azDebtNum(String(raw).replace(/,/g,''));if(!(amount>0))return toast('Jumlah bayaran tidak sah.');if(amount>azDebtNum(d.balance)&&!confirm('Bayaran lebih besar daripada baki. Baki akan jadi RM0.00. Teruskan?'))return;
-  d.balance=Math.max(0,azDebtNum(d.balance)-amount);d.status=d.balance<=0?'paid':'active';const today=new Date();const y=today.getFullYear(),m=String(today.getMonth()+1).padStart(2,'0'),dd=String(today.getDate()).padStart(2,'0');d.lastPaymentDate=`${y}-${m}-${dd}`;
-  if(d.type==='vehicle'&&azDebtNum(d.monthly)>0&&amount>=azDebtNum(d.monthly)*0.8){if(azDebtNum(d.remainingInstallments)>0)d.remainingInstallments=Math.max(0,azDebtNum(d.remainingInstallments)-1);if(d.nextDue)d.nextDue=azDebtAddMonths(d.nextDue,1);}
-  azDebtState.payments.unshift({id:'pay-'+Date.now(),debtId:d.id,creditor:d.creditor,title:d.title,amount,atMs:Date.now(),note:d.type==='vehicle'?'Loan balance tracker estimate; semak statement bank untuk baki sebenar.':''});azDebtState.payments=azDebtState.payments.slice(0,200);
-  await azDebtSave();toast(`Bayaran ${azDebtMoney(amount)} dicatat.`);
-}
-async function azDebtDelete(id){
-  const d=azDebtFind(id);if(!d)return;if(!confirm(`Delete rekod hutang ini?\n\n${d.creditor} — ${d.title}\nBaki: ${azDebtMoney(d.balance)}`))return;
-  azDebtState.debts=(azDebtState.debts||[]).filter(x=>String(x.id)!==String(id));await azDebtSave();toast('Rekod hutang dibuang.');
-}
-function azDebtExportCsv(){
-  if(!azDebtState)return;const rows=[['Type','Creditor','Description','Balance RM','Monthly RM','Next Due','Principal RM','Interest %','Remaining Installments','Original Tenure','Late Charges RM','Last Payment','Note']];
-  (azDebtState.debts||[]).forEach(d=>rows.push([azDebtTypeLabel(d.type),d.creditor,d.title,azDebtNum(d.balance).toFixed(2),azDebtNum(d.monthly).toFixed(2),d.nextDue||'',azDebtNum(d.principalBalance).toFixed(2),azDebtNum(d.interestRate).toFixed(2),d.remainingInstallments||'',d.originalTenure||'',azDebtNum(d.lateCharges).toFixed(2),d.lastPaymentDate||'',d.note||'']));
-  const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='AZOBSS-Debt-Loan-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
-}
-function azDebtBind(){
-  const root=document.getElementById('debtsloans');if(!root||root.dataset.bound==='1')return;root.dataset.bound='1';
-  document.getElementById('azDebtAddNew')?.addEventListener('click',()=>{azDebtClearEditor();document.getElementById('azDebtEditorCard')?.scrollIntoView({behavior:'smooth',block:'start'});});
-  document.getElementById('azDebtEditorClear')?.addEventListener('click',azDebtClearEditor);document.getElementById('azDebtSave')?.addEventListener('click',azDebtSaveEditor);document.getElementById('azDebtExportCsv')?.addEventListener('click',azDebtExportCsv);
-  document.getElementById('azDebtPlannerMonths')?.addEventListener('change',async e=>{azDebtState.plannerMonths=Math.max(1,Math.min(120,parseInt(e.target.value||12,10)||12));await azDebtSave();});
-  root.querySelectorAll('.az-debt-plan-preset').forEach(b=>b.addEventListener('click',async()=>{azDebtState.plannerMonths=Math.max(1,parseInt(b.dataset.months||12,10));await azDebtSave();}));
-  document.getElementById('azDebtTableBody')?.addEventListener('click',e=>{const b=e.target.closest('[data-debt-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.debtAction==='edit')azDebtEdit(id);else if(b.dataset.debtAction==='pay')azDebtPay(id);else if(b.dataset.debtAction==='delete')azDebtDelete(id);});
-  document.getElementById('azDebtClearHistory')?.addEventListener('click',async()=>{if(!azDebtState?.payments?.length)return;if(!confirm('Clear semua rekod bayaran dalam Debt & Loan tracker? Baki hutang tidak berubah.'))return;azDebtState.payments=[];await azDebtSave();toast('Rekod bayaran dikosongkan.');});
-}
-async function loadDebtsLoans(){
-  if(!azDebtState)azDebtState=azDebtReadLocal()||azDebtDefaultState();
-  azDebtBind();azDebtRender();await azDebtLoadCloud();
-}
+function azDebtClearEditor(){const vals={azDebtEditId:'',azDebtType:'person',azDebtCreditor:'',azDebtTitle:'',azDebtBalance:'',azDebtOriginal:'',azDebtMonthly:'',azDebtCurrentDue:'',azDebtDue:'',azDebtPrincipal:'',azDebtRate:'',azDebtRemaining:'',azDebtTenure:'',azDebtLate:'',azDebtLastPayment:'',azDebtBankKeywords:'',azDebtNote:''};Object.entries(vals).forEach(([id,v])=>{const n=document.getElementById(id);if(n)n.value=v;});azDebtSetText('azDebtEditorTitle','＋ Tambah Hutang');}
+function azDebtEdit(id){const d=azDebtFind(id);if(!d)return;const vals={azDebtEditId:d.id,azDebtType:d.type,azDebtCreditor:d.creditor,azDebtTitle:d.title,azDebtBalance:d.balanceAvailable!==false?d.balance:'',azDebtOriginal:d.originalAmount||'',azDebtMonthly:d.monthly||'',azDebtCurrentDue:d.currentDue||'',azDebtDue:d.nextDue||'',azDebtPrincipal:d.principalBalance||'',azDebtRate:d.interestRate||'',azDebtRemaining:d.remainingInstallments||'',azDebtTenure:d.originalTenure||'',azDebtLate:d.lateCharges||'',azDebtLastPayment:d.lastPaymentDate||'',azDebtBankKeywords:d.bankMatchKeywords||'',azDebtNote:d.note||''};Object.entries(vals).forEach(([id2,v])=>{const n=document.getElementById(id2);if(n)n.value=v;});azDebtSetText('azDebtEditorTitle','✏️ Edit Hutang');document.getElementById('azDebtEditorCard')?.scrollIntoView({behavior:'smooth',block:'start'});}
+async function azDebtSaveEditor(){if(!azDebtState)azDebtState=azDebtDefaultState();const id=String(document.getElementById('azDebtEditId')?.value||'').trim();const creditor=String(document.getElementById('azDebtCreditor')?.value||'').trim(),title=String(document.getElementById('azDebtTitle')?.value||'').trim();if(!creditor)return toast('Masukkan nama pemiutang / orang.');if(!title)return toast('Masukkan keterangan hutang.');const type=String(document.getElementById('azDebtType')?.value||'other');const rawBal=String(document.getElementById('azDebtBalance')?.value||'').trim();const obj={id:id||('debt-'+Date.now()),type,creditor,title,balance:Math.max(0,azDebtNum(rawBal)),balanceAvailable:rawBal!==''||!['spaylater','sloan'].includes(type),originalAmount:Math.max(0,azDebtNum(document.getElementById('azDebtOriginal')?.value)),monthly:Math.max(0,azDebtNum(document.getElementById('azDebtMonthly')?.value)),currentDue:Math.max(0,azDebtNum(document.getElementById('azDebtCurrentDue')?.value)),nextDue:String(document.getElementById('azDebtDue')?.value||''),principalBalance:Math.max(0,azDebtNum(document.getElementById('azDebtPrincipal')?.value)),interestRate:Math.max(0,azDebtNum(document.getElementById('azDebtRate')?.value)),remainingInstallments:Math.max(0,Math.round(azDebtNum(document.getElementById('azDebtRemaining')?.value))),originalTenure:Math.max(0,Math.round(azDebtNum(document.getElementById('azDebtTenure')?.value))),lateCharges:Math.max(0,azDebtNum(document.getElementById('azDebtLate')?.value)),lastPaymentDate:String(document.getElementById('azDebtLastPayment')?.value||''),bankMatchKeywords:String(document.getElementById('azDebtBankKeywords')?.value||'').trim(),note:String(document.getElementById('azDebtNote')?.value||'').trim(),status:'active',linked:true};if(obj.balanceAvailable&&obj.balance<=0)obj.status='paid';if(!obj.originalAmount&&obj.balanceAvailable&&obj.type!=='vehicle')obj.originalAmount=obj.balance;const idx=(azDebtState.debts||[]).findIndex(d=>String(d.id)===String(obj.id));if(idx>=0)azDebtState.debts[idx]={...azDebtState.debts[idx],...obj};else azDebtState.debts.push(obj);azDebtClearEditor();await azDebtSave();toast(idx>=0?'Hutang dikemas kini.':'Hutang ditambah.');}
+async function azDebtPay(id,amountOverride=0,noteOverride='',source='manual'){const d=azDebtFind(id);if(!d||d.balanceAvailable===false||azDebtNum(d.balance)<=0)return false;let amount=azDebtNum(amountOverride);if(!(amount>0)){const raw=prompt(`Bayaran untuk ${d.creditor} — ${d.title}\nBaki sekarang: ${azDebtMoney(d.balance)}\n\nMasukkan jumlah bayaran (RM):`,Math.max(d.monthly||0,d.currentDue||0)>0?String(Math.max(d.monthly||0,d.currentDue||0)):'');if(raw===null)return false;amount=azDebtNum(String(raw).replace(/,/g,''));if(!(amount>0))return toast('Jumlah bayaran tidak sah.');if(amount>azDebtNum(d.balance)&&!confirm('Bayaran lebih besar daripada baki. Baki akan jadi RM0.00. Teruskan?'))return false;}d.balance=Math.max(0,azDebtNum(d.balance)-amount);d.status=d.balance<=0?'paid':'active';d.lastPaymentDate=azDebtToday();if(d.type==='vehicle'&&azDebtNum(d.monthly)>0&&amount>=azDebtNum(d.monthly)*0.8){if(azDebtNum(d.remainingInstallments)>0)d.remainingInstallments=Math.max(0,azDebtNum(d.remainingInstallments)-1);if(d.nextDue)d.nextDue=azDebtAddMonths(d.nextDue,1);}azDebtState.payments.unshift({id:'pay-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),debtId:d.id,creditor:d.creditor,title:d.title,amount,atMs:Date.now(),source,note:noteOverride||(d.type==='vehicle'?'Loan balance tracker estimate; semak statement bank untuk baki sebenar.':'')});azDebtState.payments=azDebtState.payments.slice(0,300);await azDebtSave();if(!amountOverride)toast(`Bayaran ${azDebtMoney(amount)} dicatat.`);return true;}
+async function azDebtDelete(id){const d=azDebtFind(id);if(!d)return;if(d.managedSync)return azDebtResetSync(id);if(!confirm(`Delete rekod hutang ini?\n\n${d.creditor} — ${d.title}\nBaki: ${azDebtMoney(d.balance)}`))return;azDebtState.debts=(azDebtState.debts||[]).filter(x=>String(x.id)!==String(id));await azDebtSave();toast('Rekod hutang dibuang.');}
+async function azDebtResetSync(id){const d=azDebtFind(id);if(!d||!d.managedSync)return;if(!confirm(`Reset link ${d.title}?\n\nBaki dan status sync Shopee untuk rekod ini akan dikosongkan. Rekod payment history tidak dipadam.`))return;const seed=azDebtDefaultFinance(d.type);const i=azDebtState.debts.findIndex(x=>String(x.id)===String(id));azDebtState.debts[i]={...seed};await azDebtSave();toast(`${seed.title} link direset.`);}
+function azDebtExportCsv(){if(!azDebtState)return;const rows=[['Type','Creditor','Description','Balance RM','Balance Available','Monthly RM','Current Due RM','Next Due','Principal RM','Interest %','Remaining Installments','Original Tenure','Late Charges RM','Last Payment','Linked','Last Sync','Note']];(azDebtState.debts||[]).forEach(d=>rows.push([azDebtTypeLabel(d.type),d.creditor,d.title,azDebtNum(d.balance).toFixed(2),d.balanceAvailable!==false?'Yes':'No',azDebtNum(d.monthly).toFixed(2),azDebtNum(d.currentDue).toFixed(2),d.nextDue||'',azDebtNum(d.principalBalance).toFixed(2),azDebtNum(d.interestRate).toFixed(2),d.remainingInstallments||'',d.originalTenure||'',azDebtNum(d.lateCharges).toFixed(2),d.lastPaymentDate||'',d.linked?'Yes':'No',d.lastSyncAtMs?new Date(d.lastSyncAtMs).toISOString():'',d.note||'']));const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='AZOBSS-Debt-Loan-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
+function azDebtBridgeMeta(){return document.getElementById(AZ_DEBT_SHOPEE_BRIDGE_ID);}
+function azDebtRefreshBridgeStatus(){const n=document.getElementById('azDebtShopeeBridgeStatus');if(!n)return;const ready=azDebtBridgeMeta()?.getAttribute('data-extension')==='ready';n.textContent=ready?'Extension v1313 ready ✅':'Extension v1313 belum dikesan';n.classList.toggle('ready',ready);n.classList.toggle('wait',!ready);}
+async function azDebtReadShopeeBridge(){azDebtRefreshBridgeStatus();const el=azDebtBridgeMeta();const raw=el?.getAttribute('data-payload')||'';if(!raw)return false;let data=null;try{data=JSON.parse(decodeURIComponent(raw));}catch(_e){return false;}if(!data||data.payloadType!=='finance')return false;const done=await azDebtApplyFinanceSnapshot(data);if(done)document.dispatchEvent(new Event(AZ_DEBT_SHOPEE_ACK_EVENT,{bubbles:true}));return done;}
+function azDebtNormalizeDate(v){const s=String(v||'').trim();if(!s)return '';let m=s.match(/(20\d{2})[-\/]([01]?\d)[-\/]([0-3]?\d)/);if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;m=s.match(/([0-3]?\d)[\/\-]([01]?\d)[\/\-](20\d{2})/);if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;const d=new Date(s);if(!Number.isNaN(d.getTime()))return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return '';}
+function azDebtParseFinanceText(raw,forcedKind=''){const text=String(raw||'').replace(/\u00a0/g,' ').replace(/\r/g,'\n');const flat=text.replace(/[ \t]+/g,' ');const kind=forcedKind||(/\bS\s*Loan\b|SPay\s*Loan|Shopee\s*Loan/i.test(flat)?'sloan':(/SPay\s*Later|PayLater/i.test(flat)?'spaylater':''));if(!kind)return null;const money=(labels)=>{for(const label of labels){const esc=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');let m=flat.match(new RegExp(esc+'[\\s\\S]{0,90}?(?:RM\\s*)?([0-9][0-9,]*(?:\\.[0-9]{1,2})?)','i'));if(m)return azDebtNum(m[1].replace(/,/g,''));m=flat.match(new RegExp('(?:RM\\s*)?([0-9][0-9,]*(?:\\.[0-9]{1,2})?)[\\s\\S]{0,45}?'+esc,'i'));if(m)return azDebtNum(m[1].replace(/,/g,''));}return null;};const date=(labels)=>{for(const label of labels){const esc=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=flat.match(new RegExp(esc+'[\\s:–-]{0,30}([0-3]?\\d[\\/-][01]?\\d[\\/-]20\\d{2}|20\\d{2}[\\/-][01]?\\d[\\/-][0-3]?\\d|[0-3]?\\d\\s+[A-Za-z]{3,9}\\s+20\\d{2})','i'));if(m)return azDebtNormalizeDate(m[1]);}return '';};const num=(labels)=>{for(const label of labels){const esc=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=flat.match(new RegExp(esc+'[^0-9]{0,30}(\\d{1,3})','i'));if(m)return parseInt(m[1],10);}return 0;};const balance=kind==='spaylater'?money(['Total Outstanding','Outstanding Balance','Total Balance','Jumlah Tertunggak','Baki Tertunggak','Total Amount Due']):money(['Outstanding Balance','Total Outstanding','Outstanding Amount','Remaining Balance','Baki Pinjaman','Loan Balance','Principal Outstanding']);const currentDue=money(['Current Bill','Current Due','Amount Due','Total Due','Bil Semasa','Jumlah Bil','Bayaran Bulan Ini','Next Payment Amount','Instalment Amount','Installment Amount']);const monthly=money(['Monthly Instalment','Monthly Installment','Instalment Amount','Installment Amount','Monthly Payment','Bayaran Bulanan']);const nextDue=date(['Due Date','Next Due','Payment Due Date','Tarikh Akhir Pembayaran','Tarikh Bayaran','Next Payment Due']);const remainingInstallments=num(['Remaining Installment','Remaining Instalment','Installments Remaining','Instalments Remaining','Baki Ansuran']);const usable=balance!==null||currentDue!==null||monthly!==null||!!nextDue||remainingInstallments>0;if(!usable)return null;const captureId='manual-'+azDebtHash(kind+'|'+flat.slice(0,6000));return {bridgeVersion:1313,payloadType:'finance',financeType:kind,balance:balance===null?null:balance,currentDue:currentDue===null?0:currentDue,monthly:monthly===null?0:monthly,nextDue,remainingInstallments,capturedAt:new Date().toISOString(),captureId,confidence:balance!==null?'manual-good':'manual-partial',source:'azobss-manual-paste'};}
+async function azDebtApplyFinanceSnapshot(data){const kind=data?.financeType;if(!['spaylater','sloan'].includes(kind))return false;if(!azDebtState)azDebtState=azDebtReadLocal()||azDebtDefaultState();const id=kind==='spaylater'?'shopee-spaylater':'shopee-sloan';let d=azDebtFind(id);if(!d){d=azDebtDefaultFinance(kind);azDebtState.debts.push(d);}const captureId=String(data.captureId||azDebtHash(JSON.stringify(data)));if(d.lastCaptureId===captureId)return false;const oldKnown=d.balanceAvailable!==false,oldBalance=azDebtNum(d.balance);const newBalance=(data.balance===null||data.balance===undefined||data.balance==='')?null:Math.max(0,azDebtNum(data.balance));let autoPaid=0,changeNote='';if(newBalance!==null){if(d.linked&&oldKnown&&newBalance<oldBalance-0.009){autoPaid=oldBalance-newBalance;azDebtState.payments.unshift({id:'auto-'+Date.now()+'-'+captureId.slice(-6),debtId:d.id,creditor:d.creditor,title:d.title,amount:autoPaid,atMs:Date.now(),source:'shopee-reconcile',captureId,note:'Auto reconcile: baki Shopee turun '+azDebtMoney(autoPaid)});changeNote='Baki turun '+azDebtMoney(autoPaid)+' → auto payment direkod.';}else if(d.linked&&oldKnown&&newBalance>oldBalance+0.009){changeNote='Baki naik '+azDebtMoney(newBalance-oldBalance)+' (contoh pembelian/caj baru).';}else if(!d.linked||!oldKnown){changeNote='Initial balance linked.';}d.balance=newBalance;d.balanceAvailable=true;d.originalAmount=Math.max(azDebtNum(d.originalAmount),newBalance);d.status=newBalance<=0?'paid':'active';}
+  if(azDebtNum(data.currentDue)>0)d.currentDue=Math.max(0,azDebtNum(data.currentDue));if(azDebtNum(data.monthly)>0)d.monthly=Math.max(0,azDebtNum(data.monthly));if(data.nextDue)d.nextDue=azDebtNormalizeDate(data.nextDue)||String(data.nextDue);if(azDebtNum(data.remainingInstallments)>0)d.remainingInstallments=Math.round(azDebtNum(data.remainingInstallments));d.linked=true;d.managedSync=true;d.syncProvider='shopee-browser';d.lastSyncAtMs=Date.now();d.lastCaptureId=captureId;d.syncConfidence=String(data.confidence||'captured');if(autoPaid>0)d.lastPaymentDate=azDebtToday();azDebtState.syncEvents.unshift({id:'sync-'+Date.now(),debtId:d.id,kind,captureId,atMs:Date.now(),oldBalance:oldKnown?oldBalance:null,newBalance,source:String(data.source||'shopee-browser'),note:changeNote});azDebtState.syncEvents=azDebtState.syncEvents.slice(0,200);azDebtState.payments=azDebtState.payments.slice(0,300);await azDebtSave();toast(autoPaid>0?`${d.title}: ${azDebtMoney(autoPaid)} auto ditolak selepas reconcile.`:`${d.title} synced${newBalance!==null?' — '+azDebtMoney(newBalance):''}.`);return true;}
+async function azDebtManualParse(kind){const t=document.getElementById('azDebtShopeePaste')?.value||'';if(!t.trim())return toast('Paste teks ringkasan Shopee dahulu.');const data=azDebtParseFinanceText(t,kind);if(!data)return toast('Tak dapat kesan angka kewangan. Pastikan teks ada baki / current due / due date.');const ok=await azDebtApplyFinanceSnapshot(data);if(ok){const n=document.getElementById('azDebtShopeePaste');if(n)n.value='';}}
+function azDebtOpenShopee(){window.open('https://shopee.com.my/','_blank','noopener,noreferrer');toast('Buka SPayLater / SLoan dalam Shopee web. Extension akan capture apabila ringkasan kewangan kelihatan.');}
+function azDebtExtractBankAmount(line){const neg=[...String(line).matchAll(/(?:RM\s*)?-\s*([0-9][0-9,]*\.\d{2})/gi)];if(neg.length)return azDebtNum(neg[0][1].replace(/,/g,''));if(!/(?:debit|payment|bayar|paid|repayment)/i.test(line))return 0;const arr=[...String(line).matchAll(/(?:RM\s*)?([0-9][0-9,]*\.\d{2})/gi)].map(m=>azDebtNum(m[1].replace(/,/g,''))).filter(x=>x>0);return arr[0]||0;}
+async function azDebtImportBankFile(file){if(!file)return;let txt='';try{txt=await file.text();}catch(_e){return toast('Tak dapat baca file bank.');}const lines=txt.split(/\r?\n/).filter(Boolean);let matched=0,skipped=0;azDebtState.bankImports=Array.isArray(azDebtState.bankImports)?azDebtState.bankImports:[];for(const line of lines){const key='bank-'+azDebtHash(line.trim());if(azDebtState.bankImports.includes(key)){skipped++;continue;}for(const d of (azDebtState.debts||[]).filter(x=>['spaylater','sloan'].includes(x.type)&&x.linked&&x.balanceAvailable!==false&&azDebtNum(x.balance)>0)){const kws=String(d.bankMatchKeywords||'').split('|').map(x=>x.trim()).filter(Boolean);if(!kws.length||!kws.some(k=>line.toUpperCase().includes(k.toUpperCase())))continue;const amount=azDebtExtractBankAmount(line);if(!(amount>0))continue;const applied=Math.min(amount,azDebtNum(d.balance));if(!(applied>0))continue;d.balance=Math.max(0,azDebtNum(d.balance)-applied);d.status=d.balance<=0?'paid':'active';d.lastPaymentDate=azDebtToday();azDebtState.payments.unshift({id:'bank-'+Date.now()+'-'+matched,debtId:d.id,creditor:d.creditor,title:d.title,amount:applied,atMs:Date.now(),source:'bank-csv-estimate',note:'Auto-match bank CSV (provisional; Shopee capture akan reconcile).'});azDebtState.bankImports.push(key);matched++;break;}}azDebtState.bankImports=azDebtState.bankImports.slice(-1000);azDebtState.payments=azDebtState.payments.slice(0,300);await azDebtSave();toast(matched?`${matched} transaksi bank auto-match. Baki provisional akan disahkan oleh Shopee capture.`:`Tiada transaksi SPayLater/SLoan yang match secara selamat.${skipped?' '+skipped+' rekod duplicate diabaikan.':''}`);}
+function azDebtBind(){const root=document.getElementById('debtsloans');if(!root||root.dataset.bound==='1')return;root.dataset.bound='1';document.getElementById('azDebtAddNew')?.addEventListener('click',()=>{azDebtClearEditor();document.getElementById('azDebtEditorCard')?.scrollIntoView({behavior:'smooth',block:'start'});});document.getElementById('azDebtEditorClear')?.addEventListener('click',azDebtClearEditor);document.getElementById('azDebtSave')?.addEventListener('click',azDebtSaveEditor);document.getElementById('azDebtExportCsv')?.addEventListener('click',azDebtExportCsv);document.getElementById('azDebtPlannerMonths')?.addEventListener('change',async e=>{azDebtState.plannerMonths=Math.max(1,Math.min(120,parseInt(e.target.value||12,10)||12));await azDebtSave();});root.querySelectorAll('.az-debt-plan-preset').forEach(b=>b.addEventListener('click',async()=>{azDebtState.plannerMonths=Math.max(1,parseInt(b.dataset.months||12,10));await azDebtSave();}));root.addEventListener('click',e=>{const open=e.target.closest('[data-open-shopee]');if(open){azDebtOpenShopee();return;}const b=e.target.closest('[data-debt-action]');if(!b)return;const id=b.dataset.id;if(b.dataset.debtAction==='edit')azDebtEdit(id);else if(b.dataset.debtAction==='pay')azDebtPay(id);else if(b.dataset.debtAction==='delete')azDebtDelete(id);else if(b.dataset.debtAction==='reset-sync')azDebtResetSync(id);});document.getElementById('azDebtClearHistory')?.addEventListener('click',async()=>{if(!azDebtState?.payments?.length)return;if(!confirm('Clear semua rekod bayaran? Baki hutang tidak berubah.'))return;azDebtState.payments=[];await azDebtSave();toast('Rekod bayaran dikosongkan.');});document.getElementById('azDebtParseSpay')?.addEventListener('click',()=>azDebtManualParse('spaylater'));document.getElementById('azDebtParseSloan')?.addEventListener('click',()=>azDebtManualParse('sloan'));document.getElementById('azDebtSyncNow')?.addEventListener('click',async()=>{const ok=await azDebtReadShopeeBridge();if(!ok)toast('Tiada capture finance baru. Buka halaman SPayLater/SLoan di Shopee web dahulu.');});document.getElementById('azDebtBankCsv')?.addEventListener('change',async e=>{const f=e.target.files?.[0];if(f)await azDebtImportBankFile(f);e.target.value='';});document.addEventListener(AZ_DEBT_SHOPEE_READY_EVENT,()=>setTimeout(azDebtReadShopeeBridge,0));if(!azDebtBridgeTimer)azDebtBridgeTimer=setInterval(()=>{if(document.getElementById('debtsloans')?.classList.contains('active'))azDebtReadShopeeBridge();},1800);}
+async function loadDebtsLoans(){if(!azDebtState)azDebtState=azDebtReadLocal()||azDebtDefaultState();azDebtState=azDebtSafeState(azDebtState);azDebtBind();azDebtRender();await azDebtLoadCloud();setTimeout(azDebtReadShopeeBridge,150);}
 
 async function initSection(id){
   azAdminClearQueryErrors();
