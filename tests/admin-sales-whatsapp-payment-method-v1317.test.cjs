@@ -9,9 +9,9 @@ const pdf=fs.readFileSync(path.join(root,'assets','js','azobss-admin-sales-recei
 const admin=fs.readFileSync(path.join(root,'admin','index.html'),'utf8');
 
 test('v1317 package and admin force fresh share assets',()=>{
-  assert.equal(pkg.version,'1.0.1317');
-  assert.match(admin,/azobss-admin-sales-receipts\.js\?v=1317/);
-  assert.match(admin,/azobss-admin-sales-receipt-pdf\.js\?v=1317/);
+  assert.ok(['1.0.1317','1.0.1318'].includes(pkg.version));
+  assert.match(admin,/azobss-admin-sales-receipts\.js\?v=1318/);
+  assert.match(admin,/azobss-admin-sales-receipt-pdf\.js\?v=1318/);
 });
 
 test('ToyyibPay URL is only exposed when ToyyibPay is the active payment method',()=>{

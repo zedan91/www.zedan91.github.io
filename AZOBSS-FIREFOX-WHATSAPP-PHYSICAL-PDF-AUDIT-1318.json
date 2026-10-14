@@ -1,0 +1,15 @@
+{
+  "version": "1.0.1318",
+  "feature": "Firefox WhatsApp physical PDF bridge",
+  "firefoxFlow": {
+    "pdfSource": "browser-generated File",
+    "transport": "local page -> Firefox content script -> extension background -> WhatsApp Web content script",
+    "customerReceives": "physical PDF attachment",
+    "temporaryRenderLinkUsed": false,
+    "autoSend": false,
+    "manualFinalStep": "review preview and press Send"
+  },
+  "fallback": "download physical PDF and open WhatsApp Web for manual attachment",
+  "chromeEdgeFlowChanged": false,
+  "extensionFolder": "azobss-firefox-whatsapp-pdf-bridge"
+}

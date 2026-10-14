@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'admin', 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1312 adds Debt & Loan admin tab and section', () => {
-  assert.ok(['1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317'].includes(pkg.version));
+  assert.ok(['1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318'].includes(pkg.version));
   assert.match(html, /id="debtsloans" class="section az-debt-section"/);
   assert.ok((html.match(/data-tab="debtsloans"/g) || []).length >= 5);
   assert.match(html, /if\(id==='debtsloans'\)return loadDebtsLoans\(\);/);
