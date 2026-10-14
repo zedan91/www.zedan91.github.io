@@ -1,0 +1,38 @@
+{
+  "patch": 1312,
+  "baseline": 1311,
+  "feature": "Admin Debt & Loan Tracker",
+  "location": "admin/index.html > Sales & Receipts subtabs > Debt & Loan",
+  "seed": {
+    "vehicleLoanOutstandingRM": 11896.15,
+    "vehiclePrincipalRM": 11188.35,
+    "vehicleMonthlyRM": 479,
+    "vehicleInterestPercent": 3.61,
+    "vehicleRemainingInstallments": 26,
+    "vehicleOriginalTenure": 114,
+    "vehicleLateChargesRM": 8.15,
+    "vehicleNextDue": "2026-11-14",
+    "vehicleLastPayment": "2026-10-14",
+    "navaShankaraRM": 600,
+    "omarBinAkasahRM": 5000
+  },
+  "initialCalculations": {
+    "totalDebtRM": 17496.15,
+    "peopleDebtRM": 5600,
+    "vehicleSharePercent": 67.99,
+    "peopleSharePercent": 32.01,
+    "twelveMonthPeopleTargetRM": 466.67,
+    "twelveMonthTotalTargetRM": 945.67,
+    "outstandingMinusPrincipalRM": 707.80,
+    "scheduledRemainingRM": 12454,
+    "scheduleMinusOutstandingRM": 557.85,
+    "tenureElapsedPercent": 77.2
+  },
+  "storage": {
+    "localStorageKey": "azobssAdminDebtLoanTrackerV1312",
+    "firestoreAttempt": "adminFinance/debtLoanTracker",
+    "fallback": "browser local"
+  },
+  "privacy": "Full vehicle-loan account number is not stored/displayed by this patch; only vehicle reference VDD5378 is shown.",
+  "tests": "163/163 passed"
+}

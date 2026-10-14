@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1288 package version', () => {
-  assert.ok(/^1\.0\.(1288|1289|1290|1291|1292|1293|1294|1295|1296|1297|1298|1299|1300|1301|1302|1303|1304|1305|1306|1307|1308|1309|1310|1311)$/.test(pkg.version));
+  assert.ok(/^1\.0\.(1288|1289|1290|1291|1292|1293|1294|1295|1296|1297|1298|1299|1300|1301|1302|1303|1304|1305|1306|1307|1308|1309|1310|1311|1312)$/.test(pkg.version));
 });
 
 test('both existing right-side homepage banners are registered in the banner manager', () => {
