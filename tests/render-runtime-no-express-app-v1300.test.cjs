@@ -7,7 +7,7 @@ const pkg=require(path.join(root,'package.json'));
 const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 
 test('v1300 deploy-server does not call an undefined Express app',()=>{
-  assert.ok(['1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314'].includes(pkg.version));
+  assert.ok(['1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316'].includes(pkg.version));
   assert.doesNotMatch(runtime,/^app\.(?:get|post|put|delete|patch)\(/m);
   assert.match(runtime,/async function handler\(req, res\)/);
   assert.match(runtime,/pathname === "\/api\/shopee-affiliate\/product-metadata" && req\.method === "POST"/);
