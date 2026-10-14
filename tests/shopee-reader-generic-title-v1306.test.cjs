@@ -7,7 +7,7 @@ const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
-test('v1306 package',()=>assert.ok(['1.0.1306','1.0.1307','1.0.1308','1.0.1309'].includes(pkg.version)));
+test('v1306 package',()=>assert.ok(['1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310'].includes(pkg.version)));
 test('live runtime rejects generic titles',()=>{const p=runtime.indexOf('function azShopeeMetadataHasRequiredProduct');assert.match(runtime.slice(p,p+500),/azShopeeLooksGenericSeoTitle/);assert.match(runtime,/free\\s\+shipping/);});
 test('Reader can recover canonical and retry',()=>{assert.match(runtime,/decodeURIComponent/);assert.match(runtime,/queue\.push\(productUrl\)/);assert.match(runtime,/jina-reader-canonical/);assert.match(runtime,/readerPasses:pass\+1/);});
 test('Reader generic page is not success',()=>assert.match(runtime,/tajuk generik Shopee ditolak/));
