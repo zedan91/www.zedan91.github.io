@@ -7,7 +7,7 @@ const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
-test('v1304 package',()=>assert.ok(['1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316'].includes(pkg.version)));
+test('v1304 package',()=>assert.ok(['1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317'].includes(pkg.version)));
 test('challenge URLs recover the Shopee next product URL without trusting external hosts',()=>{
   assert.match(runtime,/function azShopeeChallengeInfo/);
   assert.match(runtime,/\['next','redirect','redirect_url','url','target'\]/);

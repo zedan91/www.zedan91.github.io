@@ -324,8 +324,11 @@
   function hasToyyibPayQr(row,type){
     const docType=normalizeDocumentType(type);
     const status=clean(row.status).toLowerCase();
-    const canPay=!!(clean(row.paymentUrl||row.toyyibPaymentUrl) && clean(row.toyyibQrJpegBase64));
+    const activeMethod=clean(row.paymentMethod||row.verifiedPaymentMethod).toLowerCase();
+    const canPay=activeMethod.includes('toyyib') && !!(clean(row.paymentUrl||row.toyyibPaymentUrl) && clean(row.toyyibQrJpegBase64));
     // Keep paid receipts clean: the scan instruction is only useful while payment is still due.
+    // A previously generated ToyyibPay URL/QR may remain stored for audit/reuse, but it is dormant
+    // whenever the active Payment Method is Maybank or another method.
     return canPay && ((docType==='invoice' && status==='pending') || (docType==='receipt' && status!=='paid'));
   }
   function drawToyyibPayQr(commands,row,y,type,options){
@@ -351,7 +354,7 @@
   function hasMaybankQr(row,type){
     const docType=normalizeDocumentType(type);
     const status=normalizedPaymentStatus(row.status);
-    const method=clean(row.paymentMethod).toLowerCase();
+    const method=clean(row.paymentMethod||row.verifiedPaymentMethod).toLowerCase();
     return docType==='invoice' && ['pending','deposit-paid'].includes(status) && method==='maybank';
   }
   function drawMaybankQr(commands,row,y,type,options){

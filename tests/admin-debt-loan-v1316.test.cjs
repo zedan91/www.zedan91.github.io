@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'admin','index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
 test('v1316 debt money values stay on one line',()=>{
-  assert.equal(pkg.version,'1.0.1316');
+  assert.ok(['1.0.1316','1.0.1317'].includes(pkg.version));
   assert.match(html,/\.az-debt-money-line\{[^}]*white-space:nowrap/);
   assert.match(html,/\.az-debt-money-line\{[^}]*word-break:normal/);
   assert.match(html,/class=\\?"az-debt-money-line\\?"/);

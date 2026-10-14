@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-test('v1310 package version', () => assert.ok(['1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316'].includes(pkg.version)));
+test('v1310 package version', () => assert.ok(['1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317'].includes(pkg.version)));
 
 test('legacy Exabytes seed is deletable while system banners remain hide-only', () => {
   assert.match(html, /const BUILTIN_IDS=new Set\(\[SOFTWARE_ID,LUCKY_ID\]\)/);

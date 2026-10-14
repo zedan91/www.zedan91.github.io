@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1194;
+window.__azSalesReceiptsModuleVersion=1317;
 
 let manualRows=[];
 let websiteRows=[];
@@ -1324,7 +1324,7 @@ async function printDocument(row,type='receipt',button=null){
 }
 function pdfApi(){return window.AZOBSSAdminSalesReceiptPDF||null}
 function toyyibPayPaymentUrl(row,type='invoice'){
-  if(documentType(type)!=='invoice')return '';
+  if(documentType(type)!=='invoice'||!rowUsesToyyibPay(row))return '';
   return String(row?.paymentUrl||row?.toyyibPaymentUrl||'').trim();
 }
 function documentShareText(row,type,fileName=''){
@@ -1433,9 +1433,10 @@ function setDirectShareWindow(targetWindow,url){
   const opened=window.open(url,'_blank','noopener');return !!opened;
 }
 function temporaryShareText(row,type,shareUrl){
-  const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
-  const paymentUrl=toyyibPayPaymentUrl(row,docType);
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',`PDF: ${shareUrl}`].filter(Boolean).join('\n');
+  // Keep temporary-link WhatsApp/Telegram text identical to the actual-PDF share text.
+  // This is payment-method aware, so a dormant ToyyibPay URL can never leak into a
+  // Maybank invoice after the admin changes Payment Method.
+  return documentShareText(row,type,shareUrl);
 }
 function temporaryDirectShareUrl(row,type,target,shareUrl){
   const text=temporaryShareText(row,type,shareUrl);
@@ -1594,11 +1595,11 @@ function openSharePanel(row,type='receipt'){
   const firefoxDesktop=isFirefoxDesktop();
   setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?'Firefox: Download PDF + WhatsApp':'Share Actual PDF File');
   setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?'Firefox Desktop cannot use the Chromium/Windows actual-file Share path. AZOBSS will save the PDF without opening it, then open WhatsApp with a secure PDF link.':'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
-  setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?'WhatsApp PDF + Payment Link':'WhatsApp Receipt PDF');
-  setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?'Telegram Invoice + Payment Link':'Telegram Receipt Link');
-  setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
+  setSharePanelText('salesReceiptShareWhatsAppLabel',docType==='invoice'?(isMaybankInvoice?'WhatsApp PDF + Maybank':isToyyibInvoice?'WhatsApp PDF + Payment Link':'WhatsApp Invoice PDF'):'WhatsApp Receipt PDF');
+  setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?(isMaybankInvoice?'Telegram Invoice + Maybank':isToyyibInvoice?'Telegram Invoice + Payment Link':'Telegram Invoice Link'):'Telegram Receipt Link');
+  setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
   setSharePanelText('salesReceiptShareWhatsAppDesc',docType==='invoice'?(isToyyibInvoice?'Try the actual PDF first. If this browser cannot attach files through the Share window, WhatsApp opens with the secure invoice PDF link and ToyyibPay payment link instead.':isMaybankInvoice?'Try the actual PDF first. If native file sharing is unavailable, WhatsApp opens with the secure invoice PDF link and Maybank payment details instead.':'Try the actual PDF first. If native file sharing is unavailable, WhatsApp opens with the secure temporary invoice PDF link instead.'):'Try the actual receipt PDF first. If native file sharing is unavailable, WhatsApp opens with the secure temporary receipt PDF link instead.');
   setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareLinkDesc',docType==='invoice'?'Copy the temporary invoice PDF link.':'Copy the temporary receipt PDF link.');
