@@ -396,6 +396,12 @@
     var upgradeLink = makeLink('/PC-IT-Services/#upgrade-parts', 'azPcitUpgradeLink', 'az-pcit-upgrade-icon',
       '<path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle>',
       'Upgrade &amp; Parts', 'RAM, SSD, GPU, PSU, bateri &amp; adapter', isUpgradePage);
+    upgradeLink.addEventListener('click', function (event) {
+      if (!isPcitOverviewPage()) return;
+      event.preventDefault();
+      setOpen(false);
+      activateUpgradeParts(wrap, 'smooth');
+    });
     var onlineLink = makeLink('/Troubleshoot-PC-Online/', 'azRepairOnlineLink', 'az-repair-online-icon',
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
@@ -509,6 +515,46 @@
     dropdown.querySelectorAll('a[role="menuitem"]').forEach(function (item) {
       item.addEventListener('click', function () { setOpen(false); });
     });
+  }
+
+  function isPcitOverviewPage() {
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var overviewPath = normalisePath('/PC-IT-Services/').toLowerCase();
+    return currentPath === overviewPath || currentPath.indexOf(overviewPath + '/') === 0;
+  }
+
+  function scrollToUpgradeParts(behavior) {
+    if (!isPcitOverviewPage()) return false;
+    if (String(window.location.hash || '').toLowerCase() !== '#upgrade-parts') return false;
+    var target = document.getElementById('upgrade-parts');
+    if (!target) return false;
+
+    function run() {
+      var sticky = document.querySelector('.market-sticky-bar');
+      var stickyHeight = sticky ? Math.ceil(sticky.getBoundingClientRect().height || sticky.offsetHeight || 0) : 0;
+      var top = Math.max(0, target.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0) - stickyHeight - 12);
+      try {
+        window.scrollTo({ top: top, behavior: behavior || 'auto' });
+      } catch (error) {
+        window.scrollTo(0, top);
+      }
+    }
+
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(run);
+    });
+    return true;
+  }
+
+  function activateUpgradeParts(wrap, behavior) {
+    if (!isPcitOverviewPage()) return false;
+    var next = window.location.pathname + window.location.search + '#upgrade-parts';
+    if (String(window.location.hash || '').toLowerCase() !== '#upgrade-parts') {
+      window.history.pushState(null, document.title, next);
+    }
+    document.querySelectorAll('.az-repair-nav').forEach(syncRepairMenuActive);
+    scrollToUpgradeParts(behavior || 'smooth');
+    return true;
   }
 
   function syncRepairMenuActive(wrap) {
@@ -631,6 +677,15 @@
         menuItems[(currentIndex - 1 + menuItems.length) % menuItems.length].focus();
       }
     });
+    var upgradeItem = dropdown.querySelector('a[data-az-pcit-upgrade-link="1"]');
+    if (upgradeItem) {
+      upgradeItem.addEventListener('click', function (event) {
+        if (!isPcitOverviewPage()) return;
+        event.preventDefault();
+        setOpen(false);
+        activateUpgradeParts(wrap, 'smooth');
+      });
+    }
     dropdown.querySelectorAll('a[role="menuitem"]').forEach(function (item) {
       item.addEventListener('click', function () { setOpen(false); });
     });
@@ -641,7 +696,7 @@
       if (wrap.classList.contains('is-open')) positionMobileDropdown();
     }, { passive: true });
     if (wrap.classList.contains('az-repair-nav')) {
-      window.addEventListener('hashchange', function () { syncRepairMenuActive(wrap); }, { passive: true });
+      window.addEventListener('hashchange', function () { syncRepairMenuActive(wrap); scrollToUpgradeParts('smooth'); }, { passive: true });
     }
   }
 
@@ -857,6 +912,12 @@
       return /mini\s*web\s*tools/i.test((candidate.textContent || '').trim());
     }).forEach(buildMoreMenu);
     ensureMakanMalaysiaLink();
+
+    if (String(window.location.hash || '').toLowerCase() === '#upgrade-parts') {
+      scrollToUpgradeParts('auto');
+      window.setTimeout(function () { scrollToUpgradeParts('auto'); }, 120);
+      window.setTimeout(function () { scrollToUpgradeParts('auto'); }, 420);
+    }
   }
 
   document.addEventListener('click', function (event) {
