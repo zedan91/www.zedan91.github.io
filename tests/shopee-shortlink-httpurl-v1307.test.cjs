@@ -7,7 +7,7 @@ const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 const backend=fs.readFileSync(path.join(root,'backend/server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
-test('v1307 package',()=>assert.ok(['1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313'].includes(pkg.version)));
+test('v1307 package',()=>assert.ok(['1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314'].includes(pkg.version)));
 test('CONFIG.httpUrl short-link landing recovery exists',()=>{assert.match(runtime,/function azShopeeEmbeddedHttpUrl/);assert.match(runtime,/CONFIG\\\.httpUrl|CONFIG\.httpUrl/);assert.match(runtime,/embeddedHttp.*score:520/);});
 test('mobile HEAD short-link probe runs before page GET loop',()=>{assert.match(runtime,/async function azShopeeResolveHeadHint/);assert.match(runtime,/method:'HEAD'/);assert.match(runtime,/Android 10/);assert.match(runtime,/const headHint=await azShopeeResolveHeadHint/);});
 test('Reader supports short -> canonical retry',()=>{assert.match(runtime,/pass<3/);assert.match(runtime,/const httpUrlHint=azShopeeEmbeddedHttpUrl/);assert.match(runtime,/queue\.unshift\(httpUrlHint\)/);});

@@ -9,7 +9,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root,'azobss-shopee-json-e
 const pkg = JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
 test('v1313 package and Debt & Loan finance types exist',()=>{
-  assert.equal(pkg.version,'1.0.1313');
+  assert.ok(['1.0.1313','1.0.1314'].includes(pkg.version));
   assert.match(html,/azobssAdminDebtLoanTrackerV1313/);
   assert.match(html,/azobssAdminDebtLoanTrackerV1312/);
   assert.match(html,/shopee-spaylater/);

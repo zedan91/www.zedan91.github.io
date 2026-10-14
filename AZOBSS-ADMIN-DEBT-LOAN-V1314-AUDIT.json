@@ -1,0 +1,18 @@
+{
+  "patch": 1314,
+  "date": "2026-10-14",
+  "base": 1313,
+  "changes": [
+    "Debt list no forced horizontal scroll",
+    "Direct editable due date per debt",
+    "Manual subtract/payment per debt",
+    "Manual add balance per debt",
+    "Signed payment/adjustment history",
+    "Seed car due 14th RM479",
+    "Seed SPayLater RM3469 / 22 = RM157.68 average, due 1st",
+    "Seed SLoan RM397 x 18 = RM7146 schedule balance, due 11th",
+    "v1313 to v1314 state migration"
+  ],
+  "baseline_total_rm": 28111.15,
+  "known_finance_monthly_rm": 1033.68
+}
