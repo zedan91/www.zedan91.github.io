@@ -1,21 +1,40 @@
 {
   "manifest_version": 3,
-  "name": "AZOBSS Shopee JSON Extractor",
-  "version": "1.0.0",
-  "description": "Auto extract Shopee product title/image/url and download JSON for AZOBSS affiliate import.",
-  "permissions": ["downloads", "scripting", "activeTab"],
-  "host_permissions": ["https://shopee.com.my/*", "https://*.shopee.com.my/*", "https://s.shopee.com.my/*"],
+  "name": "AZOBSS Shopee Browser Capture",
+  "version": "1.1.0",
+  "description": "Capture Shopee product metadata in the user browser and bridge it back to AZOBSS Affiliate Shop.",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.shopee.com.my/*",
+    "https://azobss.com/*",
+    "https://s.shopee.com.my/*",
+    "https://shopee.com.my/*",
+    "https://www.azobss.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://shopee.com.my/*", "https://*.shopee.com.my/*", "https://s.shopee.com.my/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://shopee.com.my/*",
+        "https://*.shopee.com.my/*",
+        "https://s.shopee.com.my/*",
+        "https://azobss.com/affiliate-shop/*",
+        "https://www.azobss.com/affiliate-shop/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_title": "AZOBSS Shopee JSON"
+    "default_title": "AZOBSS Shopee Browser Capture"
   }
 }

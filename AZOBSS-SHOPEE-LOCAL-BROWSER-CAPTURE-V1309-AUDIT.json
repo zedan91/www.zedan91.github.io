@@ -1,0 +1,28 @@
+{
+  "patch": 1309,
+  "packageVersion": "1.0.1309",
+  "feature": "local browser assisted Shopee metadata bridge",
+  "serverResolverPreserved": true,
+  "affiliateLinkPreserved": true,
+  "privateCredentialsForwarded": false,
+  "extensionFlow": [
+    "capture metadata in user Shopee browser",
+    "store locally in extension storage",
+    "bridge to AZOBSS affiliate-shop",
+    "fill edit modal while preserving affiliate Buy Now URL"
+  ],
+  "capturedFields": [
+    "title",
+    "description",
+    "image",
+    "canonicalUrl",
+    "shopId",
+    "itemId"
+  ],
+  "security": [
+    "no cookies exported",
+    "no Authorization exported",
+    "no Shopee session tokens exported",
+    "no bypass of CAPTCHA or login"
+  ]
+}

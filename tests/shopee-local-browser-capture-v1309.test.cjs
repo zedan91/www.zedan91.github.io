@@ -1,0 +1,10 @@
+const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'affiliate-shop/index.html'),'utf8');
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'azobss-shopee-json-extension/manifest.json'),'utf8'));
+const content=fs.readFileSync(path.join(root,'azobss-shopee-json-extension/content.js'),'utf8');
+test('v1309 package version',()=>assert.equal(JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).version,'1.0.1309'));
+test('extension can run on AZOBSS affiliate shop and uses storage bridge',()=>{assert.ok(manifest.permissions.includes('storage'));assert.ok(manifest.host_permissions.some(x=>x.includes('azobss.com')));assert.match(content,/azobssShopeePendingCaptureV1309/);assert.match(content,/azobss-shopee-capture-ready/)});
+test('extension preserves real Shopee product titles with Shopee Malaysia suffix',()=>{assert.match(content,/stripShopeeSuffix/);assert.match(content,/Shopee\\s\+Malaysia/);assert.doesNotMatch(content,/t\.includes\('shopee malaysia'\)/)});
+test('affiliate page offers local browser capture and preserves affiliate link',()=>{assert.match(html,/Open Browser Capture/);assert.match(html,/Local Browser Capture/);assert.match(html,/link:check\.link/);assert.match(html,/azobss-shopee-capture-ack/)});
+test('server failure points to browser capture instead of fake product modal',()=>{assert.match(html,/Server import disekat Shopee/);assert.doesNotMatch(html,/openModal\(\{title:'Shopee Product',desc:''/)});

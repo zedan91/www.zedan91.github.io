@@ -8,7 +8,7 @@ const server = fs.readFileSync(path.join(root,'backend','server.js'),'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
 test('v1295 auto imports Shopee public product metadata after affiliate link paste', () => {
-  assert.ok(['1.0.1295','1.0.1296','1.0.1297','1.0.1298','1.0.1299','1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308'].includes(pkg.version));
+  assert.ok(['1.0.1295','1.0.1296','1.0.1297','1.0.1298','1.0.1299','1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309'].includes(pkg.version));
   assert.match(html,/\/api\/shopee-affiliate\/product-metadata/);
   assert.match(html,/importManualShopeeMetadata/);
   assert.match(html,/manualShopeeAutoTimer/);

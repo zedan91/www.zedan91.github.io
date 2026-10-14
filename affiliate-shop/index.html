@@ -1037,7 +1037,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .admin-shopee-status{font-size:12px;line-height:1.45;color:#b9c7d8;min-height:18px}.admin-shopee-status.is-ok{color:#62e6a5}.admin-shopee-status.is-error{color:#ff8f8f}
 .admin-shopee-offers-box{width:min(1120px,96vw)!important;max-height:90vh;overflow:auto}.admin-shopee-help{margin:0 0 12px;color:#b9c7d8;line-height:1.5}.admin-shopee-searchbar{display:grid;grid-template-columns:minmax(240px,1fr) 180px auto auto;gap:10px;align-items:center}.admin-shopee-searchbar input,.admin-shopee-searchbar select{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-official{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid rgba(255,115,55,.5);border-radius:10px;padding:0 12px}
 .admin-shopee-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.admin-shopee-offer-card{display:grid;grid-template-columns:110px 1fr;gap:12px;border:1px solid rgba(255,255,255,.12);background:#0d1523;border-radius:14px;padding:12px}.admin-shopee-offer-card img{width:110px;height:110px;object-fit:cover;border-radius:12px;background:#172033}.admin-shopee-offer-title{font-weight:900;line-height:1.35;color:#fff}.admin-shopee-offer-meta{font-size:12px;color:#9eb0c5;margin-top:6px;line-height:1.45}.admin-shopee-offer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.admin-shopee-offer-actions button,.admin-shopee-offer-actions a{min-height:36px;border-radius:9px;border:0;padding:0 11px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}.admin-shopee-offer-actions button{background:#22c55e;color:#06130b}.admin-shopee-offer-actions a{background:#17243a;color:#dce8f8;border:1px solid rgba(255,255,255,.12)}
-.admin-shopee-manual{margin:0 0 16px;border:1px solid rgba(34,197,94,.48);background:rgba(34,197,94,.07);border-radius:14px;padding:14px;display:grid;gap:10px}.admin-shopee-manual strong{color:#77f2aa}.admin-shopee-manual-copy{color:#b9c7d8;font-size:13px;line-height:1.5}.admin-shopee-manual-row{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:10px}.admin-shopee-manual-row input{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-manual-use{min-height:44px;border:0;border-radius:10px;background:#22c55e;color:#06130b;font-weight:900;padding:0 16px;cursor:pointer}.admin-shopee-manual-use:disabled{opacity:.55;cursor:not-allowed}.admin-shopee-api-label{font-weight:900;color:#dce8f8;margin:4px 0 8px}.admin-shopee-api-disabled{opacity:.58}.admin-shopee-manual-open{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;min-height:42px;border:1px solid rgba(255,115,55,.55);border-radius:10px;padding:0 14px;color:#ffd3c5;background:rgba(238,77,45,.1);text-decoration:none;font-weight:900}
+.admin-shopee-manual{margin:0 0 16px;border:1px solid rgba(34,197,94,.48);background:rgba(34,197,94,.07);border-radius:14px;padding:14px;display:grid;gap:10px}.admin-shopee-manual strong{color:#77f2aa}.admin-shopee-manual-copy{color:#b9c7d8;font-size:13px;line-height:1.5}.admin-shopee-browser-capture{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.admin-shopee-browser-capture button{min-height:40px;border:1px solid rgba(96,165,250,.55);background:rgba(37,99,235,.16);color:#bfdbfe;border-radius:10px;padding:0 13px;font-weight:900;cursor:pointer}.admin-shopee-browser-capture button:hover{background:rgba(37,99,235,.28)}.admin-shopee-browser-capture small{color:#9eb0c5;line-height:1.4}.admin-shopee-browser-capture.is-ready small{color:#62e6a5}
+.admin-shopee-manual-row{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:10px}.admin-shopee-manual-row input{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-manual-use{min-height:44px;border:0;border-radius:10px;background:#22c55e;color:#06130b;font-weight:900;padding:0 16px;cursor:pointer}.admin-shopee-manual-use:disabled{opacity:.55;cursor:not-allowed}.admin-shopee-api-label{font-weight:900;color:#dce8f8;margin:4px 0 8px}.admin-shopee-api-disabled{opacity:.58}.admin-shopee-manual-open{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;min-height:42px;border:1px solid rgba(255,115,55,.55);border-radius:10px;padding:0 14px;color:#ffd3c5;background:rgba(238,77,45,.1);text-decoration:none;font-weight:900}
 .card .icon img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}.card .icon.has-image{overflow:hidden;padding:0;background:#111b2a}
 @media(max-width:800px){.admin-shopee-searchbar{grid-template-columns:1fr}.admin-shopee-results{grid-template-columns:1fr}.admin-shopee-offer-card{grid-template-columns:82px 1fr}.admin-shopee-offer-card img{width:82px;height:82px}.admin-shopee-manual-row{grid-template-columns:1fr}}
 </style>
@@ -1351,16 +1352,20 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       <h2 id="adminShopeeOffersTitle">Shopee Product Offer → AZOBSS Affiliate</h2>
       <button class="admin-product-close" id="adminShopeeOffersClose" type="button" aria-label="Close">×</button>
     </div>
-    <p class="admin-shopee-help"><b>Tak perlu Open API untuk import maklumat produk.</b> Buka Product Offer, Get Link, kemudian paste link affiliate. AZOBSS akan resolve short-link Shopee dan auto ambil gambar, nama, description, harga dan maklumat produk secara automatik.</p>
+    <p class="admin-shopee-help"><b>Tak perlu Open API untuk import maklumat produk.</b> Buka Product Offer, Get Link, kemudian paste link affiliate. AZOBSS cuba server import dahulu. Jika Shopee block Render, guna Browser Capture v1309 untuk ambil nama, description dan gambar melalui browser kamu sendiri.</p>
     <div class="admin-shopee-manual" id="adminShopeeManualPanel">
       <strong>✅ Paste Get Link → Auto Import — tak perlu App ID / Secret</strong>
-      <div class="admin-shopee-manual-copy">1. Buka Shopee Product Offer → 2. Get Link → 3. paste <b>s.shopee.com.my</b>. Selepas paste, AZOBSS auto isi nama, gambar, description dan harga; kamu cuma tekan Save & Publish.</div>
+      <div class="admin-shopee-manual-copy">1. Buka Shopee Product Offer → 2. Get Link → 3. paste <b>s.shopee.com.my</b>. Selepas paste, AZOBSS cuba auto import. Jika server disekat Shopee, tekan Open Browser Capture; kembali ke AZOBSS dan form akan diisi automatik.</div>
       <a class="admin-shopee-manual-open" href="https://affiliate.shopee.com.my/offer/product_offer" target="_blank" rel="noopener">1. Open Shopee Product Offer ↗</a>
       <div class="admin-shopee-manual-row">
         <input id="adminShopeeManualAffiliateLink" type="url" inputmode="url" autocomplete="off" placeholder="2. Paste Get Link — auto import maklumat produk"/>
         <button id="adminShopeeUseManualLink" class="admin-shopee-manual-use" type="button">Import / Retry</button>
       </div>
       <div class="admin-shopee-status" id="adminShopeeManualStatus">Paste affiliate Get Link. AZOBSS akan auto baca maklumat produk; butang Import / Retry disediakan jika auto import perlu dicuba semula.</div>
+      <div class="admin-shopee-browser-capture" id="adminShopeeBrowserCaptureBox">
+        <button id="adminShopeeBrowserCapture" type="button">🌐 Open Browser Capture</button>
+        <small id="adminShopeeBrowserCaptureHint">Fallback local: guna extension AZOBSS dalam browser sendiri jika Render/Shopee block server import.</small>
+      </div>
     </div>
     <div class="admin-shopee-api-label">Open API automation — aktif selepas Shopee approve</div>
     <div id="adminShopeeApiArea">
@@ -1849,6 +1854,66 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       const desc=String(m.description || '').trim();
       return [prefix,desc].filter(Boolean).join(prefix && desc ? '\n\n' : '').slice(0,1800);
     }
+    const AZOBSS_SHOPEE_BRIDGE_ID='azobss-shopee-extension-bridge-v1309';
+    let lastShopeeBrowserCaptureSig='';
+    function shopeeBrowserBridgeReady(){
+      return document.getElementById(AZOBSS_SHOPEE_BRIDGE_ID)?.getAttribute('data-extension')==='ready';
+    }
+    function updateShopeeBrowserCaptureHint(){
+      const box=document.getElementById('adminShopeeBrowserCaptureBox');
+      const hint=document.getElementById('adminShopeeBrowserCaptureHint');
+      const ready=shopeeBrowserBridgeReady();
+      box?.classList.toggle('is-ready',ready);
+      if(hint) hint.textContent=ready
+        ? '✅ AZOBSS Browser Capture extension dikesan. Buka Shopee; bila metadata ditangkap, kembali ke tab ini.'
+        : 'Extension belum dikesan. Install folder azobss-shopee-json-extension daripada package v1309 (Load unpacked).';
+      return ready;
+    }
+    function genericCapturedShopeeTitle(value){
+      const t=String(value||'').trim();
+      return !t || /^shopee(?:\s+malaysia)?$/i.test(t) || /^shopee malaysia\s*[|–—-]/i.test(t) || /^buy everything on shopee/i.test(t) || /^free shipping (?:across|in) malaysia/i.test(t);
+    }
+    function applyShopeeBrowserCapture(data){
+      if(!data || Number(data.bridgeVersion)!==1309) return false;
+      const title=String(data.title||'').trim(); if(genericCapturedShopeeTitle(title)) return false;
+      const affiliate=String(manualAffiliateInput?.value||'').trim();
+      const check=validateManualShopeeAffiliateLink(affiliate); if(!check.ok) return false;
+      const sig=JSON.stringify([data.capturedAt,title,data.canonicalUrl,data.image]); if(sig===lastShopeeBrowserCaptureSig)return true;
+      lastShopeeBrowserCaptureSig=sig;
+      closeShopeeOffers();
+      openModal({
+        title,
+        desc:String(data.description||'').trim().slice(0,1800),
+        category:guessShopeeCategory(title+' '+String(data.description||'')),
+        price:'Affiliate',badge:'Affiliate',icon:'🛒',image:String(data.image||''),
+        originLink:String(data.canonicalUrl||data.sourceUrl||''),link:check.link,buttonText:'Buy Now',
+        meta:'Shopee Affiliate • Local Browser Capture'
+      });
+      shopeeStatus(document.getElementById('adminShopeeLinkStatus'),
+        `✅ Local Browser Capture berjaya: nama${data.image?', gambar':''}${data.description?', description':''} diambil daripada browser kamu. Affiliate Buy Now kekal ${check.link}. Semak kemudian Save & Publish.`, 'ok');
+      document.dispatchEvent(new Event('azobss-shopee-capture-ack',{bubbles:true}));
+      return true;
+    }
+    function readShopeeBrowserBridge(){
+      updateShopeeBrowserCaptureHint();
+      const el=document.getElementById(AZOBSS_SHOPEE_BRIDGE_ID); const raw=el?.getAttribute('data-payload')||''; if(!raw)return false;
+      try{return applyShopeeBrowserCapture(JSON.parse(decodeURIComponent(raw)));}catch{return false;}
+    }
+    document.addEventListener('azobss-shopee-capture-ready',()=>setTimeout(readShopeeBrowserBridge,0));
+    setInterval(updateShopeeBrowserCaptureHint,1500);
+    setTimeout(readShopeeBrowserBridge,500);
+    document.getElementById('adminShopeeBrowserCapture')?.addEventListener('click',()=>{
+      const check=validateManualShopeeAffiliateLink(manualAffiliateInput?.value||'');
+      if(!check.ok){shopeeStatus(manualAffiliateStatus,'❌ '+check.message,'error');return;}
+      const ready=updateShopeeBrowserCaptureHint();
+      if(!ready){
+        shopeeStatus(manualAffiliateStatus,'⚠️ Browser Capture extension belum dikesan. Install/load unpacked folder azobss-shopee-json-extension daripada package v1309 dahulu.','error');
+        return;
+      }
+      shopeeStatus(manualAffiliateStatus,'🌐 Shopee dibuka dalam browser kamu. Tunggu badge “produk ditangkap”, kemudian kembali ke tab AZOBSS.');
+      window.open(check.link,'_blank','noopener');
+    });
+
     async function importManualShopeeMetadata(linkValue, {auto=false} = {}){
       if(!isAdmin()) return;
       const check=validateManualShopeeAffiliateLink(linkValue);
@@ -1891,9 +1956,8 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
         if(seq!==manualShopeeImportSeq) return;
         shopeeStatus(manualAffiliateStatus,'⚠️ '+(err.message || err)+' Link affiliate masih sah. Tekan Import / Retry jika perlu.','error');
         if(!auto){
-          closeShopeeOffers();
-          openModal({title:'Shopee Product',desc:'',category:'others',price:'Affiliate',badge:'Affiliate',icon:'🛒',image:'',originLink:'',link:check.link,buttonText:'Buy Now',meta:'Shopee Affiliate Manual Get Link'});
-          shopeeStatus(document.getElementById('adminShopeeLinkStatus'),'⚠️ Affiliate link sudah dipasang tetapi metadata Shopee tidak dapat dibaca secara automatik. Isi maklumat yang kosong jika perlu.','error');
+          const localReady=updateShopeeBrowserCaptureHint();
+          shopeeStatus(manualAffiliateStatus,'⚠️ Server import disekat Shopee. '+(localReady?'Tekan 🌐 Open Browser Capture untuk ambil metadata melalui browser kamu.':'Install extension v1309, kemudian tekan 🌐 Open Browser Capture.'),'error');
         }
       }finally{
         if(btn){btn.disabled=false;btn.textContent='Import / Retry';}
@@ -2091,7 +2155,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     refreshAdminState();
     loadProducts();
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=1308" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1309" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
