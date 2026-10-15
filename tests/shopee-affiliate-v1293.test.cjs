@@ -10,7 +10,7 @@ const env = fs.readFileSync(path.join(root, 'backend', '.env.example'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('v1293 package exposes admin Shopee Product Offer integration', () => {
-  assert.ok(['1.0.1293','1.0.1294','1.0.1295','1.0.1296','1.0.1297','1.0.1298','1.0.1299','1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318'].includes(pkg.version));
+  assert.ok(['1.0.1293','1.0.1294','1.0.1295','1.0.1296','1.0.1297','1.0.1298','1.0.1299','1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321'].includes(pkg.version));
   assert.match(html, /id="adminShopeeOffersButton"/);
   assert.match(html, /Shopee Product Offer → AZOBSS Affiliate/);
   assert.match(html, /\/api\/shopee-affiliate\/product-offers/);
