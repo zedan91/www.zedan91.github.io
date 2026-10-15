@@ -7,7 +7,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const nav = fs.readFileSync(path.join(root, 'assets/js/azobss-more-nav.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'PC-IT-Services/index.html'), 'utf8');
 
-test('v1311 package version', () => assert.ok(['1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321'].includes(pkg.version)));
+test('v1311 package version', () => assert.ok(['1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322'].includes(pkg.version)));
 
 test('Upgrade & Parts keeps canonical deep-link href and a real target', () => {
   assert.match(nav, /makeLink\('\/PC-IT-Services\/#upgrade-parts'/);

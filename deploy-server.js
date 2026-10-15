@@ -7063,6 +7063,8 @@ function azR2Configured() {
 
 // AZOBSS PATCH 720: R2-only Tech Vault. The bundled website copy was removed.
 const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_ANY_FILE_850_20260809";
+const AZOBSS_SOLATTIME_R2_OBJECT_KEY = "software/Azobss_SolatTime_Setup.exe";
+const AZOBSS_SOLATTIME_FILENAME = "Azobss_SolatTime_Setup.exe";
 const AZOBSS_TECH_VAULT_LOCAL_DIR = path.join(ROOT, "_private-tech-vault");
 const AZOBSS_TECH_VAULT_META_FILE = path.join(AZOBSS_TECH_VAULT_LOCAL_DIR, "tech-vault-files.json");
 
@@ -7287,6 +7289,20 @@ function azTechVaultDownloadUrl(row = {}) {
     exp: Math.floor(Date.now()/1000) + 60 * 60,
     sid: "tech-vault",
     oid: cleanPremiumText(row.id || "", 160)
+  }, azR2TokenSecret());
+  return token ? `${azR2DownloadBaseUrl()}/dl/${encodeURIComponent(token)}` : "";
+}
+
+function azSolatTimeR2DownloadUrl() {
+  const key = azSafeR2ObjectKey(AZOBSS_SOLATTIME_R2_OBJECT_KEY);
+  const name = azSafeDownloadFilename(AZOBSS_SOLATTIME_FILENAME);
+  if (!key || !name || !azR2Configured()) return "";
+  const token = azTechVaultSignPayload({
+    key,
+    name,
+    exp: Math.floor(Date.now()/1000) + 60 * 60,
+    sid: "tech-vault-solattime",
+    oid: "azobss-solattime"
   }, azR2TokenSecret());
   return token ? `${azR2DownloadBaseUrl()}/dl/${encodeURIComponent(token)}` : "";
 }
@@ -7920,7 +7936,7 @@ function azBuiltInR2ObjectKey(text = "") {
   if (key.includes("connectivity repair")) return "software/AZOBSS-Connectivity-Repair.exe";
   if (key.includes("windows update oneclick fix") || key.includes("windows update one click fix")) return "software/AZOBSS-Windows-Update-OneClick-Fix.exe";
   if (key.includes("anydesk ads remover")) return "software/AnyDesk-Ads-Remover-v2.1.0.exe";
-  if (key.includes("solattime") || key.includes("solat time")) return "software/Azobss_SolatTime_Setup_v1_0_2.exe";
+  if (key.includes("solattime") || key.includes("solat time")) return AZOBSS_SOLATTIME_R2_OBJECT_KEY;
   if (key.includes("printer oneclick fix") || key.includes("printer one click fix")) return "software/Printer-OneClick-Fix.exe";
   return "";
 }
@@ -20170,7 +20186,7 @@ async function handler(req, res) {
     if (pathname === "/api/tech-vault/files" && req.method === "GET") {
       if (!azTechVaultSessionFromRequest(req)) return send(res, 401, JSON.stringify({ ok:false, error:"Tech Vault session required." }, null, 2), "application/json");
       const files = await azTechVaultListFiles();
-      return send(res, 200, JSON.stringify({ ok:true, files, count:files.length, uploadEnabled:azR2Configured(), maxFileMb:Math.floor(azTechVaultMaxFileBytes()/1024/1024), patch:AZOBSS_TECH_VAULT_PATCH }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      return send(res, 200, JSON.stringify({ ok:true, files, count:files.length, uploadEnabled:azR2Configured(), maxFileMb:Math.floor(azTechVaultMaxFileBytes()/1024/1024), featured:{ solatTime:{ available:azR2Configured(), filename:AZOBSS_SOLATTIME_FILENAME, objectKey:AZOBSS_SOLATTIME_R2_OBJECT_KEY, source:"cloudflare-r2-private" } }, patch:AZOBSS_TECH_VAULT_PATCH }, null, 2), "application/json", { "Cache-Control":"no-store" });
     }
     if (pathname === "/api/tech-vault/upload-token" && req.method === "POST") {
       if (!azTechVaultSessionFromRequest(req)) return send(res, 401, JSON.stringify({ ok:false, error:"Tech Vault session required." }, null, 2), "application/json");
@@ -20219,6 +20235,17 @@ async function handler(req, res) {
         return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "Delete request failed." }, null, 2), "application/json");
       }
     }
+    if (pathname === "/api/tech-vault/solattime-download" && req.method === "POST") {
+      if (!azTechVaultSessionFromRequest(req)) return send(res, 401, JSON.stringify({ ok:false, error:"Tech Vault session required." }, null, 2), "application/json");
+      try {
+        const downloadUrl = azSolatTimeR2DownloadUrl();
+        if (!downloadUrl) return send(res, 503, JSON.stringify({ ok:false, error:"Private R2 download is not configured." }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, mode:"r2-direct", filename:AZOBSS_SOLATTIME_FILENAME, objectKey:AZOBSS_SOLATTIME_R2_OBJECT_KEY, downloadUrl, expiresIn:3600, patch:"1322" }, null, 2), "application/json", { "Cache-Control":"no-store" });
+      } catch (error) {
+        return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "SolatTime download token failed." }, null, 2), "application/json");
+      }
+    }
+
     if (pathname === "/api/tech-vault/download-token" && req.method === "POST") {
       if (!azTechVaultSessionFromRequest(req)) return send(res, 401, JSON.stringify({ ok:false, error:"Tech Vault session required." }, null, 2), "application/json");
       try {

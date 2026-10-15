@@ -67,8 +67,8 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
           <div class="featured-icon" aria-hidden="true">🕌</div>
           <div class="featured-info">
             <h3>AZOBSS SolatTime</h3>
-            <p>Waktu solat AZOBSS untuk kegunaan Windows. Shortcut ini akan memilih fail SolatTime terbaru yang tersedia dalam Tech Vault.</p>
-            <div class="featured-meta" id="solatTimeMeta">Mencari fail SolatTime…</div>
+            <p>Waktu solat AZOBSS untuk Windows. Download terus daripada fail private Cloudflare R2 yang telah ditetapkan.</p>
+            <div class="featured-meta" id="solatTimeMeta">Mengesan AZOBSS SolatTime dalam R2…</div>
           </div>
           <button class="btn featured-download" id="solatTimeDownloadBtn" type="button" data-state="missing" disabled>⬇ Download</button>
         </div>
@@ -112,26 +112,21 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
   const selectedIds = new Set();
   const SORT_KEY = 'azobssTechVaultSort';
   let shareData = null;
-  let solatTimeFile = null;
+  let solatTimeInfo = null;
 
-  function isSolatTimeFile(file){
-    const name=String((file&&(file.filename||file.name))||'').toLowerCase().replace(/[ _.-]+/g,'');
-    return name.includes('azobsssolattime') || name.includes('solattime');
-  }
-  function updateSolatTimeShortcut(){
-    const candidates=files.filter(isSolatTimeFile).sort((a,b)=>Number(b.createdAtMs||b.createdAt||0)-Number(a.createdAtMs||a.createdAt||0));
-    solatTimeFile=candidates[0]||null;
+  function updateSolatTimeShortcut(info){
+    solatTimeInfo=info&&typeof info==='object'?info:null;
     const btn=$('solatTimeDownloadBtn');
     const meta=$('solatTimeMeta');
     if(!btn||!meta)return;
-    if(!solatTimeFile){
-      btn.disabled=true;btn.dataset.state='missing';btn.textContent='Belum tersedia';
-      meta.textContent='Fail belum ditemui. Upload fail yang namanya mengandungi “AZOBSS SolatTime” atau “SolatTime”.';
+    if(!solatTimeInfo||solatTimeInfo.available!==true){
+      btn.disabled=true;btn.dataset.state='missing';btn.textContent='R2 belum tersedia';
+      meta.textContent='Cloudflare R2 private gateway belum dikonfigurasi pada backend.';
       return;
     }
-    btn.disabled=false;btn.dataset.state='ready';btn.textContent='⬇ Download';
-    const name=String(solatTimeFile.filename||solatTimeFile.name||'AZOBSS SolatTime');
-    meta.textContent=`Tersedia: ${name} · ${formatBytes(solatTimeFile.size)} · ${formatDate(solatTimeFile.createdAtMs||solatTimeFile.createdAt)}`;
+    btn.disabled=false;btn.dataset.state='ready';btn.textContent='⬇ Download SolatTime';
+    const name=String(solatTimeInfo.filename||'Azobss_SolatTime_Setup.exe');
+    meta.textContent=`R2 Private: ${name} · fail rasmi AZOBSS SolatTime`;
   }
 
   function authHeaders(extra={}) { return token ? { ...extra, Authorization:'Bearer '+token } : extra; }
@@ -167,7 +162,7 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
   async function loadFiles(){
     $('fileList').innerHTML='<div class="empty">Loading files…</div>';
     try{
-      const data=await api('/api/tech-vault/files'); files=Array.isArray(data.files)?data.files:[]; const valid=new Set(files.map(f=>String(f.id||''))); [...selectedIds].forEach(id=>{if(!valid.has(id))selectedIds.delete(id);}); if($('fileCount'))$('fileCount').textContent=files.length; $('maxFileMb').textContent=(data.maxFileMb||25)+' MB'; updateSolatTimeShortcut(); renderFiles();
+      const data=await api('/api/tech-vault/files'); files=Array.isArray(data.files)?data.files:[]; const valid=new Set(files.map(f=>String(f.id||''))); [...selectedIds].forEach(id=>{if(!valid.has(id))selectedIds.delete(id);}); if($('fileCount'))$('fileCount').textContent=files.length; $('maxFileMb').textContent=(data.maxFileMb||25)+' MB'; updateSolatTimeShortcut(data&&data.featured&&data.featured.solatTime); renderFiles();
     }catch(err){$('fileList').innerHTML=`<div class="error">${escapeHtml(err.message)}</div>`; if(/session|required|unauthor/i.test(err.message)){token='';sessionStorage.removeItem(TOKEN_KEY);setLocked(true);}}
   }
   function visibleRows(){
@@ -226,9 +221,15 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
     finally{button.textContent='🗑 Delete Selected';updateBulkState();}
   });
 
-  $('solatTimeDownloadBtn').addEventListener('click',()=>{
-    if(!solatTimeFile||!solatTimeFile.id)return;
-    downloadFile(String(solatTimeFile.id),$('solatTimeDownloadBtn'));
+  $('solatTimeDownloadBtn').addEventListener('click',async()=>{
+    const button=$('solatTimeDownloadBtn');
+    const old=button.textContent;button.disabled=true;button.textContent='Preparing…';
+    try{
+      const data=await api('/api/tech-vault/solattime-download',{method:'POST'});
+      if(!data.downloadUrl)throw new Error('Private R2 SolatTime download URL was not returned.');
+      location.href=data.downloadUrl;
+    }catch(err){alert(err.message);}
+    finally{button.disabled=!(solatTimeInfo&&solatTimeInfo.available===true);button.textContent=old;}
   });
 
   function closeShare(){

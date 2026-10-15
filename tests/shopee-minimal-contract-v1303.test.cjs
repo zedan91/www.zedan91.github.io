@@ -7,7 +7,7 @@ const runtime=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'affiliate-shop','index.html'),'utf8');
 const pkg=require(path.join(root,'package.json'));
 
-test('v1303 behavior remains in current package',()=>assert.ok(['1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321'].includes(pkg.version)));
+test('v1303 behavior remains in current package',()=>assert.ok(['1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322'].includes(pkg.version)));
 test('title is the required Shopee product field',()=>{
   assert.match(runtime,/function azShopeeMetadataHasRequiredProduct/);
   assert.match(runtime,/if\(!azShopeeMetadataHasRequiredProduct\(best\.metadata\)\)/);

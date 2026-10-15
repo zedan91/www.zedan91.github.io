@@ -9,7 +9,7 @@ const pdf=fs.readFileSync(path.join(root,'assets','js','azobss-admin-sales-recei
 const admin=fs.readFileSync(path.join(root,'admin','index.html'),'utf8');
 
 test('v1317 package and admin force fresh share assets',()=>{
-  assert.ok(['1.0.1317','1.0.1318','1.0.1321'].includes(pkg.version));
+  assert.ok(['1.0.1317','1.0.1318','1.0.1321','1.0.1322'].includes(pkg.version));
   assert.match(admin,/azobss-admin-sales-receipts\.js\?v=1318/);
   assert.match(admin,/azobss-admin-sales-receipt-pdf\.js\?v=1318/);
 });

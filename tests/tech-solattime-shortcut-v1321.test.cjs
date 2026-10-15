@@ -8,21 +8,16 @@ const tech = fs.readFileSync(path.join(root, 'tech', 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const auth = fs.readFileSync(path.join(root, 'assets', 'js', 'azobss-global-auth.js'), 'utf8');
 
-test('v1321 package and badge are current', () => {
-  assert.equal(pkg.version, '1.0.1321');
-  assert.match(auth, /VERSION_TEXT\s*=\s*'v1321'/);
-});
-
-test('Tech Vault contains the AZOBSS SolatTime featured download shortcut', () => {
+test('SolatTime featured shortcut remains present in current package', () => {
+  assert.ok(['1.0.1321','1.0.1322'].includes(pkg.version));
+  assert.match(auth, new RegExp(`VERSION_TEXT\\s*=\\s*'v${pkg.version.split('.').pop()}'`));
   assert.match(tech, /id="solatTimeCard"/);
   assert.match(tech, /AZOBSS SolatTime/);
   assert.match(tech, /id="solatTimeDownloadBtn"/);
-  assert.match(tech, /function isSolatTimeFile\(file\)/);
-  assert.match(tech, /name\.includes\('azobsssolattime'\) \|\| name\.includes\('solattime'\)/);
 });
 
-test('SolatTime shortcut uses existing secure Tech Vault token flow', () => {
-  assert.match(tech, /downloadFile\(String\(solatTimeFile\.id\),\$\('solatTimeDownloadBtn'\)\)/);
-  assert.match(tech, /api\('\/api\/tech-vault\/download-token'/);
-  assert.doesNotMatch(tech, /AZOBSS[-_ ]SolatTime[^\n]{0,120}https?:\/\//i);
+test('current SolatTime shortcut uses a private backend-issued R2 URL, never a public bucket URL', () => {
+  assert.match(tech, /\/api\/tech-vault\/solattime-download/);
+  assert.doesNotMatch(tech, /dash\.cloudflare\.com\/.*Azobss_SolatTime_Setup/i);
+  assert.doesNotMatch(tech, /r2\.cloudflarestorage\.com/i);
 });
