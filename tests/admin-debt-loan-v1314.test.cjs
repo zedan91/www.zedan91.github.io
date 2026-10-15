@@ -7,7 +7,7 @@ const html = fs.readFileSync(path.join(root,'admin','index.html'),'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
 test('v1314 package and migration storage are present',()=>{
-  assert.ok(['1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322'].includes(pkg.version));
+  assert.ok(['1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322','1.0.1323'].includes(pkg.version));
   assert.match(html,/azobssAdminDebtLoanTrackerV1314/);
   assert.match(html,/AZ_DEBT_LEGACY_STORAGE_KEY='azobssAdminDebtLoanTrackerV1313'/);
   assert.match(html,/azDebtApplyV1314Migration/);

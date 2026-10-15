@@ -13,11 +13,11 @@ const siteBridge=fs.readFileSync(path.join(extRoot,'azobss-bridge.js'),'utf8');
 const wa=fs.readFileSync(path.join(extRoot,'whatsapp-bridge.js'),'utf8');
 
 test('v1318 package exposes fresh admin share assets and visible version',()=>{
-  assert.ok(['1.0.1318','1.0.1321','1.0.1322'].includes(pkg.version));
+  assert.ok(['1.0.1318','1.0.1321','1.0.1322','1.0.1323'].includes(pkg.version));
   assert.match(admin,/azobss-admin-sales-receipts\.js\?v=1318/);
   assert.match(admin,/azobss-admin-sales-receipt-pdf\.js\?v=1318/);
   const auth=fs.readFileSync(path.join(root,'assets','js','azobss-global-auth.js'),'utf8');
-  assert.match(auth,/VERSION_TEXT = 'v1322'/);
+  assert.match(auth,/VERSION_TEXT = 'v1323'/);
 });
 
 test('Firefox single-document WhatsApp/native actions use local physical-PDF bridge, not temporary Render URL',()=>{

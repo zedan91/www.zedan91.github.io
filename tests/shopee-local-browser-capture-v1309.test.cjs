@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'affiliate-shop/index.html'),'utf8');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'azobss-shopee-json-extension/manifest.json'),'utf8'));
 const content=fs.readFileSync(path.join(root,'azobss-shopee-json-extension/content.js'),'utf8');
-test('v1309 package version',()=>assert.ok(['1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322'].includes(JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).version)));
+test('v1309 package version',()=>assert.ok(['1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322','1.0.1323'].includes(JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).version)));
 test('extension can run on AZOBSS affiliate shop and uses storage bridge',()=>{assert.ok(manifest.permissions.includes('storage'));assert.ok(manifest.host_permissions.some(x=>x.includes('azobss.com')));assert.match(content,/azobssShopeePendingCaptureV1309/);assert.match(content,/azobss-shopee-capture-ready/)});
 test('extension preserves real Shopee product titles with Shopee Malaysia suffix',()=>{assert.match(content,/stripShopeeSuffix/);assert.match(content,/Shopee\\s\+Malaysia/);assert.doesNotMatch(content,/t\.includes\('shopee malaysia'\)/)});
 test('affiliate page offers local browser capture and preserves affiliate link',()=>{assert.match(html,/Open Browser Capture/);assert.match(html,/Local Browser Capture/);assert.match(html,/link:check\.link/);assert.match(html,/azobss-shopee-capture-ack/)});

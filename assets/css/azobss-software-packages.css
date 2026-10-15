@@ -30,3 +30,10 @@ html body .download-card .az-package-card-actions>.az-package-support-btn{flex:n
 html body .download-card .az-package-card-actions .az-software-buy-cart-row>.download-btn{min-width:0!important;padding-left:5px!important;padding-right:5px!important;gap:4px!important}
 .az-package-dialog :focus-visible,.az-package-editor :focus-visible,.az-package-support-btn:focus-visible{outline:3px solid #5eead4;outline-offset:3px}
 @media(max-width:620px){.az-package-plan{grid-template-columns:1fr 1fr}.az-package-plan label:first-child{grid-column:1/-1}.az-package-plan small{grid-column:1/-1}.az-package-grid{grid-template-columns:1fr}.az-package-dialog{padding:18px}.azdm-form{grid-template-columns:1fr}.az-package-dialog-head h2{font-size:19px}}
+
+/* v1323: AZDM multi-gateway checkout */
+.azdm-payment-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 4px}
+.azdm-payment-buttons button{min-width:150px;font-weight:800}
+.azdm-payment-buttons [data-azdm-buy-stripe]{background:#635bff;border-color:#8b85ff}
+.azdm-payment-buttons [hidden]{display:none!important}
+@media(max-width:620px){.azdm-payment-buttons{display:grid;grid-template-columns:1fr}.azdm-payment-buttons button{width:100%}}

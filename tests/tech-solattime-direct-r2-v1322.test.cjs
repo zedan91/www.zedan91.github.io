@@ -9,8 +9,8 @@ const tech=fs.readFileSync(path.join(root,'tech','index.html'),'utf8');
 const auth=fs.readFileSync(path.join(root,'assets','js','azobss-global-auth.js'),'utf8');
 
 test('v1322 package and visible badge are current',()=>{
-  assert.equal(pkg.version,'1.0.1322');
-  assert.match(auth,/VERSION_TEXT = 'v1322'/);
+  assert.ok(['1.0.1322','1.0.1323'].includes(pkg.version));
+  assert.match(auth,/VERSION_TEXT = 'v1323'/);
 });
 
 test('SolatTime points to the exact existing private R2 object supplied by admin',()=>{

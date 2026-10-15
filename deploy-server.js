@@ -3442,10 +3442,16 @@ function azAzdmShopReadiness() {
   const token = String(process.env.AZDM_ADMIN_TOKEN || '').trim();
   const db = getAzobssBackendDb();
   const sender = String(process.env.MAIL_FROM || process.env.BREVO_FROM_EMAIL || process.env.SMTP_USER || '').trim();
-  const ready = !!(TOYYIB_SECRET_KEY && TOYYIB_CATEGORY_CODE && token.length >= 32 && token.length <= 400 && db && mailReady() && sender);
+  const coreReady = !!(token.length >= 32 && token.length <= 400 && db && mailReady() && sender);
+  const toyyibpay = !!(coreReady && TOYYIB_SECRET_KEY && TOYYIB_CATEGORY_CODE);
+  const stripe = !!(coreReady && azStripeDigitalConfigured());
+  const ready = !!(toyyibpay || stripe);
   return {
     ready,
-    sandbox: /dev\.toyyibpay\.com/i.test(String(TOYYIB_BASE_URL || '')) || String(process.env.TOYYIB_SANDBOX || '').toLowerCase() === 'true'
+    coreReady,
+    paymentMethods:{toyyibpay,stripe},
+    stripeMode:azStripeDigitalMode(),
+    sandbox: /dev\.toyyibpay\.com/i.test(String(TOYYIB_BASE_URL || '')) || String(process.env.TOYYIB_SANDBOX || '').toLowerCase() === 'true' || azStripeDigitalMode() === 'test'
   };
 }
 function azAzdmCipherKey() {
@@ -3504,6 +3510,7 @@ function azAzdmPublicOrder(order = {}, admin = false) {
     email:String(order.email || order.buyerEmail || order.user?.email || ''),
     customer:String(order.azdmCustomer || order.user?.username || order.username || order.email || 'AZOBSS Customer'),
     created_at:String(order.createdAt || ''), paid_at:String(order.paidAt || ''),
+    payment_method:String(order.paymentMethod || (order.billCode?'toyyibpay':'')),
     bill_code:String(order.billCode || ''), payment_url:String(order.paymentUrl || '')
   };
   if (admin) {
@@ -3601,11 +3608,14 @@ async function azFulfillAzdmOrder(order = {}, req, options = {}) {
 }
 async function azAzdmLocalCatalog({offer}) {
   const state = azAzdmShopReadiness();
-  return {enabled:state.ready,sandbox:state.sandbox,service:'render-native-v1212',support:{email:'zedan9107@gmail.com',whatsapp:'601135600723'},offer};
+  return {enabled:state.ready,sandbox:state.sandbox,service:'render-native-v1323',payment_methods:state.paymentMethods,stripe_mode:state.stripeMode,support:{email:'zedan9107@gmail.com',whatsapp:'601135600723'},offer};
 }
 async function azAzdmLocalCheckout({req,body,offer}) {
   const state = azAzdmShopReadiness();
   if (!state.ready) return {statusCode:503,body:{ok:false,error:'License purchasing is not available yet. Contact AZDM Support.'}};
+  const paymentMethod = String(body.payment_method || 'toyyibpay').trim().toLowerCase();
+  if (!['toyyibpay','stripe'].includes(paymentMethod)) return {statusCode:400,body:{ok:false,error:'Unsupported payment method.'}};
+  if (!state.paymentMethods?.[paymentMethod]) return {statusCode:503,body:{ok:false,error:paymentMethod==='stripe'?'Stripe payment is not configured yet.':'ToyyibPay payment is not configured yet.'}};
   const uid = String(body.account_uid || '').trim(), email = cleanToyyibEmail(body.email || ''), requestId = String(body.request_id || '').trim();
   if (!uid || !email) return {statusCode:401,body:{ok:false,error:'Please sign in with an AZOBSS account that has a verified email address.'}};
   const quote = body.trusted_quote || {};
@@ -3620,8 +3630,8 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   if (existing) {
     if (azAzdmOrderUid(existing) !== uid) return {statusCode:409,body:{ok:false,error:'This order belongs to another account.'}};
     if (String(existing.status || '').toLowerCase() === 'paid') return {statusCode:409,body:{ok:false,error:'This order has already been paid. Check your orders.'}};
-    if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId) return {statusCode:409,body:{ok:false,error:'The order has changed. Start a new checkout.'}};
-    if (existing.paymentUrl && existing.billCode) return {ok:true,reused:true,order_id:orderId,payment_url:existing.paymentUrl,status:'pending',sandbox:state.sandbox};
+    if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId || String(existing.paymentMethod || 'toyyibpay').toLowerCase()!==paymentMethod) return {statusCode:409,body:{ok:false,error:'The order has changed. Start a new checkout.'}};
+    if (existing.paymentUrl && (existing.billCode || existing.stripeCheckoutSessionId || existing.stripeSessionId)) return {ok:true,reused:true,order_id:orderId,payment_url:existing.paymentUrl,status:'pending',payment_method:paymentMethod,sandbox:state.sandbox};
     if (String(existing.status || '') === 'creation_failed') return {statusCode:409,body:{ok:false,error:'The previous payment bill failed. Start a new checkout and try again.'}};
     const age = Date.now() - Number(existing.createdAtMs || Date.parse(existing.createdAt || '') || Date.now());
     if (age < 120000) return {statusCode:409,body:{ok:false,error:'The payment bill is being prepared. Wait a moment and check your order.'}};
@@ -3637,7 +3647,7 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   let order = upsertPremiumOrder({
     orderId,azdmOrder:true,automaticCheckoutKind:'azdm',source:'azdm',fulfilment:'azdm',productId:softwareId,productName,
     softwarePackageId:planId,softwarePackageDays:days,packageQuantity:quantity,azdmPlanId:planId,azdmDays:days,azdmQuantity:quantity,
-    amountSen,saleAmount:amountSen/100,amount:`RM${(amountSen/100).toFixed(2)}`,status:'creating',paymentMethod:'toyyibpay',paymentReference:'',
+    amountSen,saleAmount:amountSen/100,amount:`RM${(amountSen/100).toFixed(2)}`,status:'creating',paymentMethod,paymentReference:'',
     azdmAccountUid:uid,azdmCustomer:customer,user:{uid,username:customer,email,phone:cleanToyyibPhone(body.phone || '')},email,buyerEmail:email,
     staffReferral:azdmReferral,shareReferral:azdmReferral,
     product:{id:softwareId,productId:softwareId,name:productName,softwarePackageId:planId,packageQuantity:quantity,softwarePackageDays:days,fulfilment:'azdm',staffReferral:azdmReferral,shareReferral:azdmReferral},
@@ -3645,7 +3655,37 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   });
   try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM creating order Firestore persist warning:', err && (err.message || err)); }
   try {
-    const apiBase = publicBaseUrlFromReq(req), returnUrl = `${FRONTEND_BASE_URL}/Software-Tools/?azdm_order=${encodeURIComponent(orderId)}&azdm_software=${encodeURIComponent(softwareId)}`;
+    const apiBase = publicBaseUrlFromReq(req);
+    const returnBase = `${FRONTEND_BASE_URL}/Software-Tools/`;
+    if (paymentMethod === 'stripe') {
+      const successUrl = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'stripe',stripe:'success',session_id:'{CHECKOUT_SESSION_ID}'});
+      const cancelUrl = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'stripe',stripe:'cancelled'});
+      const params = new URLSearchParams();
+      params.set('mode','payment');
+      params.set('success_url',successUrl);
+      params.set('cancel_url',cancelUrl);
+      params.set('client_reference_id',orderId);
+      params.append('payment_method_types[]','card');
+      params.set('locale','auto');
+      params.set('metadata[orderId]',orderId);
+      params.set('metadata[source]','azdm');
+      params.set('metadata[softwareId]',softwareId);
+      params.set('metadata[planId]',planId);
+      params.set('metadata[quantity]',String(quantity));
+      params.set('metadata[buyerEmail]',email);
+      params.set('customer_email',email);
+      params.set('line_items[0][price_data][currency]','myr');
+      params.set('line_items[0][price_data][unit_amount]',String(amountSen));
+      params.set('line_items[0][price_data][product_data][name]',productName);
+      params.set('line_items[0][price_data][product_data][description]',`AZOBSS license · ${quantity} PC`);
+      params.set('line_items[0][quantity]','1');
+      const stripeData = await azStripeDigitalRequest('/checkout/sessions',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':`azobss-azdm-${orderId}`},body:params.toString()});
+      if (!stripeData?.id || !stripeData?.url) throw new Error('Stripe Checkout did not return a payment session.');
+      order = upsertPremiumOrder({...order,status:'pending',paymentMethod:'stripe',stripeCheckoutSessionId:stripeData.id,stripeSessionId:stripeData.id,paymentUrl:stripeData.url,returnUrl:successUrl,azdmFulfillmentState:'awaiting_payment'});
+      try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM Stripe pending order Firestore persist warning:', err && (err.message || err)); }
+      return {ok:true,order_id:orderId,stripe_session_id:stripeData.id,payment_url:stripeData.url,status:'pending',payment_method:'stripe',sandbox:state.sandbox,stripe_mode:state.stripeMode};
+    }
+    const returnUrl = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'toyyibpay'});
     const billPayload = {
       userSecretKey:TOYYIB_SECRET_KEY, categoryCode:TOYYIB_CATEGORY_CODE,
       billName:cleanToyyibBillText(`${offer?.name || 'AZDM'} ${planId}`,30) || 'AZDM License',
@@ -3657,13 +3697,13 @@ async function azAzdmLocalCheckout({req,body,offer}) {
     const apiResult = await postToyyib('createBill',billPayload), billCode = azToyyibExtractBillCode(apiResult);
     if (!billCode) throw new Error(azToyyibApiMessage(apiResult,'ToyyibPay did not return a BillCode.'));
     const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-    order = upsertPremiumOrder({...order,status:'pending',billCode,paymentUrl,returnUrl,azdmFulfillmentState:'awaiting_payment'});
+    order = upsertPremiumOrder({...order,status:'pending',paymentMethod:'toyyibpay',billCode,paymentUrl,returnUrl,azdmFulfillmentState:'awaiting_payment'});
     try { await azPersistPremiumOrder(order); } catch (err) { console.warn('AZDM pending order Firestore persist warning:', err && (err.message || err)); }
-    return {ok:true,order_id:orderId,bill_code:billCode,payment_url:paymentUrl,status:'pending',sandbox:state.sandbox};
+    return {ok:true,order_id:orderId,bill_code:billCode,payment_url:paymentUrl,status:'pending',payment_method:'toyyibpay',sandbox:state.sandbox};
   } catch (err) {
     order = upsertPremiumOrder({...order,status:'creation_failed',azdmFulfillmentState:'review',azdmFulfillmentError:err.message});
     try { await azPersistPremiumOrder(order); } catch (_) {}
-    return {statusCode:502,body:{ok:false,error:'The previous payment bill failed. '+cleanPremiumText(err.message || 'ToyyibPay could not create the payment bill.',240)}};
+    return {statusCode:502,body:{ok:false,error:'The previous payment session failed. '+cleanPremiumText(err.message || (paymentMethod==='stripe'?'Stripe could not create the payment session.':'ToyyibPay could not create the payment bill.'),240)}};
   }
 }
 async function azAzdmLocalStatus({req,body}) {
@@ -3671,8 +3711,15 @@ async function azAzdmLocalStatus({req,body}) {
   let order = await findPremiumOrderByAnyDeep({orderId});
   if (!order || !azIsAzdmPremiumOrder(order) || azAzdmOrderUid(order)!==uid) return {statusCode:404,body:{ok:false,error:'Order not found.'}};
   if (order.billCode && String(order.status || '').toLowerCase() !== 'paid') order = await refreshToyyibOrder(order,req);
+  if (String(order.paymentMethod || '').toLowerCase()==='stripe' && (order.stripeCheckoutSessionId || order.stripeSessionId) && String(order.status || '').toLowerCase() !== 'paid') {
+    try {
+      const verification = await azVerifyDigitalStripeOrder(order);
+      if (verification.paid) order = await azFinalizePaidOrderOnce(order,req,{verified:true,paymentMethod:'stripe',verificationSource:'stripe-api',stripeSession:verification.session,paymentReference:verification.paymentReference});
+    } catch (err) { console.warn('AZDM Stripe status verification skipped:', err && (err.message || err)); }
+  }
   if (String(order.status || '').toLowerCase() === 'paid' && (!order.emailSentAt || order.azdmFulfillmentState !== 'complete')) order = await azFulfillAzdmOrder(order,req);
-  return {ok:true,...azAzdmPublicOrder(order,false),enabled:azAzdmShopReadiness().ready};
+  const readiness=azAzdmShopReadiness();
+  return {ok:true,...azAzdmPublicOrder(order,false),enabled:readiness.ready,payment_methods:readiness.paymentMethods,stripe_mode:readiness.stripeMode};
 }
 async function azAzdmLocalOrders({body}) {
   const uid = String(body.account_uid || '').trim();

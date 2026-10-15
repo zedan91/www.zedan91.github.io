@@ -8,9 +8,9 @@ const auth=fs.readFileSync(path.join(root,'assets/js/azobss-global-auth.js'),'ut
 const home=fs.readFileSync(path.join(root,'index.html'),'utf8');
 
 test('v1298 package exposes admin-only version badge',()=>{
-  assert.ok(['1.0.1299','1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322'].includes(pkg.version));
+  assert.ok(['1.0.1299','1.0.1300','1.0.1302','1.0.1303','1.0.1304','1.0.1305','1.0.1306','1.0.1307','1.0.1308','1.0.1309','1.0.1310','1.0.1311','1.0.1312','1.0.1313','1.0.1314','1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322','1.0.1323'].includes(pkg.version));
   assert.match(auth,/AZOBSS v1301: Administrator-only website version label, slightly larger and lower below navbar/);
-  assert.match(auth,/VERSION_TEXT = 'v1322'/);
+  assert.match(auth,/VERSION_TEXT = 'v1323'/);
   assert.match(auth,/body\.az-role-is-admin/);
   assert.match(auth,/body\[data-az-current-role="admin"\]/);
   assert.match(auth,/display:none/);
@@ -25,5 +25,5 @@ test('v1298 badge is small and positioned below navbar without taking layout spa
 });
 
 test('v1298 home forces fresh global auth asset',()=>{
-  assert.match(home,/azobss-global-auth\.js\?v=1322/);
+  assert.match(home,/azobss-global-auth\.js\?v=1323/);
 });

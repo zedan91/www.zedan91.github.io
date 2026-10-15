@@ -3257,9 +3257,9 @@ html body .downloads-section{
 <script defer src="/assets/js/azobss-more-nav.js?v=1311"></script>
 
 <!-- AZOBSS v1210: universal per-software packages and support -->
-<link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1221">
+<link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1323">
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1221" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1233" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1323" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -6810,7 +6810,7 @@ function normalizeItem(item){
 .az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1322" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1323" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -17543,7 +17543,10 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
   </div>
   <div class="azdm-summary" data-azdm-summary></div><p data-azdm-saving></p>
   <p data-package-activation></p>
-  <button type="button" data-azdm-buy disabled>Pay via ToyyibPay</button>
+  <div class="azdm-payment-buttons" data-azdm-payment-buttons>
+   <button type="button" data-azdm-buy disabled>Pay via ToyyibPay</button>
+   <button type="button" data-azdm-buy-stripe hidden disabled>Pay via Stripe</button>
+  </div>
   <button type="button" data-azdm-signin>Sign in AZOBSS</button>
   <button type="button" data-package-support>Support</button>
   <p data-azdm-message role="status" aria-live="polite"></p>

@@ -9,7 +9,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const auth = fs.readFileSync(path.join(root, 'assets', 'js', 'azobss-global-auth.js'), 'utf8');
 
 test('SolatTime featured shortcut remains present in current package', () => {
-  assert.ok(['1.0.1321','1.0.1322'].includes(pkg.version));
+  assert.ok(['1.0.1321','1.0.1322','1.0.1323'].includes(pkg.version));
   assert.match(auth, new RegExp(`VERSION_TEXT\\s*=\\s*'v${pkg.version.split('.').pop()}'`));
   assert.match(tech, /id="solatTimeCard"/);
   assert.match(tech, /AZOBSS SolatTime/);
