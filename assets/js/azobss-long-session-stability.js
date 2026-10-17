@@ -214,3 +214,23 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ cleanupKnownHiddenOverlays(); cleanupViewportBlocker(); }, {once:true});
   else { cleanupKnownHiddenOverlays(); cleanupViewportBlocker(); }
 })();
+
+
+/* AZOBSS v1325 - Affiliate Shop bulk select/pin loader.
+ * Path scoped so all other AZOBSS pages retain v1228 behaviour unchanged.
+ */
+(function(){
+  'use strict';
+  try{
+    var path = String(location.pathname || '').toLowerCase();
+    if(path !== '/affiliate-shop/' && path !== '/affiliate-shop/index.html') return;
+    if(window.__AZOBSS_AFFILIATE_BULK_LOADER_1325__) return;
+    window.__AZOBSS_AFFILIATE_BULK_LOADER_1325__ = true;
+
+    var s = document.createElement('script');
+    s.type = 'module';
+    s.src = '/assets/js/azobss-affiliate-bulk-select-pin-v1325.js?v=1325';
+    s.setAttribute('data-azobss-patch','1325');
+    (document.head || document.documentElement).appendChild(s);
+  }catch(_e){}
+})();

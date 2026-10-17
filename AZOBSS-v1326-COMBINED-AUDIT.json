@@ -1,0 +1,27 @@
+{
+  "version": 1326,
+  "baseline": "(1323)-AZOBSS-FULL-WEBSITE-AZDM-STRIPE-CHECKOUT_20261015_20261015_140827.zip",
+  "changes": [
+    {
+      "scope": "/Software-Tools/",
+      "source": "v1324",
+      "summary": "Performance fix for dropdown/filter/admin edit responsiveness.",
+      "files": [
+        "assets/js/azobss-render-wake.js",
+        "Software-Tools/index.html"
+      ]
+    },
+    {
+      "scope": "/affiliate-shop/",
+      "source": "v1325",
+      "summary": "Admin bulk Tick/Untick, Tick All, Delete Selected, Pin/Unpin Selected and pin-to-top.",
+      "files": [
+        "assets/js/azobss-long-session-stability.js",
+        "assets/js/azobss-affiliate-bulk-select-pin-v1325.js",
+        "affiliate-shop/index.html"
+      ]
+    }
+  ],
+  "package_version": "1.0.1326",
+  "other_sections": "Preserved from v1323 baseline."
+}
