@@ -2,7 +2,7 @@
 
 <html lang="en">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1326"></script>
+<script src="/assets/js/azobss-long-session-stability.js?v=1327"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
@@ -1246,7 +1246,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </label>
 <button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
 <button class="chip admin-shopee-btn" id="adminShopeeOffersButton" type="button" hidden>🛒 Shopee Product Offer / Get Link</button>
-<button class="chip admin-json-btn" id="adminImportJsonButton" type="button" hidden>Import JSON</button>
+<button class="chip admin-json-btn" id="adminImportJsonButton" type="button" hidden>Import JSON (AZOBSS / Shopee)</button>
 <button class="chip admin-json-btn" id="adminExportJsonButton" type="button" hidden>Export JSON</button>
 <input id="adminImportJsonInput" type="file" accept="application/json,.json" hidden/>
 </div>
@@ -1478,7 +1478,17 @@ function esc(value){
         originLink: item.originLink || item.productLink || '',
         link: item.link || item.offerLink || item.url || '#',
         buttonText: item.buttonText || (isFree ? 'Download Now' : 'Buy Now'),
-        source: item.source || 'static'
+        source: item.source || 'static',
+        shopeeKey: String(item.shopeeKey || ''),
+        shopeeItemId: String(item.shopeeItemId || item.itemId || item.item_id || ''),
+        shopeeShopId: String(item.shopeeShopId || item.shopId || item.shop_id || ''),
+        shopeeRetailUrl: String(item.shopeeRetailUrl || item.retail_url || ''),
+        shopeeAffiliateUrl: String(item.shopeeAffiliateUrl || item.affiliate_url || item.buy_now_url || item.productOfferLink || ''),
+        shopeeShopName: String(item.shopeeShopName || item.shopName || ''),
+        shopeeSold: item.shopeeSold ?? '',
+        shopeeRating: item.shopeeRating ?? '',
+        shopeeImportSource: String(item.shopeeImportSource || item.affiliate_link_source || ''),
+        shopeeImportedAt: String(item.shopeeImportedAt || '')
       };
     }
 
@@ -2105,6 +2115,134 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       await loadProducts();
     });
 
+    function canonicalShopeeRetailUrl(value){
+      try{
+        const u = new URL(String(value || '').trim());
+        const host = u.hostname.toLowerCase();
+        if(host !== 'shopee.com.my' && host !== 'www.shopee.com.my') return '';
+        const match = u.pathname.match(/^\/product\/(\d+)\/(\d+)\/?$/);
+        if(!match) return '';
+        return `https://shopee.com.my/product/${match[1]}/${match[2]}`;
+      }catch(e){ return ''; }
+    }
+
+    function shopeeImageUrl(value){
+      const raw = String(value || '').trim();
+      if(!raw) return '';
+      if(/^https:\/\//i.test(raw)) return raw;
+      // Shopee item-card API commonly returns the image file key rather than a full URL.
+      if(/^[A-Za-z0-9_-]{16,}$/.test(raw)) return 'https://down-my.img.susercontent.com/file/' + raw;
+      return '';
+    }
+
+    function shopeeIdentityFromRetailUrl(value){
+      const retail = canonicalShopeeRetailUrl(value);
+      if(!retail) return null;
+      const match = new URL(retail).pathname.match(/^\/product\/(\d+)\/(\d+)$/);
+      return match ? {shopId:match[1], itemId:match[2], key:`shopee:MY:${match[1]}:${match[2]}`, retailUrl:retail} : null;
+    }
+
+    function shopeeIdentityFromExisting(item){
+      const key = String(item?.shopeeKey || '').trim();
+      if(/^shopee:MY:\d+:\d+$/.test(key)) return key;
+      const shopId = String(item?.shopeeShopId || '').trim();
+      const itemId = String(item?.shopeeItemId || '').trim();
+      if(/^\d+$/.test(shopId) && /^\d+$/.test(itemId)) return `shopee:MY:${shopId}:${itemId}`;
+      return shopeeIdentityFromRetailUrl(item?.originLink || item?.shopeeRetailUrl || '')?.key || '';
+    }
+
+    function parseShopeeImportRow(row, importMeta = {}){
+      if(!row || typeof row !== 'object') return {kind:'not-shopee'};
+      const card = row.batch_item_for_item_card_full && typeof row.batch_item_for_item_card_full === 'object'
+        ? row.batch_item_for_item_card_full : {};
+      const itemId = String(row.itemId ?? row.item_id ?? card.itemid ?? '').trim();
+      const shopId = String(row.shopId ?? row.shop_id ?? card.shopid ?? '').trim();
+      const looksShopee = /^\d+$/.test(itemId) && /^\d+$/.test(shopId);
+      if(!looksShopee) return {kind:'not-shopee'};
+
+      const key = `shopee:MY:${shopId}:${itemId}`;
+      const title = String(row.title || row.productName || card.name || '').trim();
+      if(!title) return {kind:'shopee', skip:'Nama produk kosong'};
+
+      const retailCandidate = row.retail_url || row.product_link || row.productLink || row.originLink || '';
+      const retailUrl = canonicalShopeeRetailUrl(retailCandidate) || `https://shopee.com.my/product/${shopId}/${itemId}`;
+      const affiliateUrl = String(row.affiliate_url || row.buy_now_url || row.productOfferLink || row.offerLink || row.link || '').trim();
+      if(!isShopeeAffiliateUrl(affiliateUrl)) return {kind:'shopee', skip:'Affiliate Get Link tiada / tidak sah'};
+
+      const shopName = String(row.shopName || card.shop_name || '').trim();
+      const sold = row.soldCount ?? card.historical_sold_text ?? card.sold_text ?? card.historical_sold ?? card.sold ?? '';
+      const rating = row.rating ?? row.ratingStar ?? card.item_rating?.rating_star ?? '';
+      const image = shopeeImageUrl(row.imageUrl || row.image_url || row.image || card.image || (Array.isArray(card.images) ? card.images[0] : ''));
+      const displayPrice = String(row.priceLabel || row.price_label || '').trim() || 'Affiliate';
+      const category = String(row.category || '').trim() || guessShopeeCategory([title, shopName].filter(Boolean).join(' '));
+
+      const descParts = [];
+      if(shopName) descParts.push('Shop: ' + shopName);
+      if(sold !== '' && sold != null) descParts.push('Sold: ' + sold);
+      if(rating !== '' && rating != null) descParts.push('Rating: ' + rating);
+      const desc = String(row.desc || row.description || '').trim() || descParts.join(' • ');
+      const metaParts = ['Shopee Affiliate'];
+      if(shopName) metaParts.push(shopName);
+
+      const product = normalizeProduct({
+        id:key,
+        title,
+        desc,
+        badge:'Affiliate',
+        price:displayPrice,
+        icon:'🛒',
+        category,
+        meta:metaParts.join(' • '),
+        image,
+        originLink:retailUrl,
+        link:affiliateUrl,
+        buttonText:'Buy Now',
+        source:'local',
+        shopeeKey:key,
+        shopeeItemId:itemId,
+        shopeeShopId:shopId,
+        shopeeRetailUrl:retailUrl,
+        shopeeAffiliateUrl:affiliateUrl,
+        shopeeShopName:shopName,
+        shopeeSold:sold,
+        shopeeRating:rating,
+        shopeeImportSource:String(row.affiliate_link_source || importMeta?.format || 'Shopee Product Offer JSON'),
+        shopeeImportedAt:new Date().toISOString()
+      });
+      return {kind:'shopee', product};
+    }
+
+    function findExistingShopeeProduct(product){
+      const wanted = String(product?.shopeeKey || '');
+      if(!wanted) return null;
+      return products.find(item => shopeeIdentityFromExisting(item) === wanted) || null;
+    }
+
+    async function saveImportedProduct(product, existing = null){
+      const merged = normalizeProduct({...(existing || {}), ...product, id:existing?.id || product.id, source:existing?.source || product.source || 'local'});
+      try{
+        if(existing?.source === 'firestore'){
+          await updateDoc(doc(db, ADMIN_PRODUCTS_COLLECTION, existing.id), {...merged, source:'firestore', updatedAt:serverTimestamp(), updatedBy:'zedan91'});
+          return {mode:'updated-firestore'};
+        }
+        if(existing?.source === 'local'){
+          upsertLocalProduct({...merged, source:'local'});
+          return {mode:'updated-local'};
+        }
+        if(existing?.source === 'static'){
+          await addDoc(collection(db, ADMIN_PRODUCTS_COLLECTION), {...merged, source:'firestore', createdAt:serverTimestamp(), updatedAt:serverTimestamp(), createdBy:'zedan91', updatedBy:'zedan91'});
+          setHiddenProductIds([...getHiddenProductIds(), existing.id]);
+          return {mode:'replaced-static'};
+        }
+        await addDoc(collection(db, ADMIN_PRODUCTS_COLLECTION), {...merged, source:'firestore', createdAt:serverTimestamp(), createdBy:'zedan91'});
+        return {mode:'created-firestore'};
+      }catch(err){
+        upsertLocalProduct({...merged, id:existing?.source === 'local' ? existing.id : (merged.shopeeKey || merged.id), source:'local'});
+        if(existing?.source === 'static') setHiddenProductIds([...getHiddenProductIds(), existing.id]);
+        return {mode:'local-fallback', error:err};
+      }
+    }
+
     adminImportJsonButton?.addEventListener('click', () => {
       if(!isAdmin()) return alert('Admin only.');
       adminImportJsonInput?.click();
@@ -2114,32 +2252,97 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       if(!isAdmin()) return alert('Admin only.');
       const file = adminImportJsonInput.files?.[0];
       if(!file) return;
+      const originalButtonText = adminImportJsonButton?.textContent || 'Import JSON (AZOBSS / Shopee)';
       try{
-        const text = await file.text();
-        const parsed = JSON.parse(text);
+        const rawText = await file.text();
+        const parsed = JSON.parse(rawText);
         const rows = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.products) ? parsed.products : []);
         if(!rows.length) return alert('JSON tiada senarai produk.');
-        let firestoreOk = true;
+
+        const mapped = [];
+        const generic = [];
+        const skipped = [];
         for(const row of rows){
-          const product = normalizeProduct({...row, source:'local'});
-          try{
-            await addDoc(collection(db, ADMIN_PRODUCTS_COLLECTION), {...product, source:'firestore', createdAt: serverTimestamp(), createdBy: 'zedan91'});
-          }catch(err){
-            firestoreOk = false;
-            upsertLocalProduct(product);
+          const parsedRow = parseShopeeImportRow(row, parsed?.meta || {});
+          if(parsedRow.kind === 'shopee'){
+            if(parsedRow.product) mapped.push(parsedRow.product);
+            else skipped.push(parsedRow.skip || 'Shopee row tidak lengkap');
+          }else{
+            generic.push(normalizeProduct({...row, source:'local'}));
           }
         }
-        alert(firestoreOk ? 'Import JSON berjaya sync ke Firestore.' : 'Sebahagian item import disimpan local kerana Firestore sync tidak berjaya.');
+
+        const shopeeUnique = new Map();
+        for(const product of mapped) shopeeUnique.set(product.shopeeKey, product);
+        const uniqueShopeeProducts = [...shopeeUnique.values()];
+        const duplicateInsideFile = mapped.length - uniqueShopeeProducts.length;
+
+        if(uniqueShopeeProducts.length){
+          const ok = confirm(
+            `Import ${uniqueShopeeProducts.length} produk Shopee?\n\n` +
+            `• Same Shop ID + Item ID akan UPDATE, bukan duplicate.\n` +
+            `• Buy Now hanya guna affiliate Get Link s.shopee.com.my / shope.ee.\n` +
+            `• ${skipped.length} row Shopee tanpa affiliate link/medan wajib akan skip.`
+          );
+          if(!ok) return;
+        }
+
+        let created=0, updated=0, localFallback=0, genericCreated=0;
+        let index=0;
+        for(const product of uniqueShopeeProducts){
+          index++;
+          if(adminImportJsonButton){
+            adminImportJsonButton.disabled = true;
+            adminImportJsonButton.textContent = `Importing Shopee ${index}/${uniqueShopeeProducts.length}...`;
+          }
+          const existing = findExistingShopeeProduct(product);
+          const result = await saveImportedProduct(product, existing);
+          if(result.mode.startsWith('updated') || result.mode === 'replaced-static') updated++;
+          else if(result.mode === 'local-fallback') localFallback++;
+          else created++;
+          // Keep the in-memory list aware of this identity during the same import so a repeated row cannot create another Firestore document.
+          if(!existing) products.unshift({...product, source:result.mode === 'local-fallback' ? 'local' : 'firestore'});
+        }
+
+        // Preserve the old general AZOBSS JSON import behaviour for non-Shopee rows, but dedupe by exact id.
+        for(const product of generic){
+          const existing = products.find(item => String(item.id || '') === String(product.id || '')) || null;
+          if(existing){
+            await saveImportedProduct(product, existing);
+            updated++;
+          }else{
+            const result = await saveImportedProduct(product, null);
+            if(result.mode === 'local-fallback') localFallback++;
+            else genericCreated++;
+          }
+        }
+
         adminImportJsonInput.value = '';
         await loadProducts();
+        const lines = [
+          `Import selesai.`,
+          uniqueShopeeProducts.length ? `Shopee: ${created} baru, ${updated} update.` : '',
+          generic.length ? `AZOBSS generic: ${genericCreated} baru.` : '',
+          skipped.length ? `Skipped Shopee: ${skipped.length}.` : '',
+          duplicateInsideFile ? `Duplicate dalam fail dibuang: ${duplicateInsideFile}.` : '',
+          localFallback ? `Firestore gagal untuk ${localFallback} item; disimpan local sementara.` : ''
+        ].filter(Boolean);
+        alert(lines.join('\n'));
       }catch(err){
-        alert('Format JSON tidak sah.');
+        console.error('AZOBSS v1327 JSON import error:', err);
+        alert('Import JSON gagal: ' + (err?.message || 'format tidak sah / data tidak disokong.'));
+      }finally{
+        if(adminImportJsonButton){
+          adminImportJsonButton.disabled = false;
+          adminImportJsonButton.textContent = originalButtonText;
+        }
+        if(adminImportJsonInput) adminImportJsonInput.value = '';
       }
     });
 
     adminExportJsonButton?.addEventListener('click', () => {
       if(!isAdmin()) return alert('Admin only.');
-      const exportData = products.map(({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source}) => ({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source}));
+      const exportData = products.map(({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source,shopeeKey,shopeeItemId,shopeeShopId,shopeeRetailUrl,shopeeAffiliateUrl,shopeeShopName,shopeeSold,shopeeRating,shopeeImportSource,shopeeImportedAt}) => ({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source,shopeeKey,shopeeItemId,shopeeShopId,shopeeRetailUrl,shopeeAffiliateUrl,shopeeShopName,shopeeSold,shopeeRating,shopeeImportSource,shopeeImportedAt}));
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

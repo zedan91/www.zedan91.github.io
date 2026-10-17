@@ -1,0 +1,25 @@
+{
+  "version": 1327,
+  "baseline": "(1326)-AZOBSS-FULL-WEBSITE-SOFTWARE-PERFORMANCE-AFFILIATE-BULK-PIN_20261018.zip",
+  "source_evidence": {
+    "sample_json": "azobss-buy-now-import-sample.json",
+    "sample_count": 20,
+    "sample_affiliate_link_count": 20,
+    "exporter_observed_endpoints": [
+      "GET /api/v3/offer/product/list",
+      "GET /api/v3/offer/product",
+      "POST /api/v3/gql?q=productOfferLinks"
+    ],
+    "pagination": "offset-limit"
+  },
+  "changes": [
+    "Affiliate Shop Import JSON now accepts AZOBSS generic JSON, Shopee Buy Now mapping JSON, and full Product Offer exporter output.",
+    "Shopee dedupe/update key is shopee:MY:<shopId>:<itemId>.",
+    "Repeated import updates an existing product instead of intentionally adding another product for the same Shop ID + Item ID.",
+    "Shopee Buy Now requires a recognized affiliate link (s.shopee.com.my, shope.ee, or /an_redir); rows without a valid affiliate link are skipped.",
+    "Retail product URL is kept separately as originLink/reference.",
+    "Stable Shopee identity fields are saved so Firestore reloads can dedupe future imports.",
+    "Existing v1324 Software Tools performance and v1325 Affiliate bulk select/pin are preserved."
+  ],
+  "package_version": "1.0.1327"
+}
