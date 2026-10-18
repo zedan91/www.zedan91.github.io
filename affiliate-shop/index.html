@@ -255,22 +255,31 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .admin-product-save,.admin-product-cancel{border:0;border-radius:999px;padding:11px 16px;font-weight:950;cursor:pointer}
     .admin-product-save{background:#22c55e;color:#052e16}
     .admin-product-cancel{background:#172033;color:#e5e7eb;border:1px solid var(--line)}
+    /* AZOBSS v1334 - compact marketplace card: large image, short copy, price, rating and sold count. */
     .card-actions{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:auto}
-    .card-actions.card-actions-button-only{justify-content:flex-end}
-    .card-price{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(34,197,94,.35);border-radius:999px;background:rgba(34,197,94,.08);color:#86efac;padding:6px 9px;font-weight:950;font-size:12px}
-    .card-open{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#2563eb;color:#fff;padding:8px 11px;font-weight:950;font-size:12px;text-decoration:none}
+    .card-open{display:inline-flex;align-items:center;justify-content:center;min-height:34px;border-radius:9px;background:#2563eb;color:#fff;padding:7px 12px;font-weight:950;font-size:12px;text-decoration:none;white-space:nowrap}
+    .card-open:hover{background:#1d4ed8}
     @media(max-width:560px){.admin-product-grid{grid-template-columns:1fr}.sort-control{width:100%;justify-content:space-between}.sort-control select{flex:1}}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px;align-items:start}
-    .card{position:relative;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:10px;align-content:start;height:405px;min-height:405px;max-height:405px;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#13243a,#0b1220);padding:18px;color:#fff;text-decoration:none;box-shadow:0 16px 34px rgba(0,0,0,.22)}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:rgba(34,197,94,.14);color:#86efac;font-weight:900}
-    .badge{border:1px solid rgba(34,197,94,.35);border-radius:999px;padding:6px 9px;color:#86efac;font-size:12px;font-weight:900}
-    .card h2{font-size:18px;line-height:1.25;margin:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-    .card-desc-wrap{min-height:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;overflow:hidden}
-    .card-desc{margin:0;color:#cbd5e1;font-size:14px;line-height:1.45;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;line-clamp:5}
-    .card-show-more{border:0;background:transparent;color:#60a5fa;padding:0;font-size:12px;line-height:1.25;font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+    .card{position:relative;display:flex;flex-direction:column;height:510px;min-height:510px;max-height:510px;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d1623;color:#fff;text-decoration:none;box-shadow:0 14px 30px rgba(0,0,0,.22)}
+    .card-media{position:relative;flex:0 0 220px;height:220px;overflow:hidden;background:#101a29;border-bottom:1px solid rgba(148,163,184,.13)}
+    .card-media img{display:block;width:100%;height:100%;object-fit:cover;background:#101a29}
+    .card-media-fallback{display:grid;place-items:center;width:100%;height:100%;font-size:46px;font-weight:950;color:#dbeafe;background:radial-gradient(circle at 50% 42%,rgba(37,99,235,.28),rgba(15,23,42,.96) 64%)}
+    .card-media-badge{position:absolute;left:10px;bottom:10px;z-index:3;max-width:calc(100% - 58px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid rgba(255,255,255,.20);border-radius:7px;padding:5px 8px;background:rgba(3,7,18,.82);color:#e5e7eb;font-size:10px;font-weight:900;box-shadow:0 5px 16px rgba(0,0,0,.24)}
+    .card-content{display:flex;flex-direction:column;gap:7px;min-height:0;flex:1 1 auto;padding:11px 12px 12px}
+    .card h2{font-size:15px;line-height:1.38;margin:0;min-height:41px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;color:#f8fafc}
+    .card-desc-wrap{min-height:0;display:flex;align-items:flex-start;gap:7px;overflow:hidden}
+    .card-desc{flex:1 1 auto;min-width:0;margin:0;color:#b9c7d8;font-size:12.5px;line-height:1.42;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3}
+    .card-show-more{flex:0 0 auto;align-self:flex-end;border:0;background:transparent;color:#60a5fa;padding:0 0 1px;font-size:11px;line-height:1.2;font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
     .card-show-more:hover{color:#93c5fd}
-    .meta{margin-top:0;color:#94a3b8;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .card-price-main{margin-top:1px;color:#ff6b3d;font-size:17px;line-height:1.2;font-weight:1000;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .card-price-main.is-unavailable{color:#94a3b8;font-size:13px;font-weight:850}
+    .card-stats{display:flex;align-items:center;gap:8px;min-height:22px;color:#d7e0eb;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden}
+    .card-rating{display:inline-flex;align-items:center;gap:3px;color:#fde68a}
+    .card-rating-count{color:#94a3b8;font-size:10.5px;font-weight:750}
+    .card-sold{color:#dbe5f1;overflow:hidden;text-overflow:ellipsis}
+    .card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(148,163,184,.10)}
+    .card-source{min-width:0;color:#94a3b8;font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .affiliate-desc-modal{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.78);backdrop-filter:blur(7px);overflow:hidden;overscroll-behavior:none}
     .affiliate-desc-modal.is-open{display:flex}
     .affiliate-desc-box{width:min(660px,96vw);max-height:min(78vh,720px);min-height:0;display:flex;flex-direction:column;border:1px solid rgba(96,165,250,.35);border-radius:18px;background:linear-gradient(180deg,#102033,#07111f);box-shadow:0 28px 80px rgba(0,0,0,.48);overflow:hidden;overscroll-behavior:none}
@@ -279,7 +288,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .affiliate-desc-close{flex:0 0 auto;width:36px;height:36px;border-radius:999px;border:1px solid rgba(148,163,184,.3);background:#0e1729;color:#fff;font-size:20px;cursor:pointer}
     .affiliate-desc-body{min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-gutter:stable;padding:16px 18px 20px;color:#cbd5e1;font-size:14px;line-height:1.7}
     .affiliate-desc-body p{margin:0 0 12px}.affiliate-desc-body p:last-child{margin-bottom:0}
-    @media(max-width:760px){.card{height:390px;min-height:390px;max-height:390px}.card h2{-webkit-line-clamp:2}.card-desc{-webkit-line-clamp:5;line-clamp:5}}
+    @media(max-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.card{height:485px;min-height:485px;max-height:485px}.card-media{flex-basis:200px;height:200px}.card-content{padding:10px}.card h2{font-size:14px}.card-desc{-webkit-line-clamp:3;line-clamp:3}}
     .empty{display:none;border:1px solid var(--line);border-radius:16px;background:#0e1729;padding:24px;color:#cbd5e1;text-align:center}
     @media(max-width:760px){body{padding-top:92px !important}.market-bar-inner{width:100% !important;padding:0 6px !important}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important}.market-brand{width:116px !important;height:30px !important}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important}.site-auth-btn{font-size:13px !important;white-space:nowrap !important}}
 
@@ -1086,14 +1095,6 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .admin-shopee-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.admin-shopee-offer-card{display:grid;grid-template-columns:110px 1fr;gap:12px;border:1px solid rgba(255,255,255,.12);background:#0d1523;border-radius:14px;padding:12px}.admin-shopee-offer-card img{width:110px;height:110px;object-fit:cover;border-radius:12px;background:#172033}.admin-shopee-offer-title{font-weight:900;line-height:1.35;color:#fff}.admin-shopee-offer-meta{font-size:12px;color:#9eb0c5;margin-top:6px;line-height:1.45}.admin-shopee-offer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.admin-shopee-offer-actions button,.admin-shopee-offer-actions a{min-height:36px;border-radius:9px;border:0;padding:0 11px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}.admin-shopee-offer-actions button{background:#22c55e;color:#06130b}.admin-shopee-offer-actions a{background:#17243a;color:#dce8f8;border:1px solid rgba(255,255,255,.12)}
 .admin-shopee-manual{margin:0 0 16px;border:1px solid rgba(34,197,94,.48);background:rgba(34,197,94,.07);border-radius:14px;padding:14px;display:grid;gap:10px}.admin-shopee-manual strong{color:#77f2aa}.admin-shopee-manual-copy{color:#b9c7d8;font-size:13px;line-height:1.5}.admin-shopee-browser-capture{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.admin-shopee-browser-capture button{min-height:40px;border:1px solid rgba(96,165,250,.55);background:rgba(37,99,235,.16);color:#bfdbfe;border-radius:10px;padding:0 13px;font-weight:900;cursor:pointer}.admin-shopee-browser-capture button:hover{background:rgba(37,99,235,.28)}.admin-shopee-browser-capture small{color:#9eb0c5;line-height:1.4}.admin-shopee-browser-capture.is-ready small{color:#62e6a5}
 .admin-shopee-manual-row{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:10px}.admin-shopee-manual-row input{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-manual-use{min-height:44px;border:0;border-radius:10px;background:#22c55e;color:#06130b;font-weight:900;padding:0 16px;cursor:pointer}.admin-shopee-manual-use:disabled{opacity:.55;cursor:not-allowed}.admin-shopee-api-label{font-weight:900;color:#dce8f8;margin:4px 0 8px}.admin-shopee-api-disabled{opacity:.58}.admin-shopee-manual-open{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;min-height:42px;border:1px solid rgba(255,115,55,.55);border-radius:10px;padding:0 14px;color:#ffd3c5;background:rgba(238,77,45,.1);text-decoration:none;font-weight:900}
-.card .icon img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}.card .icon.has-image{overflow:hidden;padding:0;background:#111b2a}
-/* AZOBSS v1331 - desktop product image hover preview. Card size stays fixed. */
-.card .icon.has-image img{cursor:zoom-in}
-.az-aff-image-hover-preview{position:fixed;z-index:10070;width:260px;height:260px;display:grid;place-items:center;padding:8px;border:1px solid rgba(96,165,250,.42);border-radius:18px;background:rgba(7,17,31,.98);box-shadow:0 24px 70px rgba(0,0,0,.58);pointer-events:none;opacity:0;visibility:hidden;transform:scale(.94);transform-origin:center;transition:opacity .13s ease,transform .13s ease,visibility .13s ease;overflow:hidden}
-.az-aff-image-hover-preview.is-open{opacity:1;visibility:visible;transform:scale(1)}
-.az-aff-image-hover-preview img{display:block;width:100%;height:100%;object-fit:contain;border-radius:12px;background:#0b1220}
-.card .icon.has-image.az-image-hover-source{outline:2px solid rgba(96,165,250,.78);outline-offset:2px}
-@media(max-width:760px),(hover:none),(pointer:coarse){.card .icon.has-image img{cursor:default}.az-aff-image-hover-preview{display:none!important}}
 @media(max-width:800px){.admin-shopee-searchbar{grid-template-columns:1fr}.admin-shopee-results{grid-template-columns:1fr}.admin-shopee-offer-card{grid-template-columns:82px 1fr}.admin-shopee-offer-card img{width:82px;height:82px}.admin-shopee-manual-row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -1533,30 +1534,37 @@ function esc(value){
     }
 
     function normalizeProduct(item){
-      const price = String(item.price || item.badge || '').trim();
+      const rawPrice = item.price ?? item.priceLabel ?? item.price_label ?? '';
+      const priceMyr = item.priceMyr ?? item.price_myr ?? '';
+      const numericPriceMyr = String(priceMyr).trim() === '' ? NaN : Number(priceMyr);
+      const price = String(rawPrice || (Number.isFinite(numericPriceMyr) && numericPriceMyr >= 0 ? ('RM' + numericPriceMyr.toFixed(2)) : '')).trim();
       const isFree = /^free$/i.test(price);
       return {
         id: item.id || ('item-' + Date.now() + '-' + Math.random().toString(36).slice(2,8)),
         title: item.title || item.name || 'Untitled Item',
         desc: item.desc || item.description || '',
-        badge: item.badge || (isFree ? 'FREE' : (price || 'Affiliate')),
-        price: price || item.badge || 'FREE',
+        badge: item.badge || (isFree ? 'FREE' : 'Affiliate'),
+        price: price,
+        priceMyr: Number.isFinite(numericPriceMyr) ? numericPriceMyr : '',
         icon: item.icon || (isFree ? 'FREE' : '🛒'),
         category: item.category || 'affiliate-shop',
         meta: item.meta || item.category || 'Affiliate item',
         image: item.image || item.imageUrl || '',
+        images: Array.isArray(item.images) ? item.images.filter(Boolean) : [],
         originLink: item.originLink || item.productLink || '',
         link: item.link || item.offerLink || item.url || '#',
         buttonText: item.buttonText || (isFree ? 'Download Now' : 'Buy Now'),
         source: item.source || 'static',
+        ratingCount: item.ratingCount ?? item.rating_count ?? '',
+        historicalSold: item.historicalSold ?? item.historical_sold ?? item.soldCount ?? item.sold_count ?? '',
         shopeeKey: String(item.shopeeKey || ''),
         shopeeItemId: String(item.shopeeItemId || item.itemId || item.item_id || ''),
         shopeeShopId: String(item.shopeeShopId || item.shopId || item.shop_id || ''),
         shopeeRetailUrl: String(item.shopeeRetailUrl || item.retail_url || ''),
         shopeeAffiliateUrl: String(item.shopeeAffiliateUrl || item.affiliate_url || item.buy_now_url || item.productOfferLink || ''),
         shopeeShopName: String(item.shopeeShopName || item.shopName || ''),
-        shopeeSold: item.shopeeSold ?? '',
-        shopeeRating: item.shopeeRating ?? '',
+        shopeeSold: item.shopeeSold ?? item.historical_sold ?? item.soldCount ?? item.sold_count ?? '',
+        shopeeRating: item.shopeeRating ?? item.rating ?? item.ratingStar ?? '',
         shopeeImportSource: String(item.shopeeImportSource || item.affiliate_link_source || ''),
         shopeeImportedAt: String(item.shopeeImportedAt || '')
       };
@@ -1634,16 +1642,83 @@ function esc(value){
       }
     }
 
-    function hasSeparateAffiliatePrice(item){
-      const price = String(item?.price || '').trim();
-      const badge = String(item?.badge || '').trim();
-      return Boolean(price && price.toLowerCase() !== badge.toLowerCase());
+    function formatMoneyMyr(value){
+      const num = Number(value);
+      if(!Number.isFinite(num)) return '';
+      return 'RM' + num.toFixed(2);
+    }
+
+    function productPriceText(item){
+      const rawPriceMyr = item?.priceMyr;
+      const priceMyr = String(rawPriceMyr ?? '').trim() === '' ? NaN : Number(rawPriceMyr);
+      if(Number.isFinite(priceMyr) && priceMyr >= 0) return formatMoneyMyr(priceMyr);
+      const direct = String(item?.price || '').trim();
+      if(direct && !/^(affiliate|shopee affiliate|affiliate item)$/i.test(direct)) return direct;
+      const sourceText = [item?.desc,item?.meta].filter(Boolean).join(' ');
+      const range = sourceText.match(/RM\s*([0-9]+(?:\.[0-9]{1,2})?)(?:\s*[–—-]\s*(?:RM\s*)?([0-9]+(?:\.[0-9]{1,2})?))?/i);
+      if(range){
+        const first = 'RM' + Number(range[1]).toFixed(2);
+        return range[2] ? first + '–RM' + Number(range[2]).toFixed(2) : first;
+      }
+      return 'Lihat harga di kedai';
+    }
+
+    function productRatingInfo(item){
+      let rating = Number(item?.shopeeRating);
+      if(!Number.isFinite(rating) || rating <= 0){
+        const match = [item?.meta,item?.desc].filter(Boolean).join(' ').match(/([0-5](?:\.\d+)?)\s*\/\s*5|Rating\s*:\s*([0-5](?:\.\d+)?)/i);
+        rating = Number(match?.[1] || match?.[2]);
+      }
+      const rawCount = item?.ratingCount;
+      let count = String(rawCount ?? '').trim() === '' ? NaN : Number(rawCount);
+      if(!Number.isFinite(count) || count < 0){
+        const match = String(item?.meta || '').match(/([0-9][0-9,]*)\s*(?:penilaian|ratings?)/i);
+        count = match ? Number(match[1].replace(/,/g,'')) : NaN;
+      }
+      return {rating:Number.isFinite(rating) && rating > 0 ? rating : null,count:Number.isFinite(count) && count >= 0 ? count : null};
+    }
+
+    function compactNumber(value){
+      const num = Number(value);
+      if(!Number.isFinite(num) || num < 0) return '';
+      if(num >= 1000000) return (num/1000000).toFixed(num >= 10000000 ? 0 : 1).replace(/\.0$/,'') + 'M';
+      if(num >= 1000) return (num/1000).toFixed(num >= 100000 ? 0 : 1).replace(/\.0$/,'') + 'K';
+      return Math.round(num).toLocaleString('en-MY');
+    }
+
+    function productSoldInfo(item){
+      const raw = item?.historicalSold ?? item?.shopeeSold ?? '';
+      const rawText = String(raw ?? '').trim();
+      const numeric = rawText === '' ? NaN : Number(rawText.replace(/,/g,''));
+      if(Number.isFinite(numeric) && numeric >= 0) return {text:compactNumber(numeric),full:Math.round(numeric).toLocaleString('en-MY')};
+      const text = rawText;
+      if(text) return {text,full:text};
+      const match = String(item?.desc || '').match(/Sold\s*:\s*([^•|]+)/i);
+      return match ? {text:match[1].trim(),full:match[1].trim()} : {text:'',full:''};
+    }
+
+    function productSourceText(item){
+      return String(item?.shopeeShopName || item?.badge || item?.meta || 'Affiliate').trim();
     }
 
     function shouldShowMoreDescription(value){
       const text = String(value || '').trim();
       if(!text) return false;
-      return text.length > 230 || text.split(/\n/).length > 5;
+      return text.length > 110 || text.split(/\n/).length > 3;
+    }
+
+    function syncCardSeeMore(){
+      requestAnimationFrame(() => {
+        grid?.querySelectorAll('.card-desc-wrap').forEach(wrap => {
+          const desc = wrap.querySelector('.card-desc');
+          const button = wrap.querySelector('.card-show-more');
+          if(!desc || !button) return;
+          const itemId = button.getAttribute('data-aff-show-more') || '';
+          const item = products.find(x => String(x.id) === String(itemId));
+          const overflowed = desc.scrollHeight > desc.clientHeight + 2;
+          button.hidden = !(overflowed || shouldShowMoreDescription(item?.desc || ''));
+        });
+      });
     }
 
     function descriptionParagraphs(value){
@@ -1788,26 +1863,41 @@ function esc(value){
 
       const adminMode = isAdmin();
       document.body.classList.toggle('az-aff-admin', adminMode);
-      grid.innerHTML = filtered.map(item => `
+      grid.innerHTML = filtered.map(item => {
+        const ratingInfo = productRatingInfo(item);
+        const soldInfo = productSoldInfo(item);
+        const priceText = productPriceText(item);
+        const ratingText = ratingInfo.rating == null ? '—' : ratingInfo.rating.toFixed(1);
+        const ratingCountText = ratingInfo.count == null ? '' : compactNumber(ratingInfo.count);
+        const soldText = soldInfo.text || '—';
+        const priceUnavailable = priceText === 'Lihat harga di kedai';
+        return `
         <article class="card" data-product-id="${esc(item.id)}" data-product-source="${esc(item.source || 'static')}" data-category="${esc(item.category)}">
           <button class="affiliate-local-bookmark-btn${favouriteSet.has(String(item.id)) ? ' is-bookmarked' : ''}" type="button" data-aff-local-bookmark="${esc(item.id)}" aria-pressed="${favouriteSet.has(String(item.id)) ? 'true' : 'false'}" title="${favouriteSet.has(String(item.id)) ? 'Remove from Affiliate Shop bookmarks' : 'Bookmark in Affiliate Shop'}" aria-label="${favouriteSet.has(String(item.id)) ? 'Remove from Affiliate Shop bookmarks' : 'Bookmark in Affiliate Shop'}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></button>
           ${adminMode ? `<div class="card-admin-actions" aria-label="Admin product actions"><button class="card-admin-btn edit" type="button" data-aff-edit="${esc(item.id)}" title="Edit">✎</button><button class="card-admin-btn delete" type="button" data-aff-delete="${esc(item.id)}" title="Delete">🗑</button></div>` : ''}
-          <div class="top">
-            <div class="icon${item.image ? ' has-image' : ''}">${item.image ? `<img src="${esc(item.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : esc(item.icon || 'AZ')}</div>
-            <span class="badge">${esc(item.badge || item.price || 'Affiliate')}</span>
+          <div class="card-media">
+            ${item.image ? `<img src="${esc(item.image)}" alt="${esc(item.title)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="card-media-fallback" aria-hidden="true">${esc(item.icon || '🛍️')}</div>`}
+            <span class="card-media-badge">${esc(item.badge || 'Affiliate')}</span>
           </div>
-          <h2>${esc(item.title)}</h2>
-          <div class="card-desc-wrap">
-            <p class="card-desc">${esc(descriptionPreviewText(item.desc))}</p>
-            ${shouldShowMoreDescription(item.desc) ? `<button class="card-show-more" type="button" data-aff-show-more="${esc(item.id)}" aria-label="Show full description for ${esc(item.title)}">Show More</button>` : ''}
+          <div class="card-content">
+            <h2 title="${esc(item.title)}">${esc(item.title)}</h2>
+            <div class="card-desc-wrap">
+              <p class="card-desc">${esc(descriptionPreviewText(item.desc))}</p>
+              ${item.desc ? `<button class="card-show-more" type="button" data-aff-show-more="${esc(item.id)}" aria-label="See full description for ${esc(item.title)}"${shouldShowMoreDescription(item.desc) ? '' : ' hidden'}>See More</button>` : ''}
+            </div>
+            <div class="card-price-main${priceUnavailable ? ' is-unavailable' : ''}">${esc(priceText)}</div>
+            <div class="card-stats">
+              <span class="card-rating" title="Rating${ratingInfo.count != null ? ' · ' + Math.round(ratingInfo.count).toLocaleString('en-MY') + ' penilaian' : ''}">★ ${esc(ratingText)}${ratingCountText ? ` <span class="card-rating-count">(${esc(ratingCountText)})</span>` : ''}</span>
+              <span class="card-sold" title="${esc(soldInfo.full || 'Jumlah jualan tidak tersedia')}">${esc(soldText)} sold</span>
+            </div>
+            <div class="card-bottom">
+              <span class="card-source" title="${esc(productSourceText(item))}">${esc(productSourceText(item))}</span>
+              <a class="card-open" href="${esc(item.link)}" target="_blank" rel="noopener">${esc(item.buttonText || 'Buy Now')}</a>
+            </div>
           </div>
-          <div class="meta">${esc(item.meta || item.category || 'Affiliate item')}</div>
-          <div class="card-actions${hasSeparateAffiliatePrice(item) ? '' : ' card-actions-button-only'}">
-            ${hasSeparateAffiliatePrice(item) ? `<span class="card-price">${/^free$/i.test(item.price || '') ? 'FREE' : '🛒 ' + esc(item.price || '')}${azUsdBadge(item.price || '')}</span>` : ''}
-            <a class="card-open" href="${esc(item.link)}" target="_blank" rel="noopener">${esc(item.buttonText || 'Open')}</a>
-          </div>
-        </article>
-      `).join('');
+        </article>`;
+      }).join('');
+      syncCardSeeMore();
 emptyState.style.display = filtered.length ? 'none' : 'block';
     }
 
@@ -2444,10 +2534,13 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       if(!isShopeeAffiliateUrl(affiliateUrl)) return {kind:'shopee', skip:'Affiliate Get Link tiada / tidak sah'};
 
       const shopName = String(row.shopName || card.shop_name || '').trim();
-      const sold = row.soldCount ?? card.historical_sold_text ?? card.sold_text ?? card.historical_sold ?? card.sold ?? '';
+      const sold = row.historical_sold ?? row.soldCount ?? row.sold_count ?? card.historical_sold_text ?? card.sold_text ?? card.historical_sold ?? card.sold ?? '';
       const rating = row.rating ?? row.ratingStar ?? card.item_rating?.rating_star ?? '';
+      const ratingCount = row.rating_count ?? row.ratingCount ?? card.item_rating?.rating_count ?? '';
       const image = shopeeImageUrl(row.imageUrl || row.image_url || row.image || card.image || (Array.isArray(card.images) ? card.images[0] : ''));
-      const displayPrice = String(row.priceLabel || row.price_label || '').trim() || 'Affiliate';
+      const rawPriceMyr = row.price_myr ?? row.priceMyr ?? '';
+      const numericPriceMyr = String(rawPriceMyr).trim() === '' ? NaN : Number(rawPriceMyr);
+      const displayPrice = String(row.priceLabel || row.price_label || '').trim() || (Number.isFinite(numericPriceMyr) ? ('RM' + numericPriceMyr.toFixed(2)) : '');
       const category = String(row.category || '').trim() || guessShopeeCategory([title, shopName].filter(Boolean).join(' '));
 
       const descParts = [];
@@ -2464,6 +2557,9 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
         desc,
         badge:'Affiliate',
         price:displayPrice,
+        priceMyr:Number.isFinite(numericPriceMyr) ? numericPriceMyr : '',
+        ratingCount,
+        historicalSold:sold,
         icon:'🛒',
         category,
         meta:metaParts.join(' • '),
@@ -2774,7 +2870,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
 
     adminExportJsonButton?.addEventListener('click', () => {
       if(!isAdmin()) return alert('Admin only.');
-      const exportData = products.map(({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source,shopeeKey,shopeeItemId,shopeeShopId,shopeeRetailUrl,shopeeAffiliateUrl,shopeeShopName,shopeeSold,shopeeRating,shopeeImportSource,shopeeImportedAt}) => ({id,title,desc,badge,price,icon,image,originLink,category,meta,link,buttonText,source,shopeeKey,shopeeItemId,shopeeShopId,shopeeRetailUrl,shopeeAffiliateUrl,shopeeShopName,shopeeSold,shopeeRating,shopeeImportSource,shopeeImportedAt}));
+      const exportData = products.map(({id,title,desc,badge,price,priceMyr,ratingCount,historicalSold,icon,image,images,originLink,category,meta,link,buttonText,source,shopeeKey,shopeeItemId,shopeeShopId,shopeeRetailUrl,shopeeAffiliateUrl,shopeeShopName,shopeeSold,shopeeRating,shopeeImportSource,shopeeImportedAt}) => ({id,title,desc,badge,price,priceMyr,ratingCount,historicalSold,icon,image,images,originLink,category,meta,link,buttonText,source,shopeeKey,shopeeItemId,shopeeShopId,shopeeRetailUrl,shopeeAffiliateUrl,shopeeShopName,shopeeSold,shopeeRating,shopeeImportSource,shopeeImportedAt}));
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -4307,86 +4403,6 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 
-<script id="azobss-affiliate-image-hover-preview-v1331">
-(function(){
-  'use strict';
-  if(window.__AZOBSS_AFF_IMAGE_HOVER_1331__) return;
-  window.__AZOBSS_AFF_IMAGE_HOVER_1331__ = true;
-
-  function finePointer(){
-    try{return !!window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches;}
-    catch(_e){return true;}
-  }
-
-  var preview=null, previewImg=null, activeIcon=null;
-
-  function ensurePreview(){
-    if(preview && preview.isConnected) return preview;
-    preview=document.createElement('div');
-    preview.className='az-aff-image-hover-preview';
-    preview.setAttribute('aria-hidden','true');
-    previewImg=document.createElement('img');
-    previewImg.alt='';
-    previewImg.decoding='async';
-    previewImg.referrerPolicy='no-referrer';
-    preview.appendChild(previewImg);
-    document.body.appendChild(preview);
-    return preview;
-  }
-
-  function hidePreview(){
-    if(activeIcon){activeIcon.classList.remove('az-image-hover-source');activeIcon=null;}
-    if(preview){preview.classList.remove('is-open');preview.setAttribute('aria-hidden','true');}
-  }
-
-  function positionPreview(icon){
-    var box=ensurePreview();
-    var rect=icon.getBoundingClientRect();
-    var size=260, gap=14, edge=12;
-    var left=rect.right+gap;
-    if(left+size>window.innerWidth-edge) left=rect.left-size-gap;
-    if(left<edge) left=Math.max(edge,Math.min(window.innerWidth-size-edge,rect.left));
-    var top=rect.top+(rect.height/2)-(size/2);
-    top=Math.max(edge,Math.min(window.innerHeight-size-edge,top));
-    box.style.left=Math.round(left)+'px';
-    box.style.top=Math.round(top)+'px';
-  }
-
-  function showFor(img){
-    if(!finePointer() || !img) return;
-    var icon=img.closest('.card .icon.has-image');
-    if(!icon) return;
-    var src=img.currentSrc || img.src || '';
-    if(!src) return;
-    ensurePreview();
-    if(activeIcon && activeIcon!==icon) activeIcon.classList.remove('az-image-hover-source');
-    activeIcon=icon;
-    activeIcon.classList.add('az-image-hover-source');
-    if(previewImg.src!==src) previewImg.src=src;
-    previewImg.alt=img.alt || '';
-    positionPreview(icon);
-    preview.classList.add('is-open');
-    preview.setAttribute('aria-hidden','false');
-  }
-
-  document.addEventListener('mouseover',function(ev){
-    var img=ev.target && ev.target.closest ? ev.target.closest('#productGrid .card .icon.has-image img') : null;
-    if(!img) return;
-    showFor(img);
-  },true);
-
-  document.addEventListener('mouseout',function(ev){
-    var img=ev.target && ev.target.closest ? ev.target.closest('#productGrid .card .icon.has-image img') : null;
-    if(!img) return;
-    hidePreview();
-  },true);
-
-  document.addEventListener('scroll',hidePreview,true);
-  window.addEventListener('resize',hidePreview,{passive:true});
-  window.addEventListener('blur',hidePreview);
-  document.addEventListener('visibilitychange',function(){if(document.hidden) hidePreview();});
-})();
-</script>
 
 <script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
