@@ -243,13 +243,13 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .card-show-more{border:0;background:transparent;color:#60a5fa;padding:0;font-size:12px;line-height:1.25;font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
     .card-show-more:hover{color:#93c5fd}
     .meta{margin-top:0;color:#94a3b8;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .affiliate-desc-modal{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.78);backdrop-filter:blur(7px)}
+    .affiliate-desc-modal{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.78);backdrop-filter:blur(7px);overflow:hidden;overscroll-behavior:none}
     .affiliate-desc-modal.is-open{display:flex}
-    .affiliate-desc-box{width:min(660px,96vw);max-height:min(78vh,720px);display:flex;flex-direction:column;border:1px solid rgba(96,165,250,.35);border-radius:18px;background:linear-gradient(180deg,#102033,#07111f);box-shadow:0 28px 80px rgba(0,0,0,.48);overflow:hidden}
+    .affiliate-desc-box{width:min(660px,96vw);max-height:min(78vh,720px);min-height:0;display:flex;flex-direction:column;border:1px solid rgba(96,165,250,.35);border-radius:18px;background:linear-gradient(180deg,#102033,#07111f);box-shadow:0 28px 80px rgba(0,0,0,.48);overflow:hidden;overscroll-behavior:none}
     .affiliate-desc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:16px 18px;border-bottom:1px solid rgba(148,163,184,.18)}
     .affiliate-desc-head h3{margin:0;color:#fff;font-size:18px;line-height:1.35}
     .affiliate-desc-close{flex:0 0 auto;width:36px;height:36px;border-radius:999px;border:1px solid rgba(148,163,184,.3);background:#0e1729;color:#fff;font-size:20px;cursor:pointer}
-    .affiliate-desc-body{overflow:auto;padding:16px 18px 20px;color:#cbd5e1;font-size:14px;line-height:1.7}
+    .affiliate-desc-body{min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-gutter:stable;padding:16px 18px 20px;color:#cbd5e1;font-size:14px;line-height:1.7}
     .affiliate-desc-body p{margin:0 0 12px}.affiliate-desc-body p:last-child{margin-bottom:0}
     @media(max-width:760px){.card{height:390px;min-height:390px;max-height:390px}.card h2{-webkit-line-clamp:2}.card-desc{-webkit-line-clamp:5;line-clamp:5}}
     .empty{display:none;border:1px solid var(--line);border-radius:16px;background:#0e1729;padding:24px;color:#cbd5e1;text-align:center}
@@ -1059,6 +1059,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .admin-shopee-manual{margin:0 0 16px;border:1px solid rgba(34,197,94,.48);background:rgba(34,197,94,.07);border-radius:14px;padding:14px;display:grid;gap:10px}.admin-shopee-manual strong{color:#77f2aa}.admin-shopee-manual-copy{color:#b9c7d8;font-size:13px;line-height:1.5}.admin-shopee-browser-capture{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.admin-shopee-browser-capture button{min-height:40px;border:1px solid rgba(96,165,250,.55);background:rgba(37,99,235,.16);color:#bfdbfe;border-radius:10px;padding:0 13px;font-weight:900;cursor:pointer}.admin-shopee-browser-capture button:hover{background:rgba(37,99,235,.28)}.admin-shopee-browser-capture small{color:#9eb0c5;line-height:1.4}.admin-shopee-browser-capture.is-ready small{color:#62e6a5}
 .admin-shopee-manual-row{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:10px}.admin-shopee-manual-row input{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-manual-use{min-height:44px;border:0;border-radius:10px;background:#22c55e;color:#06130b;font-weight:900;padding:0 16px;cursor:pointer}.admin-shopee-manual-use:disabled{opacity:.55;cursor:not-allowed}.admin-shopee-api-label{font-weight:900;color:#dce8f8;margin:4px 0 8px}.admin-shopee-api-disabled{opacity:.58}.admin-shopee-manual-open{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;min-height:42px;border:1px solid rgba(255,115,55,.55);border-radius:10px;padding:0 14px;color:#ffd3c5;background:rgba(238,77,45,.1);text-decoration:none;font-weight:900}
 .card .icon img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}.card .icon.has-image{overflow:hidden;padding:0;background:#111b2a}
+/* AZOBSS v1331 - desktop product image hover preview. Card size stays fixed. */
+.card .icon.has-image img{cursor:zoom-in}
+.az-aff-image-hover-preview{position:fixed;z-index:10070;width:260px;height:260px;display:grid;place-items:center;padding:8px;border:1px solid rgba(96,165,250,.42);border-radius:18px;background:rgba(7,17,31,.98);box-shadow:0 24px 70px rgba(0,0,0,.58);pointer-events:none;opacity:0;visibility:hidden;transform:scale(.94);transform-origin:center;transition:opacity .13s ease,transform .13s ease,visibility .13s ease;overflow:hidden}
+.az-aff-image-hover-preview.is-open{opacity:1;visibility:visible;transform:scale(1)}
+.az-aff-image-hover-preview img{display:block;width:100%;height:100%;object-fit:contain;border-radius:12px;background:#0b1220}
+.card .icon.has-image.az-image-hover-source{outline:2px solid rgba(96,165,250,.78);outline-offset:2px}
+@media(max-width:760px),(hover:none),(pointer:coarse){.card .icon.has-image img{cursor:default}.az-aff-image-hover-preview{display:none!important}}
 @media(max-width:800px){.admin-shopee-searchbar{grid-template-columns:1fr}.admin-shopee-results{grid-template-columns:1fr}.admin-shopee-offer-card{grid-template-columns:82px 1fr}.admin-shopee-offer-card img{width:82px;height:82px}.admin-shopee-manual-row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -1606,15 +1613,64 @@ function esc(value){
           <div class="affiliate-desc-body"></div>
         </div>`;
       document.body.appendChild(modal);
+
+      const captureInlineStyle = (element, property) => ({
+        value: element.style.getPropertyValue(property),
+        priority: element.style.getPropertyPriority(property)
+      });
+      const restoreInlineStyle = (element, property, snapshot) => {
+        if(snapshot && snapshot.value) element.style.setProperty(property, snapshot.value, snapshot.priority || '');
+        else element.style.removeProperty(property);
+      };
+      const lockPageScroll = () => {
+        if(modal.__azPageScrollLock) return;
+        const html = document.documentElement;
+        const pageBody = document.body;
+        modal.__azPageScrollLock = {
+          htmlOverflow: captureInlineStyle(html, 'overflow'),
+          bodyOverflow: captureInlineStyle(pageBody, 'overflow'),
+          htmlOverscroll: captureInlineStyle(html, 'overscroll-behavior'),
+          bodyOverscroll: captureInlineStyle(pageBody, 'overscroll-behavior')
+        };
+        html.style.setProperty('overflow', 'hidden', 'important');
+        pageBody.style.setProperty('overflow', 'hidden', 'important');
+        html.style.setProperty('overscroll-behavior', 'none', 'important');
+        pageBody.style.setProperty('overscroll-behavior', 'none', 'important');
+      };
+      const unlockPageScroll = () => {
+        const saved = modal.__azPageScrollLock;
+        if(!saved) return;
+        const html = document.documentElement;
+        const pageBody = document.body;
+        restoreInlineStyle(html, 'overflow', saved.htmlOverflow);
+        restoreInlineStyle(pageBody, 'overflow', saved.bodyOverflow);
+        restoreInlineStyle(html, 'overscroll-behavior', saved.htmlOverscroll);
+        restoreInlineStyle(pageBody, 'overscroll-behavior', saved.bodyOverscroll);
+        modal.__azPageScrollLock = null;
+      };
       const close = () => {
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden','true');
-        document.body.style.removeProperty('overflow');
+        unlockPageScroll();
       };
       modal.querySelector('.affiliate-desc-close')?.addEventListener('click', close);
       modal.addEventListener('click', e => { if(e.target === modal) close(); });
+      modal.addEventListener('wheel', e => {
+        if(!modal.classList.contains('is-open')) return;
+        const scroller = modal.querySelector('.affiliate-desc-body');
+        if(!scroller){ e.preventDefault(); return; }
+        const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        if(maxScroll <= 0){ e.preventDefault(); return; }
+        const unit = e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? Math.max(1, scroller.clientHeight) : 1);
+        const delta = e.deltaY * unit;
+        if(delta){
+          e.preventDefault();
+          scroller.scrollTop = Math.max(0, Math.min(maxScroll, scroller.scrollTop + delta));
+        }
+      }, { passive:false });
       document.addEventListener('keydown', e => { if(e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
       modal.__azClose = close;
+      modal.__azLockPageScroll = lockPageScroll;
       return modal;
     }
 
@@ -1628,9 +1684,9 @@ function esc(value){
         body.innerHTML = paragraphs.map(p => `<p>${esc(p)}</p>`).join('') || '<p>No description.</p>';
         body.scrollTop = 0;
       }
+      modal.__azLockPageScroll?.();
       modal.classList.add('is-open');
       modal.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
       modal.querySelector('.affiliate-desc-close')?.focus();
     }
 
@@ -4152,6 +4208,87 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 })();
 </script>
 
+
+<script id="azobss-affiliate-image-hover-preview-v1331">
+(function(){
+  'use strict';
+  if(window.__AZOBSS_AFF_IMAGE_HOVER_1331__) return;
+  window.__AZOBSS_AFF_IMAGE_HOVER_1331__ = true;
+
+  function finePointer(){
+    try{return !!window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches;}
+    catch(_e){return true;}
+  }
+
+  var preview=null, previewImg=null, activeIcon=null;
+
+  function ensurePreview(){
+    if(preview && preview.isConnected) return preview;
+    preview=document.createElement('div');
+    preview.className='az-aff-image-hover-preview';
+    preview.setAttribute('aria-hidden','true');
+    previewImg=document.createElement('img');
+    previewImg.alt='';
+    previewImg.decoding='async';
+    previewImg.referrerPolicy='no-referrer';
+    preview.appendChild(previewImg);
+    document.body.appendChild(preview);
+    return preview;
+  }
+
+  function hidePreview(){
+    if(activeIcon){activeIcon.classList.remove('az-image-hover-source');activeIcon=null;}
+    if(preview){preview.classList.remove('is-open');preview.setAttribute('aria-hidden','true');}
+  }
+
+  function positionPreview(icon){
+    var box=ensurePreview();
+    var rect=icon.getBoundingClientRect();
+    var size=260, gap=14, edge=12;
+    var left=rect.right+gap;
+    if(left+size>window.innerWidth-edge) left=rect.left-size-gap;
+    if(left<edge) left=Math.max(edge,Math.min(window.innerWidth-size-edge,rect.left));
+    var top=rect.top+(rect.height/2)-(size/2);
+    top=Math.max(edge,Math.min(window.innerHeight-size-edge,top));
+    box.style.left=Math.round(left)+'px';
+    box.style.top=Math.round(top)+'px';
+  }
+
+  function showFor(img){
+    if(!finePointer() || !img) return;
+    var icon=img.closest('.card .icon.has-image');
+    if(!icon) return;
+    var src=img.currentSrc || img.src || '';
+    if(!src) return;
+    ensurePreview();
+    if(activeIcon && activeIcon!==icon) activeIcon.classList.remove('az-image-hover-source');
+    activeIcon=icon;
+    activeIcon.classList.add('az-image-hover-source');
+    if(previewImg.src!==src) previewImg.src=src;
+    previewImg.alt=img.alt || '';
+    positionPreview(icon);
+    preview.classList.add('is-open');
+    preview.setAttribute('aria-hidden','false');
+  }
+
+  document.addEventListener('mouseover',function(ev){
+    var img=ev.target && ev.target.closest ? ev.target.closest('#productGrid .card .icon.has-image img') : null;
+    if(!img) return;
+    showFor(img);
+  },true);
+
+  document.addEventListener('mouseout',function(ev){
+    var img=ev.target && ev.target.closest ? ev.target.closest('#productGrid .card .icon.has-image img') : null;
+    if(!img) return;
+    hidePreview();
+  },true);
+
+  document.addEventListener('scroll',hidePreview,true);
+  window.addEventListener('resize',hidePreview,{passive:true});
+  window.addEventListener('blur',hidePreview);
+  document.addEventListener('visibilitychange',function(){if(document.hidden) hidePreview();});
+})();
+</script>
 
 <script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
