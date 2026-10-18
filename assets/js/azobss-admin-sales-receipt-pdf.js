@@ -1,4 +1,4 @@
-/* AZOBSS PATCH 1069: exact table alignment + neutral invoice colour balance */
+/* AZOBSS PATCH 1336: Quotation + Invoice + Receipt document flow */
 (function(global){
   'use strict';
 
@@ -58,13 +58,14 @@
   }
   function documentDateTime(row,type){
     const docType=normalizeDocumentType(type);
-    const primary=docType==='receipt'?(parseTime(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||parseTime(row.saleDateMs)):(parseTime(row.invoiceDateMs)||parseTime(row.saleDateMs));
+    const primary=docType==='receipt'?(parseTime(row.paidAtMs||row.paymentPaidAtMs||row.paidAt)||parseTime(row.saleDateMs)):(docType==='quotation'?(parseTime(row.quotationDateMs)||parseTime(row.saleDateMs)):(parseTime(row.invoiceDateMs)||parseTime(row.saleDateMs)));
     return String(row.source||'').toLowerCase()==='manual'?legacyActualTime(primary,row):(primary||Date.now());
   }
   function categoryLabel(value){
     return ({physical:'Hardware','computer-it':'Computer & IT',software:'Software',service:'Service',cad:'CAD Tools',pabm:'PA/BM',mixed:'Mixed',other:'Other'})[clean(value).toLowerCase()] || 'Other';
   }
-  function normalizeDocumentType(value){ return clean(value).toLowerCase()==='invoice' ? 'invoice' : 'receipt'; }
+  function normalizeDocumentType(value){ const v=clean(value).toLowerCase(); return v==='quotation'?'quotation':(v==='invoice'?'invoice':'receipt'); }
+  function quotationNumber(row){ const explicit=clean(row.quotationNo);if(explicit)return explicit;const source=clean(row.documentNo||row.invoiceNo||row.receiptNo||'Quotation');if(/^AZ[IR]-/i.test(source))return source.replace(/^AZ[IR]-/i,'AZQ-');if(/^AZQ-/i.test(source))return source;return `AZQ-${source}`; }
   function receiptNumber(row){
     const explicit=clean(row.receiptNo); if(explicit&&!/^AZI-/i.test(explicit)&&!/^INV-/i.test(explicit)) return explicit;
     const source=clean(row.documentNo||row.invoiceNo||explicit||'Receipt');
@@ -79,7 +80,7 @@
     if(/^INV-/i.test(source)||/^AZI-/i.test(source)) return source;
     return `INV-${source}`;
   }
-  function documentNumber(row,type){ return normalizeDocumentType(type)==='invoice' ? invoiceNumber(row) : receiptNumber(row); }
+  function documentNumber(row,type){ const t=normalizeDocumentType(type);return t==='quotation'?quotationNumber(row):(t==='invoice'?invoiceNumber(row):receiptNumber(row)); }
   function normalizedPaymentStatus(value){
     const raw=clean(value).toLowerCase();
     if(raw==='deposit-paid'||(raw.includes('deposit')&&raw.includes('paid')))return 'deposit-paid';
@@ -88,7 +89,7 @@
   function statusLabel(value){
     const row=(value&&typeof value==='object')?value:null;
     const status=normalizedPaymentStatus(row?row.status:value);
-    const label=status==='deposit-paid'?'DEPOSIT 50% PAID':status.toUpperCase();
+    const q={'quote-draft':'QUOTATION DRAFT','quote-sent':'QUOTATION SENT','quote-accepted':'QUOTATION ACCEPTED','quote-rejected':'QUOTATION REJECTED','quote-expired':'QUOTATION EXPIRED'};const label=q[status]||(status==='deposit-paid'?'DEPOSIT 50% PAID':status.toUpperCase());
     if(row&&row.source==='website'&&row.adminStatusOverride) return `${label} - MANUAL OVERRIDE`;
     return label;
   }
@@ -108,6 +109,7 @@
     const status=normalizedPaymentStatus(value);
     if(status==='paid') return {bg:[236,253,245],border:[110,231,183],text:[6,95,70]};
     if(status==='deposit-paid') return {bg:[239,246,255],border:[147,197,253],text:[30,64,175]};
+    if(status.startsWith('quote-')) return {bg:[255,251,235],border:[253,230,138],text:[146,64,14]};
     if(status==='pending') return {bg:[255,251,235],border:[253,230,138],text:[146,64,14]};
     return {bg:[254,242,242],border:[252,165,165],text:[153,27,27]};
   }
@@ -206,7 +208,7 @@
   function image(commands,name,x,yTop,width,height){ add(commands,`q ${width.toFixed(2)} 0 0 ${height.toFixed(2)} ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} cm /${name} Do Q`); }
   function centeredBaseline(y,height,size){ return y + ((height-size)/2) + (size*0.78); }
 
-  function documentTitle(type){ return normalizeDocumentType(type)==='invoice' ? 'INVOICE' : 'RECEIPT'; }
+  function documentTitle(type){ const t=normalizeDocumentType(type);return t==='quotation'?'QUOTATION / SEBUT HARGA':(t==='invoice'?'INVOICE':'RECEIPT'); }
   function drawHeader(commands,row,continuation,type){
     const docType=normalizeDocumentType(type);
     fillRect(commands,0,0,PAGE_W,92,[238,241,245]);
@@ -219,7 +221,7 @@
     const brandNameWidth=estimateWidth('AZOBSS',31,true);
     text(commands,'www.azobss.com',brandTextX+(brandNameWidth/2),61,{size:7.6,bold:true,align:'center',color:[100,116,139]});
     text(commands,documentTitle(docType),PAGE_W-MARGIN_X,34,{size:16,bold:true,align:'right',color:[55,65,81]});
-    text(commands,continuation?`${docType==='invoice'?'Invoice':'Receipt'} continuation`:documentNumber(row,docType),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
+    text(commands,continuation?`${docType==='quotation'?'Quotation':(docType==='invoice'?'Invoice':'Receipt')} continuation`:documentNumber(row,docType),PAGE_W-MARGIN_X,57,{size:9,align:'right',color:[71,85,105]});
   }
   function drawStatusBadge(commands,row,x,y){
     const colors=statusColors(row.status); const label=statusLabel(row); const w=Math.max(72,estimateWidth(label,8,true)+22);
@@ -250,12 +252,12 @@
     line(commands,mid,y+10,mid,y+70,[226,232,240],0.8);
     line(commands,x+10,y+74,x+w-10,y+74,[226,232,240],0.8);
     const left=x+14,right=mid+14,colW=(w/2)-28;
-    drawInlineInfoRow(commands,docType==='invoice'?'BILL TO':'CUSTOMER',clean(row.customerName||'Customer'),left,y+22,colW);
+    drawInlineInfoRow(commands,docType==='quotation'?'QUOTE TO':(docType==='invoice'?'BILL TO':'CUSTOMER'),clean(row.customerName||'Customer'),left,y+22,colW);
     drawInlineInfoRow(commands,'PHONE',clean(row.customerPhone)||'-',left,y+42,colW);
     drawInlineInfoRow(commands,'EMAIL',clean(row.customerEmail)||'-',left,y+62,colW);
-    drawInlineInfoRow(commands,docType==='invoice'?'INVOICE NO.':'RECEIPT NO.',documentNumber(row,docType),right,y+22,colW);
-    drawInlineInfoRow(commands,docType==='invoice'?'ISSUE DATE':'DATE',formatDateTime(documentDateTime(row,docType)),right,y+42,colW);
-    drawInlineInfoRow(commands,'PAYMENT METHOD',paymentMethodLabel(row),right,y+62,colW);
+    drawInlineInfoRow(commands,docType==='quotation'?'QUOTATION NO.':(docType==='invoice'?'INVOICE NO.':'RECEIPT NO.'),documentNumber(row,docType),right,y+22,colW);
+    drawInlineInfoRow(commands,docType==='quotation'?'QUOTE DATE':(docType==='invoice'?'ISSUE DATE':'DATE'),formatDateTime(documentDateTime(row,docType)),right,y+42,colW);
+    drawInlineInfoRow(commands,docType==='quotation'?'VALID UNTIL':'PAYMENT METHOD',docType==='quotation'?(clean(row.quotationValidUntil)||'Until revised'):paymentMethodLabel(row),right,y+62,colW);
     drawInlineInfoRow(commands,'ADDRESS',clean(row.customerAddress)||'-',x+14,y+91,w-28);
     drawStatusBadge(commands,row,x+w-12,y-10);
   }
@@ -304,7 +306,7 @@
       lines.push(['BALANCE DUE',amounts.due]);
       return lines;
     }
-    const finalLabel=docType==='invoice'?'TOTAL PAYABLE':(normalizedPaymentStatus(row.status)==='paid'?'TOTAL PAID':'TOTAL');
+    const finalLabel=docType==='quotation'?'TOTAL QUOTED':(docType==='invoice'?'TOTAL PAYABLE':(normalizedPaymentStatus(row.status)==='paid'?'TOTAL PAID':'TOTAL'));
     lines.push([finalLabel,number(row.gross)]); return lines;
   }
   function totalsBoxHeight(row,type){ return 22+(totalLines(row,type).length*24); }
@@ -427,7 +429,8 @@
     text(commands,'AZOBSS | www.azobss.com',MARGIN_X,805,{size:7.7,bold:true,color:[71,85,105]});
     text(commands,`Page ${pageNumber} / ${pageCount}`,PAGE_W-MARGIN_X,805,{size:7.5,align:'right',color:[71,85,105]});
     let note='';
-    if(docType==='invoice') note=normalizedPaymentStatus(row.status)==='deposit-paid'?'A 50% deposit has been received. This invoice remains open until the remaining balance is paid.':'This invoice is a request for payment and is not proof that payment has been received.';
+    if(docType==='quotation') note='This quotation is a price offer only and is not a demand for payment or proof of payment.';
+    else if(docType==='invoice') note=normalizedPaymentStatus(row.status)==='deposit-paid'?'A 50% deposit has been received. This invoice remains open until the remaining balance is paid.':'This invoice is a request for payment and is not proof that payment has been received.';
     else note=clean(row.status).toLowerCase()==='paid'?`Payment status: PAID. Computer-generated receipt${clean(row.invoiceNo)?` converted from invoice ${clean(row.invoiceNo)}`:''}.`:'This receipt does not confirm payment until its status is PAID.';
     text(commands,note,MARGIN_X,821,{size:7.2,color:[100,116,139]});
   }
@@ -463,7 +466,7 @@
       y=drawNotes(commands,row,y,preparedNotes);
     }
     if(y+18<BOTTOM_LIMIT){
-      const closing=docType==='invoice'?'Thank you. Please use the invoice number as your payment reference.':'Thank you for your purchase.';
+      const closing=docType==='quotation'?'Thank you. Please confirm acceptance before payment or work begins.':(docType==='invoice'?'Thank you. Please use the invoice number as your payment reference.':'Thank you for your purchase.');
       const closingY=Math.min(BOTTOM_LIMIT-7,y+19);
       text(commands,closing,MARGIN_X,closingY,{size:10.5,bold:true,color:[4,120,87]});
     }
@@ -529,7 +532,7 @@
     xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;parts.push(stringToBytes(xref));return concatBytes(parts);
   }
   function safeFilename(value){ return ascii(value).replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'Document'; }
-  function filename(row,type='receipt'){ const docType=normalizeDocumentType(type); const label=docType==='invoice'?'Invoice':'Receipt'; return `AZOBSS-${label}-${safeFilename(documentNumber(row,docType))}-${safeFilename(row?.customerName||'Customer').slice(0,28)}.pdf`; }
+  function filename(row,type='receipt'){ const docType=normalizeDocumentType(type); const label=docType==='quotation'?'Quotation':(docType==='invoice'?'Invoice':'Receipt'); return `AZOBSS-${label}-${safeFilename(documentNumber(row,docType))}-${safeFilename(row?.customerName||'Customer').slice(0,28)}.pdf`; }
   function createBlob(row,type='receipt'){ return new Blob([buildBytes(row,type)],{type:'application/pdf'}); }
   function createFile(row,type='receipt'){ return new File([buildBytes(row,type)],filename(row,type),{type:'application/pdf',lastModified:Date.now()}); }
   function download(row,type='receipt'){
