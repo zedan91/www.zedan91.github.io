@@ -198,6 +198,13 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .admin-add-card-btn{background:linear-gradient(135deg,#22c55e,#84cc16)!important;border-color:#22c55e!important;color:#052e16!important}
     .admin-json-btn{background:#0e1729!important;border-color:rgba(34,197,94,.42)!important;color:#e5e7eb!important;min-height:42px!important;padding:0 14px!important}
     .admin-json-btn:hover{border-color:#22c55e!important;color:#86efac!important}
+    .admin-retry-failed-btn{background:#2a1307!important;border-color:rgba(251,146,60,.55)!important;color:#fed7aa!important;min-height:42px!important;padding:0 14px!important}
+    .admin-retry-failed-btn:hover{border-color:#fb923c!important;color:#fff7ed!important}
+    .admin-import-cloud-status{display:none;flex:1 1 100%;margin-top:2px;padding:9px 12px;border:1px solid rgba(148,163,184,.24);border-radius:10px;background:rgba(15,23,42,.68);color:#cbd5e1;font-size:12px;line-height:1.45}
+    body.az-aff-admin .admin-import-cloud-status:not([hidden]){display:block}
+    .admin-import-cloud-status.is-ok{border-color:rgba(34,197,94,.45);color:#bbf7d0;background:rgba(20,83,45,.18)}
+    .admin-import-cloud-status.is-warn{border-color:rgba(251,146,60,.48);color:#fed7aa;background:rgba(124,45,18,.16)}
+    .admin-import-cloud-status.is-error{border-color:rgba(248,113,113,.48);color:#fecaca;background:rgba(127,29,29,.16)}
     .tools .search{flex:0 0 min(340px,100%)!important;max-width:340px!important}
     .card-admin-actions{position:absolute;top:14px;right:56px;display:none;align-items:center;gap:6px;z-index:7}
     body.az-aff-admin .card-admin-actions{display:flex}
@@ -1247,8 +1254,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
 <button class="chip admin-shopee-btn" id="adminShopeeOffersButton" type="button" hidden>🛒 Shopee Product Offer / Get Link</button>
 <button class="chip admin-json-btn" id="adminImportJsonButton" type="button" hidden>Import JSON (AZOBSS / Shopee)</button>
+<button class="chip admin-retry-failed-btn" id="adminRetryFailedButton" type="button" hidden>Retry Failed (0)</button>
 <button class="chip admin-json-btn" id="adminExportJsonButton" type="button" hidden>Export JSON</button>
 <input id="adminImportJsonInput" type="file" accept="application/json,.json" hidden/>
+<div class="admin-import-cloud-status" id="adminImportCloudStatus" hidden>Cloud import ready. Shopee JSON mesti berjaya disimpan ke Firestore sebelum dianggap imported.</div>
 </div>
 </section>
 <section class="grid" id="productGrid"></section>
@@ -1418,8 +1427,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const adminAddItemButton = document.getElementById('adminAddItemButton');
     const adminShopeeOffersButton = document.getElementById('adminShopeeOffersButton');
     const adminImportJsonButton = document.getElementById('adminImportJsonButton');
+    const adminRetryFailedButton = document.getElementById('adminRetryFailedButton');
     const adminExportJsonButton = document.getElementById('adminExportJsonButton');
     const adminImportJsonInput = document.getElementById('adminImportJsonInput');
+    const adminImportCloudStatus = document.getElementById('adminImportCloudStatus');
+    let failedShopeeCloudImports = [];
     const categoryTiles = Array.from(document.querySelectorAll('.category-tile'));
     const chips = Array.from(document.querySelectorAll('[data-filter]'));
     let products = [];
@@ -1567,6 +1579,8 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       adminAddItemButton.hidden = !adminMode;
       if(adminShopeeOffersButton) adminShopeeOffersButton.hidden = !adminMode;
       if(adminImportJsonButton) adminImportJsonButton.hidden = !adminMode;
+      if(adminRetryFailedButton) adminRetryFailedButton.hidden = !adminMode || failedShopeeCloudImports.length === 0;
+      if(adminImportCloudStatus) adminImportCloudStatus.hidden = !adminMode;
       if(adminExportJsonButton) adminExportJsonButton.hidden = !adminMode;
       const wasAdmin = document.body.classList.contains('az-aff-admin');
       document.body.classList.toggle('az-aff-admin', adminMode);
@@ -2212,10 +2226,114 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       return {kind:'shopee', product};
     }
 
-    function findExistingShopeeProduct(product){
+    function setImportCloudStatus(message, type = ''){
+      if(!adminImportCloudStatus) return;
+      adminImportCloudStatus.hidden = !isAdmin();
+      adminImportCloudStatus.className = 'admin-import-cloud-status' + (type ? ' is-' + type : '');
+      adminImportCloudStatus.textContent = String(message || '');
+    }
+
+    function setFailedShopeeCloudImports(items){
+      const unique = new Map();
+      for(const item of (Array.isArray(items) ? items : [])){
+        const product = item?.product || item;
+        const key = String(product?.shopeeKey || '');
+        if(key) unique.set(key, {product});
+      }
+      failedShopeeCloudImports = [...unique.values()];
+      if(adminRetryFailedButton){
+        adminRetryFailedButton.textContent = `Retry Failed (${failedShopeeCloudImports.length})`;
+        adminRetryFailedButton.hidden = !isAdmin() || failedShopeeCloudImports.length === 0;
+      }
+    }
+
+    async function loadFirestoreProductsStrict(){
+      const snap = await getDocs(query(collection(db, ADMIN_PRODUCTS_COLLECTION), orderBy('createdAt','desc')));
+      return snap.docs.map(d => normalizeProduct({...d.data(), id:d.id, source:'firestore'}));
+    }
+
+    function findExistingShopeeProduct(product, cloudProducts = null){
       const wanted = String(product?.shopeeKey || '');
       if(!wanted) return null;
+      if(Array.isArray(cloudProducts)){
+        const cloudMatch = cloudProducts.find(item => shopeeIdentityFromExisting(item) === wanted);
+        if(cloudMatch) return cloudMatch;
+      }
       return products.find(item => shopeeIdentityFromExisting(item) === wanted) || null;
+    }
+
+    async function saveShopeeProductToFirestoreStrict(product, existing = null){
+      const merged = normalizeProduct({
+        ...(existing || {}),
+        ...product,
+        id: existing?.id || product.id,
+        source: 'firestore'
+      });
+
+      if(existing?.source === 'firestore'){
+        await updateDoc(doc(db, ADMIN_PRODUCTS_COLLECTION, existing.id), {
+          ...merged,
+          source:'firestore',
+          updatedAt:serverTimestamp(),
+          updatedBy:'zedan91'
+        });
+        return {mode:'updated-firestore', cloudId:existing.id};
+      }
+
+      const ref = await addDoc(collection(db, ADMIN_PRODUCTS_COLLECTION), {
+        ...merged,
+        source:'firestore',
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp(),
+        createdBy:'zedan91',
+        updatedBy:'zedan91'
+      });
+
+      // Only remove/hide old browser/static copies AFTER Firestore confirms the write.
+      if(existing?.source === 'local') removeLocalProduct(existing.id);
+      if(existing?.source === 'static') setHiddenProductIds([...getHiddenProductIds(), existing.id]);
+
+      if(existing?.source === 'local') return {mode:'migrated-local-to-firestore', cloudId:ref.id};
+      if(existing?.source === 'static') return {mode:'replaced-static', cloudId:ref.id};
+      return {mode:'created-firestore', cloudId:ref.id};
+    }
+
+    async function importShopeeProductsStrict(productList, options = {}){
+      const list = Array.isArray(productList) ? productList : [];
+      const label = options.label || 'Importing Shopee';
+      const cloudProducts = await loadFirestoreProductsStrict();
+      const failed = [];
+      let created = 0, updated = 0;
+
+      for(let i=0;i<list.length;i++){
+        const product = list[i];
+        if(adminImportJsonButton){
+          adminImportJsonButton.disabled = true;
+          adminImportJsonButton.textContent = `${label} ${i+1}/${list.length}...`;
+        }
+        if(adminRetryFailedButton) adminRetryFailedButton.disabled = true;
+
+        const existing = findExistingShopeeProduct(product, cloudProducts);
+        try{
+          const result = await saveShopeeProductToFirestoreStrict(product, existing);
+          const saved = normalizeProduct({...product, id:result.cloudId || existing?.id || product.id, source:'firestore'});
+          const cloudIdx = cloudProducts.findIndex(item => shopeeIdentityFromExisting(item) === product.shopeeKey);
+          if(cloudIdx >= 0) cloudProducts[cloudIdx] = saved;
+          else cloudProducts.unshift(saved);
+
+          const memoryIdx = products.findIndex(item => shopeeIdentityFromExisting(item) === product.shopeeKey);
+          if(memoryIdx >= 0) products[memoryIdx] = saved;
+          else products.unshift(saved);
+
+          if(result.mode === 'created-firestore') created++;
+          else updated++;
+        }catch(error){
+          console.error('AZOBSS v1328 Shopee Firestore write failed:', product?.shopeeKey, error);
+          failed.push({product, error:String(error?.message || error || 'Firestore write failed')});
+        }
+      }
+
+      return {created, updated, failed};
     }
 
     async function saveImportedProduct(product, existing = null){
@@ -2287,29 +2405,33 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           if(!ok) return;
         }
 
-        let created=0, updated=0, localFallback=0, genericCreated=0;
-        let index=0;
-        for(const product of uniqueShopeeProducts){
-          index++;
-          if(adminImportJsonButton){
-            adminImportJsonButton.disabled = true;
-            adminImportJsonButton.textContent = `Importing Shopee ${index}/${uniqueShopeeProducts.length}...`;
+        let created=0, updated=0, genericUpdated=0, localFallback=0, genericCreated=0;
+
+        if(uniqueShopeeProducts.length){
+          setImportCloudStatus('Checking Firestore cloud catalog sebelum import...', '');
+          let strictResult;
+          try{
+            strictResult = await importShopeeProductsStrict(uniqueShopeeProducts, {label:'Importing Shopee'});
+          }catch(err){
+            setFailedShopeeCloudImports(uniqueShopeeProducts.map(product => ({product})));
+            setImportCloudStatus('❌ Firestore preflight gagal. Tiada produk Shopee dianggap imported. Semak internet / Firebase rules dan tekan Retry Failed.', 'error');
+            throw new Error('Firestore cloud catalog tidak dapat dibaca. Import Shopee dihentikan supaya tiada duplicate/local-only data. ' + (err?.message || err));
           }
-          const existing = findExistingShopeeProduct(product);
-          const result = await saveImportedProduct(product, existing);
-          if(result.mode.startsWith('updated') || result.mode === 'replaced-static') updated++;
-          else if(result.mode === 'local-fallback') localFallback++;
-          else created++;
-          // Keep the in-memory list aware of this identity during the same import so a repeated row cannot create another Firestore document.
-          if(!existing) products.unshift({...product, source:result.mode === 'local-fallback' ? 'local' : 'firestore'});
+          created = strictResult.created;
+          updated = strictResult.updated;
+          setFailedShopeeCloudImports(strictResult.failed);
+        }else{
+          setFailedShopeeCloudImports([]);
         }
 
-        // Preserve the old general AZOBSS JSON import behaviour for non-Shopee rows, but dedupe by exact id.
+        // Preserve general AZOBSS JSON import behaviour for non-Shopee rows.
+        // v1328 strict-cloud enforcement applies specifically to Shopee imports.
         for(const product of generic){
           const existing = products.find(item => String(item.id || '') === String(product.id || '')) || null;
           if(existing){
-            await saveImportedProduct(product, existing);
-            updated++;
+            const result = await saveImportedProduct(product, existing);
+            if(result.mode === 'local-fallback') localFallback++;
+            else genericUpdated++;
           }else{
             const result = await saveImportedProduct(product, null);
             if(result.mode === 'local-fallback') localFallback++;
@@ -2319,17 +2441,28 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
 
         adminImportJsonInput.value = '';
         await loadProducts();
+        const failedCount = failedShopeeCloudImports.length;
+        const cloudSaved = created + updated;
         const lines = [
           `Import selesai.`,
-          uniqueShopeeProducts.length ? `Shopee: ${created} baru, ${updated} update.` : '',
-          generic.length ? `AZOBSS generic: ${genericCreated} baru.` : '',
-          skipped.length ? `Skipped Shopee: ${skipped.length}.` : '',
+          uniqueShopeeProducts.length ? `Shopee Cloud Saved: ${cloudSaved} (${created} baru, ${updated} update).` : '',
           duplicateInsideFile ? `Duplicate dalam fail dibuang: ${duplicateInsideFile}.` : '',
-          localFallback ? `Firestore gagal untuk ${localFallback} item; disimpan local sementara.` : ''
+          skipped.length ? `Skipped Shopee: ${skipped.length}.` : '',
+          failedCount ? `Failed Firestore: ${failedCount}. Tekan Retry Failed (${failedCount}).` : (uniqueShopeeProducts.length ? `Failed Firestore: 0.` : ''),
+          generic.length ? `AZOBSS generic: ${genericCreated} baru, ${genericUpdated} update${localFallback ? `, ${localFallback} local fallback` : ''}.` : ''
         ].filter(Boolean);
+
+        if(uniqueShopeeProducts.length){
+          setImportCloudStatus(
+            failedCount
+              ? `⚠ Shopee Cloud: ${cloudSaved} saved • ${created} new • ${updated} updated • ${duplicateInsideFile} duplicate file • ${skipped.length} skipped • ${failedCount} FAILED Firestore. Tiada failed item disimpan sebagai local product.`
+              : `✅ Shopee Cloud: ${cloudSaved} saved • ${created} new • ${updated} updated • ${duplicateInsideFile} duplicate file • ${skipped.length} skipped • Failed Firestore: 0. Semua imported item disahkan cloud-saved.`,
+            failedCount ? 'warn' : 'ok'
+          );
+        }
         alert(lines.join('\n'));
       }catch(err){
-        console.error('AZOBSS v1327 JSON import error:', err);
+        console.error('AZOBSS v1328 JSON import error:', err);
         alert('Import JSON gagal: ' + (err?.message || 'format tidak sah / data tidak disokong.'));
       }finally{
         if(adminImportJsonButton){
@@ -2337,6 +2470,45 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           adminImportJsonButton.textContent = originalButtonText;
         }
         if(adminImportJsonInput) adminImportJsonInput.value = '';
+      }
+    });
+
+    adminRetryFailedButton?.addEventListener('click', async () => {
+      if(!isAdmin()) return alert('Admin only.');
+      if(!failedShopeeCloudImports.length) return;
+
+      const queue = failedShopeeCloudImports.map(item => item.product).filter(Boolean);
+      if(!queue.length){ setFailedShopeeCloudImports([]); return; }
+      const ok = confirm(`Retry ${queue.length} produk Shopee yang gagal save Firestore?\n\nTiada fallback local akan digunakan.`);
+      if(!ok) return;
+
+      const originalImportText = adminImportJsonButton?.textContent || 'Import JSON (AZOBSS / Shopee)';
+      try{
+        setImportCloudStatus(`Retrying ${queue.length} failed Firestore item...`, 'warn');
+        const result = await importShopeeProductsStrict(queue, {label:'Retry Firestore'});
+        setFailedShopeeCloudImports(result.failed);
+        await loadProducts();
+        const remaining = failedShopeeCloudImports.length;
+        const saved = result.created + result.updated;
+        setImportCloudStatus(
+          remaining
+            ? `⚠ Retry: ${saved} berjaya cloud-save • ${remaining} masih gagal Firestore. Kamu boleh tekan Retry Failed lagi selepas semak connection/rules.`
+            : `✅ Retry selesai: ${saved} item berjaya cloud-save • Failed Firestore: 0.`,
+          remaining ? 'warn' : 'ok'
+        );
+        alert(remaining
+          ? `Retry selesai.\nBerjaya cloud-save: ${saved}\nMasih gagal Firestore: ${remaining}`
+          : `Retry selesai.\nBerjaya cloud-save: ${saved}\nFailed Firestore: 0`);
+      }catch(err){
+        console.error('AZOBSS v1328 Retry Failed error:', err);
+        setImportCloudStatus('❌ Retry tidak dapat membaca Firestore cloud catalog. Queue gagal masih dikekalkan; cuba semula selepas connection/rules pulih.', 'error');
+        alert('Retry Failed tidak berjaya: ' + (err?.message || err));
+      }finally{
+        if(adminImportJsonButton){
+          adminImportJsonButton.disabled = false;
+          adminImportJsonButton.textContent = originalImportText;
+        }
+        if(adminRetryFailedButton) adminRetryFailedButton.disabled = false;
       }
     });
 

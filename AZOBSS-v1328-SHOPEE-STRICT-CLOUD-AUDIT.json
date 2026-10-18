@@ -1,0 +1,13 @@
+{
+  "version": 1328,
+  "baseline": 1327,
+  "scope": "/affiliate-shop/",
+  "changes": [
+    "Strict Firestore preflight for Shopee JSON import",
+    "No local product fallback for failed Shopee rows",
+    "Retry Failed button and cloud status summary",
+    "Local/static Shopee migration only after confirmed Firestore write",
+    "Generic AZOBSS import preserved"
+  ],
+  "packageVersion": "1.0.1328"
+}
