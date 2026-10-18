@@ -188,6 +188,21 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .category-icon img{width:100%;height:100%;object-fit:contain;display:block;background:transparent;border-radius:50%}
     .category-all-icon{background:#07111f;color:#22c55e;font-size:23px}
     .category-name{font-size:12px;line-height:1.2}
+
+    /* AZOBSS v1332 - Affiliate seller trust notice */
+    .affiliate-trust-note{
+      display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;
+      margin:16px 0 12px;padding:14px 16px;border:1px solid rgba(34,197,94,.30);
+      border-radius:14px;background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(8,17,31,.96) 42%,rgba(8,17,31,.96));
+      box-shadow:0 12px 30px rgba(0,0,0,.16);color:#cbd5e1;
+    }
+    .affiliate-trust-note-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.28);font-size:20px;line-height:1}
+    .affiliate-trust-note h2{margin:0 0 5px;color:#f8fafc;font-size:15px;line-height:1.25;font-weight:900;letter-spacing:.01em}
+    .affiliate-trust-note p{margin:0;font-size:13px;line-height:1.65;color:#cbd5e1}
+    .affiliate-trust-note strong{color:#e2e8f0}
+    .affiliate-trust-note .affiliate-trust-note-small{display:block;margin-top:5px;color:#94a3b8;font-size:11.5px;line-height:1.5}
+    @media(max-width:640px){.affiliate-trust-note{grid-template-columns:1fr;padding:13px 14px}.affiliate-trust-note-icon{width:34px;height:34px}}
+
     .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
     .search{flex:1 1 280px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#08111f;color:#fff;padding:0 14px;font-weight:700}
     .chip{border:1px solid var(--line);border-radius:999px;background:#0e1729;color:#e5e7eb;padding:0 14px;min-height:42px;font-weight:800;cursor:pointer}
@@ -211,6 +226,19 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .card-admin-btn{width:30px;height:30px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(2,6,23,.72);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.22)}
     .card-admin-btn:hover{border-color:#22c55e;color:#86efac}
     .card-admin-btn.delete:hover{border-color:#ef4444;color:#fecaca}
+    /* AZOBSS v1333: Affiliate Shop uses its own local bookmark system.
+       It is intentionally separate from the global /Bookmarks/ navbar collection. */
+    .affiliate-bookmarks-filter{display:inline-flex!important;align-items:center;gap:7px}
+    .affiliate-bookmarks-filter.is-active{background:rgba(250,204,21,.16)!important;border-color:#facc15!important;color:#fde68a!important;box-shadow:0 0 0 1px rgba(250,204,21,.08) inset}
+    .affiliate-bookmark-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:rgba(148,163,184,.15);color:#cbd5e1;font-size:11px;font-weight:950;line-height:1}
+    .affiliate-bookmarks-filter.is-active .affiliate-bookmark-count{background:#facc15;color:#422006}
+    .affiliate-local-bookmark-btn{position:absolute;top:14px;right:14px;z-index:8;width:34px;height:34px;border-radius:999px;border:1px solid rgba(56,189,248,.34);background:rgba(2,6,23,.78);color:#dbeafe;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.22);transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease}
+    .affiliate-local-bookmark-btn:hover{transform:scale(1.06);border-color:#38bdf8;background:rgba(14,165,233,.13)}
+    .affiliate-local-bookmark-btn svg{width:18px;height:18px;pointer-events:none}
+    .affiliate-local-bookmark-btn path{fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+    .affiliate-local-bookmark-btn.is-bookmarked{border-color:#facc15;background:rgba(250,204,21,.17);color:#facc15}
+    .affiliate-local-bookmark-btn.is-bookmarked path{fill:currentColor;stroke:currentColor}
+    @media(max-width:760px){.affiliate-local-bookmark-btn{top:12px;right:12px;width:32px;height:32px}.affiliate-local-bookmark-btn svg{width:17px;height:17px}}
     @media(max-width:760px){.tools .search{flex:1 1 100%!important;max-width:none!important}.card-admin-actions{top:12px;right:50px}.card-admin-btn{width:28px;height:28px;font-size:13px}.admin-json-btn,.admin-add-card-btn{min-height:38px!important;padding:0 12px!important}}
     .admin-product-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px)}
     .admin-product-modal.is-open{display:flex}
@@ -1236,9 +1264,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </button>
 </div>
 </div>
+<div class="affiliate-trust-note" role="note" aria-label="Pilihan Kedai Popular dan Dipercayai">
+  <div class="affiliate-trust-note-icon" aria-hidden="true">✓</div>
+  <div>
+    <h2>Pilihan Kedai Popular &amp; Dipercayai</h2>
+    <p>Produk dan pautan kedai yang dipaparkan di sini dipilih berdasarkan <strong>rating yang baik, majoriti ulasan pelanggan yang positif serta rekod jualan yang tinggi</strong>. Kami utamakan pilihan yang lebih diyakini ramai pembeli untuk memudahkan kamu mencari produk yang berbaloi dan sesuai.<span class="affiliate-trust-note-small"><strong>Nota:</strong> Rating, ulasan, harga dan jumlah jualan boleh berubah dari semasa ke semasa mengikut platform penjual.</span></p>
+  </div>
+</div>
 <div class="tools">
 <input class="search" id="searchInput" placeholder="Search products..." type="search"/>
 <button class="chip is-active" data-filter="all" type="button">All</button>
+<button class="chip affiliate-bookmarks-filter" id="myFavouriteButton" type="button" aria-pressed="false" title="Show only products bookmarked in Affiliate Shop">
+  <span aria-hidden="true">🔖</span> Bookmarked <span class="affiliate-bookmark-count" id="affiliateBookmarkCount">0</span>
+</button>
 
 <label class="sort-control" for="categorySortSelect">Sort by:
   <select id="categorySortSelect" onchange="syncCategoryFilter(this.value)" aria-label="Sort by">
@@ -1443,6 +1481,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const categorySearch = document.getElementById('categorySearch');
     const categorySortSelect = document.getElementById('categorySortSelect');
     const myFavouriteButton = document.getElementById('myFavouriteButton');
+    const affiliateBookmarkCount = document.getElementById('affiliateBookmarkCount');
     const adminAddItemButton = document.getElementById('adminAddItemButton');
     const adminShopeeOffersButton = document.getElementById('adminShopeeOffersButton');
     const adminImportJsonButton = document.getElementById('adminImportJsonButton');
@@ -1549,8 +1588,50 @@ function esc(value){
       saveLocalAdminProductsRaw(getLocalAdminProductsRaw().filter(x => String(x.id || '') !== key));
     }
 
+    function affiliateBookmarkStorageKey(){
+      const currentUser = getCurrentUserObject();
+      const raw = String(currentUser?.usernameKey || currentUser?.username || currentUser?.email || 'guest').trim().toLowerCase();
+      const safe = raw.replace(/[^a-z0-9@._-]+/g,'-').replace(/^-+|-+$/g,'') || 'guest';
+      return 'azobss_affiliate_bookmarks_v1333:' + safe;
+    }
     function getFavouriteIds(){
-      try{return JSON.parse(localStorage.getItem('azobss_liked_products') || '[]');}catch(e){return [];}
+      try{
+        const data = JSON.parse(localStorage.getItem(affiliateBookmarkStorageKey()) || '[]');
+        return Array.isArray(data) ? Array.from(new Set(data.map(String).filter(Boolean))) : [];
+      }catch(e){ return []; }
+    }
+    function setFavouriteIds(ids){
+      try{
+        localStorage.setItem(affiliateBookmarkStorageKey(), JSON.stringify(Array.from(new Set((ids || []).map(String).filter(Boolean)))));
+      }catch(e){ console.warn('Affiliate bookmark save failed:', e); }
+    }
+    function toggleAffiliateBookmark(id){
+      const key = String(id || '');
+      if(!key) return false;
+      const ids = getFavouriteIds();
+      const set = new Set(ids);
+      let active;
+      if(set.has(key)){ set.delete(key); active = false; }
+      else{ set.add(key); active = true; }
+      setFavouriteIds(Array.from(set));
+      updateAffiliateBookmarkFilterUI();
+      return active;
+    }
+    function pruneAffiliateBookmarks(){
+      if(!products.length) return;
+      const valid = new Set(products.map(item => String(item?.id || '')).filter(Boolean));
+      const before = getFavouriteIds();
+      const after = before.filter(id => valid.has(String(id)));
+      if(after.length !== before.length) setFavouriteIds(after);
+    }
+    function updateAffiliateBookmarkFilterUI(){
+      const count = getFavouriteIds().length;
+      if(affiliateBookmarkCount) affiliateBookmarkCount.textContent = String(count);
+      if(myFavouriteButton){
+        myFavouriteButton.classList.toggle('is-active', favouriteOnly);
+        myFavouriteButton.setAttribute('aria-pressed', favouriteOnly ? 'true' : 'false');
+        myFavouriteButton.title = favouriteOnly ? 'Showing bookmarked Affiliate Shop products' : 'Show only products bookmarked in Affiliate Shop';
+      }
     }
 
     function hasSeparateAffiliatePrice(item){
@@ -1694,19 +1775,22 @@ function esc(value){
       const queryText = searchInput.value.trim().toLowerCase();
       const sortCategory = categorySortSelect?.value || 'all';
       const favouriteIds = getFavouriteIds();
+      const favouriteSet = new Set(favouriteIds.map(String));
       const filtered = products.filter(item => {
         const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
         const categoryOk = activeFilter === 'all' || item.category === activeFilter;
         const sortOk = true;
-        const favOk = !favouriteOnly || favouriteIds.includes(item.id) || localStorage.getItem('azobss_like_' + item.id) === '1';
+        const favOk = !favouriteOnly || favouriteSet.has(String(item.id));
       
         return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
       });
+      updateAffiliateBookmarkFilterUI();
 
       const adminMode = isAdmin();
       document.body.classList.toggle('az-aff-admin', adminMode);
       grid.innerHTML = filtered.map(item => `
         <article class="card" data-product-id="${esc(item.id)}" data-product-source="${esc(item.source || 'static')}" data-category="${esc(item.category)}">
+          <button class="affiliate-local-bookmark-btn${favouriteSet.has(String(item.id)) ? ' is-bookmarked' : ''}" type="button" data-aff-local-bookmark="${esc(item.id)}" aria-pressed="${favouriteSet.has(String(item.id)) ? 'true' : 'false'}" title="${favouriteSet.has(String(item.id)) ? 'Remove from Affiliate Shop bookmarks' : 'Bookmark in Affiliate Shop'}" aria-label="${favouriteSet.has(String(item.id)) ? 'Remove from Affiliate Shop bookmarks' : 'Bookmark in Affiliate Shop'}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></button>
           ${adminMode ? `<div class="card-admin-actions" aria-label="Admin product actions"><button class="card-admin-btn edit" type="button" data-aff-edit="${esc(item.id)}" title="Edit">✎</button><button class="card-admin-btn delete" type="button" data-aff-delete="${esc(item.id)}" title="Delete">🗑</button></div>` : ''}
           <div class="top">
             <div class="icon${item.image ? ' has-image' : ''}">${item.image ? `<img src="${esc(item.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : esc(item.icon || 'AZ')}</div>
@@ -1773,6 +1857,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           merged.push(item);
         });
       products = merged;
+      pruneAffiliateBookmarks();
       render();
     }
 
@@ -1787,7 +1872,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     }));
     myFavouriteButton?.addEventListener('click', () => {
       favouriteOnly = !favouriteOnly;
-      myFavouriteButton.classList.toggle('is-active', favouriteOnly);
+      updateAffiliateBookmarkFilterUI();
       render();
     });
     categorySortSelect?.addEventListener('change', () => {
@@ -2254,6 +2339,19 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     });
 
     grid?.addEventListener('click', async e => {
+      const bookmarkBtn = e.target.closest('[data-aff-local-bookmark]');
+      if(bookmarkBtn){
+        e.preventDefault();
+        e.stopPropagation();
+        const bookmarkId = String(bookmarkBtn.dataset.affLocalBookmark || '');
+        const nowBookmarked = toggleAffiliateBookmark(bookmarkId);
+        bookmarkBtn.classList.toggle('is-bookmarked', nowBookmarked);
+        bookmarkBtn.setAttribute('aria-pressed', nowBookmarked ? 'true' : 'false');
+        bookmarkBtn.title = nowBookmarked ? 'Remove from Affiliate Shop bookmarks' : 'Bookmark in Affiliate Shop';
+        bookmarkBtn.setAttribute('aria-label', bookmarkBtn.title);
+        if(favouriteOnly && !nowBookmarked) render();
+        return;
+      }
       const showMoreBtn = e.target.closest('[data-aff-show-more]');
       if(showMoreBtn){
         e.preventDefault();
@@ -2692,7 +2790,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     refreshAdminState();
     loadProducts();
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=1323" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1323" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1333"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

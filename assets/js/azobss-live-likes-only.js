@@ -23,6 +23,13 @@ window.__AZOBSS_LIKES_RUNTIME__ = 'likes-only-v1272';
    - Uses one Firestore path only: users/{usernameKey}/likes/{itemId}
    - Reads once, writes only when user toggles a like. No live listener. */
 (function(){
+  // AZOBSS v1333: Affiliate Shop owns a separate, fast local bookmark/filter system.
+  // Do not inject or sync Affiliate Shop cards into the global navbar /Bookmarks/ collection.
+  const azRoute1333 = String(location.pathname || '').toLowerCase().replace(/\/+$/,'');
+  if(azRoute1333 === '/affiliate-shop' || azRoute1333 === '/affiliate-shop/index.html') {
+    window.__AZOBSS_AFFILIATE_BOOKMARK_MODE__ = 'local-v1333';
+    return;
+  }
   const STYLE_ID = 'azobss-low-quota-like-style';
   const CACHE_PREFIX = 'azobss_low_quota_likes:';
   const PAGE_MAP = {
