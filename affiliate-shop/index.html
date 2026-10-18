@@ -255,7 +255,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .admin-product-save,.admin-product-cancel{border:0;border-radius:999px;padding:11px 16px;font-weight:950;cursor:pointer}
     .admin-product-save{background:#22c55e;color:#052e16}
     .admin-product-cancel{background:#172033;color:#e5e7eb;border:1px solid var(--line)}
-    /* AZOBSS v1334 - compact marketplace card: large image, short copy, price, rating and sold count. */
+    /* AZOBSS v1335 - marketplace card stats sync: rating count + sold count with robust Shopee backfill. */
     .card-actions{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:auto}
     .card-open{display:inline-flex;align-items:center;justify-content:center;min-height:34px;border-radius:9px;background:#2563eb;color:#fff;padding:7px 12px;font-weight:950;font-size:12px;text-decoration:none;white-space:nowrap}
     .card-open:hover{background:#1d4ed8}
@@ -274,9 +274,10 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .card-show-more:hover{color:#93c5fd}
     .card-price-main{margin-top:1px;color:#ff6b3d;font-size:17px;line-height:1.2;font-weight:1000;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .card-price-main.is-unavailable{color:#94a3b8;font-size:13px;font-weight:850}
-    .card-stats{display:flex;align-items:center;gap:8px;min-height:22px;color:#d7e0eb;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden}
+    .card-stats{display:flex;align-items:center;gap:6px;min-height:22px;color:#d7e0eb;font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden}
     .card-rating{display:inline-flex;align-items:center;gap:3px;color:#fde68a}
     .card-rating-count{color:#94a3b8;font-size:10.5px;font-weight:750}
+    .card-stat-sep{color:#64748b;font-size:10px;font-weight:900}
     .card-sold{color:#dbe5f1;overflow:hidden;text-overflow:ellipsis}
     .card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(148,163,184,.10)}
     .card-source{min-width:0;color:#94a3b8;font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1556,14 +1557,14 @@ function esc(value){
         buttonText: item.buttonText || (isFree ? 'Download Now' : 'Buy Now'),
         source: item.source || 'static',
         ratingCount: item.ratingCount ?? item.rating_count ?? '',
-        historicalSold: item.historicalSold ?? item.historical_sold ?? item.soldCount ?? item.sold_count ?? '',
+        historicalSold: item.historicalSold ?? item.historical_sold ?? item.shopeeSold ?? item.soldCount ?? item.sold_count ?? item.sold ?? item.historical_sold_text ?? item.sold_text ?? '',
         shopeeKey: String(item.shopeeKey || ''),
         shopeeItemId: String(item.shopeeItemId || item.itemId || item.item_id || ''),
         shopeeShopId: String(item.shopeeShopId || item.shopId || item.shop_id || ''),
         shopeeRetailUrl: String(item.shopeeRetailUrl || item.retail_url || ''),
         shopeeAffiliateUrl: String(item.shopeeAffiliateUrl || item.affiliate_url || item.buy_now_url || item.productOfferLink || ''),
         shopeeShopName: String(item.shopeeShopName || item.shopName || ''),
-        shopeeSold: item.shopeeSold ?? item.historical_sold ?? item.soldCount ?? item.sold_count ?? '',
+        shopeeSold: item.shopeeSold ?? item.historicalSold ?? item.historical_sold ?? item.soldCount ?? item.sold_count ?? item.sold ?? item.historical_sold_text ?? item.sold_text ?? '',
         shopeeRating: item.shopeeRating ?? item.rating ?? item.ratingStar ?? '',
         shopeeImportSource: String(item.shopeeImportSource || item.affiliate_link_source || ''),
         shopeeImportedAt: String(item.shopeeImportedAt || '')
@@ -1669,11 +1670,11 @@ function esc(value){
         const match = [item?.meta,item?.desc].filter(Boolean).join(' ').match(/([0-5](?:\.\d+)?)\s*\/\s*5|Rating\s*:\s*([0-5](?:\.\d+)?)/i);
         rating = Number(match?.[1] || match?.[2]);
       }
-      const rawCount = item?.ratingCount;
-      let count = String(rawCount ?? '').trim() === '' ? NaN : Number(rawCount);
+      const rawCount = item?.ratingCount ?? item?.rating_count;
+      let count = parseMarketplaceCount(rawCount);
       if(!Number.isFinite(count) || count < 0){
-        const match = String(item?.meta || '').match(/([0-9][0-9,]*)\s*(?:penilaian|ratings?)/i);
-        count = match ? Number(match[1].replace(/,/g,'')) : NaN;
+        const match = [item?.meta,item?.desc].filter(Boolean).join(' ').match(/([0-9][0-9,.]*\s*[kKmM]?)\s*(?:penilaian|ratings?)/i);
+        count = match ? parseMarketplaceCount(match[1]) : NaN;
       }
       return {rating:Number.isFinite(rating) && rating > 0 ? rating : null,count:Number.isFinite(count) && count >= 0 ? count : null};
     }
@@ -1686,15 +1687,50 @@ function esc(value){
       return Math.round(num).toLocaleString('en-MY');
     }
 
+    function parseMarketplaceCount(value){
+      if(value == null) return NaN;
+      let text = String(value).trim();
+      if(!text) return NaN;
+      text = text.replace(/\+/g,'').replace(/\b(?:sold|terjual|jualan|ratings?|penilaian)\b/ig,'').trim();
+      const direct = Number(text.replace(/,/g,''));
+      if(Number.isFinite(direct) && direct >= 0) return direct;
+      const compact = text.match(/^([0-9]+(?:\.[0-9]+)?)\s*([kKmM])$/);
+      if(compact){
+        const base = Number(compact[1]);
+        const mult = /m/i.test(compact[2]) ? 1000000 : 1000;
+        return Number.isFinite(base) ? base * mult : NaN;
+      }
+      return NaN;
+    }
+
     function productSoldInfo(item){
-      const raw = item?.historicalSold ?? item?.shopeeSold ?? '';
-      const rawText = String(raw ?? '').trim();
-      const numeric = rawText === '' ? NaN : Number(rawText.replace(/,/g,''));
-      if(Number.isFinite(numeric) && numeric >= 0) return {text:compactNumber(numeric),full:Math.round(numeric).toLocaleString('en-MY')};
-      const text = rawText;
-      if(text) return {text,full:text};
-      const match = String(item?.desc || '').match(/Sold\s*:\s*([^•|]+)/i);
-      return match ? {text:match[1].trim(),full:match[1].trim()} : {text:'',full:''};
+      const candidates = [
+        item?.historicalSold, item?.shopeeSold, item?.historical_sold,
+        item?.soldCount, item?.sold_count, item?.sold,
+        item?.historical_sold_text, item?.sold_text
+      ];
+      for(const candidate of candidates){
+        const rawText = String(candidate ?? '').trim();
+        if(!rawText) continue;
+        const numeric = parseMarketplaceCount(rawText);
+        if(Number.isFinite(numeric) && numeric >= 0){
+          return {text:compactNumber(numeric),full:Math.round(numeric).toLocaleString('en-MY'),value:numeric};
+        }
+        const cleaned = rawText.replace(/^\s*(?:sold|terjual|jualan)\s*:?\s*/i,'').replace(/\s*(?:sold|terjual)\s*$/i,'').trim();
+        if(cleaned) return {text:cleaned,full:cleaned,value:null};
+      }
+      const source = [item?.meta,item?.desc].filter(Boolean).join(' • ');
+      const labelled = source.match(/(?:Sold|Terjual|Jualan)\s*:\s*([0-9][0-9,.]*\s*[kKmM]?)/i);
+      const inline = source.match(/([0-9][0-9,.]*\s*[kKmM]?)\s*(?:sold|terjual)\b/i);
+      const fallback = labelled?.[1] || inline?.[1] || '';
+      if(fallback){
+        const numeric = parseMarketplaceCount(fallback);
+        if(Number.isFinite(numeric) && numeric >= 0){
+          return {text:compactNumber(numeric),full:Math.round(numeric).toLocaleString('en-MY'),value:numeric};
+        }
+        return {text:String(fallback).trim(),full:String(fallback).trim(),value:null};
+      }
+      return {text:'',full:'',value:null};
     }
 
     function productSourceText(item){
@@ -1869,7 +1905,7 @@ function esc(value){
         const priceText = productPriceText(item);
         const ratingText = ratingInfo.rating == null ? '—' : ratingInfo.rating.toFixed(1);
         const ratingCountText = ratingInfo.count == null ? '' : compactNumber(ratingInfo.count);
-        const soldText = soldInfo.text || '—';
+        const soldText = soldInfo.text || '';
         const priceUnavailable = priceText === 'Lihat harga di kedai';
         return `
         <article class="card" data-product-id="${esc(item.id)}" data-product-source="${esc(item.source || 'static')}" data-category="${esc(item.category)}">
@@ -1888,7 +1924,7 @@ function esc(value){
             <div class="card-price-main${priceUnavailable ? ' is-unavailable' : ''}">${esc(priceText)}</div>
             <div class="card-stats">
               <span class="card-rating" title="Rating${ratingInfo.count != null ? ' · ' + Math.round(ratingInfo.count).toLocaleString('en-MY') + ' penilaian' : ''}">★ ${esc(ratingText)}${ratingCountText ? ` <span class="card-rating-count">(${esc(ratingCountText)})</span>` : ''}</span>
-              <span class="card-sold" title="${esc(soldInfo.full || 'Jumlah jualan tidak tersedia')}">${esc(soldText)} sold</span>
+              ${soldText ? `<span class="card-stat-sep" aria-hidden="true">•</span><span class="card-sold" title="${esc(soldInfo.full || '')} sold">${esc(soldText)} sold</span>` : ''}
             </div>
             <div class="card-bottom">
               <span class="card-source" title="${esc(productSourceText(item))}">${esc(productSourceText(item))}</span>
@@ -2509,6 +2545,8 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     function shopeeIdentityFromExisting(item){
       const key = String(item?.shopeeKey || '').trim();
       if(/^shopee:MY:\d+:\d+$/.test(key)) return key;
+      const logicalId = String(item?.id || '').trim();
+      if(/^shopee:MY:\d+:\d+$/.test(logicalId)) return logicalId;
       const shopId = String(item?.shopeeShopId || '').trim();
       const itemId = String(item?.shopeeItemId || '').trim();
       if(/^\d+$/.test(shopId) && /^\d+$/.test(itemId)) return `shopee:MY:${shopId}:${itemId}`;
@@ -2534,9 +2572,13 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       if(!isShopeeAffiliateUrl(affiliateUrl)) return {kind:'shopee', skip:'Affiliate Get Link tiada / tidak sah'};
 
       const shopName = String(row.shopName || card.shop_name || '').trim();
-      const sold = row.historical_sold ?? row.soldCount ?? row.sold_count ?? card.historical_sold_text ?? card.sold_text ?? card.historical_sold ?? card.sold ?? '';
+      const soldRaw = row.historical_sold ?? row.historicalSold ?? row.shopeeSold ?? row.soldCount ?? row.sold_count ?? row.sold ?? row.historical_sold_text ?? row.sold_text ?? card.historical_sold ?? card.sold ?? card.historical_sold_text ?? card.sold_text ?? '';
+      const soldNumeric = parseMarketplaceCount(soldRaw);
+      const sold = Number.isFinite(soldNumeric) ? soldNumeric : soldRaw;
       const rating = row.rating ?? row.ratingStar ?? card.item_rating?.rating_star ?? '';
-      const ratingCount = row.rating_count ?? row.ratingCount ?? card.item_rating?.rating_count ?? '';
+      const ratingCountRaw = row.rating_count ?? row.ratingCount ?? card.item_rating?.rating_count ?? '';
+      const ratingCountNumeric = parseMarketplaceCount(ratingCountRaw);
+      const ratingCount = Number.isFinite(ratingCountNumeric) ? ratingCountNumeric : ratingCountRaw;
       const image = shopeeImageUrl(row.imageUrl || row.image_url || row.image || card.image || (Array.isArray(card.images) ? card.images[0] : ''));
       const rawPriceMyr = row.price_myr ?? row.priceMyr ?? '';
       const numericPriceMyr = String(rawPriceMyr).trim() === '' ? NaN : Number(rawPriceMyr);
@@ -2684,7 +2726,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           if(result.mode === 'created-firestore') created++;
           else updated++;
         }catch(error){
-          console.error('AZOBSS v1328 Shopee Firestore write failed:', product?.shopeeKey, error);
+          console.error('AZOBSS v1335 Shopee Firestore write failed:', product?.shopeeKey, error);
           failed.push({product, error:String(error?.message || error || 'Firestore write failed')});
         }
       }
@@ -2755,6 +2797,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           const ok = confirm(
             `Import ${uniqueShopeeProducts.length} produk Shopee?\n\n` +
             `• Same Shop ID + Item ID akan UPDATE, bukan duplicate.\n` +
+            `• Harga, rating, jumlah penilaian dan jumlah sold produk lama akan diselaraskan semula daripada JSON terbaru.\n` +
             `• Buy Now hanya guna affiliate Get Link s.shopee.com.my / shope.ee.\n` +
             `• ${skipped.length} row Shopee tanpa affiliate link/medan wajib akan skip.`
           );
@@ -2812,13 +2855,13 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
           setImportCloudStatus(
             failedCount
               ? `⚠ Shopee Cloud: ${cloudSaved} saved • ${created} new • ${updated} updated • ${duplicateInsideFile} duplicate file • ${skipped.length} skipped • ${failedCount} FAILED Firestore. Tiada failed item disimpan sebagai local product.`
-              : `✅ Shopee Cloud: ${cloudSaved} saved • ${created} new • ${updated} updated • ${duplicateInsideFile} duplicate file • ${skipped.length} skipped • Failed Firestore: 0. Semua imported item disahkan cloud-saved.`,
+              : `✅ Shopee Cloud: ${cloudSaved} saved • ${created} new • ${updated} updated • ${duplicateInsideFile} duplicate file • ${skipped.length} skipped • Failed Firestore: 0. Harga/rating/penilaian/sold telah disync daripada JSON terbaru.`,
             failedCount ? 'warn' : 'ok'
           );
         }
         alert(lines.join('\n'));
       }catch(err){
-        console.error('AZOBSS v1328 JSON import error:', err);
+        console.error('AZOBSS v1335 JSON import error:', err);
         alert('Import JSON gagal: ' + (err?.message || 'format tidak sah / data tidak disokong.'));
       }finally{
         if(adminImportJsonButton){

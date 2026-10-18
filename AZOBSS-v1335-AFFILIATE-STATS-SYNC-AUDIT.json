@@ -1,0 +1,17 @@
+{
+  "version": "1.0.1335",
+  "feature": "Affiliate marketplace rating/rating-count/sold synchronization",
+  "validation_source": "azobss-affiliate-shop-2000.json",
+  "source_rows": 2000,
+  "unique_shopee_keys": 2000,
+  "rows_with_historical_sold": 2000,
+  "rows_with_rating": 2000,
+  "rows_with_rating_count": 2000,
+  "rows_with_price_myr": 2000,
+  "source_json_embedded_in_website": false,
+  "notes": [
+    "The JSON was used only to validate the importer field names and coverage.",
+    "Re-importing the latest JSON updates matching Firestore products by Shopee identity and refreshes price/rating/rating-count/sold.",
+    "Cards no longer render an em-dash sold placeholder when sold data is absent."
+  ]
+}
