@@ -19237,6 +19237,144 @@ function azShopeeMetadataMerge(primary, secondary){
   if(!out.priceLabel) out.priceLabel=azShopeePriceLabel(out.priceMin,out.priceMax,out.currency||'MYR');
   return out;
 }
+
+
+// AZOBSS v1344: Upgrade & Parts live market price engine.
+// Uses the existing Shopee Affiliate Open API credentials already configured for AZOBSS.
+// Public page receives only aggregated market ranges; the App Secret never leaves the backend.
+const AZ_UPGRADE_PRICE_CACHE_MS = Math.max(15 * 60 * 1000, Number(process.env.UPGRADE_PRICE_CACHE_MS || 6 * 60 * 60 * 1000) || 6 * 60 * 60 * 1000);
+const AZ_UPGRADE_PRICE_LIMIT = Math.max(8, Math.min(30, Number(process.env.UPGRADE_PRICE_SAMPLE_LIMIT || 20) || 20));
+const AZ_UPGRADE_PRICE_DEFS = [
+  {key:'ram.8GB', label:'8GB', query:'8GB RAM DDR4 DDR5 SODIMM DIMM', min:70, max:1200, include:[/\b(?:8\s*GB|8GB)\b/i,/(?:\bRAM\b|memory|sodimm|dimm)/i], exclude:[/\b(?:laptop|notebook|desktop pc|gaming pc|motherboard|mini pc)\b/i]},
+  {key:'ram.16GB', label:'16GB', query:'16GB RAM DDR4 DDR5 SODIMM DIMM', min:120, max:2200, include:[/\b(?:16\s*GB|16GB)\b/i,/(?:\bRAM\b|memory|sodimm|dimm)/i], exclude:[/\b(?:laptop|notebook|desktop pc|gaming pc|motherboard|mini pc)\b/i]},
+  {key:'ram.32GB', label:'32GB', query:'32GB RAM DDR4 DDR5 2x16GB SODIMM DIMM', min:220, max:4200, include:[/(?:\b32\s*GB\b|\b32GB\b|2\s*[xX]\s*16\s*GB|16\s*GB\s*[xX]\s*2)/i,/(?:\bRAM\b|memory|sodimm|dimm)/i], exclude:[/\b(?:laptop|notebook|desktop pc|gaming pc|motherboard|mini pc)\b/i]},
+  {key:'storage.500GB', label:'500GB', query:'500GB NVMe M.2 SSD', min:120, max:1600, include:[/(?:500\s*GB|512\s*GB)/i,/(?:NVMe|M\.2|SSD)/i], exclude:[/\b(?:external|portable|enclosure|case|caddy)\b/i]},
+  {key:'storage.1TB', label:'1TB', query:'1TB NVMe M.2 SSD', min:180, max:3000, include:[/(?:\b1\s*TB\b|1000\s*GB|1024\s*GB)/i,/(?:NVMe|M\.2|SSD)/i], exclude:[/\b(?:external|portable|enclosure|case|caddy)\b/i]},
+  {key:'storage.2TB', label:'2TB', query:'2TB NVMe M.2 SSD', min:320, max:5200, include:[/(?:\b2\s*TB\b|2000\s*GB|2048\s*GB)/i,/(?:NVMe|M\.2|SSD)/i], exclude:[/\b(?:external|portable|enclosure|case|caddy)\b/i]},
+  {key:'gpu.Entry', label:'Entry', query:'RTX 5060 graphics card GPU', min:500, max:3500, include:[/(?:RTX|GTX|Radeon|\bRX\s*\d|Intel\s+Arc|\bArc\s+[AB]\d)/i], exclude:[/\b(?:laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block)\b/i]},
+  {key:'gpu.Mid-range', label:'Mid-range', query:'RTX 5070 graphics card GPU', min:1000, max:6000, include:[/(?:RTX|Radeon|\bRX\s*\d|Intel\s+Arc|\bArc\s+[AB]\d)/i], exclude:[/\b(?:laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block)\b/i]},
+  {key:'gpu.High-end', label:'High-end', query:'RTX 5080 graphics card GPU', min:2200, max:16000, include:[/(?:RTX|Radeon|\bRX\s*\d)/i], exclude:[/\b(?:laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block)\b/i]},
+  {key:'psu.550–650W', label:'550–650W', query:'650W PSU power supply PC', min:100, max:900, include:[/(?:PSU|power supply)/i,/(?:550\s*W|600\s*W|650\s*W)/i], exclude:[/\b(?:cable|extension|adapter|connector|tester)\b/i]},
+  {key:'psu.750–850W', label:'750–850W', query:'850W PSU power supply PC', min:160, max:1500, include:[/(?:PSU|power supply)/i,/(?:750\s*W|800\s*W|850\s*W)/i], exclude:[/\b(?:cable|extension|adapter|connector|tester)\b/i]},
+  {key:'psu.1000W+', label:'1000W+', query:'1000W PSU power supply PC', min:260, max:2400, include:[/(?:PSU|power supply)/i,/(?:1000\s*W|1050\s*W|1200\s*W|1300\s*W|1500\s*W)/i], exclude:[/\b(?:cable|extension|adapter|connector|tester)\b/i]},
+  {key:'battery.Standard', label:'Standard', query:'laptop battery replacement Acer Asus Dell HP Lenovo', min:40, max:550, include:[/battery/i,/(?:laptop|notebook|Acer|Asus|Dell|HP|Lenovo|MSI)/i], exclude:[/\b(?:cmos|coin cell|phone|iphone|ipad|tablet)\b/i]},
+  {key:'battery.Premium / model khas', label:'Premium / model khas', query:'original gaming laptop battery Dell XPS ThinkPad ROG MSI', min:90, max:950, include:[/battery/i,/(?:laptop|notebook|Dell|XPS|ThinkPad|ROG|MSI|Legion|Spectre|ZenBook)/i], exclude:[/\b(?:cmos|coin cell|phone|iphone|ipad|tablet)\b/i]},
+  {key:'adapter.Standard', label:'Standard', query:'65W laptop charger adapter Acer Asus Dell HP Lenovo', min:25, max:350, include:[/(?:adapter|charger)/i,/(?:laptop|notebook|Acer|Asus|Dell|HP|Lenovo|65\s*W|90\s*W)/i], exclude:[/\b(?:cable only|usb cable|converter only|tip only|connector only)\b/i]},
+  {key:'adapter.USB-C / high watt', label:'USB-C / high watt', query:'140W USB C laptop charger adapter gaming laptop', min:60, max:750, include:[/(?:adapter|charger)/i,/(?:USB\s*-?\s*C|PD\s*3|140\s*W|180\s*W|200\s*W|230\s*W|240\s*W|gaming laptop)/i], exclude:[/\b(?:cable only|usb cable|converter only|tip only|connector only)\b/i]}
+];
+const AZ_UPGRADE_FALLBACK = {
+  ram:{'8GB':[90,180],'16GB':[160,320],'32GB':[300,650]},
+  storage:{'500GB':[170,280],'1TB':[250,450],'2TB':[450,850]},
+  gpu:{'Entry':[650,1300],'Mid-range':[1300,2800],'High-end':[2800,6000]},
+  psu:{'550–650W':[180,350],'750–850W':[300,550],'1000W+':[500,900]},
+  battery:{'Standard':[150,250],'Premium / model khas':[250,450]},
+  adapter:{'Standard':[100,180],'USB-C / high watt':[150,300]}
+};
+let azUpgradePriceCache = { fetchedAtMs:0, payload:null, firestoreChecked:false };
+
+function azUpgradePriceNumber(value){
+  const n=Number(String(value==null?'':value).replace(/[^0-9.]/g,''));
+  return Number.isFinite(n)&&n>0?n:0;
+}
+function azUpgradeRoundDown(n){ const step=n<150?5:10; return Math.max(step,Math.floor(n/step)*step); }
+function azUpgradeRoundUp(n){ const step=n<150?5:10; return Math.max(step,Math.ceil(n/step)*step); }
+function azUpgradePercentile(values,p){
+  const a=(values||[]).filter(Number.isFinite).sort((x,y)=>x-y); if(!a.length)return 0;
+  if(a.length===1)return a[0]; const pos=(a.length-1)*p, lo=Math.floor(pos), hi=Math.ceil(pos);
+  return lo===hi?a[lo]:a[lo]+(a[hi]-a[lo])*(pos-lo);
+}
+function azUpgradeTitleMatches(def,title){
+  const text=String(title||'');
+  if((def.exclude||[]).some(re=>re.test(text)))return false;
+  return (def.include||[]).every(re=>re.test(text));
+}
+function azUpgradeFallbackFor(def){
+  const [group,opt]=String(def.key).split('.'); const row=AZ_UPGRADE_FALLBACK[group]?.[opt]||[def.min,def.max];
+  return {key:def.key,label:def.label,min:Number(row[0]),max:Number(row[1]),count:0,source:'fallback',sample:[]};
+}
+function azUpgradeAggregate(def,nodes){
+  const lows=[], highs=[], sample=[];
+  for(const node of Array.isArray(nodes)?nodes:[]){
+    const title=String(node?.productName||'').trim(); if(!title||!azUpgradeTitleMatches(def,title))continue;
+    let lo=azUpgradePriceNumber(node?.priceMin), hi=azUpgradePriceNumber(node?.priceMax||node?.priceMin);
+    if(!lo&&hi)lo=hi; if(!hi&&lo)hi=lo; if(!lo||!hi)continue;
+    if(lo<def.min||lo>def.max||hi<def.min||hi>def.max)continue;
+    lows.push(lo); highs.push(hi); if(sample.length<3)sample.push({title:title.slice(0,140),shop:String(node?.shopName||'').slice(0,80),priceMin:lo,priceMax:hi});
+  }
+  if(!lows.length)return azUpgradeFallbackFor(def);
+  const useTrim=lows.length>=5;
+  const min=azUpgradeRoundDown(useTrim?azUpgradePercentile(lows,.20):Math.min(...lows));
+  const max=azUpgradeRoundUp(useTrim?azUpgradePercentile(highs,.80):Math.max(...highs));
+  return {key:def.key,label:def.label,min,max:Math.max(min,max),count:lows.length,source:'shopee-live',sample};
+}
+async function azUpgradeFetchDef(def){
+  try{
+    const args=`keyword: ${JSON.stringify(def.query)}, sortType: 2, page: 1, limit: ${AZ_UPGRADE_PRICE_LIMIT}`;
+    const query=`query { productOfferV2(${args}) { nodes { itemId productName priceMin priceMax shopName ratingStar sales productLink offerLink } } }`;
+    const data=await azShopeeAffiliateGraphql(query);
+    return azUpgradeAggregate(def,data?.productOfferV2?.nodes||[]);
+  }catch(err){
+    const fallback=azUpgradeFallbackFor(def); fallback.error=String(err?.message||err||'Price source unavailable').slice(0,180); return fallback;
+  }
+}
+function azUpgradePayloadFromRows(rows,{source='shopee-live',configured=true}={}){
+  const groups={};
+  for(const row of rows){ const [group,opt]=String(row.key).split('.'); groups[group] ||= {options:{}}; groups[group].options[opt]=row; }
+  for(const group of Object.values(groups)){
+    const opts=Object.values(group.options||{}), live=opts.filter(x=>x.source==='shopee-live');
+    const basis=live.length?live:opts;
+    group.summary={min:Math.min(...basis.map(x=>x.min)),max:Math.max(...basis.map(x=>x.max)),liveOptions:live.length,totalOptions:opts.length};
+  }
+  const liveCount=rows.filter(x=>x.source==='shopee-live').length;
+  return {ok:true,version:1344,currency:'MYR',configured,source,liveCount,totalOptions:rows.length,fetchedAt:new Date().toISOString(),fetchedAtMs:Date.now(),cacheMs:AZ_UPGRADE_PRICE_CACHE_MS,groups};
+}
+function azUpgradeFallbackPayload(message='Live price source unavailable'){
+  const rows=AZ_UPGRADE_PRICE_DEFS.map(azUpgradeFallbackFor); const payload=azUpgradePayloadFromRows(rows,{source:'fallback',configured:azShopeeAffiliateConfigured()}); payload.message=message; return payload;
+}
+async function azUpgradeLoadFirestoreCache(){
+  if(azUpgradePriceCache.firestoreChecked)return;
+  azUpgradePriceCache.firestoreChecked=true;
+  try{
+    const db=getAzobssBackendDb(); if(!db)return;
+    const snap=await db.collection('settings').doc('upgradePartsLivePrices').get(); if(!snap.exists)return;
+    const data=snap.data()||{}, payload=data.payload;
+    if(payload&&payload.groups&&Number(payload.fetchedAtMs)>0){ azUpgradePriceCache.payload=payload; azUpgradePriceCache.fetchedAtMs=Number(payload.fetchedAtMs); }
+  }catch{}
+}
+async function azUpgradeSaveFirestoreCache(payload){
+  try{ const db=getAzobssBackendDb(); if(db)await db.collection('settings').doc('upgradePartsLivePrices').set({payload,updatedAtMs:Date.now(),updatedAt:new Date().toISOString()},{merge:true}); }catch{}
+}
+async function azUpgradeRefreshPrices(force=false){
+  await azUpgradeLoadFirestoreCache();
+  const now=Date.now();
+  if(!force&&azUpgradePriceCache.payload&&now-azUpgradePriceCache.fetchedAtMs<AZ_UPGRADE_PRICE_CACHE_MS)return {...azUpgradePriceCache.payload,cached:true};
+  if(!azShopeeAffiliateConfigured()){
+    const old=azUpgradePriceCache.payload;
+    if(old&&old.groups)return {...old,cached:true,stale:true,message:'Shopee Affiliate API tidak dikonfigurasi; menggunakan cache terakhir.'};
+    const fallback=azUpgradeFallbackPayload('Shopee Affiliate API belum dikonfigurasi; menggunakan anggaran fallback.');
+    azUpgradePriceCache={...azUpgradePriceCache,payload:fallback,fetchedAtMs:fallback.fetchedAtMs}; return {...fallback,cached:false,stale:true};
+  }
+  const rows=[];
+  for(let i=0;i<AZ_UPGRADE_PRICE_DEFS.length;i+=4){
+    const batch=AZ_UPGRADE_PRICE_DEFS.slice(i,i+4); rows.push(...await Promise.all(batch.map(azUpgradeFetchDef)));
+  }
+  const payload=azUpgradePayloadFromRows(rows,{source:'Shopee Malaysia Affiliate Open API',configured:true});
+  payload.partial=payload.liveCount<payload.totalOptions;
+  if(payload.liveCount===0&&azUpgradePriceCache.payload?.groups)return {...azUpgradePriceCache.payload,cached:true,stale:true,message:'Refresh live gagal; menggunakan cache terakhir.'};
+  azUpgradePriceCache.payload=payload; azUpgradePriceCache.fetchedAtMs=payload.fetchedAtMs;
+  azUpgradeSaveFirestoreCache(payload);
+  return {...payload,cached:false};
+}
+
+
+// Keep the live cache warm while the main Render runtime is awake.
+if (!globalThis.__azobssUpgradePriceTimer) {
+  const warm=()=>{ azUpgradeRefreshPrices(false).catch(()=>{}); };
+  const first=setTimeout(warm,30_000); if(first&&typeof first.unref==='function')first.unref();
+  const every=setInterval(warm,AZ_UPGRADE_PRICE_CACHE_MS); if(every&&typeof every.unref==='function')every.unref();
+  globalThis.__azobssUpgradePriceTimer=every;
+}
+
 function azShopeeMetadataCacheGet(key){
   const row=azShopeeMetadataCache.get(String(key||''));
   if(!row) return null;
@@ -19616,6 +19754,18 @@ async function handler(req, res) {
     }
 
     // AZOBSS v1181: production PC Build pricing routes.
+
+    if (pathname === "/api/upgrade-parts/live-prices" && req.method === "GET") {
+      try {
+        const force=String((parsed.query&&parsed.query.refresh)||'')==='1';
+        const payload=await azUpgradeRefreshPrices(force);
+        return send(res,200,JSON.stringify(payload),"application/json",{"Cache-Control":"public, max-age=300, stale-while-revalidate=3600"});
+      } catch (err) {
+        const fallback=azUpgradeFallbackPayload(String(err?.message||err||'Live price refresh failed'));
+        return send(res,200,JSON.stringify({...fallback,ok:true,stale:true,error:String(err?.message||err||'').slice(0,180)}),"application/json",{"Cache-Control":"public, max-age=120"});
+      }
+    }
+
     if (pathname === "/api/pc-build/live-prices" && req.method === "GET") {
       try {
         const now = Date.now();
