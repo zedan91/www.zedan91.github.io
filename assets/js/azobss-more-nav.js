@@ -332,15 +332,16 @@
     var overviewPath = normalisePath('/PC-IT-Services/').toLowerCase();
     var buildPath = normalisePath('/PC-Build/').toLowerCase();
     var physicalPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
+    var upgradePath = normalisePath('/Upgrade-Parts/').toLowerCase();
     var onlinePath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
     function inSection(sectionPath) {
       return currentPath === sectionPath || currentPath.indexOf(sectionPath + '/') === 0;
     }
     var isOverviewPage = inSection(overviewPath);
-    var isUpgradePage = isOverviewPage && String(window.location.hash || '').toLowerCase() === '#upgrade-parts';
-    var isOverviewLanding = isOverviewPage && !isUpgradePage;
+    var isOverviewLanding = isOverviewPage;
     var isBuildPage = inSection(buildPath);
     var isPhysicalPage = inSection(physicalPath);
+    var isUpgradePage = inSection(upgradePath);
     var isOnlinePage = inSection(onlinePath);
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
@@ -357,7 +358,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azRepairDropdown' + index);
     trigger.setAttribute('aria-label', 'Menu PC & IT Services');
-    if (isOverviewPage || isBuildPage || isPhysicalPage || isOnlinePage || inheritedActive) {
+    if (isOverviewPage || isBuildPage || isPhysicalPage || isUpgradePage || isOnlinePage || inheritedActive) {
       trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     }
     trigger.innerHTML = '' +
@@ -393,15 +394,9 @@
     var physicalLink = makeLink('/Tempah-Servis-IT/', 'azRepairPhysicalLink', 'az-repair-physical-icon',
       '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>',
       'Servis PC &amp; Laptop', 'Repair, format, cleaning, LCD dan keyboard', isPhysicalPage);
-    var upgradeLink = makeLink('/PC-IT-Services/#upgrade-parts', 'azPcitUpgradeLink', 'az-pcit-upgrade-icon',
+    var upgradeLink = makeLink('/Upgrade-Parts/', 'azPcitUpgradeLink', 'az-pcit-upgrade-icon',
       '<path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle>',
       'Upgrade &amp; Parts', 'RAM, SSD, GPU, PSU, bateri &amp; adapter', isUpgradePage);
-    upgradeLink.addEventListener('click', function (event) {
-      if (!isPcitOverviewPage()) return;
-      event.preventDefault();
-      setOpen(false);
-      activateUpgradeParts(wrap, 'smooth');
-    });
     var onlineLink = makeLink('/Troubleshoot-PC-Online/', 'azRepairOnlineLink', 'az-repair-online-icon',
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
@@ -565,17 +560,18 @@
     var overviewPath = normalisePath('/PC-IT-Services/').toLowerCase();
     var buildPath = normalisePath('/PC-Build/').toLowerCase();
     var physicalPath = normalisePath('/Tempah-Servis-IT/').toLowerCase();
+    var upgradePath = normalisePath('/Upgrade-Parts/').toLowerCase();
     var onlinePath = normalisePath('/Troubleshoot-PC-Online/').toLowerCase();
     function inSection(sectionPath) {
       return currentPath === sectionPath || currentPath.indexOf(sectionPath + '/') === 0;
     }
     var overview = inSection(overviewPath);
-    var upgrade = overview && hash === '#upgrade-parts';
+    var upgrade = inSection(upgradePath) || (overview && hash === '#upgrade-parts');
     var states = [
       ['[data-az-pcit-overview-link="1"]', overview && !upgrade, 'page'],
       ['[data-az-pcit-build-link="1"]', inSection(buildPath), 'page'],
       ['[data-az-repair-physical-link="1"]', inSection(physicalPath), 'page'],
-      ['[data-az-pcit-upgrade-link="1"]', upgrade, 'location'],
+      ['[data-az-pcit-upgrade-link="1"]', upgrade, 'page'],
       ['[data-az-repair-online-link="1"]', inSection(onlinePath), 'page']
     ];
     var anyActive = false;
@@ -677,15 +673,6 @@
         menuItems[(currentIndex - 1 + menuItems.length) % menuItems.length].focus();
       }
     });
-    var upgradeItem = dropdown.querySelector('a[data-az-pcit-upgrade-link="1"]');
-    if (upgradeItem) {
-      upgradeItem.addEventListener('click', function (event) {
-        if (!isPcitOverviewPage()) return;
-        event.preventDefault();
-        setOpen(false);
-        activateUpgradeParts(wrap, 'smooth');
-      });
-    }
     dropdown.querySelectorAll('a[role="menuitem"]').forEach(function (item) {
       item.addEventListener('click', function () { setOpen(false); });
     });
