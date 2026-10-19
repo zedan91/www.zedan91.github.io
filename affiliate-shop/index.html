@@ -265,8 +265,9 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .affiliate-sticky-spacer{display:none;width:100%;height:0;margin:0;padding:0;border:0;pointer-events:none}
     .affiliate-sticky-spacer.is-active{display:block}
     .affiliate-sticky-filters .search{flex:1 1 300px!important;max-width:none!important;min-width:220px}
-    .affiliate-sticky-filters .sort-control{margin-left:auto;flex:0 1 310px;min-width:240px}
+    .affiliate-sticky-filters .sort-control{margin-left:auto;flex:0 1 280px;min-width:220px}
     .affiliate-sticky-filters .sort-control select{min-width:0;flex:1}
+    .affiliate-sticky-filters .price-sort-control{margin-left:0;flex:0 1 205px;min-width:175px}
     .admin-tools{margin-top:8px}
     @media(max-width:760px){
       .affiliate-sticky-filters{gap:7px;padding:8px 0;margin-bottom:12px}
@@ -274,6 +275,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       .affiliate-sticky-filters .search{flex:1 1 100%!important;max-width:none!important;min-width:0;min-height:40px}
       .affiliate-sticky-filters .chip{min-height:38px;padding:0 11px;font-size:12px}
       .affiliate-sticky-filters .sort-control{margin-left:0;flex:1 1 210px;min-width:190px;min-height:38px;padding:0 10px;font-size:12px}
+      .affiliate-sticky-filters .price-sort-control{flex:1 1 180px;min-width:165px}
     }
     .admin-product-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px)}
     .admin-product-modal.is-open{display:flex}
@@ -1371,6 +1373,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <option value="others">Others</option>
   </select>
 </label>
+<label class="sort-control price-sort-control" for="priceSortSelect">Price:
+  <select id="priceSortSelect" aria-label="Sort price">
+    <option value="default">Default</option>
+    <option value="low-high">Low → High</option>
+    <option value="high-low">High → Low</option>
+  </select>
+</label>
 </div>
 <div class="affiliate-product-pagination affiliate-product-pagination-top" id="affiliateProductPaginationTop" aria-label="Product pagination"></div>
 <section class="grid" id="productGrid"></section>
@@ -1537,6 +1546,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     const emptyState = document.getElementById('emptyState');
     const categorySearch = document.getElementById('categorySearch');
     const categorySortSelect = document.getElementById('categorySortSelect');
+    const priceSortSelect = document.getElementById('priceSortSelect');
     const myFavouriteButton = document.getElementById('myFavouriteButton');
     const affiliateBookmarkCount = document.getElementById('affiliateBookmarkCount');
     const adminAddItemButton = document.getElementById('adminAddItemButton');
@@ -1721,6 +1731,16 @@ function esc(value){
         return range[2] ? first + '–RM' + Number(range[2]).toFixed(2) : first;
       }
       return 'Lihat harga di kedai';
+    }
+
+    function affiliateSortablePrice(item){
+      const rawPriceMyr = item?.priceMyr;
+      const priceMyr = String(rawPriceMyr ?? '').trim() === '' ? NaN : Number(rawPriceMyr);
+      if(Number.isFinite(priceMyr) && priceMyr >= 0) return priceMyr;
+      const priceText = productPriceText(item);
+      if(/^free$/i.test(String(priceText || '').trim())) return 0;
+      const amount = azExtractMyrAmount(priceText);
+      return Number.isFinite(amount) && amount >= 0 ? amount : null;
     }
 
     function productRatingInfo(item){
@@ -2025,17 +2045,29 @@ function esc(value){
 
     function render(){
       const queryText = searchInput.value.trim().toLowerCase();
-      const sortCategory = categorySortSelect?.value || 'all';
+      const priceSortMode = priceSortSelect?.value || 'default';
       const favouriteIds = getFavouriteIds();
       const favouriteSet = new Set(favouriteIds.map(String));
-      const filtered = products.filter(item => {
+      let filtered = products.filter(item => {
         const haystack = [item.title,item.desc,item.badge,item.meta,item.category,item.icon,item.price].join(' ').toLowerCase();
         const categoryOk = activeFilter === 'all' || item.category === activeFilter;
-        const sortOk = true;
         const favOk = !favouriteOnly || favouriteSet.has(String(item.id));
-      
-        return categoryOk && sortOk && favOk && (!queryText || haystack.includes(queryText));
+        return categoryOk && favOk && (!queryText || haystack.includes(queryText));
       });
+      if(priceSortMode === 'low-high' || priceSortMode === 'high-low'){
+        filtered = filtered
+          .map((item, index) => ({item, index, price:affiliateSortablePrice(item)}))
+          .sort((a, b) => {
+            const aMissing = !Number.isFinite(a.price);
+            const bMissing = !Number.isFinite(b.price);
+            if(aMissing && bMissing) return a.index - b.index;
+            if(aMissing) return 1;
+            if(bMissing) return -1;
+            if(a.price === b.price) return a.index - b.index;
+            return priceSortMode === 'low-high' ? a.price - b.price : b.price - a.price;
+          })
+          .map(entry => entry.item);
+      }
       updateAffiliateBookmarkFilterUI();
 
       const perPage = affiliateItemsPerPage();
@@ -2158,6 +2190,10 @@ function esc(value){
       chips.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
       favouriteOnly = false;
       myFavouriteButton?.classList.remove('is-active');
+      render();
+    });
+    priceSortSelect?.addEventListener('change', () => {
+      affiliateProductPage = 1;
       render();
     });
     searchInput.addEventListener('input', () => { affiliateProductPage = 1; render(); });
