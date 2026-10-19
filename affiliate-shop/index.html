@@ -240,6 +240,26 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .affiliate-local-bookmark-btn.is-bookmarked path{fill:currentColor;stroke:currentColor}
     @media(max-width:760px){.affiliate-local-bookmark-btn{top:12px;right:12px;width:32px;height:32px}.affiliate-local-bookmark-btn svg{width:17px;height:17px}}
     @media(max-width:760px){.tools .search{flex:1 1 100%!important;max-width:none!important}.card-admin-actions{top:12px;right:50px}.card-admin-btn{width:28px;height:28px;font-size:13px}.admin-json-btn,.admin-add-card-btn{min-height:38px!important;padding:0 12px!important}}
+    /* AZOBSS v1337 - sticky Affiliate Shop search/filter toolbar */
+    .affiliate-sticky-filters{
+      position:sticky;top:54px;z-index:2600;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      margin:0 0 14px;padding:10px 0;
+      background:linear-gradient(180deg,rgba(5,9,20,.98),rgba(5,9,20,.94));
+      border-bottom:1px solid rgba(148,163,184,.18);
+      box-shadow:0 12px 24px rgba(0,0,0,.18);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    }
+    .affiliate-sticky-filters::before{content:"";position:absolute;inset:0 calc(50% - 50vw);z-index:-1;background:rgba(5,9,20,.94);border-bottom:1px solid rgba(148,163,184,.12);pointer-events:none}
+    .affiliate-sticky-filters .search{flex:1 1 300px!important;max-width:none!important;min-width:220px}
+    .affiliate-sticky-filters .sort-control{margin-left:auto;flex:0 1 310px;min-width:240px}
+    .affiliate-sticky-filters .sort-control select{min-width:0;flex:1}
+    .admin-tools{margin-top:8px}
+    @media(max-width:760px){
+      .affiliate-sticky-filters{top:92px;gap:7px;padding:8px 0;margin-bottom:12px}
+      .affiliate-sticky-filters .search{flex:1 1 100%!important;max-width:none!important;min-width:0;min-height:40px}
+      .affiliate-sticky-filters .chip{min-height:38px;padding:0 11px;font-size:12px}
+      .affiliate-sticky-filters .sort-control{margin-left:0;flex:1 1 210px;min-width:190px;min-height:38px;padding:0 10px;font-size:12px}
+    }
     .admin-product-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(8px)}
     .admin-product-modal.is-open{display:flex}
     .admin-product-box{width:min(560px,96vw);max-height:90vh;overflow:auto;border:1px solid rgba(34,197,94,.35);border-radius:18px;background:linear-gradient(180deg,#102033,#07111f);box-shadow:0 28px 80px rgba(0,0,0,.45);padding:18px;color:#fff}
@@ -1273,7 +1293,18 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <p>Produk dan pautan kedai yang dipaparkan di sini dipilih berdasarkan <strong>rating yang baik, majoriti ulasan pelanggan yang positif serta rekod jualan yang tinggi</strong>. Kami utamakan pilihan yang lebih diyakini ramai pembeli untuk memudahkan kamu mencari produk yang berbaloi dan sesuai.<span class="affiliate-trust-note-small"><strong>Nota:</strong> Rating, ulasan, harga dan jumlah jualan boleh berubah dari semasa ke semasa mengikut platform penjual.</span></p>
   </div>
 </div>
-<div class="tools">
+<div class="tools admin-tools">
+
+<button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
+<button class="chip admin-shopee-btn" id="adminShopeeOffersButton" type="button" hidden>🛒 Shopee Product Offer / Get Link</button>
+<button class="chip admin-json-btn" id="adminImportJsonButton" type="button" hidden>Import JSON (AZOBSS / Shopee)</button>
+<button class="chip admin-retry-failed-btn" id="adminRetryFailedButton" type="button" hidden>Retry Failed (0)</button>
+<button class="chip admin-json-btn" id="adminExportJsonButton" type="button" hidden>Export JSON</button>
+<input id="adminImportJsonInput" type="file" accept="application/json,.json" hidden/>
+<div class="admin-import-cloud-status" id="adminImportCloudStatus" hidden>Cloud import ready. Shopee JSON mesti berjaya disimpan ke Firestore sebelum dianggap imported.</div>
+</div>
+</section>
+<div class="affiliate-sticky-filters" id="affiliateStickyFilters" role="search" aria-label="Affiliate Shop search and filters">
 <input class="search" id="searchInput" placeholder="Search products..." type="search"/>
 <button class="chip is-active" data-filter="all" type="button">All</button>
 <button class="chip affiliate-bookmarks-filter" id="myFavouriteButton" type="button" aria-pressed="false" title="Show only products bookmarked in Affiliate Shop">
@@ -1310,15 +1341,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <option value="others">Others</option>
   </select>
 </label>
-<button class="chip admin-add-card-btn" id="adminAddItemButton" type="button" hidden>+ Add Item</button>
-<button class="chip admin-shopee-btn" id="adminShopeeOffersButton" type="button" hidden>🛒 Shopee Product Offer / Get Link</button>
-<button class="chip admin-json-btn" id="adminImportJsonButton" type="button" hidden>Import JSON (AZOBSS / Shopee)</button>
-<button class="chip admin-retry-failed-btn" id="adminRetryFailedButton" type="button" hidden>Retry Failed (0)</button>
-<button class="chip admin-json-btn" id="adminExportJsonButton" type="button" hidden>Export JSON</button>
-<input id="adminImportJsonInput" type="file" accept="application/json,.json" hidden/>
-<div class="admin-import-cloud-status" id="adminImportCloudStatus" hidden>Cloud import ready. Shopee JSON mesti berjaya disimpan ke Firestore sebelum dianggap imported.</div>
 </div>
-</section>
 <section class="grid" id="productGrid"></section>
 <div class="empty" id="emptyState">No affiliate products found.</div>
 <div class="admin-product-modal" id="adminProductModal" aria-hidden="true">
