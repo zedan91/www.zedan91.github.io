@@ -296,8 +296,23 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .card-open:hover{background:#1d4ed8}
     @media(max-width:560px){.admin-product-grid{grid-template-columns:1fr}.sort-control{width:100%;justify-content:space-between}.sort-control select{flex:1}}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px;align-items:start}
-    .card{position:relative;display:flex;flex-direction:column;height:510px;min-height:510px;max-height:510px;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d1623;color:#fff;text-decoration:none;box-shadow:0 14px 30px rgba(0,0,0,.22)}
-    .card-media{position:relative;flex:0 0 220px;height:220px;overflow:hidden;background:#101a29;border-bottom:1px solid rgba(148,163,184,.13)}
+    /* AZOBSS v1340 - Affiliate Shop 10-row pagination + first-product smooth scroll. */
+    .affiliate-product-pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:12px 0 14px;min-height:34px}
+    .affiliate-product-pagination[hidden]{display:none!important}
+    .affiliate-product-page-btn{min-width:34px;height:32px;padding:0 10px;border:1px solid rgba(96,165,250,.30);border-radius:8px;background:#0b1525;color:#dbeafe;font-size:12px;font-weight:900;cursor:pointer}
+    .affiliate-product-page-btn:hover:not(:disabled){border-color:#60a5fa;background:#12233c;color:#fff}
+    .affiliate-product-page-btn.is-active{border-color:#22c55e;background:rgba(34,197,94,.16);color:#bbf7d0}
+    .affiliate-product-page-btn:disabled{opacity:.38;cursor:not-allowed}
+    .affiliate-product-page-info{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;color:#94a3b8;font-size:11px;font-weight:800}
+    @media(max-width:760px){
+      .card{height:440px!important;min-height:440px!important;max-height:440px!important}
+      .card-media{flex-basis:168px!important;height:168px!important}
+      .affiliate-product-pagination{gap:5px;margin:10px 0 12px}
+      .affiliate-product-page-btn{min-width:31px;height:31px;padding:0 8px;font-size:11px}
+    }
+
+    .card{position:relative;display:flex;flex-direction:column;height:455px;min-height:455px;max-height:455px;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d1623;color:#fff;text-decoration:none;box-shadow:0 14px 30px rgba(0,0,0,.22)}
+    .card-media{position:relative;flex:0 0 180px;height:180px;overflow:hidden;background:#101a29;border-bottom:1px solid rgba(148,163,184,.13)}
     .card-media img{display:block;width:100%;height:100%;object-fit:cover;background:#101a29}
     .card-media-fallback{display:grid;place-items:center;width:100%;height:100%;font-size:46px;font-weight:950;color:#dbeafe;background:radial-gradient(circle at 50% 42%,rgba(37,99,235,.28),rgba(15,23,42,.96) 64%)}
     .card-media-badge{position:absolute;left:10px;bottom:10px;z-index:3;max-width:calc(100% - 58px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid rgba(255,255,255,.20);border-radius:7px;padding:5px 8px;background:rgba(3,7,18,.82);color:#e5e7eb;font-size:10px;font-weight:900;box-shadow:0 5px 16px rgba(0,0,0,.24)}
@@ -1358,7 +1373,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   </select>
 </label>
 </div>
+<div class="affiliate-product-pagination affiliate-product-pagination-top" id="affiliateProductPaginationTop" aria-label="Product pagination"></div>
 <section class="grid" id="productGrid"></section>
+<div class="affiliate-product-pagination affiliate-product-pagination-bottom" id="affiliateProductPaginationBottom" aria-label="Product pagination"></div>
 <div class="empty" id="emptyState">No affiliate products found.</div>
 <div class="admin-product-modal" id="adminProductModal" aria-hidden="true">
   <div class="admin-product-box" role="dialog" aria-modal="true" aria-labelledby="adminProductTitle">
@@ -1536,6 +1553,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     let products = [];
     let activeFilter = 'all';
     let favouriteOnly = false;
+    let affiliateProductPage = 1;
+    const AFFILIATE_ROWS_PER_PAGE = 10;
+    const affiliatePaginationTop = document.getElementById('affiliateProductPaginationTop');
+    const affiliatePaginationBottom = document.getElementById('affiliateProductPaginationBottom');
 
     
   const AZ_USD_PER_MYR = 0.21; // Update this rate anytime if needed.
@@ -1921,6 +1942,88 @@ function esc(value){
       modal.querySelector('.affiliate-desc-close')?.focus();
     }
 
+    function affiliateGridColumnCount(){
+      if(!grid) return 1;
+      const styles = getComputedStyle(grid);
+      const gap = parseFloat(styles.columnGap || styles.gap || '14') || 14;
+      const width = Math.max(1, grid.clientWidth || grid.getBoundingClientRect().width || 1);
+      const minCard = 245;
+      return Math.max(1, Math.floor((width + gap) / (minCard + gap)));
+    }
+
+    function affiliateItemsPerPage(){
+      return Math.max(1, affiliateGridColumnCount() * AFFILIATE_ROWS_PER_PAGE);
+    }
+
+    function affiliatePaginationButton(label, page, disabled = false, active = false, title = ''){
+      return `<button class="affiliate-product-page-btn${active ? ' is-active' : ''}" type="button" data-affiliate-product-page="${page}"${disabled ? ' disabled' : ''}${title ? ` title="${esc(title)}"` : ''}>${esc(label)}</button>`;
+    }
+
+    function renderAffiliateProductPagination(totalItems, perPage){
+      const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(1, perPage)));
+      affiliateProductPage = Math.min(Math.max(1, affiliateProductPage), totalPages);
+      const holders = [affiliatePaginationTop, affiliatePaginationBottom].filter(Boolean);
+      holders.forEach(holder => {
+        if(totalItems <= perPage){
+          holder.hidden = true;
+          holder.innerHTML = '';
+          return;
+        }
+        holder.hidden = false;
+        const parts = [];
+        parts.push(affiliatePaginationButton('<<', 1, affiliateProductPage === 1, false, 'First page'));
+        parts.push(affiliatePaginationButton('Previous', Math.max(1, affiliateProductPage - 1), affiliateProductPage === 1, false, 'Previous page'));
+        const start = Math.max(1, affiliateProductPage - 2);
+        const finish = Math.min(totalPages, start + 4);
+        const first = Math.max(1, finish - 4);
+        for(let page = first; page <= finish; page++){
+          parts.push(affiliatePaginationButton(String(page), page, false, page === affiliateProductPage, `Page ${page}`));
+        }
+        parts.push(affiliatePaginationButton('Next', Math.min(totalPages, affiliateProductPage + 1), affiliateProductPage === totalPages, false, 'Next page'));
+        parts.push(affiliatePaginationButton('>>', totalPages, affiliateProductPage === totalPages, false, 'Last page'));
+        parts.push(`<span class="affiliate-product-page-info">Page ${affiliateProductPage} / ${totalPages}</span>`);
+        holder.innerHTML = parts.join('');
+      });
+      return totalPages;
+    }
+
+    function scrollAffiliateFirstProductIntoView(){
+      const firstCard = grid?.querySelector('.card');
+      if(!firstCard) return;
+      const marketNav = document.querySelector('.market-sticky-bar');
+      const filterBar = document.getElementById('affiliateStickyFilters');
+      const navHeight = marketNav ? Math.max(0, marketNav.getBoundingClientRect().height) : 0;
+      const filterHeight = filterBar && filterBar.classList.contains('is-aff-fixed')
+        ? Math.max(0, filterBar.getBoundingClientRect().height)
+        : 0;
+      const targetTop = window.scrollY + firstCard.getBoundingClientRect().top - navHeight - filterHeight - 12;
+      window.scrollTo({top:Math.max(0, targetTop), behavior:'smooth'});
+    }
+
+    function goToAffiliateProductPage(page, shouldScroll){
+      const next = Number(page) || 1;
+      if(next === affiliateProductPage && !shouldScroll) return;
+      affiliateProductPage = Math.max(1, next);
+      render();
+      if(shouldScroll){
+        requestAnimationFrame(() => requestAnimationFrame(scrollAffiliateFirstProductIntoView));
+      }
+    }
+
+    function bindAffiliateProductPagination(holder){
+      if(!holder || holder.dataset.azobssPaginationBound === '1') return;
+      holder.dataset.azobssPaginationBound = '1';
+      holder.addEventListener('click', event => {
+        const button = event.target.closest('button[data-affiliate-product-page]');
+        if(!button || button.disabled) return;
+        event.preventDefault();
+        goToAffiliateProductPage(Number(button.dataset.affiliateProductPage) || 1, true);
+      });
+    }
+
+    bindAffiliateProductPagination(affiliatePaginationTop);
+    bindAffiliateProductPagination(affiliatePaginationBottom);
+
     function render(){
       const queryText = searchInput.value.trim().toLowerCase();
       const sortCategory = categorySortSelect?.value || 'all';
@@ -1936,9 +2039,15 @@ function esc(value){
       });
       updateAffiliateBookmarkFilterUI();
 
+      const perPage = affiliateItemsPerPage();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+      affiliateProductPage = Math.min(Math.max(1, affiliateProductPage), totalPages);
+      const startIndex = (affiliateProductPage - 1) * perPage;
+      const visibleProducts = filtered.slice(startIndex, startIndex + perPage);
+
       const adminMode = isAdmin();
       document.body.classList.toggle('az-aff-admin', adminMode);
-      grid.innerHTML = filtered.map(item => {
+      grid.innerHTML = visibleProducts.map(item => {
         const ratingInfo = productRatingInfo(item);
         const soldInfo = productSoldInfo(item);
         const priceText = productPriceText(item);
@@ -1973,7 +2082,8 @@ function esc(value){
         </article>`;
       }).join('');
       syncCardSeeMore();
-emptyState.style.display = filtered.length ? 'none' : 'block';
+      renderAffiliateProductPagination(filtered.length, perPage);
+      emptyState.style.display = filtered.length ? 'none' : 'block';
     }
 
     function refreshAdminState(){
@@ -2027,6 +2137,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
     }
 
     chips.forEach(chip => chip.addEventListener('click', () => {
+      affiliateProductPage = 1;
       activeFilter = chip.dataset.filter || 'all';
       if(categorySortSelect) categorySortSelect.value = activeFilter;
       chips.forEach(item => item.classList.toggle('is-active', item === chip));
@@ -2036,11 +2147,13 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       render();
     }));
     myFavouriteButton?.addEventListener('click', () => {
+      affiliateProductPage = 1;
       favouriteOnly = !favouriteOnly;
       updateAffiliateBookmarkFilterUI();
       render();
     });
     categorySortSelect?.addEventListener('change', () => {
+      affiliateProductPage = 1;
       activeFilter = categorySortSelect.value || 'all';
       categoryTiles.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
       chips.forEach(item => item.classList.toggle('is-active', (item.dataset.filter || 'all') === activeFilter));
@@ -2048,7 +2161,7 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       myFavouriteButton?.classList.remove('is-active');
       render();
     });
-    searchInput.addEventListener('input', render);
+    searchInput.addEventListener('input', () => { affiliateProductPage = 1; render(); });
     if(categorySearch){
       categorySearch.addEventListener('input', () => {
         const queryText = categorySearch.value.trim().toLowerCase();
@@ -2059,12 +2172,19 @@ emptyState.style.display = filtered.length ? 'none' : 'block';
       });
     }
     categoryTiles.forEach(tile => tile.addEventListener('click', () => {
+      affiliateProductPage = 1;
       activeFilter = tile.dataset.filter || 'all';
       if(categorySortSelect) categorySortSelect.value = activeFilter;
       categoryTiles.forEach(item => item.classList.toggle('is-active', item === tile));
       chips.forEach(item => item.classList.toggle('is-active', item.dataset.filter === activeFilter));
       render();
     }));
+
+    let affiliateResizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(affiliateResizeTimer);
+      affiliateResizeTimer = setTimeout(() => render(), 140);
+    }, {passive:true});
 
     function shopeeStatus(el, message, type = ''){
       if(!el) return;
