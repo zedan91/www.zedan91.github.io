@@ -296,7 +296,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .card-open:hover{background:#1d4ed8}
     @media(max-width:560px){.admin-product-grid{grid-template-columns:1fr}.sort-control{width:100%;justify-content:space-between}.sort-control select{flex:1}}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px;align-items:start}
-    /* AZOBSS v1340 - Affiliate Shop 10-row pagination + first-product smooth scroll. */
+    /* AZOBSS v1341 - Affiliate Shop compact auto-height cards + v1340 pagination smooth scroll. */
     .affiliate-product-pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:12px 0 14px;min-height:34px}
     .affiliate-product-pagination[hidden]{display:none!important}
     .affiliate-product-page-btn{min-width:34px;height:32px;padding:0 10px;border:1px solid rgba(96,165,250,.30);border-radius:8px;background:#0b1525;color:#dbeafe;font-size:12px;font-weight:900;cursor:pointer}
@@ -305,21 +305,19 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .affiliate-product-page-btn:disabled{opacity:.38;cursor:not-allowed}
     .affiliate-product-page-info{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;color:#94a3b8;font-size:11px;font-weight:800}
     @media(max-width:760px){
-      .card{height:440px!important;min-height:440px!important;max-height:440px!important}
-      .card-media{flex-basis:168px!important;height:168px!important}
       .affiliate-product-pagination{gap:5px;margin:10px 0 12px}
       .affiliate-product-page-btn{min-width:31px;height:31px;padding:0 8px;font-size:11px}
     }
 
-    .card{position:relative;display:flex;flex-direction:column;height:455px;min-height:455px;max-height:455px;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d1623;color:#fff;text-decoration:none;box-shadow:0 14px 30px rgba(0,0,0,.22)}
-    .card-media{position:relative;flex:0 0 180px;height:180px;overflow:hidden;background:#101a29;border-bottom:1px solid rgba(148,163,184,.13)}
+    .card{position:relative;display:flex;flex-direction:column;height:auto;min-height:0;max-height:none;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d1623;color:#fff;text-decoration:none;box-shadow:0 14px 30px rgba(0,0,0,.22)}
+    .card-media{position:relative;flex:0 0 165px;height:165px;overflow:hidden;background:#101a29;border-bottom:1px solid rgba(148,163,184,.13)}
     .card-media img{display:block;width:100%;height:100%;object-fit:cover;background:#101a29}
     .card-media-fallback{display:grid;place-items:center;width:100%;height:100%;font-size:46px;font-weight:950;color:#dbeafe;background:radial-gradient(circle at 50% 42%,rgba(37,99,235,.28),rgba(15,23,42,.96) 64%)}
     .card-media-badge{position:absolute;left:10px;bottom:10px;z-index:3;max-width:calc(100% - 58px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid rgba(255,255,255,.20);border-radius:7px;padding:5px 8px;background:rgba(3,7,18,.82);color:#e5e7eb;font-size:10px;font-weight:900;box-shadow:0 5px 16px rgba(0,0,0,.24)}
-    .card-content{display:flex;flex-direction:column;gap:7px;min-height:0;flex:1 1 auto;padding:11px 12px 12px}
-    .card h2{font-size:15px;line-height:1.38;margin:0;min-height:41px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;color:#f8fafc}
+    .card-content{display:flex;flex-direction:column;gap:5px;min-height:0;flex:0 0 auto;padding:9px 11px 10px}
+    .card h2{font-size:15px;line-height:1.32;margin:0;min-height:39px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;color:#f8fafc}
     .card-desc-wrap{min-height:0;display:flex;align-items:flex-start;gap:7px;overflow:hidden}
-    .card-desc{flex:1 1 auto;min-width:0;margin:0;color:#b9c7d8;font-size:12.5px;line-height:1.42;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3}
+    .card-desc{flex:1 1 auto;min-width:0;margin:0;color:#b9c7d8;font-size:12px;line-height:1.36;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
     .card-show-more{flex:0 0 auto;align-self:flex-end;border:0;background:transparent;color:#60a5fa;padding:0 0 1px;font-size:11px;line-height:1.2;font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
     .card-show-more:hover{color:#93c5fd}
     .card-price-main{margin-top:1px;color:#ff6b3d;font-size:17px;line-height:1.2;font-weight:1000;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -329,7 +327,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .card-rating-count{color:#94a3b8;font-size:10.5px;font-weight:750}
     .card-stat-sep{color:#64748b;font-size:10px;font-weight:900}
     .card-sold{color:#dbe5f1;overflow:hidden;text-overflow:ellipsis}
-    .card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(148,163,184,.10)}
+    .card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-top:7px;border-top:1px solid rgba(148,163,184,.10)}
     .card-source{min-width:0;color:#94a3b8;font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .affiliate-desc-modal{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.78);backdrop-filter:blur(7px);overflow:hidden;overscroll-behavior:none}
     .affiliate-desc-modal.is-open{display:flex}
@@ -339,7 +337,8 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .affiliate-desc-close{flex:0 0 auto;width:36px;height:36px;border-radius:999px;border:1px solid rgba(148,163,184,.3);background:#0e1729;color:#fff;font-size:20px;cursor:pointer}
     .affiliate-desc-body{min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-gutter:stable;padding:16px 18px 20px;color:#cbd5e1;font-size:14px;line-height:1.7}
     .affiliate-desc-body p{margin:0 0 12px}.affiliate-desc-body p:last-child{margin-bottom:0}
-    @media(max-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.card{height:485px;min-height:485px;max-height:485px}.card-media{flex-basis:200px;height:200px}.card-content{padding:10px}.card h2{font-size:14px}.card-desc{-webkit-line-clamp:3;line-clamp:3}}
+    @media(max-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.card{height:auto;min-height:0;max-height:none}.card-media{flex-basis:158px;height:158px}.card-content{padding:8px 10px 9px;gap:5px}.card h2{font-size:14px;line-height:1.3;min-height:37px}.card-desc{font-size:11.8px;line-height:1.34;-webkit-line-clamp:2;line-clamp:2}.card-bottom{margin-top:2px;padding-top:6px}}
+    /* v1341: cards size to their actual content; this removes the dead vertical gap above Affiliate / Buy Now. */
     .empty{display:none;border:1px solid var(--line);border-radius:16px;background:#0e1729;padding:24px;color:#cbd5e1;text-align:center}
     @media(max-width:760px){body{padding-top:92px !important}.market-bar-inner{width:100% !important;padding:0 6px !important}.market-main-row{min-height:auto !important;padding-top:9px !important;gap:6px !important;flex-wrap:wrap !important}.market-brand{width:116px !important;height:30px !important}.market-nav{order:3 !important;width:100% !important;flex-basis:100% !important;gap:6px !important;overflow:hidden !important;padding-bottom:8px !important}.market-nav a{min-height:30px !important;padding:0 8px !important;font-size:11px !important}.site-auth-actions{margin-left:auto !important;margin-right:10px !important;gap:12px !important}.site-auth-btn{font-size:13px !important;white-space:nowrap !important}}
 
