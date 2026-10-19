@@ -240,9 +240,10 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
     .affiliate-local-bookmark-btn.is-bookmarked path{fill:currentColor;stroke:currentColor}
     @media(max-width:760px){.affiliate-local-bookmark-btn{top:12px;right:12px;width:32px;height:32px}.affiliate-local-bookmark-btn svg{width:17px;height:17px}}
     @media(max-width:760px){.tools .search{flex:1 1 100%!important;max-width:none!important}.card-admin-actions{top:12px;right:50px}.card-admin-btn{width:28px;height:28px;font-size:13px}.admin-json-btn,.admin-add-card-btn{min-height:38px!important;padding:0 12px!important}}
-    /* AZOBSS v1337 - sticky Affiliate Shop search/filter toolbar */
+    /* AZOBSS v1338 - guaranteed floating Affiliate Shop search/filter toolbar.
+       Uses JS fixed mode instead of CSS sticky so Chromium/Firefox behave the same. */
     .affiliate-sticky-filters{
-      position:sticky;top:54px;z-index:2600;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      position:relative;z-index:2600;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
       margin:0 0 14px;padding:10px 0;
       background:linear-gradient(180deg,rgba(5,9,20,.98),rgba(5,9,20,.94));
       border-bottom:1px solid rgba(148,163,184,.18);
@@ -250,12 +251,26 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
       backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     }
     .affiliate-sticky-filters::before{content:"";position:absolute;inset:0 calc(50% - 50vw);z-index:-1;background:rgba(5,9,20,.94);border-bottom:1px solid rgba(148,163,184,.12);pointer-events:none}
+    .affiliate-sticky-filters.is-aff-fixed{
+      position:fixed!important;
+      top:var(--az-aff-fixed-top,54px)!important;
+      left:var(--az-aff-fixed-left,14px)!important;
+      right:auto!important;
+      width:var(--az-aff-fixed-width,calc(100% - 28px))!important;
+      margin:0!important;
+      z-index:3190!important;
+      border-radius:0 0 14px 14px;
+      box-shadow:0 14px 34px rgba(0,0,0,.42);
+    }
+    .affiliate-sticky-spacer{display:none;width:100%;height:0;margin:0;padding:0;border:0;pointer-events:none}
+    .affiliate-sticky-spacer.is-active{display:block}
     .affiliate-sticky-filters .search{flex:1 1 300px!important;max-width:none!important;min-width:220px}
     .affiliate-sticky-filters .sort-control{margin-left:auto;flex:0 1 310px;min-width:240px}
     .affiliate-sticky-filters .sort-control select{min-width:0;flex:1}
     .admin-tools{margin-top:8px}
     @media(max-width:760px){
-      .affiliate-sticky-filters{top:92px;gap:7px;padding:8px 0;margin-bottom:12px}
+      .affiliate-sticky-filters{gap:7px;padding:8px 0;margin-bottom:12px}
+      .affiliate-sticky-filters.is-aff-fixed{border-radius:0 0 12px 12px}
       .affiliate-sticky-filters .search{flex:1 1 100%!important;max-width:none!important;min-width:0;min-height:40px}
       .affiliate-sticky-filters .chip{min-height:38px;padding:0 11px;font-size:12px}
       .affiliate-sticky-filters .sort-control{margin-left:0;flex:1 1 210px;min-width:190px;min-height:38px;padding:0 10px;font-size:12px}
@@ -1304,6 +1319,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="admin-import-cloud-status" id="adminImportCloudStatus" hidden>Cloud import ready. Shopee JSON mesti berjaya disimpan ke Firestore sebelum dianggap imported.</div>
 </div>
 </section>
+<div class="affiliate-sticky-spacer" id="affiliateStickySpacer" aria-hidden="true"></div>
 <div class="affiliate-sticky-filters" id="affiliateStickyFilters" role="search" aria-label="Affiliate Shop search and filters">
 <input class="search" id="searchInput" placeholder="Search products..." type="search"/>
 <button class="chip is-active" data-filter="all" type="button">All</button>
@@ -4470,6 +4486,93 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 
 
 
+
+<script id="azobss-affiliate-fixed-filters-v1338">
+(function(){
+  'use strict';
+  function init(){
+    var bar=document.getElementById('affiliateStickyFilters');
+    var spacer=document.getElementById('affiliateStickySpacer');
+    var main=document.querySelector('main');
+    var nav=document.querySelector('.market-sticky-bar');
+    if(!bar || !spacer || !main) return;
+
+    var anchorY=0;
+    var ticking=false;
+
+    function navHeight(){
+      if(!nav) return 0;
+      var r=nav.getBoundingClientRect();
+      return Math.max(0,Math.round(r.height));
+    }
+
+    function measureAnchor(){
+      var wasFixed=bar.classList.contains('is-aff-fixed');
+      if(wasFixed){
+        bar.classList.remove('is-aff-fixed');
+        spacer.classList.remove('is-active');
+        spacer.style.height='0px';
+      }
+      var rect=bar.getBoundingClientRect();
+      anchorY=window.scrollY + rect.top;
+      if(wasFixed) update(true);
+    }
+
+    function applyGeometry(){
+      var mr=main.getBoundingClientRect();
+      var top=navHeight();
+      bar.style.setProperty('--az-aff-fixed-top', top+'px');
+      bar.style.setProperty('--az-aff-fixed-left', Math.round(mr.left)+'px');
+      bar.style.setProperty('--az-aff-fixed-width', Math.round(mr.width)+'px');
+    }
+
+    function update(force){
+      ticking=false;
+      applyGeometry();
+      var top=navHeight();
+      var shouldFix=(window.scrollY + top) >= anchorY;
+      var isFixed=bar.classList.contains('is-aff-fixed');
+      if(shouldFix && !isFixed){
+        var h=Math.ceil(bar.getBoundingClientRect().height);
+        spacer.style.height=h+'px';
+        spacer.classList.add('is-active');
+        bar.classList.add('is-aff-fixed');
+        applyGeometry();
+      }else if(!shouldFix && isFixed){
+        bar.classList.remove('is-aff-fixed');
+        spacer.classList.remove('is-active');
+        spacer.style.height='0px';
+        applyGeometry();
+      }else if(shouldFix && isFixed){
+        var currentH=Math.ceil(bar.getBoundingClientRect().height);
+        if(currentH>0) spacer.style.height=currentH+'px';
+      }
+    }
+
+    function schedule(){
+      if(ticking) return;
+      ticking=true;
+      requestAnimationFrame(update);
+    }
+
+    // Initial natural position after layout/fonts settle.
+    requestAnimationFrame(function(){
+      measureAnchor();
+      update(true);
+      setTimeout(function(){ measureAnchor(); update(true); },250);
+      setTimeout(function(){ measureAnchor(); update(true); },900);
+    });
+    window.addEventListener('scroll',schedule,{passive:true});
+    window.addEventListener('resize',function(){ measureAnchor(); update(true); },{passive:true});
+    window.addEventListener('orientationchange',function(){ setTimeout(function(){measureAnchor();update(true);},120); });
+    if(window.ResizeObserver){
+      new ResizeObserver(function(){ schedule(); }).observe(nav || document.body);
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
 <script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
 <script id="azobss-render-smart-prewarm-v1040" src="/scripts/azobss-render-smart-prewarm-v1040.js" defer></script>
 </body>
