@@ -2782,6 +2782,46 @@ function openGoogleProfileModal(firebaseUser,profile,offerLink=true){
   if(modal){modal.classList.add('is-open');modal.setAttribute('aria-hidden','false')}
   setTimeout(()=>$('siteGooglePhone')?.focus(),60);
 }
+// AZOBSS v1352: return users to the protected destination that requested login.
+// Only same-origin relative URLs are accepted to avoid open-redirect abuse.
+function azobssGetPostAuthReturnTarget1352(){
+  let raw='';
+  try{
+    const params=new URLSearchParams(location.search||'');
+    raw=String(params.get('next')||'').trim();
+  }catch(_e){}
+  if(!raw){
+    try{raw=String(sessionStorage.getItem('azobssReturnAfterLogin')||'').trim();}catch(_e){}
+  }
+  if(!raw){
+    try{raw=String(localStorage.getItem('azobssReturnAfterLogin')||'').trim();}catch(_e){}
+  }
+  if(!raw) return '';
+  try{
+    const target=new URL(raw, location.origin);
+    if(target.origin!==location.origin) return '';
+    if(!target.pathname.startsWith('/')) return '';
+    return target.pathname + target.search + target.hash;
+  }catch(_e){ return ''; }
+}
+function azobssRememberPostAuthReturnTarget1352(target){
+  const value=String(target||'').trim();
+  if(!value) return;
+  try{sessionStorage.setItem('azobssReturnAfterLogin',value);}catch(_e){}
+  try{localStorage.setItem('azobssReturnAfterLogin',value);}catch(_e){}
+}
+function azobssRedirectAfterAuth1352(){
+  const target=azobssGetPostAuthReturnTarget1352();
+  if(!target) return false;
+  try{sessionStorage.removeItem('azobssReturnAfterLogin');}catch(_e){}
+  try{localStorage.removeItem('azobssReturnAfterLogin');}catch(_e){}
+  try{
+    const current=location.pathname+location.search+location.hash;
+    if(current===target) return false;
+    location.assign(target);
+    return true;
+  }catch(_e){ return false; }
+}
 async function finalizeGoogleSession(firebaseUser,profile){
   const usernameKey=normalizeUsername(profile?.usernameKey||profile?.username||profile?.name||profile?.id||'');
   if(!usernameKey) throw new Error('AZOBSS profile username is missing.');
@@ -2798,6 +2838,7 @@ async function finalizeGoogleSession(firebaseUser,profile){
   saveUser(fullUser);syncHeader(fullUser);enforcePaBmPageAccess(fullUser,true);startAzobssPresenceHeartbeat(fullUser);await recordLoginHistory(fullUser,'login');bindAzobssPurchaseRecordsUI();renderAzobssPurchaseRecords();setTimeout(renderAzobssPurchaseRecords,800);renderFirebaseAdminRecords();
   setTimeout(()=>{azobssTryAutoRedeemPendingReferral();azobssHandleMembershipReturn();},250);
   closeGoogleProfileModal();closeSiteAuth();window.__AZOBSS_GOOGLE_AUTH_FLOW__=false;
+  if(azobssRedirectAfterAuth1352()) return true;
   return true;
 }
 async function azobssGetTrustedAlreadyLinkedGoogleProfile(firebaseUser,identity){
@@ -7639,6 +7680,7 @@ function bindAuth() {
       }
       const signedInUser={uid:authUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,authEmail:realEmail || authUser.email,verified:!!authUser.emailVerified || isOwnerBypass,emailVerified:!!authUser.emailVerified || isOwnerBypass};
       saveUser(signedInUser); syncHeader(signedInUser); startAzobssPresenceHeartbeat(signedInUser); await recordLoginHistory(signedInUser, 'login'); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); renderFirebaseAdminRecords(); migrateUsernameAuthLookupForAdmin(); closeSiteAuth();
+      if(azobssRedirectAfterAuth1352()) return;
     }catch(error){
       console.warn('AZOBSS login failed:', error?.code || error?.message || error);
       if(err) err.textContent = error?.code==='auth/invalid-credential' ? 'Wrong username/email or password. If username login fails, try your Gmail email once.' : ((error?.code || 'Login failed') + ': ' + (error?.message || 'Please try again.'));
@@ -7833,8 +7875,12 @@ function bindAuth() {
         // Previous build deleted the Auth user when Firestore was slow/blocked,
         // causing the user to disappear after ~30 seconds and no Gmail verification.
         if(err){err.style.color='#87ceeb'; err.textContent='📧 Sending verification email...';}
+        const signupReturnTarget1352=azobssGetPostAuthReturnTarget1352();
+        if(signupReturnTarget1352) azobssRememberPostAuthReturnTarget1352(signupReturnTarget1352);
+        const verifyParams1352=new URLSearchParams({azobssVerified:'1'});
+        if(signupReturnTarget1352) verifyParams1352.set('next',signupReturnTarget1352);
         await sendEmailVerification(newUser, {
-          url: location.origin + '/?azobssVerified=1',
+          url: location.origin + '/?' + verifyParams1352.toString(),
           handleCodeInApp: false
         });
         verificationEmailSent = true;
@@ -8137,7 +8183,12 @@ function bindAuth() {
   const params = new URLSearchParams(location.search || '');
   if(params.get('azobssVerified') === '1') {
     try{ sessionStorage.setItem('azobssAccessDeniedMessage','Email verified successfully. Please login.'); }catch(e){}
-    history.replaceState(null,'',location.pathname + '#login');
+    const verifiedReturn1352=String(params.get('next')||'').trim();
+    if(verifiedReturn1352) azobssRememberPostAuthReturnTarget1352(verifiedReturn1352);
+    const cleanVerifiedParams1352=new URLSearchParams(location.search||'');
+    cleanVerifiedParams1352.delete('azobssVerified');
+    const cleanVerifiedQuery1352=cleanVerifiedParams1352.toString();
+    history.replaceState(null,'',location.pathname + (cleanVerifiedQuery1352?'?'+cleanVerifiedQuery1352:'') + '#login');
     setTimeout(()=>openSiteAuth('signin'), 80);
   }
   const hash = String(location.hash || '').toLowerCase();

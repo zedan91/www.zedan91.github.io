@@ -86,7 +86,7 @@
       (loginRequired?'<button type="button" class="azebook-btn primary azebook-paywall-main" id="azebookLogin1351">Login / Register dahulu</button><p class="azebook-paywall-note">Pembelian mesti dipautkan pada akaun supaya akses kekal walaupun tukar browser atau PC.</p>':
        '<button type="button" class="azebook-btn primary azebook-paywall-main" id="azebookBuy1351">'+(pending?'Semak / Sambung Pembayaran':'Unlock Sekarang — RM19')+'</button><p class="azebook-paywall-note">Pembayaran melalui ToyyibPay / FPX. Selepas disahkan, generator dibuka automatik.</p>')+
       '<div id="azebookPayStatus1351" class="azebook-paywall-status"></div></div>';
-    var lb=byId('azebookLogin1351');if(lb)lb.onclick=function(){try{sessionStorage.setItem('azobssReturnAfterLogin','/Software-Tools/#ebook')}catch(_e){};location.href='/?next='+encodeURIComponent('/Software-Tools/#ebook')+'#login'};
+    var lb=byId('azebookLogin1351');if(lb)lb.onclick=function(){try{sessionStorage.setItem('azobssReturnAfterLogin','/Software-Tools/#ebook')}catch(_e){}try{localStorage.setItem('azobssReturnAfterLogin','/Software-Tools/#ebook')}catch(_e){};location.href='/?next='+encodeURIComponent('/Software-Tools/#ebook')+'#login'};
     var bb=byId('azebookBuy1351');if(bb)bb.onclick=function(){ if(pending&&pending.paymentUrl){location.href=pending.paymentUrl;return} buyLifetimeAccess(); };
   }
   function gateStatus(msg,error){var el=byId('azebookPayStatus1351');if(!el)return;el.textContent=msg||'';el.className='azebook-paywall-status'+(error?' is-error':'')}
