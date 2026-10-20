@@ -5,9 +5,12 @@
   const $=id=>root.querySelector('#azdm-'+id);
   const tabs=[...document.querySelectorAll('[data-software-key-product]')];
   let product='azdm',loaded=false,loading=null,page=0,cursors=[null],next=null,search='',sort='created-desc';
-  let orderPage=0,orderCursors=[null],orderNext=null,serialRecord=null,editing=null,pending=null,generation=0;
+  let orderPage=0,orderCursors=[null],orderNext=null,orderSearch='',serialRecord=null,editing=null,pending=null,generation=0,currentOrder=null,previousBodyOverflow='';
   const apiBase='https://azobss-backend.onrender.com/api/azdm/admin/';
   const date=seconds=>seconds?new Date(seconds*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}):'Lifetime';
+  const dateTime=value=>{if(!value)return '—';const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):String(value)};
+  const safe=v=>String(v??'').trim();
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   function notice(text){$('notice').textContent=text;$('notice').hidden=!text;}
   async function api(action,body={}){
     for(let i=0;i<40&&typeof window.azAdminFetchJson!=='function';i++)await new Promise(resolve=>setTimeout(resolve,100));
@@ -56,7 +59,7 @@
   }
   async function loadOrders(suppress=true){
     try{
-      const current=generation,result=await api('orders',{limit:25,cursor:orderCursors[orderPage]});
+      const current=generation,result=await api('orders',{limit:25,cursor:orderCursors[orderPage],search:orderSearch});
       if(current!==generation)return;
       orderNext=result.next_cursor;$('order-rows').replaceChildren();
       $('shop-state').textContent=result.enabled?'Pembelian online aktif.':'Pembelian online belum diaktifkan.';
@@ -66,13 +69,26 @@
         const row=document.createElement('tr'),name=cell(row,'');const strong=document.createElement('strong');strong.textContent=item.customer;name.append(strong);
         for(const value of [item.email,item.id]){const small=document.createElement('small');small.textContent=value;name.append(small);}
         cell(row,item.product_name+' · '+item.quantity+' PC · RM'+(item.amount_cents/100).toFixed(2));cell(row,states[item.status]||item.status);cell(row,emails[item.email_status]||'Selepas bayaran');
-        const td=cell(row,'');if(item.email_status==='review')td.append(button('Hantar semula',()=>confirm(item,'order-email-retry')));
+        const td=cell(row,''),actions=document.createElement('div');actions.className='azdm-admin-actions';td.append(actions);
+        const viewBtn=button('View',()=>openOrderAudit(item));viewBtn.classList.add('azdm-order-view');actions.append(viewBtn);
+        if(item.email_status==='review')actions.append(button('Hantar semula',()=>confirm(item,'order-email-retry')));
         $('order-rows').append(row);
       }
       if(!result.orders.length){const row=document.createElement('tr'),td=cell(row,'Belum ada pesanan AZDM online.');td.colSpan=5;td.className='azdm-admin-empty';$('order-rows').append(row);}
-      $('orders-page-label').textContent='Halaman '+(orderPage+1)+' · '+result.orders.length+' pesanan';updatePages();
+      $('orders-page-label').textContent=(result.total??result.orders.length)+' rekod · Halaman '+(orderPage+1)+' · '+result.orders.length+' dipaparkan';updatePages();
     }catch(error){$('shop-state').textContent='Pesanan online belum tersedia: '+error.message;if(!suppress)throw error;}
   }
+  function auditLine(label,value,copy=false){const raw=safe(value)||'—';return `<div class="azdm-audit-line"><span>${esc(label)}</span><b>${esc(raw)}</b>${copy&&raw!=='—'?`<button type="button" class="azdm-audit-copy" data-azdm-copy="${esc(raw)}">Copy</button>`:''}</div>`;}
+  function openOrderAudit(item){
+    currentOrder=item;const drawer=$('order-audit-drawer'),back=$('order-audit-backdrop'),body=$('order-audit-body');if(!drawer||!back||!body)return;
+    $('order-audit-title').textContent=item.customer||item.email||'AZDM Customer';$('order-audit-subtitle').textContent=(item.status||'').toUpperCase()+' • RM'+(Number(item.amount_cents||0)/100).toFixed(2);
+    const licenses=Array.isArray(item.issued_licenses)&&item.issued_licenses.length?item.issued_licenses.map(x=>x.license_id||'').filter(Boolean).join(', '):'—';
+    body.innerHTML=`<div class="azdm-audit-section"><h4>👤 Akaun Customer</h4>${auditLine('Customer',item.customer)}${auditLine('Username',item.username)}${auditLine('Email',item.email)}${auditLine('Phone',item.phone)}${auditLine('Firebase UID',item.firebase_uid,true)}</div>
+      <div class="azdm-audit-section"><h4>💳 Pembelian & Payment</h4>${auditLine('Order ID',item.order_id,true)}${auditLine('Status',item.status)}${auditLine('Amount','RM'+(Number(item.amount_cents||0)/100).toFixed(2))}${auditLine('Payment',String(item.payment_method||'').toUpperCase())}${auditLine('BillCode',item.bill_code,true)}${auditLine('Payment Ref',item.payment_reference,true)}${auditLine('Transaction ID',item.transaction_id,true)}${auditLine('Stripe PI',item.stripe_payment_intent,true)}${auditLine('Stripe Session',item.stripe_checkout_session,true)}${auditLine('Purchased',dateTime(item.created_at))}${auditLine('Paid At',dateTime(item.paid_at))}${auditLine('Verified At',dateTime(item.payment_verified_at))}${auditLine('Invoice',item.invoice_no,true)}${auditLine('Receipt',item.receipt_no,true)}</div>
+      <div class="azdm-audit-section"><h4>🔑 Fulfilment & Lesen</h4>${auditLine('Issued Count',item.issued_count)}${auditLine('License ID(s)',licenses,true)}${auditLine('Fulfilment',item.fulfillment_state)}${auditLine('Email Status',item.email_status)}${auditLine('Error',item.fulfillment_error||'—')}</div>`;
+    back.hidden=false;drawer.hidden=false;previousBodyOverflow=document.body.style.overflow;document.body.style.overflow='hidden';setTimeout(()=>$('order-audit-close')?.focus(),0);
+  }
+  function closeOrderAudit(){const drawer=$('order-audit-drawer'),back=$('order-audit-backdrop');if(drawer)drawer.hidden=true;if(back)back.hidden=true;document.body.style.overflow=previousBodyOverflow||'';currentOrder=null;}
   function load(force=false){
     if(loading)return loading;
     if(loaded&&!force)return Promise.resolve();
@@ -145,10 +161,16 @@
   });
   root.querySelectorAll('[data-azdm-close]').forEach(el=>el.addEventListener('click',()=>$(el.dataset.azdmClose).close()));
   $('serial-dialog').addEventListener('close',()=>{serialRecord=null;$('serial-value').value='';});
+  $('order-search-form')?.addEventListener('submit',event=>{event.preventDefault();action(async()=>{orderSearch=$('order-search').value.trim();orderPage=0;orderCursors=[null];await loadOrders(false);});});
+  $('order-clear')?.addEventListener('click',()=>action(async()=>{orderSearch='';$('order-search').value='';orderPage=0;orderCursors=[null];await loadOrders(false);}));
   $('refresh-orders').addEventListener('click',()=>action(async()=>{orderPage=0;orderCursors=[null];await loadOrders();}));
+  $('order-audit-close')?.addEventListener('click',closeOrderAudit);
+  $('order-audit-backdrop')?.addEventListener('click',closeOrderAudit);
+  $('order-audit-body')?.addEventListener('click',async event=>{const btn=event.target.closest('[data-azdm-copy]');if(!btn)return;try{await navigator.clipboard.writeText(btn.getAttribute('data-azdm-copy')||'');notice('Maklumat disalin.');}catch{notice('Tidak dapat salin automatik.');}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('order-audit-drawer')?.hidden)closeOrderAudit();});
   $('orders-next').addEventListener('click',()=>action(async()=>{const old=orderPage;orderCursors[orderPage+1]=orderNext;orderPage++;try{await loadOrders(false);}catch(error){orderPage=old;throw error;}}));
   $('orders-previous').addEventListener('click',()=>action(async()=>{const old=orderPage;orderPage--;try{await loadOrders(false);}catch(error){orderPage=old;throw error;}}));
-  window.addEventListener('azobss-auth-changed',()=>{generation++;loaded=false;serialRecord=null;$('rows').replaceChildren();$('order-rows').replaceChildren();$('serial-value').value='';root.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());});
+  window.addEventListener('azobss-auth-changed',()=>{generation++;loaded=false;serialRecord=null;$('rows').replaceChildren();$('order-rows').replaceChildren();$('serial-value').value='';root.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeOrderAudit();});
   window.addEventListener('pagehide',()=>{serialRecord=null;$('serial-value').value='';});
   selectProduct('azdm');updatePages();
 })();

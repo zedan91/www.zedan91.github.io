@@ -105,3 +105,12 @@
   #azdmAdminPanel .azdm-license-table-wrap{overflow-x:auto}
   #azdmAdminPanel .azdm-license-table{min-width:1050px;table-layout:auto}
 }
+
+/* AZOBSS v1360 — AZDM purchase/payment audit drawer */
+#azdmAdminPanel .azdm-order-audit-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.72);backdrop-filter:blur(3px);z-index:9998}
+#azdmAdminPanel .azdm-order-audit-drawer{position:fixed;right:0;top:0;width:min(520px,100vw);height:100vh;background:#0c1728;border-left:1px solid #2b415e;z-index:9999;box-shadow:-18px 0 50px rgba(0,0,0,.35);overflow:auto;padding:0 0 28px}
+#azdmAdminPanel .azdm-order-audit-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:20px;background:#0f1d31;border-bottom:1px solid #2b415e}
+#azdmAdminPanel .azdm-order-audit-head strong{display:block;font-size:18px;color:#fff}#azdmAdminPanel .azdm-order-audit-head span{display:block;font-size:11px;color:#93a4ba;margin-top:3px}
+#azdmAdminPanel .azdm-order-audit-head button{min-width:40px;height:40px;border-radius:10px}
+#azdmAdminPanel .azdm-order-audit-body{padding:16px 20px}.azdm-audit-section{border:1px solid #273b56;background:#101d30;border-radius:14px;padding:12px 14px;margin-bottom:12px}.azdm-audit-section h4{margin:0 0 8px;color:#eaf2ff}.azdm-audit-line{display:grid;grid-template-columns:125px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #20324a;font-size:11px}.azdm-audit-line:last-child{border-bottom:0}.azdm-audit-line span{color:#86b8ef}.azdm-audit-line b{color:#fff;overflow-wrap:anywhere}.azdm-audit-copy{font-size:10px!important;min-height:28px!important;padding:5px 8px!important}.azdm-order-view{background:#153b67!important;border-color:#2b6ca8!important;color:#fff!important}
+@media(max-width:600px){#azdmAdminPanel .azdm-order-audit-drawer{width:100vw}.azdm-audit-line{grid-template-columns:100px 1fr}.azdm-audit-line button{grid-column:2}}

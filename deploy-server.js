@@ -3285,7 +3285,7 @@ async function azGrantEbookGeneratorLifetimeAccess(order = {}) {
       paymentReference:cleanPremiumText(order.paymentReference || "", 180),
       updatedAt:nowIso,
       updatedAtMs:nowMs,
-      accessVersion:1359
+      accessVersion:1360
     }, { merge:true });
   }
   const updated = upsertPremiumOrder({
@@ -3341,7 +3341,7 @@ async function azEbookGeneratorAccessStatus(identity = {}) {
         const row = snap.data() || {};
         if (row.active !== false && row.lifetime === true) {
           const nowMs = Date.now(), nowIso = new Date(nowMs).toISOString();
-          azFireAndForget(accessRef.set({ lastAccessAt:nowIso, lastAccessAtMs:nowMs, lastAccessSource:"access-status", accessVersion:1359 }, { merge:true }), "Ebook last-access touch failed");
+          azFireAndForget(accessRef.set({ lastAccessAt:nowIso, lastAccessAtMs:nowMs, lastAccessSource:"access-status", accessVersion:1360 }, { merge:true }), "Ebook last-access touch failed");
           return { access:true, lifetime:true, source:"entitlement", entitlement:{ ...row, lastAccessAt:nowIso, lastAccessAtMs:nowMs } };
         }
         if (row.active === false) return { access:false, lifetime:true, reason:"admin_revoked", source:"entitlement", entitlement:row };
@@ -3357,7 +3357,7 @@ async function azEbookGeneratorAccessStatus(identity = {}) {
   return { access:false, reason:pending ? "payment_pending" : "payment_required", pending:pending ? { orderId:pending.orderId || "", billCode:pending.billCode || "", paymentUrl:pending.paymentUrl || "" } : null };
 }
 
-// AZOBSS v1359 — Polished Digital Access manager with audit, Last Used and Re-sync.
+// AZOBSS v1360 — Digital Access manager + fast access cache and audit.
 async function azAdminListEbookGeneratorAccess() {
   const db = getAzobssBackendDb();
   if (!db) throw new Error("Firebase Admin is not configured.");
@@ -3457,16 +3457,16 @@ async function azAdminSetEbookGeneratorAccess(req, adminIdentity = {}, body = {}
     if (!paid) throw Object.assign(new Error("Tiada rekod pembayaran PAID untuk akaun ini."), { statusCode:404 });
     if (!(paid.paymentVerifiedAt || paid.toyyibVerifiedAt || paid.stripeVerifiedAt)) throw Object.assign(new Error("Rekod PAID ini belum mempunyai verification marker. Sahkan pembayaran dahulu."), { statusCode:409 });
     await azGrantEbookGeneratorLifetimeAccess(paid);
-    await ref.set({ active:true, lifetime:true, resyncedAt:nowIso, resyncedAtMs:nowMs, resyncedBy:adminName, updatedAt:nowIso, updatedAtMs:nowMs, accessVersion:1359 }, { merge:true });
+    await ref.set({ active:true, lifetime:true, resyncedAt:nowIso, resyncedAtMs:nowMs, resyncedBy:adminName, updatedAt:nowIso, updatedAtMs:nowMs, accessVersion:1360 }, { merge:true });
     azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,'ebook_access_resync','ebookGeneratorAccess',uid,{uid,orderId:paid.orderId || '',billCode:paid.billCode || ''},'success'),'Ebook access resync audit failed');
     return {ok:true,uid,active:true,action:'resync',orderId:paid.orderId || '',billCode:paid.billCode || ''};
   }
 
   const reason = cleanPremiumText(body.reason || "", 300);
   const patch = action === 'revoke' ? {
-    active:false,revokedAt:nowIso,revokedAtMs:nowMs,revokedBy:adminName,revokedReason:reason,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1359
+    active:false,revokedAt:nowIso,revokedAtMs:nowMs,revokedBy:adminName,revokedReason:reason,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1360
   } : {
-    active:true,revokedAt:"",revokedAtMs:0,revokedBy:"",revokedReason:"",restoredAt:nowIso,restoredAtMs:nowMs,restoredBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1359
+    active:true,revokedAt:"",revokedAtMs:0,revokedBy:"",revokedReason:"",restoredAt:nowIso,restoredAtMs:nowMs,restoredBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1360
   };
   await ref.set(patch,{merge:true});
   azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,action==='revoke'?'ebook_access_revoke':'ebook_access_restore','ebookGeneratorAccess',uid,{uid,reason},'success'),'Ebook access admin audit failed');
@@ -3795,6 +3795,22 @@ function azAzdmPublicOrder(order = {}, admin = false) {
     row.issued_count = Math.max(0, Number(order.azdmIssuedCount || 0) || 0);
     row.fulfillment_state = String(order.azdmFulfillmentState || '');
     row.fulfillment_error = String(order.azdmFulfillmentError || order.emailError || '');
+    // v1360: retain proof/audit identifiers for Admin > AZDM purchase drawer.
+    row.firebase_uid = azAzdmOrderUid(order);
+    row.username = String(order.user?.username || order.username || order.usernameKey || '');
+    row.phone = String(order.user?.phone || order.phone || order.customerPhone || '');
+    row.payment_reference = String(order.paymentReference || order.transactionId || order.transaction_id || '');
+    row.transaction_id = String(order.transactionId || order.transaction_id || '');
+    row.stripe_payment_intent = String(order.stripePaymentIntentId || order.paymentIntentId || order.stripePaymentIntent || '');
+    row.stripe_checkout_session = String(order.stripeCheckoutSessionId || order.stripeSessionId || '');
+    row.payment_verified_at = String(order.paymentVerifiedAt || order.toyyibVerifiedAt || order.stripeVerifiedAt || '');
+    row.updated_at = String(order.updatedAt || '');
+    row.payment_fee = Number(order.paymentFee ?? order.gatewayFee ?? order.stripeFee ?? 0) || 0;
+    row.net_amount = Number(order.stripeNet ?? order.netAmount ?? 0) || 0;
+    try {
+      const issued = order.azdmSerialCipher ? azAzdmDecryptSerials(order.azdmSerialCipher) : [];
+      row.issued_licenses = Array.isArray(issued) ? issued.map(x=>({license_id:String(x.license_id||''),expires:Number(x.expires||0)||0})) : [];
+    } catch (_) { row.issued_licenses = []; }
   }
   return row;
 }
@@ -4004,8 +4020,22 @@ async function azAzdmLocalOrders({body}) {
 }
 async function azAzdmAdminLocalOrders({body}) {
   const limit = Math.max(1, Math.min(50, Number(body.limit || 25) || 25)), offset = Math.max(0, Number(body.cursor || 0) || 0);
-  const all = await azAzdmLoadOrdersRaw(500), slice = all.slice(offset,offset+limit).map(row=>azAzdmPublicOrder(row,true));
-  return {ok:true,enabled:azAzdmShopReadiness().ready,orders:slice,next_cursor:offset+limit<all.length?String(offset+limit):null};
+  const search = cleanPremiumText(body.search || '',180).trim().toLowerCase();
+  let all = await azAzdmLoadOrdersRaw(500);
+  if (search) {
+    all = all.filter(order => {
+      const hay = [
+        order.orderId,order.billCode,order.paymentReference,order.transactionId,order.transaction_id,
+        order.user?.uid,order.azdmAccountUid,order.accountUid,order.user?.username,order.username,order.usernameKey,
+        order.email,order.buyerEmail,order.user?.email,order.phone,order.user?.phone,
+        order.productName,order.productId,order.invoiceNo,order.receiptNo,
+        order.stripePaymentIntentId,order.paymentIntentId,order.stripeCheckoutSessionId,order.stripeSessionId
+      ].map(v=>String(v||'').toLowerCase()).join(' ');
+      return hay.includes(search);
+    });
+  }
+  const slice = all.slice(offset,offset+limit).map(row=>azAzdmPublicOrder(row,true));
+  return {ok:true,enabled:azAzdmShopReadiness().ready,orders:slice,total:all.length,next_cursor:offset+limit<all.length?String(offset+limit):null,version:1360};
 }
 async function azAzdmAdminLocalRetryEmail({req,body}) {
   const orderId = cleanPremiumText(body.order_id || body.orderId || '',180);
@@ -21560,7 +21590,7 @@ async function handler(req, res) {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
         if (!adminIdentity || !adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
         const rows = await azAdminListEbookGeneratorAccess();
-        return send(res,200,JSON.stringify({ok:true,records:rows,total:rows.length,active:rows.filter(x=>x.active).length,revoked:rows.filter(x=>!x.active).length,version:1359},null,2),"application/json",{"Cache-Control":"no-store"});
+        return send(res,200,JSON.stringify({ok:true,records:rows,total:rows.length,active:rows.filter(x=>x.active).length,revoked:rows.filter(x=>!x.active).length,version:1360},null,2),"application/json",{"Cache-Control":"no-store"});
       } catch (err) {
         console.error("Admin Ebook access list failed:", err && (err.stack || err.message || err));
         return send(res,500,JSON.stringify({ok:false,error:cleanPremiumText(err && err.message,300)||"Could not load Ebook access records."},null,2),"application/json",{"Cache-Control":"no-store"});
@@ -21592,7 +21622,7 @@ async function handler(req, res) {
           }
         }
         const state = await azEbookGeneratorAccessStatus(identity);
-        return send(res, 200, JSON.stringify({ ok:true, ...state, priceRM:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID, accessVersion:1359 }, null, 2), "application/json", {"Cache-Control":"no-store"});
+        return send(res, 200, JSON.stringify({ ok:true, ...state, priceRM:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID, accessVersion:1360 }, null, 2), "application/json", {"Cache-Control":"no-store"});
       } catch (err) {
         console.error("Ebook access status failed:", err && (err.stack || err.message || err));
         return send(res, 500, JSON.stringify({ ok:false, access:false, error:"Could not check Ebook Generator access." }, null, 2), "application/json", {"Cache-Control":"no-store"});

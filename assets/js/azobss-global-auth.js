@@ -4438,6 +4438,8 @@ async function azobssGetFirebaseAuthHeaders(forceRefresh){
   }
 }
 try{ window.azobssGetFirebaseAuthHeaders = azobssGetFirebaseAuthHeaders; }catch(_e){}
+// AZOBSS v1360 — lightweight synchronous auth identity for paid-access UI cache.
+try{ window.azobssGetCurrentFirebaseUid = function(){ try{return String((auth&&auth.currentUser&&auth.currentUser.uid)||'');}catch(_e){return '';} }; }catch(_e){}
 
 // v1268: secure token waiter for classic PA/BM fallbacks. The saved AZOBSS
 // profile/header may render before Firebase Auth finishes hydrating currentUser

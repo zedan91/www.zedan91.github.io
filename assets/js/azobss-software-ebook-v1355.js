@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  var VERSION='1355';
+  var VERSION='1360';
   var STORAGE_KEY='azobssEbookPromptsV1345';
   var ACTIVE_SIZE='medium';
   var currentPrompt='';
@@ -12,6 +12,8 @@
   var ACCESS_STATE=null;
   var EBOOK_PRICE='RM19';
   var EBOOK_PENDING_KEY='azobssEbookGeneratorPendingV1351';
+  var ACCESS_CACHE_KEY='azobssEbookAccessCacheV1360';
+  var ACCESS_CACHE_TTL=5*60*1000;
 
   function esc(v){
     return String(v==null?'':v).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});
@@ -52,12 +54,13 @@
   }
   async function authHeaders(force){
     try{
-      if(typeof window.azobssWaitForFirebaseAuthToken==='function'){
-        var token=await window.azobssWaitForFirebaseAuthToken(!!force,10000);
-        if(token)return {'Authorization':'Bearer '+token};
-      }
+      // v1360: use the already-restored Firebase user immediately when available.
       if(typeof window.azobssGetFirebaseAuthHeaders==='function'){
         var h=await window.azobssGetFirebaseAuthHeaders(!!force);if(h&&h.Authorization)return h;
+      }
+      if(typeof window.azobssWaitForFirebaseAuthToken==='function'){
+        var token=await window.azobssWaitForFirebaseAuthToken(!!force,3000);
+        if(token)return {'Authorization':'Bearer '+token};
       }
     }catch(_e){}
     return {};
@@ -79,6 +82,22 @@
     try{var x=JSON.parse(localStorage.getItem(EBOOK_PENDING_KEY)||'null');return x&&typeof x==='object'?x:null}catch(_e){return null}
   }
   function setPendingPayment(v){try{if(v)localStorage.setItem(EBOOK_PENDING_KEY,JSON.stringify(v));else localStorage.removeItem(EBOOK_PENDING_KEY)}catch(_e){}}
+  function currentFirebaseUid(){
+    try{if(typeof window.azobssGetCurrentFirebaseUid==='function')return String(window.azobssGetCurrentFirebaseUid()||'').trim()}catch(_e){}
+    return '';
+  }
+  function readAccessCache(){try{var x=JSON.parse(sessionStorage.getItem(ACCESS_CACHE_KEY)||localStorage.getItem(ACCESS_CACHE_KEY)||'null');return x&&typeof x==='object'?x:null}catch(_e){return null}}
+  function writeAccessCache(uid){
+    uid=String(uid||'').trim();if(!uid)return;
+    var row={uid:uid,access:true,lifetime:true,checkedAtMs:Date.now()};
+    try{sessionStorage.setItem(ACCESS_CACHE_KEY,JSON.stringify(row));localStorage.setItem(ACCESS_CACHE_KEY,JSON.stringify(row))}catch(_e){}
+  }
+  function clearAccessCache(){try{sessionStorage.removeItem(ACCESS_CACHE_KEY);localStorage.removeItem(ACCESS_CACHE_KEY)}catch(_e){}}
+  function restoreCachedAccess(){
+    var uid=currentFirebaseUid(),row=readAccessCache();
+    if(!uid||!row||row.uid!==uid||row.access!==true||Date.now()-Number(row.checkedAtMs||0)>ACCESS_CACHE_TTL)return false;
+    updateGate({access:true,lifetime:true,source:'short-cache',reason:'cached'});return true;
+  }
   function gateEl(){return byId('azebookAccessGate1351')}
   function paidContent(){return byId('azebookPaidContent1351')}
   function updateGate(state){
@@ -123,21 +142,34 @@
     var bb=byId('azebookBuy1351');if(bb)bb.onclick=function(){ if(pending&&pending.paymentUrl){location.href=pending.paymentUrl;return} buyLifetimeAccess(); };
   }
   function gateStatus(msg,error){var el=byId('azebookPayStatus1351');if(!el)return;el.textContent=msg||'';el.className='azebook-paywall-status'+(error?' is-error':'')}
-  async function checkLifetimeAccess(force){
-    ACCESS_LOADING=true;
-    var headers=await waitForAuthHeaders(!!force,6500);
-    if(!headers.Authorization){updateGate({access:false,loginRequired:true,reason:'login_required'});return false}
+  async function checkLifetimeAccess(force,options){
+    options=options||{};var background=!!options.background;
+    if(!background)ACCESS_LOADING=true;
+    var headers=await waitForAuthHeaders(!!force,background?1200:3000);
+    if(!headers.Authorization){
+      if(background&&ACCESS_GRANTED)return true;
+      clearAccessCache();updateGate({access:false,loginRequired:true,reason:'login_required'});return false;
+    }
     var pending=pendingPayment();
     var url=apiBase()+'/api/ebook-generator/access-status'+(pending&&pending.billCode?'?billCode='+encodeURIComponent(pending.billCode):'');
+    var controller=typeof AbortController!=='undefined'?new AbortController():null;
+    var timeout=setTimeout(function(){try{controller&&controller.abort()}catch(_e){}},background?2800:5000);
     try{
-      var res=await fetch(url,{headers:Object.assign({'Accept':'application/json'},headers),cache:'no-store'});
+      var res=await fetch(url,{headers:Object.assign({'Accept':'application/json'},headers),cache:'no-store',signal:controller?controller.signal:undefined});
       var data=await res.json().catch(function(){return {}});
-      if(res.status===401){updateGate({access:false,loginRequired:true,reason:'login_required'});return false}
+      if(res.status===401){clearAccessCache();updateGate({access:false,loginRequired:true,reason:'login_required'});return false}
       if(!res.ok||data.ok===false)throw new Error(data.error||'Access check failed');
+      var uid=currentFirebaseUid()||String(data&&data.entitlement&&data.entitlement.uid||'');
+      if(data.access)writeAccessCache(uid);else clearAccessCache();
       updateGate(data);
       if(!data.access&&data.reason==='payment_pending')gateStatus('Pembayaran belum disahkan. Jika baru selesai bayar, tunggu beberapa saat dan tekan semula.',false);
       return !!data.access;
-    }catch(err){updateGate({access:false,reason:'check_failed'});gateStatus('Tak dapat semak akses sekarang: '+(err.message||err),true);return false}
+    }catch(err){
+      if(background&&ACCESS_GRANTED)return true;
+      updateGate({access:false,reason:'check_failed'});
+      gateStatus((err&&err.name==='AbortError'?'Semakan mengambil masa lebih lama daripada biasa. Cuba semula.':'Tak dapat semak akses sekarang: '+(err.message||err)),true);
+      return false;
+    }finally{clearTimeout(timeout)}
   }
   async function buyLifetimeAccess(){
     var btn=byId('azebookBuy1351');if(btn){btn.disabled=true;btn.textContent='Menyediakan pembayaran...'}
@@ -662,16 +694,23 @@
     updateGate({access:false,reason:'loading'});
     var paymentReturn=readEbookPaymentReturn();
     if(paymentReturn.isReturn){handleEbookPaymentReturn(paymentReturn);}
-    else{checkLifetimeAccess(false);if(String(location.hash||'').toLowerCase()==='#ebook')setMainTab('ebook',false);}
+    else{
+      var cached=restoreCachedAccess();
+      checkLifetimeAccess(false,cached?{background:true}:{});
+      if(String(location.hash||'').toLowerCase()==='#ebook')setMainTab('ebook',false);
+    }
     window.addEventListener('hashchange',function(){
       if(String(location.hash||'').toLowerCase()==='#ebook')setMainTab('ebook',false);
       else if(document.body.classList.contains('azebook-mode-on'))setMainTab('software',false);
     });
-    window.addEventListener('azobss:auth-state-ready',function(){
-      if(String(location.hash||'').toLowerCase()==='#ebook'){updateGate({access:false,reason:'loading'});checkLifetimeAccess(true);}
+    window.addEventListener('azobss:auth-state-ready',function(event){
+      if(String(location.hash||'').toLowerCase()!=='#ebook')return;
+      if(event&&event.detail&&event.detail.loggedIn===false){clearAccessCache();updateGate({access:false,loginRequired:true,reason:'login_required'});return;}
+      var cached=restoreCachedAccess();if(!cached)updateGate({access:false,reason:'loading'});
+      checkLifetimeAccess(true,cached?{background:true}:{});
     });
-    window.addEventListener('pageshow',function(){if(String(location.hash||'').toLowerCase()==='#ebook')checkLifetimeAccess(false)});
-    window.addEventListener('focus',function(){if(String(location.hash||'').toLowerCase()==='#ebook'&&!ACCESS_GRANTED)checkLifetimeAccess(false)});
+    window.addEventListener('pageshow',function(){if(String(location.hash||'').toLowerCase()==='#ebook'){var cached=restoreCachedAccess();checkLifetimeAccess(false,cached?{background:true}:{})}});
+    window.addEventListener('focus',function(){if(String(location.hash||'').toLowerCase()==='#ebook'){var cached=restoreCachedAccess();if(!ACCESS_GRANTED||!cached)checkLifetimeAccess(false,cached?{background:true}:{})}});
     try{document.documentElement.setAttribute('data-azobss-ebook-module',VERSION)}catch(_e){}
   }
 
