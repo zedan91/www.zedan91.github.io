@@ -6882,6 +6882,8 @@ function azBuildCommissionLines(order = {}, verifiedReferral = null){
   const owner = azProductOwnerFrom(product, order);
   const referral = verifiedReferral || azReferralFrom({}, product, order);
   const buyer = azCommissionUsername(order.user?.username || order.username || '');
+  const buyerUid = cleanPremiumText(order.user?.uid || order.uid || order.buyerUid || '', 140);
+  const buyerEmail = cleanPremiumText(order.user?.email || order.buyerEmail || order.email || '', 180).toLowerCase();
   const saleAmount = Number(order.amountSen || 0) > 0 ? Number(order.amountSen) / 100 : azCommissionMoney(order.amount || product.price);
   if (!saleAmount) return [];
   const productId = cleanPremiumText(order.productId || product.id || product.productId || '', 160);
@@ -6908,6 +6910,18 @@ function azBuildCommissionLines(order = {}, verifiedReferral = null){
   const validSharer = !!(sharer && sharer !== buyer && (!ownerName || sharer !== ownerName));
   function add(kind, username, uid, email, rate, note, opts = {}){
     if(!username || !rate) return;
+    const targetUsername = azCommissionUsername(username);
+    const targetUid = cleanPremiumText(uid || '', 140);
+    const targetEmail = cleanPremiumText(email || '', 180).toLowerCase();
+    const isSelfPurchase = !!(
+      (buyer && targetUsername && buyer === targetUsername) ||
+      (buyerUid && targetUid && buyerUid === targetUid) ||
+      (buyerEmail && targetEmail && buyerEmail === targetEmail)
+    );
+    if(isSelfPurchase){
+      console.info('[commission] skipped self-purchase', { orderId:order.orderId||'', buyer, username:targetUsername, kind });
+      return;
+    }
     const amount = Math.round((saleAmount * rate / 100) * 100) / 100;
     const azRate = opts.azobssShareRate != null ? Math.max(0, Number(opts.azobssShareRate || 0)) : Math.max(0, 100 - Number(rate || 0));
     const azobssShareAmount = Math.round((saleAmount * azRate / 100) * 100) / 100;

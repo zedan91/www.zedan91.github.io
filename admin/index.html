@@ -1222,11 +1222,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .az-pay-badge.paid{border-color:rgba(34,197,94,.5);color:#86efac;background:rgba(34,197,94,.10)}
 .az-pay-badge.pending{border-color:rgba(245,158,11,.55);color:#fde68a;background:rgba(245,158,11,.10)}
 .az-pay-badge.failed,.az-pay-badge.cancelled{border-color:rgba(248,113,113,.55);color:#fecaca;background:rgba(239,68,68,.10)}
-.az-payment-detail-modal{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px}
+html.az-admin-detail-modal-open,body.az-admin-detail-modal-open{overflow:hidden!important;overscroll-behavior:none!important}
+.az-payment-detail-modal{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px;overflow:hidden;overscroll-behavior:contain;isolation:isolate}
 .az-payment-detail-modal.is-open{display:flex}
-.az-payment-detail-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.74);backdrop-filter:blur(8px)}
-.az-payment-detail-panel{position:relative;width:min(860px,94vw);max-height:86vh;overflow:auto;border:1px solid rgba(148,163,184,.28);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(8,13,24,.98));box-shadow:0 30px 100px rgba(0,0,0,.55);padding:18px}
-.az-payment-detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(148,163,184,.18);padding-bottom:12px;margin-bottom:14px}
+.az-payment-detail-backdrop{position:absolute;inset:0;z-index:0;background:rgba(2,6,23,.74);backdrop-filter:blur(8px);pointer-events:auto}
+.az-payment-detail-panel{position:relative;z-index:1;width:min(860px,94vw);height:auto;max-height:calc(100dvh - 36px);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(8,13,24,.98));box-shadow:0 30px 100px rgba(0,0,0,.55);padding:18px;pointer-events:auto}
+.az-payment-detail-head{position:relative;z-index:2;flex:0 0 auto;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(148,163,184,.18);padding-bottom:12px;margin-bottom:14px;background:linear-gradient(180deg,rgba(15,23,42,.995),rgba(15,23,42,.94))}
+.az-payment-detail-head .btn{position:relative;z-index:3;pointer-events:auto!important}
+.az-payment-detail-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:4px;-webkit-overflow-scrolling:touch}
 .az-payment-detail-head h2{margin:0;font-size:24px}
 .az-payment-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .az-payment-detail-cell{border:1px solid rgba(148,163,184,.18);border-radius:14px;background:rgba(15,23,42,.64);padding:10px}
@@ -1255,7 +1258,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 }
 .az-mini-payment-list .az-admin-pabm-dl-badge{height:20px!important;min-height:20px!important;padding:0 4px!important;border-radius:7px!important;font-size:9.4px!important;line-height:1!important;justify-content:center!important}
 @media(max-width:980px){.az-payment-logs-split{grid-template-columns:1fr!important}.az-mini-payment-list .item-actions{min-width:178px!important;max-width:210px!important}}
-@media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:92vh}.az-mini-payment-list .az-payment-log-row .item-row{grid-template-columns:1fr!important}.az-mini-payment-list .item-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important}.az-mini-payment-list .az-payment-log-row .item-meta{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important}}
+@media(max-width:760px){.az-payment-logs-toolbar input,.az-payment-logs-toolbar select,.az-payment-logs-toolbar button{width:100%;min-width:0}.az-payment-detail-grid{grid-template-columns:1fr}.az-payment-detail-head{flex-direction:column}.az-payment-detail-panel{max-height:calc(100dvh - 24px)}.az-mini-payment-list .az-payment-log-row .item-row{grid-template-columns:1fr!important}.az-mini-payment-list .item-actions{width:100%!important;min-width:0!important;max-width:none!important;justify-content:flex-start!important}.az-mini-payment-list .az-payment-log-row .item-meta{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important}}
 </style>
 
 
@@ -6031,10 +6034,18 @@ function azAdminOpenPaymentLogDetail(key){
   if(sub) sub.textContent=(rec.category||'Payment')+' • '+(rec.orderId||rec.billCode||rec.id||'No ID');
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden','false');
+  azAdminSyncDetailModalScrollLock();
+  requestAnimationFrame(()=>{ const scroller=modal.querySelector('.az-payment-detail-body'); if(scroller) scroller.scrollTop=0; });
+}
+function azAdminSyncDetailModalScrollLock(){
+  const anyOpen=!!document.querySelector('.az-payment-detail-modal.is-open');
+  document.documentElement.classList.toggle('az-admin-detail-modal-open',anyOpen);
+  document.body.classList.toggle('az-admin-detail-modal-open',anyOpen);
 }
 function azAdminClosePaymentLogDetail(){
   const modal=$('#paymentLogDetailModal');
   if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+  azAdminSyncDetailModalScrollLock();
 }
 function azAdminPaymentRecordByKey(key){
   const rec=window.azAdminPaymentLogsMap?.[key];
@@ -6510,9 +6521,26 @@ async function azAdminBulkCommissionStatus(status){
 function azAdminOpenCommissionDetail(key){
   const rec=adminCommissionCache.find(x=>String(x.docId||'')===String(key)||String(x._azRowKey||'')===String(key)); if(!rec) return toast('Commission record not found.');
   const fields=[['Staff / Username',commissionUsernameOf(rec)||'-'],['Product',commissionProductName(rec)],['Product ID',rec.productId||'-'],['Order ID',rec.orderId||'-'],['Bill Code',rec.billCode||'-'],['Type',commissionTypeLabel(rec)],['Sale Amount',commissionSaleAmountOf(rec)?('RM'+commissionSaleAmountOf(rec).toFixed(2)):'-'],['Commission','RM'+commissionAmountOf(rec).toFixed(2)],['Rate',commissionRateOf(rec)?commissionRateOf(rec).toFixed(2)+'%':'-'],['Status',commissionPayoutStatus(rec)],['Payout Method',rec.payoutMethod||'-'],['Payout Reference',rec.payoutReference||'-'],['Parent / Adjustment Ref',rec.parentDocId||rec.adjustmentParentDocId||'-'],['Void Reason',rec.voidReason||'-'],['Created',fmtDate(commissionCreatedMs(rec))],['Source',rec._source||rec.sourcePage||'-']];
-  const body=$('#commissionDetailBody'); if(body){body.innerHTML='<div class="az-payment-detail-grid">'+fields.map(([k,v])=>`<div class="az-payment-detail-cell"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')+'</div><h3 style="margin:10px 0 8px">Raw Debug Data</h3><pre class="az-payment-detail-raw">'+esc(JSON.stringify(rec,(k,v)=>k==='_azRowKey'?undefined:v,2))+'</pre>';} $('#commissionDetailModal')?.classList.add('is-open');
+  const body=$('#commissionDetailBody');
+  if(body){body.innerHTML='<div class="az-payment-detail-grid">'+fields.map(([k,v])=>`<div class="az-payment-detail-cell"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')+'</div><h3 style="margin:10px 0 8px">Raw Debug Data</h3><pre class="az-payment-detail-raw">'+esc(JSON.stringify(rec,(k,v)=>k==='_azRowKey'?undefined:v,2))+'</pre>';}
+  const modal=$('#commissionDetailModal');
+  if(modal){
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden','false');
+    azAdminSyncDetailModalScrollLock();
+    requestAnimationFrame(()=>{ const scroller=modal.querySelector('.az-payment-detail-body'); if(scroller) scroller.scrollTop=0; });
+  }
 }
-function azAdminCloseCommissionDetail(){ $('#commissionDetailModal')?.classList.remove('is-open'); }
+function azAdminCloseCommissionDetail(){
+  const modal=$('#commissionDetailModal');
+  if(modal){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+  azAdminSyncDetailModalScrollLock();
+}
+document.addEventListener('keydown',(e)=>{
+  if(e.key!=='Escape') return;
+  if($('#commissionDetailModal')?.classList.contains('is-open')){ e.preventDefault(); azAdminCloseCommissionDetail(); return; }
+  if($('#paymentLogDetailModal')?.classList.contains('is-open')){ e.preventDefault(); azAdminClosePaymentLogDetail(); }
+});
 async function retryCommissionForOrder(){
   const raw=String($('#commissionRetryOrderId')?.value||'').trim(); if(!raw) return toast('Masukkan Order ID atau Bill Code dahulu.');
   const box=$('#commissionRetryResult'); if(box) box.textContent='Menyemak paid order dan menjana commission...';
@@ -8072,7 +8100,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1355"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1356"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
