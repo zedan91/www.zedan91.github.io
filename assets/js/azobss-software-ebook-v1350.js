@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  var VERSION='1349';
+  var VERSION='1350';
   var STORAGE_KEY='azobssEbookPromptsV1345';
   var ACTIVE_SIZE='medium';
   var currentPrompt='';
@@ -80,6 +80,19 @@
     };
     var set=lang==='en'?en:ms;
     return set[v]||set.minimal;
+  }
+
+  function getFormState(){
+    return {
+      topic:text(byId('azebookTopic1345')?.value),
+      author:text(byId('azebookAuthor1345')?.value),
+      audience:text(byId('azebookAudience1345')?.value),
+      tone:text(byId('azebookTone1345')?.value)||'professional',
+      language:text(byId('azebookLanguage1345')?.value)||'ms',
+      design:text(byId('azebookDesign1345')?.value)||'minimal',
+      size:ACTIVE_SIZE||'medium',
+      maxPages:text(byId('azebookMaxPages1345')?.value)
+    };
   }
 
   function generatePrompt(s){
@@ -430,11 +443,17 @@
     var form=byId('azebookForm1345');
     if(form)form.addEventListener('submit',function(e){
       e.preventDefault();
-      var s=getFormState();
-      if(!s.topic){setStatus('Masukkan Topik Ebook dahulu.','error');byId('azebookTopic1345').focus();return}
-      if(s.maxPages){var n=Number(s.maxPages);if(!Number.isFinite(n)||n<5||n>300){setStatus('Muka Surat Maksimum mestilah antara 5 hingga 300.','error');byId('azebookMaxPages1345').focus();return}}
-      var p=generatePrompt(s);
-      updatePreview(p);savePrompt(s,p);setStatus('Direct PDF Production Prompt berjaya dijana dan disimpan dalam Prompt Saya.','ok');toast('Prompt PDF Ebook siap');
+      try{
+        var s=getFormState();
+        if(!s.topic){setStatus('Masukkan Topik Ebook dahulu.','error');byId('azebookTopic1345').focus();return}
+        if(s.maxPages){var n=Number(s.maxPages);if(!Number.isFinite(n)||n<5||n>300){setStatus('Muka Surat Maksimum mestilah antara 5 hingga 300.','error');byId('azebookMaxPages1345').focus();return}}
+        var p=generatePrompt(s);
+        updatePreview(p);savePrompt(s,p);setStatus('Direct PDF Production Prompt berjaya dijana dan disimpan dalam Prompt Saya.','ok');toast('Prompt PDF Ebook siap');
+      }catch(err){
+        console.error('[AZOBSS Ebook] Prompt generation failed:',err);
+        setStatus('Gagal jana prompt: '+(err&&err.message?err.message:'ralat JavaScript tidak diketahui')+'. Cuba refresh halaman dan tekan semula.','error');
+        toast('Gagal jana prompt');
+      }
     });
 
     var reset=byId('azebookReset1345');
