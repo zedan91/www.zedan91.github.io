@@ -1,8 +1,8 @@
-/* AZOBSS v1345 — Software Tools > Ebook module */
+/* AZOBSS v1346 — Software Tools > Ebook guide-design wording + prompt logic fix */
 (function(){
   'use strict';
 
-  var VERSION='1345';
+  var VERSION='1346';
   var STORAGE_KEY='azobssEbookPromptsV1345';
   var ACTIVE_SIZE='medium';
   var currentPrompt='';
@@ -62,7 +62,7 @@
       editorial:'Majalah / editorial — visual besar, pembahagian seksyen yang kuat dan layout editorial.',
       workbook:'Buku kerja (workbook) — sertakan kotak latihan, checklist, ruang refleksi dan action steps.',
       motivation:'Motivasi / self-help — quote besar, warna hangat, latihan refleksi dan action plan.',
-      technical:'Teknikal / panduan — gunakan jadual, kotak kod, nota, warning dan langkah bernombor bila sesuai.',
+      technical:'Panduan langkah demi langkah — gunakan langkah bernombor, jadual, checklist, kotak nota/peringatan dan contoh praktikal apabila sesuai. Jangan gunakan blok kod kecuali topik memang berkaitan pemprograman atau IT.',
       pastel:'Pastel lembut — visual mesra, ringan dan sesuai untuk lifestyle.',
       premium:'Gelap premium — latar gelap, aksen emas dan rasa mewah tetapi kekal mudah dibaca.'
     };
@@ -74,7 +74,7 @@
       editorial:'Magazine / editorial — large visuals, strong section breaks and editorial composition.',
       workbook:'Workbook — include exercises, checklists, reflection boxes and actionable worksheets.',
       motivation:'Motivation / self-help — large quotes, warm tone, reflection prompts and action plans.',
-      technical:'Technical / guide — use tables, code blocks, notes, warnings and numbered procedures when useful.',
+      technical:'Step-by-step guide — use numbered procedures, tables, checklists, note/warning boxes and practical examples when useful. Do not use code blocks unless the topic genuinely involves programming or IT.',
       pastel:'Soft pastel — friendly, light visual style suitable for lifestyle content.',
       premium:'Dark premium — dark background, gold accents and a premium feel while staying readable.'
     };
@@ -126,7 +126,7 @@
         '4. Include a table of contents.',
         '5. Write a useful introduction explaining the reader problem, desired outcome and what the ebook will cover.',
         '6. Write the full chapters, not placeholders. Keep each chapter focused, practical and easy to follow.',
-        '7. Use examples, mini case studies, tables, checklists, step-by-step instructions, callout notes or code blocks when they genuinely improve understanding.',
+        '7. Use examples, mini case studies, tables, checklists, step-by-step instructions and callout notes when they genuinely improve understanding. Use code blocks only when the topic genuinely involves programming, scripts or technical code.',
         '8. End each chapter with a short recap and/or action steps when appropriate.',
         '9. Finish with a conclusion and a practical next-step plan for the reader.',
         '10. Do not invent statistics, quotations, research papers, laws, product specifications or factual claims. If a fact is uncertain, clearly mark it for verification rather than fabricating a source.',
@@ -173,7 +173,7 @@
       '4. Sertakan isi kandungan.',
       '5. Tulis pengenalan yang menerangkan masalah pembaca, hasil yang mahu dicapai dan apa yang akan dipelajari.',
       '6. Tulis semua bab dengan kandungan penuh, bukan placeholder. Setiap bab mesti fokus, praktikal dan mudah diikuti.',
-      '7. Gunakan contoh, mini kajian kes, jadual, checklist, langkah demi langkah, nota penting atau blok kod apabila benar-benar membantu kefahaman.',
+      '7. Gunakan contoh, mini kajian kes, jadual, checklist, langkah demi langkah dan nota penting apabila benar-benar membantu kefahaman. Gunakan blok kod hanya jika topik memang berkaitan pemprograman, skrip atau kod teknikal.',
       '8. Akhiri setiap bab dengan ringkasan pendek dan/atau tindakan seterusnya jika sesuai.',
       '9. Akhiri ebook dengan kesimpulan serta pelan tindakan praktikal untuk pembaca.',
       '10. Jangan mereka-reka statistik, petikan, kajian, undang-undang, spesifikasi produk atau fakta. Jika sesuatu fakta tidak pasti, tandakan dengan jelas supaya disahkan kemudian dan jangan cipta sumber palsu.',
@@ -356,7 +356,7 @@
                 '<option value="editorial">Majalah / editorial — visual besar, editorial</option>',
                 '<option value="workbook">Buku kerja (workbook) — latihan &amp; checklist</option>',
                 '<option value="motivation">Motivasi / self-help — quote &amp; action plan</option>',
-                '<option value="technical">Teknikal / panduan — jadual, kod, langkah</option>',
+                '<option value="technical">Panduan langkah demi langkah — jadual, checklist &amp; nota penting</option>',
                 '<option value="pastel">Pastel lembut — lifestyle &amp; mesra</option>',
                 '<option value="premium">Gelap premium — aksen emas, mewah</option>',
               '</select></label>',
