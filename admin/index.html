@@ -2295,6 +2295,46 @@ body[data-dashboard-page="admin"] .topbar{
 @media(max-width:900px){#ebookAccessAdminPanel .ebook-access-toolbar{grid-template-columns:1fr 1fr}.ebook-access-toolbar input{grid-column:1/-1}.ebook-access-table thead{display:none}.ebook-access-table,.ebook-access-table tbody{display:block}.ebook-access-table tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:11px;margin:10px;border:1px solid rgba(74,112,151,.32);border-radius:12px;background:#0b1727}.ebook-access-table td{display:block;border:0;padding:4px;min-width:0}.ebook-access-table td::before{content:attr(data-label);display:block;color:#7f99b8;font-size:9px;font-weight:900;text-transform:uppercase;margin-bottom:4px}.ebook-access-table td[data-label="Tindakan"]{grid-column:1/-1}.ebook-access-table th{width:auto!important}}
 @media(max-width:680px){#ebookAccessAdminPanel .ebook-access-heading{align-items:flex-start;flex-direction:column}.ebook-access-open{width:100%;justify-content:center}.ebook-access-kpis{grid-template-columns:1fr!important}.ebook-access-toolbar{grid-template-columns:1fr!important}.ebook-access-toolbar input{grid-column:auto}.ebook-access-table tr{grid-template-columns:1fr}.ebook-access-table td[data-label="Tindakan"]{grid-column:auto}.ebook-access-drawer{width:100vw;max-width:100vw}.ebook-access-drawer-metrics{grid-template-columns:1fr 1fr}.ebook-access-line{grid-template-columns:96px minmax(0,1fr)}.ebook-access-line .ebook-access-copy{grid-column:2}.ebook-access-pager{align-items:flex-start;flex-direction:column}}
 </style>
+
+<style id="az1361-admin-users-clean-layout">
+/* AZOBSS v1361 — Registered Users compact structured layout */
+#users{max-width:none!important}
+#users .az-admin-subtabs{margin-bottom:12px!important}
+.az1361-users-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 12px}
+.az1361-users-heading h2{margin:0 0 4px!important;font-size:24px!important;line-height:1.15!important;text-align:left!important}
+.az1361-users-heading .az-section-help{margin:0!important;max-width:760px!important;text-align:left!important;color:#9fb4ce!important;font-size:12px!important}
+.az1361-users-summary{flex:0 0 auto;display:inline-flex;align-items:center;min-height:34px;padding:0 11px;border-radius:999px;border:1px solid rgba(34,197,94,.30);background:rgba(34,197,94,.08);color:#86efac;font-size:11px;font-weight:900;white-space:nowrap}
+#registeredUsersAdminCard{width:100%!important;max-width:none!important;padding:14px!important;border-radius:16px!important;box-sizing:border-box}
+#registeredUsersAdminCard>*{max-width:none!important}
+#registeredUsersAdminCard .az-admin-registered-toolbar{width:100%!important;margin:0 0 12px!important;display:grid!important;grid-template-columns:minmax(280px,1.55fr) minmax(230px,.85fr) auto!important;gap:10px!important;align-items:end!important}
+.az1361-users-search-wrap,.az1361-users-sort-wrap{display:grid;gap:5px;min-width:0}
+.az1361-users-tool-label{font-size:9px;font-weight:950;letter-spacing:.09em;color:#7dd3fc;padding-left:2px}
+#registeredUsersAdminCard .az-admin-registered-search,#registeredUsersAdminCard .az-admin-registered-sort{width:100%!important;min-width:0!important;height:40px!important;border-radius:11px!important;background:#07111f!important;border:1px solid rgba(88,124,161,.42)!important;padding:0 12px!important;box-sizing:border-box!important}
+#registeredUsersAdminCard .az-admin-registered-search:focus,#registeredUsersAdminCard .az-admin-registered-sort:focus{border-color:#22c55e!important;box-shadow:0 0 0 2px rgba(34,197,94,.10)!important}
+.az1361-users-refresh{height:40px!important;min-width:108px!important;padding:0 14px!important;background:#22c55e!important;color:#052e16!important}
+.az1361-users-column-head{display:grid;grid-template-columns:minmax(200px,1.05fr) minmax(310px,1.75fr) minmax(145px,.7fr) minmax(220px,.9fr);gap:12px;padding:0 13px 7px;color:#79a9d8;font-size:9px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}
+#registeredUsersAdminList.az-admin-registered-list{width:100%!important;display:grid!important;gap:7px!important}
+#registeredUsersAdminList .az-admin-reg-row{width:100%!important;max-width:none!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(200px,1.05fr) minmax(310px,1.75fr) minmax(145px,.7fr) minmax(220px,.9fr)!important;gap:12px!important;align-items:center!important;padding:11px 13px!important;border-radius:12px!important;font-size:12px!important;background:linear-gradient(120deg,rgba(10,24,42,.94),rgba(13,25,43,.86))!important;border-top:1px solid rgba(105,138,173,.22)!important;border-right:1px solid rgba(105,138,173,.22)!important;border-bottom:1px solid rgba(105,138,173,.22)!important}
+#registeredUsersAdminList .az-admin-reg-row:hover{border-color:rgba(94,234,212,.35)!important;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.az1361-user-identity,.az1361-user-status{position:relative;z-index:1;min-width:0}
+#registeredUsersAdminList .az-admin-reg-title{font-size:14px!important;line-height:1.2!important;margin-bottom:3px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#registeredUsersAdminList .az-admin-reg-sub{font-size:10.5px!important;line-height:1.35!important;color:#9fb0c8!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.az1361-user-uid{margin-top:4px;color:#65809d;font:700 9.5px/1.25 Consolas,"Courier New",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#registeredUsersAdminList .az-admin-reg-meta-line{margin:0!important;gap:5px!important}
+#registeredUsersAdminList .az-admin-reg-role-pill,#registeredUsersAdminList .az-admin-reg-pabm-pill,#registeredUsersAdminList .az-admin-reg-food-pill,#registeredUsersAdminList .az-admin-reg-membership-pill,#registeredUsersAdminList .az-admin-reg-price-pill{padding:3px 7px!important;font-size:9.5px!important;line-height:1.2!important}
+#registeredUsersAdminList .az-admin-reg-time{display:grid!important;gap:3px!important;text-align:left!important;color:#c8d6e8!important;font-size:10.5px!important;line-height:1.3!important;white-space:normal!important}
+#registeredUsersAdminList .az-admin-reg-time span{color:#6685a5;font-size:8.5px;font-weight:950;letter-spacing:.07em;text-transform:uppercase}
+#registeredUsersAdminList .az-reg-actions{position:relative;z-index:1;display:flex!important;flex-wrap:nowrap!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;max-width:none!important}
+#registeredUsersAdminList .az-reg-actions button{height:32px!important;padding:0 10px!important;border-radius:9px!important;font-size:10px!important;white-space:nowrap!important}
+#registeredUsersAdminList .az-reg-food-access{min-width:102px!important}
+#registeredUsersAdminCard .az-admin-reg-pagination{width:100%!important;margin-top:12px!important;padding-top:10px!important;border-top:1px solid rgba(148,163,184,.14)!important;display:flex!important;justify-content:center!important;align-items:center!important;gap:10px!important}
+#registeredUsersAdminCard .az-admin-reg-pagination span{color:#91a8c2;font-size:10.5px;font-weight:800;text-align:center}
+#registeredUsersAdminCard .az-admin-reg-pagination button{min-width:92px!important;height:32px!important;padding:0 11px!important;border:1px solid rgba(96,165,250,.28)!important;border-radius:9px!important;background:#102442!important;color:#dbeafe!important;font-size:10px!important}
+#registeredUsersAdminCard .az-admin-reg-pagination button:not(:disabled):hover{background:#1d4ed8!important;color:#fff!important}
+#registeredUsersAdminCard .az-admin-reg-pagination button:disabled{opacity:.35!important;cursor:not-allowed!important}
+@media(max-width:1120px){.az1361-users-column-head{display:none}.az1361-users-heading{align-items:flex-start}.az1361-users-heading .az-section-help{text-align:left!important}#registeredUsersAdminList .az-admin-reg-row{grid-template-columns:minmax(190px,.9fr) minmax(260px,1.4fr) auto!important}.az-reg-actions{grid-column:1/-1!important;justify-content:flex-start!important}#registeredUsersAdminList .az-admin-reg-time{text-align:right!important}}
+@media(max-width:760px){.az1361-users-heading{display:grid!important;gap:8px!important}.az1361-users-summary{width:max-content}.az1361-users-heading h2{font-size:21px!important}#registeredUsersAdminCard .az-admin-registered-toolbar{grid-template-columns:1fr!important}.az1361-users-refresh{width:100%!important}#registeredUsersAdminList .az-admin-reg-row{grid-template-columns:1fr!important;gap:8px!important;padding:12px!important}#registeredUsersAdminList .az-admin-reg-time{text-align:left!important}.az-reg-actions{grid-column:auto!important;justify-content:flex-start!important;flex-wrap:wrap!important}#registeredUsersAdminList .az-reg-actions button{flex:1 1 auto!important}.az1361-user-uid{white-space:normal;word-break:break-all}}
+</style>
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -2824,31 +2864,44 @@ body[data-dashboard-page="admin"] .topbar{
         <button type="button" data-tab="staffroles">Staff Permissions</button>
       </div>
 
-      <h2>👥 Registered User Records</h2>
-      <p class="az-section-help">Cari, semak Account Role, status Membership, edit akses PA/BM dan urus akaun user berdaftar.</p>
+      <div class="az1361-users-heading">
+        <div>
+          <h2>👥 Registered User Records</h2>
+          <p class="az-section-help">Cari pengguna, semak role dan membership, kemudian urus akses PA/BM serta tempahan dari satu paparan yang lebih ringkas.</p>
+        </div>
+        <div id="registeredUsersSummaryChip" class="az1361-users-summary">Memuatkan rekod…</div>
+      </div>
       <div class="card" id="registeredUsersAdminCard">
-        <h2>Registered User Records</h2>
         <div class="az-admin-registered-toolbar">
-          <input id="registeredUsersSearch" class="az-admin-registered-search" placeholder="Search username / email / phone...">
-          <select id="registeredUsersSort" class="az-admin-registered-sort" title="Sort By">
-            <option value="newest" selected>Date registered: newest</option>
-            <option value="oldest">Date registered: oldest</option>
-            <option value="az">Username / Email A-Z</option>
-            <option value="online">Online users only</option>
-            <option value="pabm">PA Access Allowed</option>
-            <option value="foodorders">Food Orders Access Allowed</option>
-            <option value="role-admin">Role: Administrator</option>
-            <option value="role-semiadmin">Role: Manager</option>
-            <option value="role-staff">Role: Staff</option>
-            <option value="role-user">Role: User</option>
-          </select>
-          <button class="btn" id="registeredUsersRefreshBtn" type="button">Refresh</button>
+          <div class="az1361-users-search-wrap">
+            <span class="az1361-users-tool-label">SEARCH</span>
+            <input id="registeredUsersSearch" class="az-admin-registered-search" placeholder="Username / email / phone / UID...">
+          </div>
+          <div class="az1361-users-sort-wrap">
+            <span class="az1361-users-tool-label">FILTER / SORT</span>
+            <select id="registeredUsersSort" class="az-admin-registered-sort" title="Sort By">
+              <option value="newest" selected>Daftar: Terbaharu</option>
+              <option value="oldest">Daftar: Terlama</option>
+              <option value="az">Username / Email A–Z</option>
+              <option value="online">Online sahaja</option>
+              <option value="pabm">PA/BM dibenarkan</option>
+              <option value="foodorders">Tempahan dibenarkan</option>
+              <option value="role-admin">Role: Administrator</option>
+              <option value="role-semiadmin">Role: Manager</option>
+              <option value="role-staff">Role: Staff</option>
+              <option value="role-user">Role: User</option>
+            </select>
+          </div>
+          <button class="btn az1361-users-refresh" id="registeredUsersRefreshBtn" type="button">↻ Refresh</button>
+        </div>
+        <div class="az1361-users-column-head" aria-hidden="true">
+          <span>USER</span><span>ACCESS & STATUS</span><span>REGISTERED</span><span>ACTIONS</span>
         </div>
         <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
         <div class="az-admin-reg-pagination">
-          <button id="registeredUsersPrevBtn" type="button">◀ Prev</button>
+          <button id="registeredUsersPrevBtn" type="button">‹ Previous</button>
           <span id="registeredUsersPageInfo">Page 1 / 1</span>
-          <button id="registeredUsersNextBtn" type="button">Next ▶</button>
+          <button id="registeredUsersNextBtn" type="button">Next ›</button>
         </div>
       </div>
     </section>
@@ -6934,7 +6987,7 @@ function azRegAccountRoleLabel(value){
   return 'User';
 }
 function azRegSub(x){
-  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||'', 'Role: '+azRegAccountRoleLabel(x.role)].filter(Boolean).join(' • ');
+  return [x.email||x.authEmail||'', x.phone||x.phoneNumber||''].filter(Boolean).join(' • ');
 }
 function azRegPaAllowed(x){
   const managed = x?.adminPaBmOverride === true || String(x?.paBmManagedBy || '').toLowerCase() === 'admin';
@@ -7074,9 +7127,12 @@ function renderRegisteredUsersAdmin(){
     const roleLabel=azRegRoleLabel(x);
     const sub=esc(azRegSub(x));
     return `<div class="az-admin-reg-row ${roleClass}">
-      <div>
+      <div class="az1361-user-identity">
         <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
-        <div class="az-admin-reg-sub">${sub}</div>
+        <div class="az-admin-reg-sub">${sub||'Tiada email / telefon direkod'}</div>
+        ${userUid?`<div class="az1361-user-uid" title="Firebase UID">UID: ${esc(userUid)}</div>`:''}
+      </div>
+      <div class="az1361-user-status">
         <div class="az-admin-reg-meta-line">
           <span class="az-admin-reg-role-pill ${roleClass}">Role: ${esc(roleLabel)}</span>
           ${azRegPaDotHtml(pa)}
@@ -7085,10 +7141,11 @@ function renderRegisteredUsersAdmin(){
           ${azRegPricePillHtml(x)}
         </div>
       </div>
-      <div class="az-admin-reg-time">${esc(azRegTime(x))}</div>
+      <div class="az-admin-reg-time"><span>Registered</span>${esc(azRegTime(x))}</div>
       <div class="az-reg-actions">
         <button class="az-reg-food-access ${foodAccess?'on':'off'}" data-reg-food-access="${id}" ${userUid?'': 'disabled title="Firebase Auth UID tiada"'}>${foodAccess?'Tempahan ON':'Tempahan OFF'}</button>
-        <button class="az-reg-edit" data-reg-edit="${id}">Edit</button><button class="az-reg-delete" data-reg-delete="${id}">Delete</button>
+        <button class="az-reg-edit" data-reg-edit="${id}">Edit</button>
+        <button class="az-reg-delete" data-reg-delete="${id}">Delete</button>
       </div>
     </div>`;
   }).join('')||'<div class="az-admin-reg-row role-unknown"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
@@ -7097,6 +7154,8 @@ function renderRegisteredUsersAdmin(){
     const total = adminRegisteredUsersTotalCount;
     const totalText = total === null ? `${loaded} loaded` : `${loaded} loaded / ${total} total`;
     $('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} matched • ${totalText}`;
+    const summary=$('#registeredUsersSummaryChip');
+    if(summary) summary.textContent=total===null?`${rows.length} rekod dipaparkan`:`${rows.length} padan • ${total} pengguna`;
   }
   if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
   if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
