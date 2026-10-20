@@ -3261,7 +3261,7 @@ html body .downloads-section{
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1221" defer></script>
 <script src="/assets/js/azobss-software-packages.js?v=1323" defer></script>
 
-<link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1348.css?v=1348">
+<link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1349.css?v=1349">
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3481,7 +3481,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🧑‍💻</span>Developer &amp; Technical</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
     <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🔐</span>Security &amp; Privacy</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
     <div class="software-category-group-wrap-475"><button type="button" class="software-category-group-trigger-475" aria-expanded="false"><span class="software-category-group-label-475"><span aria-hidden="true">🧭</span>Engineering &amp; Specialist</span><span class="software-category-group-chevron-475" aria-hidden="true">⌄</span></button></div>
-    <button type="button" class="software-category-ebook-entry-1347" data-azebook-entry="category" aria-label="Open Ebook Generator"><span aria-hidden="true">📖</span><span>Ebook</span></button>
+    <button type="button" class="software-category-ebook-entry-1347" data-azebook-filter="1" aria-pressed="false" aria-label="Show Ebook products"><span aria-hidden="true">📖</span><span>Ebook</span></button>
   </div>
 </div>
 </div>
@@ -4328,10 +4328,16 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
 
     categoryFilter.querySelectorAll('[data-software-category]').forEach(btn=>{
       const category=btn.getAttribute('data-software-category') || 'all';
-      const active=category===selectedSoftwareCategory;
+      const active=category===selectedSoftwareCategory && !(category==='all' && selectedSoftwareType==='ebook');
       btn.classList.toggle('is-active',active);
       btn.setAttribute('aria-pressed',active?'true':'false');
     });
+    const ebookFilterBtn=categoryFilter.querySelector('[data-azebook-filter="1"]');
+    if(ebookFilterBtn){
+      const ebookActive=selectedSoftwareType==='ebook';
+      ebookFilterBtn.classList.toggle('is-active',ebookActive);
+      ebookFilterBtn.setAttribute('aria-pressed',ebookActive?'true':'false');
+    }
 
     categoryFilter.querySelectorAll('.software-category-group-wrap-475').forEach(wrap=>{
       const title=wrap.querySelector('.software-category-group-trigger-475')?.dataset.softwareGroupToggle || '';
@@ -4480,9 +4486,10 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     // menus. Selecting it clears the active category and shows all software.
     const allButton=document.createElement('button');
     allButton.type='button';
-    allButton.className='software-category-all-btn-475'+(selectedSoftwareCategory==='all'?' is-active':'');
+    const allCategoryActive=selectedSoftwareCategory==='all' && selectedSoftwareType!=='ebook';
+    allButton.className='software-category-all-btn-475'+(allCategoryActive?' is-active':'');
     allButton.setAttribute('data-software-category','all');
-    allButton.setAttribute('aria-pressed',selectedSoftwareCategory==='all'?'true':'false');
+    allButton.setAttribute('aria-pressed',allCategoryActive?'true':'false');
     allButton.setAttribute('aria-label','Show all software categories');
     allButton.innerHTML='<span class="software-category-group-label-475"><span aria-hidden="true">▦</span>All</span>';
     nav.appendChild(allButton);
@@ -4490,9 +4497,10 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     groups.forEach(group=>nav.appendChild(createSoftwareCategoryGroup475(group,stats,selectedGroup)));
     const ebookEntry=document.createElement('button');
     ebookEntry.type='button';
-    ebookEntry.className='software-category-ebook-entry-1347';
-    ebookEntry.setAttribute('data-azebook-entry','category');
-    ebookEntry.setAttribute('aria-label','Open Ebook Generator');
+    ebookEntry.className='software-category-ebook-entry-1347'+(selectedSoftwareType==='ebook'?' is-active':'');
+    ebookEntry.setAttribute('data-azebook-filter','1');
+    ebookEntry.setAttribute('aria-pressed',selectedSoftwareType==='ebook'?'true':'false');
+    ebookEntry.setAttribute('aria-label','Show Ebook products');
     ebookEntry.innerHTML='<span aria-hidden="true">📖</span><span>Ebook</span>';
     nav.appendChild(ebookEntry);
     categoryFilter.appendChild(nav);
@@ -5860,7 +5868,9 @@ function normalizeItem(item){
     staticCards.forEach(card => {
       const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
       const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
-      const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
+      const selectedTypeOk = selectedSoftwareType === 'all' || softwareTypeOf(card) === selectedSoftwareType;
+      const sortTypeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
+      const typeOk = selectedTypeOk && sortTypeOk;
       card.style.display = (selectedSoftwareOwnerFilter !== 'mine' && !isOverridden && categoryOk && cardPlatformOk(card) && typeOk) ? '' : 'none';
     });
     if(keyword){
@@ -5869,7 +5879,9 @@ function normalizeItem(item){
         const isOverridden = overriddenIds.has(String(staticProductId(card))) || overriddenIds.has(normalizeSoftwareKey(staticProductId(card))) || softwareDynamicItems.some(item => dynamicMatchesStatic(item, card));
         const text = clean(card.dataset.search || card.textContent || '');
         const categoryOk = softwareCategoryMatches(card.dataset.category || 'General Tools', selectedSoftwareCategory);
-        const typeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
+        const selectedTypeOk = selectedSoftwareType === 'all' || softwareTypeOf(card) === selectedSoftwareType;
+        const sortTypeOk = (sortMode !== 'freeOnly' && sortMode !== 'premiumOnly') || softwareTypeOf(card) === (sortMode === 'premiumOnly' ? 'premium' : 'free');
+        const typeOk = selectedTypeOk && sortTypeOk;
         card.style.display = (selectedSoftwareOwnerFilter !== 'mine' && !isOverridden && categoryOk && cardPlatformOk(card) && typeOk && text.includes(keyword)) ? '' : 'none';
       });
     }
@@ -6158,9 +6170,32 @@ function normalizeItem(item){
       toggleSoftwareCategoryDropdown474();
       return;
     }
+    const ebookBtn=e.target.closest('[data-azebook-filter="1"]');
+    if(ebookBtn){
+      e.preventDefault();
+      selectedSoftwareCategory='all';
+      selectedSoftwareType=selectedSoftwareType==='ebook'?'all':'ebook';
+      softwareCategorySearch473='';
+      document.querySelectorAll('[data-software-type]').forEach(b=>{
+        const value=b.getAttribute('data-software-type') || 'all';
+        b.classList.toggle('is-active',selectedSoftwareType==='all' ? value==='all' : value===selectedSoftwareType);
+      });
+      updateSoftwareCategorySelectionUI483();
+      applySoftwareFilters();
+      return;
+    }
     const btn = e.target.closest('[data-software-category]');
     if(!btn) return;
     const clickedCategory = btn.getAttribute('data-software-category') || 'all';
+    // Ebook is a peer filter in this category row. Choosing a normal category
+    // (including All) exits Ebook-only mode so the chosen category shows every type.
+    if(selectedSoftwareType==='ebook'){
+      selectedSoftwareType='all';
+      document.querySelectorAll('[data-software-type]').forEach(b=>{
+        const value=b.getAttribute('data-software-type') || 'all';
+        b.classList.toggle('is-active',value==='all');
+      });
+    }
     // The All button explicitly resets the category filter. Clicking an
     // already-selected nested category also keeps the convenient reset action.
     selectSoftwareCategory473(clickedCategory === selectedSoftwareCategory ? 'all' : clickedCategory);
@@ -17576,6 +17611,6 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
 </dialog>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
 
-<script defer src="/assets/js/azobss-software-ebook-v1348.js?v=1348"></script>
+<script defer src="/assets/js/azobss-software-ebook-v1349.js?v=1349"></script>
 </body>
 </html>
