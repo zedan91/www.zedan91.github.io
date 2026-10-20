@@ -1283,6 +1283,56 @@ async function toyyibPost(endpoint, payload) {
   return json ?? text;
 }
 
+
+// AZOBSS v1351 — Ebook Generator one-time lifetime access (RM19)
+const AZOBSS_EBOOK_GENERATOR_PRODUCT_ID = "azobss-ebook-generator-lifetime";
+const AZOBSS_EBOOK_GENERATOR_PRODUCT_NAME = "AZOBSS Ebook Generator Lifetime Access";
+const AZOBSS_EBOOK_GENERATOR_PRICE_SEN = 1900;
+function azIsEbookGeneratorAccessOrder(order = {}) {
+  const pid = cleanPremiumText(order.productId || order.product?.productId || order.product?.id || "", 180).toLowerCase();
+  return order.ebookGeneratorLifetimeAccess === true || order.automaticCheckoutKind === "ebook-generator-lifetime" || pid === AZOBSS_EBOOK_GENERATOR_PRODUCT_ID;
+}
+function azEbookOrderBelongsToIdentity(order = {}, identity = {}) {
+  const uid = cleanPremiumText(identity.uid || "", 180);
+  const email = String(identity.email || identity.authEmail || identity.profileEmail || "").trim().toLowerCase();
+  const ouid = cleanPremiumText(order.user?.uid || order.uid || order.userUid || "", 180);
+  const oemail = String(order.user?.email || order.buyerEmail || order.email || "").trim().toLowerCase();
+  return !!((uid && ouid && uid === ouid) || (email && oemail && email === oemail));
+}
+async function azGrantEbookGeneratorLifetimeAccess(order = {}) {
+  if (!azIsEbookGeneratorAccessOrder(order)) return order;
+  const uid = cleanPremiumText(order.user?.uid || order.uid || order.userUid || "", 180);
+  const email = String(order.user?.email || order.buyerEmail || order.email || "").trim().toLowerCase();
+  if (!uid) return order;
+  const nowMs=Date.now(), nowIso=new Date(nowMs).toISOString();
+  const db=getAzobssBackendDb();
+  if(db){
+    await db.collection('ebookGeneratorAccess').doc(uid).set({uid,email,active:true,lifetime:true,productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,productName:AZOBSS_EBOOK_GENERATOR_PRODUCT_NAME,priceRM:19,amountSen:1900,purchasedAt:order.paidAt||nowIso,purchasedAtMs:Number(order.paidAtMs||Date.parse(order.paidAt||'')||nowMs)||nowMs,orderId:order.orderId||'',billCode:order.billCode||'',paymentMethod:order.paymentMethod||'toyyibpay',paymentReference:order.paymentReference||'',updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1351},{merge:true});
+  }
+  const updated=upsertPremiumOrder({...order,ebookGeneratorLifetimeAccess:true,ebookGeneratorAccessGranted:true,ebookGeneratorAccessGrantedAt:order.ebookGeneratorAccessGrantedAt||nowIso,ebookGeneratorAccessGrantedAtMs:Number(order.ebookGeneratorAccessGrantedAtMs||0)||nowMs,fulfillmentState:'access-granted'});
+  try{await azobssPersistJupemOrder(updated)}catch(_e){}
+  return updated;
+}
+async function azFindEbookGeneratorOrderForIdentity(identity={}, wanted='any'){
+  const rows=[];
+  try{for(const row of readPremiumOrders()){if(azIsEbookGeneratorAccessOrder(row)&&azEbookOrderBelongsToIdentity(row,identity))rows.push(row)}}catch(_e){}
+  const db=getAzobssBackendDb();
+  if(db){try{const snap=await db.collection('premiumOrders').where('productId','==',AZOBSS_EBOOK_GENERATOR_PRODUCT_ID).limit(80).get();snap.forEach(d=>{const row=d.data()||{};if(azEbookOrderBelongsToIdentity(row,identity))rows.push(row)})}catch(_e){}}
+  rows.sort((a,b)=>Number(b.updatedAtMs||b.createdAtMs||0)-Number(a.updatedAtMs||a.createdAtMs||0));
+  const seen=new Set();
+  return rows.find(row=>{const k=String(row.orderId||row.billCode||'');if(k&&seen.has(k))return false;if(k)seen.add(k);const st=String(row.status||'').toLowerCase();if(wanted==='paid')return st==='paid';if(wanted==='pending')return st==='pending'||st==='creating';return true})||null;
+}
+async function azEbookGeneratorAccessStatus(identity={}){
+  if(!identity||!identity.uid)return {access:false,reason:'login_required'};
+  if(String(identity.role||'').toLowerCase()==='administrator'||identity.isAdmin===true)return {access:true,lifetime:true,adminBypass:true,source:'administrator'};
+  const db=getAzobssBackendDb();
+  if(db){try{const snap=await db.collection('ebookGeneratorAccess').doc(String(identity.uid)).get();if(snap.exists){const row=snap.data()||{};if(row.active!==false&&row.lifetime===true)return {access:true,lifetime:true,source:'entitlement',entitlement:row}}}catch(_e){}}
+  const paid=await azFindEbookGeneratorOrderForIdentity(identity,'paid');
+  if(paid){const granted=await azGrantEbookGeneratorLifetimeAccess(paid);return {access:true,lifetime:true,source:'paid-order-recovery',orderId:granted.orderId||'',billCode:granted.billCode||''}}
+  const pending=await azFindEbookGeneratorOrderForIdentity(identity,'pending');
+  return {access:false,reason:pending?'payment_pending':'payment_required',pending:pending?{orderId:pending.orderId||'',billCode:pending.billCode||'',paymentUrl:pending.paymentUrl||''}:null};
+}
+
 // AZOBSS PATCH 424: Express backend payment logs delete endpoint.
 function azExpressDeleteLogSafeText(v = "", max = 180) {
   return cleanPremiumText(v || "", max);
@@ -1437,6 +1487,11 @@ async function refreshToyyibOrderStatus(order) {
         });
       }
       paid = await azSubEnsurePaidOrderCode(paid);
+      if (azIsEbookGeneratorAccessOrder(paid)) {
+        const granted = await azGrantEbookGeneratorLifetimeAccess(paid);
+        await azFinalizeCommissionForOrder(granted);
+        return granted;
+      }
       const withDownload = makePremiumDownloadForOrder(paid);
       await azFinalizeCommissionForOrder(withDownload);
       await sendDownloadEmailForOrder(withDownload);
@@ -1460,6 +1515,9 @@ function toyyibPaidResponse(order, req) {
   const base = publicBaseUrl(req);
   if (isPublicPaPremiumOrder(order)) {
     return { ok:true, paid:true, publicPa:true, paBm:true, orderId:order.orderId, status:order.status, amountSen:Number(order.amountSen || 3000), unit:1, downloadUrl:publicPaDownloadUrl(order, req), receiptUrl:`${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}`, emailSent:!!order.emailSentAt, emailError:order.emailError || null };
+  }
+  if (azIsEbookGeneratorAccessOrder(order)) {
+    return { ok:true, paid:true, verified:true, paymentConfirmed:true, accessGranted:true, ebookGenerator:true, lifetime:true, priceRM:19, orderId:order.orderId, billCode:order.billCode||'', status:order.status, receiptUrl:`${base}/api/premium/receipt/${encodeURIComponent(order.orderId)}` };
   }
   const withToken = makePremiumDownloadForOrder(order);
   return {
@@ -3404,6 +3462,33 @@ app.post("/api/toyyib/create-pa-bm-bill", async (req, res) => {
     const statusCode = Math.max(400, Math.min(500, Number(err?.statusCode || 500)));
     res.status(statusCode).json({ ok:false, error: err.message || "Failed to create JUPEM ToyyibPay bill" });
   }
+});
+
+
+app.get('/api/ebook-generator/access-status', async (req,res)=>{
+  try{
+    const identity=await getFirebaseAdminIdentity(req);
+    if(!identity||!identity.uid)return res.status(401).json({ok:false,access:false,loginRequired:true,error:'Login required.'});
+    const billCode=cleanPremiumText(req.query.billCode||req.query.billcode||'',120);
+    if(billCode){let order=findPremiumOrderByAny({billCode});if(!order){const db=getAzobssBackendDb();if(db){try{const qs=await db.collection('premiumOrders').where('billCode','==',billCode).limit(1).get();if(!qs.empty)order=qs.docs[0].data()||null}catch(_e){}}}if(order&&azIsEbookGeneratorAccessOrder(order)&&azEbookOrderBelongsToIdentity(order,identity)&&String(order.status||'').toLowerCase()!=='paid')await refreshToyyibOrderStatus(order)}
+    const state=await azEbookGeneratorAccessStatus(identity);
+    res.set('Cache-Control','no-store');return res.json({ok:true,...state,priceRM:19,amountSen:1900,oneTime:true,recurring:false,productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,accessVersion:1351});
+  }catch(err){console.error('Ebook access status failed:',err);return res.status(500).json({ok:false,access:false,error:'Could not check Ebook Generator access.'})}
+});
+app.post('/api/ebook-generator/create-bill', async (req,res)=>{
+  try{
+    const identity=await getFirebaseAdminIdentity(req);
+    if(!identity||!identity.uid)return res.status(401).json({ok:false,error:'Login required before purchase.'});
+    const access=await azEbookGeneratorAccessStatus(identity);if(access.access)return res.json({ok:true,accessGranted:true,lifetime:true,alreadyOwned:true,priceRM:19});
+    if(!TOYYIB_SECRET_KEY||!TOYYIB_CATEGORY_CODE)return res.status(503).json({ok:false,error:'ToyyibPay is not configured.'});
+    const existing=await azFindEbookGeneratorOrderForIdentity(identity,'pending');if(existing&&existing.paymentUrl&&existing.billCode)return res.json({ok:true,reused:true,orderId:existing.orderId,billCode:existing.billCode,paymentUrl:existing.paymentUrl,status:'pending',amount:19,amountSen:1900,oneTime:true,lifetime:true});
+    const orderId=makePremiumId('ebook'),nowMs=Date.now(),email=String(identity.email||identity.authEmail||identity.profileEmail||'').trim().toLowerCase(),username=cleanPremiumText(identity.username||email||'AZOBSS Customer',120);
+    const returnUrl=`${frontendBaseUrl(req)}/Software-Tools/?ebook_payment=return#ebook`;
+    let order={orderId,productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,productName:AZOBSS_EBOOK_GENERATOR_PRODUCT_NAME,amount:'RM19.00',amountSen:1900,baseAmount:19,baseAmountSen:1900,saleAmount:19,saleAmountText:'RM19.00',status:'creating',paymentMethod:'toyyibpay',paymentReference:'',ebookGeneratorLifetimeAccess:true,lifetimeAccess:true,automaticCheckoutKind:'ebook-generator-lifetime',user:{uid:identity.uid,username,email},email,buyerEmail:email,product:{id:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,name:AZOBSS_EBOOK_GENERATOR_PRODUCT_NAME,price:'RM19.00',basePrice:'RM19.00',ebookGeneratorLifetimeAccess:true,lifetimeAccess:true},returnUrl,createdAt:new Date(nowMs).toISOString(),createdAtMs:nowMs};
+    order=await azobssPersistJupemOrder(order);
+    const payload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:'AZOBSS Ebook Generator',billDescription:'AZOBSS Ebook Generator lifetime access',billPriceSetting:1,billPayorInfo:1,billAmount:1900,billReturnUrl:returnUrl,billCallbackUrl:TOYYIB_CALLBACK_URL||`${publicBaseUrl(req)}/api/toyyib-callback`,billExternalReferenceNo:orderId,billTo:toyyibClean(username||'AZOBSS Customer',30),billEmail:toyyibClean(email,80),billPhone:'01135600723',billSplitPayment:0,billSplitPaymentArgs:'',billPaymentChannel:0,billContentEmail:'Thank you for purchasing AZOBSS Ebook Generator lifetime access. Access is unlocked after payment verification.',billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
+    const out=await toyyibPost('createBill',payload);const billCode=Array.isArray(out)?(out[0]?.BillCode||out[0]?.billCode):out?.BillCode;if(!billCode)throw new Error('ToyyibPay did not return a BillCode.');const paymentUrl=`${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;order=await azobssPersistJupemOrder({...order,status:'pending',billCode,paymentUrl,returnUrl,fulfillmentState:'awaiting-payment'});return res.json({ok:true,orderId,billCode,paymentUrl,status:'pending',amount:19,amountSen:1900,oneTime:true,recurring:false,lifetime:true,priceLabel:'RM19 sekali sahaja'});
+  }catch(err){console.error('Ebook Generator checkout failed:',err);return res.status(500).json({ok:false,error:err.message||'Could not create Ebook Generator payment.'})}
 });
 
 app.post("/api/toyyib/create-bill", async (req, res) => {
