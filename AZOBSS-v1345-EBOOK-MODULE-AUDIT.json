@@ -1,0 +1,24 @@
+{
+  "version": "1.0.1345",
+  "baseline": "1.0.1344",
+  "feature": "Software Tools Ebook Module",
+  "route": "/Software-Tools/#ebook",
+  "source_reference": "KrafBuku /jana UI snapshot supplied by user",
+  "implementation": "AZOBSS-native independent UI and client-side prompt builder",
+  "tabs": ["Software", "Ebook"],
+  "ebook_subtabs": ["Jana Ebook", "Prompt Saya"],
+  "controls": {
+    "topic": true,
+    "author": true,
+    "audience": true,
+    "tones": 5,
+    "languages": ["Bahasa Melayu", "English"],
+    "design_styles": 10,
+    "size_presets": 3,
+    "max_pages": {"min": 5, "max": 300}
+  },
+  "actions": ["Copy Prompt", "Download TXT", "Open in ChatGPT", "Save Prompt History", "Load", "Delete", "Clear All"],
+  "history_storage": "localStorage on current browser/device",
+  "backend_required": false,
+  "upgrade_parts_v1345_draft_included": false
+}
