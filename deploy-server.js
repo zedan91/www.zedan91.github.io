@@ -3285,7 +3285,7 @@ async function azGrantEbookGeneratorLifetimeAccess(order = {}) {
       paymentReference:cleanPremiumText(order.paymentReference || "", 180),
       updatedAt:nowIso,
       updatedAtMs:nowMs,
-      accessVersion:1351
+      accessVersion:1359
     }, { merge:true });
   }
   const updated = upsertPremiumOrder({
@@ -3335,10 +3335,15 @@ async function azEbookGeneratorAccessStatus(identity = {}) {
   const db = getAzobssBackendDb();
   if (db) {
     try {
-      const snap = await db.collection("ebookGeneratorAccess").doc(String(identity.uid)).get();
+      const accessRef = db.collection("ebookGeneratorAccess").doc(String(identity.uid));
+      const snap = await accessRef.get();
       if (snap.exists) {
         const row = snap.data() || {};
-        if (row.active !== false && row.lifetime === true) return { access:true, lifetime:true, source:"entitlement", entitlement:row };
+        if (row.active !== false && row.lifetime === true) {
+          const nowMs = Date.now(), nowIso = new Date(nowMs).toISOString();
+          azFireAndForget(accessRef.set({ lastAccessAt:nowIso, lastAccessAtMs:nowMs, lastAccessSource:"access-status", accessVersion:1359 }, { merge:true }), "Ebook last-access touch failed");
+          return { access:true, lifetime:true, source:"entitlement", entitlement:{ ...row, lastAccessAt:nowIso, lastAccessAtMs:nowMs } };
+        }
         if (row.active === false) return { access:false, lifetime:true, reason:"admin_revoked", source:"entitlement", entitlement:row };
       }
     } catch (err) { console.warn("Ebook entitlement read skipped:", err && (err.message || err)); }
@@ -3352,7 +3357,7 @@ async function azEbookGeneratorAccessStatus(identity = {}) {
   return { access:false, reason:pending ? "payment_pending" : "payment_required", pending:pending ? { orderId:pending.orderId || "", billCode:pending.billCode || "", paymentUrl:pending.paymentUrl || "" } : null };
 }
 
-// AZOBSS v1358 — Admin management for non-key digital entitlements such as Ebook Generator.
+// AZOBSS v1359 — Polished Digital Access manager with audit, Last Used and Re-sync.
 async function azAdminListEbookGeneratorAccess() {
   const db = getAzobssBackendDb();
   if (!db) throw new Error("Firebase Admin is not configured.");
@@ -3417,8 +3422,15 @@ async function azAdminListEbookGeneratorAccess() {
       paymentMethod:cleanPremiumText(row.paymentMethod || order.paymentMethod || "", 40),
       paymentReference:cleanPremiumText(row.paymentReference || order.paymentReference || "", 180),
       accessUpdatedAt:cleanPremiumText(row.updatedAt || "", 120),
+      lastAccessAt:cleanPremiumText(row.lastAccessAt || "", 120),
+      lastAccessAtMs:Number(row.lastAccessAtMs || Date.parse(row.lastAccessAt || "") || 0) || 0,
       revokedAt:cleanPremiumText(row.revokedAt || "", 120),
-      revokedBy:cleanPremiumText(row.revokedBy || "", 120)
+      revokedBy:cleanPremiumText(row.revokedBy || "", 120),
+      revokedReason:cleanPremiumText(row.revokedReason || "", 300),
+      restoredAt:cleanPremiumText(row.restoredAt || "", 120),
+      restoredBy:cleanPremiumText(row.restoredBy || "", 120),
+      resyncedAt:cleanPremiumText(row.resyncedAt || "", 120),
+      resyncedBy:cleanPremiumText(row.resyncedBy || "", 120)
     };
   });
   rows.sort((a,b)=>(Number(b.purchasedAtMs||0)-Number(a.purchasedAtMs||0)) || String(a.username||a.email||a.uid).localeCompare(String(b.username||b.email||b.uid)));
@@ -3430,19 +3442,34 @@ async function azAdminSetEbookGeneratorAccess(req, adminIdentity = {}, body = {}
   const uid = cleanPremiumText(body.uid || "", 180);
   if (!uid) throw Object.assign(new Error("Customer UID is required."), { statusCode:400 });
   const action = String(body.action || "").trim().toLowerCase();
-  if (!['revoke','restore'].includes(action)) throw Object.assign(new Error("Unsupported access action."), { statusCode:400 });
+  if (!['revoke','restore','resync'].includes(action)) throw Object.assign(new Error("Unsupported access action."), { statusCode:400 });
   const ref = db.collection("ebookGeneratorAccess").doc(uid);
   const snap = await ref.get();
-  if (!snap.exists) throw Object.assign(new Error("Ebook Generator access record not found."), { statusCode:404 });
+  if (!snap.exists && action !== 'resync') throw Object.assign(new Error("Ebook Generator access record not found."), { statusCode:404 });
+  const existing = snap.exists ? (snap.data() || {}) : {};
   const nowMs = Date.now(), nowIso = new Date(nowMs).toISOString();
   const adminName = cleanPremiumText(adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin", 120);
+
+  if (action === 'resync') {
+    if (snap.exists && existing.active === false) throw Object.assign(new Error("Akses ini sedang disekat oleh Admin. Pulihkan akses dahulu sebelum Re-sync."), { statusCode:409 });
+    const identity = { uid, email:existing.email || "", authEmail:existing.email || "", profileEmail:existing.email || "" };
+    const paid = await azFindEbookGeneratorOrderForIdentity(identity, { paid:true });
+    if (!paid) throw Object.assign(new Error("Tiada rekod pembayaran PAID untuk akaun ini."), { statusCode:404 });
+    if (!(paid.paymentVerifiedAt || paid.toyyibVerifiedAt || paid.stripeVerifiedAt)) throw Object.assign(new Error("Rekod PAID ini belum mempunyai verification marker. Sahkan pembayaran dahulu."), { statusCode:409 });
+    await azGrantEbookGeneratorLifetimeAccess(paid);
+    await ref.set({ active:true, lifetime:true, resyncedAt:nowIso, resyncedAtMs:nowMs, resyncedBy:adminName, updatedAt:nowIso, updatedAtMs:nowMs, accessVersion:1359 }, { merge:true });
+    azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,'ebook_access_resync','ebookGeneratorAccess',uid,{uid,orderId:paid.orderId || '',billCode:paid.billCode || ''},'success'),'Ebook access resync audit failed');
+    return {ok:true,uid,active:true,action:'resync',orderId:paid.orderId || '',billCode:paid.billCode || ''};
+  }
+
+  const reason = cleanPremiumText(body.reason || "", 300);
   const patch = action === 'revoke' ? {
-    active:false,revokedAt:nowIso,revokedAtMs:nowMs,revokedBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1358
+    active:false,revokedAt:nowIso,revokedAtMs:nowMs,revokedBy:adminName,revokedReason:reason,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1359
   } : {
-    active:true,revokedAt:"",revokedAtMs:0,revokedBy:"",restoredAt:nowIso,restoredAtMs:nowMs,restoredBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1358
+    active:true,revokedAt:"",revokedAtMs:0,revokedBy:"",revokedReason:"",restoredAt:nowIso,restoredAtMs:nowMs,restoredBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1359
   };
   await ref.set(patch,{merge:true});
-  azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,action==='revoke'?'ebook_access_revoke':'ebook_access_restore','ebookGeneratorAccess',uid,{uid},'success'),'Ebook access admin audit failed');
+  azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,action==='revoke'?'ebook_access_revoke':'ebook_access_restore','ebookGeneratorAccess',uid,{uid,reason},'success'),'Ebook access admin audit failed');
   return {ok:true,uid,active:action==='restore',action};
 }
 
@@ -21527,13 +21554,13 @@ async function handler(req, res) {
     }
 
 
-    // AZOBSS v1358 — Admin > Software Key / Digital Access > Ebook Access
+    // AZOBSS v1359 — Admin > Software Key / Digital Access > Ebook Access
     if (pathname === "/api/admin/ebook-generator-access" && req.method === "GET") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
         if (!adminIdentity || !adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
         const rows = await azAdminListEbookGeneratorAccess();
-        return send(res,200,JSON.stringify({ok:true,records:rows,total:rows.length,active:rows.filter(x=>x.active).length,revoked:rows.filter(x=>!x.active).length,version:1358},null,2),"application/json",{"Cache-Control":"no-store"});
+        return send(res,200,JSON.stringify({ok:true,records:rows,total:rows.length,active:rows.filter(x=>x.active).length,revoked:rows.filter(x=>!x.active).length,version:1359},null,2),"application/json",{"Cache-Control":"no-store"});
       } catch (err) {
         console.error("Admin Ebook access list failed:", err && (err.stack || err.message || err));
         return send(res,500,JSON.stringify({ok:false,error:cleanPremiumText(err && err.message,300)||"Could not load Ebook access records."},null,2),"application/json",{"Cache-Control":"no-store"});
@@ -21565,7 +21592,7 @@ async function handler(req, res) {
           }
         }
         const state = await azEbookGeneratorAccessStatus(identity);
-        return send(res, 200, JSON.stringify({ ok:true, ...state, priceRM:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID, accessVersion:1351 }, null, 2), "application/json", {"Cache-Control":"no-store"});
+        return send(res, 200, JSON.stringify({ ok:true, ...state, priceRM:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID, accessVersion:1359 }, null, 2), "application/json", {"Cache-Control":"no-store"});
       } catch (err) {
         console.error("Ebook access status failed:", err && (err.stack || err.message || err));
         return send(res, 500, JSON.stringify({ ok:false, access:false, error:"Could not check Ebook Generator access." }, null, 2), "application/json", {"Cache-Control":"no-store"});
