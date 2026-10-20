@@ -2413,6 +2413,39 @@ body[data-dashboard-page="admin"] .topbar{
   #registeredUsersAdminList .az-admin-reg-row,#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row{padding-left:92px!important}
   .az1364-rank-badge{left:10px;top:12px;transform:none;min-width:28px;width:auto;height:28px;padding:0 7px;border-radius:9px;font-size:13px}
 }
+
+/* AZOBSS v1366 — readable identity column + compact icon actions + 3-tier changed settings */
+.az1361-users-column-head{grid-template-columns:minmax(300px,1.6fr) minmax(245px,1.15fr) minmax(145px,.65fr) 86px!important}
+#registeredUsersAdminList .az-admin-reg-row{grid-template-columns:minmax(300px,1.6fr) minmax(245px,1.15fr) minmax(145px,.65fr) 86px!important}
+#registeredUsersAdminList .az-admin-reg-title{
+  display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px 6px!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-word!important;
+}
+#registeredUsersAdminList .az1363-user-contact{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-word!important}
+#registeredUsersAdminList .az1361-user-uid{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-all!important}
+#registeredUsersAdminList .az1361-user-status{align-self:stretch!important;display:flex!important;align-items:center!important;min-width:0!important}
+#registeredUsersAdminList .az-admin-reg-meta-line{
+  display:grid!important;grid-template-rows:repeat(3,minmax(0,auto))!important;grid-auto-flow:column!important;grid-auto-columns:max-content!important;
+  align-content:center!important;justify-content:start!important;gap:4px 5px!important;max-width:100%!important;overflow:hidden!important;
+}
+#registeredUsersAdminList .az-admin-reg-meta-line>span{max-width:150px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#registeredUsersAdminList .az-reg-actions{justify-content:center!important;gap:5px!important}
+#registeredUsersAdminList .az-reg-actions .az1366-icon-action{
+  width:34px!important;min-width:34px!important;height:34px!important;padding:0!important;border-radius:10px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:18px!important;font-weight:950!important;line-height:1!important;
+}
+#registeredUsersAdminList .az-reg-actions .az-reg-edit.az1366-icon-action{background:#2563eb!important;color:#fff!important;border:1px solid #3b82f6!important}
+#registeredUsersAdminList .az-reg-actions .az-reg-delete.az1366-icon-action{background:#7f1d1d!important;color:#fee2e2!important;border:1px solid #ef4444!important}
+#registeredUsersAdminList .az-reg-actions .az1366-icon-action:hover{filter:brightness(1.12);transform:translateY(-1px)}
+@media(max-width:1120px){
+  #registeredUsersAdminList .az-admin-reg-row{grid-template-columns:minmax(260px,1.35fr) minmax(230px,1fr) minmax(130px,.65fr) 82px!important}
+  #registeredUsersAdminList .az-reg-actions{grid-column:auto!important;justify-content:center!important}
+}
+@media(max-width:760px){
+  #registeredUsersAdminList .az-admin-reg-row{grid-template-columns:1fr!important}
+  #registeredUsersAdminList .az-admin-reg-meta-line{grid-template-rows:repeat(3,minmax(0,auto))!important;grid-auto-flow:column!important}
+  #registeredUsersAdminList .az-reg-actions{grid-column:auto!important;justify-content:flex-start!important}
+}
 </style>
 </head>
 
@@ -7319,9 +7352,8 @@ function azRegIdentityRowHtml(x,sharedEmail){
     <div class="az1361-user-status"><div class="az-admin-reg-meta-line">${azRegChangedStatusHtml(x)}</div></div>
     <div class="az-admin-reg-time"><span>Registered</span>${esc(azRegTime(x))}</div>
     <div class="az-reg-actions">
-      <button class="az-reg-food-access ${foodAccess?'on':'off'}" data-reg-food-access="${id}" ${userUid?'':'disabled title="Firebase Auth UID tiada"'}>${foodAccess?'Tempahan ON':'Tempahan OFF'}</button>
-      <button class="az-reg-edit" data-reg-edit="${id}">Edit</button>
-      <button class="az-reg-delete" data-reg-delete="${id}">Delete</button>
+      <button class="az-reg-edit az1366-icon-action" data-reg-edit="${id}" title="Edit ${esc(azRegUser(x))}" aria-label="Edit ${esc(azRegUser(x))}">✎</button>
+      <button class="az-reg-delete az1366-icon-action danger" data-reg-delete="${id}" title="Delete ${esc(azRegUser(x))}" aria-label="Delete ${esc(azRegUser(x))}">×</button>
     </div>
   </div>`;
 }
@@ -7381,6 +7413,7 @@ function openRegisteredEdit(id){
   $('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
   $('#azRegEditRole').value=azRegRole(x);
   $('#azRegEditPa').value=azRegPaAllowed(x)?'true':'false';
+  $('#azRegEditFood').value=azRegFoodOrdersAllowed(x)?'true':'false';
   const pricePercents=azRegPricePercents(x);
   $('#azRegEditPricePaBm').value=String(pricePercents.paBm);
   $('#azRegEditPriceLotKadaster').value=String(pricePercents.lotKadaster);
@@ -7393,6 +7426,7 @@ function openRegisteredEdit(id){
 async function saveRegisteredEdit(){
   let id=$('#azRegEditDocId')?.value||'';
   if(!id)return;
+  const originalX=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id))||{};
   const rawUsername=String($('#azRegEditUsername')?.value||'').trim().toLowerCase();
   const usernameKey=rawUsername.replace(/[^a-z0-9_]/g,'').slice(0,80);
   if(!usernameKey){toast('Username tidak sah. Gunakan huruf, nombor atau underscore.');return;}
@@ -7402,6 +7436,7 @@ async function saveRegisteredEdit(){
     return;
   }
   const pa=$('#azRegEditPa')?.value==='true';
+  const foodAllowed=$('#azRegEditFood')?.value==='true';
   const priceInputs={
     paBm:Number($('#azRegEditPricePaBm')?.value||0),
     lotKadaster:Number($('#azRegEditPriceLotKadaster')?.value||0),
@@ -7415,7 +7450,7 @@ async function saveRegisteredEdit(){
   const priceAdjustmentByCategory=Object.fromEntries(Object.entries(priceInputs).map(([key,value])=>[key,Math.round(value*100)/100]));
 
   if(usernameKey!==id){
-    const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id))||{};
+    const x=originalX;
     const uid=azRegUid(x);
     const ok=confirm(`Tukar username ${id} → ${usernameKey}?\n\nSistem akan merge/move profil Firestore, usernameAuthEmails, purchase summary, referral mapping dan data user berkaitan sambil mengekalkan UID yang sama.`);
     if(!ok)return;
@@ -7485,6 +7520,26 @@ async function saveRegisteredEdit(){
 
     updatedAt:serverTimestamp(),updatedAtMs:Date.now(),updatedByAdmin:'admin-dashboard'
   });
+
+  // v1366: Tempahan access is edited inside the user dialog. OFF stays visually silent in the list.
+  const foodUid=azRegUid(originalX);
+  if(foodUid){
+    await setDoc(doc(db,'foodOrderStaffAccess',foodUid),{
+      active:foodAllowed,
+      canViewFoodOrders:foodAllowed,
+      role:azRegRoleLabel({...originalX,role:$('#azRegEditRole')?.value||azRegRole(originalX)}),
+      username:id,
+      userDocId:id,
+      email:$('#azRegEditEmail')?.value.trim()||originalX.email||originalX.authEmail||'',
+      uid:foodUid,
+      managedBy:'admin-dashboard',
+      updatedAt:serverTimestamp(),
+      updatedAtMs:Date.now()
+    },{merge:true});
+  }else if(foodAllowed){
+    toast('Tempahan ON tidak dapat disimpan kerana Firebase UID user tiada. Setting lain tetap disimpan.');
+  }
+
   $('#azRegEditModal')?.classList.remove('is-open');
   await loadRegisteredUsersAdmin();
 
@@ -8546,6 +8601,10 @@ onAuthStateChanged(auth, async user => {
     <div class="row">
       <div><label>Account Role</label><select id="azRegEditRole"><option value="user">User</option><option value="staff">Staff</option><option value="semiAdmin">Manager</option><option value="admin">Administrator</option></select><div class="az-reg-help">Membership berbayar adalah status/langganan berasingan dan bukan Account Role.</div></div>
       <div><label>PA/BM Access</label><select id="azRegEditPa"><option value="false">PA/BM off</option><option value="true">PA/BM allowed</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Tempahan Access</label><select id="azRegEditFood"><option value="false">Tempahan off</option><option value="true">Tempahan allowed</option></select><div class="az-reg-help">Jika ON, badge hijau akan dipaparkan di “Setting Berubah”. Jika OFF, tiada badge dipaparkan.</div></div>
+      <div></div>
     </div>
     <div class="az-reg-price-section" id="azRegMembershipAdminBox">
       <div class="az-reg-price-heading">Membership</div>
