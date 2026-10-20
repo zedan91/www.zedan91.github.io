@@ -2334,6 +2334,85 @@ body[data-dashboard-page="admin"] .topbar{
 #registeredUsersAdminCard .az-admin-reg-pagination button:disabled{opacity:.35!important;cursor:not-allowed!important}
 @media(max-width:1120px){.az1361-users-column-head{display:none}.az1361-users-heading{align-items:flex-start}.az1361-users-heading .az-section-help{text-align:left!important}#registeredUsersAdminList .az-admin-reg-row{grid-template-columns:minmax(190px,.9fr) minmax(260px,1.4fr) auto!important}.az-reg-actions{grid-column:1/-1!important;justify-content:flex-start!important}#registeredUsersAdminList .az-admin-reg-time{text-align:right!important}}
 @media(max-width:760px){.az1361-users-heading{display:grid!important;gap:8px!important}.az1361-users-summary{width:max-content}.az1361-users-heading h2{font-size:21px!important}#registeredUsersAdminCard .az-admin-registered-toolbar{grid-template-columns:1fr!important}.az1361-users-refresh{width:100%!important}#registeredUsersAdminList .az-admin-reg-row{grid-template-columns:1fr!important;gap:8px!important;padding:12px!important}#registeredUsersAdminList .az-admin-reg-time{text-align:left!important}.az-reg-actions{grid-column:auto!important;justify-content:flex-start!important;flex-wrap:wrap!important}#registeredUsersAdminList .az-reg-actions button{flex:1 1 auto!important}.az1361-user-uid{white-space:normal;word-break:break-all}}
+/* AZOBSS v1363: group duplicate account records by email without destroying source data. */
+#registeredUsersAdminList .az1363-email-group{border:1px solid rgba(74,112,151,.28);border-radius:14px;background:rgba(5,13,24,.38);overflow:hidden;display:grid;gap:0}
+#registeredUsersAdminList .az1363-email-group.is-shared{border-color:rgba(56,189,248,.42);box-shadow:inset 0 0 0 1px rgba(56,189,248,.05)}
+#registeredUsersAdminList .az1363-email-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 13px;background:linear-gradient(90deg,rgba(14,116,144,.18),rgba(8,20,34,.72));border-bottom:1px solid rgba(74,112,151,.24)}
+#registeredUsersAdminList .az1363-email-head strong{color:#d9f3ff;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#registeredUsersAdminList .az1363-email-head span{color:#7dd3fc;font-size:9.5px;font-weight:900;white-space:nowrap}
+#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row{border-radius:0!important;border-left-width:4px!important;border-top:0!important;border-right:0!important;border-bottom:1px solid rgba(105,138,173,.16)!important;box-shadow:none!important}
+#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row:last-child{border-bottom:0!important}
+#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row:hover{transform:none!important;background:linear-gradient(120deg,rgba(13,31,52,.98),rgba(16,30,49,.92))!important}
+.az1363-login-badge{display:inline-flex;align-items:center;gap:5px;margin-left:7px;padding:2px 7px;border-radius:999px;border:1px solid rgba(96,165,250,.38);background:rgba(30,64,175,.16);color:#bfdbfe;font-size:8.5px;font-weight:950;vertical-align:2px;white-space:nowrap}
+.az1363-login-badge.google{border-color:rgba(34,197,94,.42);background:rgba(22,101,52,.18);color:#86efac}
+.az1363-login-badge.hybrid{border-color:rgba(168,85,247,.46);background:rgba(88,28,135,.20);color:#d8b4fe}
+.az1363-default-pill{display:inline-flex;align-items:center;border:1px solid rgba(100,116,139,.32);border-radius:999px;background:rgba(51,65,85,.18);color:#94a3b8;padding:3px 7px;font-size:9.5px;font-weight:850}
+.az1363-source-count{display:inline-flex;margin-left:6px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.30);color:#fcd34d;font-size:8px;font-weight:900;vertical-align:2px}
+.az1363-user-contact{display:block;margin-top:2px;color:#8fa6bf;font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){#registeredUsersAdminList .az1363-email-head{align-items:flex-start;flex-direction:column;gap:3px}.az1363-login-badge{margin-left:4px}.az1363-user-contact{white-space:normal;word-break:break-word}}
+/* AZOBSS v1364 — unified user card colour + rank badge */
+#registeredUsersAdminList .az-admin-reg-row,
+#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row{
+  background:linear-gradient(120deg,rgba(10,24,42,.96),rgba(13,25,43,.90))!important;
+  border-color:rgba(105,138,173,.22)!important;
+  border-left:1px solid rgba(105,138,173,.22)!important;
+  padding-left:105px!important;
+}
+#registeredUsersAdminList .az-admin-reg-row::before{
+  display:none!important;
+  background:none!important;
+}
+#registeredUsersAdminList .az-admin-reg-row:hover,
+#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row:hover{
+  background:linear-gradient(120deg,rgba(13,31,52,.98),rgba(16,30,49,.94))!important;
+  border-color:rgba(94,234,212,.30)!important;
+}
+.az1364-rank-badge{
+  position:absolute;
+  left:11px;
+  top:9px;
+  transform:none;
+  min-width:31px;
+  width:auto;
+  height:31px;
+  padding:0 8px;
+  gap:5px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
+  z-index:3;
+  border:1px solid rgba(148,163,184,.30);
+  background:#101c2f;
+  color:#e2e8f0;
+  box-shadow:0 6px 18px rgba(0,0,0,.20);
+  font-size:15px;
+  line-height:1;
+  font-weight:950;
+  cursor:default;
+}
+.az1364-rank-badge.admin{border-color:rgba(250,204,21,.70);background:rgba(113,63,18,.42);color:#fde68a}
+.az1364-rank-badge.manager{border-color:rgba(168,85,247,.72);background:rgba(88,28,135,.40);color:#e9d5ff}
+.az1364-rank-badge.staff{border-color:rgba(59,130,246,.72);background:rgba(30,64,175,.40);color:#bfdbfe}
+.az1364-rank-badge.user{border-color:rgba(34,197,94,.58);background:rgba(20,83,45,.34);color:#bbf7d0}
+.az1364-rank-badge .az1364-rank-short{
+  position:static;
+  transform:none;
+  min-width:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.01em;
+  text-align:left;
+}
+@media(max-width:760px){
+  #registeredUsersAdminList .az-admin-reg-row,#registeredUsersAdminList .az1363-email-group>.az-admin-reg-row{padding-left:92px!important}
+  .az1364-rank-badge{left:10px;top:12px;transform:none;min-width:28px;width:auto;height:28px;padding:0 7px;border-radius:9px;font-size:13px}
+}
 </style>
 </head>
 
@@ -2895,7 +2974,7 @@ body[data-dashboard-page="admin"] .topbar{
           <button class="btn az1361-users-refresh" id="registeredUsersRefreshBtn" type="button">↻ Refresh</button>
         </div>
         <div class="az1361-users-column-head" aria-hidden="true">
-          <span>USER</span><span>ACCESS & STATUS</span><span>REGISTERED</span><span>ACTIONS</span>
+          <span>EMAIL / USERNAME</span><span>SETTING BERUBAH</span><span>REGISTERED</span><span>ACTIONS</span>
         </div>
         <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
         <div class="az-admin-reg-pagination">
@@ -7000,6 +7079,7 @@ function azRegUid(x){
   return String(x?.uid||x?.authUid||x?.userUid||x?.firebaseUid||'').trim();
 }
 function azRegFoodOrdersAllowed(x){
+  if(typeof x?.__foodAllowed==='boolean')return x.__foodAllowed;
   const uid=azRegUid(x);
   if(!uid)return false;
   const access=adminFoodOrderAccessCache.get(uid);
@@ -7047,6 +7127,7 @@ function azRegNormalisePricePercent(value){
   return Number.isFinite(n)?Math.max(-99,Math.min(500,Math.round(n*100)/100)):0;
 }
 function azRegPricePercents(x){
+  if(x?.__pricePercents&&typeof x.__pricePercents==='object')return {...x.__pricePercents};
   const managed=x?.adminPriceAdjustmentOverride===true||String(x?.priceAdjustmentManagedBy||'').toLowerCase()==='admin';
   const managedMap=x?.adminPriceAdjustmentByCategory&&typeof x.adminPriceAdjustmentByCategory==='object'?x.adminPriceAdjustmentByCategory:null;
   const publicMap=x?.priceAdjustmentByCategory&&typeof x.priceAdjustmentByCategory==='object'?x.priceAdjustmentByCategory:null;
@@ -7081,81 +7162,191 @@ function azRegPricePillHtml(x){
   }).join('');
 }
 function azRegNameEmail(x){return String((azRegUser(x)||'')+' '+(x.email||x.authEmail||'')).toLowerCase();}
+function azRegEmail(x){
+  const raw=String(x?.email||x?.authEmail||x?.realEmail||x?.contactEmail||x?.googleEmail||'').trim().toLowerCase();
+  return raw.includes('@')?raw:'';
+}
+function azRegLoginMethod(x){
+  const rows=Array.isArray(x?.__records)&&x.__records.length?x.__records:[x||{}];
+  let google=false, normal=false;
+  rows.forEach(r=>{
+    const provider=String(r?.authProvider||r?.providerId||r?.loginProvider||r?.signInProvider||'').toLowerCase();
+    if(provider.includes('google.com')||r?.googleSignIn===true||r?.googleProfileConfirmed===true||String(r?.googleEmail||'').trim()) google=true;
+    if(provider.includes('password')||provider.includes('email')||r?.passwordSignIn===true||r?.emailPasswordSignIn===true) normal=true;
+  });
+  if(google&&normal)return 'hybrid';
+  if(google)return 'google';
+  return 'normal';
+}
+function azRegLoginBadgeHtml(x){
+  const method=azRegLoginMethod(x);
+  if(method==='google')return '<span class="az1363-login-badge google">G • Google</span>';
+  if(method==='hybrid')return '<span class="az1363-login-badge hybrid">G + 🔑 • Google + Biasa</span>';
+  return '<span class="az1363-login-badge">🔑 • Login Biasa</span>';
+}
 function azRegSearchText(x){
   return [
     x.docId,x.usernameKey,x.username,x.name,x.displayName,x.email,x.authEmail,x.realEmail,
     x.phone,x.phoneNumber,x.uid,x.authUid,x.userUid,x.firebaseUid,x.role,x.accountRole,
-    x.memberCode,x.inviteCode,x.accessCode,x.signupCode,
+    x.memberCode,x.inviteCode,x.accessCode,x.signupCode,x.authProvider,azRegLoginMethod(x),
     azRegFoodOrdersAllowed(x)?'food orders access allowed tempahan on':'food orders access off tempahan off'
   ].map(v=>String(v||'').toLowerCase()).join(' ');
 }
 function azRegIsOnline(x){
-  const online = x.online===true || x.isOnline===true || x.loggedIn===true || String(x.status||'').toLowerCase()==='online';
-  const seen = azRegMs(x.lastSeenAtMs||x.lastActiveAtMs||x.lastLoginAtMs||x.updatedAtMs||x.lastSeenAt||x.lastActiveAt||x.updatedAt);
-  return online || (seen && (Date.now()-seen) < 10*60*1000);
+  const rows=Array.isArray(x?.__records)&&x.__records.length?x.__records:[x||{}];
+  return rows.some(r=>{
+    const online = r.online===true || r.isOnline===true || r.loggedIn===true || String(r.status||'').toLowerCase()==='online';
+    const seen = azRegMs(r.lastSeenAtMs||r.lastActiveAtMs||r.lastLoginAtMs||r.updatedAtMs||r.lastSeenAt||r.lastActiveAt||r.updatedAt);
+    return online || (seen && (Date.now()-seen) < 10*60*1000);
+  });
 }
-function azRegDateValue(x){return azRegMs(x.createdAtMs||x.registeredAtMs||x.createdAt||x.registeredAt||x.updatedAtMs||x.updatedAt);}
-function azRegSortFilter(rows){
-  const mode=String($('#registeredUsersSort')?.value||'newest').toLowerCase();
-  let out=[...rows];
-  if(mode==='online') out=out.filter(azRegIsOnline);
-  else if(mode==='pabm') out=out.filter(azRegPaAllowed);
-  else if(mode==='foodorders') out=out.filter(azRegFoodOrdersAllowed);
-  else if(mode.startsWith('role-')){
-    const want=mode.replace('role-','');
-    out=out.filter(x=>azRegRole(x)===want);
+function azRegDateValue(x){
+  const rows=Array.isArray(x?.__records)&&x.__records.length?x.__records:[x||{}];
+  return Math.max(0,...rows.map(r=>azRegMs(r.createdAtMs||r.registeredAtMs||r.createdAt||r.registeredAt||r.updatedAtMs||r.updatedAt)));
+}
+function azRegRoleRank(x){
+  const r=azRegRole(x);return r==='admin'?4:r==='semiadmin'?3:r==='staff'?2:1;
+}
+function azRegMergeIdentityRecords(records){
+  const rows=[...(records||[])].sort((a,b)=>azRegDateValue(b)-azRegDateValue(a));
+  const base={...(rows[0]||{})};
+  if(!rows.length)return base;
+  const roleRow=[...rows].sort((a,b)=>azRegRoleRank(b)-azRegRoleRank(a)||azRegDateValue(b)-azRegDateValue(a))[0]||base;
+  base.role=azRegRole(roleRow);
+  base.__records=rows;
+  base.__sourceCount=rows.length;
+  base.__uids=Array.from(new Set(rows.map(azRegUid).filter(Boolean)));
+  if(base.__uids.length)base.uid=base.__uids[0];
+  base.__foodAllowed=rows.some(r=>azRegFoodOrdersAllowed(r));
+  const paRow=rows.find(r=>azRegPaAllowed(r));
+  if(paRow){
+    base.adminPaBmOverride=true;base.adminPaBmAllowed=true;base.paBmManagedBy='admin';base.paBmAllowed=true;
   }
-  if(mode==='oldest') out.sort((a,b)=>azRegDateValue(a)-azRegDateValue(b));
-  else if(mode==='az') out.sort((a,b)=>azRegNameEmail(a).localeCompare(azRegNameEmail(b)));
-  else out.sort((a,b)=>azRegDateValue(b)-azRegDateValue(a));
+  const activeMembership=rows.map(r=>({r,m:azRegMembershipInfo(r)})).filter(o=>o.m.active).sort((a,b)=>(b.m.expiry||Number.MAX_SAFE_INTEGER)-(a.m.expiry||Number.MAX_SAFE_INTEGER))[0];
+  if(activeMembership){
+    const r=activeMembership.r;
+    ['membershipBenefitActive','membershipBenefitExpiresAtMs','membershipBenefitExpiresAt','membershipBenefitPackageName','membershipBenefitPackageId'].forEach(k=>{if(r[k]!==undefined)base[k]=r[k];});
+  }
+  const mergedPrices={};
+  AZ_REG_PRICE_CATEGORIES.forEach(([key])=>{
+    let chosen=0;
+    for(const r of rows){const v=azRegPricePercents(r)[key];if(v!==0){chosen=v;break;}}
+    mergedPrices[key]=chosen;
+  });
+  base.__pricePercents=mergedPrices;
+  if(!base.phone&&!base.phoneNumber){const r=rows.find(v=>v.phone||v.phoneNumber);if(r){base.phone=r.phone||r.phoneNumber;base.phoneNumber=r.phoneNumber||r.phone;}}
+  if(!base.email&&!base.authEmail){const r=rows.find(v=>azRegEmail(v));if(r){base.email=azRegEmail(r);base.authEmail=azRegEmail(r);}}
+  return base;
+}
+function azRegGroupKey(x){
+  const email=azRegEmail(x);if(email)return 'email:'+email;
+  const uid=azRegUid(x);if(uid)return 'uid:'+uid.toLowerCase();
+  return 'user:'+String(azRegUser(x)||x.docId||Math.random()).trim().toLowerCase();
+}
+function azRegBuildEmailGroups(rows){
+  const groups=new Map();
+  (rows||[]).forEach(r=>{
+    const key=azRegGroupKey(r);
+    if(!groups.has(key))groups.set(key,{key,email:azRegEmail(r),records:[]});
+    groups.get(key).records.push(r);
+  });
+  return [...groups.values()].map(g=>{
+    const byUser=new Map();
+    g.records.forEach(r=>{
+      const user=String(azRegUser(r)||r.docId||'unknown').trim().toLowerCase();
+      if(!byUser.has(user))byUser.set(user,[]);
+      byUser.get(user).push(r);
+    });
+    const identities=[...byUser.values()].map(azRegMergeIdentityRecords).sort((a,b)=>azRegDateValue(b)-azRegDateValue(a));
+    return {...g,identities,__isGroup:true,__dateNewest:Math.max(0,...identities.map(azRegDateValue)),__dateOldest:Math.min(...identities.map(v=>azRegDateValue(v)||Date.now()))};
+  });
+}
+function azRegGroupSearchText(g){
+  return [g.email,...g.identities.map(azRegSearchText)].join(' ').toLowerCase();
+}
+function azRegGroupMatchesMode(g,mode){
+  const ids=g.identities||[];
+  if(mode==='online')return ids.some(azRegIsOnline);
+  if(mode==='pabm')return ids.some(azRegPaAllowed);
+  if(mode==='foodorders')return ids.some(azRegFoodOrdersAllowed);
+  if(mode.startsWith('role-')){const want=mode.replace('role-','');return ids.some(x=>azRegRole(x)===want);}
+  return true;
+}
+function azRegSortGroups(groups){
+  const mode=String($('#registeredUsersSort')?.value||'newest').toLowerCase();
+  let out=(groups||[]).filter(g=>azRegGroupMatchesMode(g,mode));
+  if(mode==='oldest')out.sort((a,b)=>(a.__dateOldest||0)-(b.__dateOldest||0));
+  else if(mode==='az')out.sort((a,b)=>String(a.email||azRegUser(a.identities?.[0])||'').localeCompare(String(b.email||azRegUser(b.identities?.[0])||'')));
+  else out.sort((a,b)=>(b.__dateNewest||0)-(a.__dateNewest||0));
   return out;
+}
+function azRegRankBadgeHtml(x){
+  const role=azRegRole(x);
+  const map={
+    admin:{cls:'admin',icon:'👑',short:'Admin',label:'Administrator'},
+    semiadmin:{cls:'manager',icon:'◆',short:'Manager',label:'Manager'},
+    staff:{cls:'staff',icon:'★',short:'Staff',label:'Staff'},
+    user:{cls:'user',icon:'●',short:'User',label:'User'}
+  };
+  const v=map[role]||map.user;
+  return `<span class="az1364-rank-badge ${v.cls}" title="Pangkat: ${esc(v.label)}" aria-label="Pangkat ${esc(v.label)}">${v.icon}<span class="az1364-rank-short">${v.short}</span></span>`;
+}
+function azRegChangedStatusHtml(x){
+  const bits=[];
+  const role=azRegRole(x);
+  if(azRegPaAllowed(x))bits.push(azRegPaDotHtml(true));
+  if(azRegMembershipInfo(x).active)bits.push(azRegMembershipPillHtml(x));
+  if(azRegFoodOrdersAllowed(x))bits.push(azRegFoodOrdersPillHtml(true));
+  const prices=azRegPricePillHtml(x);
+  if(!/Semua harga asal/.test(prices))bits.push(prices);
+  return bits.length?bits.join(''):'<span class="az1363-default-pill">Default settings</span>';
+}
+function azRegIdentityRowHtml(x,sharedEmail){
+  const id=esc(x.docId||azRegUser(x));
+  const foodAccess=azRegFoodOrdersAllowed(x),userUid=azRegUid(x),roleClass=azRegRoleClass(x);
+  const phone=String(x.phone||x.phoneNumber||'').trim();
+  const email=azRegEmail(x);
+  const contact=sharedEmail?(phone||'Tiada telefon direkod'):[email,phone].filter(Boolean).join(' • ');
+  const uidList=Array.isArray(x.__uids)&&x.__uids.length?x.__uids:(userUid?[userUid]:[]);
+  const uidText=uidList.length>1?`${uidList[0]} (+${uidList.length-1} UID)`:uidList[0]||'';
+  return `<div class="az-admin-reg-row ${roleClass}">
+    ${azRegRankBadgeHtml(x)}
+    <div class="az1361-user-identity">
+      <div class="az-admin-reg-title">${esc(azRegUser(x))}${azRegLoginBadgeHtml(x)}${x.__sourceCount>1?`<span class="az1363-source-count">${x.__sourceCount} rekod digabung</span>`:''}</div>
+      <span class="az1363-user-contact">${esc(contact||'Tiada email / telefon direkod')}</span>
+      ${uidText?`<div class="az1361-user-uid" title="Firebase UID${uidList.length>1?'s':''}">UID: ${esc(uidText)}</div>`:''}
+    </div>
+    <div class="az1361-user-status"><div class="az-admin-reg-meta-line">${azRegChangedStatusHtml(x)}</div></div>
+    <div class="az-admin-reg-time"><span>Registered</span>${esc(azRegTime(x))}</div>
+    <div class="az-reg-actions">
+      <button class="az-reg-food-access ${foodAccess?'on':'off'}" data-reg-food-access="${id}" ${userUid?'':'disabled title="Firebase Auth UID tiada"'}>${foodAccess?'Tempahan ON':'Tempahan OFF'}</button>
+      <button class="az-reg-edit" data-reg-edit="${id}">Edit</button>
+      <button class="az-reg-delete" data-reg-delete="${id}">Delete</button>
+    </div>
+  </div>`;
 }
 function renderRegisteredUsersAdmin(){
   const box=$('#registeredUsersAdminList'); if(!box)return;
   const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
-  const rows=azRegSortFilter(adminRegisteredUsersCache.filter(x=>!q||azRegSearchText(x).includes(q)));
-  const totalPages=Math.max(1,Math.ceil(rows.length/ADMIN_REGISTERED_PAGE_SIZE));
+  let groups=azRegBuildEmailGroups(adminRegisteredUsersCache);
+  if(q)groups=groups.filter(g=>azRegGroupSearchText(g).includes(q));
+  groups=azRegSortGroups(groups);
+  const totalPages=Math.max(1,Math.ceil(groups.length/ADMIN_REGISTERED_PAGE_SIZE));
   adminRegisteredUsersPage=Math.min(Math.max(1,adminRegisteredUsersPage),totalPages);
   const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
-  const page=rows.slice(start,start+ADMIN_REGISTERED_PAGE_SIZE);
-  box.innerHTML=page.map(x=>{
-    const id=esc(x.docId||azRegUser(x));
-    const pa=azRegPaAllowed(x);
-    const foodAccess=azRegFoodOrdersAllowed(x);
-    const userUid=azRegUid(x);
-    const roleClass=azRegRoleClass(x);
-    const roleLabel=azRegRoleLabel(x);
-    const sub=esc(azRegSub(x));
-    return `<div class="az-admin-reg-row ${roleClass}">
-      <div class="az1361-user-identity">
-        <div class="az-admin-reg-title">${esc(azRegUser(x))}</div>
-        <div class="az-admin-reg-sub">${sub||'Tiada email / telefon direkod'}</div>
-        ${userUid?`<div class="az1361-user-uid" title="Firebase UID">UID: ${esc(userUid)}</div>`:''}
-      </div>
-      <div class="az1361-user-status">
-        <div class="az-admin-reg-meta-line">
-          <span class="az-admin-reg-role-pill ${roleClass}">Role: ${esc(roleLabel)}</span>
-          ${azRegPaDotHtml(pa)}
-          ${azRegMembershipPillHtml(x)}
-          ${azRegFoodOrdersPillHtml(foodAccess)}
-          ${azRegPricePillHtml(x)}
-        </div>
-      </div>
-      <div class="az-admin-reg-time"><span>Registered</span>${esc(azRegTime(x))}</div>
-      <div class="az-reg-actions">
-        <button class="az-reg-food-access ${foodAccess?'on':'off'}" data-reg-food-access="${id}" ${userUid?'': 'disabled title="Firebase Auth UID tiada"'}>${foodAccess?'Tempahan ON':'Tempahan OFF'}</button>
-        <button class="az-reg-edit" data-reg-edit="${id}">Edit</button>
-        <button class="az-reg-delete" data-reg-delete="${id}">Delete</button>
-      </div>
-    </div>`;
+  const page=groups.slice(start,start+ADMIN_REGISTERED_PAGE_SIZE);
+  box.innerHTML=page.map(g=>{
+    const shared=g.identities.length>1;
+    const header=shared?`<div class="az1363-email-head"><strong>📧 ${esc(g.email||'Tanpa email')}</strong><span>${g.identities.length} username dalam email sama</span></div>`:'';
+    return `<div class="az1363-email-group ${shared?'is-shared':''}">${header}${g.identities.map(x=>azRegIdentityRowHtml(x,shared)).join('')}</div>`;
   }).join('')||'<div class="az-admin-reg-row role-unknown"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
   if($('#registeredUsersPageInfo')){
-    const loaded = adminRegisteredUsersCache.length;
-    const total = adminRegisteredUsersTotalCount;
-    const totalText = total === null ? `${loaded} loaded` : `${loaded} loaded / ${total} total`;
-    $('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${rows.length} matched • ${totalText}`;
+    const loaded=adminRegisteredUsersCache.length,total=adminRegisteredUsersTotalCount;
+    const identityCount=groups.reduce((n,g)=>n+(g.identities?.length||0),0);
+    const loadedText=total===null?`${loaded} rekod dimuatkan`:`${loaded} rekod dimuatkan / ${total} total`;
+    $('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${groups.length} akaun/email • ${identityCount} username • ${loadedText}`;
     const summary=$('#registeredUsersSummaryChip');
-    if(summary) summary.textContent=total===null?`${rows.length} rekod dipaparkan`:`${rows.length} padan • ${total} pengguna`;
+    if(summary)summary.textContent=`${groups.length} akaun • ${identityCount} username`;
   }
   if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
   if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
@@ -7184,6 +7375,8 @@ function openRegisteredEdit(id){
   if(!x)return toast('User not found.');
   $('#azRegEditDocId').value=x.docId||azRegUser(x);
   $('#azRegEditUsername').value=azRegUser(x);
+  const identityInfo=$('#azRegEditIdentityInfo');
+  if(identityInfo){const m=azRegLoginMethod(x);identityInfo.textContent=`Login: ${m==='google'?'Google':m==='hybrid'?'Google + Biasa':'Biasa'} • Firebase UID: ${azRegUid(x)||'Tiada'}`;}
   $('#azRegEditEmail').value=x.email||x.authEmail||'';
   $('#azRegEditPhone').value=x.phone||x.phoneNumber||'';
   $('#azRegEditRole').value=azRegRole(x);
@@ -8345,6 +8538,7 @@ onAuthStateChanged(auth, async user => {
     <label>Username</label>
     <input id="azRegEditUsername" autocomplete="off" spellcheck="false">
     <div class="az-reg-help">Username boleh ditukar oleh admin. Jika ditukar, data akaun berkaitan akan dipindah/merge ke username baharu tanpa menukar Firebase UID.</div>
+    <div id="azRegEditIdentityInfo" class="az-reg-help" style="margin-top:7px;padding:8px 10px;border:1px solid rgba(96,165,250,.20);border-radius:10px;background:rgba(15,23,42,.45)">Login: — • Firebase UID: —</div>
     <div class="row">
       <div><label>Email</label><input id="azRegEditEmail"></div>
       <div><label>Phone</label><input id="azRegEditPhone"></div>
