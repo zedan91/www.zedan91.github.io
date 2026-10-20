@@ -80,19 +80,25 @@
     return loading;
   }
   function selectProduct(value,focus=false){
-    product=value==='azdm'?'azdm':'surveycad';
-    document.getElementById('surveycadKeyPanel').hidden=product!=='surveycad';root.hidden=product!=='azdm';
+    product=['azdm','surveycad','ebook'].includes(value)?value:'azdm';
+    document.getElementById('surveycadKeyPanel').hidden=product!=='surveycad';
+    document.getElementById('ebookAccessAdminPanel').hidden=product!=='ebook';
+    root.hidden=product!=='azdm';
     tabs.forEach(tab=>{const active=tab.dataset.softwareKeyProduct===product;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;if(active&&focus)tab.focus();});
     if(document.getElementById('softwarekeys').classList.contains('active'))window.azSoftwareKeyTabsLoad();
   }
   tabs.forEach((tab,i)=>{
     tab.addEventListener('click',()=>selectProduct(tab.dataset.softwareKeyProduct));
     tab.addEventListener('keydown',event=>{
-      let target;if(event.key==='ArrowRight'||event.key==='ArrowLeft')target=1-i;if(event.key==='Home')target=0;if(event.key==='End')target=tabs.length-1;
+      let target;
+      if(event.key==='ArrowRight')target=(i+1)%tabs.length;
+      if(event.key==='ArrowLeft')target=(i-1+tabs.length)%tabs.length;
+      if(event.key==='Home')target=0;
+      if(event.key==='End')target=tabs.length-1;
       if(target!==undefined){event.preventDefault();selectProduct(tabs[target].dataset.softwareKeyProduct,true);}
     });
   });
-  window.azSoftwareKeyTabsLoad=()=>product==='azdm'?load():typeof window.azSoftwareKeysLoad==='function'?window.azSoftwareKeysLoad({force:false}):Promise.resolve();
+  window.azSoftwareKeyTabsLoad=()=>product==='azdm'?load():product==='ebook'?(typeof window.azEbookAccessAdminLoad==='function'?window.azEbookAccessAdminLoad({force:false}):Promise.resolve()):(typeof window.azSoftwareKeysLoad==='function'?window.azSoftwareKeysLoad({force:false}):Promise.resolve());
   $('refresh').addEventListener('click',()=>load(true));
   $('issue-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
     const customer=$('customer').value.trim(),email=$('email').value.trim(),phone=$('phone').value.trim();const result=await api('issue',{customer,email,phone,days:Number($('duration').value)});

@@ -2363,6 +2363,14 @@ function azExportSafePremiumOrder(x = {}, docId = "") {
     status: azExportSafeText(x.status || "", 60),
     paymentMethod: azExportSafeText(x.paymentMethod || "", 80),
     paymentReference: azExportSafeText(x.paymentReference || "", 160),
+    paymentFee: azExportAmount(x.paymentFee || x.gatewayFee || x.stripeFee || x.transactionFee || x.processingFee || 0),
+    gatewayFee: azExportAmount(x.gatewayFee || x.paymentFee || x.stripeFee || 0),
+    stripeFee: azExportAmount(x.stripeFee || x.paymentFee || 0),
+    stripeNet: azExportAmount(x.stripeNet || 0),
+    stripePaymentIntentId: azExportSafeText(x.stripePaymentIntentId || "", 220),
+    stripeChargeId: azExportSafeText(x.stripeChargeId || "", 220),
+    stripeBalanceTransactionId: azExportSafeText(x.stripeBalanceTransactionId || "", 220),
+    stripeFeeSyncedAt: azExportSafeText(x.stripeFeeSyncedAt || "", 120),
     invoiceNo: azExportSafeText(x.invoiceNo || "", 180),
     receiptNo: azExportSafeText(x.receiptNo || "", 180),
     documentSequence: Number(x.documentSequence || 0) || 0,
@@ -2660,8 +2668,21 @@ async function azLoadPremiumOrdersMerged(maxRows = 500) {
     error = [error, "local-json: " + (err && err.message ? err.message : String(err))].filter(Boolean).join(" | ");
   }
   merged.sort((a, b) => azPremiumOrderSortMs(b) - azPremiumOrderSortMs(a));
+  // v1357: backfill a limited number of legacy paid Stripe rows whenever Admin Sales loads.
+  // The authoritative amount comes from Stripe Balance Transaction, not an estimated percentage.
+  let stripeFeeBackfilled = 0;
+  for (const row of merged.slice(0, Math.min(limitRows, 40))) {
+    if (stripeFeeBackfilled >= 12) break;
+    const isPaidStripe = String(row.status || "").toLowerCase() === "paid" && String(row.paymentMethod || "").toLowerCase().includes("stripe");
+    const hasFee = Number(row.paymentFee || row.gatewayFee || row.stripeFee || 0) > 0;
+    if (!isPaidStripe || hasFee) continue;
+    try {
+      const synced = await azSyncStripeFeeForPaidOrder(row);
+      if (synced && Number(synced.paymentFee || 0) > 0) { Object.assign(row, synced); stripeFeeBackfilled += 1; }
+    } catch (err) { console.warn("Legacy Stripe fee backfill skipped:", row.orderId || row.paymentReference || "", err && (err.message || err)); }
+  }
   const source = sources.size ? Array.from(sources).join("+") : "empty";
-  return { rows: merged.slice(0, limitRows).map((x, i) => azExportSafePremiumOrder(x, x.docId || x.orderId || x.billCode || `merged_${i}`)), firestoreOk, source, error };
+  return { rows: merged.slice(0, limitRows).map((x, i) => azExportSafePremiumOrder(x, x.docId || x.orderId || x.billCode || `merged_${i}`)), firestoreOk, source, error, stripeFeeBackfilled };
 }
 
 
@@ -3248,6 +3269,8 @@ async function azGrantEbookGeneratorLifetimeAccess(order = {}) {
     await db.collection("ebookGeneratorAccess").doc(uid).set({
       uid,
       email,
+      username:cleanPremiumText(order.user?.username || order.username || order.usernameKey || "", 120),
+      phone:cleanPremiumText(order.user?.phone || order.phone || "", 80),
       active:true,
       lifetime:true,
       productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,
@@ -3316,6 +3339,7 @@ async function azEbookGeneratorAccessStatus(identity = {}) {
       if (snap.exists) {
         const row = snap.data() || {};
         if (row.active !== false && row.lifetime === true) return { access:true, lifetime:true, source:"entitlement", entitlement:row };
+        if (row.active === false) return { access:false, lifetime:true, reason:"admin_revoked", source:"entitlement", entitlement:row };
       }
     } catch (err) { console.warn("Ebook entitlement read skipped:", err && (err.message || err)); }
   }
@@ -3326,6 +3350,100 @@ async function azEbookGeneratorAccessStatus(identity = {}) {
   }
   const pending = await azFindEbookGeneratorOrderForIdentity(identity, { pending:true });
   return { access:false, reason:pending ? "payment_pending" : "payment_required", pending:pending ? { orderId:pending.orderId || "", billCode:pending.billCode || "", paymentUrl:pending.paymentUrl || "" } : null };
+}
+
+// AZOBSS v1358 — Admin management for non-key digital entitlements such as Ebook Generator.
+async function azAdminListEbookGeneratorAccess() {
+  const db = getAzobssBackendDb();
+  if (!db) throw new Error("Firebase Admin is not configured.");
+  const accessRows = [];
+  try {
+    const snap = await db.collection("ebookGeneratorAccess").limit(500).get();
+    snap.forEach(docSnap => accessRows.push({ uid:docSnap.id, ...(docSnap.data() || {}) }));
+  } catch (err) { throw new Error("Could not load Ebook Generator access records: " + (err && err.message ? err.message : String(err))); }
+
+  const paidOrders = [];
+  try {
+    const snap = await db.collection("premiumOrders").where("productId", "==", AZOBSS_EBOOK_GENERATOR_PRODUCT_ID).limit(500).get();
+    snap.forEach(docSnap => {
+      const row = { docId:docSnap.id, ...(docSnap.data() || {}) };
+      if (String(row.status || "").toLowerCase() === "paid") paidOrders.push(row);
+    });
+  } catch (err) { console.warn("Ebook access admin paid-order join skipped:", err && (err.message || err)); }
+
+  const latestOrderByUid = new Map();
+  for (const order of paidOrders) {
+    const uid = cleanPremiumText(order.user?.uid || order.uid || order.userUid || "", 180);
+    if (!uid) continue;
+    const prev = latestOrderByUid.get(uid);
+    const orderMs = Number(order.paidAtMs || order.updatedAtMs || order.createdAtMs || Date.parse(order.paidAt || order.updatedAt || order.createdAt || "") || 0) || 0;
+    const prevMs = prev ? (Number(prev.paidAtMs || prev.updatedAtMs || prev.createdAtMs || Date.parse(prev.paidAt || prev.updatedAt || prev.createdAt || "") || 0) || 0) : -1;
+    if (!prev || orderMs > prevMs) latestOrderByUid.set(uid, order);
+  }
+
+  // Recover a missing entitlement from a verified paid order so old customers also appear.
+  for (const [uid, order] of latestOrderByUid.entries()) {
+    if (accessRows.some(row => String(row.uid || "") === uid)) continue;
+    try {
+      const granted = await azGrantEbookGeneratorLifetimeAccess(order);
+      accessRows.push({
+        uid,
+        email:cleanToyyibEmail(granted.user?.email || granted.email || granted.buyerEmail || ""),
+        username:cleanPremiumText(granted.user?.username || granted.username || "", 120),
+        phone:cleanPremiumText(granted.user?.phone || granted.phone || "", 80),
+        active:true,lifetime:true,productId:AZOBSS_EBOOK_GENERATOR_PRODUCT_ID,productName:AZOBSS_EBOOK_GENERATOR_PRODUCT_NAME,
+        priceRM:19,purchasedAt:granted.paidAt || granted.createdAt || "",purchasedAtMs:Number(granted.paidAtMs || granted.createdAtMs || 0)||0,
+        orderId:granted.orderId || "",billCode:granted.billCode || "",paymentMethod:granted.paymentMethod || "",paymentReference:granted.paymentReference || ""
+      });
+    } catch (err) { console.warn("Ebook access admin entitlement recovery skipped:", uid, err && (err.message || err)); }
+  }
+
+  const rows = accessRows.map(row => {
+    const uid = cleanPremiumText(row.uid || "", 180);
+    const order = latestOrderByUid.get(uid) || {};
+    const user = order.user && typeof order.user === "object" ? order.user : {};
+    return {
+      uid,
+      username:cleanPremiumText(row.username || user.username || order.username || order.usernameKey || "", 120),
+      email:cleanToyyibEmail(row.email || user.email || order.email || order.buyerEmail || ""),
+      phone:cleanPremiumText(row.phone || user.phone || order.phone || "", 80),
+      active:row.active !== false,
+      lifetime:row.lifetime === true,
+      priceRM:Number(row.priceRM || 19) || 19,
+      purchasedAt:cleanPremiumText(row.purchasedAt || order.paidAt || order.createdAt || "", 120),
+      purchasedAtMs:Number(row.purchasedAtMs || order.paidAtMs || order.createdAtMs || 0) || 0,
+      orderId:cleanPremiumText(row.orderId || order.orderId || "", 180),
+      billCode:cleanPremiumText(row.billCode || order.billCode || "", 120),
+      paymentMethod:cleanPremiumText(row.paymentMethod || order.paymentMethod || "", 40),
+      paymentReference:cleanPremiumText(row.paymentReference || order.paymentReference || "", 180),
+      accessUpdatedAt:cleanPremiumText(row.updatedAt || "", 120),
+      revokedAt:cleanPremiumText(row.revokedAt || "", 120),
+      revokedBy:cleanPremiumText(row.revokedBy || "", 120)
+    };
+  });
+  rows.sort((a,b)=>(Number(b.purchasedAtMs||0)-Number(a.purchasedAtMs||0)) || String(a.username||a.email||a.uid).localeCompare(String(b.username||b.email||b.uid)));
+  return rows;
+}
+async function azAdminSetEbookGeneratorAccess(req, adminIdentity = {}, body = {}) {
+  const db = getAzobssBackendDb();
+  if (!db) throw new Error("Firebase Admin is not configured.");
+  const uid = cleanPremiumText(body.uid || "", 180);
+  if (!uid) throw Object.assign(new Error("Customer UID is required."), { statusCode:400 });
+  const action = String(body.action || "").trim().toLowerCase();
+  if (!['revoke','restore'].includes(action)) throw Object.assign(new Error("Unsupported access action."), { statusCode:400 });
+  const ref = db.collection("ebookGeneratorAccess").doc(uid);
+  const snap = await ref.get();
+  if (!snap.exists) throw Object.assign(new Error("Ebook Generator access record not found."), { statusCode:404 });
+  const nowMs = Date.now(), nowIso = new Date(nowMs).toISOString();
+  const adminName = cleanPremiumText(adminIdentity.username || adminIdentity.email || adminIdentity.uid || "admin", 120);
+  const patch = action === 'revoke' ? {
+    active:false,revokedAt:nowIso,revokedAtMs:nowMs,revokedBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1358
+  } : {
+    active:true,revokedAt:"",revokedAtMs:0,revokedBy:"",restoredAt:nowIso,restoredAtMs:nowMs,restoredBy:adminName,updatedAt:nowIso,updatedAtMs:nowMs,accessVersion:1358
+  };
+  await ref.set(patch,{merge:true});
+  azFireAndForget(azWriteAdminAuditLog(req,adminIdentity,action==='revoke'?'ebook_access_revoke':'ebook_access_restore','ebookGeneratorAccess',uid,{uid},'success'),'Ebook access admin audit failed');
+  return {ok:true,uid,active:action==='restore',action};
 }
 
 async function postToyyib(endpoint, payload) {
@@ -4263,6 +4381,10 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       paymentVerificationSource: verifiedByStripe ? (opts.verificationSource || "stripe-api") : (verifiedByToyyib ? "toyyibpay-api" : (latest.paymentVerificationSource || "")),
       callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
     });
+    if (verifiedByStripe) {
+      try { latest = await azSyncStripeFeeForPaidOrder(latest); }
+      catch (stripeFeeError) { console.warn("Stripe real fee sync skipped:", stripeFeeError && (stripeFeeError.message || stripeFeeError)); }
+    }
     if (!azIsManualSalesInvoiceOrder(latest)) {
       try {
         await azPersistPremiumOrder(latest);
@@ -16772,6 +16894,66 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
     mode:azStripeDigitalMode()
   };
 }
+// AZOBSS v1357 — sync the real Stripe processing fee from the Balance Transaction.
+// Never hard-code a percentage here: international cards / FX can produce a different fee.
+function azStripeMinorMoney(value = 0) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? Math.round((n / 100) * 100) / 100 : 0;
+}
+async function azStripePaymentFeeDetails(paymentIntentId = "") {
+  const intentId = cleanPremiumText(paymentIntentId || "", 220);
+  if (!intentId) throw new Error("Stripe PaymentIntent is missing for fee sync.");
+  const intent = await azStripeDigitalRequest(`/payment_intents/${encodeURIComponent(intentId)}?expand[]=latest_charge.balance_transaction`, { method:"GET" });
+  let charge = intent && intent.latest_charge;
+  if (typeof charge === "string" && charge) {
+    charge = await azStripeDigitalRequest(`/charges/${encodeURIComponent(charge)}?expand[]=balance_transaction`, { method:"GET" });
+  }
+  let balance = charge && charge.balance_transaction;
+  if (typeof balance === "string" && balance) {
+    balance = await azStripeDigitalRequest(`/balance_transactions/${encodeURIComponent(balance)}`, { method:"GET" });
+  }
+  if (!balance || typeof balance !== "object") throw new Error("Stripe Balance Transaction is not available yet.");
+  const feeRm = azStripeMinorMoney(balance.fee);
+  const netRm = azStripeMinorMoney(balance.net);
+  return {
+    paymentIntentId:intentId,
+    chargeId:cleanPremiumText((charge && charge.id) || "", 220),
+    balanceTransactionId:cleanPremiumText(balance.id || "", 220),
+    feeRm,
+    netRm,
+    currency:cleanPremiumText(balance.currency || intent.currency || "myr", 20).toLowerCase(),
+    source:"stripe-balance-transaction"
+  };
+}
+async function azSyncStripeFeeForPaidOrder(order = {}, options = {}) {
+  const method = String(order.paymentMethod || "").toLowerCase();
+  const paid = String(order.status || "").toLowerCase() === "paid";
+  if (!paid || !method.includes("stripe")) return order;
+  const existingFee = Number(order.paymentFee || order.gatewayFee || order.stripeFee || 0) || 0;
+  if (existingFee > 0 && order.stripeFeeSyncedAt && options.force !== true) return order;
+  const paymentIntentId = cleanPremiumText(order.stripePaymentIntentId || order.paymentReference || order.stripeSession?.payment_intent || "", 220);
+  if (!/^pi_/i.test(paymentIntentId)) return order;
+  const details = await azStripePaymentFeeDetails(paymentIntentId);
+  const nowIso = new Date().toISOString();
+  const updated = upsertPremiumOrder({
+    ...order,
+    stripePaymentIntentId:details.paymentIntentId,
+    stripeChargeId:details.chargeId,
+    stripeBalanceTransactionId:details.balanceTransactionId,
+    stripeCurrency:details.currency,
+    stripeFee:details.feeRm,
+    paymentFee:details.feeRm,
+    gatewayFee:details.feeRm,
+    stripeNet:details.netRm,
+    stripeFeeSource:details.source,
+    stripeFeeSyncedAt:nowIso,
+    stripeFeeSyncedAtMs:Date.now(),
+    stripeFeeSyncVersion:1357
+  });
+  try { await azPersistPremiumOrder(updated); } catch (err) { console.warn("Stripe fee persist warning:", err && (err.message || err)); }
+  return updated;
+}
+
 async function azVerifyDigitalStripeOrder(order = {}) {
   const sessionId = cleanPremiumText(order.stripeCheckoutSessionId || order.stripeSessionId || '', 220);
   if (!sessionId) return { paid:false, reason:'stripe_session_missing' };
@@ -21344,6 +21526,31 @@ async function handler(req, res) {
       }
     }
 
+
+    // AZOBSS v1358 — Admin > Software Key / Digital Access > Ebook Access
+    if (pathname === "/api/admin/ebook-generator-access" && req.method === "GET") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
+        const rows = await azAdminListEbookGeneratorAccess();
+        return send(res,200,JSON.stringify({ok:true,records:rows,total:rows.length,active:rows.filter(x=>x.active).length,revoked:rows.filter(x=>!x.active).length,version:1358},null,2),"application/json",{"Cache-Control":"no-store"});
+      } catch (err) {
+        console.error("Admin Ebook access list failed:", err && (err.stack || err.message || err));
+        return send(res,500,JSON.stringify({ok:false,error:cleanPremiumText(err && err.message,300)||"Could not load Ebook access records."},null,2),"application/json",{"Cache-Control":"no-store"});
+      }
+    }
+    if (pathname === "/api/admin/ebook-generator-access" && req.method === "POST") {
+      try {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity || !adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Admin authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
+        const body = parseRequestBody(await readBody(req));
+        const result = await azAdminSetEbookGeneratorAccess(req, adminIdentity, body);
+        return send(res,200,JSON.stringify(result,null,2),"application/json",{"Cache-Control":"no-store"});
+      } catch (err) {
+        const status = Number(err && err.statusCode || 500) || 500;
+        return send(res,status,JSON.stringify({ok:false,error:cleanPremiumText(err && err.message,300)||"Could not update Ebook access."},null,2),"application/json",{"Cache-Control":"no-store"});
+      }
+    }
 
     // AZOBSS v1351 — one-time RM19 lifetime Ebook Generator access
     if (pathname === "/api/ebook-generator/access-status" && req.method === "GET") {

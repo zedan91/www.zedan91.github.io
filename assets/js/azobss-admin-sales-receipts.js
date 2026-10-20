@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1336;
+window.__azSalesReceiptsModuleVersion=1357;
 
 let manualRows=[];
 let websiteRows=[];
@@ -754,6 +754,11 @@ async function loadData(options={}){
         existing.paBmItems=Array.isArray(x.paBmItems)?x.paBmItems:existing.paBmItems;
         existing.items=exactItems;existing.categories=['pabm'];existing.category='pabm';
         existing.gross=row.gross;existing.subtotal=row.subtotal;existing.paymentFee=row.paymentFee;existing.commission=row.commission;existing.otherCost=row.otherCost;existing.totalCost=row.totalCost;existing.profit=row.profit;
+      }
+      if(num(row.paymentFee)>num(existing.paymentFee)){
+        existing.paymentFee=num(row.paymentFee);
+        existing.totalCost=num(existing.paymentFee)+num(existing.commission)+num(existing.otherCost)+num(existing.productCost)+num(existing.shippingCost);
+        existing.profit=num(existing.gross)-num(existing.totalCost);
       }
       if(existing.status!=='paid'&&row.status==='paid')existing.status='paid';
       existing.customerName=existing.customerName||row.customerName;existing.customerPhone=existing.customerPhone||row.customerPhone;existing.customerEmail=existing.customerEmail||row.customerEmail;existing.customerAddress=existing.customerAddress||row.customerAddress;

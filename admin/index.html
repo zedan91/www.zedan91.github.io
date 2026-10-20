@@ -2239,7 +2239,8 @@ body[data-dashboard-page="admin"] .topbar{
 </style>
 
 <link rel="stylesheet" href="/assets/css/azobss-azdm-admin.css?v=1218">
-<script src="/assets/js/azobss-azdm-admin.js?v=1218" defer></script>
+<script src="/assets/js/azobss-ebook-access-admin.js?v=1358" defer></script>
+<script src="/assets/js/azobss-azdm-admin.js?v=1358" defer></script>
 
 <style id="azobss-admin-debt-loan-v1314">
 .az-debt-section{--az-debt-border:#2d506f;--az-debt-soft:#0f1b2d;--az-debt-card:#162337}
@@ -2281,6 +2282,10 @@ body[data-dashboard-page="admin"] .topbar{
 
 <style id="azobss-sales-docflow-v1336">
 .az-sr-docviews{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}.az-sr-docviews .btn.active{background:#16a34a;border-color:#22c55e;color:white}.az-sr-doc-kind.quotation{color:#fbbf24;border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.08)}.az-sr-pill.quote-draft,.az-sr-pill.quote-sent,.az-sr-pill.quote-accepted,.az-sr-pill.quote-rejected,.az-sr-pill.quote-expired{background:rgba(251,191,36,.10);color:#fde68a;border-color:rgba(251,191,36,.35)}.az-sr-quote-action{font-size:10px!important}
+</style>
+
+<style id="ebook-access-admin-v1358">
+#ebookAccessAdminPanel .ebook-access-status{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;font-weight:800;font-size:12px;border:1px solid #31506f}.ebook-access-status.active{color:#5df59a;border-color:#17844f;background:#082d22}.ebook-access-status.revoked{color:#ff8c8c;border-color:#9d3030;background:#351316}#ebookAccessAdminPanel td small{display:block;color:#91a7c3;margin-top:3px}#ebookAccessAdminPanel .ebook-access-order{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all}
 </style>
 </head>
 
@@ -2702,7 +2707,7 @@ body[data-dashboard-page="admin"] .topbar{
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
       <button data-tab="membership">⭐ Membership</button>
-      <button data-tab="softwarekeys">🗝️ Software Key</button>
+      <button data-tab="softwarekeys">🗝️ Software Key / Digital Access</button>
       <a class="home-link" href="/admin/AZOBSSTV/">📺 AZOBSSTV</a>
       <div class="nav-group">System</div>
       <button data-tab="activity">📚 Logs &amp; Activity</button>
@@ -2910,10 +2915,11 @@ body[data-dashboard-page="admin"] .topbar{
     </section>
 
     <section id="softwarekeys" class="section">
-      <h2>🗝️ Software Key</h2>
+      <h2>🗝️ Software Key / Digital Access</h2>
       <div class="azdm-key-tabs" role="tablist" aria-label="Pilih software">
         <button id="softwareKeyAzdmTab" type="button" role="tab" aria-controls="azdmAdminPanel" aria-selected="true" data-software-key-product="azdm">AZDM</button>
         <button id="softwareKeySurveycadTab" type="button" role="tab" aria-controls="surveycadKeyPanel" aria-selected="false" tabindex="-1" data-software-key-product="surveycad">SurveyCAD</button>
+        <button id="softwareKeyEbookTab" type="button" role="tab" aria-controls="ebookAccessAdminPanel" aria-selected="false" tabindex="-1" data-software-key-product="ebook">Ebook Access</button>
       </div>
       <div id="surveycadKeyPanel" role="tabpanel" aria-labelledby="softwareKeySurveycadTab" hidden>
 
@@ -2964,6 +2970,21 @@ body[data-dashboard-page="admin"] .topbar{
   <dialog id="azdm-serial-dialog"><h3>Serial customer siap</h3><p id="azdm-serial-customer"></p><label for="azdm-serial-value">Simpan serial ini</label><textarea id="azdm-serial-value" rows="3" readonly></textarea><p>Serial penuh tidak disimpan dalam senarai lesen. Simpan sebelum menutup tetingkap.</p><div class="azdm-dialog-actions"><button id="azdm-save-serial" type="button">Simpan .txt</button><button id="azdm-copy-serial" type="button" class="azdm-primary">Salin serial</button><button type="button" data-azdm-close="serial-dialog">Selesai</button></div></dialog>
   <dialog id="azdm-edit-dialog"><form id="azdm-edit-form"><h3>Edit lesen AZDM</h3><label for="azdm-edit-name">Nama customer</label><input id="azdm-edit-name" required maxlength="120"><label for="azdm-edit-email">Gmail / Email</label><input id="azdm-edit-email" type="email" maxlength="254" autocomplete="email" placeholder="contoh@gmail.com"><label for="azdm-edit-phone">No. Phone</label><input id="azdm-edit-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="Contoh: 011-3560 0723"><label for="azdm-edit-serial">Serial Key</label><input id="azdm-edit-serial" class="azdm-serial-input" maxlength="40" autocomplete="off" spellcheck="false" placeholder="AZDM-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"><p id="azdm-edit-serial-note" class="azdm-admin-muted"></p><label class="azdm-lifetime-label"><input id="azdm-edit-lifetime" type="checkbox">Lesen Lifetime</label><label for="azdm-edit-expiry">Tarikh dan masa tamat</label><input id="azdm-edit-expiry" type="datetime-local" required><p>Tarikh mengikut waktu tempatan anda. Serial baru mesti unik. Menukar serial akan melepaskan PC lama dan membatalkan token aktivasi lama pada semakan online seterusnya.</p><div class="azdm-dialog-actions"><button type="button" data-azdm-close="edit-dialog">Batal</button><button type="submit" class="azdm-primary">Simpan perubahan</button></div></form></dialog>
   <dialog id="azdm-confirm-dialog"><h3 id="azdm-confirm-title"></h3><p id="azdm-confirm-detail"></p><div class="azdm-dialog-actions"><button type="button" data-azdm-close="confirm-dialog">Batal</button><button id="azdm-confirm-action" type="button" class="azdm-primary">Teruskan</button></div></dialog><dialog id="azdm-delete-dialog"><form id="azdm-delete-form"><h3>Delete customer / lesen?</h3><p>Customer <strong id="azdm-delete-customer"></strong> akan dipadam daripada senarai lesen AZDM. Tindakan ini tidak boleh undo.</p><p class="azdm-admin-muted">AZDM yang masih offline mungkin terus menggunakan lease lama sehingga lease tamat, maksimum 30 hari. Selepas semakan online, lesen yang dipadam tidak boleh renew.</p><div class="azdm-dialog-actions"><button type="button" data-azdm-close="delete-dialog">Batal</button><button type="submit" class="azdm-danger">OK, Delete</button></div></form></dialog>
+</div>
+
+<div id="ebookAccessAdminPanel" role="tabpanel" aria-labelledby="softwareKeyEbookTab" hidden>
+  <div class="azdm-admin-heading"><div style="width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:#073b4c;font-size:24px">📚</div><div><h3>Ebook Generator — Pengurusan Digital Access</h3><p>Akaun yang sudah membeli akses lifetime RM19. Semak pembelian, status akses dan sekat/pulihkan jika perlu.</p></div><a class="azdm-admin-source" href="/Software-Tools/#ebook" target="_blank" rel="noopener">Buka Ebook Generator ↗</a></div>
+  <div id="ebookAccessNotice" class="azdm-admin-notice" role="status" aria-live="polite" hidden></div>
+  <div class="azdm-admin-stats">
+    <div class="azdm-admin-stat"><strong id="ebookAccessTotal">0</strong><small>Jumlah pembeli lifetime</small></div>
+    <div class="azdm-admin-stat"><strong id="ebookAccessActive">0</strong><small>Akses aktif</small></div>
+    <div class="azdm-admin-stat"><strong id="ebookAccessRevoked">0</strong><small>Akses disekat</small></div>
+  </div>
+  <div class="azdm-admin-card">
+    <div class="azdm-admin-list-head"><div><h3>Senarai pembeli Ebook Generator</h3><p class="azdm-admin-muted">Bayaran sekali RM19. Rekod pembelian kekal untuk audit walaupun akses disekat.</p></div><div class="azdm-admin-search"><input id="ebookAccessSearch" placeholder="Cari username, email, phone, UID atau Order ID"><label class="azdm-sort-field"><span>Sort by</span><select id="ebookAccessSort"><option value="purchased-desc">Pembelian: Terbaharu</option><option value="purchased-asc">Pembelian: Terlama</option><option value="customer-asc">Customer: A → Z</option><option value="customer-desc">Customer: Z → A</option><option value="active-first">Status: Aktif dahulu</option><option value="revoked-first">Status: Disekat dahulu</option></select></label><button id="ebookAccessRefresh" type="button">Refresh</button></div></div>
+    <div class="azdm-admin-table"><table><thead><tr><th>Customer</th><th>Email / Phone</th><th>Akses</th><th>Pembelian</th><th>Bayaran</th><th>Order ID</th><th>Tindakan</th></tr></thead><tbody id="ebookAccessRows"></tbody></table></div>
+    <div class="azdm-admin-pager"><span id="ebookAccessPageLabel"></span><div><button id="ebookAccessPrevious" type="button" disabled>Sebelum</button><button id="ebookAccessNext" type="button" disabled>Seterusnya</button></div></div>
+  </div>
 </div>
 
     </section>
@@ -9650,7 +9671,7 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1336"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1354" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1357" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*
