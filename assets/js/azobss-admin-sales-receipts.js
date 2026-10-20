@@ -672,6 +672,9 @@ function normalizeManual(id,x={}){
   const row={...x,...c,id,docId:id,source:'manual',editable:true,quotationNo,invoiceNo,receiptNo,documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),customerName:String(x.customerName||'Customer'),customerPhone:String(x.customerPhone||''),customerEmail:String(x.customerEmail||''),customerAddress:String(x.customerAddress||x.billingAddress||x.fullAddress||x.address||''),status,paymentMethod:String(x.paymentMethod||'Bank Transfer'),saleDateMs:actualManualDateMs(rowDateMs(x),x)||Date.now(),categories,category:categories.length===1?categories[0]:'mixed'};
   row.documentNo=currentDocumentNo(row);row.depositPercent=depositPercent(row);row.depositAmount=depositAmount(row);row.paidGross=receivedAmount(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=outstandingAmount(row);return row;
 }
+function isInternalAutoCheckoutAttempt(x={}){
+  return x.hiddenFromSalesReceipts===true || x.autoDuplicateSuperseded===true || String(x.cancelReason||'').toLowerCase()==='duplicate-auto-checkout-paid' || x.checkoutCreateFailed===true;
+}
 function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const status=normalizeStatus(x.status||x.paymentStatus,x.paid===true);
   const gross=clampMoney(extractAmount(x));
@@ -740,9 +743,9 @@ async function loadData(options={}){
     try{repairedCount=await repairDuplicateManualNumbers()}catch(repairError){console.warn('Duplicate document number repair skipped:',repairError)}
     if(repairedCount)manualRows=await freshManualRows();
     const map=new Map();
-    purchaseSnap.forEach(d=>{const x=d.data()||{};if(isAdminTestRecord(x))return;const row=normalizeWebsite(d.id,x,'purchaseLogs');map.set(websiteDedupKey(row),row)});
+    purchaseSnap.forEach(d=>{const x=d.data()||{};if(isAdminTestRecord(x)||isInternalAutoCheckoutAttempt(x))return;const row=normalizeWebsite(d.id,x,'purchaseLogs');map.set(websiteDedupKey(row),row)});
     premium.forEach((x,i)=>{
-      if(isAdminTestRecord(x)||isManualInvoicePaymentOrder(x))return;
+      if(isAdminTestRecord(x)||isManualInvoicePaymentOrder(x)||isInternalAutoCheckoutAttempt(x))return;
       const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);const existing=map.get(k);
       if(!existing){map.set(k,row);return}
       existing.deleteRefs=mergeDeleteRefs(existing.deleteRefs,row.deleteRefs);

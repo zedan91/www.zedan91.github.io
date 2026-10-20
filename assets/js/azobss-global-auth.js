@@ -1,5 +1,14 @@
 /* AZOBSS core stability fix 036 */
 
+// v1355: enforce one production origin so Firebase local persistence is not split
+// between https://azobss.com and https://www.azobss.com. Preserve the complete
+// path/query/hash so payment returns and #ebook deep links survive the redirect.
+try{
+  if(String(location.protocol).toLowerCase()==='https:' && String(location.hostname).toLowerCase()==='azobss.com'){
+    location.replace('https://www.azobss.com'+location.pathname+location.search+location.hash);
+  }
+}catch(_e){}
+
 // v1272 stabilization: one canonical auth/navbar/purchase runtime across the whole site.
 window.__AZOBSS_GLOBAL_AUTH_OWNER__ = 'global-auth-v1272';
 
@@ -8093,7 +8102,9 @@ function bindAuth() {
     if(!firebaseUser){
       if(window.__AZOBSS_LOGGING_OUT__ || azobssLogoutInProgress) return;
       if(azobssPresenceHeartbeatTimer){ clearInterval(azobssPresenceHeartbeatTimer); azobssPresenceHeartbeatTimer = null; }
-      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); recordGuestHistory(); renderFirebaseAdminRecords(); return;
+      clearUser(); syncHeader(null); enforcePaBmPageAccess(null, true); bindAzobssPurchaseRecordsUI(); renderAzobssPurchaseRecords(); setTimeout(renderAzobssPurchaseRecords, 800); recordGuestHistory(); renderFirebaseAdminRecords();
+      try{window.dispatchEvent(new CustomEvent('azobss:auth-state-ready',{detail:{loggedIn:false}}))}catch(_e){}
+      return;
     }
     try{
       try{ await firebaseUser.reload(); }catch(e){}
@@ -8158,6 +8169,7 @@ function bindAuth() {
       }
       const fullUser={uid:freshUser.uid,...profile,phone: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),phoneNumber: normalizeAzobssPhone(profile.phone || profile.phoneNumber || preservedPhone || ''),usernameKey,verified:!!freshUser.emailVerified || ownerBypass,emailVerified:!!freshUser.emailVerified || ownerBypass};
       saveUser(fullUser); syncHeader(fullUser); enforcePaBmPageAccess(fullUser, true); startAzobssPresenceHeartbeat(fullUser);
+      try{window.dispatchEvent(new CustomEvent('azobss:auth-state-ready',{detail:{loggedIn:true,uid:String(freshUser.uid||''),username:String(usernameKey||'')}}))}catch(_e){}
       // v1266: never put cart recovery behind analytics/login-history writes.
       // A failure or slow Firestore history write must not leave Troli Anda empty.
       if(/^\/PA-BM\/?$/i.test(window.location.pathname || '')){

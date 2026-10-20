@@ -6,11 +6,12 @@ const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
 test('v1351 gates Ebook Generator behind RM19 one-time lifetime account access',()=>{
-  assert.equal(JSON.parse(read('package.json')).version,'1.0.1351');
+  assert.ok(Number(JSON.parse(read('package.json')).version.split('.').pop())>=1351);
   const html=read('Software-Tools/index.html');
-  assert.match(html,/azobss-software-ebook-v1351\.js\?v=1351/);
+  const jsRef=html.match(/src=\"\/assets\/js\/(azobss-software-ebook-v\d+\.js)\?v=\d+\"/);
+  assert.ok(jsRef,'current Ebook Generator JS ref missing');
   assert.match(html,/azobss-software-ebook-v1351\.css\?v=1351/);
-  const js=read('assets/js/azobss-software-ebook-v1351.js');
+  const js=read('assets/js/'+jsRef[1]);
   assert.match(js,/RM19/);
   assert.match(js,/api\/ebook-generator\/access-status/);
   assert.match(js,/api\/ebook-generator\/create-bill/);
