@@ -1,8 +1,8 @@
-/* AZOBSS v1346 — Software Tools > Ebook guide-design wording + prompt logic fix */
+/* AZOBSS v1347 — Ebook Generator moved to More + category entry; no top Software/Ebook tab */
 (function(){
   'use strict';
 
-  var VERSION='1346';
+  var VERSION='1347';
   var STORAGE_KEY='azobssEbookPromptsV1345';
   var ACTIVE_SIZE='medium';
   var currentPrompt='';
@@ -299,28 +299,17 @@
     var ws=byId('azebookWorkspace1345');
     document.body.classList.toggle('azebook-mode-on',ebook);
     if(ws)ws.hidden=!ebook;
-    document.querySelectorAll('[data-azebook-main-tab]').forEach(function(b){var active=b.getAttribute('data-azebook-main-tab')===(ebook?'ebook':'software');b.classList.toggle('is-active',active);b.setAttribute('aria-selected',active?'true':'false')});
     try{
       var u=new URL(location.href);
       if(ebook)u.hash='ebook';else if(u.hash==='#ebook')u.hash='';
       history.replaceState(history.state,'',u.pathname+u.search+u.hash);
     }catch(_e){}
     if(ebook&&scroll){
-      var shell=byId('azebookTabs1345');
-      if(shell){var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;shell.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'})}
+      if(ws){var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;ws.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'})}
     }
   }
 
   function buildUI(downloadSection){
-    var shell=document.createElement('div');
-    shell.id='azebookTabs1345';
-    shell.className='azebook-tabs-shell';
-    shell.innerHTML='<div class="azebook-main-tabs" role="tablist" aria-label="Software Tools sections">'+
-      '<button type="button" class="azebook-main-tab is-active" role="tab" aria-selected="true" data-azebook-main-tab="software">Software</button>'+
-      '<button type="button" class="azebook-main-tab" role="tab" aria-selected="false" data-azebook-main-tab="ebook">Ebook <span class="azebook-new">NEW</span></button>'+
-    '</div>';
-    downloadSection.parentNode.insertBefore(shell,downloadSection);
-
     var ws=document.createElement('section');
     ws.id='azebookWorkspace1345';
     ws.hidden=true;
@@ -389,13 +378,13 @@
       '</div>',
       '<div id="azebookToast1345" class="azebook-toast" role="status" aria-live="polite"></div>'
     ].join('');
-    downloadSection.parentNode.insertBefore(ws,downloadSection.nextSibling);
+    downloadSection.parentNode.insertBefore(ws,downloadSection);
   }
 
   function bind(){
     document.addEventListener('click',function(e){
-      var main=e.target.closest('[data-azebook-main-tab]');
-      if(main){setMainTab(main.getAttribute('data-azebook-main-tab'),true);return}
+      var entry=e.target.closest('[data-azebook-entry]');
+      if(entry){e.preventDefault();setMainTab('ebook',true);return}
       var sub=e.target.closest('[data-azebook-subtab]');
       if(sub){switchSub(sub.getAttribute('data-azebook-subtab'));return}
       var size=e.target.closest('[data-azebook-size]');
@@ -464,7 +453,7 @@
   }
 
   function init(){
-    if(byId('azebookTabs1345'))return;
+    if(byId('azebookWorkspace1345'))return;
     var downloads=document.querySelector('.downloads-section');
     if(!downloads)return;
     buildUI(downloads);
@@ -472,7 +461,10 @@
     renderHistory();
     updatePreview('');
     if(String(location.hash||'').toLowerCase()==='#ebook')setMainTab('ebook',false);
-    window.addEventListener('hashchange',function(){if(String(location.hash||'').toLowerCase()==='#ebook')setMainTab('ebook',false)});
+    window.addEventListener('hashchange',function(){
+      if(String(location.hash||'').toLowerCase()==='#ebook')setMainTab('ebook',false);
+      else if(document.body.classList.contains('azebook-mode-on'))setMainTab('software',false);
+    });
     try{document.documentElement.setAttribute('data-azobss-ebook-module',VERSION)}catch(_e){}
   }
 

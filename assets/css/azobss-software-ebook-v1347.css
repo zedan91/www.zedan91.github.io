@@ -1,4 +1,4 @@
-/* AZOBSS v1346 — Software Tools > Ebook module */
+/* AZOBSS v1347 — Ebook Generator accessed from More / category Ebook entry */
 :root{
   --azebook-bg:#07111f;
   --azebook-panel:#0d1b2d;
@@ -92,3 +92,18 @@ body.azebook-mode-on .downloads-section{display:none!important}
   .azebook-history-actions{justify-content:flex-start}
 }
 @media(prefers-reduced-motion:reduce){.azebook-main-tab,.azebook-toast{transition:none!important}}
+
+
+/* v1347: Ebook is a standalone entry to the right of Engineering & Specialist. */
+.software-category-ebook-entry-1347{
+  appearance:none;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:0 16px;border:1px solid rgba(34,197,94,.46);border-radius:13px;
+  background:rgba(20,83,45,.20);color:#bbf7d0;font-size:12px;font-weight:950;cursor:pointer;
+  white-space:nowrap;transition:.16s ease;box-shadow:none
+}
+.software-category-ebook-entry-1347:hover,.software-category-ebook-entry-1347:focus-visible{
+  background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#22c55e;color:#052e16;outline:none;
+  box-shadow:0 8px 20px rgba(34,197,94,.16)
+}
+@media(max-width:720px){.software-category-ebook-entry-1347{min-width:calc(50% - 4px);justify-content:flex-start;padding:0 12px}}
+body.azebook-mode-on #azebookWorkspace1345{display:block}

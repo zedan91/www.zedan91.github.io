@@ -1,4 +1,4 @@
-/* AZOBSS 1079: Makan Malaysia added to More dropdown; keeps Web Picks + Repair menus and static stickybar support. */
+/* AZOBSS v1347: Ebook Generator added to More dropdown; keeps existing More/Repair behavior. */
 (function () {
   'use strict';
 
@@ -752,6 +752,55 @@
   }
 
 
+  function ensureEbookGeneratorLink() {
+    var currentPath = normalisePath(window.location.pathname).toLowerCase();
+    var softwarePath = normalisePath('/Software-Tools/').toLowerCase();
+    var isEbook = currentPath === softwarePath && String(window.location.hash || '').toLowerCase() === '#ebook';
+
+    document.querySelectorAll('.market-sticky-bar .market-nav').forEach(function (nav) {
+      var moreWrap = nav.querySelector(':scope > .az-more-nav[data-az-more-menu="1"]');
+      var dropdown = moreWrap && moreWrap.querySelector(':scope > .az-more-dropdown');
+      if (!dropdown) return;
+
+      var ebookLink = dropdown.querySelector('a[data-az-ebook-generator-link="1"], a[href="/Software-Tools/#ebook"]');
+      if (!ebookLink) {
+        ebookLink = document.createElement('a');
+        ebookLink.href = '/Software-Tools/#ebook';
+        ebookLink.setAttribute('role', 'menuitem');
+        ebookLink.dataset.azEbookGeneratorLink = '1';
+        ebookLink.title = 'AZOBSS Ebook Generator';
+        ebookLink.innerHTML = '' +
+          '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+            '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path>' +
+            '<path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"></path>' +
+          '</svg>' +
+          '<span>Ebook Generator</span>';
+        var toolsLink = dropdown.querySelector('a[data-az-more-tools-link="1"]');
+        if (toolsLink) toolsLink.insertAdjacentElement('afterend', ebookLink);
+        else dropdown.appendChild(ebookLink);
+        ebookLink.addEventListener('click', function () {
+          moreWrap.classList.remove('is-open');
+          var trigger = moreWrap.querySelector(':scope > .az-more-trigger');
+          if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      var softwareTop = nav.querySelector(':scope > a[href="/Software-Tools/"], :scope > a[href="/Software-Tools"]');
+      if (isEbook) {
+        ebookLink.classList.add('market-nav-active', 'is-active', 'is-current');
+        ebookLink.setAttribute('aria-current', 'page');
+        var trigger = moreWrap.querySelector(':scope > .az-more-trigger');
+        if (trigger) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
+        if (softwareTop) { softwareTop.classList.remove('market-nav-active', 'is-active', 'is-current'); softwareTop.removeAttribute('aria-current'); }
+      } else {
+        ebookLink.classList.remove('market-nav-active', 'is-active', 'is-current');
+        ebookLink.removeAttribute('aria-current');
+        if (currentPath === softwarePath && softwareTop) { softwareTop.classList.add('market-nav-active', 'is-active'); softwareTop.setAttribute('aria-current','page'); }
+      }
+    });
+  }
+
+
   function ensureMakanMalaysiaLink() {
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
     var makanPath = normalisePath('/Makan-Malaysia/').toLowerCase();
@@ -881,6 +930,7 @@
 
     // Legacy fallback only: pages not yet pre-rendered may still be upgraded.
     ensureWebPilihanLink();
+    ensureEbookGeneratorLink();
     ensureMakanMalaysiaLink();
     ensureWebsiteOrderLink();
     ensureRepairServiceLink();
@@ -898,6 +948,7 @@
     links.filter(function (candidate) {
       return /mini\s*web\s*tools/i.test((candidate.textContent || '').trim());
     }).forEach(buildMoreMenu);
+    ensureEbookGeneratorLink();
     ensureMakanMalaysiaLink();
 
     if (String(window.location.hash || '').toLowerCase() === '#upgrade-parts') {
@@ -906,6 +957,8 @@
       window.setTimeout(function () { scrollToUpgradeParts('auto'); }, 420);
     }
   }
+
+  window.addEventListener('hashchange', function () { ensureEbookGeneratorLink(); }, { passive: true });
 
   document.addEventListener('click', function (event) {
     document.querySelectorAll('.az-more-nav.is-open').forEach(function (menu) {
