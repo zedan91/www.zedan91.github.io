@@ -5,7 +5,8 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'Software-Tools','index.html'),'utf8');
 const js=fs.readFileSync(path.join(root,'assets','js','azobss-software-ebook-v1373.js'),'utf8');
-const css=fs.readFileSync(path.join(root,'assets','css','azobss-software-ebook-v1373.css'),'utf8');
+const cssPath=fs.existsSync(path.join(root,'assets','css','azobss-software-ebook-v1374.css'))?'azobss-software-ebook-v1374.css':'azobss-software-ebook-v1373.css';
+const css=fs.readFileSync(path.join(root,'assets','css',cssPath),'utf8');
 
 test('v1373 uses its own Publisher Lab visual/copy direction',()=>{
   for(const phrase of [
@@ -53,7 +54,7 @@ test('first interaction uses longer access cache and delayed background revalida
 });
 
 test('Software Tools loads one combined ebook stylesheet and v1373 runtime',()=>{
-  assert.ok(html.includes('/assets/css/azobss-software-ebook-v1373.css?v=1373'));
+  assert.ok(html.includes('/assets/css/azobss-software-ebook-v1374.css?v=1374')||html.includes('/assets/css/azobss-software-ebook-v1373.css?v=1373'));
   assert.ok(!/<link[^>]+azobss-software-ebook-v1351\.css\?v=1351/.test(html));
   assert.ok(!/<link[^>]+azobss-software-ebook-v1372\.css\?v=1372/.test(html));
   assert.ok(html.includes('/assets/js/azobss-software-ebook-v1373.js?v=1373'));
