@@ -1072,6 +1072,21 @@ async function proceedToPayment() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok) throw new Error(data.error || 'Bil pembayaran tidak dapat dibuat.');
     assertCheckoutResponse(data, items);
+    // v1370: if this exact stale cart already belongs to a just-paid order, the
+    // backend returns the existing paid transaction instead of creating a second
+    // Pending invoice / consuming a new AZI sequence.
+    if (data.alreadyPaid === true || data.duplicateCheckoutPrevented === true || data.clearCart === true) {
+      await clearPaidCartEverywhere('duplicate-paid-checkout-prevented');
+      if (status) status.textContent = data.receiptNo
+        ? `Pembayaran ini sudah berjaya (${data.receiptNo}). Troli telah dikosongkan.`
+        : 'Pembayaran ini sudah berjaya. Troli telah dikosongkan.';
+      try {
+        window.dispatchEvent(new CustomEvent('azobss:pabm-payment-paid', { detail:{ orderId:String(data.orderId || ''), billCode:String(data.billCode || ''), receiptNo:String(data.receiptNo || ''), duplicateCheckoutPrevented:true, version:1370 } }));
+      } catch (_) {}
+      if (typeof window.azobssRenderPurchaseRecords === 'function') await window.azobssRenderPurchaseRecords();
+      else if (typeof window.azobssRefreshPaBmPurchasesNow === 'function') window.azobssRefreshPaBmPurchasesNow();
+      return;
+    }
     if (data.orderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', String(data.orderId));
     if (data.billCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', String(data.billCode));
     try {
@@ -1235,6 +1250,30 @@ function bindAdminTestPaymentButton() {
   adminTestPaymentButton.addEventListener('click', proceedAdminTestPayment);
 }
 
+async function clearPaidCartEverywhere(reason = 'paid') {
+  // v1370: a verified PA/BM payment must clear every browser cart owner, not only
+  // the payment backup. The classic inline core is the canonical owner on /PA-BM/.
+  try {
+    const core = window.azobssPaBmCartCore;
+    if (core && typeof core.write === 'function') core.write([]);
+    else writeCart([]);
+  } catch (_) {
+    try { localStorage.removeItem(cartKey()); } catch (_e) {}
+  }
+  try { localStorage.removeItem(cartKey()); } catch (_) {}
+  clearPaymentCartBackup();
+  try {
+    sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+    localStorage.removeItem('azobss_pa_bm_pending_return');
+  } catch (_) {}
+  renderCart();
+  try { await syncServerCartDraftNow([]); } catch (_) {}
+  try {
+    window.dispatchEvent(new CustomEvent('azobss:pabm-cart-cleared-after-paid', { detail:{ reason, version:1370 } }));
+  } catch (_) {}
+}
+
 async function clearCartAfterPaidReturn() {
   const params = new URLSearchParams(window.location.search || '');
   const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
@@ -1244,9 +1283,7 @@ async function clearCartAfterPaidReturn() {
     const response = await fetch('https://azobss-backend.onrender.com/api/verify-payment?orderId=' + encodeURIComponent(orderId) + '&billCode=' + encodeURIComponent(billCode), { cache: 'no-store' });
     const data = await response.json().catch(() => ({}));
     if (data && (data.paid || data.status === 'paid' || data.status === 'success')) {
-      localStorage.removeItem(cartKey());
-      clearPaymentCartBackup();
-      renderCart();
+      await clearPaidCartEverywhere('verified-return');
     }
   } catch (_) {}
 }
@@ -1275,7 +1312,7 @@ function publishPaBmStoreCartApi(){
     removeRecord: removeRecordFromStoreCart
   };
   try{
-    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1272 } }));
+    window.dispatchEvent(new CustomEvent('azobss:pabm-store-cart-ready', { detail:{ version:1370 } }));
   }catch(_){ }
   return window.azobssPaBmStoreCart;
 }
@@ -1285,7 +1322,7 @@ async function init() {
   // file again with a different query string, only one storefront instance may
   // own cart globals/listeners on /PA-BM/.
   if (window.__AZOBSS_PABM_STOREFRONT_ACTIVE__) return;
-  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1272';
+  window.__AZOBSS_PABM_STOREFRONT_ACTIVE__ = 'v1370';
   // v1249: the storefront UI and Add to Cart must never wait for the async
   // profile price-adjustment lookup. Use the cached adjustment immediately,
   // bind the current state-button picker/cart handlers now, then refresh prices
@@ -1342,7 +1379,12 @@ async function init() {
     if (rows.length) setCartSyncStatus(`Pembayaran dibatalkan / belum berjaya. ${rows.length} item kekal dalam Troli Anda.`);
   });
   window.addEventListener('azobss:pabm-payment-paid', () => {
-    clearPaymentCartBackup();
+    clearPaidCartEverywhere('payment-paid-event');
+  });
+  // Server-side recovery uses this verified event when ToyyibPay confirmation
+  // arrives after the short return-page polling window.
+  window.addEventListener('azobss:pabm-payment-verified', () => {
+    clearPaidCartEverywhere('payment-verified-event');
   });
   window.addEventListener('azobss:pabm-pending-order-recovered', async (event) => {
     if (readCart().length) return;

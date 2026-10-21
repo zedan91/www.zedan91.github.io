@@ -5107,6 +5107,15 @@ async function azobssUpdatePaBmPurchaseLogsForOrder(order, status = "pending", e
   }
 
   const db = firebaseAdmin.firestore();
+  if (paid && !azIsManualSalesInvoiceOrder(order)) {
+    try {
+      order = await azEnsureAutomaticSalesDocumentNumbers(order, { db });
+      await azPersistPremiumOrder(order);
+      order = await azReloadPremiumOrder(order);
+    } catch (numberSyncError) {
+      console.warn('PA/BM paid document-number pairing sync skipped:', numberSyncError && (numberSyncError.message || numberSyncError));
+    }
+  }
   const nowMs = Number(extra.nowMs || Date.now());
   const paidAtMs = Number(extra.paidAtMs || nowMs);
   const baseUpdate = {
@@ -5982,6 +5991,35 @@ async function azFindReusablePendingAutomaticCheckout(fingerprint = "") {
   matches.sort((a,b)=>azAutomaticCheckoutCreatedMs(b)-azAutomaticCheckoutCreatedMs(a));
   return matches[0] || null;
 }
+
+// AZOBSS v1370: stale paid-cart guard. A just-paid PA/BM cart can remain in the
+// browser briefly if ToyyibPay verification finishes after the return-page timer.
+// Re-submitting that exact pre-payment cart must NOT create a second Pending AZI.
+const AZOBSS_PA_BM_STALE_PAID_CART_WINDOW_MS = 30 * 60 * 1000;
+function azPaBmCheckoutSnapshotNewestMs(items = []) {
+  return (Array.isArray(items) ? items : []).reduce((max, item) => {
+    const ms = Number(item && (item.createdAtMs || item.addedAtMs) || 0) || 0;
+    return Math.max(max, ms);
+  }, 0);
+}
+async function azFindRecentlyPaidSameCartCheckout(fingerprint = "", items = [], windowMs = AZOBSS_PA_BM_STALE_PAID_CART_WINDOW_MS) {
+  const fp = cleanPremiumText(fingerprint,100).toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(fp)) return null;
+  const nowMs = Date.now();
+  const cartNewestMs = azPaBmCheckoutSnapshotNewestMs(items);
+  const rows = await azLoadRecentAutomaticOrdersForFingerprint(350);
+  const matches = rows.filter(row => {
+    if (!azobssPaidStatus(row.status || row.paymentStatus)) return false;
+    if (row.hiddenFromSalesReceipts === true || row.autoDuplicateSuperseded === true) return false;
+    if (azAutomaticCheckoutFingerprintForOrder(row) !== fp) return false;
+    const paidMs = azAutomaticOrderPaidMs(row);
+    if (!paidMs || (nowMs - paidMs) > Math.max(60000, Number(windowMs || 0))) return false;
+    if (cartNewestMs) return cartNewestMs <= (paidMs + 5000);
+    return (nowMs - paidMs) <= (2 * 60 * 1000);
+  });
+  matches.sort((a,b)=>azAutomaticOrderPaidMs(b)-azAutomaticOrderPaidMs(a));
+  return matches[0] || null;
+}
 async function azAcquireAutomaticCheckoutCreateLock(fingerprint = "") {
   const key = cleanPremiumText(fingerprint,100).toLowerCase() || makeId("checkout-lock");
   const previous = AZOBSS_AUTO_CHECKOUT_CREATE_LOCKS.get(key) || Promise.resolve();
@@ -6361,6 +6399,18 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
 
     if (draftOrder && originalStatus === 'paid' && verifiedAlready) {
       await azClearPaBmCartDraft(identity, 'paid', { orderId:draftOrder.orderId || '', billCode:draftOrder.billCode || '' });
+      try { await azSupersedeDuplicatePendingAutomaticOrders(draftOrder); } catch (_) {}
+      return {
+        ok:true, recovered:false, paid:true, status:'paid',
+        orderId:cleanPremiumText(draftOrder.orderId || '',160),
+        billCode:cleanPremiumText(draftOrder.billCode || '',120),
+        invoiceNo:cleanPremiumText(draftOrder.invoiceNo || '',180),
+        receiptNo:cleanPremiumText(draftOrder.receiptNo || '',180),
+        purchaseUpdated:Number(draftOrder.paBmPaidSyncedCount || 0),
+        cartCleared:true,
+        recoveryVersion:1370,
+        recoverySource:'server-cart-draft-already-paid'
+      };
     } else if (draftOrder && cleanPremiumText(draftOrder.billCode || serverDraft.billCode || '',120) && String(draftOrder.paymentMethod || 'toyyibpay').toLowerCase().includes('toyyib')) {
       try {
         const verified = await azVerifyToyyibPaidTransaction(draftOrder);
@@ -6373,6 +6423,7 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
             paymentReference:verified.paymentReference || draftOrder.paymentReference || ''
           });
           await azClearPaBmCartDraft(identity, 'paid', { orderId:draftOrder.orderId || '', billCode:draftOrder.billCode || '' });
+          try { await azSupersedeDuplicatePendingAutomaticOrders(draftOrder); } catch (_) {}
           await azResolveToyyibRecoveryEventsForOrder(draftOrder);
           return {
             ok:true, recovered:true, paid:true, status:'paid',
@@ -6388,6 +6439,30 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
       } catch (verifyError) {
         console.warn('PA/BM server cart draft ToyyibPay verify skipped:', verifyError && (verifyError.message || verifyError));
       }
+    }
+
+    // v1370: if this draft came from the same pre-payment cart as a recent Paid
+    // order, do not restore the later duplicate Pending bill.
+    try {
+      const draftItems = azNormalizePaBmCartDraftItems(serverDraft.items, Number(serverDraft.updatedAtMs || Date.now()));
+      const draftFp = cleanPremiumText((draftOrder && draftOrder.checkoutFingerprint) || serverDraft.checkoutFingerprint || (draftOrder && azAutomaticCheckoutFingerprintForOrder(draftOrder)) || '',100);
+      const paidMatch = await azFindRecentlyPaidSameCartCheckout(draftFp, draftItems);
+      if (paidMatch && (!draftOrder || String(paidMatch.orderId || '') !== String(draftOrder.orderId || ''))) {
+        try { await azSupersedeDuplicatePendingAutomaticOrders(paidMatch); } catch (_) {}
+        await azClearPaBmCartDraft(identity, 'stale-cart-already-paid', { orderId:paidMatch.orderId || '', billCode:paidMatch.billCode || '' });
+        return {
+          ok:true, recovered:true, paid:true, status:'paid',
+          orderId:cleanPremiumText(paidMatch.orderId || '',160),
+          billCode:cleanPremiumText(paidMatch.billCode || '',120),
+          invoiceNo:cleanPremiumText(paidMatch.invoiceNo || '',180),
+          receiptNo:cleanPremiumText(paidMatch.receiptNo || '',180),
+          duplicatePendingCleaned:true, cartCleared:true,
+          recoveryVersion:1370,
+          recoverySource:'server-cart-draft-stale-paid-guard'
+        };
+      }
+    } catch (staleDraftError) {
+      console.warn('PA/BM stale paid-cart recovery guard skipped:', staleDraftError && (staleDraftError.message || staleDraftError));
     }
 
     // Pending/unpaid orders may safely resume the same bill.  A failed/cancelled
@@ -6441,6 +6516,7 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
           verificationSource:"toyyibpay-api-recovery"
         });
       }
+      try { await azSupersedeDuplicatePendingAutomaticOrders(order); } catch (_) {}
       await azResolveToyyibRecoveryEventsForOrder(order);
       return {
         ok:true,
@@ -6469,6 +6545,7 @@ async function azRecoverPaBmPaymentForIdentity(req, identity = {}) {
           toyyibTransaction:verified.tx,
           paymentReference:verified.paymentReference || order.paymentReference || ""
         });
+        try { await azSupersedeDuplicatePendingAutomaticOrders(order); } catch (_) {}
         await azResolveToyyibRecoveryEventsForOrder(order);
         return {
           ok:true,
@@ -21343,6 +21420,31 @@ async function handler(req, res) {
         const checkoutFingerprint = azAutomaticCheckoutFingerprint("pa-bm", { user, amountSen, items });
         const releaseCheckoutLock = await azAcquireAutomaticCheckoutCreateLock(checkoutFingerprint);
         try {
+          // v1370: if this browser is resubmitting the exact pre-payment cart
+          // that has already been paid, return the existing Paid transaction.
+          // Never consume a new AZI/AZR sequence for the stale cart.
+          let alreadyPaidOrder = await azFindRecentlyPaidSameCartCheckout(checkoutFingerprint, items);
+          if (alreadyPaidOrder) {
+            try {
+              alreadyPaidOrder = await azEnsureAutomaticSalesDocumentNumbers(alreadyPaidOrder, { db:getAzobssBackendDb() });
+              await azPersistPremiumOrder(alreadyPaidOrder);
+              alreadyPaidOrder = await azReloadPremiumOrder(alreadyPaidOrder);
+            } catch (_) {}
+            try { await azSupersedeDuplicatePendingAutomaticOrders(alreadyPaidOrder); } catch (_) {}
+            try { await azClearPaBmCartDraft(identity, 'duplicate-paid-checkout-prevented', { orderId:alreadyPaidOrder.orderId || '', billCode:alreadyPaidOrder.billCode || '' }); } catch (_) {}
+            return send(res, 200, JSON.stringify({
+              ok:true, success:true, paid:true, alreadyPaid:true, duplicateCheckoutPrevented:true, clearCart:true, patch:1370,
+              orderId:alreadyPaidOrder.orderId || '', billCode:alreadyPaidOrder.billCode || '',
+              paymentUrl:'', url:'', redirectUrl:'',
+              invoiceNo:alreadyPaidOrder.invoiceNo || '', receiptNo:alreadyPaidOrder.receiptNo || '',
+              status:'paid', amount:totalAmount, amountSen, baseAmount:baseTotalAmount,
+              baseAmountSen:Math.round(baseTotalAmount*100),
+              priceAdjustmentPercent:Number(alreadyPaidOrder.priceAdjustmentPercent || 0),
+              priceAdjustmentByCategory:alreadyPaidOrder.priceAdjustmentByCategory || priceAdjustmentByCategory,
+              unit:items.length
+            }, null, 2), "application/json");
+          }
+
           const reusableOrder = await azFindReusablePendingAutomaticCheckout(checkoutFingerprint);
           if (reusableOrder) {
             // v1266: the early-return reuse path previously skipped the durable cart
@@ -21361,7 +21463,7 @@ async function handler(req, res) {
               console.warn('PA/BM reusable-order cart draft persist skipped:', draftError && (draftError.message || draftError));
             }
             return send(res, 200, JSON.stringify({
-              ok:true, success:true, reused:true, idempotent:true, patch:1266,
+              ok:true, success:true, reused:true, idempotent:true, patch:1370,
               orderId:reusableOrder.orderId, billCode:reusableOrder.billCode,
               paymentUrl:reusableOrder.paymentUrl, url:reusableOrder.paymentUrl, redirectUrl:reusableOrder.paymentUrl,
               invoiceNo:reusableOrder.invoiceNo || "", status:"pending",
@@ -21419,7 +21521,7 @@ async function handler(req, res) {
           console.warn('PA/BM cart draft persist skipped before redirect:', draftError && (draftError.message || draftError));
         }
         try { await azobssUpdatePaBmPurchaseLogsForOrder(paBmOrder, "pending"); } catch (syncError) { console.warn("PA/BM purchaseLogs pending sync failed:", syncError && (syncError.message || syncError)); }
-        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1265, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
+        return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1370, orderId, billCode, paymentUrl, url:paymentUrl, redirectUrl:paymentUrl, invoiceNo:paBmOrder.invoiceNo || "", amount:totalAmount, amountSen, baseAmount:baseTotalAmount, baseAmountSen:Math.round(baseTotalAmount*100), priceAdjustmentPercent, priceAdjustmentByCategory, unit:items.length, status:"pending" }, null, 2), "application/json");
         } finally {
           releaseCheckoutLock();
         }

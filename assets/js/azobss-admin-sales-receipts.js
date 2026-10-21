@@ -702,6 +702,23 @@ function websiteDedupKey(row){
   const raw=row.raw||row;
   return String(raw.orderId||raw.paymentOrderId||raw.billCode||raw.paymentReference||raw.receiptNo||row.receiptNo||row.id).toLowerCase();
 }
+function az1370CheckoutFingerprint(row={}){return String(row.checkoutFingerprint||row.raw?.checkoutFingerprint||'').trim().toLowerCase()}
+function az1370NewestCartItemMs(row={}){return (Array.isArray(row.paBmItems)?row.paBmItems:[]).reduce((m,item)=>Math.max(m,Number(item?.createdAtMs||item?.addedAtMs||0)||0),0)}
+function az1370PaidMs(row={}){return parseMs(row.paidAtMs||row.paymentPaidAtMs||row.paidAt||row.paymentVerifiedAt||row.verifiedAt)||0}
+function filterStalePaidDuplicateWebsiteRows(rows=[]){
+  const paidByFp=new Map();
+  rows.forEach(row=>{const fp=az1370CheckoutFingerprint(row);if(!fp||normalizeStatus(row.status)!=='paid')return;const prev=paidByFp.get(fp);if(!prev||az1370PaidMs(row)>az1370PaidMs(prev))paidByFp.set(fp,row)});
+  return rows.filter(row=>{
+    if(normalizeStatus(row.status)!=='pending')return true;
+    const fp=az1370CheckoutFingerprint(row);if(!fp)return true;
+    const paid=paidByFp.get(fp);if(!paid)return true;
+    const paidMs=az1370PaidMs(paid);const cartMs=az1370NewestCartItemMs(row);
+    // Same pre-payment item timestamp means this Pending order came from the stale
+    // cart that should have been cleared by the earlier Paid transaction.
+    if(paidMs&&cartMs&&cartMs<=paidMs+5000)return false;
+    return true;
+  });
+}
 async function waitForUser(){
   if(auth.currentUser)return auth.currentUser;
   return await new Promise(resolve=>{let done=false;let off=()=>{};off=onAuthStateChanged(auth,u=>{if(done)return;done=true;off();resolve(u)});setTimeout(()=>{if(done)return;done=true;off();resolve(auth.currentUser)},7000)});
@@ -765,7 +782,7 @@ async function loadData(options={}){
       existing.invoiceNo=existing.invoiceNo||row.invoiceNo;existing.receiptNo=existing.receiptNo||row.receiptNo;
       existing.documentType=documentKindForStatus(existing.status);existing.paymentRecognized=isRecognizedPayment(existing.status);existing.documentNo=currentDocumentNo(existing);existing.depositPercent=depositPercent(existing);existing.depositAmount=depositAmount(existing);existing.paidGross=receivedAmount(existing);existing.recognizedTotalCost=recognizedCosts(existing);existing.recognizedProfit=recognizedProfit(existing);existing.amountDue=outstandingAmount(existing);
     });
-    websiteRows=[...map.values()].filter(row=>!isAdminTestRecord(row)).map(row=>applyReceiptDeliveryState(applyAutoInvoiceEdit(row)));
+    websiteRows=filterStalePaidDuplicateWebsiteRows([...map.values()].filter(row=>!isAdminTestRecord(row))).map(row=>applyReceiptDeliveryState(applyAutoInvoiceEdit(row)));
     selectedRowIds.clear();
     currentPage=1;lastSuccessfulLoadAt=Date.now();applyFilters();
     if(info)info.textContent=`Loaded ${manualRows.length} manual quotation / invoice / receipt record(s) and ${websiteRows.length} website sale record(s).`;
