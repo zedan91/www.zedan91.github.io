@@ -1,0 +1,42 @@
+/* AZOBSS v1372 — Ebook Prompt Studio UI + Advanced Prompt Controls */
+.azebook-panel-head1372{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.azebook-panel-head1372 .azebook-panel-sub{margin-bottom:0}
+.azebook-quality-badge1372{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border:1px solid rgba(56,189,248,.35);border-radius:999px;background:rgba(14,165,233,.1);color:#bae6fd;padding:6px 10px;font-size:10px;font-weight:950;letter-spacing:.02em}
+.azebook-quality-badge1372.is-advanced{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.12);color:#bbf7d0;box-shadow:0 0 0 3px rgba(34,197,94,.045)}
+
+.azebook-mode-switch1372{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:6px;border:1px solid rgba(148,163,184,.2);border-radius:15px;background:rgba(3,12,25,.56)}
+.azebook-mode-btn1372{appearance:none;border:1px solid transparent;border-radius:11px;background:transparent;color:#cbd5e1;padding:11px 12px;text-align:left;cursor:pointer;display:grid;gap:3px;transition:.16s ease;min-height:68px}
+.azebook-mode-btn1372 strong{font-size:12px;color:#e2e8f0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.azebook-mode-btn1372 span{font-size:10px;line-height:1.4;color:#7f93aa}
+.azebook-mode-btn1372 em{font-style:normal;font-size:8px;line-height:1;border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.12);color:#86efac;border-radius:999px;padding:4px 6px;letter-spacing:.04em;text-transform:uppercase}
+.azebook-mode-btn1372:hover{background:rgba(30,41,59,.52);border-color:rgba(148,163,184,.18)}
+.azebook-mode-btn1372.is-active{background:linear-gradient(145deg,rgba(14,165,233,.15),rgba(37,99,235,.12));border-color:rgba(56,189,248,.48);box-shadow:0 8px 22px rgba(2,132,199,.09)}
+.azebook-mode-btn1372.is-active strong{color:#e0f2fe}
+.azebook-mode-btn1372[data-azebook-mode="advanced"].is-active{background:linear-gradient(145deg,rgba(34,197,94,.14),rgba(16,185,129,.08));border-color:rgba(34,197,94,.55);box-shadow:0 8px 24px rgba(34,197,94,.09)}
+.azebook-mode-btn1372[data-azebook-mode="advanced"].is-active strong{color:#dcfce7}
+
+.azebook-advanced1372[hidden]{display:none!important}
+.azebook-advanced1372{display:grid;gap:13px;border:1px solid rgba(34,197,94,.3);border-radius:16px;background:linear-gradient(160deg,rgba(6,38,31,.38),rgba(7,19,33,.72));padding:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.azebook-advanced-title1372{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:11px;border-bottom:1px solid rgba(148,163,184,.14)}
+.azebook-advanced-title1372>div{display:grid;gap:4px;min-width:0}
+.azebook-advanced-title1372 strong{font-size:13px;color:#dcfce7}
+.azebook-advanced-title1372 span{font-size:10px;color:#8fa6b8;line-height:1.45}
+.azebook-advanced-title1372 .azebook-advanced-chip1372{flex:0 0 auto;display:inline-flex;align-items:center;border:1px solid rgba(250,204,21,.38);background:rgba(250,204,21,.08);color:#fde68a;border-radius:999px;padding:5px 8px;font-size:8px;font-weight:1000;letter-spacing:.08em}
+.azebook-advanced1372 textarea{resize:vertical;min-height:76px}
+.azebook-advanced1372 .azebook-field>span{color:#d1fae5}
+
+/* Keep the preview visually distinct from the editable brief. */
+#azebookPreview1345{background:linear-gradient(180deg,#04101d,#061523);border-color:rgba(56,189,248,.24)}
+.azebook-preview-tools .azebook-btn.green{color:#ecfdf5;background:linear-gradient(135deg,#15803d,#16a34a)}
+
+@media(min-width:901px){
+  .azebook-grid{grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr)}
+}
+@media(max-width:650px){
+  .azebook-panel-head1372{display:grid;grid-template-columns:1fr}
+  .azebook-quality-badge1372{justify-self:start}
+  .azebook-mode-switch1372{grid-template-columns:1fr}
+  .azebook-mode-btn1372{min-height:62px}
+  .azebook-advanced-title1372{display:grid}
+  .azebook-advanced-title1372 .azebook-advanced-chip1372{justify-self:start}
+}
