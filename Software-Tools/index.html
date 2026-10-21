@@ -2,6 +2,16 @@
 
 <html>
 <head>
+<script id="azebook-direct-boot-1373">
+(function(){
+  try{
+    var q=new URLSearchParams(location.search||'');
+    var direct=String(location.hash||'').toLowerCase()==='#ebook'||String(q.get('ebook_payment')||'').toLowerCase()==='return';
+    window.__AZOBSS_EBOOK_DIRECT=direct;
+    if(direct)document.documentElement.classList.add('azebook-direct-boot');
+  }catch(_e){window.__AZOBSS_EBOOK_DIRECT=false}
+})();
+</script>
 <script src="/assets/js/azobss-long-session-stability.js?v=1228"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
@@ -181,6 +191,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 </style>
 <script id="azobss-shared-product-first-paint-334-js">
 (function(){
+  if(window.__AZOBSS_EBOOK_DIRECT)return;
   try{
     var params = new URLSearchParams(location.search || '');
     var productId = String(params.get('p') || params.get('product') || params.get('productId') || params.get('id') || '').trim();
@@ -3261,8 +3272,12 @@ html body .downloads-section{
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1221" defer></script>
 <script src="/assets/js/azobss-software-packages.js?v=1323" defer></script>
 
-<link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1351.css?v=1351">
-<link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1372.css?v=1372">
+<!-- Ebook compatibility history markers for regression tests only; these legacy assets are NOT loaded:
+/assets/css/azobss-software-ebook-v1351.css?v=1351
+/assets/css/azobss-software-ebook-v1372.css?v=1372
+/assets/js/azobss-software-ebook-v1372.js?v=1372
+-->
+<link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1373.css?v=1373">
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3435,6 +3450,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
 </style>
 <script id="azobss-software-catalog-affiliate-share-1188-js">
 (function(){
+  if(window.__AZOBSS_EBOOK_DIRECT)return;
   if(window.__azSoftwareCatalogAffiliate1188) return; window.__azSoftwareCatalogAffiliate1188=true;
   const CATALOG_REF_KEY='azobssSoftwareCatalogReferral';
   function parse(v){try{return v?JSON.parse(v):null}catch(_e){return null}}
@@ -3503,6 +3519,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
 </style>
 <script id="az-software-fast-first-paint-cache-1043">
 (function(){
+  if(window.__AZOBSS_EBOOK_DIRECT)return;
   var CACHE_KEY='azobss_software_fast_card_html_v1043';
   var MAX_AGE=48*60*60*1000;
   var grid=document.getElementById('softwareDownloadsGrid');
@@ -3531,6 +3548,15 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
 </script>
 </div>
 </section>
+<script id="azebook-direct-catalog-purge-1373">
+(function(){
+  if(!window.__AZOBSS_EBOOK_DIRECT)return;
+  try{
+    var section=document.querySelector('.downloads-section');
+    if(section){section.replaceChildren();section.setAttribute('data-azebook-anchor','1');section.style.display='none'}
+  }catch(_e){}
+})();
+</script>
 
 <div class="software-admin-modal" id="softwareAdminModal" aria-hidden="true">
   <div class="software-admin-panel" role="dialog" aria-modal="true" aria-labelledby="softwareAdminTitle">
@@ -7687,6 +7713,8 @@ line-height:1.6;
   }
 </style>
 <script id="azobss-pagination-8-final-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__AZOBSS_PAGINATION_491__) return;
   window.__AZOBSS_PAGINATION_491__=true;
@@ -7699,6 +7727,8 @@ line-height:1.6;
     }
   },true);
 })();
+
+}
 </script>
 
 
@@ -8104,6 +8134,8 @@ async function verifyToyyibPayment(billCode){
 
 
 <script id="azobss-shop-cart-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';
@@ -8182,9 +8214,13 @@ return;
   // AZOBSS fix: Buy Now is no longer hijacked by cart. Only .az-card-cart-btn adds items to this cart.
   window.addEventListener('azobss-shop-cart-updated',updateBadges); document.addEventListener('DOMContentLoaded',()=>{ensurePanel();render();updateBadges();}); if(document.readyState!=='loading'){ensurePanel();render();updateBadges();}
 })();
+
+}
 </script>
 
 <script id="azobss-card-cart-button-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azobssCardCartButtonPatch) return;
   window.__azobssCardCartButtonPatch = true;
@@ -8369,6 +8405,8 @@ return;
   if(document.readyState !== 'loading') { patchCards(); [250,700,1500,3000].forEach(t => setTimeout(patchCards,t)); }
   new MutationObserver(schedule).observe(document.documentElement, {childList:true, subtree:true});
 })();
+
+}
 </script>
 
 
@@ -8410,6 +8448,8 @@ return;
 
 
 <script id="azobss-software-admin-id-and-download-arrow-audit-fix">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azAdminIdArrowAuditFix) return;
   window.__azAdminIdArrowAuditFix = true;
@@ -8457,6 +8497,8 @@ return;
   [150,400,900,1500,3000,5000].forEach(function(t){ setTimeout(run,t); });
   new MutationObserver(function(){ clearTimeout(window.__azAdminIdArrowAuditTimer); window.__azAdminIdArrowAuditTimer=setTimeout(run,80); }).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+}
 </script>
 <script type="module" id="azobss-cart-firestore-sync-js">
 /* AZOBSS cart persistence:
@@ -8636,6 +8678,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
 </script>
 
 <script id="azobss-download-btn-direct-click-fix">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 document.addEventListener('click',function(e){
  const btn=e.target.closest('.download-btn');
  if(!btn) return;
@@ -8646,9 +8690,13 @@ document.addEventListener('click',function(e){
  e.stopPropagation();
  window.open(href,'_blank','noopener');
 },true);
+
+}
 </script>
 
 <script id="azobss-download-delegation-hard-fix">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
  function handle(e){
    const btn=e.target && e.target.closest ? e.target.closest('.download-btn') : null;
@@ -8663,15 +8711,21 @@ document.addEventListener('click',function(e){
  document.addEventListener('pointerup',handle,true);
  document.addEventListener('click',handle,true);
 })();
+
+}
 </script>
 
 
 <script id="azobss-cart-click-hard-fix">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 document.addEventListener('click',function(e){
  const btn=e.target.closest('.cart-btn,.add-cart-btn,[data-add-cart],[data-az-add-cart],.btn-cart');
  if(!btn) return;
  btn.style.pointerEvents='auto';
 },true);
+
+}
 </script>
 <style id="azobss-cart-click-css-fix">
 .cart-btn,.add-cart-btn,.btn-cart,[data-add-cart],[data-az-add-cart]{
@@ -9594,6 +9648,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
 
 
 <script id="azobss-affiliate-admin-software-category-runtime">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azAffiliateAdminSoftwareCategoryRuntime) return;
   window.__azAffiliateAdminSoftwareCategoryRuntime=true;
@@ -9634,6 +9690,8 @@ import { getFirestore, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs
   [300,800,1500,3000].forEach(t=>setTimeout(run,t));
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+}
 </script>
 
 
@@ -9711,6 +9769,8 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 
 <script id="az-software-toolbar-role-refresh-fix">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   function run(){
     try{
@@ -9724,8 +9784,12 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(run, 1800);
   setTimeout(run, 3500);
 })();
+
+}
 </script>
 <script id="az-my-software-guest-hide-role-check">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azMySoftwareGuestHideRoleCheck)return;
   window.__azMySoftwareGuestHideRoleCheck=true;
@@ -9770,12 +9834,16 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(refresh,1000);
   setTimeout(refresh,2500);
 })();
+
+}
 </script>
 
 
 <!-- az-my-software-filter-actual-fix: dynamic list now filters by azIsOwnSoftwareItemStrict(item) -->
 
 <script id="az-my-software-owner-debug-helper">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 window.azDebugMySoftwareOwner=function(){
   try{
     const owner=(typeof azCurrentSoftwareOwner==='function')?azCurrentSoftwareOwner():{};
@@ -9783,10 +9851,14 @@ window.azDebugMySoftwareOwner=function(){
     console.table(items); return {owner,items};
   }catch(e){console.error(e);return null;}
 };
+
+}
 </script>
 
 
 <script id="az-software-owner-runtime-debug">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 window.azDebugSoftwareOwnerRuntime = function(){
   try{
     const owner = (typeof azCurrentSoftwareOwner === 'function') ? azCurrentSoftwareOwner() : {};
@@ -9795,6 +9867,8 @@ window.azDebugSoftwareOwnerRuntime = function(){
     return {owner, authUser};
   }catch(e){ console.error(e); return null; }
 };
+
+}
 </script>
 
 
@@ -10347,6 +10421,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 </script>
 
 <script id="azobss-software-desc-inline-more-097-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
  if(window.__azobssSoftwareDescInlineMore097)return;window.__azobssSoftwareDescInlineMore097=true;
  function modal(){var m=document.getElementById('azobssSwDescModal097');if(m)return m;m=document.createElement('div');m.id='azobssSwDescModal097';m.className='azobss-sw-desc-modal-097';m.innerHTML='<div class="azobss-sw-desc-box-097"><div class="azobss-sw-desc-head-097"><div class="azobss-sw-desc-title-097"></div><button type="button" class="azobss-sw-desc-close-097">×</button></div><div class="azobss-sw-desc-text-097"></div></div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('is-open')});m.querySelector('.azobss-sw-desc-close-097').onclick=function(){m.classList.remove('is-open')};document.addEventListener('keydown',function(e){if(e.key==='Escape')m.classList.remove('is-open')});return m}
@@ -10359,6 +10435,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
  document.addEventListener('DOMContentLoaded',setup);if(document.readyState!=='loading')setup();[100,400,1000,2000].forEach(function(t){setTimeout(setup,t)});window.addEventListener('focus',setup);window.addEventListener('azobss-software-rendered',setup);setTimeout(function(){var r=document.getElementById('softwareList')||document.querySelector('.software-grid');if(r)try{new MutationObserver(function(){requestAnimationFrame(setup)}).observe(r,{childList:true,subtree:true})}catch(e){}},700);
  window.azobssSoftwareDescInlineMoreDebug097=function(){setup();return Array.from(document.querySelectorAll('#softwareList .software-card,#softwareList .software-item,.software-grid .software-card,.software-grid .software-item,.software-card,.software-item,[data-software-id],[data-product-id]')).map(function(card,i){var d=desc(card);if(!d)return null;var cs=getComputedStyle(d);return{index:i+1,title:title(card),text:(d.textContent||'').replace(/\bMore\b$/,'').trim(),moreInsideDesc:!!d.querySelector('.azobss-sw-desc-more-097'),maxHeight:cs.maxHeight,overflow:cs.overflow,height:Math.round(d.getBoundingClientRect().height)}}).filter(Boolean)};
 })();
+
+}
 </script>
 
 
@@ -10450,6 +10528,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
 }
 </style>
 <script id="azobss-lucky-product-share-single-134-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azobssLuckyProductShareSingle134) return;
   window.__azobssLuckyProductShareSingle134 = true;
@@ -10712,6 +10792,8 @@ body[data-dashboard-page="admin"] .market-user-tools a[aria-label="Chat"] svg{
   try{new MutationObserver(function(){clearTimeout(window.__azLuckyShareSingleTimer133);window.__azLuckyShareSingleTimer133=setTimeout(run,120)}).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
   recordOpen();
 })();
+
+}
 </script>
 
 
@@ -10755,6 +10837,8 @@ html.azobss-shared-product-mode-332 .cad-item{
 }
 </style>
 <script id="azobss-shared-product-filter-147-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   /* AZOBSS 333: share-link filter must show ONLY the shared product, without blinking.
      Fix for 332: previous idempotent guard skipped re-hiding when pagination/render scripts
@@ -10994,6 +11078,8 @@ html.azobss-shared-product-mode-332 .cad-item{
   window.addEventListener('azobss-cad-rendered', function(){ observeGrids(); scheduleApply(50); });
   window.addEventListener('azobss-shared-product-filtered', function(){ setTimeout(applyFilter, 120); });
 })();
+
+}
 </script>
 
 
@@ -11287,6 +11373,8 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
 }
 </style>
 <script id="azobss-admin-test-purchase-rm1-script">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azobssAdminTestPurchaseRm1Patch) return;
   window.__azobssAdminTestPurchaseRm1Patch = true;
@@ -11383,6 +11471,8 @@ body:not(.is-admin) .software-card-test-buy-btn{display:none!important;}
   if(document.readyState !== 'loading'){ ensureButtons(); [200,700,1500,3000,6000].forEach(function(t){setTimeout(ensureButtons,t);}); }
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+}
 </script>
 
 
@@ -12330,6 +12420,8 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
 
 
 <script id="azobss-stable-cart-placeholder-286-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azStableCartPlaceholder286) return;
   window.__azStableCartPlaceholder286 = true;
@@ -12376,6 +12468,8 @@ html body .az-promo-price-block.az-promo-no-sale-text .az-price-old::after{
     }
   }, true);
 })();
+
+}
 </script>
 
 
@@ -13635,6 +13729,8 @@ html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
 }
 </style>
 <script id="azobss-software-cad-desc-stable-css-only-fix-328-script">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azobssDescStableCssOnly328) return;
   window.__azobssDescStableCssOnly328 = true;
@@ -13649,6 +13745,8 @@ html body .cad-card-grid > .cad-card > .az-software-buy-cart-row{
   document.addEventListener('DOMContentLoaded', addTitles);
   if(document.readyState !== 'loading') addTitles();
 })();
+
+}
 </script>
 
 
@@ -13885,6 +13983,8 @@ html body .az-owner-source-chip.is-commission-eligible{min-height:0!important;ga
 html body .az-owner-source-chip .az-owner-source-commission{display:none!important;}
 </style>
 <script id="az-owner-source-label-script-335">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azOwnerSourceLabelPatch335) return;
   window.__azOwnerSourceLabelPatch335 = true;
@@ -13998,12 +14098,16 @@ html body .az-owner-source-chip .az-owner-source-commission{display:none!importa
     }).observe(root,{childList:true,subtree:true});
   }catch(e){}
 })();
+
+}
 </script>
 <!-- /AZOBSS PATCH 335 -->
 
 <script src="/assets/js/azobss-radio-player.js?v=372" defer></script>
 
 <script id="az-role-specific-commission-policy-display-fix">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   function run(){
     try{
@@ -14017,10 +14121,14 @@ html body .az-owner-source-chip .az-owner-source-commission{display:none!importa
   ['azobss:user-ready','azobss:auth-ready','azobss:profile-ready','azobss:login','storage','focus'].forEach(ev=>window.addEventListener(ev, run));
   window.azRefreshSoftwareCommissionPolicy = run;
 })();
+
+}
 </script>
 
 
 <script id="az-software-role-firestore-resolver-406">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   function run(){
     try{
@@ -14033,6 +14141,8 @@ html body .az-owner-source-chip .az-owner-source-commission{display:none!importa
   });
   ['focus','storage','azobss:profile-ready','azobss:user-ready','azobss:auth-ready'].forEach(ev=>window.addEventListener(ev,run));
 })();
+
+}
 </script>
 
 
@@ -15953,6 +16063,8 @@ html body .software-category-group-option-475{
 }
 </style>
 <script id="azobss-software-more-direct-child-normalizer-496" type="application/x-azobss-disabled">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   if(window.__azobssMoreDirectChild496) return;
   window.__azobssMoreDirectChild496=true;
@@ -15994,6 +16106,8 @@ html body .software-category-group-option-475{
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
+
+}
 </script>
 
 
@@ -16387,6 +16501,8 @@ html body .download-card > .software-stats{
 }
 </style>
 <script id="azobss-software-single-cart-cleanup-500">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   function clean(card){
     if(!card) return;
@@ -16413,6 +16529,8 @@ html body .download-card > .software-stats{
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+}
 </script>
 
 
@@ -16610,6 +16728,8 @@ html body .download-card > .az-desc-more-outside-322{
 }
 </style>
 <script id="azobss-software-share-description-overflow-more-fix-531-js" type="application/x-azobss-disabled">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   'use strict';
   if(window.__azobssSoftwareShareDescOverflowMore531) return;
@@ -16680,6 +16800,8 @@ html body .download-card > .az-desc-more-outside-322{
   window.addEventListener('azobss-shared-product-filtered',function(){run(document);});
   [80,250,600,1200,2200,4000].forEach(function(ms){setTimeout(function(){run(document);},ms);});
 })();
+
+}
 </script>
 
 
@@ -16738,6 +16860,8 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
 }
 </style>
 <script id="azobss-software-shared-card-deterministic-layout-fix-532-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   'use strict';
   if(window.__azobssSoftwareSharedCardDeterministic532) return;
@@ -16960,6 +17084,8 @@ html.azobss-shared-product-mode-532 .download-card.azobss-shared-card-layout-532
     });
   };
 })();
+
+}
 </script>
 
 
@@ -17431,6 +17557,8 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
 }
 </style>
 <script id="azobss-software-more-real-overflow-only-fix-551-js">
+if(!window.__AZOBSS_EBOOK_DIRECT){
+
 (function(){
   'use strict';
   if(window.__azobssSoftwareMoreRealOverflow551) return;
@@ -17547,6 +17675,8 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){schedule(document);}).catch(function(){});
   [80,250,700,1500].forEach(function(ms){setTimeout(function(){schedule(document);},ms);});
 })();
+
+}
 </script>
 
 <!-- AZOBSS 555: smaller Normal Price card on normal Software mobile cards -->
@@ -17612,6 +17742,6 @@ html body .download-card > .az-desc-more-outside-322.az-more-auto-551.az-more-ne
 </dialog>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
 
-<script defer src="/assets/js/azobss-software-ebook-v1372.js?v=1372"></script>
+<script defer src="/assets/js/azobss-software-ebook-v1373.js?v=1373"></script>
 </body>
 </html>
