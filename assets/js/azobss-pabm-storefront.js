@@ -5,6 +5,7 @@ import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const PAYMENT_CART_BACKUP_PREFIX = 'azobss_pabm_payment_cart_backup_v1_';
 const PAYMENT_CART_BACKUP_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const PAID_CART_CLEAR_MARKER_KEY_1371 = 'azobss_pabm_paid_cart_clear_v1371';
 const BACKEND_BASE = window.AZOBSS_BACKEND_URL || (
   /^(?:127\.0\.0\.1|localhost)$/.test(window.location.hostname)
     ? window.location.origin
@@ -161,6 +162,43 @@ function userKey() {
 
 function cartKey() {
   return CART_PREFIX + (userKey() || 'guest');
+}
+
+function paidCartOwnerAliases1371() {
+  const aliases = new Set(['guest']);
+  const localUser = savedUser() || {};
+  [localUser.usernameKey, localUser.username, localUser.userName, localUser.uid, auth && auth.currentUser && auth.currentUser.uid].forEach((value) => {
+    const raw = String(value || '').trim();
+    if (raw) { aliases.add(raw); aliases.add(raw.toLowerCase()); }
+  });
+  return Array.from(aliases).filter(Boolean);
+}
+function readRecentPaidCartClearMarker1371() {
+  try {
+    const direct = typeof window.azobssReadPaBmPaidCartClearMarker1371 === 'function'
+      ? window.azobssReadPaBmPaidCartClearMarker1371()
+      : null;
+    if (direct) return direct;
+  } catch (_) {}
+  try {
+    const marker = JSON.parse(localStorage.getItem(PAID_CART_CLEAR_MARKER_KEY_1371) || 'null');
+    if (marker && Number(marker.at) && Date.now() - Number(marker.at) <= 10 * 60 * 1000) return marker;
+  } catch (_) {}
+  return null;
+}
+function clearPaidBrowserStorageAliases1371() {
+  const aliases = paidCartOwnerAliases1371();
+  try {
+    aliases.forEach((alias) => {
+      localStorage.removeItem(CART_PREFIX + alias);
+      localStorage.removeItem(PAYMENT_CART_BACKUP_PREFIX + alias);
+    });
+    localStorage.removeItem('azobss_pa_bm_pending_return');
+  } catch (_) {}
+  try {
+    sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+  } catch (_) {}
 }
 
 function openLogin() {
@@ -389,6 +427,14 @@ function paymentCartBackupKey() {
 function savePaymentCartBackup(items, meta = {}) {
   try {
     const rows = Array.isArray(items) ? items.filter(Boolean).slice(0, MAX_CART_ITEMS) : [];
+    const marker = readRecentPaidCartClearMarker1371();
+    const nextOrder = String(meta.orderId || '').trim();
+    const nextBill = String(meta.billCode || '').trim();
+    const samePaid = marker && ((nextOrder && marker.orderId === nextOrder) || (nextBill && marker.billCode === nextBill));
+    if (marker && !samePaid) {
+      localStorage.removeItem(PAID_CART_CLEAR_MARKER_KEY_1371);
+      window.__azobssPaBmPaidCartClear1371 = null;
+    }
     if (!rows.length) return false;
     localStorage.setItem(paymentCartBackupKey(), JSON.stringify({
       items: rows,
@@ -418,6 +464,11 @@ function readPaymentCartBackup() {
 }
 
 function restorePaymentCartBackup() {
+  if (readRecentPaidCartClearMarker1371()) {
+    clearPaidBrowserStorageAliases1371();
+    renderCart();
+    return readCart();
+  }
   const backup = readPaymentCartBackup();
   if (!backup || !backup.items.length) {
     renderCart();
@@ -1251,8 +1302,9 @@ function bindAdminTestPaymentButton() {
 }
 
 async function clearPaidCartEverywhere(reason = 'paid') {
-  // v1370: a verified PA/BM payment must clear every browser cart owner, not only
-  // the payment backup. The classic inline core is the canonical owner on /PA-BM/.
+  // v1371: this can run either before or after global-auth verification.  Clear
+  // all current owner aliases and keep a short paid marker so a late module/auth
+  // callback cannot restore the pre-payment backup into Troli Anda.
   try {
     const core = window.azobssPaBmCartCore;
     if (core && typeof core.write === 'function') core.write([]);
@@ -1262,6 +1314,7 @@ async function clearPaidCartEverywhere(reason = 'paid') {
   }
   try { localStorage.removeItem(cartKey()); } catch (_) {}
   clearPaymentCartBackup();
+  clearPaidBrowserStorageAliases1371();
   try {
     sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
     sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
@@ -1276,8 +1329,9 @@ async function clearPaidCartEverywhere(reason = 'paid') {
 
 async function clearCartAfterPaidReturn() {
   const params = new URLSearchParams(window.location.search || '');
-  const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || '';
-  const billCode = params.get('billCode') || params.get('billcode') || sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || '';
+  const backup = readPaymentCartBackup();
+  const orderId = params.get('orderId') || params.get('order_id') || sessionStorage.getItem('azobss_pa_bm_pending_order_id') || String(backup && backup.orderId || '');
+  const billCode = params.get('billCode') || params.get('billcode') || sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || String(backup && backup.billCode || '');
   if (!orderId && !billCode) return;
   try {
     const response = await fetch('https://azobss-backend.onrender.com/api/verify-payment?orderId=' + encodeURIComponent(orderId) + '&billCode=' + encodeURIComponent(billCode), { cache: 'no-store' });
@@ -1331,10 +1385,11 @@ async function init() {
   auth = apps.length ? getAuth(apps[0]) : null;
   publishPaBmStoreCartApi();
 
-  // v1265: the checkout backup is durable localStorage specifically so a cart
-  // survives leaving AZOBSS for ToyyibPay. Restore it on every fresh page load,
-  // not only after a ToyyibPay return event.
-  restorePaymentCartBackup();
+  // v1371: global-auth is loaded earlier than this module and may already have
+  // verified payment. If so, NEVER restore the old payment backup on late init.
+  // Otherwise keep the v1265 durability behavior for genuine unpaid checkouts.
+  if (readRecentPaidCartClearMarker1371()) await clearPaidCartEverywhere('late-storefront-init-after-paid');
+  else restorePaymentCartBackup();
 
   // Restore the current PA/BM state-picker UI immediately. Without this class
   // the raw legacy <select> remains visible until Firestore/profile lookup ends.
@@ -1416,7 +1471,10 @@ async function init() {
   }).catch(() => {});
 
   if (auth) onAuthStateChanged(auth, (user) => {
-    if (user) restorePaymentCartBackup();
+    if (user) {
+      if (readRecentPaidCartClearMarker1371()) clearPaidCartEverywhere('late-auth-after-paid');
+      else restorePaymentCartBackup();
+    }
     renderCart();
     if (user) setTimeout(() => reconcileEmptyStoredCart().catch(() => {}), 500);
   });

@@ -5756,6 +5756,95 @@ function azobssPaBmReturnConsumed(key){
   try{ return localStorage.getItem('azobss_pa_bm_return_consumed_' + key) === '1'; }
   catch(e){ return false; }
 }
+
+// AZOBSS v1371: payment verification can finish in global-auth before the
+// late PA/BM storefront module has attached its paid-event listener.  Clearing
+// only by event therefore leaves the pre-payment cart visible after return.
+const AZOBSS_PABM_PAID_CART_CLEAR_MARKER_1371 = 'azobss_pabm_paid_cart_clear_v1371';
+function azobssReadPaBmPaidCartClearMarker1371(){
+  let marker = window.__azobssPaBmPaidCartClear1371 || null;
+  if(!marker){
+    try{ marker = JSON.parse(localStorage.getItem(AZOBSS_PABM_PAID_CART_CLEAR_MARKER_1371) || 'null'); }catch(_e){ marker = null; }
+  }
+  if(!marker || !Number(marker.at) || (Date.now() - Number(marker.at)) > (10 * 60 * 1000)) return null;
+  return marker;
+}
+function azobssRememberPaBmPaidCartClear1371(orderId, billCode, source){
+  const marker = {
+    at:Date.now(),
+    orderId:String(orderId || '').trim(),
+    billCode:String(billCode || '').trim(),
+    source:String(source || 'paid').trim()
+  };
+  window.__azobssPaBmPaidCartClear1371 = marker;
+  try{ localStorage.setItem(AZOBSS_PABM_PAID_CART_CLEAR_MARKER_1371, JSON.stringify(marker)); }catch(_e){}
+  return marker;
+}
+function azobssClearPaBmPaidCartMarkerForNewCheckout1371(orderId, billCode){
+  const marker = azobssReadPaBmPaidCartClearMarker1371();
+  if(!marker) return;
+  const oid = String(orderId || '').trim();
+  const bill = String(billCode || '').trim();
+  const same = (oid && marker.orderId && oid === marker.orderId) || (bill && marker.billCode && bill === marker.billCode);
+  if(same) return;
+  window.__azobssPaBmPaidCartClear1371 = null;
+  try{ localStorage.removeItem(AZOBSS_PABM_PAID_CART_CLEAR_MARKER_1371); }catch(_e){}
+}
+function azobssPaBmCartAliases1371(){
+  const values = new Set(['guest']);
+  try{
+    const current = (typeof getSavedUser === 'function' && getSavedUser()) || {};
+    [current.usernameKey,current.username,current.userName,current.uid,current.id].forEach(v=>{
+      const raw=String(v||'').trim(); if(raw){ values.add(raw); values.add(raw.toLowerCase()); }
+    });
+  }catch(_e){}
+  try{
+    const uid=String(auth && auth.currentUser && auth.currentUser.uid || '').trim();
+    if(uid){ values.add(uid); values.add(uid.toLowerCase()); }
+  }catch(_e){}
+  return Array.from(values).filter(Boolean);
+}
+async function azobssHardClearPaBmCartAfterPaid1371(orderId, billCode, source){
+  if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return false;
+  const marker = azobssRememberPaBmPaidCartClear1371(orderId, billCode, source);
+  const aliases = azobssPaBmCartAliases1371();
+  try{
+    if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.write === 'function') window.azobssPaBmCartCore.write([]);
+    else if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.clear === 'function') window.azobssPaBmStoreCart.clear();
+  }catch(_e){}
+  try{
+    aliases.forEach(alias=>{
+      localStorage.removeItem('azobss_pabm_store_cart_v1_' + alias);
+      localStorage.removeItem('azobss_pabm_payment_cart_backup_v1_' + alias);
+    });
+    // A checkout can have started while username hydration still used another
+    // owner key. Remove only backup rows that explicitly belong to this paid
+    // order/bill; never wipe unrelated users' backups on the same browser.
+    for(let i=localStorage.length-1;i>=0;i--){
+      const key=localStorage.key(i) || '';
+      if(!key.startsWith('azobss_pabm_payment_cart_backup_v1_')) continue;
+      try{
+        const row=JSON.parse(localStorage.getItem(key) || '{}');
+        const sameOrder = marker.orderId && String(row.orderId || '').trim() === marker.orderId;
+        const sameBill = marker.billCode && String(row.billCode || '').trim() === marker.billCode;
+        if(sameOrder || sameBill) localStorage.removeItem(key);
+      }catch(_e){}
+    }
+    localStorage.removeItem('azobss_pa_bm_pending_return');
+  }catch(_e){}
+  try{
+    sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
+    sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
+  }catch(_e){}
+  try{ if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.render === 'function') window.azobssPaBmCartCore.render(); }catch(_e){}
+  try{ if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.render === 'function') window.azobssPaBmStoreCart.render(); }catch(_e){}
+  // Delete the durable server cart after the browser copy is already empty.
+  try{ if(typeof window.azobssSyncPaBmCartDraftNow === 'function') await window.azobssSyncPaBmCartDraftNow(); }catch(_e){}
+  try{ window.dispatchEvent(new CustomEvent('azobss:pabm-cart-hard-cleared',{detail:{orderId:marker.orderId,billCode:marker.billCode,source:marker.source,version:1371}})); }catch(_e){}
+  return true;
+}
+window.azobssHardClearPaBmCartAfterPaid1371 = azobssHardClearPaBmCartAfterPaid1371;
+window.azobssReadPaBmPaidCartClearMarker1371 = azobssReadPaBmPaidCartClearMarker1371;
 function azobssMarkPaBmReturnConsumed(key){
   if(!key) return;
   try{ localStorage.setItem('azobss_pa_bm_return_consumed_' + key, '1'); }catch(e){}
@@ -5763,6 +5852,7 @@ function azobssMarkPaBmReturnConsumed(key){
 function azobssSavePaBmPendingReturn(orderId, billCode){
   const cleanOrderId = String(orderId || '').trim();
   const cleanBillCode = String(billCode || '').trim();
+  azobssClearPaBmPaidCartMarkerForNewCheckout1371(cleanOrderId, cleanBillCode);
   try{
     if(cleanOrderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', cleanOrderId);
     if(cleanBillCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', cleanBillCode);
@@ -5943,6 +6033,7 @@ async function azobssCheckPaBmToyyibReturn(){
       || !!(data && ['failed','cancelled','canceled','rejected','unsuccessful'].includes(String(data.status || '').toLowerCase()));
 
     if(paid){
+      await azobssHardClearPaBmCartAfterPaid1371(orderId || returnKey, billCode || '', 'return-verify');
       await azobssResetCurrentPurchaseTotalAfterPaid(orderId || returnKey);
       try{ sessionStorage.setItem('azobss_pa_bm_paid_reset_' + returnKey, '1'); }catch(e){}
       azobssMarkPaBmReturnConsumed(returnKey);
@@ -6260,6 +6351,7 @@ async function azobssRecoverPaBmPaymentFromServer1055(force){
 
     if(data.paid){
       const verifiedKey = String(data.orderId || data.billCode || data.receiptNo || '').trim();
+      await azobssHardClearPaBmCartAfterPaid1371(data.orderId || verifiedKey, data.billCode || '', data.recovered ? 'server-recovery-paid' : 'server-sync-paid');
       if(verifiedKey){
         window.__azobssPaBmPaymentVerifiedKey = verifiedKey;
         window.__azobssPaBmPaymentVerifiedAt = Date.now();
@@ -6625,15 +6717,7 @@ async function azobssAdminTestPaBmFallback1270(event){
       throw new Error('Jumlah Admin Test Payment tidak sepadan dengan Troli Anda.');
     }
 
-    try{
-      if(window.azobssPaBmCartCore && typeof window.azobssPaBmCartCore.write === 'function') window.azobssPaBmCartCore.write([]);
-      else if(window.azobssPaBmStoreCart && typeof window.azobssPaBmStoreCart.clear === 'function') window.azobssPaBmStoreCart.clear();
-    }catch(_e){}
-    try{
-      sessionStorage.removeItem('azobss_pa_bm_pending_order_id');
-      sessionStorage.removeItem('azobss_pa_bm_pending_bill_code');
-      localStorage.removeItem('azobss_pa_bm_pending_return');
-    }catch(_e){}
+    await azobssHardClearPaBmCartAfterPaid1371(data.orderId || data.recordId || '', data.billCode || '', 'admin-test-paid');
 
     if(status) status.textContent = 'Admin test payment berjaya. Mengemas kini Senarai Pembelian Terkini...';
     try{
