@@ -2446,6 +2446,61 @@ body[data-dashboard-page="admin"] .topbar{
   #registeredUsersAdminList .az-admin-reg-meta-line{grid-template-rows:repeat(3,minmax(0,auto))!important;grid-auto-flow:column!important}
   #registeredUsersAdminList .az-reg-actions{grid-column:auto!important;justify-content:flex-start!important}
 }
+
+/* AZOBSS v1367 — one email = one normal card; merged non-default settings; username-safe action menu */
+.az1361-users-column-head.az1367-users-column-head{grid-template-columns:minmax(330px,1.55fr) minmax(280px,1.15fr) minmax(220px,.72fr)!important}
+#registeredUsersAdminList .az1367-email-card{
+  position:relative!important;overflow:visible!important;z-index:1;
+  display:grid!important;grid-template-columns:minmax(330px,1.55fr) minmax(280px,1.15fr) minmax(220px,.72fr)!important;
+  gap:14px!important;align-items:center!important;
+  padding:13px 14px 13px 108px!important;border-radius:13px!important;
+  border:1px solid rgba(105,138,173,.24)!important;
+  background:linear-gradient(120deg,rgba(10,24,42,.96),rgba(13,25,43,.90))!important;
+  box-shadow:none!important;
+}
+#registeredUsersAdminList .az1367-email-card:hover{transform:translateY(-1px)!important;border-color:rgba(94,234,212,.34)!important;box-shadow:0 8px 24px rgba(0,0,0,.16)!important}
+#registeredUsersAdminList .az1367-email-card.is-menu-open{z-index:40!important}
+#registeredUsersAdminList .az1367-email-card .az1364-rank-badge{top:50%!important;left:12px!important;transform:translateY(-50%)!important}
+.az1367-identity-block{min-width:0;display:grid;gap:6px}
+.az1367-email-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;min-width:0}
+.az1367-primary-email{font-size:13px;font-weight:950;color:#e8f6ff;line-height:1.25;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.az1367-shared-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;border:1px solid rgba(56,189,248,.30);background:rgba(14,116,144,.13);color:#7dd3fc;font-size:8.5px;font-weight:950;white-space:nowrap}
+.az1367-usernames{display:grid;gap:4px;min-width:0}
+.az1367-username-line{display:flex;align-items:center;flex-wrap:wrap;gap:5px 7px;min-width:0;color:#d6e4f2;font-size:11px;line-height:1.25}
+.az1367-username-line strong{font-size:11px;color:#f1f5f9;word-break:break-word}
+.az1367-username-line .az1363-login-badge{margin-left:0!important;vertical-align:0!important}
+.az1367-setting-block{min-width:0;display:flex;align-items:center}
+#registeredUsersAdminList .az1367-setting-block .az-admin-reg-meta-line{display:flex!important;flex-wrap:wrap!important;gap:5px!important;overflow:visible!important;max-width:none!important}
+#registeredUsersAdminList .az1367-setting-block .az-admin-reg-meta-line>span{max-width:190px!important}
+.az1367-settings-empty{color:#526a84;font-size:13px;font-weight:900}
+.az1367-right{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;justify-content:end}
+.az1367-date{min-width:0;display:grid;gap:2px;text-align:right}
+.az1367-date span{color:#6685a5;font-size:8.5px;font-weight:950;letter-spacing:.07em;text-transform:uppercase}
+.az1367-date strong{color:#c8d6e8;font-size:10px;font-weight:800;line-height:1.3;white-space:normal}
+.az1367-action-wrap{position:relative;display:flex;justify-content:flex-end}
+.az1367-edit-menu-btn{height:34px;min-width:74px;padding:0 10px;border:1px solid #3b82f6;border-radius:10px;background:#2563eb;color:#fff;font-size:10.5px;font-weight:950;cursor:pointer;white-space:nowrap}
+.az1367-edit-menu-btn:hover{filter:brightness(1.10)}
+.az1367-action-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:100;min-width:220px;max-width:300px;padding:7px;border:1px solid rgba(96,165,250,.34);border-radius:11px;background:#081423;box-shadow:0 16px 40px rgba(0,0,0,.42)}
+.az1367-action-wrap.is-open .az1367-action-menu{display:grid;gap:3px}
+.az1367-menu-label{padding:4px 7px 2px;color:#6685a5;font-size:8px;font-weight:950;letter-spacing:.07em;text-transform:uppercase}
+.az1367-menu-sep{height:1px;margin:4px 2px;background:rgba(148,163,184,.14)}
+.az1367-action-menu button{width:100%;min-height:32px;padding:6px 9px;border:0;border-radius:8px;background:transparent;color:#dbeafe;text-align:left;font-size:10.5px;font-weight:850;cursor:pointer;white-space:normal;word-break:break-word}
+.az1367-action-menu button:hover{background:rgba(37,99,235,.20);color:#fff}
+.az1367-action-menu button.danger{color:#fecaca}
+.az1367-action-menu button.danger:hover{background:rgba(127,29,29,.32);color:#fee2e2}
+@media(max-width:1120px){
+  .az1361-users-column-head.az1367-users-column-head{display:none!important}
+  #registeredUsersAdminList .az1367-email-card{grid-template-columns:minmax(280px,1.35fr) minmax(240px,1fr) minmax(190px,.7fr)!important;padding-left:102px!important}
+  .az1367-right{grid-template-columns:1fr auto}
+}
+@media(max-width:760px){
+  #registeredUsersAdminList .az1367-email-card{grid-template-columns:1fr!important;gap:10px!important;padding:13px 12px 13px 88px!important}
+  #registeredUsersAdminList .az1367-email-card .az1364-rank-badge{left:10px!important;top:16px!important;transform:none!important}
+  .az1367-primary-email{white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}
+  .az1367-right{grid-template-columns:1fr auto!important;align-items:end}
+  .az1367-date{text-align:left}
+  .az1367-action-menu{right:0;min-width:min(250px,calc(100vw - 36px))}
+}
 </style>
 </head>
 
@@ -3006,8 +3061,8 @@ body[data-dashboard-page="admin"] .topbar{
           </div>
           <button class="btn az1361-users-refresh" id="registeredUsersRefreshBtn" type="button">↻ Refresh</button>
         </div>
-        <div class="az1361-users-column-head" aria-hidden="true">
-          <span>EMAIL / USERNAME</span><span>SETTING BERUBAH</span><span>REGISTERED</span><span>ACTIONS</span>
+        <div class="az1361-users-column-head az1367-users-column-head" aria-hidden="true">
+          <span>EMAIL / USERNAME</span><span>SETTING BERUBAH</span><span>TERKINI / TINDAKAN</span>
         </div>
         <div id="registeredUsersAdminList" class="az-admin-registered-list"></div>
         <div class="az-admin-reg-pagination">
@@ -7357,6 +7412,93 @@ function azRegIdentityRowHtml(x,sharedEmail){
     </div>
   </div>`;
 }
+function azRegGroupRankIdentity(g){
+  const ids=[...(g?.identities||[])];
+  ids.sort((a,b)=>azRegRoleRank(b)-azRegRoleRank(a)||azRegDateValue(b)-azRegDateValue(a));
+  return ids[0]||{};
+}
+function azRegGroupPricePillsHtml(ids){
+  const byCategory=new Map();
+  AZ_REG_PRICE_CATEGORIES.forEach(([key,label])=>byCategory.set(key,{label,values:new Map()}));
+  (ids||[]).forEach(x=>{
+    const username=azRegUser(x);
+    const values=azRegPricePercents(x);
+    AZ_REG_PRICE_CATEGORIES.forEach(([key])=>{
+      const p=Number(values[key]||0);
+      if(!p)return;
+      const bucket=byCategory.get(key);
+      const valueKey=String(p);
+      if(!bucket.values.has(valueKey))bucket.values.set(valueKey,{percent:p,users:[]});
+      bucket.values.get(valueKey).users.push(username);
+    });
+  });
+  const out=[];
+  byCategory.forEach(bucket=>{
+    const values=[...bucket.values.values()];
+    values.forEach(v=>{
+      const p=v.percent,cls=p<0?'discount':'markup';
+      const amount=p<0?`-${Math.abs(p)}%`:`+${p}%`;
+      const conflict=values.length>1;
+      const users=[...new Set(v.users)].join(', ');
+      const who=conflict?` · ${users}`:'';
+      out.push(`<span class="az-admin-reg-price-pill ${cls}" title="${esc(users)}">${esc(bucket.label)} ${amount}${esc(who)}</span>`);
+    });
+  });
+  return out.join('');
+}
+function azRegGroupChangedStatusHtml(g){
+  const ids=g?.identities||[];
+  const bits=[];
+  if(ids.some(azRegPaAllowed))bits.push(azRegPaDotHtml(true));
+  const memberships=new Map();
+  ids.forEach(x=>{
+    const m=azRegMembershipInfo(x);
+    if(!m.active)return;
+    const key=`${m.name}|${m.expiry||0}`;
+    if(!memberships.has(key))memberships.set(key,x);
+  });
+  memberships.forEach(x=>bits.push(azRegMembershipPillHtml(x)));
+  if(ids.some(azRegFoodOrdersAllowed))bits.push(azRegFoodOrdersPillHtml(true));
+  const prices=azRegGroupPricePillsHtml(ids);
+  if(prices)bits.push(prices);
+  return bits.length?bits.join(''):'<span class="az1367-settings-empty" title="Semua setting kekal default">—</span>';
+}
+function azRegGroupIdentityHtml(g){
+  const ids=g?.identities||[];
+  const email=g?.email||'Tanpa email';
+  const count=ids.length;
+  return `<div class="az1367-identity-block">
+    <div class="az1367-email-line"><span class="az1367-primary-email">${esc(email)}</span>${count>1?`<span class="az1367-shared-badge">${count} username dalam email sama</span>`:''}</div>
+    <div class="az1367-usernames">${ids.map(x=>`<div class="az1367-username-line"><strong>${esc(azRegUser(x))}</strong>${azRegLoginBadgeHtml(x)}</div>`).join('')}</div>
+  </div>`;
+}
+function azRegGroupActionMenuHtml(g){
+  const ids=g?.identities||[];
+  const editRows=ids.map(x=>{
+    const id=esc(x.docId||azRegUser(x)),username=esc(azRegUser(x));
+    return `<button type="button" data-reg-edit="${id}" title="Edit ${username}">✎ Edit ${username}</button>`;
+  }).join('');
+  const deleteRows=ids.map(x=>{
+    const id=esc(x.docId||azRegUser(x)),username=esc(azRegUser(x));
+    return `<button type="button" class="danger" data-reg-delete="${id}" title="Delete ${username}">× Delete ${username}</button>`;
+  }).join('');
+  return `<div class="az1367-action-wrap">
+    <button class="az1367-edit-menu-btn" type="button" data-reg-menu-toggle aria-haspopup="menu" aria-expanded="false">Edit ▾</button>
+    <div class="az1367-action-menu" role="menu">
+      <div class="az1367-menu-label">Edit username</div>${editRows}
+      <div class="az1367-menu-sep"></div>
+      <div class="az1367-menu-label">Delete username</div>${deleteRows}
+    </div>
+  </div>`;
+}
+function azRegCloseActionMenus(exceptWrap){
+  document.querySelectorAll('.az1367-action-wrap.is-open').forEach(w=>{
+    if(w===exceptWrap)return;
+    w.classList.remove('is-open');
+    w.closest('.az1367-email-card')?.classList.remove('is-menu-open');
+    const b=w.querySelector('[data-reg-menu-toggle]');if(b)b.setAttribute('aria-expanded','false');
+  });
+}
 function renderRegisteredUsersAdmin(){
   const box=$('#registeredUsersAdminList'); if(!box)return;
   const q=String($('#registeredUsersSearch')?.value||'').toLowerCase().trim();
@@ -7368,21 +7510,30 @@ function renderRegisteredUsersAdmin(){
   const start=(adminRegisteredUsersPage-1)*ADMIN_REGISTERED_PAGE_SIZE;
   const page=groups.slice(start,start+ADMIN_REGISTERED_PAGE_SIZE);
   box.innerHTML=page.map(g=>{
-    const shared=g.identities.length>1;
-    const header=shared?`<div class="az1363-email-head"><strong>📧 ${esc(g.email||'Tanpa email')}</strong><span>${g.identities.length} username dalam email sama</span></div>`:'';
-    return `<div class="az1363-email-group ${shared?'is-shared':''}">${header}${g.identities.map(x=>azRegIdentityRowHtml(x,shared)).join('')}</div>`;
+    const rankIdentity=azRegGroupRankIdentity(g);
+    const latest=g.__dateNewest?new Date(g.__dateNewest).toLocaleString():'-';
+    return `<div class="az-admin-reg-row az1367-email-card">
+      ${azRegRankBadgeHtml(rankIdentity)}
+      ${azRegGroupIdentityHtml(g)}
+      <div class="az1367-setting-block"><div class="az-admin-reg-meta-line">${azRegGroupChangedStatusHtml(g)}</div></div>
+      <div class="az1367-right">
+        <div class="az1367-date"><span>Terbaru</span><strong>${esc(latest)}</strong></div>
+        ${azRegGroupActionMenuHtml(g)}
+      </div>
+    </div>`;
   }).join('')||'<div class="az-admin-reg-row role-unknown"><div><div class="az-admin-reg-title">No registered users found.</div></div></div>';
   if($('#registeredUsersPageInfo')){
     const loaded=adminRegisteredUsersCache.length,total=adminRegisteredUsersTotalCount;
     const identityCount=groups.reduce((n,g)=>n+(g.identities?.length||0),0);
     const loadedText=total===null?`${loaded} rekod dimuatkan`:`${loaded} rekod dimuatkan / ${total} total`;
-    $('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${groups.length} akaun/email • ${identityCount} username • ${loadedText}`;
+    $('#registeredUsersPageInfo').textContent=`Page ${adminRegisteredUsersPage} / ${totalPages} • ${groups.length} kad email • ${identityCount} username • ${loadedText}`;
     const summary=$('#registeredUsersSummaryChip');
-    if(summary)summary.textContent=`${groups.length} akaun • ${identityCount} username`;
+    if(summary)summary.textContent=`${groups.length} kad • ${identityCount} username`;
   }
   if($('#registeredUsersPrevBtn'))$('#registeredUsersPrevBtn').disabled=adminRegisteredUsersPage<=1;
   if($('#registeredUsersNextBtn'))$('#registeredUsersNextBtn').disabled=adminRegisteredUsersPage>=totalPages;
 }
+
 async function azRegRenderMembershipAdmin(x){
   const status=$('#azRegMembershipStatus'),sel=$('#azRegMembershipPackage');if(!status||!sel)return;
   const m=azRegMembershipInfo(x||{});status.textContent=m.active?`Active: ${m.name}${m.expiry?' • until '+new Date(m.expiry).toLocaleDateString():''}`:'No active Membership.';
@@ -7403,6 +7554,7 @@ async function azRegMembershipAdminAction(action){
   }catch(e){toast(e?.message||'Membership action failed.');}
 }
 function openRegisteredEdit(id){
+  azRegCloseActionMenus();
   const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id));
   if(!x)return toast('User not found.');
   $('#azRegEditDocId').value=x.docId||azRegUser(x);
@@ -7575,8 +7727,19 @@ async function toggleRegisteredFoodOrderAccess(id){
   }
 }
 async function deleteRegisteredUser(id){
-  if(!confirm('Delete user '+id+'?'))return;
-  await deleteDoc(doc(db,'users',id));
+  azRegCloseActionMenus();
+  const x=adminRegisteredUsersCache.find(r=>String(r.docId)===String(id)||String(azRegUser(r))===String(id));
+  if(!x){toast('User not found.');return;}
+  const docId=String(x.docId||azRegUser(x));
+  const username=azRegUser(x);
+  const email=azRegEmail(x);
+  const siblings=email?adminRegisteredUsersCache.filter(r=>azRegEmail(r)===email&&String(r.docId||azRegUser(r))!==docId):[];
+  let message=`Delete username ${username}?`;
+  if(email&&siblings.length){
+    message+=`\n\nEmail ${email} masih digunakan oleh ${siblings.length} username lain. Hanya username ${username} akan dipadam; username lain dalam email ini kekal.`;
+  }
+  if(!confirm(message))return;
+  await deleteDoc(doc(db,'users',docId));
   await loadRegisteredUsersAdmin();
   if(typeof loadOnlineUsers === 'function') await loadOnlineUsers();
   await loadOverview();
@@ -8191,6 +8354,17 @@ document.addEventListener('click',async e=>{
       overviewLoadButton.disabled=false;
       overviewLoadButton.textContent=oldText||'📥 Load Dashboard Data';
     }
+    return;
+  }
+  if(!e.target.closest('.az1367-action-wrap'))azRegCloseActionMenus();
+  const regMenuToggle=e.target.closest('[data-reg-menu-toggle]');
+  if(regMenuToggle){
+    const wrap=regMenuToggle.closest('.az1367-action-wrap');
+    const opening=!wrap?.classList.contains('is-open');
+    azRegCloseActionMenus(wrap);
+    wrap?.classList.toggle('is-open',opening);
+    wrap?.closest('.az1367-email-card')?.classList.toggle('is-menu-open',opening);
+    regMenuToggle.setAttribute('aria-expanded',opening?'true':'false');
     return;
   }
   const regFoodAccess=e.target.closest('[data-reg-food-access]');
