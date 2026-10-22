@@ -844,23 +844,47 @@
     if(open)try{open.focus()}catch(_e){}
   }
 
+  function bindTutorial1379(){
+    var modal=byId('azebookTutorial1378');
+    if(!modal||modal.getAttribute('data-azebook-tutorial-bound')==='1')return;
+    modal.setAttribute('data-azebook-tutorial-bound','1');
+    var openButton=document.querySelector('[data-azebook-tutorial-open]');
+    if(openButton&&!openButton.getAttribute('data-azebook-tutorial-open-bound')){
+      openButton.setAttribute('data-azebook-tutorial-open-bound','1');
+      openButton.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openTutorial1378()});
+    }
+    var closeButtons=modal.querySelectorAll('[data-azebook-tutorial-close]');
+    Array.prototype.forEach.call(closeButtons,function(btn){
+      btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();closeTutorial1378()});
+    });
+    modal.addEventListener('click',function(e){
+      if(e.target===modal){e.preventDefault();closeTutorial1378()}
+    });
+    document.addEventListener('keydown',function(e){
+      if((e.key==='Escape'||e.key==='Esc')&&!modal.hidden){e.preventDefault();closeTutorial1378()}
+    });
+  }
+
   function bind(){
+    bindTutorial1379();
     document.addEventListener('click',function(e){
-      var tutorialOpen=e.target.closest('[data-azebook-tutorial-open]');
+      var clickTarget=e.target&&e.target.nodeType===3?e.target.parentElement:e.target;
+      if(!clickTarget||typeof clickTarget.closest!=='function')return;
+      var tutorialOpen=clickTarget.closest('[data-azebook-tutorial-open]');
       if(tutorialOpen){e.preventDefault();openTutorial1378();return}
-      var tutorialClose=e.target.closest('[data-azebook-tutorial-close]');
+      var tutorialClose=clickTarget.closest('[data-azebook-tutorial-close]');
       if(tutorialClose){e.preventDefault();closeTutorial1378();return}
-      var tutorialOverlay=e.target.closest('#azebookTutorial1378');
-      if(tutorialOverlay&&e.target===tutorialOverlay){closeTutorial1378();return}
-      var entry=e.target.closest('[data-azebook-entry]');
+      var tutorialOverlay=clickTarget.closest('#azebookTutorial1378');
+      if(tutorialOverlay&&clickTarget===tutorialOverlay){closeTutorial1378();return}
+      var entry=clickTarget.closest('[data-azebook-entry]');
       if(entry){e.preventDefault();setMainTab('ebook',true);return}
-      var sub=e.target.closest('[data-azebook-subtab]');
+      var sub=clickTarget.closest('[data-azebook-subtab]');
       if(sub){if(!ACCESS_GRANTED){toast('Akses Publisher Lab belum dibuka');return}switchSub(sub.getAttribute('data-azebook-subtab'));return}
-      var mode=e.target.closest('[data-azebook-mode]');
+      var mode=clickTarget.closest('[data-azebook-mode]');
       if(mode){if(!ACCESS_GRANTED)return;setAdvancedMode(mode.getAttribute('data-azebook-mode')==='advanced');return}
-      var size=e.target.closest('[data-azebook-size]');
+      var size=clickTarget.closest('[data-azebook-size]');
       if(size){if(!ACCESS_GRANTED)return;setSize(size.getAttribute('data-azebook-size'));return}
-      var action=e.target.closest('[data-azebook-action]');
+      var action=clickTarget.closest('[data-azebook-action]');
       if(action){
         var item=action.closest('[data-azebook-id]');
         if(!item)return;
