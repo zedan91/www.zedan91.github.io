@@ -1,0 +1,25 @@
+{
+  "version": "1381",
+  "baseline": "1380",
+  "date": "2026-10-22",
+  "target": "admin/index.html",
+  "checks": {
+    "targeted": 20,
+    "passed": 20,
+    "inline_scripts": 32,
+    "syntax_errors": 0
+  },
+  "features": [
+    "Monthly Sales & Profit Trend",
+    "SVG line graph",
+    "SVG bar graph",
+    "range 6/12/year/24",
+    "Gross toggle",
+    "Net Profit toggle",
+    "Total Costs toggle",
+    "value labels",
+    "Reset Graph",
+    "localStorage persistence",
+    "canonical ledger"
+  ]
+}

@@ -1330,6 +1330,41 @@ html.az-admin-detail-modal-open,body.az-admin-detail-modal-open{overflow:hidden!
 .az-sales-product-amount{text-align:right;font-weight:950;color:#86efac;white-space:nowrap}
 .az-sales-empty{border:1px dashed rgba(148,163,184,.28);border-radius:16px;padding:14px;color:#94a3b8;background:rgba(15,23,42,.42)}
 .az-sales-small-note{margin-top:10px;color:#94a3b8;font-size:12px;font-weight:750}
+/* AZOBSS v1381: configurable Monthly Sales & Profit graph */
+.az-sales-trend-card{overflow:hidden}
+.az-sales-trend-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px}
+.az-sales-trend-head h2{margin:0}
+.az-sales-trend-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 8px;padding:9px;border:1px solid rgba(148,163,184,.16);border-radius:13px;background:rgba(2,6,23,.28)}
+.az-sales-trend-toolbar select,.az-sales-trend-toolbar button{min-height:34px;border-radius:9px}
+.az-sales-trend-metric{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:6px 9px;border-radius:9px;border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.58);color:#dbeafe;font-size:11px;font-weight:850;cursor:pointer;user-select:none}
+.az-sales-trend-metric input{accent-color:#22c55e}
+.az-sales-trend-graph{position:relative;min-height:286px;margin-top:8px;border:1px solid rgba(148,163,184,.15);border-radius:14px;background:linear-gradient(180deg,rgba(2,6,23,.62),rgba(15,23,42,.40));overflow:hidden}
+.az-sales-trend-svg{display:block;width:100%;height:auto;min-height:286px}
+.az-sales-trend-grid{stroke:rgba(148,163,184,.15);stroke-width:1}
+.az-sales-trend-axis{stroke:rgba(148,163,184,.30);stroke-width:1}
+.az-sales-trend-axis-label{fill:#94a3b8;font-size:10px;font-weight:700}
+.az-sales-trend-x-label{fill:#cbd5e1;font-size:10px;font-weight:800}
+.az-sales-trend-line-gross{fill:none;stroke:#38bdf8;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.az-sales-trend-line-profit{fill:none;stroke:#22c55e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.az-sales-trend-line-cost{fill:none;stroke:#f59e0b;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.az-sales-trend-point-gross{fill:#38bdf8;stroke:#082f49;stroke-width:1.5}
+.az-sales-trend-point-profit{fill:#22c55e;stroke:#052e16;stroke-width:1.5}
+.az-sales-trend-point-cost{fill:#f59e0b;stroke:#451a03;stroke-width:1.5}
+.az-sales-trend-bar-gross{fill:#38bdf8;fill-opacity:.78}
+.az-sales-trend-bar-profit{fill:#22c55e;fill-opacity:.78}
+.az-sales-trend-bar-cost{fill:#f59e0b;fill-opacity:.78}
+.az-sales-trend-value-gross{fill:#7dd3fc}
+.az-sales-trend-value-profit{fill:#86efac}
+.az-sales-trend-value-cost{fill:#fcd34d}
+.az-sales-trend-value-label{font-size:9px;font-weight:900;text-anchor:middle}
+.az-sales-trend-legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:9px;color:#cbd5e1;font-size:11px;font-weight:800}
+.az-sales-trend-legend-item{display:inline-flex;align-items:center;gap:6px}
+.az-sales-trend-dot{width:9px;height:9px;border-radius:999px}
+.az-sales-trend-dot.gross{background:#38bdf8}.az-sales-trend-dot.profit{background:#22c55e}.az-sales-trend-dot.cost{background:#f59e0b}
+.az-sales-trend-summary{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:9px;padding:8px 10px;border-radius:11px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.13);color:#cbd5e1;font-size:11px;font-weight:750}
+.az-sales-trend-summary b{color:#f8fafc}
+@media(max-width:820px){.az-sales-trend-toolbar{align-items:stretch}.az-sales-trend-toolbar select,.az-sales-trend-toolbar button,.az-sales-trend-metric{flex:1 1 135px}.az-sales-trend-graph{overflow-x:auto}.az-sales-trend-svg{min-width:700px}}
+
 @media(max-width:820px){.az-sales-snapshot-head{flex-direction:column;align-items:flex-start}.az-sales-chart-row{grid-template-columns:1fr;gap:6px}.az-sales-chart-value{text-align:left}.az-sales-top-product{grid-template-columns:28px 1fr}.az-sales-product-amount{grid-column:2;text-align:left}}
 /* AZOBSS PATCH 304: Admin Website Health Report / Export */
 .az-report-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -3830,10 +3865,33 @@ body[data-dashboard-page="admin"] .topbar{
       </div>
 
       <div class="split az-sales-analytics-split">
-        <div class="card">
-          <h2>Monthly Revenue Trend</h2>
-          <p class="tabs-note">Last 6 months confirmed revenue.</p>
-          <div id="salesMonthlyTrend" class="az-sales-chart-box"></div>
+        <div class="card az-sales-trend-card">
+          <div class="az-sales-trend-head">
+            <div>
+              <h2>Monthly Sales &amp; Profit Trend</h2>
+              <p class="tabs-note">Gross Sales dan Net Profit daripada Paid canonical Sales &amp; Receipts ledger.</p>
+            </div>
+          </div>
+          <div class="az-sales-trend-toolbar" aria-label="Sales graph settings">
+            <select id="salesTrendRange" title="Tempoh graf">
+              <option value="6">6 Bulan</option>
+              <option value="12">12 Bulan</option>
+              <option value="year">Tahun Ini</option>
+              <option value="24">24 Bulan</option>
+            </select>
+            <select id="salesTrendType" title="Jenis graf">
+              <option value="line">Line Graph</option>
+              <option value="bar">Bar Graph</option>
+            </select>
+            <label class="az-sales-trend-metric"><input id="salesTrendGross" type="checkbox" checked> Gross Sales</label>
+            <label class="az-sales-trend-metric"><input id="salesTrendProfit" type="checkbox" checked> Net Profit</label>
+            <label class="az-sales-trend-metric"><input id="salesTrendCost" type="checkbox"> Total Costs</label>
+            <label class="az-sales-trend-metric"><input id="salesTrendValues" type="checkbox"> Nilai</label>
+            <button class="btn gray" id="salesTrendReset" type="button">Reset Graph</button>
+          </div>
+          <div id="salesMonthlyTrend" class="az-sales-trend-graph"></div>
+          <div id="salesTrendLegend" class="az-sales-trend-legend"></div>
+          <div id="salesTrendSummary" class="az-sales-trend-summary"></div>
         </div>
         <div class="card">
           <h2>Sales by Category</h2>
@@ -5957,6 +6015,137 @@ function azAdminLedgerPeriod(rows,startMs=0){
   const paid=(rows||[]).filter(row=>azAdminLedgerIsPaid(row)&&(!startMs||azAdminLedgerDateMs(row)>=startMs));
   return paid.reduce((o,row)=>{const c=azAdminLedgerCostParts(row);o.gross+=azAdminLedgerNum(row.gross);o.cost+=c.totalCost;o.profit+=azAdminLedgerProfit(row);o.fee+=c.paymentFee;o.orders++;return o;},{gross:0,cost:0,profit:0,fee:0,orders:0});
 }
+
+const AZ_ADMIN_SALES_TREND_STORAGE='azobss_admin_sales_trend_v1381';
+function azAdminSalesTrendDefaultSettings(){return {range:'6',type:'line',gross:true,profit:true,cost:false,values:false};}
+function azAdminSalesTrendReadSettings(){
+  const d=azAdminSalesTrendDefaultSettings();
+  try{Object.assign(d,JSON.parse(localStorage.getItem(AZ_ADMIN_SALES_TREND_STORAGE)||'{}')||{});}catch(_){}
+  const range=$('#salesTrendRange'),type=$('#salesTrendType'),gross=$('#salesTrendGross'),profit=$('#salesTrendProfit'),cost=$('#salesTrendCost'),values=$('#salesTrendValues');
+  if(range)d.range=range.value||d.range;
+  if(type)d.type=type.value||d.type;
+  if(gross)d.gross=!!gross.checked;
+  if(profit)d.profit=!!profit.checked;
+  if(cost)d.cost=!!cost.checked;
+  if(values)d.values=!!values.checked;
+  return d;
+}
+function azAdminSalesTrendApplySettings(s){
+  const d={...azAdminSalesTrendDefaultSettings(),...(s||{})};
+  const range=$('#salesTrendRange'),type=$('#salesTrendType'),gross=$('#salesTrendGross'),profit=$('#salesTrendProfit'),cost=$('#salesTrendCost'),values=$('#salesTrendValues');
+  if(range)range.value=d.range;
+  if(type)type.value=d.type;
+  if(gross)gross.checked=!!d.gross;
+  if(profit)profit.checked=!!d.profit;
+  if(cost)cost.checked=!!d.cost;
+  if(values)values.checked=!!d.values;
+}
+function azAdminSalesTrendSaveSettings(s){try{localStorage.setItem(AZ_ADMIN_SALES_TREND_STORAGE,JSON.stringify(s));}catch(_){}}
+function azAdminSalesTrendMonthKeys(range){
+  if(String(range)==='year'){
+    const now=new Date(),out=[];
+    for(let m=0;m<=now.getMonth();m++)out.push(azAdminMonthKeyFromDate(new Date(now.getFullYear(),m,1)));
+    return out;
+  }
+  return azAdminLastMonthKeys(Math.max(1,Math.min(36,Number(range)||6)));
+}
+function azAdminSalesTrendCompactRM(v){
+  const raw=Number(v)||0,n=Math.abs(raw),sign=raw<0?'-':'';
+  if(n>=1000000)return sign+'RM'+(n/1000000).toFixed(n>=10000000?0:1)+'m';
+  if(n>=1000)return sign+'RM'+(n/1000).toFixed(n>=10000?0:1)+'k';
+  return sign+'RM'+n.toFixed(n>=100?0:2);
+}
+function azAdminSalesTrendEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function azAdminSalesTrendData(records,range){
+  const keys=azAdminSalesTrendMonthKeys(range);
+  const totals=Object.fromEntries(keys.map(k=>[k,{key:k,label:azAdminMonthLabel(k),gross:0,cost:0,profit:0,orders:0}]));
+  (records||[]).filter(azAdminLedgerIsPaid).forEach(row=>{
+    const ms=azAdminLedgerDateMs(row);if(!ms)return;
+    const key=azAdminMonthKeyFromDate(new Date(ms));if(!(key in totals))return;
+    const c=azAdminLedgerCostParts(row);
+    totals[key].gross+=azAdminLedgerNum(row.gross);
+    totals[key].cost+=c.totalCost;
+    totals[key].profit+=azAdminLedgerProfit(row);
+    totals[key].orders++;
+  });
+  return keys.map(k=>totals[k]);
+}
+function azAdminSalesTrendEnabled(s){
+  const out=[];
+  if(s.gross)out.push({key:'gross',label:'Gross Sales',cls:'gross'});
+  if(s.profit)out.push({key:'profit',label:'Net Profit',cls:'profit'});
+  if(s.cost)out.push({key:'cost',label:'Total Costs',cls:'cost'});
+  return out;
+}
+function azAdminRenderMonthlySalesProfitTrend(records){
+  const box=$('#salesMonthlyTrend'),legend=$('#salesTrendLegend'),summary=$('#salesTrendSummary');if(!box)return;
+  const s=azAdminSalesTrendReadSettings(),data=azAdminSalesTrendData(records,s.range),series=azAdminSalesTrendEnabled(s);
+  if(!series.length){
+    box.innerHTML='<div class="az-sales-empty" style="margin:12px">Pilih sekurang-kurangnya satu metric: Gross Sales, Net Profit atau Total Costs.</div>';
+    if(legend)legend.innerHTML='';if(summary)summary.innerHTML='';return;
+  }
+  const W=860,H=300,L=62,R=18,T=24,B=48,plotW=W-L-R,plotH=H-T-B,vals=[];
+  data.forEach(d=>series.forEach(x=>vals.push(Number(d[x.key]||0))));
+  let min=Math.min(0,...vals),max=Math.max(0,...vals);if(max===min)max=min+1;
+  const pad=(max-min)*.08;max+=pad;if(min<0)min-=pad;
+  const y=v=>T+((max-Number(v||0))/(max-min))*plotH;
+  const zeroY=y(0),stepX=data.length>1?plotW/(data.length-1):plotW/2;
+  const x=i=>data.length>1?L+i*stepX:L+plotW/2;
+  let svg=`<svg class="az-sales-trend-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly Sales and Profit Trend">`;
+  for(let i=0;i<=4;i++){
+    const yy=T+(plotH*i/4),val=max-((max-min)*i/4);
+    svg+=`<line class="az-sales-trend-grid" x1="${L}" y1="${yy.toFixed(1)}" x2="${W-R}" y2="${yy.toFixed(1)}"></line><text class="az-sales-trend-axis-label" x="${L-8}" y="${(yy+3).toFixed(1)}" text-anchor="end">${azAdminSalesTrendEsc(azAdminSalesTrendCompactRM(val))}</text>`;
+  }
+  svg+=`<line class="az-sales-trend-axis" x1="${L}" y1="${zeroY.toFixed(1)}" x2="${W-R}" y2="${zeroY.toFixed(1)}"></line>`;
+  data.forEach((d,i)=>{if(data.length<=12||i%2===0||i===data.length-1)svg+=`<text class="az-sales-trend-x-label" x="${x(i).toFixed(1)}" y="${H-17}" text-anchor="middle">${azAdminSalesTrendEsc(d.label)}</text>`;});
+  if(s.type==='bar'){
+    const slot=data.length?plotW/data.length:plotW;
+    const groupW=Math.min(58,slot*.72),barGap=3,barW=Math.max(4,(groupW-(series.length-1)*barGap)/series.length);
+    data.forEach((d,i)=>{
+      const center=data.length>1?x(i):L+plotW/2;
+      series.forEach((meta,j)=>{
+        const v=Number(d[meta.key]||0),yy=y(v),top=Math.min(yy,zeroY),height=Math.max(1,Math.abs(zeroY-yy)),bx=center-groupW/2+j*(barW+barGap);
+        svg+=`<rect class="az-sales-trend-bar-${meta.cls}" x="${bx.toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${height.toFixed(1)}" rx="3"><title>${azAdminSalesTrendEsc(d.label+' • '+meta.label+': RM'+azAdminMoney(v))}</title></rect>`;
+        if(s.values&&data.length<=12)svg+=`<text class="az-sales-trend-value-label az-sales-trend-value-${meta.cls}" x="${(bx+barW/2).toFixed(1)}" y="${Math.max(12,top-5).toFixed(1)}">${azAdminSalesTrendEsc(azAdminSalesTrendCompactRM(v))}</text>`;
+      });
+    });
+  }else{
+    series.forEach(meta=>{
+      const pts=data.map((d,i)=>`${x(i).toFixed(1)},${y(d[meta.key]).toFixed(1)}`).join(' ');
+      svg+=`<polyline class="az-sales-trend-line-${meta.cls}" points="${pts}"></polyline>`;
+      data.forEach((d,i)=>{
+        const xx=x(i),yy=y(d[meta.key]),v=Number(d[meta.key]||0);
+        svg+=`<circle class="az-sales-trend-point-${meta.cls}" cx="${xx.toFixed(1)}" cy="${yy.toFixed(1)}" r="4"><title>${azAdminSalesTrendEsc(d.label+' • '+meta.label+': RM'+azAdminMoney(v))}</title></circle>`;
+        if(s.values&&data.length<=12)svg+=`<text class="az-sales-trend-value-label az-sales-trend-value-${meta.cls}" x="${xx.toFixed(1)}" y="${Math.max(12,yy-(meta.key==='profit'?9:18)).toFixed(1)}">${azAdminSalesTrendEsc(azAdminSalesTrendCompactRM(v))}</text>`;
+      });
+    });
+  }
+  svg+='</svg>';box.innerHTML=svg;
+  if(legend)legend.innerHTML=series.map(meta=>`<span class="az-sales-trend-legend-item"><span class="az-sales-trend-dot ${meta.cls}"></span>${azAdminSalesTrendEsc(meta.label)}</span>`).join('');
+  const totals=data.reduce((o,d)=>{o.gross+=d.gross;o.cost+=d.cost;o.profit+=d.profit;o.orders+=d.orders;return o;},{gross:0,cost:0,profit:0,orders:0});
+  const margin=totals.gross?totals.profit/totals.gross*100:0;
+  if(summary)summary.innerHTML=`<span>Gross <b>RM${azAdminMoney(totals.gross)}</b></span><span>Costs <b>RM${azAdminMoney(totals.cost)}</b></span><span>Net Profit <b>RM${azAdminMoney(totals.profit)}</b></span><span>Margin <b>${margin.toFixed(1)}%</b></span><span>Paid Orders <b>${totals.orders}</b></span>`;
+}
+function azAdminInitSalesTrendControls(){
+  if(window.__azAdminSalesTrendControlsBound)return;
+  window.__azAdminSalesTrendControlsBound=true;
+  let saved=azAdminSalesTrendDefaultSettings();
+  try{saved={...saved,...JSON.parse(localStorage.getItem(AZ_ADMIN_SALES_TREND_STORAGE)||'{}')};}catch(_){}
+  azAdminSalesTrendApplySettings(saved);
+  ['#salesTrendRange','#salesTrendType','#salesTrendGross','#salesTrendProfit','#salesTrendCost','#salesTrendValues'].forEach(sel=>{
+    const el=$(sel);if(!el)return;
+    el.addEventListener('change',()=>{
+      const s=azAdminSalesTrendReadSettings();azAdminSalesTrendSaveSettings(s);
+      azAdminRenderMonthlySalesProfitTrend(window.__azAdminSalesTrendRecords||[]);
+    });
+  });
+  $('#salesTrendReset')?.addEventListener('click',()=>{
+    const d=azAdminSalesTrendDefaultSettings();
+    azAdminSalesTrendApplySettings(d);azAdminSalesTrendSaveSettings(d);
+    azAdminRenderMonthlySalesProfitTrend(window.__azAdminSalesTrendRecords||[]);
+  });
+}
+
 function azAdminRenderSalesOverviewCharts(records){
   records=Array.isArray(records)?records:[];const paid=records.filter(azAdminLedgerIsPaid);const now=new Date();
   const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();const yearStart=new Date(now.getFullYear(),0,1).getTime();
@@ -5966,9 +6155,8 @@ function azAdminRenderSalesOverviewCharts(records){
   azAdminSetText('#salesThisYearGrossTotal',azAdminMoney(year.gross));azAdminSetText('#salesThisYearCostTotal',azAdminMoney(year.cost));azAdminSetText('#salesThisYearNetTotal',azAdminMoney(year.profit));
   azAdminSetText('#salesThisMonthFeeTotal',azAdminMoney(month.fee));azAdminSetText('#salesThisMonthOrders',month.orders);azAdminSetText('#salesAverageOrder',azAdminMoney(all.orders?all.gross/all.orders:0));
 
-  const monthKeys=azAdminLastMonthKeys(6);const monthTotals=Object.fromEntries(monthKeys.map(k=>[k,{gross:0,profit:0}]));
-  paid.forEach(row=>{const ms=azAdminLedgerDateMs(row);if(!ms)return;const key=azAdminMonthKeyFromDate(new Date(ms));if(key in monthTotals){monthTotals[key].gross+=azAdminLedgerNum(row.gross);monthTotals[key].profit+=azAdminLedgerProfit(row);}});
-  azAdminRenderBarRows('#salesMonthlyTrend',monthKeys.map(k=>({label:azAdminMonthLabel(k),value:monthTotals[k].gross,valueText:'RM'+azAdminMoney(monthTotals[k].gross)+' • Net RM'+azAdminMoney(monthTotals[k].profit)})),{empty:'No paid revenue for the last 6 months.'});
+  window.__azAdminSalesTrendRecords=records;
+  azAdminRenderMonthlySalesProfitTrend(records);
 
   const sum=azAdminLedgerSummary(records);const cats=[['PA/BM',sum.categories.pabm],['Software',sum.categories.software],['CAD Tools',sum.categories.cad],['Hardware / PC',sum.categories.hardware],['Service',sum.categories.service],['Other',sum.categories.other]];
   azAdminRenderBarRows('#salesCategoryBreakdown',cats.filter(([,v])=>v>0).map(([label,value])=>({label,value,valueText:'RM'+azAdminMoney(value)})),{empty:'No paid category sales yet.'});
@@ -5993,6 +6181,7 @@ async function loadPayments(forceLoad=false){
   azAdminSetText('#payTotalPABM',azAdminMoney(totals.categories.pabm));azAdminSetText('#payTotalSoftware',azAdminMoney(totals.categories.software));azAdminSetText('#payTotalCAD',azAdminMoney(totals.categories.cad));azAdminSetText('#payTotalHardware',azAdminMoney(totals.categories.hardware));azAdminSetText('#payTotalService',azAdminMoney(totals.categories.service));azAdminSetText('#payTotalOther',azAdminMoney(totals.categories.other));
   azAdminSetText('#payTotalAll',azAdminMoney(totals.gross));azAdminSetText('#payTotalProductCost',azAdminMoney(totals.productCost));azAdminSetText('#payTotalShippingCost',azAdminMoney(totals.shippingCost));azAdminSetText('#payTotalFee',azAdminMoney(totals.paymentFee));azAdminSetText('#payTotalCommission',azAdminMoney(totals.commission));azAdminSetText('#payTotalOtherCost',azAdminMoney(totals.otherCost));azAdminSetText('#payTotalCost',azAdminMoney(totals.totalCost));azAdminSetText('#payTotalNet',azAdminMoney(totals.profit));azAdminSetText('#payTotalDiscount',azAdminMoney(totals.discount));azAdminSetText('#payTotalShippingCharge',azAdminMoney(totals.shippingCharge));
   azAdminSetText('#payPendingCount',totals.pending);azAdminSetText('#payPaidCount',totals.paid);azAdminSetText('#payQuotationCount',totals.quotation);azAdminSetText('#payRecordCount',totals.total);
+  azAdminInitSalesTrendControls();
   azAdminRenderSalesOverviewCharts(records);
   try{azAdminSaveOverviewSalesCache({allGross:totals.gross,netAfterFee:totals.profit,paidCount:totals.paid,source:'sales-receipts-canonical-ledger'});}catch(e){console.warn('Analytics cache bridge skipped:',e);}
 
