@@ -1,275 +1,297 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-title AnyDesk + TeamViewer + RustDesk Auto Install and Send ID
+chcp 65001 >nul 2>&1
+title AZOBSS UltraViewer Remote Support
 color 0A
 
+set "PHONE=601135600723"
+set "UV_DOWNLOAD_PAGE=https://www.ultraviewer.net/en/download.html"
+set "UV_FALLBACK_URL=https://dl2.ultraviewer.net/UltraViewer_setup_6.6_en.exe"
+set "UV_TEMP=%TEMP%\AZOBSS_UltraViewer_Latest.exe"
+set "LOG=%TEMP%\AZOBSS_UltraViewer_Remote.log"
+
 :: ============================================================
-:: AUTO INSTALL / RUN:
-::   1. AnyDesk
-::   2. TeamViewer
-::   3. RustDesk
-::
-:: AUTO GET ID:
-::   - AnyDesk ID
-::   - TeamViewer ID
-::   - RustDesk ID
-::
-:: Then open WhatsApp Web with all IDs filled in automatically.
+:: AZOBSS UltraViewer Remote Support
+:: - Auto elevate to Administrator
+:: - Detect official latest UltraViewer installer URL from download page
+:: - Fallback to official dl2 URL if the page cannot be parsed
+:: - Silent install / update UltraViewer
+:: - Launch UltraViewer
+:: - Capture the UltraViewer window (ID + Password) and send to AZOBSS WhatsApp
 :: ============================================================
 
-:: =========================
-:: ADMIN CHECK
-:: =========================
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+:: Elevate once
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p=New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent());if($p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){exit 0}else{exit 1}" >nul 2>&1
+if errorlevel 1 (
+    if /I "%~1"=="--elevated" (
+        echo [FAILED] Administrator mode tidak dapat disahkan.
+        pause
+        exit /b 10
+    )
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -ArgumentList '--elevated' -Verb RunAs" >nul 2>&1
     exit /b
 )
 
-:: =========================
-:: SETTINGS
-:: =========================
-set "PHONE=60192554232"
-
-set "ANYDESK_URL=https://download.anydesk.com/AnyDesk.exe"
-set "ANYDESK_TEMP=%TEMP%\AZOBSS_AnyDesk.exe"
-set "ANYDESK_EXE1=C:\Program Files (x86)\AnyDesk\AnyDesk.exe"
-set "ANYDESK_EXE2=C:\Program Files\AnyDesk\AnyDesk.exe"
-
-set "TEAMVIEWER_URL=https://download.teamviewer.com/download/TeamViewer_Setup_x64.exe"
-set "TEAMVIEWER_TEMP=%TEMP%\AZOBSS_TeamViewer_Setup_x64.exe"
-set "TEAMVIEWER_EXE1=C:\Program Files\TeamViewer\TeamViewer.exe"
-set "TEAMVIEWER_EXE2=C:\Program Files (x86)\TeamViewer\TeamViewer.exe"
-
-set "RUSTDESK_TEMP=%TEMP%\AZOBSS_RustDesk.exe"
-set "RUSTDESK_EXE1=C:\Program Files\RustDesk\rustdesk.exe"
-set "RUSTDESK_EXE2=C:\Program Files (x86)\RustDesk\rustdesk.exe"
-
-set "ANYDESK_ID="
-set "TEAMVIEWER_ID="
-set "RUSTDESK_ID="
-
 cls
 echo ============================================================
-echo   ANYDESK + TEAMVIEWER + RUSTDESK
-echo   AUTO DOWNLOAD / INSTALL / GET ID / SEND WHATSAPP
+echo           AZOBSS ULTRAVIEWER REMOTE SUPPORT
 echo ============================================================
 echo.
+> "%LOG%" echo [%date% %time%] START
 
-:: ============================================================
-:: ANYDESK
-:: ============================================================
-echo [1/3] ANYDESK
-echo ------------------------------------------------------------
-taskkill /f /im AnyDesk.exe >nul 2>&1
+:: ------------------------------------------------------------
+:: 1/4 - Discover latest official installer and download
+:: ------------------------------------------------------------
+echo [1/4] Mencari versi UltraViewer rasmi terkini...
+set "AZOBSS_UV_PAGE=%UV_DOWNLOAD_PAGE%"
+set "AZOBSS_UV_FALLBACK=%UV_FALLBACK_URL%"
+set "AZOBSS_UV_TEMP=%UV_TEMP%"
 
-if not exist "%ANYDESK_EXE1%" if not exist "%ANYDESK_EXE2%" (
-    echo Downloading AnyDesk...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri '%ANYDESK_URL%' -OutFile '%ANYDESK_TEMP%'"
-
-    if not exist "%ANYDESK_TEMP%" (
-        echo [FAILED] AnyDesk download failed.
-        goto ANYDESK_GET_ID
-    )
-
-    echo Installing AnyDesk silently...
-    "%ANYDESK_TEMP%" --install "C:\Program Files (x86)\AnyDesk" --silent --create-desktop-icon
-    timeout /t 5 /nobreak >nul
-    del /q "%ANYDESK_TEMP%" >nul 2>&1
-) else (
-    echo [OK] AnyDesk already installed.
-)
-
-if exist "%ANYDESK_EXE1%" (
-    "%ANYDESK_EXE1%" --start-service >nul 2>&1
-    start "" "%ANYDESK_EXE1%"
-) else if exist "%ANYDESK_EXE2%" (
-    "%ANYDESK_EXE2%" --start-service >nul 2>&1
-    start "" "%ANYDESK_EXE2%"
-)
-timeout /t 3 /nobreak >nul
-
-:ANYDESK_GET_ID
-echo Getting AnyDesk ID...
-
-if exist "%ANYDESK_EXE1%" (
-    for /f "usebackq delims=" %%I in (`"%ANYDESK_EXE1%" --get-id 2^>nul`) do if not defined ANYDESK_ID set "ANYDESK_ID=%%I"
-)
-if not defined ANYDESK_ID if exist "%ANYDESK_EXE2%" (
-    for /f "usebackq delims=" %%I in (`"%ANYDESK_EXE2%" --get-id 2^>nul`) do if not defined ANYDESK_ID set "ANYDESK_ID=%%I"
-)
-
-if defined ANYDESK_ID (
-    for /f "tokens=* delims= " %%I in ("!ANYDESK_ID!") do set "ANYDESK_ID=%%I"
-    echo [OK] AnyDesk ID: !ANYDESK_ID!
-) else (
-    set "ANYDESK_ID=NOT AVAILABLE"
-    echo [WARNING] AnyDesk ID not available.
-)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
+"$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;" ^
+"$page=$env:AZOBSS_UV_PAGE; $fallback=$env:AZOBSS_UV_FALLBACK; $dest=$env:AZOBSS_UV_TEMP; $url=$null;" ^
+"try {" ^
+"  $r=Invoke-WebRequest -UseBasicParsing -Uri $page -Headers @{'User-Agent'='Mozilla/5.0 AZOBSS-Remote-Support'};" ^
+"  $m=[regex]::Matches([string]$r.Content,'(?i)(?:href|url)\s*=\s*[\x22\x27]([^\x22\x27]*UltraViewer_setup_[0-9.]+_en\.exe(?:\?[^\x22\x27]*)?)[\x22\x27]');" ^
+"  if($m.Count -gt 0){ $u=$m[0].Groups[1].Value; if($u -match '^https?://'){ $url=$u } elseif($u.StartsWith('//')){ $url='https:'+$u } elseif($u.StartsWith('/')){ $url='https://www.ultraviewer.net'+$u } else { $url=(New-Object System.Uri((New-Object System.Uri($page)),$u)).AbsoluteUri } }" ^
+"} catch { Write-Host ('[WARN] Halaman download tidak dapat dibaca: ' + $_.Exception.Message) }" ^
+"if(-not $url){$url=$fallback; Write-Host ('[WARN] Menggunakan fallback rasmi: ' + $url)} else {Write-Host ('[OK] Link rasmi dikesan: ' + $url)};" ^
+"Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -Headers @{'User-Agent'='Mozilla/5.0 AZOBSS-Remote-Support'};" ^
+"if(-not (Test-Path -LiteralPath $dest)){throw 'Fail installer UltraViewer tidak dijumpai selepas download.'};" ^
+"$f=Get-Item -LiteralPath $dest; if($f.Length -lt 500000){throw ('Installer terlalu kecil / tidak sah: ' + $f.Length + ' bytes')};" ^
+"$v=$f.VersionInfo.ProductVersion; if($v){Write-Host ('[OK] Product version: ' + $v)};" ^
+"$sig=Get-AuthenticodeSignature -LiteralPath $dest; Write-Host ('[INFO] Digital signature: ' + $sig.Status);" ^
+"[IO.File]::WriteAllText(($dest+'.url.txt'),$url,[Text.UTF8Encoding]::new($false))"
+if errorlevel 1 goto ERROR_DOWNLOAD
+if not exist "%UV_TEMP%" goto ERROR_DOWNLOAD
 
 echo.
+echo [2/4] Memasang / mengemas kini UltraViewer...
+"%UV_TEMP%" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+set "INSTALL_RC=!errorlevel!"
+echo [%date% %time%] installer exit=!INSTALL_RC!>>"%LOG%"
 
-:: ============================================================
-:: TEAMVIEWER
-:: ============================================================
-echo [2/3] TEAMVIEWER
-echo ------------------------------------------------------------
-
-if not exist "%TEAMVIEWER_EXE1%" if not exist "%TEAMVIEWER_EXE2%" (
-    echo Downloading latest TeamViewer 64-bit...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri '%TEAMVIEWER_URL%' -OutFile '%TEAMVIEWER_TEMP%'"
-
-    if not exist "%TEAMVIEWER_TEMP%" (
-        echo [FAILED] TeamViewer download failed.
-        goto TEAMVIEWER_GET_ID
-    )
-
-    echo Installing TeamViewer...
-    echo Trying unattended EXE install first...
-    start /wait "" "%TEAMVIEWER_TEMP%" /S
-    timeout /t 8 /nobreak >nul
-
-    :: TeamViewer does not officially guarantee silent deployment for the
-    :: public EXE. If /S did not install it, open the already-downloaded
-    :: official installer normally and wait until installation finishes.
-    if not exist "%TEAMVIEWER_EXE1%" if not exist "%TEAMVIEWER_EXE2%" (
-        echo.
-        echo [INFO] Silent EXE install was not completed.
-        echo Opening the downloaded TeamViewer installer...
-        start /wait "" "%TEAMVIEWER_TEMP%"
-        timeout /t 5 /nobreak >nul
-    )
-
-    del /q "%TEAMVIEWER_TEMP%" >nul 2>&1
-) else (
-    echo [OK] TeamViewer already installed.
+call :FIND_ULTRAVIEWER
+if not defined UV_EXE (
+    echo       Silent install belum menghasilkan aplikasi. Cuba installer biasa...
+    start /wait "" "%UV_TEMP%"
+    call :FIND_ULTRAVIEWER
 )
+if not defined UV_EXE goto ERROR_INSTALL
 
-sc start TeamViewer >nul 2>&1
-timeout /t 2 /nobreak >nul
+del /q "%UV_TEMP%" >nul 2>&1
+del /q "%UV_TEMP%.url.txt" >nul 2>&1
 
-if exist "%TEAMVIEWER_EXE1%" (
-    start "" "%TEAMVIEWER_EXE1%" --Minimize
-) else if exist "%TEAMVIEWER_EXE2%" (
-    start "" "%TEAMVIEWER_EXE2%" --Minimize
-)
+echo       UltraViewer READY.
+echo       !UV_EXE!
+echo [%date% %time%] UltraViewer path=!UV_EXE!>>"%LOG%"
+
+:: ------------------------------------------------------------
+:: 3/4 - Launch UltraViewer
+:: ------------------------------------------------------------
+echo.
+echo [3/4] Membuka UltraViewer dan menunggu ID / Password...
+taskkill /f /im UltraViewer_Desktop.exe >nul 2>&1
+start "" "!UV_EXE!"
 timeout /t 5 /nobreak >nul
 
-:TEAMVIEWER_GET_ID
-echo Getting TeamViewer ID...
+:: ------------------------------------------------------------
+:: 4/4 - Screenshot UltraViewer and send to WhatsApp
+:: ------------------------------------------------------------
+echo [4/4] Menyediakan ID / Password untuk WhatsApp AZOBSS...
+set "AZOBSS_SELF=%~f0"
+powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -Command "$c=[IO.File]::ReadAllText($env:AZOBSS_SELF);$m=':__POWERSHELL_PAYLOAD__';$i=$c.LastIndexOf($m);if($i -lt 0){exit 90};$ps=$c.Substring($i+$m.Length);Invoke-Expression $ps"
+set "RC=%errorlevel%"
 
-:: TeamViewer stores a reference copy of ClientID in the Windows registry.
-:: PowerShell is used so large DWORD values are converted correctly.
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$paths=@('Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\TeamViewer','Registry::HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer'); foreach($p in $paths){ try { $v=(Get-ItemProperty -Path $p -Name ClientID -ErrorAction Stop).ClientID; if($null -ne $v){ if($v -is [int]){ ([uint64]([uint32]$v)).ToString() } else { ([uint64]$v).ToString() }; break } } catch{} }"`) do (
-    if not defined TEAMVIEWER_ID set "TEAMVIEWER_ID=%%I"
-)
-
-if defined TEAMVIEWER_ID (
-    echo [OK] TeamViewer ID: !TEAMVIEWER_ID!
-) else (
-    set "TEAMVIEWER_ID=NOT AVAILABLE"
-    echo [WARNING] TeamViewer ID not available yet.
-)
-echo.
-
-:: ============================================================
-:: RUSTDESK
-:: ============================================================
-echo [3/3] RUSTDESK
-echo ------------------------------------------------------------
-
-if not exist "%RUSTDESK_EXE1%" if not exist "%RUSTDESK_EXE2%" (
-    echo Finding latest official RustDesk Windows x86_64 release...
-
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $headers=@{'User-Agent'='AZOBSS-Installer'}; $r=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/rustdesk/rustdesk/releases/latest'; $a=$r.assets ^| Where-Object { $_.name -match '^rustdesk-[0-9].*-x86_64\.exe$' -and $_.name -notmatch 'win7|sciter' } ^| Select-Object -First 1; if(-not $a){ $a=$r.assets ^| Where-Object { $_.name -match 'x86_64\.exe$' } ^| Select-Object -First 1 }; if(-not $a){ throw 'RustDesk Windows x86_64 asset not found' }; Write-Host ('Downloading ' + $a.name + '...'); Invoke-WebRequest -UseBasicParsing -Uri $a.browser_download_url -OutFile '%RUSTDESK_TEMP%'"
-
-    if not exist "%RUSTDESK_TEMP%" (
-        echo [FAILED] RustDesk download failed.
-        goto RUSTDESK_GET_ID
-    )
-
-    echo Installing RustDesk silently...
-    "%RUSTDESK_TEMP%" --silent-install
-    timeout /t 8 /nobreak >nul
-    del /q "%RUSTDESK_TEMP%" >nul 2>&1
-) else (
-    echo [OK] RustDesk already installed.
-)
-
-sc start RustDesk >nul 2>&1
-timeout /t 2 /nobreak >nul
-
-if exist "%RUSTDESK_EXE1%" (
-    start "" "%RUSTDESK_EXE1%"
-) else if exist "%RUSTDESK_EXE2%" (
-    start "" "%RUSTDESK_EXE2%"
-)
-timeout /t 5 /nobreak >nul
-
-:RUSTDESK_GET_ID
-echo Getting RustDesk ID...
-
-if exist "%RUSTDESK_EXE1%" (
-    for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$x = ^& '%RUSTDESK_EXE1%' --get-id ^| Out-String; $x.Trim()"`) do (
-        if not defined RUSTDESK_ID set "RUSTDESK_ID=%%I"
-    )
-)
-
-if not defined RUSTDESK_ID if exist "%RUSTDESK_EXE2%" (
-    for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$x = ^& '%RUSTDESK_EXE2%' --get-id ^| Out-String; $x.Trim()"`) do (
-        if not defined RUSTDESK_ID set "RUSTDESK_ID=%%I"
-    )
-)
-
-if defined RUSTDESK_ID (
-    echo [OK] RustDesk ID: !RUSTDESK_ID!
-) else (
-    set "RUSTDESK_ID=NOT AVAILABLE"
-    echo [WARNING] RustDesk ID not available yet.
+if not "%RC%"=="0" (
+    echo.
+    echo [WARNING] UltraViewer sudah dibuka, tetapi penghantaran automatik ke WhatsApp tidak lengkap.
+    echo           Sila hantar ID dan Password UltraViewer secara manual kepada AZOBSS.
+    echo Log: %LOG%
+    start "" "https://wa.me/%PHONE%?text=AZOBSS%%20Remote%%20Support%%20-%%20UltraViewer%%20sudah%%20dibuka.%%20Saya%%20akan%%20hantar%%20ID%%20dan%%20Password."
+    pause
+    exit /b 0
 )
 
 echo.
-echo ============================================================
-echo                 REMOTE SUPPORT IDs
-echo ============================================================
-echo AnyDesk    : !ANYDESK_ID!
-echo TeamViewer : !TEAMVIEWER_ID!
-echo RustDesk   : !RUSTDESK_ID!
-echo ============================================================
-echo.
-
-:: =========================
-:: BUILD WHATSAPP MESSAGE
-:: =========================
-set "MSGFILE=%TEMP%\AZOBSS_Remote_IDs.txt"
-> "%MSGFILE%" (
-    echo Remote Support IDs
-    echo AnyDesk: !ANYDESK_ID!
-    echo TeamViewer: !TEAMVIEWER_ID!
-    echo RustDesk: !RUSTDESK_ID!
-)
-
-set "ENCODED_MSG="
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$m=Get-Content -LiteralPath '%MSGFILE%' -Raw; [uri]::EscapeDataString($m)"`) do (
-    set "ENCODED_MSG=%%I"
-)
-
-del /q "%MSGFILE%" >nul 2>&1
-
-if not defined ENCODED_MSG (
-    set "ENCODED_MSG=Remote%%20Support%%20IDs%%0AAnyDesk%%3A%%20!ANYDESK_ID!%%0ATeamViewer%%3A%%20!TEAMVIEWER_ID!%%0ARustDesk%%3A%%20!RUSTDESK_ID!"
-)
-
-echo Opening WhatsApp Web with all IDs...
-start "" "https://web.whatsapp.com/send?phone=%PHONE%&text=!ENCODED_MSG!"
-
-echo.
-echo DONE - AnyDesk, TeamViewer and RustDesk IDs collected.
-echo WhatsApp opened with all IDs.
-echo.
+echo Selesai. UltraViewer sudah dibuka dan maklumat remote dihantar ke WhatsApp.
 pause
-exit /b
+exit /b 0
+
+:: ============================================================
+:: Helpers
+:: ============================================================
+:FIND_ULTRAVIEWER
+set "UV_EXE="
+for %%P in (
+    "C:\Program Files (x86)\UltraViewer\UltraViewer_Desktop.exe"
+    "C:\Program Files\UltraViewer\UltraViewer_Desktop.exe"
+    "%LOCALAPPDATA%\UltraViewer\UltraViewer_Desktop.exe"
+) do (
+    if not defined UV_EXE if exist "%%~P" set "UV_EXE=%%~P"
+)
+if defined UV_EXE exit /b 0
+
+for /f "usebackq delims=" %%P in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$roots=@($env:ProgramFiles,${env:ProgramFiles(x86)},$env:LOCALAPPDATA) ^| Where-Object {$_ -and (Test-Path $_)}; foreach($r in $roots){$f=Get-ChildItem -Path $r -Filter 'UltraViewer_Desktop.exe' -File -Recurse -ErrorAction SilentlyContinue ^| Select-Object -First 1; if($f){$f.FullName; break}}"`) do (
+    if not defined UV_EXE set "UV_EXE=%%P"
+)
+exit /b 0
+
+:ERROR_DOWNLOAD
+echo.
+echo [FAILED] UltraViewer tidak berjaya dimuat turun dari sumber rasmi.
+echo Cuba download manual: %UV_DOWNLOAD_PAGE%
+echo Log: %LOG%
+pause
+exit /b 1
+
+:ERROR_INSTALL
+echo.
+echo [FAILED] UltraViewer tidak berjaya dipasang / dikesan.
+echo Installer rasmi boleh dimuat turun di: %UV_DOWNLOAD_PAGE%
+echo Log: %LOG%
+pause
+exit /b 2
+
+:__POWERSHELL_PAYLOAD__
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
+
+$phone = '601135600723'
+$shot  = Join-Path $env:TEMP 'AZOBSS_UltraViewer_Full.png'
+$log   = Join-Path $env:TEMP 'AZOBSS_UltraViewer_Remote.log'
+
+function Log([string]$s) {
+    $line = ('{0:yyyy-MM-dd HH:mm:ss}  {1}' -f (Get-Date), $s)
+    Add-Content -LiteralPath $log -Value $line -Encoding UTF8
+    Write-Host $s
+}
+
+$native = @'
+using System;
+using System.Text;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Drawing;
+using System.Drawing.Imaging;
+
+public static class AZWinUV {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+    public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT r);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+    [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+    [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr hwnd, IntPtr hdcBlt, uint nFlags);
+    [DllImport("user32.dll", SetLastError=true)] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+    [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+
+    public static string Title(IntPtr h) {
+        var b = new StringBuilder(1024); GetWindowText(h,b,b.Capacity); return b.ToString();
+    }
+
+    public static IntPtr FindUltraViewerWindow() {
+        IntPtr best = IntPtr.Zero; long bestArea = 0;
+        EnumWindows(delegate(IntPtr h, IntPtr l) {
+            if (!IsWindowVisible(h)) return true;
+            uint pid; GetWindowThreadProcessId(h, out pid); if (pid == 0) return true;
+            try {
+                Process p = Process.GetProcessById((int)pid);
+                string n = (p.ProcessName ?? "").ToLowerInvariant();
+                string t = Title(h).ToLowerInvariant();
+                if (!n.Contains("ultraviewer") && !t.Contains("ultraviewer")) return true;
+                RECT r; if (!GetWindowRect(h, out r)) return true;
+                long w=r.Right-r.Left, ht=r.Bottom-r.Top, area=w*ht;
+                if (w>=280 && ht>=220 && area>bestArea) { best=h; bestArea=area; }
+            } catch { }
+            return true;
+        }, IntPtr.Zero);
+        return best;
+    }
+
+    public static IntPtr FindVisibleTitle(string needle) {
+        IntPtr found = IntPtr.Zero;
+        EnumWindows(delegate(IntPtr h, IntPtr l) {
+            if (IsWindowVisible(h)) {
+                string t = Title(h);
+                if (!String.IsNullOrWhiteSpace(t) && t.IndexOf(needle,StringComparison.OrdinalIgnoreCase)>=0) { found=h; return false; }
+            }
+            return true;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    public static bool CaptureWindow(IntPtr h, string path, out string method) {
+        method=""; RECT r; if(!GetWindowRect(h,out r)) return false;
+        int w=r.Right-r.Left, ht=r.Bottom-r.Top; if(w<100 || ht<100) return false;
+        using(var bmp=new Bitmap(w,ht,PixelFormat.Format32bppArgb)) {
+            bool ok=false;
+            try { using(var g=Graphics.FromImage(bmp)){g.CopyFromScreen(r.Left,r.Top,0,0,new Size(w,ht));} ok=true; method="CopyFromScreen"; } catch { ok=false; }
+            if(!ok){using(var g=Graphics.FromImage(bmp)){IntPtr hdc=g.GetHdc(); try{ok=PrintWindow(h,hdc,2);}finally{g.ReleaseHdc(hdc);}} if(ok) method="PrintWindow";}
+            if(ok) bmp.Save(path,ImageFormat.Png); return ok;
+        }
+    }
+}
+'@
+Add-Type -TypeDefinition $native -ReferencedAssemblies 'System.dll','System.Drawing.dll'
+
+try { Remove-Item -LiteralPath $shot -Force -ErrorAction SilentlyContinue } catch {}
+$console=[AZWinUV]::GetConsoleWindow()
+$cmdWindow=[AZWinUV]::FindVisibleTitle('AZOBSS UltraViewer Remote Support')
+$h=[IntPtr]::Zero
+$top=$false
+
+try {
+    Log 'Mencari window UltraViewer...'
+    for($i=0;$i -lt 60 -and $h -eq [IntPtr]::Zero;$i++) { $h=[AZWinUV]::FindUltraViewerWindow(); if($h -eq [IntPtr]::Zero){Start-Sleep -Seconds 1} }
+    if($h -eq [IntPtr]::Zero){throw 'Window UltraViewer tidak dijumpai.'}
+
+    if($console -ne [IntPtr]::Zero -and $console -ne $h){[AZWinUV]::ShowWindow($console,0)|Out-Null}
+    if($cmdWindow -ne [IntPtr]::Zero -and $cmdWindow -ne $h -and $cmdWindow -ne $console){[AZWinUV]::ShowWindow($cmdWindow,0)|Out-Null}
+
+    [AZWinUV]::ShowWindow($h,9)|Out-Null; [AZWinUV]::BringWindowToTop($h)|Out-Null; [AZWinUV]::SetForegroundWindow($h)|Out-Null
+    $flags=0x0001 -bor 0x0002 -bor 0x0040
+    [AZWinUV]::SetWindowPos($h,[IntPtr](-1),0,0,0,0,$flags)|Out-Null; $top=$true
+    Log 'Tunggu supaya ID dan Password UltraViewer dipaparkan...'; Start-Sleep -Seconds 7
+
+    $method=''; if(-not [AZWinUV]::CaptureWindow($h,$shot,[ref]$method)){throw 'Screenshot UltraViewer gagal.'}
+    Log ('Screenshot berjaya: '+$shot)
+    [AZWinUV]::SetWindowPos($h,[IntPtr](-2),0,0,0,0,$flags)|Out-Null; $top=$false
+
+    $img=[System.Drawing.Image]::FromFile($shot)
+    try {
+        $clip=$false
+        for($i=0;$i -lt 10 -and -not $clip;$i++){try{[System.Windows.Forms.Clipboard]::SetImage($img);$clip=$true}catch{Start-Sleep -Milliseconds 400}}
+        if(-not $clip){throw 'Gagal copy screenshot ke Clipboard.'}
+    } finally {$img.Dispose()}
+
+    $text=[uri]::EscapeDataString('AZOBSS Remote Support - UltraViewer ID & Password')
+    $waOpened=$false
+    try {Start-Process ('whatsapp://send?phone='+$phone+'&text='+$text) -ErrorAction Stop; $waOpened=$true} catch {}
+    if(-not $waOpened){Start-Process ('https://web.whatsapp.com/send?phone='+$phone+'&text='+$text)}
+
+    $wa=[IntPtr]::Zero
+    for($i=0;$i -lt 100 -and $wa -eq [IntPtr]::Zero;$i++){ $wa=[AZWinUV]::FindVisibleTitle('WhatsApp'); if($wa -eq [IntPtr]::Zero){Start-Sleep -Milliseconds 250} }
+    if($wa -eq [IntPtr]::Zero){throw 'Window WhatsApp tidak dijumpai.'}
+
+    [AZWinUV]::ShowWindow($wa,9)|Out-Null; [AZWinUV]::BringWindowToTop($wa)|Out-Null; [AZWinUV]::SetForegroundWindow($wa)|Out-Null
+    Start-Sleep -Milliseconds 1600
+    $ws=New-Object -ComObject WScript.Shell
+    $ws.SendKeys('^v'); Start-Sleep -Milliseconds 1000; $ws.SendKeys('{ENTER}')
+    Log 'Screenshot UltraViewer dihantar ke WhatsApp.'
+    exit 0
+}
+catch {
+    try{Log ('ERROR: '+$_.Exception.Message)}catch{}
+    exit 1
+}
+finally {
+    try{if($top -and $h -ne [IntPtr]::Zero){$flags=0x0001 -bor 0x0002 -bor 0x0040;[AZWinUV]::SetWindowPos($h,[IntPtr](-2),0,0,0,0,$flags)|Out-Null}}catch{}
+    try{if($console -ne [IntPtr]::Zero){[AZWinUV]::ShowWindow($console,9)|Out-Null};if($cmdWindow -ne [IntPtr]::Zero -and $cmdWindow -ne $console){[AZWinUV]::ShowWindow($cmdWindow,9)|Out-Null}}catch{}
+}
