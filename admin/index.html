@@ -3749,59 +3749,83 @@ body[data-dashboard-page="admin"] .topbar{
       </div>
 
       <h2>📊 Sales Analytics</h2>
-      <p class="az-section-help">Ringkasan jualan PA/BM, Software dan CAD Tools mengikut kategori dan status.</p>
-      <p class="tabs-note">Analytics untuk pantauan jualan. Untuk carian penuh, buka Payment Logs / Download Control.</p>
+      <p class="az-section-help">Financial reconciliation daripada ledger yang sama dengan Sales &amp; Receipts.</p>
+      <p class="tabs-note" id="analyticsSourceNotice">Memuatkan canonical Sales &amp; Receipts ledger…</p>
 
-      <div class="grid">
+      <div class="az-sales-snapshot-head"><div><h2>Revenue by Category</h2><p class="tabs-note">Paid sales sahaja. Nilai kategori menggunakan item yang sama seperti Sales Records.</p></div></div>
+      <div class="grid az-sales-quick-grid">
         <div class="card"><div class="stat-label">PA/BM Paid RM</div><div id="payTotalPABM" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Software Paid RM</div><div id="payTotalSoftware" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">CAD Tools Paid RM</div><div id="payTotalCAD" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">All Paid Gross RM</div><div id="payTotalAll" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">ToyyibPay Fee RM</div><div id="payTotalFee" class="stat-value">0</div><div class="az-kpi-note">RM1 × paid transaction</div></div>
-        <div class="card az-net-income-card"><div class="stat-label">Net After Fee RM</div><div id="payTotalNet" class="stat-value">0</div><div class="az-kpi-note">Final pendapatan bersih diterima</div></div>
+        <div class="card"><div class="stat-label">Hardware / PC Paid RM</div><div id="payTotalHardware" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Service Paid RM</div><div id="payTotalService" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Other Paid RM</div><div id="payTotalOther" class="stat-value">0</div></div>
+      </div>
+
+      <div class="az-sales-snapshot-head"><div><h2>Financial Reconciliation</h2><p class="tabs-note">Gross dan Net Profit kini ikut formula Sales &amp; Receipts: Gross − semua kos dalaman.</p></div></div>
+      <div class="grid az-sales-quick-grid">
+        <div class="card"><div class="stat-label">Paid Gross Sales RM</div><div id="payTotalAll" class="stat-value">0</div><div class="az-kpi-note">Jumlah dibayar pelanggan.</div></div>
+        <div class="card"><div class="stat-label">Product Cost RM</div><div id="payTotalProductCost" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Shipping Cost RM</div><div id="payTotalShippingCost" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Payment Fees RM</div><div id="payTotalFee" class="stat-value">0</div><div class="az-kpi-note">Fee sebenar setiap rekod/gateway.</div></div>
+        <div class="card"><div class="stat-label">Commission RM</div><div id="payTotalCommission" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Other Costs RM</div><div id="payTotalOtherCost" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Total Costs RM</div><div id="payTotalCost" class="stat-value">0</div><div class="az-kpi-note">Product + shipping + fee + commission + other.</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">Net Profit RM</div><div id="payTotalNet" class="stat-value">0</div><div class="az-kpi-note">Sama formula dengan Sales Records.</div></div>
+        <div class="card"><div class="stat-label">Discount Given RM</div><div id="payTotalDiscount" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Shipping Charged RM</div><div id="payTotalShippingCharge" class="stat-value">0</div></div>
       </div>
 
       <div class="split">
         <div class="card">
-          <h2>Payment Status</h2>
-          <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:0">
+          <h2>Ledger Status</h2>
+          <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:0">
             <div class="card"><div class="stat-label">Pending</div><div id="payPendingCount" class="stat-value">0</div></div>
-            <div class="card"><div class="stat-label">Verified/Paid</div><div id="payPaidCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Paid</div><div id="payPaidCount" class="stat-value">0</div></div>
+            <div class="card"><div class="stat-label">Quotation</div><div id="payQuotationCount" class="stat-value">0</div></div>
             <div class="card"><div class="stat-label">Total Records</div><div id="payRecordCount" class="stat-value">0</div></div>
           </div>
         </div>
         <div class="card">
           <h2>Quick Filter</h2>
+          <p class="tabs-note">Filter ini untuk senarai rekod terbaru di bawah; KPI utama kekal keseluruhan ledger.</p>
           <div class="toolbar">
             <select id="paymentCategoryFilter">
-              <option value="all">All</option>
+              <option value="all">All Records</option>
               <option value="pabm">PA/BM</option>
               <option value="software">Software</option>
               <option value="cad">CAD Tools</option>
+              <option value="hardware">Hardware / PC</option>
+              <option value="service">Service</option>
+              <option value="other">Other</option>
               <option value="pending">Pending Only</option>
-              <option value="paid" selected>Paid/Verified Only</option>
+              <option value="paid" selected>Paid Only</option>
             </select>
             <button class="btn" id="refreshPayments">Refresh Overview</button>
-            <button class="btn gray" data-tab="purchases" type="button">View All Payment Logs</button>
+            <button class="btn gray" data-tab="purchases" type="button">View Raw Payment Logs</button>
           </div>
         </div>
       </div>
 
       <div class="az-sales-snapshot-head">
         <div>
-          <h2>📈 Sales Analytics</h2>
-          <p class="tabs-note">Confirmed revenue dikira dari rekod Paid/Verified sahaja. Gross = sebelum caj; Net = selepas tolak caj ToyyibPay RM1 setiap transaksi.</p>
+          <h2>📈 Period Analytics</h2>
+          <p class="tabs-note">Gross, costs dan net profit menggunakan rekod Paid daripada canonical Sales &amp; Receipts ledger.</p>
         </div>
       </div>
 
       <div class="grid az-sales-quick-grid">
-        <div class="card"><div class="stat-label">Today Gross Sales RM</div><div id="salesTodayTotal" class="stat-value">0</div></div>
-        <div class="card az-net-income-card"><div class="stat-label">Today Net Sales RM</div><div id="salesTodayNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income hari ini</div></div>
-        <div class="card"><div class="stat-label">This Month Gross Sales RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
-        <div class="card az-net-income-card"><div class="stat-label">This Month Net Sales RM</div><div id="salesThisMonthNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income bulan ini</div></div>
-        <div class="card az-net-income-card"><div class="stat-label">This Year Net Sales RM</div><div id="salesThisYearNetTotal" class="stat-value">0</div><div class="az-kpi-note">Final income tahun ini</div></div>
+        <div class="card"><div class="stat-label">Today Gross RM</div><div id="salesTodayTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Today Costs RM</div><div id="salesTodayCostTotal" class="stat-value">0</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">Today Net Profit RM</div><div id="salesTodayNetTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Month Gross RM</div><div id="salesThisMonthTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Month Costs RM</div><div id="salesThisMonthCostTotal" class="stat-value">0</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">This Month Net Profit RM</div><div id="salesThisMonthNetTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Year Gross RM</div><div id="salesThisYearGrossTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">This Year Costs RM</div><div id="salesThisYearCostTotal" class="stat-value">0</div></div>
+        <div class="card az-net-income-card"><div class="stat-label">This Year Net Profit RM</div><div id="salesThisYearNetTotal" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">This Month Orders</div><div id="salesThisMonthOrders" class="stat-value">0</div></div>
-        <div class="card"><div class="stat-label">ToyyibPay Fee This Month RM</div><div id="salesThisMonthFeeTotal" class="stat-value">0</div></div>
+        <div class="card"><div class="stat-label">Payment Fees This Month RM</div><div id="salesThisMonthFeeTotal" class="stat-value">0</div></div>
         <div class="card"><div class="stat-label">Avg Gross Order RM</div><div id="salesAverageOrder" class="stat-value">0</div></div>
       </div>
 
@@ -3813,7 +3837,7 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
         <div class="card">
           <h2>Sales by Category</h2>
-          <p class="tabs-note">PA/BM, Software dan CAD Tools berdasarkan paid/verified records.</p>
+          <p class="tabs-note">Semua kategori daripada Paid Sales Records, termasuk Hardware / PC dan Service.</p>
           <div id="salesCategoryBreakdown" class="az-sales-chart-box"></div>
         </div>
       </div>
@@ -3821,7 +3845,7 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="split az-sales-analytics-split">
         <div class="card">
           <h2>Paid vs Pending</h2>
-          <p class="tabs-note">Status semua rekod yang berjaya dimuatkan.</p>
+          <p class="tabs-note">Status daripada canonical Sales &amp; Receipts ledger.</p>
           <div id="salesStatusBreakdown" class="az-sales-chart-box"></div>
         </div>
         <div class="card">
@@ -3832,7 +3856,7 @@ body[data-dashboard-page="admin"] .topbar{
       </div>
 
       <div class="card">
-        <h2>Latest 5 Payment Records</h2>
+        <h2>Latest 5 Ledger Records</h2>
         <div id="paymentsList" class="list"></div>
       </div>
     </section>
@@ -5818,187 +5842,163 @@ function azAdminLastMonthKeys(count=6){
   }
   return out;
 }
-function azAdminToyyibPayFeePerTransaction(){
-  // AZOBSS PATCH 389:
-  // ToyyibPay fee is RM1 for each paid/verified transaction.
-  // Keep as a function so it is easy to change later if the fee changes.
-  return 1;
+function azAdminToyyibPayFeePerTransaction(){return 1;}
+function azAdminNetAfterToyyibPay(gross, transactionCount){const fee=(Number(transactionCount||0)||0)*azAdminToyyibPayFeePerTransaction();return Math.max(0,(Number(gross||0)||0)-fee);}
+function azAdminPaidRevenueRecords(records){return (records||[]).filter(x=>!azAdminIsTestPaymentRecord(x)&&azAdminStatusBucket(x)==='paid'&&(Number(x.amount||0)||0)>0);}
+function azAdminLedgerNum(v){
+  const n=Number(String(v??'').replace(/[^0-9.-]/g,''));
+  return Number.isFinite(n)?n:0;
 }
-function azAdminNetAfterToyyibPay(gross, transactionCount){
-  const fee=(Number(transactionCount||0)||0) * azAdminToyyibPayFeePerTransaction();
-  return Math.max(0, (Number(gross||0)||0) - fee);
+function azAdminLedgerStatus(row={}){
+  return String(row.status||row.paymentStatus||'').trim().toLowerCase();
 }
-function azAdminPaidRevenueRecords(records){
-  return (records||[]).filter(x=>!azAdminIsTestPaymentRecord(x) && azAdminStatusBucket(x)==='paid' && (Number(x.amount||0)||0)>0);
+function azAdminLedgerIsPaid(row={}){ return azAdminLedgerStatus(row)==='paid'; }
+function azAdminLedgerDateMs(row={}){
+  const direct=azAdminLedgerNum(row.saleDateMs||row.paidAtMs||row.createdAtMs||row.updatedAtMs);
+  if(direct>0)return direct;
+  const raw=row.saleDateTime||row.saleDate||row.paidAt||row.createdAt||row.updatedAt||'';
+  const ms=Date.parse(raw);return Number.isFinite(ms)?ms:0;
 }
-function azAdminSalesProductName(x){
-  return String(x?.title || x?.name || x?.itemName || x?.filename || x?.itemCode || x?.productName || x?.productTitle || x?.product?.name || x?.product?.title || x?.productId || 'Purchase').trim() || 'Purchase';
+function azAdminLedgerItems(row={}){ return Array.isArray(row.items)?row.items:[]; }
+function azAdminLedgerCategories(row={}){
+  if(Array.isArray(row.categories)&&row.categories.length)return row.categories.map(x=>String(x||'other').toLowerCase());
+  return [String(row.category||'other').toLowerCase()];
+}
+function azAdminLedgerCategoryGross(row={}, wanted=[]){
+  const set=new Set(Array.isArray(wanted)?wanted:[wanted]);
+  const subtotal=azAdminLedgerNum(row.subtotal)||azAdminLedgerNum(row.gross);
+  const gross=azAdminLedgerNum(row.gross);
+  if(subtotal<=0||gross<=0)return 0;
+  const items=azAdminLedgerItems(row);
+  if(items.length){
+    const factor=gross/subtotal;
+    return items.filter(i=>set.has(String(i.category||'other').toLowerCase())).reduce((sum,i)=>sum+(azAdminLedgerNum(i.qty)||1)*azAdminLedgerNum(i.unitPrice)*factor,0);
+  }
+  return azAdminLedgerCategories(row).some(c=>set.has(c))?gross:0;
+}
+function azAdminLedgerCostParts(row={}){
+  const productCost=azAdminLedgerNum(row.productCost);
+  const shippingCost=azAdminLedgerNum(row.shippingCost);
+  const paymentFee=azAdminLedgerNum(row.paymentFee);
+  const commission=azAdminLedgerNum(row.commission);
+  const otherCost=azAdminLedgerNum(row.otherCost);
+  const calculated=productCost+shippingCost+paymentFee+commission+otherCost;
+  const stored=azAdminLedgerNum(row.totalCost);
+  const totalCost=stored>0||calculated===0?stored:calculated;
+  return {productCost,shippingCost,paymentFee,commission,otherCost,totalCost};
+}
+function azAdminLedgerProfit(row={}){
+  const gross=azAdminLedgerNum(row.gross);
+  const stored=Number(row.profit);
+  return Number.isFinite(stored)?stored:gross-azAdminLedgerCostParts(row).totalCost;
+}
+function azAdminLedgerStatusBucket(row={}){
+  const s=azAdminLedgerStatus(row);
+  if(s.startsWith('quote'))return 'quotation';
+  if(s==='paid')return 'paid';
+  if(['pending','deposit-paid','unpaid','waiting','processing','created','checkout','initiated'].includes(s)||!s)return 'pending';
+  if(['cancelled','canceled','refunded','void'].includes(s))return 'cancelled';
+  if(['failed','fail','expired'].includes(s))return 'failed';
+  return 'other';
+}
+function azAdminLedgerProductName(row={}){
+  const items=azAdminLedgerItems(row);
+  if(items.length)return String(items[0]?.name||'Purchase').trim()||'Purchase';
+  return String(row.productName||row.productTitle||row.itemName||row.title||row.name||row.filename||row.itemCode||'Purchase').trim()||'Purchase';
+}
+function azAdminLedgerPrimaryCategory(row={}){
+  const cats=azAdminLedgerCategories(row);
+  const labels={pabm:'PA/BM',software:'Software',cad:'CAD Tools',physical:'Hardware','computer-it':'Computer & IT',service:'Service',other:'Other',mixed:'Mixed'};
+  return cats.length===1?(labels[cats[0]]||'Other'):'Mixed';
+}
+function azAdminLedgerSummary(rows=[]){
+  const all=Array.isArray(rows)?rows:[];
+  const paid=all.filter(azAdminLedgerIsPaid);
+  const out={gross:0,subtotal:0,discount:0,shippingCharge:0,productCost:0,shippingCost:0,paymentFee:0,commission:0,otherCost:0,totalCost:0,profit:0,paid:paid.length,pending:0,quotation:0,total:all.length,categories:{pabm:0,software:0,cad:0,hardware:0,service:0,other:0}};
+  all.forEach(row=>{const b=azAdminLedgerStatusBucket(row);if(b==='pending')out.pending++;if(b==='quotation')out.quotation++;});
+  paid.forEach(row=>{
+    const gross=azAdminLedgerNum(row.gross);const c=azAdminLedgerCostParts(row);
+    out.gross+=gross;out.subtotal+=azAdminLedgerNum(row.subtotal);out.discount+=azAdminLedgerNum(row.discount);out.shippingCharge+=azAdminLedgerNum(row.shippingCharge);
+    out.productCost+=c.productCost;out.shippingCost+=c.shippingCost;out.paymentFee+=c.paymentFee;out.commission+=c.commission;out.otherCost+=c.otherCost;out.totalCost+=c.totalCost;out.profit+=azAdminLedgerProfit(row);
+    out.categories.pabm+=azAdminLedgerCategoryGross(row,['pabm']);
+    out.categories.software+=azAdminLedgerCategoryGross(row,['software']);
+    out.categories.cad+=azAdminLedgerCategoryGross(row,['cad']);
+    out.categories.hardware+=azAdminLedgerCategoryGross(row,['physical','computer-it']);
+    out.categories.service+=azAdminLedgerCategoryGross(row,['service']);
+    const known=out.categories; // marker only; Other is calculated per-row below.
+    const allocated=azAdminLedgerCategoryGross(row,['pabm','software','cad','physical','computer-it','service']);
+    out.categories.other+=Math.max(0,gross-allocated);
+  });
+  return out;
+}
+async function azAdminWaitForSalesLedgerBridge(timeoutMs=7000){
+  const started=Date.now();
+  while(typeof window.azSalesReceiptsAnalyticsSnapshot!=='function'&&Date.now()-started<timeoutMs){await new Promise(r=>setTimeout(r,100));}
+  return typeof window.azSalesReceiptsAnalyticsSnapshot==='function';
+}
+async function azAdminLoadCanonicalSalesLedger(force=false){
+  const ready=await azAdminWaitForSalesLedgerBridge();
+  if(!ready)throw new Error('Sales & Receipts ledger module is not ready.');
+  const snapshot=await window.azSalesReceiptsAnalyticsSnapshot({force});
+  const rows=Array.isArray(snapshot?.rows)?snapshot.rows:[];
+  return {rows,source:snapshot?.source||'sales-receipts-ledger',generatedAt:snapshot?.generatedAt||Date.now()};
 }
 function azAdminRenderBarRows(targetSel, rows, opts={}){
-  const box=$(targetSel);
-  if(!box) return;
-  rows=Array.isArray(rows)?rows:[];
-  const empty=opts.empty || 'No data yet.';
-  if(!rows.length){ box.innerHTML='<div class="az-sales-empty">'+esc(empty)+'</div>'; return; }
+  const box=$(targetSel);if(!box)return;rows=Array.isArray(rows)?rows:[];const empty=opts.empty||'No data yet.';
+  if(!rows.length){box.innerHTML='<div class="az-sales-empty">'+esc(empty)+'</div>';return;}
   const max=Math.max(...rows.map(r=>Number(r.value||0)||0),1);
-  box.innerHTML=rows.map(r=>{
-    const pct=Math.max(3,Math.min(100,((Number(r.value||0)||0)/max)*100));
-    const fillClass=r.fillClass?(' '+String(r.fillClass).replace(/[^a-z0-9_-]/gi,'')):'';
-    const label=esc(r.label||'-');
-    const value=esc(r.valueText||String(r.value||0));
-    return `<div class="az-sales-chart-row"><div class="az-sales-chart-label" title="${label}">${label}</div><div class="az-sales-chart-track"><div class="az-sales-chart-fill${fillClass}" style="width:${pct.toFixed(1)}%"></div></div><div class="az-sales-chart-value">${value}</div></div>`;
-  }).join('') + (opts.note?'<div class="az-sales-small-note">'+esc(opts.note)+'</div>':'');
+  box.innerHTML=rows.map(r=>{const pct=Math.max(3,Math.min(100,((Number(r.value||0)||0)/max)*100));const fillClass=r.fillClass?(' '+String(r.fillClass).replace(/[^a-z0-9_-]/gi,'')):'';const label=esc(r.label||'-');const value=esc(r.valueText||String(r.value||0));return `<div class="az-sales-chart-row"><div class="az-sales-chart-label" title="${label}">${label}</div><div class="az-sales-chart-track"><div class="az-sales-chart-fill${fillClass}" style="width:${pct.toFixed(1)}%"></div></div><div class="az-sales-chart-value">${value}</div></div>`;}).join('')+(opts.note?'<div class="az-sales-small-note">'+esc(opts.note)+'</div>':'');
 }
 function azAdminRenderTopProducts(rows){
-  const box=$('#salesTopProducts');
-  if(!box) return;
-  if(!rows.length){ box.innerHTML='<div class="az-sales-empty">No confirmed product sales yet.</div>'; return; }
-  box.innerHTML=rows.slice(0,5).map((r,i)=>{
-    const meta=[r.category, (r.count||0)+' order'+((r.count||0)>1?'s':'')].filter(Boolean).join(' • ');
-    return `<div class="az-sales-top-product"><div class="az-sales-rank">${i+1}</div><div><div class="az-sales-product-title">${esc(r.name)}</div><div class="az-sales-product-meta">${esc(meta)}</div></div><div class="az-sales-product-amount">RM${azAdminMoney(r.amount)}</div></div>`;
-  }).join('');
+  const box=$('#salesTopProducts');if(!box)return;if(!rows.length){box.innerHTML='<div class="az-sales-empty">No paid product sales yet.</div>';return;}
+  box.innerHTML=rows.slice(0,5).map((r,i)=>{const meta=[r.category,(r.count||0)+' item'+((r.count||0)>1?'s':'')].filter(Boolean).join(' • ');return `<div class="az-sales-top-product"><div class="az-sales-rank">${i+1}</div><div><div class="az-sales-product-title">${esc(r.name)}</div><div class="az-sales-product-meta">${esc(meta)}</div></div><div class="az-sales-product-amount">RM${azAdminMoney(r.amount)}</div></div>`;}).join('');
+}
+function azAdminLedgerPeriod(rows,startMs=0){
+  const paid=(rows||[]).filter(row=>azAdminLedgerIsPaid(row)&&(!startMs||azAdminLedgerDateMs(row)>=startMs));
+  return paid.reduce((o,row)=>{const c=azAdminLedgerCostParts(row);o.gross+=azAdminLedgerNum(row.gross);o.cost+=c.totalCost;o.profit+=azAdminLedgerProfit(row);o.fee+=c.paymentFee;o.orders++;return o;},{gross:0,cost:0,profit:0,fee:0,orders:0});
 }
 function azAdminRenderSalesOverviewCharts(records){
-  records=Array.isArray(records)?records:[];
-  const paid=azAdminPaidRevenueRecords(records);
-  const now=new Date();
-  const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
-  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-  const yearStart=new Date(now.getFullYear(),0,1).getTime();
-  let todayTotal=0,todayOrders=0,monthTotal=0,monthOrders=0,yearTotal=0,yearOrders=0,paidTotal=0;
-  paid.forEach(x=>{
-    const amount=Number(x.amount||0)||0;
-    const ms=azAdminPaymentMs(x);
-    paidTotal+=amount;
-    if(ms>=todayStart){ todayTotal+=amount; todayOrders++; }
-    if(ms>=monthStart){ monthTotal+=amount; monthOrders++; }
-    if(ms>=yearStart){ yearTotal+=amount; yearOrders++; }
-  });
-  const todayFee=todayOrders * azAdminToyyibPayFeePerTransaction();
-  const monthFee=monthOrders * azAdminToyyibPayFeePerTransaction();
-  const yearFee=yearOrders * azAdminToyyibPayFeePerTransaction();
-  const todayNet=azAdminNetAfterToyyibPay(todayTotal, todayOrders);
-  const monthNet=azAdminNetAfterToyyibPay(monthTotal, monthOrders);
-  const yearNet=azAdminNetAfterToyyibPay(yearTotal, yearOrders);
-  azAdminSetText('#salesTodayTotal',azAdminMoney(todayTotal));
-  azAdminSetText('#salesTodayNetTotal',azAdminMoney(todayNet));
-  azAdminSetText('#salesThisMonthTotal',azAdminMoney(monthTotal));
-  azAdminSetText('#salesThisMonthNetTotal',azAdminMoney(monthNet));
-  azAdminSetText('#salesThisYearNetTotal',azAdminMoney(yearNet));
-  azAdminSetText('#salesThisMonthFeeTotal',azAdminMoney(monthFee));
-  azAdminSetText('#salesThisMonthOrders',monthOrders);
-  azAdminSetText('#salesAverageOrder',azAdminMoney(paid.length?paidTotal/paid.length:0));
+  records=Array.isArray(records)?records:[];const paid=records.filter(azAdminLedgerIsPaid);const now=new Date();
+  const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();const yearStart=new Date(now.getFullYear(),0,1).getTime();
+  const today=azAdminLedgerPeriod(records,todayStart),month=azAdminLedgerPeriod(records,monthStart),year=azAdminLedgerPeriod(records,yearStart),all=azAdminLedgerPeriod(records,0);
+  azAdminSetText('#salesTodayTotal',azAdminMoney(today.gross));azAdminSetText('#salesTodayCostTotal',azAdminMoney(today.cost));azAdminSetText('#salesTodayNetTotal',azAdminMoney(today.profit));
+  azAdminSetText('#salesThisMonthTotal',azAdminMoney(month.gross));azAdminSetText('#salesThisMonthCostTotal',azAdminMoney(month.cost));azAdminSetText('#salesThisMonthNetTotal',azAdminMoney(month.profit));
+  azAdminSetText('#salesThisYearGrossTotal',azAdminMoney(year.gross));azAdminSetText('#salesThisYearCostTotal',azAdminMoney(year.cost));azAdminSetText('#salesThisYearNetTotal',azAdminMoney(year.profit));
+  azAdminSetText('#salesThisMonthFeeTotal',azAdminMoney(month.fee));azAdminSetText('#salesThisMonthOrders',month.orders);azAdminSetText('#salesAverageOrder',azAdminMoney(all.orders?all.gross/all.orders:0));
 
-  const monthKeys=azAdminLastMonthKeys(6);
-  const monthTotals=Object.fromEntries(monthKeys.map(k=>[k,0]));
-  paid.forEach(x=>{
-    const ms=azAdminPaymentMs(x);
-    if(!ms) return;
-    const key=azAdminMonthKeyFromDate(new Date(ms));
-    if(key in monthTotals) monthTotals[key]+=Number(x.amount||0)||0;
-  });
-  azAdminRenderBarRows('#salesMonthlyTrend',monthKeys.map(k=>({label:azAdminMonthLabel(k),value:monthTotals[k],valueText:'RM'+azAdminMoney(monthTotals[k])})),{empty:'No confirmed revenue for the last 6 months.'});
+  const monthKeys=azAdminLastMonthKeys(6);const monthTotals=Object.fromEntries(monthKeys.map(k=>[k,{gross:0,profit:0}]));
+  paid.forEach(row=>{const ms=azAdminLedgerDateMs(row);if(!ms)return;const key=azAdminMonthKeyFromDate(new Date(ms));if(key in monthTotals){monthTotals[key].gross+=azAdminLedgerNum(row.gross);monthTotals[key].profit+=azAdminLedgerProfit(row);}});
+  azAdminRenderBarRows('#salesMonthlyTrend',monthKeys.map(k=>({label:azAdminMonthLabel(k),value:monthTotals[k].gross,valueText:'RM'+azAdminMoney(monthTotals[k].gross)+' • Net RM'+azAdminMoney(monthTotals[k].profit)})),{empty:'No paid revenue for the last 6 months.'});
 
-  const catOrder=['PA/BM','Software','CAD Tools','Others'];
-  const catTotals={}; catOrder.forEach(c=>catTotals[c]=0);
-  paid.forEach(x=>{const c=catOrder.includes(x.category)?x.category:'Others';catTotals[c]+=Number(x.amount||0)||0;});
-  const catRows=catOrder.filter(c=>catTotals[c]>0 || c!=='Others').map(c=>({label:c,value:catTotals[c],valueText:'RM'+azAdminMoney(catTotals[c])}));
-  azAdminRenderBarRows('#salesCategoryBreakdown',catRows,{empty:'No confirmed category sales yet.'});
+  const sum=azAdminLedgerSummary(records);const cats=[['PA/BM',sum.categories.pabm],['Software',sum.categories.software],['CAD Tools',sum.categories.cad],['Hardware / PC',sum.categories.hardware],['Service',sum.categories.service],['Other',sum.categories.other]];
+  azAdminRenderBarRows('#salesCategoryBreakdown',cats.filter(([,v])=>v>0).map(([label,value])=>({label,value,valueText:'RM'+azAdminMoney(value)})),{empty:'No paid category sales yet.'});
 
-  const statusCounts={paid:0,pending:0,cancelled:0,failed:0};
-  records.forEach(x=>{const b=azAdminStatusBucket(x); if(statusCounts[b]!==undefined) statusCounts[b]++;});
-  azAdminRenderBarRows('#salesStatusBreakdown',[
-    {label:'Paid / Verified',value:statusCounts.paid,valueText:String(statusCounts.paid)},
-    {label:'Pending',value:statusCounts.pending,valueText:String(statusCounts.pending),fillClass:'warning'},
-    {label:'Cancelled',value:statusCounts.cancelled,valueText:String(statusCounts.cancelled),fillClass:'bad'},
-    {label:'Failed',value:statusCounts.failed,valueText:String(statusCounts.failed),fillClass:'bad'}
-  ],{empty:'No payment status data yet.',note:'Status count includes PA/BM purchaseLogs and Software/CAD premiumOrders.'});
+  const statusCounts={paid:0,pending:0,quotation:0,cancelled:0,failed:0,other:0};records.forEach(row=>{const b=azAdminLedgerStatusBucket(row);statusCounts[b]=(statusCounts[b]||0)+1;});
+  azAdminRenderBarRows('#salesStatusBreakdown',[{label:'Paid',value:statusCounts.paid,valueText:String(statusCounts.paid)},{label:'Pending / Deposit',value:statusCounts.pending,valueText:String(statusCounts.pending),fillClass:'warning'},{label:'Quotation',value:statusCounts.quotation,valueText:String(statusCounts.quotation)},{label:'Cancelled / Refunded',value:statusCounts.cancelled,valueText:String(statusCounts.cancelled),fillClass:'bad'},{label:'Failed / Expired',value:statusCounts.failed,valueText:String(statusCounts.failed),fillClass:'bad'}].filter(r=>r.value>0),{empty:'No ledger status data yet.',note:'Counts use the same normalized ledger as Sales Records.'});
 
-  const products=new Map();
-  paid.forEach(x=>{
-    const name=azAdminSalesProductName(x);
-    const key=(name+'|'+(x.category||'')).toLowerCase();
-    const old=products.get(key)||{name,category:x.category||'',amount:0,count:0};
-    old.amount+=Number(x.amount||0)||0;
-    old.count+=1;
-    products.set(key,old);
-  });
+  const products=new Map();paid.forEach(row=>{const items=azAdminLedgerItems(row);const subtotal=azAdminLedgerNum(row.subtotal)||azAdminLedgerNum(row.gross);const factor=subtotal>0?azAdminLedgerNum(row.gross)/subtotal:1;if(items.length){items.forEach(item=>{const name=String(item.name||'Purchase').trim()||'Purchase';const category=String(item.category||'other');const key=(name+'|'+category).toLowerCase();const old=products.get(key)||{name,category,amount:0,count:0};old.amount+=(azAdminLedgerNum(item.qty)||1)*azAdminLedgerNum(item.unitPrice)*factor;old.count+=(azAdminLedgerNum(item.qty)||1);products.set(key,old);});}else{const name=azAdminLedgerProductName(row),category=azAdminLedgerPrimaryCategory(row),key=(name+'|'+category).toLowerCase();const old=products.get(key)||{name,category,amount:0,count:0};old.amount+=azAdminLedgerNum(row.gross);old.count++;products.set(key,old);}});
   azAdminRenderTopProducts([...products.values()].sort((a,b)=>(b.amount-a.amount)||(b.count-a.count)));
 }
+function azAdminLedgerMatchesQuickFilter(row,filter){
+  filter=String(filter||'all').toLowerCase();if(filter==='all')return true;const bucket=azAdminLedgerStatusBucket(row);if(filter==='paid'||filter==='pending')return bucket===filter;
+  const cats=azAdminLedgerCategories(row);if(filter==='hardware')return cats.some(c=>['physical','computer-it'].includes(c));if(filter==='service')return cats.includes('service');if(filter==='other')return cats.every(c=>!['pabm','software','cad','physical','computer-it','service'].includes(c));return cats.includes(filter);
+}
+async function loadPayments(forceLoad=false){
+  const notice=$('#analyticsSourceNotice');if(notice)notice.textContent='Syncing canonical Sales & Receipts ledger…';
+  let ledger;
+  try{ledger=await azAdminLoadCanonicalSalesLedger(forceLoad===true);}catch(error){console.error('Analytics canonical ledger load failed:',error);if(notice)notice.textContent='Analytics gagal sync dengan Sales Records: '+(error?.message||error);throw error;}
+  const records=ledger.rows||[];const totals=azAdminLedgerSummary(records);
+  if(notice)notice.textContent=`Source: Sales & Receipts canonical ledger • ${records.length} record(s) • last sync ${new Date(ledger.generatedAt||Date.now()).toLocaleTimeString('en-MY')}`;
 
-async function loadPayments(){
-  const filter = ($('#paymentCategoryFilter')?.value || 'all').toLowerCase();
-  let logs = await safeGet(query(collection(db,'purchaseLogs'),orderBy('createdAtMs','desc'),limit(150)),'Sales Overview: purchaseLogs');
-  const premiumRecords = await azAdminLoadPremiumOrdersViaBackend(300);
-  const records = [];
-
-  logs?.forEach(d=>{
-    const record=azAdminPurchaseLogToPaymentRecord(d.id,d.data());
-    if(record) records.push(record);
-  });
-  premiumRecords.forEach(x=>records.push(x));
-  records.sort((a,b)=>azAdminPaymentMs(b)-azAdminPaymentMs(a));
+  azAdminSetText('#payTotalPABM',azAdminMoney(totals.categories.pabm));azAdminSetText('#payTotalSoftware',azAdminMoney(totals.categories.software));azAdminSetText('#payTotalCAD',azAdminMoney(totals.categories.cad));azAdminSetText('#payTotalHardware',azAdminMoney(totals.categories.hardware));azAdminSetText('#payTotalService',azAdminMoney(totals.categories.service));azAdminSetText('#payTotalOther',azAdminMoney(totals.categories.other));
+  azAdminSetText('#payTotalAll',azAdminMoney(totals.gross));azAdminSetText('#payTotalProductCost',azAdminMoney(totals.productCost));azAdminSetText('#payTotalShippingCost',azAdminMoney(totals.shippingCost));azAdminSetText('#payTotalFee',azAdminMoney(totals.paymentFee));azAdminSetText('#payTotalCommission',azAdminMoney(totals.commission));azAdminSetText('#payTotalOtherCost',azAdminMoney(totals.otherCost));azAdminSetText('#payTotalCost',azAdminMoney(totals.totalCost));azAdminSetText('#payTotalNet',azAdminMoney(totals.profit));azAdminSetText('#payTotalDiscount',azAdminMoney(totals.discount));azAdminSetText('#payTotalShippingCharge',azAdminMoney(totals.shippingCharge));
+  azAdminSetText('#payPendingCount',totals.pending);azAdminSetText('#payPaidCount',totals.paid);azAdminSetText('#payQuotationCount',totals.quotation);azAdminSetText('#payRecordCount',totals.total);
   azAdminRenderSalesOverviewCharts(records);
+  try{azAdminSaveOverviewSalesCache({allGross:totals.gross,netAfterFee:totals.profit,paidCount:totals.paid,source:'sales-receipts-canonical-ledger'});}catch(e){console.warn('Analytics cache bridge skipped:',e);}
 
-  // AZOBSS PATCH 384: Sales Overview revenue must count Paid/Verified records only.
-  // Pending/cancelled/failed records remain visible in status counts, but are excluded from RM totals.
-  const totals = {pabm:0, software:0, cad:0, all:0, fee:0, net:0, pending:0, paid:0};
-  records.forEach(x=>{
-    const bucket = azAdminStatusBucket(x);
-    const isPaid = bucket === 'paid';
-    const amount = Number(x.amount || 0) || 0;
-
-    if(isPaid){
-      totals.all += amount;
-      if(x.category === 'PA/BM') totals.pabm += amount;
-      if(x.category === 'Software') totals.software += amount;
-      if(x.category === 'CAD Tools') totals.cad += amount;
-      totals.paid++;
-    }
-    if(bucket === 'pending') totals.pending++;
-  });
-
-  totals.fee = totals.paid * azAdminToyyibPayFeePerTransaction();
-  totals.net = Math.max(0, totals.all - totals.fee);
-
-  if($('#payTotalPABM')) $('#payTotalPABM').textContent = totals.pabm.toFixed(2);
-  if($('#payTotalSoftware')) $('#payTotalSoftware').textContent = totals.software.toFixed(2);
-  if($('#payTotalCAD')) $('#payTotalCAD').textContent = totals.cad.toFixed(2);
-  if($('#payTotalAll')) $('#payTotalAll').textContent = totals.all.toFixed(2);
-  if($('#payTotalFee')) $('#payTotalFee').textContent = totals.fee.toFixed(2);
-  if($('#payTotalNet')) $('#payTotalNet').textContent = totals.net.toFixed(2);
-  if($('#payPendingCount')) $('#payPendingCount').textContent = totals.pending;
-  if($('#payPaidCount')) $('#payPaidCount').textContent = totals.paid;
-  if($('#payRecordCount')) $('#payRecordCount').textContent = records.length;
-  try{
-    azAdminSaveOverviewSalesCache({
-      allGross:totals.all,
-      netAfterFee:totals.net,
-      paidCount:totals.paid,
-      source:'sales-overview'
-    });
-  }catch(e){
-    console.warn('Sales Overview cache bridge skipped:', e);
-  }
-
-  const overviewCategory = (filter === 'pending' || filter === 'paid') ? 'all' : filter;
-  const overviewStatus = (filter === 'pending' || filter === 'paid') ? filter : 'all';
-  const filtered = azAdminFilterPaymentRecords(records, overviewCategory, overviewStatus, '', 'all').slice(0,5);
-
-  const rows = filtered.map(x=>{
-    const statusText = esc(x.status || x.paymentStatus || (x.paid ? 'paid' : 'pending'));
-    const buyer = esc(x.usernameKey || x.username || x.displayName || x.email || '-');
-    const itemName = esc(x.title || x.name || x.itemName || x.filename || x.itemCode || x.productType || x.productName || 'Purchase');
-    const sourceBadge = x._azSource === 'premiumOrders' ? ' • premiumOrders' : '';
-    const actions = x._azSource === 'premiumOrders' ? '' : azAdminPaBmResetActions(x);
-    return item(
-      `${esc(x.category)} • RM${Number(x.amount || 0).toFixed(2)}`,
-      `${buyer} • ${itemName} • Status: ${statusText}${sourceBadge} • ${fmtDate(azAdminPaymentMs(x)||x.createdAtMs||x.createdAt)}`,
-      actions
-    );
-  });
-
-  $('#paymentsList').innerHTML = rows.join('') || '<div class="item">No latest payment records found.</div>';
+  const filter=($('#paymentCategoryFilter')?.value||'paid').toLowerCase();const filtered=records.filter(row=>azAdminLedgerMatchesQuickFilter(row,filter)).sort((a,b)=>azAdminLedgerDateMs(b)-azAdminLedgerDateMs(a)).slice(0,5);
+  const rows=filtered.map(row=>{const amount=azAdminLedgerNum(row.gross);const buyer=esc(row.customerName||row.customerEmail||row.customerPhone||'-');const itemName=esc(azAdminLedgerProductName(row));const category=esc(azAdminLedgerPrimaryCategory(row));const status=esc(azAdminLedgerStatus(row)||'-');const method=esc(row.paymentMethod||'-');const source=esc(row.source==='manual'?'Manual':'Website');return item(`${category} • RM${azAdminMoney(amount)}`,`${buyer} • ${itemName} • ${status} • ${method} • ${source} • ${fmtDate(azAdminLedgerDateMs(row))}`,'');});
+  $('#paymentsList').innerHTML=rows.join('')||'<div class="item">No matching ledger records found.</div>';
 }
 
 
@@ -8456,7 +8456,7 @@ $('#clearReadAdminPaymentAlerts')?.addEventListener('click',()=>{if(confirm('Cle
 // AZOBSS PATCH 384: default Sales Overview to Paid/Verified Only.
 // Some browsers restore old select state, so force this tab's default on fresh admin load.
 if($('#paymentCategoryFilter')) $('#paymentCategoryFilter').value='paid';
-$('#refreshPayments')?.addEventListener('click',loadPayments);
+$('#refreshPayments')?.addEventListener('click',()=>loadPayments(true));
 $('#paymentCategoryFilter')?.addEventListener('change',loadPayments);
 $('#refreshPaymentLogs')?.addEventListener('click',loadPurchases);
 $('#paymentLogsCategoryFilter')?.addEventListener('change',loadPurchases);
@@ -10185,7 +10185,7 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1336"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1357" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1380" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 
 <style id="az900-admin-software-key-force-dark-style">
 /*

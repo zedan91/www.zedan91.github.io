@@ -16,7 +16,7 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
-window.__azSalesReceiptsModuleVersion=1357;
+window.__azSalesReceiptsModuleVersion=1380;
 
 let manualRows=[];
 let websiteRows=[];
@@ -1944,6 +1944,29 @@ window.azSalesReceiptsOpenServiceInvoice=async function(invoiceDocId=''){
 };
 
 window.azSalesReceiptsLoad=async function(){bind();return loadData()};
+
+/* AZOBSS v1380: canonical ledger bridge for Admin > Analytics.
+   Analytics must use the exact same normalized/manual+website rows as Sales & Receipts,
+   including admin status overrides, payment fees, commissions and all internal costs. */
+function analyticsLedgerSnapshotRows(){
+  return [...manualRows,...websiteRows].map(row=>({
+    ...row,
+    items:Array.isArray(row.items)?row.items.map(item=>({...item})):[],
+    categories:Array.isArray(row.categories)?[...row.categories]:[]
+  }));
+}
+window.azSalesReceiptsAnalyticsSnapshot=async function(options={}){
+  bind();
+  const force=options&&options.force===true;
+  await loadData({force});
+  return {
+    ok:true,
+    source:'sales-receipts-ledger',
+    generatedAt:Date.now(),
+    rows:analyticsLedgerSnapshotRows()
+  };
+};
+window.azSalesReceiptsGetLedgerRows=function(){return analyticsLedgerSnapshotRows()};
 bind();
 
 // The admin tab can be opened before this ES module finishes importing Firebase.
