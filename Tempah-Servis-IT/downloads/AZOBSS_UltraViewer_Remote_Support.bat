@@ -65,14 +65,15 @@ if errorlevel 1 exit /b 11
 echo       Memasang UltraViewer...
 set "AZOBSS_UV_INSTALLER=%UV_TEMP%"
 set "AZOBSS_UV_INSTALL_LOG=%INSTALL_LOG%"
-@powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$exe=$env:AZOBSS_UV_INSTALLER;$log=$env:AZOBSS_UV_INSTALL_LOG;$q=[char]34;$args='/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG='+$q+$log+$q;$p=Start-Process -FilePath $exe -ArgumentList $args -PassThru;$sw=[Diagnostics.Stopwatch]::StartNew();$frames=@('|','/','-','\');$i=0;while(-not $p.HasExited){$p.Refresh();$sec=[int]$sw.Elapsed.TotalSeconds;$frame=$frames[$i%%4];$i++;$pos=$sec%%20;$bar=('='*$pos).PadRight(20,'.');Write-Host -NoNewline (([char]13)+'      Installing ['+$bar+'] '+$frame+'  '+$sec+'s');Start-Sleep -Milliseconds 250};Write-Host '';exit $p.ExitCode"
+@powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$exe=$env:AZOBSS_UV_INSTALLER;$log=$env:AZOBSS_UV_INSTALL_LOG;$argLine=@('/SP-','/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/LOG='+[char]34+$log+[char]34));$p=Start-Process -FilePath $exe -ArgumentList $argLine -PassThru;$sw=[Diagnostics.Stopwatch]::StartNew();$frames=@('|','/','-','\');$i=0;while(-not $p.HasExited){$p.Refresh();$sec=[int]$sw.Elapsed.TotalSeconds;$frame=$frames[$i%%4];$i++;$pos=$sec%%20;$bar=('='*$pos).PadRight(20,'.');Write-Host -NoNewline (([char]13)+'      Installing ['+$bar+'] '+$frame+'  '+$sec+'s');Start-Sleep -Milliseconds 250};Write-Host '';exit $p.ExitCode"
 set "INSTALL_RC=%ERRORLEVEL%"
 echo [%date% %time%] installer exit=%INSTALL_RC%>>"%LOG%"
 
-call :FIND_ULTRAVIEWER
+call :WAIT_FIND_ULTRAVIEWER
 if not defined UV_EXE (
-    "%UV_TEMP%" /NORESTART /LOG="%INSTALL_LOG%" >nul 2>&1
-    call :FIND_ULTRAVIEWER
+    echo       Menyelesaikan pemasangan...
+    start "" /wait "%UV_TEMP%" /SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG="%INSTALL_LOG%" >nul 2>&1
+    call :WAIT_FIND_ULTRAVIEWER
 )
 if not defined UV_EXE exit /b 21
 echo       [OK] UltraViewer siap.
@@ -100,4 +101,26 @@ echo   Hantar screenshot atau ID + Password kepada AZOBSS.
 echo   WhatsApp: 011-3560 0723
 echo [%date% %time%] DONE>>"%LOG%"
 timeout /t 2 /nobreak >nul
+exit /b 0
+
+:WAIT_FIND_ULTRAVIEWER
+set "UV_EXE="
+for /L %%N in (1,1,20) do (
+    call :FIND_ULTRAVIEWER
+    if defined UV_EXE exit /b 0
+    timeout /t 1 /nobreak >nul
+)
+exit /b 0
+
+:FIND_ULTRAVIEWER
+set "UV_EXE="
+if exist "%ProgramFiles(x86)%\UltraViewer\UltraViewer_Desktop.exe" set "UV_EXE=%ProgramFiles(x86)%\UltraViewer\UltraViewer_Desktop.exe"
+if not defined UV_EXE if exist "%ProgramFiles%\UltraViewer\UltraViewer_Desktop.exe" set "UV_EXE=%ProgramFiles%\UltraViewer\UltraViewer_Desktop.exe"
+if not defined UV_EXE if exist "%LOCALAPPDATA%\UltraViewer\UltraViewer_Desktop.exe" set "UV_EXE=%LOCALAPPDATA%\UltraViewer\UltraViewer_Desktop.exe"
+if defined UV_EXE exit /b 0
+
+set "AZOBSS_UV_PATH_FILE=%UV_PATH_FILE%"
+@powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$out=$env:AZOBSS_UV_PATH_FILE;$found=$null;$roots=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*');foreach($root in $roots){try{$items=Get-ItemProperty -Path $root -ErrorAction SilentlyContinue;foreach($item in $items){if(([string]$item.DisplayName) -like 'UltraViewer*'){$candidates=@();if($item.InstallLocation){$candidates+=Join-Path ([string]$item.InstallLocation) 'UltraViewer_Desktop.exe'};if($item.DisplayIcon){$icon=([string]$item.DisplayIcon).Trim('"').Split(',')[0];$candidates+=$icon};foreach($c in $candidates){if($c -and (Test-Path -LiteralPath $c)){$found=$c;break}}};if($found){break}}}catch{};if($found){break}};if($found){[IO.File]::WriteAllText($out,$found,[Text.UTF8Encoding]::new($false))}" >nul 2>&1
+if exist "%UV_PATH_FILE%" set /p "UV_EXE="<"%UV_PATH_FILE%"
+del /q "%UV_PATH_FILE%" >nul 2>&1
 exit /b 0
