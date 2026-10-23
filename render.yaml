@@ -36,6 +36,8 @@ services:
         - Sound-Effects/catalog-7210.json
       ignoredPaths: []
     envVars:
+      - key: SOLATTIME_ADMIN_TOKEN
+        sync: false
       - key: AZDM_ADMIN_TOKEN
         sync: false
       - key: AZDM_LICENSE_URL

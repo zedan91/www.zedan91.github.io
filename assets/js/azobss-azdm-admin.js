@@ -128,7 +128,8 @@
     return loading;
   }
   function selectProduct(value,focus=false){
-    product=['azdm','surveycad','ebook'].includes(value)?value:'azdm';
+    product=['azdm','solattime','surveycad','ebook'].includes(value)?value:'azdm';
+    const solatPanel=document.getElementById('solattimeAdminPanel');if(solatPanel)solatPanel.hidden=product!=='solattime';
     document.getElementById('surveycadKeyPanel').hidden=product!=='surveycad';
     document.getElementById('ebookAccessAdminPanel').hidden=product!=='ebook';
     root.hidden=product!=='azdm';
@@ -146,7 +147,7 @@
       if(target!==undefined){event.preventDefault();selectProduct(tabs[target].dataset.softwareKeyProduct,true);}
     });
   });
-  window.azSoftwareKeyTabsLoad=()=>product==='azdm'?load():product==='ebook'?(typeof window.azEbookAccessAdminLoad==='function'?window.azEbookAccessAdminLoad({force:false}):Promise.resolve()):(typeof window.azSoftwareKeysLoad==='function'?window.azSoftwareKeysLoad({force:false}):Promise.resolve());
+  window.azSoftwareKeyTabsLoad=()=>product==='azdm'?load():product==='solattime'?(typeof window.azSolatTimeAdminLoad==='function'?window.azSolatTimeAdminLoad():Promise.resolve()):product==='ebook'?(typeof window.azEbookAccessAdminLoad==='function'?window.azEbookAccessAdminLoad({force:false}):Promise.resolve()):(typeof window.azSoftwareKeysLoad==='function'?window.azSoftwareKeysLoad({force:false}):Promise.resolve());
   $('issue-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
     const customer=$('customer').value.trim(),email=$('email').value.trim(),phone=$('phone').value.trim();const result=await api('issue',{customer,email,phone,days:Number($('duration').value)});
     serialRecord={...result,customer,email,phone};$('serial-customer').textContent=[customer,email,phone,date(result.expires)].filter(Boolean).join(' · ');$('serial-value').value=result.serial;$('serial-dialog').showModal();$('customer').value='';$('email').value='';$('phone').value='';

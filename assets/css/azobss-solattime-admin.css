@@ -1,0 +1,60 @@
+/* v1397: SolatTime stays beside AZDM; product panels and records are separate. */
+#softwarekeys .azdm-key-tabs{flex-wrap:wrap}
+#solattimeAdminPanel{color:#e2e8f0;text-align:left;min-width:0}
+#solattimeAdminPanel *,#solattimeAdminPanel *::before,#solattimeAdminPanel *::after{box-sizing:border-box}
+#solattimeAdminPanel[hidden],#solattimeAdminPanel [hidden]{display:none!important}
+#solattimeAdminPanel h3{margin:0 0 6px;color:#f8fafc;font-size:17px}
+#solattimeAdminPanel p{line-height:1.5;margin:6px 0 12px}
+#solattimeAdminPanel .solat-heading{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:0 0 12px}
+#solattimeAdminPanel .solat-heading img{object-fit:contain;flex:none}
+#solattimeAdminPanel .solat-heading h3{font-size:20px}
+#solattimeAdminPanel .solat-heading p,#solattimeAdminPanel .solat-muted{color:#a6b6ca;font-size:12px}
+#solattimeAdminPanel .solat-heading a{margin-left:auto;color:#5eead4;text-decoration:none;font-size:12px;padding:6px}
+#solattimeAdminPanel .solat-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:12px}
+#solattimeAdminPanel .solat-stats>div{background:#142232;border:1px solid #344761;border-radius:10px;padding:12px}
+#solattimeAdminPanel .solat-stats strong{display:block;font-size:20px;color:#f8fafc;margin-bottom:5px}
+#solattimeAdminPanel .solat-stats small{font-size:11px;color:#a6b6ca;line-height:1.5;display:block}
+#solattimeAdminPanel .solat-card{background:#1e293b;border:1px solid #344761;border-radius:13px;padding:16px;margin-bottom:12px}
+#solattimeAdminPanel label{display:block;font-size:12px;font-weight:700;color:#bfdbfe}
+#solattimeAdminPanel input{display:block;width:100%;background:#0b1220;border:1px solid #475569;border-radius:8px;color:#f8fafc;padding:10px 11px;min-height:40px;font:inherit;margin:5px 0 10px}
+#solattimeAdminPanel input::placeholder{color:#94a3b8;opacity:1}
+#solattimeAdminPanel button{font:inherit;font-size:12px;font-weight:700;border:1px solid #475569;border-radius:8px;background:#334155;color:#f1f5f9;padding:9px 12px;min-height:38px;cursor:pointer}
+#solattimeAdminPanel .solat-primary{background:#087f72;border-color:#2dd4bf}
+#solattimeAdminPanel .solat-danger{background:#7f1d1d;border-color:#f87171}
+#solattimeAdminPanel button:disabled{opacity:.45;cursor:default}
+#solattimeAdminPanel :is(button,a,input,summary,[tabindex]):focus-visible{outline:3px solid #5eead4;outline-offset:3px}
+#solattimeAdminPanel .solat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}
+#solattimeAdminPanel .solat-form input{margin-bottom:0}
+#solattimeAdminPanel .solat-list-heading{display:flex;align-items:start;justify-content:space-between;gap:12px}
+#solattimeAdminPanel #solat-search{max-width:420px}
+#solattimeAdminPanel .solat-table{width:100%;overflow:auto;margin:12px 0}
+#solattimeAdminPanel table{width:100%;min-width:730px;border-collapse:collapse;font-size:12px}
+#solattimeAdminPanel th{background:#142b2c;color:#99f6e4;font-size:11px;text-align:left;padding:11px}
+#solattimeAdminPanel td{padding:12px 11px;border-bottom:1px solid #344761;vertical-align:middle;overflow-wrap:anywhere}
+#solattimeAdminPanel td small{display:block;color:#94a3b8;font-size:10px;margin-top:5px}
+#solattimeAdminPanel .solat-empty{text-align:center;padding:22px;color:#a6b6ca}
+#solattimeAdminPanel .solat-pager,#solattimeAdminPanel .solat-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#solattimeAdminPanel .solat-pager{justify-content:space-between;font-size:12px;color:#a6b6ca}
+#solattimeAdminPanel .solat-notice{padding:11px 13px;margin:12px 0;border:1px solid #e0b965;background:#332b1b;color:#fde68a;border-radius:8px;font-size:13px;overflow-wrap:anywhere}
+#solattimeAdminPanel summary{color:#e2e8f0;cursor:pointer;font-size:14px;font-weight:700}
+#solattimeAdminPanel details[open] summary{margin-bottom:12px}
+#solattimeAdminPanel .solat-import-form{display:grid;grid-template-columns:1fr 1.6fr auto;align-items:end;gap:10px}
+#solattimeAdminPanel .solat-import-form input{margin-bottom:0}
+#solattimeAdminPanel dialog{background:#142232;color:#f8fafc;border:1px solid #47617d;border-radius:14px;width:min(580px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;padding:22px}
+#solattimeAdminPanel dialog::backdrop{background:rgba(2,6,23,.76)}
+#solattimeAdminPanel #solat-serial-value{font-family:Consolas,monospace;font-size:14px}
+#solattimeAdminPanel #solat-serial-status{font-size:12px;color:#99f6e4;min-height:18px}
+@media(max-width:640px){
+ #softwarekeys .azdm-key-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #softwarekeys .azdm-key-tabs button{width:100%;min-width:0!important}
+}
+@media(max-width:720px){
+ #solattimeAdminPanel .solat-heading a{margin-left:0}
+ #solattimeAdminPanel .solat-stats{grid-template-columns:1fr}
+ #solattimeAdminPanel .solat-stats>div{padding:10px 12px}
+ #solattimeAdminPanel .solat-stats strong{font-size:18px}
+ #solattimeAdminPanel .solat-form,#solattimeAdminPanel .solat-import-form{grid-template-columns:1fr}
+ #solattimeAdminPanel .solat-card{padding:12px}
+ #solattimeAdminPanel .solat-pager{justify-content:flex-start}
+ #solattimeAdminPanel .solat-pager span{width:100%;order:-1}
+}

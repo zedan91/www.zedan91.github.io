@@ -105,6 +105,8 @@ async function azdmAdminIdentity(req) {
   return {...verified,isAdmin:azIdentityTrustedForBackendAdmin({uid:verified.uid,authEmail:verified.email})};
 }
 const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,localAdmin:{list:azAzdmAdminLocalList,orders:azAzdmAdminLocalOrders,'order-email-retry':azAzdmAdminLocalRetryEmail}});
+const {createSolatTimeAdminHandler}=require('./lib/azobss-solattime-admin');
+const handleSolatTimeAdmin=createSolatTimeAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend});
 const {createOfferHandler,model:azSoftwarePackageModel}=require('./lib/azobss-azdm-offers');
 async function azSoftwarePackageProduct(productId){
   const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
@@ -20397,6 +20399,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
     if (await handleSoftwarePackages(req,res,parsed)) return;
     if (await handleAzdmAdmin(req,res,parsed)) return;
+    if (await handleSolatTimeAdmin(req,res,parsed)) return;
     if (await handleAzdm(req,res,parsed)) return;
 
     if ((pathname === "/api/toyyib/create-bill" || pathname === "/api/create-payment") && req.method === "POST" && azRateLimitOrSend(req, res, "create-premium-bill", 12, 5 * 60 * 1000)) return;
