@@ -1,13 +1,10 @@
-# AZOBSS v1394 — UltraViewer Screenshot Reliability Fix
+# AZOBSS v1394 — Unified AZDM Management Workspace
 
-Date: 2026-10-23
-Baseline: v1393
-
-Changes:
-- Fixed UltraViewer screenshot reliability: removed the brittle 3-pixel image test that could reject a valid screenshot.
-- UltraViewer window is maximized/foregrounded before capture, with up to 5 capture retries.
-- Screenshot PNG is validated by real file existence, minimum file size, and image dimensions.
-- Clipboard copy has retry handling before WhatsApp automation starts.
-- BAT now prints the actual screenshot path after a successful capture.
-- `Remote_PC_and_send_WS.bat` legacy path now contains the exact same current flow as `AZOBSS_UltraViewer_Remote_Support.bat`, preventing old cached links from running the obsolete no-screenshot script.
-- Troubleshoot-PC-Online copy updated to describe auto screenshot + auto WhatsApp send.
+- Baseline: v1393 full website.
+- Admin > Software Key > AZDM now combines license and purchase management into one card/workspace.
+- Tabs: Lesen, Pesanan & Pembayaran, Audit.
+- One global search controls license and order searches together.
+- Existing license actions (Edit, Reset PC, Sekat/Buka sekatan, Delete, Salin) retained.
+- Existing order View / resend email and audit drawer retained.
+- Audit tab builds a timeline only from available real data: purchase, payment confirmation, serial issuance, email status, and current PC activation when available.
+- No payment price, ToyyibPay, Stripe, fulfillment, or licensing rules changed.

@@ -104,7 +104,7 @@ async function azdmAdminIdentity(req) {
   if(!verified?.uid)return null;
   return {...verified,isAdmin:azIdentityTrustedForBackendAdmin({uid:verified.uid,authEmail:verified.email})};
 }
-const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,localAdmin:{orders:azAzdmAdminLocalOrders,'order-email-retry':azAzdmAdminLocalRetryEmail}});
+const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,localAdmin:{list:azAzdmAdminLocalList,orders:azAzdmAdminLocalOrders,'order-email-retry':azAzdmAdminLocalRetryEmail}});
 const {createOfferHandler,model:azSoftwarePackageModel}=require('./lib/azobss-azdm-offers');
 async function azSoftwarePackageProduct(productId){
   const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
@@ -3804,6 +3804,7 @@ function azAzdmPublicOrder(order = {}, admin = false) {
     row.stripe_payment_intent = String(order.stripePaymentIntentId || order.paymentIntentId || order.stripePaymentIntent || '');
     row.stripe_checkout_session = String(order.stripeCheckoutSessionId || order.stripeSessionId || '');
     row.payment_verified_at = String(order.paymentVerifiedAt || order.toyyibVerifiedAt || order.stripeVerifiedAt || '');
+    row.email_sent_at = String(order.azdmEmailSentAt || order.emailSentAt || '');
     row.updated_at = String(order.updatedAt || '');
     row.payment_fee = Number(order.paymentFee ?? order.gatewayFee ?? order.stripeFee ?? 0) || 0;
     row.net_amount = Number(order.stripeNet ?? order.netAmount ?? 0) || 0;
@@ -4017,6 +4018,28 @@ async function azAzdmLocalOrders({body}) {
   const uid = String(body.account_uid || '').trim();
   const rows = (await azAzdmLoadOrdersRaw(250)).filter(row=>azAzdmOrderUid(row)===uid).slice(0,50).map(row=>azAzdmPublicOrder(row,false));
   return {ok:true,orders:rows,enabled:azAzdmShopReadiness().ready};
+}
+async function azAzdmAdminLocalList({body}) {
+  const rawSearch = cleanPremiumText(body.search || '',180).trim();
+  // The license Worker can search name/email/phone/UUID directly. Serial text is encrypted
+  // in storage, so for an admin serial lookup we page through the protected admin list and
+  // compare only the decrypted serials returned to this trusted server-side bridge.
+  if (!/^AZDM-/i.test(rawSearch)) return azAzdmAdminCall('list',body);
+  const needle = rawSearch.toUpperCase().replace(/\s+/g,'');
+  const sort = typeof body.sort === 'string' ? body.sort : 'created-desc';
+  const matches = [];
+  let cursor = null, pages = 0;
+  do {
+    const result = await azAzdmAdminCall('list',{limit:100,search:'',sort,cursor});
+    const rows = Array.isArray(result.licenses) ? result.licenses : [];
+    for (const row of rows) {
+      const serial = String(row.serial || '').toUpperCase().replace(/\s+/g,'');
+      if (serial && serial.includes(needle)) matches.push(row);
+    }
+    cursor = result.next_cursor || null;
+    pages += 1;
+  } while (cursor && pages < 50 && matches.length < 100);
+  return {licenses:matches.slice(0,100),sort,next_cursor:null,serial_search:true};
 }
 async function azAzdmAdminLocalOrders({body}) {
   const limit = Math.max(1, Math.min(50, Number(body.limit || 25) || 25)), offset = Math.max(0, Number(body.cursor || 0) || 0);
@@ -7517,117 +7540,6 @@ function azR2Configured() {
 
 
 // AZOBSS PATCH 720: R2-only Tech Vault. The bundled website copy was removed.
-// AZOBSS v1395: Admin-managed public UltraViewer Remote Support BAT.
-// The active BAT can be uploaded/replaced/deleted from Troubleshoot-PC-Online
-// without rebuilding the static website. File bytes live in private Cloudflare R2;
-// only short-lived signed public download links are exposed.
-const AZOBSS_REMOTE_SUPPORT_FILE_PATCH = "AZOBSS_REMOTE_SUPPORT_ADMIN_FILE_MANAGER_1395_20261023";
-const AZOBSS_REMOTE_SUPPORT_SETTING_COLLECTION = "settings";
-const AZOBSS_REMOTE_SUPPORT_SETTING_DOC = "remoteSupportFile";
-const AZOBSS_REMOTE_SUPPORT_LEGACY_URL = "/Tempah-Servis-IT/downloads/AZOBSS_UltraViewer_Remote_Support.bat";
-const AZOBSS_REMOTE_SUPPORT_LOCAL_STATE = path.join(ROOT, "_private-tech-vault", "remote-support-file.json");
-
-function azRemoteSupportFileMaxBytes(){
-  const n=Number(process.env.AZOBSS_REMOTE_SUPPORT_FILE_MAX_MB || 5);
-  const mb=Number.isFinite(n)?Math.max(1,Math.min(25,n)):5;
-  return Math.floor(mb*1024*1024);
-}
-function azRemoteSupportFileSafeName(value=""){
-  const name=azTechVaultSafeFilename(value);
-  return name && /\.bat$/i.test(name) ? name : "";
-}
-function azRemoteSupportReadLocalState(){
-  try{
-    if(!fs.existsSync(AZOBSS_REMOTE_SUPPORT_LOCAL_STATE)) return null;
-    const row=JSON.parse(fs.readFileSync(AZOBSS_REMOTE_SUPPORT_LOCAL_STATE,"utf8"));
-    return row&&typeof row==="object"?row:null;
-  }catch(_){ return null; }
-}
-function azRemoteSupportWriteLocalState(row={}){
-  try{
-    fs.mkdirSync(path.dirname(AZOBSS_REMOTE_SUPPORT_LOCAL_STATE),{recursive:true});
-    fs.writeFileSync(AZOBSS_REMOTE_SUPPORT_LOCAL_STATE,JSON.stringify(row,null,2));
-    return true;
-  }catch(err){
-    console.warn("Remote Support local state write failed:",err&&err.message||err);
-    return false;
-  }
-}
-async function azRemoteSupportReadState(){
-  const db=getAzobssBackendDb();
-  if(db){
-    try{
-      const snap=await db.collection(AZOBSS_REMOTE_SUPPORT_SETTING_COLLECTION).doc(AZOBSS_REMOTE_SUPPORT_SETTING_DOC).get();
-      if(snap.exists){
-        const row=snap.data()||{};
-        if(row&&typeof row==="object") return row;
-      }
-    }catch(err){ console.warn("Remote Support Firestore read failed:",err&&err.message||err); }
-  }
-  return azRemoteSupportReadLocalState();
-}
-async function azRemoteSupportWriteState(row={}){
-  const saved={...row,patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH};
-  const db=getAzobssBackendDb();
-  let firestoreSaved=false;
-  if(db){
-    try{
-      await db.collection(AZOBSS_REMOTE_SUPPORT_SETTING_COLLECTION).doc(AZOBSS_REMOTE_SUPPORT_SETTING_DOC).set(saved,{merge:false});
-      firestoreSaved=true;
-    }catch(err){ console.warn("Remote Support Firestore write failed:",err&&err.message||err); }
-  }
-  azRemoteSupportWriteLocalState(saved);
-  if(db&&!firestoreSaved) throw Object.assign(new Error("Remote Support file setting could not be saved to Firestore."),{statusCode:503});
-  return saved;
-}
-function azRemoteSupportPublicState(row){
-  if(!row || row.managed!==true){
-    return {managed:false,active:true,source:"legacy-static",filename:"AZOBSS_UltraViewer_Remote_Support.bat",legacyUrl:AZOBSS_REMOTE_SUPPORT_LEGACY_URL,patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH};
-  }
-  const active=row.active===true && !!azRemoteSupportFileSafeName(row.filename||row.name) && !!azTechVaultSafeObjectKey(row.objectKey||row.key);
-  return {
-    managed:true,
-    active,
-    source:active?"cloudflare-r2":"none",
-    filename:active?azRemoteSupportFileSafeName(row.filename||row.name):"",
-    size:active?Math.max(0,Number(row.size||0)||0):0,
-    updatedAt:row.updatedAt||row.createdAt||"",
-    updatedAtMs:Number(row.updatedAtMs||row.createdAtMs||0)||0,
-    maxFileMb:Math.floor(azRemoteSupportFileMaxBytes()/1024/1024),
-    patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH
-  };
-}
-function azRemoteSupportDownloadUrl(row={}){
-  const key=azTechVaultSafeObjectKey(row.objectKey||row.key);
-  const name=azRemoteSupportFileSafeName(row.filename||row.name);
-  if(!key||!name||!azR2Configured()) return "";
-  const token=azTechVaultSignPayload({key,name,exp:Math.floor(Date.now()/1000)+15*60,sid:"remote-support-public",oid:cleanPremiumText(row.id||"remote-support",160)},azR2TokenSecret());
-  return token?`${azR2DownloadBaseUrl()}/dl/${encodeURIComponent(token)}`:"";
-}
-async function azRemoteSupportDeleteR2(row={}){
-  const id=cleanPremiumText(row.id||"remote-support",180).replace(/[^a-zA-Z0-9_-]/g,"")||"remote-support";
-  const filename=azRemoteSupportFileSafeName(row.filename||row.name);
-  const objectKey=azTechVaultSafeObjectKey(row.objectKey||row.key);
-  if(!filename||!objectKey) return {deleted:false,skipped:true};
-  const deleteUrl=azTechVaultDeleteUrl({id,filename,objectKey});
-  if(!deleteUrl) throw Object.assign(new Error("Private R2 delete gateway is not configured."),{statusCode:503});
-  const response=await fetch(deleteUrl,{method:"DELETE",headers:{Accept:"application/json"}});
-  const body=await response.text();
-  if(!response.ok){
-    let detail=body; try{detail=JSON.parse(body).error||detail}catch(_){ }
-    throw Object.assign(new Error(cleanPremiumText(detail,300)||`R2 delete failed (HTTP ${response.status}).`),{statusCode:response.status||502});
-  }
-  return {deleted:true,id,filename,objectKey};
-}
-function azRemoteSupportUploadToken(filename="",size=0,contentType=""){
-  const safeName=azRemoteSupportFileSafeName(filename);
-  const safeSize=Math.floor(Number(size||0));
-  if(!safeName) throw Object.assign(new Error("Only a Windows .bat file can be uploaded here."),{statusCode:400});
-  if(!Number.isFinite(safeSize)||safeSize<=0) throw Object.assign(new Error("The selected BAT file is empty."),{statusCode:400});
-  if(safeSize>azRemoteSupportFileMaxBytes()) throw Object.assign(new Error(`BAT file exceeds the ${Math.floor(azRemoteSupportFileMaxBytes()/1024/1024)} MB limit.`),{statusCode:413});
-  return azTechVaultUploadToken(safeName,safeSize,contentType||"application/octet-stream");
-}
-
 const AZOBSS_TECH_VAULT_PATCH = "AZOBSS_TECH_VAULT_ANY_FILE_850_20260809";
 const AZOBSS_SOLATTIME_R2_OBJECT_KEY = "software/Azobss_SolatTime_Setup.exe";
 const AZOBSS_SOLATTIME_FILENAME = "Azobss_SolatTime_Setup.exe";
@@ -20933,86 +20845,6 @@ async function handler(req, res) {
       } catch (error) {
         const statusCode = Number(error && error.statusCode) || 500;
         return send(res, statusCode, JSON.stringify({ ok:false, error:azServiceBookingText(error && error.message, 300) || "Tempahan servis gagal disimpan." }, null, 2), "application/json", { "Cache-Control":"no-store" });
-      }
-    }
-
-    // =========================
-    // AZOBSS v1395 — REMOTE SUPPORT FILE MANAGER
-    // =========================
-    if (pathname === "/api/remote-support-file/status" && req.method === "GET") {
-      try {
-        const row=await azRemoteSupportReadState();
-        return send(res,200,JSON.stringify({ok:true,...azRemoteSupportPublicState(row)},null,2),"application/json",{"Cache-Control":"no-store"});
-      } catch(error) {
-        return send(res,500,JSON.stringify({ok:false,error:cleanPremiumText(error&&error.message,300)||"Unable to read Remote Support file status."},null,2),"application/json",{"Cache-Control":"no-store"});
-      }
-    }
-    if (pathname === "/api/remote-support-file/download" && (req.method === "GET" || req.method === "POST")) {
-      try {
-        const row=await azRemoteSupportReadState();
-        if(!row || row.managed!==true){
-          return send(res,200,JSON.stringify({ok:true,mode:"legacy",filename:"AZOBSS_UltraViewer_Remote_Support.bat",downloadUrl:AZOBSS_REMOTE_SUPPORT_LEGACY_URL,patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH},null,2),"application/json",{"Cache-Control":"no-store"});
-        }
-        if(row.active!==true) return send(res,404,JSON.stringify({ok:false,error:"Remote Support BAT belum tersedia. Sila hubungi AZOBSS."},null,2),"application/json",{"Cache-Control":"no-store"});
-        const downloadUrl=azRemoteSupportDownloadUrl(row);
-        if(!downloadUrl) return send(res,503,JSON.stringify({ok:false,error:"Remote Support download gateway belum tersedia."},null,2),"application/json",{"Cache-Control":"no-store"});
-        return send(res,200,JSON.stringify({ok:true,mode:"r2",filename:azRemoteSupportFileSafeName(row.filename||row.name),downloadUrl,expiresIn:900,patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH},null,2),"application/json",{"Cache-Control":"no-store"});
-      } catch(error) {
-        const status=Number(error&&error.statusCode)||500;
-        return send(res,status,JSON.stringify({ok:false,error:cleanPremiumText(error&&error.message,300)||"Remote Support download failed."},null,2),"application/json",{"Cache-Control":"no-store"});
-      }
-    }
-    if (pathname === "/api/remote-support-file/admin-upload-token" && req.method === "POST") {
-      try {
-        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
-        if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Administrator authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
-        const data=parseRequestBody(await readBody(req));
-        const upload=azRemoteSupportUploadToken(data.filename||data.name,data.size,data.contentType||data.type);
-        return send(res,200,JSON.stringify({ok:true,upload,maxFileMb:Math.floor(azRemoteSupportFileMaxBytes()/1024/1024),patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH},null,2),"application/json",{"Cache-Control":"no-store"});
-      } catch(error) {
-        const status=Number(error&&error.statusCode)||500;
-        return send(res,status,JSON.stringify({ok:false,error:cleanPremiumText(error&&error.message,300)||"Unable to prepare BAT upload."},null,2),"application/json",{"Cache-Control":"no-store"});
-      }
-    }
-    if (pathname === "/api/remote-support-file/admin-register" && req.method === "POST") {
-      try {
-        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
-        if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Administrator authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
-        const data=parseRequestBody(await readBody(req));
-        const upload=azTechVaultVerifyUploadToken(data.uploadToken||data.token);
-        if(!upload) return send(res,403,JSON.stringify({ok:false,error:"Invalid or expired upload confirmation."},null,2),"application/json",{"Cache-Control":"no-store"});
-        const filename=azRemoteSupportFileSafeName(upload.name);
-        if(!filename) return send(res,400,JSON.stringify({ok:false,error:"Only a .bat file can become the active Remote Support file."},null,2),"application/json",{"Cache-Control":"no-store"});
-        if(Number(upload.size||0)>azRemoteSupportFileMaxBytes()) return send(res,413,JSON.stringify({ok:false,error:"Uploaded BAT exceeds the Remote Support file limit."},null,2),"application/json",{"Cache-Control":"no-store"});
-        const previous=await azRemoteSupportReadState();
-        const now=Date.now();
-        const saved=await azRemoteSupportWriteState({managed:true,active:true,id:upload.id,filename,objectKey:upload.key,size:Number(upload.size||0)||0,contentType:upload.type||"application/octet-stream",createdAt:new Date(now).toISOString(),createdAtMs:now,updatedAt:new Date(now).toISOString(),updatedAtMs:now,uploadedBy:cleanPremiumText(adminIdentity.username||adminIdentity.email||adminIdentity.uid||"admin",160)});
-        let cleanupWarning="";
-        if(previous&&previous.managed===true&&previous.active===true&&previous.objectKey&&previous.objectKey!==saved.objectKey){
-          try{ await azRemoteSupportDeleteR2(previous); }
-          catch(err){ cleanupWarning=cleanPremiumText(err&&err.message,240)||"Previous BAT could not be removed from R2."; }
-        }
-        return send(res,200,JSON.stringify({ok:true,file:azRemoteSupportPublicState(saved),cleanupWarning,patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH},null,2),"application/json",{"Cache-Control":"no-store"});
-      } catch(error) {
-        const status=Number(error&&error.statusCode)||500;
-        return send(res,status,JSON.stringify({ok:false,error:cleanPremiumText(error&&error.message,300)||"Unable to activate uploaded BAT."},null,2),"application/json",{"Cache-Control":"no-store"});
-      }
-    }
-    if (pathname === "/api/remote-support-file/admin-delete" && req.method === "POST") {
-      try {
-        const adminIdentity=await azAdminIdentityFromRequest(req,parsed);
-        if(!adminIdentity||!adminIdentity.isAdmin) return send(res,403,JSON.stringify({ok:false,error:"Administrator authorization required."},null,2),"application/json",{"Cache-Control":"no-store"});
-        const current=await azRemoteSupportReadState();
-        let deletedR2=false;
-        if(current&&current.managed===true&&current.active===true&&current.objectKey){
-          const result=await azRemoteSupportDeleteR2(current); deletedR2=!!result.deleted;
-        }
-        const now=Date.now();
-        const saved=await azRemoteSupportWriteState({managed:true,active:false,filename:"",objectKey:"",size:0,deletedAt:new Date(now).toISOString(),deletedAtMs:now,updatedAt:new Date(now).toISOString(),updatedAtMs:now,deletedBy:cleanPremiumText(adminIdentity.username||adminIdentity.email||adminIdentity.uid||"admin",160)});
-        return send(res,200,JSON.stringify({ok:true,deletedR2,file:azRemoteSupportPublicState(saved),patch:AZOBSS_REMOTE_SUPPORT_FILE_PATCH},null,2),"application/json",{"Cache-Control":"no-store"});
-      } catch(error) {
-        const status=Number(error&&error.statusCode)||500;
-        return send(res,status,JSON.stringify({ok:false,error:cleanPremiumText(error&&error.message,300)||"Unable to delete Remote Support BAT."},null,2),"application/json",{"Cache-Control":"no-store"});
       }
     }
 
