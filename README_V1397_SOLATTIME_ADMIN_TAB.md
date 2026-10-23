@@ -1,4 +1,15 @@
-# AZOBSS v1397 — SolatTime in Software Key / Digital Access
+# AZOBSS v1398 — SolatTime tab and Render Blueprint fix
+
+## v1398 Render Blueprint fix
+
+The supplied Blueprint included `azobss-software-tools-export (5).json` as a
+literal build-filter path. Render rejects spaces/parentheses in those patterns.
+It now uses `azobss-software-tools-export*.json`, which also matches the original
+filename. No data file was renamed or removed. All other Blueprint settings and
+secret declarations are preserved. Commit the corrected root `render.yaml` to
+the linked repository, then run Blueprint Manual sync in Render.
+
+Reference: https://render.com/docs/monorepo-support#filter-syntax
 
 Baseline: user-supplied full website v1396. Existing package.json/global version
 badge values are preserved; the edited/new admin JavaScript uses cache tag 1397.

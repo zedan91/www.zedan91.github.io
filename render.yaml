@@ -24,7 +24,8 @@ services:
         - backend/**
         - _private-tech-vault/**
         - affiliate-products.json
-        - azobss-software-tools-export (5).json
+        # Render build-filter patterns cannot contain spaces or parentheses.
+        - azobss-software-tools-export*.json
         - admin-audit-logs.json
         - premium-orders.json
         - premium-download-tokens.json
