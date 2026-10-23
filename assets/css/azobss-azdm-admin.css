@@ -188,3 +188,12 @@
   #azdmAdminPanel .azdm-workspace-panel{padding:12px}
 }
 
+
+/* AZOBSS v1396 — product logos inside Software Key / Digital Access tabs */
+#softwarekeys .azdm-key-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1}
+#softwarekeys .azdm-key-tabs .azdm-key-tab-logo{display:block;width:23px;height:23px;flex:0 0 23px;object-fit:contain;pointer-events:none}
+#softwarekeys .azdm-key-tabs .azdm-key-tab-logo-azdm{width:24px;height:24px;flex-basis:24px}
+#softwarekeys .azdm-key-tabs .azdm-key-tab-logo-surveycad{width:24px;height:24px;flex-basis:24px;object-fit:contain;mix-blend-mode:screen}
+#softwarekeys .azdm-key-tabs .azdm-key-tab-logo-ebook{width:22px;height:22px;flex-basis:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#softwarekeys .azdm-key-tabs button span{display:inline-block;white-space:nowrap}
+@media(max-width:640px){#softwarekeys .azdm-key-tabs{gap:6px}#softwarekeys .azdm-key-tabs button{min-width:0!important;padding-left:12px!important;padding-right:12px!important;gap:6px}#softwarekeys .azdm-key-tabs .azdm-key-tab-logo{width:20px;height:20px;flex-basis:20px}}
