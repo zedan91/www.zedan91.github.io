@@ -149,3 +149,42 @@
 #azdmAdminPanel .azdm-audit-event small{display:block;color:#8fa2ba;font-size:9.5px;line-height:1.4;margin-top:3px;overflow-wrap:anywhere}
 #azdmAdminPanel .azdm-audit-empty{border:1px dashed #344761;border-radius:10px}
 @media(max-width:820px){#azdmAdminPanel .azdm-workspace-head{padding:15px 14px 12px}#azdmAdminPanel .azdm-workspace-tabs{padding:0 12px}#azdmAdminPanel .azdm-workspace-panel{padding:14px}#azdmAdminPanel .azdm-unified-search{width:100%}#azdmAdminPanel .azdm-unified-search input{width:100%;flex:1 1 100%}#azdmAdminPanel .azdm-audit-timeline{flex-direction:column}#azdmAdminPanel .azdm-audit-event{min-width:0;width:100%}#azdmAdminPanel .azdm-audit-event:after{content:'↓';right:auto;left:14px;top:auto;bottom:-13px;transform:none}}
+
+/* AZOBSS v1395 — Compact AZDM admin + G4 logo */
+#softwarekeys .azdm-key-tabs{margin:8px 0 12px}
+#softwarekeys .azdm-key-tabs button{padding:9px 22px;min-height:38px}
+#azdmAdminPanel .azdm-admin-heading{gap:9px;margin-bottom:8px}
+#azdmAdminPanel .azdm-admin-heading img{width:34px;height:34px;object-fit:contain}
+#azdmAdminPanel .azdm-admin-heading h3{font-size:18px;line-height:1.15}
+#azdmAdminPanel .azdm-admin-heading p{margin:2px 0;font-size:11px;line-height:1.35}
+#azdmAdminPanel .azdm-admin-source{padding:5px 6px;font-size:11px}
+#azdmAdminPanel .azdm-admin-stats{gap:8px;margin:8px 0 10px}
+#azdmAdminPanel .azdm-admin-stat{padding:9px 12px;border-radius:9px}
+#azdmAdminPanel .azdm-admin-stat strong{font-size:19px;line-height:1.1;margin-bottom:2px}
+#azdmAdminPanel .azdm-admin-stat small{font-size:11px;line-height:1.35}
+#azdmAdminPanel .azdm-admin-card{padding:14px 16px;margin-bottom:10px;border-radius:12px}
+#azdmAdminPanel .azdm-admin-card h3{font-size:15px;line-height:1.2;margin:0 0 5px}
+#azdmAdminPanel .azdm-admin-card>.azdm-admin-muted{margin:0 0 8px;font-size:11px;line-height:1.35}
+#azdmAdminPanel label{font-size:11px;margin-bottom:4px}
+#azdmAdminPanel input,#azdmAdminPanel select,#azdmAdminPanel textarea{min-height:36px;padding:7px 10px}
+#azdmAdminPanel button{min-height:34px;padding:8px 11px}
+#azdmAdminPanel .azdm-admin-issue{gap:8px}
+#azdmAdminPanel .azdm-workspace-card{padding:0}
+#azdmAdminPanel .azdm-workspace-head{gap:10px;padding:13px 16px 9px}
+#azdmAdminPanel .azdm-workspace-head h3{margin-bottom:3px}
+#azdmAdminPanel .azdm-workspace-head .azdm-admin-muted{margin:0;font-size:11px;line-height:1.35}
+#azdmAdminPanel .azdm-workspace-tabs{padding:0 16px}
+#azdmAdminPanel .azdm-workspace-tab{padding:9px 12px 8px;min-height:38px}
+#azdmAdminPanel .azdm-workspace-panel{padding:13px 16px 16px}
+#azdmAdminPanel .azdm-workspace-subhead{margin-bottom:9px}
+#azdmAdminPanel .azdm-admin-list-head{margin-bottom:9px}
+#azdmAdminPanel .azdm-admin-pager{margin-top:8px}
+@media(max-width:720px){
+  #azdmAdminPanel .azdm-admin-heading img{width:32px;height:32px}
+  #azdmAdminPanel .azdm-admin-card{padding:12px}
+  #azdmAdminPanel .azdm-admin-stat{padding:9px 10px}
+  #azdmAdminPanel .azdm-workspace-head{padding:12px}
+  #azdmAdminPanel .azdm-workspace-tabs{padding:0 10px}
+  #azdmAdminPanel .azdm-workspace-panel{padding:12px}
+}
+

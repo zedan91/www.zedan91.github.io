@@ -5548,7 +5548,7 @@ function normalizeItem(item){
   function mergeSoftwareDirectorySources470(remoteItems,localItems,bundledItems){
     const live=dedupeSoftwareItems([...(remoteItems||[]),...(localItems||[])]);
     if(!live.some(x=>(x.softwarePackages?.enabled&&x.softwarePackages.fulfilment==='azdm')||String(x.productId||x.id).toUpperCase()==='AZDM')){
-      live.unshift(normalizeItem({id:'AZDM',productId:'AZDM',name:'AZDM',desc:'Choose an AZDM license plan for your PC. Each PC receives its own unique serial key.',type:'premium',price:'RM25',status:'active',category:'Downloads & Torrents',platforms:['Windows'],imageUrl:'/assets/images/azdm-logo.svg',icon:'A',ownerUsername:'zedan91',createdAtMs:1791032400000,softwarePackages:window.azdmOfferModel?.defaults(),supportEnabled:true}));
+      live.unshift(normalizeItem({id:'AZDM',productId:'AZDM',name:'AZDM',desc:'Choose an AZDM license plan for your PC. Each PC receives its own unique serial key.',type:'premium',price:'RM25',status:'active',category:'Downloads & Torrents',platforms:['Windows'],imageUrl:'/assets/images/azdm-logo.png',icon:'A',ownerUsername:'zedan91',createdAtMs:1791032400000,softwarePackages:window.azdmOfferModel?.defaults(),supportEnabled:true}));
     }
 
     const seen=new Set();
