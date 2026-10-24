@@ -15,6 +15,7 @@ import admin from "firebase-admin";
 import { Readable } from "stream";
 import {validateSettings,malaysiaMonth,scheduledAt,nextScheduledAt,publicEntry,publicWinner} from "./lucky-draw-model.js";
 import {createSettingsStore,createDrawRunner,problem} from "./lucky-draw-settings.js";
+import {savePrizeGallery} from "./lucky-draw-gallery.js";
 
 dotenv.config();
 
@@ -2182,7 +2183,7 @@ function safeFilename(name) {
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9._-]/g, "")
     .slice(0, 60) || "prize";
-  return `${Date.now()}-${base}${ext}`;
+  return `${Date.now()}-${crypto.randomBytes(6).toString('hex')}-${base}${ext}`;
 }
 
 const storage = multer.diskStorage({
@@ -4170,54 +4171,29 @@ app.get("/api/lucky-draw/prize", async (req, res) => {
     imageUrl: "",
     updatedAt: ""
   });
-  res.json({ ok: true, prize, monthName: monthName(key), autoSync: autoSyncResult });
+  res.json({ ok: true, prize, monthName: monthName(key), autoSync: autoSyncResult, galleryProtocol: 1 });
 });
 
 app.post("/api/lucky-draw/prize", requireAdmin, upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
+  const uploadFiles = [...(req.files?.image || []), ...(req.files?.images || [])];
   try {
     const key = req.body.monthKey || monthKey();
     const previous = readJson(getPrizeFile(key), {});
-    const manualImageUrl = cleanText(req.body.imageUrl, 1200);
-    let manualImageUrls = [];
-    try {
-      const raw = req.body.imageUrls;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) manualImageUrls = parsed.map(v => cleanText(v, 1200)).filter(Boolean);
-      }
-    } catch(e) {
-      manualImageUrls = String(req.body.imageUrls || "").split(/[\n,]+/).map(v => cleanText(v, 1200)).filter(Boolean);
-    }
-    if (manualImageUrl && !manualImageUrls.includes(manualImageUrl)) manualImageUrls.unshift(manualImageUrl);
-
-    const previousUrls = Array.isArray(previous.imageUrls) ? previous.imageUrls.filter(Boolean) : [];
-    if (!previousUrls.length && (previous.imageUrl || previous.image)) previousUrls.push(previous.imageUrl || previous.image);
-
-    let imageUrls = manualImageUrls.length ? manualImageUrls.slice() : previousUrls.slice();
-    let imageStorage = previous.imageStorage || (imageUrls.length ? "url" : "");
-
-    const uploadFiles = [];
-    if (req.files) {
-      if (Array.isArray(req.files.image)) uploadFiles.push(...req.files.image);
-      if (Array.isArray(req.files.images)) uploadFiles.push(...req.files.images);
-    }
-
-    if (uploadFiles.length) {
-      const uploadedUrls = [];
-      for (const file of uploadFiles.slice(0, 10)) {
-        const persistentUrl = await uploadLuckyPrizeImagePersistent(file);
-        if (persistentUrl) {
-          uploadedUrls.push(persistentUrl);
-          try { fs.unlinkSync(file.path); } catch(e) {}
-        } else {
-          uploadedUrls.push(`${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${file.filename}`);
-        }
-      }
-      if (uploadedUrls.length) {
-        imageUrls = uploadedUrls;
-        imageStorage = uploadedUrls.some(u => /res\.cloudinary\.com/i.test(u)) ? "cloudinary" : "backend-upload";
-      }
-    }
+    const {imageUrls, imageStorage} = await savePrizeGallery({
+      body:req.body, files:uploadFiles, previous,
+      validateImage:async file=>{
+        try {
+          const metadata=await sharp(file.path).metadata();
+          if(!['jpeg','png','webp','gif','avif','heif'].includes(metadata.format)||!metadata.width||!metadata.height)throw Error();
+        } catch { const error=new Error('Fail gambar tidak sah. Gunakan JPG, PNG, WebP, GIF atau AVIF.');error.status=400;throw error; }
+      },
+      uploadImage:async file=>{
+        const url=await uploadLuckyPrizeImagePersistent(file);
+        if(url)try{fs.unlinkSync(file.path);}catch{}
+        return url;
+      },
+      localUrl:file=>`${PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`}/uploads/lucky-draw/${file.filename}`
+    });
 
     const imageUrl = imageUrls[0] || "";
     const prize = {
@@ -4234,9 +4210,10 @@ app.post("/api/lucky-draw/prize", requireAdmin, upload.fields([{ name: "image", 
     };
 
     writeJson(getPrizeFile(key), prize);
-    res.json({ ok: true, prize, persistentImage: imageStorage === "cloudinary" || imageStorage === "url" });
+    res.json({ ok: true, prize, persistentImage: imageStorage === "cloudinary" || imageStorage === "url", galleryProtocol: 1 });
   } catch (err) {
-    res.status(500).json({ ok:false, error: err.message || "Save prize failed" });
+    for(const file of uploadFiles)try{fs.unlinkSync(file.path);}catch{}
+    res.status(err.status || 500).json({ ok:false, error: err.message || "Save prize failed" });
   }
 });
 

@@ -1427,6 +1427,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <link rel="stylesheet" href="/assets/css/azobss-lucky-draw-studio.css?v=1406">
 <link rel="stylesheet" href="/assets/css/azobss-prize-lightbox.css?v=1410">
 <script src="/assets/js/azobss-prize-lightbox.js?v=1410" defer></script>
+<link rel="stylesheet" href="/assets/css/azobss-prize-gallery.css?v=1412">
+<script src="/assets/js/azobss-prize-gallery.js?v=1412" defer></script>
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -1611,27 +1613,35 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <label class="field-label" for="prizeTitleInput">Tajuk hadiah</label>
 <input id="prizeTitleInput" placeholder="Tajuk hadiah" type="text"/>
 </div>
-<div>
-<label class="field-label" for="prizeImageFile">Gambar hadiah</label>
-<input accept="image/*" class="file-input" id="prizeImageFile" multiple type="file"/>
+<div class="ld-prize-gallery" id="ld-prize-gallery">
+<div class="ld-gallery-heading"><h3>Galeri gambar hadiah</h3><span id="ld-gallery-count">0 / 50 gambar</span></div>
+<div class="ld-gallery-drop" id="ld-gallery-drop">
+<strong>Seret &amp; lepas gambar di sini</strong>
+<small>JPG, PNG, WebP, GIF atau AVIF · Maksimum 5 MB setiap gambar · 10 fail baharu setiap simpanan</small>
+<button class="btn green" id="ld-gallery-pick" type="button">＋ Pilih gambar</button>
+<input accept="image/jpeg,image/png,image/webp,image/gif,image/avif" class="file-input" id="prizeImageFile" multiple type="file" hidden style="display:none"/>
 </div>
-<div>
-<label class="field-label" for="prizeImageUrlInput">URL gambar kekal</label>
-<textarea id="prizeImageUrlInput" placeholder="https://... (satu URL setiap baris)" rows="3"></textarea>
-<small class="status-note" style="display:block;margin-top:6px">Untuk banyak gambar, pilih beberapa file atau isi beberapa URL dipisah koma/baris baru.</small>
+<ol class="ld-gallery-list" id="ld-gallery-list" aria-label="Susunan gambar hadiah"></ol>
+<p class="ld-gallery-note" id="ld-gallery-status" role="status" aria-live="polite">Gambar pertama ialah gambar utama. Seret kad atau gunakan anak panah untuk susun.</p>
+<div class="ld-gallery-footer"><small>★ Jadikan utama · ← → Ubah susunan · × Buang daripada galeri</small><div><button class="btn dark" id="ld-gallery-reset" type="button">Batal perubahan</button><button class="btn green" id="ld-gallery-save" type="button">Simpan hadiah</button></div></div>
+<details class="ld-gallery-advanced"><summary>Tambah menggunakan URL gambar</summary>
+<label class="field-label" for="prizeImageUrlInput">URL gambar kekal (satu URL setiap baris)</label>
+<textarea id="prizeImageUrlInput" placeholder="https://..." rows="3"></textarea>
+<button class="btn dark" id="ld-gallery-add-urls" type="button">Tambah URL ke galeri</button>
+</details>
 </div>
 </div>
 <div style="margin-top:12px">
 <label class="field-label" for="prizeDescriptionInput">Description</label>
 <textarea id="prizeDescriptionInput" placeholder="Description hadiah"></textarea>
 </div>
-<div class="admin-json">
+<details class="admin-json"><summary>JSON hadiah (lanjutan)</summary>
 <label class="field-label" for="prizeJsonInput">Add / edit JSON</label>
 <textarea id="prizeJsonInput" placeholder='{"title":"Hadiah","description":"Maklumat hadiah","imageUrl":"https://..."}'></textarea>
 <input accept="application/json,.json" id="prizeJsonFileInput" style="display:none" type="file"/>
-</div>
+</details>
 <div class="admin-actions">
-<button class="btn green" id="savePrizeButton" type="button">Save Prize</button>
+<button class="btn green" id="savePrizeButton" type="button">Simpan hadiah</button>
 <button class="btn dark" id="syncPrizeButton" type="button">Sync from Backend</button>
 <button class="btn blue" id="syncFolderPrizeButton" type="button">Sync Folder Prize</button>
 <button class="btn dark" id="loadJsonButton" type="button">Load Prize JSON</button>
@@ -2032,7 +2042,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         adminPrizeImage: 'Upload gambar hadiah',
         adminPrizeImageUrl: 'URL gambar kekal',
         adminPrizeImageUrlHint: 'Untuk long term, guna URL gambar dari Cloudinary/Firebase Storage/CDN.',
-        savePrize: 'Save Prize',
+        savePrize: 'Simpan hadiah',
         syncBackend: 'Sync from Backend',
         syncFolderPrize: 'Sync Folder Prize',
         loadJson: 'Load Prize JSON',
@@ -2867,7 +2877,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       updatePrizeCarousel();
     }
 
-    function renderPrize(prize){
+    function renderPrize(prize, options = {}){
       const images = getPrizeImages(prize || {});
       const title = prize.title || tr('prizeDefaultTitle');
       const desc = prize.description || tr('prizeDefaultDesc');
@@ -2888,7 +2898,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const urlList = splitPrizeImageUrls(prize.imageUrls || prize.images || []);
       const singleUrl = prize.imageUrl || prize.image || '';
       if (!urlList.length && singleUrl) urlList.push(singleUrl);
-      if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = urlList.join('\n');
+      if (window.azPrizeGallery) window.azPrizeGallery.load(urlList, {force:!!options.forceGallery});
+      else if (els.prizeImageUrlInput) els.prizeImageUrlInput.value = urlList.join('\n');
       els.prizeJsonInput.value = JSON.stringify({
         monthKey: prize.monthKey || monthKey(),
         title,
@@ -3316,7 +3327,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       }
     }
 
+    let prizeSaving = false;
     async function savePrize(){
+      if (prizeSaving || window.azPrizeGallery?.busy) return;
       if (!isAdmin(readUser())) {
         setAdminStatus('Admin sahaja boleh save hadiah.', true);
         return;
@@ -3325,7 +3338,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       form.append('monthKey', monthKey());
       form.append('title', els.prizeTitleInput.value.trim());
       form.append('description', els.prizeDescriptionInput.value.trim());
-      if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) {
+      if (window.azPrizeGallery) window.azPrizeGallery.appendTo(form);
+      else if (els.prizeImageUrlInput && els.prizeImageUrlInput.value.trim()) {
         const urls = splitPrizeImageUrls(els.prizeImageUrlInput.value.trim());
         if (urls.length) {
           form.append('imageUrl', urls[0]);
@@ -3333,23 +3347,36 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         }
       }
       form.append('updatedBy', normalizeUsername(readUser().usernameKey || readUser().name));
-      try {
+      if (!window.azPrizeGallery) try {
         const parsed = JSON.parse(els.prizeJsonInput.value || '{}');
         if (parsed.imageUrls || parsed.images) form.append('imageUrls', JSON.stringify(splitPrizeImageUrls(parsed.imageUrls || parsed.images)));
         if (parsed.imageUrl || parsed.image) form.append('imageUrl', parsed.imageUrl || parsed.image);
       } catch(e) {}
-      if (els.prizeImageFile.files && els.prizeImageFile.files.length) {
+      if (!window.azPrizeGallery && els.prizeImageFile.files && els.prizeImageFile.files.length) {
         Array.from(els.prizeImageFile.files).slice(0, 10).forEach(file => form.append('images', file));
       }
-      setAdminStatus('Saving hadiah...');
+      prizeSaving = true;
+      window.azPrizeGallery?.setBusy(true);
+      const locked = ['savePrizeButton','syncPrizeButton','syncFolderPrizeButton','loadJsonButton','applyJsonButton','refreshPrizeButton','prizeTitleInput','prizeDescriptionInput'].map(id=>document.getElementById(id)).filter(Boolean);
+      locked.forEach(node=>node.disabled=true);
+      setAdminStatus('Menyimpan gambar dan susunan hadiah…');
       try {
+        if (window.azPrizeGallery) {
+          const capability = await apiFetch('/api/lucky-draw/prize?monthKey=' + encodeURIComponent(monthKey()), {cache:'no-store'});
+          const supported = await capability.json();
+          if (!capability.ok || supported.galleryProtocol !== 1) throw Error('Servis galeri sedang dikemas kini. Gambar belum dihantar; cuba simpan semula sebentar lagi.');
+        }
         const res = await apiFetch('/api/lucky-draw/prize', {method:'POST', body:form});
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Save gagal');
-        renderPrize(data.prize || {});
-        setAdminStatus('Hadiah berjaya disimpan.');
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Simpan gagal. Semak saiz dan format gambar, kemudian cuba lagi.');
+        renderPrize(data.prize || {}, {forceGallery:true});
+        setAdminStatus(data.persistentImage ? 'Hadiah, gambar dan susunan berjaya disimpan.' : 'Hadiah disimpan. Amaran: sebahagian gambar berada pada storan sementara backend; sediakan Cloudinary untuk simpanan gambar kekal.', !data.persistentImage);
       } catch(e) {
         setAdminStatus(e.message || 'Save hadiah gagal.', true);
+      } finally {
+        prizeSaving = false;
+        locked.forEach(node=>node.disabled=false);
+        window.azPrizeGallery?.setBusy(false);
       }
     }
 
@@ -3384,6 +3411,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
 
     function applyJson(){
+      if (window.azPrizeGallery?.busy) return;
       try {
         const data = JSON.parse(els.prizeJsonInput.value || '{}');
         if (data.title !== undefined) els.prizeTitleInput.value = data.title;
@@ -3398,7 +3426,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
           description: els.prizeDescriptionInput.value,
           imageUrls: splitPrizeImageUrls((els.prizeImageUrlInput && els.prizeImageUrlInput.value) || data.imageUrls || data.images || data.imageUrl || data.image || ''),
           imageUrl: splitPrizeImageUrls((els.prizeImageUrlInput && els.prizeImageUrlInput.value) || data.imageUrls || data.images || data.imageUrl || data.image || '')[0] || ''
-        });
+        }, {forceGallery:true});
         setAdminStatus('JSON diaplikasi ke preview. Tekan Save Prize untuk publish.');
       } catch(e) {
         setAdminStatus('JSON tidak valid: ' + e.message, true);
@@ -3406,6 +3434,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
 
     function downloadJson(){
+      if (window.azPrizeGallery?.dirty) { setAdminStatus('Simpan hadiah dahulu sebelum eksport JSON supaya semua fail dan susunan dimasukkan.', true); return; }
       const payload = {
         monthKey: monthKey(),
         title: els.prizeTitleInput.value.trim(),
