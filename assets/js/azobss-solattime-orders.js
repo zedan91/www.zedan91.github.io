@@ -90,8 +90,7 @@
   $('[data-solat-orders-previous]').addEventListener('click',()=>guarded(async()=>{if(!history.length)return;const previous=history[history.length-1];await load(previous);history.pop();}));
   const panel=document.getElementById('solattimeAdminPanel');new MutationObserver(()=>{if(!panel.hidden&&!loaded)guarded(()=>load(''));}).observe(panel,{attributes:true,attributeFilter:['hidden']});pages();
  }else{
-  const entry=el('div',undefined,'solat-commerce-entry');entry.append(button('Lesen SolatTime saya',openOrders));
-  const grid=document.getElementById('softwareDownloadsGrid')||document.getElementById('softwareGrid')||document.querySelector('.software-grid,.downloads-grid');if(grid)grid.before(entry);else document.body.append(entry);
+  window.azobssOpenSolatTimeOrders=openOrders;
   if(new URLSearchParams(location.search).has('solattime_orders'))openOrders();
   window.addEventListener('azobss-payment-confirmed',event=>{const id=event.detail?.orderId;if(!id)return;pollCount=0;guarded(async()=>{try{await showOrder(id);}catch(e){/* Other products keep their existing success dialog. */}});});
  }

@@ -27,7 +27,7 @@ function fixture(){
  return {window,dialog,calls,serial,timers,get text(){return body.textContent;},get entry(){return entry;},button:text=>all().find(node=>node.tagName==='button'&&node.textContent===text),response:fn=>response=fn,auth(uid='buyer-a'){window.azobssGetCurrentFirebaseUid=()=>uid;window.azobssWaitForFirebaseAuthToken=async()=>uid?'fixture-token-'+uid:'';},event(detail){window.dispatchEvent({type:'azobss:auth-state-ready',detail});},async tick(ms){const end=now+ms;while(true){const next=[...timers].filter(([,v])=>v.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!next)break;now=next[1].at;timers.delete(next[0]);next[1].fn();await flush();}now=end;await flush();}};
 }
 test('email deep link waits for delayed auth module and restored Firebase user before fetching',async()=>{
- const f=fixture();assert.equal(f.dialog.open,true);assert.equal(f.calls.length,0);assert.match(f.text,/Sedang mengesahkan sesi/);assert.doesNotMatch(f.text,/Sila log masuk/);
+ const f=fixture();assert.equal(f.entry,undefined);assert.equal(typeof f.window.azobssOpenSolatTimeOrders,'function');assert.equal(f.dialog.open,true);assert.equal(f.calls.length,0);assert.match(f.text,/Sedang mengesahkan sesi/);assert.doesNotMatch(f.text,/Sila log masuk/);
  const pending=deferred();f.window.azobssWaitForFirebaseAuthToken=()=>pending.promise;f.window.azobssGetCurrentFirebaseUid=()=> 'buyer-a';await f.tick(150);assert.equal(f.calls.length,0);
  pending.resolve('fixture-token');f.event({loggedIn:true,uid:'buyer-a'});await flush();assert.equal(f.calls.length,1);assert.match(f.text,/Pilih pesanan/);assert.equal(f.dialog.open,true);assert.equal(f.calls[0].options.headers.Authorization,'Bearer fixture-token');
 });

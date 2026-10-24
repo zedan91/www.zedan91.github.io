@@ -1280,7 +1280,7 @@ function normalizeUserMenu() {
   if (!dropdown) return;
   dropdown.innerHTML = `
     
-    <a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">My Purchases</span></a>
+    <a class="user-dropdown-item" href="/#purchases" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🧾</span><span class="az-user-menu-label">Lesen &amp; Pembelian Saya</span></a>
     <a class="user-dropdown-item" href="/Bookmarks/" role="menuitem"><svg class="az-user-menu-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24" style="width:20px;height:20px;flex:0 0 20px;color:#facc15;vertical-align:-4px"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z" style="fill:#facc15;stroke:#facc15;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round"></path></svg><span>Bookmarks</span></a>
     
     <button class="user-dropdown-item" id="profileSettingsButton" type="button" role="menuitem"><span class="az-user-menu-icon" aria-hidden="true" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">⚙️</span><span class="az-user-menu-label">Settings</span></button>
@@ -8779,11 +8779,12 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   document.addEventListener('click', function(e){
     const a = e.target && e.target.closest ? e.target.closest('a.user-dropdown-item[href="/#purchases"], a[href="/#purchases"]') : null;
     if(!a) return;
-    if(!/my\s+purchases/i.test(a.textContent || '')) return;
+    if(!/my\s+purchases|lesen\s*&\s*pembelian\s+saya/i.test(a.textContent || '')) return;
     e.preventDefault();
     e.stopPropagation();
     try{ document.querySelectorAll('.user-menu.is-open').forEach(el => el.classList.remove('is-open')); }catch(_e){}
-    window.azobssOpenMyPurchases();
+    if(typeof window.azobssOpenAccountPurchases==='function')window.azobssOpenAccountPurchases();
+    else window.azobssOpenMyPurchases();
   }, true);
 
   window.addEventListener('azobss-my-purchases-updated', renderMyPurchasesList);
@@ -9237,6 +9238,12 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
     try{ document.getElementById('azobssMyPurchasesModal')?.classList.remove('is-open'); }catch(_){ }
     modal.classList.add('is-open');
     await loadRows();
+  };
+  window.azobssOpenAccountPurchases = async function(){
+    try{
+      await import('/assets/js/azobss-account-purchases.js?v=1402');
+      window.azobssAccountPurchasesOpen();
+    }catch(error){alert('Panel lesen belum dapat dibuka. Muat semula halaman dan cuba lagi.');}
   };
   window.addEventListener('azobss-my-purchases-updated', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(700); });
   window.addEventListener('focus', function(){ if(document.getElementById('azobssMyPurchasesProModal')?.classList.contains('is-open')) scheduleLoadRows(500); });
