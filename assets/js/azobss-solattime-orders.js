@@ -50,12 +50,14 @@
   if(event.detail?.loggedIn&&dialog.open&&!busy&&!loaded)openOrders();
  });
  dialog.addEventListener('close',()=>{epoch++;busy=false;stopPoll();content.replaceChildren();nav.replaceChildren();status.textContent='';detailId='';});
- async function guarded(fn){if(busy)return;const generation=epoch;busy=true;try{await fn();}catch(e){if(generation===epoch){if(admin)$('[data-solat-orders-status]').textContent=e.message;status.textContent=e.message;}}finally{if(generation===epoch){busy=false;if(admin)pages();}}}
+ async function guarded(fn){if(busy)return false;const generation=epoch;busy=true;try{await fn();return true;}catch(e){if(generation===epoch){if(admin)$('[data-solat-orders-status]').textContent=e.message;status.textContent=e.message;}return false;}finally{if(generation===epoch){busy=false;if(admin)pages();}}}
  function openOrders(){if(busy)return;pollCount=0;if(!dialog.open)dialog.showModal();nav.replaceChildren(button('Cuba semula',()=>openOrders()));guarded(()=>load(''));}
  function pages(){if(!admin)return;$('[data-solat-orders-previous]').disabled=busy||!history.length;$('[data-solat-orders-next]').disabled=busy||next===null;}
  function renderAdmin(){
   const target=$('[data-solat-orders-rows]'),term=$('[data-solat-orders-search]').value.trim().toLowerCase();target.replaceChildren();
-  for(const order of orders.filter(o=>[o.customer,o.email,o.order_id,o.payment_reference,o.license_id].some(x=>String(x||'').toLowerCase().includes(term)))){
+  let items=orders.filter(o=>[o.customer,o.email,o.phone,o.account_uid,o.order_id,o.payment_reference,o.license_id,o.invoice_no,o.receipt_no].some(x=>String(x||'').toLowerCase().includes(term)));
+  const sort=$('[data-solat-orders-sort]')?.value||'newest';items.sort((a,b)=>sort==='name'?String(a.customer||'').localeCompare(String(b.customer||''),'ms'):sort==='amount'?Number(b.amount_cents)-Number(a.amount_cents):sort==='oldest'?(Date.parse(a.created_at)||0)-(Date.parse(b.created_at)||0):(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0));
+  for(const order of items){
    const row=el('tr'),person=el('td'),proof=el('td'),delivery=el('td'),actions=el('td');
    person.append(el('strong',order.customer),el('small',order.email),el('small',order.phone));
    proof.append(el('strong',order.order_id),el('small',[order.invoice_no,order.receipt_no].filter(Boolean).join(' · ')),el('small',order.payment_method+' · '+(order.payment_reference||'—')));
@@ -68,7 +70,7 @@
  }
  async function load(target=''){
   const value=await api('orders',{cursor:target});orders=value.orders||[];cursor=target;next=value.next_cursor;loaded=true;
-  if(admin){renderAdmin();$('[data-solat-orders-status]').textContent=orders.length+' pesanan pada halaman ini.';}
+  if(admin){renderAdmin();$('[data-solat-orders-status]').textContent=orders.length+' pesanan pada halaman ini.';window.dispatchEvent(new CustomEvent('azobss:solattime-orders-loaded',{detail:{orders,next}}));}
   else{content.replaceChildren();status.textContent=orders.length?'Pilih pesanan untuk melihat serial anda.':'Belum ada pembelian SolatTime dalam akaun ini.';nav.replaceChildren(button('Muat semula',()=>guarded(()=>load(cursor))),button('← Sebelumnya',()=>guarded(async()=>{if(!history.length)return;await load(history.pop());})),button('Seterusnya →',()=>guarded(async()=>{if(next===null)return;const old=cursor;await load(next);history.push(old);})));nav.children[1].disabled=!history.length;nav.children[2].disabled=next===null;for(const order of orders){const card=el('article',undefined,'solat-commerce-order');card.append(el('h3','AZOBSS SolatTime · '+money(order.amount_cents)),el('p',order.order_id),el('p',label(order.status)+' · '+label(order.fulfillment_state)),button('Lihat lesen',()=>guarded(()=>showOrder(order.order_id))));content.append(card);}}
  }
  async function showOrder(id){
@@ -84,8 +86,12 @@
   nav.replaceChildren(button('Hantar semula',()=>guarded(async()=>{await api('retry-email',{order_id:order.order_id});status.textContent='E-mel diterima penyedia penghantaran.';await load(cursor);dialog.close();})),button('Batal',()=>dialog.close()));status.textContent='';dialog.showModal();
  }
  if(admin){
+  window.azSolatTimeAdminOrdersLoad=()=>loaded?Promise.resolve(true):guarded(()=>load(''));
+  window.azSolatTimeAdminOrdersRefresh=()=>guarded(()=>load(cursor));
+  window.azSolatTimeAdminShowOrder=id=>guarded(()=>showOrder(id));
   $('[data-solat-orders-refresh]').addEventListener('click',()=>guarded(()=>load(cursor)));
   $('[data-solat-orders-search]').addEventListener('input',renderAdmin);
+  $('[data-solat-orders-sort]')?.addEventListener('change',()=>{renderAdmin();window.dispatchEvent(new CustomEvent('azobss:solattime-orders-loaded',{detail:{orders,next}}));});
   $('[data-solat-orders-next]').addEventListener('click',()=>guarded(async()=>{if(next===null)return;const old=cursor;await load(next);history.push(old);}));
   $('[data-solat-orders-previous]').addEventListener('click',()=>guarded(async()=>{if(!history.length)return;const previous=history[history.length-1];await load(previous);history.pop();}));
   const panel=document.getElementById('solattimeAdminPanel');new MutationObserver(()=>{if(!panel.hidden&&!loaded)guarded(()=>load(''));}).observe(panel,{attributes:true,attributeFilter:['hidden']});pages();

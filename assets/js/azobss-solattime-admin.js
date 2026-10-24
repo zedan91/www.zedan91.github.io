@@ -3,7 +3,7 @@
   const root=document.getElementById('solattimeAdminPanel');if(!root)return;
   const $=id=>root.querySelector('#solat-'+id);
   const apiBase='https://azobss-backend.onrender.com/api/solattime/admin/';
-  const licenseButtons=()=>Array.from(root.querySelectorAll('button')).filter(button=>!button.closest('#solattimePurchaseAdmin'));
+  const licenseButtons=()=>Array.from(root.querySelectorAll('#solat-issue-form button,#solat-workspace-panel-licenses button,#solat-import-form button,#solat-serial-dialog button,#solat-confirm-dialog button'));
   let generation=0,busy=false,loaded=false,loading=null,offset=0,next=null,history=[],licenses=[],serialRecord=null,pending=null;
   const date=value=>Number.isFinite(Number(value))&&Number(value)>0?new Date(Number(value)*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}):'—';
   function notice(text){$('notice').textContent=text;$('notice').hidden=!text;}
@@ -30,7 +30,8 @@
   function cell(row,text){const td=document.createElement('td');td.textContent=String(text??'');row.append(td);return td;}
   function render(){
     const term=$('search').value.trim().toLocaleLowerCase('ms-MY');
-    const items=licenses.filter(item=>[item.customer,item.id].some(value=>String(value||'').toLocaleLowerCase('ms-MY').includes(term)));
+    const items=licenses.filter(item=>typeof window.azSolatTimeWorkspaceLicenseMatches==='function'?window.azSolatTimeWorkspaceLicenseMatches(item,term):[item.customer,item.id].some(value=>String(value||'').toLocaleLowerCase('ms-MY').includes(term)));
+    const sort=$('sort')?.value||'newest';items.sort((a,b)=>sort==='name'?String(a.customer||'').localeCompare(String(b.customer||''),'ms'):sort==='name-desc'?String(b.customer||'').localeCompare(String(a.customer||''),'ms'):sort==='status'?Number(b.status==='active')-Number(a.status==='active')||Number(b.created)-Number(a.created):sort==='oldest'?Number(a.created)-Number(b.created):Number(b.created)-Number(a.created));
     $('rows').replaceChildren();
     for(const item of items){
       const row=document.createElement('tr'),name=cell(row,''),title=document.createElement('strong'),id=document.createElement('small');
@@ -50,6 +51,7 @@
     const result=await api('list',{limit:25,offset:target});
     if(!Array.isArray(result.licenses)||(result.next_offset!==null&&!Number.isInteger(result.next_offset)))throw Error('Senarai lesen tidak dapat disahkan.');
     offset=target;next=result.next_offset;licenses=result.licenses;loaded=true;render();
+    window.dispatchEvent(new CustomEvent('azobss:solattime-licenses-loaded',{detail:{licenses,next}}));
   }
   window.azSolatTimeAdminLoad=()=>{
     if(loaded)return Promise.resolve(true);
@@ -57,8 +59,10 @@
     const current=generation;
     loading=action(()=>loadLicenses()).finally(()=>{if(current===generation)loading=null;});return loading;
   };
+  window.azSolatTimeAdminRefresh=()=>action(()=>loadLicenses());
   $('refresh').addEventListener('click',()=>action(()=>loadLicenses()));
   $('search').addEventListener('input',render);
+  $('sort')?.addEventListener('change',render);
   $('next').addEventListener('click',()=>action(async()=>{
     if(next===null)return;const previous=offset;await loadLicenses(next);history.push(previous);render();
   }));

@@ -2274,9 +2274,9 @@ body[data-dashboard-page="admin"] .topbar{
 </style>
 
 <link rel="stylesheet" href="/assets/css/azobss-azdm-admin.css?v=1396">
-<link rel="stylesheet" href="/assets/css/azobss-solattime-admin.css?v=1399">
+<link rel="stylesheet" href="/assets/css/azobss-solattime-admin.css?v=1403">
 <script src="/assets/js/azobss-ebook-access-admin.js?v=1360" defer></script>
-<script src="/assets/js/azobss-solattime-admin.js?v=1399" defer></script>
+<script src="/assets/js/azobss-solattime-admin.js?v=1403" defer></script>
 <script src="/assets/js/azobss-azdm-admin.js?v=1397" defer></script>
 
 <style id="azobss-admin-debt-loan-v1314">
@@ -2540,7 +2540,8 @@ body[data-dashboard-page="admin"] .topbar{
 }
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-solattime-commerce.css?v=1399">
-<script src="/assets/js/azobss-solattime-orders.js?v=1402" defer></script>
+<script src="/assets/js/azobss-solattime-orders.js?v=1403" defer></script>
+<script src="/assets/js/azobss-solattime-workspace.js?v=1403" defer></script>
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -3239,19 +3240,35 @@ body[data-dashboard-page="admin"] .topbar{
     <h3>Keluarkan serial SolatTime</h3><p class="solat-muted">Serial baharu dipaparkan sekali selepas dikeluarkan. Salin atau simpan fail serial sebelum menutupnya.</p>
     <form id="solat-issue-form" class="solat-form"><label for="solat-customer">Nama pelanggan<input id="solat-customer" name="customer" maxlength="120" placeholder="Contoh: Ahmad Ali" autocomplete="off" required></label><button type="submit" class="solat-primary">Keluarkan serial</button></form>
   </section>
-  <section class="solat-card">
-    <div class="solat-list-heading"><div><h3>Senarai lesen SolatTime</h3><p class="solat-muted">Lesen berserial sahaja. Percubaan 30 hari bermula terus dalam aplikasi.</p></div><button id="solat-refresh" type="button">Muat semula</button></div>
-    <label for="solat-search">Cari pada halaman ini<input id="solat-search" type="search" placeholder="Nama pelanggan atau ID lesen" autocomplete="off"></label>
+  <section class="solat-card solat-workspace">
+    <div class="solat-workspace-head"><h3>SolatTime — Lesen, Pesanan &amp; Pembayaran</h3><p class="solat-muted">Urus lesen pelanggan, semak pembayaran dan lihat audit pembelian dalam satu ruang.</p>
+      <form id="solat-workspace-controls" class="solat-workspace-controls" role="search"><label class="solat-sr-only" for="solat-workspace-search">Carian pada halaman dimuatkan</label><input id="solat-workspace-search" type="search" placeholder="Cari nama, e-mel, telefon, ID lesen / UID / pesanan" autocomplete="off"><button type="submit">Cari</button><button id="solat-workspace-clear" type="button">Semua</button><button id="solat-workspace-refresh" type="button">Refresh</button></form>
+      <p class="solat-muted solat-search-note">Carian dan susunan digunakan pada halaman lesen serta pesanan yang dimuatkan.</p>
+    </div>
+    <div class="solat-workspace-tabs" role="tablist" aria-label="Pengurusan SolatTime">
+      <button id="solat-workspace-tab-licenses" type="button" role="tab" aria-selected="true" aria-controls="solat-workspace-panel-licenses" data-solat-workspace="licenses">Lesen <span id="solat-license-count" class="solat-tab-count">—</span></button>
+      <button id="solat-workspace-tab-orders" type="button" role="tab" aria-selected="false" aria-controls="solat-workspace-panel-orders" tabindex="-1" data-solat-workspace="orders">Pesanan &amp; Pembayaran <span id="solat-order-count" class="solat-tab-count">—</span></button>
+      <button id="solat-workspace-tab-audit" type="button" role="tab" aria-selected="false" aria-controls="solat-workspace-panel-audit" tabindex="-1" data-solat-workspace="audit">Audit</button>
+    </div>
+    <section id="solat-workspace-panel-licenses" class="solat-workspace-panel" role="tabpanel" aria-labelledby="solat-workspace-tab-licenses">
+    <div class="solat-list-heading"><div><h3>Senarai lesen SolatTime</h3><p class="solat-muted">Lesen berserial sahaja. Percubaan 30 hari bermula terus dalam aplikasi.</p></div><label for="solat-sort">Susun<select id="solat-sort"><option value="newest">Dikeluarkan: Terbaharu</option><option value="oldest">Dikeluarkan: Terlama</option><option value="name">Pelanggan: A → Z</option><option value="name-desc">Pelanggan: Z → A</option><option value="status">Status: Aktif dahulu</option></select></label><button id="solat-refresh" type="button" hidden>Muat semula</button></div>
+    <input id="solat-search" type="search" autocomplete="off" aria-label="Carian lesen" hidden>
     <div class="solat-table" role="region" aria-label="Senarai lesen SolatTime" tabindex="0"><table><thead><tr><th>Pelanggan / ID lesen</th><th>Status</th><th>PC didaftarkan</th><th>Jenis</th><th>Dikeluarkan</th><th>Tindakan</th></tr></thead><tbody id="solat-rows"><tr><td colspan="6" class="solat-empty">Pilih tab SolatTime untuk memuatkan lesen.</td></tr></tbody></table></div>
     <div class="solat-pager"><button id="solat-previous" type="button" disabled>← Sebelumnya</button><span id="solat-page-label" aria-live="polite">25 lesen setiap halaman</span><button id="solat-next" type="button" disabled>Seterusnya →</button></div>
     <p class="solat-muted">Pindahan serial dibuat dan disahkan dalam aplikasi pada PC baharu. PC lama dinyahaktifkan apabila kembali online dan sync.</p>
-  </section>
-  <section id="solattimePurchaseAdmin" class="solat-card solat-commerce">
-    <div class="solat-list-heading"><div><h3>Pesanan &amp; Pembayaran SolatTime</h3><p class="solat-muted">Serial dikeluarkan selepas bayaran disahkan. Semak pelanggan, transaksi dan penghantaran e-mel di sini.</p></div><button type="button" data-solat-orders-refresh>Muat semula pesanan</button></div>
+    </section>
+    <section id="solat-workspace-panel-orders" class="solat-workspace-panel" role="tabpanel" aria-labelledby="solat-workspace-tab-orders" hidden>
+  <section id="solattimePurchaseAdmin" class="solat-commerce">
+    <div class="solat-list-heading"><div><h3>Pesanan &amp; Pembayaran SolatTime</h3><p class="solat-muted">Serial dikeluarkan selepas bayaran disahkan. Semak transaksi dan penghantaran e-mel di sini.</p></div><label>Susun<select data-solat-orders-sort><option value="newest">Dibeli: Terbaharu</option><option value="oldest">Dibeli: Terlama</option><option value="name">Pelanggan: A → Z</option><option value="amount">Jumlah: Tertinggi</option></select></label><button type="button" data-solat-orders-refresh hidden>Muat semula pesanan</button></div>
     <p data-solat-orders-status role="status" aria-live="polite">Buka senarai untuk memuatkan pesanan.</p>
-    <label>Carian pada halaman ini<input data-solat-orders-search type="search" placeholder="Nama, e-mel atau ID pesanan" autocomplete="off"></label>
+    <input data-solat-orders-search type="search" autocomplete="off" aria-label="Carian pesanan" hidden>
     <div class="solat-table" role="region" aria-label="Pesanan dan pembayaran SolatTime" tabindex="0"><table><thead><tr><th>Pelanggan</th><th>Pesanan / Bukti bayaran</th><th>Jumlah</th><th>Bayaran</th><th>Lesen / E-mel</th><th>Tindakan</th></tr></thead><tbody data-solat-orders-rows></tbody></table></div>
-    <div class="solat-pager"><button type="button" data-solat-orders-previous disabled>← Sebelumnya</button><span>25 pesanan setiap halaman · susunan ID pesanan</span><button type="button" data-solat-orders-next disabled>Seterusnya →</button></div>
+    <div class="solat-pager"><button type="button" data-solat-orders-previous disabled>← Sebelumnya</button><span>25 pesanan setiap halaman · susunan pada halaman ini</span><button type="button" data-solat-orders-next disabled>Seterusnya →</button></div>
+  </section>
+    </section>
+    <section id="solat-workspace-panel-audit" class="solat-workspace-panel" role="tabpanel" aria-labelledby="solat-workspace-tab-audit" hidden>
+      <h3>Audit pembelian SolatTime</h3><p class="solat-muted">Ringkasan transaksi dan status semasa daripada halaman pesanan serta lesen yang dimuatkan.</p><div id="solat-audit-rows" class="solat-audit-rows"></div>
+    </section>
   </section>
   <details class="solat-card"><summary>Daftarkan serial lama untuk pindahan PC</summary>
     <p class="solat-muted">Lesen lama kekal sah pada PC asal. Daftarkan serial sedia ada di sini untuk membenarkan pindahan melalui aplikasi; pendaftaran ini tidak memindahkan lesen.</p>
