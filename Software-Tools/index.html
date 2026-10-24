@@ -5473,6 +5473,11 @@ function normalizeItem(item){
 
   function renderItem(item){
     const itemStats482 = statsForItem(item);
+    const isSolatTime = item.licenseProduct === 'solattime' || String(item.name || '').trim().toLowerCase() === 'azobss solattime';
+    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.32/Azobss_SolatTime_Setup.exe';
+    const secondaryActionHtml = isSolatTime
+      ? `<a class="az-card-cart-btn az-solattime-setup-download" href="${solatTimeInstaller}" download="Azobss_SolatTime_Setup.exe" aria-label="Muat turun SolatTime — percubaan 30 hari atau pasang semula" title="Muat turun SolatTime — percubaan 30 hari atau pasang semula"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></a>`
+      : `<button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button>`;
     const isPremium = item.type === 'premium' || item.type === 'ebook';
     const badgeText = isPremium ? ('🛒 ' + item.price) : '';
     const usdBadge = isPremium ? azUsdBadge(item.price) : '';
@@ -5509,7 +5514,7 @@ function normalizeItem(item){
     const azdmInstallerBtnHtml = item.softwarePackages?.enabled && item.softwarePackages.fulfilment === 'azdm'
       ? `<a class="download-btn azdm-setup-download-btn" data-azobss-premium-buy="0" data-product-id="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-download-link="${esc(azdmInstallerUrl)}" href="${esc(azdmInstallerUrl)}" target="_blank" rel="noopener" title="Download AZDM Setup" aria-label="Download AZDM Setup">Download</a>`
       : '';
-    const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Choose Plan</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot"><button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button></div></div>` : actionBtnHtml));
+    const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Choose Plan</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot">${secondaryActionHtml}</div></div>` : actionBtnHtml));
     return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-commission-eligible="${isPremium && !promoFreeInfo.active ? '1' : '0'}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
@@ -8331,6 +8336,8 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
   }
   function patchCards(){
     eligibleCards().forEach(card => {
+      // The public trial/reinstall link is already rendered; never bind cart actions to it.
+      if(card.querySelector('.az-solattime-setup-download')) return;
       const isSoftwareCard = !isCADPage();
       const actionWrap = card.querySelector(':scope > .az-card-bottom-actions-498 > .az-package-card-actions') || card.querySelector(':scope > .az-card-bottom-actions-498') || card;
 
