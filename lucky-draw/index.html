@@ -3370,7 +3370,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const data = await res.json().catch(()=>({}));
         if (!res.ok || !data.ok) throw new Error(data.error || 'Simpan gagal. Semak saiz dan format gambar, kemudian cuba lagi.');
         renderPrize(data.prize || {}, {forceGallery:true});
-        setAdminStatus(data.persistentImage ? 'Hadiah, gambar dan susunan berjaya disimpan.' : 'Hadiah disimpan. Amaran: sebahagian gambar berada pada storan sementara backend; sediakan Cloudinary untuk simpanan gambar kekal.', !data.persistentImage);
+        const storageWarning = !data.persistentImage ? 'Hadiah disimpan. Amaran: sebahagian gambar berada pada storan sementara backend; sediakan Cloudinary untuk simpanan gambar kekal.' : data.prizeStorage === 'json' ? 'Hadiah disimpan. Amaran: rekod hadiah menggunakan storan JSON setempat; aktifkan Firestore untuk rekod kekal.' : '';
+        setAdminStatus(storageWarning || 'Hadiah, gambar dan susunan berjaya disimpan.', !!storageWarning);
       } catch(e) {
         setAdminStatus(e.message || 'Save hadiah gagal.', true);
       } finally {

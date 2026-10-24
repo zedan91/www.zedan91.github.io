@@ -16,6 +16,7 @@ import { Readable } from "stream";
 import {validateSettings,malaysiaMonth,scheduledAt,nextScheduledAt,publicEntry,publicWinner} from "./lucky-draw-model.js";
 import {createSettingsStore,createDrawRunner,problem} from "./lucky-draw-settings.js";
 import {savePrizeGallery} from "./lucky-draw-gallery.js";
+import {createPrizeStore} from "./lucky-draw-prize-store.js";
 
 dotenv.config();
 
@@ -1600,6 +1601,7 @@ function monthName(key = monthKey()) {
 function getPrizeFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-prizes", `${key}.json`);
 }
+const luckyPrizeStore=createPrizeStore({db:luckyDrawDb,getFile:getPrizeFile,readJson});
 
 function getEntriesFile(key = monthKey()) {
   return path.join(DATA_DIR, "lucky-draw-entries", `${key}.json`);
@@ -4043,7 +4045,7 @@ async function syncLuckyDrawPrizeFromPublicFolder(options = {}) {
   const baseUrl = String(options.baseUrl || PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "").trim();
   if (!baseUrl) return { ok:false, error:"baseUrl tidak ditemui." };
 
-  const previous = readJson(getPrizeFile(key), {});
+  const previous = await luckyPrizeStore.get(key, {});
   const jsonPath = options.prizeJsonPath || "/lucky-draw/giveaway-prize.json";
   const jsonUrl = resolvePublicUrl(baseUrl, jsonPath);
   let jsonData = {};
@@ -4118,7 +4120,7 @@ async function syncLuckyDrawPrizeFromPublicFolder(options = {}) {
     sourceImageUrls: sourceUrls,
     autoSynced: true
   };
-  writeJson(getPrizeFile(key), prize);
+  await luckyPrizeStore.save(key, prize);
   return { ok:true, prize, syncedImages, sourceImageUrls: sourceUrls, sourceJsonUrl: jsonUrl, jsonFound };
 }
 
@@ -4141,6 +4143,7 @@ app.post("/api/lucky-draw/prize/sync-folder", requireAdmin, async (req, res) => 
 });
 
 app.get("/api/lucky-draw/prize", async (req, res) => {
+  try {
   const key = req.query.monthKey || monthKey();
   let autoSyncResult = null;
   const wantsAutoSync = String(req.query.autoFolderSync || req.query.autoSync || "") === "1";
@@ -4164,21 +4167,23 @@ app.get("/api/lucky-draw/prize", async (req, res) => {
       autoSyncResult = { ok:false, error: err.message || "Auto folder sync failed" };
     }
   }
-  const prize = readJson(getPrizeFile(key), {
+  const prize = await luckyPrizeStore.get(key, {
     monthKey: key,
     title: "Hadiah belum diumumkan",
     description: "Admin belum upload hadiah Lucky Draw bulan ini.",
     imageUrl: "",
     updatedAt: ""
   });
-  res.json({ ok: true, prize, monthName: monthName(key), autoSync: autoSyncResult, galleryProtocol: 1 });
+  res.setHeader('Cache-Control','no-store');
+  res.json({ ok: true, prize, monthName: monthName(key), autoSync: autoSyncResult, galleryProtocol: 1, prizeStorage:luckyPrizeStore.storage });
+  } catch(error) { res.status(error.status||503).json({ok:false,error:'Rekod hadiah belum dapat dimuatkan. Cuba semula.'}); }
 });
 
 app.post("/api/lucky-draw/prize", requireAdmin, upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
   const uploadFiles = [...(req.files?.image || []), ...(req.files?.images || [])];
   try {
     const key = req.body.monthKey || monthKey();
-    const previous = readJson(getPrizeFile(key), {});
+    const previous = await luckyPrizeStore.get(key, {});
     const {imageUrls, imageStorage} = await savePrizeGallery({
       body:req.body, files:uploadFiles, previous,
       validateImage:async file=>{
@@ -4209,8 +4214,8 @@ app.post("/api/lucky-draw/prize", requireAdmin, upload.fields([{ name: "image", 
       updatedBy: req.body.updatedBy || "admin"
     };
 
-    writeJson(getPrizeFile(key), prize);
-    res.json({ ok: true, prize, persistentImage: imageStorage === "cloudinary" || imageStorage === "url", galleryProtocol: 1 });
+    await luckyPrizeStore.save(key, prize);
+    res.json({ ok: true, prize, persistentImage: imageStorage === "cloudinary" || imageStorage === "url", galleryProtocol: 1, prizeStorage:luckyPrizeStore.storage });
   } catch (err) {
     for(const file of uploadFiles)try{fs.unlinkSync(file.path);}catch{}
     res.status(err.status || 500).json({ ok:false, error: err.message || "Save prize failed" });
@@ -4220,11 +4225,11 @@ app.post("/api/lucky-draw/prize", requireAdmin, upload.fields([{ name: "image", 
 
 // Simple alias for browser test and old frontend code.
 // ES module safe: no require().
-app.get("/api/prize", (req, res) => {
+app.get("/api/prize", async (req, res) => {
   try {
     const key = req.query.monthKey || monthKey();
 
-    let prize = readJson(getPrizeFile(key), null);
+    let prize = await luckyPrizeStore.get(key, null);
 
     // Fallback manual file: backend/data/prize.json
     if (!prize) {
