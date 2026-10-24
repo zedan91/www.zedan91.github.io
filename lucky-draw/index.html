@@ -1424,6 +1424,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1176">
 <script defer src="/assets/js/azobss-more-nav.js?v=1347"></script>
+<link rel="stylesheet" href="/assets/css/azobss-lucky-draw-studio.css?v=1406">
 </head>
 <body>
 <header aria-label="AZOBSS navigation" class="market-sticky-bar">
@@ -1476,15 +1477,55 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 </div>
 </header>
-<main>
+<main class="ld-page" data-ld-version="1406">
 <section class="lucky-shell">
-<div class="top-grid">
-<div class="panel">
-<div class="lucky-lang-row"><button class="btn dark lucky-lang-toggle" id="luckyLangToggle" type="button">English</button></div>
-<span class="kicker">Lucky Draw</span>
-<h1>Peraduan Lucky Draw User</h1>
-<p>User yang sudah register dan login boleh join Lucky Draw selepas share mana-mana produk Software atau CAD Tools.</p>
-<ul class="rules">
+<div class="ld-topline"><a class="ld-back" href="/">AZOBSS <span>/</span> Lucky Draw</a><div class="ld-top-actions"><button type="button" class="btn dark ld-admin-only" id="ld-open-settings">⚙ Urus Lucky Draw</button><button class="btn dark lucky-lang-toggle" id="luckyLangToggle" type="button">English</button></div></div>
+<div class="ld-announcement" id="ld-announcement" hidden role="status"></div>
+<div class="ld-hero">
+ <div class="ld-hero-copy"><div class="ld-campaign-meta"><span class="ld-live-dot"></span><span id="ld-campaign-badge">CABUTAN EKSKLUSIF AZOBSS</span><span class="ld-edition" id="ld-edition"></span></div>
+ <h1 id="ld-title">Rezeki anda,<br>giliran seterusnya.</h1><p class="ld-intro" id="ld-intro">Hadiah istimewa. Komuniti hebat. Sertai cabutan bulanan AZOBSS dan nantikan detik nama anda diumumkan.</p>
+ <div class="ld-hero-links"><a class="btn green" href="#ld-join" id="ld-hero-join">Sertai cabutan <span aria-hidden="true">↗</span></a><a class="ld-text-link" href="#ld-prize" id="ld-view-prize">Lihat hadiah ↓</a></div>
+ <div class="ld-trust"><span id="ld-free-label">Percuma untuk menyertai</span><span id="ld-account-label">Satu akaun, satu penyertaan</span></div>
+ <div class="panel countdown-panel">
+<span>Lucky Draw akan berjalan dalam</span>
+<strong id="countdownText">-- hari --:--:--</strong>
+<small id="targetText">Auto hujung bulan, 10:00 PM Malaysia</small>
+<div class="lucky-draw-minimum-note" id="minimumParticipantsNote">Jika peserta tidak mencapai <b>100 orang</b>, roll tidak akan berjalan. Countdown akan reset dan dibawa ke bulan seterusnya.</div>
+</div>
+ </div>
+ <section class="ld-stage" id="ld-stage" aria-label="Pentas cabutan"><div class="ld-stage-top"><span id="ld-stage-label">THE LUCKY STAGE</span><span class="ld-live-pill" id="ld-draw-status">PENYERTAAN DIBUKA</span></div>
+ <div class="ld-wheel-wrap"><div class="ld-wheel-orbit"></div><span class="ld-wheel-pointer" aria-hidden="true"></span><canvas id="ld-wheel" width="760" height="760" role="img" aria-label="Visual roda cabutan AZOBSS"></canvas><div class="ld-wheel-center"><span class="ld-monogram" aria-hidden="true">A<span>✦</span></span><span id="winnerText" class="draw-summary-winner" aria-live="polite">Pemenang belum dipilih</span></div><span class="ld-star ld-star-one" aria-hidden="true">✦</span><span class="ld-star ld-star-two" aria-hidden="true">✧</span></div>
+ <div class="ld-stage-bottom"><span id="ld-stage-note">Keputusan rasmi dipilih pada server.</span><div><button type="button" class="ld-icon-button" id="ld-sound" aria-label="Aktifkan bunyi" aria-pressed="false">♪</button><button type="button" class="ld-icon-button" id="ld-fullscreen" aria-label="Paparan penuh">⛶</button></div></div></section>
+</div>
+<div class="ld-metrics"><div class="summary-grid">
+<div class="summary-box">
+<span>Jumlah peserta join</span>
+<strong id="participantTotal">0</strong>
+</div>
+<div class="summary-box winner">
+<span>Pemenang bulan ini</span>
+<strong id="winnerName">Belum dipilih</strong>
+</div>
+</div><div class="ld-progress-card"><div><span id="ld-progress-title">Menuju detik cabutan</span><strong id="ld-progress-label">0 / 100 peserta</strong></div><progress id="ld-progress" max="100" value="0" aria-label="Kemajuan minimum peserta"></progress><small id="ld-progress-note">100 lagi untuk capai minimum</small></div></div>
+<div class="ld-section-heading" id="ld-prize"><div><span class="ld-eyebrow" id="ld-discover-label">ADA SESUATU UNTUK ANDA</span><h2 id="ld-experience-title">Hadiah yang dinantikan.</h2></div><span class="ld-section-number" aria-hidden="true">01 — 02</span></div>
+<div class="ld-experience"><div class="panel prize-panel">
+<div class="prize-carousel-shell single" id="prizeCarouselShell">
+<button aria-label="Gambar sebelum" class="prize-carousel-btn prev" id="prizePrevButton" type="button">‹</button>
+<div class="prize-image-wrap">
+<img alt="Lucky Draw Prize" id="prizeImage" onerror="this.onerror=null;this.src='/lucky-draw/prize-placeholder.svg';" src="/lucky-draw/prize-placeholder.svg"/>
+</div>
+<button aria-label="Gambar seterusnya" class="prize-carousel-btn next" id="prizeNextButton" type="button">›</button>
+<span class="prize-carousel-counter" id="prizeImageCounter">1 / 1</span>
+</div>
+<div>
+<span class="kicker">Hadiah Lucky Draw</span>
+<h2 id="prizeTitle" style="margin-top:10px">Hadiah belum diumumkan</h2>
+<div class="azobss-prize-desc-wrap">
+<p class="description" id="prizeDescription">Admin belum upload hadiah Lucky Draw bulan ini.</p>
+<div aria-hidden="true" id="prizeDescScrollHint">Scroll untuk baca semua description</div>
+</div>
+</div>
+</div><div class="panel ld-join-panel" id="ld-join"><span class="ld-eyebrow" id="ld-join-kicker">TIGA LANGKAH MUDAH</span><h2 id="ld-join-title">Peluang anda bermula di sini.</h2><ul class="rules">
 <li>Login dahulu sebelum join Lucky Draw.</li>
 <li>Share mana-mana produk di Software Tools atau CAD Tools.</li>
 <li>Tekan Check Share Status untuk semak status sebelum join.</li>
@@ -1521,15 +1562,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div class="status-note" id="joinStatus">Login dahulu untuk aktifkan Lucky Draw.</div>
 </div>
-</div>
-<div class="right-stack">
-<div class="panel countdown-panel">
-<span>Lucky Draw akan berjalan dalam</span>
-<strong id="countdownText">-- hari --:--:--</strong>
-<small id="targetText">Auto hujung bulan, 10:00 PM Malaysia</small>
-<div class="lucky-draw-minimum-note" id="minimumParticipantsNote">Jika peserta tidak mencapai <b>100 orang</b>, roll tidak akan berjalan. Countdown akan reset dan dibawa ke bulan seterusnya.</div>
-</div>
-<div class="panel spin-box draw-summary-panel">
+</div></div>
+<details class="ld-campaign-details"><summary id="ld-details-label">Butiran penyertaan & syarat cabutan</summary><div class="ld-details-grid"><div class="panel spin-box draw-summary-panel">
 <span class="kicker" id="drawSummaryKicker">Ringkasan</span>
 <strong id="drawSummaryTitle">Ringkasan Lucky Draw bulan ini</strong>
 <div class="draw-summary-list">
@@ -1542,39 +1576,32 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
   <span id="drawSummaryLatestLabel">Peserta terbaru</span>
   <div id="drawSummaryLatest">Belum ada peserta.</div>
 </div>
-<span id="winnerText" class="draw-summary-winner">Pemenang belum dipilih</span>
-</div>
-</div>
-</div>
-<div class="summary-grid">
-<div class="summary-box">
-<span>Jumlah peserta join</span>
-<strong id="participantTotal">0</strong>
-</div>
-<div class="summary-box winner">
-<span>Pemenang bulan ini</span>
-<strong id="winnerName">Belum dipilih</strong>
-</div>
-</div>
-<div class="panel prize-panel">
-<div class="prize-carousel-shell single" id="prizeCarouselShell">
-<button aria-label="Gambar sebelum" class="prize-carousel-btn prev" id="prizePrevButton" type="button">‹</button>
-<div class="prize-image-wrap">
-<img alt="Lucky Draw Prize" id="prizeImage" onerror="this.onerror=null;this.src='/lucky-draw/Multi cooker Philips.jpg';" src="/lucky-draw/prize-placeholder.svg"/>
-</div>
-<button aria-label="Gambar seterusnya" class="prize-carousel-btn next" id="prizeNextButton" type="button">›</button>
-<span class="prize-carousel-counter" id="prizeImageCounter">1 / 1</span>
-</div>
+
+</div><div class="ld-terms"><h3 id="ld-terms-title">Terma penyertaan</h3><p id="ld-terms"></p></div></div></details>
+<div class="ld-community-grid"><div class="panel participants">
+<div class="participants-head">
 <div>
-<span class="kicker">Hadiah Lucky Draw</span>
-<h2 id="prizeTitle" style="margin-top:10px">Hadiah belum diumumkan</h2>
-<div class="azobss-prize-desc-wrap">
-<p class="description" id="prizeDescription">Admin belum upload hadiah Lucky Draw bulan ini.</p>
-<div aria-hidden="true" id="prizeDescScrollHint">Scroll untuk baca semua description</div>
+<span class="kicker">Peserta Lucky Draw</span>
+<h2 style="margin-top:10px">Senarai peserta bulan ini</h2>
 </div>
+<button class="btn dark" id="refreshEntriesButton" type="button">Refresh</button>
 </div>
+<label class="ld-search-label" for="ld-participant-search">Cari dalam peserta terkini</label><input type="search" id="ld-participant-search" placeholder="Cari nama peserta…" autocomplete="off"><div class="participant-list" id="participantList">
+<div class="empty">Loading peserta...</div>
 </div>
-<div class="panel admin-panel" id="adminPrizePanel">
+</div><div class="panel winner-history-panel">
+<div class="participants-head">
+<div>
+<span class="kicker" id="winnerHistoryKicker">Winner History</span>
+<h2 id="winnerHistoryTitle" style="margin-top:10px">Sejarah pemenang Lucky Draw</h2>
+</div>
+<button class="btn dark" id="refreshWinnerHistoryButton" type="button">Refresh</button>
+</div>
+<div class="participant-list" id="winnerHistoryList">
+<div class="empty">Loading winner history...</div>
+</div>
+</div></div>
+<dialog id="ld-settings" class="ld-settings" aria-labelledby="ld-settings-title"><div class="ld-dialog-head"><div><span class="ld-eyebrow">AZOBSS CONTROL ROOM</span><h2 id="ld-settings-title">Urus Lucky Draw</h2></div><button type="button" class="ld-icon-button" id="ld-close-settings" aria-label="Tutup tetapan">✕</button></div><div class="ld-settings-meta"><span id="ld-settings-revision">Memuatkan tetapan…</span><button class="ld-text-button" type="button" id="ld-reload-settings">Muat semula</button></div><div class="ld-settings-tabs" role="tablist" aria-label="Tetapan Lucky Draw"><button type="button" role="tab" id="ld-tab-brand" aria-controls="ld-panel-brand" aria-selected="true" data-ld-tab="brand">Kempen</button><button type="button" role="tab" id="ld-tab-look" aria-controls="ld-panel-look" aria-selected="false" data-ld-tab="look">Paparan</button><button type="button" role="tab" id="ld-tab-entry" aria-controls="ld-panel-entry" aria-selected="false" data-ld-tab="entry">Penyertaan</button><button type="button" role="tab" id="ld-tab-schedule" aria-controls="ld-panel-schedule" aria-selected="false" data-ld-tab="schedule">Jadual</button><button type="button" role="tab" id="ld-tab-prize" aria-controls="ld-panel-prize" aria-selected="false" data-ld-tab="prize">Hadiah & Cabutan</button><button type="button" role="tab" id="ld-tab-audit" aria-controls="ld-panel-audit" aria-selected="false" data-ld-tab="audit">Data & Audit</button></div><form id="ld-settings-form"><div class="ld-settings-body"><section data-ld-panel="brand" id="ld-panel-brand" role="tabpanel" aria-labelledby="ld-tab-brand"><h3>Jadikan kempen ini milik anda.</h3><p>Tajuk dan mesej berasingan untuk Bahasa Melayu serta English.</p><div class="ld-fields"><label class="ld-field"><span>Tajuk — BM</span><input name="titleMs" maxlength="100"></label><label class="ld-field"><span>Title — English</span><input name="titleEn" maxlength="100"></label><label class="ld-field"><span>Lencana — BM</span><input name="badgeMs" maxlength="100"></label><label class="ld-field"><span>Badge — English</span><input name="badgeEn" maxlength="100"></label><label class="ld-field"><span>Pengenalan — BM</span><textarea name="subtitleMs" maxlength="420"></textarea></label><label class="ld-field"><span>Introduction — English</span><textarea name="subtitleEn" maxlength="420"></textarea></label><label class="ld-field"><span>Pengumuman — BM (pilihan)</span><textarea name="announcementMs" maxlength="240"></textarea></label><label class="ld-field"><span>Announcement — English (optional)</span><textarea name="announcementEn" maxlength="240"></textarea></label></div></section><section data-ld-panel="look" id="ld-panel-look" role="tabpanel" aria-labelledby="ld-tab-look" hidden><h3>Gaya pentas cabutan</h3><div class="ld-theme-presets"><button type="button" data-ld-preset="emerald"><i></i>Emerald Club</button><button type="button" data-ld-preset="royal"><i></i>Royal Violet</button><button type="button" data-ld-preset="midnight"><i></i>Midnight Blue</button></div><div class="ld-fields"><label class="ld-field"><span>Tema</span><select name="theme" aria-label="Tema"><option value="emerald">Emerald Club</option><option value="royal">Royal Violet</option><option value="midnight">Midnight Blue</option></select></label><label class="ld-field"><span>Warna aksen</span><input name="accent" type="color"></label><label class="ld-field"><span>Tempoh animasi (3–20 saat)</span><input name="spinSeconds" type="number" min="3" max="20" step="1" required></label></div><label class="ld-switch"><input type="checkbox" name="confettiEnabled"><span><strong>Konfeti pemenang</strong><small>Kesan perayaan ringkas; menghormati tetapan reduced motion.</small></span></label><label class="ld-switch"><input type="checkbox" name="soundEnabled"><span><strong>Benarkan kesan bunyi</strong><small>Bunyi bermula selepas penonton mengaktifkannya sendiri.</small></span></label><label class="ld-switch"><input type="checkbox" name="showParticipants"><span><strong>Paparkan senarai peserta</strong><small>Pelawat hanya melihat nama dan masa menyertai.</small></span></label><label class="ld-switch"><input type="checkbox" name="showHistory"><span><strong>Paparkan sejarah pemenang</strong><small>Sembunyikan sejarah pada halaman awam jika tidak diperlukan.</small></span></label></section><section data-ld-panel="entry" id="ld-panel-entry" role="tabpanel" aria-labelledby="ld-tab-entry" hidden><h3>Penyertaan yang jelas, satu peluang setiap akaun.</h3><label class="ld-switch"><input type="checkbox" name="registrationOpen"><span><strong>Buka penyertaan</strong><small>Matikan untuk jeda pendaftaran; rekod sedia ada kekal.</small></span></label><label class="ld-switch"><input type="checkbox" name="shareRequired"><span><strong>Wajib share produk Software / CAD</strong><small>Pengesahan menggunakan rekod share pada server.</small></span></label><div class="ld-fields"><label class="ld-field"><span>Minimum produk berbeza dikongsi (1–10)</span><input name="minShares" type="number" min="1" max="10" required></label><label class="ld-field"><span>Minimum peserta cabutan (1–20,000)</span><input name="minParticipants" type="number" min="1" max="20000" required></label><label class="ld-field"><span>Terma tambahan — BM</span><textarea name="termsMs" maxlength="2000" rows="5"></textarea></label><label class="ld-field"><span>Additional terms — English</span><textarea name="termsEn" maxlength="2000" rows="5"></textarea></label></div><p class="ld-callout">Login dan kawalan penyertaan berganda kekal aktif. Tetapan tidak membolehkan admin menentukan nama pemenang.</p></section><section data-ld-panel="schedule" id="ld-panel-schedule" role="tabpanel" aria-labelledby="ld-tab-schedule" hidden><h3>Atur detik pengumuman.</h3><div class="ld-fields"><label class="ld-field"><span>Kaedah cabutan</span><select name="scheduleMode" aria-label="Kaedah cabutan"><option value="monthly">Bulanan mengikut jadual</option><option value="manual">Manual oleh admin</option></select></label><label class="ld-field"><span>Hari setiap bulan</span><select name="drawDay" aria-label="Hari setiap bulan"><option value="0">Hari terakhir bulan</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option></select></label><label class="ld-field"><span>Jam (waktu Malaysia, 0–23)</span><input name="drawHour" type="number" min="0" max="23" required></label><label class="ld-field"><span>Minit (0–59)</span><input name="drawMinute" type="number" min="0" max="59" required></label></div><p class="ld-callout">Zon waktu Asia/Kuala_Lumpur. Cabutan memerlukan minimum peserta. Jadual diproses ketika servis backend berjalan; hosting Render percuma boleh tidur. Jika waktunya berlalu, status akan disemak semula apabila servis bangun.</p><p>Gunakan Run Draw dalam tab Hadiah & Cabutan untuk memulakan cabutan lebih awal sebagai admin. Pemenang sedia ada tidak akan diganti oleh klik berulang.</p></section><section data-ld-panel="prize" id="ld-panel-prize" role="tabpanel" aria-labelledby="ld-tab-prize" hidden><div class="panel admin-panel" id="adminPrizePanel">
 <span class="kicker">Admin</span>
 <h2 style="margin-top:10px">Edit Hadiah Lucky Draw</h2>
 <div class="admin-grid" style="margin-top:12px">
@@ -1588,7 +1615,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </div>
 <div>
 <label class="field-label" for="prizeImageUrlInput">URL gambar kekal</label>
-<input id="prizeImageUrlInput" placeholder="https://..." type="url"/>
+<textarea id="prizeImageUrlInput" placeholder="https://... (satu URL setiap baris)" rows="3"></textarea>
 <small class="status-note" style="display:block;margin-top:6px">Untuk banyak gambar, pilih beberapa file atau isi beberapa URL dipisah koma/baris baru.</small>
 </div>
 </div>
@@ -1619,9 +1646,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <button class="btn dark" id="exportParticipantsButton" type="button">Export Peserta</button>
 </div>
 <div class="status-note" id="adminStatus"></div>
-</div>
-
-<div class="panel admin-panel referral-audit-panel" id="adminReferralAuditPanel">
+</div></section><section data-ld-panel="audit" id="ld-panel-audit" role="tabpanel" aria-labelledby="ld-tab-audit" hidden><div class="panel admin-panel referral-audit-panel" id="adminReferralAuditPanel">
 <div class="participants-head">
 <div>
 <span class="kicker" id="referralAuditKicker">Referral Audit</span>
@@ -1642,9 +1667,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="empty">Tekan Refresh Audit untuk baca rekod link share.</div>
 </div>
 <div class="status-note" id="referralAuditStatus"></div>
-</div>
-
-<div class="panel admin-panel abuse-audit-panel" id="adminAbuseAuditPanel">
+</div><div class="panel admin-panel abuse-audit-panel" id="adminAbuseAuditPanel">
 <div class="participants-head">
 <div>
 <span class="kicker" id="abuseAuditKicker">Anti-Abuse Log</span>
@@ -1665,34 +1688,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <div class="empty">Tekan Refresh Log untuk baca rekod anti-abuse.</div>
 </div>
 <div class="status-note" id="abuseAuditStatus"></div>
-</div>
-<div class="panel participants">
-<div class="participants-head">
-<div>
-<span class="kicker">Peserta Lucky Draw</span>
-<h2 style="margin-top:10px">Senarai peserta bulan ini</h2>
-</div>
-<button class="btn dark" id="refreshEntriesButton" type="button">Refresh</button>
-</div>
-<div class="participant-list" id="participantList">
-<div class="empty">Loading peserta...</div>
-</div>
-</div>
-<div class="panel winner-history-panel">
-<div class="participants-head">
-<div>
-<span class="kicker" id="winnerHistoryKicker">Winner History</span>
-<h2 id="winnerHistoryTitle" style="margin-top:10px">Sejarah pemenang Lucky Draw</h2>
-</div>
-<button class="btn dark" id="refreshWinnerHistoryButton" type="button">Refresh</button>
-</div>
-<div class="participant-list" id="winnerHistoryList">
-<div class="empty">Loading winner history...</div>
-</div>
-</div>
-</section>
-<footer>© 2026 AZOBSS. All rights reserved.</footer>
-</main>
+</div></section></div><div class="ld-dialog-footer"><p id="ld-settings-status" role="status" aria-live="polite">Perubahan hanya diterbitkan selepas Simpan tetapan.</p><div><button class="btn dark" type="button" id="ld-preview-settings">Pratonton</button><button class="btn green" type="submit" id="ld-save-settings">Simpan tetapan</button></div></div></form></dialog>
+</section><footer>© 2026 AZOBSS. All rights reserved.</footer></main>
+<script type="module" src="/assets/js/azobss-lucky-draw-studio.js?v=1406"></script>
 <a aria-label="WhatsApp" class="whatsapp" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"></a>
 <script id="az-lucky-draw-correct-api-url-migration-408">
 (function(){
@@ -1723,10 +1721,12 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </script>
 
 <script>
-    const API_BASE = (window.AZOBSS_LUCKY_DRAW_API || localStorage.getItem('azobssLuckyDrawBackendUrl') || 'https://azobss-lucky-draw-api.onrender.com').replace(/\/$/, '');
+    const API_BASE = 'https://azobss-lucky-draw-api.onrender.com'; // Never forward Firebase/admin credentials to an arbitrary stored URL.
     const ADMIN_USERNAME = 'zedan91';
     const MEMBER_PA_CODE = ''; // legacy invite/member codes never grant PA/BM access
     function getLuckyDrawTargetDate(){
+      if(window.azLuckyConfig?.scheduleMode==='manual')return null;
+      if(window.azLuckyNextDrawAt)return new Date(window.azLuckyNextDrawAt);
       const now = new Date();
       const malaysiaParts = new Intl.DateTimeFormat('en-CA', {
         timeZone:'Asia/Kuala_Lumpur',
@@ -1774,6 +1774,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     if (savedInviteFromUrl) localStorage.setItem('azobssLuckyDrawLastInvite', savedInviteFromUrl);
 
     let luckyDrawEntriesCache = [];
+    let luckyOwnEntry=null,luckyEntriesLoading=false;
+    function shareReady(){return window.azLuckyConfig?.shareRequired===false||referralClickCountCache >= (window.azLuckyConfig?.minShares||1);}
     let luckyDrawEntriesTotalCache = 0;
     let luckyDrawEntriesOffsetCache = 0;
     let prizeCarouselImages = [];
@@ -1945,6 +1947,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         const opts = azobssWithAdminHeaders(options);
         const firebaseHeaders = await azobssLuckyFirebaseHeaders();
         opts.headers = Object.assign({}, firebaseHeaders, opts.headers || {});
+        opts.signal=opts.signal||AbortSignal.timeout(25000);
         const res = await fetch(API_BASE + path, opts);
         return res;
       }catch(error){
@@ -2146,8 +2149,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         drawClosedDesc: 'New entries are now closed.',
         noteTitle: 'Product share note',
         note1: 'Share at least one Software or CAD Tools product after login to unlock this month\'s Lucky Draw.',
-        note2: 'Opening your own link does not count.',
-        note3: 'Repeated clicks from the same device or IP address will not be counted multiple times.',
+        note2: 'You do not need to wait for someone else to open the link.',
+        note3: 'One entry per account for the current month.',
         countdownLabel: 'Lucky Draw will run in',
         targetFallback: 'Auto end of month, 10:00 PM Malaysia',
         minimumParticipantsNote: 'If participants do not reach <b>100 people</b>, the roll will not run. The countdown will reset and move to next month.',
@@ -2231,19 +2234,19 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         abuseAuditExportEmpty: 'No anti-abuse log to export.',
         abuseAuditExportDone: 'Anti-abuse log export completed.',
         loginPlaceholder: 'Share a paid Software/CAD product to unlock join',
-        productRequirement: 'Open any paid Software/CAD product and tap <strong>Share for Lucky Draw</strong>. Join activates after another person opens that product link.',
+        productRequirement: 'Share a Software/CAD product after signing in, then check your share status to enter.',
         loginActive: 'Log in first to activate Lucky Draw.',
         loginCheck: 'Log in first to check product share.',
         checking: 'Checking product share...',
         alreadyJoined: 'You have already joined this month\'s Lucky Draw.',
-        referralValid: 'Paid product click is valid. Join Lucky Draw button is now active.',
+        referralValid: 'Your product share is recorded. You can now enter the draw.',
         joinBlockedDevice: 'Paid product share is valid, but this device has already been used to join this month.',
         joinBlockedIp: 'Paid product share is valid, but this IP address has already been used to join this month.',
         joinBlockedAccount: 'This account has already joined the Lucky Draw this month.',
         joinBlockedGeneric: 'Paid product share is valid, but you cannot join this month.',
-        referralMissing: 'Share any paid Software/CAD product. Join will be active after at least 1 person opens your product link.',
+        referralMissing: 'Share a Software/CAD product to complete the entry requirement.',
         referralCount: 'Product share: ',
-        noReferral: 'No valid product click yet',
+        noReferral: 'No product share recorded yet',
         copyLogin: 'Log in first before opening Software Tools.',
         copied: 'Choose any Software/CAD product, then tap Share.',
         shareLogin: 'Log in first before opening CAD Tools.',
@@ -2312,7 +2315,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('label[for="prizeDescriptionInput"]', tr('adminPrizeDesc'));
       setText('label[for="prizeImageFile"]', tr('adminPrizeImage'));
       setText('label[for="prizeImageUrlInput"]', tr('adminPrizeImageUrl'));
-      const imageUrlHint = document.querySelector('label[for="prizeImageUrlInput"] + input + small'); if (imageUrlHint) imageUrlHint.textContent = tr('adminPrizeImageUrlHint');
+      const imageUrlHint = document.querySelector('label[for="prizeImageUrlInput"] + textarea + small'); if (imageUrlHint) imageUrlHint.textContent = tr('adminPrizeImageUrlHint');
       const titleInput = document.getElementById('prizeTitleInput'); if (titleInput) titleInput.placeholder = tr('adminPrizeTitle');
       const imageUrlInput = document.getElementById('prizeImageUrlInput'); if (imageUrlInput) imageUrlInput.placeholder = 'https://...';
       const descInput = document.getElementById('prizeDescriptionInput'); if (descInput) descInput.placeholder = tr('adminPrizeDesc');
@@ -2351,6 +2354,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setText('#abuseAuditDuplicateJoinLabel', tr('abuseAuditDuplicateJoinTotal'));
       setText('#refreshAbuseAuditButton', tr('abuseAuditRefresh'));
       setText('#exportAbuseAuditButton', tr('abuseAuditExport'));
+      window.dispatchEvent(new Event('ld:language'));
     }
 
     function setJoinStep(el, state, label, title, desc){
@@ -2467,7 +2471,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const usernameKey = normalizeUsername(user.usernameKey || user.name);
       const uid = String(user.uid || '').trim();
       const inviteCode = cleanShareUsername(user.inviteCode || buildInviteCode(usernameKey));
-      return (luckyDrawEntriesCache || []).find((entry) => {
+      return [luckyOwnEntry,...(luckyDrawEntriesCache || [])].filter(Boolean).find((entry) => {
         if (!entry || entry.deleted) return false;
         const entryUser = normalizeUsername(entry.usernameKey || entry.name);
         const entryUid = String(entry.uid || '').trim();
@@ -2544,7 +2548,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (!user.usernameKey) user.usernameKey = normalizeUsername(user.name);
       user.inviteCode = buildInviteCode(user.usernameKey);
       const inviteUrl = buildInviteUrl(user);
-      const referralReadyRaw = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
+      const referralReadyRaw = shareReady();
       const joinBlocked = !!luckyDrawJoinBlockCache;
       const referralReady = referralReadyRaw && !joinBlocked;
       const backendJoined = !!findCurrentUserEntry(user);
@@ -2557,7 +2561,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       if (els.productRequirementText) els.productRequirementText.innerHTML = tr('productRequirement');
       els.inviteCode.textContent = user.usernameKey;
       els.shareStatus.textContent = joinBlocked ? getJoinBlockMessage(luckyDrawJoinBlockCache) : (referralReady ? (tr('referralCount') + Math.max(1, referralClickCountCache)) : tr('noReferral'));
-      els.joinButton.disabled = luckyDrawWinnerSelected || joined || joinBlocked || !referralReady;
+      els.joinButton.disabled = window.azLuckyConfig?.registrationOpen===false || luckyDrawWinnerSelected || joined || joinBlocked || !referralReady;
       updateJoinChecklist(user, referralReady, joined);
       if (els.confirmShareButton) {
         els.confirmShareButton.disabled = joined;
@@ -2569,11 +2573,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       else if (referralReady) setStatus(tr('referralValid'));
       else setStatus(tr('referralMissing'));
       updateLuckyDrawSummary();
+      window.dispatchEvent(new Event('ld:updated'));
     }
 
     function tickCountdown(){
       const target = getLuckyDrawTargetDate();
+      if(!target){els.countdown.textContent=luckyDrawLang==='en'?'Admin will announce':'Menanti pengumuman';els.targetText.textContent=luckyDrawLang==='en'?'Manual draw':'Cabutan oleh admin';return;}
       const diff = Math.max(0, target.getTime() - Date.now());
+      if(window.azLuckyConfig&&diff===0){els.countdown.textContent=luckyDrawLang==='en'?'Awaiting the result':'Menanti keputusan';els.targetText.textContent=formatLuckyDrawTargetText(target);return;}
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor(diff / 3600000) % 24;
       const minutes = Math.floor(diff / 60000) % 60;
@@ -2659,11 +2666,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     async function loadPrize(){
       setPrizeLoading(true);
       try {
-        const res = await apiFetch('/api/lucky-draw/prize?autoFolderSync=1&monthKey=' + encodeURIComponent(monthKey()) + '&baseUrl=' + encodeURIComponent(location.origin) + '&_=' + Date.now(), {cache:'no-store'});
+        const res = await apiFetch('/api/lucky-draw/prize?autoFolderSync=0&monthKey=' + encodeURIComponent(monthKey()) + '&baseUrl=' + encodeURIComponent(location.origin) + '&_=' + Date.now(), {cache:'no-store'});
         const data = await res.json();
         if (data && data.ok && data.prize) {
           renderPrize(data.prize);
-          mergePublicFolderPrizeFallback(data.prize);
+          // Folder synchronization is an explicit admin action, not a side effect of each visit.
           return;
         }
       } catch(e) {}
@@ -2671,7 +2678,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       try {
         const res = await fetch('/lucky-draw/giveaway-prize.json', {cache:'no-store'});
         const data = await res.json();
-        renderPrize(data || {});
+        renderPrize(data?.monthKey===monthKey()?data:{});
       } catch(e) {
         setPrizeLoading(false);
       }
@@ -2891,11 +2898,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     }
 
     async function loadEntries(){
+      if(luckyEntriesLoading)return;luckyEntriesLoading=true;
       setEntriesLoading(true);
       try {
         const res = await apiFetch('/api/lucky-draw/entries?monthKey=' + encodeURIComponent(monthKey()) + '&limit=20&page=1', {cache:'no-store'});
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Entries error');
+        if(readUser()){try{const mine=await apiFetch('/api/lucky-draw/me',{cache:'no-store'});const own=await mine.json();luckyOwnEntry=own.ok?own.entry:null;}catch{luckyOwnEntry=null;}}else luckyOwnEntry=null;
         const rows = Array.isArray(data.entries) ? data.entries : [];
         luckyDrawEntriesCache = rows.filter((entry) => !entry.deleted);
         luckyDrawEntriesTotalCache = Number(data.total || luckyDrawEntriesCache.length || 0);
@@ -2908,8 +2917,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       } catch(e) {
         setEntriesLoading(false);
         console.warn('Lucky Draw participants load failed:', e);
-        els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '<br><small>Backend: ' + escapeHtml(API_BASE + '/api/health') + '</small></div>';
-      }
+        els.participants.innerHTML = '<div class="empty">' + escapeHtml(tr('entriesBackendFail')) + '</div>';
+      }finally{luckyEntriesLoading=false;window.dispatchEvent(new Event('ld:updated'));}
     }
 
     function renderParticipants(rows, totalCount, offset){
@@ -3204,7 +3213,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         showJoinedStatus(user, tr('alreadyJoined'));
         return;
       }
-      const referralReady = localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0;
+      const referralReady = shareReady();
       if (!referralReady) {
         await loadReferralStatus(user);
       }
@@ -3213,7 +3222,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         setStatus(getJoinBlockMessage(luckyDrawJoinBlockCache), true);
         return;
       }
-      if (!(localStorage.getItem(getShareKey(user)) === '1' || referralClickCountCache > 0)) {
+      if (!shareReady()) {
         setStatus('Share mana-mana produk Software atau CAD Tools dahulu untuk unlock Lucky Draw.', true);
         return;
       }
@@ -3422,6 +3431,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 
 
     function requireLuckyDrawAdmin(){
+      if(luckyDrawRollingActive){setAdminStatus('Tunggu animasi cabutan selesai dahulu.',true);return false;}
       if (isAdmin(readUser())) return true;
       setAdminStatus('Admin sahaja boleh guna fungsi ini.', true);
       return false;
@@ -3464,6 +3474,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         index = (index + 1) % names.length;
         setWinnerRollBox(title, names[index], note, opt.test ? 'is-test' : '');
       }, opt.speed || 90);
+      window.dispatchEvent(new CustomEvent('ld:spin-start',{detail:{test:!!opt.test}}));
     }
 
     function clearWinnerRolling(resetActive){
@@ -3480,13 +3491,14 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       const note = opt.test ? tr('testRollingNote') : tr('winnerFinalNote');
       clearWinnerRolling(true);
       setWinnerRollBox(title, finalName || 'User', note, opt.test ? 'is-test' : 'is-final');
+      window.dispatchEvent(new CustomEvent('ld:spin-finish',{detail:{name:finalName,test:!!opt.test}}));
     }
 
     async function runLuckyDraw(){
-      if (!requireLuckyDrawAdmin()) return;
+      if (!requireLuckyDrawAdmin()||luckyDrawRollingActive) return;
       if (!confirm(tr('runDrawConfirm'))) return;
       const rows = activeLuckyRows();
-      if (rows.length) startWinnerRolling({test:false});
+      startWinnerRolling({test:false});
       setAdminStatus('Running lucky draw...');
       const startedAt = Date.now();
       try {
@@ -3499,7 +3511,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
         if (!data.ok) throw new Error(data.error || 'Run draw gagal');
         const winner = data.winner || {};
         const name = winner.name || winner.usernameKey || 'Winner';
-        const remaining = Math.max(0, 1800 - (Date.now() - startedAt));
+        luckyDrawCurrentWinnerCache=winner;
+        const remaining = Math.max(0, (window.azLuckyConfig?.spinSeconds||6)*1000 - (Date.now() - startedAt));
+        window.dispatchEvent(new CustomEvent('ld:spin-result',{detail:{name,duration:remaining,test:false}}));
         await new Promise(resolve => setTimeout(resolve, remaining));
         els.winner.textContent = name;
         finishWinnerRolling(name, {test:false});
@@ -3519,12 +3533,13 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       } catch(e) {
         clearWinnerRolling(true);
         if (!luckyDrawCurrentWinnerCache) els.winnerText.textContent = tr('winnerPending');
+        window.dispatchEvent(new Event('ld:spin-error'));
         setAdminStatus(e.message || 'Run draw gagal.', true);
       }
     }
 
     function testLuckySpin(){
-      if (!requireLuckyDrawAdmin()) return;
+      if (!requireLuckyDrawAdmin()||luckyDrawRollingActive) return;
       const rows = activeLuckyRows();
       if (!rows.length) {
         setAdminStatus('Tiada peserta untuk test spin.', true);
@@ -3533,11 +3548,11 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
       setAdminStatus('Test spin sahaja. Pemenang tidak disimpan.');
       startWinnerRolling({test:true, speed:80});
       setTimeout(() => {
-        const finalPick = rows[Math.floor(Math.random() * rows.length)] || {};
+        const finalPick = rows[crypto.getRandomValues(new Uint32Array(1))[0] % rows.length] || {};
         const finalName = finalPick.name || finalPick.usernameKey || 'User';
         finishWinnerRolling(finalName, {test:true});
         setAdminStatus('Test spin selesai. Tiada rekod winner disimpan.');
-      }, 2200);
+      }, (window.azLuckyConfig?.spinSeconds||6)*1000);
     }
 
     async function resetLuckyWinner(){
@@ -3713,8 +3728,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     document.getElementById('exportParticipantsButton').addEventListener('click', exportLuckyParticipants);
 
     window.addEventListener('storage', showUser);
+    window.addEventListener('azobss-auth-changed',()=>{luckyOwnEntry=null;showUser();window.dispatchEvent(new Event('ld:updated'));});
     window.addEventListener('resize', updatePrizeDescScrollHint);
 
+    window.azLuckyBridge={apiFetch,isAdmin:()=>isAdmin(readUser()),state:()=>({entries:luckyDrawEntriesCache,total:luckyDrawEntriesTotalCache,rolling:luckyDrawRollingActive,winner:luckyDrawCurrentWinnerCache,language:luckyDrawLang}),refresh:async()=>{await Promise.all([loadEntries(),loadWinner(),loadWinnerHistory()]);},apply:()=>{applyLuckyDrawLanguage();updateInvitePanel();tickCountdown();}};
     applyLuckyDrawLanguage();
     tickCountdown();
     window.azobssLongSessionInterval(tickCountdown, 1000);
@@ -3727,7 +3744,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     loadWinner();
     loadWinnerHistory();
     if (isAdmin(readUser())) loadReferralAudit();
-    window.azobssLongSessionInterval(function(){ loadEntries(); loadReferralStatus(readUser()).then(updateInvitePanel); if (isAdmin(readUser())) loadReferralAudit(); }, 30000);
+    window.azobssLongSessionInterval(function(){if(document.hidden)return;loadEntries();loadWinner();loadReferralStatus(readUser()).then(updateInvitePanel);}, 60000);
   </script>
 <script src="/assets/js/azobss-global-auth.js?v=1402" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
