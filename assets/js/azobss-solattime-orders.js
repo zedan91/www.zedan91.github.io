@@ -3,15 +3,36 @@
  const base='https://azobss-backend.onrender.com/api/solattime/';
  const admin=document.getElementById('solattimePurchaseAdmin');
  let epoch=0,loaded=false,busy=false,cursor='',next=null,history=[],orders=[],detailId='',poll=null,pollCount=0;
+ let accountUid='',authSettled=false;
  const $=s=>admin?.querySelector(s),money=v=>'RM'+(Number(v||0)/100).toFixed(2);
  const states={pending:'Menunggu bayaran',paid:'Bayaran diterima',complete:'Serial siap',issued:'Serial siap · e-mel belum selesai',review:'Perlu semakan',prepared:'Sedang diproses',awaiting_payment:'Menunggu bayaran',accepted:'Diterima penyedia e-mel',queued:'Dalam giliran'};
  const label=v=>states[v]||String(v||'—');
  function el(tag,text,cls){const value=document.createElement(tag);if(text!==undefined)value.textContent=String(text);if(cls)value.className=cls;return value;}
  function button(text,fn){const b=el('button',text);b.type='button';b.addEventListener('click',fn);return b;}
+ async function buyerAuth(generation){
+  const deadline=Date.now()+12000;
+  status.textContent='Sedang mengesahkan sesi akaun anda…';
+  while(generation===epoch&&Date.now()<deadline){
+   let headers={};
+   if(typeof window.azobssWaitForFirebaseAuthToken==='function'){
+    const token=await window.azobssWaitForFirebaseAuthToken(false,Math.max(1000,deadline-Date.now()));
+    if(token)headers={Authorization:'Bearer '+token};
+    else if(generation===epoch)throw Error('Sila log masuk untuk melihat lesen SolatTime anda.');
+   }else if(typeof window.azobssGetFirebaseAuthHeaders==='function'){
+    headers=await window.azobssGetFirebaseAuthHeaders(false)||{};
+   }
+   if(generation!==epoch)throw Error('Sesi telah berubah.');
+   if(headers.Authorization){accountUid=window.azobssGetCurrentFirebaseUid?.()||accountUid;return headers;}
+   if(authSettled)throw Error('Sila log masuk untuk melihat lesen SolatTime anda.');
+   await new Promise(resolve=>setTimeout(resolve,150));
+  }
+  if(generation!==epoch)throw Error('Sesi telah berubah.');
+  throw Error('Sesi akaun belum dapat disahkan. Tekan Cuba semula atau log masuk semula.');
+ }
  async function api(path,body){
   const generation=epoch;let result;
   if(admin){if(typeof window.azAdminFetchJson!=='function')throw Error('Sesi admin belum tersedia. Cuba semula.');result=await window.azAdminFetchJson(base+'admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{}),cache:'no-store',signal:AbortSignal.timeout(60000)});}
-  else{const auth=typeof window.azobssGetFirebaseAuthHeaders==='function'?await window.azobssGetFirebaseAuthHeaders(false)||{}:{};if(!auth.Authorization)throw Error('Sila log masuk untuk melihat lesen SolatTime anda.');const query=new URLSearchParams(body||{});const r=await fetch(base+path+'?'+query,{headers:auth,cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(60000)});result=await r.json();if(!r.ok)throw Error(result.error||'Permintaan belum berjaya.');}
+  else{const auth=await buyerAuth(generation);if(generation!==epoch)throw Error('Sesi telah berubah.');status.textContent='Sedang memuatkan lesen SolatTime…';const query=new URLSearchParams(body||{});const r=await fetch(base+path+'?'+query,{headers:auth,cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(60000)});result=await r.json();if(!r.ok)throw Error(result.error||'Permintaan belum berjaya.');}
   if(generation!==epoch)throw Error('Sesi telah berubah.');if(result.ok===false)throw Error(result.error||'Permintaan belum berjaya.');return result;
  }
  const dialog=el('dialog',undefined,'solat-commerce-dialog');dialog.setAttribute('aria-label',admin?'Butiran pesanan SolatTime':'Lesen SolatTime saya');
@@ -19,10 +40,18 @@
  const status=el('p','', 'solat-commerce-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  const content=el('div'),nav=el('div',undefined,'solat-commerce-actions');dialog.append(top,status,nav,content);document.body.append(dialog);
  function stopPoll(){if(poll)clearTimeout(poll);poll=null;}
- function clear(){epoch++;stopPoll();loaded=false;busy=false;cursor='';next=null;history=[];orders=[];detailId='';content.replaceChildren();status.textContent='';nav.replaceChildren();if(dialog.open)dialog.close();if(admin){$('[data-solat-orders-rows]').replaceChildren();$('[data-solat-orders-status]').textContent='Muat semula selepas log masuk.';$('[data-solat-orders-search]').value='';}}
+ function clear(){epoch++;stopPoll();loaded=false;busy=false;cursor='';next=null;history=[];orders=[];detailId='';accountUid='';content.replaceChildren();status.textContent='';nav.replaceChildren();if(dialog.open)dialog.close();if(admin){$('[data-solat-orders-rows]').replaceChildren();$('[data-solat-orders-status]').textContent='Muat semula selepas log masuk.';$('[data-solat-orders-search]').value='';}}
  window.addEventListener('azobss-auth-changed',clear);window.addEventListener('pagehide',clear);
- dialog.addEventListener('close',()=>{epoch++;busy=false;stopPoll();content.replaceChildren();status.textContent='';detailId='';});
+ window.addEventListener('azobss:auth-state-ready',event=>{
+  authSettled=true;if(admin)return;
+  const uid=String(event.detail?.uid||'');
+  if(accountUid&&accountUid!==uid){clear();return;}
+  if(uid)accountUid=uid;
+  if(event.detail?.loggedIn&&dialog.open&&!busy&&!loaded)openOrders();
+ });
+ dialog.addEventListener('close',()=>{epoch++;busy=false;stopPoll();content.replaceChildren();nav.replaceChildren();status.textContent='';detailId='';});
  async function guarded(fn){if(busy)return;const generation=epoch;busy=true;try{await fn();}catch(e){if(generation===epoch){if(admin)$('[data-solat-orders-status]').textContent=e.message;status.textContent=e.message;}}finally{if(generation===epoch){busy=false;if(admin)pages();}}}
+ function openOrders(){if(busy)return;pollCount=0;if(!dialog.open)dialog.showModal();nav.replaceChildren(button('Cuba semula',()=>openOrders()));guarded(()=>load(''));}
  function pages(){if(!admin)return;$('[data-solat-orders-previous]').disabled=busy||!history.length;$('[data-solat-orders-next]').disabled=busy||next===null;}
  function renderAdmin(){
   const target=$('[data-solat-orders-rows]'),term=$('[data-solat-orders-search]').value.trim().toLowerCase();target.replaceChildren();
@@ -61,9 +90,9 @@
   $('[data-solat-orders-previous]').addEventListener('click',()=>guarded(async()=>{if(!history.length)return;const previous=history[history.length-1];await load(previous);history.pop();}));
   const panel=document.getElementById('solattimeAdminPanel');new MutationObserver(()=>{if(!panel.hidden&&!loaded)guarded(()=>load(''));}).observe(panel,{attributes:true,attributeFilter:['hidden']});pages();
  }else{
-  const entry=el('div',undefined,'solat-commerce-entry');entry.append(button('Lesen SolatTime saya',()=>{pollCount=0;dialog.showModal();guarded(()=>load(''));}));
+  const entry=el('div',undefined,'solat-commerce-entry');entry.append(button('Lesen SolatTime saya',openOrders));
   const grid=document.getElementById('softwareDownloadsGrid')||document.getElementById('softwareGrid')||document.querySelector('.software-grid,.downloads-grid');if(grid)grid.before(entry);else document.body.append(entry);
-  if(new URLSearchParams(location.search).has('solattime_orders')){dialog.showModal();guarded(()=>load(''));}
+  if(new URLSearchParams(location.search).has('solattime_orders'))openOrders();
   window.addEventListener('azobss-payment-confirmed',event=>{const id=event.detail?.orderId;if(!id)return;pollCount=0;guarded(async()=>{try{await showOrder(id);}catch(e){/* Other products keep their existing success dialog. */}});});
  }
 })();
