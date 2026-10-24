@@ -17,7 +17,7 @@
  const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=String(text);if(cls)node.className=cls;return node;};
  const term=()=>$('workspace-search').value.trim().toLowerCase();
  const date=value=>{const time=Date.parse(value||'');return Number.isFinite(time)?new Date(time).toLocaleString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'}):'';};
- window.azSolatTimeWorkspaceLicenseMatches=(license,q)=>[license.customer,license.id].some(value=>String(value||'').toLowerCase().includes(q))||orders.some(order=>order.license_id===license.id&&orderMatches(order,q));
+ window.azSolatTimeWorkspaceLicenseMatches=(license,q)=>[license.customer,license.id,license.email,license.phone,license.serial].some(value=>String(value||'').toLowerCase().includes(q))||orders.some(order=>order.license_id===license.id&&orderMatches(order,q));
  function search(){
   const query=$('workspace-search').value;
   $('search').value=query;$('search').dispatchEvent(new Event('input'));

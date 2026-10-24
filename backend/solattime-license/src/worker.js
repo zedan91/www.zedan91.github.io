@@ -69,7 +69,8 @@ async function activate(body,env,legacySync=false) {
   throw new Denied(401,'invalid_serial');
  }
  const current=row.current_activation?await env.DB.prepare('SELECT * FROM activations WHERE id=?').bind(row.current_activation).first():null;
- if(row.status!=='active')return {response:await signed(env,body,{state:'blocked',license_id:row.id,activation_id:legacySync?'legacy':(current?.id||'legacy'),generation:row.generation})};
+ if(row.status!=='active'||row.deleted)return {response:await signed(env,body,{state:'blocked',license_id:row.id,activation_id:legacySync?'legacy':(current?.id||'legacy'),generation:row.generation})};
+ if(legacySync&&!current&&row.generation>0)return {response:await signed(env,body,{state:'transferred',license_id:row.id,activation_id:'legacy',generation:row.generation})};
  if(current&&current.machine!==body.machine) {
   if(legacySync)return {response:await signed(env,body,{state:'transferred',license_id:row.id,activation_id:'legacy',generation:row.generation})};
   if(body.transfer!==true)return {response:await signed(env,body,{state:'transfer_required',license_id:row.id,generation:row.generation})};
@@ -87,10 +88,10 @@ async function activate(body,env,legacySync=false) {
 }
 async function sync(body,env) {
  if(!HEX.test(body.activation_token||''))throw new Denied(401,'invalid_activation');
- const row=await env.DB.prepare('SELECT a.id AS activation_id,a.machine,a.generation,l.id,l.status,l.current_activation FROM activations a JOIN licenses l ON l.id=a.license_id WHERE a.token_hash=? AND a.machine=?')
+ const row=await env.DB.prepare('SELECT a.id AS activation_id,a.machine,a.generation,l.id,l.status,l.deleted,l.current_activation FROM activations a JOIN licenses l ON l.id=a.license_id WHERE a.token_hash=? AND a.machine=?')
   .bind(await sha(body.activation_token),body.machine).first();
  if(!row)throw new Denied(401,'invalid_activation');
- const state=row.status!=='active'?'blocked':row.current_activation===row.activation_id?'active':'transferred';
+ const state=row.status!=='active'||row.deleted?'blocked':row.current_activation===row.activation_id?'active':'transferred';
  return {response:await signed(env,body,{state,license_id:row.id,activation_id:row.activation_id,generation:row.generation,...(state==='active'?{expires:0}:{})})};
 }
 async function trial(body,env) {
@@ -102,6 +103,27 @@ async function trial(body,env) {
  return {response:await signed(env,body,{state:'trial',trial_id:row.id,started:row.started,expires:row.expires})};
 }
 async function admin(path,body,env) {
+ if(path==='/admin/management-ready') {await env.DB.prepare('SELECT deleted FROM licenses LIMIT 1').all();return {ok:true,management_protocol:1};}
+ if(path==='/admin/license') {
+  if(!UUID.test(body.license_id||''))throw new Denied(400,'invalid_license');
+  const row=await env.DB.prepare('SELECT id,customer,source,status,generation,created,deleted,serial_hash,purchase_key,CASE WHEN current_activation=\'\' THEN 0 ELSE 1 END AS device_count FROM licenses WHERE id=?').bind(body.license_id).first();
+  if(!row)throw new Denied(404,'not_found');return {ok:true,license:row};
+ }
+ if(['/admin/edit','/admin/reset','/admin/delete','/admin/undelete'].includes(path)) {
+  if(!UUID.test(body.license_id||''))throw new Denied(400,'invalid_license');
+  let statement;
+  if(path==='/admin/edit') {
+   if(typeof body.customer!=='string'||!body.customer.trim()||body.customer.length>120)throw new Denied(400,'invalid_customer');
+   statement=env.DB.prepare('UPDATE licenses SET customer=? WHERE id=? AND deleted=0 RETURNING id').bind(body.customer.trim(),body.license_id);
+  }else if(path==='/admin/undelete') {
+   statement=env.DB.prepare("UPDATE licenses SET deleted=0,status='blocked' WHERE id=? AND deleted=1 RETURNING id").bind(body.license_id);
+  }else {
+   if(!Number.isInteger(body.expected_generation)||body.expected_generation<0)throw new Denied(400,'invalid_generation');
+   statement=env.DB.prepare(path==='/admin/reset'?"UPDATE licenses SET current_activation='',generation=generation+1 WHERE id=? AND generation=? AND deleted=0 RETURNING id":"UPDATE licenses SET deleted=1,status='blocked',current_activation='',generation=generation+1 WHERE id=? AND generation=? AND deleted=0 RETURNING id").bind(body.license_id,body.expected_generation);
+  }
+  const result=await env.DB.batch([statement,env.DB.prepare('INSERT INTO audit(time,action,license_id) SELECT unixepoch(),?,? WHERE changes()=1').bind(path.slice(7),body.license_id)]);
+  if(result[0].results.length!==1)throw new Denied(409,'state_changed');return {ok:true};
+ }
  if(path==='/admin/commerce-ready') {
   await env.DB.prepare('SELECT purchase_key FROM licenses LIMIT 1').all();
   return {ok:true,commerce_protocol:1};
@@ -116,15 +138,16 @@ async function admin(path,body,env) {
   await env.DB.prepare("INSERT INTO licenses(id,serial_hash,customer,source,created,purchase_key) VALUES(?,?,?,'new',?,?) ON CONFLICT DO NOTHING")
    .bind(body.license_id,hash,body.customer.trim(),Math.floor(Date.now()/1000),body.order_id).run();
   const row=await env.DB.prepare('SELECT id,serial_hash,customer FROM licenses WHERE purchase_key=?').bind(body.order_id).first();
-  if(!row||row.id!==body.license_id||row.serial_hash!==hash||row.customer!==body.customer.trim())throw new Denied(409,'order_conflict');
+  if(!row||row.id!==body.license_id||row.serial_hash!==hash)throw new Denied(409,'order_conflict');
   return {ok:true,license_id:row.id};
  }
  if(path==='/admin/list') {
   const limit=body.limit??50;
   if(!Number.isInteger(limit)||limit<1||limit>100)throw new Denied(400,'invalid_limit');
   const offset=body.offset??0;if(!Number.isInteger(offset)||offset<0||offset>1000000)throw new Denied(400,'invalid_page');
-  const {results}=await env.DB.prepare('SELECT id,customer,source,status,generation,created,CASE WHEN current_activation=\'\' THEN 0 ELSE 1 END AS device_count FROM licenses ORDER BY created DESC,id DESC LIMIT ? OFFSET ?').bind(limit+1,offset).all();
-  return {licenses:results.slice(0,limit),next_offset:results.length>limit?offset+limit:null};
+  if(body.archived!==undefined&&typeof body.archived!=='boolean')throw new Denied(400,'invalid_page');
+  const {results}=await env.DB.prepare('SELECT id,customer,source,status,generation,created,deleted,serial_hash,purchase_key,CASE WHEN current_activation=\'\' THEN 0 ELSE 1 END AS device_count FROM licenses WHERE deleted=? ORDER BY created DESC,id DESC LIMIT ? OFFSET ?').bind(body.archived===true?1:0,limit+1,offset).all();
+  return {licenses:results.slice(0,limit),next_offset:results.length>limit?offset+limit:null,management_protocol:1};
  }
  if(path==='/admin/issue'||path==='/admin/import-legacy') {
   if(typeof body.customer!=='string'||!body.customer.trim()||body.customer.length>120)throw new Denied(400,'invalid_customer');
@@ -142,7 +165,7 @@ async function admin(path,body,env) {
   return {license_id:id,...(path==='/admin/issue'?{serial}:{}),ok:true};
  }
  if(!['/admin/block','/admin/restore'].includes(path)||!UUID.test(body.license_id||''))throw new Denied(400,'invalid_action');
- const row=await env.DB.prepare('UPDATE licenses SET status=? WHERE id=? RETURNING id').bind(path==='/admin/block'?'blocked':'active',body.license_id).first();
+ const row=await env.DB.prepare('UPDATE licenses SET status=? WHERE id=? AND deleted=0 RETURNING id').bind(path==='/admin/block'?'blocked':'active',body.license_id).first();
  if(!row)throw new Denied(404,'not_found');return {ok:true};
 }
 async function dispatch(request,env) {

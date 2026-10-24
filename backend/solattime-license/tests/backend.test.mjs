@@ -14,6 +14,7 @@ before(async()=>{
  for(const sql of (await readFile(root+'migrations/0001_licenses.sql','utf8')).split(/;\s*(?=CREATE|$)/i))if(sql.trim())await db.prepare(sql).run();
  await db.prepare(await readFile(root+'migrations/0002_trials.sql','utf8')).run();
  for(const sql of (await readFile(root+'migrations/0003_purchase_issues.sql','utf8')).split(';'))if(sql.trim())await db.prepare(sql).run();
+ for(const sql of (await readFile(root+'migrations/0004_license_management.sql','utf8')).split(';'))if(sql.trim())await db.prepare(sql).run();
 });
 after(async()=>{await mf?.dispose();});
 async function post(path,body={},headers={}){
@@ -95,4 +96,41 @@ test('purchase issuance is idempotent across concurrency/lost responses and keep
  assert.equal((await post('/admin/issue-order',{...value,order_id:'another-order'})).status,409);
  assert.equal((await post('/admin/issue-order',{...value,order_id:'bad/id'})).status,400);
  assert.equal((await post('/admin/issue-order',value,{Authorization:'Bearer wrong'})).status,401);
+ await post('/admin/edit',{license_id:value.license_id,customer:'Renamed after purchase'});
+ assert.equal((await post('/admin/issue-order',value)).status,200);
+ assert.equal((await post('/admin/license',{license_id:value.license_id})).value.license.customer,'Renamed after purchase');
+});
+test('admin edit preserves activation; reset uses generation and old PC cannot take ownership back',async()=>{
+ assert.equal((await post('/admin/management-ready')).value.management_protocol,1);
+ const item=await issue(),active=await activate(item.serial,A),generation=response(active.value).generation;
+ assert.equal((await post('/admin/edit',{license_id:item.license_id,customer:'Updated fixture'})).status,200);
+ assert.equal(response((await sync(active.value.activation_token,A)).value).state,'active');
+ assert.equal((await post('/admin/reset',{license_id:item.license_id,expected_generation:generation-1})).status,409);
+ assert.equal((await post('/admin/reset',{license_id:item.license_id,expected_generation:generation})).status,200);
+ assert.equal(response((await sync(active.value.activation_token,A)).value).state,'transferred');
+ const moved=await activate(item.serial,B);assert.equal(response(moved.value).state,'active');
+ assert.equal((await post('/admin/reset',{license_id:item.license_id,expected_generation:generation})).status,409);
+ assert.equal(response((await sync(moved.value.activation_token,B)).value).state,'active');
+});
+test('legacy sync after reset stays deactivated until explicit activation',async()=>{
+ const serial='AZST-2345-6789-ABCD-EF01-2345',imported=await post('/admin/import-legacy',{customer:'Legacy reset fixture',serial});
+ const first=await post('/v1/legacy-sync',body(A,{serial}));assert.equal(response(first.value).state,'active');
+ await post('/admin/reset',{license_id:imported.value.license_id,expected_generation:response(first.value).generation});
+ assert.equal(response((await post('/v1/legacy-sync',body(A,{serial}))).value).state,'transferred');
+ assert.equal(response((await activate(serial,B)).value).state,'active');
+});
+test('delete archives a tombstone, prevents reuse/retry resurrection and can restore as blocked',async()=>{
+ const value={order_id:'tp-archive-fixture',license_id:crypto.randomUUID(),customer:'Archive fixture',serial:'AZST-AAAAA-BBBBB-CCCCC-DDDDD-EEEEE-FFFFF'};
+ await post('/admin/issue-order',value);const active=await activate(value.serial,A);
+ assert.equal((await post('/admin/delete',{license_id:value.license_id,expected_generation:response(active.value).generation})).status,200);
+ assert.equal(response((await sync(active.value.activation_token,A)).value).state,'blocked');
+ await post('/admin/issue-order',value);assert.equal(response((await activate(value.serial,B)).value).state,'blocked');
+ assert.equal((await post('/admin/restore',{license_id:value.license_id})).status,404);
+ assert.equal((await post('/admin/edit',{license_id:value.license_id,customer:'Wrong'})).status,409);
+ assert.ok(!(await post('/admin/list',{limit:100})).value.licenses.some(row=>row.id===value.license_id));
+ assert.ok((await post('/admin/list',{limit:100,archived:true})).value.licenses.some(row=>row.id===value.license_id));
+ assert.equal((await post('/admin/undelete',{license_id:value.license_id})).status,200);
+ assert.equal(response((await activate(value.serial,B)).value).state,'blocked');await post('/admin/restore',{license_id:value.license_id});
+ assert.equal(response((await sync(active.value.activation_token,A)).value).state,'transferred');
+ assert.equal(response((await activate(value.serial,B)).value).state,'active');
 });

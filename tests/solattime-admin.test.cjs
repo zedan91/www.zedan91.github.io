@@ -11,8 +11,8 @@ function fixture({identity={uid:'owner',isAdmin:true},env={SOLATTIME_ADMIN_TOKEN
  return {calls,replies,run:(action='list',body={},method='POST')=>handler({method,body:typeof body==='string'?body:JSON.stringify(body)},{},{pathname:'/api/solattime/admin/'+action}),handler};
 }
 test('SolatTime rejects unsigned accounts, customers and forged browser admin roles',async()=>{
- for(const identity of [null,{uid:'customer',isAdmin:false},{uid:'staff',role:'admin'}]){
-  const f=fixture({identity});await f.run('issue',{customer:'Example',isAdmin:true,adminToken:secret});
+ for(const identity of [null,{uid:'customer',isAdmin:false},{uid:'staff',role:'admin'}])for(const action of ['issue','edit','reset','delete','attach-serial','undelete']){
+  const f=fixture({identity});await f.run(action,{customer:'Example',isAdmin:true,adminToken:secret});
   assert.ok([401,403].includes(f.replies[0].status));assert.equal(f.calls.length,0);
  }
 });
@@ -41,7 +41,8 @@ test('legacy import and block/restore match the actual SolatTime admin protocol'
  assert.ok(f.calls[1].url.endsWith('/admin/block'));
 });
 test('SolatTime refuses AZDM operations, GET, malformed data and invalid pagination',async()=>{
- for(const action of ['reset','delete','revoke','orders','update','../issue']){const f=fixture();await f.run(action);assert.equal(f.replies[0].status,404);assert.equal(f.calls.length,0);}
+ for(const action of ['revoke','orders','update','../issue']){const f=fixture();await f.run(action);assert.equal(f.replies[0].status,404);assert.equal(f.calls.length,0);}
+ for(const action of ['reset','delete']){const f=fixture();await f.run(action,{license_id:id});assert.equal(f.replies[0].status,400);assert.equal(f.calls.length,0);}
  for(const [action,body,method,status] of [['issue',{},'GET',405],['list','bad JSON','POST',400],['list',[],'POST',400],['list',{offset:-1},'POST',400],['list',{limit:101},'POST',400],['issue',{customer:''},'POST',400],['issue',{customer:'a'.repeat(121)},'POST',400],['import-legacy',{customer:'Old',serial},'POST',400],['block',{license_id:'invalid'},'POST',400],['issue',{customer:'a'.repeat(9000)},'POST',413]]){
   const f=fixture();await f.run(action,body,method);assert.equal(f.replies[0].status,status);assert.equal(f.calls.length,0);
  }
@@ -57,4 +58,8 @@ test('upstream errors, invalid schemas and exceptions never leak the owner crede
  }
  const f=fixture({data:{error:'already_registered'},status:409});await f.run('import-legacy',{customer:'Old',serial:'AZST-1234-5678-9ABC-DEF0-1234'});
  assert.equal(f.replies[0].status,409);assert.match(f.replies[0].body.error,/sudah didaftarkan/);
+});
+test('management list projects authorized serials and contacts but strips fingerprints and purchase bindings',async()=>{
+ const replies=[];const handler=createSolatTimeAdminHandler({getAdminIdentity:async()=>({uid:'owner',isAdmin:true}),env:{SOLATTIME_ADMIN_TOKEN:secret},readBody:async()=>JSON.stringify({}),rateLimit:()=>false,fetchImpl:()=>{throw Error('Unused');},licenseStore:{run:async()=>({ok:true,status:200,data:{licenses:[{id,customer:'Fixture',serial,email:'fixture@example.com',phone:'011123',serial_state:'available',deleted:false,serial_hash:'PRIVATE-HASH',purchase_key:'PRIVATE-PURCHASE',serial_cipher:'PRIVATE-CIPHER',debug:secret}],next_offset:null,management_enabled:true}})},send:(res,status,raw)=>replies.push({status,body:JSON.parse(raw)})});
+ await handler({method:'POST'},{},{pathname:'/api/solattime/admin/list'});assert.equal(replies[0].body.licenses[0].serial,serial);assert.equal(replies[0].body.management_enabled,true);for(const value of ['PRIVATE-HASH','PRIVATE-PURCHASE','PRIVATE-CIPHER',secret])assert.ok(!JSON.stringify(replies).includes(value));
 });

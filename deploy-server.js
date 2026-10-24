@@ -106,7 +106,9 @@ async function azdmAdminIdentity(req) {
 }
 const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,localAdmin:{list:azAzdmAdminLocalList,orders:azAzdmAdminLocalOrders,'order-email-retry':azAzdmAdminLocalRetryEmail}});
 const {createSolatTimeAdminHandler}=require('./lib/azobss-solattime-admin');
-const handleSolatTimeAdmin=createSolatTimeAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend});
+const {createLicenseStore}=require('./lib/azobss-solattime-license-store');
+const solatTimeLicenseStore=createLicenseStore({getDb:getAzobssBackendDb,findOrder:orderId=>findPremiumOrderByAnyDeep({orderId})});
+const handleSolatTimeAdmin=createSolatTimeAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,licenseStore:solatTimeLicenseStore});
 const {createSolatTimeCommerce,isProduct:azIsSolatTimeProduct,isOrder:azIsSolatTimeOrder,orderFields:azSolatTimeOrderFields,paymentMatches:azSolatTimePaymentMatches,DOWNLOAD:SOLATTIME_INSTALLER_URL}=require('./lib/azobss-solattime-commerce');
 const solatTimeCommerce=createSolatTimeCommerce({
   getDb:getAzobssBackendDb,getIdentity:azdmVerifiedAccount,getAdminIdentity:azdmAdminIdentity,
