@@ -1,5 +1,10 @@
 # AZOBSS v1398 — SolatTime tab and Render Blueprint fix
 
+**v1399 update:** automatic SolatTime purchasing is now included. Read
+README_V1399_SOLATTIME_AUTOMATIC_PURCHASE.md first: purchases additionally require
+SOLATTIME_ORDER_CIPHER_KEY and the included Worker commerce migration/deployment.
+The text below describes the earlier manual licence panel.
+
 ## v1398 Render Blueprint fix
 
 The supplied Blueprint included `azobss-software-tools-export (5).json` as a

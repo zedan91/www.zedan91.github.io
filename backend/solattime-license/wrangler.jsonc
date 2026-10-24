@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "solattime-license",
+  "main": "src/worker.js",
+  "account_id": "daddf08942b3ca1fd855bfd6180aa49a",
+  "compatibility_date": "2026-10-03",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false
+  },
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none"
+  },
+  "vars": {
+    "PUBLIC_KEY": "88df7d86b0b6f9f82f39545170eeaab684ef7738d5dd4f018781d856a04d6cd7"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "solattime-licenses",
+      "database_id": "016750dd-4aff-4848-a41d-d27aef4d3bca",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "IP_LIMIT",
+      "namespace_id": "103101",
+      "simple": {
+        "limit": 120,
+        "period": 60
+      }
+    },
+    {
+      "name": "ACTOR_LIMIT",
+      "namespace_id": "103102",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    }
+  ]
+}

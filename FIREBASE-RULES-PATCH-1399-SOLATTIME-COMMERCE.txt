@@ -1,0 +1,16 @@
+Merge this match block INSIDE match /databases/{database}/documents of the
+existing website Firestore rules. Do not replace the complete existing rules.
+The Admin SDK bypasses these rules; browsers must use the authenticated backend.
+
+match /solattimePurchaseFulfillment/{document=**} {
+  allow read, write: if false;
+}
+
+IMPORTANT: Firestore combines overlapping allow rules with OR. An existing broad
+wildcard allow must exclude this collection; a deny block alone cannot override
+an overlapping allow. Keep premiumOrders writes server/admin-only as already
+required for the existing payment system. Never allow buyers to set paid status,
+payment verification, solattimeOrder or solattimeAccountUid.
+
+Only encrypted serials are stored here. The encryption secret stays in Render's
+SOLATTIME_ORDER_CIPHER_KEY, never Firestore, browser code or the website ZIP.

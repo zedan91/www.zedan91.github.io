@@ -39,6 +39,8 @@ services:
     envVars:
       - key: SOLATTIME_ADMIN_TOKEN
         sync: false
+      - key: SOLATTIME_ORDER_CIPHER_KEY
+        sync: false
       - key: AZDM_ADMIN_TOKEN
         sync: false
       - key: AZDM_LICENSE_URL

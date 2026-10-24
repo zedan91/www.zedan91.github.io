@@ -3278,6 +3278,8 @@ html body .downloads-section{
 /assets/js/azobss-software-ebook-v1372.js?v=1372
 -->
 <link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1379.css?v=1379">
+<link rel="stylesheet" href="/assets/css/azobss-solattime-commerce.css?v=1399">
+<script src="/assets/js/azobss-solattime-orders.js?v=1399" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -4861,7 +4863,7 @@ function normalizeItem(item){
       promoFreeUnits: azPromoFreeLimit(item),
       promoFreeBatchId: String(item.promoFreeBatchId || item.promoBatchId || item.promoFreeStartedAtMs || '').trim(),
       promoFreeStartedAtMs: Number(item.promoFreeStartedAtMs || item.promoFreeStartAtMs || 0),
-      softwarePackages: item.softwarePackages || null,
+      softwarePackages: String(item.name||item.title||'').trim().toLowerCase()==='azobss solattime' ? null : (item.softwarePackages || null),
       supportEnabled: item.supportEnabled !== false,
       category: canonicalSoftwareCategory485(item.category || item.softwareCategory || 'Productivity & Office'),
       productId: item.productId || item.sku || item.id || makeProductId('AZSW'),
@@ -6930,6 +6932,7 @@ function normalizeItem(item){
 
   let currentProduct = null;
   let currentMethod = 'bank';
+  function azIsSolatTimeCurrentProduct(){return String(currentProduct?.name||currentProduct?.productName||'').trim().toLowerCase()==='azobss solattime'||currentProduct?.licenseProduct==='solattime';}
 
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
@@ -6971,6 +6974,7 @@ function normalizeItem(item){
   }
   function requireBuyerEmail(){
     const field=document.getElementById('azobssBuyerEmailField');
+    if(azIsSolatTimeCurrentProduct()&&!isLoggedIn()){if(errorBox)errorBox.textContent='Sila log masuk ke akaun AZOBSS sebelum membeli SolatTime.';return false;}
     if(isLoggedIn()) return true;
     if(validEmail(refInput?.value)) return true;
     if(field) field.classList.add('is-invalid');
@@ -7017,6 +7021,7 @@ function normalizeItem(item){
       inst.textContent = 'Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.';
       openPaymentBtn.textContent = 'Open Payment';
     }
+    if(azIsSolatTimeCurrentProduct())inst.textContent='Log masuk menggunakan akaun dengan e-mel yang disahkan. Selepas bayaran disahkan, serial lesen kekal untuk 1 PC dihantar melalui e-mel dan boleh dilihat pada Lesen SolatTime saya.';
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
   }
 
@@ -7071,6 +7076,12 @@ function normalizeItem(item){
     return null;
   }
 
+  async function azPremiumPaymentAuthHeaders(){
+    const h=typeof window.azobssGetFirebaseAuthHeaders==='function'?await window.azobssGetFirebaseAuthHeaders(false)||{}:{};
+    const name=String(currentProduct?.name||currentProduct?.productName||'').trim().toLowerCase();
+    if((name==='azobss solattime'||currentProduct?.licenseProduct==='solattime')&&!h.Authorization)throw Error('Sila log masuk ke akaun AZOBSS sebelum membeli SolatTime.');
+    return {...h,'Content-Type':'application/json'};
+  }
   openPaymentBtn?.addEventListener('click', async ()=>{
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
@@ -7121,7 +7132,7 @@ function normalizeItem(item){
         };
         const res = await fetch(API_BASE + '/api/stripe/digital-checkout', {
           method:'POST',
-          headers:{'Content-Type':'application/json'},
+          headers:await azPremiumPaymentAuthHeaders(),
           body:JSON.stringify(payload)
         });
         const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
@@ -7159,7 +7170,7 @@ function normalizeItem(item){
       localStorage.setItem('azobss_last_checkout_page', returnUrl);
       const res = await fetch(API_BASE + '/api/toyyib/create-bill', {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:await azPremiumPaymentAuthHeaders(),
         body:JSON.stringify({
           product: {...currentProduct, productId: currentProduct.productId || currentProduct.id || currentProduct.sku || '', sku: currentProduct.sku || currentProduct.productId || currentProduct.id || '', productName: currentProduct.productName || currentProduct.name || '', staffReferral: azStaffShareReferralForProduct(currentProduct), r2ObjectKey: currentProduct.r2ObjectKey || currentProduct.r2Key || '', r2Key: currentProduct.r2ObjectKey || currentProduct.r2Key || '', premiumDownloadFileLink: currentProduct.premiumDownloadFileLink || currentProduct.secureDownloadLink || currentProduct.downloadLink, secureDownloadLink: currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink || currentProduct.downloadLink, downloadLink: currentProduct.downloadLink || currentProduct.secureDownloadLink || currentProduct.premiumDownloadFileLink},
           productId: currentProduct.productId || currentProduct.id || currentProduct.sku || '',
@@ -7207,7 +7218,7 @@ function normalizeItem(item){
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
-      const fallback = toAbsolute(currentProduct.paymentLink || '');
+      const fallback = azIsSolatTimeCurrentProduct() ? '' : toAbsolute(currentProduct.paymentLink || '');
       errorBox.textContent = (err.message || 'Failed to generate payment.') + (fallback ? ' Fallback payment link available.' : '');
       if(fallback){
         successBox.innerHTML = `<b>Fallback available</b><br><span>The backend is not ready or environment variables are incomplete. You may still open the manual payment link.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`;
@@ -8121,6 +8132,7 @@ async function verifyToyyibPayment(billCode){
         }catch(_e){}
         console.log('AZOBSS payment verified; email trigger status:', data.emailSent, data.emailError || '');
         window.showAzobssPaymentSuccessPopup({ receiptUrl: data.receiptUrl || '' });
+        window.dispatchEvent(new CustomEvent('azobss-payment-confirmed',{detail:{orderId:data.orderId||orderId}}));
       } else if (data && data.paid === false) {
         console.log('AZOBSS payment not verified yet:', data.reason || data.status || 'pending');
       }

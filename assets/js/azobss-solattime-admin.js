@@ -3,6 +3,7 @@
   const root=document.getElementById('solattimeAdminPanel');if(!root)return;
   const $=id=>root.querySelector('#solat-'+id);
   const apiBase='https://azobss-backend.onrender.com/api/solattime/admin/';
+  const licenseButtons=()=>Array.from(root.querySelectorAll('button')).filter(button=>!button.closest('#solattimePurchaseAdmin'));
   let generation=0,busy=false,loaded=false,loading=null,offset=0,next=null,history=[],licenses=[],serialRecord=null,pending=null;
   const date=value=>Number.isFinite(Number(value))&&Number(value)>0?new Date(Number(value)*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}):'—';
   function notice(text){$('notice').textContent=text;$('notice').hidden=!text;}
@@ -22,9 +23,9 @@
   async function action(fn){
     if(busy)return false;
     const current=generation;busy=true;notice('');
-    root.querySelectorAll('button').forEach(button=>button.disabled=true);
+    licenseButtons().forEach(button=>button.disabled=true);
     try{await fn();return true;}catch(error){if(current===generation)notice(error.message||'Tindakan belum berjaya.');return false;}
-    finally{if(current===generation){busy=false;root.querySelectorAll('button').forEach(button=>button.disabled=false);pages();}}
+    finally{if(current===generation){busy=false;licenseButtons().forEach(button=>button.disabled=false);pages();}}
   }
   function cell(row,text){const td=document.createElement('td');td.textContent=String(text??'');row.append(td);return td;}
   function render(){
@@ -108,7 +109,7 @@
     root.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
     for(const id of ['customer','search','legacy-customer','legacy-serial','serial-value'])$(id).value='';
     for(const id of ['serial-customer','serial-status','confirm-customer','confirm-detail'])$(id).textContent='';
-    root.querySelectorAll('button').forEach(button=>button.disabled=false);notice('');
+    licenseButtons().forEach(button=>button.disabled=false);notice('');
     $('rows').replaceChildren();$('page-label').textContent='25 lesen setiap halaman';pages();
   }
   window.addEventListener('azobss-auth-changed',()=>{clear();if(!root.hidden&&document.getElementById('softwarekeys')?.classList.contains('active'))window.azSolatTimeAdminLoad();});

@@ -13,6 +13,7 @@ test('actual premium resolver prices generic packages from trusted catalogue and
  const source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8'),fn=source.slice(source.indexOf('async function azResolveTrustedPremiumProduct('),source.indexOf('\nfunction azRequestHasCommissionSecret'));
  let identity={uid:'real-buyer'},trusted={productId:'OTHER-SOFTWARE',name:'Software lain',type:'premium',price:'RM999',secureDownloadLink:'https://files.azobss.com/test.exe',softwarePackages:bundle()};
  const sandbox={azSoftwarePackageModel:model,getPremiumUser:()=>({}),azProductIdFromAny:p=>p.productId,cleanPremiumText:x=>String(x||''),cleanPremiumUrl:x=>x||'',azSafeR2ObjectKey:x=>x||'',azFindFirestoreProduct:async()=>trusted,azFindLocalSoftwareProduct:()=>null,azIsAdminTestPurchase:()=>false,azProductIsPremium:()=>true,azdmVerifiedAccount:async()=>identity,azSubscriptionSelectedPlan:()=>null,parseAmountToSen:x=>Math.round(Number(String(x).replace(/[^\d.]/g,''))*100)};
+ sandbox.azIsSolatTimeProduct=require('../lib/azobss-solattime-commerce').isProduct;
  vm.runInNewContext(fn+';globalThis.resolve=azResolveTrustedPremiumProduct;',sandbox);
  const data={product:{productId:'OTHER-SOFTWARE',price:'RM0.01',downloadLink:'https://attacker.invalid'},softwarePackageId:'three',packageQuantity:3,amount:1};
  const result=await sandbox.resolve(data,{});assert.equal(result.amountSen,10000);assert.equal(result.product.packageQuantity,3);assert.equal(result.downloadLink,'https://files.azobss.com/test.exe');

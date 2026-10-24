@@ -1,0 +1,19 @@
+.solat-commerce-entry{display:flex;justify-content:flex-end;width:100%;margin:12px 0}
+.solat-commerce-entry button,.solat-commerce-dialog button,.solat-commerce-dialog a{font:inherit;border:1px solid #3c6374;background:#087f72;color:#f8fafc;border-radius:8px;padding:10px 14px;cursor:pointer;display:inline-block;margin:4px;text-decoration:none}
+.solat-commerce-dialog{box-sizing:border-box;background:#101d2d;color:#e2e8f0;border:1px solid #426276;border-radius:16px;width:min(760px,calc(100vw - 28px));max-height:calc(100dvh - 32px);padding:22px;overflow:auto;font-family:Arial,sans-serif;text-align:left}
+.solat-commerce-dialog::backdrop{background:#020617c9}
+.solat-commerce-dialog *{box-sizing:border-box}
+.solat-commerce-dialog h2{font-size:21px;color:#f8fafc;margin:0}
+.solat-commerce-heading{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.solat-commerce-dialog p{line-height:1.5;overflow-wrap:anywhere}
+.solat-commerce-dialog dl{display:grid;grid-template-columns:145px minmax(0,1fr);gap:9px;font-size:13px}
+.solat-commerce-dialog dd{margin:0;overflow-wrap:anywhere}
+.solat-commerce-dialog dt{color:#a5c0d3}
+.solat-commerce-dialog input{display:block;width:100%;padding:12px;background:#071421;border:1px solid #426276;border-radius:8px;color:#f8fafc;font:14px Consolas,monospace;margin:8px 0}
+.solat-commerce-dialog .solat-commerce-order{border:1px solid #344b60;padding:12px;border-radius:10px;margin:10px 0}
+.solat-commerce-dialog .solat-commerce-order h3{margin:0;font-size:17px}
+.solat-commerce-status{color:#99f6e4;min-height:22px}
+.solat-commerce-dialog button:disabled{opacity:.45;cursor:default}
+.solat-commerce-dialog :focus-visible,.solat-commerce-entry :focus-visible{outline:3px solid #5eead4;outline-offset:3px}
+#solattimePurchaseAdmin td button{margin:3px}
+@media(max-width:500px){.solat-commerce-dialog{padding:15px}.solat-commerce-dialog dl{grid-template-columns:1fr;gap:4px}.solat-commerce-dialog dd{margin-bottom:9px}.solat-commerce-heading{align-items:flex-start}.solat-commerce-entry button{width:100%}}

@@ -107,6 +107,13 @@ async function azdmAdminIdentity(req) {
 const handleAzdmAdmin=createAzdmAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend,localAdmin:{list:azAzdmAdminLocalList,orders:azAzdmAdminLocalOrders,'order-email-retry':azAzdmAdminLocalRetryEmail}});
 const {createSolatTimeAdminHandler}=require('./lib/azobss-solattime-admin');
 const handleSolatTimeAdmin=createSolatTimeAdminHandler({getAdminIdentity:azdmAdminIdentity,readBody,send,rateLimit:azRateLimitOrSend});
+const {createSolatTimeCommerce,isProduct:azIsSolatTimeProduct,isOrder:azIsSolatTimeOrder,orderFields:azSolatTimeOrderFields,paymentMatches:azSolatTimePaymentMatches,DOWNLOAD:SOLATTIME_INSTALLER_URL}=require('./lib/azobss-solattime-commerce');
+const solatTimeCommerce=createSolatTimeCommerce({
+  getDb:getAzobssBackendDb,getIdentity:azdmVerifiedAccount,getAdminIdentity:azdmAdminIdentity,
+  findOrder:orderId=>findPremiumOrderByAnyDeep({orderId}),
+  persistSummary:async order=>{const result=await azPersistPremiumOrder(order);if(!result.ok)throw Error('SolatTime order persistence unavailable');return upsertPremiumOrder(order);},
+  verifyPayment:azVerifySolatTimePurchase,sendEmail:azSendSolatTimeSerialEmail,send,readBody,rateLimit:azRateLimitOrSend
+});
 const {createOfferHandler,model:azSoftwarePackageModel}=require('./lib/azobss-azdm-offers');
 async function azSoftwarePackageProduct(productId){
   const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
@@ -878,6 +885,18 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   }
   if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
 
+  // SolatTime uses the trusted catalog price and verified account, never the
+  // browser's licence/price/email flags. One permanent 1-PC licence per purchase.
+  if(trusted&&azIsSolatTimeProduct(trusted)){
+    if(!azProductIsPremium(trusted)||trusted.status&&trusted.status!=='active')throw Error('SolatTime belum tersedia untuk pembelian.');
+    if(!mailReady())throw Error('E-mel penghantaran SolatTime belum tersedia.');
+    const account=await solatTimeCommerce.prepareCheckout(req);
+    const amountSen=parseAmountToSen(trusted.price||trusted.amount||'');
+    if(!amountSen)throw Error('Harga SolatTime pada server tidak sah.');
+    const file=cleanPremiumUrl(trusted.secureDownloadLink||trusted.premiumDownloadFileLink||trusted.downloadLink||'')||SOLATTIME_INSTALLER_URL;
+    const r2=azSafeR2ObjectKey(trusted.r2ObjectKey||trusted.r2Key||'');
+    return {account,product:{...trusted,licenseProduct:'solattime',fulfilment:'solattime',softwarePackages:null,subscriptionCodeEnabled:false,activationCodeSale:false,subscriptionPlan:null,selectedSubscriptionPlan:null},amountText:`RM${(amountSen/100).toFixed(2)}`,amountSen,downloadLink:file,r2ObjectKey:r2,subscriptionCodeEnabled:false,trustedSource:trusted.source||'backend',isAdminTestPurchase:false};
+  }
   // Admin-only RM1 test purchase: keep real product metadata/file if found, but lock test amount to RM1.
   if (azIsAdminTestPurchase(data, clientProduct)) {
     if (!azIsAdminTestUser(user, data, clientProduct)) {
@@ -3853,6 +3872,21 @@ async function azAzdmSendSerialEmail(order, serialRows = []) {
   await azSendEmailWithOptionalPdf({to:email, subject:emailSubject, html, text});
   return email;
 }
+async function azVerifySolatTimePurchase(order,options={}){
+  const method=String(order.paymentMethod||'').toLowerCase();
+  const verification=method==='stripe'?await azVerifyDigitalStripeOrder(order):method==='toyyibpay'?await azVerifyToyyibPaidTransaction(order):null;
+  if(!azSolatTimePaymentMatches(order,method,verification))return options.finalize?order:false;
+  if(options.finalize)return azFinalizePaidOrderOnce(order,options.req,{verified:true,paymentMethod:method,toyyibTransaction:verification.tx,stripeSession:verification.session,paymentReference:verification.paymentReference});
+  return true;
+}
+async function azSendSolatTimeSerialEmail(order,issued){
+  const email=cleanToyyibEmail(order.email||order.user?.email||'');if(!email)throw Error('Invalid SolatTime email');
+  const name=cleanPremiumText(order.user?.username||'Pelanggan',120),id=cleanPremiumText(order.orderId,160);
+  const accountUrl=FRONTEND_BASE_URL+'/Software-Tools/?solattime_orders=1';
+  const text=`Salam ${name},\n\nBayaran AZOBSS SolatTime anda sudah disahkan.\nSerial: ${issued.serial}\nLesen kekal untuk 1 PC.\nPesanan: ${id}\n\nMuat turun: ${SOLATTIME_INSTALLER_URL}\nLesen dalam akaun: ${accountUrl}\n\nBuka SolatTime dan masukkan serial ini untuk aktivasi. Pindahan PC perlu disahkan dalam aplikasi.\nSokongan: +60 11-3560 0723\n`;
+  const html=`<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Lesen AZOBSS SolatTime</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda sudah disahkan.</p><p><b>Serial:</b> <code>${azAzdmSafeHtml(issued.serial)}</code></p><p>Lesen kekal · 1 PC<br>Pesanan: ${azAzdmSafeHtml(id)}</p><p><a href="${SOLATTIME_INSTALLER_URL}">Muat turun SolatTime</a> · <a href="${accountUrl}">Lesen dalam akaun saya</a></p><p>Buka SolatTime dan masukkan serial untuk aktivasi. Pindahan PC disahkan dalam aplikasi.</p></div>`;
+  await azSendEmailWithOptionalPdf({to:email,subject:'AZOBSS SolatTime — Serial lesen anda',html,text});
+}
 async function azFulfillAzdmOrder(order = {}, req, options = {}) {
   let latest = await azReloadPremiumOrder(order);
   if (!azIsAzdmPremiumOrder(latest) || String(latest.status || '').toLowerCase() !== 'paid') return latest;
@@ -4223,6 +4257,7 @@ async function azEnsurePremiumDownloadResendLink(order = {}, req = null) {
 }
 
 async function maybeSendDownloadEmail(order, req) {
+  if(azIsSolatTimeOrder(order))return solatTimeCommerce.fulfill(order);
   try {
     let current = order || {};
 
@@ -4512,6 +4547,8 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       }
     } else if (azIsMembershipOrder(latest)) {
       latest = await azActivateMembershipOrder(latest);
+    } else if (azIsSolatTimeOrder(latest)) {
+      latest = await solatTimeCommerce.fulfill(latest);
     } else if (azIsAzdmPremiumOrder(latest)) {
       latest = await azFulfillAzdmOrder(latest, req);
     } else if (azIsEbookGeneratorAccessOrder(latest)) {
@@ -4561,6 +4598,7 @@ async function refreshToyyibOrder(order, req) {
 }
 function paidPayload(order, req) {
   const base = publicBaseUrlFromReq(req);
+  if(azIsSolatTimeOrder(order))return {ok:true,success:true,paid:true,orderId:order.orderId,status:order.status,solattime:true,licenseReady:order.solattimeFulfillmentState==='complete',receiptUrl:azReceiptUrl(base,order)};
   if (azIsMembershipOrder(order)) {
     return { ok:true, success:true, paid:true, orderId:order.orderId, status:order.status, membership:true, membershipActivated:!!order.membershipActivatedAt, membershipPackageId:order.membershipPackageId || "", membershipPackageName:order.membershipPackageSnapshot?.packageName || order.productName || "Membership", membershipExpiresAtMs:Number(order.membershipBenefits?.membershipBenefitExpiresAtMs || 0) || 0, receiptUrl:azReceiptUrl(base, order) };
   }
@@ -16962,6 +17000,7 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   }
 
   upsertPremiumOrder({
+    ...azSolatTimeOrderFields(product,user),
     orderId,
     productId,
     productName,
@@ -20399,6 +20438,7 @@ async function handler(req, res) {
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
     if (await handleSoftwarePackages(req,res,parsed)) return;
     if (await handleAzdmAdmin(req,res,parsed)) return;
+    if (await solatTimeCommerce.handle(req,res,parsed)) return;
     if (await handleSolatTimeAdmin(req,res,parsed)) return;
     if (await handleAzdm(req,res,parsed)) return;
 
@@ -21646,7 +21686,7 @@ async function handler(req, res) {
           return send(res, 502, JSON.stringify({ ok:false, success:false, error:String(msg), raw: apiResult }, null, 2), "application/json");
         }
         const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        const digitalOrder = upsertPremiumOrder({ orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, priceAdjustmentCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, priceAdjustmentCategory, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product), r2ObjectKey, r2Key:r2ObjectKey }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, r2ObjectKey, r2Key:r2ObjectKey, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"digital", createdAt:new Date().toISOString(), createdAtMs:Date.now() });
+        const digitalOrder = upsertPremiumOrder({ ...azSolatTimeOrderFields(product,user), orderId, productId, productName, amount: amountText, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount, saleAmountText: amountText, priceAdjustmentPercent, priceAdjustmentCategory, status:"pending", paymentMethod:"toyyibpay", paymentReference:"", billCode, paymentUrl, returnUrl, sourceUrl: data.sourceUrl || data.pageUrl || "", pageUrl: data.pageUrl || data.sourceUrl || "", user, email:user.email || data.buyerEmail || data.email || "", buyerEmail:user.email || data.buyerEmail || data.email || "", product:{ ...product, id:productId, productId, name:productName, basePrice:baseAmountText, price:amountText, priceAdjustmentPercent, priceAdjustmentCategory, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, activationCodePrefix:azActivationCodePrefix(product), r2ObjectKey, r2Key:r2ObjectKey }, subscriptionCodeEnabled:!!trustedResolved.subscriptionCodeEnabled, activationCodeSale:!!trustedResolved.subscriptionCodeEnabled, subscriptionPlan:activationPlan, subscriptionPlanId:activationPlan&&activationPlan.id, subscriptionPlanLabel:activationPlan&&(activationPlan.label||activationPlan.id), subscriptionDurationDays:activationPlan&&activationPlan.durationDays, subscriptionMonths:activationPlan&&activationPlan.months, activationCodePrefix:azActivationCodePrefix(product), trustedProductSource: trustedResolved.trustedSource || "backend", isAdminTestPurchase: !!trustedResolved.isAdminTestPurchase, clientPriceIgnored: cleanPremiumText(requestedProduct.price || data.amount || data.price || "", 40), shareReferral:azReferralFrom(data, product, {productId, returnUrl}), productOwner:azProductOwnerFrom(product, {productId}), premiumDownloadFileLink: downloadLink, downloadLink, r2ObjectKey, r2Key:r2ObjectKey, downloadLimit:requestedLimit, maxDownload:requestedLimit, maxDownloads:requestedLimit, expiryHours:requestedExpiryHours, linkExpiryHours:requestedExpiryHours, receiptTokenRequired:true, receiptTokenVersion:2, checkoutFingerprint, checkoutFingerprintVersion:1050, automaticCheckoutKind:"digital", createdAt:new Date().toISOString(), createdAtMs:Date.now() });
         try { await azPersistPremiumOrder(digitalOrder); } catch (persistError) { console.warn("Digital ToyyibPay order Firestore persist failed before redirect:", persistError && (persistError.message || persistError)); }
         return send(res, 200, JSON.stringify({ ok:true, success:true, reused:false, idempotent:true, patch:1050, orderId, billCode, paymentUrl, url: paymentUrl, redirectUrl: paymentUrl, invoiceNo:digitalOrder.invoiceNo || "", status:"pending", amount:adjustedAmount, amountSen, baseAmount, baseAmountSen, priceAdjustmentPercent, priceAdjustmentCategory }, null, 2), "application/json");
         } finally {
@@ -21962,6 +22002,7 @@ async function handler(req, res) {
             paymentReference:order.paymentReference || ""
           }, null, 2), "application/json");
         }
+        if(azIsSolatTimeOrder(order))return send(res,200,JSON.stringify({...paidPayload(order,req),verified:true,paymentConfirmed:true,emailSent:!!order.emailSentAt}),'application/json',{'Cache-Control':'no-store'});
         if (!order.downloadToken) order = makeDownloadForOrder(order);
         if (!order.emailSentAt) order = await maybeSendDownloadEmail(order, req);
         return send(res, 200, JSON.stringify({ ...paidPayload(order, req), verified:true, paymentConfirmed:true, emailSent: !!order.emailSentAt, emailError: order.emailError || null, emailTo: order.emailTo || azPickPremiumBuyerEmailFromOrder(order) || null }, null, 2), "application/json");
@@ -26343,6 +26384,10 @@ server.on("error", (error) => {
 });
 
 server.listen(SERVER_PORT, HOST, () => {
+  // Durable SolatTime email/issuance retries resume after a backend restart.
+  const retrySolatTime=()=>solatTimeCommerce.drainPending().catch(()=>console.warn('SolatTime pending queue will retry later.'));
+  setTimeout(retrySolatTime,10000).unref();
+  setInterval(retrySolatTime,60000).unref();
 
   console.log("");
   console.log("================================");
