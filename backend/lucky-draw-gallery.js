@@ -36,7 +36,11 @@ export async function savePrizeGallery({body,files,previous,uploadImage,localUrl
   if(manual.length)urls=manual;
  }
  const uploaded=[];
- for(const file of files.slice(0,10)){const persistent=await uploadImage(file);uploaded.push(persistent||localUrl(file));}
+ for(const file of files.slice(0,10)){
+  const persistent=await uploadImage(file);
+  if(ordered&&!persistent){const error=new Error('Storan gambar kekal belum tersedia. Semak konfigurasi Cloudinary; galeri asal belum diubah. Cuba simpan semula selepas storan dipulihkan.');error.status=503;throw error;}
+  uploaded.push(persistent||localUrl(file));
+ }
  if(ordered)urls=order.map(item=>item.kind==='url'?item.url:uploaded[item.index]);
  else if(uploaded.length)urls=uploaded;
  if(ordered||uploaded.length)storage=urls.some(url=>/\/uploads\/lucky-draw\//.test(url))?'backend-upload':urls.some(url=>/^https:\/\/res\.cloudinary\.com\//i.test(url))?'cloudinary':'url';
