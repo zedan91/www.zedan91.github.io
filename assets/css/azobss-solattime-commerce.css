@@ -17,3 +17,8 @@
 .solat-commerce-dialog :focus-visible,.solat-commerce-entry :focus-visible{outline:3px solid #5eead4;outline-offset:3px}
 #solattimePurchaseAdmin td button{margin:3px}
 @media(max-width:500px){.solat-commerce-dialog{padding:15px}.solat-commerce-dialog dl{grid-template-columns:1fr;gap:4px}.solat-commerce-dialog dd{margin-bottom:9px}.solat-commerce-heading{align-items:flex-start}.solat-commerce-entry button{width:100%}}
+.solat-purchase-quantity{margin:14px 0;padding:12px;border:1px solid #2d645e;border-radius:10px}
+.solat-purchase-quantity label{display:grid;gap:7px;font-weight:700}
+.solat-purchase-quantity input{box-sizing:border-box;width:100%;max-width:180px;min-height:42px;padding:8px 12px;border:1px solid #4b7282;border-radius:8px;background:#0a1423;color:#fff;font:inherit}
+.solat-purchase-quantity small{display:block;margin-top:6px;color:#b5cad5}
+.solat-purchase-quantity p{margin:8px 0 0;color:#83ead1;font-size:13px;line-height:1.5}

@@ -3270,7 +3270,7 @@ html body .downloads-section{
 <!-- AZOBSS v1210: universal per-software packages and support -->
 <link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1408">
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1408" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1408" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1409" defer></script>
 
 <!-- Ebook compatibility history markers for regression tests only; these legacy assets are NOT loaded:
 /assets/css/azobss-software-ebook-v1351.css?v=1351
@@ -3278,8 +3278,8 @@ html body .downloads-section{
 /assets/js/azobss-software-ebook-v1372.js?v=1372
 -->
 <link rel="stylesheet" href="/assets/css/azobss-software-ebook-v1379.css?v=1379">
-<link rel="stylesheet" href="/assets/css/azobss-solattime-commerce.css?v=1399">
-<script src="/assets/js/azobss-solattime-orders.js?v=1403" defer></script>
+<link rel="stylesheet" href="/assets/css/azobss-solattime-commerce.css?v=1409">
+<script src="/assets/js/azobss-solattime-orders.js?v=1409" defer></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -6939,6 +6939,19 @@ function normalizeItem(item){
   let currentProduct = null;
   let currentMethod = 'bank';
   function azIsSolatTimeCurrentProduct(){return String(currentProduct?.name||currentProduct?.productName||'').trim().toLowerCase()==='azobss solattime'||currentProduct?.licenseProduct==='solattime';}
+  function azUpdateSolatTimeQuantity(){
+    if(!azIsSolatTimeCurrentProduct())return true;
+    const input=productBox.querySelector('[data-solattime-quantity]'),quantity=Number(input?.value),unit=Number(String(currentProduct.price||'').replace(/[^\d.]/g,''));
+    const valid=Number.isInteger(quantity)&&quantity>=1&&quantity<=100&&Number.isFinite(unit)&&unit>0;
+    openPaymentBtn.disabled=!valid;
+    if(!valid){errorBox.textContent='Pilih bilangan lesen antara 1 dan 100.';productBox.querySelector('[data-solattime-total]').textContent='—';productBox.querySelector('[data-solattime-key-count]').textContent='';return false;}
+    if(errorBox.textContent==='Pilih bilangan lesen antara 1 dan 100.')errorBox.textContent='';
+    currentProduct.solattimeQuantity=quantity;
+    productBox.querySelector('[data-solattime-total]').textContent='RM'+(Math.round(unit*100)*quantity/100).toFixed(2);
+    const info=productBox.querySelector('[data-solattime-key-count]');if(info)info.textContent=quantity+' lesen kekal · '+quantity+' serial berasingan · Setiap serial untuk 1 PC.';
+    return true;
+  }
+  productBox.addEventListener('input',event=>{if(event.target.matches('[data-solattime-quantity]'))azUpdateSolatTimeQuantity();});
 
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
@@ -7027,12 +7040,13 @@ function normalizeItem(item){
       inst.textContent = 'Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.';
       openPaymentBtn.textContent = 'Open Payment';
     }
-    if(azIsSolatTimeCurrentProduct())inst.textContent='Log masuk menggunakan akaun dengan e-mel yang disahkan. Selepas bayaran disahkan, serial lesen kekal untuk 1 PC dihantar melalui e-mel dan boleh dilihat pada Lesen SolatTime saya.';
+    if(azIsSolatTimeCurrentProduct())inst.textContent='Log masuk menggunakan akaun dengan e-mel yang disahkan. Selepas bayaran disahkan, setiap lesen mendapat serial berasingan untuk 1 PC melalui e-mel dan Lesen & Pembelian Saya.';
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
   }
 
   function open(product){
     currentProduct = product;
+    openPaymentBtn.disabled=false;
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
     successBox.innerHTML = '';
@@ -7041,7 +7055,9 @@ function normalizeItem(item){
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden','false');
     const planHtml = product.subscriptionCodeEnabled ? `<div class="azobss-pay-plan-box"><b>${esc(product.subscriptionPlanLabel || 'Activation Code')}</b><br>${esc(product.subscriptionMonthlyText || '')}${product.subscriptionSaveText ? ' · '+esc(product.subscriptionSaveText) : ''}<br><small>The Pro activation code will be generated after payment is verified.</small></div>` : '';
-    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX or Stripe Checkout. The product price is verified by AZOBSS backend.</div>`;
+    const quantityHtml=azIsSolatTimeCurrentProduct()?`<div class="solat-purchase-quantity"><label>Jumlah lesen (1 lesen = 1 PC)<input type="number" data-solattime-quantity min="1" max="100" step="1" inputmode="numeric" value="1"></label><small>${esc(product.price)} setiap lesen</small><p data-solattime-key-count></p></div>`:'';
+    productBox.innerHTML = `<div><b>${esc(product.name)}</b></div><div>Amount: <b data-solattime-total>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${quantityHtml}${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX or Stripe Checkout. The product price is verified by AZOBSS backend.</div>`;
+    azUpdateSolatTimeQuantity();
     setActiveMethod('bank');
   }
 
@@ -7093,6 +7109,9 @@ function normalizeItem(item){
     successBox.classList.remove('is-open');
     if(!requireBuyerEmail()) return;
     if(!currentProduct){ errorBox.textContent = 'Product not found.'; return; }
+    if(!azUpdateSolatTimeQuantity())return;
+    const quantityInput=productBox.querySelector('[data-solattime-quantity]');
+    if(quantityInput)quantityInput.disabled=true;
 
     if(currentMethod === 'stripe'){
       const email = buyerEmail();
@@ -7120,6 +7139,7 @@ function normalizeItem(item){
           productId:currentProduct.productId || currentProduct.id || currentProduct.sku,
           cartItems:currentProduct.cartItems || [],
           isCartCheckout:currentProduct.isCartCheckout === true,
+          solattimeQuantity:azIsSolatTimeCurrentProduct()?currentProduct.solattimeQuantity:undefined,
           staffReferral:azStaffShareReferralForProduct(currentProduct),
           r2ObjectKey:currentProduct.r2ObjectKey || currentProduct.r2Key || '',
           r2Key:currentProduct.r2ObjectKey || currentProduct.r2Key || '',
@@ -7162,6 +7182,7 @@ function normalizeItem(item){
         errorBox.textContent = err && err.message ? err.message : 'Stripe Checkout failed to open.';
       }finally{
         openPaymentBtn.disabled = false;
+        if(quantityInput)quantityInput.disabled=false;
         openPaymentBtn.textContent = originalText || 'Open Stripe Checkout';
       }
       return;
@@ -7182,6 +7203,7 @@ function normalizeItem(item){
           productId: currentProduct.productId || currentProduct.id || currentProduct.sku || '',
           cartItems: currentProduct.cartItems || [],
           isCartCheckout: currentProduct.isCartCheckout === true,
+          solattimeQuantity:azIsSolatTimeCurrentProduct()?currentProduct.solattimeQuantity:undefined,
           subscriptionPlanId: currentProduct.subscriptionPlanId || '',
           subscriptionPlan: currentProduct.subscriptionPlan || null,
           subscriptionCodeEnabled: !!currentProduct.subscriptionCodeEnabled,
@@ -7232,6 +7254,7 @@ function normalizeItem(item){
       }
     }finally{
       openPaymentBtn.disabled = false;
+      if(quantityInput)quantityInput.disabled=false;
       openPaymentBtn.textContent = originalText || 'Open Payment';
     }
   });

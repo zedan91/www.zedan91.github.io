@@ -60,7 +60,7 @@
   for(const order of items){
    const row=el('tr'),person=el('td'),proof=el('td'),delivery=el('td'),actions=el('td');
    person.append(el('strong',order.customer),el('small',order.email),el('small',order.phone));
-   proof.append(el('strong',order.order_id),el('small',[order.invoice_no,order.receipt_no].filter(Boolean).join(' · ')),el('small',order.payment_method+' · '+(order.payment_reference||'—')));
+   proof.append(el('strong',order.order_id),el('small',(order.quantity||1)+' lesen · '+[order.invoice_no,order.receipt_no].filter(Boolean).join(' · ')),el('small',order.payment_method+' · '+(order.payment_reference||'—')));
    delivery.append(el('span',label(order.fulfillment_state)),el('small',label(order.email_status)),el('small',order.license_id));
    actions.append(button('Butiran',()=>guarded(()=>showOrder(order.order_id))));
    if(order.status==='paid')actions.append(button('Hantar semula e-mel',()=>{confirmRetry(order);}));
@@ -77,7 +77,9 @@
   stopPoll();const generation=epoch;const value=await api('order',{order_id:id}),order=value.order;detailId=id;if(!dialog.open)dialog.showModal();content.replaceChildren();status.textContent=label(order.fulfillment_state)+' · '+label(order.email_status);
   nav.replaceChildren(button('Muat semula status',()=>guarded(()=>showOrder(id))));if(!admin)nav.append(button('Semua pesanan saya',()=>guarded(()=>load(''))));
   const summary=el('dl');for(const [name,text] of [['Pesanan',order.order_id],['Pelanggan',order.customer],['E-mel',order.email],['Jumlah',money(order.amount_cents)],['Bayaran',label(order.status)],['Kaedah',order.payment_method],['Invois',order.invoice_no],['Resit',order.receipt_no],['ID lesen',order.license_id],...(admin?[['UID akaun',order.account_uid],['Rujukan transaksi',order.payment_reference],['Bayaran disahkan',order.payment_verified_at],['E-mel dihantar',order.email_sent_at]]:[])]){summary.append(el('dt',name),el('dd',text||'—'));}content.append(summary);
-  if(order.serial){const title=el('label','Serial SolatTime'),input=el('input');input.value=order.serial;input.readOnly=true;input.autocomplete='off';input.spellcheck=false;title.append(input);content.append(title,button('Salin serial',async()=>{try{await navigator.clipboard.writeText(input.value);status.textContent='Serial disalin.';}catch{input.focus();input.select();status.textContent='Tekan Ctrl+C untuk menyalin serial.';}}),el('p','Lesen kekal · 1 PC. Masukkan serial ini dalam aplikasi untuk aktivasi.'));}
+  const serials=order.serials?.length?order.serials:order.serial?[{serial:order.serial,license_id:order.license_id}]:[];
+  if(serials.length)content.append(el('p',serials.length+' lesen kekal · Setiap serial untuk 1 PC.'));
+  for(const [index,item] of serials.entries()){const title=el('label',serials.length>1?'Serial SolatTime · PC '+(index+1):'Serial SolatTime'),input=el('input');input.value=item.serial;input.readOnly=true;input.autocomplete='off';input.spellcheck=false;title.append(input);content.append(title,el('small',item.license_id||''),button(serials.length>1?'Salin serial PC '+(index+1):'Salin serial',async()=>{try{await navigator.clipboard.writeText(input.value);status.textContent='Serial disalin.';}catch{input.focus();input.select();status.textContent='Tekan Ctrl+C untuk menyalin serial.';}}));}
   if(order.status==='paid'&&value.download_url){const link=el('a','Muat turun SolatTime');link.href=value.download_url;link.rel='noopener noreferrer';content.append(link);}
   if(!admin&&order.fulfillment_state!=='complete'&&pollCount<12&&generation===epoch){poll=setTimeout(()=>{if(dialog.open&&detailId===id){pollCount++;guarded(()=>showOrder(id));}},4000);}
  }

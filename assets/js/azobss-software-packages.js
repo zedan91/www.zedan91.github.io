@@ -110,7 +110,9 @@
    else paymentMethods={toyyibpay:true,stripe:false};
    if(buyToyyib)buyToyyib.hidden=offer.fulfilment==='azdm'&&!paymentMethods.toyyibpay;
    if(buyStripe)buyStripe.hidden=offer.fulfilment!=='azdm'||!paymentMethods.stripe;
-   for(const p of offer.plans){const o=document.createElement('option');o.value=p.id;o.textContent=p.label+(p.quantity?' · '+p.quantity+(p.quantity===1?' PC':' PCs'):p.min_quantity?' · '+p.min_quantity+'+ PCs':'')+' · '+money(p.amount_cents)+(p.quantity?'':' / PC');plan.append(o);}
+   // Group AZDM terms together, then show single-PC before multi-PC choices.
+   const plans=offer.fulfilment==='azdm'?[...offer.plans].sort((a,b)=>(a.days===0?Infinity:a.days)-(b.days===0?Infinity:b.days)||(a.quantity||a.min_quantity||1)-(b.quantity||b.min_quantity||1)):offer.plans;
+   for(const p of plans){const o=document.createElement('option');o.value=p.id;o.textContent=p.label+(p.quantity?' · '+p.quantity+(p.quantity===1?' PC':' PCs'):p.min_quantity?' · '+p.min_quantity+'+ PCs':'')+' · '+money(p.amount_cents)+(p.quantity?'':' / PC');plan.append(o);}
    document.getElementById('softwarePackageTitle').textContent=offer.name+' · Choose Plan';quantity.value=1;
    $('[data-package-order-box]').hidden=offer.fulfilment!=='azdm';$('[data-azdm-orders]').replaceChildren();
    $('[data-package-activation]').textContent=offer.fulfilment==='azdm'?'After payment is verified, each PC receives one unique serial key via your AZOBSS account email.':'Payment and download use your AZOBSS account. Any account-specific pricing will be verified during checkout.';

@@ -1,6 +1,6 @@
 (function(){
  'use strict';
- const orderMatches=(order,term)=>[order.customer,order.email,order.phone,order.account_uid,order.order_id,order.payment_reference,order.license_id,order.invoice_no,order.receipt_no].some(value=>String(value||'').toLowerCase().includes(term));
+ const orderMatches=(order,term)=>[order.customer,order.email,order.phone,order.account_uid,order.order_id,order.payment_reference,order.license_id,...(order.license_ids||[]),order.invoice_no,order.receipt_no].some(value=>String(value||'').toLowerCase().includes(term));
  function auditEvents(order,license){
   const events=[{label:'Pesanan dibuat',time:order.created_at,detail:order.order_id,state:'done'}];
   events.push(order.status==='paid'?{label:'Bayaran disahkan',time:order.payment_verified_at||order.paid_at,detail:String(order.payment_method||'').toUpperCase(),state:'done'}:{label:order.status==='pending'?'Menunggu pengesahan bayaran':'Status bayaran',time:'',detail:order.status,state:'pending'});
@@ -17,7 +17,7 @@
  const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=String(text);if(cls)node.className=cls;return node;};
  const term=()=>$('workspace-search').value.trim().toLowerCase();
  const date=value=>{const time=Date.parse(value||'');return Number.isFinite(time)?new Date(time).toLocaleString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'}):'';};
- window.azSolatTimeWorkspaceLicenseMatches=(license,q)=>[license.customer,license.id,license.email,license.phone,license.serial].some(value=>String(value||'').toLowerCase().includes(q))||orders.some(order=>order.license_id===license.id&&orderMatches(order,q));
+ window.azSolatTimeWorkspaceLicenseMatches=(license,q)=>[license.customer,license.id,license.email,license.phone,license.serial].some(value=>String(value||'').toLowerCase().includes(q))||orders.some(order=>(order.license_ids||[order.license_id]).includes(license.id)&&orderMatches(order,q));
  function search(){
   const query=$('workspace-search').value;
   $('search').value=query;$('search').dispatchEvent(new Event('input'));

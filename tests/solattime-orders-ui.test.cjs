@@ -50,3 +50,9 @@ test('missing auth module has a bounded wait and offers an explicit retry',async
  const f=fixture();await f.tick(12150);assert.equal(f.calls.length,0);assert.match(f.text,/Sesi akaun belum dapat disahkan/);assert.ok(f.button('Cuba semula'));assert.equal(f.timers.size,0);
  f.auth();f.button('Cuba semula').click();await flush();assert.equal(f.calls.length,1);assert.match(f.text,/Pilih pesanan/);
 });
+test('buyer detail displays every purchased serial with a separate copy control',async()=>{
+ const f=fixture(),serials=['AZST-AAAAA-AAAAA-AAAAA-AAAAA-AAAAA-AAAAA','AZST-BBBBB-BBBBB-BBBBB-BBBBB-BBBBB-BBBBB'];f.auth();await f.tick(150);
+ f.response(async()=>({ok:true,json:async()=>({order:{order_id:'order-fixture',status:'paid',quantity:2,amount_cents:7800,fulfillment_state:'complete',email_status:'accepted',serials:serials.map((serial,i)=>({serial,license_id:'fixture-'+i}))}})}));
+ f.button('Lihat lesen').click();await flush();assert.match(f.text,/2 lesen kekal/);assert.ok(f.button('Salin serial PC 1'));assert.ok(f.button('Salin serial PC 2'));
+ const fields=f.dialog.children[3].children.flatMap(node=>node.children).filter(node=>node.tagName==='input');assert.deepEqual(fields.map(x=>x.value),serials);
+});

@@ -5,7 +5,7 @@ const {codec,COLLECTION}=require('../lib/azobss-solattime-commerce');
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 class Store{
  constructor(){this.values=new Map();this.queue=Promise.resolve();}
- collection(name){return {doc:id=>{const key=name+'/'+id;return {key,get:async()=>({exists:this.values.has(key),data:()=>structuredClone(this.values.get(key))})};}};}
+ collection(name){return {doc:id=>{const key=name+'/'+id;return {key,get:async()=>({exists:this.values.has(key),data:()=>structuredClone(this.values.get(key))})};},where:(field,op,value)=>({limit:()=>({get:async()=>({docs:[...this.values].filter(([k,v])=>k.startsWith(name+'/')&&op==='array-contains'&&v[field]?.includes(value)).map(([k,v])=>({id:k.slice(name.length+1),data:()=>structuredClone(v)}))})})})};}
  runTransaction(fn){const next=this.queue.then(()=>fn({get:ref=>ref.get(),set:(ref,value)=>this.values.set(ref.key,structuredClone(value))}));this.queue=next.catch(()=>{});return next;}
 }
 function fixture(){
@@ -40,6 +40,14 @@ test('paid serial recovery requires the original payment context, issued marker 
  const context=JSON.stringify(['solattime-purchase-v1',order.orderId,'buyer',3000]);f.orders.set(order.orderId,order);f.rows.set(id,{id,customer:'Buyer',purchase_key:order.orderId,serial_hash:sha(serial),deleted:0});f.db.values.set(COLLECTION+'/'+order.orderId,{license_id:id,context,issued_at:'issued',cipher:codec(f.env.SOLATTIME_ORDER_CIPHER_KEY).encrypt({license_id:id,serial},context)});
  let list=(await f.run('list',{})).data;assert.equal(list.licenses[0].serial,serial);assert.equal(list.licenses[0].email,'buyer@example.com');
  order.amountSen=1;list=(await f.run('list',{})).data;assert.equal(list.licenses[0].serial,'');order.amountSen=3000;f.rows.get(id).serial_hash=sha('another');list=(await f.run('list',{})).data;assert.equal(list.licenses[0].serial,'');
+});
+test('every multi-PC licence resolves its parent purchase and its own encrypted serial in admin',async()=>{
+ const {purchaseContext,purchaseKey}=require('../lib/azobss-solattime-commerce'),f=fixture();
+ const order={orderId:'stripe-multi',solattimeQuantity:2,product:{licenseProduct:'solattime',fulfilment:'solattime'},status:'paid',paymentVerifiedAt:'verified',amountSen:7800,user:{uid:'buyer'},email:'buyer@example.com'};
+ const licenses=['AAAAA','BBBBB'].map(chunk=>({license_id:crypto.randomUUID(),serial:'AZST-'+Array(6).fill(chunk).join('-')})),context=purchaseContext(order);
+ f.orders.set(order.orderId,order);f.db.values.set(COLLECTION+'/'+order.orderId,{context,issued_at:'issued',license_id:licenses[0].license_id,license_ids:licenses.map(x=>x.license_id),purchase_keys:licenses.map((x,i)=>purchaseKey(order,i)),cipher:codec(f.env.SOLATTIME_ORDER_CIPHER_KEY).encrypt({...licenses[0],licenses},context)});
+ licenses.forEach((x,i)=>f.rows.set(x.license_id,{id:x.license_id,purchase_key:purchaseKey(order,i),serial_hash:sha(x.serial),customer:'Buyer',deleted:0}));
+ const list=(await f.run('list',{})).data.licenses;assert.equal(list.length,2);assert.deepEqual(list.map(x=>x.serial),licenses.map(x=>x.serial));assert.ok(list.every(x=>x.email==='buyer@example.com'));
 });
 test('wrong key and tampered vault fail without replacing an existing serial',async()=>{
  const f=fixture(),input=request(),issued=await f.run('issue',input),snapshot=JSON.stringify([...f.db.values]);f.env.SOLATTIME_ORDER_CIPHER_KEY='b'.repeat(64);await assert.rejects(()=>f.run('issue',input));assert.equal(JSON.stringify([...f.db.values]),snapshot);assert.equal(f.rows.size,1);assert.equal((await f.run('list',{})).data.licenses[0].serial,'');

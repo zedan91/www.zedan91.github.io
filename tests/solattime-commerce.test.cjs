@@ -80,3 +80,40 @@ test('actual shared checkout resolver uses server SolatTime price/account and di
 test('durable pending queue resumes after failure, respects backoff and does not resend completed keys',async()=>{
  const f=fixture();await f.add();f.setEmailFails(true);await f.service.fulfill(f.order);f.setEmailFails(false);await f.service.drainPending();assert.equal(f.emails.length,0);const ref=f.db.collection(COLLECTION).doc(f.order.orderId),record=(await ref.get()).data();await ref.set({...record,next_retry_at:0});await f.service.drainPending();await f.service.drainPending();await f.service.drainPending();assert.equal(f.emails.length,1);assert.equal(f.issues.size,1);assert.equal((await ref.get()).data().state,'complete');
 });
+test('three-PC SolatTime purchase reserves distinct encrypted keys and issues exactly three licences',async()=>{
+ const f=fixture(),order={...f.order,solattimeQuantity:3,amountSen:11700};await f.add(order);
+ await Promise.all([f.service.fulfill(order),f.service.fulfill(order)]);
+ assert.equal(f.issues.size,3);assert.equal(f.emails.length,1);assert.equal(f.emails[0].licenses.length,3);
+ const serials=f.emails[0].licenses;assert.equal(new Set(serials.map(x=>x.serial)).size,3);assert.equal(new Set(serials.map(x=>x.license_id)).size,3);
+ const record=(await f.db.collection(COLLECTION).doc(order.orderId).get()).data();assert.ok(serials.every(x=>!JSON.stringify(record).includes(x.serial)));assert.equal(record.purchase_keys.length,3);
+ const result=await f.call('/api/solattime/order',{order_id:order.orderId});assert.equal(result.order.quantity,3);assert.deepEqual(result.order.serials,serials);
+ assert.equal((await f.call('/api/solattime/orders')).orders[0].serials,undefined);
+ await f.service.fulfill(order);assert.equal(f.issues.size,3);assert.equal(f.emails.length,1);
+});
+test('lost multi-PC issue response and failed email retry reuse all original serials',async()=>{
+ const f=fixture(),order={...f.order,solattimeQuantity:3,amountSen:11700};await f.add(order);f.setLost(true);await f.service.fulfill(order);
+ assert.equal(f.issues.size,1);assert.equal(f.emails.length,0);f.setEmailFails(true);await f.service.fulfill(order,{retryNow:true});assert.equal(f.issues.size,3);
+ const original=[...f.issues.values()].map(x=>x.serial);f.setEmailFails(false);
+ await f.call('/api/solattime/admin/retry-email',{order_id:order.orderId});assert.equal(f.issues.size,3);assert.deepEqual(f.emails[0].licenses.map(x=>x.serial),original);
+});
+test('changing quantity or cipher key cannot replace a reserved multi-PC purchase',async()=>{
+ const f=fixture(),order={...f.order,solattimeQuantity:3,amountSen:11700};await f.add(order);f.setLost(true);await f.service.fulfill(order);
+ await assert.rejects(()=>f.service.fulfill({...order,solattimeQuantity:2},{retryNow:true}));assert.equal(f.issues.size,1);
+ f.env.SOLATTIME_ORDER_CIPHER_KEY='b'.repeat(64);await assert.rejects(()=>f.service.fulfill(order,{retryNow:true}));assert.equal(f.issues.size,1);
+});
+test('trusted checkout multiplies current server unit price and validates quantity, ignoring forged client prices',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8');
+ const fn=source.slice(source.indexOf('async function azResolveTrustedPremiumProduct('),source.indexOf('\nfunction azRequestHasCommissionSecret'));
+ const sandbox={getPremiumUser:()=>({uid:'forged'}),azProductIdFromAny:p=>p.productId,azFindFirestoreProduct:async()=>({name:'AZOBSS SolatTime',type:'premium',price:'RM39'}),azIsSolatTimeProduct:isProduct,azProductIsPremium:()=>true,mailReady:()=>true,solatTimeCommerce:{prepareCheckout:async()=>({uid:'buyer'})},parseAmountToSen:v=>Number(v.replace('RM',''))*100,cleanPremiumUrl:v=>v||'',azSafeR2ObjectKey:()=>'',SOLATTIME_INSTALLER_URL:'https://example.com/setup.exe'};
+ vm.runInNewContext(fn+';globalThis.resolve=azResolveTrustedPremiumProduct',sandbox);
+ for(const n of [1,2,3,100]){const result=await sandbox.resolve({product:{productId:'SOLATTIME',price:'RM0.01',solattimeUnitPriceSen:1},solattimeQuantity:n},{});assert.equal(result.amountSen,3900*n);assert.equal(result.product.solattimeQuantity,n);assert.equal(result.product.solattimeUnitPriceSen,3900);}
+ for(const n of [0,101,1.5,'2'])await assert.rejects(()=>sandbox.resolve({product:{productId:'SOLATTIME'},solattimeQuantity:n},{}));
+});
+test('email template includes each purchased serial and states one PC per key',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8');
+ const fn=source.slice(source.indexOf('async function azSendSolatTimeSerialEmail('),source.indexOf('\nasync function azFulfillAzdmOrder'));
+ let message;const sandbox={cleanToyyibEmail:s=>s,cleanPremiumText:s=>s,azAzdmSafeHtml:s=>s,FRONTEND_BASE_URL:'https://example.com',SOLATTIME_INSTALLER_URL:'https://example.com/setup.exe',azSendEmailWithOptionalPdf:async value=>message=value};
+ vm.runInNewContext(fn+';globalThis.email=azSendSolatTimeSerialEmail;',sandbox);
+ await sandbox.email({orderId:'fixture',email:'fixture@example.com',user:{username:'Fixture'}},{licenses:[{serial:'TEST-ONE'},{serial:'TEST-TWO'}]});
+ for(const key of ['TEST-ONE','TEST-TWO']){assert.ok(message.text.includes(key));assert.ok(message.html.includes(key));}assert.match(message.text,/2 lesen kekal/);assert.match(message.text,/Setiap serial untuk 1 PC/);
+});

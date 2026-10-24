@@ -888,16 +888,18 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
 
   // SolatTime uses the trusted catalog price and verified account, never the
-  // browser's licence/price/email flags. One permanent 1-PC licence per purchase.
+  // browser's licence/price/email flags. Each purchased PC receives a distinct permanent licence.
   if(trusted&&azIsSolatTimeProduct(trusted)){
     if(!azProductIsPremium(trusted)||trusted.status&&trusted.status!=='active')throw Error('SolatTime belum tersedia untuk pembelian.');
     if(!mailReady())throw Error('E-mel penghantaran SolatTime belum tersedia.');
     const account=await solatTimeCommerce.prepareCheckout(req);
-    const amountSen=parseAmountToSen(trusted.price||trusted.amount||'');
-    if(!amountSen)throw Error('Harga SolatTime pada server tidak sah.');
+    const quantity=data.solattimeQuantity??clientProduct.solattimeQuantity??1;
+    if(!Number.isInteger(quantity)||quantity<1||quantity>100)throw Error('Pilih bilangan lesen SolatTime antara 1 dan 100.');
+    const unitPriceSen=parseAmountToSen(trusted.price||trusted.amount||''),amountSen=unitPriceSen*quantity;
+    if(!unitPriceSen||!Number.isSafeInteger(amountSen))throw Error('Harga SolatTime pada server tidak sah.');
     const file=cleanPremiumUrl(trusted.secureDownloadLink||trusted.premiumDownloadFileLink||trusted.downloadLink||'')||SOLATTIME_INSTALLER_URL;
     const r2=azSafeR2ObjectKey(trusted.r2ObjectKey||trusted.r2Key||'');
-    return {account,product:{...trusted,licenseProduct:'solattime',fulfilment:'solattime',softwarePackages:null,subscriptionCodeEnabled:false,activationCodeSale:false,subscriptionPlan:null,selectedSubscriptionPlan:null},amountText:`RM${(amountSen/100).toFixed(2)}`,amountSen,downloadLink:file,r2ObjectKey:r2,subscriptionCodeEnabled:false,trustedSource:trusted.source||'backend',isAdminTestPurchase:false};
+    return {account,product:{...trusted,licenseProduct:'solattime',fulfilment:'solattime',solattimeQuantity:quantity,solattimeUnitPriceSen:unitPriceSen,softwarePackages:null,subscriptionCodeEnabled:false,activationCodeSale:false,subscriptionPlan:null,selectedSubscriptionPlan:null},amountText:`RM${(amountSen/100).toFixed(2)}`,amountSen,downloadLink:file,r2ObjectKey:r2,subscriptionCodeEnabled:false,trustedSource:trusted.source||'backend',isAdminTestPurchase:false};
   }
   // Admin-only RM1 test purchase: keep real product metadata/file if found, but lock test amount to RM1.
   if (azIsAdminTestPurchase(data, clientProduct)) {
@@ -3885,8 +3887,10 @@ async function azSendSolatTimeSerialEmail(order,issued){
   const email=cleanToyyibEmail(order.email||order.user?.email||'');if(!email)throw Error('Invalid SolatTime email');
   const name=cleanPremiumText(order.user?.username||'Pelanggan',120),id=cleanPremiumText(order.orderId,160);
   const accountUrl=FRONTEND_BASE_URL+'/Software-Tools/?solattime_orders=1';
-  const text=`Salam ${name},\n\nBayaran AZOBSS SolatTime anda sudah disahkan.\nSerial: ${issued.serial}\nLesen kekal untuk 1 PC.\nPesanan: ${id}\n\nMuat turun: ${SOLATTIME_INSTALLER_URL}\nLesen dalam akaun: ${accountUrl}\n\nBuka SolatTime dan masukkan serial ini untuk aktivasi. Pindahan PC perlu disahkan dalam aplikasi.\nSokongan: +60 11-3560 0723\n`;
-  const html=`<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Lesen AZOBSS SolatTime</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda sudah disahkan.</p><p><b>Serial:</b> <code>${azAzdmSafeHtml(issued.serial)}</code></p><p>Lesen kekal · 1 PC<br>Pesanan: ${azAzdmSafeHtml(id)}</p><p><a href="${SOLATTIME_INSTALLER_URL}">Muat turun SolatTime</a> · <a href="${accountUrl}">Lesen dalam akaun saya</a></p><p>Buka SolatTime dan masukkan serial untuk aktivasi. Pindahan PC disahkan dalam aplikasi.</p></div>`;
+  const licenses=Array.isArray(issued.licenses)?issued.licenses:[issued];
+  const lines=licenses.map((item,i)=>`PC ${i+1}: ${item.serial}`).join('\n');
+  const text=`Salam ${name},\n\nBayaran AZOBSS SolatTime anda sudah disahkan.\n${lines}\n${licenses.length} lesen kekal. Setiap serial untuk 1 PC.\nPesanan: ${id}\n\nMuat turun: ${SOLATTIME_INSTALLER_URL}\nLesen dalam akaun: ${accountUrl}\n\nBuka SolatTime dan masukkan serial untuk aktivasi. Pindahan PC perlu disahkan dalam aplikasi.\nSokongan: +60 11-3560 0723\n`;
+  const html=`<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Lesen AZOBSS SolatTime</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda sudah disahkan.</p><ol>${licenses.map((item,i)=>`<li><b>PC ${i+1}</b><br><code>${azAzdmSafeHtml(item.serial)}</code></li>`).join('')}</ol><p>${licenses.length} lesen kekal · Setiap serial untuk 1 PC<br>Pesanan: ${azAzdmSafeHtml(id)}</p><p><a href="${SOLATTIME_INSTALLER_URL}">Muat turun SolatTime</a> · <a href="${accountUrl}">Lesen dalam akaun saya</a></p><p>Buka SolatTime dan masukkan serial untuk aktivasi. Pindahan PC disahkan dalam aplikasi.</p></div>`;
   await azSendEmailWithOptionalPdf({to:email,subject:'AZOBSS SolatTime — Serial lesen anda',html,text});
 }
 async function azFulfillAzdmOrder(order = {}, req, options = {}) {
@@ -5984,7 +5988,8 @@ function azAutomaticCheckoutFingerprint(kind = "digital", payload = {}) {
     items.join(";;")
   ].join("|");
   const packagePart=payload.softwarePackageId ? "|package:"+String(payload.softwarePackageId)+":"+String(payload.packageQuantity)+":"+String(payload.softwarePackageDays??'') : "";
-  return crypto.createHash("sha256").update(canonical+packagePart).digest("hex");
+  const solatPart=Number(payload.solattimeQuantity)>1?'|solattime:'+String(payload.solattimeQuantity):'';
+  return crypto.createHash("sha256").update(canonical+packagePart+solatPart).digest("hex");
 }
 function azAutomaticCheckoutKindForOrder(order = {}) {
   if (order.publicPaPurchase === true || String(order.source || "").toLowerCase().includes("public-pa")) return "public-pa";
@@ -6003,7 +6008,7 @@ function azAutomaticCheckoutFingerprintForOrder(order = {}) {
     amountSen:Number(order.amountSen || 0),
     productId:order.productId || (order.product && (order.product.productId || order.product.id)) || "",
     subscriptionPlanId:order.subscriptionPlanId || (order.subscriptionPlan && order.subscriptionPlan.id) || "",
-    softwarePackageId:order.product?.softwarePackageId, packageQuantity:order.product?.packageQuantity, softwarePackageDays:order.product?.softwarePackageDays,
+    softwarePackageId:order.product?.softwarePackageId, packageQuantity:order.product?.packageQuantity, softwarePackageDays:order.product?.softwarePackageDays, solattimeQuantity:order.solattimeQuantity??order.product?.solattimeQuantity,
     items:order.paBmItems || []
   });
 }
@@ -21637,7 +21642,7 @@ async function handler(req, res) {
         if (!productName || !amountSen) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Missing backend product name or valid backend amount." }, null, 2), "application/json");
         if (!downloadLink && !r2ObjectKey) return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Premium Download File Link atau Cloudflare R2 Private Object Key belum diset untuk produk ini." }, null, 2), "application/json");
         const checkoutFingerprint = azAutomaticCheckoutFingerprint("digital", {
-          user, amountSen, productId, softwarePackageId:product.softwarePackageId, packageQuantity:product.packageQuantity, softwarePackageDays:product.softwarePackageDays, subscriptionPlanId:activationPlan && activationPlan.id || ""
+          user, amountSen, productId, softwarePackageId:product.softwarePackageId, packageQuantity:product.packageQuantity, softwarePackageDays:product.softwarePackageDays, solattimeQuantity:product.solattimeQuantity, subscriptionPlanId:activationPlan && activationPlan.id || ""
         });
         const releaseCheckoutLock = await azAcquireAutomaticCheckoutCreateLock(checkoutFingerprint);
         try {
