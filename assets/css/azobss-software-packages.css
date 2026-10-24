@@ -4,10 +4,10 @@
 .az-package-toggle input{width:18px!important;height:18px!important;min-height:0!important;flex:none}
 #softwarePackageFields[hidden]{display:none!important}
 .az-package-hint,.az-package-plan small,.az-package-editor small{font-size:12px;color:#b4c6d3;line-height:1.5;display:block;margin:6px 0}
-.az-package-plan{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;padding:14px 0;border-bottom:1px solid #334155}
+.az-package-plan{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px;padding:14px 0;border-bottom:1px solid #334155}
 .az-package-plan label,.az-package-grid label{min-width:0;font-size:13px}
 .az-package-plan input,.az-package-grid input{width:100%;min-width:0;box-sizing:border-box}
-.az-package-plan small{grid-column:1/4}.az-package-plan button{align-self:center;min-height:34px}
+.az-package-plan small{grid-column:1/-2}.az-package-plan button{align-self:center;min-height:34px}
 .az-package-editor button{border:1px solid #277967;border-radius:8px;background:#11382e;color:#a7f3d0;padding:8px 12px;cursor:pointer;font:inherit;font-size:12px}
 #softwarePackageAdd{margin:12px 0}.az-package-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .az-package-dialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(600px,calc(100vw - 28px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #258c79;border-radius:18px;background:#101b2b;color:#e5eefb;padding:22px;z-index:10000001;font-family:inherit}

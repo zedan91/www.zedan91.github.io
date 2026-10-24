@@ -6,7 +6,7 @@ test('universal packages support arbitrary names, duration, fixed PC bundles and
  assert.equal(model.quote(bundle(),'three',3).total_cents,10000);assert.throws(()=>model.quote(bundle(),'three',2));
  assert.equal(model.quote(bundle(),'month',4).total_cents,4800);
  const future=bundle();future.plans[0].amount_cents=15000;assert.equal(model.quote(future,'three',3).total_cents,15000);
- assert.equal(model.quote(model.defaults(),'lifetime',2).total_cents,8000);
+ assert.equal(model.quote(model.defaults(),'lifetime-multi',2).total_cents,8000);
  for(const patch of [{max_quantity:101},{bulk_minimum:1},{plans:[]},{plans:[{...bundle().plans[0],amount_cents:-1}]}])assert.throws(()=>model.normalize({...bundle(),...patch}));
 });
 test('actual premium resolver prices generic packages from trusted catalogue and keeps ordinary product checkout intact',async()=>{

@@ -1,6 +1,6 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.azdmOfferModel=factory();})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
-  const defaults=()=>({enabled:true,product_id:'AZDM',name:'AZDM',fulfilment:'azdm',max_quantity:100,bulk_minimum:2,bulk_unit_cents:4000,plans:[{id:'annual',label:'1 Year',days:365,quantity:0,amount_cents:2500},{id:'lifetime',label:'Lifetime',days:0,quantity:0,amount_cents:5000}]});
+  const defaults=()=>({enabled:true,product_id:'AZDM',name:'AZDM',fulfilment:'azdm',max_quantity:100,bulk_minimum:2,bulk_unit_cents:4000,plans:[{id:'annual',label:'1 Year',days:365,quantity:1,amount_cents:2500},{id:'annual-multi',label:'1 Year',days:365,quantity:0,min_quantity:2,amount_cents:2000},{id:'lifetime',label:'Lifetime',days:0,quantity:1,amount_cents:5000},{id:'lifetime-multi',label:'Lifetime',days:0,quantity:0,min_quantity:2,amount_cents:4000}]});
   function integer(value,min,max,label){if(!Number.isInteger(value)||value<min||value>max)throw new Error(label+' is invalid.');return value;}
   function normalize(value){
     if(!value||typeof value!=='object')throw new Error('Plan settings are required.');
@@ -17,16 +17,19 @@
       if(!p||!/^[-A-Za-z0-9_]{1,40}$/.test(p.id||'')||ids.has(p.id))throw new Error('Plan ID must be unique.');ids.add(p.id);
       const label=String(p.label||'').trim();if(!label||label.length>60||/[\x00-\x1f]/.test(label))throw new Error('Plan name is invalid.');
       const days=integer(p.days,0,36500,'License duration'),quantity=integer(p.quantity,0,max,'Number of PCs'),amount=integer(p.amount_cents,1,10000000,'Plan price');
-      if(minimum&&days===0&&!quantity&&discount>=amount)throw new Error('Discount price must be lower than the standard Lifetime price.');
-      return {id:p.id,label,days,quantity,amount_cents:amount};
+      const minQuantity=integer(p.min_quantity??1,1,max,'Minimum PCs');
+      if(quantity&&minQuantity>1)throw new Error('A fixed-PC plan cannot have a variable minimum.');
+      if(minimum&&days===0&&!quantity&&minQuantity===1&&discount>=amount)throw new Error('Discount price must be lower than the standard Lifetime price.');
+      return {id:p.id,label,days,quantity,amount_cents:amount,...(minQuantity>1?{min_quantity:minQuantity}:{})};
     });
     return {enabled:value.enabled===true,product_id:id,name,fulfilment,max_quantity:max,bulk_minimum:minimum,bulk_unit_cents:minimum?discount:0,plans};
   }
   function quote(value,planId,quantity){
     const offer=normalize(value);if(!offer.enabled)throw new Error('License plans are not enabled yet.');
     const p=offer.plans.find(x=>x.id===planId);if(!p)throw new Error('Plan not found.');
-    integer(quantity,1,offer.max_quantity,'Number of PCs');if(p.quantity&&p.quantity!==quantity)throw new Error('Number of PCs must match the selected plan.');
-    const discount=!p.quantity&&p.days===0&&offer.bulk_minimum&&quantity>=offer.bulk_minimum;
+    integer(quantity,p.min_quantity||1,offer.max_quantity,'Number of PCs');if(p.quantity&&p.quantity!==quantity)throw new Error('Number of PCs must match the selected plan.');
+    // A 2+ PC plan has its own per-PC price; the legacy Lifetime discount applies only to unrestricted plans.
+    const discount=!p.quantity&&!p.min_quantity&&p.days===0&&offer.bulk_minimum&&quantity>=offer.bulk_minimum;
     const unit=discount?offer.bulk_unit_cents:p.amount_cents,total=p.quantity?p.amount_cents:unit*quantity;
     return {id:offer.product_id+':'+p.id,name:offer.name+' · '+p.label,days:p.days,quantity,unit_cents:p.quantity?Math.floor(total/quantity):unit,total_cents:total,fixed:p.quantity>0,discount:!!discount};
   }
