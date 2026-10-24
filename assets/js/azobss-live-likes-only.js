@@ -148,9 +148,10 @@ window.__AZOBSS_LIKES_RUNTIME__ = 'likes-only-v1272';
   function setButtonState(btn, liked){
     if(!btn) return;
     btn.classList.toggle('is-liked', !!liked);
-    btn.innerHTML = azBookmarkIconHtml434();
-    btn.setAttribute('aria-label', liked ? 'Remove bookmark' : 'Add bookmark');
-    btn.title = liked ? 'Remove bookmark' : 'Add bookmark';
+    if(!btn.querySelector(':scope > svg.az-bookmark-icon'))btn.innerHTML = azBookmarkIconHtml434();
+    const label=liked ? 'Remove bookmark' : 'Add bookmark';
+    if(btn.getAttribute('aria-label')!==label)btn.setAttribute('aria-label',label);
+    if(btn.title!==label)btn.title=label;
   }
   function isBookmarksRoute439(){
     const path = String(location.pathname || '').toLowerCase();

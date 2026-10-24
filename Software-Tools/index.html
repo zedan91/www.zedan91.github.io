@@ -5714,8 +5714,9 @@ function normalizeItem(item){
     const admin = isAdmin();
     getStaticCards().forEach(card => {
       const id = staticProductId(card);
-      card.querySelectorAll('[data-software-static-edit-wrap]').forEach(el => el.remove());
-      if(admin){
+      const wraps=Array.from(card.querySelectorAll('[data-software-static-edit-wrap]'));
+      wraps.slice(admin?1:0).forEach(el=>el.remove());
+      if(admin&&!wraps.length){
         card.insertAdjacentHTML('beforeend', `<div class="software-card-admin-actions" data-software-static-edit-wrap="1" aria-label="Admin card actions"><button class="software-logo-admin-btn" type="button" data-software-logo-regen="${esc(id)}" title="Generate logo from website link" aria-label="Generate logo">🪄</button><button class="software-card-edit-btn" type="button" data-software-edit="${esc(id)}" title="Edit software" aria-label="Edit">✏️</button><button class="software-card-delete-btn" type="button" data-software-delete="${esc(id)}" title="Delete software" aria-label="Delete">🗑️</button></div>`);
       }
     });
@@ -6890,7 +6891,7 @@ function normalizeItem(item){
 .az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1355" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1355" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -7504,7 +7505,7 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   function statsFor(card){const key=slug(productId(card));const local=readLocal();return normalizeSoftwareLikeState(local[key]||{},card);}
   function setStars(wrap,rating){const filled=Math.round(Number(rating)||0);wrap?.querySelectorAll?.('.azb-star').forEach((star,idx)=>star.classList.toggle('is-filled',idx<filled));}
   function applyCard(card,st){if(!card)return;const box=card.querySelector(':scope > .software-stats');if(!box)return;st=norm(st,card);card.dataset.downloads=String(st.downloads);card.dataset.rating=String(st.rating);card.dataset.ratingVotes=String(st.ratingVotes);card.dataset.likes=String(st.likes||0);const dl=box.querySelector('.azb-dl-number');if(dl&&dl.textContent!==fmt(st.downloads))dl.textContent=fmt(st.downloads);const likeNum=box.querySelector('.azb-like-number');if(likeNum&&likeNum.textContent!==fmt(st.likes||0))likeNum.textContent=fmt(st.likes||0);const likeBtn=box.querySelector('.azb-stat-like');if(likeBtn){const liked=softwareStatIsLiked(card);likeBtn.classList.toggle('is-liked',liked);likeBtn.setAttribute('aria-pressed',liked?'true':'false');likeBtn.title=liked?'Unlike this software':'Like this software';likeBtn.setAttribute('aria-label',liked?'Unlike this software':'Like this software');}const val=box.querySelector('.azb-rate-value');const nextVal=Number(st.rating||0).toFixed(1);if(val&&val.textContent!==nextVal)val.textContent=nextVal;const votes=box.querySelector('.azb-rate-votes');const nextVotes='('+Number(st.ratingVotes||0)+')';if(votes&&votes.textContent!==nextVotes)votes.textContent=nextVotes;setStars(box.querySelector('.azb-stars'),st.rating);}
-  function applyAll(){document.querySelectorAll('.download-card').forEach(card=>applyCard(card,statsFor(card)));}
+  function applyAll(){const local=readLocal();document.querySelectorAll('.download-card').forEach(card=>applyCard(card,normalizeSoftwareLikeState(local[slug(productId(card))]||{},card)));}
   const LIKE_PENDING={};
   function setSoftwareStatLikedKeyLocal(key,liked){const data=readLikedLocal();if(liked)data[key]=true;else delete data[key];writeLikedLocal(data);}
   function countLikedByMap(map){try{return Object.values(map&&typeof map==='object'?map:{}).filter(Boolean).length;}catch(e){return 0;}}
@@ -7645,7 +7646,7 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction } from 'https://www.g
   window.azobssSoftwareStatsSingleSync440=loadRemote;
   window.azobssRenderSoftwareStatsFooter=applyAll;
   window.azobssSyncSoftwareStatsFromFirestore=loadRemote;
-  document.addEventListener('DOMContentLoaded',function(){applyAll();loadRemote();const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid')||document.body;new MutationObserver(()=>requestAnimationFrame(applyAll)).observe(root,{childList:true,subtree:true});});
+  document.addEventListener('DOMContentLoaded',function(){applyAll();loadRemote();const root=document.querySelector('#softwareDownloadsGrid')||document.querySelector('#softwareGrid')||document.querySelector('.downloads-grid');if(root){let queued=false;new MutationObserver(records=>{const relevant=records.some(r=>r.target===root||Array.from(r.addedNodes).some(n=>n.nodeType===1&&(n.matches('.download-card,.software-stats')||n.querySelector('.download-card,.software-stats'))));if(!relevant||queued)return;queued=true;requestAnimationFrame(()=>{queued=false;applyAll();});}).observe(root,{childList:true,subtree:true});}});
   setTimeout(applyAll,0);
 })();
 </script>
@@ -8312,7 +8313,7 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
     const yes = inCart(item);
     btn.classList.toggle('is-carted', yes);
     btn.setAttribute('aria-label', yes ? 'Carted' : 'Add to cart');
-    btn.innerHTML = '<span class="az-card-cart-icon">🛒</span>';
+    if(!btn.querySelector(':scope > .az-card-cart-icon'))btn.innerHTML = '<span class="az-card-cart-icon">🛒</span>';
   }
   function eligibleCards(){
     if(!isShopPage()) return [];
@@ -8470,7 +8471,7 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
       if(btn.getAttribute('data-azobss-premium-buy') === '1' || btn.classList.contains('premium')) return;
       btn.querySelectorAll('.az-btn-icon').forEach(function(el){ el.remove(); });
       var txt = (btn.textContent || '').replace(/^\s*[⬇↓↧⇩⤓]+\s*/,'').trim();
-      if(/download\s*now/i.test(txt)) btn.innerHTML = '<span class="download-text">Download Now</span>';
+      if(/download\s*now/i.test(txt)&&!(btn.childElementCount===1&&btn.firstElementChild.classList.contains('download-text')&&btn.firstElementChild.textContent==='Download Now')) btn.innerHTML = '<span class="download-text">Download Now</span>';
     });
   }
   function copyText(v){
@@ -14074,9 +14075,10 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
     }
     var hasPromo=!!card.querySelector('.az-promo-price-block,.az-price-old,.az-promo-chip');
     var commissionEligible=String(card.dataset.commissionEligible||'')==='1';
-    old.className='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo');
-    old.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerText)+'</span>';
-    old.title=az ? 'Owned by AZOBSS' : ('Owned by '+staffName(owner));
+    var nextClass='az-owner-source-chip '+(az?'is-azobss':'is-staff')+' '+(hasPromo?'has-promo':'no-promo');
+    if(old.className!==nextClass)old.className=nextClass;
+    if(old.textContent!=='OWNED:'+ownerText||!old.querySelector('.az-owner-source-name'))old.innerHTML='<span class="az-owner-source-title">OWNED:</span><span class="az-owner-source-name">'+esc(ownerText)+'</span>';
+    var ownerTitle=az ? 'Owned by AZOBSS' : ('Owned by '+staffName(owner));if(old.title!==ownerTitle)old.title=ownerTitle;
 
     var coin=card.querySelector(':scope > .az-card-commission-symbol-1235');
     if(commissionEligible && info.ok){
@@ -14087,8 +14089,8 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
         coin.setAttribute('role','img');
         card.appendChild(coin);
       }
-      coin.textContent='💰';
-      coin.title='Commission eligible — sales from your Staff/Manager share link can earn commission after successful payment.';
+      if(coin.textContent!=='💰')coin.textContent='💰';
+      var coinTitle='Commission eligible — sales from your Staff/Manager share link can earn commission after successful payment.';if(coin.title!==coinTitle)coin.title=coinTitle;
     }else if(coin){
       coin.remove();
     }
@@ -14103,11 +14105,19 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
   [250,800,1500,3000].forEach(function(t){setTimeout(run,t);});
   try{
     var root=document.querySelector('#softwareGrid,#softwareDownloadsGrid,.downloads-grid,.software-grid,.cad-card-grid,.cad-tools-shop')||document.body;
-    new MutationObserver(function(muts){
-      for(var i=0;i<muts.length;i++){
-        if(muts[i].addedNodes && muts[i].addedNodes.length){requestAnimationFrame(run);break;}
-      }
-    }).observe(root,{childList:true,subtree:true});
+    var ownerQueued=false;
+    function scheduleOwners(){if(ownerQueued)return;ownerQueued=true;requestAnimationFrame(function(){ownerQueued=false;run();});}
+    new MutationObserver(function(records){
+      var relevant=records.some(function(record){
+        if(record.type==='attributes'||record.target===root)return true;
+        return Array.from(record.addedNodes).concat(Array.from(record.removedNodes)).some(function(node){return node.nodeType===1&&(node.matches('.download-card,.az-promo-price-block,.az-price-old,.az-promo-chip,[data-owner-username],[data-owner-key]')||node.querySelector('.download-card,.az-promo-price-block,.az-price-old,.az-promo-chip,[data-owner-username],[data-owner-key]'));});
+      });
+      if(relevant)scheduleOwners();
+    }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['data-owner-username','data-owner-email','data-owner-key','data-owner-uid','data-commission-eligible']});
+    window.addEventListener('azobss-software-rendered',scheduleOwners);
+    window.addEventListener('azobss-auth-changed',scheduleOwners);
+    window.addEventListener('storage',scheduleOwners);
+    window.addEventListener('focus',scheduleOwners);
   }catch(e){}
 })();
 
