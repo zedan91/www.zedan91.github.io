@@ -3812,7 +3812,16 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
       <div class="azobss-pay-step">4. Download Ready</div>
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab.</p>
-    <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address Address <span class="azobss-pay-required">*</span>
+    <div id="azobssSolatTimeCheckoutAccount" class="azobss-pay-product" hidden>
+      <strong>Daftar / Log masuk untuk membeli lesen</strong>
+      <p class="azobss-pay-note">Serial, resit dan sejarah pembelian akan disimpan dalam akaun anda. Gunakan e-mel yang disahkan untuk menerima serial.</p>
+      <div class="azobss-pay-actions">
+        <button type="button" class="azobss-pay-btn azobss-pay-primary" data-auth-open="signup">Daftar akaun</button>
+        <button type="button" class="azobss-pay-btn azobss-pay-muted" data-auth-open="signin">Log masuk</button>
+      </div>
+      <small class="azobss-pay-helper">Pilihan produk dan jumlah lesen kekal semasa anda log masuk. Muat turun percubaan tidak memerlukan akaun.</small>
+    </div>
+    <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address <span class="azobss-pay-required">*</span>
       <input id="azobssPayReference" type="email" autocomplete="email" inputmode="email" placeholder="Enter buyer email address" required>
       <small class="azobss-pay-helper">Guest buyers must enter an email address before opening payment. The download link and payment receipt will be sent to this email address.</small>
     </label>
@@ -5474,7 +5483,7 @@ function normalizeItem(item){
   function renderItem(item){
     const itemStats482 = statsForItem(item);
     const isSolatTime = item.licenseProduct === 'solattime' || String(item.name || '').trim().toLowerCase() === 'azobss solattime';
-    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.32/Azobss_SolatTime_Setup.exe';
+    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.33/Azobss_SolatTime_Setup.exe';
     const secondaryActionHtml = isSolatTime
       ? `<a class="az-card-cart-btn az-solattime-setup-download" href="${solatTimeInstaller}" download="Azobss_SolatTime_Setup.exe" aria-label="Muat turun SolatTime — percubaan 30 hari atau pasang semula" title="Muat turun SolatTime — percubaan 30 hari atau pasang semula"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></a>`
       : `<button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button>`;
@@ -6982,18 +6991,23 @@ function normalizeItem(item){
   function isLoggedIn(){ return !!(userEmail() || sessionStorage.getItem('azobssLoggedIn')==='1' || localStorage.getItem('azobssLoggedIn')==='1'); }
   function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim()); }
   function buyerEmail(){ return userEmail() || String(refInput?.value || '').trim(); }
+  function solatTimeSignedIn(){return !!window.azobssGetCurrentFirebaseUid?.();}
   function syncBuyerEmailField(){
     const field=document.getElementById('azobssBuyerEmailField');
     if(!field || !refInput) return;
-    const logged=isLoggedIn();
-    field.classList.toggle('azobss-pay-field-hidden', logged);
+    const solat=azIsSolatTimeCurrentProduct(),logged=solat?solatTimeSignedIn():isLoggedIn();
+    field.classList.toggle('azobss-pay-field-hidden', logged||solat);
+    refInput.required=!logged&&!solat;
+    const account=document.getElementById('azobssSolatTimeCheckoutAccount');
+    if(account){account.hidden=!solat||logged;account.style.display=account.hidden?'none':'block';}
+    if(solat)openPaymentBtn.style.display=logged?'':'none';
     field.classList.remove('is-invalid');
     if(logged){ refInput.value = userEmail() || ''; }
     openPaymentBtn?.classList.toggle('is-blocked', !logged && !validEmail(refInput.value));
   }
   function requireBuyerEmail(){
     const field=document.getElementById('azobssBuyerEmailField');
-    if(azIsSolatTimeCurrentProduct()&&!isLoggedIn()){if(errorBox)errorBox.textContent='Sila log masuk ke akaun AZOBSS sebelum membeli SolatTime.';return false;}
+    if(azIsSolatTimeCurrentProduct()&&!solatTimeSignedIn()){if(errorBox)errorBox.textContent='Sila daftar atau log masuk ke akaun AZOBSS sebelum membeli SolatTime.';return false;}
     if(isLoggedIn()) return true;
     if(validEmail(refInput?.value)) return true;
     if(field) field.classList.add('is-invalid');
@@ -7007,6 +7021,11 @@ function normalizeItem(item){
     if(validEmail(refInput.value)) field?.classList.remove('is-invalid');
     syncBuyerEmailField();
   });
+  for(const eventName of ['azobss-auth-changed','azobss:auth-state-ready','azobss:global-auth-ready','focus']){
+    window.addEventListener(eventName,()=>{
+      if(modal.getAttribute('aria-hidden')==='false')syncBuyerEmailField();
+    });
+  }
 
   function setActiveMethod(method){
     currentMethod = method || 'bank';
@@ -7042,6 +7061,7 @@ function normalizeItem(item){
     }
     if(azIsSolatTimeCurrentProduct())inst.textContent='Log masuk menggunakan akaun dengan e-mel yang disahkan. Selepas bayaran disahkan, setiap lesen mendapat serial berasingan untuk 1 PC melalui e-mel dan Lesen & Pembelian Saya.';
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
+    syncBuyerEmailField();
   }
 
   function open(product){

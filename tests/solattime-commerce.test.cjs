@@ -23,6 +23,18 @@ function fixture(){
 test('SolatTime catalog detection and order markers do not classify other products',()=>{
  assert.ok(isProduct({name:'AZOBSS SolatTime'}));assert.ok(!isProduct({name:'AZDM'}));assert.ok(!isOrder({product:{name:'AZOBSS SolatTime'}}));assert.deepEqual(orderFields({licenseProduct:'solattime',fulfilment:'solattime'},{uid:'u'}),{solattimeOrder:true,solattimeAccountUid:'u'});assert.deepEqual(orderFields({fulfilment:'azdm'},{uid:'u'}),{});
 });
+
+test('checkout rejects guests and unverified email before contacting licensing service',async()=>{
+ const f=fixture();f.setIdentity(null);
+ await assert.rejects(()=>f.service.prepareCheckout({}),e=>e.statusCode===401);
+ assert.equal(f.requests.length,0);
+ f.setIdentity({uid:'buyer-1',email:'buyer@example.com',emailVerified:false});
+ await assert.rejects(()=>f.service.prepareCheckout({}),e=>e.statusCode===403);
+ assert.equal(f.requests.length,0);
+ f.setIdentity({uid:'buyer-1',email:'buyer@example.com',emailVerified:true});
+ assert.equal((await f.service.prepareCheckout({})).uid,'buyer-1');
+ assert.equal(f.requests.length,1);
+});
 test('AES-GCM binds serial to order/account/amount and rejects wrong keys or tampering',()=>{
  const c=codec(crypto.randomBytes(32).toString('hex')),value={serial:'AZST-ABCDE-FGHIJ-KLMNO-PQRST-UVWXY-Z2345',license_id:crypto.randomUUID()},raw=c.encrypt(value,'order-a');assert.ok(!raw.includes(value.serial));assert.deepEqual(c.decrypt(raw,'order-a'),value);assert.throws(()=>c.decrypt(raw,'order-b'));assert.throws(()=>codec('b'.repeat(64)).decrypt(raw,'order-a'));assert.throws(()=>c.decrypt(raw.slice(0,-3)+'xyz','order-a'));assert.throws(()=>codec('short'));
 });
