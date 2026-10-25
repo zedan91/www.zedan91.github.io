@@ -17,13 +17,13 @@
    if(typeof window.azobssWaitForFirebaseAuthToken==='function'){
     const token=await window.azobssWaitForFirebaseAuthToken(false,Math.max(1000,deadline-Date.now()));
     if(token)headers={Authorization:'Bearer '+token};
-    else if(generation===epoch)throw Error('Sila log masuk untuk melihat lesen SolatTime anda.');
+    else if(generation===epoch)throw Error('Sila log masuk untuk melihat lesen Liyabudun anda.');
    }else if(typeof window.azobssGetFirebaseAuthHeaders==='function'){
     headers=await window.azobssGetFirebaseAuthHeaders(false)||{};
    }
    if(generation!==epoch)throw Error('Sesi telah berubah.');
    if(headers.Authorization){accountUid=window.azobssGetCurrentFirebaseUid?.()||accountUid;return headers;}
-   if(authSettled)throw Error('Sila log masuk untuk melihat lesen SolatTime anda.');
+   if(authSettled)throw Error('Sila log masuk untuk melihat lesen Liyabudun anda.');
    await new Promise(resolve=>setTimeout(resolve,150));
   }
   if(generation!==epoch)throw Error('Sesi telah berubah.');
@@ -32,11 +32,11 @@
  async function api(path,body){
   const generation=epoch;let result;
   if(admin){if(typeof window.azAdminFetchJson!=='function')throw Error('Sesi admin belum tersedia. Cuba semula.');result=await window.azAdminFetchJson(base+'admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{}),cache:'no-store',signal:AbortSignal.timeout(60000)});}
-  else{const auth=await buyerAuth(generation);if(generation!==epoch)throw Error('Sesi telah berubah.');status.textContent='Sedang memuatkan lesen SolatTime…';const query=new URLSearchParams(body||{});const r=await fetch(base+path+'?'+query,{headers:auth,cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(60000)});result=await r.json();if(!r.ok)throw Error(result.error||'Permintaan belum berjaya.');}
+  else{const auth=await buyerAuth(generation);if(generation!==epoch)throw Error('Sesi telah berubah.');status.textContent='Sedang memuatkan lesen Liyabudun…';const query=new URLSearchParams(body||{});const r=await fetch(base+path+'?'+query,{headers:auth,cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(60000)});result=await r.json();if(!r.ok)throw Error(result.error||'Permintaan belum berjaya.');}
   if(generation!==epoch)throw Error('Sesi telah berubah.');if(result.ok===false)throw Error(result.error||'Permintaan belum berjaya.');return result;
  }
- const dialog=el('dialog',undefined,'solat-commerce-dialog');dialog.setAttribute('aria-label',admin?'Butiran pesanan SolatTime':'Lesen SolatTime saya');
- const top=el('div',undefined,'solat-commerce-heading'),heading=el('h2',admin?'Butiran pesanan SolatTime':'Lesen SolatTime saya'),close=button('Tutup',()=>dialog.close());top.append(heading,close);
+ const dialog=el('dialog',undefined,'solat-commerce-dialog');dialog.setAttribute('aria-label',admin?'Butiran pesanan Liyabudun':'Lesen Liyabudun saya');
+ const top=el('div',undefined,'solat-commerce-heading'),heading=el('h2',admin?'Butiran pesanan Liyabudun':'Lesen Liyabudun saya'),close=button('Tutup',()=>dialog.close());top.append(heading,close);
  const status=el('p','', 'solat-commerce-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  const content=el('div'),nav=el('div',undefined,'solat-commerce-actions');dialog.append(top,status,nav,content);document.body.append(dialog);
  function stopPoll(){if(poll)clearTimeout(poll);poll=null;}
@@ -66,12 +66,12 @@
    if(order.status==='paid')actions.append(button('Hantar semula e-mel',()=>{confirmRetry(order);}));
    row.append(person,proof,el('td',money(order.amount_cents)),el('td',label(order.status)),delivery,actions);target.append(row);
   }
-  if(!target.children.length){const row=el('tr'),cell=el('td',term?'Tiada pesanan sepadan pada halaman ini.':'Belum ada pesanan SolatTime.');cell.colSpan=6;row.append(cell);target.append(row);}pages();
+  if(!target.children.length){const row=el('tr'),cell=el('td',term?'Tiada pesanan sepadan pada halaman ini.':'Belum ada pesanan Liyabudun.');cell.colSpan=6;row.append(cell);target.append(row);}pages();
  }
  async function load(target=''){
   const value=await api('orders',{cursor:target});orders=value.orders||[];cursor=target;next=value.next_cursor;loaded=true;
   if(admin){renderAdmin();$('[data-solat-orders-status]').textContent=orders.length+' pesanan pada halaman ini.';window.dispatchEvent(new CustomEvent('azobss:solattime-orders-loaded',{detail:{orders,next}}));}
-  else{content.replaceChildren();status.textContent=orders.length?'Pilih pesanan untuk melihat serial anda.':'Belum ada pembelian SolatTime dalam akaun ini.';nav.replaceChildren(button('Muat semula',()=>guarded(()=>load(cursor))),button('← Sebelumnya',()=>guarded(async()=>{if(!history.length)return;await load(history.pop());})),button('Seterusnya →',()=>guarded(async()=>{if(next===null)return;const old=cursor;await load(next);history.push(old);})));nav.children[1].disabled=!history.length;nav.children[2].disabled=next===null;for(const order of orders){const card=el('article',undefined,'solat-commerce-order');card.append(el('h3','AZOBSS SolatTime · '+money(order.amount_cents)),el('p',order.order_id),el('p',label(order.status)+' · '+label(order.fulfillment_state)),button('Lihat lesen',()=>guarded(()=>showOrder(order.order_id))));content.append(card);}}
+  else{content.replaceChildren();status.textContent=orders.length?'Pilih pesanan untuk melihat serial anda.':'Belum ada pembelian Liyabudun dalam akaun ini.';nav.replaceChildren(button('Muat semula',()=>guarded(()=>load(cursor))),button('← Sebelumnya',()=>guarded(async()=>{if(!history.length)return;await load(history.pop());})),button('Seterusnya →',()=>guarded(async()=>{if(next===null)return;const old=cursor;await load(next);history.push(old);})));nav.children[1].disabled=!history.length;nav.children[2].disabled=next===null;for(const order of orders){const card=el('article',undefined,'solat-commerce-order');card.append(el('h3','Liyabudun · '+money(order.amount_cents)),el('p',order.order_id),el('p',label(order.status)+' · '+label(order.fulfillment_state)),button('Lihat lesen',()=>guarded(()=>showOrder(order.order_id))));content.append(card);}}
  }
  async function showOrder(id){
   stopPoll();const generation=epoch;const value=await api('order',{order_id:id}),order=value.order;detailId=id;if(!dialog.open)dialog.showModal();content.replaceChildren();status.textContent=label(order.fulfillment_state)+' · '+label(order.email_status);
@@ -79,8 +79,8 @@
   const summary=el('dl');for(const [name,text] of [['Pesanan',order.order_id],['Pelanggan',order.customer],['E-mel',order.email],['Jumlah',money(order.amount_cents)],['Bayaran',label(order.status)],['Kaedah',order.payment_method],['Invois',order.invoice_no],['Resit',order.receipt_no],['ID lesen',order.license_id],...(admin?[['UID akaun',order.account_uid],['Rujukan transaksi',order.payment_reference],['Bayaran disahkan',order.payment_verified_at],['E-mel dihantar',order.email_sent_at]]:[])]){summary.append(el('dt',name),el('dd',text||'—'));}content.append(summary);
   const serials=order.serials?.length?order.serials:order.serial?[{serial:order.serial,license_id:order.license_id}]:[];
   if(serials.length)content.append(el('p',serials.length+' lesen kekal · Setiap serial untuk 1 PC.'));
-  for(const [index,item] of serials.entries()){const title=el('label',serials.length>1?'Serial SolatTime · PC '+(index+1):'Serial SolatTime'),input=el('input');input.value=item.serial;input.readOnly=true;input.autocomplete='off';input.spellcheck=false;title.append(input);content.append(title,el('small',item.license_id||''),button(serials.length>1?'Salin serial PC '+(index+1):'Salin serial',async()=>{try{await navigator.clipboard.writeText(input.value);status.textContent='Serial disalin.';}catch{input.focus();input.select();status.textContent='Tekan Ctrl+C untuk menyalin serial.';}}));}
-  if(order.status==='paid'&&value.download_url){const link=el('a','Muat turun SolatTime');link.href=value.download_url;link.rel='noopener noreferrer';content.append(link);}
+  for(const [index,item] of serials.entries()){const title=el('label',serials.length>1?'Serial Liyabudun · PC '+(index+1):'Serial Liyabudun'),input=el('input');input.value=item.serial;input.readOnly=true;input.autocomplete='off';input.spellcheck=false;title.append(input);content.append(title,el('small',item.license_id||''),button(serials.length>1?'Salin serial PC '+(index+1):'Salin serial',async()=>{try{await navigator.clipboard.writeText(input.value);status.textContent='Serial disalin.';}catch{input.focus();input.select();status.textContent='Tekan Ctrl+C untuk menyalin serial.';}}));}
+  if(order.status==='paid'&&value.download_url){const link=el('a','Muat turun Liyabudun');link.href=value.download_url;link.rel='noopener noreferrer';content.append(link);}
   if(!admin&&order.fulfillment_state!=='complete'&&pollCount<12&&generation===epoch){poll=setTimeout(()=>{if(dialog.open&&detailId===id){pollCount++;guarded(()=>showOrder(id));}},4000);}
  }
  function confirmRetry(order){

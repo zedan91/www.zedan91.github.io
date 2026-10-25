@@ -18,7 +18,7 @@
     if(typeof window.azAdminFetchJson!=='function')throw Error('Sesi admin belum tersedia. Sign in AZOBSS dan cuba semula.');
     const result=await window.azAdminFetchJson(apiBase+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(30000)});
     if(current!==generation)throw Error('Sesi admin telah berubah.');
-    if(result.ok===false)throw Error(result.error||'Servis lesen SolatTime belum tersedia.');
+    if(result.ok===false)throw Error(result.error||'Servis lesen Liyabudun belum tersedia.');
     return result;
   }
   async function action(fn){
@@ -51,7 +51,7 @@
       else buttons.append(control('Edit',()=>openEdit(item),false,management),control('Reset PC',()=>confirmLicense(item,'reset'),false,management&&Number(item.device_count)>0),control(item.status==='blocked'?'Buka sekatan':'Sekat',()=>confirmLicense(item,item.status==='blocked'?'restore':'block'),item.status!=='blocked'),control('Delete',()=>confirmLicense(item,'delete'),true,management));
       $('rows').append(row);
     }
-    if(!items.length){const row=document.createElement('tr'),td=cell(row,term?'Tiada lesen sepadan pada halaman ini.':archived?'Belum ada lesen dalam arkib.':'Belum ada lesen SolatTime.');td.colSpan=8;td.className='solat-empty';$('rows').append(row);}
+    if(!items.length){const row=document.createElement('tr'),td=cell(row,term?'Tiada lesen sepadan pada halaman ini.':archived?'Belum ada lesen dalam arkib.':'Belum ada lesen Liyabudun.');td.colSpan=8;td.className='solat-empty';$('rows').append(row);}
     $('page-label').textContent='Halaman '+(history.length+1)+' · '+items.length+' / '+licenses.length+' lesen pada halaman ini';pages();
   }
   async function loadLicenses(target=offset){
@@ -90,18 +90,18 @@
   });});
   $('import-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
     const customer=$('legacy-customer').value.trim(),serial=$('legacy-serial').value.trim().toUpperCase();
-    if(!customer||!/^AZST-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}$/.test(serial))throw Error('Masukkan nama pelanggan dan serial lama SolatTime yang sah.');
+    if(!customer||!/^AZST-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}$/.test(serial))throw Error('Masukkan nama pelanggan dan serial lama Liyabudun yang sah.');
     await api('import-legacy',{customer,serial});$('legacy-serial').value='';$('legacy-customer').value='';
     await loadLicenses(0);history=[];$('search').value='';render();notice('Serial lama didaftarkan. Pindahan masih perlu disahkan dalam aplikasi pada PC baharu.');
   });});
   function confirmLicense(item,operation){
     if(busy)return;pending={id:item.id,operation,generation:item.generation};
-    const copy={block:['Sekat lesen SolatTime?','PC yang menggunakan lesen ini menerima sekatan apabila online dan sync. PC offline tidak boleh dinyahaktifkan serta-merta.'],restore:['Buka sekatan lesen?','PC pemilik semasa boleh menggunakan lesen selepas sync. Tindakan ini tidak memindahkan lesen.'],reset:['Reset PC lesen ini?','PC lama dilepaskan dan tidak boleh mengambil semula lesen melalui sync. Aktifkan serial secara jelas pada PC yang dikehendaki. PC offline menerima perubahan apabila kembali online.'],delete:['Delete lesen ke arkib?','Lesen disekat dan PC dilepaskan apabila sync. Rekod serta serial disimpan dalam arkib supaya boleh dipulihkan. PC offline menerima perubahan apabila kembali online.'],undelete:['Pulihkan rekod dari arkib?','Rekod dipulihkan dalam keadaan Disekat dan tanpa PC. Semak pelanggan, kemudian buka sekatan dan aktifkan serial pada PC yang dikehendaki.']}[operation];
+    const copy={block:['Sekat lesen Liyabudun?','PC yang menggunakan lesen ini menerima sekatan apabila online dan sync. PC offline tidak boleh dinyahaktifkan serta-merta.'],restore:['Buka sekatan lesen?','PC pemilik semasa boleh menggunakan lesen selepas sync. Tindakan ini tidak memindahkan lesen.'],reset:['Reset PC lesen ini?','PC lama dilepaskan dan tidak boleh mengambil semula lesen melalui sync. Aktifkan serial secara jelas pada PC yang dikehendaki. PC offline menerima perubahan apabila kembali online.'],delete:['Delete lesen ke arkib?','Lesen disekat dan PC dilepaskan apabila sync. Rekod serta serial disimpan dalam arkib supaya boleh dipulihkan. PC offline menerima perubahan apabila kembali online.'],undelete:['Pulihkan rekod dari arkib?','Rekod dipulihkan dalam keadaan Disekat dan tanpa PC. Semak pelanggan, kemudian buka sekatan dan aktifkan serial pada PC yang dikehendaki.']}[operation];
     $('confirm-title').textContent=copy[0];$('confirm-customer').textContent=item.customer+' · '+item.id;$('confirm-detail').textContent=copy[1];
     $('confirm-action').classList.toggle('solat-danger',['block','delete'].includes(operation));$('confirm-dialog').showModal();
   }
   $('confirm-action').addEventListener('click',()=>action(async()=>{
-    if(!pending)return;try{await api(pending.operation,{license_id:pending.id,...(['reset','delete'].includes(pending.operation)?{expected_generation:pending.generation}:{})});$('confirm-dialog').close();await loadLicenses();notice('Status lesen SolatTime sudah dikemas kini.');}catch(error){$('confirm-detail').textContent=error.message;throw error;}
+    if(!pending)return;try{await api(pending.operation,{license_id:pending.id,...(['reset','delete'].includes(pending.operation)?{expected_generation:pending.generation}:{})});$('confirm-dialog').close();await loadLicenses();notice('Status lesen Liyabudun sudah dikemas kini.');}catch(error){$('confirm-detail').textContent=error.message;throw error;}
   }));
   function openEdit(item){if(busy||!management)return;editing=item.id;$('edit-customer').value=item.customer||'';$('edit-email').value=item.email||'';$('edit-phone').value=item.phone||'';$('edit-status').textContent='';$('edit-dialog').showModal();}
   $('edit-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{if(!editing)return;try{await api('edit',{license_id:editing,customer:$('edit-customer').value.trim(),email:$('edit-email').value.trim(),phone:$('edit-phone').value.trim()});$('edit-dialog').close();await loadLicenses();notice('Maklumat pelanggan disimpan.');}catch(error){$('edit-status').textContent=error.message;throw error;}});});
@@ -116,9 +116,9 @@
   });
   $('save').addEventListener('click',()=>{
     if(!serialRecord)return;
-    const text='AZOBSS SolatTime\nPelanggan: '+serialRecord.customer+'\nSerial: '+serialRecord.serial+'\nID lesen: '+serialRecord.id+'\nLesen kekal, 1 PC. Pindahan disahkan melalui aplikasi.\n';
+    const text='Liyabudun\nPelanggan: '+serialRecord.customer+'\nSerial: '+serialRecord.serial+'\nID lesen: '+serialRecord.id+'\nLesen kekal, 1 PC. Pindahan disahkan melalui aplikasi.\n';
     const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'})),link=document.createElement('a');
-    link.href=url;link.download='SolatTime-Serial-'+serialRecord.id+'.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    link.href=url;link.download='Liyabudun-Serial-'+serialRecord.id+'.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   root.querySelectorAll('[data-solat-close]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.solatClose).close()));
   $('serial-dialog').addEventListener('close',()=>{serialRecord=null;$('serial-value').value='';$('serial-status').textContent='';});

@@ -29,7 +29,7 @@
   const sort=root.querySelector('[data-solat-orders-sort]')?.value||'newest';items.sort((a,b)=>sort==='name'?String(a.customer||'').localeCompare(String(b.customer||''),'ms'):sort==='amount'?Number(b.amount_cents)-Number(a.amount_cents):sort==='oldest'?(Date.parse(a.created_at)||0)-(Date.parse(b.created_at)||0):(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0));
   for(const order of items){
    const card=el('article',undefined,'solat-audit-card'),head=el('div',undefined,'solat-audit-head'),person=el('div'),view=el('button','Butiran');view.type='button';view.addEventListener('click',()=>window.azSolatTimeAdminShowOrder?.(order.order_id));
-   person.append(el('strong',order.customer||order.email||'Pelanggan SolatTime'),el('small',[order.email,order.order_id].filter(Boolean).join(' · ')));head.append(person,view);card.append(head);
+   person.append(el('strong',order.customer||order.email||'Pelanggan Liyabudun'),el('small',[order.email,order.order_id].filter(Boolean).join(' · ')));head.append(person,view);card.append(head);
    const timeline=el('ol',undefined,'solat-audit-timeline');
    for(const event of auditEvents(order,licenses.find(license=>license.id===order.license_id))){const row=el('li',undefined,'solat-audit-event '+event.state);row.append(el('strong',event.label),el('small',[event.detail,date(event.time)].filter(Boolean).join(' · ')));timeline.append(row);}
    card.append(timeline);host.append(card);

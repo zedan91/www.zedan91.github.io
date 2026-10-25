@@ -113,7 +113,7 @@ const {createSolatTimeCommerce,isProduct:azIsSolatTimeProduct,isOrder:azIsSolatT
 const solatTimeCommerce=createSolatTimeCommerce({
   getDb:getAzobssBackendDb,getIdentity:azdmVerifiedAccount,getAdminIdentity:azdmAdminIdentity,
   findOrder:orderId=>findPremiumOrderByAnyDeep({orderId}),
-  persistSummary:async order=>{const result=await azPersistPremiumOrder(order);if(!result.ok)throw Error('SolatTime order persistence unavailable');return upsertPremiumOrder(order);},
+  persistSummary:async order=>{const result=await azPersistPremiumOrder(order);if(!result.ok)throw Error('Liyabudun order persistence unavailable');return upsertPremiumOrder(order);},
   verifyPayment:azVerifySolatTimePurchase,sendEmail:azSendSolatTimeSerialEmail,send,readBody,rateLimit:azRateLimitOrSend
 });
 const {createOfferHandler,model:azSoftwarePackageModel}=require('./lib/azobss-azdm-offers');
@@ -887,19 +887,19 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
   }
   if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
 
-  // SolatTime uses the trusted catalog price and verified account, never the
+  // Liyabudun uses the trusted catalog price and verified account, never the
   // browser's licence/price/email flags. Each purchased PC receives a distinct permanent licence.
   if(trusted&&azIsSolatTimeProduct(trusted)){
-    if(!azProductIsPremium(trusted)||trusted.status&&trusted.status!=='active')throw Error('SolatTime belum tersedia untuk pembelian.');
-    if(!mailReady())throw Error('E-mel penghantaran SolatTime belum tersedia.');
+    if(!azProductIsPremium(trusted)||trusted.status&&trusted.status!=='active')throw Error('Liyabudun belum tersedia untuk pembelian.');
+    if(!mailReady())throw Error('E-mel penghantaran Liyabudun belum tersedia.');
     const account=await solatTimeCommerce.prepareCheckout(req);
     const quantity=data.solattimeQuantity??clientProduct.solattimeQuantity??1;
-    if(!Number.isInteger(quantity)||quantity<1||quantity>100)throw Error('Pilih bilangan lesen SolatTime antara 1 dan 100.');
+    if(!Number.isInteger(quantity)||quantity<1||quantity>100)throw Error('Pilih bilangan lesen Liyabudun antara 1 dan 100.');
     const unitPriceSen=parseAmountToSen(trusted.price||trusted.amount||''),amountSen=unitPriceSen*quantity;
-    if(!unitPriceSen||!Number.isSafeInteger(amountSen))throw Error('Harga SolatTime pada server tidak sah.');
+    if(!unitPriceSen||!Number.isSafeInteger(amountSen))throw Error('Harga Liyabudun pada server tidak sah.');
     const file=cleanPremiumUrl(trusted.secureDownloadLink||trusted.premiumDownloadFileLink||trusted.downloadLink||'')||SOLATTIME_INSTALLER_URL;
     const r2=azSafeR2ObjectKey(trusted.r2ObjectKey||trusted.r2Key||'');
-    return {account,product:{...trusted,licenseProduct:'solattime',fulfilment:'solattime',solattimeQuantity:quantity,solattimeUnitPriceSen:unitPriceSen,softwarePackages:null,subscriptionCodeEnabled:false,activationCodeSale:false,subscriptionPlan:null,selectedSubscriptionPlan:null},amountText:`RM${(amountSen/100).toFixed(2)}`,amountSen,downloadLink:file,r2ObjectKey:r2,subscriptionCodeEnabled:false,trustedSource:trusted.source||'backend',isAdminTestPurchase:false};
+    return {account,product:{...trusted,name:'Liyabudun',licenseProduct:'solattime',fulfilment:'solattime',solattimeQuantity:quantity,solattimeUnitPriceSen:unitPriceSen,softwarePackages:null,subscriptionCodeEnabled:false,activationCodeSale:false,subscriptionPlan:null,selectedSubscriptionPlan:null},amountText:`RM${(amountSen/100).toFixed(2)}`,amountSen,downloadLink:file,r2ObjectKey:r2,subscriptionCodeEnabled:false,trustedSource:trusted.source||'backend',isAdminTestPurchase:false};
   }
   // Admin-only RM1 test purchase: keep real product metadata/file if found, but lock test amount to RM1.
   if (azIsAdminTestPurchase(data, clientProduct)) {
@@ -3884,14 +3884,14 @@ async function azVerifySolatTimePurchase(order,options={}){
   return true;
 }
 async function azSendSolatTimeSerialEmail(order,issued){
-  const email=cleanToyyibEmail(order.email||order.user?.email||'');if(!email)throw Error('Invalid SolatTime email');
+  const email=cleanToyyibEmail(order.email||order.user?.email||'');if(!email)throw Error('Invalid Liyabudun email');
   const name=cleanPremiumText(order.user?.username||'Pelanggan',120),id=cleanPremiumText(order.orderId,160);
   const accountUrl=FRONTEND_BASE_URL+'/Software-Tools/?solattime_orders=1';
   const licenses=Array.isArray(issued.licenses)?issued.licenses:[issued];
   const lines=licenses.map((item,i)=>`PC ${i+1}: ${item.serial}`).join('\n');
-  const text=`Salam ${name},\n\nBayaran AZOBSS SolatTime anda sudah disahkan.\n${lines}\n${licenses.length} lesen kekal. Setiap serial untuk 1 PC.\nPesanan: ${id}\n\nMuat turun: ${SOLATTIME_INSTALLER_URL}\nLesen dalam akaun: ${accountUrl}\n\nBuka SolatTime dan masukkan serial untuk aktivasi. Pindahan PC perlu disahkan dalam aplikasi.\nSokongan: +60 11-3560 0723\n`;
-  const html=`<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Lesen AZOBSS SolatTime</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda sudah disahkan.</p><ol>${licenses.map((item,i)=>`<li><b>PC ${i+1}</b><br><code>${azAzdmSafeHtml(item.serial)}</code></li>`).join('')}</ol><p>${licenses.length} lesen kekal · Setiap serial untuk 1 PC<br>Pesanan: ${azAzdmSafeHtml(id)}</p><p><a href="${SOLATTIME_INSTALLER_URL}">Muat turun SolatTime</a> · <a href="${accountUrl}">Lesen dalam akaun saya</a></p><p>Buka SolatTime dan masukkan serial untuk aktivasi. Pindahan PC disahkan dalam aplikasi.</p></div>`;
-  await azSendEmailWithOptionalPdf({to:email,subject:'AZOBSS SolatTime — Serial lesen anda',html,text});
+  const text=`Salam ${name},\n\nBayaran Liyabudun anda sudah disahkan.\n${lines}\n${licenses.length} lesen kekal. Setiap serial untuk 1 PC.\nPesanan: ${id}\n\nMuat turun: ${SOLATTIME_INSTALLER_URL}\nLesen dalam akaun: ${accountUrl}\n\nBuka Liyabudun dan masukkan serial untuk aktivasi. Pindahan PC perlu disahkan dalam aplikasi.\nSokongan: +60 11-3560 0723\n`;
+  const html=`<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Lesen Liyabudun</h2><p>Salam ${azAzdmSafeHtml(name)}, bayaran anda sudah disahkan.</p><ol>${licenses.map((item,i)=>`<li><b>PC ${i+1}</b><br><code>${azAzdmSafeHtml(item.serial)}</code></li>`).join('')}</ol><p>${licenses.length} lesen kekal · Setiap serial untuk 1 PC<br>Pesanan: ${azAzdmSafeHtml(id)}</p><p><a href="${SOLATTIME_INSTALLER_URL}">Muat turun Liyabudun</a> · <a href="${accountUrl}">Lesen dalam akaun saya</a></p><p>Buka Liyabudun dan masukkan serial untuk aktivasi. Pindahan PC disahkan dalam aplikasi.</p></div>`;
+  await azSendEmailWithOptionalPdf({to:email,subject:'Liyabudun — Serial lesen anda',html,text});
 }
 async function azFulfillAzdmOrder(order = {}, req, options = {}) {
   let latest = await azReloadPremiumOrder(order);
@@ -20980,7 +20980,7 @@ async function handler(req, res) {
         if (!downloadUrl) return send(res, 503, JSON.stringify({ ok:false, error:"Private R2 download is not configured." }, null, 2), "application/json");
         return send(res, 200, JSON.stringify({ ok:true, mode:"r2-direct", filename:AZOBSS_SOLATTIME_FILENAME, objectKey:AZOBSS_SOLATTIME_R2_OBJECT_KEY, downloadUrl, expiresIn:3600, patch:"1322" }, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (error) {
-        return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "SolatTime download token failed." }, null, 2), "application/json");
+        return send(res, 500, JSON.stringify({ ok:false, error:cleanPremiumText(error && error.message, 300) || "Liyabudun download token failed." }, null, 2), "application/json");
       }
     }
 
@@ -26391,8 +26391,8 @@ server.on("error", (error) => {
 });
 
 server.listen(SERVER_PORT, HOST, () => {
-  // Durable SolatTime email/issuance retries resume after a backend restart.
-  const retrySolatTime=()=>solatTimeCommerce.drainPending().catch(()=>console.warn('SolatTime pending queue will retry later.'));
+  // Durable Liyabudun email/issuance retries resume after a backend restart.
+  const retrySolatTime=()=>solatTimeCommerce.drainPending().catch(()=>console.warn('Liyabudun pending queue will retry later.'));
   setTimeout(retrySolatTime,10000).unref();
   setInterval(retrySolatTime,60000).unref();
 

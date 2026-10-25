@@ -21,6 +21,7 @@ function fixture(){
  return {db,orders,service,env,order,add,call,issues,requests,emails,sent,setIdentity:v=>identity=v,setAdmin:v=>admin=v,setPaid:v=>paid=v,setEmailFails:v=>emailFails=v,setLost:v=>loseResponse=v,setWorkerFails:v=>workerFails=v,setPersistFails:v=>persistFails=v,get verifyCount(){return verifyCount;}};
 }
 test('SolatTime catalog detection and order markers do not classify other products',()=>{
+ assert.ok(isProduct({name:'Liyabudun'}));assert.ok(isProduct({productId:'AZSW-372165',name:'Renamed catalogue entry'}));assert.ok(!isProduct({name:'Liyabudun tutorial ebook'}));
  assert.ok(isProduct({name:'AZOBSS SolatTime'}));assert.ok(!isProduct({name:'AZDM'}));assert.ok(!isOrder({product:{name:'AZOBSS SolatTime'}}));assert.deepEqual(orderFields({licenseProduct:'solattime',fulfilment:'solattime'},{uid:'u'}),{solattimeOrder:true,solattimeAccountUid:'u'});assert.deepEqual(orderFields({fulfilment:'azdm'},{uid:'u'}),{});
 });
 
@@ -86,7 +87,7 @@ test('actual shared checkout resolver uses server SolatTime price/account and di
  const sandbox={getPremiumUser:()=>({uid:'forged'}),azProductIdFromAny:p=>p.productId,azFindFirestoreProduct:async()=>catalog,azFindLocalSoftwareProduct:()=>null,azIsSolatTimeProduct:isProduct,azProductIsPremium:()=>true,mailReady:()=>true,solatTimeCommerce:{prepareCheckout:async()=>{if(!buyer)throw Error('Sign in');return buyer;}},parseAmountToSen:v=>Math.round(Number(v.replace('RM',''))*100),cleanPremiumUrl:v=>v||'',azSafeR2ObjectKey:v=>v||'',SOLATTIME_INSTALLER_URL:'https://files.azobss.com/test.exe'};
  vm.runInNewContext(fn+';globalThis.resolve=azResolveTrustedPremiumProduct',sandbox);
  const result=await sandbox.resolve({product:{productId:'actual-catalog-sku',price:'RM0.01'},user:{uid:'forged'},subscriptionPlan:{durationDays:1}},{});
- assert.equal(result.amountSen,3000);assert.equal(result.account.uid,'verified-buyer');assert.equal(result.product.licenseProduct,'solattime');assert.equal(result.product.softwarePackages,null);assert.equal(result.subscriptionCodeEnabled,false);assert.equal(result.isAdminTestPurchase,false);
+ assert.equal(result.amountSen,3000);assert.equal(result.account.uid,'verified-buyer');assert.equal(result.product.licenseProduct,'solattime');assert.equal(result.product.name,'Liyabudun');assert.equal(catalog.name,'AZOBSS SolatTime');assert.equal(result.product.softwarePackages,null);assert.equal(result.subscriptionCodeEnabled,false);assert.equal(result.isAdminTestPurchase,false);
  buyer=null;await assert.rejects(()=>sandbox.resolve({product:{productId:'actual-catalog-sku'}},{}));catalog={...catalog,status:'draft'};await assert.rejects(()=>sandbox.resolve({product:{productId:'actual-catalog-sku'}},{}));
 });
 test('durable pending queue resumes after failure, respects backoff and does not resend completed keys',async()=>{

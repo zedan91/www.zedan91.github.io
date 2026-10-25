@@ -36,7 +36,7 @@ test('signed-out visitor gets retry and login event reloads the same open panel'
  f.auth('buyer-a');f.event({loggedIn:true,uid:'buyer-a'});await flush();assert.equal(f.calls.length,1);assert.equal(f.dialog.open,true);assert.match(f.text,/Pilih pesanan/);
 });
 test('closing while auth is pending cancels work and login never reopens the panel',async()=>{
- const f=fixture(),pending=deferred();f.window.azobssWaitForFirebaseAuthToken=()=>pending.promise;await f.tick(150);f.dialog.close();pending.resolve('fixture-token');f.event({loggedIn:true,uid:'buyer-a'});await flush();assert.equal(f.calls.length,0);assert.equal(f.dialog.open,false);assert.equal(f.text,'Lesen SolatTime sayaTutup');
+ const f=fixture(),pending=deferred();f.window.azobssWaitForFirebaseAuthToken=()=>pending.promise;await f.tick(150);f.dialog.close();pending.resolve('fixture-token');f.event({loggedIn:true,uid:'buyer-a'});await flush();assert.equal(f.calls.length,0);assert.equal(f.dialog.open,false);assert.equal(f.text,'Lesen Liyabudun sayaTutup');
 });
 test('logout discards a late authenticated response without rendering another account data',async()=>{
  const f=fixture(),pending=deferred();f.auth();f.response(()=>pending.promise);await f.tick(150);assert.equal(f.calls.length,1);
