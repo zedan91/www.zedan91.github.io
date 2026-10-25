@@ -65,3 +65,105 @@ main.ld-page{width:min(1240px,calc(100% - 64px));padding:30px 0 40px}
 @media(max-width:1000px){.ld-hero{gap:30px}.ld-stage{padding:17px}.ld-page h1#ld-title{font-size:49px}.ld-wheel-wrap{margin:24px 8px 15px}.ld-page .ld-join-panel{padding:20px!important}.ld-trust{gap:12px;font-size:9px}.ld-stage-bottom{font-size:9px}}
 @media(max-width:760px){main.ld-page{width:calc(100% - 32px)!important;padding-top:22px!important}.ld-topline{gap:8px}.ld-top-actions{gap:7px}.ld-page .ld-top-actions .btn{font-size:10px;padding:0 10px;min-height:33px}.ld-hero{grid-template-columns:1fr;gap:30px;padding:30px 0}.ld-page h1#ld-title{font-size:46px!important;line-height:1.06!important;letter-spacing:-1.8px;margin:18px 0;max-width:430px}.ld-intro{font-size:14px!important}.ld-campaign-meta{font-size:9px;letter-spacing:1px}.ld-hero-links .btn{min-height:44px!important;font-size:13px!important}.ld-trust{font-size:10px;flex-wrap:wrap}.ld-page .countdown-panel{padding-top:17px!important}.ld-stage{width:100%;padding:18px;border-radius:20px}.ld-wheel-wrap{max-width:330px;margin:22px auto 15px}.ld-stage-bottom{font-size:9px}.ld-metrics{grid-template-columns:1fr;margin:0 0 34px}.ld-page .summary-box{padding:17px!important}.ld-progress-card{padding:17px;border-top:1px solid #ffffff12}.ld-page .ld-section-heading h2{font-size:24px!important}.ld-section-number{display:none}.ld-experience,.ld-community-grid,.ld-details-grid{grid-template-columns:1fr;gap:18px}.ld-page .prize-panel{padding:16px!important;grid-template-rows:250px auto!important;gap:16px!important}.ld-page .prize-panel .prize-carousel-shell,.ld-page .prize-panel .prize-image-wrap{height:250px!important;max-height:250px!important;min-height:0!important}.ld-page .ld-join-panel{padding:20px!important}.ld-page .ld-join-panel h2{font-size:23px!important}.ld-page .lucky-join-checklist{grid-template-columns:repeat(3,1fr)!important}.ld-page .lucky-join-step small{font-size:8px!important}.ld-page .lucky-join-step strong{font-size:10px!important}.ld-page .mini-status-grid{grid-template-columns:1fr 1fr!important}.ld-page .participants-head{display:flex!important;flex-direction:row;align-items:center!important}.ld-page .participants-head .btn{width:auto!important}.ld-page .participants-head h2{font-size:17px!important}.ld-settings{width:calc(100vw - 16px);max-height:95dvh;border-radius:15px}.ld-dialog-head{padding:18px 17px 12px}.ld-dialog-head h2{font-size:22px}.ld-settings-meta{padding:0 17px 10px}.ld-settings-tabs{padding:0 10px}.ld-settings-tabs button{padding:13px 10px}.ld-settings-body{padding:19px 17px;max-height:calc(95dvh - 270px)}.ld-fields{grid-template-columns:1fr;gap:14px}.ld-dialog-footer{padding:13px 17px;align-items:stretch;flex-direction:column;gap:12px}.ld-dialog-footer p{max-width:none}.ld-dialog-footer>div{justify-content:flex-end}.ld-theme-presets{gap:7px}.ld-theme-presets button{font-size:10px;padding:15px 6px}.ld-settings .admin-grid{grid-template-columns:1fr}.ld-settings .referral-audit-summary,.ld-settings .abuse-audit-summary{grid-template-columns:1fr 1fr}.ld-campaign-details{margin-bottom:25px}.ld-page .referral-info-note{font-size:10px!important}.ld-page .product-share-actions .btn{min-height:38px!important}.ld-stage .ld-wheel-center{padding:10px}.ld-stage .ld-monogram{font-size:38px}.ld-stage .ld-wheel-center .roll-name{font-size:12px!important}}
 @media(prefers-reduced-motion:reduce){.ld-page *,.ld-settings *{scroll-behavior:auto!important;animation:none!important;transition:none!important}.ld-confetti{display:none}}
+
+/* 1424: readable type at normal browser zoom, including narrow screens. */
+main.ld-page,.ld-settings{font-size:16px;line-height:1.6}
+.ld-page .ld-back,.ld-page .ld-text-link{font-size:14px;line-height:1.5}
+.ld-page .btn,.ld-settings .btn{font-size:15px!important;line-height:1.4!important;min-height:44px!important;white-space:normal!important;padding:10px 16px!important}
+.ld-page .btn:disabled,.ld-settings .btn:disabled{opacity:.65}
+.ld-page .ld-top-actions{flex-wrap:wrap;justify-content:flex-end}
+.ld-page .ld-announcement{font-size:16px;line-height:1.6}
+.ld-page .ld-intro{font-size:17px!important;line-height:1.7!important}
+.ld-page .ld-campaign-meta,.ld-page .ld-edition{font-size:13px;line-height:1.5;letter-spacing:1px}
+.ld-page .ld-trust{font-size:14px;line-height:1.6;flex-wrap:wrap;color:#b6cbbf;gap:10px 20px}
+.ld-page .countdown-panel>span{font-size:13px;line-height:1.5;letter-spacing:1px}
+.ld-page #targetText,.ld-page #minimumParticipantsNote{font-size:14px;line-height:1.6;color:#b6cbbf}
+.ld-page .ld-stage-top{font-size:13px;line-height:1.5;letter-spacing:1px;flex-wrap:wrap}
+.ld-page .ld-live-pill{font-size:13px;line-height:1.4}
+.ld-page .ld-stage-bottom{font-size:14px;line-height:1.6;color:#b6cbbf;flex-wrap:wrap;align-items:flex-start}
+.ld-page .ld-stage-bottom>span{flex:1;min-width:180px}
+.ld-page .ld-icon-button,.ld-settings .ld-icon-button{min-width:44px;min-height:44px;flex-shrink:0}
+.ld-page .ld-wheel-center{width:46%;padding:12px}
+.ld-page #winnerText{font-size:14px;line-height:1.5;color:#d0dfd3;overflow-wrap:anywhere}
+.ld-page .draw-winner-rollbox .roll-label,.ld-page .draw-winner-rollbox .roll-note{font-size:13px!important;line-height:1.45!important;letter-spacing:.3px;color:#c3d7c9!important}
+.ld-page .draw-winner-rollbox .roll-name{font-size:18px!important;line-height:1.35!important;white-space:normal}
+.ld-page .ld-wheel-center:has(.draw-winner-rollbox) .ld-monogram{display:none}
+.ld-page .summary-box>span{font-size:14px!important;line-height:1.5;color:#b8cdc0}
+.ld-page .summary-box.winner strong{font-size:20px!important;line-height:1.4}
+.ld-page .ld-progress-card>div,.ld-page .ld-progress-card strong,.ld-page .ld-progress-card small{font-size:14px;line-height:1.6;color:#b8cdc0}
+.ld-page .ld-progress-card>div{flex-wrap:wrap}
+.ld-page .ld-progress-card strong{color:var(--ld-accent)}
+.ld-page .ld-eyebrow,.ld-settings .ld-eyebrow{font-size:13px;line-height:1.5;letter-spacing:1px}
+.ld-page .ld-section-number{font-size:14px;color:#afc5b7}
+.ld-page .prize-panel{max-height:none!important;grid-template-rows:260px auto!important;overflow:visible!important}
+.ld-page #prizeTitle{font-size:23px;line-height:1.4}
+.ld-page #prizeDescription{font-size:16px!important;line-height:1.75!important;color:#c1d3c6;max-height:260px!important;overflow:auto}
+.ld-page #prizeDescScrollHint{font-size:13px;line-height:1.5}
+.ld-page .field-label{font-size:14px;line-height:1.5;color:#c0d2c6}
+.ld-page #productShareRequirementText{font-size:16px!important;line-height:1.65!important;color:#c1d3c6}
+.ld-page .product-share-actions #joinLuckyDrawButton{font-size:16px!important}
+.ld-page .mini-status span,.ld-page .lucky-join-step span{font-size:13px!important;line-height:1.5;color:#b4ccba;letter-spacing:.4px}
+.ld-page .mini-status strong,.ld-page .lucky-join-step strong{font-size:16px!important;line-height:1.5}
+.ld-page .lucky-join-step small{font-size:14px!important;line-height:1.6;color:#b7cebd}
+.ld-page .referral-info-note{font-size:15px!important;line-height:1.7!important;color:#c1d3c6}
+.ld-page .referral-info-note strong{font-size:15px!important;line-height:1.6}
+.ld-page .status-note{font-size:15px!important;line-height:1.6!important}
+.ld-page .kicker,.ld-page .prize-carousel-counter{font-size:13px!important;line-height:1.5!important}
+.ld-page .az-ld-image-loading-badge,.ld-page .az-ld-refresh-note{font-size:14px!important;line-height:1.5!important}
+.ld-page .ld-campaign-details>summary{font-size:16px;line-height:1.5}
+.ld-page .draw-summary-row,.ld-page .draw-summary-row span,.ld-page .draw-summary-row b,
+.ld-page .draw-summary-latest,.ld-page .draw-summary-latest span,.ld-page .draw-summary-latest small,
+.ld-page .draw-summary-winner{font-size:14px!important;line-height:1.6!important}
+.ld-page #drawSummaryLatest,.ld-page .ld-terms p{font-size:16px;line-height:1.75;color:#bfd2c3}
+.ld-page .ld-terms h3{font-size:18px;line-height:1.5}
+.ld-page .participant-card,.ld-page .participant-item,.ld-page .empty{font-size:16px;line-height:1.6}
+.ld-page .participant-card strong{font-size:16px}
+.ld-page .participant-card span,.ld-page .participant-item small{font-size:14px;line-height:1.6;color:#b5cdbb}
+.ld-page .ld-search-label{font-size:14px;line-height:1.5;color:#b5cdbb}
+.ld-page #ld-participant-search{font-size:16px;min-height:44px}
+.ld-page footer{font-size:14px!important;line-height:1.6!important;color:#b0c7b7}
+
+.ld-settings[open]{display:flex;flex-direction:column;max-height:92dvh}
+.ld-settings .ld-dialog-head,.ld-settings .ld-settings-meta,.ld-settings .ld-settings-tabs,.ld-settings .ld-dialog-footer{flex-shrink:0}
+.ld-settings #ld-settings-form{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ld-settings .ld-settings-body{min-height:0;max-height:none;overflow-y:auto}
+.ld-settings .ld-settings-meta{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.ld-settings .ld-settings-tabs button{font-size:15px;line-height:1.5;min-height:44px}
+.ld-settings .ld-dialog-head h2{font-size:26px!important;line-height:1.3!important}
+.ld-settings h3{font-size:20px!important;line-height:1.4!important}
+.ld-settings p{font-size:16px;line-height:1.7}
+.ld-settings .ld-field>span,.ld-settings .field-label{font-size:14px;line-height:1.5}
+.ld-settings input:not([type="checkbox"]),.ld-settings textarea,.ld-settings select{font-size:16px;line-height:1.5;min-height:44px}
+.ld-settings .ld-switch strong{font-size:16px;line-height:1.5}
+.ld-settings .ld-switch small{font-size:14px;line-height:1.6;color:#b5ccbe}
+.ld-settings .ld-theme-presets button{font-size:14px;line-height:1.5}
+.ld-settings .ld-callout{font-size:14px!important;line-height:1.7}
+.ld-settings .ld-dialog-footer p,.ld-settings .status-note{font-size:14px;line-height:1.6}
+.ld-settings .referral-audit-box span,.ld-settings .abuse-audit-box span,
+.ld-settings .referral-audit-card span,.ld-settings .referral-audit-card small,
+.ld-settings .abuse-audit-card span,.ld-settings .abuse-audit-card small{font-size:14px!important;line-height:1.6!important}
+.ld-settings .participant-list,.ld-settings .ld-gallery-empty{font-size:16px;line-height:1.6}
+.ld-settings .ld-gallery-heading span,.ld-settings .ld-gallery-drop small,
+.ld-settings .ld-gallery-badge,.ld-settings .ld-gallery-caption,.ld-settings .ld-gallery-note,
+.ld-settings .ld-gallery-advanced summary,.ld-settings .admin-json summary,.ld-settings .ld-gallery-footer small{font-size:14px;line-height:1.6}
+.ld-settings .ld-gallery-heading h3,.ld-settings .ld-gallery-drop strong{font-size:18px;line-height:1.5}
+.ld-prize-lightbox .ld-prize-lightbox-description{font-size:16px!important;line-height:1.75!important}
+.ld-prize-lightbox .ld-prize-lightbox-counter{font-size:14px;line-height:1.5}
+@media(max-width:1000px){
+  .ld-page .ld-experience,.ld-page .ld-community-grid,.ld-page .ld-details-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .ld-page .ld-topline{align-items:flex-start;flex-wrap:wrap}
+  .ld-page .ld-hero-links{gap:16px;flex-wrap:wrap}
+  .ld-page .prize-panel{grid-template-rows:250px auto!important}
+  .ld-page .participants-head{gap:12px;flex-wrap:wrap}
+  .ld-settings[open]{max-height:95dvh}
+}
+@media(max-width:620px){
+  .ld-page .lucky-join-checklist{grid-template-columns:1fr!important}
+  .ld-page .lucky-join-step{padding:14px!important}
+  .ld-page .product-share-actions{grid-template-columns:1fr!important}
+  .ld-page .mini-status-grid{grid-template-columns:1fr!important}
+  .ld-settings .ld-dialog-head{gap:12px;align-items:flex-start}
+  .ld-settings .ld-dialog-footer>div{flex-wrap:wrap}
+}
