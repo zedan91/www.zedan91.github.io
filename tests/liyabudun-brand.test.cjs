@@ -12,6 +12,6 @@ test('old catalogue entries render Liyabudun copy without rewriting stored produ
 test('brand page keeps canonical checkout, download identity and publisher attribution',()=>{
  const html=fs.readFileSync(require.resolve('../solattime/index.html'),'utf8');
  assert.match(html,/<title>Liyabudun/);assert.match(html,/Dahulu AZOBSS SolatTime/);
- assert.match(html,/p=AZSW-372165/);assert.match(html,/solattime\/releases\/1\.0\.39\/Azobss_SolatTime_Setup\.exe/);
+ assert.match(html,/p=AZSW-372165/);assert.match(html,/solattime\/releases\/1\.0\.40\/Azobss_SolatTime_Setup\.exe/);
  assert.match(html,/oleh AZOBSS/);assert.doesNotMatch(html,/zero competition|terjamin.*carian/i);
 });
