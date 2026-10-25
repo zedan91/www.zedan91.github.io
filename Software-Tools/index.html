@@ -5483,7 +5483,7 @@ function normalizeItem(item){
   function renderItem(item){
     const itemStats482 = statsForItem(item);
     const isSolatTime = item.licenseProduct === 'solattime' || String(item.name || '').trim().toLowerCase() === 'azobss solattime';
-    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.35/Azobss_SolatTime_Setup.exe';
+    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.36/Azobss_SolatTime_Setup.exe';
     const secondaryActionHtml = isSolatTime
       ? `<a class="az-card-cart-btn az-solattime-setup-download" href="${solatTimeInstaller}" download="Azobss_SolatTime_Setup.exe" aria-label="Muat turun SolatTime — percubaan 30 hari atau pasang semula" title="Muat turun SolatTime — percubaan 30 hari atau pasang semula"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></a>`
       : `<button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button>`;
