@@ -1,0 +1,524 @@
+{
+  "schemaVersion": 1,
+  "storeId": "brightstar",
+  "storeName": "Brightstar Computer",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://brightstarcomp.com/collections/desktop",
+  "notes": "",
+  "products": [
+    {
+      "id": "brightstar-acer-aspire-xc",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Low",
+      "name": "Acer Aspire XC Office Desktop",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 2779,
+      "priceMin": 2779,
+      "priceMax": 2779,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 125H"
+        ],
+        [
+          "GPU",
+          "Intel Graphics"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Acer Aspire XC Office Desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-set-heroes",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Mid",
+      "name": "PC Package Heroes",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3299,
+      "priceMin": 3299,
+      "priceMax": 3299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "PC Package Heroes - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-set-c",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Mid",
+      "name": "Tech Upgrade Set C",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3599,
+      "priceMin": 3599,
+      "priceMax": 3599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Tech Upgrade Set C - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-msi-cubi",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Low",
+      "name": "MSI Cubi NUC 1M Mini Desktop",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 3299,
+      "priceMin": 3299,
+      "priceMax": 3299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel configurable"
+        ],
+        [
+          "GPU",
+          "Integrated Graphics"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "MSI Cubi NUC 1M Mini Desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-ideacentre",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Low",
+      "name": "Lenovo IdeaCentre Tower Desktop Workstation",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 3649,
+      "priceMin": 3649,
+      "priceMax": 3649,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel configurable"
+        ],
+        [
+          "GPU",
+          "Integrated / discrete depends model"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Lenovo IdeaCentre Tower Desktop Workstation - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-expertcenter",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Low",
+      "name": "ASUS ExpertCenter D700 SFF",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 3799,
+      "priceMin": 3799,
+      "priceMax": 3799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel configurable"
+        ],
+        [
+          "GPU",
+          "Integrated Graphics"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "ASUS ExpertCenter D700 SFF - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-set-a",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Mid",
+      "name": "Tech Upgrade Set A",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4099,
+      "priceMin": 4099,
+      "priceMax": 4099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 255F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Tech Upgrade Set A - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-set-b",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Mid-High",
+      "name": "Tech Upgrade Set B",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 5799,
+      "priceMin": 5799,
+      "priceMax": 5799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Tech Upgrade Set B - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-set-d",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Mid-High",
+      "name": "Tech Upgrade Set D",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6099,
+      "priceMin": 6099,
+      "priceMax": 6099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Tech Upgrade Set D - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "brightstar-msi-infinite-x3",
+      "origin": "retailer",
+      "storeId": "brightstar",
+      "storeName": "Brightstar Computer",
+      "tier": "Flagship",
+      "name": "MSI MPG Infinite X3 AI 2nd Gaming Desktop",
+      "tagline": "Brightstar Computer • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 12209,
+      "priceMin": 12209,
+      "priceMax": 12209,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Brightstar Computer",
+      "sourceUrl": "https://brightstarcomp.com/collections/desktop",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "BRIGHTSTAR COMPUTER",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel / MSI configuration"
+        ],
+        [
+          "GPU",
+          "NVIDIA gaming GPU"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "MSI MPG Infinite X3 AI 2nd Gaming Desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Brightstar Computer",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "NVIDIA gaming GPU",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

@@ -1,0 +1,545 @@
+{
+  "schemaVersion": 1,
+  "storeId": "techhypermart",
+  "storeName": "Tech Hypermart",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://www.techhypermart.com/computers-desktop-pc",
+  "notes": "",
+  "products": [
+    {
+      "id": "techhypermart-acer-c24",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Low",
+      "name": "Acer Aspire C24B 23.8\" AIO",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 3839,
+      "priceMin": 3839,
+      "priceMax": 3839,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core 5 120U"
+        ],
+        [
+          "GPU",
+          "Intel Graphics"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Acer Aspire C24B 23.8\" AIO - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-acer-c27",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Low",
+      "name": "Acer Aspire C27B 27\" AIO",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 4799,
+      "priceMin": 4799,
+      "priceMax": 4799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 255U"
+        ],
+        [
+          "GPU",
+          "Intel Graphics"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Acer Aspire C27B 27\" AIO - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-acer-tc1860",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Low",
+      "name": "Acer Aspire TC-1860 Desktop",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 3429,
+      "priceMin": 3429,
+      "priceMax": 3429,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 265"
+        ],
+        [
+          "GPU",
+          "Intel Graphics"
+        ],
+        [
+          "RAM",
+          "8GB DDR5"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Acer Aspire TC-1860 Desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-acer-orion5000",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Flagship",
+      "name": "Acer Predator Orion 5000",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 13799,
+      "priceMin": 13799,
+      "priceMax": 13799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 265F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070"
+        ],
+        [
+          "RAM",
+          "32GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "Acer Predator Orion 5000 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-acer-orion7000",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Flagship",
+      "name": "Acer Predator Orion 7000",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 17999,
+      "priceMin": 17999,
+      "priceMax": 17999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 9 285K"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080"
+        ],
+        [
+          "RAM",
+          "32GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "Acer Predator Orion 7000 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-asus-rnuc15",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Flagship",
+      "name": "ASUS RNUC15 Mini Desktop PC",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 20359,
+      "priceMin": 20359,
+      "priceMax": 20359,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 9 275HX"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080"
+        ],
+        [
+          "RAM",
+          "DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe PCIe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "ASUS RNUC15 Mini Desktop PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-thinkstation-p3",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Workstation",
+      "name": "Lenovo ThinkStation P3 Gen 2",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 13549,
+      "priceMin": 13549,
+      "priceMax": 13549,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 265"
+        ],
+        [
+          "GPU",
+          "NVIDIA RTX A1000"
+        ],
+        [
+          "RAM",
+          "32GB"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Lenovo ThinkStation P3 Gen 2 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX A1000",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-hp-z2",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Workstation",
+      "name": "HP Z2 G1i Tower AI Workstation",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 15599,
+      "priceMin": 15599,
+      "priceMax": 15599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers?order=DESC&sort=p.price",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 265"
+        ],
+        [
+          "GPU",
+          "NVIDIA RTX PRO 2000 Blackwell"
+        ],
+        [
+          "RAM",
+          "32GB"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "HP Z2 G1i Tower AI Workstation - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX PRO 2000 Blackwell",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "techhypermart-dell-pro-max-gb10",
+      "origin": "retailer",
+      "storeId": "techhypermart",
+      "storeName": "Tech Hypermart",
+      "tier": "Workstation",
+      "name": "Dell Pro Max GB10 AI Supercomputing",
+      "tagline": "Tech Hypermart • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 25199,
+      "priceMin": 25199,
+      "priceMax": 25199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Tech Hypermart",
+      "sourceUrl": "https://www.techhypermart.com/computers?order=DESC&sort=p.price",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TECH HYPERMART",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "NVIDIA GB10 Grace"
+        ],
+        [
+          "GPU",
+          "NVIDIA GB10 Blackwell"
+        ],
+        [
+          "RAM",
+          "128GB"
+        ],
+        [
+          "Storage",
+          "2TB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Dell Pro Max GB10 AI Supercomputing - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "segment": "workstation",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "NVIDIA GB10 Blackwell",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

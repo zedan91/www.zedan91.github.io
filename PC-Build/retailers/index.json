@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "version": 1430,
+  "checkedAt": "2026-10-26",
+  "catalogs": [
+    {
+      "id": "all-it",
+      "name": "ALL IT Hypermarket",
+      "file": "./retailers/all-it.json",
+      "count": 10,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "ideal-tech",
+      "name": "Ideal Tech",
+      "file": "./retailers/ideal-tech.json",
+      "count": 13,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "tmt",
+      "name": "TMT / Thunder Match",
+      "file": "./retailers/tmt.json",
+      "count": 1,
+      "catalogStatus": "quote"
+    },
+    {
+      "id": "viewnet",
+      "name": "Viewnet",
+      "file": "./retailers/viewnet.json",
+      "count": 15,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "pc-image",
+      "name": "PC Image",
+      "file": "./retailers/pc-image.json",
+      "count": 1,
+      "catalogStatus": "quote"
+    },
+    {
+      "id": "techhypermart",
+      "name": "Tech Hypermart",
+      "file": "./retailers/techhypermart.json",
+      "count": 9,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "dotatech",
+      "name": "DOTATECH",
+      "file": "./retailers/dotatech.json",
+      "count": 14,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "rextech",
+      "name": "REXTECH PC",
+      "file": "./retailers/rextech.json",
+      "count": 1,
+      "catalogStatus": "quote"
+    },
+    {
+      "id": "emarque",
+      "name": "EMARQUE",
+      "file": "./retailers/emarque.json",
+      "count": 18,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "illegear",
+      "name": "ILLEGEAR",
+      "file": "./retailers/illegear.json",
+      "count": 20,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "brightstar",
+      "name": "Brightstar Computer",
+      "file": "./retailers/brightstar.json",
+      "count": 10,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "netstore",
+      "name": "NETSTORE",
+      "file": "./retailers/netstore.json",
+      "count": 1,
+      "catalogStatus": "quote"
+    },
+    {
+      "id": "jayacom",
+      "name": "Jayacom",
+      "file": "./retailers/jayacom.json",
+      "count": 6,
+      "catalogStatus": "active"
+    },
+    {
+      "id": "sri-computers",
+      "name": "Sri Computers",
+      "file": "./retailers/sri-computers.json",
+      "count": 1,
+      "catalogStatus": "quote"
+    },
+    {
+      "id": "c-zone",
+      "name": "C-Zone / Compuzone",
+      "file": "./retailers/c-zone.json",
+      "count": 1,
+      "catalogStatus": "quote"
+    }
+  ]
+}

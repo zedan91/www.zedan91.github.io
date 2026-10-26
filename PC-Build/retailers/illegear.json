@@ -1,0 +1,1198 @@
+{
+  "schemaVersion": 1,
+  "storeId": "illegear",
+  "storeName": "ILLEGEAR",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+  "notes": "",
+  "products": [
+    {
+      "id": "illegear-ignite-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Low",
+      "name": "IGNITE (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1299,
+      "priceMin": 1299,
+      "priceMax": 1299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5000 Series"
+        ],
+        [
+          "GPU",
+          "Integrated / GPU configurable"
+        ],
+        [
+          "Storage",
+          "NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "IGNITE (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "office",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-ignite-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Low",
+      "name": "IGNITE (INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1599,
+      "priceMin": 1599,
+      "priceMax": 1599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core up to 14th Gen"
+        ],
+        [
+          "GPU",
+          "Integrated / GPU configurable"
+        ],
+        [
+          "Storage",
+          "NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "IGNITE (INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-revive-ddr4",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "REVIVE (DDR4)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2299,
+      "priceMin": 2299,
+      "priceMax": 2299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 64GB DDR4"
+        ],
+        [
+          "Storage",
+          "500GB+ NVMe"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "REVIVE (DDR4) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-gaming-set-ddr4",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "GAMING PC SET MURAH (DDR4)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2699,
+      "priceMin": 2699,
+      "priceMax": 2699,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR4"
+        ],
+        [
+          "Storage",
+          "NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "GAMING PC SET MURAH (DDR4) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-gaming-set-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "GAMING PC SET MURAH (INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2899,
+      "priceMin": 2899,
+      "priceMax": 2899,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core 14th Gen"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR4"
+        ],
+        [
+          "Storage",
+          "PCIe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "GAMING PC SET MURAH (INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-gaming-set-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "GAMING PC SET MURAH (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3199,
+      "priceMin": 3199,
+      "priceMax": 3199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "GAMING PC SET MURAH (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-gaming-set-ddr5",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "GAMING PC SET MURAH (DDR5)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3299,
+      "priceMin": 3299,
+      "priceMax": 3299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "GAMING PC SET MURAH (DDR5) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-kapsule-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "KAPSULE (ITX AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3599,
+      "priceMin": 3599,
+      "priceMax": 3599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 64GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "KAPSULE (ITX AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-aura-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "AURA (INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3799,
+      "priceMin": 3799,
+      "priceMax": 3799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core 14th Gen"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "PCIe Gen5 capable"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AURA (INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-kapsule-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "KAPSULE (ITX INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3799,
+      "priceMin": 3799,
+      "priceMax": 3799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 64GB DDR5"
+        ],
+        [
+          "Storage",
+          "PCIe Gen5 capable"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "KAPSULE (ITX INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-aura-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "AURA (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4099,
+      "priceMin": 4099,
+      "priceMax": 4099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AURA (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-seaview",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "SEAVIEW (DDR5)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4299,
+      "priceMin": 4299,
+      "priceMax": 4299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "SEAVIEW (DDR5) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-arctic-ddr5",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "ARCTIC (DDR5)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4699,
+      "priceMin": 4699,
+      "priceMax": 4699,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "PCIe Gen5 capable"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "ARCTIC (DDR5) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-aethra-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "AETHRA (INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5099,
+      "priceMin": 5099,
+      "priceMax": 5099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core up to 14th Gen"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR4"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "AETHRA (INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-reaper-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "REAPER (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5199,
+      "priceMin": 5199,
+      "priceMax": 5199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "REAPER (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-reaper-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "REAPER (INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5199,
+      "priceMin": 5199,
+      "priceMax": 5199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "REAPER (INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-ikigai-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid",
+      "name": "IKIGAI (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5239,
+      "priceMin": 5239,
+      "priceMax": 5239,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "PCIe Gen5 capable"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "IKIGAI (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-aethra-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid-High",
+      "name": "AETHRA (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 5899,
+      "priceMin": 5899,
+      "priceMax": 5899,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "AETHRA (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-atlas-amd",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid-High",
+      "name": "ATLAS (AMD)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6699,
+      "priceMin": 6699,
+      "priceMax": 6699,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 9000-Series configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "PCIe Gen5 capable"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "ATLAS (AMD) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "illegear-atlas-intel",
+      "origin": "retailer",
+      "storeId": "illegear",
+      "storeName": "ILLEGEAR",
+      "tier": "Mid-High",
+      "name": "ATLAS (INTEL)",
+      "tagline": "ILLEGEAR • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6799,
+      "priceMin": 6799,
+      "priceMax": 6799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ILLEGEAR",
+      "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ILLEGEAR",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra configurable"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 50-Series configurable"
+        ],
+        [
+          "RAM",
+          "Up to 128GB DDR5"
+        ],
+        [
+          "Storage",
+          "PCIe Gen5 capable"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "ATLAS (INTEL) - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ILLEGEAR",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 50",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

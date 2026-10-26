@@ -1,5 +1,5 @@
 {
-  "version": 1428,
+  "version": 1430,
   "checkedAt": "2026-10-26",
   "stores": [
     {
@@ -14,7 +14,10 @@
         "accessories"
       ],
       "description": "PC siap, komponen, laptop dan aksesori.",
-      "source": "https://www.allithypermarket.com.my/"
+      "source": "https://www.allithypermarket.com.my/",
+      "catalogFile": "./retailers/all-it.json",
+      "catalogStatus": "active",
+      "productCount": 10
     },
     {
       "id": "ideal-tech",
@@ -27,7 +30,10 @@
         "laptop"
       ],
       "description": "Custom PC gaming, pejabat dan workstation.",
-      "source": "https://idealtech.com.my/"
+      "source": "https://idealtech.com.my/",
+      "catalogFile": "./retailers/ideal-tech.json",
+      "catalogStatus": "active",
+      "productCount": 13
     },
     {
       "id": "tmt",
@@ -41,7 +47,10 @@
         "accessories"
       ],
       "description": "Desktop, custom PC, laptop dan perkakasan.",
-      "source": "https://www.tmt.my/"
+      "source": "https://www.tmt.my/",
+      "catalogFile": "./retailers/tmt.json",
+      "catalogStatus": "quote",
+      "productCount": 1
     },
     {
       "id": "viewnet",
@@ -54,7 +63,10 @@
         "accessories"
       ],
       "description": "Prebuilt PC, PC builder dan komponen.",
-      "source": "https://viewnet.com.my/store"
+      "source": "https://viewnet.com.my/store",
+      "catalogFile": "./retailers/viewnet.json",
+      "catalogStatus": "active",
+      "productCount": 15
     },
     {
       "id": "pc-image",
@@ -68,7 +80,10 @@
         "accessories"
       ],
       "description": "Rangkaian kedai komputer dan perkakasan.",
-      "source": "https://pcimage.com.my/consumer/"
+      "source": "https://pcimage.com.my/consumer/",
+      "catalogFile": "./retailers/pc-image.json",
+      "catalogStatus": "quote",
+      "productCount": 1
     },
     {
       "id": "techhypermart",
@@ -82,7 +97,10 @@
         "accessories"
       ],
       "description": "Desktop berjenama, workstation dan laptop.",
-      "source": "https://www.techhypermart.com/computers"
+      "source": "https://www.techhypermart.com/computers",
+      "catalogFile": "./retailers/techhypermart.json",
+      "catalogStatus": "active",
+      "productCount": 9
     },
     {
       "id": "dotatech",
@@ -96,7 +114,10 @@
         "accessories"
       ],
       "description": "Custom gaming PC, workstation dan komponen.",
-      "source": "https://www.dotatech.com.my/pages/faqs"
+      "source": "https://www.dotatech.com.my/pages/faqs",
+      "catalogFile": "./retailers/dotatech.json",
+      "catalogStatus": "active",
+      "productCount": 14
     },
     {
       "id": "rextech",
@@ -108,7 +129,10 @@
         "workstation"
       ],
       "description": "Custom PC gaming dan konfigurasi kerja.",
-      "source": "https://rextechpc.com.my/"
+      "source": "https://rextechpc.com.my/",
+      "catalogFile": "./retailers/rextech.json",
+      "catalogStatus": "quote",
+      "productCount": 1
     },
     {
       "id": "emarque",
@@ -120,7 +144,10 @@
         "workstation"
       ],
       "description": "Custom gaming PC dan workstation.",
-      "source": "https://emarque.co/"
+      "source": "https://emarque.co/",
+      "catalogFile": "./retailers/emarque.json",
+      "catalogStatus": "active",
+      "productCount": 18
     },
     {
       "id": "illegear",
@@ -133,7 +160,10 @@
         "accessories"
       ],
       "description": "Custom desktop, laptop gaming dan aksesori.",
-      "source": "https://www.illegear.com/showroom-kuala-lumpur/"
+      "source": "https://www.illegear.com/showroom-kuala-lumpur/",
+      "catalogFile": "./retailers/illegear.json",
+      "catalogStatus": "active",
+      "productCount": 20
     },
     {
       "id": "brightstar",
@@ -146,7 +176,10 @@
         "accessories"
       ],
       "description": "Komponen, laptop dan aksesori komputer.",
-      "source": "https://brightstarcomp.com/pages/store-locator"
+      "source": "https://brightstarcomp.com/pages/store-locator",
+      "catalogFile": "./retailers/brightstar.json",
+      "catalogStatus": "active",
+      "productCount": 10
     },
     {
       "id": "netstore",
@@ -159,7 +192,10 @@
         "accessories"
       ],
       "description": "Perkakasan komputer dan pilihan custom PC.",
-      "source": "https://netstore.com.my/index.php"
+      "source": "https://netstore.com.my/index.php",
+      "catalogFile": "./retailers/netstore.json",
+      "catalogStatus": "quote",
+      "productCount": 1
     },
     {
       "id": "jayacom",
@@ -171,7 +207,10 @@
         "accessories"
       ],
       "description": "Komponen dan aksesori komputer.",
-      "source": "https://www.in-win.com/en/where-to-buy?country_id=21&page=1&product_category=0&store_category=0"
+      "source": "https://www.in-win.com/en/where-to-buy?country_id=21&page=1&product_category=0&store_category=0",
+      "catalogFile": "./retailers/jayacom.json",
+      "catalogStatus": "active",
+      "productCount": 6
     },
     {
       "id": "sri-computers",
@@ -185,7 +224,10 @@
       ],
       "description": "Komponen, laptop dan aksesori melalui kedai Shopee.",
       "linkLabel": "Buka kedai Shopee",
-      "source": "https://images-cdn.lowyat.net/pricelist/sri1.pdf"
+      "source": "https://images-cdn.lowyat.net/pricelist/sri1.pdf",
+      "catalogFile": "./retailers/sri-computers.json",
+      "catalogStatus": "quote",
+      "productCount": 1
     },
     {
       "id": "c-zone",
@@ -198,7 +240,10 @@
       ],
       "description": "Rujukan perkakasan dan promosi melalui Facebook kedai.",
       "linkLabel": "Buka Facebook kedai",
-      "source": "https://assets.hardwarezone.com/retailer_pricelist/145/C-Zone%20Price%20List.pdf"
+      "source": "https://assets.hardwarezone.com/retailer_pricelist/145/C-Zone%20Price%20List.pdf",
+      "catalogFile": "./retailers/c-zone.json",
+      "catalogStatus": "quote",
+      "productCount": 1
     }
   ]
 }

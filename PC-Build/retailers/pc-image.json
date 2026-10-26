@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "storeId": "pc-image",
+  "storeName": "PC Image",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "quote",
+  "source": "https://pcimage.com.my/outlets/",
+  "notes": "",
+  "products": [
+    {
+      "id": "pc-image-desktop-custom",
+      "origin": "retailer",
+      "storeId": "pc-image",
+      "storeName": "PC Image",
+      "tier": "Quote",
+      "name": "PC Image Desktop / Custom PC",
+      "tagline": "PC Image • Harga perlu disahkan",
+      "category": "office",
+      "resolution": "Semak kedai",
+      "price": null,
+      "priceMin": null,
+      "priceMax": null,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "PC Image",
+      "sourceUrl": "https://pcimage.com.my/outlets/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "PC IMAGE",
+      "accent": "green",
+      "parts": [
+        [
+          "Konfigurasi",
+          "Custom / ikut bajet dan keperluan pengguna"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "PC Image mempunyai rangkaian outlet dan menjual PC/perkakasan, tetapi snapshot harga desktop semasa yang stabil tidak tersedia daripada laman utama. Dipaparkan sebagai quote-required; admin boleh kemas kini JSON bila price list baru diperoleh.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "PC Image Desktop / Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data PC Image",
+      "segment": "package",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Integrated / Quote",
+      "resolutionTags": [
+        "office",
+        "1080p",
+        "1440p",
+        "4k",
+        "workstation",
+        "ai"
+      ],
+      "availability": "quote-required",
+      "quoteRequired": true,
+      "retailerSnapshot": true
+    }
+  ]
+}

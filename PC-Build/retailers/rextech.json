@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "storeId": "rextech",
+  "storeName": "REXTECH PC",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "quote",
+  "source": "https://rextechpc.com.my/custom-pc/",
+  "notes": "",
+  "products": [
+    {
+      "id": "rextech-custom-pc",
+      "origin": "retailer",
+      "storeId": "rextech",
+      "storeName": "REXTECH PC",
+      "tier": "Quote",
+      "name": "REXTECH Custom Gaming / Work PC",
+      "tagline": "REXTECH PC • Harga perlu disahkan",
+      "category": "office",
+      "resolution": "Semak kedai",
+      "price": null,
+      "priceMin": null,
+      "priceMax": null,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "REXTECH PC",
+      "sourceUrl": "https://rextechpc.com.my/custom-pc/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "REXTECH PC",
+      "accent": "green",
+      "parts": [
+        [
+          "Konfigurasi",
+          "Custom / ikut bajet dan keperluan pengguna"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "REXTECH menawarkan custom PC untuk gaming dan kerja, tetapi laman rasmi semasa mengarahkan pelanggan meminta quotation. Marketplace snapshots yang ditemui bertanda sold out, jadi AZOBSS tidak memaparkan harga lama sebagai harga semasa.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "REXTECH Custom Gaming / Work PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data REXTECH PC",
+      "segment": "package",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Integrated / Quote",
+      "resolutionTags": [
+        "office",
+        "1080p",
+        "1440p",
+        "4k",
+        "workstation",
+        "ai"
+      ],
+      "availability": "quote-required",
+      "quoteRequired": true,
+      "retailerSnapshot": true
+    }
+  ]
+}

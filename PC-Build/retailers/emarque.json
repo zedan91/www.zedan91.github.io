@@ -1,0 +1,1086 @@
+{
+  "schemaVersion": 1,
+  "storeId": "emarque",
+  "storeName": "EMARQUE",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://emarque.co/collections/gaming-pc",
+  "notes": "",
+  "products": [
+    {
+      "id": "emarque-core-3050",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "CORE 3050 Creator PC",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2599,
+      "priceMin": 2599,
+      "priceMax": 2599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050 6GB"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "CORE 3050 Creator PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050 6GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-5050",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Ryzen 5 5500 / RTX 5050",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3359,
+      "priceMin": 3359,
+      "priceMax": 3359,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5050 8GB"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "NEO Ryzen 5 5500 / RTX 5050 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5050 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-5060ti-5500",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Ryzen 5 5500 / RTX 5060 Ti",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4199,
+      "priceMin": 4199,
+      "priceMax": 4199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 8GB"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "NEO Ryzen 5 5500 / RTX 5060 Ti - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-5060-7500f",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Ryzen 5 7500F / RTX 5060",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4388,
+      "priceMin": 4388,
+      "priceMax": 4388,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "NEO Ryzen 5 7500F / RTX 5060 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-rx9060xt-5500",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Ryzen 5 5500 / RX 9060 XT",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4588,
+      "priceMin": 4588,
+      "priceMax": 4588,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "NEO Ryzen 5 5500 / RX 9060 XT - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-5060ti-i5",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Core i5-14400F / RTX 5060 Ti",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4788,
+      "priceMin": 4788,
+      "priceMax": 4788,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 8GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "NEO Core i5-14400F / RTX 5060 Ti - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-5060ti-7500f",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Ryzen 5 7500F / RTX 5060 Ti",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5099,
+      "priceMin": 5099,
+      "priceMax": 5099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 8GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "NEO Ryzen 5 7500F / RTX 5060 Ti - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-5060ti-u5",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Core Ultra 5 225F / RTX 5060 Ti",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5299,
+      "priceMin": 5299,
+      "priceMax": 5299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 8GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "NEO Core Ultra 5 225F / RTX 5060 Ti - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-neo-rx9060xt-7500f",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid",
+      "name": "NEO Ryzen 5 7500F / RX 9060 XT",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5499,
+      "priceMin": 5499,
+      "priceMax": 5499,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "NEO Ryzen 5 7500F / RX 9060 XT - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-infinity-5070-i5",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid-High",
+      "name": "INFINITY Core i5-14400F / RTX 5070",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 5999,
+      "priceMin": 5999,
+      "priceMax": 5999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "INFINITY Core i5-14400F / RTX 5070 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 12GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-infinity-5070-7500f",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid-High",
+      "name": "INFINITY Ryzen 5 7500F / RTX 5070",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6399,
+      "priceMin": 6399,
+      "priceMax": 6399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "256GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "INFINITY Ryzen 5 7500F / RTX 5070 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 12GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-circle-x50",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Mid-High",
+      "name": "CIRCLE X50 Ryzen 5 7500F / RTX 5070",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6699,
+      "priceMin": 6699,
+      "priceMax": 6699,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "CIRCLE X50 Ryzen 5 7500F / RTX 5070 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 12GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-infinity-rx9070xt",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "High",
+      "name": "INFINITY Ryzen 5 7500F / RX 9070 XT",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 6999,
+      "priceMin": 6999,
+      "priceMax": 6999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "INFINITY Ryzen 5 7500F / RX 9070 XT - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 XT 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-infinity-r7-rx9070xt",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "High",
+      "name": "INFINITY Ryzen 7 7800X3D / RX 9070 XT",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 7999,
+      "priceMin": 7999,
+      "priceMax": 7999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7800X3D"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "INFINITY Ryzen 7 7800X3D / RX 9070 XT - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 XT 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-infinity-5070ti",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "High",
+      "name": "INFINITY Ryzen 5 7500F / RTX 5070 Ti",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 8399,
+      "priceMin": 8399,
+      "priceMax": 8399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "INFINITY Ryzen 5 7500F / RTX 5070 Ti - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-xr-rx9070xt",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "High",
+      "name": "XR Ryzen 7 9800X3D / RX 9070 XT",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 9199,
+      "priceMin": 9199,
+      "priceMax": 9199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 9800X3D"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "XR Ryzen 7 9800X3D / RX 9070 XT - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 XT 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-xr-5070ti",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Flagship",
+      "name": "XR Ryzen 7 9800X3D / RTX 5070 Ti",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 12999,
+      "priceMin": 12999,
+      "priceMax": 12999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 9800X3D"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "XR Ryzen 7 9800X3D / RTX 5070 Ti - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti 16GB",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "emarque-flow-5080",
+      "origin": "retailer",
+      "storeId": "emarque",
+      "storeName": "EMARQUE",
+      "tier": "Flagship",
+      "name": "FLOW Ryzen 7 9800X3D / RTX 5080",
+      "tagline": "EMARQUE • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 14999,
+      "priceMin": 14999,
+      "priceMax": 14999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "EMARQUE",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 9800X3D"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080 16GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB Gen4 NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "FLOW Ryzen 7 9800X3D / RTX 5080 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data EMARQUE",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080 16GB",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

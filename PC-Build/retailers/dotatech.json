@@ -1,0 +1,839 @@
+{
+  "schemaVersion": 1,
+  "storeId": "dotatech",
+  "storeName": "DOTATECH",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+  "notes": "",
+  "products": [
+    {
+      "id": "dotatech-fa-r5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH FA-GAMING R5",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3099,
+      "priceMin": 3099,
+      "priceMax": 3099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH FA-GAMING R5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-dc-r5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH DC-GAMING AMD",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3499,
+      "priceMin": 3499,
+      "priceMax": 3499,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "16GB DDR4"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH DC-GAMING AMD - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-fa-i5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH FA-GAMING i5",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3599,
+      "priceMin": 3599,
+      "priceMax": 3599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH FA-GAMING i5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-t-r5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH T-GAMING R5",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3899,
+      "priceMin": 3899,
+      "priceMax": 3899,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 8400F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "8GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH T-GAMING R5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-fh6-u5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH FH6-U5",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4199,
+      "priceMin": 4199,
+      "priceMax": 4199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "8GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH FH6-U5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-fh6-r5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH FH6-R5",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4699,
+      "priceMin": 4699,
+      "priceMax": 4699,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 8400F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH FH6-R5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-dc-am5",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid",
+      "name": "DOTATECH DC-GAMING AM5",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4799,
+      "priceMin": 4799,
+      "priceMax": 4799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 8400F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH DC-GAMING AM5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-fh6-r7",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid-High",
+      "name": "DOTATECH FH6-R7",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6599,
+      "priceMin": 6599,
+      "priceMax": 6599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 8700F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH FH6-R7 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-fh6-u7",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Mid-High",
+      "name": "DOTATECH FH6-U7",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 7399,
+      "priceMin": 7399,
+      "priceMax": 7399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 265F"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DOTATECH FH6-U7 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-lga7x3d",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "High",
+      "name": "DOTATECH L-GA7X3D",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 8399,
+      "priceMin": 8399,
+      "priceMax": 8399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7800X3D"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "32GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "DOTATECH L-GA7X3D - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-s-g9x3d",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "High",
+      "name": "DOTATECH S-G9X3D",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 9999,
+      "priceMin": 9999,
+      "priceMax": 9999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 9800X3D"
+        ],
+        [
+          "GPU",
+          "GPU options"
+        ],
+        [
+          "RAM",
+          "32GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "DOTATECH S-G9X3D - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "GPU options",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-frieren",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Flagship",
+      "name": "DOTATECH FRIEREN",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 13599,
+      "priceMin": 13599,
+      "priceMax": 13599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen CPU options"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti"
+        ],
+        [
+          "RAM",
+          "32GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "DOTATECH FRIEREN - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-r9700",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Workstation",
+      "name": "DOTATECH R579 / AI PRO R9700 Workstation",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 15799,
+      "priceMin": 15799,
+      "priceMax": 15799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/products/dotatech-r579-r970032g-15-7-workstation-pc-package-48gb-1tb-ssd-ai-pro-r9700-cpu-options",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 8400F"
+        ],
+        [
+          "GPU",
+          "AMD Radeon AI PRO R9700 32GB"
+        ],
+        [
+          "RAM",
+          "48GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB NVMe Gen4"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "DOTATECH R579 / AI PRO R9700 Workstation - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "workstation",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "AMD Radeon AI PRO R9700 32GB",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "dotatech-miku-5080",
+      "origin": "retailer",
+      "storeId": "dotatech",
+      "storeName": "DOTATECH",
+      "tier": "Flagship",
+      "name": "DOTATECH AMD x ROG x Hatsune Miku",
+      "tagline": "DOTATECH • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 26299,
+      "priceMin": 26299,
+      "priceMax": 26299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "DOTATECH",
+      "sourceUrl": "https://www.dotatech.com.my/collections/pre-build-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "DOTATECH",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD CPU options"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080 16GB"
+        ],
+        [
+          "RAM",
+          "48GB DDR5"
+        ],
+        [
+          "Storage",
+          "2TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "DOTATECH AMD x ROG x Hatsune Miku - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data DOTATECH",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080 16GB",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

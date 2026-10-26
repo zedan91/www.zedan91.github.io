@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "storeId": "tmt",
+  "storeName": "TMT / Thunder Match",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "quote",
+  "source": "https://www.tmt.my/",
+  "notes": "",
+  "products": [
+    {
+      "id": "tmt-custom-pc",
+      "origin": "retailer",
+      "storeId": "tmt",
+      "storeName": "TMT / Thunder Match",
+      "tier": "Quote",
+      "name": "TMT Custom PC Build",
+      "tagline": "TMT / Thunder Match • Harga perlu disahkan",
+      "category": "office",
+      "resolution": "Semak kedai",
+      "price": null,
+      "priceMin": null,
+      "priceMax": null,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Thunder Match current PC Builder",
+      "sourceUrl": "https://www.tmt.my/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "TMT / THUNDER MATCH",
+      "accent": "green",
+      "parts": [
+        [
+          "Konfigurasi",
+          "Custom / ikut bajet dan keperluan pengguna"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "TMT menyenaraikan Desktop PC dan Custom PC Build pada laman semasa, tetapi harga/spec build custom tidak boleh dibaca secara stabil untuk snapshot. Dipaparkan sebagai quote-required.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "TMT Custom PC Build - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data TMT / Thunder Match",
+      "segment": "package",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Integrated / Quote",
+      "resolutionTags": [
+        "office",
+        "1080p",
+        "1440p",
+        "4k",
+        "workstation",
+        "ai"
+      ],
+      "availability": "quote-required",
+      "quoteRequired": true,
+      "retailerSnapshot": true
+    }
+  ]
+}

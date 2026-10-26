@@ -1,0 +1,787 @@
+{
+  "schemaVersion": 1,
+  "storeId": "viewnet",
+  "storeName": "Viewnet",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+  "notes": "",
+  "products": [
+    {
+      "id": "viewnet-forge-r5",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "FORGE Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2888,
+      "priceMin": 2888,
+      "priceMax": 2888,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050 6GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "FORGE Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050 6GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-phantom",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "PHANTOM Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3088,
+      "priceMin": 3088,
+      "priceMax": 3088,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9050 8GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "PHANTOM Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9050 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-hyper",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "HYPER Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3788,
+      "priceMin": 3788,
+      "priceMax": 3788,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "HYPER Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-dual",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "DUAL Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4688,
+      "priceMin": 4688,
+      "priceMax": 4688,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "DUAL Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-turbo",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid-High",
+      "name": "TURBO Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 7088,
+      "priceMin": 7088,
+      "priceMax": 7088,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "TURBO Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 12GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-prime",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "High",
+      "name": "PRIME Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 9588,
+      "priceMin": 9588,
+      "priceMax": 9588,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "PRIME Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-ultra",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Flagship",
+      "name": "ULTRA Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 12888,
+      "priceMin": 12888,
+      "priceMax": 12888,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 250KF Plus"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "ULTRA Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080 16GB",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-cronox",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Flagship",
+      "name": "CRONOX Gaming Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 19888,
+      "priceMin": 19888,
+      "priceMax": 19888,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7800X3D"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "CRONOX Gaming Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080 16GB",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-a1",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "A1 SET",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4099,
+      "priceMin": 4099,
+      "priceMax": 4099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "A1 SET - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-a2",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "A2 SET",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4099,
+      "priceMin": 4099,
+      "priceMax": 4099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "A2 SET - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-a3",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "A3 SET",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4599,
+      "priceMin": 4599,
+      "priceMax": 4599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "A3 SET - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-perseus",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "PERSEUS",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4999,
+      "priceMin": 4999,
+      "priceMax": 4999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 5700X"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "PERSEUS - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-ares-g",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid-High",
+      "name": "ARES-G",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 5999,
+      "priceMin": 5999,
+      "priceMax": 5999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 7500F"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 GRE 12GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "ARES-G - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 GRE 12GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-msi-forge",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "MSI FORGE Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3088,
+      "priceMin": 3088,
+      "priceMax": 3088,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050 6GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "MSI FORGE Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050 6GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "viewnet-msi-ventus",
+      "origin": "retailer",
+      "storeId": "viewnet",
+      "storeName": "Viewnet",
+      "tier": "Mid",
+      "name": "MSI VENTUS Set",
+      "tagline": "Viewnet • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3688,
+      "priceMin": 3688,
+      "priceMax": 3688,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Viewnet",
+      "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "public-social-index",
+      "badge": "VIEWNET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "MSI VENTUS Set - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Viewnet",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

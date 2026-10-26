@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "storeId": "c-zone",
+  "storeName": "C-Zone / Compuzone",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "quote",
+  "source": "https://www.facebook.com/compuzone/",
+  "notes": "",
+  "products": [
+    {
+      "id": "c-zone-custom-components",
+      "origin": "retailer",
+      "storeId": "c-zone",
+      "storeName": "C-Zone / Compuzone",
+      "tier": "Quote",
+      "name": "C-Zone Custom PC / Component Build",
+      "tagline": "C-Zone / Compuzone • Harga perlu disahkan",
+      "category": "office",
+      "resolution": "Semak kedai",
+      "price": null,
+      "priceMin": null,
+      "priceMax": null,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "C-Zone / Compuzone",
+      "sourceUrl": "https://www.facebook.com/compuzone/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "C-ZONE / COMPUZONE",
+      "accent": "green",
+      "parts": [
+        [
+          "Konfigurasi",
+          "Custom / ikut bajet dan keperluan pengguna"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "C-Zone mempunyai price list komponen dan sejarah desktop package, tetapi snapshot PC package semasa yang dapat disahkan tidak cukup konsisten. AZOBSS menyimpan kedai ini sebagai sumber quote/component-build tanpa mereka-reka harga PC siap.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "C-Zone Custom PC / Component Build - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data C-Zone / Compuzone",
+      "segment": "package",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Integrated / Quote",
+      "resolutionTags": [
+        "office",
+        "1080p",
+        "1440p",
+        "4k",
+        "workstation",
+        "ai"
+      ],
+      "availability": "quote-required",
+      "quoteRequired": true,
+      "retailerSnapshot": true
+    }
+  ]
+}

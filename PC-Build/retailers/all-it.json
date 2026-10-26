@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 1,
+  "storeId": "all-it",
+  "storeName": "ALL IT Hypermarket",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+  "notes": "",
+  "products": [
+    {
+      "id": "all-it-office-plus",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Low",
+      "name": "Office Plus - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1399,
+      "priceMin": 1399,
+      "priceMax": 2169,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500GT"
+        ],
+        [
+          "GPU",
+          "AMD Radeon Graphics (Integrated)"
+        ],
+        [
+          "RAM",
+          "8GB/16GB DDR4"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Office Plus - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "office",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-office-standard",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Low",
+      "name": "Office Standard - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1499,
+      "priceMin": 1499,
+      "priceMax": 2299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i3-14100"
+        ],
+        [
+          "GPU",
+          "Intel UHD Graphics"
+        ],
+        [
+          "RAM",
+          "8GB/16GB DDR4"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Office Standard - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-apex-gaming",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Mid",
+      "name": "Apex Gaming - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2949,
+      "priceMin": 2949,
+      "priceMax": 3969,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050 6GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR4"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Apex Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050 6GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-aura-gaming",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Mid",
+      "name": "Aura Gaming - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3999,
+      "priceMin": 3999,
+      "priceMax": 4849,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5500"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR4"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Aura Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-creator-one",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Mid",
+      "name": "Creator One - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3199,
+      "priceMin": 3199,
+      "priceMax": 4219,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050 6GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR4"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Creator One - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050 6GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-creator-x",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Mid",
+      "name": "Creator X - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4379,
+      "priceMin": 4379,
+      "priceMax": 5399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 8GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR4"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Creator X - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-creator-plus",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Mid-High",
+      "name": "Creator Plus - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6449,
+      "priceMin": 6449,
+      "priceMax": 7869,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 245K"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti 16GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Creator Plus - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti 16GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-creator-pro",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "Mid-High",
+      "name": "Creator Pro - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 7949,
+      "priceMin": 7949,
+      "priceMax": 9369,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 270K Plus"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 12GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR5"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Creator Pro - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 12GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-phantom",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "High",
+      "name": "Phantom Gaming - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 7649,
+      "priceMin": 7649,
+      "priceMax": 9069,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7800X3D"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT 16GB"
+        ],
+        [
+          "RAM",
+          "16GB/32GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "Phantom Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 XT 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "all-it-titan",
+      "origin": "retailer",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "tier": "High",
+      "name": "Titan Gaming - Pre-built Custom PC",
+      "tagline": "ALL IT Hypermarket • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 11499,
+      "priceMin": 11499,
+      "priceMax": 12069,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "ALL IT Hypermarket",
+      "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "ALL IT HYPERMARKET",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 5800X3D"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti 16GB"
+        ],
+        [
+          "RAM",
+          "32GB DDR4"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "Titan Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data ALL IT Hypermarket",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

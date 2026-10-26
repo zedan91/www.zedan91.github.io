@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "storeId": "netstore",
+  "storeName": "NETSTORE",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "quote",
+  "source": "https://netstore.com.my/index.php",
+  "notes": "",
+  "products": [
+    {
+      "id": "netstore-custom-config",
+      "origin": "retailer",
+      "storeId": "netstore",
+      "storeName": "NETSTORE",
+      "tier": "Quote",
+      "name": "NETSTORE Custom PC Configuration",
+      "tagline": "NETSTORE • Harga perlu disahkan",
+      "category": "office",
+      "resolution": "Semak kedai",
+      "price": null,
+      "priceMin": null,
+      "priceMax": null,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NETSTORE",
+      "sourceUrl": "https://netstore.com.my/index.php",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "NETSTORE",
+      "accent": "green",
+      "parts": [
+        [
+          "Konfigurasi",
+          "Custom / ikut bajet dan keperluan pengguna"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "NETSTORE menyatakan mereka membina custom computers dan menyediakan PC Build Filterer / PC Part Builder, tetapi harga sistem siap tidak dipaparkan secara stabil pada halaman utama. Dipaparkan sebagai quote-required.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "NETSTORE Custom PC Configuration - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data NETSTORE",
+      "segment": "package",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Integrated / Quote",
+      "resolutionTags": [
+        "office",
+        "1080p",
+        "1440p",
+        "4k",
+        "workstation",
+        "ai"
+      ],
+      "availability": "quote-required",
+      "quoteRequired": true,
+      "retailerSnapshot": true
+    }
+  ]
+}

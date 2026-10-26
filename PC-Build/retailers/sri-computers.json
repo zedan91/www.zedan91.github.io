@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "storeId": "sri-computers",
+  "storeName": "Sri Computers",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "quote",
+  "source": "https://shopee.com.my/sri_computers",
+  "notes": "",
+  "products": [
+    {
+      "id": "sri-computers-desktop-source",
+      "origin": "retailer",
+      "storeId": "sri-computers",
+      "storeName": "Sri Computers",
+      "tier": "Quote",
+      "name": "Sri Computers Desktop / Custom PC Source",
+      "tagline": "Sri Computers • Harga perlu disahkan",
+      "category": "office",
+      "resolution": "Semak kedai",
+      "price": null,
+      "priceMin": null,
+      "priceMax": null,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Sri Computers",
+      "sourceUrl": "https://shopee.com.my/sri_computers",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "SRI COMPUTERS",
+      "accent": "green",
+      "parts": [
+        [
+          "Konfigurasi",
+          "Custom / ikut bajet dan keperluan pengguna"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Sri Computers mempunyai kedai perkakasan dan marketplace aktif, tetapi carian awam semasa tidak memberi snapshot PC siap yang cukup stabil untuk dimasukkan sebagai harga aktif. JSON disediakan dan boleh diisi terus apabila price list / desktop package semasa diterima.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Sri Computers Desktop / Custom PC Source - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Sri Computers",
+      "segment": "package",
+      "cpuBrand": "all",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Integrated / Quote",
+      "resolutionTags": [
+        "office",
+        "1080p",
+        "1440p",
+        "4k",
+        "workstation",
+        "ai"
+      ],
+      "availability": "quote-required",
+      "quoteRequired": true,
+      "retailerSnapshot": true
+    }
+  ]
+}

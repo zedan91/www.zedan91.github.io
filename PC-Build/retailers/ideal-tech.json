@@ -1,0 +1,709 @@
+{
+  "schemaVersion": 1,
+  "storeId": "ideal-tech",
+  "storeName": "Ideal Tech",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://idealtech.com.my/desktop-pcs/",
+  "notes": "",
+  "products": [
+    {
+      "id": "ideal-tech-radiance-novice",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid",
+      "name": "IDEALTECH Radiance Novice",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2599,
+      "priceMin": 2599,
+      "priceMax": 2599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Novice - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-adept",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid",
+      "name": "IDEALTECH Radiance Adept",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2799,
+      "priceMin": 2799,
+      "priceMax": 2799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9050"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "IDEALTECH Radiance Adept - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9050",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-rush",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid",
+      "name": "IDEALTECH Radiance Rush",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3499,
+      "priceMin": 3499,
+      "priceMax": 3499,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Rush - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-kiro",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid",
+      "name": "IDEALTECH Radiance Kiro",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4099,
+      "priceMin": 4099,
+      "priceMax": 4099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9060 XT 16GB"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/mainstream-rx.webp",
+      "imageAlt": "IDEALTECH Radiance Kiro - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9060 XT 16GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-core",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid",
+      "name": "IDEALTECH Radiance Core",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4199,
+      "priceMin": 4199,
+      "priceMax": 4199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060 Ti"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Core - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-turbo",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid",
+      "name": "IDEALTECH Radiance Turbo",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4199,
+      "priceMin": 4199,
+      "priceMax": 4199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Turbo - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-stellar",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Mid-High",
+      "name": "IDEALTECH Radiance Stellar",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6499,
+      "priceMin": 6499,
+      "priceMax": 6499,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Stellar - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-axis",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "High",
+      "name": "IDEALTECH Radiance Axis",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 6799,
+      "priceMin": 6799,
+      "priceMax": 6799,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "AMD Radeon RX 9070 XT"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "IDEALTECH Radiance Axis - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "RX 9070 XT",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-zenith",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "High",
+      "name": "IDEALTECH Radiance Zenith",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 8399,
+      "priceMin": 8399,
+      "priceMax": 8399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5070 Ti"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Zenith - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5070 Ti",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-radiance-apex",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Flagship",
+      "name": "IDEALTECH Radiance Apex",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "flagship",
+      "resolution": "4K / High-End",
+      "price": 12999,
+      "priceMin": 12999,
+      "priceMax": 12999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "red",
+      "parts": [
+        [
+          "CPU",
+          "AMD / Intel configurable"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5080"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/flagship-rtx.webp",
+      "imageAlt": "IDEALTECH Radiance Apex - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "package",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5080",
+      "resolutionTags": [
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-adept-workstation",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Workstation",
+      "name": "IDEALTECH The Adept Workstation",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 9599,
+      "priceMin": 9599,
+      "priceMax": 9599,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/workstation-pc/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "Workstation GPU configurable"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "IDEALTECH The Adept Workstation - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "all",
+      "gpuModel": "Workstation GPU configurable",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-anvil-ai",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Workstation",
+      "name": "IDEALTECH The Anvil AI Workstation",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 20999,
+      "priceMin": 20999,
+      "priceMax": 20999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/workstation-pc/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA RTX Pro 4000 Blackwell 24GB"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "IDEALTECH The Anvil AI Workstation - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX Pro 4000 Blackwell 24GB",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "ideal-tech-artisan-ai",
+      "origin": "retailer",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "tier": "Workstation",
+      "name": "IDEALTECH The Artisan AI Workstation",
+      "tagline": "Ideal Tech • snapshot harga kedai",
+      "category": "workstation",
+      "resolution": "Workstation / AI",
+      "price": 29999,
+      "priceMin": 29999,
+      "priceMax": 29999,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Ideal Tech",
+      "sourceUrl": "https://idealtech.com.my/workstation-pc/",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "official",
+      "badge": "IDEAL TECH",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "NVIDIA RTX Pro 4500 Blackwell 32GB"
+        ],
+        [
+          "RAM",
+          "32GB DDR5 6000MHz"
+        ],
+        [
+          "Storage",
+          "500GB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "IDEALTECH The Artisan AI Workstation - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Ideal Tech",
+      "segment": "workstation",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX Pro 4500 Blackwell 32GB",
+      "resolutionTags": [
+        "workstation",
+        "ai"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}

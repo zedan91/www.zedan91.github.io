@@ -1,0 +1,372 @@
+{
+  "schemaVersion": 1,
+  "storeId": "jayacom",
+  "storeName": "Jayacom",
+  "checkedAt": "2026-10-26",
+  "catalogStatus": "active",
+  "source": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+  "notes": "",
+  "products": [
+    {
+      "id": "jayacom-intel-i3-office",
+      "origin": "retailer",
+      "storeId": "jayacom",
+      "storeName": "Jayacom",
+      "tier": "Low",
+      "name": "Intel Basic Office PC - i3",
+      "tagline": "Jayacom • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1159,
+      "priceMin": 1159,
+      "priceMax": 1159,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Jayacom",
+      "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "third-party-catalog-index",
+      "badge": "JAYACOM",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i3-12100"
+        ],
+        [
+          "GPU",
+          "Intel Integrated Graphics"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Intel Basic Office PC - i3 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Jayacom",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "jayacom-amd-5600g-office",
+      "origin": "retailer",
+      "storeId": "jayacom",
+      "storeName": "Jayacom",
+      "tier": "Low",
+      "name": "AMD Ryzen Budget Office PC",
+      "tagline": "Jayacom • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1299,
+      "priceMin": 1299,
+      "priceMax": 1299,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Jayacom",
+      "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "third-party-catalog-index",
+      "badge": "JAYACOM",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 5 5600G"
+        ],
+        [
+          "GPU",
+          "AMD Radeon Graphics"
+        ],
+        [
+          "Motherboard",
+          "MSI A520M-A PRO"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "AMD Ryzen Budget Office PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Jayacom",
+      "segment": "office",
+      "cpuBrand": "amd",
+      "platform": "",
+      "gpuBrand": "amd",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "jayacom-intel-i5-office",
+      "origin": "retailer",
+      "storeId": "jayacom",
+      "storeName": "Jayacom",
+      "tier": "Low",
+      "name": "Intel Basic Office PC - i5",
+      "tagline": "Jayacom • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 1450,
+      "priceMin": 1450,
+      "priceMax": 1450,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Jayacom",
+      "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "third-party-catalog-index",
+      "badge": "JAYACOM",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-12400"
+        ],
+        [
+          "GPU",
+          "Intel Integrated Graphics"
+        ],
+        [
+          "RAM",
+          "8GB DDR4"
+        ],
+        [
+          "Storage",
+          "256GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Intel Basic Office PC - i5 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Jayacom",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Graphics",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "jayacom-entry-gaming",
+      "origin": "retailer",
+      "storeId": "jayacom",
+      "storeName": "Jayacom",
+      "tier": "Mid",
+      "name": "Intel Entry Gaming PC",
+      "tagline": "Jayacom • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2199,
+      "priceMin": 2199,
+      "priceMax": 2199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Jayacom",
+      "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "third-party-catalog-index",
+      "badge": "JAYACOM",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i3-12100F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050"
+        ],
+        [
+          "RAM",
+          "16GB DDR4"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Intel Entry Gaming PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Jayacom",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "jayacom-balanced-pro",
+      "origin": "retailer",
+      "storeId": "jayacom",
+      "storeName": "Jayacom",
+      "tier": "Mid",
+      "name": "Budget Balanced Pro PC",
+      "tagline": "Jayacom • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 2399,
+      "priceMin": 2399,
+      "priceMax": 2399,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Jayacom",
+      "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "third-party-catalog-index",
+      "badge": "JAYACOM",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 3050"
+        ],
+        [
+          "RAM",
+          "64GB RAM"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Budget Balanced Pro PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Jayacom",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 3050",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    },
+    {
+      "id": "jayacom-gaming-pro",
+      "origin": "retailer",
+      "storeId": "jayacom",
+      "storeName": "Jayacom",
+      "tier": "Mid",
+      "name": "Intel Gaming Pro PC",
+      "tagline": "Jayacom • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 3485,
+      "priceMin": 3485,
+      "priceMax": 3485,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "Jayacom",
+      "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
+      "sourceCheckedAt": "2026-10-26",
+      "sourceType": "third-party-catalog-index",
+      "badge": "JAYACOM",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core i5-14400F / i7-14700F"
+        ],
+        [
+          "GPU",
+          "NVIDIA GeForce RTX 5060"
+        ],
+        [
+          "RAM",
+          "32GB DDR4"
+        ],
+        [
+          "Storage",
+          "1TB NVMe SSD"
+        ]
+      ],
+      "bestFor": [
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
+      ],
+      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
+      "softwareFit": [],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Intel Gaming Pro PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan • data Jayacom",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "platform": "",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true
+    }
+  ]
+}
