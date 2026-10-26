@@ -34,11 +34,16 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office / kerja harian — ikut CPU dan RAM yang dipilih",
+        "AutoCAD / Revit / kerja 3D — ikut GPU dan RAM yang dipilih",
+        "Gaming / rendering — pilih dedicated GPU mengikut tahap prestasi diperlukan"
       ],
       "note": "PC Image mempunyai rangkaian outlet dan menjual PC/perkakasan, tetapi snapshot harga desktop semasa yang stabil tidak tersedia daripada laman utama. Dipaparkan sebagai quote-required; admin boleh kemas kini JSON bila price list baru diperoleh.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD / Revit (ikut konfigurasi)",
+        "SketchUp / Blender (ikut GPU)"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "PC Image Desktop / Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data PC Image",
@@ -57,7 +62,8 @@
       ],
       "availability": "quote-required",
       "quoteRequired": true,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

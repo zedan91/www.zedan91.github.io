@@ -38,11 +38,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, multitasking & kerja kreatif",
+        "AutoCAD 2D / SketchUp ringan–sederhana",
+        "Gaming 1080p tahap entry",
+        "Photoshop & video editing 1080p ringan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD 2D",
+        "SketchUp",
+        "Photoshop",
+        "Premiere Pro 1080p",
+        "Microsoft Office"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "FORGE Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -57,7 +65,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-phantom",
@@ -90,11 +99,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "PHANTOM Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -109,7 +126,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-hyper",
@@ -142,11 +160,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "HYPER Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -161,7 +187,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-dual",
@@ -194,11 +221,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DUAL Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -213,7 +248,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-turbo",
@@ -246,11 +282,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "CUDA / AI workload sederhana"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "TURBO Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -264,7 +309,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-prime",
@@ -297,11 +343,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "PRIME Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -316,7 +371,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-ultra",
@@ -349,11 +405,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "ULTRA Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -367,7 +432,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-cronox",
@@ -400,11 +466,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "CRONOX Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -418,7 +493,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-a1",
@@ -451,11 +527,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "A1 SET - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -470,7 +554,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-a2",
@@ -503,11 +588,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "A2 SET - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -522,7 +615,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-a3",
@@ -555,11 +649,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "A3 SET - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -574,7 +676,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-perseus",
@@ -607,11 +710,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "PERSEUS - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -626,7 +737,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-ares-g",
@@ -659,11 +771,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "ARES-G - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -677,7 +798,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-msi-forge",
@@ -710,11 +832,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, multitasking & kerja kreatif",
+        "AutoCAD 2D / SketchUp ringan–sederhana",
+        "Gaming 1080p tahap entry",
+        "Photoshop & video editing 1080p ringan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD 2D",
+        "SketchUp",
+        "Photoshop",
+        "Premiere Pro 1080p",
+        "Microsoft Office"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "MSI FORGE Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -729,7 +859,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "viewnet-msi-ventus",
@@ -762,11 +893,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "MSI VENTUS Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -781,7 +920,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

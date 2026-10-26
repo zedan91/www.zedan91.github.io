@@ -368,9 +368,9 @@ async function loadLivePrices(attempt=0){
 }
 async function loadRetailerCatalogBuilds(){
   try{
-    const manifestRes=await fetch('./retailers/index.json?v=1430',{cache:'no-store'});if(!manifestRes.ok)throw new Error('Retailer manifest HTTP '+manifestRes.status);
+    const manifestRes=await fetch('./retailers/index.json?v=1432',{cache:'no-store'});if(!manifestRes.ok)throw new Error('Retailer manifest HTTP '+manifestRes.status);
     const manifest=await manifestRes.json(),catalogs=Array.isArray(manifest.catalogs)?manifest.catalogs:[];
-    const settled=await Promise.allSettled(catalogs.map(async c=>{const r=await fetch(c.file+'?v=1430',{cache:'no-store'});if(!r.ok)throw new Error(`${c.id} HTTP ${r.status}`);return r.json()}));
+    const settled=await Promise.allSettled(catalogs.map(async c=>{const r=await fetch(c.file+'?v=1432',{cache:'no-store'});if(!r.ok)throw new Error(`${c.id} HTTP ${r.status}`);return r.json()}));
     const products=[];
     settled.forEach((result,i)=>{if(result.status!=='fulfilled'){console.warn('Retailer catalog gagal:',catalogs[i]?.id,result.reason);return}const cat=result.value;for(const raw of (cat.products||[])){if(!raw||!raw.id)continue;products.push({...raw,origin:'retailer',retailerSnapshot:true,storeId:raw.storeId||cat.storeId,storeName:raw.storeName||cat.storeName,sourceCheckedAt:raw.sourceCheckedAt||cat.checkedAt})}});
     return products;

@@ -46,11 +46,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, accounting, browsing & kerja harian",
+        "Microsoft Office / Google Workspace / POS",
+        "AutoCAD 2D ringan & pelan asas",
+        "Canva / Photoshop ringan & video mesyuarat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS ringan",
+        "Canva / Photoshop ringan"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire C24B 23.8\" AIO - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -64,7 +71,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-acer-c27",
@@ -105,11 +113,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, accounting, browsing & kerja harian",
+        "Microsoft Office / Google Workspace / POS",
+        "AutoCAD 2D ringan & pelan asas",
+        "Canva / Photoshop ringan & video mesyuarat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS ringan",
+        "Canva / Photoshop ringan"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire C27B 27\" AIO - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -123,7 +138,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-acer-tc1860",
@@ -164,11 +180,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, accounting, browsing & kerja harian",
+        "Microsoft Office / Google Workspace / POS",
+        "AutoCAD 2D ringan & pelan asas",
+        "Canva / Photoshop ringan & video mesyuarat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS ringan",
+        "Canva / Photoshop ringan"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire TC-1860 Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -182,7 +205,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-acer-orion5000",
@@ -223,11 +247,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "CUDA / AI workload sederhana"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "Acer Predator Orion 5000 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -241,7 +274,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-acer-orion7000",
@@ -282,11 +316,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "Acer Predator Orion 7000 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -300,7 +343,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-asus-rnuc15",
@@ -341,11 +385,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "ASUS RNUC15 Mini Desktop PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -359,7 +412,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-thinkstation-p3",
@@ -400,11 +454,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit profesional",
+        "SolidWorks / 3ds Max / kerja CAD 3D",
+        "Rendering, visualisasi & GPU compute",
+        "Multitasking workstation & projek teknikal sederhana–besar"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SolidWorks / 3ds Max",
+        "Blender / rendering"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Lenovo ThinkStation P3 Gen 2 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -419,7 +481,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-hp-z2",
@@ -460,11 +523,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit profesional",
+        "SolidWorks / 3ds Max / kerja CAD 3D",
+        "Rendering, visualisasi & GPU compute",
+        "AI tempatan / model GPU & projek teknikal berat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SolidWorks / 3ds Max",
+        "Blender / rendering",
+        "AI / CUDA workload"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "HP Z2 G1i Tower AI Workstation - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -479,7 +551,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "techhypermart-dell-pro-max-gb10",
@@ -520,11 +593,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit profesional",
+        "SolidWorks / 3ds Max / kerja CAD 3D",
+        "Rendering, visualisasi & GPU compute",
+        "AI tempatan / model GPU & projek teknikal berat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SolidWorks / 3ds Max",
+        "Blender / rendering",
+        "AI / CUDA workload"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Dell Pro Max GB10 AI Supercomputing - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -539,7 +621,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

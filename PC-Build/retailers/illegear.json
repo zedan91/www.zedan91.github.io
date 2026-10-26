@@ -42,11 +42,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "IGNITE (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -60,7 +67,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-ignite-intel",
@@ -97,11 +105,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "IGNITE (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -115,7 +130,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-revive-ddr4",
@@ -156,11 +172,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "REVIVE (DDR4) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -175,7 +198,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-gaming-set-ddr4",
@@ -216,11 +240,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (DDR4) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -235,7 +266,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-gaming-set-intel",
@@ -276,11 +308,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -295,7 +334,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-gaming-set-amd",
@@ -336,11 +376,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -355,7 +402,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-gaming-set-ddr5",
@@ -396,11 +444,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (DDR5) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -415,7 +470,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-kapsule-amd",
@@ -456,11 +512,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "KAPSULE (ITX AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -475,7 +538,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-aura-intel",
@@ -516,11 +580,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "AURA (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -535,7 +606,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-kapsule-intel",
@@ -576,11 +648,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "KAPSULE (ITX INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -595,7 +674,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-aura-amd",
@@ -636,11 +716,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "AURA (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -655,7 +742,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-seaview",
@@ -696,11 +784,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "SEAVIEW (DDR5) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -715,7 +810,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-arctic-ddr5",
@@ -756,11 +852,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "ARCTIC (DDR5) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -775,7 +878,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-aethra-intel",
@@ -816,11 +920,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "AETHRA (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -835,7 +946,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-reaper-amd",
@@ -876,11 +988,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "REAPER (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -895,7 +1014,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-reaper-intel",
@@ -936,11 +1056,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "REAPER (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -955,7 +1082,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-ikigai-amd",
@@ -996,11 +1124,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "IKIGAI (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1015,7 +1150,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-aethra-amd",
@@ -1056,11 +1192,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "AETHRA (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1074,7 +1217,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-atlas-amd",
@@ -1115,11 +1259,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "ATLAS (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1133,7 +1284,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "illegear-atlas-intel",
@@ -1174,11 +1326,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, kerja harian & multitasking",
+        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
+        "Gaming 1080p–4K — ikut model GPU yang dipilih",
+        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit / Civil 3D",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "ATLAS (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1192,7 +1351,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

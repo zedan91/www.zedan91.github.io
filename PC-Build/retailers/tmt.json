@@ -34,11 +34,16 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office / kerja harian — ikut CPU dan RAM yang dipilih",
+        "AutoCAD / Revit / kerja 3D — ikut GPU dan RAM yang dipilih",
+        "Gaming / rendering — pilih dedicated GPU mengikut tahap prestasi diperlukan"
       ],
       "note": "TMT menyenaraikan Desktop PC dan Custom PC Build pada laman semasa, tetapi harga/spec build custom tidak boleh dibaca secara stabil untuk snapshot. Dipaparkan sebagai quote-required.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD / Revit (ikut konfigurasi)",
+        "SketchUp / Blender (ikut GPU)"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "TMT Custom PC Build - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data TMT / Thunder Match",
@@ -57,7 +62,8 @@
       ],
       "availability": "quote-required",
       "quoteRequired": true,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

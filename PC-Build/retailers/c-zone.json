@@ -34,11 +34,16 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office / kerja harian — ikut CPU dan RAM yang dipilih",
+        "AutoCAD / Revit / kerja 3D — ikut GPU dan RAM yang dipilih",
+        "Gaming / rendering — pilih dedicated GPU mengikut tahap prestasi diperlukan"
       ],
       "note": "C-Zone mempunyai price list komponen dan sejarah desktop package, tetapi snapshot PC package semasa yang dapat disahkan tidak cukup konsisten. AZOBSS menyimpan kedai ini sebagai sumber quote/component-build tanpa mereka-reka harga PC siap.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD / Revit (ikut konfigurasi)",
+        "SketchUp / Blender (ikut GPU)"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "C-Zone Custom PC / Component Build - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data C-Zone / Compuzone",
@@ -57,7 +62,8 @@
       ],
       "availability": "quote-required",
       "quoteRequired": true,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

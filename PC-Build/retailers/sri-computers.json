@@ -34,11 +34,16 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office / kerja harian — ikut CPU dan RAM yang dipilih",
+        "AutoCAD / Revit / kerja 3D — ikut GPU dan RAM yang dipilih",
+        "Gaming / rendering — pilih dedicated GPU mengikut tahap prestasi diperlukan"
       ],
       "note": "Sri Computers mempunyai kedai perkakasan dan marketplace aktif, tetapi carian awam semasa tidak memberi snapshot PC siap yang cukup stabil untuk dimasukkan sebagai harga aktif. JSON disediakan dan boleh diisi terus apabila price list / desktop package semasa diterima.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD / Revit (ikut konfigurasi)",
+        "SketchUp / Blender (ikut GPU)"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Sri Computers Desktop / Custom PC Source - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Sri Computers",
@@ -57,7 +62,8 @@
       ],
       "availability": "quote-required",
       "quoteRequired": true,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

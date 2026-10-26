@@ -46,11 +46,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, accounting, browsing & kerja harian",
+        "Microsoft Office / Google Workspace / POS",
+        "AutoCAD 2D ringan & pelan asas",
+        "Canva / Photoshop ringan & video mesyuarat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS ringan",
+        "Canva / Photoshop ringan"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Office Plus - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -64,7 +71,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-office-standard",
@@ -105,11 +113,17 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, accounting, browsing & kerja harian",
+        "Microsoft Office / Google Workspace / POS",
+        "Pembelajaran, web & sistem kaunter / POS",
+        "Tidak disaran untuk 3D, rendering atau gaming berat"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "Browser / POS / accounting",
+        "Canva ringan"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Office Standard - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -123,7 +137,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-apex-gaming",
@@ -164,11 +179,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, multitasking & kerja kreatif",
+        "AutoCAD 2D / SketchUp ringan–sederhana",
+        "Gaming 1080p tahap entry",
+        "Photoshop & video editing 1080p ringan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD 2D",
+        "SketchUp",
+        "Photoshop",
+        "Premiere Pro 1080p",
+        "Microsoft Office"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Apex Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -183,7 +206,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-aura-gaming",
@@ -224,11 +248,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Aura Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -243,7 +275,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-creator-one",
@@ -284,11 +317,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office, multitasking & kerja kreatif",
+        "AutoCAD 2D / SketchUp ringan–sederhana",
+        "Gaming 1080p tahap entry",
+        "Photoshop & video editing 1080p ringan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD 2D",
+        "SketchUp",
+        "Photoshop",
+        "Premiere Pro 1080p",
+        "Microsoft Office"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Creator One - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -303,7 +344,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-creator-x",
@@ -344,11 +386,19 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD 2D/3D & SketchUp sederhana",
+        "Revit / Civil 3D projek kecil–sederhana",
+        "Gaming 1080p High / 1440p sederhana",
+        "Video editing 1080p–1440p & rendering sederhana"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "SketchUp",
+        "Blender / Premiere Pro"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Creator X - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -363,7 +413,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-creator-plus",
@@ -404,11 +455,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "CUDA / AI workload sederhana"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Creator Plus - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -422,7 +482,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-creator-pro",
@@ -463,11 +524,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
+        "3D rendering, Blender & visualisasi",
+        "Gaming 1440p High/Ultra",
+        "Video editing 4K & creator workload"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "CUDA / AI workload sederhana"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Creator Pro - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -481,7 +551,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-phantom",
@@ -522,11 +593,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/highend-rx.webp",
       "imageAlt": "Phantom Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -541,7 +621,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     },
     {
       "id": "all-it-titan",
@@ -582,11 +663,20 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "BIM / CAD 3D projek besar & workstation berat",
+        "3D rendering berat / GPU compute",
+        "Gaming 1440p Ultra / 4K High",
+        "Video editing 4K, creator & AI tempatan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "softwareFit": [
+        "AutoCAD",
+        "Civil 3D",
+        "Revit",
+        "3ds Max / Blender",
+        "Premiere Pro 4K",
+        "AI / CUDA workload"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "Titan Gaming - Pre-built Custom PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ALL IT Hypermarket",
@@ -601,7 +691,8 @@
       ],
       "availability": "available",
       "quoteRequired": false,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }

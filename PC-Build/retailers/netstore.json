@@ -34,11 +34,16 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office / kerja harian — ikut CPU dan RAM yang dipilih",
+        "AutoCAD / Revit / kerja 3D — ikut GPU dan RAM yang dipilih",
+        "Gaming / rendering — pilih dedicated GPU mengikut tahap prestasi diperlukan"
       ],
       "note": "NETSTORE menyatakan mereka membina custom computers dan menyediakan PC Build Filterer / PC Part Builder, tetapi harga sistem siap tidak dipaparkan secara stabil pada halaman utama. Dipaparkan sebagai quote-required.",
-      "softwareFit": [],
+      "softwareFit": [
+        "Microsoft Office / Google Workspace",
+        "AutoCAD / Revit (ikut konfigurasi)",
+        "SketchUp / Blender (ikut GPU)"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "NETSTORE Custom PC Configuration - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data NETSTORE",
@@ -57,7 +62,8 @@
       ],
       "availability": "quote-required",
       "quoteRequired": true,
-      "retailerSnapshot": true
+      "retailerSnapshot": true,
+      "usageDerivedFromSpec": true
     }
   ]
 }
