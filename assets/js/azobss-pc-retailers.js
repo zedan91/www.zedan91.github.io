@@ -1,4 +1,4 @@
-/* AZOBSS v1434: 15-store internal retailer catalog integration + verified-price-only public policy. Retailer directory panel remains admin-only. */
+/* AZOBSS v1435: 15-store internal retailer catalog integration + verified-price-only public policy. Retailer directory panel remains admin-only. */
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
@@ -76,7 +76,7 @@
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
     storeLoadPromise=(async()=>{
       try{
-        const response=await fetch('/PC-Build/pc-retailers.json?v=1434',{signal:controller.signal,cache:'no-store'});
+        const response=await fetch('/PC-Build/pc-retailers.json?v=1435',{signal:controller.signal,cache:'no-store'});
         if(!response.ok)throw Error('Directory unavailable');
         const data=await response.json();
         storeCache=(data.stores||[]).filter(validStore);
