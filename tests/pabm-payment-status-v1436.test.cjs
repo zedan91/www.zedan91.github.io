@@ -14,7 +14,7 @@ function fixture(options={}){
   Date:class extends Date{static now(){return now;}},console:{warn(){}},CustomEvent:class{constructor(type,props){this.type=type;this.detail=props.detail;}},
   setTimeout(fn,ms){const id=++timerId;timers.set(id,{fn,ms});return id;},clearTimeout(id){timers.delete(id);},
   fetch:async(url,opts)=>{calls.push({url,opts});return reader(url,opts);},
-  sessionStorage:{setItem(){}},azobssPaBmReturnKey:(o,b)=>o||b,
+  auth:{currentUser:{uid:'user-A'}},sessionStorage:{setItem(){}},azobssPaBmReturnKey:(o,b)=>o||b,
   azobssReadPaBmPendingReturn:()=>({...pending}),azobssClearPaBmPendingReturn(){pending={orderId:'',billCode:''};},
   azobssMarkPaBmReturnConsumed:key=>consumed.add(key),azobssPaBmReturnConsumed:key=>consumed.has(key),
   azobssCleanPaBmPaymentReturnUrl(){window.location.search='';},azobssGetBackendBaseUrl:()=>'https://backend.example.org',
@@ -92,4 +92,53 @@ test('complete production modules parse, including the pre-existing mixed ?? / &
  for(const file of ['azobss-global-auth.js','azobss-pabm-storefront.js']){
   const checked=spawnSync(process.execPath,['--check',path.join(root,'assets/js',file)],{encoding:'utf8'});assert.equal(checked.status,0,checked.stderr);
  }
+});
+
+function serverSnapshot(row,metadata={fromCache:false,hasPendingWrites:false},itemMetadata={hasPendingWrites:false}){
+ return {metadata,forEach(fn){fn({data:()=>row,metadata:itemMetadata});}};
+}
+const paidRow=()=>({uid:'user-A',orderId:'order-A',billCode:'bill-A',status:'paid',paidAtMs:900000});
+test('server paid snapshot clears the cart immediately while HTTP verification is stalled',async()=>{
+ const f=fixture({fetch:(_,opts)=>new Promise((_,reject)=>opts.signal.addEventListener('abort',()=>reject(Error('aborted'))))});
+ const request=f.check();await flush();
+ assert.equal(f.context.azobssPaBmAcceptServerSnapshot1437(serverSnapshot(paidRow())),true);
+ assert.equal(f.elements.paBmToyyibStatus.dataset.paymentState,'paid');assert.equal(f.clears(),1);
+ await request;assert.equal(f.window.__azobssPaBmReturnCheckActive,false);assert.equal(f.timers.has('retry'),false);
+});
+test('cached, local-write, pending, mismatched and other-customer snapshots cannot confirm payment',async()=>{
+ const cases=[
+  serverSnapshot(paidRow(),{fromCache:true,hasPendingWrites:false}),
+  serverSnapshot(paidRow(),{fromCache:false,hasPendingWrites:true}),
+  serverSnapshot(paidRow(),undefined,{hasPendingWrites:true}),
+  serverSnapshot({...paidRow(),status:'pending'}),serverSnapshot({...paidRow(),paidAtMs:0}),
+  serverSnapshot({...paidRow(),orderId:'other-order'}),serverSnapshot({...paidRow(),billCode:'other-bill'}),
+  serverSnapshot({...paidRow(),uid:'other-user'}),serverSnapshot(paidRow(),{})
+ ];
+ for(const snapshot of cases){const f=fixture({fetch:()=>response({status:'pending'})});await f.check();
+  assert.equal(f.context.azobssPaBmAcceptServerSnapshot1437(snapshot),false);assert.equal(f.clears(),0);}
+});
+test('a server snapshot received before return verification avoids a redundant HTTP wait',async()=>{
+ const f=fixture({fetch:()=>{throw Error('should not request');}});
+ f.context.azobssPaBmAcceptServerSnapshot1437(serverSnapshot(paidRow()));await f.check();
+ assert.equal(f.clears(),1);assert.equal(f.calls.length,0);
+});
+test('a snapshot retained from a previous signed-in user cannot clear the new user cart',async()=>{
+ const f=fixture({fetch:()=>response({status:'pending'})});
+ f.context.azobssPaBmAcceptServerSnapshot1437(serverSnapshot(paidRow()));f.context.auth.currentUser.uid='user-B';
+ await f.check();assert.equal(f.clears(),0);assert.equal(f.calls.length,1);
+});
+test('an already-consumed return cannot clear a new cart after page reload',async()=>{
+ const f=fixture();f.consumed.add('order-A');
+ f.context.azobssPaBmAcceptServerSnapshot1437(serverSnapshot(paidRow()));await f.check();
+ assert.equal(f.clears(),0);assert.equal(f.calls.length,0);
+});
+test('purchase link stays on PA/BM despite the root base URL and focuses the list',()=>{
+ const html=fs.readFileSync(path.join(root,'PA-BM/index.html'),'utf8');
+ const base=html.match(/<base href="([^"]+)"/)[1],href=html.match(/id="paBmPaidPurchasesLink" href="([^"]+)"/)[1];
+ const resolved=new URL(href,new URL(base,'https://www.azobss.com/PA-BM/'));
+ assert.equal(resolved.pathname,'/PA-BM/');assert.equal(resolved.hash,'#userPaPurchasePanel');
+ const f=fixture();let prevented=false,scrolled=false,focused=false;
+ f.elements.userPaPurchasePanel={scrollIntoView(){scrolled=true;},setAttribute(){},focus(){focused=true;}};
+ f.elements.paBmPaidPurchasesLink.handlers.click({preventDefault(){prevented=true;}});
+ assert.ok(prevented&&scrolled&&focused);
 });

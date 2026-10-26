@@ -5979,7 +5979,7 @@ function azobssPaBmVerificationMessage1436(message, state){
   const status=document.getElementById('paBmToyyibStatus');
   if(status){status.dataset.paymentState=state || '';status.textContent=message;}
   const retry=document.getElementById('paBmVerifyAgainButton');if(retry)retry.hidden=state!=='delayed';
-  const purchases=document.getElementById('paBmPaidPurchasesLink');if(purchases)purchases.hidden=state!=='delayed';
+  const purchases=document.getElementById('paBmPaidPurchasesLink');if(purchases)purchases.hidden=!['checking','delayed'].includes(state);
   const pay=document.getElementById('payPaBmToyyibButton');
   if(pay && ['checking','delayed'].includes(state)){pay.dataset.paymentState=state;pay.disabled=true;pay.textContent=state==='delayed'?'Status Belum Disahkan':'Menyemak Bayaran...';}
   else if(pay && state==='failed'){pay.dataset.paymentState='failed';pay.textContent='Teruskan Pembayaran';}
@@ -6002,6 +6002,7 @@ function azobssPaBmCompletePaid1436(orderId, billCode, source){
   try{azobssClearPaBmPendingReturn();}catch(_e){}
   try{azobssCleanPaBmPaymentReturnUrl();}catch(_e){}
   azobssPaBmShowPaid1436();
+  try{view.verifyController?.abort();}catch(_e){}
   const background=fn=>{try{Promise.resolve(fn()).catch(error=>console.warn('Paid purchase UI sync deferred:',error));}catch(error){console.warn('Paid purchase UI sync deferred:',error);}};
   // This async helper empties local storage synchronously before its first cloud await.
   background(()=>azobssHardClearPaBmCartAfterPaid1371(orderId || key,billCode,source || 'verified-paid'));
@@ -6037,6 +6038,38 @@ document.getElementById('paBmVerifyAgainButton')?.addEventListener('click',()=>{
   if(pending.orderId || pending.billCode || new URLSearchParams(window.location.search).get('orderId'))azobssCheckPaBmToyyibReturn();
   else azobssRecoverPaBmPaymentFromServer1055(true);
 });
+// v1437: use the existing server purchase stream for the exact current order.
+let azobssPaBmServerSnapshot1437 = null;
+function azobssPaBmAcceptServerSnapshot1437(snapshot){
+  if(!/^\/PA-BM\/?$/i.test(window.location.pathname || ''))return false;
+  const uid=String(auth?.currentUser?.uid || '');
+  if(!uid || !snapshot || snapshot.metadata?.fromCache!==false || snapshot.metadata?.hasPendingWrites!==false)return false;
+  azobssPaBmServerSnapshot1437={snapshot,uid};
+  const view=azobssPaBmView1436;if(!view || view.paid)return false;
+  if(azobssPaBmReturnConsumed(azobssPaBmReturnKey(view.orderId,view.billCode)))return false;
+  let confirmed=false;
+  snapshot.forEach(item=>{
+    if(confirmed || item.metadata?.hasPendingWrites)return;
+    const row=item.data() || {};
+    if(String(row.uid || '')!==uid || String(row.status || '').toLowerCase()!=='paid' || !(Number(row.paidAtMs)>0))return;
+    // Every supplied reference must match: another paid order cannot clear this cart.
+    const order=String(row.orderId || row.paymentOrderId || ''),bill=String(row.billCode || '');
+    if(view.orderId && view.orderId!==order)return;
+    if(view.billCode && view.billCode!==bill)return;
+    if(!view.orderId && !view.billCode)return;
+    confirmed=azobssPaBmCompletePaid1436(view.orderId || order,view.billCode || bill,'server-purchase-snapshot');
+  });
+  return confirmed;
+}
+function azobssPaBmOpenPurchases1437(event){
+  const target=document.getElementById('userPaPurchasePanel');
+  if(!target)return; // The absolute href remains a valid fallback.
+  event?.preventDefault();
+  try{azobssSchedulePurchaseRecordsRefresh('paid purchase link');}catch(_e){}
+  target.scrollIntoView({behavior:'smooth',block:'start'});
+  target.setAttribute('tabindex','-1');target.focus({preventScroll:true});
+}
+document.getElementById('paBmPaidPurchasesLink')?.addEventListener('click',azobssPaBmOpenPurchases1437);
 // End v1436 paid UI helpers.
 
 function azobssResetPaBmPaymentStatusIfIdle(force){
@@ -6083,6 +6116,7 @@ async function azobssCheckPaBmToyyibReturn(){
     }
     view=azobssPaBmBeginView1436(orderId,billCode);
     if(view.paid){azobssPaBmShowPaid1436();return;}
+    if(azobssPaBmServerSnapshot1437?.uid===String(auth?.currentUser?.uid || '') && azobssPaBmAcceptServerSnapshot1437(azobssPaBmServerSnapshot1437.snapshot))return;
     if(azobssPaBmReturnConsumed(returnKey)){
       azobssClearPaBmPendingReturn();azobssCleanPaBmPaymentReturnUrl();azobssResetPaBmPaymentStatusIfIdle(true);
       try{azobssSchedulePurchaseRecordsRefresh('consumed payment return');}catch(_e){}
@@ -6093,7 +6127,7 @@ async function azobssCheckPaBmToyyibReturn(){
     }
     window.__azobssPaBmPaymentPollAttempts=Number(window.__azobssPaBmPaymentPollAttempts || 0)+1;
     azobssPaBmVerificationMessage1436('Mengesahkan pembayaran...','checking');
-    const controller=new AbortController();
+    const controller=new AbortController();view.verifyController=controller;
     const deadline=setTimeout(()=>controller.abort(),12000);
     let data;
     try{
@@ -6101,7 +6135,7 @@ async function azobssCheckPaBmToyyibReturn(){
       const response=await fetch(url,{cache:'no-store',headers:{'Cache-Control':'no-cache'},signal:controller.signal});
       if(!response.ok)throw new Error('Payment verification unavailable');
       data=await response.json();
-    }finally{clearTimeout(deadline);}
+    }finally{clearTimeout(deadline);if(view.verifyController===controller)view.verifyController=null;}
     if(!current())return;
     if(view.paid){azobssPaBmShowPaid1436();return;}
     const paid=!!(data && (data.paid===true || data.status==='paid' || data.status==='success'));
@@ -7515,7 +7549,8 @@ function startAzobssPurchaseRealtimeSync(){
   const purchaseCol = collection(db, AZOBSS_PURCHASE_COLLECTION);
   try{
     if(uid){
-      azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('uid', '==', uid)), function(){
+      azobssPurchaseRealtimeUnsubs.push(onSnapshot(query(purchaseCol, where('uid', '==', uid)), {includeMetadataChanges:true}, function(snapshot){
+        azobssPaBmAcceptServerSnapshot1437(snapshot);
         azobssSchedulePurchaseRecordsRefresh('purchaseLogs uid snapshot');
       }, function(e){ console.warn('purchase uid snapshot failed:', e); }));
     }
@@ -9296,7 +9331,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1436';
+  var VERSION_TEXT = 'v1437';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 

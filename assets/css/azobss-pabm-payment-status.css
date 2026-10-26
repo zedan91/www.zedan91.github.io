@@ -5,5 +5,6 @@ body.pa-bm-page #pabmStoreCartPanel #paymentCtaWrap #paBmToyyibStatus[data-payme
 .pabm-payment-followup [hidden]{display:none!important}
 .pabm-payment-followup a,.pabm-payment-followup button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border:1px solid #2a7468;border-radius:9px;background:#0b322c;color:#c5f7eb!important;font-family:inherit;font-size:14px;font-weight:600;line-height:1.4;text-decoration:none;cursor:pointer}
 .pabm-payment-followup :focus-visible{outline:3px solid #67e8f9;outline-offset:3px}
+#userPaPurchasePanel{scroll-margin-top:90px}
 #payPaBmToyyibButton:disabled{cursor:default}
 body.pa-bm-page #pabmStoreCartPanel #payPaBmToyyibButton[data-payment-state="paid"]{background:#0d674c;color:#dcfce7;border-color:#2a9d71;box-shadow:none;cursor:default}

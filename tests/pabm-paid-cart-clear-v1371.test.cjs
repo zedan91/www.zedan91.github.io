@@ -29,6 +29,6 @@ test('v1371 late storefront init cannot restore just-paid backup', () => {
 });
 
 test('v1371 cache-busters force browsers to load paid-cart race fix', () => {
-  assert.match(html, /azobss-global-auth\.js\?v=1436/);
-  assert.match(html, /azobss-pabm-storefront\.js\?v=1436/);
+  assert.ok(Number(html.match(/azobss-global-auth\.js\?v=(\d+)/)?.[1])>=1437);
+  assert.ok(Number(html.match(/azobss-pabm-storefront\.js\?v=(\d+)/)?.[1])>=1437);
 });
