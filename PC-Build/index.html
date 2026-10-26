@@ -194,7 +194,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 
 <section class="toolbar" aria-label="PC build filters">
 <input class="control search" id="search" type="search" placeholder="Cari CPU, GPU, AutoCAD, Civil 3D, Revit, AI, software atau kegunaan…"/>
-<select class="control" id="retailerStore" aria-label="Sumber PC"><option value="all">Semua sumber</option><option value="azobss">AZOBSS</option></select>
+<select class="control" id="retailerStore" aria-label="Sumber PC" data-admin-retailer-filter hidden disabled><option value="all">Semua sumber</option><option value="azobss">AZOBSS</option></select>
 <select class="control" id="segment"><option value="all">Semua PC</option><option value="office">Office PC</option><option value="package">Package / Gaming PC</option><option value="workstation">Workstation / AI</option></select>
 <select class="control" id="cpuBrand"><option value="all">Semua CPU</option><option value="amd">AMD</option><option value="intel">Intel</option></select>
 <select class="control" id="resolution"><option value="all">Semua Resolusi/Kelas</option><option value="office">Office</option><option value="1080p">1080p</option><option value="1440p">1440p</option><option value="4k">4K</option><option value="workstation">Workstation</option><option value="ai">AI</option></select>
@@ -243,6 +243,14 @@ function isAdminViewer(){
   return false;
 }
 window.isAdminViewer=isAdminViewer;
+function syncRetailerStoreAccess(){
+  const filter=els.retailerStore;if(!filter)return;
+  const admin=isAdminViewer();
+  filter.hidden=!admin;
+  filter.disabled=!admin;
+  filter.setAttribute('aria-hidden',admin?'false':'true');
+  if(!admin&&filter.value!=='all'){filter.value='all';render();}
+}
 function markupRateFor(cost){cost=Number(cost)||0;if(cost<=2500)return .15;if(cost<=4000)return .12;if(cost<=6000)return .10;if(cost<=8000)return .09;if(cost<=10000)return .08;return .07}
 function stablePriceSeed(key){let h=0;for(const ch of String(key||''))h=((h<<5)-h+ch.charCodeAt(0))>>>0;return h}
 function variedRetailPrice(base,key){base=Number(base)||0;const endings=[0,20,40,50,80,90];const start=Math.floor(base/100)*100;const candidates=[];for(let h=start;h<=start+200;h+=100){for(const ending of endings){const v=h+ending;if(v>=base)candidates.push(v)}}candidates.sort((a,b)=>a-b);const shortlist=[...new Set(candidates)].slice(0,3);return shortlist.length?shortlist[stablePriceSeed(key)%shortlist.length]:Math.ceil(base/10)*10}
@@ -288,7 +296,7 @@ function populateGpuModels(){if(!els.gpuModel)return;const current=els.gpuModel.
 function render(){
   let list=[...(DATA.builds||[])];
   const admin=isAdminViewer();
-  const q=els.search.value.trim().toLowerCase(),qTokens=q.split(/\s+/).filter(Boolean),storeId=els.retailerStore?.value||'all',seg=els.segment.value,cpu=els.cpuBrand.value,res=els.resolution.value,gpu=els.gpuBrand.value,gpuModel=els.gpuModel.value,cat=els.category.value,max=Number(els.budget.value||0);
+  const q=els.search.value.trim().toLowerCase(),qTokens=q.split(/\s+/).filter(Boolean),storeId=isAdminViewer()?(els.retailerStore?.value||'all'):'all',seg=els.segment.value,cpu=els.cpuBrand.value,res=els.resolution.value,gpu=els.gpuBrand.value,gpuModel=els.gpuModel.value,cat=els.category.value,max=Number(els.budget.value||0);
   if(storeId==='azobss')list=list.filter(b=>!isRetailerBuild(b));
   else if(storeId!=='all')list=list.filter(b=>isRetailerBuild(b)&&b.storeId===storeId);
   if(qTokens.length)list=list.filter(b=>{const hay=JSON.stringify(b).toLowerCase();return qTokens.every(t=>hay.includes(t))});
@@ -378,7 +386,7 @@ Promise.all([
 }).catch(e=>{els.grid.innerHTML='<div class="empty">Data PC Build tidak dapat dimuat. Sila refresh halaman.</div>';setLiveStatus('Data PC Build gagal dimuat','live-bad');console.error(e)});
 [els.search,els.retailerStore,els.segment,els.cpuBrand,els.resolution,els.gpuBrand,els.gpuModel,els.category,els.budget,els.sort].filter(Boolean).forEach(el=>el.addEventListener(el.tagName==='INPUT'?'input':'change',render));
 els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retailerStore)els.retailerStore.value='all';els.segment.value='all';els.cpuBrand.value='all';els.resolution.value='all';els.gpuBrand.value='all';els.gpuModel.value='all';els.category.value='all';els.budget.value='0';els.sort.value='asc';render();window.dispatchEvent(new CustomEvent('azobss-pc-main-filter-change'))});
-try{let lastAdmin=isAdminViewer();new MutationObserver(()=>{const now=isAdminViewer();if(now!==lastAdmin){lastAdmin=now;render();renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']})}catch(_e){}
+try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;render();renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();render()});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
 <script src="/assets/js/azobss-global-auth.js?v=1402" type="module"></script>
