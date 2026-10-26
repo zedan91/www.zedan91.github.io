@@ -131,6 +131,8 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"PC Build Malaysia | AZOBSS","url":"https://www.azobss.com/PC-Build/","description":"Cadangan PC build dari low ke high untuk Office, AutoCAD, CAD/Survey, gaming dan workstation dengan harga rujukan Malaysia yang dikemas kini secara live."}</script>
+<link rel="stylesheet" href="/assets/css/azobss-pc-retailers.css?v=1427">
+<script defer src="/assets/js/azobss-pc-retailers.js?v=1427"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -167,6 +169,22 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 </header>
 <main class="wrap">
 <section class="hero"><div class="eyebrow">🖥️ AZOBSS PC BUILD • MALAYSIA</div><h1>Pilih PC Build dari <span>Low → High</span></h1><p>Pilih Office PC, gaming 1080p/1440p/4K, creator, Workstation/AI atau bina sendiri. Harga AZOBSS diselaraskan daripada rujukan pasaran Malaysia dan diperiksa semula secara automatik setiap beberapa minit.</p><div class="status"><span class="pill">Pasaran: <strong>Malaysia</strong></span><span class="pill" id="livePricePill"><span class="live-dot"></span><span id="livePriceStatus">Harga live: memuat…</span></span><span class="pill">Build dipaparkan: <strong id="count">0</strong></span></div><div class="hero-actions"><a class="hero-build-btn" href="/PC-Build/Build-Sendiri/">🧩 Build Sendiri Lengkap</a><a class="hero-build-btn secondary" href="#grid">Lihat Build Siap</a></div></section>
+<details class="pc-retailers" id="pc-retailer-panel" hidden>
+  <summary><span>Carian kedai PC<small>Rujukan pembekal untuk admin</small></span><span class="pc-retailer-count" data-retailer-count>15 kedai</span></summary>
+  <div class="pc-retailer-body">
+    <p>Cari model PC atau komponen daripada beberapa kedai. Semak harga, stok dan konfigurasi pada kedai sebelum membuat perbandingan.</p>
+    <form class="pc-retailer-form">
+      <label>Model / kata kunci<input type="search" name="keyword" maxlength="160" placeholder="Contoh: RTX 5070, Ryzen 7, DDR5 32GB" autocomplete="off"></label>
+      <label>Kategori<select name="category"><option value="all">Semua kategori</option><option value="pc">PC siap / Custom</option><option value="parts">Komponen</option><option value="workstation">Workstation</option><option value="laptop">Laptop</option><option value="accessories">Aksesori</option></select></label>
+      <label>Kedai<select name="store"><option value="all">Semua kedai</option></select></label>
+      <a class="pc-retailer-search" data-retailer-search href="#" target="_blank" rel="noopener noreferrer" hidden>Cari di semua kedai</a>
+    </form>
+    <div class="pc-retailer-status" data-retailer-status role="status">Memuatkan senarai kedai…</div>
+    <div class="pc-retailer-grid" data-retailer-grid></div>
+    <button class="pc-retailer-more" data-retailer-more type="button" aria-expanded="false" hidden>Lihat semua kedai</button>
+  </div>
+</details>
+
 
 <section class="custom-builder-section" id="build-sendiri" aria-label="Build PC sendiri" hidden style="display:none!important">
   <div class="custom-builder-head">

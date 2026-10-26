@@ -126,6 +126,8 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 @media(max-width:760px){.builder-top{grid-template-columns:1fr 1fr}.global-search{grid-column:1/-1;grid-row:1}.builder-head{display:none}.cat-row{grid-template-columns:42px minmax(0,1fr);padding:10px}.qty-stack,.line-total-stack{grid-column:2}.qty-stack{display:flex;flex-wrap:wrap}.qty{width:94px}.line-total-stack{margin-top:-2px}.line-total{justify-content:flex-start;height:auto;min-height:26px}.product-line{grid-template-columns:minmax(0,1fr) auto}.summary{grid-template-columns:1fr}.top-total strong{font-size:18px}.hero{padding-top:24px}.modal-head{flex-wrap:wrap}.modal-head h3{width:calc(100% - 52px)}.modal-search{order:3;flex-basis:100%}.product-option{grid-template-columns:1fr}.product-option span{white-space:normal}.quote-row{grid-template-columns:1fr 40px 80px}}
 </style>
+<link rel="stylesheet" href="/assets/css/azobss-pc-retailers.css?v=1427">
+<script defer src="/assets/js/azobss-pc-retailers.js?v=1427"></script>
 </head><body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -161,6 +163,22 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 </header>
 <main class="wrap">
 <section class="hero"><div class="crumb"><a href="/PC-Build/">PC Build</a><span>›</span><strong>Build Sendiri</strong></div><h1>Build PC Sendiri <span>Lengkap</span></h1><p>Pilih komponen daripada 29 kategori seperti builder kedai PC: CPU Intel/AMD, cooler, motherboard, RAM, GPU, PSU, casing, SSD/HDD, monitor, peripherals, networking, software dan aksesori. Senarai harga cuba diselaraskan daripada rujukan pasaran semasa. Compatibility Lock akan menutup pilihan CPU, motherboard, RAM, cooler, casing, GPU, PSU dan storage yang tidak serasi; AZOBSS mengenakan markup sekali pada jumlah akhir.</p><div class="info-row"><span class="pill">29 kategori hardware & aksesori</span><span class="pill compat-lock-pill">🔒 Compatibility Lock aktif</span><span class="pill live" id="catalogStatus">Catalog: memuat…</span><span class="pill" id="updatedStatus">Rujukan: —</span></div></section>
+<details class="pc-retailers" id="pc-retailer-panel" hidden>
+  <summary><span>Carian kedai PC<small>Rujukan pembekal untuk admin</small></span><span class="pc-retailer-count" data-retailer-count>15 kedai</span></summary>
+  <div class="pc-retailer-body">
+    <p>Cari model PC atau komponen daripada beberapa kedai. Semak harga, stok dan konfigurasi pada kedai sebelum membuat perbandingan.</p>
+    <form class="pc-retailer-form">
+      <label>Model / kata kunci<input type="search" name="keyword" maxlength="160" placeholder="Contoh: RTX 5070, Ryzen 7, DDR5 32GB" autocomplete="off"></label>
+      <label>Kategori<select name="category"><option value="all">Semua kategori</option><option value="pc">PC siap / Custom</option><option value="parts">Komponen</option><option value="workstation">Workstation</option><option value="laptop">Laptop</option><option value="accessories">Aksesori</option></select></label>
+      <label>Kedai<select name="store"><option value="all">Semua kedai</option></select></label>
+      <a class="pc-retailer-search" data-retailer-search href="#" target="_blank" rel="noopener noreferrer" hidden>Cari di semua kedai</a>
+    </form>
+    <div class="pc-retailer-status" data-retailer-status role="status">Memuatkan senarai kedai…</div>
+    <div class="pc-retailer-grid" data-retailer-grid></div>
+    <button class="pc-retailer-more" data-retailer-more type="button" aria-expanded="false" hidden>Lihat semua kedai</button>
+  </div>
+</details>
+
 <div class="builder-top"><button class="top-btn" id="resetBtn">Reset</button><input class="global-search" id="globalSearch" placeholder="Cari semua produk… (Ctrl + K)" readonly/><div class="top-total"><span>Harga AZOBSS</span><strong id="topTotal">RM 0</strong></div><button class="top-btn primary" id="nextBtn">Next</button></div>
 <section class="builder" aria-label="AZOBSS full PC builder"><div class="builder-head"><span>Add</span><span>Products</span><span>Quantity</span><span>Total</span></div><div id="categoryRows"></div></section>
 <section class="summary"><div class="summary-card"><h3>Semakan keserasian</h3><div class="compat" id="compatBox"></div></div><div class="summary-card"><div class="price-note">Harga anggaran AZOBSS</div><div class="price-big" id="summaryTotal">RM 0</div><div class="price-note">Harga berubah mengikut harga hardware live, stok dan promosi. Semakan akhir dibuat sebelum tempahan.</div><div class="admin-box" id="adminBox" hidden></div><div class="summary-actions"><button id="copyBtn">Salin Spec</button><button id="shareBtn">Share Build</button><button class="primary wide" id="waBtn">Salin & WhatsApp</button></div></div></section>
