@@ -1,21 +1,204 @@
 {
-  "version": 1427,
+  "version": 1428,
   "checkedAt": "2026-10-26",
   "stores": [
-    {"id":"all-it","name":"ALL IT Hypermarket","url":"https://www.allithypermarket.com.my/","scope":"allithypermarket.com.my","categories":["pc","parts","laptop","accessories"],"description":"PC siap, komponen, laptop dan aksesori.","source":"https://www.allithypermarket.com.my/"},
-    {"id":"ideal-tech","name":"Ideal Tech","url":"https://idealtech.com.my/","scope":"idealtech.com.my","categories":["pc","workstation","laptop"],"description":"Custom PC gaming, pejabat dan workstation.","source":"https://idealtech.com.my/"},
-    {"id":"tmt","name":"TMT / Thunder Match","url":"https://www.tmt.my/","scope":"tmt.my","categories":["pc","parts","laptop","accessories"],"description":"Desktop, custom PC, laptop dan perkakasan.","source":"https://www.tmt.my/"},
-    {"id":"viewnet","name":"Viewnet","url":"https://viewnet.com.my/","scope":"viewnet.com.my","categories":["pc","parts","accessories"],"description":"Prebuilt PC, PC builder dan komponen.","source":"https://viewnet.com.my/store"},
-    {"id":"pc-image","name":"PC Image","url":"https://pcimage.com.my/","scope":"pcimage.com.my","categories":["pc","parts","laptop","accessories"],"description":"Rangkaian kedai komputer dan perkakasan.","source":"https://pcimage.com.my/consumer/"},
-    {"id":"techhypermart","name":"Tech Hypermart","url":"https://www.techhypermart.com/","scope":"techhypermart.com","categories":["pc","workstation","laptop","accessories"],"description":"Desktop berjenama, workstation dan laptop.","source":"https://www.techhypermart.com/computers"},
-    {"id":"dotatech","name":"DOTATECH","url":"https://www.dotatech.com.my/","scope":"dotatech.com.my","categories":["pc","parts","workstation","accessories"],"description":"Custom gaming PC, workstation dan komponen.","source":"https://www.dotatech.com.my/pages/faqs"},
-    {"id":"rextech","name":"REXTECH PC","url":"https://rextechpc.com.my/","scope":"rextechpc.com.my","categories":["pc","workstation"],"description":"Custom PC gaming dan konfigurasi kerja.","source":"https://rextechpc.com.my/"},
-    {"id":"emarque","name":"EMARQUE","url":"https://emarque.co/","scope":"emarque.co","categories":["pc","workstation"],"description":"Custom gaming PC dan workstation.","source":"https://emarque.co/"},
-    {"id":"illegear","name":"ILLEGEAR","url":"https://www.illegear.com/","scope":"illegear.com","categories":["pc","laptop","accessories"],"description":"Custom desktop, laptop gaming dan aksesori.","source":"https://www.illegear.com/showroom-kuala-lumpur/"},
-    {"id":"brightstar","name":"Brightstar Computer","url":"https://brightstarcomp.com/","scope":"brightstarcomp.com","categories":["parts","laptop","accessories"],"description":"Komponen, laptop dan aksesori komputer.","source":"https://brightstarcomp.com/pages/store-locator"},
-    {"id":"netstore","name":"NETSTORE","url":"https://netstore.com.my/","scope":"netstore.com.my","categories":["pc","parts","accessories"],"description":"Perkakasan komputer dan pilihan custom PC.","source":"https://netstore.com.my/index.php"},
-    {"id":"jayacom","name":"Jayacom","url":"https://www.jayacom.com.my/","scope":"jayacom.com.my","categories":["parts","accessories"],"description":"Komponen dan aksesori komputer.","source":"https://www.in-win.com/en/where-to-buy?country_id=21&page=1&product_category=0&store_category=0"},
-    {"id":"sri-computers","name":"Sri Computers","url":"https://shopee.com.my/sri_computers","scope":"shopee.com.my/sri_computers","categories":["parts","laptop","accessories"],"description":"Komponen, laptop dan aksesori melalui kedai Shopee.","linkLabel":"Buka kedai Shopee","source":"https://images-cdn.lowyat.net/pricelist/sri1.pdf"},
-    {"id":"c-zone","name":"C-Zone / Compuzone","url":"https://www.facebook.com/compuzone/","scope":"facebook.com/compuzone","categories":["parts","accessories"],"description":"Rujukan perkakasan dan promosi melalui Facebook kedai.","linkLabel":"Buka Facebook kedai","source":"https://assets.hardwarezone.com/retailer_pricelist/145/C-Zone%20Price%20List.pdf"}
+    {
+      "id": "all-it",
+      "name": "ALL IT Hypermarket",
+      "url": "https://www.allithypermarket.com.my/",
+      "scope": "allithypermarket.com.my",
+      "categories": [
+        "pc",
+        "parts",
+        "laptop",
+        "accessories"
+      ],
+      "description": "PC siap, komponen, laptop dan aksesori.",
+      "source": "https://www.allithypermarket.com.my/"
+    },
+    {
+      "id": "ideal-tech",
+      "name": "Ideal Tech",
+      "url": "https://idealtech.com.my/",
+      "scope": "idealtech.com.my",
+      "categories": [
+        "pc",
+        "workstation",
+        "laptop"
+      ],
+      "description": "Custom PC gaming, pejabat dan workstation.",
+      "source": "https://idealtech.com.my/"
+    },
+    {
+      "id": "tmt",
+      "name": "TMT / Thunder Match",
+      "url": "https://www.tmt.my/",
+      "scope": "tmt.my",
+      "categories": [
+        "pc",
+        "parts",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Desktop, custom PC, laptop dan perkakasan.",
+      "source": "https://www.tmt.my/"
+    },
+    {
+      "id": "viewnet",
+      "name": "Viewnet",
+      "url": "https://viewnet.com.my/",
+      "scope": "viewnet.com.my",
+      "categories": [
+        "pc",
+        "parts",
+        "accessories"
+      ],
+      "description": "Prebuilt PC, PC builder dan komponen.",
+      "source": "https://viewnet.com.my/store"
+    },
+    {
+      "id": "pc-image",
+      "name": "PC Image",
+      "url": "https://pcimage.com.my/",
+      "scope": "pcimage.com.my",
+      "categories": [
+        "pc",
+        "parts",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Rangkaian kedai komputer dan perkakasan.",
+      "source": "https://pcimage.com.my/consumer/"
+    },
+    {
+      "id": "techhypermart",
+      "name": "Tech Hypermart",
+      "url": "https://www.techhypermart.com/",
+      "scope": "techhypermart.com",
+      "categories": [
+        "pc",
+        "workstation",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Desktop berjenama, workstation dan laptop.",
+      "source": "https://www.techhypermart.com/computers"
+    },
+    {
+      "id": "dotatech",
+      "name": "DOTATECH",
+      "url": "https://www.dotatech.com.my/",
+      "scope": "dotatech.com.my",
+      "categories": [
+        "pc",
+        "parts",
+        "workstation",
+        "accessories"
+      ],
+      "description": "Custom gaming PC, workstation dan komponen.",
+      "source": "https://www.dotatech.com.my/pages/faqs"
+    },
+    {
+      "id": "rextech",
+      "name": "REXTECH PC",
+      "url": "https://rextechpc.com.my/",
+      "scope": "rextechpc.com.my",
+      "categories": [
+        "pc",
+        "workstation"
+      ],
+      "description": "Custom PC gaming dan konfigurasi kerja.",
+      "source": "https://rextechpc.com.my/"
+    },
+    {
+      "id": "emarque",
+      "name": "EMARQUE",
+      "url": "https://emarque.co/",
+      "scope": "emarque.co",
+      "categories": [
+        "pc",
+        "workstation"
+      ],
+      "description": "Custom gaming PC dan workstation.",
+      "source": "https://emarque.co/"
+    },
+    {
+      "id": "illegear",
+      "name": "ILLEGEAR",
+      "url": "https://www.illegear.com/",
+      "scope": "illegear.com",
+      "categories": [
+        "pc",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Custom desktop, laptop gaming dan aksesori.",
+      "source": "https://www.illegear.com/showroom-kuala-lumpur/"
+    },
+    {
+      "id": "brightstar",
+      "name": "Brightstar Computer",
+      "url": "https://brightstarcomp.com/",
+      "scope": "brightstarcomp.com",
+      "categories": [
+        "parts",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Komponen, laptop dan aksesori komputer.",
+      "source": "https://brightstarcomp.com/pages/store-locator"
+    },
+    {
+      "id": "netstore",
+      "name": "NETSTORE",
+      "url": "https://netstore.com.my/",
+      "scope": "netstore.com.my",
+      "categories": [
+        "pc",
+        "parts",
+        "accessories"
+      ],
+      "description": "Perkakasan komputer dan pilihan custom PC.",
+      "source": "https://netstore.com.my/index.php"
+    },
+    {
+      "id": "jayacom",
+      "name": "Jayacom",
+      "url": "https://www.jayacom.com.my/",
+      "scope": "jayacom.com.my",
+      "categories": [
+        "parts",
+        "accessories"
+      ],
+      "description": "Komponen dan aksesori komputer.",
+      "source": "https://www.in-win.com/en/where-to-buy?country_id=21&page=1&product_category=0&store_category=0"
+    },
+    {
+      "id": "sri-computers",
+      "name": "Sri Computers",
+      "url": "https://shopee.com.my/sri_computers",
+      "scope": "shopee.com.my/sri_computers",
+      "categories": [
+        "parts",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Komponen, laptop dan aksesori melalui kedai Shopee.",
+      "linkLabel": "Buka kedai Shopee",
+      "source": "https://images-cdn.lowyat.net/pricelist/sri1.pdf"
+    },
+    {
+      "id": "c-zone",
+      "name": "C-Zone / Compuzone",
+      "url": "https://www.facebook.com/compuzone/",
+      "scope": "facebook.com/compuzone",
+      "categories": [
+        "parts",
+        "accessories"
+      ],
+      "description": "Rujukan perkakasan dan promosi melalui Facebook kedai.",
+      "linkLabel": "Buka Facebook kedai",
+      "source": "https://assets.hardwarezone.com/retailer_pricelist/145/C-Zone%20Price%20List.pdf"
+    }
   ]
 }

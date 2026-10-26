@@ -31,11 +31,23 @@ test('malformed and mismatched outbound destinations cannot enter search results
  assert.equal(api.validStore({...store,categories:['fake']}),false);
  assert.equal(api.validStore({...store,scope:'google.com'}),false);
 });
-test('both PC pages keep supplier tools hidden until the existing admin display check succeeds',()=>{
- for(const page of ['PC-Build/index.html','PC-Build/Build-Sendiri/index.html']){
-  const html=fs.readFileSync(path.join(__dirname,'..',page),'utf8');
-  assert.match(html,/<details[^>]*id="pc-retailer-panel"[^>]*hidden/);
-  assert.match(html,/azobss-pc-retailers.js\?v=1427/);
-  assert.match(html,/function isAdminViewer\(/);
- }
+test('main filter keyword is composed from the same PC-Build controls',()=>{
+ const q=api.mainFilterKeyword({search:'AutoCAD',segment:'workstation',cpuBrand:'amd',resolution:'1440p',gpuBrand:'nvidia',gpuModel:'RTX 5070',category:'performance',budget:'7000'});
+ for(const term of ['AutoCAD','workstation AI','AMD Ryzen','RTX 5070','1440p','creator performance','bawah RM7000'])assert.ok(q.includes(term),term);
+});
+test('build compare keyword carries useful CPU/GPU/RAM/storage details',()=>{
+ const q=api.buildSearchKeyword({name:'AZOBSS Performance RTX',gpuModel:'RTX 5070',parts:[['CPU','AMD Ryzen 7 7700'],['RAM','32GB DDR5'],['Storage','1TB NVMe']],softwareFit:['AutoCAD 2026','Revit']});
+ for(const term of ['AZOBSS Performance RTX','AMD Ryzen 7 7700','RTX 5070','32GB DDR5','1TB NVMe','AutoCAD 2026'])assert.ok(q.includes(term),term);
+});
+test('main PC-Build exposes public integrated 15-store search while Build-Sendiri keeps admin supplier panel',()=>{
+ const main=fs.readFileSync(path.join(__dirname,'../PC-Build/index.html'),'utf8');
+ assert.match(main,/id="pc-retailer-panel"[^>]*data-public="1"[^>]*data-integrated="1"/);
+ assert.match(main,/id="retailerStore"/);
+ assert.match(main,/data-retailer-compare/);
+ assert.match(main,/azobss-pc-retailers\.js\?v=1428/);
+ const builder=fs.readFileSync(path.join(__dirname,'../PC-Build/Build-Sendiri/index.html'),'utf8');
+ assert.match(builder,/<details[^>]*id="pc-retailer-panel"[^>]*hidden/);
+ assert.doesNotMatch(builder,/id="pc-retailer-panel"[^>]*data-public="1"/);
+ assert.match(builder,/azobss-pc-retailers\.js\?v=1428/);
+ assert.match(builder,/function isAdminViewer\(/);
 });
