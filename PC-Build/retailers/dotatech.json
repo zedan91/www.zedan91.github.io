@@ -42,18 +42,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH FA-GAMING R5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -69,7 +62,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-dc-r5",
@@ -110,18 +103,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH DC-GAMING AMD - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -137,7 +123,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-fa-i5",
@@ -174,18 +160,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH FA-GAMING i5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -201,7 +180,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-t-r5",
@@ -242,18 +221,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH T-GAMING R5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -269,7 +241,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-fh6-u5",
@@ -310,18 +282,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH FH6-U5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -337,7 +302,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-fh6-r5",
@@ -378,18 +343,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH FH6-R5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -405,7 +363,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-dc-am5",
@@ -446,18 +404,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH DC-GAMING AM5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -473,7 +424,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-fh6-r7",
@@ -514,18 +465,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH FH6-R7 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -540,7 +484,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-fh6-u7",
@@ -581,18 +525,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DOTATECH FH6-U7 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -607,7 +544,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-lga7x3d",
@@ -648,18 +585,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/highend-rx.webp",
       "imageAlt": "DOTATECH L-GA7X3D - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -675,7 +605,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-s-g9x3d",
@@ -716,18 +646,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/highend-rx.webp",
       "imageAlt": "DOTATECH S-G9X3D - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -743,7 +666,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-frieren",
@@ -784,20 +707,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "DOTATECH FRIEREN - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -812,7 +726,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-r9700",
@@ -853,20 +767,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD / Civil 3D / Revit profesional",
-        "SolidWorks / 3ds Max / kerja CAD 3D",
-        "Rendering, visualisasi & GPU compute",
-        "AI tempatan / model GPU & projek teknikal berat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SolidWorks / 3ds Max",
-        "Blender / rendering",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "DOTATECH R579 / AI PRO R9700 Workstation - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -882,7 +787,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "dotatech-miku-5080",
@@ -923,20 +828,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "DOTATECH AMD x ROG x Hatsune Miku - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data DOTATECH",
@@ -951,7 +847,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     }
   ]
 }

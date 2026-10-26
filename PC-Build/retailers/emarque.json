@@ -46,19 +46,11 @@
         ]
       ],
       "bestFor": [
-        "Office, multitasking & kerja kreatif",
-        "AutoCAD 2D / SketchUp ringan–sederhana",
-        "Gaming 1080p tahap entry",
-        "Photoshop & video editing 1080p ringan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD 2D",
-        "SketchUp",
-        "Photoshop",
-        "Premiere Pro 1080p",
-        "Microsoft Office"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "CORE 3050 Creator PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -74,7 +66,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-5050",
@@ -115,19 +107,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana — naik taraf 16GB/32GB RAM disaran"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "NEO Ryzen 5 5500 / RTX 5050 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -143,7 +127,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-5060ti-5500",
@@ -184,19 +168,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana — naik taraf 16GB/32GB RAM disaran"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "NEO Ryzen 5 5500 / RTX 5060 Ti - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -212,7 +188,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-5060-7500f",
@@ -253,19 +229,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "NEO Ryzen 5 7500F / RTX 5060 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -281,7 +249,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-rx9060xt-5500",
@@ -322,19 +290,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
-        "3D rendering, Blender & visualisasi",
-        "Gaming 1440p High/Ultra",
-        "Video editing 4K & creator workload — naik taraf 16GB/32GB RAM disaran"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "NEO Ryzen 5 5500 / RX 9060 XT - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -350,7 +310,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-5060ti-i5",
@@ -391,19 +351,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "NEO Core i5-14400F / RTX 5060 Ti - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -419,7 +371,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-5060ti-7500f",
@@ -460,19 +412,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "NEO Ryzen 5 7500F / RTX 5060 Ti - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -488,7 +432,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-5060ti-u5",
@@ -529,19 +473,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "NEO Core Ultra 5 225F / RTX 5060 Ti - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -557,7 +493,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-neo-rx9060xt-7500f",
@@ -598,19 +534,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
-        "3D rendering, Blender & visualisasi",
-        "Gaming 1440p High/Ultra",
-        "Video editing 4K & creator workload"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K"
-      ],
+      "softwareFit": [],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "NEO Ryzen 5 7500F / RX 9060 XT - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -626,7 +554,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-infinity-5070-i5",
@@ -667,20 +595,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
-        "3D rendering, Blender & visualisasi",
-        "Gaming 1440p High/Ultra",
-        "Video editing 4K & creator workload"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "CUDA / AI workload sederhana"
-      ],
+      "softwareFit": [],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "INFINITY Core i5-14400F / RTX 5070 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -695,7 +614,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-infinity-5070-7500f",
@@ -736,20 +655,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
-        "3D rendering, Blender & visualisasi",
-        "Gaming 1440p High/Ultra",
-        "Video editing 4K & creator workload"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "CUDA / AI workload sederhana"
-      ],
+      "softwareFit": [],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "INFINITY Ryzen 5 7500F / RTX 5070 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -764,7 +674,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-circle-x50",
@@ -805,20 +715,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD / Civil 3D / Revit projek sederhana–besar",
-        "3D rendering, Blender & visualisasi",
-        "Gaming 1440p High/Ultra",
-        "Video editing 4K & creator workload"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "CUDA / AI workload sederhana"
-      ],
+      "softwareFit": [],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "CIRCLE X50 Ryzen 5 7500F / RTX 5070 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -833,7 +734,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-infinity-rx9070xt",
@@ -874,20 +775,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/highend-rx.webp",
       "imageAlt": "INFINITY Ryzen 5 7500F / RX 9070 XT - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -903,7 +795,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-infinity-r7-rx9070xt",
@@ -944,20 +836,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/highend-rx.webp",
       "imageAlt": "INFINITY Ryzen 7 7800X3D / RX 9070 XT - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -973,7 +856,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-infinity-5070ti",
@@ -1014,20 +897,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "INFINITY Ryzen 5 7500F / RTX 5070 Ti - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -1043,7 +917,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-xr-rx9070xt",
@@ -1084,20 +958,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/highend-rx.webp",
       "imageAlt": "XR Ryzen 7 9800X3D / RX 9070 XT - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -1113,7 +978,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-xr-5070ti",
@@ -1154,20 +1019,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "XR Ryzen 7 9800X3D / RTX 5070 Ti - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -1182,7 +1038,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "emarque-flow-5080",
@@ -1223,20 +1079,11 @@
         ]
       ],
       "bestFor": [
-        "BIM / CAD 3D projek besar & workstation berat",
-        "3D rendering berat / GPU compute",
-        "Gaming 1440p Ultra / 4K High",
-        "Video editing 4K, creator & AI tempatan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "3ds Max / Blender",
-        "Premiere Pro 4K",
-        "AI / CUDA workload"
-      ],
+      "softwareFit": [],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "FLOW Ryzen 7 9800X3D / RTX 5080 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data EMARQUE",
@@ -1251,7 +1098,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     }
   ]
 }

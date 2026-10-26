@@ -46,17 +46,11 @@
         ]
       ],
       "bestFor": [
-        "Office, accounting, browsing & kerja harian",
-        "Microsoft Office / Google Workspace / POS",
-        "Pembelajaran, web & sistem kaunter / POS",
-        "Tidak disaran untuk 3D, rendering atau gaming berat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "Browser / POS / accounting",
-        "Canva ringan"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "Intel Basic Office PC - i3 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -71,7 +65,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "jayacom-amd-5600g-office",
@@ -116,18 +110,11 @@
         ]
       ],
       "bestFor": [
-        "Office, accounting, browsing & kerja harian",
-        "Microsoft Office / Google Workspace / POS",
-        "AutoCAD 2D ringan & pelan asas",
-        "Canva / Photoshop ringan & video mesyuarat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "AutoCAD 2D ringan",
-        "MapInfo / QGIS ringan",
-        "Canva / Photoshop ringan"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "AMD Ryzen Budget Office PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -142,7 +129,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "jayacom-intel-i5-office",
@@ -183,18 +170,11 @@
         ]
       ],
       "bestFor": [
-        "Office, accounting, browsing & kerja harian",
-        "Microsoft Office / Google Workspace / POS",
-        "AutoCAD 2D ringan & pelan asas",
-        "Canva / Photoshop ringan & video mesyuarat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "AutoCAD 2D ringan",
-        "MapInfo / QGIS ringan",
-        "Canva / Photoshop ringan"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "Intel Basic Office PC - i5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -209,7 +189,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "jayacom-entry-gaming",
@@ -250,19 +230,11 @@
         ]
       ],
       "bestFor": [
-        "Office, multitasking & kerja kreatif",
-        "AutoCAD 2D / SketchUp ringan–sederhana",
-        "Gaming 1080p tahap entry",
-        "Photoshop & video editing 1080p ringan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD 2D",
-        "SketchUp",
-        "Photoshop",
-        "Premiere Pro 1080p",
-        "Microsoft Office"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Intel Entry Gaming PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -278,7 +250,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "jayacom-balanced-pro",
@@ -319,19 +291,11 @@
         ]
       ],
       "bestFor": [
-        "Office, multitasking & kerja kreatif",
-        "AutoCAD 2D / SketchUp ringan–sederhana",
-        "Gaming 1080p tahap entry",
-        "Photoshop & video editing 1080p ringan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD 2D",
-        "SketchUp",
-        "Photoshop",
-        "Premiere Pro 1080p",
-        "Microsoft Office"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Budget Balanced Pro PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -347,7 +311,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "jayacom-gaming-pro",
@@ -388,19 +352,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Intel Gaming Pro PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -416,7 +372,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     }
   ]
 }

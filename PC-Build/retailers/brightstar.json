@@ -38,18 +38,11 @@
         ]
       ],
       "bestFor": [
-        "Office, accounting, browsing & kerja harian",
-        "Microsoft Office / Google Workspace / POS",
-        "AutoCAD 2D ringan & pelan asas",
-        "Canva / Photoshop ringan & video mesyuarat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "AutoCAD 2D ringan",
-        "MapInfo / QGIS ringan",
-        "Canva / Photoshop ringan"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire XC Office Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -64,7 +57,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-set-heroes",
@@ -97,19 +90,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "PC Package Heroes - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -125,7 +110,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-set-c",
@@ -158,19 +143,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Tech Upgrade Set C - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -186,7 +163,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-msi-cubi",
@@ -219,18 +196,11 @@
         ]
       ],
       "bestFor": [
-        "Office, accounting, browsing & kerja harian",
-        "Microsoft Office / Google Workspace / POS",
-        "AutoCAD 2D ringan & pelan asas",
-        "Canva / Photoshop ringan & video mesyuarat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "AutoCAD 2D ringan",
-        "MapInfo / QGIS ringan",
-        "Canva / Photoshop ringan"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "MSI Cubi NUC 1M Mini Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -245,7 +215,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-ideacentre",
@@ -278,18 +248,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD / Civil 3D / Revit profesional — ikut GPU workstation dipilih",
-        "3D rendering / simulation / GPU compute — ikut GPU & RAM dipilih"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SolidWorks / 3ds Max",
-        "Blender / rendering"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "Lenovo IdeaCentre Tower Desktop Workstation - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -304,7 +267,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-expertcenter",
@@ -337,18 +300,11 @@
         ]
       ],
       "bestFor": [
-        "Office, accounting, browsing & kerja harian",
-        "Microsoft Office / Google Workspace / POS",
-        "AutoCAD 2D ringan & pelan asas",
-        "Canva / Photoshop ringan & video mesyuarat"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "AutoCAD 2D ringan",
-        "MapInfo / QGIS ringan",
-        "Canva / Photoshop ringan"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "ASUS ExpertCenter D700 SFF - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -363,7 +319,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-set-a",
@@ -396,19 +352,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Tech Upgrade Set A - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -424,7 +372,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-set-b",
@@ -457,19 +405,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Tech Upgrade Set B - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -484,7 +424,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-set-d",
@@ -517,19 +457,11 @@
         ]
       ],
       "bestFor": [
-        "AutoCAD 2D/3D & SketchUp sederhana",
-        "Revit / Civil 3D projek kecil–sederhana",
-        "Gaming 1080p High / 1440p sederhana",
-        "Video editing 1080p–1440p & rendering sederhana"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "Civil 3D",
-        "Revit",
-        "SketchUp",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Tech Upgrade Set D - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -544,7 +476,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     },
     {
       "id": "brightstar-msi-infinite-x3",
@@ -577,18 +509,11 @@
         ]
       ],
       "bestFor": [
-        "Office, kerja harian & multitasking",
-        "AutoCAD 2D/3D & SketchUp — prestasi ikut GPU yang dipilih",
-        "Gaming 1080p–4K — ikut model GPU yang dipilih",
-        "Revit / Civil 3D / rendering — disaran 32GB RAM + GPU dedicated"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [
-        "AutoCAD",
-        "SketchUp",
-        "Revit / Civil 3D",
-        "Blender / Premiere Pro"
-      ],
+      "softwareFit": [],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "MSI MPG Infinite X3 AI 2nd Gaming Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -603,7 +528,7 @@
       "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": true
     }
   ]
 }

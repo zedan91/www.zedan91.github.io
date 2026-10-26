@@ -1,4 +1,4 @@
-/* AZOBSS v1430: 15-store internal retailer catalog integration. Retailer directory panel remains admin-only. */
+/* AZOBSS v1434: 15-store internal retailer catalog integration + verified-price-only public policy. Retailer directory panel remains admin-only. */
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
@@ -76,7 +76,7 @@
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
     storeLoadPromise=(async()=>{
       try{
-        const response=await fetch('/PC-Build/pc-retailers.json?v=1430',{signal:controller.signal,cache:'no-store'});
+        const response=await fetch('/PC-Build/pc-retailers.json?v=1434',{signal:controller.signal,cache:'no-store'});
         if(!response.ok)throw Error('Directory unavailable');
         const data=await response.json();
         storeCache=(data.stores||[]).filter(validStore);
@@ -138,7 +138,7 @@
         const card=document.createElement('article');card.className='pc-retailer-card';
         const heading=document.createElement('h3');heading.textContent=item.name;
         const description=document.createElement('p');description.textContent=item.description;
-        const tags=document.createElement('div');tags.className='pc-retailer-tags';tags.textContent=`${item.productCount||0} rekod JSON · ${item.catalogStatus==='quote'?'harga perlu semakan':'snapshot harga tersedia'}`;
+        const tags=document.createElement('div');tags.className='pc-retailer-tags';tags.textContent=`${item.productCount||0} rekod JSON · ${item.catalogStatus==='quote'?'tiada harga disahkan':'snapshot harga disahkan'}`;
         const actions=document.createElement('div');actions.className='pc-retailer-actions';
         actions.append(
           internalLink('Tapis katalog',()=>{setControl(document,'#retailerStore',item.id);document.querySelector('#grid')?.scrollIntoView({behavior:'smooth',block:'start'});},'pc-retailer-primary'),

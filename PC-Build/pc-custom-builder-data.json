@@ -3,7 +3,7 @@
   "market": "Malaysia",
   "currency": "MYR",
   "updated": "2026-10-01",
-  "pricingNote": "Harga asas menggunakan harga live build AZOBSS. Upgrade cuba diselaraskan daripada halaman rujukan semasa; jika gagal, fallback terakhir digunakan. Markup AZOBSS dikenakan sekali sahaja selepas jumlah kos pasaran dikira.",
+  "pricingNote": "Kos dan markup digunakan sebagai kiraan dalaman Administrator. Pelanggan tidak dipaparkan harga anggaran; harga akhir hanya diberi selepas komponen, stok dan sumber semasa disahkan.",
   "compatibilityNote": "Builder menyemak platform/socket, kelas VRM, PSU, saiz casing, radiator dan Gen5 SSD. Harga akhir perlu disahkan semasa tempahan kerana stok/promosi boleh berubah.",
   "profiles": [
     {

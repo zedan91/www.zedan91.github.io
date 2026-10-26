@@ -1,0 +1,20 @@
+{
+  "version": 1432,
+  "area": "PC-Build",
+  "policy": "verified-price-only",
+  "baseline": 1431,
+  "verifiedRetailerRecords": 115,
+  "unverifiedOrQuoteRecords": 6,
+  "customerEstimatedPriceDisplay": false,
+  "adminInternalCalculationRetained": true,
+  "rules": [
+    "Retailer price requires priceVerified=true",
+    "Retailer price requires numeric price > 0",
+    "Retailer price requires sourceCheckedAt",
+    "Retailer price requires sourceUrl",
+    "Retailer price requires snapshot/store priceType",
+    "Quote/unverified records display no RM number",
+    "AZOBSS calculated markup prices are hidden from customer UI",
+    "Build Sendiri estimated totals are hidden from customer UI"
+  ]
+}

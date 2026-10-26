@@ -1,5 +1,5 @@
 {
-  "version": 1430,
+  "version": "1434",
   "checkedAt": "2026-10-26",
   "stores": [
     {
@@ -245,5 +245,6 @@
       "catalogStatus": "quote",
       "productCount": 1
     }
-  ]
+  ],
+  "pricePolicy": "Public PC Build memaparkan nombor harga hanya untuk snapshot retailer yang ditanda priceVerified=true. Tiada harga anggaran untuk rekod quote/unverified atau Build Sendiri."
 }

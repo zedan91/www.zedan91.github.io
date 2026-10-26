@@ -20,7 +20,7 @@
       "price": null,
       "priceMin": null,
       "priceMax": null,
-      "priceType": "Harga kedai / snapshot sumber",
+      "priceType": "Tiada harga snapshot disahkan",
       "sourceName": "REXTECH PC",
       "sourceUrl": "https://rextechpc.com.my/custom-pc/",
       "sourceCheckedAt": "2026-10-26",
@@ -34,16 +34,11 @@
         ]
       ],
       "bestFor": [
-        "Office / kerja harian — ikut CPU dan RAM yang dipilih",
-        "AutoCAD / Revit / kerja 3D — ikut GPU dan RAM yang dipilih",
-        "Gaming / rendering — pilih dedicated GPU mengikut tahap prestasi diperlukan"
+        "Banding harga antara kedai",
+        "Semak stok / konfigurasi sebelum tempahan"
       ],
       "note": "REXTECH menawarkan custom PC untuk gaming dan kerja, tetapi laman rasmi semasa mengarahkan pelanggan meminta quotation. Marketplace snapshots yang ditemui bertanda sold out, jadi AZOBSS tidak memaparkan harga lama sebagai harga semasa.",
-      "softwareFit": [
-        "Microsoft Office / Google Workspace",
-        "AutoCAD / Revit (ikut konfigurasi)",
-        "SketchUp / Blender (ikut GPU)"
-      ],
+      "softwareFit": [],
       "image": "./images/essential-office.webp",
       "imageAlt": "REXTECH Custom Gaming / Work PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data REXTECH PC",
@@ -63,7 +58,7 @@
       "availability": "quote-required",
       "quoteRequired": true,
       "retailerSnapshot": true,
-      "usageDerivedFromSpec": true
+      "priceVerified": false
     }
   ]
 }
