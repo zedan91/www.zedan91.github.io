@@ -5853,6 +5853,7 @@ function azobssSavePaBmPendingReturn(orderId, billCode){
   const cleanOrderId = String(orderId || '').trim();
   const cleanBillCode = String(billCode || '').trim();
   azobssClearPaBmPaidCartMarkerForNewCheckout1371(cleanOrderId, cleanBillCode);
+  azobssPaBmBeginView1436(cleanOrderId, cleanBillCode);
   try{
     if(cleanOrderId) sessionStorage.setItem('azobss_pa_bm_pending_order_id', cleanOrderId);
     if(cleanBillCode) sessionStorage.setItem('azobss_pa_bm_pending_bill_code', cleanBillCode);
@@ -5941,8 +5942,106 @@ function azobssShowPaBmPaymentSuccessPopup(verifiedKey){
 }
 
 
+// AZOBSS v1436: a verified payment is terminal; cloud/UI cleanup is best effort.
+const azobssPaBmConfirmed1436 = new Set();
+let azobssPaBmView1436 = null;
+function azobssPaBmSameView1436(view, orderId, billCode){
+  return !!view && !!((orderId && view.orderId === String(orderId)) || (billCode && view.billCode === String(billCode)));
+}
+function azobssPaBmBeginView1436(orderId, billCode){
+  if(!azobssPaBmSameView1436(azobssPaBmView1436, orderId, billCode)){
+    azobssPaBmView1436 = {orderId:String(orderId || ''),billCode:String(billCode || ''),paid:false,empty:false};
+  }
+  return azobssPaBmView1436;
+}
+function azobssPaBmShowPaid1436(){
+  if(!azobssPaBmView1436?.paid) return false;
+  const status=document.getElementById('paBmToyyibStatus');
+  const message='Pembayaran berjaya. Lihat pembelian anda untuk muat turun. Tidak perlu bayar semula.';
+  if(status){status.dataset.paymentState='paid';if(status.textContent!==message)status.textContent=message;}
+  const pay=document.getElementById('payPaBmToyyibButton');
+  if(pay){pay.dataset.paymentState='paid';pay.disabled=true;if(pay.textContent!=='Pembayaran Berjaya')pay.textContent='Pembayaran Berjaya';}
+  const purchases=document.getElementById('paBmPaidPurchasesLink');if(purchases)purchases.hidden=false;
+  const retry=document.getElementById('paBmVerifyAgainButton');if(retry)retry.hidden=true;
+  return true;
+}
+function azobssPaBmRefreshStatus1436(){
+  if(azobssPaBmShowPaid1436())return true;
+  const state=document.getElementById('paBmToyyibStatus')?.dataset.paymentState;
+  if(azobssPaBmView1436 && ['checking','delayed'].includes(state)){
+    const pay=document.getElementById('payPaBmToyyibButton');
+    if(pay){pay.disabled=true;pay.textContent=state==='delayed'?'Status Belum Disahkan':'Menyemak Bayaran...';}
+  }
+  return false;
+}
+function azobssPaBmVerificationMessage1436(message, state){
+  if(azobssPaBmShowPaid1436()) return;
+  const status=document.getElementById('paBmToyyibStatus');
+  if(status){status.dataset.paymentState=state || '';status.textContent=message;}
+  const retry=document.getElementById('paBmVerifyAgainButton');if(retry)retry.hidden=state!=='delayed';
+  const purchases=document.getElementById('paBmPaidPurchasesLink');if(purchases)purchases.hidden=state!=='delayed';
+  const pay=document.getElementById('payPaBmToyyibButton');
+  if(pay && ['checking','delayed'].includes(state)){pay.dataset.paymentState=state;pay.disabled=true;pay.textContent=state==='delayed'?'Status Belum Disahkan':'Menyemak Bayaran...';}
+  else if(pay && state==='failed'){pay.dataset.paymentState='failed';pay.textContent='Teruskan Pembayaran';}
+}
+function azobssPaBmCompletePaid1436(orderId, billCode, source){
+  orderId=String(orderId || '').trim();billCode=String(billCode || '').trim();
+  if(!orderId && !billCode) return false;
+  const known=(orderId && azobssPaBmConfirmed1436.has('order:'+orderId)) || (billCode && azobssPaBmConfirmed1436.has('bill:'+billCode));
+  if(known){if(azobssPaBmSameView1436(azobssPaBmView1436,orderId,billCode))azobssPaBmShowPaid1436();return false;}
+  // A late result for order A must never clear a newer checkout B.
+  if(azobssPaBmView1436 && !azobssPaBmSameView1436(azobssPaBmView1436,orderId,billCode))return false;
+  const view=azobssPaBmBeginView1436(orderId,billCode);view.paid=true;
+  if(orderId)azobssPaBmConfirmed1436.add('order:'+orderId);
+  if(billCode)azobssPaBmConfirmed1436.add('bill:'+billCode);
+  const key=azobssPaBmReturnKey(orderId,billCode);
+  window.__azobssPaBmPaymentVerifiedKey=key;window.__azobssPaBmPaymentVerifiedAt=Date.now();
+  clearTimeout(window.__azobssPaBmReturnCheckTimer);window.__azobssPaBmReturnCheckTimer=0;
+  try{sessionStorage.setItem('azobss_pa_bm_paid_reset_'+key,'1');}catch(_e){}
+  try{azobssMarkPaBmReturnConsumed(key);}catch(_e){}
+  try{azobssClearPaBmPendingReturn();}catch(_e){}
+  try{azobssCleanPaBmPaymentReturnUrl();}catch(_e){}
+  azobssPaBmShowPaid1436();
+  const background=fn=>{try{Promise.resolve(fn()).catch(error=>console.warn('Paid purchase UI sync deferred:',error));}catch(error){console.warn('Paid purchase UI sync deferred:',error);}};
+  // This async helper empties local storage synchronously before its first cloud await.
+  background(()=>azobssHardClearPaBmCartAfterPaid1371(orderId || key,billCode,source || 'verified-paid'));
+  background(()=>azobssResetCurrentPurchaseTotalAfterPaid(orderId || key));
+  try{window.dispatchEvent(new CustomEvent('azobss:pabm-payment-paid',{detail:{orderId,billCode,version:1436}}));}catch(_e){}
+  try{azobssShowPaBmPaymentSuccessPopup(key);}catch(_e){}
+  try{startAzobssPurchaseRealtimeSync();azobssSchedulePurchaseRecordsRefresh('verified paid 1436');}catch(_e){}
+  azobssPaBmShowPaid1436();
+  return true;
+}
+window.azobssCompletePaBmPaid1436=azobssPaBmCompletePaid1436;
+window.azobssRenderPaBmPaidStatus1436=azobssPaBmRefreshStatus1436;
+function azobssPaBmCartChanged1436(event){
+  const view=azobssPaBmView1436;if(!view?.paid){azobssPaBmRefreshStatus1436();return;}
+  const count=Number(event?.detail?.count);
+  if(count===0){view.empty=true;azobssPaBmShowPaid1436();}
+  else if(count>0 && view.empty){
+    // A deliberate new cart is usable; old confirmed results stay idempotent.
+    azobssPaBmView1436=null;
+    const status=document.getElementById('paBmToyyibStatus');if(status){status.dataset.paymentState='';status.textContent='Pergi ke halaman pembayaran';}
+    const purchases=document.getElementById('paBmPaidPurchasesLink');if(purchases)purchases.hidden=true;
+    const pay=document.getElementById('payPaBmToyyibButton');if(pay){pay.dataset.paymentState='';pay.disabled=false;pay.textContent='Teruskan Pembayaran';}
+  }
+}
+window.addEventListener('azobss:pabm-cart-core-rendered',azobssPaBmCartChanged1436);
+window.addEventListener('azobss:pabm-cart-updated',azobssPaBmCartChanged1436);
+const azobssPaBmStatusElement1436=document.getElementById('paBmToyyibStatus');
+if(azobssPaBmStatusElement1436 && typeof MutationObserver==='function')new MutationObserver(()=>azobssPaBmShowPaid1436()).observe(azobssPaBmStatusElement1436,{childList:true,characterData:true,subtree:true});
+document.getElementById('paBmVerifyAgainButton')?.addEventListener('click',()=>{
+  if(window.__azobssPaBmReturnCheckActive || azobssPaBmShowPaid1436())return;
+  window.__azobssPaBmPaymentPollStartedAt=Date.now();window.__azobssPaBmPaymentPollAttempts=0;
+  const pending=azobssReadPaBmPendingReturn();
+  if(pending.orderId || pending.billCode || new URLSearchParams(window.location.search).get('orderId'))azobssCheckPaBmToyyibReturn();
+  else azobssRecoverPaBmPaymentFromServer1055(true);
+});
+// End v1436 paid UI helpers.
+
 function azobssResetPaBmPaymentStatusIfIdle(force){
   try{
+    if(azobssPaBmShowPaid1436()) return;
     const status = document.getElementById('paBmToyyibStatus');
     if(!status) return;
     const text = String(status.textContent || '').trim();
@@ -5952,153 +6051,88 @@ function azobssResetPaBmPaymentStatusIfIdle(force){
       'Mengesan rujukan pembayaran...',
       'Pembayaran diterima. Menunggu pengesahan ToyyibPay...'
     ];
-    if(force || transient.includes(text)) status.textContent = 'Pergi ke halaman pembayaran';
+    if(force || transient.includes(text) || ['checking','delayed'].includes(status.dataset.paymentState)){
+      status.dataset.paymentState='';status.textContent='Pergi ke halaman pembayaran';
+      const retry=document.getElementById('paBmVerifyAgainButton');if(retry)retry.hidden=true;
+      const purchases=document.getElementById('paBmPaidPurchasesLink');if(purchases)purchases.hidden=true;
+      const pay=document.getElementById('payPaBmToyyibButton');if(pay){pay.dataset.paymentState='';pay.textContent='Teruskan Pembayaran';}
+      try{window.azobssPaBmStoreCart?.render();}catch(_e){}
+    }
   }catch(e){}
 }
 
 async function azobssCheckPaBmToyyibReturn(){
-  if(window.__azobssPaBmReturnCheckActive) return;
-  window.__azobssPaBmReturnCheckActive = true;
-  const status = document.getElementById('paBmToyyibStatus');
-  let shouldRetry = false;
-  let retryDelay = 1800;
+  if(window.__azobssPaBmReturnCheckActive)return;
+  window.__azobssPaBmReturnCheckActive=true;
+  let shouldRetry=false,retryDelay=1800,view=null;
+  const current=()=>!view || azobssPaBmView1436===view;
   try{
-    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || '')) return;
-
-    if(Date.now() < Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0)){
-      azobssResetPaBmPaymentStatusIfIdle(true);
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search || '');
-    const urlOrderId = params.get('orderId') || params.get('order_id') || '';
-    const urlBillCode = params.get('billCode') || params.get('billcode') || params.get('BillCode') || '';
-    const pending = azobssReadPaBmPendingReturn();
-    const orderId = urlOrderId || pending.orderId;
-    const billCode = urlBillCode || pending.billCode;
-    const returnKey = azobssPaBmReturnKey(orderId, billCode);
-    const hasCallbackSignal = params.get('payment') === 'return' || !!params.get('status_id') || !!params.get('status') || !!urlOrderId || !!urlBillCode;
-    const hasPendingCheckout = !!pending.orderId || !!pending.billCode;
-
-    if(!hasCallbackSignal && !hasPendingCheckout){
-      azobssResetPaBmPaymentStatusIfIdle(false);
-      return;
-    }
-
-    if(returnKey && azobssPaBmReturnConsumed(returnKey)){
-      azobssClearPaBmPendingReturn();
-      azobssCleanPaBmPaymentReturnUrl();
-      azobssResetPaBmPaymentStatusIfIdle(true);
-      try{ azobssSchedulePurchaseRecordsRefresh('consumed payment return'); }catch(e){}
-      return;
-    }
-
-    [250, 700, 1500, 3000, 6000].forEach(function(ms){
-      setTimeout(function(){
-        try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
-        try{ azobssSchedulePurchaseRecordsRefresh('toyyib return live retry'); }catch(e){}
-      }, ms);
-    });
-
+    if(!/^\/PA-BM\/?$/i.test(window.location.pathname || ''))return;
+    if(Date.now()<Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0)){azobssResetPaBmPaymentStatusIfIdle(true);return;}
+    const params=new URLSearchParams(window.location.search || '');
+    const pending=azobssReadPaBmPendingReturn();
+    const orderId=params.get('orderId') || params.get('order_id') || pending.orderId || '';
+    const billCode=params.get('billCode') || params.get('billcode') || params.get('BillCode') || pending.billCode || '';
+    const returnKey=azobssPaBmReturnKey(orderId,billCode);
+    const callback=params.get('payment')==='return' || params.has('status_id') || params.has('status');
     if(!returnKey){
-      if(status) status.textContent = 'Mengesan rujukan pembayaran...';
-      window.__azobssPaBmMissingReturnAttempts = Number(window.__azobssPaBmMissingReturnAttempts || 0) + 1;
-      if(window.__azobssPaBmMissingReturnAttempts <= 12){
-        shouldRetry = true;
-        retryDelay = 1000;
-      }else{
-        azobssCleanPaBmPaymentReturnUrl();
-        azobssClearPaBmPendingReturn();
-        azobssResetPaBmPaymentStatusIfIdle(true);
-      }
+      if(!callback){azobssResetPaBmPaymentStatusIfIdle(false);return;}
+      // Missing references cannot be confirmed by a success-looking URL alone.
+      azobssPaBmVerificationMessage1436('Rujukan bayaran belum ditemui. Semak Senarai Pembelian atau tekan Semak Semula. Jangan bayar semula jika akaun bank telah didebit.','delayed');
       return;
     }
-
-    if(window.__azobssPaBmPaymentPollKey !== returnKey){
-      window.__azobssPaBmPaymentPollKey = returnKey;
-      window.__azobssPaBmPaymentPollStartedAt = Date.now();
-      window.__azobssPaBmPaymentPollAttempts = 0;
+    view=azobssPaBmBeginView1436(orderId,billCode);
+    if(view.paid){azobssPaBmShowPaid1436();return;}
+    if(azobssPaBmReturnConsumed(returnKey)){
+      azobssClearPaBmPendingReturn();azobssCleanPaBmPaymentReturnUrl();azobssResetPaBmPaymentStatusIfIdle(true);
+      try{azobssSchedulePurchaseRecordsRefresh('consumed payment return');}catch(_e){}
+      return;
     }
-    window.__azobssPaBmPaymentPollAttempts = Number(window.__azobssPaBmPaymentPollAttempts || 0) + 1;
-
-    if(status) status.textContent = 'Mengesahkan pembayaran...';
-    const verifyUrl = azobssGetBackendBaseUrl() + '/api/verify-payment?orderId=' + encodeURIComponent(orderId || '') + '&billCode=' + encodeURIComponent(billCode || '') + '&_=' + Date.now();
-    const res = await fetch(verifyUrl, { cache:'no-store', headers:{'Cache-Control':'no-cache'} });
-    const data = await res.json().catch(()=>({}));
-    const paid = !!(data && (data.paid || data.status === 'paid' || data.status === 'success'));
-    const gatewayStatusId = String(params.get('status_id') || '').trim();
-    const gatewayStatusText = String(params.get('status') || '').trim().toLowerCase();
-    const failed = gatewayStatusId === '3'
-      || ['failed','cancelled','canceled','rejected','unsuccessful'].includes(gatewayStatusText)
-      || !!(data && ['failed','cancelled','canceled','rejected','unsuccessful'].includes(String(data.status || '').toLowerCase()));
-
-    if(paid){
-      await azobssHardClearPaBmCartAfterPaid1371(orderId || returnKey, billCode || '', 'return-verify');
-      await azobssResetCurrentPurchaseTotalAfterPaid(orderId || returnKey);
-      try{ sessionStorage.setItem('azobss_pa_bm_paid_reset_' + returnKey, '1'); }catch(e){}
-      azobssMarkPaBmReturnConsumed(returnKey);
-      azobssClearPaBmPendingReturn();
-      window.__azobssPaBmPaymentVerifiedKey = returnKey;
-      window.__azobssPaBmPaymentVerifiedAt = Date.now();
-      if(status) status.textContent = 'Pembayaran berjaya. Senarai pembelian dikemaskini.';
-      try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-paid', { detail:{ orderId:String(orderId || returnKey), billCode:String(billCode || '') } })); }catch(e){}
-      azobssShowPaBmPaymentSuccessPopup(returnKey);
-      azobssCleanPaBmPaymentReturnUrl();
-      [250, 700, 1500, 3000].forEach(ms => setTimeout(() => azobssSchedulePurchaseRecordsRefresh('paid verify immediate'), ms));
-      setTimeout(function(){ azobssResetPaBmPaymentStatusIfIdle(true); }, 1800);
-    }else if(failed){
-      try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid', { detail:{ orderId:String(orderId || returnKey), billCode:String(billCode || ''), reason:'failed_or_cancelled' } })); }catch(e){}
-      azobssMarkPaBmReturnConsumed(returnKey);
-      azobssClearPaBmPendingReturn();
-      azobssCleanPaBmPaymentReturnUrl();
-      if(status) status.textContent = 'Pembayaran dibatalkan / tidak berjaya. Item kekal dalam Troli Anda.';
-    }else{
-      const elapsed = Date.now() - Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
-      if(status) status.textContent = 'Pembayaran diterima. Menunggu pengesahan ToyyibPay...';
-      if(elapsed < 120000){
-        shouldRetry = true;
-        retryDelay = Math.min(5000, 1200 + (Number(window.__azobssPaBmPaymentPollAttempts || 1) * 450));
-      }else{
-        try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid', { detail:{ orderId:String(orderId || returnKey), billCode:String(billCode || ''), reason:'not_completed' } })); }catch(e){}
-        azobssClearPaBmPendingReturn();
-        azobssCleanPaBmPaymentReturnUrl();
-        if(status) status.textContent = 'Pembayaran belum selesai. Item kekal dalam Troli Anda.';
-      }
+    if(window.__azobssPaBmPaymentPollKey!==returnKey){
+      window.__azobssPaBmPaymentPollKey=returnKey;window.__azobssPaBmPaymentPollStartedAt=Date.now();window.__azobssPaBmPaymentPollAttempts=0;
     }
-  }catch(e){
-    console.warn('PA/BM payment return check failed:', e);
-    const pendingNow = azobssReadPaBmPendingReturn();
-    const paramsNow = new URLSearchParams(window.location.search || '');
-    const hasCallbackNow = paramsNow.get('payment') === 'return' || !!paramsNow.get('status_id') || !!paramsNow.get('status') || !!paramsNow.get('orderId') || !!paramsNow.get('order_id') || !!paramsNow.get('billCode') || !!paramsNow.get('billcode') || !!paramsNow.get('BillCode');
-    const suppressed = Date.now() < Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0);
-    if(suppressed || ((!pendingNow.orderId && !pendingNow.billCode) && !hasCallbackNow)){
-      shouldRetry = false;
-      azobssResetPaBmPaymentStatusIfIdle(true);
-    }else{
-      if(status) status.textContent = 'Sedang menyambung semula pengesahan pembayaran...';
-      const startedAt = Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
-      if((Date.now() - startedAt) < 120000){
-        shouldRetry = true;
-        retryDelay = 2500;
-      }else{
-        try{ window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid', { detail:{ orderId:String(pendingNow.orderId || ''), billCode:String(pendingNow.billCode || ''), reason:'verification_timeout' } })); }catch(_e){}
-        azobssClearPaBmPendingReturn();
-        azobssCleanPaBmPaymentReturnUrl();
-        if(status) status.textContent = 'Pembayaran belum disahkan. Item kekal dalam Troli Anda.';
-      }
+    window.__azobssPaBmPaymentPollAttempts=Number(window.__azobssPaBmPaymentPollAttempts || 0)+1;
+    azobssPaBmVerificationMessage1436('Mengesahkan pembayaran...','checking');
+    const controller=new AbortController();
+    const deadline=setTimeout(()=>controller.abort(),12000);
+    let data;
+    try{
+      const url=azobssGetBackendBaseUrl()+'/api/verify-payment?orderId='+encodeURIComponent(orderId)+'&billCode='+encodeURIComponent(billCode)+'&_='+Date.now();
+      const response=await fetch(url,{cache:'no-store',headers:{'Cache-Control':'no-cache'},signal:controller.signal});
+      if(!response.ok)throw new Error('Payment verification unavailable');
+      data=await response.json();
+    }finally{clearTimeout(deadline);}
+    if(!current())return;
+    if(view.paid){azobssPaBmShowPaid1436();return;}
+    const paid=!!(data && (data.paid===true || data.status==='paid' || data.status==='success'));
+    if(paid){azobssPaBmCompletePaid1436(orderId,billCode,'return-verify');return;}
+    const gatewayStatusId=String(params.get('status_id') || '').trim();
+    const failed=gatewayStatusId === '3' || ['failed','cancelled','canceled','rejected','unsuccessful'].includes(String(data?.status || '').toLowerCase()) || ['failed','cancelled','canceled','rejected','unsuccessful'].includes(String(params.get('status') || '').toLowerCase());
+    if(failed){
+      try{window.dispatchEvent(new CustomEvent('azobss:pabm-payment-unpaid',{detail:{orderId,billCode,reason:'failed_or_cancelled'}}));}catch(_e){}
+      azobssMarkPaBmReturnConsumed(returnKey);azobssClearPaBmPendingReturn();azobssCleanPaBmPaymentReturnUrl();
+      azobssPaBmVerificationMessage1436('Pembayaran dibatalkan / tidak berjaya. Item kekal dalam Troli Anda.','failed');
+      try{window.azobssPaBmStoreCart?.render();}catch(_e){}
+      return;
     }
+    const elapsed=Date.now()-Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
+    shouldRetry=elapsed<120000;
+    retryDelay=Math.min(5000,1200+window.__azobssPaBmPaymentPollAttempts*450);
+    azobssPaBmVerificationMessage1436(shouldRetry
+      ?'Status bayaran sedang disemak. Jangan bayar semula jika akaun bank telah didebit.'
+      :'Semakan mengambil masa lebih lama. Semak Senarai Pembelian atau tekan Semak Semula. Jangan bayar semula jika akaun bank telah didebit.',shouldRetry?'checking':'delayed');
+  }catch(error){
+    if(!current())return;
+    if(view?.paid || azobssPaBmShowPaid1436())return;
+    console.warn('PA/BM payment verification interrupted:',error);
+    const elapsed=Date.now()-Number(window.__azobssPaBmPaymentPollStartedAt || Date.now());
+    shouldRetry=!!view && elapsed<120000;retryDelay=2500;
+    azobssPaBmVerificationMessage1436(shouldRetry
+      ?'Sambungan semakan terganggu. Kami akan cuba semula. Jangan bayar semula jika akaun bank telah didebit.'
+      :'Status bayaran belum dapat disahkan. Semak Senarai Pembelian atau tekan Semak Semula. Jangan bayar semula jika akaun bank telah didebit.',shouldRetry?'checking':'delayed');
   }finally{
-    window.__azobssPaBmReturnCheckActive = false;
-    if(shouldRetry && Date.now() >= Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0)){
-      azobssSchedulePaBmReturnCheck(retryDelay);
-    }else if(!shouldRetry){
-      const pendingNow = azobssReadPaBmPendingReturn();
-      const paramsNow = new URLSearchParams(window.location.search || '');
-      const hasCallbackNow = paramsNow.get('payment') === 'return' || !!paramsNow.get('status_id') || !!paramsNow.get('status') || !!paramsNow.get('orderId') || !!paramsNow.get('order_id') || !!paramsNow.get('billCode') || !!paramsNow.get('billcode') || !!paramsNow.get('BillCode');
-      if((!pendingNow.orderId && !pendingNow.billCode) && !hasCallbackNow){
-        azobssResetPaBmPaymentStatusIfIdle(false);
-      }
-    }
+    window.__azobssPaBmReturnCheckActive=false;
+    if(current() && !view?.paid && shouldRetry && Date.now()>=Number(window.__azobssPaBmReturnPollingSuppressedUntil || 0))azobssSchedulePaBmReturnCheck(retryDelay);
   }
 }
 
@@ -6350,30 +6384,8 @@ async function azobssRecoverPaBmPaymentFromServer1055(force){
     }
 
     if(data.paid){
-      const verifiedKey = String(data.orderId || data.billCode || data.receiptNo || '').trim();
-      await azobssHardClearPaBmCartAfterPaid1371(data.orderId || verifiedKey, data.billCode || '', data.recovered ? 'server-recovery-paid' : 'server-sync-paid');
-      if(verifiedKey){
-        window.__azobssPaBmPaymentVerifiedKey = verifiedKey;
-        window.__azobssPaBmPaymentVerifiedAt = Date.now();
-      }
-      try{ await azobssResetCurrentPurchaseTotalAfterPaid(data.orderId || verifiedKey); }catch(e){}
-      azobssClearPaBmPendingReturn();
-      try{ azobssCleanPaBmPaymentReturnUrl(); }catch(e){}
-      try{ startAzobssPurchaseRealtimeSync(); }catch(e){}
-      try{ azobssSchedulePurchaseRecordsRefresh(data.recovered ? 'server payment recovery 1055' : 'server paid sync 1055'); }catch(e){}
-      [250,700,1500,3000].forEach(function(ms){
-        setTimeout(function(){
-          try{ if(window.azobssRenderPurchaseRecords) window.azobssRenderPurchaseRecords(); }catch(e){}
-          try{ if(window.azobssRefreshPaBmPurchasesNow) window.azobssRefreshPaBmPurchasesNow(); }catch(e){}
-          try{ window.dispatchEvent(new Event('azobss:purchases-updated')); }catch(e){}
-        }, ms);
-      });
-      if(data.recovered && verifiedKey){
-        const status = document.getElementById('paBmToyyibStatus');
-        if(status) status.textContent = 'Pembayaran berjaya dipulihkan. Senarai pembelian dikemaskini.';
-        azobssShowPaBmPaymentSuccessPopup(verifiedKey);
-        window.dispatchEvent(new CustomEvent('azobss:pabm-payment-verified', { detail:{ key:verifiedKey, orderId:String(data.orderId || ''), recovered:true, version:1055 } }));
-      }
+      const verifiedKey=String(data.orderId || data.billCode || data.receiptNo || '').trim();
+      azobssPaBmCompletePaid1436(data.orderId || verifiedKey,data.billCode || '',data.recovered ? 'server-recovery-paid' : 'server-sync-paid');
     }
     return data;
   }catch(e){
@@ -9284,7 +9296,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1435';
+  var VERSION_TEXT = 'v1436';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 

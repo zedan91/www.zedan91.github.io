@@ -737,6 +737,7 @@ function renderCart() {
     adminTestPaymentButton.disabled = !items.length || !loggedIn;
     adminTestPaymentButton.textContent = items.length ? 'Test Payment (Admin)' : 'Test Payment (Empty Cart)';
   }
+  try { window.azobssRenderPaBmPaidStatus1436?.(); } catch (_) {}
   scheduleTableCartButtonSync();
 }
 
@@ -776,7 +777,7 @@ async function restorePendingOrderToCart(order) {
       baseAmount: pendingBaseAmount > 0 ? pendingBaseAmount : item.baseAmount,
       amount: pendingAmount > 0 ? pendingAmount : item.amount,
       priceAdjustmentCategory: String(raw && raw.priceAdjustmentCategory || item.priceAdjustmentCategory || ''),
-      priceAdjustmentPercent: Number(raw && raw.priceAdjustmentPercent ?? item.priceAdjustmentPercent ?? 0)
+      priceAdjustmentPercent: Number((raw && raw.priceAdjustmentPercent) ?? item.priceAdjustmentPercent ?? 0)
     };
   });
   const resumeCartKey = pendingResumeCartKey(orderId, normalized);
@@ -1334,10 +1335,16 @@ async function clearCartAfterPaidReturn() {
   const billCode = params.get('billCode') || params.get('billcode') || sessionStorage.getItem('azobss_pa_bm_pending_bill_code') || String(backup && backup.billCode || '');
   if (!orderId && !billCode) return;
   try {
-    const response = await fetch('https://azobss-backend.onrender.com/api/verify-payment?orderId=' + encodeURIComponent(orderId) + '&billCode=' + encodeURIComponent(billCode), { cache: 'no-store' });
-    const data = await response.json().catch(() => ({}));
-    if (data && (data.paid || data.status === 'paid' || data.status === 'success')) {
-      await clearPaidCartEverywhere('verified-return');
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), 12000);
+    let response, data;
+    try {
+      response = await fetch('https://azobss-backend.onrender.com/api/verify-payment?orderId=' + encodeURIComponent(orderId) + '&billCode=' + encodeURIComponent(billCode), { cache: 'no-store', signal: controller.signal });
+      data = await response.json();
+    } finally { clearTimeout(deadline); }
+    if (response.ok && data && (data.paid === true || data.status === 'paid' || data.status === 'success')) {
+      if (typeof window.azobssCompletePaBmPaid1436 === 'function') window.azobssCompletePaBmPaid1436(orderId, billCode, 'storefront-verify');
+      else await clearPaidCartEverywhere('verified-return');
     }
   } catch (_) {}
 }
@@ -1434,12 +1441,12 @@ async function init() {
     if (rows.length) setCartSyncStatus(`Pembayaran dibatalkan / belum berjaya. ${rows.length} item kekal dalam Troli Anda.`);
   });
   window.addEventListener('azobss:pabm-payment-paid', () => {
-    clearPaidCartEverywhere('payment-paid-event');
+    clearPaidCartEverywhere('payment-paid-event').catch(error => console.warn('Paid cart sync deferred:', error));
   });
   // Server-side recovery uses this verified event when ToyyibPay confirmation
   // arrives after the short return-page polling window.
   window.addEventListener('azobss:pabm-payment-verified', () => {
-    clearPaidCartEverywhere('payment-verified-event');
+    clearPaidCartEverywhere('payment-verified-event').catch(error => console.warn('Paid cart sync deferred:', error));
   });
   window.addEventListener('azobss:pabm-pending-order-recovered', async (event) => {
     if (readCart().length) return;
