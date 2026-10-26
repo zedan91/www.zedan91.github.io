@@ -5486,7 +5486,7 @@ function normalizeItem(item){
     const itemStats482 = statsForItem(item);
     const isSolatTime = azIsSolatTimeCatalogItem(item);
     const displayName = isSolatTime ? 'Liyabudun' : item.name;
-    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.41/Azobss_SolatTime_Setup.exe';
+    const solatTimeInstaller = 'https://files.azobss.com/solattime/releases/1.0.42/Azobss_SolatTime_Setup.exe';
     const secondaryActionHtml = isSolatTime
       ? `<a class="az-card-cart-btn az-solattime-setup-download" href="${solatTimeInstaller}" download="Azobss_SolatTime_Setup.exe" aria-label="Muat turun Liyabudun — percubaan 30 hari atau pasang semula" title="Muat turun Liyabudun — percubaan 30 hari atau pasang semula"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></a>`
       : `<button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button>`;
@@ -5512,7 +5512,7 @@ function normalizeItem(item){
     const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
     const mediaHtml = `<div class="software-card-media az-logo-media"><img class="software-logo-img" src="${esc(logoSrc)}" data-fallback-src="${esc(logoFallback)}" alt="${esc(item.name)} logo" loading="lazy"><span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
     const gifHtml = ''; // AZOBSS 293: preview button is first-paint floating control only; no duplicate inline preview link.
-    const meta = [item.category, isSolatTime ? 'v1.0.41' : item.version, isSolatTime ? '90 MB' : item.fileSize, ...(item.platforms || [])].filter(Boolean);
+    const meta = [item.category, isSolatTime ? 'v1.0.42' : item.version, isSolatTime ? '90 MB' : item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = (!item.bundledDirectory && item.badge) ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
@@ -6908,7 +6908,7 @@ function normalizeItem(item){
 .az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1438" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1439" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
