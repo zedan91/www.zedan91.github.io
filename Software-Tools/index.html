@@ -3524,7 +3524,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
 <script id="az-software-fast-first-paint-cache-1043">
 (function(){
   if(window.__AZOBSS_EBOOK_DIRECT)return;
-  var CACHE_KEY='azobss_software_fast_card_html_v1043';
+  var CACHE_KEY='azobss_software_fast_card_html_v1450';
   var MAX_AGE=48*60*60*1000;
   var grid=document.getElementById('softwareDownloadsGrid');
   if(!grid) return;
@@ -3669,10 +3669,16 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
           </select>
         </label>
       </div>
-      <label class="az-featured-admin-toggle-553">
-        <span><input id="softwareAdminFeatured" type="checkbox"> <strong>⭐ Featured / Pin to Top</strong></span>
-        <small>Featured software appears before normal items while keeping the normal card design.</small>
-      </label>
+      <div class="software-admin-row az-featured-admin-row-1450">
+        <label class="az-featured-admin-toggle-553">
+          <span><input id="softwareAdminFeatured" type="checkbox"> <strong>⭐ Featured / Pin to Top</strong></span>
+          <small>Pinned software appears before normal items.</small>
+        </label>
+        <label class="az-pin-order-admin-control-1450">Pin Order
+          <input id="softwareAdminPinOrder" type="number" min="1" max="999" step="1" placeholder="Auto">
+          <small>1 = paling atas, 2 = kedua, 3 = ketiga.</small>
+        </label>
+      </div>
       <div class="software-admin-row">
         <label>Version
           <input id="softwareAdminVersion" type="text" placeholder="v1.0.0">
@@ -3888,8 +3894,8 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v1043';
-  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=1043';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v1450';
+  const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=1450';
 
   const grid = document.getElementById('softwareDownloadsGrid');
   const addButton = document.getElementById('softwareAdminAddButton');
@@ -3930,6 +3936,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
   const likesInput = document.getElementById('softwareAdminLikes');
   const statusInput = document.getElementById('softwareAdminStatus');
   const featuredInput = document.getElementById('softwareAdminFeatured');
+  const pinOrderInput = document.getElementById('softwareAdminPinOrder');
   const versionInput = document.getElementById('softwareAdminVersion');
   const fileSizeInput = document.getElementById('softwareAdminFileSize');
   const downloadLimitInput = document.getElementById('softwareAdminDownloadLimit');
@@ -4831,6 +4838,35 @@ function azSoftwareFeaturedValue553(item){
     // admin saves the item, the explicit featured field becomes authoritative.
     return clean(source.name || source.title || '') === 'azobss solattime';
   }
+  function azSoftwarePinOrder1450(item, fallback = 999999){
+    const source = item || {};
+    const values = [source.pinOrder, source.featuredOrder, source.pinPriority, source.pinnedOrder, source.featuredPriority];
+    for(const value of values){
+      const n = Math.floor(Number(value));
+      if(Number.isFinite(n) && n > 0) return Math.min(999, n);
+    }
+    return fallback;
+  }
+  function azNextSoftwarePinOrder1450(){
+    let maxOrder = 0;
+    (softwareDynamicItems || []).forEach(item => {
+      if(!item?.featured) return;
+      const n = azSoftwarePinOrder1450(item, 0);
+      if(n > maxOrder) maxOrder = n;
+    });
+    getStaticCards().forEach(card => {
+      if(card?.dataset?.featured !== '1') return;
+      const n = Math.floor(Number(card.dataset.pinOrder || 0));
+      if(Number.isFinite(n) && n > maxOrder && n <= 999) maxOrder = n;
+    });
+    return Math.min(999, Math.max(1, maxOrder + 1));
+  }
+  function azSyncPinOrderControl1450(){
+    if(!pinOrderInput) return;
+    pinOrderInput.disabled = !featuredInput?.checked;
+    pinOrderInput.closest('label')?.classList.toggle('is-disabled', pinOrderInput.disabled);
+  }
+  featuredInput?.addEventListener('change', azSyncPinOrderControl1450);
 const AZ_SOFTWARE_R2_ADMIN_PREFIX = 'r2ObjectKey:software/';
 function azNormalizeSoftwareR2ObjectKey(value){
     let key = String(value || '').trim();
@@ -4898,6 +4934,7 @@ function normalizeItem(item){
       replacesProductId: item.replacesProductId || item.oldProductId || '',
       status: item.status || 'active',
       featured: azSoftwareFeaturedValue553(item),
+      pinOrder: azSoftwarePinOrder1450(item, 0),
       version: item.version || '',
       fileSize: item.fileSize || '',
       platforms: Array.isArray(item.platforms) ? item.platforms : (item.platform ? [item.platform] : ['Windows']),
@@ -4965,6 +5002,7 @@ function normalizeItem(item){
       category: n.category,
       status: n.status,
       featured: !!n.featured,
+      pinOrder: n.featured ? azSoftwarePinOrder1450(n, 0) : 0,
       version: n.version,
       fileSize: n.fileSize,
       platforms: n.platforms || ['Windows'],
@@ -5557,7 +5595,7 @@ function normalizeItem(item){
       ? `<a class="download-btn azdm-setup-download-btn" data-azobss-premium-buy="0" data-product-id="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-download-link="${esc(azdmInstallerUrl)}" href="${esc(azdmInstallerUrl)}" target="_blank" rel="noopener" title="Download AZDM Setup" aria-label="Download AZDM Setup">Download</a>`
       : '';
     const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Choose Plan</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot">${secondaryActionHtml}</div></div>` : actionBtnHtml));
-    return `<div class="download-card software-status-${esc(item.status || 'active')}${affiliateOffer ? ' az-affiliate-offer-card' : ''}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-commission-eligible="${isPremium && !promoFreeInfo.active ? '1' : '0'}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + (isSolatTime ? 'Liyabudun AZOBSS SolatTime ' : '') + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}${affiliateOffer ? ' az-affiliate-offer-card' : ''}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-pin-order="${item.featured ? esc(azSoftwarePinOrder1450(item, 0)) : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-commission-eligible="${isPremium && !promoFreeInfo.active ? '1' : '0'}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + (isSolatTime ? 'Liyabudun AZOBSS SolatTime ' : '') + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -5732,6 +5770,8 @@ function normalizeItem(item){
       downloads: statsForCard(card).downloads,
       rating: statsForCard(card).rating,
       likes: statsForCard(card).likes,
+      featured: card?.dataset.featured === '1',
+      pinOrder: Number(card?.dataset.pinOrder || 0),
       createdAtMs: Number(card?.dataset.created || 0)
     });
   }
@@ -5975,6 +6015,10 @@ function normalizeItem(item){
     dynamic.sort((a,b) => {
       const featuredDiff553 = Number(!!b.featured) - Number(!!a.featured);
       if(featuredDiff553) return featuredDiff553;
+      if(a.featured && b.featured){
+        const pinDiff1450 = azSoftwarePinOrder1450(a) - azSoftwarePinOrder1450(b);
+        if(pinDiff1450) return pinDiff1450;
+      }
       if(sortMode === 'freeOnly') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'premiumOnly') return String(a.name).localeCompare(String(b.name));
       if(sortMode === 'nameAZ') return String(a.name).localeCompare(String(b.name));
@@ -5993,6 +6037,11 @@ function normalizeItem(item){
     const sortedStatic = staticCards.slice().sort((a,b) => {
       const featuredDiff553 = Number(b.dataset.featured === '1') - Number(a.dataset.featured === '1');
       if(featuredDiff553) return featuredDiff553;
+      if(a.dataset.featured === '1' && b.dataset.featured === '1'){
+        const ap = Math.floor(Number(a.dataset.pinOrder || 999999));
+        const bp = Math.floor(Number(b.dataset.pinOrder || 999999));
+        if(ap !== bp) return ap - bp;
+      }
       const an = String(a.dataset.name || a.querySelector('h3')?.textContent || '').toLowerCase();
       const bn = String(b.dataset.name || b.querySelector('h3')?.textContent || '').toLowerCase();
       const ac = Number(a.dataset.created || 0);
@@ -6209,6 +6258,8 @@ function normalizeItem(item){
     if(productIdInput) productIdInput.value = item?.productId || makeProductId('AZSW');
     if(statusInput) statusInput.value = item?.status || 'active';
     if(featuredInput) featuredInput.checked = !!item?.featured;
+    if(pinOrderInput) pinOrderInput.value = item?.featured && azSoftwarePinOrder1450(item, 0) ? String(azSoftwarePinOrder1450(item, 0)) : '';
+    azSyncPinOrderControl1450();
     if(versionInput) versionInput.value = item?.version || '';
     if(fileSizeInput) fileSizeInput.value = item?.fileSize || '';
     if(downloadLimitInput) downloadLimitInput.value = String(item?.downloadLimit || 3);
@@ -6830,6 +6881,7 @@ function normalizeItem(item){
       productId: productIdInput?.value.trim() || makeProductId('AZSW'),
       status: statusInput?.value || 'active',
       featured: !!featuredInput?.checked,
+      pinOrder: featuredInput?.checked ? (() => { const n = Math.floor(Number(pinOrderInput?.value || 0)); return Number.isFinite(n) && n > 0 ? Math.min(999, n) : azNextSoftwarePinOrder1450(); })() : 0,
       version: versionInput?.value.trim(),
       fileSize: fileSizeInput?.value.trim(),
       platforms: selectedPlatforms(),
@@ -6936,9 +6988,14 @@ function normalizeItem(item){
 .az-featured-admin-toggle-553 > span{display:flex;align-items:center;gap:9px;color:#fde68a}
 .az-featured-admin-toggle-553 input{width:auto!important;accent-color:#facc15}
 .az-featured-admin-toggle-553 small{color:#cbd5e1;font-weight:700;line-height:1.4}
+.az-featured-admin-row-1450{align-items:stretch!important}
+.az-pin-order-admin-control-1450{border:1px solid rgba(56,189,248,.34);border-radius:14px;padding:10px 12px;background:rgba(14,116,144,.08)}
+.az-pin-order-admin-control-1450 input{margin-top:7px}
+.az-pin-order-admin-control-1450 small{display:block;margin-top:5px;color:#cbd5e1;font-weight:700;line-height:1.35}
+.az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1449" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1450" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
