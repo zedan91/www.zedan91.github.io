@@ -13,11 +13,11 @@ function fixture(){
  return {window,document,calls,routes,open:()=>window.azobssAccountPurchasesOpen(),get dialog(){return document.body.children[0];},get text(){return document.body.textContent;},button:name=>all(document.body).find(node=>node.tagName==='button'&&node.textContent.startsWith(name)),auth(uid='buyer-a'){window.azobssWaitForFirebaseAuthToken=async()=>uid?'token-'+uid:'';window.azobssGetCurrentFirebaseUid=()=>uid;},fetch:fn=>fetchImpl=fn,event(type,detail){window.dispatchEvent({type,detail});}};
 }
 test('account landing is one reusable dialog with three categories and no background account requests',()=>{
- const f=fixture();f.open();f.open();assert.equal(f.document.body.children.length,1);assert.equal(f.document.head.children.length,1);assert.match(f.text,/Lesen & Pembelian Saya/);for(const label of ['SolatTime','AZDM','Pembelian lain'])assert.ok(f.button(label));assert.equal(f.calls.length,0);
+ const f=fixture();f.open();f.open();assert.equal(f.document.body.children.length,1);assert.equal(f.document.head.children.length,1);assert.match(f.text,/Lesen & Pembelian Saya/);for(const label of ['Liyabudun','AZDM','Pembelian lain'])assert.ok(f.button(label));assert.equal(f.calls.length,0);
 });
-test('SolatTime opens existing license dialog on Software Tools and preserves the email route on other pages',()=>{
- const f=fixture();let opened=0;f.window.azobssOpenSolatTimeOrders=()=>opened++;f.open();f.button('SolatTime').click();assert.equal(opened,1);assert.equal(f.dialog.open,false);assert.equal(f.routes.length,0);
- delete f.window.azobssOpenSolatTimeOrders;f.open();f.button('SolatTime').click();assert.deepEqual(f.routes,['/Software-Tools/?solattime_orders=1']);
+test('Liyabudun opens existing license dialog on Software Tools and preserves the email route on other pages',()=>{
+ const f=fixture();let opened=0;f.window.azobssOpenSolatTimeOrders=()=>opened++;f.open();f.button('Liyabudun').click();assert.equal(opened,1);assert.equal(f.dialog.open,false);assert.equal(f.routes.length,0);
+ delete f.window.azobssOpenSolatTimeOrders;f.open();f.button('Liyabudun').click();assert.deepEqual(f.routes,['/Software-Tools/?solattime_orders=1']);
 });
 test('other purchases retain the original receipts/downloads view',()=>{
  const f=fixture();let opened=0;f.window.azobssOpenMyPurchases=()=>opened++;f.open();f.button('Pembelian lain').click();assert.equal(opened,1);assert.equal(f.dialog.open,false);

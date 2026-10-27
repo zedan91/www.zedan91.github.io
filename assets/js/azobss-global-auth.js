@@ -9288,7 +9288,7 @@ window.azobssFormatLocalPhoneForDisplay = function(value){
   };
   window.azobssOpenAccountPurchases = async function(){
     try{
-      await import('/assets/js/azobss-account-purchases.js?v=1402');
+      await import('/assets/js/azobss-account-purchases.js?v=1444');
       window.azobssAccountPurchasesOpen();
     }catch(error){alert('Panel lesen belum dapat dibuka. Muat semula halaman dan cuba lagi.');}
   };
@@ -9331,7 +9331,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1443';
+  var VERSION_TEXT = 'v1444';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 

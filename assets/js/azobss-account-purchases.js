@@ -24,7 +24,7 @@
   reset();status.textContent='Pilih software atau buka rekod pembelian anda.';
   const choices=el('div',undefined,'az-account-purchases-choices');
   for(const [name,note,action] of [
-   ['SolatTime','Serial, status pembelian dan installer.',openSolatTime],
+   ['Liyabudun','Serial, status pembelian dan installer.',openSolatTime],
    ['AZDM','Pesanan lesen dan status penghantaran e-mel serial.',loadAzdm],
    ['Pembelian lain','Rekod pembelian, resit dan muat turun.',()=>{close();window.azobssOpenMyPurchases?.();}]
   ]){const card=button('',action);card.append(el('strong',name),el('span',note));choices.append(card);}
