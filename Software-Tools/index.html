@@ -3524,7 +3524,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
 <script id="az-software-fast-first-paint-cache-1043">
 (function(){
   if(window.__AZOBSS_EBOOK_DIRECT)return;
-  var CACHE_KEY='azobss_software_fast_card_html_v1451';
+  var CACHE_KEY='azobss_software_fast_card_html_v1452';
   var MAX_AGE=48*60*60*1000;
   var grid=document.getElementById('softwareDownloadsGrid');
   if(!grid) return;
@@ -3894,7 +3894,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
   const LOCAL_KEY = 'azobss_admin_software_tools_v1';
   const STATIC_DELETED_KEY = 'azobss_admin_software_static_deleted_v1';
   const SOFTWARE_STATS_KEY = 'azobss_software_manual_stats_v2';
-  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v1451';
+  const SOFTWARE_FAST_HTML_CACHE_KEY_464 = 'azobss_software_fast_card_html_v1452';
   const SOFTWARE_BUNDLED_DIRECTORY_URL_470 = './software-directory.json?v=1450';
 
   const grid = document.getElementById('softwareDownloadsGrid');
@@ -5543,7 +5543,7 @@ function normalizeItem(item){
     const itemStats482 = statsForItem(item);
     const isSolatTime = azIsSolatTimeCatalogItem(item);
     const displayName = isSolatTime ? 'Liyabudun' : item.name;
-    const solatTimeInstaller = 'https://files.azobss.com/liyabudun/releases/1.0.49/Liyabudun_Setup.exe';
+    const solatTimeInstaller = 'https://files.azobss.com/liyabudun/releases/1.0.50/Liyabudun_Setup.exe';
     const secondaryActionHtml = isSolatTime
       ? `<a class="az-card-cart-btn az-solattime-setup-download" href="${solatTimeInstaller}" download="Liyabudun_Setup.exe" aria-label="Muat turun Liyabudun — percubaan 30 hari atau pasang semula" title="Muat turun Liyabudun — percubaan 30 hari atau pasang semula"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></a>`
       : `<button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button>`;
@@ -5569,7 +5569,7 @@ function normalizeItem(item){
     const logoFallback = azFaviconUrlFromLink(item.downloadLink || item.secureDownloadLink || item.paymentLink || item.stripeLink || item.link);
     const mediaHtml = `<div class="software-card-media az-logo-media"><img class="software-logo-img" src="${esc(logoSrc)}" data-fallback-src="${esc(logoFallback)}" alt="${esc(item.name)} logo" loading="lazy"><span class="software-logo-initial">${esc(item.icon || (item.name||'').slice(0,2).toUpperCase())}</span></div>`;
     const gifHtml = ''; // AZOBSS 293: preview button is first-paint floating control only; no duplicate inline preview link.
-    const meta = [item.category, isSolatTime ? 'v1.0.49' : item.version, isSolatTime ? '90 MB' : item.fileSize, ...(item.platforms || [])].filter(Boolean);
+    const meta = [item.category, isSolatTime ? 'v1.0.50' : item.version, isSolatTime ? '90 MB' : item.fileSize, ...(item.platforms || [])].filter(Boolean);
     const metaHtml = meta.length ? `<div class="software-meta">${meta.map(v=>`<span>${esc(v)}</span>`).join('')}</div>` : '';
     const productIdMeta = ''; // Product ID hidden from card; still searchable via data-search and copyable via admin ID icon
     const badgeExtra = (!item.bundledDirectory && item.badge) ? `<div class="software-badge extra">${esc(item.badge)}</div>` : '';
@@ -6995,7 +6995,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1451" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1452" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
