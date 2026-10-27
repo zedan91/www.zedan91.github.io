@@ -38,11 +38,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "FORGE Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -91,11 +98,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "PHANTOM Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -144,11 +158,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "HYPER Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -197,11 +218,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "DUAL Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -250,11 +278,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "TURBO Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -302,11 +337,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p / 4K gaming",
+        "Civil 3D / Revit",
+        "3D modelling & rendering",
+        "Creator & photogrammetry"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build prestasi tinggi untuk gaming 1440p/4K, BIM dan kerja creator. 32GB RAM atau lebih disarankan untuk projek besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "PRIME Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -355,11 +397,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "4K gaming / high refresh",
+        "Civil 3D / Revit projek besar",
+        "3D rendering & creator berat",
+        "AI / photogrammetry / CUDA"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build high-end untuk gaming, BIM, rendering dan creator berat. Sesuai untuk pengguna yang perlukan GPU berkuasa serta ruang naik taraf besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / After Effects",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "ULTRA Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -407,11 +456,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "4K gaming / high refresh",
+        "Civil 3D / Revit projek besar",
+        "3D rendering & creator berat",
+        "AI / photogrammetry / CUDA"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build high-end untuk gaming, BIM, rendering dan creator berat. Sesuai untuk pengguna yang perlukan GPU berkuasa serta ruang naik taraf besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / After Effects",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "CRONOX Gaming Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -459,11 +515,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "A1 SET - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -512,11 +575,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "A2 SET - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -565,11 +635,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "A3 SET - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -618,11 +695,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "PERSEUS - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -671,11 +755,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/mainstream-rx.webp",
       "imageAlt": "ARES-G - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -723,11 +814,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "MSI FORGE Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",
@@ -776,11 +874,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "MSI VENTUS Set - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Viewnet",

@@ -46,11 +46,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire C24B 23.8\" AIO - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -106,11 +113,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire C27B 27\" AIO - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -166,11 +180,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire TC-1860 Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -226,11 +247,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "4K gaming / high refresh",
+        "Civil 3D / Revit projek besar",
+        "3D rendering & creator berat",
+        "AI / photogrammetry / CUDA"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build high-end untuk gaming, BIM, rendering dan creator berat. Sesuai untuk pengguna yang perlukan GPU berkuasa serta ruang naik taraf besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / After Effects",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "Acer Predator Orion 5000 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -286,11 +314,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "4K gaming / high refresh",
+        "Civil 3D / Revit projek besar",
+        "3D rendering & creator berat",
+        "AI / photogrammetry / CUDA"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build high-end untuk gaming, BIM, rendering dan creator berat. Sesuai untuk pengguna yang perlukan GPU berkuasa serta ruang naik taraf besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / After Effects",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "Acer Predator Orion 7000 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -346,11 +381,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "4K gaming / high refresh",
+        "Civil 3D / Revit projek besar",
+        "3D rendering & creator berat",
+        "AI / photogrammetry / CUDA"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build high-end untuk gaming, BIM, rendering dan creator berat. Sesuai untuk pengguna yang perlukan GPU berkuasa serta ruang naik taraf besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / After Effects",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "ASUS RNUC15 Mini Desktop PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -406,11 +448,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "CAD / BIM profesional",
+        "AutoCAD / Civil 3D",
+        "3D modelling & visualisation",
+        "Kerja teknikal multi-tasking"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Workstation untuk kerja teknikal dan profesional. Semak kapasiti RAM, VRAM dan storage mengikut saiz projek sebelum tempahan.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "MapInfo / QGIS / Global Mapper",
+        "SketchUp / 3ds Max",
+        "Adobe / Blender"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Lenovo ThinkStation P3 Gen 2 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -467,11 +516,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "CAD / BIM profesional",
+        "AutoCAD / Civil 3D",
+        "3D modelling & visualisation",
+        "Kerja teknikal multi-tasking"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Workstation untuk kerja teknikal dan profesional. Semak kapasiti RAM, VRAM dan storage mengikut saiz projek sebelum tempahan.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "MapInfo / QGIS / Global Mapper",
+        "SketchUp / 3ds Max",
+        "Adobe / Blender"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "HP Z2 G1i Tower AI Workstation - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",
@@ -528,11 +584,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "CAD / BIM profesional",
+        "3D rendering & visualisation",
+        "Photogrammetry / point cloud",
+        "AI / compute workstation"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Workstation kelas profesional untuk projek teknikal, rendering, photogrammetry dan beban GPU berat. Prestasi sebenar bergantung pada konfigurasi RAM, storage dan GPU.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp Pro",
+        "Agisoft Metashape",
+        "Blender / CUDA / AI tools"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Dell Pro Max GB10 AI Supercomputing - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Tech Hypermart",

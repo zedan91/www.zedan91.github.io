@@ -46,11 +46,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Intel Basic Office PC - i3 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -110,11 +117,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "AMD Ryzen Budget Office PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -170,11 +184,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Intel Basic Office PC - i5 - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -230,11 +251,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Intel Entry Gaming PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -291,11 +319,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Budget Balanced Pro PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",
@@ -352,11 +387,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Intel Gaming Pro PC - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Jayacom",

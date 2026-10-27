@@ -34,11 +34,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "C-Zone mempunyai price list komponen dan sejarah desktop package, tetapi snapshot PC package semasa yang dapat disahkan tidak cukup konsisten. AZOBSS menyimpan kedai ini sebagai sumber quote/component-build tanpa mereka-reka harga PC siap.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "C-Zone Custom PC / Component Build - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data C-Zone / Compuzone",

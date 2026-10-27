@@ -34,11 +34,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "TMT menyenaraikan Desktop PC dan Custom PC Build pada laman semasa, tetapi harga/spec build custom tidak boleh dibaca secara stabil untuk snapshot. Dipaparkan sebagai quote-required.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "TMT Custom PC Build - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data TMT / Thunder Match",

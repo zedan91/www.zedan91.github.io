@@ -34,11 +34,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "NETSTORE menyatakan mereka membina custom computers dan menyediakan PC Build Filterer / PC Part Builder, tetapi harga sistem siap tidak dipaparkan secara stabil pada halaman utama. Dipaparkan sebagai quote-required.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "NETSTORE Custom PC Configuration - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data NETSTORE",

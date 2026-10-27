@@ -403,7 +403,7 @@ async function loadLivePrices(attempt=0){
 }
 async function loadRetailerCatalogBuilds(){
   try{
-    const manifestRes=await fetch('./retailers/index.json?v=1435',{cache:'no-store'});if(!manifestRes.ok)throw new Error('Retailer manifest HTTP '+manifestRes.status);
+    const manifestRes=await fetch('./retailers/index.json?v=1443',{cache:'no-store'});if(!manifestRes.ok)throw new Error('Retailer manifest HTTP '+manifestRes.status);
     const manifest=await manifestRes.json(),catalogs=Array.isArray(manifest.catalogs)?manifest.catalogs:[];
     const settled=await Promise.allSettled(catalogs.map(async c=>{const r=await fetch(c.file+'?v=1435',{cache:'no-store'});if(!r.ok)throw new Error(`${c.id} HTTP ${r.status}`);return r.json()}));
     const products=[];
@@ -424,6 +424,6 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;render();renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();render()});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1435" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1443" type="module"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 </body></html>

@@ -42,11 +42,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "IGNITE (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -98,11 +105,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "IGNITE (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -158,11 +172,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "REVIVE (DDR4) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -219,11 +240,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (DDR4) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -280,11 +308,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -341,11 +376,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -402,11 +444,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "GAMING PC SET MURAH (DDR5) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -463,11 +512,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "KAPSULE (ITX AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -524,11 +580,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "AURA (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -585,11 +648,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "KAPSULE (ITX INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -646,11 +716,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "AURA (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -707,11 +784,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "SEAVIEW (DDR5) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -768,11 +852,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "ARCTIC (DDR5) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -829,11 +920,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "AETHRA (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -890,11 +988,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "REAPER (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -951,11 +1056,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "REAPER (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1012,11 +1124,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & productivity",
+        "AutoCAD / CAD-GIS",
+        "Gaming mengikut GPU dipilih",
+        "Creator mengikut konfigurasi"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Konfigurasi fleksibel. Kesesuaian untuk gaming, 3D dan rendering bergantung pada GPU, RAM dan storage yang dipilih.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD / CAD-GIS",
+        "SketchUp",
+        "Adobe / Blender mengikut GPU"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "IKIGAI (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1073,11 +1192,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "AETHRA (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1133,11 +1259,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "ATLAS (AMD) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",
@@ -1193,11 +1326,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "ATLAS (INTEL) - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data ILLEGEAR",

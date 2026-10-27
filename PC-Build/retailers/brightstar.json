@@ -38,11 +38,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Acer Aspire XC Office Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -90,11 +97,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "PC Package Heroes - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -143,11 +157,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Tech Upgrade Set C - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -196,11 +217,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "MSI Cubi NUC 1M Mini Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -248,11 +276,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "Lenovo IdeaCentre Tower Desktop Workstation - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -300,11 +335,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "Office & accounting",
+        "POS / counter system",
+        "Study & web apps",
+        "AutoCAD 2D ringan"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build pejabat ekonomi untuk kerja harian dan CAD 2D ringan. Untuk 3D, rendering atau gaming berat, pilih build dengan dedicated GPU.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "MapInfo / QGIS asas",
+        "Browser / accounting / POS"
+      ],
       "image": "./images/essential-office.webp",
       "imageAlt": "ASUS ExpertCenter D700 SFF - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -352,11 +394,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1080p gaming",
+        "AutoCAD 2D/3D ringan",
+        "SketchUp / CAD-GIS",
+        "Creator ringan–sederhana"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build dedicated GPU untuk gaming 1080p, CAD/GIS dan creator ringan hingga sederhana. Naik taraf RAM jika menggunakan projek 3D atau multitasking berat.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "MapInfo / QGIS / Global Mapper",
+        "Photoshop / Premiere / Blender ringan"
+      ],
       "image": "./images/entry-rtx.webp",
       "imageAlt": "Tech Upgrade Set A - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -405,11 +454,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Tech Upgrade Set B - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -457,11 +513,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "1440p gaming",
+        "AutoCAD / Civil 3D",
+        "Revit / SketchUp",
+        "Creator & GPU rendering"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build performance untuk gaming 1440p dan kerja teknikal/creator. Untuk BIM atau Civil 3D projek besar, 32GB RAM lebih selesa.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "SketchUp / 3ds Max",
+        "Premiere Pro / DaVinci Resolve",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/performance-rtx.webp",
       "imageAlt": "Tech Upgrade Set D - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
@@ -509,11 +572,18 @@
         ]
       ],
       "bestFor": [
-        "Banding harga antara kedai",
-        "Semak stok / konfigurasi sebelum tempahan"
+        "4K gaming / high refresh",
+        "Civil 3D / Revit projek besar",
+        "3D rendering & creator berat",
+        "AI / photogrammetry / CUDA"
       ],
-      "note": "Harga dan stok boleh berubah. Data disimpan dalam katalog dalaman AZOBSS supaya carian tidak perlu keluar ke website kedai.",
-      "softwareFit": [],
+      "note": "Build high-end untuk gaming, BIM, rendering dan creator berat. Sesuai untuk pengguna yang perlukan GPU berkuasa serta ruang naik taraf besar.",
+      "softwareFit": [
+        "AutoCAD / Civil 3D / Revit",
+        "3ds Max / SketchUp",
+        "Premiere Pro / After Effects",
+        "Blender / Agisoft Metashape"
+      ],
       "image": "./images/flagship-rtx.webp",
       "imageAlt": "MSI MPG Infinite X3 AI 2nd Gaming Desktop - visual rujukan AZOBSS",
       "imageNote": "Visual rujukan • data Brightstar Computer",
