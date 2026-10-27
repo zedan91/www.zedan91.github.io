@@ -3281,11 +3281,7 @@ html body .downloads-section{
 <link rel="stylesheet" href="/assets/css/azobss-solattime-commerce.css?v=1409">
 <script src="/assets/js/azobss-solattime-orders.js?v=1421" defer></script>
 
-<style id="azobss-software-affiliate-offer-v1442">
-.az-software-affiliate-disclosure{margin:6px 10px 0;text-align:center;color:#94a3b8;font-size:9px;line-height:1.35;font-weight:700}
-.az-affiliate-offer-btn{background:linear-gradient(135deg,#16a34a,#059669)!important}
-@media(max-width:640px){.az-software-affiliate-disclosure{font-size:8.5px;margin-top:5px}}
-</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -4039,6 +4035,22 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     controls.innerHTML=parts.join('');
   }
 
+  function azNormalizeAffiliateOfferCards1445(root){
+    const scope=root || document;
+    scope.querySelectorAll?.('.download-card').forEach(card=>{
+      const offer=card.querySelector('[data-az-affiliate-offer="1"]');
+      if(!offer) return;
+      card.classList.add('az-affiliate-offer-card');
+      card.querySelectorAll('.az-software-affiliate-disclosure').forEach(el=>el.remove());
+      const children=Array.from(card.children || []);
+      const media=children.find(el=>el.classList?.contains('software-card-media') && el.classList?.contains('az-logo-media'));
+      const title=children.find(el=>el.matches?.('h3,.software-title'));
+      if(media && title && media.nextElementSibling!==title){
+        card.insertBefore(media,title);
+      }
+    });
+  }
+
   function renderSoftwareVirtualPage491(resetPage=false){
     if(!grid) return;
     const signature=softwareVirtualVisibleItems491.map(azSoftwarePoolKey482).join('|');
@@ -4054,6 +4066,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     // Replacing a maximum of eight cards is dramatically cheaper and also
     // prevents the browser from fetching hundreds of off-screen logos.
     grid.innerHTML=pageItems.map(renderItem).join('');
+    azNormalizeAffiliateOfferCards1445(grid);
     softwareDynamicCardPool482.clear();
     grid.querySelectorAll('[data-admin-software="1"]').forEach(card=>{
       const key=String(card.dataset.productId||card.dataset.name||'').toLowerCase();
@@ -5536,7 +5549,6 @@ function normalizeItem(item){
     const publicFreeButtonText = affiliateOffer ? 'Lihat Tawaran' : (freeButtonText || 'Download Now');
     const affiliateOfferAttrs = affiliateOffer ? ' data-az-affiliate-offer="1" aria-label="Lihat tawaran di laman rakan niaga"' : '';
     const normalActionBtnHtml = `<a class="download-btn ${isPremium ? 'premium' : ''}${affiliateOffer ? ' az-affiliate-offer-btn' : ''}" data-azobss-premium-buy="${isPremium ? '1' : '0'}" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="${esc(item.price)}" data-original-price="${esc(item.originalPrice || item.promoOriginalPrice || '')}" data-payment-link="${esc(item.paymentLink)}" data-stripe-link="${esc(item.stripeLink)}" data-download-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-premium-download-file-link="${esc(item.secureDownloadLink || item.downloadLink)}" data-r2-object-key="${esc(item.r2ObjectKey || item.r2Key || '')}" data-download-limit="${esc(item.downloadLimit || 3)}" data-expiry-hours="${esc(item.expiryHours ?? 24)}" data-owner-uid="${esc(item.ownerUid || item.createdByUid || item.staffUid || item.sellerUid || '')}" data-owner-username="${esc(item.ownerUsername || item.createdByUsername || item.staffUsername || item.sellerUsername || '')}" data-owner-email="${esc(item.ownerEmail || item.createdByEmail || item.staffEmail || item.sellerEmail || '')}" data-owner-key="${esc(item.ownerKey || item.createdByKey || item.staffOwnerKey || item.sellerKey || '')}"${affiliateOfferAttrs} href="${esc(isPremium ? (item.paymentLink || item.stripeLink || '#') : freeActionUrl)}" rel="${affiliateOffer ? 'noopener sponsored' : 'noopener'}" target="_blank">${isPremium ? `<span class="buy-price">${esc(item.price || 'RM10')}</span><span class="buy-text">Buy Now</span>` : `<span class="download-text">${esc(publicFreeButtonText)}</span>`}</a>`;
-    const affiliateDisclosureHtml = affiliateOffer ? `<div class="az-software-affiliate-disclosure">Pautan affiliate • pembelian dibuat di laman rakan niaga</div>` : '';
     const promoFreeActionBtnHtml = `<button type="button" class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" aria-label="Claim free promotional download after login"><span class="download-text">🎁 Free Promo Download</span></button>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
@@ -5545,7 +5557,7 @@ function normalizeItem(item){
       ? `<a class="download-btn azdm-setup-download-btn" data-azobss-premium-buy="0" data-product-id="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-download-link="${esc(azdmInstallerUrl)}" href="${esc(azdmInstallerUrl)}" target="_blank" rel="noopener" title="Download AZDM Setup" aria-label="Download AZDM Setup">Download</a>`
       : '';
     const actionHtml = item.softwarePackages?.enabled ? `<button type="button" class="download-btn premium" data-azobss-premium-buy="0" data-software-package-buy="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-package-mode="${esc(item.softwarePackages.fulfilment)}">Choose Plan</button>${azdmInstallerBtnHtml}` : subscriptionHtml || (promoFreeInfo.active ? actionBtnHtml : (isPremium ? `<div class="az-software-buy-cart-row az-stable-action-row-286">${actionBtnHtml}<div class="az-card-cart-slot">${secondaryActionHtml}</div></div>` : actionBtnHtml));
-    return `<div class="download-card software-status-${esc(item.status || 'active')}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-commission-eligible="${isPremium && !promoFreeInfo.active ? '1' : '0'}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + (isSolatTime ? 'Liyabudun AZOBSS SolatTime ' : '') + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
+    return `<div class="download-card software-status-${esc(item.status || 'active')}${affiliateOffer ? ' az-affiliate-offer-card' : ''}" data-admin-software="1" data-doc-id="${esc(item.docId || '')}" data-product-id="${esc(item.productId || item.id)}" data-status="${esc(item.status || 'active')}" data-featured="${item.featured ? '1' : '0'}" data-type="${esc(item.type)}" data-product-price="${esc(item.price || '')}" data-product-kind="${esc(item.type || '')}" data-commission-eligible="${isPremium && !promoFreeInfo.active ? '1' : '0'}" data-created="${esc(item.createdAtMs || Date.now())}" data-views="${esc(itemStats482.views)}" data-downloads="${esc(itemStats482.downloads)}" data-rating="${esc(itemStats482.rating)}" data-rating-votes="${esc(itemStats482.ratingVotes || itemStats482.votes || item.ratingVotes || item.votes || 0)}" data-likes="${esc(itemStats482.likes)}" data-name="${esc(item.name.toLowerCase())}" data-search="${esc((item.name + ' ' + (isSolatTime ? 'Liyabudun AZOBSS SolatTime ' : '') + item.desc + ' ' + item.type + ' ' + item.price + ' ' + (item.originalPrice || item.promoOriginalPrice || '') + ' ' + item.category + ' ' + item.productId + ' ' + item.version + ' ' + item.fileSize + ' ' + (item.platforms||[]).join(' ') + ' ' + item.badge + ' ' + (item.featured?'featured pin top priority':'') + ' ' + (item.subscriptionCodeEnabled?'subscription activation code pro version':'') + ' ' + (item.promoFreeEnabled?'promo free download percuma promosi unit':'')).toLowerCase())}" data-category="${esc(item.category || 'General Tools')}" data-platforms="${esc((item.platforms || []).join('|'))}" data-gif-url="${esc(item.gifUrl || '')}" data-demo-video="${item.demoVideoUrl ? '1' : '0'}">
       ${stableLikeHtml}${stableShareHtml}${stableWatchVideoHtml}${stablePreviewHtml}
       ${mediaHtml}
       ${badgeExtra}
@@ -5560,7 +5572,6 @@ function normalizeItem(item){
       ${promoFreeHtml}
       ${promoFreeNormalPriceHtml}
       <div class="az-card-bottom-actions-498"><div class="az-package-card-actions">${actionHtml}${item.supportEnabled!==false ? `<button type="button" class="az-package-support-btn" data-software-support="1" data-product-name="${esc(item.name)}">Support</button>` : ''}</div></div>
-      ${affiliateDisclosureHtml}
       ${adminEdit}
       ${stableStatsHtml}
     </div>`;
@@ -17837,5 +17848,30 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
 
 <script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1379"></script>
+
+<!-- AZOBSS 1445: affiliate cards use the same logo-first layout as normal software cards; no disclosure row. -->
+<style id="azobss-software-affiliate-layout-v1445">
+html body .download-card.az-affiliate-offer-card > .az-software-affiliate-disclosure{display:none!important;}
+html body #softwareGrid > .download-card.az-affiliate-offer-card > .software-card-media.az-logo-media,
+html body #softwareDownloadsGrid > .download-card.az-affiliate-offer-card > .software-card-media.az-logo-media,
+html body .downloads-grid > .download-card.az-affiliate-offer-card > .software-card-media.az-logo-media{
+  order:1!important;
+}
+html body #softwareGrid > .download-card.az-affiliate-offer-card > h3,
+html body #softwareDownloadsGrid > .download-card.az-affiliate-offer-card > h3,
+html body .downloads-grid > .download-card.az-affiliate-offer-card > h3,
+html body #softwareGrid > .download-card.az-affiliate-offer-card > .software-title,
+html body #softwareDownloadsGrid > .download-card.az-affiliate-offer-card > .software-title,
+html body .downloads-grid > .download-card.az-affiliate-offer-card > .software-title{order:2!important;}
+html body #softwareGrid > .download-card.az-affiliate-offer-card > .software-meta,
+html body #softwareDownloadsGrid > .download-card.az-affiliate-offer-card > .software-meta,
+html body .downloads-grid > .download-card.az-affiliate-offer-card > .software-meta{order:3!important;}
+html body #softwareGrid > .download-card.az-affiliate-offer-card > .azobss-sw-desc-target-097,
+html body #softwareDownloadsGrid > .download-card.az-affiliate-offer-card > .azobss-sw-desc-target-097,
+html body .downloads-grid > .download-card.az-affiliate-offer-card > .azobss-sw-desc-target-097,
+html body #softwareGrid > .download-card.az-affiliate-offer-card > p,
+html body #softwareDownloadsGrid > .download-card.az-affiliate-offer-card > p,
+html body .downloads-grid > .download-card.az-affiliate-offer-card > p{order:4!important;}
+</style>
 </body>
 </html>
