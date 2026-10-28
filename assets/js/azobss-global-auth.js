@@ -4404,7 +4404,10 @@ function azobssPurchaseDownloadPayload(r, format){
       downloadCount: azobssPurchaseDownloadCount(r),
       maxDownloads: azobssPurchaseDownloadMax(r),
       paidAtMs: azobssPurchasePaidAtMs(r),
-      downloadExpiresAtMs: azobssPurchaseDownloadExpiresAtMs(r)
+      downloadExpiresAtMs: azobssPurchaseDownloadExpiresAtMs(r),
+      fileAvailable:r?.fileAvailable, downloadAvailable:r?.downloadAvailable,
+      accessAllowed:r?.accessAllowed, downloadAllowed:r?.downloadAllowed,
+      downloadStatus:r?.downloadStatus, accessStatus:r?.accessStatus
     }));
   }catch(e){ return ''; }
 }
@@ -4594,217 +4597,158 @@ function azobssCanShowPaBmAdminReset(){
 }
 window.azobssCanShowPaBmAdminReset = azobssCanShowPaBmAdminReset;
 
-function azobssSetLotDownloadBusyVisual(candidate){
-  try{
-    if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download') || candidate.classList.contains('is-locked')) return false;
-    // v1146: use a real child element, not ::before/::after.
-    // Older PA/BM patches also use pseudo-elements for busy buttons and were
-    // overriding the newer spinner. A real DOM spinner avoids that cascade race.
-    candidate.dataset.busy = '1';
-    candidate.classList.add('azobss-download-button-spinning');
-    candidate.setAttribute('aria-busy', 'true');
-    candidate.setAttribute('aria-label', 'Sedang menyediakan fail');
-    if(!candidate.querySelector('.azobss-btn-spinner-v1146')){
-      candidate.innerHTML = '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>';
-    }
-    return true;
-  }catch(_){ return false; }
+// AZOBSS v1460: one record-driven owner for PA/BM download presentation.
+// No quota decisions are inferred from classes, labels, disabled or busy attributes.
+// Native attachment handoffs retain the original per-attempt quota identity.
+function azobssPaBmDownloadRecords(){
+  return window.__azobssPaBmDownloadRecords1460 || (window.__azobssPaBmDownloadRecords1460 = new Map());
 }
-
-function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
-  try{
-    if(document.body) document.body.classList.toggle('az-pabm-download-active', !!active);
-    document.querySelectorAll('.user-pa-download').forEach(function(candidate){
-      const candidateKey = String(candidate.getAttribute('data-download-payload') || candidate.getAttribute('data-download-url') || '');
-      const isOwner = !!active && (candidate === owner || (!!activeKey && candidateKey === activeKey));
-      const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
-      if(isOwner){
-        candidate.dataset.busy = '1';
-        candidate.classList.add('azobss-download-button-spinning');
-        if(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.phase === 'preparing') candidate.dataset.preparing = '1';
-        else delete candidate.dataset.preparing;
-        delete candidate.dataset.downloadLocked;
-        candidate.removeAttribute('aria-disabled');
-        candidate.setAttribute('aria-busy', 'true');
-        if(!azobssSetLotDownloadBusyVisual(candidate)) candidate.textContent = String(window.__azobssPaBmActiveDownload && window.__azobssPaBmActiveDownload.label || 'Downloading...');
-        candidate.style.pointerEvents = 'none';
-      }else if(active){
-        candidate.dataset.downloadLocked = '1';
-        candidate.setAttribute('aria-disabled', 'true');
-      }else{
-        delete candidate.dataset.downloadLocked;
-        candidate.removeAttribute('aria-disabled');
-        if(candidate.dataset.busy === '1'){
-          delete candidate.dataset.busy;
-          delete candidate.dataset.preparing;
-          candidate.classList.remove('azobss-download-button-spinning');
-          candidate.removeAttribute('aria-busy');
-          candidate.textContent = defaultLabel;
-          candidate.setAttribute('aria-label', defaultLabel);
-          candidate.style.pointerEvents = '';
-        }
-      }
-    });
-  }catch(_){ }
+function azobssPaBmDownloadRecordKey(r){
+  const id = String(r && (r.firestoreId || r.purchaseLogId || r.id) || '').trim();
+  if(id) return 'id:' + id;
+  return JSON.stringify([r && r.uid, r && r.usernameKey, r && (r.productType || r.product), r && r.itemCode, r && r.negeri, r && (r.createdAtMs || r.createdAtClient), r && r.downloadUrl]);
 }
-
-
-
-
-// AZOBSS v1451: deterministic PA/BM download UI release + anti-spam cooldown.
-// A successful browser handoff can race with purchase-list rerenders. The old
-// cleanup only touched the original DOM node, so a freshly rendered replacement
-// could remain visually locked/busy. These helpers normalize the current DOM too.
-function azobssPaBmDownloadCooldownStore(){
-  if(!window.__azobssPaBmDownloadCooldowns || typeof window.__azobssPaBmDownloadCooldowns !== 'object'){
-    window.__azobssPaBmDownloadCooldowns = Object.create(null);
+function azobssRegisterPaBmDownloadRecord(r){
+  const key = azobssPaBmDownloadRecordKey(r);
+  azobssPaBmDownloadRecords().set(key, r);
+  return key;
+}
+function azobssPaBmDownloadButtonRecord(button){
+  if(!button) return null;
+  const row = button.closest('[data-pabm-record-key]');
+  const key = (row && row.getAttribute('data-pabm-record-key')) || button.getAttribute('data-pabm-record-key');
+  if(key && azobssPaBmDownloadRecords().has(key)) return azobssPaBmDownloadRecords().get(key);
+  // Compatibility with a restored DOM: the payload contains the purchase facts,
+  // including payment, expiry and usage, rather than a cached presentation flag.
+  try{ return JSON.parse(decodeURIComponent(button.getAttribute('data-download-payload') || '')); }catch(_e){ return null; }
+}
+function azobssPaBmDownloadButtonState(r, format){
+  const paymentStatus = String(r && (r.status || r.paymentStatus || r.payment_status) || '').trim().toLowerCase();
+  const paid = !!r && !/^(pending|pending payment|unpaid|failed|cancelled|canceled|refunded)$/.test(paymentStatus) && azobssIsPurchasePaidForDownload(r);
+  const days = r ? azobssPurchaseDownloadRemainingDays(r) : 0;
+  const used = r ? azobssPurchaseDownloadCount(r) : 0;
+  const max = r ? azobssPurchaseDownloadMax(r) : AZOBSS_PA_BM_MAX_DOWNLOADS;
+  const expired = !!r && (days <= 0 || /^(expired|tamat)$/i.test(String(r.downloadStatus || r.accessStatus || r.status || '')));
+  const unavailable = !r || r.fileAvailable === false || r.downloadAvailable === false || r.accessAllowed === false || r.downloadAllowed === false
+    || /^(unavailable|denied|revoked|forbidden)$/i.test(String(r.downloadStatus || r.accessStatus || ''));
+  const url = r ? azobssBuildPaidPurchaseDownloadUrl(r, format) : '';
+  const canDownload = paid && !expired && used < max && !unavailable && !!url;
+  const active = window.__azobssPaBmActiveDownload;
+  const key = r ? azobssPaBmDownloadRecordKey(r) : '';
+  const selectedFormat = String(format || (r && r.downloadFormat) || 'original').replace(/^zip$/, 'original');
+  const busy = canDownload && !!(active && !active.released && active.recordKey === key && active.format === selectedFormat);
+  const reason = !paid ? 'Pending Payment' : expired ? 'Tamat' : used >= max ? 'Had download telah digunakan' : unavailable || !url ? 'Fail tidak tersedia' : '';
+  return { canDownload, busy, reason, paid, days, used, max, key, format:selectedFormat, url };
+}
+function azobssApplyPaBmDownloadButtonState(button, record){
+  if(!button || !button.classList || !button.classList.contains('user-pa-download')) return null;
+  const r = record || azobssPaBmDownloadButtonRecord(button);
+  if(!r) return null; // Unknown/legacy non-download spans fail closed.
+  const state = azobssPaBmDownloadButtonState(r, button.getAttribute('data-download-format') || r.downloadFormat);
+  const label = button.getAttribute('data-default-label') || (state.format === 'dxf' ? 'DXF' : '↓');
+  const setAttr = (name,value) => { if(button.getAttribute(name) !== value) button.setAttribute(name,value); };
+  const text = state.canDownload ? label : state.reason;
+  // Writes must be idempotent: assigning identical textContent still emits a
+  // childList mutation. v1458/1459's observer was feeding itself every frame.
+  const attributes = {
+    'data-download-locked':null, 'data-download-active':null, 'data-azobss-click-claimed':null,
+    'data-busy':state.busy ? '1' : null,
+    'data-preparing':state.busy && window.__azobssPaBmActiveDownload.phase === 'preparing' ? '1' : null,
+    'aria-busy':state.busy ? 'true' : null,
+    'aria-disabled':state.canDownload ? null : 'true',
+    'disabled':!state.canDownload && 'disabled' in button ? '' : null
+  };
+  Object.keys(attributes).forEach(function(attr){
+    const value=attributes[attr];
+    if(value === null){ if(button.hasAttribute(attr)) button.removeAttribute(attr); }
+    else setAttr(attr,value);
+  });
+  if('disabled' in button && button.disabled !== !state.canDownload) button.disabled = !state.canDownload;
+  for(const cls of ['is-locked','is-busy','is-loading','loading','disabled','is-disabled','is-pending-status','azobss-download-button-spinning']){
+    const wanted = cls === 'is-locked' ? !state.canDownload : cls === 'azobss-download-button-spinning' ? state.busy : false;
+    if(button.classList.contains(cls) !== wanted) button.classList.toggle(cls,wanted);
   }
-  return window.__azobssPaBmDownloadCooldowns;
+  for(const prop of ['pointer-events','opacity','cursor','background','background-color','color','filter']){
+    if(button.style.getPropertyValue(prop)) button.style.removeProperty(prop);
+  }
+  if(state.busy){
+    setAttr('aria-label','Sedang menyediakan fail');
+    if(!button.querySelector('.azobss-btn-spinner-v1146')) button.innerHTML='<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>';
+  }else{
+    const shown = !state.canDownload && state.used >= state.max && state.paid && state.days > 0 ? '🔒' : text;
+    if(button.textContent !== shown || button.children.length) button.textContent = shown;
+    setAttr('aria-label', state.canDownload ? (button.getAttribute('title') || label) : state.reason);
+    if(!state.canDownload) setAttr('tabindex','-1');
+    else if(button.getAttribute('tabindex') === '-1') button.removeAttribute('tabindex');
+  }
+  return state;
 }
-function azobssPaBmDownloadCoolingDown(key){
-  const k = String(key || '').trim();
-  if(!k) return false;
-  const store = azobssPaBmDownloadCooldownStore();
-  const until = Number(store[k] || 0);
-  if(!until) return false;
-  if(Date.now() >= until){ try{ delete store[k]; }catch(_e){} return false; }
+function azobssSyncPaBmDownloadButtons(){
+  document.querySelectorAll('.user-pa-download').forEach(button => azobssApplyPaBmDownloadButtonState(button));
+  if(document.body) document.body.classList.toggle('az-pabm-download-active', !!window.__azobssPaBmActiveDownload);
+}
+function azobssSetLotDownloadBusyVisual(button){
+  const state = azobssApplyPaBmDownloadButtonState(button);
+  return !!(state && state.busy);
+}
+function azobssSetPaBmDownloadUiLock(){ azobssSyncPaBmDownloadButtons(); }
+function azobssNormalizePaBmDownloadButton(button){ return azobssApplyPaBmDownloadButtonState(button); }
+function azobssReleasePaBmDownloadUi(owner){
+  const active = window.__azobssPaBmActiveDownload;
+  if(active && active !== owner) return false; // Old completions cannot clear a newer attempt.
+  if(owner) owner.released = true;
+  if(active === owner) window.__azobssPaBmActiveDownload = null;
+  if(owner && owner.link) azobssApplyPaBmDownloadButtonState(owner.link);
+  azobssSyncPaBmDownloadButtons();
   return true;
 }
-function azobssStartPaBmDownloadCooldown(key, ms){
-  const k = String(key || '').trim();
-  if(!k) return;
-  azobssPaBmDownloadCooldownStore()[k] = Date.now() + Math.max(1200, Number(ms || 3500));
+function azobssRepairIdlePaBmDownloadUi(){ azobssSyncPaBmDownloadButtons(); }
+function azobssPaBmDownloadCooldownStore(){
+  return window.__azobssPaBmDownloadCooldowns || (window.__azobssPaBmDownloadCooldowns = Object.create(null));
 }
-function azobssIsFirefoxBrowser1459(){
-  try{ return /Firefox\//i.test(String(navigator && navigator.userAgent || '')); }catch(_e){ return false; }
+function azobssPaBmDownloadCoolingDown(key){
+  const until = Number(azobssPaBmDownloadCooldownStore()[key] || 0);
+  if(until <= Date.now()){ delete azobssPaBmDownloadCooldownStore()[key]; return false; }
+  return true;
 }
-function azobssNormalizePaBmDownloadButton(candidate){
-  try{
-    if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download')) return;
-    const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
-    const isRealDownloadControl = !!(candidate.getAttribute('data-default-label') && (candidate.getAttribute('data-download-payload') || candidate.getAttribute('data-download-url')));
-    // v1459 Firefox: Firefox/bfcache can restore the dynamic DOM state from the
-    // moment another download button was temporarily locked. A genuine paid
-    // download control is identifiable by its data-download-* payload. It is safe
-    // to remove a stale is-locked/disabled state from that control; true Expired,
-    // 5/5 and Pending rows are rendered as non-download spans without this payload.
-    if(isRealDownloadControl && !candidate.classList.contains('is-pending-status')){
-      candidate.classList.remove('is-locked');
-      candidate.removeAttribute('disabled');
-      try{ if('disabled' in candidate) candidate.disabled = false; }catch(_e){}
-    }
-    try{ delete candidate.dataset.busy; }catch(_e){ candidate.removeAttribute('data-busy'); }
-    try{ delete candidate.dataset.preparing; }catch(_e){ candidate.removeAttribute('data-preparing'); }
-    try{ delete candidate.dataset.downloadLocked; }catch(_e){ candidate.removeAttribute('data-download-locked'); }
-    try{ delete candidate.dataset.azobssClickClaimed; }catch(_e){ candidate.removeAttribute('data-azobss-click-claimed'); }
-    candidate.classList.remove('azobss-download-button-spinning');
-    candidate.removeAttribute('aria-busy');
-    candidate.removeAttribute('aria-disabled');
-    candidate.style.pointerEvents = '';
-    try{ candidate.querySelectorAll('.azobss-btn-spinner-v1146,.az-lot-busy-spinner-v949').forEach(function(node){ node.remove(); }); }catch(_e){}
-    if(!candidate.classList.contains('is-locked') && !candidate.classList.contains('is-pending-status')){
-      candidate.textContent = defaultLabel;
-      candidate.setAttribute('aria-label', defaultLabel);
-    }
-  }catch(_e){}
-}
-function azobssReleasePaBmDownloadUi(owner){
-  try{
-    const active = window.__azobssPaBmActiveDownload;
-    // Never let a delayed cleanup from an older download unlock a newer one.
-    if(active && owner && active !== owner) return false;
-    if(!owner || active === owner) window.__azobssPaBmActiveDownload = null;
-    if(document.body) document.body.classList.remove('az-pabm-download-active');
-    document.querySelectorAll('.user-pa-download').forEach(azobssNormalizePaBmDownloadButton);
-    return true;
-  }catch(_e){ return false; }
-}
-function azobssRepairIdlePaBmDownloadUi(){
-  try{
-    const active = window.__azobssPaBmActiveDownload;
-    // Do not touch a real in-progress download. This repair only heals stale DOM
-    // left behind after the owner has already completed/failed and been released.
-    if(active) return false;
-    if(document.body) document.body.classList.remove('az-pabm-download-active');
-    document.querySelectorAll('.user-pa-download').forEach(azobssNormalizePaBmDownloadButton);
-    return true;
-  }catch(_e){ return false; }
-}
-function azobssSchedulePaBmDownloadUiRelease(owner){
-  // v1458: purchase records can rerender as late as ~4.2s after a ZIP handoff.
-  // Keep healing beyond that window so a replacement DOM node cannot remain grey/locked.
-  [0, 150, 500, 1200, 2500, 4500, 7000, 10000].forEach(function(delay){
-    window.setTimeout(function(){
-      azobssReleasePaBmDownloadUi(owner);
-      azobssRepairIdlePaBmDownloadUi();
-    }, delay);
-  });
-}
+function azobssStartPaBmDownloadCooldown(key, ms){ azobssPaBmDownloadCooldownStore()[key] = Date.now() + Number(ms || 3500); }
 function azobssInstallPaBmDownloadUiSelfHeal(){
-  try{
-    if(window.__azobssPaBmDownloadUiSelfHeal1459) return;
-    window.__azobssPaBmDownloadUiSelfHeal1459 = true;
-    let queued = false;
-    const queueRepair = function(){
-      if(queued) return;
-      queued = true;
-      const run = function(){
-        queued = false;
-        azobssRepairIdlePaBmDownloadUi();
-      };
-      if(typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(run);
-      else window.setTimeout(run, 0);
-    };
-    const startObserver = function(){
-      queueRepair();
-      if(typeof MutationObserver === 'undefined') return;
-      const target = document.getElementById('userPaPurchaseList') || document.body;
-      if(!target) return;
-      new MutationObserver(function(){
-        // A purchase-list refresh can replace the exact button that was normalized
-        // in finally{}. If there is no active owner, the replacement must be ready.
-        if(!window.__azobssPaBmActiveDownload) queueRepair();
-      }).observe(target, {
-        childList:true,
-        subtree:true,
-        attributes:true,
-        attributeFilter:['data-busy','data-preparing','data-download-locked','aria-busy','aria-disabled','class']
-      });
-    };
-    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserver, { once:true });
-    else startObserver();
-    window.addEventListener('pagehide', function(ev){
-      // v1459 Firefox BFCache: do not carry a transient download owner/lock into
-      // a cached page snapshot. Navigating away already ends this page's UI task.
-      if(azobssIsFirefoxBrowser1459() && ev && ev.persisted){
-        window.__azobssPaBmActiveDownload = null;
-        azobssRepairIdlePaBmDownloadUi();
-      }
-    });
-    window.addEventListener('pageshow', function(ev){
-      // Firefox restores DOM attributes/classes very aggressively from BFCache.
-      // Force a clean idle state on a persisted restore before the next paint.
-      if(azobssIsFirefoxBrowser1459() && ev && ev.persisted){
-        window.__azobssPaBmActiveDownload = null;
-        azobssReleasePaBmDownloadUi(null);
-      }
-      queueRepair();
-      window.setTimeout(queueRepair, 80);
-      window.setTimeout(queueRepair, 450);
-    });
-    window.addEventListener('focus', function(){
-      queueRepair();
-      if(azobssIsFirefoxBrowser1459()) window.setTimeout(queueRepair, 120);
-    });
-    document.addEventListener('visibilitychange', function(){
-      if(!document.hidden){
-        queueRepair();
-        if(azobssIsFirefoxBrowser1459()) window.setTimeout(queueRepair, 120);
-      }
-    });
-  }catch(_e){}
+  if(window.__azobssPaBmDownloadUiSelfHeal1460) return;
+  window.__azobssPaBmDownloadUiSelfHeal1460 = true;
+  let observer;
+  let queued = false;
+  function sync(){
+    queued = false;
+    // Disconnect while applying; never observe our own attribute/text writes.
+    if(observer) observer.disconnect();
+    try{ azobssSyncPaBmDownloadButtons(); }
+    finally{
+      const target = document.getElementById('userPaPurchaseList');
+      if(observer && target) observer.observe(target,{childList:true,subtree:true,attributes:true,attributeFilter:['data-busy','data-preparing','data-download-locked','data-download-active','data-azobss-click-claimed','disabled','aria-busy','aria-disabled','class','style']});
+    }
+  }
+  function queue(){
+    if(queued) return;
+    queued = true;
+    Promise.resolve().then(sync); // No animation frame dependency in a hidden Firefox tab.
+  }
+  function start(){ if(typeof MutationObserver === 'function') observer = new MutationObserver(queue); sync(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+  window.addEventListener('pageshow',function(event){
+    if(event.persisted){
+      const old = window.__azobssPaBmActiveDownload;
+      if(old){ old.released=true; window.__azobssPaBmActiveDownload=null; }
+    }
+    sync();
+  });
+  window.addEventListener('focus',sync);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) sync(); });
 }
+window.azobssApplyPaBmDownloadButtonState = azobssApplyPaBmDownloadButtonState;
+window.azobssSyncPaBmDownloadButtons = azobssSyncPaBmDownloadButtons;
+window.__AZOBSS_PABM_DOWNLOAD_STATE_OWNER__ = 'global-auth-v1460';
 azobssInstallPaBmDownloadUiSelfHeal();
+
 
 // AZOBSS v1146: single DOM spinner for Download + Test; verified Render /health wake check; PA/BM page pre-wakes backend from <head>.
 // IMPORTANT v1144: deploy-server.js exposes /health. Do not use /api/health.
@@ -4982,7 +4926,7 @@ function azobssTriggerHiddenAttachmentDownload(url){
   if(!targetUrl) return false;
   try{
     const parsed = new URL(targetUrl, window.location.href);
-    const isAzobssAttachment = String(parsed.hostname || '').toLowerCase() === 'azobss-backend.onrender.com'
+    const isAzobssAttachment = (String(parsed.hostname || '').toLowerCase() === 'azobss-backend.onrender.com' || parsed.origin === window.location.origin)
       && /\/api\/pa-bm-download(?:\/|$)/i.test(String(parsed.pathname || ''))
       && (parsed.searchParams.get('download') === '1' || /\.(?:zip|dxf|pdf)(?:$|[?#])/i.test(parsed.href));
 
@@ -5023,15 +4967,16 @@ async function azobssLegacyUrlOnlyDownload(url, link){
   const value = String(url || '').trim();
   if(!value) return false;
   if(azobssPaBmDownloadCoolingDown(value)) return false;
+  if(window.__azobssPaBmActiveDownload) return false;
   const startedAt = Date.now();
+  const record = azobssPaBmDownloadButtonRecord(link);
+  const owner = {key:value,recordKey:record ? azobssPaBmDownloadRecordKey(record) : value,format:'original',link,startedAt,phase:'downloading'};
+  window.__azobssPaBmActiveDownload = owner;
   try{
+    azobssSyncPaBmDownloadButtons();
     if(link){
       azobssEnsureDownloadButtonSpinnerStyle();
-      link.dataset.busy = '1';
-      link.classList.add('azobss-download-button-spinning');
       if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = 'Preparing...';
-      link.style.pointerEvents = 'none';
-      link.setAttribute('aria-busy','true');
       link.setAttribute('href','#');
       link.removeAttribute('download');
       link.removeAttribute('target');
@@ -5046,6 +4991,7 @@ async function azobssLegacyUrlOnlyDownload(url, link){
       throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
     }
     azobssStartPaBmDownloadCooldown(value, 3500);
+    azobssReleasePaBmDownloadUi(owner);
     await azobssWaitForDownloadHandoffPaint();
     return true;
   }catch(error){
@@ -5057,7 +5003,7 @@ async function azobssLegacyUrlOnlyDownload(url, link){
       const elapsed = Date.now() - startedAt;
       if(elapsed < 900) await new Promise(function(resolve){ window.setTimeout(resolve, 900 - elapsed); });
     }catch(_e){}
-    if(link){ azobssNormalizePaBmDownloadButton(link); }
+    azobssReleasePaBmDownloadUi(owner);
   }
 }
 
@@ -5076,7 +5022,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   const link = linkEl || (clickEvent && clickEvent.currentTarget) || (window.event && window.event.currentTarget) || null;
   const originalText = link ? link.textContent : '';
   const defaultLabel = link ? String(link.getAttribute('data-default-label') || originalText || 'Download') : 'Download';
-  const downloadKey = String(encodedPayload || (link && (link.getAttribute('data-download-payload') || link.getAttribute('data-download-url'))) || '');
+  const downloadKey = azobssPaBmDownloadRecordKey(r) + '|' + String(r.downloadFormat || 'original').replace(/^zip$/, 'original');
   const activeDownload = window.__azobssPaBmActiveDownload;
   if(activeDownload){
     if(activeDownload.key !== downloadKey){
@@ -5084,7 +5030,16 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     }
     return false;
   }
-  if(link && link.dataset && link.dataset.busy === '1') return false;
+  const latestRecord = azobssPaBmDownloadRecords().get(azobssPaBmDownloadRecordKey(r));
+  if(latestRecord) r = Object.assign({}, latestRecord, {downloadFormat:r.downloadFormat});
+  else azobssRegisterPaBmDownloadRecord(r);
+  const canonicalState = azobssPaBmDownloadButtonState(r, r.downloadFormat);
+  if(link) azobssApplyPaBmDownloadButtonState(link, r);
+  if(!canonicalState.canDownload){
+    alert(canonicalState.reason);
+    try{ azobssSchedulePurchaseRecordsRefresh('download access unavailable'); }catch(_e){}
+    return false;
+  }
   if(azobssPaBmDownloadCoolingDown(downloadKey)) return false;
 
   const used = azobssPurchaseDownloadCount(r);
@@ -5138,6 +5093,8 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
 
   const downloadOwner = {
     key: downloadKey || directUrl,
+    recordKey: azobssPaBmDownloadRecordKey(r),
+    format: downloadFormat,
     link: link || null,
     startedAt: Date.now(),
     phase: isLotDownload ? 'preparing' : 'downloading',
@@ -5148,11 +5105,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
   try{
     if(link){
       azobssEnsureDownloadButtonSpinnerStyle();
-      link.dataset.busy = '1';
-      link.classList.add('azobss-download-button-spinning');
       if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
-      link.style.pointerEvents = 'none';
-      link.setAttribute('aria-busy', 'true');
       link.setAttribute('href', '#');
       link.removeAttribute('download');
       link.removeAttribute('target');
@@ -5234,6 +5187,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           throw new Error('Browser gagal memulakan muat turun ZIP tanpa meninggalkan halaman AZOBSS.');
         }
         downloadTriggered = true;
+        azobssReleasePaBmDownloadUi(downloadOwner);
         azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
         await azobssWaitForDownloadHandoffPaint();
         try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download'); }catch(e){}
@@ -5247,6 +5201,22 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       downloadOwner.label = 'Muat ' + downloadFormat.toUpperCase() + '...';
       if(link) if(!azobssSetLotDownloadBusyVisual(link)) link.textContent = downloadOwner.label;
       azobssSetPaBmDownloadUiLock(true, link, downloadOwner.key);
+    }
+
+    // Firefox can reject fetch() of an attachment as NetworkError (including
+    // download-manager interception) after the server has served/counts the file.
+    // Retrying fetch for two minutes then strands the spinner despite a download.
+    // Use one native attachment handoff; keep its existing idempotency key and
+    // leave ZIP/DXF generation and authoritative quota enforcement on the server.
+    if(typeof navigator !== 'undefined' && /Firefox\//i.test(navigator.userAgent || '')){
+      const nativeUrl = directUrl + (directUrl.includes('?') ? '&' : '?') + 'download=1';
+      if(!azobssTriggerHiddenAttachmentDownload(nativeUrl)) throw new Error('Browser gagal memulakan muat turun.');
+      downloadTriggered = true;
+      azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
+      azobssReleasePaBmDownloadUi(downloadOwner);
+      try{ azobssSchedulePurchaseRecordsRefresh('Firefox native attachment handoff'); }catch(_e){}
+      setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('Firefox attachment snapshot'); }catch(_e){} },1800);
+      return false;
     }
 
     let response = null;
@@ -5308,6 +5278,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         try{ azobssOpenDownloadFallbackWithoutLeavingPage(directUrl); }catch(e){}
       }
       downloadTriggered = true;
+      azobssReleasePaBmDownloadUi(downloadOwner);
       azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
       await azobssWaitForDownloadHandoffPaint();
       try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
@@ -5336,6 +5307,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           a.remove();
         }
         downloadTriggered = true;
+        azobssReleasePaBmDownloadUi(downloadOwner);
         azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
         await azobssWaitForDownloadHandoffPaint();
         try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
@@ -5378,6 +5350,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     document.body.appendChild(a);
     a.click();
     downloadTriggered = true;
+    azobssReleasePaBmDownloadUi(downloadOwner);
     azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
     a.remove();
     // v1150: do not clear the button immediately after a.click(). The file bytes are
@@ -5408,15 +5381,12 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     if(window.__azobssPaBmActiveDownload === downloadOwner){
       window.__azobssPaBmActiveDownload = null;
     }
-    // v1451 hard release: normalize both the original node and any replacement
-    // created by a purchase-list refresh, then repeat cleanup after render races.
-    if(link) azobssNormalizePaBmDownloadButton(link);
+    // Failure and early returns release here; successful handoffs already released.
     azobssReleasePaBmDownloadUi(downloadOwner);
-    azobssSchedulePaBmDownloadUiRelease(downloadOwner);
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
-window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1155';
+window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1460';
 
 (function(){
   if(window.__azobssPaBmDownloadCaptureInstalled) return;
@@ -5434,7 +5404,8 @@ window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1155';
   }
   document.addEventListener('click', function(ev){
     const link = findDownloadLink(ev.target);
-    if(!link || link.classList.contains('is-locked') || link.classList.contains('is-pending-status')) return;
+    if(!link) return;
+    const state = azobssApplyPaBmDownloadButtonState(link);
     const payload = link.getAttribute('data-download-payload') || '';
     const url = link.getAttribute('data-download-url') || '';
     if(!payload && !url) return;
@@ -5443,15 +5414,10 @@ window.__AZOBSS_PABM_DOWNLOAD_OWNER__ = 'azobss-global-auth-v1155';
       ev.stopPropagation();
       if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
     }catch(e){}
+    if(state && !state.canDownload) return false;
     if(window.azobssClientControlledDownload){
       if(payload){
-        // v1114: this capture handler is the single click owner.
-        // Mark the DOM element immediately so no second path can start the same click.
-        if(link.dataset && link.dataset.azobssClickClaimed === '1') return false;
-        if(link.dataset) link.dataset.azobssClickClaimed = '1';
-        Promise.resolve(window.azobssClientControlledDownload(payload, link, ev)).finally(function(){
-          try{ if(link && link.dataset) delete link.dataset.azobssClickClaimed; }catch(_e){}
-        });
+        Promise.resolve(window.azobssClientControlledDownload(payload, link, ev)).catch(function(error){ console.error('PA/BM download failed:', error); });
       }else{
         // v1148 legacy URL-only safety: use the same health gate + hidden delivery path.
         // Never navigate the current PA/BM tab to Render or a source fallback page.
@@ -5609,6 +5575,7 @@ function azobssLotPurchasePercentLabel(record){
 }
 
 function purchaseDetailRowHtml(r){
+  const recordKey1460 = azobssRegisterPaBmDownloadRecord(r);
   const itemType = String(r.productType || r.product || 'PA').trim().toUpperCase();
   const itemCode = (itemType === 'NDCDB' || itemType === 'NDCDB_C3') && r.productId
     ? r.productId
@@ -5627,10 +5594,10 @@ function purchaseDetailRowHtml(r){
   const paidDownloadName = azobssPaidPurchaseDownloadFilename(r);
   const paidDownloadPayload = azobssPurchaseDownloadPayload(r);
   const activeDownload = window.__azobssPaBmActiveDownload;
-  const isActiveDownload = !!(activeDownload && activeDownload.key === paidDownloadPayload);
-  const isOtherDownloadActive = !!(activeDownload && !isActiveDownload);
+  const isActiveDownload = azobssPaBmDownloadButtonState(r, 'original').busy;
+  const isOtherDownloadActive = false;
   const paid = azobssIsPurchasePaidForDownload(r);
-  const allowed = azobssPurchaseDownloadAllowed(r);
+  const allowed = azobssPaBmDownloadButtonState(r, 'original').canDownload;
   const expired = paid && azobssPurchaseDownloadExpired(r);
   const limitReached = paid && azobssPurchaseDownloadLimitReached(r);
   const used = azobssPurchaseDownloadCount(r);
@@ -5658,8 +5625,8 @@ function purchaseDetailRowHtml(r){
         const url = azobssBuildPaidPurchaseDownloadUrl(r, def.key);
         const payload = azobssPurchaseDownloadPayload(r, def.key);
         const filename = azobssPaidPurchaseDownloadFilename(r, def.key);
-        const active = !!(activeDownload && activeDownload.key === payload);
-        const lockedByOther = !!(activeDownload && !active);
+        const active = azobssPaBmDownloadButtonState(r, def.key).busy;
+        const lockedByOther = false;
         const shownLabel = active ? '<span class="azobss-btn-spinner-v1146" aria-hidden="true"></span>' : escHtml(def.label);
         return `<a class="user-pa-download az-lot-format-download az-lot-format-${def.key}${active ? ' azobss-download-button-spinning' : ''}" href="#" title="${escHtml(def.title)}" data-default-label="${def.label}" data-download-format="${def.key}" data-download-url="${escHtml(url)}" data-download-name="${escHtml(filename)}" data-download-payload="${payload}"${active ? ' data-busy="1" aria-busy="true"' : ''}${active && activeDownload.phase === 'preparing' ? ' data-preparing="1"' : ''}${lockedByOther ? ' data-download-locked="1" aria-disabled="true"' : ''} >${shownLabel}</a>`;
       }).join('');
@@ -5673,7 +5640,7 @@ function purchaseDetailRowHtml(r){
     if(limitReached){
       actionHtml = `<div class="user-pa-action-with-count az-lot-download-action az-download-limit-action-v957"><span class="az-lot-download-format-group"><span class="user-pa-download is-locked az-lot-format-download az-lot-format-original az-download-limit-used-v957" title="Had download telah digunakan" aria-label="Had download telah digunakan">🔒</span></span>${dlMetaHtml}${adminResetHtml}</div>`;
     }else{
-      const reason = expired ? 'Tamat' : 'Expired';
+      const reason = azobssPaBmDownloadButtonState(r, 'original').reason || 'Fail tidak tersedia';
       actionHtml = `<div class="user-pa-action-with-count"><span class="user-pa-download is-locked">${escHtml(reason)}</span>${dlMetaHtml}${adminResetHtml}</div>`;
     }
   }else{
@@ -5681,7 +5648,7 @@ function purchaseDetailRowHtml(r){
   }
   const idx = (window.__azPurchaseRowIndex = (window.__azPurchaseRowIndex||0)+1);
   return `
-    <div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-row">
+    <div class="user-pa-item purchase-detail-row compact-purchase-row compact-table-row" data-pabm-record-key="${escHtml(recordKey1460)}">
       ${azobssPurchaseSelectionCellHtml(r)}
       <div class="col-no">${idx}</div>
       <div class="col-item"><strong>${escHtml(item)}</strong></div>
@@ -7481,6 +7448,7 @@ window.azobssDeleteAllPurchaseRecordsForUser = azobssDeleteAllPurchaseRecordsFor
 window.azobssDeleteSelectedPurchaseRecords = azobssDeleteSelectedPurchaseRecords;
 
 function azobssAdminPurchaseDownloadResetHtml(r){
+  azobssRegisterPaBmDownloadRecord(r);
   try{
     if(!azobssCanShowPaBmAdminReset()) return '';
     const used = azobssPurchaseDownloadCount(r);
@@ -7492,10 +7460,10 @@ function azobssAdminPurchaseDownloadResetHtml(r){
     const testPayload = azobssPurchaseDownloadPayload(r);
     const testUrl = azobssBuildControlledPurchaseDownloadUrl(r);
     const testName = azobssPaidPurchaseDownloadFilename(r);
-    const testAllowed = azobssPurchaseDownloadAllowed(r) && !!testPayload && !!testUrl;
+    const testAllowed = azobssPaBmDownloadButtonState(r, 'original').canDownload && !!testPayload && !!testUrl;
     const activeDownload = window.__azobssPaBmActiveDownload;
-    const testActive = !!(activeDownload && activeDownload.key === testPayload);
-    const testLockedByOther = !!(activeDownload && !testActive);
+    const testActive = azobssPaBmDownloadButtonState(r, 'original').busy;
+    const testLockedByOther = false;
     let testTitle = 'Uji muat turun sama seperti POV customer. Ujian berjaya menggunakan 1 kuota download sebenar.';
     if(!testAllowed){
       if(azobssPurchaseDownloadExpired(r)) testTitle = 'POV customer: tempoh download telah tamat. Reset 0/' + max + ' dahulu untuk ujian baharu.';
@@ -7683,6 +7651,7 @@ async function renderAzobssPurchaseRecords(){
     renderAzobssPager(document.getElementById('userPaPurchasePagination'), azobssUserPurchasePage, detailRecords.length, AZOBSS_PURCHASE_PAGE_SIZE, onUserPage);
     renderAzobssPager(document.getElementById('purchaseRecordsPagination'), 1, 0, AZOBSS_PURCHASE_PAGE_SIZE, function(){});
   }
+  azobssSyncPaBmDownloadButtons();
   azobssRefreshPaBmToyyibTotal(records, purchaseResetMap);
 }
 
@@ -9493,7 +9462,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1459';
+  var VERSION_TEXT = 'v1460';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
