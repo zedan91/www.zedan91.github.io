@@ -4675,10 +4675,24 @@ function azobssStartPaBmDownloadCooldown(key, ms){
   if(!k) return;
   azobssPaBmDownloadCooldownStore()[k] = Date.now() + Math.max(1200, Number(ms || 3500));
 }
+function azobssIsFirefoxBrowser1459(){
+  try{ return /Firefox\//i.test(String(navigator && navigator.userAgent || '')); }catch(_e){ return false; }
+}
 function azobssNormalizePaBmDownloadButton(candidate){
   try{
     if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download')) return;
     const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
+    const isRealDownloadControl = !!(candidate.getAttribute('data-default-label') && (candidate.getAttribute('data-download-payload') || candidate.getAttribute('data-download-url')));
+    // v1459 Firefox: Firefox/bfcache can restore the dynamic DOM state from the
+    // moment another download button was temporarily locked. A genuine paid
+    // download control is identifiable by its data-download-* payload. It is safe
+    // to remove a stale is-locked/disabled state from that control; true Expired,
+    // 5/5 and Pending rows are rendered as non-download spans without this payload.
+    if(isRealDownloadControl && !candidate.classList.contains('is-pending-status')){
+      candidate.classList.remove('is-locked');
+      candidate.removeAttribute('disabled');
+      try{ if('disabled' in candidate) candidate.disabled = false; }catch(_e){}
+    }
     try{ delete candidate.dataset.busy; }catch(_e){ candidate.removeAttribute('data-busy'); }
     try{ delete candidate.dataset.preparing; }catch(_e){ candidate.removeAttribute('data-preparing'); }
     try{ delete candidate.dataset.downloadLocked; }catch(_e){ candidate.removeAttribute('data-download-locked'); }
@@ -4728,8 +4742,8 @@ function azobssSchedulePaBmDownloadUiRelease(owner){
 }
 function azobssInstallPaBmDownloadUiSelfHeal(){
   try{
-    if(window.__azobssPaBmDownloadUiSelfHeal1458) return;
-    window.__azobssPaBmDownloadUiSelfHeal1458 = true;
+    if(window.__azobssPaBmDownloadUiSelfHeal1459) return;
+    window.__azobssPaBmDownloadUiSelfHeal1459 = true;
     let queued = false;
     const queueRepair = function(){
       if(queued) return;
@@ -4759,9 +4773,35 @@ function azobssInstallPaBmDownloadUiSelfHeal(){
     };
     if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserver, { once:true });
     else startObserver();
-    window.addEventListener('pageshow', queueRepair);
-    window.addEventListener('focus', queueRepair);
-    document.addEventListener('visibilitychange', function(){ if(!document.hidden) queueRepair(); });
+    window.addEventListener('pagehide', function(ev){
+      // v1459 Firefox BFCache: do not carry a transient download owner/lock into
+      // a cached page snapshot. Navigating away already ends this page's UI task.
+      if(azobssIsFirefoxBrowser1459() && ev && ev.persisted){
+        window.__azobssPaBmActiveDownload = null;
+        azobssRepairIdlePaBmDownloadUi();
+      }
+    });
+    window.addEventListener('pageshow', function(ev){
+      // Firefox restores DOM attributes/classes very aggressively from BFCache.
+      // Force a clean idle state on a persisted restore before the next paint.
+      if(azobssIsFirefoxBrowser1459() && ev && ev.persisted){
+        window.__azobssPaBmActiveDownload = null;
+        azobssReleasePaBmDownloadUi(null);
+      }
+      queueRepair();
+      window.setTimeout(queueRepair, 80);
+      window.setTimeout(queueRepair, 450);
+    });
+    window.addEventListener('focus', function(){
+      queueRepair();
+      if(azobssIsFirefoxBrowser1459()) window.setTimeout(queueRepair, 120);
+    });
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden){
+        queueRepair();
+        if(azobssIsFirefoxBrowser1459()) window.setTimeout(queueRepair, 120);
+      }
+    });
   }catch(_e){}
 }
 azobssInstallPaBmDownloadUiSelfHeal();
@@ -9453,7 +9493,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1458';
+  var VERSION_TEXT = 'v1459';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
