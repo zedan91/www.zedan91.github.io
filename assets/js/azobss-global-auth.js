@@ -4705,11 +4705,66 @@ function azobssReleasePaBmDownloadUi(owner){
     return true;
   }catch(_e){ return false; }
 }
+function azobssRepairIdlePaBmDownloadUi(){
+  try{
+    const active = window.__azobssPaBmActiveDownload;
+    // Do not touch a real in-progress download. This repair only heals stale DOM
+    // left behind after the owner has already completed/failed and been released.
+    if(active) return false;
+    if(document.body) document.body.classList.remove('az-pabm-download-active');
+    document.querySelectorAll('.user-pa-download').forEach(azobssNormalizePaBmDownloadButton);
+    return true;
+  }catch(_e){ return false; }
+}
 function azobssSchedulePaBmDownloadUiRelease(owner){
-  [0, 220, 850, 1800].forEach(function(delay){
-    window.setTimeout(function(){ azobssReleasePaBmDownloadUi(owner); }, delay);
+  // v1458: purchase records can rerender as late as ~4.2s after a ZIP handoff.
+  // Keep healing beyond that window so a replacement DOM node cannot remain grey/locked.
+  [0, 150, 500, 1200, 2500, 4500, 7000, 10000].forEach(function(delay){
+    window.setTimeout(function(){
+      azobssReleasePaBmDownloadUi(owner);
+      azobssRepairIdlePaBmDownloadUi();
+    }, delay);
   });
 }
+function azobssInstallPaBmDownloadUiSelfHeal(){
+  try{
+    if(window.__azobssPaBmDownloadUiSelfHeal1458) return;
+    window.__azobssPaBmDownloadUiSelfHeal1458 = true;
+    let queued = false;
+    const queueRepair = function(){
+      if(queued) return;
+      queued = true;
+      const run = function(){
+        queued = false;
+        azobssRepairIdlePaBmDownloadUi();
+      };
+      if(typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(run);
+      else window.setTimeout(run, 0);
+    };
+    const startObserver = function(){
+      queueRepair();
+      if(typeof MutationObserver === 'undefined') return;
+      const target = document.getElementById('userPaPurchaseList') || document.body;
+      if(!target) return;
+      new MutationObserver(function(){
+        // A purchase-list refresh can replace the exact button that was normalized
+        // in finally{}. If there is no active owner, the replacement must be ready.
+        if(!window.__azobssPaBmActiveDownload) queueRepair();
+      }).observe(target, {
+        childList:true,
+        subtree:true,
+        attributes:true,
+        attributeFilter:['data-busy','data-preparing','data-download-locked','aria-busy','aria-disabled','class']
+      });
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserver, { once:true });
+    else startObserver();
+    window.addEventListener('pageshow', queueRepair);
+    window.addEventListener('focus', queueRepair);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) queueRepair(); });
+  }catch(_e){}
+}
+azobssInstallPaBmDownloadUiSelfHeal();
 
 // AZOBSS v1146: single DOM spinner for Download + Test; verified Render /health wake check; PA/BM page pre-wakes backend from <head>.
 // IMPORTANT v1144: deploy-server.js exposes /health. Do not use /api/health.
@@ -9398,7 +9453,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1456';
+  var VERSION_TEXT = 'v1458';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
