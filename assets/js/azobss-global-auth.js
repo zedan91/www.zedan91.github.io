@@ -4649,6 +4649,68 @@ function azobssSetPaBmDownloadUiLock(active, owner, activeKey){
 }
 
 
+
+
+// AZOBSS v1451: deterministic PA/BM download UI release + anti-spam cooldown.
+// A successful browser handoff can race with purchase-list rerenders. The old
+// cleanup only touched the original DOM node, so a freshly rendered replacement
+// could remain visually locked/busy. These helpers normalize the current DOM too.
+function azobssPaBmDownloadCooldownStore(){
+  if(!window.__azobssPaBmDownloadCooldowns || typeof window.__azobssPaBmDownloadCooldowns !== 'object'){
+    window.__azobssPaBmDownloadCooldowns = Object.create(null);
+  }
+  return window.__azobssPaBmDownloadCooldowns;
+}
+function azobssPaBmDownloadCoolingDown(key){
+  const k = String(key || '').trim();
+  if(!k) return false;
+  const store = azobssPaBmDownloadCooldownStore();
+  const until = Number(store[k] || 0);
+  if(!until) return false;
+  if(Date.now() >= until){ try{ delete store[k]; }catch(_e){} return false; }
+  return true;
+}
+function azobssStartPaBmDownloadCooldown(key, ms){
+  const k = String(key || '').trim();
+  if(!k) return;
+  azobssPaBmDownloadCooldownStore()[k] = Date.now() + Math.max(1200, Number(ms || 3500));
+}
+function azobssNormalizePaBmDownloadButton(candidate){
+  try{
+    if(!candidate || !candidate.classList || !candidate.classList.contains('user-pa-download')) return;
+    const defaultLabel = String(candidate.getAttribute('data-default-label') || candidate.dataset.defaultLabel || 'Download');
+    try{ delete candidate.dataset.busy; }catch(_e){ candidate.removeAttribute('data-busy'); }
+    try{ delete candidate.dataset.preparing; }catch(_e){ candidate.removeAttribute('data-preparing'); }
+    try{ delete candidate.dataset.downloadLocked; }catch(_e){ candidate.removeAttribute('data-download-locked'); }
+    try{ delete candidate.dataset.azobssClickClaimed; }catch(_e){ candidate.removeAttribute('data-azobss-click-claimed'); }
+    candidate.classList.remove('azobss-download-button-spinning');
+    candidate.removeAttribute('aria-busy');
+    candidate.removeAttribute('aria-disabled');
+    candidate.style.pointerEvents = '';
+    try{ candidate.querySelectorAll('.azobss-btn-spinner-v1146,.az-lot-busy-spinner-v949').forEach(function(node){ node.remove(); }); }catch(_e){}
+    if(!candidate.classList.contains('is-locked') && !candidate.classList.contains('is-pending-status')){
+      candidate.textContent = defaultLabel;
+      candidate.setAttribute('aria-label', defaultLabel);
+    }
+  }catch(_e){}
+}
+function azobssReleasePaBmDownloadUi(owner){
+  try{
+    const active = window.__azobssPaBmActiveDownload;
+    // Never let a delayed cleanup from an older download unlock a newer one.
+    if(active && owner && active !== owner) return false;
+    if(!owner || active === owner) window.__azobssPaBmActiveDownload = null;
+    if(document.body) document.body.classList.remove('az-pabm-download-active');
+    document.querySelectorAll('.user-pa-download').forEach(azobssNormalizePaBmDownloadButton);
+    return true;
+  }catch(_e){ return false; }
+}
+function azobssSchedulePaBmDownloadUiRelease(owner){
+  [0, 220, 850, 1800].forEach(function(delay){
+    window.setTimeout(function(){ azobssReleasePaBmDownloadUi(owner); }, delay);
+  });
+}
+
 // AZOBSS v1146: single DOM spinner for Download + Test; verified Render /health wake check; PA/BM page pre-wakes backend from <head>.
 // IMPORTANT v1144: deploy-server.js exposes /health. Do not use /api/health.
 // The wake check is quota-free; the paid-download endpoint is only called after health is ready.
@@ -4865,6 +4927,7 @@ function azobssOpenDownloadFallbackWithoutLeavingPage(url){
 async function azobssLegacyUrlOnlyDownload(url, link){
   const value = String(url || '').trim();
   if(!value) return false;
+  if(azobssPaBmDownloadCoolingDown(value)) return false;
   const startedAt = Date.now();
   try{
     if(link){
@@ -4887,6 +4950,8 @@ async function azobssLegacyUrlOnlyDownload(url, link){
     if(!azobssOpenDownloadFallbackWithoutLeavingPage(value)){
       throw new Error('Browser gagal memulakan muat turun tanpa meninggalkan halaman AZOBSS.');
     }
+    azobssStartPaBmDownloadCooldown(value, 3500);
+    await azobssWaitForDownloadHandoffPaint();
     return true;
   }catch(error){
     console.error('Legacy URL-only download failed:', error);
@@ -4897,12 +4962,7 @@ async function azobssLegacyUrlOnlyDownload(url, link){
       const elapsed = Date.now() - startedAt;
       if(elapsed < 900) await new Promise(function(resolve){ window.setTimeout(resolve, 900 - elapsed); });
     }catch(_e){}
-    if(link){
-      try{ link.dataset.busy = ''; }catch(_e){}
-      try{ link.classList.remove('azobss-download-button-spinning'); }catch(_e){}
-      try{ link.querySelectorAll('.azobss-btn-spinner-v1146').forEach(function(node){ node.remove(); }); }catch(_e){}
-      try{ link.style.pointerEvents = ''; link.removeAttribute('aria-busy'); }catch(_e){}
-    }
+    if(link){ azobssNormalizePaBmDownloadButton(link); }
   }
 }
 
@@ -4930,6 +4990,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     return false;
   }
   if(link && link.dataset && link.dataset.busy === '1') return false;
+  if(azobssPaBmDownloadCoolingDown(downloadKey)) return false;
 
   const used = azobssPurchaseDownloadCount(r);
   const max = azobssPurchaseDownloadMax(r);
@@ -5077,6 +5138,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
         if(!azobssTriggerHiddenAttachmentDownload(zipUrl)){
           throw new Error('Browser gagal memulakan muat turun ZIP tanpa meninggalkan halaman AZOBSS.');
         }
+        downloadTriggered = true;
+        azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
+        await azobssWaitForDownloadHandoffPaint();
         try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download'); }catch(e){}
         setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed'); }catch(e){} }, 1800);
         setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('NDCDB ZIP attachment download delayed 2'); }catch(e){} }, 4200);
@@ -5148,6 +5212,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
       }else{
         try{ azobssOpenDownloadFallbackWithoutLeavingPage(directUrl); }catch(e){}
       }
+      downloadTriggered = true;
+      azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
+      await azobssWaitForDownloadHandoffPaint();
       try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
       setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
       return false;
@@ -5173,6 +5240,9 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
           a.click();
           a.remove();
         }
+        downloadTriggered = true;
+        azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
+        await azobssWaitForDownloadHandoffPaint();
         try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback'); }catch(e){}
         setTimeout(function(){ try{ azobssSchedulePurchaseRecordsRefresh('download browser fallback delayed'); }catch(e){} }, 1600);
         return false;
@@ -5213,6 +5283,7 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     document.body.appendChild(a);
     a.click();
     downloadTriggered = true;
+    azobssStartPaBmDownloadCooldown(downloadOwner.key, 3500);
     a.remove();
     // v1150: do not clear the button immediately after a.click(). The file bytes are
     // already fully received here; wait for the browser download handoff to paint first.
@@ -5241,16 +5312,12 @@ async function azobssClientControlledDownload(encodedPayload, linkEl, clickEvent
     }catch(_e){}
     if(window.__azobssPaBmActiveDownload === downloadOwner){
       window.__azobssPaBmActiveDownload = null;
-      azobssSetPaBmDownloadUiLock(false, null, '');
     }
-    if(link){
-      link.dataset.busy = '';
-      link.classList.remove('azobss-download-button-spinning');
-      try{ link.querySelectorAll('.azobss-btn-spinner-v1146').forEach(function(node){ node.remove(); }); }catch(_e){}
-      link.textContent = defaultLabel;
-      link.style.pointerEvents = '';
-      link.removeAttribute('aria-busy');
-    }
+    // v1451 hard release: normalize both the original node and any replacement
+    // created by a purchase-list refresh, then repeat cleanup after render races.
+    if(link) azobssNormalizePaBmDownloadButton(link);
+    azobssReleasePaBmDownloadUi(downloadOwner);
+    azobssSchedulePaBmDownloadUiRelease(downloadOwner);
   }
 }
 window.azobssClientControlledDownload = azobssClientControlledDownload;
@@ -9331,7 +9398,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1453';
+  var VERSION_TEXT = 'v1454';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
