@@ -150,6 +150,22 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 @media(max-width:820px){.upgrade-grid.detailed{grid-template-columns:1fr}.part-card.part-card-wide{grid-column:auto}.part-table{font-size:11px}.part-table th,.part-table td{padding:7px 5px}.part-table th:nth-child(3),.part-table td:nth-child(3){display:none}}
 @media(max-width:620px){.upgrade-hero{padding-top:34px}.upgrade-grid{grid-template-columns:1fr}.est-fields{grid-template-columns:1fr}.upgrade-cta{align-items:stretch;flex-direction:column}.upgrade-cta .actions{display:grid}.upgrade-cta .actions .btn{width:100%}}
 </style>
+
+<style id="azobss-upgrade-parts-v1466-real-photos">
+/* AZOBSS v1466 — real hardware photos, SVG retained only as failure fallback */
+.part-visual.real-photo{background:#eef2f5;border-color:rgba(148,163,184,.30);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 10px 28px rgba(0,0,0,.16)}
+.part-visual.real-photo img{height:178px;object-fit:cover;object-position:center;filter:saturate(.96) contrast(1.02);background:#eef2f5}
+.part-card-wide .part-visual.real-photo img{height:220px}
+.part-visual.real-photo.contain img{object-fit:contain;padding:10px}
+.part-card:hover .part-visual.real-photo img{transform:scale(1.018);filter:saturate(1.02) contrast(1.04)}
+.hardware-photo-note{margin:4px 0 34px;color:#71869d;font-size:11px;line-height:1.55}
+.hardware-photo-note summary{cursor:pointer;color:#8fa5bf;font-weight:800;list-style:none}
+.hardware-photo-note summary::-webkit-details-marker{display:none}
+.hardware-photo-note summary::before{content:"ⓘ ";color:#67e8f9}
+.hardware-photo-note .credits-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;margin-top:9px;padding:11px 13px;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:rgba(8,21,35,.72)}
+.hardware-photo-note a{color:#8fdfff;text-decoration:none}.hardware-photo-note a:hover{text-decoration:underline}
+@media(max-width:700px){.part-visual.real-photo img,.part-card-wide .part-visual.real-photo img{height:180px}.hardware-photo-note .credits-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -199,7 +215,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <div class="upgrade-grid detailed">
 <article class="part-card part-card-wide">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🧠</span>RAM — DDR1 hingga DDR5</div><div class="part-price" id="price-summary-ram">Semak ikut jenis</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/ram.svg" alt="Ilustrasi modul RAM DDR untuk desktop dan laptop" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo contain"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/RAM_Module_%28SDRAM-DDR4%29.jpg/960px-RAM_Module_%28SDRAM-DDR4%29.jpg" alt="Foto sebenar modul RAM DDR4" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/ram.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>RAM tidak boleh dipilih berdasarkan kapasiti sahaja. Generasi DDR, form factor, speed, voltage dan kapasiti maksimum motherboard/laptop mesti sepadan.</p>
   <div class="part-spec"><b>Desktop:</b> DIMM/UDIMM &nbsp;•&nbsp; <b>Laptop:</b> SO-DIMM &nbsp;•&nbsp; DDR berlainan generasi <b>tidak boleh dipasang silang</b> kerana notch/pin/voltage berbeza.</div>
   <table class="part-table"><thead><tr><th>Jenis</th><th>Kapasiti biasa</th><th>Speed biasa</th><th>Anggaran</th></tr></thead><tbody>
@@ -219,7 +235,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 <article class="part-card part-card-wide">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">💾</span>SSD / M.2 / NVMe / HDD</div><div class="part-price" id="price-summary-storage">Ikut interface &amp; generation</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/storage.svg" alt="Ilustrasi SSD SATA dan M.2 NVMe" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo contain"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/A_2230_NVME_SSD.jpg/960px-A_2230_NVME_SSD.jpg" alt="Foto sebenar SSD NVMe M.2" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/storage.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>M.2 ialah bentuk fizikal, bukan semestinya NVMe. Sesetengah M.2 menggunakan SATA; NVMe pula menggunakan PCIe Gen3/Gen4/Gen5.</p>
   <table class="part-table"><thead><tr><th>Jenis</th><th>Kapasiti</th><th>Interface / kelajuan</th><th>Anggaran</th></tr></thead><tbody>
     <tr><td><b>2.5&quot; SATA SSD</b></td><td>240–256GB</td><td>SATA 6Gb/s</td><td data-price-group="storage" data-price-option="SATA 256GB">RM120–RM300</td></tr>
@@ -241,49 +257,49 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🗄️</span>HDD</div><div class="part-price" id="price-summary-hdd">RM150+</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/hdd.svg" alt="Ilustrasi hard disk drive HDD" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/HDD_Internal.jpg/960px-HDD_Internal.jpg" alt="Foto sebenar hard disk drive HDD" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/hdd.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Untuk storan besar/cold storage. Desktop biasanya 3.5&quot;; laptop lama biasanya 2.5&quot; SATA.</p>
   <ul><li><span>1TB SATA</span><span data-price-group="hdd" data-price-option="HDD 1TB">RM150–RM350</span></li><li><span>2TB SATA</span><span data-price-group="hdd" data-price-option="HDD 2TB">RM250–RM550</span></li><li><span>4TB SATA</span><span data-price-group="hdd" data-price-option="HDD 4TB">RM400–RM900</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🎮</span>GPU</div><div class="part-price" id="price-summary-gpu">RM500–RM8,000+</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/gpu.svg" alt="Ilustrasi kad grafik GPU" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo contain"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/S3Graphics_Chrome_440GTX_256MB_PCIE1.0.jpg/960px-S3Graphics_Chrome_440GTX_256MB_PCIE1.0.jpg" alt="Foto sebenar kad grafik PCIe GPU" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/gpu.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Semak VRAM, panjang/ketinggian kad, PSU, connector 8-pin/12V-2x6, CPU bottleneck dan airflow.</p>
   <ul><li><span>Entry / 1080p</span><span data-price-group="gpu" data-price-option="Entry">RM500–RM1,500</span></li><li><span>Mainstream</span><span data-price-group="gpu" data-price-option="Mainstream">RM1,500–RM3,000</span></li><li><span>Performance</span><span data-price-group="gpu" data-price-option="Performance">RM3,000–RM5,500</span></li><li><span>High-end</span><span data-price-group="gpu" data-price-option="High-end">RM5,000–RM10,000+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">⚡</span>PSU</div><div class="part-price" id="price-summary-psu">RM150–RM1,200+</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/psu.svg" alt="Ilustrasi power supply unit PSU" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Computer_power_supply_units_5399.jpg/960px-Computer_power_supply_units_5399.jpg" alt="Foto sebenar power supply unit PSU komputer" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/psu.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Watt sahaja tidak cukup. Semak 80 PLUS, ATX version, 12V rail, connector GPU dan warranty.</p>
   <ul><li><span>450–550W Bronze</span><span data-price-group="psu" data-price-option="450-550W Bronze">RM150–RM320</span></li><li><span>650W Bronze / Gold</span><span data-price-group="psu" data-price-option="650W Bronze-Gold">RM220–RM450</span></li><li><span>750W Gold</span><span data-price-group="psu" data-price-option="750W Gold">RM300–RM600</span></li><li><span>850W Gold</span><span data-price-group="psu" data-price-option="850W Gold">RM380–RM750</span></li><li><span>1000W+ Gold</span><span data-price-group="psu" data-price-option="1000W+ Gold">RM550–RM1,300+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">❄️</span>Cooling / Fan</div><div class="part-price" id="price-summary-cooling">RM30–RM900+</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/cooling.svg" alt="Ilustrasi kipas dan CPU cooler" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Computer_heatsink_and_fan.jpg/960px-Computer_heatsink_and_fan.jpg" alt="Foto sebenar CPU cooler dan kipas" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/cooling.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Semak socket CPU, clearance RAM/casing dan radiator support sebelum beli.</p>
   <ul><li><span>120mm Case Fan</span><span data-price-group="cooling" data-price-option="120mm Fan">RM30–RM120</span></li><li><span>Basic Air Cooler</span><span data-price-group="cooling" data-price-option="Basic Air Cooler">RM60–RM180</span></li><li><span>Tower Air Cooler</span><span data-price-group="cooling" data-price-option="Tower Air Cooler">RM120–RM350</span></li><li><span>AIO 240mm</span><span data-price-group="cooling" data-price-option="AIO 240mm">RM220–RM600</span></li><li><span>AIO 360mm</span><span data-price-group="cooling" data-price-option="AIO 360mm">RM350–RM900+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">📶</span>Wi-Fi / Bluetooth</div><div class="part-price" id="price-summary-wifi">RM30–RM300+</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/wifi.svg" alt="Ilustrasi kad Wi-Fi dan Bluetooth" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo contain"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/WLAN_PCI_Card.jpg/960px-WLAN_PCI_Card.jpg" alt="Foto sebenar kad Wi-Fi PCI" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/wifi.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Pilih USB, PCIe desktop atau M.2 laptop. Pastikan slot/key dan antenna sesuai.</p>
   <ul><li><span>USB Wi-Fi</span><span data-price-group="wifi" data-price-option="USB Wi-Fi">RM30–RM120</span></li><li><span>PCIe Wi-Fi + BT</span><span data-price-group="wifi" data-price-option="PCIe Wi-Fi BT">RM80–RM250</span></li><li><span>M.2 Wi-Fi + BT</span><span data-price-group="wifi" data-price-option="M.2 Wi-Fi BT">RM70–RM220</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🔋</span>Bateri Laptop</div><div class="part-price" id="price-summary-battery">Dari RM120</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/battery.svg" alt="Ilustrasi bateri laptop" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo contain"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0e/A_Battery_of_Laptop.jpg/960px-A_Battery_of_Laptop.jpg" alt="Foto sebenar bateri laptop" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/battery.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Part number lebih penting daripada rupa fizikal. Kapasiti Wh, voltage dan connector mesti sepadan.</p>
   <ul><li><span>Compatible / OEM</span><span data-price-group="battery" data-price-option="Compatible OEM">RM120–RM250</span></li><li><span>Original / Premium</span><span data-price-group="battery" data-price-option="Original Premium">RM250–RM500+</span></li><li><span>Gaming / ultrabook khas</span><span data-price-group="battery" data-price-option="Gaming-Ultrabook">RM300–RM650+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🔌</span>Adapter / Charger</div><div class="part-price" id="price-summary-adapter">Dari RM60</div></div>
-  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/adapter.svg" alt="Ilustrasi adapter dan charger laptop USB-C" loading="lazy" decoding="async"></div>
+  <div class="part-visual real-photo"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Laptop_charger.jpg/960px-Laptop_charger.jpg" alt="Foto sebenar adapter charger laptop" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/Upgrade-Parts/assets/hardware/adapter.svg';this.closest('.part-visual')?.classList.remove('real-photo','contain');"></div>
   <p>Voltage mesti sepadan; wattage mesti mencukupi. USB-C memerlukan sokongan Power Delivery yang sesuai.</p>
   <ul><li><span>45–65W Barrel</span><span data-price-group="adapter" data-price-option="45-65W Barrel">RM60–RM150</span></li><li><span>90W Barrel</span><span data-price-group="adapter" data-price-option="90W Barrel">RM90–RM180</span></li><li><span>USB-C PD 65–100W</span><span data-price-group="adapter" data-price-option="USB-C 65-100W">RM100–RM250</span></li><li><span>USB-C PD 140W</span><span data-price-group="adapter" data-price-option="USB-C 140W">RM180–RM350</span></li><li><span>Gaming 180–330W</span><span data-price-group="adapter" data-price-option="Gaming 180-330W">RM180–RM550+</span></li></ul>
 </article>
@@ -306,6 +322,21 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 </section>
 
 <section class="upgrade-cta"><div><h3>Dah tahu komponen yang kamu mahu?</h3><p>Hantar model PC/laptop dan pilihan upgrade. AZOBSS akan semak keserasian, stok dan harga akhir sebelum pemasangan.</p></div><div class="actions"><a class="btn primary" href="/Tempah-Servis-IT/#bookingForm">Tempah / Semak Keserasian</a><a class="btn" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">WhatsApp</a></div></section>
+
+<details class="hardware-photo-note">
+<summary>Kredit foto hardware sebenar</summary>
+<div class="credits-grid">
+<div>RAM — ElooKoN, <a href="https://commons.wikimedia.org/wiki/File:RAM_Module_(SDRAM-DDR4).jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 4.0</div>
+<div>NVMe — User5515, <a href="https://commons.wikimedia.org/wiki/File:A_2230_NVME_SSD.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC0</div>
+<div>HDD — Tookapic, <a href="https://commons.wikimedia.org/wiki/File:HDD_Internal.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC0</div>
+<div>GPU — Futase_tdkr, <a href="https://commons.wikimedia.org/wiki/File:S3Graphics_Chrome_440GTX_256MB_PCIE1.0.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, Public Domain</div>
+<div>PSU — Henry Kellner, <a href="https://commons.wikimedia.org/wiki/File:Computer_power_supply_units_5399.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 4.0</div>
+<div>Cooling — Douglas Paul Perkins, <a href="https://commons.wikimedia.org/wiki/File:Computer_heatsink_and_fan.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY 3.0</div>
+<div>Wi-Fi — Appaloosa, <a href="https://commons.wikimedia.org/wiki/File:WLAN_PCI_Card.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, GPL</div>
+<div>Bateri — Zhantong Zhang, <a href="https://commons.wikimedia.org/wiki/File:A_Battery_of_Laptop.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 3.0</div>
+<div>Adapter — CHILIVERI RITHVIK, <a href="https://commons.wikimedia.org/wiki/File:Laptop_charger.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 4.0</div>
+</div>
+</details>
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • Upgrade &amp; Parts • Harga tertakluk kepada model dan stok</div></footer>
 <script id="azobss-upgrade-estimator-v1465">
@@ -379,7 +410,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   fetch(LIVE_API,{headers:{Accept:'application/json'},cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(applyLive).catch(function(){if(status&&statusText){status.dataset.state='fallback';statusText.textContent='Anggaran fallback • live sync unavailable';}});
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1465" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1466" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body>
 </html>
