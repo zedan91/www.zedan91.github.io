@@ -2979,30 +2979,78 @@ app.get("/api/shopee-affiliate/status", requireAdmin, (req, res) => {
 const AZ_UPGRADE_PRICE_CACHE_MS = Math.max(15 * 60 * 1000, Number(process.env.UPGRADE_PRICE_CACHE_MS || 6 * 60 * 60 * 1000) || 6 * 60 * 60 * 1000);
 const AZ_UPGRADE_PRICE_LIMIT = Math.max(8, Math.min(30, Number(process.env.UPGRADE_PRICE_SAMPLE_LIMIT || 20) || 20));
 const AZ_UPGRADE_PRICE_DEFS = [
-  {key:'ram.8GB', label:'8GB', query:'8GB RAM DDR4 DDR5 SODIMM DIMM', min:70, max:1200, include:[/\b(?:8\s*GB|8GB)\b/i,/(?:\bRAM\b|memory|sodimm|dimm)/i], exclude:[/\b(?:laptop|notebook|desktop pc|gaming pc|motherboard|mini pc)\b/i]},
-  {key:'ram.16GB', label:'16GB', query:'16GB RAM DDR4 DDR5 SODIMM DIMM', min:120, max:2200, include:[/\b(?:16\s*GB|16GB)\b/i,/(?:\bRAM\b|memory|sodimm|dimm)/i], exclude:[/\b(?:laptop|notebook|desktop pc|gaming pc|motherboard|mini pc)\b/i]},
-  {key:'ram.32GB', label:'32GB', query:'32GB RAM DDR4 DDR5 2x16GB SODIMM DIMM', min:220, max:4200, include:[/(?:\b32\s*GB\b|\b32GB\b|2\s*[xX]\s*16\s*GB|16\s*GB\s*[xX]\s*2)/i,/(?:\bRAM\b|memory|sodimm|dimm)/i], exclude:[/\b(?:laptop|notebook|desktop pc|gaming pc|motherboard|mini pc)\b/i]},
-  {key:'storage.500GB', label:'500GB', query:'500GB NVMe M.2 SSD', min:120, max:1600, include:[/(?:500\s*GB|512\s*GB)/i,/(?:NVMe|M\.2|SSD)/i], exclude:[/\b(?:external|portable|enclosure|case|caddy)\b/i]},
-  {key:'storage.1TB', label:'1TB', query:'1TB NVMe M.2 SSD', min:180, max:3000, include:[/(?:\b1\s*TB\b|1000\s*GB|1024\s*GB)/i,/(?:NVMe|M\.2|SSD)/i], exclude:[/\b(?:external|portable|enclosure|case|caddy)\b/i]},
-  {key:'storage.2TB', label:'2TB', query:'2TB NVMe M.2 SSD', min:320, max:5200, include:[/(?:\b2\s*TB\b|2000\s*GB|2048\s*GB)/i,/(?:NVMe|M\.2|SSD)/i], exclude:[/\b(?:external|portable|enclosure|case|caddy)\b/i]},
-  {key:'gpu.Entry', label:'Entry', query:'RTX 5060 graphics card GPU', min:500, max:3500, include:[/(?:RTX|GTX|Radeon|\bRX\s*\d|Intel\s+Arc|\bArc\s+[AB]\d)/i], exclude:[/\b(?:laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block)\b/i]},
-  {key:'gpu.Mid-range', label:'Mid-range', query:'RTX 5070 graphics card GPU', min:1000, max:6000, include:[/(?:RTX|Radeon|\bRX\s*\d|Intel\s+Arc|\bArc\s+[AB]\d)/i], exclude:[/\b(?:laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block)\b/i]},
-  {key:'gpu.High-end', label:'High-end', query:'RTX 5080 graphics card GPU', min:2200, max:16000, include:[/(?:RTX|Radeon|\bRX\s*\d)/i], exclude:[/\b(?:laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block)\b/i]},
-  {key:'psu.550–650W', label:'550–650W', query:'650W PSU power supply PC', min:100, max:900, include:[/(?:PSU|power supply)/i,/(?:550\s*W|600\s*W|650\s*W)/i], exclude:[/\b(?:cable|extension|adapter|connector|tester)\b/i]},
-  {key:'psu.750–850W', label:'750–850W', query:'850W PSU power supply PC', min:160, max:1500, include:[/(?:PSU|power supply)/i,/(?:750\s*W|800\s*W|850\s*W)/i], exclude:[/\b(?:cable|extension|adapter|connector|tester)\b/i]},
-  {key:'psu.1000W+', label:'1000W+', query:'1000W PSU power supply PC', min:260, max:2400, include:[/(?:PSU|power supply)/i,/(?:1000\s*W|1050\s*W|1200\s*W|1300\s*W|1500\s*W)/i], exclude:[/\b(?:cable|extension|adapter|connector|tester)\b/i]},
-  {key:'battery.Standard', label:'Standard', query:'laptop battery replacement Acer Asus Dell HP Lenovo', min:40, max:550, include:[/battery/i,/(?:laptop|notebook|Acer|Asus|Dell|HP|Lenovo|MSI)/i], exclude:[/\b(?:cmos|coin cell|phone|iphone|ipad|tablet)\b/i]},
-  {key:'battery.Premium / model khas', label:'Premium / model khas', query:'original gaming laptop battery Dell XPS ThinkPad ROG MSI', min:90, max:950, include:[/battery/i,/(?:laptop|notebook|Dell|XPS|ThinkPad|ROG|MSI|Legion|Spectre|ZenBook)/i], exclude:[/\b(?:cmos|coin cell|phone|iphone|ipad|tablet)\b/i]},
-  {key:'adapter.Standard', label:'Standard', query:'65W laptop charger adapter Acer Asus Dell HP Lenovo', min:25, max:350, include:[/(?:adapter|charger)/i,/(?:laptop|notebook|Acer|Asus|Dell|HP|Lenovo|65\s*W|90\s*W)/i], exclude:[/\b(?:cable only|usb cable|converter only|tip only|connector only)\b/i]},
-  {key:'adapter.USB-C / high watt', label:'USB-C / high watt', query:'140W USB C laptop charger adapter gaming laptop', min:60, max:750, include:[/(?:adapter|charger)/i,/(?:USB\s*-?\s*C|PD\s*3|140\s*W|180\s*W|200\s*W|230\s*W|240\s*W|gaming laptop)/i], exclude:[/\b(?:cable only|usb cable|converter only|tip only|connector only)\b/i]}
+  // RAM — generation + capacity matter; legacy generations are still searchable but availability is inconsistent.
+  {key:'ram.DDR1 Legacy', label:'DDR1 Legacy', query:'DDR1 RAM 1GB PC3200 DIMM', min:10, max:250, include:[/(?:DDR1|DDR\s*400|PC3200|PC2700)/i,/(?:RAM|memory|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR2 Legacy', label:'DDR2 Legacy', query:'DDR2 RAM 2GB 4GB 667 800 DIMM SODIMM', min:10, max:300, include:[/DDR2/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR3 4GB', label:'DDR3 4GB', query:'DDR3 DDR3L 4GB RAM 1600 DIMM SODIMM', min:10, max:350, include:[/DDR3L?|PC3L?/i,/4\s*GB/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR3 8GB', label:'DDR3 8GB', query:'DDR3 DDR3L 8GB RAM 1600 DIMM SODIMM', min:15, max:450, include:[/DDR3L?|PC3L?/i,/8\s*GB/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR4 8GB', label:'DDR4 8GB', query:'DDR4 8GB RAM 3200 DIMM SODIMM', min:60, max:900, include:[/DDR4/i,/8\s*GB/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR4 16GB', label:'DDR4 16GB', query:'DDR4 16GB RAM 3200 DIMM SODIMM', min:100, max:1400, include:[/DDR4/i,/16\s*GB/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR4 32GB', label:'DDR4 32GB', query:'DDR4 32GB RAM 3200 DIMM SODIMM', min:180, max:2600, include:[/DDR4/i,/(?:32\s*GB|2\s*[xX]\s*16\s*GB)/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR5 8GB', label:'DDR5 8GB', query:'DDR5 8GB RAM 5600 DIMM SODIMM', min:100, max:1200, include:[/DDR5/i,/8\s*GB/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR5 16GB', label:'DDR5 16GB', query:'DDR5 16GB RAM 5600 DIMM SODIMM', min:180, max:2200, include:[/DDR5/i,/16\s*GB/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+  {key:'ram.DDR5 32GB', label:'DDR5 32GB', query:'DDR5 32GB RAM 5600 6000 DIMM SODIMM', min:300, max:4200, include:[/DDR5/i,/(?:32\s*GB|2\s*[xX]\s*16\s*GB)/i,/(?:RAM|memory|SODIMM|DIMM)/i], exclude:[/adapter|converter|motherboard|desktop pc|laptop pc/i]},
+
+  // Storage — split SATA/NVMe generation instead of capacity-only ranges.
+  {key:'storage.SATA 256GB', label:'SATA 256GB', query:'256GB 240GB 2.5 SATA SSD', min:60, max:600, include:[/(?:240|250|256)\s*GB/i,/SSD/i,/SATA/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.SATA 512GB', label:'SATA 512GB', query:'512GB 480GB 500GB 2.5 SATA SSD', min:90, max:900, include:[/(?:480|500|512)\s*GB/i,/SSD/i,/SATA/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.SATA 1TB', label:'SATA 1TB', query:'1TB 2.5 SATA SSD', min:150, max:1600, include:[/(?:1\s*TB|1000\s*GB|1024\s*GB)/i,/SSD/i,/SATA/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.M.2 SATA 256GB', label:'M.2 SATA 256GB', query:'256GB M.2 SATA SSD B+M', min:60, max:700, include:[/(?:240|250|256)\s*GB/i,/M\.2/i,/SATA/i,/SSD/i], exclude:[/NVMe|external|portable|enclosure|case|caddy/i]},
+  {key:'storage.M.2 SATA 512GB', label:'M.2 SATA 512GB', query:'512GB M.2 SATA SSD B+M', min:90, max:1000, include:[/(?:480|500|512)\s*GB/i,/M\.2/i,/SATA/i,/SSD/i], exclude:[/NVMe|external|portable|enclosure|case|caddy/i]},
+  {key:'storage.M.2 SATA 1TB', label:'M.2 SATA 1TB', query:'1TB M.2 SATA SSD B+M', min:150, max:1700, include:[/(?:1\s*TB|1000\s*GB|1024\s*GB)/i,/M\.2/i,/SATA/i,/SSD/i], exclude:[/NVMe|external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen3 500GB', label:'NVMe Gen3 500GB', query:'500GB NVMe PCIe Gen3 M.2 SSD', min:100, max:1000, include:[/(?:500|512)\s*GB/i,/NVMe/i,/(?:Gen\s*3|PCIe\s*3)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen3 1TB', label:'NVMe Gen3 1TB', query:'1TB NVMe PCIe Gen3 M.2 SSD', min:150, max:1600, include:[/(?:1\s*TB|1000\s*GB|1024\s*GB)/i,/NVMe/i,/(?:Gen\s*3|PCIe\s*3)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen4 500GB', label:'NVMe Gen4 500GB', query:'500GB NVMe PCIe Gen4 M.2 SSD', min:120, max:1200, include:[/(?:500|512)\s*GB/i,/NVMe/i,/(?:Gen\s*4|PCIe\s*4)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen4 1TB', label:'NVMe Gen4 1TB', query:'1TB NVMe PCIe Gen4 M.2 SSD', min:180, max:2200, include:[/(?:1\s*TB|1000\s*GB|1024\s*GB)/i,/NVMe/i,/(?:Gen\s*4|PCIe\s*4)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen4 2TB', label:'NVMe Gen4 2TB', query:'2TB NVMe PCIe Gen4 M.2 SSD', min:300, max:3600, include:[/(?:2\s*TB|2000\s*GB|2048\s*GB)/i,/NVMe/i,/(?:Gen\s*4|PCIe\s*4)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen5 1TB', label:'NVMe Gen5 1TB', query:'1TB NVMe PCIe Gen5 M.2 SSD', min:300, max:3200, include:[/(?:1\s*TB|1000\s*GB|1024\s*GB)/i,/NVMe/i,/(?:Gen\s*5|PCIe\s*5)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'storage.NVMe Gen5 2TB', label:'NVMe Gen5 2TB', query:'2TB NVMe PCIe Gen5 M.2 SSD', min:500, max:5200, include:[/(?:2\s*TB|2000\s*GB|2048\s*GB)/i,/NVMe/i,/(?:Gen\s*5|PCIe\s*5)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+
+  {key:'hdd.HDD 1TB', label:'HDD 1TB', query:'1TB SATA HDD 3.5 hard disk', min:80, max:700, include:[/(?:1\s*TB|1000\s*GB)/i,/(?:HDD|hard disk)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'hdd.HDD 2TB', label:'HDD 2TB', query:'2TB SATA HDD 3.5 hard disk', min:120, max:900, include:[/(?:2\s*TB|2000\s*GB)/i,/(?:HDD|hard disk)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+  {key:'hdd.HDD 4TB', label:'HDD 4TB', query:'4TB SATA HDD 3.5 hard disk', min:220, max:1400, include:[/(?:4\s*TB|4000\s*GB)/i,/(?:HDD|hard disk)/i], exclude:[/external|portable|enclosure|case|caddy/i]},
+
+  {key:'gpu.Entry', label:'Entry', query:'RTX 3050 RTX 4060 RX 7600 graphics card GPU', min:400, max:2600, include:[/(?:RTX|GTX|Radeon|\bRX\s*\d|Intel\s+Arc|\bArc\s+[AB]\d)/i], exclude:[/laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block/i]},
+  {key:'gpu.Mainstream', label:'Mainstream', query:'RTX 5060 RTX 5060 Ti graphics card GPU', min:900, max:4200, include:[/(?:RTX|Radeon|\bRX\s*\d|Intel\s+Arc|\bArc\s+[AB]\d)/i], exclude:[/laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block/i]},
+  {key:'gpu.Performance', label:'Performance', query:'RTX 5070 RTX 5070 Ti graphics card GPU', min:1700, max:7000, include:[/(?:RTX|Radeon|\bRX\s*\d)/i], exclude:[/laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block/i]},
+  {key:'gpu.High-end', label:'High-end', query:'RTX 5080 RTX 5090 graphics card GPU', min:2800, max:16000, include:[/(?:RTX|Radeon|\bRX\s*\d)/i], exclude:[/laptop|notebook|gaming pc|desktop pc|prebuilt|riser|holder|bracket|backplate|waterblock|water block/i]},
+
+  {key:'psu.450-550W Bronze', label:'450-550W Bronze', query:'550W 80 Plus Bronze PSU power supply', min:80, max:700, include:[/(?:PSU|power supply)/i,/(?:450\s*W|500\s*W|550\s*W)/i], exclude:[/cable|extension|adapter|connector|tester/i]},
+  {key:'psu.650W Bronze-Gold', label:'650W Bronze-Gold', query:'650W 80 Plus Bronze Gold PSU power supply', min:120, max:1000, include:[/(?:PSU|power supply)/i,/650\s*W/i], exclude:[/cable|extension|adapter|connector|tester/i]},
+  {key:'psu.750W Gold', label:'750W Gold', query:'750W 80 Plus Gold PSU power supply', min:160, max:1200, include:[/(?:PSU|power supply)/i,/750\s*W/i], exclude:[/cable|extension|adapter|connector|tester/i]},
+  {key:'psu.850W Gold', label:'850W Gold', query:'850W 80 Plus Gold PSU power supply', min:200, max:1600, include:[/(?:PSU|power supply)/i,/850\s*W/i], exclude:[/cable|extension|adapter|connector|tester/i]},
+  {key:'psu.1000W+ Gold', label:'1000W+ Gold', query:'1000W 80 Plus Gold ATX 3.0 PSU power supply', min:300, max:2600, include:[/(?:PSU|power supply)/i,/(?:1000\s*W|1050\s*W|1200\s*W|1300\s*W|1500\s*W)/i], exclude:[/cable|extension|adapter|connector|tester/i]},
+
+  {key:'cooling.120mm Fan', label:'120mm Fan', query:'120mm PC case fan PWM', min:10, max:300, include:[/120\s*mm/i,/(?:fan|cooling)/i], exclude:[/laptop|blower|replacement fan/i]},
+  {key:'cooling.Basic Air Cooler', label:'Basic Air Cooler', query:'CPU air cooler Intel AMD', min:30, max:350, include:[/(?:CPU|processor)/i,/(?:air cooler|heatsink|cooler)/i], exclude:[/AIO|liquid|water/i]},
+  {key:'cooling.Tower Air Cooler', label:'Tower Air Cooler', query:'tower CPU air cooler heatpipe Intel AMD', min:60, max:650, include:[/(?:tower|heatpipe|heat pipe)/i,/(?:CPU|processor|cooler)/i], exclude:[/AIO|liquid|water/i]},
+  {key:'cooling.AIO 240mm', label:'AIO 240mm', query:'240mm AIO liquid CPU cooler', min:120, max:1000, include:[/240\s*mm/i,/(?:AIO|liquid|water cooler)/i], exclude:[]},
+  {key:'cooling.AIO 360mm', label:'AIO 360mm', query:'360mm AIO liquid CPU cooler', min:180, max:1600, include:[/360\s*mm/i,/(?:AIO|liquid|water cooler)/i], exclude:[]},
+
+  {key:'wifi.USB Wi-Fi', label:'USB Wi-Fi', query:'USB WiFi adapter AC AX', min:15, max:300, include:[/USB/i,/(?:Wi-?Fi|wireless)/i], exclude:[/router|access point|mesh/i]},
+  {key:'wifi.PCIe Wi-Fi BT', label:'PCIe Wi-Fi BT', query:'PCIe WiFi Bluetooth card AX210 AXE5400', min:40, max:450, include:[/(?:PCIe|PCI-E)/i,/(?:Wi-?Fi|wireless)/i], exclude:[/router|access point|mesh/i]},
+  {key:'wifi.M.2 Wi-Fi BT', label:'M.2 Wi-Fi BT', query:'M.2 WiFi Bluetooth AX210 laptop card', min:30, max:350, include:[/M\.2/i,/(?:Wi-?Fi|wireless)/i], exclude:[/router|access point|mesh/i]},
+
+  {key:'battery.Compatible OEM', label:'Compatible OEM', query:'laptop battery replacement Acer Asus Dell HP Lenovo', min:40, max:550, include:[/battery/i,/(?:laptop|notebook|Acer|Asus|Dell|HP|Lenovo|MSI)/i], exclude:[/cmos|coin cell|phone|iphone|ipad|tablet/i]},
+  {key:'battery.Original Premium', label:'Original Premium', query:'original laptop battery Dell XPS ThinkPad ROG MSI Lenovo HP', min:90, max:950, include:[/battery/i,/(?:laptop|notebook|Dell|XPS|ThinkPad|ROG|MSI|Legion|Spectre|ZenBook|HP|Lenovo)/i], exclude:[/cmos|coin cell|phone|iphone|ipad|tablet/i]},
+  {key:'battery.Gaming-Ultrabook', label:'Gaming-Ultrabook', query:'gaming ultrabook laptop battery ROG Legion MSI XPS', min:120, max:1200, include:[/battery/i,/(?:ROG|Legion|MSI|XPS|gaming|ultrabook|ZenBook|Spectre)/i], exclude:[/cmos|coin cell|phone|iphone|ipad|tablet/i]},
+
+  {key:'adapter.45-65W Barrel', label:'45-65W Barrel', query:'65W laptop charger adapter barrel Acer Asus Dell HP Lenovo', min:25, max:280, include:[/(?:adapter|charger)/i,/(?:45\s*W|65\s*W)/i], exclude:[/cable only|usb cable|converter only|tip only|connector only/i]},
+  {key:'adapter.90W Barrel', label:'90W Barrel', query:'90W laptop charger adapter Acer Asus Dell HP Lenovo', min:35, max:350, include:[/(?:adapter|charger)/i,/90\s*W/i], exclude:[/cable only|usb cable|converter only|tip only|connector only/i]},
+  {key:'adapter.USB-C 65-100W', label:'USB-C 65-100W', query:'65W 100W USB C PD laptop charger', min:45, max:450, include:[/(?:adapter|charger)/i,/USB\s*-?\s*C/i,/(?:65\s*W|100\s*W)/i], exclude:[/cable only|usb cable|converter only|tip only|connector only/i]},
+  {key:'adapter.USB-C 140W', label:'USB-C 140W', query:'140W USB C PD 3.1 laptop charger', min:80, max:650, include:[/(?:adapter|charger)/i,/USB\s*-?\s*C/i,/140\s*W/i], exclude:[/cable only|usb cable|converter only|tip only|connector only/i]},
+  {key:'adapter.Gaming 180-330W', label:'Gaming 180-330W', query:'230W 280W 300W 330W gaming laptop charger adapter', min:90, max:900, include:[/(?:adapter|charger)/i,/(?:180\s*W|200\s*W|230\s*W|240\s*W|280\s*W|300\s*W|330\s*W)/i], exclude:[/cable only|usb cable|converter only|tip only|connector only/i]}
 ];
 const AZ_UPGRADE_FALLBACK = {
-  ram:{'8GB':[90,180],'16GB':[160,320],'32GB':[300,650]},
-  storage:{'500GB':[170,280],'1TB':[250,450],'2TB':[450,850]},
-  gpu:{'Entry':[650,1300],'Mid-range':[1300,2800],'High-end':[2800,6000]},
-  psu:{'550–650W':[180,350],'750–850W':[300,550],'1000W+':[500,900]},
-  battery:{'Standard':[150,250],'Premium / model khas':[250,450]},
-  adapter:{'Standard':[100,180],'USB-C / high watt':[150,300]}
+  ram:{'DDR1 Legacy':[20,80],'DDR2 Legacy':[20,90],'DDR3 4GB':[20,80],'DDR3 8GB':[25,120],'DDR4 8GB':[180,450],'DDR4 16GB':[280,750],'DDR4 32GB':[550,1600],'DDR5 8GB':[250,750],'DDR5 16GB':[450,1400],'DDR5 32GB':[800,2400]},
+  storage:{'SATA 256GB':[120,300],'SATA 512GB':[180,450],'SATA 1TB':[300,800],'M.2 SATA 256GB':[130,350],'M.2 SATA 512GB':[200,500],'M.2 SATA 1TB':[320,850],'NVMe Gen3 500GB':[180,450],'NVMe Gen3 1TB':[280,750],'NVMe Gen4 500GB':[250,650],'NVMe Gen4 1TB':[350,1100],'NVMe Gen4 2TB':[650,1900],'NVMe Gen5 1TB':[600,1600],'NVMe Gen5 2TB':[1000,2800]},
+  hdd:{'HDD 1TB':[150,350],'HDD 2TB':[250,550],'HDD 4TB':[400,900]},
+  gpu:{'Entry':[500,1500],'Mainstream':[1500,3000],'Performance':[3000,5500],'High-end':[5000,10000]},
+  psu:{'450-550W Bronze':[150,320],'650W Bronze-Gold':[220,450],'750W Gold':[300,600],'850W Gold':[380,750],'1000W+ Gold':[550,1300]},
+  cooling:{'120mm Fan':[30,120],'Basic Air Cooler':[60,180],'Tower Air Cooler':[120,350],'AIO 240mm':[220,600],'AIO 360mm':[350,900]},
+  wifi:{'USB Wi-Fi':[30,120],'PCIe Wi-Fi BT':[80,250],'M.2 Wi-Fi BT':[70,220]},
+  battery:{'Compatible OEM':[120,250],'Original Premium':[250,500],'Gaming-Ultrabook':[300,650]},
+  adapter:{'45-65W Barrel':[60,150],'90W Barrel':[90,180],'USB-C 65-100W':[100,250],'USB-C 140W':[180,350],'Gaming 180-330W':[180,550]}
 };
 let azUpgradePriceCache = { fetchedAtMs:0, payload:null, firestoreChecked:false };
 
@@ -3022,8 +3070,9 @@ function azUpgradeTitleMatches(def,title){
   if((def.exclude||[]).some(re=>re.test(text)))return false;
   return (def.include||[]).every(re=>re.test(text));
 }
+function azUpgradeKeyParts(key){ const text=String(key||''); const i=text.indexOf('.'); return i<0?[text,'']:[text.slice(0,i),text.slice(i+1)]; }
 function azUpgradeFallbackFor(def){
-  const [group,opt]=String(def.key).split('.'); const row=AZ_UPGRADE_FALLBACK[group]?.[opt]||[def.min,def.max];
+  const [group,opt]=azUpgradeKeyParts(def.key); const row=AZ_UPGRADE_FALLBACK[group]?.[opt]||[def.min,def.max];
   return {key:def.key,label:def.label,min:Number(row[0]),max:Number(row[1]),count:0,source:'fallback',sample:[]};
 }
 function azUpgradeAggregate(def,nodes){
@@ -3053,14 +3102,14 @@ async function azUpgradeFetchDef(def){
 }
 function azUpgradePayloadFromRows(rows,{source='shopee-live',configured=true}={}){
   const groups={};
-  for(const row of rows){ const [group,opt]=String(row.key).split('.'); groups[group] ||= {options:{}}; groups[group].options[opt]=row; }
+  for(const row of rows){ const [group,opt]=azUpgradeKeyParts(row.key); groups[group] ||= {options:{}}; groups[group].options[opt]=row; }
   for(const group of Object.values(groups)){
     const opts=Object.values(group.options||{}), live=opts.filter(x=>x.source==='shopee-live');
     const basis=live.length?live:opts;
     group.summary={min:Math.min(...basis.map(x=>x.min)),max:Math.max(...basis.map(x=>x.max)),liveOptions:live.length,totalOptions:opts.length};
   }
   const liveCount=rows.filter(x=>x.source==='shopee-live').length;
-  return {ok:true,version:1344,currency:'MYR',configured,source,liveCount,totalOptions:rows.length,fetchedAt:new Date().toISOString(),fetchedAtMs:Date.now(),cacheMs:AZ_UPGRADE_PRICE_CACHE_MS,groups};
+  return {ok:true,version:1464,currency:'MYR',configured,source,liveCount,totalOptions:rows.length,fetchedAt:new Date().toISOString(),fetchedAtMs:Date.now(),cacheMs:AZ_UPGRADE_PRICE_CACHE_MS,groups};
 }
 function azUpgradeFallbackPayload(message='Live price source unavailable'){
   const rows=AZ_UPGRADE_PRICE_DEFS.map(azUpgradeFallbackFor); const payload=azUpgradePayloadFromRows(rows,{source:'fallback',configured:azShopeeAffiliateConfigured()}); payload.message=message; return payload;
