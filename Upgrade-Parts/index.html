@@ -247,7 +247,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   fetch(LIVE_API,{headers:{Accept:'application/json'},cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(applyLive).catch(function(){if(status&&statusText){status.dataset.state='fallback';statusText.textContent='Anggaran fallback • live sync unavailable';}});
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1461" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1463" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body>
 </html>

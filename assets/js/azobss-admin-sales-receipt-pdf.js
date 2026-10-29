@@ -213,7 +213,7 @@
   function image(commands,name,x,yTop,width,height){ add(commands,`q ${width.toFixed(2)} 0 0 ${height.toFixed(2)} ${x.toFixed(2)} ${(PAGE_H-yTop-height).toFixed(2)} cm /${name} Do Q`); }
   function centeredBaseline(y,height,size){ return y + ((height-size)/2) + (size*0.78); }
 
-  function documentTitle(type){ const t=normalizeDocumentType(type);return ({quotation:'QUOTATION / SEBUT HARGA',invoice:'INVOICE',receipt:'RECEIPT','credit-note':'CREDIT NOTE','debit-note':'DEBIT NOTE','delivery-order':'DELIVERY ORDER','purchase-order':'PURCHASE ORDER','supplier-purchase':'SUPPLIER PURCHASE','expense':'EXPENSE RECORD',payment:'PAYMENT RECORD'})[t]||'DOCUMENT'; }
+  function documentTitle(type){ const t=normalizeDocumentType(type);return ({quotation:'QUOTATION',invoice:'INVOICE',receipt:'RECEIPT','credit-note':'CREDIT NOTE','debit-note':'DEBIT NOTE','delivery-order':'DELIVERY ORDER','purchase-order':'PURCHASE ORDER','supplier-purchase':'SUPPLIER PURCHASE','expense':'EXPENSE RECORD',payment:'PAYMENT RECORD'})[t]||'DOCUMENT'; }
   function documentShortLabel(type){return ({quotation:'Quotation',invoice:'Invoice',receipt:'Receipt','credit-note':'Credit Note','debit-note':'Debit Note','delivery-order':'Delivery Order','purchase-order':'Purchase Order','supplier-purchase':'Supplier Purchase',expense:'Expense',payment:'Payment'})[normalizeDocumentType(type)]||'Document'}
   function drawHeader(commands,row,continuation,type){
     const docType=normalizeDocumentType(type);
