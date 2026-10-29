@@ -129,9 +129,16 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 .upgrade-hero{padding:46px 0 24px}.upgrade-hero h1{font-size:clamp(34px,5vw,58px);line-height:1.04;margin:14px 0 12px}.upgrade-hero h1 span{background:linear-gradient(90deg,#fb923c,#facc15,#67e8f9);-webkit-background-clip:text;color:transparent}.upgrade-hero p{max-width:860px;color:#aabbd0;font-size:16px;line-height:1.7}.upgrade-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.upgrade-actions .btn{min-height:44px}.price-note{margin:8px 0 24px;padding:13px 15px;border:1px solid rgba(251,146,60,.32);border-radius:14px;background:rgba(251,146,60,.08);color:#ffd8b4;font-size:13px;line-height:1.55}.upgrade-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0 34px}.part-card{border:1px solid #29415e;border-radius:18px;background:linear-gradient(160deg,#102039,#091626);padding:18px;min-width:0}.part-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}.part-title{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:900}.part-icon{display:grid;place-items:center;width:39px;height:39px;border-radius:11px;border:1px solid #365473;background:#0a1728;font-size:20px}.part-price{font-weight:950;color:#fbbf24;font-size:17px;white-space:nowrap}.part-card p{margin:0 0 11px;color:#9fb2c9;line-height:1.5;font-size:13px}.part-card ul{list-style:none;padding:0;margin:0}.part-card li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid rgba(148,163,184,.1);font-size:12px;color:#d9e6f4}.part-card li span:last-child{font-weight:850;color:#bdefff;text-align:right}.estimator{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:16px;margin:12px 0 34px}.estimate-panel{border:1px solid #2b4664;border-radius:20px;background:#0b192b;padding:20px}.estimate-panel h2{margin:0 0 6px;font-size:23px}.estimate-panel>p{margin:0 0 17px;color:#9fb2c9;font-size:13px;line-height:1.55}.est-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.est-field{display:grid;gap:6px}.est-field label{font-size:12px;font-weight:850;color:#c9d8e8}.est-field select{width:100%;min-height:44px;border:1px solid #385573;border-radius:11px;background:#071426;color:#edf6ff;padding:0 11px;font:inherit}.est-result{display:flex;flex-direction:column;justify-content:center;min-height:100%;border:1px solid rgba(34,211,238,.28);border-radius:20px;background:linear-gradient(145deg,rgba(14,165,233,.10),rgba(251,146,60,.08));padding:22px}.est-result .label{color:#9fb2c9;font-size:12px;font-weight:800}.est-result strong{display:block;margin:7px 0 5px;color:#fbbf24;font-size:34px;line-height:1}.est-result small{color:#b8c9dc;line-height:1.55}.est-result .mini{margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,.16);font-size:12px;color:#8fa5bf}.compat{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0 34px}.compat-card{border:1px solid #28435f;border-radius:18px;background:#0b192b;padding:19px}.compat-card h3{margin:0 0 10px;font-size:18px}.compat-card ol,.compat-card ul{margin:0;padding-left:20px;color:#c9d8e8;line-height:1.75;font-size:13px}.service-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 36px}.service-mini{border:1px solid #2a435f;border-radius:16px;background:#0a1728;padding:16px}.service-mini b{display:block;color:#fff;margin-bottom:5px}.service-mini strong{display:block;color:#67e8f9;font-size:18px}.service-mini small{display:block;margin-top:4px;color:#92a7bf;line-height:1.4}.upgrade-cta{margin:0 0 52px;padding:22px;border:1px solid #365473;border-radius:20px;background:linear-gradient(135deg,rgba(251,146,60,.10),rgba(37,99,235,.09));display:flex;align-items:center;justify-content:space-between;gap:18px}.upgrade-cta h3{margin:0 0 6px;font-size:20px}.upgrade-cta p{margin:0;color:#aabbd0;line-height:1.55}.upgrade-cta .actions{display:flex;gap:9px;flex-wrap:wrap;flex:0 0 auto}
 @media(max-width:900px){.upgrade-grid{grid-template-columns:repeat(2,1fr)}.estimator,.compat{grid-template-columns:1fr}.service-strip{grid-template-columns:1fr}.est-result{min-height:190px}}
 
-/* AZOBSS v1464 — detailed hardware matrix */
+/* AZOBSS v1465 — detailed hardware matrix + hardware visuals */
 .upgrade-grid.detailed{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
 .part-card.part-card-wide{grid-column:span 2}
+.part-visual{position:relative;margin:4px 0 14px;border:1px solid rgba(125,211,252,.18);border-radius:15px;overflow:hidden;background:linear-gradient(135deg,rgba(14,165,233,.06),rgba(15,23,42,.6));box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.part-visual img{display:block;width:100%;height:150px;object-fit:cover;transition:transform .28s ease,filter .28s ease;filter:saturate(.92) contrast(1.03)}
+.part-card:hover .part-visual img{transform:scale(1.025);filter:saturate(1.05) contrast(1.04)}
+.part-card-wide .part-visual img{height:190px;object-fit:cover}
+.part-visual::after{content:"";position:absolute;inset:auto 0 0;height:34%;background:linear-gradient(transparent,rgba(7,17,31,.34));pointer-events:none}
+@media(max-width:700px){.part-visual img,.part-card-wide .part-visual img{height:138px}}
+
 .part-spec{margin:10px 0 12px;padding:10px 11px;border:1px solid rgba(148,163,184,.12);border-radius:12px;background:rgba(2,12,27,.36);color:#a9bdd2;font-size:12px;line-height:1.55}
 .part-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:5px}
 .part-table th,.part-table td{padding:8px 7px;border-top:1px solid rgba(148,163,184,.11);vertical-align:top;text-align:left}
@@ -192,6 +199,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <div class="upgrade-grid detailed">
 <article class="part-card part-card-wide">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🧠</span>RAM — DDR1 hingga DDR5</div><div class="part-price" id="price-summary-ram">Semak ikut jenis</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/ram.svg" alt="Ilustrasi modul RAM DDR untuk desktop dan laptop" loading="lazy" decoding="async"></div>
   <p>RAM tidak boleh dipilih berdasarkan kapasiti sahaja. Generasi DDR, form factor, speed, voltage dan kapasiti maksimum motherboard/laptop mesti sepadan.</p>
   <div class="part-spec"><b>Desktop:</b> DIMM/UDIMM &nbsp;•&nbsp; <b>Laptop:</b> SO-DIMM &nbsp;•&nbsp; DDR berlainan generasi <b>tidak boleh dipasang silang</b> kerana notch/pin/voltage berbeza.</div>
   <table class="part-table"><thead><tr><th>Jenis</th><th>Kapasiti biasa</th><th>Speed biasa</th><th>Anggaran</th></tr></thead><tbody>
@@ -211,6 +219,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 <article class="part-card part-card-wide">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">💾</span>SSD / M.2 / NVMe / HDD</div><div class="part-price" id="price-summary-storage">Ikut interface &amp; generation</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/storage.svg" alt="Ilustrasi SSD SATA dan M.2 NVMe" loading="lazy" decoding="async"></div>
   <p>M.2 ialah bentuk fizikal, bukan semestinya NVMe. Sesetengah M.2 menggunakan SATA; NVMe pula menggunakan PCIe Gen3/Gen4/Gen5.</p>
   <table class="part-table"><thead><tr><th>Jenis</th><th>Kapasiti</th><th>Interface / kelajuan</th><th>Anggaran</th></tr></thead><tbody>
     <tr><td><b>2.5&quot; SATA SSD</b></td><td>240–256GB</td><td>SATA 6Gb/s</td><td data-price-group="storage" data-price-option="SATA 256GB">RM120–RM300</td></tr>
@@ -232,42 +241,49 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🗄️</span>HDD</div><div class="part-price" id="price-summary-hdd">RM150+</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/hdd.svg" alt="Ilustrasi hard disk drive HDD" loading="lazy" decoding="async"></div>
   <p>Untuk storan besar/cold storage. Desktop biasanya 3.5&quot;; laptop lama biasanya 2.5&quot; SATA.</p>
   <ul><li><span>1TB SATA</span><span data-price-group="hdd" data-price-option="HDD 1TB">RM150–RM350</span></li><li><span>2TB SATA</span><span data-price-group="hdd" data-price-option="HDD 2TB">RM250–RM550</span></li><li><span>4TB SATA</span><span data-price-group="hdd" data-price-option="HDD 4TB">RM400–RM900</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🎮</span>GPU</div><div class="part-price" id="price-summary-gpu">RM500–RM8,000+</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/gpu.svg" alt="Ilustrasi kad grafik GPU" loading="lazy" decoding="async"></div>
   <p>Semak VRAM, panjang/ketinggian kad, PSU, connector 8-pin/12V-2x6, CPU bottleneck dan airflow.</p>
   <ul><li><span>Entry / 1080p</span><span data-price-group="gpu" data-price-option="Entry">RM500–RM1,500</span></li><li><span>Mainstream</span><span data-price-group="gpu" data-price-option="Mainstream">RM1,500–RM3,000</span></li><li><span>Performance</span><span data-price-group="gpu" data-price-option="Performance">RM3,000–RM5,500</span></li><li><span>High-end</span><span data-price-group="gpu" data-price-option="High-end">RM5,000–RM10,000+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">⚡</span>PSU</div><div class="part-price" id="price-summary-psu">RM150–RM1,200+</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/psu.svg" alt="Ilustrasi power supply unit PSU" loading="lazy" decoding="async"></div>
   <p>Watt sahaja tidak cukup. Semak 80 PLUS, ATX version, 12V rail, connector GPU dan warranty.</p>
   <ul><li><span>450–550W Bronze</span><span data-price-group="psu" data-price-option="450-550W Bronze">RM150–RM320</span></li><li><span>650W Bronze / Gold</span><span data-price-group="psu" data-price-option="650W Bronze-Gold">RM220–RM450</span></li><li><span>750W Gold</span><span data-price-group="psu" data-price-option="750W Gold">RM300–RM600</span></li><li><span>850W Gold</span><span data-price-group="psu" data-price-option="850W Gold">RM380–RM750</span></li><li><span>1000W+ Gold</span><span data-price-group="psu" data-price-option="1000W+ Gold">RM550–RM1,300+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">❄️</span>Cooling / Fan</div><div class="part-price" id="price-summary-cooling">RM30–RM900+</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/cooling.svg" alt="Ilustrasi kipas dan CPU cooler" loading="lazy" decoding="async"></div>
   <p>Semak socket CPU, clearance RAM/casing dan radiator support sebelum beli.</p>
   <ul><li><span>120mm Case Fan</span><span data-price-group="cooling" data-price-option="120mm Fan">RM30–RM120</span></li><li><span>Basic Air Cooler</span><span data-price-group="cooling" data-price-option="Basic Air Cooler">RM60–RM180</span></li><li><span>Tower Air Cooler</span><span data-price-group="cooling" data-price-option="Tower Air Cooler">RM120–RM350</span></li><li><span>AIO 240mm</span><span data-price-group="cooling" data-price-option="AIO 240mm">RM220–RM600</span></li><li><span>AIO 360mm</span><span data-price-group="cooling" data-price-option="AIO 360mm">RM350–RM900+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">📶</span>Wi-Fi / Bluetooth</div><div class="part-price" id="price-summary-wifi">RM30–RM300+</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/wifi.svg" alt="Ilustrasi kad Wi-Fi dan Bluetooth" loading="lazy" decoding="async"></div>
   <p>Pilih USB, PCIe desktop atau M.2 laptop. Pastikan slot/key dan antenna sesuai.</p>
   <ul><li><span>USB Wi-Fi</span><span data-price-group="wifi" data-price-option="USB Wi-Fi">RM30–RM120</span></li><li><span>PCIe Wi-Fi + BT</span><span data-price-group="wifi" data-price-option="PCIe Wi-Fi BT">RM80–RM250</span></li><li><span>M.2 Wi-Fi + BT</span><span data-price-group="wifi" data-price-option="M.2 Wi-Fi BT">RM70–RM220</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🔋</span>Bateri Laptop</div><div class="part-price" id="price-summary-battery">Dari RM120</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/battery.svg" alt="Ilustrasi bateri laptop" loading="lazy" decoding="async"></div>
   <p>Part number lebih penting daripada rupa fizikal. Kapasiti Wh, voltage dan connector mesti sepadan.</p>
   <ul><li><span>Compatible / OEM</span><span data-price-group="battery" data-price-option="Compatible OEM">RM120–RM250</span></li><li><span>Original / Premium</span><span data-price-group="battery" data-price-option="Original Premium">RM250–RM500+</span></li><li><span>Gaming / ultrabook khas</span><span data-price-group="battery" data-price-option="Gaming-Ultrabook">RM300–RM650+</span></li></ul>
 </article>
 
 <article class="part-card">
   <div class="part-card-top"><div class="part-title"><span class="part-icon">🔌</span>Adapter / Charger</div><div class="part-price" id="price-summary-adapter">Dari RM60</div></div>
+  <div class="part-visual"><img src="/Upgrade-Parts/assets/hardware/adapter.svg" alt="Ilustrasi adapter dan charger laptop USB-C" loading="lazy" decoding="async"></div>
   <p>Voltage mesti sepadan; wattage mesti mencukupi. USB-C memerlukan sokongan Power Delivery yang sesuai.</p>
   <ul><li><span>45–65W Barrel</span><span data-price-group="adapter" data-price-option="45-65W Barrel">RM60–RM150</span></li><li><span>90W Barrel</span><span data-price-group="adapter" data-price-option="90W Barrel">RM90–RM180</span></li><li><span>USB-C PD 65–100W</span><span data-price-group="adapter" data-price-option="USB-C 65-100W">RM100–RM250</span></li><li><span>USB-C PD 140W</span><span data-price-group="adapter" data-price-option="USB-C 140W">RM180–RM350</span></li><li><span>Gaming 180–330W</span><span data-price-group="adapter" data-price-option="Gaming 180-330W">RM180–RM550+</span></li></ul>
 </article>
@@ -292,7 +308,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <section class="upgrade-cta"><div><h3>Dah tahu komponen yang kamu mahu?</h3><p>Hantar model PC/laptop dan pilihan upgrade. AZOBSS akan semak keserasian, stok dan harga akhir sebelum pemasangan.</p></div><div class="actions"><a class="btn primary" href="/Tempah-Servis-IT/#bookingForm">Tempah / Semak Keserasian</a><a class="btn" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">WhatsApp</a></div></section>
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • Upgrade &amp; Parts • Harga tertakluk kepada model dan stok</div></footer>
-<script id="azobss-upgrade-estimator-v1464">
+<script id="azobss-upgrade-estimator-v1465">
 (function(){
   'use strict';
   var LIVE_API='https://azobss-backend.onrender.com/api/upgrade-parts/live-prices';
@@ -363,7 +379,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   fetch(LIVE_API,{headers:{Accept:'application/json'},cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(applyLive).catch(function(){if(status&&statusText){status.dataset.state='fallback';statusText.textContent='Anggaran fallback • live sync unavailable';}});
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1464" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1465" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body>
 </html>
