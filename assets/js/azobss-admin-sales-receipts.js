@@ -420,9 +420,12 @@ function depositAmount(row={}){
 }
 function receivedAmount(row={}){
   const status=normalizeStatus(row.status);
-  if(status==='paid')return clampMoney(row.gross);
+  const gross=clampMoney(row.gross);
+  if(status==='paid')return gross;
   if(status==='deposit-paid')return depositAmount(row);
-  return 0;
+  // v1461: allow arbitrary partial payments while the record remains an Invoice.
+  const stored=clampMoney(row.paidGross||row.amountReceived||row.partialPaymentAmount);
+  return Math.min(gross,stored);
 }
 function outstandingAmount(row={}){
   return clampMoney(Math.max(0,num(row.gross)-receivedAmount(row)));
@@ -648,7 +651,7 @@ function mergeDeleteRefs(...groups){
   return out;
 }
 function manualCalc(items=[],extras={}){
-  const clean=items.map(i=>({category:String(i.category||'other'),name:String(i.name||'Item'),qty:Math.max(0,num(i.qty)),unitPrice:clampMoney(i.unitPrice),unitCost:clampMoney(i.unitCost)}));
+  const clean=items.map(i=>({category:String(i.category||'other'),name:String(i.name||'Item'),qty:Math.max(0,num(i.qty)),unitPrice:clampMoney(i.unitPrice),unitCost:clampMoney(i.unitCost),serialNumber:String(i.serialNumber||'').trim(),warrantyUntil:String(i.warrantyUntil||'').slice(0,10)}));
   const subtotal=clean.reduce((s,i)=>s+i.qty*i.unitPrice,0);
   const productCost=clean.reduce((s,i)=>s+i.qty*i.unitCost,0);
   const discount=clampMoney(extras.discount);
@@ -785,6 +788,7 @@ async function loadData(options={}){
     websiteRows=filterStalePaidDuplicateWebsiteRows([...map.values()].filter(row=>!isAdminTestRecord(row))).map(row=>applyReceiptDeliveryState(applyAutoInvoiceEdit(row)));
     selectedRowIds.clear();
     currentPage=1;lastSuccessfulLoadAt=Date.now();applyFilters();
+    try{window.dispatchEvent(new CustomEvent('azobss:sales-receipts-updated',{detail:{manual:manualRows.length,website:websiteRows.length}}))}catch(_e){}
     if(info)info.textContent=`Loaded ${manualRows.length} manual quotation / invoice / receipt record(s) and ${websiteRows.length} website sale record(s).`;
   })().catch(e=>{
     const message=String(e?.message||e||'Failed to load sales receipts.');
@@ -846,7 +850,8 @@ function statusText(status){
   return normalized==='deposit-paid'?'DEPOSIT 50% PAID':normalized.toUpperCase();
 }
 function statusDisplayLabel(row={}){
-  const label=statusText(row.status);
+  let label=statusText(row.status);
+  if(normalizeStatus(row.status)==='pending'&&receivedAmount(row)>0&&outstandingAmount(row)>0)label='PARTIALLY PAID';
   return row.source==='website'&&row.adminStatusOverride?`${label} · MANUAL OVERRIDE`:label;
 }
 function statusPill(status,row=null){const normalized=normalizeStatus(status);const label=row?statusDisplayLabel(row):statusText(normalized);return `<span class="az-sr-pill ${esc(normalized)}">${esc(label)}</span>`}
@@ -926,11 +931,14 @@ function renderTable(){
     actions.push(iconActionButton('delete',`Delete ${label}`,`data-sr-delete-row="${rowId}"`));
     const paid=isRecognizedPayment(r.status);
     const depositPaid=normalizeStatus(r.status)==='deposit-paid';
+    const partialReceived=!paid&&!depositPaid?receivedAmount(r):0;
     const grossCell=paid
       ? money(r.gross)
       : depositPaid
         ? `<span class="az-sr-deposit-received">${money(receivedAmount(r))}</span><div class="az-sr-subtext az-sr-due">Due ${money(outstandingAmount(r))}</div>`
-        : `<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext az-sr-due">Due ${money(outstandingAmount(r))}</div>`;
+        : partialReceived>0
+          ? `<span class="az-sr-deposit-received">${money(partialReceived)}</span><div class="az-sr-subtext az-sr-due">Due ${money(outstandingAmount(r))}</div>`
+          : `<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext az-sr-due">Due ${money(outstandingAmount(r))}</div>`;
     const costCell=paid?money(r.totalCost):`<span class="az-sr-unrecognized">${money(0)}</span>`;
     const profitValue=paid?num(r.profit):0;
     const profitCell=paid?money(profitValue):`<span class="az-sr-unrecognized">${money(0)}</span><div class="az-sr-subtext">Not recognized</div>`;
@@ -1032,10 +1040,10 @@ function categoryOptions(selected='other'){return ['physical','computer-it','sof
 function addItemRow(item={}){
   const box=el('salesReceiptItems');if(!box)return;
   const row=document.createElement('div');row.className='az-sr-item-row';
-  row.innerHTML=`<label>Category<select data-sr-item-category>${categoryOptions(item.category||'other')}</select></label><label class="az-sr-item-name">Product / Service<input data-sr-item-name value="${esc(item.name||'')}" placeholder="Product name"></label><label>Quantity<input data-sr-item-qty type="number" min="0.01" step="0.01" value="${num(item.qty)||1}"></label><label>Unit price (RM)<input data-sr-item-price type="number" min="0" step="0.01" value="${num(item.unitPrice)||0}"></label><label>Unit cost (RM)<input data-sr-item-cost type="number" min="0" step="0.01" value="${num(item.unitCost)||0}"></label><button class="az-sr-remove-item" type="button" title="Remove item">×</button>`;
+  row.innerHTML=`<label>Category<select data-sr-item-category>${categoryOptions(item.category||'other')}</select></label><label class="az-sr-item-name">Product / Service<input data-sr-item-name value="${esc(item.name||'')}" placeholder="Product name"></label><label>Quantity<input data-sr-item-qty type="number" min="0.01" step="0.01" value="${num(item.qty)||1}"></label><label>Unit price (RM)<input data-sr-item-price type="number" min="0" step="0.01" value="${num(item.unitPrice)||0}"></label><label>Unit cost (RM)<input data-sr-item-cost type="number" min="0" step="0.01" value="${num(item.unitCost)||0}"></label><label class="az-sr-item-serial">Serial No.<input data-sr-item-serial value="${esc(item.serialNumber||'')}" placeholder="Optional serial"></label><label class="az-sr-item-warranty">Warranty Until<input data-sr-item-warranty type="date" value="${esc(String(item.warrantyUntil||'').slice(0,10))}"></label><button class="az-sr-remove-item" type="button" title="Remove item">×</button>`;
   box.appendChild(row);row.querySelectorAll('input,select').forEach(x=>x.addEventListener('input',recalcForm));row.querySelector('.az-sr-remove-item').addEventListener('click',()=>{if(box.children.length<=1)return notify('At least one item is required.',true);row.remove();recalcForm()});recalcForm();
 }
-function collectFormItems(){return [...document.querySelectorAll('#salesReceiptItems .az-sr-item-row')].map(row=>({category:row.querySelector('[data-sr-item-category]')?.value||'other',name:String(row.querySelector('[data-sr-item-name]')?.value||'').trim(),qty:num(row.querySelector('[data-sr-item-qty]')?.value)||1,unitPrice:num(row.querySelector('[data-sr-item-price]')?.value),unitCost:num(row.querySelector('[data-sr-item-cost]')?.value)}))}
+function collectFormItems(){return [...document.querySelectorAll('#salesReceiptItems .az-sr-item-row')].map(row=>({category:row.querySelector('[data-sr-item-category]')?.value||'other',name:String(row.querySelector('[data-sr-item-name]')?.value||'').trim(),qty:num(row.querySelector('[data-sr-item-qty]')?.value)||1,unitPrice:num(row.querySelector('[data-sr-item-price]')?.value),unitCost:num(row.querySelector('[data-sr-item-cost]')?.value),serialNumber:String(row.querySelector('[data-sr-item-serial]')?.value||'').trim(),warrantyUntil:String(row.querySelector('[data-sr-item-warranty]')?.value||'').slice(0,10)}))}
 function formExtras(){return {discount:num(el('salesReceiptDiscount')?.value),shippingCharge:num(el('salesReceiptShippingCharge')?.value),shippingCost:num(el('salesReceiptShippingCost')?.value),paymentFee:num(el('salesReceiptPaymentFee')?.value),commission:num(el('salesReceiptCommission')?.value),otherCost:num(el('salesReceiptOtherCost')?.value)}}
 function manualFormUsesToyyibPay(){
   const method=String(el('salesReceiptPaymentMethod')?.value||'');
@@ -1085,9 +1093,10 @@ function recalcForm(){
   if(!commissionSyncLock&&String(el('salesReceiptCommissionPercent')?.value||'').trim()!=='')syncCommissionAmountFromPercent();
   const c=manualCalc(collectFormItems(),formExtras());const status=normalizeStatus(el('salesReceiptFormStatus')?.value);const recognized=isRecognizedPayment(status);const depositPaid=status==='deposit-paid';
   const set=(id,v)=>{if(el(id))el(id).textContent=money(v)};
-  const formAmountDue=depositPaid?clampMoney(c.gross*0.5):c.gross;
+  const manualReceived=Math.min(c.gross,clampMoney(el('salesReceiptAmountReceived')?.value||0));
+  const formAmountDue=recognized?0:(depositPaid?clampMoney(c.gross*0.5):clampMoney(Math.max(0,c.gross-manualReceived)));
   set('salesReceiptCalcSubtotal',c.subtotal);set('salesReceiptCalcProductCost',c.productCost);set('salesReceiptCalcGross',recognized?c.gross:formAmountDue);set('salesReceiptCalcCosts',recognized?c.totalCost:0);set('salesReceiptCalcProfit',recognized?c.profit:0);
-  if(el('salesReceiptCalcGrossLabel'))el('salesReceiptCalcGrossLabel').textContent=recognized?'Total Paid':(depositPaid?'Balance Due (50%)':'Amount Due');
+  if(el('salesReceiptCalcGrossLabel'))el('salesReceiptCalcGrossLabel').textContent=recognized?'Total Paid':(depositPaid?'Balance Due (50%)':(manualReceived>0?'Outstanding Balance':'Amount Due'));
   if(el('salesReceiptCalcCostsLabel'))el('salesReceiptCalcCostsLabel').textContent=recognized?'Recognized Costs':'Costs (after Paid)';
   if(el('salesReceiptCalcProfitLabel'))el('salesReceiptCalcProfitLabel').textContent=recognized?'Net Profit':'Net Profit (after Paid)';
 }
@@ -1173,6 +1182,7 @@ function openForm(row=null){
   editingDocId=editingMode==='manual'?(row?.docId||''):'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingQuotationNo=row?quotationNoForRow(row):'';editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
   editingSourceBookingId=editingMode==='manual'?String(row?.sourceBookingId||row?.bookingId||'').trim():'';editingSourceBookingSnapshot=editingMode==='manual'?(row?.sourceBookingSnapshot||null):null;
   el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=editingMode==='website'?(row?.paymentMethod||row?.verifiedPaymentMethod||'Other'):(row?.paymentMethod||(normalizeStatus(row?.status||'pending')==='pending'?'ToyyibPay':'Bank Transfer'));el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
+  if(el('salesReceiptCustomerType'))el('salesReceiptCustomerType').value=row?.customerType||'individual';if(el('salesReceiptCustomerTin'))el('salesReceiptCustomerTin').value=row?.customerTin||'';if(el('salesReceiptCustomerIdType'))el('salesReceiptCustomerIdType').value=row?.customerIdType||'';if(el('salesReceiptCustomerIdNo'))el('salesReceiptCustomerIdNo').value=row?.customerIdNo||row?.customerBrn||'';if(el('salesReceiptDueDate'))el('salesReceiptDueDate').value=String(row?.dueDate||'').slice(0,10);if(el('salesReceiptPaymentTerms'))el('salesReceiptPaymentTerms').value=row?.paymentTerms||'';if(el('salesReceiptAmountReceived'))el('salesReceiptAmountReceived').value=receivedAmount(row);if(el('salesReceiptPaymentReference'))el('salesReceiptPaymentReference').value=row?.paymentReference||'';
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;if(el('salesReceiptCommissionPercent'))el('salesReceiptCommissionPercent').value=num(row?.commissionPercent||row?.commissionRate)||(num(row?.gross)>0?((num(row?.commission)/num(row?.gross))*100).toFixed(2):0);el('salesReceiptOtherCost').value=num(row?.otherCost)||0;
   const savedStaff=(row?.commissionStaffUsername||row?.commissionStaffUid)?{username:row.commissionStaffUsername||'',uid:row.commissionStaffUid||'',email:row.commissionStaffEmail||'',role:row.commissionStaffRole||'',name:row.commissionStaffName||row.commissionStaffUsername||'',phone:row.commissionStaffPhone||''}:null;setCommissionStaff(savedStaff);el('salesReceiptNotes').value=row?.notes||'';
@@ -1230,7 +1240,7 @@ async function saveForm(){
   const existing=manualRows.find(r=>r.docId===editingDocId);const transitionedToPaid=status==='paid'&&editingOriginalStatus!=='paid';const transitionedToDeposit=status==='deposit-paid'&&editingOriginalStatus!=='deposit-paid';
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='quotation'?editingQuotationNo:(kind==='invoice'?editingInvoiceNo:editingReceiptNo);
   const documentNo=kind==='quotation'?editingQuotationNo:(kind==='invoice'?editingInvoiceNo:editingReceiptNo);
-  const depositPaid=status==='deposit-paid';const depositValue=depositPaid?clampMoney(c.gross*0.5):0;const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,quotationNo:editingQuotationNo||'',invoiceNo:kind==='quotation'?'':(editingInvoiceNo||''),receiptNo:editingReceiptNo||'',quotationDateMs:kind==='quotation'?(num(existing?.quotationDateMs)||saleDateMs):(num(existing?.quotationDateMs)||0),quotationValidUntil:String(el('salesReceiptQuoteValidUntil')?.value||existing?.quotationValidUntil||'').slice(0,10),paymentRecognized:recognized,depositPercent:depositPaid?50:0,depositAmount:depositValue,amountDue:recognized?0:(depositPaid?clampMoney(c.gross-depositValue):c.gross),paidGross:recognized?c.gross:depositValue,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),status,paymentMethod:kind==='quotation'?'Not Applicable':(String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:739,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,commissionPercent,commissionRate:commissionPercent,commissionStaffUsername:selectedCommissionStaff?.username||'',commissionStaffUid:selectedCommissionStaff?.uid||'',commissionStaffEmail:selectedCommissionStaff?.email||'',commissionStaffRole:selectedCommissionStaff?.role||'',commissionStaffName:selectedCommissionStaff?.name||'',commissionStaffPhone:selectedCommissionStaff?.phone||'',otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  const depositPaid=status==='deposit-paid';const depositValue=depositPaid?clampMoney(c.gross*0.5):0;const requestedReceived=clampMoney(el('salesReceiptAmountReceived')?.value||existing?.paidGross||0);const paidGross=recognized?c.gross:(depositPaid?depositValue:Math.min(c.gross,requestedReceived));const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,quotationNo:editingQuotationNo||'',invoiceNo:kind==='quotation'?'':(editingInvoiceNo||''),receiptNo:editingReceiptNo||'',quotationDateMs:kind==='quotation'?(num(existing?.quotationDateMs)||saleDateMs):(num(existing?.quotationDateMs)||0),quotationValidUntil:String(el('salesReceiptQuoteValidUntil')?.value||existing?.quotationValidUntil||'').slice(0,10),paymentRecognized:recognized,depositPercent:depositPaid?50:0,depositAmount:depositValue,amountDue:recognized?0:clampMoney(Math.max(0,c.gross-paidGross)),paidGross,partialPaymentAmount:paidGross,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),customerType:String(el('salesReceiptCustomerType')?.value||existing?.customerType||'individual'),customerTin:String(el('salesReceiptCustomerTin')?.value||'').trim(),customerIdType:String(el('salesReceiptCustomerIdType')?.value||'').trim(),customerIdNo:String(el('salesReceiptCustomerIdNo')?.value||'').trim(),customerBrn:String(el('salesReceiptCustomerIdType')?.value||'')==='BRN'?String(el('salesReceiptCustomerIdNo')?.value||'').trim():'',dueDate:String(el('salesReceiptDueDate')?.value||'').slice(0,10),paymentTerms:String(el('salesReceiptPaymentTerms')?.value||'').trim(),paymentReference:String(el('salesReceiptPaymentReference')?.value||'').trim(),status,paymentMethod:kind==='quotation'?'Not Applicable':(String(el('salesReceiptPaymentMethod')?.value||(status==='pending'?'ToyyibPay':'Other')).trim()||'Other'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:1461,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,commissionPercent,commissionRate:commissionPercent,commissionStaffUsername:selectedCommissionStaff?.username||'',commissionStaffUid:selectedCommissionStaff?.uid||'',commissionStaffEmail:selectedCommissionStaff?.email||'',commissionStaffRole:selectedCommissionStaff?.role||'',commissionStaffName:selectedCommissionStaff?.name||'',commissionStaffPhone:selectedCommissionStaff?.phone||'',otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   if(depositPaid){payload.depositPaidAtMs=num(existing?.depositPaidAtMs)||(transitionedToDeposit?Date.now():saleDateMs);if(transitionedToDeposit||!editingDocId)payload.depositPaidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='quotation'?'Quotation':(kind==='invoice'?'Invoice':'Receipt');btn.disabled=true;btn.textContent='Saving...';
@@ -1967,6 +1977,13 @@ window.azSalesReceiptsAnalyticsSnapshot=async function(options={}){
   };
 };
 window.azSalesReceiptsGetLedgerRows=function(){return analyticsLedgerSnapshotRows()};
+window.AZOBSSSalesReceipts=Object.freeze({
+  version:'1461',
+  getRows:()=>analyticsLedgerSnapshotRows(),
+  reload:async()=>{await loadData({force:true});return analyticsLedgerSnapshotRows()},
+  recalc:()=>recalcForm(),
+  openById:async id=>{await loadData();const row=findRow(String(id||''));if(row){openForm(row);return true}return false}
+});
 bind();
 
 // The admin tab can be opened before this ES module finishes importing Firebase.

@@ -9,8 +9,7 @@ const admin=fs.readFileSync(path.join(root,'admin','index.html'),'utf8');
 const home=fs.readFileSync(path.join(root,'index.html'),'utf8');
 
 test('v1315 visible admin version badge follows current package',()=>{
-  assert.match(pkg.version,/^1\.0\.\d+$/);
-  assert.ok(Number(pkg.version.split('.').pop()) >= 1315);
+  assert.ok(['1.0.1315','1.0.1316','1.0.1317','1.0.1318','1.0.1321','1.0.1322','1.0.1323'].includes(pkg.version));
   assert.match(auth,new RegExp(`VERSION_TEXT = 'v${pkg.version.split('.').pop()}'`));
   assert.doesNotMatch(auth,/VERSION_TEXT = 'v1307'/);
 });
