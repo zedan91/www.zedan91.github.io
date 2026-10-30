@@ -330,6 +330,31 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .auth-google-btn:hover{background:#f8fafc;border-color:#fff;}
 .auth-google-btn:disabled{opacity:.65;cursor:wait;}
 .auth-google-g{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;font:900 18px/1 Arial,sans-serif;color:#4285f4;background:#fff;}
+/* v1468: compact signup + Google quick sign-in prompt */
+#siteSignUpForm.auth-signup-form{gap:11px;}
+#siteSignUpForm.auth-signup-form label{gap:6px;}
+#siteSignUpForm.auth-signup-form input{padding:12px 14px;}
+#siteSignUpForm .country-code-button{height:44px;}
+#siteSignUpForm .auth-signup-captcha{margin-top:2px;}
+#siteSignUpForm .request-error:empty{display:none!important;min-height:0!important;}
+#siteSignUpForm .request-error:not(:empty){display:block;}
+#siteSignUpForm .auth-primary-cta{margin-top:1px;}
+#siteSignUpForm .auth-google-password-link{background:#31435f;color:#dcecff;box-shadow:none;border:1px solid rgba(147,197,253,.24);padding:11px 14px;}
+.az-google-quick-card{position:fixed;right:18px;top:18px;z-index:2147483590;width:min(350px,calc(100vw - 28px));padding:15px 15px 14px;border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#171a20;color:#fff;box-shadow:0 18px 60px rgba(0,0,0,.42);display:none;opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .18s ease;}
+.az-google-quick-card.is-visible{display:block;opacity:1;transform:translateY(0);}
+.az-google-quick-head{display:flex;align-items:flex-start;gap:11px;padding-right:34px;}
+.az-google-quick-logo{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#4285f4;font:900 22px/1 Arial,sans-serif;}
+.az-google-quick-copy{min-width:0;}
+.az-google-quick-title{display:block;font-size:15px;font-weight:800;line-height:1.28;color:#f8fafc;}
+.az-google-quick-sub{display:block;margin-top:3px;font-size:12px;line-height:1.35;color:#aeb8c7;}
+.az-google-quick-close{position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:9px;background:transparent;color:#aeb8c7;font-size:23px;line-height:1;cursor:pointer;}
+.az-google-quick-close:hover{background:rgba(255,255,255,.08);color:#fff;}
+.az-google-quick-continue{width:100%;margin-top:13px;min-height:40px;border:0;border-radius:999px;background:#1456c8;color:#fff;font-weight:800;font-size:14px;cursor:pointer;}
+.az-google-quick-continue:hover{filter:brightness(1.08);}
+.az-google-quick-continue:disabled{opacity:.65;cursor:wait;}
+body.is-authenticated .az-google-quick-card{display:none!important;}
+#siteAuthModal.is-open ~ .az-google-quick-card{display:none!important;}
+@media(max-width:720px){.az-google-quick-card{right:12px;left:12px;top:12px;width:auto;}.az-google-quick-sub{display:none;}}
 .google-profile-copy{margin:-4px 0 4px;color:#b7c5d9;font-size:13px;line-height:1.5;}
 .google-profile-identity{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(203,213,225,.18);border-radius:10px;background:rgba(8,19,38,.58);}
 .google-profile-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#0d1628;border:1px solid rgba(203,213,225,.25);}
@@ -429,9 +454,12 @@ function injectModal() {
       </div>
       <p class="auth-switch-note">Don't have an account? <button id="switchToSiteSignup" type="button">Register</button></p>
     </form>
-    <form class="auth-modal-form" id="siteSignUpForm" hidden>
-      <label for="siteSignupUsername">Username / Email
+    <form class="auth-modal-form auth-signup-form" id="siteSignUpForm" hidden>
+      <label for="siteSignupUsername">Username
         <input id="siteSignupUsername" autocomplete="username" placeholder="Choose a username" required type="text">
+      </label>
+      <label for="siteSignupEmail">Email
+        <input id="siteSignupEmail" autocomplete="email" inputmode="email" placeholder="name@email.com" required type="email">
       </label>
       <label for="siteSignupPassword">Password
         <input id="siteSignupPassword" autocomplete="new-password" placeholder="Minimum 8 characters" minlength="8" required type="password">
@@ -448,13 +476,10 @@ function injectModal() {
           <div class="phone-number-wrap"><span class="phone-prefix" data-phone-prefix>+60</span><input id="siteSignupPhone" inputmode="tel" placeholder="10-3560 0723" required type="tel"><input id="siteSignupDial" type="hidden" value="60"></div>
         </div>
       </label>
-      <label for="siteSignupEmail">Email
-        <input id="siteSignupEmail" inputmode="email" placeholder="Example: name@email.com" required type="email">
-      </label>
-      <div class="auth-captcha-row"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
+      <div class="auth-captcha-row auth-signup-captcha"><div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div></div>
       <p class="request-error" id="siteSignupError"></p>
-      <button class="btn secondary" id="siteEnablePasswordWithGoogleButton" type="button" hidden>Verify Google & Enable Password Login</button>
-      <button class="btn signup" type="submit">Create Account</button>
+      <button class="btn secondary auth-google-password-link" id="siteEnablePasswordWithGoogleButton" type="button" hidden>Verify Google account & enable password login</button>
+      <button class="btn signup auth-primary-cta" type="submit">Create Account</button>
       <div class="auth-google-divider"><span>or</span></div>
       <button class="auth-google-btn" id="siteGoogleSignUpButton" type="button"><span class="auth-google-g" aria-hidden="true">G</span><span>Sign up with Google</span></button>
       <p class="auth-switch-note">Already have an account? <button id="switchToSiteSignin" type="button">Sign in</button></p>
@@ -464,6 +489,33 @@ function injectModal() {
   document.body.appendChild(wrap.firstElementChild);
   setupCountryPhoneSelectors(document);
   setupPasswordVisibilityToggles();
+}
+
+function injectGoogleQuickSignInPrompt(){
+  if(document.getElementById('azGoogleQuickSignIn')) return;
+  if(/^\/admin(?:\/|$)/i.test(location.pathname)) return;
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<aside class="az-google-quick-card" id="azGoogleQuickSignIn" aria-label="Google sign in" aria-hidden="true">
+    <button class="az-google-quick-close" id="azGoogleQuickClose" type="button" aria-label="Close Google sign-in prompt">×</button>
+    <div class="az-google-quick-head">
+      <span class="az-google-quick-logo" aria-hidden="true">G</span>
+      <span class="az-google-quick-copy"><strong class="az-google-quick-title">Sign in to AZOBSS with Google</strong><small class="az-google-quick-sub">Use your Google account for faster sign-in.</small></span>
+    </div>
+    <button class="az-google-quick-continue" id="azGoogleQuickContinue" type="button">Continue</button>
+  </aside>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+function azobssHideGoogleQuickPrompt(remindThisSession=false){
+  const card=document.getElementById('azGoogleQuickSignIn');
+  if(card){card.classList.remove('is-visible');card.setAttribute('aria-hidden','true');}
+  if(remindThisSession){try{sessionStorage.setItem('azobssGoogleQuickDismissed','1')}catch(_){}}
+}
+function azobssMaybeShowGoogleQuickPrompt(){
+  const card=document.getElementById('azGoogleQuickSignIn');
+  if(!card||document.body.classList.contains('is-authenticated')) return;
+  try{if(sessionStorage.getItem('azobssGoogleQuickDismissed')==='1') return;}catch(_){}
+  if(document.getElementById('siteAuthModal')?.classList.contains('is-open')) return;
+  card.classList.add('is-visible');card.setAttribute('aria-hidden','false');
 }
 
 function injectGoogleProfileModal(){
@@ -1804,6 +1856,7 @@ function syncHeader(user){
 }
 
 function openSiteAuth(mode='signin'){
+  try{azobssHideGoogleQuickPrompt(false);}catch(_){}
   const modal=$('siteAuthModal'), title=$('siteAuthTitle'), signInForm=$('siteSignInForm'), signUpForm=$('siteSignUpForm');
   if(!modal || !signInForm || !signUpForm) return;
   const isSignup=mode==='signup' || mode==='register';
@@ -7787,7 +7840,7 @@ window.addEventListener('azobssPurchaseRecorded', renderAzobssPurchaseRecords);
 window.addEventListener('storage', renderAzobssPurchaseRecords);
 
 function bindAuth() {
-  addStyle(); injectModal(); injectGoogleProfileModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser()); azobssInstallNavbarUsernameGuard();
+  addStyle(); injectModal(); injectGoogleQuickSignInPrompt(); injectGoogleProfileModal(); injectProfileSettingsModal(); injectAdminUserEditModal(); normalizeUserMenu(); bindUserDropdownActions(); syncActiveNav(); syncHeader(getSavedUser()); azobssInstallNavbarUsernameGuard();
   bindAzobssPurchaseRecordsUI(); bindAzobssPaBmToyyibButton(); renderFirebaseAdminRecords();
 
   document.addEventListener('click', async (event) => {
@@ -7854,6 +7907,16 @@ function bindAuth() {
 
   $('siteGoogleSignInButton')?.addEventListener('click',()=>handleGoogleAuth('signin'));
   $('siteGoogleSignUpButton')?.addEventListener('click',()=>handleGoogleAuth('signup'));
+  $('azGoogleQuickClose')?.addEventListener('click',()=>azobssHideGoogleQuickPrompt(true));
+  $('azGoogleQuickContinue')?.addEventListener('click',async()=>{
+    const btn=$('azGoogleQuickContinue');
+    if(btn){btn.disabled=true;btn.textContent='Opening Google...';}
+    azobssHideGoogleQuickPrompt(false);
+    try{await handleGoogleAuth('signin');}
+    finally{if(btn){btn.disabled=false;btn.textContent='Continue';}}
+  });
+  setTimeout(()=>{try{azobssMaybeShowGoogleQuickPrompt();}catch(_){}},1400);
+  window.addEventListener('focus',()=>{setTimeout(()=>{try{azobssMaybeShowGoogleQuickPrompt();}catch(_){}},350);});
   $('siteGoogleProfileCancel')?.addEventListener('click',()=>{azobssAbortGoogleProfile().catch(()=>{})});
   $('siteGoogleRepairButton')?.addEventListener('click',()=>{azobssRunGoogleRepair().catch((error)=>{const err=$('siteGoogleProfileError');if(err)err.textContent=error?.message||'Unable to repair Google sign-in.'})});
   $('siteGoogleLinkToggle')?.addEventListener('click',()=>setGoogleLinkMode(!azobssGooglePendingLinkMode));
@@ -9493,7 +9556,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1467';
+  var VERSION_TEXT = 'v1468';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
