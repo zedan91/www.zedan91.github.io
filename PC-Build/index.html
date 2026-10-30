@@ -100,6 +100,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <script src="/assets/js/azobss-render-wake.js?v=1056"></script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<script src="/assets/js/azobss-mobile-view-switcher.js?v=1469"></script>
 <title>PC Build Malaysia | AZOBSS</title>
 <meta name="description" content="PC Build Malaysia dari Office hingga RTX 5090, Workstation/AI dan Build Sendiri untuk AutoCAD, CAD/Survey, gaming, creator dan profesional dengan harga rujukan live."/>
 <link rel="canonical" href="https://www.azobss.com/PC-Build/"/>
@@ -424,7 +425,7 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;render();renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();render()});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1468" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1469" type="module"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

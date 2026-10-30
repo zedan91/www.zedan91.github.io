@@ -102,6 +102,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<script src="/assets/js/azobss-mobile-view-switcher.js?v=1469"></script>
 <title>Upgrade PC & Parts — Anggaran Harga | AZOBSS</title>
 <meta name="description" content="Anggaran harga upgrade PC dan laptop terperinci untuk RAM DDR1-DDR5, SATA SSD, NVMe Gen3/Gen4/Gen5, HDD, GPU, PSU, cooling, Wi-Fi, bateri dan adapter. Semak keserasian sebelum tempahan dengan AZOBSS."/>
 <link rel="icon" href="/favicon-96x96.png"/>
@@ -420,7 +421,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   fetch(LIVE_API,{headers:{Accept:'application/json'},cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(applyLive).catch(function(){if(status&&statusText){status.dataset.state='fallback';statusText.textContent='Anggaran fallback • live sync unavailable';}});
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1468" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1469" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body>
 </html>

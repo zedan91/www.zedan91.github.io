@@ -330,6 +330,7 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .auth-google-btn:hover{background:#f8fafc;border-color:#fff;}
 .auth-google-btn:disabled{opacity:.65;cursor:wait;}
 .auth-google-g{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;font:900 18px/1 Arial,sans-serif;color:#4285f4;background:#fff;}
+/* v1469: phone Desktop View / Mobile View switcher */
 /* v1468: compact signup + Google quick sign-in prompt */
 #siteSignUpForm.auth-signup-form{gap:11px;}
 #siteSignUpForm.auth-signup-form label{gap:6px;}
@@ -9556,7 +9557,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1468';
+  var VERSION_TEXT = 'v1469';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
