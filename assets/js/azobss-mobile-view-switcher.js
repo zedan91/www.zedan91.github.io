@@ -1,4 +1,4 @@
-/* AZOBSS v1469 - Phone Mobile/Desktop View Switcher
+/* AZOBSS v1470 - Phone Mobile/Desktop View Switcher
  * Gives phone users an explicit Desktop View / Mobile View toggle.
  * Preference persists across AZOBSS pages via localStorage.
  */

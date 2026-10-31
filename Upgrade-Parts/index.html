@@ -102,7 +102,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<script src="/assets/js/azobss-mobile-view-switcher.js?v=1469"></script>
+<script src="/assets/js/azobss-mobile-view-switcher.js?v=1470"></script>
 <title>Upgrade PC & Parts — Anggaran Harga | AZOBSS</title>
 <meta name="description" content="Anggaran harga upgrade PC dan laptop terperinci untuk RAM DDR1-DDR5, SATA SSD, NVMe Gen3/Gen4/Gen5, HDD, GPU, PSU, cooling, Wi-Fi, bateri dan adapter. Semak keserasian sebelum tempahan dengan AZOBSS."/>
 <link rel="icon" href="/favicon-96x96.png"/>
@@ -177,6 +177,70 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 .part-card:hover .part-visual.real-photo img{transform:none!important;filter:saturate(1.01) contrast(1.03)}
 @media(max-width:700px){.part-visual.real-photo,.part-card-wide .part-visual.real-photo{height:190px;padding:10px}}
 </style>
+
+<style id="azobss-upgrade-focus-v1470">
+/* v1470: compact one-screen hardware focus layout */
+.upgrade-hero{padding:12px 0 7px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center}
+.upgrade-hero .eyebrow{display:none!important}
+.upgrade-hero h1{grid-column:1;margin:0;font-size:clamp(26px,3vw,38px);line-height:1.04;max-width:none}
+.upgrade-hero p{grid-column:1/-1;margin:0;max-width:none;font-size:13px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upgrade-actions{grid-column:2;grid-row:1;margin:0;gap:7px;justify-content:flex-end}
+.upgrade-actions .btn{min-height:36px;padding:0 11px;font-size:12px;border-radius:9px}
+.price-note{margin:3px 0 7px;padding:7px 10px;font-size:11px;line-height:1.35;border-radius:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#anggaran{scroll-margin-top:58px}
+#anggaran>.section-title{font-size:19px;margin:4px 0 2px}
+#anggaran>.section-sub{display:none}
+.upgrade-grid.detailed.hardware-focus-ready{display:block;margin:5px 0 22px;padding:0}
+.hardware-focus-shell{display:grid;grid-template-columns:232px minmax(0,1fr);gap:10px;height:clamp(490px,calc(100vh - 245px),620px);min-height:0}
+.hardware-focus-nav{display:grid;grid-template-rows:repeat(9,minmax(0,1fr));gap:6px;min-height:0}
+.hardware-focus-btn{width:100%;min-width:0;border:1px solid #29415e;border-radius:12px;background:linear-gradient(145deg,#0b192b,#081421);color:#dce9f7;padding:5px 7px;display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;text-align:left;cursor:pointer;transition:border-color .16s ease,background .16s ease,transform .16s ease}
+.hardware-focus-btn:hover{border-color:#4b6d93;background:#10233a}
+.hardware-focus-btn:focus-visible{outline:2px solid #67e8f9;outline-offset:2px}
+.hardware-focus-btn.is-active{border-color:#22d3ee;background:linear-gradient(145deg,rgba(8,145,178,.19),#0b1c2d);box-shadow:inset 3px 0 0 #22d3ee}
+.hardware-focus-thumb{grid-row:1/3;width:38px;height:38px;border-radius:9px;background:#eef2f5;border:1px solid rgba(148,163,184,.28);object-fit:contain;padding:3px}
+.hardware-focus-name{min-width:0;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:end}
+.hardware-focus-price{min-width:0;font-size:10px;font-weight:850;color:#fbbf24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:start}
+.hardware-focus-stage{min-width:0;min-height:0;height:100%}
+.hardware-focus-stage>.part-card{display:none!important}
+.hardware-focus-stage>.part-card.is-active{display:flex!important;flex-direction:column;height:100%;min-height:0;padding:12px 14px;border-radius:16px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+.hardware-focus-stage .part-card.part-card-wide{grid-column:auto}
+.hardware-focus-stage .part-card-top{flex:0 0 auto;margin-bottom:8px}
+.hardware-focus-stage .part-title{font-size:17px}
+.hardware-focus-stage .part-icon{width:34px;height:34px;font-size:18px;border-radius:10px}
+.hardware-focus-stage .part-price{font-size:15px}
+.part-focus-body{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(0,1.28fr);gap:14px;min-height:0;flex:1}
+.part-focus-media,.part-focus-detail{min-width:0;min-height:0}
+.part-focus-media{display:flex;flex-direction:column;gap:7px;overflow:auto;padding-right:2px}
+.part-focus-detail{overflow:auto;padding-right:4px}
+.hardware-focus-stage .part-visual.real-photo,.hardware-focus-stage .part-card-wide .part-visual.real-photo{height:210px;min-height:210px;margin:0 0 3px;padding:8px;border-radius:12px}
+.hardware-focus-stage .part-card p{margin:0;color:#a9bdd3;font-size:12px;line-height:1.45}
+.hardware-focus-stage .part-spec,.hardware-focus-stage .hardware-note{margin-top:0;font-size:11px;line-height:1.4}
+.hardware-focus-stage .part-tags{margin-top:auto;padding-top:4px}
+.hardware-focus-stage .part-tag{font-size:10px;padding:4px 7px}
+.hardware-focus-stage .part-table{font-size:10.5px;margin:0;width:100%}
+.hardware-focus-stage .part-table th,.hardware-focus-stage .part-table td{padding:5px 6px;line-height:1.25}
+.hardware-focus-stage .part-card ul{margin:0}
+.hardware-focus-stage .part-card li{font-size:11.5px;padding:8px 2px}
+.hardware-focus-stage .part-focus-detail::-webkit-scrollbar,.part-focus-media::-webkit-scrollbar{width:7px}
+.hardware-focus-stage .part-focus-detail::-webkit-scrollbar-thumb,.part-focus-media::-webkit-scrollbar-thumb{background:#2c4968;border-radius:99px}
+@media(max-width:900px){
+  .upgrade-hero{grid-template-columns:1fr}.upgrade-hero h1,.upgrade-actions,.upgrade-hero p{grid-column:1}.upgrade-actions{grid-row:auto;justify-content:flex-start}.upgrade-hero p{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.price-note{white-space:normal}
+  .hardware-focus-shell{grid-template-columns:1fr;height:auto;min-height:0}
+  .hardware-focus-nav{display:flex;overflow-x:auto;gap:7px;padding-bottom:4px;scrollbar-width:thin}
+  .hardware-focus-btn{flex:0 0 142px;height:54px;grid-template-columns:36px minmax(0,1fr)}
+  .hardware-focus-thumb{width:36px;height:36px}
+  .hardware-focus-stage{height:min(590px,72vh)}
+  .part-focus-body{grid-template-columns:1fr;overflow:auto}
+  .part-focus-media{overflow:visible}.part-focus-detail{overflow:visible}
+  .hardware-focus-stage .part-visual.real-photo,.hardware-focus-stage .part-card-wide .part-visual.real-photo{height:180px;min-height:180px}
+}
+@media(max-width:560px){
+  .upgrade-hero{padding-top:8px}.upgrade-hero h1{font-size:25px}.upgrade-actions .btn{min-height:34px;padding:0 9px;font-size:11px}
+  #anggaran>.section-title{font-size:17px}.hardware-focus-stage{height:560px}
+  .hardware-focus-stage>.part-card.is-active{padding:10px}.part-focus-body{gap:8px}.hardware-focus-stage .part-visual.real-photo{height:155px;min-height:155px}
+}
+</style>
+
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -317,6 +381,72 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 </div>
 </section>
 
+<script id="azobss-upgrade-focus-v1470-js">
+(function(){
+  'use strict';
+  var grid=document.querySelector('.upgrade-grid.detailed');
+  if(!grid||grid.dataset.focusReady==='1')return;
+  var cards=Array.from(grid.querySelectorAll(':scope > .part-card'));
+  if(!cards.length)return;
+  grid.dataset.focusReady='1';
+  grid.classList.add('hardware-focus-ready');
+
+  var shell=document.createElement('div'); shell.className='hardware-focus-shell';
+  var nav=document.createElement('div'); nav.className='hardware-focus-nav'; nav.setAttribute('role','tablist'); nav.setAttribute('aria-label','Pilih hardware');
+  var stage=document.createElement('div'); stage.className='hardware-focus-stage';
+  shell.append(nav,stage); grid.appendChild(shell);
+
+  function text(el){return String(el&&el.textContent||'').replace(/\s+/g,' ').trim();}
+  var buttons=[];
+  cards.forEach(function(card,index){
+    var top=card.querySelector('.part-card-top');
+    var title=card.querySelector('.part-title');
+    var price=card.querySelector('.part-price');
+    var image=card.querySelector('.part-visual img');
+    var body=document.createElement('div'); body.className='part-focus-body';
+    var media=document.createElement('div'); media.className='part-focus-media';
+    var detail=document.createElement('div'); detail.className='part-focus-detail';
+    Array.from(card.children).forEach(function(node){
+      if(node===top)return;
+      if(node.matches&& (node.matches('table')||node.matches('ul'))) detail.appendChild(node);
+      else media.appendChild(node);
+    });
+    body.append(media,detail); card.appendChild(body); stage.appendChild(card);
+    card.id=card.id||('hardware-focus-panel-'+index);
+    card.setAttribute('role','tabpanel');
+
+    var btn=document.createElement('button'); btn.type='button'; btn.className='hardware-focus-btn'; btn.setAttribute('role','tab'); btn.setAttribute('aria-controls',card.id);
+    var thumb=document.createElement('img'); thumb.className='hardware-focus-thumb'; thumb.alt=''; thumb.loading='lazy'; thumb.decoding='async';
+    if(image){thumb.src=image.currentSrc||image.src; thumb.onerror=function(){this.style.visibility='hidden';};}
+    var name=document.createElement('span'); name.className='hardware-focus-name'; name.textContent=text(title).replace(/^[^A-Za-z0-9]+/,'')||('Hardware '+(index+1));
+    var priceMirror=document.createElement('span'); priceMirror.className='hardware-focus-price'; priceMirror.textContent=text(price);
+    btn.append(thumb,name,priceMirror); nav.appendChild(btn); buttons.push(btn);
+
+    if(price&&window.MutationObserver){
+      new MutationObserver(function(){priceMirror.textContent=text(price);}).observe(price,{childList:true,characterData:true,subtree:true});
+    }
+    btn.addEventListener('click',function(){activate(index,true);});
+  });
+
+  function activate(index,focusButton){
+    cards.forEach(function(card,i){
+      var on=i===index; card.classList.toggle('is-active',on); card.hidden=!on;
+      buttons[i].classList.toggle('is-active',on); buttons[i].setAttribute('aria-selected',on?'true':'false'); buttons[i].tabIndex=on?0:-1;
+    });
+    if(focusButton)buttons[index].focus({preventScroll:true});
+  }
+  nav.addEventListener('keydown',function(ev){
+    var current=buttons.indexOf(document.activeElement); if(current<0)return;
+    var next=current;
+    if(ev.key==='ArrowDown'||ev.key==='ArrowRight')next=(current+1)%buttons.length;
+    else if(ev.key==='ArrowUp'||ev.key==='ArrowLeft')next=(current-1+buttons.length)%buttons.length;
+    else if(ev.key==='Home')next=0; else if(ev.key==='End')next=buttons.length-1; else return;
+    ev.preventDefault(); activate(next,true);
+  });
+  activate(0,false);
+})();
+</script>
+
 <section class="estimator" aria-labelledby="estimatorTitle">
 <div class="estimate-panel"><h2 id="estimatorTitle">Kalkulator anggaran terperinci</h2><p>Pilih komponen kemudian pilih generasi, kapasiti atau kelas sebenar. Harga live/fallback akan ikut pilihan yang sama seperti jadual di atas.</p><div class="est-fields"><div class="est-field"><label for="upgradeType">Komponen</label><select id="upgradeType"><option value="ram">RAM DDR1–DDR5</option><option value="storage">SSD / NVMe</option><option value="hdd">HDD</option><option value="gpu">GPU</option><option value="psu">PSU</option><option value="cooling">Cooling / Fan</option><option value="wifi">Wi-Fi / Bluetooth</option><option value="battery">Bateri Laptop</option><option value="adapter">Adapter / Charger</option></select></div><div class="est-field"><label for="upgradeOption">Jenis / kapasiti / kelas</label><select id="upgradeOption"></select></div></div></div>
 <aside class="est-result" aria-live="polite"><span class="label">ANGGARAN KOMPONEN</span><strong id="upgradeEstimate">Semak stok</strong><small id="upgradeEstimateNote">RAM DDR1 Legacy — stok baru sangat terhad; semak DIMM dan spesifikasi motherboard.</small><div class="mini">Tidak termasuk caj tambahan jika perlu cloning data, pemasangan khas, converter/bracket atau kerja troubleshooting.</div></aside>
@@ -421,7 +551,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   fetch(LIVE_API,{headers:{Accept:'application/json'},cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(applyLive).catch(function(){if(status&&statusText){status.dataset.state='fallback';statusText.textContent='Anggaran fallback • live sync unavailable';}});
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1469" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1470" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body>
 </html>
