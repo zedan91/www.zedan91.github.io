@@ -1,0 +1,582 @@
+{
+  "schemaVersion": 1,
+  "version": "1475",
+  "checkedAt": "2026-11-01",
+  "market": "Malaysia",
+  "currency": "MYR",
+  "pricePolicy": "Source prices are synchronized by the AZOBSS backend and converted to final AZOBSS selling prices with server-side markup. If a live source cannot be verified, the last snapshot remains visible as a temporary selling price and checkout requires confirmation.",
+  "products": [
+    {
+      "id": "nb-msi-rtx5060-inspire-8g",
+      "type": "hardware",
+      "category": "GPU",
+      "name": "MSI GeForce RTX 5060 8G INSPIRE 2X OC",
+      "price": 1599,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "source-out-of-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/graphic-card/14605-msi-geforce-rtx-5060-8g-inspire-2x-oc-graphic-card.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "8GB GDDR7",
+        "PCIe 5.0 x16 (x8)",
+        "2535MHz boost",
+        "550W recommended PSU",
+        "3-year MSI Malaysia warranty"
+      ],
+      "image": "https://img-itopya.mncdn.com/cdn/1000/1-0edb99.png",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/gpu.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "MSI GeForce RTX 5060 8G INSPIRE 2X OC",
+        "RTX 5060 8G INSPIRE"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 1599
+    },
+    {
+      "id": "nb-msi-rtx5070-ventus-12g",
+      "type": "hardware",
+      "category": "GPU",
+      "name": "MSI GeForce RTX 5070 12GB",
+      "price": 3299,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/145-pc-components",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "12GB GDDR7",
+        "RTX 50-series",
+        "1440p / creator class",
+        "Stock requires confirmation"
+      ],
+      "image": "https://zortexcomputer.com/cdn/shop/files/MSI_GeForce_RTX_5070_12G_VENTUS_2X_OC1.jpg?v=1776430061",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/gpu.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "MSI GeForce RTX 5070",
+        "RTX 5070 12GB"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 3299
+    },
+    {
+      "id": "nb-msi-b860m-mortar-wifi",
+      "type": "hardware",
+      "category": "Motherboard",
+      "name": "MSI MAG B860M Mortar WiFi",
+      "price": 969,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/145-pc-components",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel B860",
+        "mATX",
+        "Wi-Fi",
+        "Current retail snapshot"
+      ],
+      "image": "https://cdn.nbplaza.com.my/img/p/6/4/6/3/9/64639-home_default.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "MSI MAG B860M Mortar WiFi",
+        "B860M Mortar WiFi"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 969
+    },
+    {
+      "id": "nb-kingston-nv3-gen4",
+      "type": "hardware",
+      "category": "SSD / NVMe",
+      "name": "Kingston NV3 PCIe 4.0 NVMe SSD",
+      "price": 780,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/storage/14119-3920-kingston-m2-2280-pcie-40-nvme-nv3-ssd-500gb-1tb-2tb-4tb.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "500GB / 1TB / 2TB / 4TB variants",
+        "PCIe 4.0 x4 NVMe",
+        "Up to 6,000MB/s read on selected capacities",
+        "5-year Kingston warranty",
+        "Displayed source price depends on selected capacity"
+      ],
+      "image": "https://cdn.nbplaza.com.my/img/p/5/8/6/3/1/58631-home_default.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Kingston NV3",
+        "NV3 SSD"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 780
+    },
+    {
+      "id": "nb-samsung-990-pro",
+      "type": "hardware",
+      "category": "SSD / NVMe",
+      "name": "Samsung 990 PRO PCIe 4.0 NVMe SSD",
+      "price": 1240,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/145-pc-components",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "1TB / 2TB / 4TB variants",
+        "PCIe 4.0 NVMe",
+        "Performance SSD",
+        "Capacity-specific price requires confirmation"
+      ],
+      "image": "https://cdn.hstatic.net/products/200000837185/ssd-samsung-990-pro-pcie-gen-4-0__1__8288631e4bb644d8be514c3c6062a474_master.png",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Samsung 990 PRO",
+        "990 PRO"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 1240
+    },
+    {
+      "id": "nb-ddr5-5600-sodimm",
+      "type": "hardware",
+      "category": "RAM",
+      "name": "DDR5 5600MHz Notebook RAM",
+      "price": 700,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "source-in-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/ram/11753-ddr5-5600mhz-notebook-ram.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "DDR5 SO-DIMM",
+        "5600MHz",
+        "8GB / 16GB / 32GB variants",
+        "3-year warranty",
+        "Capacity-specific price requires confirmation"
+      ],
+      "image": "https://www.kingstonstore.com.br/cdn/shop/products/SODIMM16GB2.jpg?v=1681500641&width=2048",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/ram.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "DDR5 5600MHz Notebook RAM",
+        "5600MHz Notebook RAM"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 700
+    },
+    {
+      "id": "nb-hyte-y40-white",
+      "type": "hardware",
+      "category": "Case",
+      "name": "HYTE Y40 ATX Case - White",
+      "price": 669,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/145-pc-components",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "ATX chassis",
+        "Tempered-glass style gaming case",
+        "Stock requires confirmation"
+      ],
+      "image": "https://computerorbit.com/cdn/shop/files/8a100eb0ae0f5c558f9cf35dd6fa8277_700x700.webp?v=1700309973",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "HYTE Y40",
+        "Y40 ATX Case"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 669
+    },
+    {
+      "id": "nb-acer-nitro-5060",
+      "type": "desktop",
+      "category": "Desktop PC",
+      "name": "Acer Aspire Nitro N30-100 RTX 5060 Gaming Desktop",
+      "price": 5519,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core Ultra 5 225F",
+        "8GB RAM",
+        "512GB SSD",
+        "GeForce RTX 5060 8GB",
+        "Windows 11"
+      ],
+      "image": "https://www.regard.ru/api/photo/goods/6592857.png",
+      "imageFallback": "/PC-Build/images/entry-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Acer Aspire Nitro N30-100",
+        "Nitro N30-100"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 5519
+    },
+    {
+      "id": "nb-acer-predator-orion-5060",
+      "type": "desktop",
+      "category": "Desktop PC",
+      "name": "Acer Predator Orion 3000 RTX 5060 Desktop",
+      "price": 6289,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core Ultra 5 225F",
+        "16GB RAM",
+        "1TB SSD",
+        "RTX 5060 8GB",
+        "Windows 11"
+      ],
+      "image": "https://kainoteka-public.s3.eu-central-1.amazonaws.com/products/fe9ba0c8-9e1f-45f8-bfac-228cb49399c1/acer-predator-orion-3000-desktop-tower-intel-core-ultra-5-225f-16-gb-ddr5-512-gb-nvidia-geforce-rtx-5060-n.jpg",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Acer Predator Orion 3000",
+        "Predator Orion 3000"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 6289
+    },
+    {
+      "id": "nb-hp-omnidesk-r7",
+      "type": "desktop",
+      "category": "Desktop PC",
+      "name": "HP OmniDesk Slim Ryzen 7 Desktop",
+      "price": 3099,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/12-hp-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Ryzen 7 7445HS",
+        "8GB RAM",
+        "512GB SSD",
+        "Windows 11",
+        "Office bundle on listed configuration"
+      ],
+      "image": "https://thumb.pccomponentes.com/w-530-530/articles/1115/11159959/2847-pc-sobremesa-hp-omnidesk-slim-s04-0001ns-amd-ryzen-7-7445hs-12gb-512gb-ssd-radeon-740m-freedos-wifi6-comprar.jpg",
+      "imageFallback": "/PC-Build/images/essential-office.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "HP OmniDesk Slim",
+        "OmniDesk Slim"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 3099
+    },
+    {
+      "id": "nb-hp-omen-5060ti",
+      "type": "desktop",
+      "category": "Desktop PC",
+      "name": "HP OMEN 35L RTX 5060 Ti 16GB Desktop",
+      "price": 10979,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/20-desktop?q=Categories-HP%2FRAM+Upgradable-Yes%2FOperating+System+-Windows+11",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core Ultra 7 270K",
+        "16GB RAM",
+        "1TB SSD",
+        "RTX 5060 Ti 16GB",
+        "Windows 11"
+      ],
+      "image": "https://dam.elcorteingles.es/producto/www-001015215325059-00.jpg",
+      "imageFallback": "/PC-Build/images/highend-rx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "HP OMEN 35L",
+        "OMEN 35L"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 10979
+    },
+    {
+      "id": "emarque-i5-14400f-rtx5070",
+      "type": "desktop",
+      "category": "Custom PC",
+      "name": "Core i5-14400F / RTX 5070 Gaming PC",
+      "price": 5999,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "build-to-order",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/products/infinity-intel-core-i5-14400f-geforce-rtx-5070-gaming-pc",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core i5-14400F",
+        "GeForce RTX 5070",
+        "Configurable SSD",
+        "Optional Wi-Fi/Bluetooth",
+        "Build-to-order reference"
+      ],
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Intel Core i5 14400F GeForce RTX 5070",
+        "i5 14400F RTX 5070"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 5999
+    },
+    {
+      "id": "emarque-r5-7500f-rtx5070",
+      "type": "desktop",
+      "category": "Custom PC",
+      "name": "Ryzen 5 7500F / RTX 5070 Gaming PC",
+      "price": 6399,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "build-to-order",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Ryzen 5 7500F",
+        "GeForce RTX 5070",
+        "1440p class",
+        "Reference price around RM6,000 in current price guide"
+      ],
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Ryzen 5 7500F GeForce RTX 5070",
+        "7500F RTX 5070"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 6399
+    },
+    {
+      "id": "emarque-r5-7500f-rtx5080",
+      "type": "desktop",
+      "category": "Custom PC",
+      "name": "Ryzen 5 7500F / RTX 5080 Gaming PC",
+      "price": 12499,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "build-to-order",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/sim-racing-pcs",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Ryzen 5 7500F",
+        "GeForce RTX 5080",
+        "4K-class gaming",
+        "Build-to-order reference"
+      ],
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/flagship-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Ryzen 5 7500F GeForce RTX 5080",
+        "7500F RTX 5080"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 12499
+    },
+    {
+      "id": "emarque-9800x3d-rtx5080",
+      "type": "desktop",
+      "category": "Custom PC",
+      "name": "Ryzen 7 9800X3D / RTX 5080 Gaming PC",
+      "price": 14999,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "build-to-order",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/collections/gaming-pc?variant=50394622230808",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Ryzen 7 9800X3D",
+        "GeForce RTX 5080 16GB GDDR7",
+        "B850M Wi-Fi motherboard",
+        "16GB DDR5 5600",
+        "1TB Gen4 NVMe",
+        "850W Gold PSU",
+        "240mm AIO"
+      ],
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/flagship-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Ryzen 7 9800X3D GeForce RTX 5080",
+        "9800X3D RTX 5080"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 14999
+    },
+    {
+      "id": "emarque-nzxt-h3-flow-white",
+      "type": "hardware",
+      "category": "Case",
+      "name": "NZXT H3 Flow White mATX Case",
+      "price": 239,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "build-to-order",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/products/nzxt-h3-flow-white-micro-atx-desktop-chassis",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "mATX chassis",
+        "Current configurator snapshot",
+        "Compatibility must be checked before order"
+      ],
+      "image": "https://files.ekmcdn.com/292980/resources/products/07-h3-hero2-w.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "NZXT H3 Flow",
+        "H3 Flow White"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 239
+    },
+    {
+      "id": "emarque-phanteks-xt-m3-black",
+      "type": "hardware",
+      "category": "Case",
+      "name": "Phanteks XT M3 mATX Case - Black",
+      "price": 279,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "build-to-order",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/products/phanteks-xt-m3-tg-micro-atx-argb-chassis",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "mATX chassis",
+        "Current configurator snapshot",
+        "Compatibility must be checked before order"
+      ],
+      "image": "https://phanteks.com/wp-content/uploads/2025/05/XT-M3_Black_00.webp",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Phanteks XT M3",
+        "XT M3 mATX"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 279
+    },
+    {
+      "id": "nb-msi-cyborg-15-c13wfo-419",
+      "type": "laptop",
+      "category": "Laptop",
+      "name": "MSI Cyborg 15 C13WFO-419 RTX 5060 Gaming Laptop",
+      "price": 4989,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/29-msi-laptop",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core i5-13420H",
+        "16GB DDR4-3200",
+        "512GB PCIe Gen4 NVMe SSD",
+        "GeForce RTX 5060 8GB Laptop GPU",
+        "15.6-inch FHD 144Hz • Windows 11"
+      ],
+      "image": "https://storage-asset.msi.com/global/picture/apluscontent/reseller/1774323246.jpeg",
+      "imageFallback": "/PC-Build/images/entry-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "MSI Cyborg 15 C13WFO",
+        "C13WFO"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 4989
+    },
+    {
+      "id": "nb-asus-tuf-a16-fa608u-mitu216w",
+      "type": "laptop",
+      "category": "Laptop",
+      "name": "ASUS TUF Gaming A16 FA608U-MITU216WP RTX 5060",
+      "price": 6409,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/asus-laptop/15092-5191-asus-tuf-gaming-a16-fa608u-mitu216wp-16-wuxga-144hz-gaming-laptop-rtx-5060-8gb-r7-260-16gb-512gb-w11-.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "AMD Ryzen 7 260",
+        "16GB RAM",
+        "512GB SSD",
+        "GeForce RTX 5060 8GB Laptop GPU",
+        "16-inch FHD+ 144Hz • Windows 11"
+      ],
+      "image": "https://cdn.nbplaza.com.my/img/p/6/6/0/1/6/66016-home_default.jpg",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Asus TUF A16 FA608U-MITU216",
+        "FA608U-MITU216"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 6409
+    },
+    {
+      "id": "nb-acer-predator-helios-neo16-phn16-i31-73tc",
+      "type": "laptop",
+      "category": "Laptop",
+      "name": "Acer Predator Helios Neo 16 AI PHN16-I31-73TC RTX 5060",
+      "price": 8689,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": true,
+      "stock": "source-in-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/acer-laptop/14926-acer-predator-helios-neo-16-ai-phn16-i31-73tc-16-wqxga-gaming-laptop-i7-14650hx-16gb-1tb-rtx5060-8gb-w11-hsm365.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core i7-14650HX",
+        "16GB DDR5-5600",
+        "1TB PCIe Gen4 NVMe SSD",
+        "GeForce RTX 5060 8GB Laptop GPU",
+        "16-inch WQXGA • Windows 11 • 2-year Acer onsite warranty"
+      ],
+      "image": "https://www.gloo.com.my/image/cache/catalog/Images/Notebook/NBKACERI3173TC_T1-1000x1000.jpg",
+      "imageFallback": "/PC-Build/images/flagship-rtx.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Acer Predator Helios Neo 16 AI PHN16-I31-73TC",
+        "PHN16-I31-73TC"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 8689
+    }
+  ],
+  "note": "Harga dalam katalog ini ialah rujukan semasa pasaran Malaysia untuk membantu anggaran. Harga jual AZOBSS, stok dan shipping mesti disahkan sebelum bayaran apabila requiresConfirmation=true."
+}
