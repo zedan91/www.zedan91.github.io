@@ -4716,15 +4716,36 @@ async function azAdminParseJsonResponse(res, url=''){
     return {ok:false,error: hint + (short ? ' Response: '+short : ''), nonJson:true, status:res.status};
   }
 }
+async function azAdminFetchRaw1474(url,options={}){
+  const opts={...options};
+  const timeoutMs=Math.max(5000,Number(opts.timeoutMs||30000));
+  delete opts.timeoutMs;
+  const controller=new AbortController();
+  const external=opts.signal;
+  let onAbort=null;
+  if(external){
+    if(external.aborted) controller.abort(external.reason);
+    else { onAbort=()=>controller.abort(external.reason); external.addEventListener('abort',onAbort,{once:true}); }
+  }
+  const timer=setTimeout(()=>controller.abort('azobss-timeout'),timeoutMs);
+  try{ return await fetch(url,{...opts,signal:controller.signal}); }
+  catch(error){
+    if(controller.signal.aborted && !(external&&external.aborted)) throw new Error('Backend mengambil masa terlalu lama. Cuba lagi.');
+    throw error;
+  }finally{
+    clearTimeout(timer);
+    if(external&&onAbort) external.removeEventListener('abort',onAbort);
+  }
+}
 async function azAdminFetchJson(url,options={}){
   const baseHeaders=options.headers||{};
   const adminKeyHeaders=azAdminApiKeyHeaders();
   let authHeaders=await azAdminAuthHeaders(false);
-  let res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
+  let res=await azAdminFetchRaw1474(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
   let data=await azAdminParseJsonResponse(res,url);
   if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
     authHeaders=await azAdminAuthHeaders(true);
-    res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
+    res=await azAdminFetchRaw1474(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
     data=await azAdminParseJsonResponse(res,url);
   }
   if(!res.ok) throw new Error(azAdminApiErrorMessage(res.status,data));
@@ -4734,10 +4755,10 @@ async function azAdminFetchBlob(url,options={}){
   const baseHeaders=options.headers||{};
   const adminKeyHeaders=azAdminApiKeyHeaders();
   let authHeaders=await azAdminAuthHeaders(false);
-  let res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
+  let res=await azAdminFetchRaw1474(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
   if((res.status===401 || res.status===403) && Object.keys(authHeaders).length){
     authHeaders=await azAdminAuthHeaders(true);
-    res=await fetch(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
+    res=await azAdminFetchRaw1474(url,{...options,headers:{...baseHeaders,...adminKeyHeaders,...authHeaders}});
   }
   if(!res.ok){
     const text=await res.text().catch(()=>'');
@@ -8908,7 +8929,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1472"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1474"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10463,8 +10484,8 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1463"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1472" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
-<script defer src="/assets/js/azobss-admin-pc-shop-orders-v1472.js?v=1472"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1473" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script defer src="/assets/js/azobss-admin-pc-shop-orders-v1474.js?v=1474"></script>
 <script type="module" src="/assets/js/azobss-admin-business-ops-v1461.js?v=1461"></script>
 
 <style id="az900-admin-software-key-force-dark-style">

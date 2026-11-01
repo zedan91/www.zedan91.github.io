@@ -331,7 +331,7 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .auth-google-btn:disabled{opacity:.65;cursor:wait;}
 .auth-google-g{width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;font:900 18px/1 Arial,sans-serif;color:#4285f4;background:#fff;}
 /* v1470: phone Desktop View / Mobile View switcher */
-/* v1472: PC Build & Hardware Shopping Place */
+/* v1474: modal stability, request timeout and stale scroll-lock recovery */
 /* v1468: compact signup + Google quick sign-in prompt */
 #siteSignUpForm.auth-signup-form{gap:11px;}
 #siteSignUpForm.auth-signup-form label{gap:6px;}
@@ -9558,7 +9558,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1472';
+  var VERSION_TEXT = 'v1474';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
@@ -9640,4 +9640,73 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
+})();
+
+
+// AZOBSS v1474: stale modal / scroll-lock recovery.
+// Older feature modules use their own modal implementations. A failed async path or
+// browser BFCache restore can leave body overflow locked even though no overlay is open.
+(function azobssInstallModalStability1474(){
+  try{
+    if(window.__azobssModalStability1474) return;
+    window.__azobssModalStability1474=true;
+    const activeSelectors=[
+      '#siteAuthModal.is-open:not([aria-hidden="true"])',
+      '#siteGoogleProfileModal.is-open:not([aria-hidden="true"])',
+      '#profileSettingsModal.is-open:not([aria-hidden="true"])',
+      '#adminUserEditModal.is-open:not([aria-hidden="true"])',
+      '.azobss-modal-lite.is-open',
+      '.location-modal.show:not([aria-hidden="true"])',
+      '.az-market-modal.open',
+      '#azPcShopModal',
+      '#azPcAdmin1474',
+      '#az1196PayoutQrModal:not([hidden])',
+      '#az1197StaffPayoutQrCropModal:not([hidden])',
+      '#az1198DrawerBackdrop:not([hidden])',
+      '#ebookAccessDrawerBackdrop:not([hidden])',
+      '#order-audit-backdrop:not([hidden])',
+      '#salesReceiptDialog:not([hidden])',
+      '#azBizModal:not([hidden])',
+      '[data-az-food-modal].is-open',
+      '.az-food-modal.is-open',
+      '#lotSelectionMapModal:not([hidden])'
+    ];
+    const isActuallyVisible=(el)=>{
+      if(!el || !el.isConnected || el.hidden) return false;
+      if(el.getAttribute('aria-hidden')==='true') return false;
+      try{
+        const st=getComputedStyle(el);
+        return st.display!=='none' && st.visibility!=='hidden' && st.pointerEvents!=='none';
+      }catch(_e){ return true; }
+    };
+    const hasActiveBlockingModal=()=>activeSelectors.some(sel=>{
+      try{return Array.from(document.querySelectorAll(sel)).some(isActuallyVisible)}catch(_e){return false}
+    });
+    let timer=0;
+    const repair=()=>{
+      timer=0;
+      const body=document.body;
+      if(!body) return;
+      if(hasActiveBlockingModal()) return;
+      // Only clear locks owned by known modal systems. Do not change normal page overflow.
+      if(body.style.overflow==='hidden') body.style.removeProperty('overflow');
+      body.classList.remove('az-location-picker-open','az-biz-modal-open','az-pc-shop-modal-open','az-pc-admin-modal-open');
+      document.querySelectorAll('.auth-modal[aria-hidden="true"],.azobss-modal-lite:not(.is-open)').forEach(el=>{
+        try{el.style.setProperty('pointer-events','none','important')}catch(_e){}
+      });
+    };
+    const schedule=(delay=80)=>{clearTimeout(timer);timer=setTimeout(repair,delay)};
+    document.addEventListener('click',event=>{
+      const t=event.target?.closest?.('[data-close],.auth-close,.azobss-modal-close,.az-pc-shop-close,.az-pc-admin-close,.location-close,[aria-label="Close"]');
+      if(t) schedule(120);
+    },true);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape') schedule(120)},true);
+    window.addEventListener('pageshow',()=>schedule(40));
+    window.addEventListener('focus',()=>schedule(80));
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule(80)});
+    if(document.body && typeof MutationObserver!=='undefined'){
+      new MutationObserver(()=>schedule(100)).observe(document.body,{attributes:true,attributeFilter:['style','class']});
+    }
+    schedule(300);
+  }catch(error){ console.warn('AZOBSS modal stability v1474:',error); }
 })();

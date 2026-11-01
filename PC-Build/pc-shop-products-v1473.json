@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1472",
+  "version": "1473",
   "checkedAt": "2026-11-01",
   "market": "Malaysia",
   "currency": "MYR",
@@ -25,7 +25,9 @@
         "550W recommended PSU",
         "3-year MSI Malaysia warranty"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/gpu.svg"
+      "image": "https://img-itopya.mncdn.com/cdn/1000/1-0edb99.png",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/gpu.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-msi-rtx5070-ventus-12g",
@@ -45,7 +47,9 @@
         "1440p / creator class",
         "Stock requires confirmation"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/gpu.svg"
+      "image": "https://zortexcomputer.com/cdn/shop/files/MSI_GeForce_RTX_5070_12G_VENTUS_2X_OC1.jpg?v=1776430061",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/gpu.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-msi-b860m-mortar-wifi",
@@ -65,7 +69,9 @@
         "Wi-Fi",
         "Current retail snapshot"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/storage.svg"
+      "image": "https://cdn.nbplaza.com.my/img/p/6/4/6/3/9/64639-home_default.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-kingston-nv3-gen4",
@@ -86,7 +92,9 @@
         "5-year Kingston warranty",
         "Displayed source price depends on selected capacity"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/storage.svg"
+      "image": "https://cdn.nbplaza.com.my/img/p/5/8/6/3/1/58631-home_default.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-samsung-990-pro",
@@ -106,7 +114,9 @@
         "Performance SSD",
         "Capacity-specific price requires confirmation"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/storage.svg"
+      "image": "https://cdn.hstatic.net/products/200000837185/ssd-samsung-990-pro-pcie-gen-4-0__1__8288631e4bb644d8be514c3c6062a474_master.png",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-ddr5-5600-sodimm",
@@ -127,7 +137,9 @@
         "3-year warranty",
         "Capacity-specific price requires confirmation"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/ram.svg"
+      "image": "https://www.kingstonstore.com.br/cdn/shop/products/SODIMM16GB2.jpg?v=1681500641&width=2048",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/ram.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-hyte-y40-white",
@@ -146,7 +158,9 @@
         "Tempered-glass style gaming case",
         "Stock requires confirmation"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/cooling.svg"
+      "image": "https://computerorbit.com/cdn/shop/files/8a100eb0ae0f5c558f9cf35dd6fa8277_700x700.webp?v=1700309973",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-acer-nitro-5060",
@@ -167,7 +181,9 @@
         "GeForce RTX 5060 8GB",
         "Windows 11"
       ],
-      "image": "/PC-Build/images/entry-rtx.webp"
+      "image": "https://www.regard.ru/api/photo/goods/6592857.png",
+      "imageFallback": "/PC-Build/images/entry-rtx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-acer-predator-orion-5060",
@@ -188,7 +204,9 @@
         "RTX 5060 8GB",
         "Windows 11"
       ],
-      "image": "/PC-Build/images/performance-rtx.webp"
+      "image": "https://kainoteka-public.s3.eu-central-1.amazonaws.com/products/fe9ba0c8-9e1f-45f8-bfac-228cb49399c1/acer-predator-orion-3000-desktop-tower-intel-core-ultra-5-225f-16-gb-ddr5-512-gb-nvidia-geforce-rtx-5060-n.jpg",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-hp-omnidesk-r7",
@@ -209,7 +227,9 @@
         "Windows 11",
         "Office bundle on listed configuration"
       ],
-      "image": "/PC-Build/images/essential-office.webp"
+      "image": "https://thumb.pccomponentes.com/w-530-530/articles/1115/11159959/2847-pc-sobremesa-hp-omnidesk-slim-s04-0001ns-amd-ryzen-7-7445hs-12gb-512gb-ssd-radeon-740m-freedos-wifi6-comprar.jpg",
+      "imageFallback": "/PC-Build/images/essential-office.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "nb-hp-omen-5060ti",
@@ -230,7 +250,9 @@
         "RTX 5060 Ti 16GB",
         "Windows 11"
       ],
-      "image": "/PC-Build/images/highend-rx.webp"
+      "image": "https://dam.elcorteingles.es/producto/www-001015215325059-00.jpg",
+      "imageFallback": "/PC-Build/images/highend-rx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "emarque-i5-14400f-rtx5070",
@@ -251,7 +273,9 @@
         "Optional Wi-Fi/Bluetooth",
         "Build-to-order reference"
       ],
-      "image": "/PC-Build/images/performance-rtx.webp"
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "emarque-r5-7500f-rtx5070",
@@ -271,7 +295,9 @@
         "1440p class",
         "Reference price around RM6,000 in current price guide"
       ],
-      "image": "/PC-Build/images/performance-rtx.webp"
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "emarque-r5-7500f-rtx5080",
@@ -291,7 +317,9 @@
         "4K-class gaming",
         "Build-to-order reference"
       ],
-      "image": "/PC-Build/images/flagship-rtx.webp"
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/flagship-rtx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "emarque-9800x3d-rtx5080",
@@ -314,7 +342,9 @@
         "850W Gold PSU",
         "240mm AIO"
       ],
-      "image": "/PC-Build/images/flagship-rtx.webp"
+      "image": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=416",
+      "imageFallback": "/PC-Build/images/flagship-rtx.webp",
+      "imageType": "real-product-photo"
     },
     {
       "id": "emarque-nzxt-h3-flow-white",
@@ -333,7 +363,9 @@
         "Current configurator snapshot",
         "Compatibility must be checked before order"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/cooling.svg"
+      "image": "https://files.ekmcdn.com/292980/resources/products/07-h3-hero2-w.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo"
     },
     {
       "id": "emarque-phanteks-xt-m3-black",
@@ -352,7 +384,78 @@
         "Current configurator snapshot",
         "Compatibility must be checked before order"
       ],
-      "image": "/Upgrade-Parts/assets/hardware/cooling.svg"
+      "image": "https://phanteks.com/wp-content/uploads/2025/05/XT-M3_Black_00.webp",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo"
+    },
+    {
+      "id": "nb-msi-cyborg-15-c13wfo-419",
+      "type": "laptop",
+      "category": "Laptop",
+      "name": "MSI Cyborg 15 C13WFO-419 RTX 5060 Gaming Laptop",
+      "price": 4989,
+      "priceMode": "reference",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/29-msi-laptop",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core i5-13420H",
+        "16GB DDR4-3200",
+        "512GB PCIe Gen4 NVMe SSD",
+        "GeForce RTX 5060 8GB Laptop GPU",
+        "15.6-inch FHD 144Hz • Windows 11"
+      ],
+      "image": "https://storage-asset.msi.com/global/picture/apluscontent/reseller/1774323246.jpeg",
+      "imageFallback": "/PC-Build/images/entry-rtx.webp",
+      "imageType": "real-product-photo"
+    },
+    {
+      "id": "nb-asus-tuf-a16-fa608u-mitu216w",
+      "type": "laptop",
+      "category": "Laptop",
+      "name": "ASUS TUF Gaming A16 FA608U-MITU216WP RTX 5060",
+      "price": 6409,
+      "priceMode": "reference",
+      "requiresConfirmation": true,
+      "stock": "check",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/asus-laptop/15092-5191-asus-tuf-gaming-a16-fa608u-mitu216wp-16-wuxga-144hz-gaming-laptop-rtx-5060-8gb-r7-260-16gb-512gb-w11-.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "AMD Ryzen 7 260",
+        "16GB RAM",
+        "512GB SSD",
+        "GeForce RTX 5060 8GB Laptop GPU",
+        "16-inch FHD+ 144Hz • Windows 11"
+      ],
+      "image": "https://cdn.nbplaza.com.my/img/p/6/6/0/1/6/66016-home_default.jpg",
+      "imageFallback": "/PC-Build/images/performance-rtx.webp",
+      "imageType": "real-product-photo"
+    },
+    {
+      "id": "nb-acer-predator-helios-neo16-phn16-i31-73tc",
+      "type": "laptop",
+      "category": "Laptop",
+      "name": "Acer Predator Helios Neo 16 AI PHN16-I31-73TC RTX 5060",
+      "price": 8689,
+      "priceMode": "reference",
+      "requiresConfirmation": true,
+      "stock": "source-in-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/acer-laptop/14926-acer-predator-helios-neo-16-ai-phn16-i31-73tc-16-wqxga-gaming-laptop-i7-14650hx-16gb-1tb-rtx5060-8gb-w11-hsm365.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel Core i7-14650HX",
+        "16GB DDR5-5600",
+        "1TB PCIe Gen4 NVMe SSD",
+        "GeForce RTX 5060 8GB Laptop GPU",
+        "16-inch WQXGA • Windows 11 • 2-year Acer onsite warranty"
+      ],
+      "image": "https://www.gloo.com.my/image/cache/catalog/Images/Notebook/NBKACERI3173TC_T1-1000x1000.jpg",
+      "imageFallback": "/PC-Build/images/flagship-rtx.webp",
+      "imageType": "real-product-photo"
     }
   ],
   "note": "Harga dalam katalog ini ialah rujukan semasa pasaran Malaysia untuk membantu anggaran. Harga jual AZOBSS, stok dan shipping mesti disahkan sebelum bayaran apabila requiresConfirmation=true."
