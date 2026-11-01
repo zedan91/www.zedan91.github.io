@@ -20270,6 +20270,20 @@ async function azShopeeResolveMetadataAuto(affiliateUrl,{force=false}={}){
   try{return await work;}finally{if(!force)azShopeeMetadataInflight.delete(key);}
 }
 
+// AZOBSS v1478: PC Build & Hardware Shop API must live in deploy-server.js because this is the Render runtime entrypoint.
+const {createPcShopRuntime}=require('./lib/azobss-pc-shop-runtime');
+const azPcShopRuntime=createPcShopRuntime({
+  rootDir:__dirname,
+  getDb:getAzobssBackendDb,
+  getUserIdentity:azCommissionIdentityFromRequest,
+  getAdminIdentity:azAdminIdentityFromRequest,
+  readBody,send,cleanText:cleanPremiumText,
+  pcBuildFetch:azobssPcBuildFetch,
+  pcBuildReadShopify:azobssPcBuildReadShopify,
+  pcBuildPriceFromJsonLd:azobssPcBuildPriceFromJsonLd,
+  pcBuildPriceFromHtml:azobssPcBuildPriceFromHtml
+});
+
 // AZOBSS v1300: deploy-server.js uses the native handler(req,res) router below; do not register Express app routes here.
 
 async function handler(req, res) {
@@ -20278,6 +20292,10 @@ async function handler(req, res) {
 
     const parsed = url.parse(req.url, true);
     const pathname = parsed.pathname || "/";
+
+    // AZOBSS v1478: runtime PC Shop routes (health/catalog/orders/admin orders).
+    const pcShopHandled = await azPcShopRuntime.handle(req, res, parsed);
+    if (pcShopHandled !== false) return pcShopHandled;
 
 
     // AZOBSS v1182: full 29-category rendered PC catalog.

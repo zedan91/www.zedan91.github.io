@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ms">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1477"></script>
+<script src="/assets/js/azobss-long-session-stability.js?v=1478"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
@@ -427,8 +427,8 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;render();renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();render()});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1477" type="module"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1477.js?v=1477"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1478" type="module"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1478.js?v=1478"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

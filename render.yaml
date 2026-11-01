@@ -23,6 +23,9 @@ services:
         - scripts/**
         - templates/**
         - backend/**
+        - PC-Build/pc-shop-products-v*.json
+        - PC-Build/pc-build-data.json
+        - PC-Build/retailers/**
         - _private-tech-vault/**
         - affiliate-products.json
         # Render build-filter patterns cannot contain spaces or parentheses.
