@@ -1,4 +1,4 @@
-/* AZOBSS v1228 Long Session Stability + Active Modal Pointer Fix
+/* AZOBSS v1477 Long Session Stability + Active Modal Pointer Fix
  * Firefox/Chromium long-idle self-heal:
  * - pauses/throttles AZOBSS polling while hidden/idle
  * - refreshes auth token after a long background sleep
@@ -50,14 +50,16 @@
         '#azobssMyPurchasesModal.is-open',
         'dialog[open]',
         '.swal2-container.swal2-shown',
-        '.modal.show'
+        '.modal.show',
+        '.az-pc-shop-backdrop.is-open:not([aria-hidden="true"])',
+        '.az-pc-admin-modal.is-open:not([aria-hidden="true"])'
       ].join(','));
     }catch(_e){ return false; }
   }
 
   function markNoPointer(el){
     if(!el || el === document.body || el === document.documentElement) return false;
-    try{ if(el.matches && el.matches('.auth-modal.is-open[aria-hidden="false"]')) return false; }catch(_e){}
+    try{ if(el.matches && el.matches('.auth-modal.is-open[aria-hidden="false"],.az-pc-shop-backdrop.is-open[aria-hidden="false"],.az-pc-admin-modal.is-open[aria-hidden="false"]')) return false; }catch(_e){}
     try{
       el.style.setProperty('pointer-events','none');
       el.dataset.azobssOrphanOverlayRecovered = '1228';
@@ -67,7 +69,7 @@
 
   function restoreActiveModalPointers(){
     try{
-      document.querySelectorAll('.auth-modal.is-open[aria-hidden="false"],.azobss-modal-lite.is-open').forEach(function(el){
+      document.querySelectorAll('.auth-modal.is-open[aria-hidden="false"],.azobss-modal-lite.is-open,.az-pc-shop-backdrop.is-open[aria-hidden="false"],.az-pc-admin-modal.is-open[aria-hidden="false"]').forEach(function(el){
         try{
           if(el.dataset && el.dataset.azobssOrphanOverlayRecovered){
             el.style.removeProperty('pointer-events');
@@ -86,6 +88,10 @@
       '.auth-modal:not(.is-open)',
       '.azobss-modal-lite:not(.is-open)',
       '#azobssMyPurchasesModal:not(.is-open)',
+      '.az-pc-shop-backdrop:not(.is-open)',
+      '.az-pc-shop-backdrop[aria-hidden="true"]',
+      '.az-pc-admin-modal:not(.is-open)',
+      '.az-pc-admin-modal[aria-hidden="true"]',
       '.food-menu-admin-modal[hidden]',
       '.az1197-staff-crop-modal[hidden]',
       '.modal-backdrop[aria-hidden="true"]',
@@ -207,7 +213,7 @@
     if(document.getElementById('azobss-long-session-style-1228')) return;
     var style = document.createElement('style');
     style.id = 'azobss-long-session-style-1228';
-    style.textContent = '[hidden]{pointer-events:none!important}.auth-modal[aria-hidden="true"],.auth-modal:not(.is-open),.azobss-modal-lite:not(.is-open),#azobssMyPurchasesModal:not(.is-open){pointer-events:none!important}.auth-modal.is-open[aria-hidden="false"]{pointer-events:auto!important;z-index:2147483600!important}.auth-modal.is-open[aria-hidden="false"]>.auth-modal-card{pointer-events:auto!important;position:relative!important;z-index:1!important}';
+    style.textContent = '[hidden]{pointer-events:none!important}.auth-modal[aria-hidden="true"],.auth-modal:not(.is-open),.azobss-modal-lite:not(.is-open),#azobssMyPurchasesModal:not(.is-open),.az-pc-shop-backdrop:not(.is-open),.az-pc-shop-backdrop[aria-hidden="true"],.az-pc-admin-modal:not(.is-open),.az-pc-admin-modal[aria-hidden="true"]{pointer-events:none!important}.auth-modal.is-open[aria-hidden="false"],.az-pc-shop-backdrop.is-open[aria-hidden="false"],.az-pc-admin-modal.is-open[aria-hidden="false"]{pointer-events:auto!important}.auth-modal.is-open[aria-hidden="false"]{z-index:2147483600!important}.auth-modal.is-open[aria-hidden="false"]>.auth-modal-card{pointer-events:auto!important;position:relative!important;z-index:1!important}';
     (document.head || document.documentElement).appendChild(style);
   }
   installCssGuard();
