@@ -3,7 +3,7 @@
   "storeId": "viewnet",
   "storeName": "Viewnet",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2888,
-      "priceMin": 2888,
-      "priceMax": 2888,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -62,10 +59,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-phantom",
@@ -77,9 +78,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3088,
-      "priceMin": 3088,
-      "priceMax": 3088,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -122,10 +120,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-hyper",
@@ -137,9 +139,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3788,
-      "priceMin": 3788,
-      "priceMax": 3788,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -182,10 +181,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-dual",
@@ -197,9 +200,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4688,
-      "priceMin": 4688,
-      "priceMax": 4688,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -242,10 +242,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-turbo",
@@ -257,9 +261,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 7088,
-      "priceMin": 7088,
-      "priceMax": 7088,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -301,10 +302,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-prime",
@@ -316,9 +321,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 9588,
-      "priceMin": 9588,
-      "priceMax": 9588,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -361,10 +363,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-ultra",
@@ -376,9 +382,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 12888,
-      "priceMin": 12888,
-      "priceMax": 12888,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -420,10 +423,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-cronox",
@@ -435,9 +442,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 19888,
-      "priceMin": 19888,
-      "priceMax": 19888,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -479,10 +483,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-a1",
@@ -494,9 +502,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4099,
-      "priceMin": 4099,
-      "priceMax": 4099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -539,10 +544,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-a2",
@@ -554,9 +563,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4099,
-      "priceMin": 4099,
-      "priceMax": 4099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -599,10 +605,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-a3",
@@ -614,9 +624,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4599,
-      "priceMin": 4599,
-      "priceMax": 4599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -659,10 +666,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-perseus",
@@ -674,9 +685,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4999,
-      "priceMin": 4999,
-      "priceMax": 4999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -719,10 +727,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-ares-g",
@@ -734,9 +746,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 5999,
-      "priceMin": 5999,
-      "priceMax": 5999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -778,10 +787,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-msi-forge",
@@ -793,9 +806,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3088,
-      "priceMin": 3088,
-      "priceMax": 3088,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -838,10 +848,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "viewnet-msi-ventus",
@@ -853,9 +867,6 @@
       "tagline": "Viewnet • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3688,
-      "priceMin": 3688,
-      "priceMax": 3688,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Viewnet",
       "sourceUrl": "https://www.findglocal.com/MY/Kuala-Lumpur/195359621582/Viewnet",
@@ -898,11 +909,15 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

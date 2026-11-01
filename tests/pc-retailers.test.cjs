@@ -1,53 +1,32 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const api=require('../assets/js/azobss-pc-retailers.js');
-const data=JSON.parse(fs.readFileSync(path.join(__dirname,'../PC-Build/pc-retailers.json'),'utf8'));
+const root=path.resolve(__dirname,'..');
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'PC-Build/retailers/index.json'),'utf8'));
+const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'utf8');
+const main=fs.readFileSync(path.join(root,'PC-Build/index.html'),'utf8');
+const builder=fs.readFileSync(path.join(root,'PC-Build/Build-Sendiri/index.html'),'utf8');
 
-test('15 curated retailers have valid HTTPS source metadata and local catalog files',()=>{
- assert.equal(data.version,1430);assert.equal(data.stores.length,15);assert.equal(new Set(data.stores.map(s=>s.id)).size,15);
- for(const s of data.stores){
-  assert.equal(api.validStore(s),true,s.name);
-  assert.match(s.catalogFile,/^\.\/retailers\/[a-z0-9-]+\.json$/);
-  assert.ok(Number(s.productCount)>=1,s.name);
-  assert.ok(['active','quote'].includes(s.catalogStatus),s.name);
+test('retailer catalogs are backend-live-only and unknown/unverified rows cannot be customer candidates',()=>{
+ assert.equal(String(manifest.version),'1484');assert.ok(manifest.catalogs.length>=1);
+ assert.match(runtime,/row\.sourceVerified === true/);assert.match(runtime,/row\.availabilityVerified === true/);
+ assert.match(runtime,/row\.mediaVerified === true/);assert.match(runtime,/row\.specVerified === true/);assert.match(runtime,/row\.variantVerified === true/);
+ assert.match(runtime,/availability === 'available'/);
+});
+
+test('main PC-Build has one retailer data owner and fetches live builds from backend',()=>{
+ assert.match(main,/const BUILD_API='https:\/\/azobss-backend\.onrender\.com\/api\/pc-shop\/builds'/);
+ assert.match(main,/loadRetailerLiveBuilds/);
+ assert.doesNotMatch(main,/azobss-pc-retailers\.js/);
+ assert.doesNotMatch(builder,/azobss-pc-retailers\.js/);
+});
+
+test('public builder/catalog files contain no pricing secrets',()=>{
+ for(const rel of ['PC-Build/pc-build-data.json','PC-Build/pc-custom-builder-data.json','PC-Build/pc-full-builder-fallback.json','PC-Build/pc-shop-products-v1484.json']){
+  const text=fs.readFileSync(path.join(root,rel),'utf8');
+  assert.doesNotMatch(text,/"(?:marketPrice|snapshotPrice|unitCost|markupRate|markupAmount|marketDelta|liveMarketDelta|cost|price)"\s*:/,rel);
  }
 });
 
-test('store/category filters still intersect correctly',()=>{
- assert.equal(api.filter(data.stores,'all','ideal-tech').length,1);
- assert.equal(api.filter(data.stores,'workstation','sri-computers').length,0);
- assert.ok(api.filter(data.stores,'workstation').every(s=>s.categories.includes('workstation')));
-});
-
-test('malformed and mismatched retailer source destinations are rejected',()=>{
- const store=data.stores[0];
- for(const url of ['javascript:alert(1)','http://allithypermarket.com.my/','https://user:pass@allithypermarket.com.my/','https://allithypermarket.com.my.evil.test/'])assert.equal(api.validStore({...store,url}),false,url);
- assert.equal(api.validStore({...store,categories:['fake']}),false);
- assert.equal(api.validStore({...store,scope:'google.com'}),false);
-});
-
-test('main filter keyword represents PC-Build controls',()=>{
- const q=api.mainFilterKeyword({search:'AutoCAD',segment:'workstation',cpuBrand:'amd',resolution:'1440p',gpuBrand:'nvidia',gpuModel:'RTX 5070',category:'performance',budget:'7000'});
- for(const term of ['AutoCAD','workstation AI','AMD Ryzen','RTX 5070','1440p','creator performance','bawah RM7000'])assert.ok(q.includes(term),term);
-});
-
-test('build comparison keyword focuses on comparable CPU/GPU rather than retailer URL',()=>{
- const q=api.buildSearchKeyword({name:'AZOBSS Performance RTX',gpuModel:'RTX 5070',parts:[['CPU','AMD Ryzen 7 7700'],['RAM','32GB DDR5'],['Storage','1TB NVMe']]});
- assert.ok(q.includes('AMD Ryzen 7 7700'));
- assert.ok(q.includes('RTX 5070'));
- assert.ok(q.includes('32GB DDR5'));
- assert.doesNotMatch(q,/https?:\/\//);
-});
-
-test('main PC-Build keeps 15-store directory admin-only and loads v1430 internal integration',()=>{
- const main=fs.readFileSync(path.join(__dirname,'../PC-Build/index.html'),'utf8');
- assert.match(main,/id="pc-retailer-panel"[^>]*data-public="0"[^>]*data-integrated="1"[^>]*hidden/);
- assert.match(main,/id="retailerStore"/);
- assert.match(main,/Semua sumber/);
- assert.match(main,/loadRetailerCatalogBuilds/);
- assert.match(main,/\.\/retailers\/index\.json\?v=1430/);
- assert.match(main,/azobss-pc-retailers\.js\?v=1430/);
- assert.match(main,/data-retailer-compare/);
- const builder=fs.readFileSync(path.join(__dirname,'../PC-Build/Build-Sendiri/index.html'),'utf8');
- assert.match(builder,/<details[^>]*id="pc-retailer-panel"[^>]*hidden/);
- assert.match(builder,/azobss-pc-retailers\.js\?v=1430/);
+test('Build Sendiri is quote-only in browser and strips accidental pricing fields',()=>{
+ assert.match(builder,/Minta Sebut Harga/);assert.match(builder,/function publicOption/);
+ assert.doesNotMatch(builder,/function currentSell|function lineRetail|\[ADMIN DALAMAN\] Kos/);
 });

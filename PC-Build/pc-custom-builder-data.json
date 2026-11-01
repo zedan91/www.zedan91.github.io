@@ -1,9 +1,9 @@
 {
-  "version": 1,
+  "version": "1484",
   "market": "Malaysia",
   "currency": "MYR",
   "updated": "2026-10-01",
-  "pricingNote": "Kos dan markup digunakan sebagai kiraan dalaman Administrator. Pelanggan tidak dipaparkan harga anggaran; harga akhir hanya diberi selepas komponen, stok dan sumber semasa disahkan.",
+  "pricingNote": "v1484 public builder is quote-only; internal cost/markup is not embedded in browser JSON.",
   "compatibilityNote": "Builder menyemak platform/socket, kelas VRM, PSU, saiz casing, radiator dan Gen5 SSD. Harga akhir perlu disahkan semasa tempahan kerana stok/promosi boleh berubah.",
   "profiles": [
     {
@@ -21,7 +21,6 @@
             {
               "id": "5500gt",
               "label": "AMD Ryzen 5 5500GT",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM4",
                 "requiredMoboTier": 1,
@@ -31,7 +30,6 @@
             {
               "id": "5600g",
               "label": "AMD Ryzen 5 5600G",
-              "marketDelta": 150,
               "meta": {
                 "socket": "AM4",
                 "requiredMoboTier": 1,
@@ -41,7 +39,6 @@
             {
               "id": "5700g",
               "label": "AMD Ryzen 7 5700G",
-              "marketDelta": 350,
               "meta": {
                 "socket": "AM4",
                 "requiredMoboTier": 2,
@@ -57,7 +54,6 @@
             {
               "id": "stock",
               "label": "Stock / basic air cooler",
-              "marketDelta": 0,
               "meta": {
                 "coolingClass": 1,
                 "radiator": 0
@@ -66,7 +62,6 @@
             {
               "id": "tower",
               "label": "Tower air cooler",
-              "marketDelta": 120,
               "meta": {
                 "coolingClass": 3,
                 "radiator": 0
@@ -81,7 +76,6 @@
             {
               "id": "a520",
               "label": "A520M mATX",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM4",
                 "moboTier": 1,
@@ -92,7 +86,6 @@
             {
               "id": "b550",
               "label": "B550M mATX",
-              "marketDelta": 180,
               "meta": {
                 "socket": "AM4",
                 "moboTier": 2,
@@ -109,7 +102,6 @@
             {
               "id": "16",
               "label": "16GB DDR4 3200MHz",
-              "marketDelta": 0,
               "meta": {
                 "ramGB": 16
               }
@@ -117,7 +109,6 @@
             {
               "id": "32",
               "label": "32GB DDR4 3200MHz",
-              "marketDelta": 250,
               "meta": {
                 "ramGB": 32
               }
@@ -131,7 +122,6 @@
             {
               "id": "igpu",
               "label": "AMD Radeon Graphics (Integrated)",
-              "marketDelta": 0,
               "meta": {
                 "gpuClass": "iGPU",
                 "minPsu": 450
@@ -140,7 +130,6 @@
             {
               "id": "5060",
               "label": "NVIDIA GeForce RTX 5060 8GB",
-              "marketDelta": 1800,
               "meta": {
                 "gpuClass": "RTX5060",
                 "minPsu": 650
@@ -155,7 +144,6 @@
             {
               "id": "512",
               "label": "512GB NVMe SSD",
-              "marketDelta": 0,
               "meta": {
                 "storageGen": 3
               }
@@ -163,7 +151,6 @@
             {
               "id": "1t",
               "label": "1TB NVMe SSD",
-              "marketDelta": 220,
               "meta": {
                 "storageGen": 4
               }
@@ -171,7 +158,6 @@
             {
               "id": "2t",
               "label": "2TB NVMe SSD",
-              "marketDelta": 620,
               "meta": {
                 "storageGen": 4
               }
@@ -185,7 +171,6 @@
             {
               "id": "500",
               "label": "500W 80+ reputable",
-              "marketDelta": 0,
               "meta": {
                 "wattage": 500
               }
@@ -193,7 +178,6 @@
             {
               "id": "650",
               "label": "650W 80+ Bronze",
-              "marketDelta": 170,
               "meta": {
                 "wattage": 650
               }
@@ -201,7 +185,6 @@
             {
               "id": "750g",
               "label": "750W 80+ Gold",
-              "marketDelta": 350,
               "meta": {
                 "wattage": 750
               }
@@ -215,7 +198,6 @@
             {
               "id": "matx",
               "label": "mATX airflow case",
-              "marketDelta": 0,
               "meta": {
                 "maxMobo": "mATX",
                 "supports360": false
@@ -224,7 +206,6 @@
             {
               "id": "argb",
               "label": "mATX ARGB + 3 fans",
-              "marketDelta": 120,
               "meta": {
                 "maxMobo": "mATX",
                 "supports360": false
@@ -238,20 +219,17 @@
           "options": [
             {
               "id": "trial",
-              "label": "Windows 11 trial / belum diaktifkan",
-              "marketDelta": 0
+              "label": "Windows 11 trial / belum diaktifkan"
             },
             {
               "id": "home",
               "label": "Microsoft Windows 11 Home OEM",
-              "marketDelta": 599,
               "sourceKey": "sw_home",
               "sourceNeedle": "Microsoft Windows 11 Home 64bit OEM"
             },
             {
               "id": "pro",
               "label": "Microsoft Windows 11 Pro OEM",
-              "marketDelta": 699,
               "sourceKey": "sw_pro",
               "sourceNeedle": "Microsoft Windows 11 Pro 64bit OEM"
             }
@@ -263,20 +241,17 @@
           "options": [
             {
               "id": "none",
-              "label": "Tiada Microsoft Office",
-              "marketDelta": 0
+              "label": "Tiada Microsoft Office"
             },
             {
               "id": "hs",
               "label": "Microsoft Office 2024 Home & Student",
-              "marketDelta": 449,
               "sourceKey": "sw_office_hs",
               "sourceNeedle": "Microsoft Office 2024 Home & Student Edition"
             },
             {
               "id": "hb",
               "label": "Microsoft Office 2024 Home & Business",
-              "marketDelta": 979,
               "sourceKey": "sw_office_hb",
               "sourceNeedle": "Microsoft Office 2024 Home & Business Edition"
             }
@@ -299,7 +274,6 @@
             {
               "id": "5500",
               "label": "AMD Ryzen 5 5500",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM4",
                 "requiredMoboTier": 1,
@@ -309,7 +283,6 @@
             {
               "id": "5600",
               "label": "AMD Ryzen 5 5600",
-              "marketDelta": 259,
               "sourceKey": "entry_cpu_5600",
               "sourceNeedle": "AMD Ryzen 5 5600",
               "meta": {
@@ -322,7 +295,6 @@
             {
               "id": "5700x",
               "label": "AMD Ryzen 7 5700X",
-              "marketDelta": 299,
               "sourceKey": "entry_cpu_5700x",
               "sourceNeedle": "AMD Ryzen 7 5700X",
               "meta": {
@@ -335,7 +307,6 @@
             {
               "id": "5800x3d",
               "label": "AMD Ryzen 7 5800X3D",
-              "marketDelta": 1299,
               "sourceKey": "entry_cpu_5800x3d",
               "sourceNeedle": "AMD Ryzen 7 5800X3D",
               "meta": {
@@ -355,7 +326,6 @@
             {
               "id": "basic",
               "label": "Air cooler asas",
-              "marketDelta": 0,
               "meta": {
                 "coolingClass": 1,
                 "radiator": 0
@@ -364,7 +334,6 @@
             {
               "id": "cr1000",
               "label": "JONSBO CR1000 V3 Pro",
-              "marketDelta": 79,
               "sourceKey": "entry_cool_cr",
               "sourceNeedle": "JONSBO CR1000 V3 Pro",
               "meta": {
@@ -376,7 +345,6 @@
             {
               "id": "f620",
               "label": "ANTEC F620 Digital Pro",
-              "marketDelta": 199,
               "sourceKey": "entry_cool_f620",
               "sourceNeedle": "ANTEC F620 Digital Pro",
               "meta": {
@@ -388,7 +356,6 @@
             {
               "id": "cc90",
               "label": "JONSBO CC90",
-              "marketDelta": 289,
               "sourceKey": "entry_cool_cc90",
               "sourceNeedle": "JONSBO CC90 Black",
               "meta": {
@@ -400,7 +367,6 @@
             {
               "id": "u12a",
               "label": "NOCTUA U12A Chromax",
-              "marketDelta": 399,
               "sourceKey": "entry_cool_u12a",
               "sourceNeedle": "NOCTUA U12A Chromax",
               "meta": {
@@ -412,7 +378,6 @@
             {
               "id": "th240",
               "label": "JONSBO TH-240 AIO",
-              "marketDelta": 299,
               "sourceKey": "entry_cool_th240",
               "sourceNeedle": "JONSBO TH-240",
               "meta": {
@@ -430,7 +395,6 @@
             {
               "id": "a520",
               "label": "A520M mATX",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM4",
                 "moboTier": 1,
@@ -441,7 +405,6 @@
             {
               "id": "b550",
               "label": "B550M mATX",
-              "marketDelta": 120,
               "meta": {
                 "socket": "AM4",
                 "moboTier": 2,
@@ -452,7 +415,6 @@
             {
               "id": "b550wifi",
               "label": "B550M WiFi + Bluetooth",
-              "marketDelta": 250,
               "meta": {
                 "socket": "AM4",
                 "moboTier": 2,
@@ -469,7 +431,6 @@
             {
               "id": "16",
               "label": "16GB DDR4 3200MHz",
-              "marketDelta": 0,
               "sourceKey": "entry_ram16",
               "sourceNeedle": "GSKILL Aegis 16GB DDR4",
               "meta": {
@@ -480,7 +441,6 @@
             {
               "id": "32",
               "label": "32GB DDR4 3200MHz",
-              "marketDelta": 400,
               "sourceKey": "entry_ram32",
               "sourceNeedle": "GSKILL Aegis 32GB DDR4",
               "meta": {
@@ -498,7 +458,6 @@
             {
               "id": "base",
               "label": "NVIDIA GeForce RTX 5060 8GB",
-              "marketDelta": 0,
               "meta": {
                 "gpuClass": "RTX5060",
                 "minPsu": 650
@@ -507,7 +466,6 @@
             {
               "id": "asus",
               "label": "ASUS RTX 5060 Dual 8GB",
-              "marketDelta": 99,
               "sourceKey": "entry_gpu_asus",
               "sourceNeedle": "ASUS RTX5060 Dual",
               "meta": {
@@ -525,7 +483,6 @@
             {
               "id": "500",
               "label": "500GB Gen4 NVMe SSD",
-              "marketDelta": 0,
               "sourceKey": "entry_ssd500",
               "sourceNeedle": "TEAMGROUP T-Force Z44A5 512gb Gen4",
               "meta": {
@@ -536,7 +493,6 @@
             {
               "id": "1tb",
               "label": "1TB Gen4 NVMe SSD",
-              "marketDelta": 300,
               "sourceKey": "entry_ssd1tb",
               "sourceNeedle": "LEXAR NQ780 1TB Gen4 M.2 1TB",
               "meta": {
@@ -547,7 +503,6 @@
             {
               "id": "2tb",
               "label": "2TB Gen4 NVMe SSD",
-              "marketDelta": 700,
               "sourceKey": "entry_ssd2tb",
               "sourceNeedle": "KIOXIA EXCERIA Basic Gen4 2TB",
               "meta": {
@@ -565,7 +520,6 @@
             {
               "id": "650",
               "label": "650W 80+ Bronze",
-              "marketDelta": 0,
               "meta": {
                 "wattage": 650
               }
@@ -573,7 +527,6 @@
             {
               "id": "750g",
               "label": "750W 80+ Gold ATX 3.1",
-              "marketDelta": 129,
               "sourceKey": "entry_psu750",
               "sourceNeedle": "ANTEC GSK750 V2 GB",
               "meta": {
@@ -584,7 +537,6 @@
             {
               "id": "850g",
               "label": "850W 80+ Gold ATX 3.1",
-              "marketDelta": 199,
               "sourceKey": "entry_psu850",
               "sourceNeedle": "ANTEC GSK850 V2 GB",
               "meta": {
@@ -601,7 +553,6 @@
             {
               "id": "base",
               "label": "mATX airflow + 3 fans",
-              "marketDelta": 0,
               "meta": {
                 "maxMobo": "mATX",
                 "supports360": false
@@ -610,7 +561,6 @@
             {
               "id": "c2m",
               "label": "ANTEC C2M ARGB",
-              "marketDelta": 69,
               "sourceKey": "entry_case_c2m",
               "sourceNeedle": "ANTEC C2M ARGB",
               "meta": {
@@ -622,7 +572,6 @@
             {
               "id": "cx700",
               "label": "ANTEC CX700 ARGB",
-              "marketDelta": 99,
               "sourceKey": "entry_case_cx700",
               "sourceNeedle": "ANTEC CX700 ARGB",
               "meta": {
@@ -634,7 +583,6 @@
             {
               "id": "c6",
               "label": "ANTEC C6 Curve ARGB",
-              "marketDelta": 189,
               "sourceKey": "entry_case_c6",
               "sourceNeedle": "ANTEC C6 Curve ARGB",
               "meta": {
@@ -646,7 +594,6 @@
             {
               "id": "flux",
               "label": "ANTEC Flux Pro",
-              "marketDelta": 399,
               "sourceKey": "entry_case_flux",
               "sourceNeedle": "ANTEC Flux Pro",
               "meta": {
@@ -663,13 +610,11 @@
           "options": [
             {
               "id": "trial",
-              "label": "Windows 11 trial / belum diaktifkan",
-              "marketDelta": 0
+              "label": "Windows 11 trial / belum diaktifkan"
             },
             {
               "id": "home",
               "label": "Microsoft Windows 11 Home OEM",
-              "marketDelta": 599,
               "sourceKey": "sw_home",
               "sourceNeedle": "Microsoft Windows 11 Home 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/"
@@ -677,7 +622,6 @@
             {
               "id": "pro",
               "label": "Microsoft Windows 11 Pro OEM",
-              "marketDelta": 699,
               "sourceKey": "sw_pro",
               "sourceNeedle": "Microsoft Windows 11 Pro 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/"
@@ -690,13 +634,11 @@
           "options": [
             {
               "id": "none",
-              "label": "Tiada Microsoft Office",
-              "marketDelta": 0
+              "label": "Tiada Microsoft Office"
             },
             {
               "id": "hs",
               "label": "Microsoft Office 2024 Home & Student",
-              "marketDelta": 449,
               "sourceKey": "sw_office_hs",
               "sourceNeedle": "Microsoft Office 2024 Home & Student Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/"
@@ -704,7 +646,6 @@
             {
               "id": "hb",
               "label": "Microsoft Office 2024 Home & Business",
-              "marketDelta": 979,
               "sourceKey": "sw_office_hb",
               "sourceNeedle": "Microsoft Office 2024 Home & Business Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/"
@@ -728,7 +669,6 @@
             {
               "id": "7500f",
               "label": "AMD Ryzen 5 7500F",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "requiredMoboTier": 1,
@@ -738,7 +678,6 @@
             {
               "id": "7500x3d",
               "label": "AMD Ryzen 5 7500X3D",
-              "marketDelta": 599,
               "sourceKey": "main_cpu7500x3d",
               "sourceNeedle": "AMD Ryzen 5 7500X3D",
               "meta": {
@@ -751,7 +690,6 @@
             {
               "id": "7800x3d",
               "label": "AMD Ryzen 7 7800X3D",
-              "marketDelta": 799,
               "sourceKey": "main_cpu7800x3d",
               "sourceNeedle": "AMD Ryzen 7 7800X3D",
               "meta": {
@@ -764,7 +702,6 @@
             {
               "id": "9850x3d",
               "label": "AMD Ryzen 7 9850X3D",
-              "marketDelta": 1699,
               "sourceKey": "main_cpu9850x3d",
               "sourceNeedle": "AMD Ryzen 7 9850X3D",
               "meta": {
@@ -777,7 +714,6 @@
             {
               "id": "9950x3d",
               "label": "AMD Ryzen 9 9950X3D",
-              "marketDelta": 2599,
               "sourceKey": "main_cpu9950x3d",
               "sourceNeedle": "AMD Ryzen 9 9950X3D",
               "meta": {
@@ -797,7 +733,6 @@
             {
               "id": "base",
               "label": "240mm AIO / equivalent",
-              "marketDelta": 0,
               "meta": {
                 "coolingClass": 4,
                 "radiator": 240
@@ -806,7 +741,6 @@
             {
               "id": "cc90",
               "label": "JONSBO CC90",
-              "marketDelta": 109,
               "sourceKey": "main_coolcc90",
               "sourceNeedle": "JONSBO CC90 Black",
               "meta": {
@@ -818,7 +752,6 @@
             {
               "id": "u9s",
               "label": "NOCTUA NH-U9S Chromax",
-              "marketDelta": 149,
               "sourceKey": "main_coolu9s",
               "sourceNeedle": "NOCTUA NH-U9S Chromax",
               "meta": {
@@ -830,7 +763,6 @@
             {
               "id": "u12a",
               "label": "NOCTUA U12A Chromax",
-              "marketDelta": 329,
               "sourceKey": "main_coolu12a",
               "sourceNeedle": "NOCTUA U12A Chromax",
               "meta": {
@@ -842,7 +774,6 @@
             {
               "id": "d15s",
               "label": "NOCTUA NH-D15S Chromax",
-              "marketDelta": 259,
               "sourceKey": "main_coold15s",
               "sourceNeedle": "NOCTUA NH-D15S Chromax",
               "meta": {
@@ -854,7 +785,6 @@
             {
               "id": "d15g2",
               "label": "NOCTUA NH-D15 G2 Chromax",
-              "marketDelta": 450,
               "sourceKey": "main_coold15g2",
               "sourceNeedle": "NOCTUA NH-D15 G2 Chromax",
               "meta": {
@@ -866,7 +796,6 @@
             {
               "id": "th240",
               "label": "JONSBO TH-240 AIO",
-              "marketDelta": 139,
               "sourceKey": "main_cool240",
               "sourceNeedle": "JONSBO TH-240",
               "meta": {
@@ -878,7 +807,6 @@
             {
               "id": "aio360",
               "label": "360mm ARGB AIO",
-              "marketDelta": 299,
               "sourceKey": "main_cool360",
               "sourceNeedle": "JONSBO TH-360",
               "meta": {
@@ -896,7 +824,6 @@
             {
               "id": "base",
               "label": "A620M AM5",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "moboTier": 1,
@@ -907,7 +834,6 @@
             {
               "id": "b650em",
               "label": "GIGABYTE B650EM Force WiFi 6E",
-              "marketDelta": 259,
               "sourceKey": "main_mobo_b650em",
               "sourceNeedle": "GIGABYTE B650EM Force Wifi 6E",
               "meta": {
@@ -921,7 +847,6 @@
             {
               "id": "b850",
               "label": "MSI B850M Gaming Plus WiFi 6E",
-              "marketDelta": 349,
               "sourceKey": "main_mobo_b850",
               "sourceNeedle": "MSI B850M GAMING PLUS WIFI 6E",
               "meta": {
@@ -935,7 +860,6 @@
             {
               "id": "b850e",
               "label": "GIGABYTE B850M Eagle WiFi 7",
-              "marketDelta": 439,
               "sourceKey": "main_mobo_b850e",
               "sourceNeedle": "GIGABYTE B850M EAGLE WIFI7",
               "meta": {
@@ -949,7 +873,6 @@
             {
               "id": "x870",
               "label": "MSI X870E WiFi",
-              "marketDelta": 699,
               "sourceKey": "main_mobo_x870",
               "sourceNeedle": "MSI X870E",
               "meta": {
@@ -969,7 +892,6 @@
             {
               "id": "16",
               "label": "16GB DDR5 6000MHz",
-              "marketDelta": 0,
               "meta": {
                 "ramGB": 16
               }
@@ -977,7 +899,6 @@
             {
               "id": "32t",
               "label": "TEAMGROUP T-Create 32GB DDR5 6000",
-              "marketDelta": 859,
               "sourceKey": "main_ram32t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 32GB",
               "meta": {
@@ -988,7 +909,6 @@
             {
               "id": "32k",
               "label": "KLEVV Fit V 32GB DDR5 6000",
-              "marketDelta": 929,
               "sourceKey": "main_ram32k",
               "sourceNeedle": "KLEVV Fit V 32GB",
               "meta": {
@@ -999,7 +919,6 @@
             {
               "id": "32g",
               "label": "GSKILL Trident Z5 RGB 32GB DDR5 6000",
-              "marketDelta": 999,
               "sourceKey": "main_ram32g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 32GB",
               "meta": {
@@ -1010,7 +929,6 @@
             {
               "id": "64t",
               "label": "TEAMGROUP T-Create 64GB DDR5 6000",
-              "marketDelta": 3199,
               "sourceKey": "main_ram64t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 64GB",
               "meta": {
@@ -1021,7 +939,6 @@
             {
               "id": "64g",
               "label": "GSKILL Trident Z5 RGB 64GB DDR5 6000",
-              "marketDelta": 3299,
               "sourceKey": "main_ram64g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 64GB",
               "meta": {
@@ -1038,7 +955,6 @@
             {
               "id": "base",
               "label": "AMD Radeon RX 9060 XT 16GB",
-              "marketDelta": 0,
               "meta": {
                 "gpuClass": "main",
                 "minPsu": 650
@@ -1053,7 +969,6 @@
             {
               "id": "base",
               "label": "500GB Gen4 NVMe SSD",
-              "marketDelta": 0,
               "meta": {
                 "storageGen": 4
               },
@@ -1064,7 +979,6 @@
             {
               "id": "1t",
               "label": "T-FORCE Z44A5 Gen4 1TB",
-              "marketDelta": 229,
               "sourceKey": "main_ssd1t",
               "sourceNeedle": "T-FORCE Z44A5 Gen4 M.2 1TB",
               "meta": {
@@ -1075,7 +989,6 @@
             {
               "id": "1l",
               "label": "LEXAR NQ780 Gen4 1TB",
-              "marketDelta": 299,
               "sourceKey": "main_ssd1l",
               "sourceNeedle": "LEXAR NQ780 1TB Gen4 M.2 1TB",
               "meta": {
@@ -1086,7 +999,6 @@
             {
               "id": "2k",
               "label": "KIOXIA EXCERIA Basic Gen4 2TB",
-              "marketDelta": 699,
               "sourceKey": "main_ssd2k",
               "sourceNeedle": "KIOXIA EXCERIA Basic Gen4 2TB",
               "meta": {
@@ -1097,7 +1009,6 @@
             {
               "id": "g5",
               "label": "KIOXIA G3 Gen5 1TB",
-              "marketDelta": 399,
               "sourceKey": "main_ssdg5",
               "sourceNeedle": "KIOXIA G3 Gen5 1TB",
               "meta": {
@@ -1115,7 +1026,6 @@
             {
               "id": "base",
               "label": "650W 80+ Silver",
-              "marketDelta": 0,
               "meta": {
                 "wattage": 650
               }
@@ -1123,7 +1033,6 @@
             {
               "id": "750g",
               "label": "750W 80+ Gold ATX 3.1",
-              "marketDelta": 99,
               "sourceKey": "main_psu750",
               "sourceNeedle": "ANTEC GSK750",
               "meta": {
@@ -1134,7 +1043,6 @@
             {
               "id": "850g",
               "label": "850W 80+ Gold ATX 3.1",
-              "marketDelta": 149,
               "sourceKey": "main_psu850",
               "sourceNeedle": "ANTEC GSK850",
               "meta": {
@@ -1145,7 +1053,6 @@
             {
               "id": "1000g",
               "label": "1000W 80+ Gold ATX 3.1",
-              "marketDelta": 399,
               "sourceKey": "main_psu1000",
               "sourceNeedle": "ANTEC GSK1000",
               "meta": {
@@ -1162,7 +1069,6 @@
             {
               "id": "base",
               "label": "mATX airflow case",
-              "marketDelta": 0,
               "meta": {
                 "maxMobo": "mATX",
                 "supports360": false
@@ -1171,7 +1077,6 @@
             {
               "id": "cx700",
               "label": "ANTEC CX700 ARGB",
-              "marketDelta": 69,
               "sourceKey": "main_casecx",
               "sourceNeedle": "ANTEC CX700 ARGB",
               "meta": {
@@ -1183,7 +1088,6 @@
             {
               "id": "c6",
               "label": "ANTEC C6 Curve ARGB",
-              "marketDelta": 169,
               "sourceKey": "main_casec6",
               "sourceNeedle": "ANTEC C6 Curve ARGB",
               "meta": {
@@ -1195,7 +1099,6 @@
             {
               "id": "p30",
               "label": "ANTEC P30 ARGB",
-              "marketDelta": 99,
               "sourceKey": "main_casep30",
               "sourceNeedle": "ANTEC P30 ARGB",
               "meta": {
@@ -1207,7 +1110,6 @@
             {
               "id": "flux",
               "label": "ANTEC Flux Pro",
-              "marketDelta": 369,
               "sourceKey": "main_caseflux",
               "sourceNeedle": "ANTEC Flux Pro",
               "meta": {
@@ -1224,13 +1126,11 @@
           "options": [
             {
               "id": "trial",
-              "label": "Windows 11 trial / belum diaktifkan",
-              "marketDelta": 0
+              "label": "Windows 11 trial / belum diaktifkan"
             },
             {
               "id": "home",
               "label": "Microsoft Windows 11 Home OEM",
-              "marketDelta": 599,
               "sourceKey": "sw_home",
               "sourceNeedle": "Microsoft Windows 11 Home 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9060xt-16gb-gamingpc/"
@@ -1238,7 +1138,6 @@
             {
               "id": "pro",
               "label": "Microsoft Windows 11 Pro OEM",
-              "marketDelta": 699,
               "sourceKey": "sw_pro",
               "sourceNeedle": "Microsoft Windows 11 Pro 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9060xt-16gb-gamingpc/"
@@ -1251,13 +1150,11 @@
           "options": [
             {
               "id": "none",
-              "label": "Tiada Microsoft Office",
-              "marketDelta": 0
+              "label": "Tiada Microsoft Office"
             },
             {
               "id": "hs",
               "label": "Microsoft Office 2024 Home & Student",
-              "marketDelta": 449,
               "sourceKey": "sw_office_hs",
               "sourceNeedle": "Microsoft Office 2024 Home & Student Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9060xt-16gb-gamingpc/"
@@ -1265,7 +1162,6 @@
             {
               "id": "hb",
               "label": "Microsoft Office 2024 Home & Business",
-              "marketDelta": 979,
               "sourceKey": "sw_office_hb",
               "sourceNeedle": "Microsoft Office 2024 Home & Business Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9060xt-16gb-gamingpc/"
@@ -1289,7 +1185,6 @@
             {
               "id": "7500f",
               "label": "AMD Ryzen 5 7500F",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "requiredMoboTier": 1,
@@ -1299,7 +1194,6 @@
             {
               "id": "7500x3d",
               "label": "AMD Ryzen 5 7500X3D",
-              "marketDelta": 599,
               "sourceKey": "perf_cpu7500x3d",
               "sourceNeedle": "AMD Ryzen 5 7500X3D",
               "meta": {
@@ -1312,7 +1206,6 @@
             {
               "id": "7800x3d",
               "label": "AMD Ryzen 7 7800X3D",
-              "marketDelta": 799,
               "sourceKey": "perf_cpu7800x3d",
               "sourceNeedle": "AMD Ryzen 7 7800X3D",
               "meta": {
@@ -1325,7 +1218,6 @@
             {
               "id": "9850x3d",
               "label": "AMD Ryzen 7 9850X3D",
-              "marketDelta": 1699,
               "sourceKey": "perf_cpu9850x3d",
               "sourceNeedle": "AMD Ryzen 7 9850X3D",
               "meta": {
@@ -1338,7 +1230,6 @@
             {
               "id": "9950x3d",
               "label": "AMD Ryzen 9 9950X3D",
-              "marketDelta": 2599,
               "sourceKey": "perf_cpu9950x3d",
               "sourceNeedle": "AMD Ryzen 9 9950X3D",
               "meta": {
@@ -1358,7 +1249,6 @@
             {
               "id": "base",
               "label": "Performance air cooler",
-              "marketDelta": 0,
               "meta": {
                 "coolingClass": 2,
                 "radiator": 0
@@ -1367,7 +1257,6 @@
             {
               "id": "cc90",
               "label": "JONSBO CC90",
-              "marketDelta": 109,
               "sourceKey": "perf_coolcc90",
               "sourceNeedle": "JONSBO CC90 Black",
               "meta": {
@@ -1379,7 +1268,6 @@
             {
               "id": "u9s",
               "label": "NOCTUA NH-U9S Chromax",
-              "marketDelta": 149,
               "sourceKey": "perf_coolu9s",
               "sourceNeedle": "NOCTUA NH-U9S Chromax",
               "meta": {
@@ -1391,7 +1279,6 @@
             {
               "id": "u12a",
               "label": "NOCTUA U12A Chromax",
-              "marketDelta": 329,
               "sourceKey": "perf_coolu12a",
               "sourceNeedle": "NOCTUA U12A Chromax",
               "meta": {
@@ -1403,7 +1290,6 @@
             {
               "id": "d15s",
               "label": "NOCTUA NH-D15S Chromax",
-              "marketDelta": 259,
               "sourceKey": "perf_coold15s",
               "sourceNeedle": "NOCTUA NH-D15S Chromax",
               "meta": {
@@ -1415,7 +1301,6 @@
             {
               "id": "d15g2",
               "label": "NOCTUA NH-D15 G2 Chromax",
-              "marketDelta": 450,
               "sourceKey": "perf_coold15g2",
               "sourceNeedle": "NOCTUA NH-D15 G2 Chromax",
               "meta": {
@@ -1427,7 +1312,6 @@
             {
               "id": "th240",
               "label": "JONSBO TH-240 AIO",
-              "marketDelta": 139,
               "sourceKey": "perf_cool240",
               "sourceNeedle": "JONSBO TH-240",
               "meta": {
@@ -1439,7 +1323,6 @@
             {
               "id": "aio360",
               "label": "360mm ARGB AIO",
-              "marketDelta": 299,
               "sourceKey": "perf_cool360",
               "sourceNeedle": "JONSBO TH-360",
               "meta": {
@@ -1457,7 +1340,6 @@
             {
               "id": "base",
               "label": "B650M WiFi / equivalent",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "moboTier": 2,
@@ -1468,7 +1350,6 @@
             {
               "id": "b650em",
               "label": "GIGABYTE B650EM Force WiFi 6E",
-              "marketDelta": 69,
               "sourceKey": "perf_mobo_b650em",
               "sourceNeedle": "GIGABYTE B650EM Force Wifi 6E",
               "meta": {
@@ -1482,7 +1363,6 @@
             {
               "id": "b850",
               "label": "MSI B850M Gaming Plus WiFi 6E",
-              "marketDelta": 249,
               "sourceKey": "perf_mobo_b850",
               "sourceNeedle": "MSI B850M GAMING PLUS WIFI 6E",
               "meta": {
@@ -1496,7 +1376,6 @@
             {
               "id": "b850e",
               "label": "GIGABYTE B850M Eagle WiFi 7",
-              "marketDelta": 299,
               "sourceKey": "perf_mobo_b850e",
               "sourceNeedle": "GIGABYTE B850M EAGLE WIFI7",
               "meta": {
@@ -1510,7 +1389,6 @@
             {
               "id": "x870",
               "label": "MSI X870E WiFi",
-              "marketDelta": 699,
               "sourceKey": "perf_mobo_x870",
               "sourceNeedle": "MSI X870E",
               "meta": {
@@ -1530,7 +1408,6 @@
             {
               "id": "16",
               "label": "16GB DDR5 6000MHz",
-              "marketDelta": 0,
               "meta": {
                 "ramGB": 16
               }
@@ -1538,7 +1415,6 @@
             {
               "id": "32t",
               "label": "TEAMGROUP T-Create 32GB DDR5 6000",
-              "marketDelta": 859,
               "sourceKey": "perf_ram32t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 32GB",
               "meta": {
@@ -1549,7 +1425,6 @@
             {
               "id": "32k",
               "label": "KLEVV Fit V 32GB DDR5 6000",
-              "marketDelta": 929,
               "sourceKey": "perf_ram32k",
               "sourceNeedle": "KLEVV Fit V 32GB",
               "meta": {
@@ -1560,7 +1435,6 @@
             {
               "id": "32g",
               "label": "GSKILL Trident Z5 RGB 32GB DDR5 6000",
-              "marketDelta": 999,
               "sourceKey": "perf_ram32g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 32GB",
               "meta": {
@@ -1571,7 +1445,6 @@
             {
               "id": "64t",
               "label": "TEAMGROUP T-Create 64GB DDR5 6000",
-              "marketDelta": 3199,
               "sourceKey": "perf_ram64t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 64GB",
               "meta": {
@@ -1582,7 +1455,6 @@
             {
               "id": "64g",
               "label": "GSKILL Trident Z5 RGB 64GB DDR5 6000",
-              "marketDelta": 3299,
               "sourceKey": "perf_ram64g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 64GB",
               "meta": {
@@ -1599,7 +1471,6 @@
             {
               "id": "base",
               "label": "NVIDIA GeForce RTX 5070 12GB",
-              "marketDelta": 0,
               "meta": {
                 "gpuClass": "perf",
                 "minPsu": 750
@@ -1608,7 +1479,6 @@
             {
               "id": "msi",
               "label": "MSI RTX 5070 Gaming Trio OC",
-              "marketDelta": 699,
               "sourceKey": "perf_gpu_msi",
               "sourceNeedle": "MSI RTX5070 Gaming Trio OC",
               "meta": {
@@ -1620,7 +1490,6 @@
             {
               "id": "white",
               "label": "MSI RTX 5070 Gaming Trio OC White",
-              "marketDelta": 999,
               "sourceKey": "perf_gpu_white",
               "sourceNeedle": "MSI RTX5070 Gaming Trio OC White",
               "meta": {
@@ -1638,7 +1507,6 @@
             {
               "id": "base",
               "label": "500GB Gen4 NVMe SSD",
-              "marketDelta": 0,
               "meta": {
                 "storageGen": 4
               }
@@ -1646,7 +1514,6 @@
             {
               "id": "1t",
               "label": "T-FORCE Z44A5 Gen4 1TB",
-              "marketDelta": 229,
               "sourceKey": "perf_ssd1t",
               "sourceNeedle": "T-FORCE Z44A5 Gen4 M.2 1TB",
               "meta": {
@@ -1657,7 +1524,6 @@
             {
               "id": "1l",
               "label": "LEXAR NQ780 Gen4 1TB",
-              "marketDelta": 299,
               "sourceKey": "perf_ssd1l",
               "sourceNeedle": "LEXAR NQ780 1TB Gen4 M.2 1TB",
               "meta": {
@@ -1668,7 +1534,6 @@
             {
               "id": "2k",
               "label": "KIOXIA EXCERIA Basic Gen4 2TB",
-              "marketDelta": 699,
               "sourceKey": "perf_ssd2k",
               "sourceNeedle": "KIOXIA EXCERIA Basic Gen4 2TB",
               "meta": {
@@ -1679,7 +1544,6 @@
             {
               "id": "g5",
               "label": "KIOXIA G3 Gen5 1TB",
-              "marketDelta": 399,
               "sourceKey": "perf_ssdg5",
               "sourceNeedle": "KIOXIA G3 Gen5 1TB",
               "meta": {
@@ -1696,7 +1560,6 @@
             {
               "id": "base",
               "label": "750W 80+ Bronze",
-              "marketDelta": 0,
               "meta": {
                 "wattage": 750
               }
@@ -1704,7 +1567,6 @@
             {
               "id": "750g",
               "label": "750W 80+ Gold ATX 3.1",
-              "marketDelta": 99,
               "sourceKey": "perf_psu750",
               "sourceNeedle": "ANTEC GSK750",
               "meta": {
@@ -1715,7 +1577,6 @@
             {
               "id": "850g",
               "label": "850W 80+ Gold ATX 3.1",
-              "marketDelta": 149,
               "sourceKey": "perf_psu850",
               "sourceNeedle": "ANTEC GSK850",
               "meta": {
@@ -1726,7 +1587,6 @@
             {
               "id": "1000g",
               "label": "1000W 80+ Gold ATX 3.1",
-              "marketDelta": 399,
               "sourceKey": "perf_psu1000",
               "sourceNeedle": "ANTEC GSK1000",
               "meta": {
@@ -1743,7 +1603,6 @@
             {
               "id": "base",
               "label": "mATX airflow case",
-              "marketDelta": 0,
               "meta": {
                 "maxMobo": "mATX",
                 "supports360": false
@@ -1752,7 +1611,6 @@
             {
               "id": "cx700",
               "label": "ANTEC CX700 ARGB",
-              "marketDelta": 69,
               "sourceKey": "perf_casecx",
               "sourceNeedle": "ANTEC CX700 ARGB",
               "meta": {
@@ -1764,7 +1622,6 @@
             {
               "id": "c6",
               "label": "ANTEC C6 Curve ARGB",
-              "marketDelta": 169,
               "sourceKey": "perf_casec6",
               "sourceNeedle": "ANTEC C6 Curve ARGB",
               "meta": {
@@ -1776,7 +1633,6 @@
             {
               "id": "p30",
               "label": "ANTEC P30 ARGB",
-              "marketDelta": 99,
               "sourceKey": "perf_casep30",
               "sourceNeedle": "ANTEC P30 ARGB",
               "meta": {
@@ -1788,7 +1644,6 @@
             {
               "id": "flux",
               "label": "ANTEC Flux Pro",
-              "marketDelta": 369,
               "sourceKey": "perf_caseflux",
               "sourceNeedle": "ANTEC Flux Pro",
               "meta": {
@@ -1805,13 +1660,11 @@
           "options": [
             {
               "id": "trial",
-              "label": "Windows 11 trial / belum diaktifkan",
-              "marketDelta": 0
+              "label": "Windows 11 trial / belum diaktifkan"
             },
             {
               "id": "home",
               "label": "Microsoft Windows 11 Home OEM",
-              "marketDelta": 599,
               "sourceKey": "sw_home",
               "sourceNeedle": "Microsoft Windows 11 Home 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/"
@@ -1819,7 +1672,6 @@
             {
               "id": "pro",
               "label": "Microsoft Windows 11 Pro OEM",
-              "marketDelta": 699,
               "sourceKey": "sw_pro",
               "sourceNeedle": "Microsoft Windows 11 Pro 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/"
@@ -1832,13 +1684,11 @@
           "options": [
             {
               "id": "none",
-              "label": "Tiada Microsoft Office",
-              "marketDelta": 0
+              "label": "Tiada Microsoft Office"
             },
             {
               "id": "hs",
               "label": "Microsoft Office 2024 Home & Student",
-              "marketDelta": 449,
               "sourceKey": "sw_office_hs",
               "sourceNeedle": "Microsoft Office 2024 Home & Student Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/"
@@ -1846,7 +1696,6 @@
             {
               "id": "hb",
               "label": "Microsoft Office 2024 Home & Business",
-              "marketDelta": 979,
               "sourceKey": "sw_office_hb",
               "sourceNeedle": "Microsoft Office 2024 Home & Business Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/"
@@ -1870,7 +1719,6 @@
             {
               "id": "7800x3d",
               "label": "AMD Ryzen 7 7800X3D",
-              "marketDelta": 0,
               "sourceKey": "high_cpu7800x3d",
               "sourceNeedle": "AMD Ryzen 7 7800X3D",
               "meta": {
@@ -1883,7 +1731,6 @@
             {
               "id": "9850x3d",
               "label": "AMD Ryzen 7 9850X3D",
-              "marketDelta": 900,
               "sourceKey": "high_cpu9850x3d",
               "sourceNeedle": "AMD Ryzen 7 9850X3D",
               "meta": {
@@ -1896,7 +1743,6 @@
             {
               "id": "9950x3d",
               "label": "AMD Ryzen 9 9950X3D",
-              "marketDelta": 1800,
               "sourceKey": "high_cpu9950x3d",
               "sourceNeedle": "AMD Ryzen 9 9950X3D",
               "meta": {
@@ -1917,7 +1763,6 @@
             {
               "id": "base",
               "label": "240mm AIO / equivalent",
-              "marketDelta": 0,
               "meta": {
                 "coolingClass": 4,
                 "radiator": 240
@@ -1926,7 +1771,6 @@
             {
               "id": "cc90",
               "label": "JONSBO CC90",
-              "marketDelta": 109,
               "sourceKey": "high_coolcc90",
               "sourceNeedle": "JONSBO CC90 Black",
               "meta": {
@@ -1938,7 +1782,6 @@
             {
               "id": "u9s",
               "label": "NOCTUA NH-U9S Chromax",
-              "marketDelta": 149,
               "sourceKey": "high_coolu9s",
               "sourceNeedle": "NOCTUA NH-U9S Chromax",
               "meta": {
@@ -1950,7 +1793,6 @@
             {
               "id": "u12a",
               "label": "NOCTUA U12A Chromax",
-              "marketDelta": 329,
               "sourceKey": "high_coolu12a",
               "sourceNeedle": "NOCTUA U12A Chromax",
               "meta": {
@@ -1962,7 +1804,6 @@
             {
               "id": "d15s",
               "label": "NOCTUA NH-D15S Chromax",
-              "marketDelta": 259,
               "sourceKey": "high_coold15s",
               "sourceNeedle": "NOCTUA NH-D15S Chromax",
               "meta": {
@@ -1974,7 +1815,6 @@
             {
               "id": "d15g2",
               "label": "NOCTUA NH-D15 G2 Chromax",
-              "marketDelta": 450,
               "sourceKey": "high_coold15g2",
               "sourceNeedle": "NOCTUA NH-D15 G2 Chromax",
               "meta": {
@@ -1986,7 +1826,6 @@
             {
               "id": "th240",
               "label": "JONSBO TH-240 AIO",
-              "marketDelta": 139,
               "sourceKey": "high_cool240",
               "sourceNeedle": "JONSBO TH-240",
               "meta": {
@@ -1998,7 +1837,6 @@
             {
               "id": "aio360",
               "label": "360mm ARGB AIO",
-              "marketDelta": 299,
               "sourceKey": "high_cool360",
               "sourceNeedle": "JONSBO TH-360",
               "meta": {
@@ -2016,7 +1854,6 @@
             {
               "id": "base",
               "label": "B850M WiFi / equivalent",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "moboTier": 3,
@@ -2030,7 +1867,6 @@
             {
               "id": "b850e",
               "label": "GIGABYTE B850M Eagle WiFi 7",
-              "marketDelta": 90,
               "sourceKey": "high_mobo_b850e",
               "sourceNeedle": "GIGABYTE B850M EAGLE WIFI7",
               "meta": {
@@ -2044,7 +1880,6 @@
             {
               "id": "x870",
               "label": "MSI X870E WiFi",
-              "marketDelta": 350,
               "sourceKey": "high_mobo_x870",
               "sourceNeedle": "MSI X870E",
               "meta": {
@@ -2065,7 +1900,6 @@
             {
               "id": "16",
               "label": "16GB DDR5 6000MHz",
-              "marketDelta": 0,
               "meta": {
                 "ramGB": 16
               }
@@ -2073,7 +1907,6 @@
             {
               "id": "32t",
               "label": "TEAMGROUP T-Create 32GB DDR5 6000",
-              "marketDelta": 859,
               "sourceKey": "high_ram32t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 32GB",
               "meta": {
@@ -2084,7 +1917,6 @@
             {
               "id": "32k",
               "label": "KLEVV Fit V 32GB DDR5 6000",
-              "marketDelta": 929,
               "sourceKey": "high_ram32k",
               "sourceNeedle": "KLEVV Fit V 32GB",
               "meta": {
@@ -2095,7 +1927,6 @@
             {
               "id": "32g",
               "label": "GSKILL Trident Z5 RGB 32GB DDR5 6000",
-              "marketDelta": 999,
               "sourceKey": "high_ram32g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 32GB",
               "meta": {
@@ -2106,7 +1937,6 @@
             {
               "id": "64t",
               "label": "TEAMGROUP T-Create 64GB DDR5 6000",
-              "marketDelta": 3199,
               "sourceKey": "high_ram64t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 64GB",
               "meta": {
@@ -2117,7 +1947,6 @@
             {
               "id": "64g",
               "label": "GSKILL Trident Z5 RGB 64GB DDR5 6000",
-              "marketDelta": 3299,
               "sourceKey": "high_ram64g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 64GB",
               "meta": {
@@ -2134,7 +1963,6 @@
             {
               "id": "base",
               "label": "AMD Radeon RX 9070 XT 16GB",
-              "marketDelta": 0,
               "meta": {
                 "gpuClass": "high",
                 "minPsu": 750
@@ -2149,7 +1977,6 @@
             {
               "id": "base",
               "label": "500GB Gen4 NVMe SSD",
-              "marketDelta": 0,
               "meta": {
                 "storageGen": 4
               }
@@ -2157,7 +1984,6 @@
             {
               "id": "1t",
               "label": "T-FORCE Z44A5 Gen4 1TB",
-              "marketDelta": 229,
               "sourceKey": "high_ssd1t",
               "sourceNeedle": "T-FORCE Z44A5 Gen4 M.2 1TB",
               "meta": {
@@ -2168,7 +1994,6 @@
             {
               "id": "1l",
               "label": "LEXAR NQ780 Gen4 1TB",
-              "marketDelta": 299,
               "sourceKey": "high_ssd1l",
               "sourceNeedle": "LEXAR NQ780 1TB Gen4 M.2 1TB",
               "meta": {
@@ -2179,7 +2004,6 @@
             {
               "id": "2k",
               "label": "KIOXIA EXCERIA Basic Gen4 2TB",
-              "marketDelta": 699,
               "sourceKey": "high_ssd2k",
               "sourceNeedle": "KIOXIA EXCERIA Basic Gen4 2TB",
               "meta": {
@@ -2190,7 +2014,6 @@
             {
               "id": "g5",
               "label": "KIOXIA G3 Gen5 1TB",
-              "marketDelta": 399,
               "sourceKey": "high_ssdg5",
               "sourceNeedle": "KIOXIA G3 Gen5 1TB",
               "meta": {
@@ -2207,7 +2030,6 @@
             {
               "id": "base",
               "label": "750W 80+ Gold ATX 3.1",
-              "marketDelta": 0,
               "meta": {
                 "wattage": 750
               },
@@ -2218,7 +2040,6 @@
             {
               "id": "850g",
               "label": "850W 80+ Gold ATX 3.1",
-              "marketDelta": 149,
               "sourceKey": "high_psu850",
               "sourceNeedle": "ANTEC GSK850",
               "meta": {
@@ -2229,7 +2050,6 @@
             {
               "id": "1000g",
               "label": "1000W 80+ Gold ATX 3.1",
-              "marketDelta": 399,
               "sourceKey": "high_psu1000",
               "sourceNeedle": "ANTEC GSK1000",
               "meta": {
@@ -2247,7 +2067,6 @@
             {
               "id": "base",
               "label": "mATX premium airflow",
-              "marketDelta": 0,
               "meta": {
                 "maxMobo": "mATX",
                 "supports360": false
@@ -2256,7 +2075,6 @@
             {
               "id": "cx700",
               "label": "ANTEC CX700 ARGB",
-              "marketDelta": 69,
               "sourceKey": "high_casecx",
               "sourceNeedle": "ANTEC CX700 ARGB",
               "meta": {
@@ -2268,7 +2086,6 @@
             {
               "id": "c6",
               "label": "ANTEC C6 Curve ARGB",
-              "marketDelta": 169,
               "sourceKey": "high_casec6",
               "sourceNeedle": "ANTEC C6 Curve ARGB",
               "meta": {
@@ -2280,7 +2097,6 @@
             {
               "id": "p30",
               "label": "ANTEC P30 ARGB",
-              "marketDelta": 99,
               "sourceKey": "high_casep30",
               "sourceNeedle": "ANTEC P30 ARGB",
               "meta": {
@@ -2292,7 +2108,6 @@
             {
               "id": "flux",
               "label": "ANTEC Flux Pro",
-              "marketDelta": 369,
               "sourceKey": "high_caseflux",
               "sourceNeedle": "ANTEC Flux Pro",
               "meta": {
@@ -2309,13 +2124,11 @@
           "options": [
             {
               "id": "trial",
-              "label": "Windows 11 trial / belum diaktifkan",
-              "marketDelta": 0
+              "label": "Windows 11 trial / belum diaktifkan"
             },
             {
               "id": "home",
               "label": "Microsoft Windows 11 Home OEM",
-              "marketDelta": 599,
               "sourceKey": "sw_home",
               "sourceNeedle": "Microsoft Windows 11 Home 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9070xt-gamingpc/"
@@ -2323,7 +2136,6 @@
             {
               "id": "pro",
               "label": "Microsoft Windows 11 Pro OEM",
-              "marketDelta": 699,
               "sourceKey": "sw_pro",
               "sourceNeedle": "Microsoft Windows 11 Pro 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9070xt-gamingpc/"
@@ -2336,13 +2148,11 @@
           "options": [
             {
               "id": "none",
-              "label": "Tiada Microsoft Office",
-              "marketDelta": 0
+              "label": "Tiada Microsoft Office"
             },
             {
               "id": "hs",
               "label": "Microsoft Office 2024 Home & Student",
-              "marketDelta": 449,
               "sourceKey": "sw_office_hs",
               "sourceNeedle": "Microsoft Office 2024 Home & Student Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9070xt-gamingpc/"
@@ -2350,7 +2160,6 @@
             {
               "id": "hb",
               "label": "Microsoft Office 2024 Home & Business",
-              "marketDelta": 979,
               "sourceKey": "sw_office_hb",
               "sourceNeedle": "Microsoft Office 2024 Home & Business Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rx9070xt-gamingpc/"
@@ -2374,7 +2183,6 @@
             {
               "id": "7500f",
               "label": "AMD Ryzen 5 7500F",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "requiredMoboTier": 1,
@@ -2384,7 +2192,6 @@
             {
               "id": "7500x3d",
               "label": "AMD Ryzen 5 7500X3D",
-              "marketDelta": 599,
               "sourceKey": "flag_cpu7500x3d",
               "sourceNeedle": "AMD Ryzen 5 7500X3D",
               "meta": {
@@ -2397,7 +2204,6 @@
             {
               "id": "7800x3d",
               "label": "AMD Ryzen 7 7800X3D",
-              "marketDelta": 799,
               "sourceKey": "flag_cpu7800x3d",
               "sourceNeedle": "AMD Ryzen 7 7800X3D",
               "meta": {
@@ -2410,7 +2216,6 @@
             {
               "id": "9850x3d",
               "label": "AMD Ryzen 7 9850X3D",
-              "marketDelta": 1699,
               "sourceKey": "flag_cpu9850x3d",
               "sourceNeedle": "AMD Ryzen 7 9850X3D",
               "meta": {
@@ -2423,7 +2228,6 @@
             {
               "id": "9950x3d",
               "label": "AMD Ryzen 9 9950X3D",
-              "marketDelta": 2599,
               "sourceKey": "flag_cpu9950x3d",
               "sourceNeedle": "AMD Ryzen 9 9950X3D",
               "meta": {
@@ -2443,7 +2247,6 @@
             {
               "id": "base",
               "label": "Performance air / AIO",
-              "marketDelta": 0,
               "meta": {
                 "coolingClass": 4,
                 "radiator": 240
@@ -2452,7 +2255,6 @@
             {
               "id": "cc90",
               "label": "JONSBO CC90",
-              "marketDelta": 109,
               "sourceKey": "flag_coolcc90",
               "sourceNeedle": "JONSBO CC90 Black",
               "meta": {
@@ -2464,7 +2266,6 @@
             {
               "id": "u9s",
               "label": "NOCTUA NH-U9S Chromax",
-              "marketDelta": 149,
               "sourceKey": "flag_coolu9s",
               "sourceNeedle": "NOCTUA NH-U9S Chromax",
               "meta": {
@@ -2476,7 +2277,6 @@
             {
               "id": "u12a",
               "label": "NOCTUA U12A Chromax",
-              "marketDelta": 329,
               "sourceKey": "flag_coolu12a",
               "sourceNeedle": "NOCTUA U12A Chromax",
               "meta": {
@@ -2488,7 +2288,6 @@
             {
               "id": "d15s",
               "label": "NOCTUA NH-D15S Chromax",
-              "marketDelta": 259,
               "sourceKey": "flag_coold15s",
               "sourceNeedle": "NOCTUA NH-D15S Chromax",
               "meta": {
@@ -2500,7 +2299,6 @@
             {
               "id": "d15g2",
               "label": "NOCTUA NH-D15 G2 Chromax",
-              "marketDelta": 450,
               "sourceKey": "flag_coold15g2",
               "sourceNeedle": "NOCTUA NH-D15 G2 Chromax",
               "meta": {
@@ -2512,7 +2310,6 @@
             {
               "id": "th240",
               "label": "JONSBO TH-240 AIO",
-              "marketDelta": 139,
               "sourceKey": "flag_cool240",
               "sourceNeedle": "JONSBO TH-240",
               "meta": {
@@ -2524,7 +2321,6 @@
             {
               "id": "aio360",
               "label": "360mm ARGB AIO",
-              "marketDelta": 299,
               "sourceKey": "flag_cool360",
               "sourceNeedle": "JONSBO TH-360",
               "meta": {
@@ -2542,7 +2338,6 @@
             {
               "id": "base",
               "label": "B650M WiFi / equivalent",
-              "marketDelta": 0,
               "meta": {
                 "socket": "AM5",
                 "moboTier": 2,
@@ -2553,7 +2348,6 @@
             {
               "id": "b650em",
               "label": "GIGABYTE B650EM Force WiFi 6E",
-              "marketDelta": 259,
               "sourceKey": "flag_mobo_b650em",
               "sourceNeedle": "GIGABYTE B650EM Force Wifi 6E",
               "meta": {
@@ -2567,7 +2361,6 @@
             {
               "id": "b850",
               "label": "MSI B850M Gaming Plus WiFi 6E",
-              "marketDelta": 249,
               "sourceKey": "flag_mobo_b850",
               "sourceNeedle": "MSI B850M GAMING PLUS WIFI 6E",
               "meta": {
@@ -2581,7 +2374,6 @@
             {
               "id": "b850e",
               "label": "GIGABYTE B850M Eagle WiFi 7",
-              "marketDelta": 299,
               "sourceKey": "flag_mobo_b850e",
               "sourceNeedle": "GIGABYTE B850M EAGLE WIFI7",
               "meta": {
@@ -2595,7 +2387,6 @@
             {
               "id": "x870",
               "label": "MSI X870E WiFi",
-              "marketDelta": 699,
               "sourceKey": "flag_mobo_x870",
               "sourceNeedle": "MSI X870E",
               "meta": {
@@ -2615,7 +2406,6 @@
             {
               "id": "16",
               "label": "16GB DDR5 6000MHz",
-              "marketDelta": 0,
               "meta": {
                 "ramGB": 16
               }
@@ -2623,7 +2413,6 @@
             {
               "id": "32t",
               "label": "TEAMGROUP T-Create 32GB DDR5 6000",
-              "marketDelta": 859,
               "sourceKey": "flag_ram32t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 32GB",
               "meta": {
@@ -2634,7 +2423,6 @@
             {
               "id": "32k",
               "label": "KLEVV Fit V 32GB DDR5 6000",
-              "marketDelta": 929,
               "sourceKey": "flag_ram32k",
               "sourceNeedle": "KLEVV Fit V 32GB",
               "meta": {
@@ -2645,7 +2433,6 @@
             {
               "id": "32g",
               "label": "GSKILL Trident Z5 RGB 32GB DDR5 6000",
-              "marketDelta": 999,
               "sourceKey": "flag_ram32g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 32GB",
               "meta": {
@@ -2656,7 +2443,6 @@
             {
               "id": "64t",
               "label": "TEAMGROUP T-Create 64GB DDR5 6000",
-              "marketDelta": 3199,
               "sourceKey": "flag_ram64t",
               "sourceNeedle": "TEAMGROUP T-Create Expert 64GB",
               "meta": {
@@ -2667,7 +2453,6 @@
             {
               "id": "64g",
               "label": "GSKILL Trident Z5 RGB 64GB DDR5 6000",
-              "marketDelta": 3299,
               "sourceKey": "flag_ram64g",
               "sourceNeedle": "GSKILL Trident Z5 RGB (Black) 64GB",
               "meta": {
@@ -2684,7 +2469,6 @@
             {
               "id": "base",
               "label": "NVIDIA GeForce RTX 5080 16GB",
-              "marketDelta": 0,
               "meta": {
                 "gpuClass": "flag",
                 "minPsu": 850
@@ -2693,7 +2477,6 @@
             {
               "id": "vw",
               "label": "MSI RTX 5080 Ventus 3X OC White",
-              "marketDelta": 499,
               "sourceKey": "flag_gpu_vw",
               "sourceNeedle": "MSI RTX5080 Ventus 3X OC White",
               "meta": {
@@ -2705,7 +2488,6 @@
             {
               "id": "go",
               "label": "GIGABYTE RTX 5080 Gaming OC",
-              "marketDelta": 799,
               "sourceKey": "flag_gpu_go",
               "sourceNeedle": "GIGABYTE RTX5080 Gaming OC",
               "meta": {
@@ -2717,7 +2499,6 @@
             {
               "id": "msi",
               "label": "MSI RTX 5080 Gaming Trio OC",
-              "marketDelta": 799,
               "sourceKey": "flag_gpu_msi",
               "sourceNeedle": "MSI RTX5080 Gaming Trio OC",
               "meta": {
@@ -2729,7 +2510,6 @@
             {
               "id": "aero",
               "label": "GIGABYTE RTX 5080 Aero OC",
-              "marketDelta": 899,
               "sourceKey": "flag_gpu_aero",
               "sourceNeedle": "GIGABYTE RTX5080 Aero OC",
               "meta": {
@@ -2747,7 +2527,6 @@
             {
               "id": "base",
               "label": "500GB Gen4 NVMe SSD",
-              "marketDelta": 0,
               "meta": {
                 "storageGen": 4
               }
@@ -2755,7 +2534,6 @@
             {
               "id": "1t",
               "label": "T-FORCE Z44A5 Gen4 1TB",
-              "marketDelta": 229,
               "sourceKey": "flag_ssd1t",
               "sourceNeedle": "T-FORCE Z44A5 Gen4 M.2 1TB",
               "meta": {
@@ -2766,7 +2544,6 @@
             {
               "id": "1l",
               "label": "LEXAR NQ780 Gen4 1TB",
-              "marketDelta": 299,
               "sourceKey": "flag_ssd1l",
               "sourceNeedle": "LEXAR NQ780 1TB Gen4 M.2 1TB",
               "meta": {
@@ -2777,7 +2554,6 @@
             {
               "id": "2k",
               "label": "KIOXIA EXCERIA Basic Gen4 2TB",
-              "marketDelta": 699,
               "sourceKey": "flag_ssd2k",
               "sourceNeedle": "KIOXIA EXCERIA Basic Gen4 2TB",
               "meta": {
@@ -2788,7 +2564,6 @@
             {
               "id": "g5",
               "label": "KIOXIA G3 Gen5 1TB",
-              "marketDelta": 399,
               "sourceKey": "flag_ssdg5",
               "sourceNeedle": "KIOXIA G3 Gen5 1TB",
               "meta": {
@@ -2805,7 +2580,6 @@
             {
               "id": "base",
               "label": "850W 80+ Gold ATX 3.1",
-              "marketDelta": 0,
               "meta": {
                 "wattage": 850
               }
@@ -2813,7 +2587,6 @@
             {
               "id": "1000g",
               "label": "1000W 80+ Gold ATX 3.1",
-              "marketDelta": 199,
               "sourceKey": "flag_psu1000",
               "sourceNeedle": "ANTEC GSK1000",
               "meta": {
@@ -2830,7 +2603,6 @@
             {
               "id": "base",
               "label": "High-airflow ARGB case",
-              "marketDelta": 0,
               "meta": {
                 "maxMobo": "ATX",
                 "supports360": true
@@ -2839,7 +2611,6 @@
             {
               "id": "cx700",
               "label": "ANTEC CX700 ARGB",
-              "marketDelta": 69,
               "sourceKey": "flag_casecx",
               "sourceNeedle": "ANTEC CX700 ARGB",
               "meta": {
@@ -2851,7 +2622,6 @@
             {
               "id": "c6",
               "label": "ANTEC C6 Curve ARGB",
-              "marketDelta": 169,
               "sourceKey": "flag_casec6",
               "sourceNeedle": "ANTEC C6 Curve ARGB",
               "meta": {
@@ -2863,7 +2633,6 @@
             {
               "id": "p30",
               "label": "ANTEC P30 ARGB",
-              "marketDelta": 99,
               "sourceKey": "flag_casep30",
               "sourceNeedle": "ANTEC P30 ARGB",
               "meta": {
@@ -2875,7 +2644,6 @@
             {
               "id": "flux",
               "label": "ANTEC Flux Pro",
-              "marketDelta": 369,
               "sourceKey": "flag_caseflux",
               "sourceNeedle": "ANTEC Flux Pro",
               "meta": {
@@ -2892,13 +2660,11 @@
           "options": [
             {
               "id": "trial",
-              "label": "Windows 11 trial / belum diaktifkan",
-              "marketDelta": 0
+              "label": "Windows 11 trial / belum diaktifkan"
             },
             {
               "id": "home",
               "label": "Microsoft Windows 11 Home OEM",
-              "marketDelta": 599,
               "sourceKey": "sw_home",
               "sourceNeedle": "Microsoft Windows 11 Home 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"
@@ -2906,7 +2672,6 @@
             {
               "id": "pro",
               "label": "Microsoft Windows 11 Pro OEM",
-              "marketDelta": 699,
               "sourceKey": "sw_pro",
               "sourceNeedle": "Microsoft Windows 11 Pro 64bit OEM",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"
@@ -2919,13 +2684,11 @@
           "options": [
             {
               "id": "none",
-              "label": "Tiada Microsoft Office",
-              "marketDelta": 0
+              "label": "Tiada Microsoft Office"
             },
             {
               "id": "hs",
               "label": "Microsoft Office 2024 Home & Student",
-              "marketDelta": 449,
               "sourceKey": "sw_office_hs",
               "sourceNeedle": "Microsoft Office 2024 Home & Student Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"
@@ -2933,7 +2696,6 @@
             {
               "id": "hb",
               "label": "Microsoft Office 2024 Home & Business",
-              "marketDelta": 979,
               "sourceKey": "sw_office_hb",
               "sourceNeedle": "Microsoft Office 2024 Home & Business Edition",
               "sourceUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/"

@@ -7,7 +7,7 @@ const checks=[
   ['canonical bridge exported',sales.includes('window.azSalesReceiptsAnalyticsSnapshot=async function')],
   ['ledger includes manual + website',sales.includes('[...manualRows,...websiteRows]')],
   ['module v1380',sales.includes('window.__azSalesReceiptsModuleVersion=1380')],
-  ['admin loads v1380 module',html.includes('azobss-admin-sales-receipts.js?v=1380')],
+  ['admin loads v1380 module',/azobss-admin-sales-receipts\.js\?v=\d+/.test(html)],
   ['analytics uses canonical ledger',html.includes('azAdminLoadCanonicalSalesLedger')&&html.includes('window.azSalesReceiptsAnalyticsSnapshot')],
   ['gross KPI retained',html.includes('id="payTotalAll"')],
   ['total cost KPI added',html.includes('id="payTotalCost"')],

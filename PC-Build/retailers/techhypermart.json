@@ -3,7 +3,7 @@
   "storeId": "techhypermart",
   "storeName": "Tech Hypermart",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://www.techhypermart.com/computers-desktop-pc",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 3839,
-      "priceMin": 3839,
-      "priceMax": 3839,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
@@ -69,10 +66,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-acer-c27",
@@ -84,9 +85,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 4799,
-      "priceMin": 4799,
-      "priceMax": 4799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
@@ -136,10 +134,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-acer-tc1860",
@@ -151,9 +153,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 3429,
-      "priceMin": 3429,
-      "priceMax": 3429,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
@@ -203,10 +202,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-acer-orion5000",
@@ -218,9 +221,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 13799,
-      "priceMin": 13799,
-      "priceMax": 13799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -270,10 +270,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-acer-orion7000",
@@ -285,9 +289,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 17999,
-      "priceMin": 17999,
-      "priceMax": 17999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -337,10 +338,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-asus-rnuc15",
@@ -352,9 +357,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 20359,
-      "priceMin": 20359,
-      "priceMax": 20359,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -404,10 +406,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-thinkstation-p3",
@@ -419,9 +425,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
-      "price": 13549,
-      "priceMin": 13549,
-      "priceMax": 13549,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -472,10 +475,14 @@
         "workstation",
         "ai"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-hp-z2",
@@ -487,9 +494,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
-      "price": 15599,
-      "priceMin": 15599,
-      "priceMax": 15599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers?order=DESC&sort=p.price",
@@ -540,10 +544,14 @@
         "workstation",
         "ai"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "techhypermart-dell-pro-max-gb10",
@@ -555,9 +563,6 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
-      "price": 25199,
-      "priceMin": 25199,
-      "priceMax": 25199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers?order=DESC&sort=p.price",
@@ -608,11 +613,15 @@
         "workstation",
         "ai"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

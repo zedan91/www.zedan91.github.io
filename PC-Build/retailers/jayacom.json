@@ -3,7 +3,7 @@
   "storeId": "jayacom",
   "storeName": "Jayacom",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "Jayacom • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1159,
-      "priceMin": 1159,
-      "priceMax": 1159,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Jayacom",
       "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
@@ -69,10 +66,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "jayacom-amd-5600g-office",
@@ -84,9 +85,6 @@
       "tagline": "Jayacom • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1299,
-      "priceMin": 1299,
-      "priceMax": 1299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Jayacom",
       "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
@@ -140,10 +138,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "jayacom-intel-i5-office",
@@ -155,9 +157,6 @@
       "tagline": "Jayacom • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1450,
-      "priceMin": 1450,
-      "priceMax": 1450,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Jayacom",
       "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
@@ -207,10 +206,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "jayacom-entry-gaming",
@@ -222,9 +225,6 @@
       "tagline": "Jayacom • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2199,
-      "priceMin": 2199,
-      "priceMax": 2199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Jayacom",
       "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
@@ -275,10 +275,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "jayacom-balanced-pro",
@@ -290,9 +294,6 @@
       "tagline": "Jayacom • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2399,
-      "priceMin": 2399,
-      "priceMax": 2399,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Jayacom",
       "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
@@ -343,10 +344,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "jayacom-gaming-pro",
@@ -358,9 +363,6 @@
       "tagline": "Jayacom • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3485,
-      "priceMin": 3485,
-      "priceMax": 3485,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Jayacom",
       "sourceUrl": "https://magicpin.com/malaysia/Shah-Alam/I-city-Shah-Alam/Electronics/Jayacom-%28Alam-Sentral-Branch%29/store/23b041c",
@@ -411,11 +413,15 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

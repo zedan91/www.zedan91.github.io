@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'admin','index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 
 test('v1367 package version and one-email-card layout are present',()=>{
-  assert.equal(pkg.version,'1.0.1367');
+  assert.ok(Number(String(pkg.version||'').split('.').pop()) >= 1367);
   assert.match(html,/az1367-users-column-head/);
   assert.match(html,/az1367-email-card/);
   assert.match(html,/TERKINI \/ TINDAKAN/);

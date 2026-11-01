@@ -3,7 +3,7 @@
   "storeId": "nb-plaza",
   "storeName": "NB Plaza",
   "checkedAt": "2026-11-01",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://www.nbplaza.com.my/",
   "notes": "Snapshot rasmi untuk rujukan dalaman AZOBSS. Sumber kedai disembunyikan daripada customer.",
   "products": [
@@ -14,9 +14,6 @@
       "tagline": "NB Plaza • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4209,
-      "priceMin": 4209,
-      "priceMax": 4209,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "NB Plaza",
       "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
@@ -69,13 +66,17 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "origin": "retailer",
       "storeId": "nb-plaza",
-      "storeName": "NB Plaza"
+      "storeName": "NB Plaza",
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "nbp-acer-predator-orion-5060",
@@ -84,9 +85,6 @@
       "tagline": "NB Plaza • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6099,
-      "priceMin": 6099,
-      "priceMax": 6099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "NB Plaza",
       "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
@@ -138,13 +136,17 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "origin": "retailer",
       "storeId": "nb-plaza",
-      "storeName": "NB Plaza"
+      "storeName": "NB Plaza",
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "nbp-hp-omnidesk-r7",
@@ -153,9 +155,6 @@
       "tagline": "NB Plaza • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 3099,
-      "priceMin": 3099,
-      "priceMax": 3099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "NB Plaza",
       "sourceUrl": "https://www.nbplaza.com.my/12-hp-desktop",
@@ -207,13 +206,17 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "origin": "retailer",
       "storeId": "nb-plaza",
-      "storeName": "NB Plaza"
+      "storeName": "NB Plaza",
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "nbp-hp-omen-5060ti",
@@ -222,9 +225,6 @@
       "tagline": "NB Plaza • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 10979,
-      "priceMin": 10979,
-      "priceMax": 10979,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "NB Plaza",
       "sourceUrl": "https://www.nbplaza.com.my/20-desktop?q=Categories-HP%2FRAM+Upgradable-Yes%2FOperating+System+-Windows+11",
@@ -277,13 +277,17 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "origin": "retailer",
       "storeId": "nb-plaza",
-      "storeName": "NB Plaza"
+      "storeName": "NB Plaza",
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "nbp-joi-5060-msi",
@@ -292,9 +296,6 @@
       "tagline": "NB Plaza • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5199,
-      "priceMin": 5199,
-      "priceMax": 5199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "NB Plaza",
       "sourceUrl": "https://www.nbplaza.com.my/msi-x-nvidia/15146-geforce-rtx-5060-8gb-joi-gaming-powered-by-msi.html",
@@ -347,13 +348,17 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "origin": "retailer",
       "storeId": "nb-plaza",
-      "storeName": "NB Plaza"
+      "storeName": "NB Plaza",
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "nbp-acer-veriton-u5",
@@ -362,9 +367,6 @@
       "tagline": "NB Plaza • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 2839,
-      "priceMin": 2839,
-      "priceMax": 2839,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "NB Plaza",
       "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
@@ -416,14 +418,18 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "origin": "retailer",
       "storeId": "nb-plaza",
-      "storeName": "NB Plaza"
+      "storeName": "NB Plaza",
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

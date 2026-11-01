@@ -3,7 +3,7 @@
   "storeId": "ideal-tech",
   "storeName": "Ideal Tech",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://idealtech.com.my/desktop-pcs/",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2599,
-      "priceMin": 2599,
-      "priceMax": 2599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -62,10 +59,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-adept",
@@ -77,9 +78,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2799,
-      "priceMin": 2799,
-      "priceMax": 2799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -122,10 +120,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-rush",
@@ -137,9 +139,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3499,
-      "priceMin": 3499,
-      "priceMax": 3499,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -182,10 +181,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-kiro",
@@ -197,9 +200,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4099,
-      "priceMin": 4099,
-      "priceMax": 4099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -242,10 +242,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-core",
@@ -257,9 +261,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4199,
-      "priceMin": 4199,
-      "priceMax": 4199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -302,10 +303,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-turbo",
@@ -317,9 +322,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4199,
-      "priceMin": 4199,
-      "priceMax": 4199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -362,10 +364,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-stellar",
@@ -377,9 +383,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6499,
-      "priceMin": 6499,
-      "priceMax": 6499,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -421,10 +424,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-axis",
@@ -436,9 +443,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 6799,
-      "priceMin": 6799,
-      "priceMax": 6799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -481,10 +485,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-zenith",
@@ -496,9 +504,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 8399,
-      "priceMin": 8399,
-      "priceMax": 8399,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -541,10 +546,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-radiance-apex",
@@ -556,9 +565,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 12999,
-      "priceMin": 12999,
-      "priceMax": 12999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/desktop-pcs/",
@@ -600,10 +606,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-adept-workstation",
@@ -615,9 +625,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
-      "price": 9599,
-      "priceMin": 9599,
-      "priceMax": 9599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/workstation-pc/",
@@ -668,10 +675,14 @@
         "workstation",
         "ai"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-anvil-ai",
@@ -683,9 +694,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
-      "price": 20999,
-      "priceMin": 20999,
-      "priceMax": 20999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/workstation-pc/",
@@ -736,10 +744,14 @@
         "workstation",
         "ai"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "ideal-tech-artisan-ai",
@@ -751,9 +763,6 @@
       "tagline": "Ideal Tech • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
-      "price": 29999,
-      "priceMin": 29999,
-      "priceMax": 29999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Ideal Tech",
       "sourceUrl": "https://idealtech.com.my/workstation-pc/",
@@ -804,11 +813,15 @@
         "workstation",
         "ai"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

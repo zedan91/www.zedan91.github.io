@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1483",
+  "version": "1484",
   "checkedAt": "2026-11-02",
   "catalogs": [
     {
@@ -74,5 +74,5 @@
       "catalogStatus": "verification-required"
     }
   ],
-  "pricePolicy": "v1483: customer-visible PC Builds require current verified price + availability + exact product-page image + detailed matching specifications. Generic/reference images and unverified rows are hidden."
+  "pricePolicy": "v1484: backend-live-only verification. Public catalog stores no source/selling price; unavailable or unknown products are hidden."
 }

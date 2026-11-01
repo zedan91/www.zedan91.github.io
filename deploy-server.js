@@ -18747,18 +18747,19 @@ function azobssPcBuildVariantMatches(title, keywords = []) {
 async function azobssPcBuildReadShopify(source) {
   const product = await azobssPcBuildFetch(azobssPcBuildShopifyJsUrl(source.sourceUrl), true);
   const variants = Array.isArray(product?.variants) ? product.variants : [];
-  let variant = variants.find((v) => azobssPcBuildVariantMatches(v?.title, source.variantKeywords));
-  if (!variant && source.variantKeywords?.length) {
-    variant = variants.find((v) => azobssPcBuildVariantMatches(v?.title, [source.variantKeywords[0]]));
-  }
-  if (!variant) variant = variants.find((v) => v && v.available !== false) || variants[0];
+  const requiredKeywords = Array.isArray(source.variantKeywords) ? source.variantKeywords.filter(Boolean) : [];
+  let variant = requiredKeywords.length
+    ? variants.find((v) => azobssPcBuildVariantMatches(v?.title, requiredKeywords))
+    : (variants.length === 1 ? variants[0] : null);
+  if (!variant) throw new Error(requiredKeywords.length ? "Exact Shopify variant not found" : "Shopify variant is ambiguous");
   const cents = Number(variant?.price);
   const price = Number.isFinite(cents) && cents > 0 ? cents / 100 : 0;
   if (!azobssPcBuildCleanPrice(price)) throw new Error("Shopify variant price not found");
   return {
     price: Math.round(price * 100) / 100,
     variant: String(variant?.title || "").trim(),
-    available: variant?.available !== false,
+    available: variant?.available === true,
+    availability: variant?.available === true ? "available" : "unavailable",
     productTitle: String(product?.title || "").trim()
   };
 }
@@ -18808,11 +18809,18 @@ function azobssPcBuildPriceFromHtml(html) {
   return 0;
 }
 
+function azobssPcBuildAvailabilityFromHtml(html) {
+  const text = String(html || "").replace(/\s+/g, " ").toLowerCase();
+  if (/out[ -]?of[ -]?stock|sold[ -]?out|currently unavailable|not available|notify me|back in stock/.test(text)) return "unavailable";
+  if (/in[ -]?stock|stock adequate|ready to ship|add to cart|available now/.test(text)) return "available";
+  return "unknown";
+}
 async function azobssPcBuildReadWooCommerce(source) {
   const html = await azobssPcBuildFetch(source.sourceUrl, false);
   const price = azobssPcBuildPriceFromHtml(html);
   if (!price) throw new Error("WooCommerce product price not found");
-  return { price, variant: "Base configuration", available: true };
+  const availability = azobssPcBuildAvailabilityFromHtml(html);
+  return { price, variant: "Base configuration", available: availability === "available", availability };
 }
 
 async function azobssPcBuildReadSource(source) {
@@ -18826,7 +18834,8 @@ async function azobssPcBuildReadSource(source) {
       id: source.id,
       price: data.price,
       variant: data.variant || "",
-      available: data.available !== false,
+      availability: String(data.availability || (data.available === true ? "available" : data.available === false ? "unavailable" : "unknown")),
+      available: data.available === true,
       sourceName: source.sourceName,
       sourceUrl: source.sourceUrl,
       fetchedAt: new Date().toISOString(),
@@ -18933,6 +18942,27 @@ async function azobssPcCustomRefresh(force = false) {
   return { ...azobssPcCustomPriceCache, cached:false };
 }
 
+
+function azobssPcBuildStripPricing(value) {
+  if (Array.isArray(value)) return value.map(azobssPcBuildStripPricing);
+  if (!value || typeof value !== "object") return value;
+  const sensitive = new Set(["marketPrice","price","cost","unitCost","snapshotPrice","markupRate","markupAmount","marketDelta","liveMarketDelta","deltas"]);
+  const out = {};
+  for (const [k,v] of Object.entries(value)) {
+    if (sensitive.has(k)) continue;
+    out[k] = azobssPcBuildStripPricing(v);
+  }
+  return out;
+}
+function azobssPcBuildPublicPriceStatus(rows) {
+  return (rows || []).map((x) => ({
+    id:String(x?.id || ""), ok:!!x?.ok,
+    availability:String(x?.availability || (x?.available === true ? "available" : x?.available === false ? "unavailable" : "unknown")),
+    available:x?.available === true,
+    sourceName:String(x?.sourceName || ""), fetchedAt:String(x?.fetchedAt || ""), responseMs:Number(x?.responseMs || 0) || 0,
+    error:x?.ok ? undefined : cleanPremiumText(x?.error || "Source unavailable", 120)
+  }));
+}
 
 // AZOBSS v1182: full 29-category PC Builder catalog.
 // The public Ideal Tech builder is rendered with Chromium because its product options are hydrated client-side.
@@ -20298,15 +20328,25 @@ async function handler(req, res) {
     const pcShopHandled = await azPcShopRuntime.handle(req, res, parsed);
     if (pcShopHandled !== false) return pcShopHandled;
 
-    // AZOBSS v1182: full 29-category rendered PC catalog.
+    // AZOBSS v1484: public full builder catalog is quote-only. Source costs/prices never leave the backend.
     if (pathname === "/api/pc-build/full-catalog" && req.method === "GET") {
       try {
         const force = String((parsed.query && parsed.query.refresh) || "") === "1";
         const payload = await azobssPcFullCatalog(force);
-        return send(res, 200, JSON.stringify(payload), "application/json");
+        return send(res, 200, JSON.stringify(azobssPcBuildStripPricing(payload)), "application/json", {"Cache-Control":"no-store"});
       } catch (err) {
         const fb = azobssPcFullMergeLiveWithFallback([]);
-        return send(res, 200, JSON.stringify({ ok:true, source:"Fallback catalog", sourceUpdated:"", fetchedAt:new Date().toISOString(), cached:false, liveCategories:0, liveProducts:0, scrapeError:cleanPremiumText(err?.message || String(err),180), categories:fb.categories||[] }), "application/json");
+        return send(res, 200, JSON.stringify(azobssPcBuildStripPricing({ ok:true, source:"Fallback catalog", sourceUpdated:"", fetchedAt:new Date().toISOString(), cached:false, liveCategories:0, liveProducts:0, scrapeError:cleanPremiumText(err?.message || String(err),180), categories:fb.categories||[] })), "application/json", {"Cache-Control":"no-store"});
+      }
+    }
+    if (pathname === "/api/admin/pc-build/full-catalog" && req.method === "GET") {
+      const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+      if (!adminIdentity?.isAdmin) return send(res, 403, JSON.stringify({ok:false,error:"Admin authorization required."}), "application/json");
+      try {
+        const force = String((parsed.query && parsed.query.refresh) || "") === "1";
+        return send(res, 200, JSON.stringify(await azobssPcFullCatalog(force)), "application/json", {"Cache-Control":"no-store"});
+      } catch (err) {
+        return send(res, 502, JSON.stringify({ok:false,error:cleanPremiumText(err?.message || String(err),180)}), "application/json");
       }
     }
 
@@ -20323,28 +20363,42 @@ async function handler(req, res) {
       }
     }
 
-    if (pathname === "/api/pc-build/live-prices" && req.method === "GET") {
+    if ((pathname === "/api/pc-build/live-prices" || pathname === "/api/admin/pc-build/live-prices") && req.method === "GET") {
+      const adminRoute = pathname.startsWith("/api/admin/");
+      if (adminRoute) {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity?.isAdmin) return send(res, 403, JSON.stringify({ok:false,error:"Admin authorization required."}), "application/json");
+      }
       try {
         const now = Date.now();
         const force = String((parsed.query && parsed.query.refresh) || "") === "1";
-        if (!force && azobssPcBuildPriceCache.prices.length && now - azobssPcBuildPriceCache.fetchedAtMs < AZOBSS_PC_BUILD_PRICE_CACHE_MS) {
-          return send(res, 200, JSON.stringify({ ok:true, cached:true, cacheSeconds:Math.round(AZOBSS_PC_BUILD_PRICE_CACHE_MS/1000), fetchedAt:new Date(azobssPcBuildPriceCache.fetchedAtMs).toISOString(), prices:azobssPcBuildPriceCache.prices }), "application/json");
+        let prices = azobssPcBuildPriceCache.prices;
+        let cached = !force && prices.length && now - azobssPcBuildPriceCache.fetchedAtMs < AZOBSS_PC_BUILD_PRICE_CACHE_MS;
+        if (!cached) {
+          prices = await Promise.all(AZOBSS_PC_BUILD_PRICE_SOURCES.map(azobssPcBuildReadSource));
+          azobssPcBuildPriceCache.fetchedAtMs = Date.now();
+          azobssPcBuildPriceCache.prices = prices;
         }
-        const prices = await Promise.all(AZOBSS_PC_BUILD_PRICE_SOURCES.map(azobssPcBuildReadSource));
-        azobssPcBuildPriceCache.fetchedAtMs = Date.now();
-        azobssPcBuildPriceCache.prices = prices;
-        return send(res, 200, JSON.stringify({ ok:prices.some(x=>x.ok), cached:false, cacheSeconds:Math.round(AZOBSS_PC_BUILD_PRICE_CACHE_MS/1000), fetchedAt:new Date(azobssPcBuildPriceCache.fetchedAtMs).toISOString(), prices }), "application/json");
+        const exposed = adminRoute ? prices : azobssPcBuildPublicPriceStatus(prices);
+        return send(res, 200, JSON.stringify({ ok:prices.some(x=>x.ok), cached:!!cached, cacheSeconds:Math.round(AZOBSS_PC_BUILD_PRICE_CACHE_MS/1000), fetchedAt:new Date(azobssPcBuildPriceCache.fetchedAtMs).toISOString(), prices:exposed }), "application/json", {"Cache-Control":"no-store"});
       } catch (err) {
         return send(res, 502, JSON.stringify({ ok:false, error:cleanPremiumText(err?.message || String(err),180), prices:[] }), "application/json");
       }
     }
-    if (pathname === "/api/pc-build/custom-market" && req.method === "GET") {
+    if ((pathname === "/api/pc-build/custom-market" || pathname === "/api/admin/pc-build/custom-market") && req.method === "GET") {
+      const adminRoute = pathname.startsWith("/api/admin/");
+      if (adminRoute) {
+        const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
+        if (!adminIdentity?.isAdmin) return send(res, 403, JSON.stringify({ok:false,error:"Admin authorization required."}), "application/json");
+      }
       try {
         const force = String((parsed.query && parsed.query.refresh) || "") === "1";
         const result = await azobssPcCustomRefresh(force);
-        return send(res, 200, JSON.stringify({ ok:true, cached:!!result.cached, cacheSeconds:Math.round(AZOBSS_PC_CUSTOM_PRICE_CACHE_MS/1000), fetchedAt:new Date(result.fetchedAtMs).toISOString(), deltas:result.deltas || {}, sources:result.sources || [] }), "application/json");
+        if (adminRoute) return send(res, 200, JSON.stringify({ ok:true, cached:!!result.cached, cacheSeconds:Math.round(AZOBSS_PC_CUSTOM_PRICE_CACHE_MS/1000), fetchedAt:new Date(result.fetchedAtMs).toISOString(), deltas:result.deltas || {}, sources:result.sources || [] }), "application/json", {"Cache-Control":"no-store"});
+        const sources = (result.sources || []).map(x=>({ok:!!x.ok,matched:Number(x.matched||0),requested:Number(x.requested||0),responseMs:Number(x.responseMs||0),error:x.ok?undefined:cleanPremiumText(x.error||"Source unavailable",120)}));
+        return send(res, 200, JSON.stringify({ ok:true, cached:!!result.cached, cacheSeconds:Math.round(AZOBSS_PC_CUSTOM_PRICE_CACHE_MS/1000), fetchedAt:new Date(result.fetchedAtMs).toISOString(), matched:Object.keys(result.deltas||{}).length, sources }), "application/json", {"Cache-Control":"no-store"});
       } catch (err) {
-        return send(res, 502, JSON.stringify({ ok:false, error:cleanPremiumText(err?.message || String(err),180), deltas:{} }), "application/json");
+        return send(res, 502, JSON.stringify({ ok:false, error:cleanPremiumText(err?.message || String(err),180), matched:0, sources:[] }), "application/json");
       }
     }
 

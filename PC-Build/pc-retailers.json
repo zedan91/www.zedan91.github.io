@@ -1,5 +1,5 @@
 {
-  "version": "1483",
+  "version": "1484",
   "checkedAt": "2026-11-02",
   "stores": [
     {
@@ -20,5 +20,5 @@
       "productCount": 1
     }
   ],
-  "pricePolicy": "Customer hanya melihat produk dengan harga sumber disahkan dan snapshot tidak lebih 14 hari. Sumber tanpa harga/quote-only tidak termasuk katalog aktif."
+  "pricePolicy": "v1484: retailer PC Builds are customer-visible only after backend live verification of current price, availability, exact product media and matching specifications; public JSON stores no selling/source price."
 }

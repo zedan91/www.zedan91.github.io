@@ -3,7 +3,7 @@
   "storeId": "illegear",
   "storeName": "ILLEGEAR",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://www.illegear.com/shop/11-illegear-desktop-pc",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1299,
-      "priceMin": 1299,
-      "priceMax": 1299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -65,10 +62,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-ignite-intel",
@@ -80,9 +81,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1599,
-      "priceMin": 1599,
-      "priceMax": 1599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -128,10 +126,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-revive-ddr4",
@@ -143,9 +145,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2299,
-      "priceMin": 2299,
-      "priceMax": 2299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -196,10 +195,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-gaming-set-ddr4",
@@ -211,9 +214,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2699,
-      "priceMin": 2699,
-      "priceMax": 2699,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -264,10 +264,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-gaming-set-intel",
@@ -279,9 +283,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2899,
-      "priceMin": 2899,
-      "priceMax": 2899,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -332,10 +333,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-gaming-set-amd",
@@ -347,9 +352,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3199,
-      "priceMin": 3199,
-      "priceMax": 3199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -400,10 +402,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-gaming-set-ddr5",
@@ -415,9 +421,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3299,
-      "priceMin": 3299,
-      "priceMax": 3299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -468,10 +471,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-kapsule-amd",
@@ -483,9 +490,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3599,
-      "priceMin": 3599,
-      "priceMax": 3599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -536,10 +540,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-aura-intel",
@@ -551,9 +559,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3799,
-      "priceMin": 3799,
-      "priceMax": 3799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -604,10 +609,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-kapsule-intel",
@@ -619,9 +628,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3799,
-      "priceMin": 3799,
-      "priceMax": 3799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -672,10 +678,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-aura-amd",
@@ -687,9 +697,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4099,
-      "priceMin": 4099,
-      "priceMax": 4099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -740,10 +747,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-seaview",
@@ -755,9 +766,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4299,
-      "priceMin": 4299,
-      "priceMax": 4299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -808,10 +816,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-arctic-ddr5",
@@ -823,9 +835,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4699,
-      "priceMin": 4699,
-      "priceMax": 4699,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -876,10 +885,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-aethra-intel",
@@ -891,9 +904,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5099,
-      "priceMin": 5099,
-      "priceMax": 5099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -944,10 +954,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-reaper-amd",
@@ -959,9 +973,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5199,
-      "priceMin": 5199,
-      "priceMax": 5199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -1012,10 +1023,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-reaper-intel",
@@ -1027,9 +1042,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5199,
-      "priceMin": 5199,
-      "priceMax": 5199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -1080,10 +1092,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-ikigai-amd",
@@ -1095,9 +1111,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5239,
-      "priceMin": 5239,
-      "priceMax": 5239,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -1148,10 +1161,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-aethra-amd",
@@ -1163,9 +1180,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 5899,
-      "priceMin": 5899,
-      "priceMax": 5899,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -1215,10 +1229,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-atlas-amd",
@@ -1230,9 +1248,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6699,
-      "priceMin": 6699,
-      "priceMax": 6699,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -1282,10 +1297,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "illegear-atlas-intel",
@@ -1297,9 +1316,6 @@
       "tagline": "ILLEGEAR • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6799,
-      "priceMin": 6799,
-      "priceMax": 6799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ILLEGEAR",
       "sourceUrl": "https://www.illegear.com/shop/11-illegear-desktop-pc",
@@ -1349,11 +1365,15 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

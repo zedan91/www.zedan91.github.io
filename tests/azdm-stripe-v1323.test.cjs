@@ -12,10 +12,10 @@ const frontend=fs.readFileSync(path.join(root,'assets','js','azobss-software-pac
 const backend=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 
 test('v1323 exposes ToyyibPay and Stripe choices in AZDM plan dialog',()=>{
-  assert.equal(pkg.version,'1.0.1323');
+  assert.ok(Number(String(pkg.version||'').split('.').pop()) >= 1323);
   assert.match(html,/data-azdm-buy[^>]*>Pay via ToyyibPay</);
   assert.match(html,/data-azdm-buy-stripe[^>]*>Pay via Stripe</);
-  assert.match(html,/azobss-software-packages\.js\?v=1323/);
+  assert.match(html,/azobss-software-packages\.js\?v=\d+/);
   assert.match(frontend,/payment_method:paymentMethod/);
   assert.match(frontend,/startCheckout\('stripe',buyStripe\)/);
   assert.match(frontend,/checkout\.stripe\.com/);

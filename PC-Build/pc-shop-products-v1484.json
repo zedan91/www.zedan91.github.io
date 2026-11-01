@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1483",
+  "version": "1484",
   "checkedAt": "2026-11-02",
   "market": "Malaysia",
   "products": [
@@ -9,9 +9,8 @@
       "type": "hardware",
       "category": "GPU",
       "name": "MSI GeForce RTX 5070 12G VENTUS 2X OC",
-      "price": 2989,
-      "priceMode": "official-verified",
-      "requiresConfirmation": false,
+      "priceMode": "backend-live-only",
+      "requiresConfirmation": true,
       "stock": "in-stock",
       "availability": "available",
       "availabilityVerified": true,
@@ -43,17 +42,15 @@
         "MSI GeForce RTX 5070 12G VENTUS 2X OC",
         "Reference: 912-V532-009"
       ],
-      "sourceProvider": "html",
-      "snapshotPrice": 2989
+      "sourceProvider": "html"
     },
     {
       "id": "nb-msi-b860m-mortar-wifi",
       "type": "hardware",
       "category": "Motherboard",
       "name": "MSI MAG B860M MORTAR WIFI",
-      "price": 969,
-      "priceMode": "official-verified",
-      "requiresConfirmation": false,
+      "priceMode": "backend-live-only",
+      "requiresConfirmation": true,
       "stock": "in-stock",
       "availability": "available",
       "availabilityVerified": true,
@@ -87,9 +84,8 @@
         "MSI MAG B860M Mortar WiFi Gaming Motherboard",
         "MAG B860M MORTAR WIFI"
       ],
-      "sourceProvider": "html",
-      "snapshotPrice": 969
+      "sourceProvider": "html"
     }
   ],
-  "note": "v1483 strict Hardware Shop: only exact official product-page media/specifications with current verified price and availability are customer-visible. Generic or third-party substitute images are not used."
+  "note": "v1484 strict public metadata only. Source cost/snapshot prices are not stored in public JSON; backend live verification determines availability and final AZOBSS selling price."
 }

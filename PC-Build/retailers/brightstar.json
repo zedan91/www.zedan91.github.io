@@ -3,7 +3,7 @@
   "storeId": "brightstar",
   "storeName": "Brightstar Computer",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://brightstarcomp.com/collections/desktop",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 2779,
-      "priceMin": 2779,
-      "priceMax": 2779,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -61,10 +58,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-set-heroes",
@@ -76,9 +77,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3299,
-      "priceMin": 3299,
-      "priceMax": 3299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -121,10 +119,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-set-c",
@@ -136,9 +138,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3599,
-      "priceMin": 3599,
-      "priceMax": 3599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -181,10 +180,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-msi-cubi",
@@ -196,9 +199,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 3299,
-      "priceMin": 3299,
-      "priceMax": 3299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -240,10 +240,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-ideacentre",
@@ -255,9 +259,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 3649,
-      "priceMin": 3649,
-      "priceMax": 3649,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -299,10 +300,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-expertcenter",
@@ -314,9 +319,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 3799,
-      "priceMin": 3799,
-      "priceMax": 3799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -358,10 +360,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-set-a",
@@ -373,9 +379,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4099,
-      "priceMin": 4099,
-      "priceMax": 4099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -418,10 +421,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-set-b",
@@ -433,9 +440,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 5799,
-      "priceMin": 5799,
-      "priceMax": 5799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -477,10 +481,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-set-d",
@@ -492,9 +500,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6099,
-      "priceMin": 6099,
-      "priceMax": 6099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -536,10 +541,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "brightstar-msi-infinite-x3",
@@ -551,9 +560,6 @@
       "tagline": "Brightstar Computer • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 12209,
-      "priceMin": 12209,
-      "priceMax": 12209,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Brightstar Computer",
       "sourceUrl": "https://brightstarcomp.com/collections/desktop",
@@ -595,11 +601,15 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

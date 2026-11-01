@@ -33,3 +33,17 @@ body.az-pc-shop-modal-open{overflow:hidden!important}
 .az-pc-shop-backdrop.is-open[aria-hidden="false"]{pointer-events:auto!important}
 .az-pc-shop-backdrop.is-open[aria-hidden="false"] .az-pc-shop-modal,.az-pc-shop-backdrop.is-open[aria-hidden="false"] .az-pc-shop-modal *{pointer-events:auto}
 .az-pc-shop-backdrop:not(.is-open),.az-pc-shop-backdrop[aria-hidden="true"]{pointer-events:none!important}
+
+/* AZOBSS v1484 exact-product media */
+.az-pc-product-media{overflow:hidden;padding:0;cursor:zoom-in;background:#071522}
+.az-pc-product-media img{width:100%;height:100%;object-fit:contain;object-position:center;transition:transform .26s ease,filter .26s ease;transform:scale(1.04)}
+.az-pc-product-media.product-focus img{transform:scale(1.08)}
+.az-pc-product-source{display:block;margin-top:9px;color:#7dd3fc;font-size:10px;text-decoration:none;overflow-wrap:anywhere}
+.az-pc-product-source:hover{text-decoration:underline}
+@media(hover:hover) and (pointer:fine){.az-pc-product-media:hover img{transform:scale(1.28);filter:brightness(1.06)}}
+@media(prefers-reduced-motion:reduce){.az-pc-product-media img{transition:none}}
+/* v1484 exact-image viewer + tap support */
+.az-pc-product-media{border:0;padding:0;width:100%;display:block;cursor:zoom-in;text-align:inherit;background:#091522}
+.az-pc-product-media:focus-visible{outline:2px solid #22d3ee;outline-offset:-3px}
+.az-pc-product-source-label{margin-top:10px;color:#9fb5c9;font-size:11px;line-height:1.4}
+.az-pc-image-viewer{display:grid;gap:10px;place-items:center}.az-pc-image-viewer img{display:block;max-width:min(100%,980px);max-height:76vh;width:auto;height:auto;object-fit:contain;border-radius:14px;background:#07111f;border:1px solid #284661}

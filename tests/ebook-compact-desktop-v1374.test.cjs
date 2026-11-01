@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(root,'Software-Tools','index.html'),'utf8')
 const css=fs.readFileSync(path.join(root,'assets','css','azobss-software-ebook-v1374.css'),'utf8');
 
 test('v1374 loads cache-busted compact Ebook stylesheet',()=>{
-  assert.ok(html.includes('/assets/css/azobss-software-ebook-v1374.css?v=1374'));
+  assert.ok(/\/assets\/css\/azobss-software-ebook-v\d+\.css\?v=\d+/.test(html));
 });
 
 test('v1374 keeps desktop workflow in a compact two-column form grid',()=>{

@@ -3,7 +3,7 @@
   "storeId": "all-it",
   "storeName": "ALL IT Hypermarket",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1399,
-      "priceMin": 1399,
-      "priceMax": 2169,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -69,10 +66,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-office-standard",
@@ -84,9 +85,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
-      "price": 1499,
-      "priceMin": 1499,
-      "priceMax": 2299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -136,10 +134,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-apex-gaming",
@@ -151,9 +153,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2949,
-      "priceMin": 2949,
-      "priceMax": 3969,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -204,10 +203,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-aura-gaming",
@@ -219,9 +222,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3999,
-      "priceMin": 3999,
-      "priceMax": 4849,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -272,10 +272,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-creator-one",
@@ -287,9 +291,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3199,
-      "priceMin": 3199,
-      "priceMax": 4219,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -340,10 +341,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-creator-x",
@@ -355,9 +360,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4379,
-      "priceMin": 4379,
-      "priceMax": 5399,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -408,10 +410,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-creator-plus",
@@ -423,9 +429,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6449,
-      "priceMin": 6449,
-      "priceMax": 7869,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -475,10 +478,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-creator-pro",
@@ -490,9 +497,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 7949,
-      "priceMin": 7949,
-      "priceMax": 9369,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -542,10 +546,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-phantom",
@@ -557,9 +565,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 7649,
-      "priceMin": 7649,
-      "priceMax": 9069,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -610,10 +615,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "all-it-titan",
@@ -625,9 +634,6 @@
       "tagline": "ALL IT Hypermarket • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 11499,
-      "priceMin": 11499,
-      "priceMax": 12069,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "ALL IT Hypermarket",
       "sourceUrl": "https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package",
@@ -678,11 +684,15 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

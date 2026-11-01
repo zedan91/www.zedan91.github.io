@@ -3,7 +3,7 @@
   "storeId": "emarque",
   "storeName": "EMARQUE",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "active",
+  "catalogStatus": "verification-required",
   "source": "https://emarque.co/collections/gaming-pc",
   "notes": "",
   "products": [
@@ -17,9 +17,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 2599,
-      "priceMin": 2599,
-      "priceMax": 2599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -70,10 +67,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-5050",
@@ -85,9 +86,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3359,
-      "priceMin": 3359,
-      "priceMax": 3359,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -138,10 +136,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-5060ti-5500",
@@ -153,9 +155,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4199,
-      "priceMin": 4199,
-      "priceMax": 4199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -206,10 +205,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-5060-7500f",
@@ -221,9 +224,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4388,
-      "priceMin": 4388,
-      "priceMax": 4388,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -274,10 +274,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-rx9060xt-5500",
@@ -289,9 +293,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4588,
-      "priceMin": 4588,
-      "priceMax": 4588,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -342,10 +343,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-5060ti-i5",
@@ -357,9 +362,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 4788,
-      "priceMin": 4788,
-      "priceMax": 4788,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -410,10 +412,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-5060ti-7500f",
@@ -425,9 +431,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5099,
-      "priceMin": 5099,
-      "priceMax": 5099,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -478,10 +481,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-5060ti-u5",
@@ -493,9 +500,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5299,
-      "priceMin": 5299,
-      "priceMax": 5299,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -546,10 +550,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-neo-rx9060xt-7500f",
@@ -561,9 +569,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 5499,
-      "priceMin": 5499,
-      "priceMax": 5499,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -614,10 +619,14 @@
         "1080p",
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-infinity-5070-i5",
@@ -629,9 +638,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 5999,
-      "priceMin": 5999,
-      "priceMax": 5999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -681,10 +687,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-infinity-5070-7500f",
@@ -696,9 +706,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6399,
-      "priceMin": 6399,
-      "priceMax": 6399,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -748,10 +755,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-circle-x50",
@@ -763,9 +774,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "performance",
       "resolution": "1440p",
-      "price": 6699,
-      "priceMin": 6699,
-      "priceMax": 6699,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -815,10 +823,14 @@
       "resolutionTags": [
         "1440p"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-infinity-rx9070xt",
@@ -830,9 +842,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 6999,
-      "priceMin": 6999,
-      "priceMax": 6999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -883,10 +892,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-infinity-r7-rx9070xt",
@@ -898,9 +911,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 7999,
-      "priceMin": 7999,
-      "priceMax": 7999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -951,10 +961,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-infinity-5070ti",
@@ -966,9 +980,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 8399,
-      "priceMin": 8399,
-      "priceMax": 8399,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -1019,10 +1030,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-xr-rx9070xt",
@@ -1034,9 +1049,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "highend",
       "resolution": "1440p / 4K",
-      "price": 9199,
-      "priceMin": 9199,
-      "priceMax": 9199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -1087,10 +1099,14 @@
         "1440p",
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-xr-5070ti",
@@ -1102,9 +1118,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 12999,
-      "priceMin": 12999,
-      "priceMax": 12999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -1154,10 +1167,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     },
     {
       "id": "emarque-flow-5080",
@@ -1169,9 +1186,6 @@
       "tagline": "EMARQUE • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
-      "price": 14999,
-      "priceMin": 14999,
-      "priceMax": 14999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "EMARQUE",
       "sourceUrl": "https://emarque.co/collections/gaming-pc",
@@ -1221,11 +1235,15 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "available",
+      "availability": "unknown",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true
+      "priceVerified": false,
+      "sourceVerified": false,
+      "availabilityVerified": false,
+      "variantVerified": false,
+      "priceMode": "verification-required"
     }
   ],
-  "version": "1482"
+  "version": "1484"
 }

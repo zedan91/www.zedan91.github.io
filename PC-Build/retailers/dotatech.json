@@ -5,7 +5,7 @@
   "checkedAt": "2026-11-02",
   "catalogStatus": "active",
   "source": "https://www.dotatech.com.my/collections/pre-build-pc-package",
-  "notes": "v1483 strict catalog: only variants with exact official product page, matching product image, detailed specification, current price and availability verification are customer-visible.",
+  "notes": "v1484 strict catalog: exact product page, exact image/spec/variant and backend live price+availability are required before customer visibility.",
   "products": [
     {
       "id": "dotatech-fa-r5-rx7600",
@@ -17,9 +17,6 @@
       "tagline": "Konfigurasi daripada halaman produk rasmi yang sama",
       "category": "gaming",
       "resolution": "1080p / 1440p",
-      "price": 3099,
-      "priceMin": 3099,
-      "priceMax": 3099,
       "priceType": "Harga produk rasmi / varian disahkan",
       "sourceName": "DOTATECH",
       "sourceUrl": "https://www.dotatech.com.my/products/dotatech-fa-gaming-r5-rtxradeonarc-2-5-custom-pc-gaming-package-r5-5500-gpu-options",
@@ -82,12 +79,18 @@
       "availabilityVerified": true,
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": true,
+      "priceVerified": false,
       "mediaVerified": true,
       "specVerified": true,
       "variantVerified": true,
-      "verifiedAt": "2026-11-02T00:00:00+08:00"
+      "verifiedAt": "2026-11-02T00:00:00+08:00",
+      "sourceVerified": true,
+      "sourceProvider": "shopify",
+      "variantKeywords": [
+        "RX7600 8GB"
+      ],
+      "priceMode": "backend-live-only"
     }
   ],
-  "version": "1483"
+  "version": "1484"
 }
