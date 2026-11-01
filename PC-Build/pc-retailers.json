@@ -1,6 +1,6 @@
 {
-  "version": "1435",
-  "checkedAt": "2026-10-26",
+  "version": "1472",
+  "checkedAt": "2026-11-01",
   "stores": [
     {
       "id": "all-it",
@@ -244,6 +244,23 @@
       "catalogFile": "./retailers/c-zone.json",
       "catalogStatus": "quote",
       "productCount": 1
+    },
+    {
+      "id": "nb-plaza",
+      "name": "NB Plaza",
+      "url": "https://www.nbplaza.com.my/",
+      "scope": "nbplaza.com.my",
+      "categories": [
+        "pc",
+        "parts",
+        "laptop",
+        "accessories"
+      ],
+      "description": "Desktop, laptop dan PC components.",
+      "source": "https://www.nbplaza.com.my/",
+      "catalogFile": "./retailers/nb-plaza.json",
+      "catalogStatus": "active",
+      "productCount": 6
     }
   ],
   "pricePolicy": "Public PC Build memaparkan nombor harga hanya untuk snapshot retailer yang ditanda priceVerified=true. Tiada harga anggaran untuk rekod quote/unverified atau Build Sendiri."

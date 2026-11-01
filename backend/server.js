@@ -6024,6 +6024,125 @@ app.get("/api/pc-build/live-prices", async (req, res) => {
   }
 });
 
+
+// AZOBSS v1472 — PC Build & Hardware Shop order flow.
+const AZOBSS_PC_SHOP_CATALOG_FILE = path.resolve(__dirname, "..", "PC-Build", "pc-shop-products-v1472.json");
+const AZOBSS_PC_BUILD_FILE = path.resolve(__dirname, "..", "PC-Build", "pc-build-data.json");
+const AZOBSS_PC_RETAILER_DIR = path.resolve(__dirname, "..", "PC-Build", "retailers");
+let azobssPcShopCatalogCache = null;
+let azobssPcBuildLookupCache = null;
+function azPcShopReadJson(file, fallback){ try{return JSON.parse(fs.readFileSync(file,'utf8'))}catch(_e){return fallback} }
+function azPcShopCatalog(){
+  if(azobssPcShopCatalogCache)return azobssPcShopCatalogCache;
+  const raw=azPcShopReadJson(AZOBSS_PC_SHOP_CATALOG_FILE,{products:[]});
+  azobssPcShopCatalogCache=Array.isArray(raw.products)?raw.products:[];
+  return azobssPcShopCatalogCache;
+}
+function azPcShopBuildLookup(){
+  if(azobssPcBuildLookupCache)return azobssPcBuildLookupCache;
+  const map=new Map();
+  const base=azPcShopReadJson(AZOBSS_PC_BUILD_FILE,{builds:[]});
+  for(const row of (base.builds||[])){ if(row&&row.id)map.set(String(row.id),row); }
+  try{
+    for(const file of fs.readdirSync(AZOBSS_PC_RETAILER_DIR)){
+      if(!file.endsWith('.json')||file==='index.json')continue;
+      const cat=azPcShopReadJson(path.join(AZOBSS_PC_RETAILER_DIR,file),{products:[]});
+      for(const row of (cat.products||[])){ if(row&&row.id)map.set(String(row.id),{...row,retailerSnapshot:true,storeId:row.storeId||cat.storeId,storeName:row.storeName||cat.storeName}); }
+    }
+  }catch(_e){}
+  azobssPcBuildLookupCache=map;
+  return map;
+}
+function azPcShopMoney(v){const n=Number(v);return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:0}
+function azPcShopText(v,max=300){return cleanPremiumText(String(v||''),max)}
+function azPcShopResolveItem(raw={}){
+  const productId=azPcShopText(raw.productId||raw.id,160);
+  const qty=Math.max(1,Math.min(20,Math.round(Number(raw.qty||raw.quantity||1)||1)));
+  const catalog=azPcShopCatalog().find(x=>String(x.id)===productId);
+  if(catalog){
+    return {productId,name:azPcShopText(catalog.name,180),category:azPcShopText(catalog.category||'Hardware',80),itemType:azPcShopText(catalog.type||'hardware',40),qty,unitPrice:azPcShopMoney(catalog.price),unitCost:0,priceMode:String(catalog.priceMode||'reference'),requiresConfirmation:catalog.requiresConfirmation!==false,sourceCheckedAt:azPcShopText(catalog.sourceCheckedAt,40),sourceName:azPcShopText(catalog.sourceName,100),sourceUrl:azPcShopText(catalog.sourceUrl,500),image:azPcShopText(catalog.image,500),specs:Array.isArray(catalog.specs)?catalog.specs.slice(0,16).map(x=>azPcShopText(x,180)):[]};
+  }
+  const build=azPcShopBuildLookup().get(productId);
+  if(build){
+    const retailer=!!(build.retailerSnapshot||build.origin==='retailer');
+    const verified=retailer?build.priceVerified===true&&Number(build.price)>0&&!!String(build.sourceCheckedAt||'').trim()&&!!String(build.sourceUrl||'').trim():build.priceVerified===true&&Number(build.price)>0;
+    return {productId,name:azPcShopText(build.name||'PC Build',180),category:'PC Build',itemType:'pc-build',qty,unitPrice:verified?azPcShopMoney(build.price):0,unitCost:0,priceMode:verified?(retailer?'reference':'fixed'):'quote',requiresConfirmation:retailer||!verified,sourceCheckedAt:azPcShopText(build.sourceCheckedAt,40),sourceName:azPcShopText(build.sourceName||build.storeName,100),sourceUrl:azPcShopText(build.sourceUrl,500),image:azPcShopText(build.image,500),specs:Array.isArray(build.parts)?build.parts.slice(0,16).map(p=>`${azPcShopText(p?.[0],60)}: ${azPcShopText(p?.[1],150)}`):[]};
+  }
+  return null;
+}
+async function azPcShopIdentity(req){
+  const identity=await getFirebaseAdminIdentity(req);
+  if(!identity||!identity.uid)return null;
+  return identity;
+}
+async function azPcShopNextSequence(db){
+  const year=new Date().toLocaleString('en-US',{timeZone:'Asia/Kuala_Lumpur',year:'numeric'});
+  const ref=db.collection('settings').doc('pcShopCounters');
+  let seq=1;
+  try{
+    await db.runTransaction(async tx=>{const snap=await tx.get(ref);const data=snap.exists?(snap.data()||{}):{};const key=`orderSeq${year}`;seq=Math.max(0,Number(data[key]||0))+1;tx.set(ref,{[key]:seq,updatedAtMs:Date.now()},{merge:true});});
+  }catch(_e){ seq=Number(String(Date.now()).slice(-6)); }
+  return {year,seq,serial:String(seq).padStart(6,'0')};
+}
+function azPcShopPublicOrder(row={}){
+  return {orderId:row.orderId||'',documentNo:row.documentNo||'',quoteNo:row.quoteNo||'',invoiceNo:row.invoiceNo||'',receiptNo:row.receiptNo||'',intent:row.intent||'checkout',status:row.status||'',paymentStatus:row.paymentStatus||'',fulfillmentStatus:row.fulfillmentStatus||'',priceConfirmed:row.priceConfirmed===true,priceConfirmationRequired:row.priceConfirmationRequired===true,referenceSubtotal:azPcShopMoney(row.referenceSubtotal),confirmedTotal:azPcShopMoney(row.confirmedTotal),shippingCharge:azPcShopMoney(row.shippingCharge),currency:'MYR',items:Array.isArray(row.items)?row.items.map(x=>({productId:x.productId||'',name:x.name||'',category:x.category||'',qty:Number(x.qty||1),unitPrice:azPcShopMoney(x.unitPrice),priceMode:x.priceMode||''})):[],shippingMethod:row.shippingMethod||'',paymentMethod:row.paymentMethod||'',courier:row.courier||'',trackingNumber:row.trackingNumber||'',customerName:row.customerName||'',createdAtMs:Number(row.createdAtMs||0),updatedAtMs:Number(row.updatedAtMs||0),statusHistory:Array.isArray(row.statusHistory)?row.statusHistory.slice(-20):[]};
+}
+async function azPcShopSyncPurchaseLog(db,order){
+  if(!db||!order||order.intent!=='checkout')return;
+  const docId=`pcshop-${azPcShopText(order.orderId,120)}`;
+  const gross=azPcShopMoney(order.confirmedTotal||order.referenceSubtotal||0);
+  const paid=String(order.paymentStatus||'').toLowerCase()==='paid';
+  const items=(order.items||[]).map(x=>({category:'computer-it',name:x.name||'PC / Hardware',qty:Number(x.qty||1),unitPrice:azPcShopMoney(order.priceConfirmed?x.confirmedUnitPrice||x.unitPrice:x.unitPrice),unitCost:azPcShopMoney(x.unitCost||0)}));
+  await db.collection('purchaseLogs').doc(docId).set({source:'pc-shop',sourceName:'AZOBSS PC Build & Hardware',orderId:order.orderId,invoiceNo:order.invoiceNo||'',receiptNo:paid?(order.receiptNo||''):'',productName:items.map(x=>x.name).slice(0,3).join(' + ')||'PC / Hardware Order',category:'computer-it',items,amount:gross,total:gross,totalAmount:gross,status:paid?'paid':'pending',paymentStatus:paid?'paid':'pending',paid,priceConfirmationRequired:order.priceConfirmationRequired===true,priceConfirmed:order.priceConfirmed===true,customerName:order.customerName||'',customerPhone:order.customerPhone||'',customerEmail:order.customerEmail||'',customerAddress:order.customerAddress||'',paymentMethod:order.paymentMethod||'Maybank',shippingCharge:azPcShopMoney(order.shippingCharge),shippingCost:azPcShopMoney(order.shippingCost),fulfillmentStatus:order.fulfillmentStatus||'',trackingNumber:order.trackingNumber||'',courier:order.courier||'',createdAtMs:Number(order.createdAtMs||Date.now()),updatedAtMs:Date.now(),paidAtMs:paid?Number(order.paidAtMs||Date.now()):0},{merge:true});
+}
+app.post('/api/pc-shop/orders', async (req,res)=>{
+  try{
+    const identity=await azPcShopIdentity(req);if(!identity)return res.status(401).json({ok:false,error:'login_required'});
+    const db=getAzobssBackendDb();if(!db)return res.status(503).json({ok:false,error:'firestore_unavailable'});
+    const body=req.body&&typeof req.body==='object'?req.body:{};
+    const intent=String(body.intent||'checkout').toLowerCase()==='quote'?'quote':'checkout';
+    const requested=Array.isArray(body.items)?body.items.slice(0,24):[];if(!requested.length)return res.status(400).json({ok:false,error:'cart_empty'});
+    const items=[];for(const raw of requested){const item=azPcShopResolveItem(raw);if(!item)return res.status(400).json({ok:false,error:'unknown_product',productId:azPcShopText(raw?.productId||raw?.id,160)});items.push(item)}
+    const referenceSubtotal=azPcShopMoney(items.reduce((s,x)=>s+x.unitPrice*x.qty,0));
+    const shippingMethod=azPcShopText(body.shippingMethod||'Courier',80),paymentMethod=azPcShopText(body.paymentMethod||'Maybank',80);
+    const priceConfirmationRequired=intent==='quote'||items.some(x=>x.requiresConfirmation||x.unitPrice<=0)||/courier/i.test(shippingMethod);
+    const seq=await azPcShopNextSequence(db);const orderId=`AZO-${seq.year}-${seq.serial}`;const invoiceNo=intent==='checkout'?`AZI-${seq.year}-${seq.serial}`:'';const quoteNo=intent==='quote'?`AZQ-${seq.year}-${seq.serial}`:'';
+    const now=Date.now(),status=intent==='quote'?'quote-requested':(priceConfirmationRequired?'price-confirmation':'awaiting-payment');
+    const row={orderId,documentNo:quoteNo||invoiceNo,quoteNo,invoiceNo,receiptNo:'',intent,status,paymentStatus:priceConfirmationRequired?'not-ready':'pending',fulfillmentStatus:'order-received',priceConfirmationRequired,priceConfirmed:!priceConfirmationRequired,referenceSubtotal,confirmedTotal:!priceConfirmationRequired?referenceSubtotal:0,shippingCharge:0,shippingCost:0,currency:'MYR',items,shippingMethod,paymentMethod,customerName:azPcShopText(body.customerName||identity.username||identity.email,140),customerPhone:azPcShopText(body.customerPhone,60),customerEmail:azPcShopText(body.customerEmail||identity.email,180).toLowerCase(),customerAddress:azPcShopText(body.customerAddress,500),notes:azPcShopText(body.notes,800),uid:identity.uid,username:identity.username||'',authEmail:identity.authEmail||identity.email||'',createdAtMs:now,updatedAtMs:now,statusHistory:[{status,atMs:now,by:'customer'}]};
+    await db.collection('pcShopOrders').doc(orderId).set(row);
+    if(intent==='checkout')await azPcShopSyncPurchaseLog(db,row);
+    return res.json({ok:true,order:azPcShopPublicOrder(row)});
+  }catch(err){console.error('PC shop order create failed:',err);return res.status(500).json({ok:false,error:'order_create_failed',message:azPcShopText(err?.message||err,200)})}
+});
+app.get('/api/pc-shop/orders', async (req,res)=>{
+  try{
+    const identity=await azPcShopIdentity(req);if(!identity)return res.status(401).json({ok:false,error:'login_required'});
+    const db=getAzobssBackendDb();if(!db)return res.status(503).json({ok:false,error:'firestore_unavailable'});
+    const snap=await db.collection('pcShopOrders').where('uid','==',identity.uid).limit(100).get();const rows=[];snap.forEach(d=>rows.push(azPcShopPublicOrder(d.data()||{})));rows.sort((a,b)=>b.createdAtMs-a.createdAtMs);return res.json({ok:true,orders:rows});
+  }catch(err){return res.status(500).json({ok:false,error:'order_list_failed',message:azPcShopText(err?.message||err,200)})}
+});
+app.get('/api/admin/pc-shop/orders', requireAdmin, async (req,res)=>{
+  try{
+    const db=getAzobssBackendDb();if(!db)return res.status(503).json({ok:false,error:'firestore_unavailable'});
+    const snap=await db.collection('pcShopOrders').limit(250).get();const rows=[];
+    snap.forEach(d=>{const raw=d.data()||{};const pub=azPcShopPublicOrder(raw);rows.push({...pub,items:Array.isArray(raw.items)?raw.items.map(x=>({...pub.items.find(p=>p.productId===x.productId),sourceName:x.sourceName||'',sourceUrl:x.sourceUrl||'',sourceCheckedAt:x.sourceCheckedAt||''})):pub.items,uid:raw.uid||'',customerPhone:raw.customerPhone||'',customerEmail:raw.customerEmail||'',customerAddress:raw.customerAddress||'',notes:raw.notes||'',adminNote:raw.adminNote||'',shippingCost:azPcShopMoney(raw.shippingCost)});});
+    rows.sort((a,b)=>b.createdAtMs-a.createdAtMs);return res.json({ok:true,orders:rows});
+  }catch(err){return res.status(500).json({ok:false,error:'admin_order_list_failed',message:azPcShopText(err?.message||err,200)})}
+});
+app.patch('/api/admin/pc-shop/orders/:orderId', requireAdmin, async (req,res)=>{
+  try{
+    const db=getAzobssBackendDb();if(!db)return res.status(503).json({ok:false,error:'firestore_unavailable'});const orderId=azPcShopText(req.params.orderId,120);const ref=db.collection('pcShopOrders').doc(orderId);const snap=await ref.get();if(!snap.exists)return res.status(404).json({ok:false,error:'order_not_found'});const row=snap.data()||{},body=req.body&&typeof req.body==='object'?req.body:{};const now=Date.now();
+    const allowedPayment=new Set(['not-ready','pending','paid','refunded','cancelled']);const allowedFulfil=new Set(['order-received','processing','packed','shipped','in-transit','delivered','completed','cancelled']);
+    const intent=body.convertToOrder===true?'checkout':String(row.intent||'checkout');
+    const paymentStatus=allowedPayment.has(String(body.paymentStatus||''))?String(body.paymentStatus):String(row.paymentStatus||'not-ready');const fulfillmentStatus=allowedFulfil.has(String(body.fulfillmentStatus||''))?String(body.fulfillmentStatus):String(row.fulfillmentStatus||'order-received');
+    const confirmedTotal=body.confirmedTotal!==undefined?azPcShopMoney(body.confirmedTotal):azPcShopMoney(row.confirmedTotal);const priceConfirmed=body.priceConfirmed===true||row.priceConfirmed===true||(confirmedTotal>0&&body.confirmedTotal!==undefined);
+    let status=String(row.status||'');if(paymentStatus==='cancelled'||fulfillmentStatus==='cancelled')status='cancelled';else if(paymentStatus==='refunded')status='refunded';else if(['completed','delivered','in-transit','shipped','packed','processing'].includes(fulfillmentStatus)&&paymentStatus==='paid')status=fulfillmentStatus;else if(paymentStatus==='paid')status='payment-received';else if(intent==='quote'&&!priceConfirmed)status='quote-requested';else if(priceConfirmed)status='awaiting-payment';else status='price-confirmation';
+    const serial=String(orderId).split('-').pop()||String(Date.now()).slice(-6),year=String(orderId).split('-')[1]||new Date().getFullYear();const receiptNo=paymentStatus==='paid'?(row.receiptNo||`AZR-${year}-${serial}`):(row.receiptNo||'');const invoiceNo=intent==='checkout'?(row.invoiceNo||`AZI-${year}-${serial}`):(row.invoiceNo||'');
+    const patch={intent,invoiceNo,documentNo:intent==='checkout'?invoiceNo:(row.documentNo||row.quoteNo||''),paymentStatus,fulfillmentStatus,status,priceConfirmed,priceConfirmationRequired:!priceConfirmed,confirmedTotal,shippingCharge:body.shippingCharge!==undefined?azPcShopMoney(body.shippingCharge):azPcShopMoney(row.shippingCharge),shippingCost:body.shippingCost!==undefined?azPcShopMoney(body.shippingCost):azPcShopMoney(row.shippingCost),paymentMethod:azPcShopText(body.paymentMethod||row.paymentMethod||'Maybank',80),courier:azPcShopText(body.courier||row.courier,100),trackingNumber:azPcShopText(body.trackingNumber||row.trackingNumber,160),adminNote:azPcShopText(body.adminNote||row.adminNote,800),receiptNo,updatedAtMs:now};if(paymentStatus==='paid'&&!row.paidAtMs)patch.paidAtMs=now;if(status!==row.status)patch.statusHistory=admin.firestore.FieldValue.arrayUnion({status,atMs:now,by:'admin'});
+    await ref.set(patch,{merge:true});const latest={...row,...patch,statusHistory:Array.isArray(patch.statusHistory)?patch.statusHistory:(row.statusHistory||[])};await azPcShopSyncPurchaseLog(db,latest);return res.json({ok:true,order:azPcShopPublicOrder(latest)});
+  }catch(err){console.error('PC shop admin update failed:',err);return res.status(500).json({ok:false,error:'admin_order_update_failed',message:azPcShopText(err?.message||err,200)})}
+});
+
 // AZOBSS v1129: legacy Benefit/Invite Code redemption is retired. Membership must be purchased,
 // while Invite Code is now reserved for the referral reward system. Neither path grants PA/BM access.
 app.use('/api/invite-benefit', (req,res)=>res.status(410).json({ok:false,error:'Legacy Benefit Code has been retired. Use Membership purchase or Referral Invite Code instead.'}));

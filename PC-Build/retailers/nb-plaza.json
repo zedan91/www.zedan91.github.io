@@ -1,0 +1,428 @@
+{
+  "schemaVersion": 1,
+  "storeId": "nb-plaza",
+  "storeName": "NB Plaza",
+  "checkedAt": "2026-11-01",
+  "catalogStatus": "active",
+  "source": "https://www.nbplaza.com.my/",
+  "notes": "Snapshot rasmi untuk rujukan dalaman AZOBSS. Sumber kedai disembunyikan daripada customer.",
+  "products": [
+    {
+      "id": "nbp-acer-nitro-5060",
+      "tier": "Mid",
+      "name": "Acer Nitro N50 RTX 5060 Gaming Desktop",
+      "tagline": "NB Plaza • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 4209,
+      "priceMin": 4209,
+      "priceMax": 4209,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceType": "official",
+      "badge": "NB Plaza",
+      "accent": "cyan",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 5060 8GB"
+        ],
+        [
+          "RAM",
+          "8GB"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ],
+        [
+          "OS",
+          "Windows 11"
+        ]
+      ],
+      "bestFor": [
+        "1080p / 1440p gaming",
+        "AutoCAD / SketchUp",
+        "Creator ringan–sederhana"
+      ],
+      "note": "Gaming desktop dengan RTX 5060. Harga dan stok perlu disahkan semula sebelum tempahan.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Photoshop / Premiere",
+        "QGIS / MapInfo"
+      ],
+      "image": "./images/entry-rtx.webp",
+      "imageAlt": "Acer Nitro RTX 5060 desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true,
+      "priceVerified": true,
+      "origin": "retailer",
+      "storeId": "nb-plaza",
+      "storeName": "NB Plaza"
+    },
+    {
+      "id": "nbp-acer-predator-orion-5060",
+      "tier": "Performance",
+      "name": "Acer Predator Orion 3000 RTX 5060 Desktop",
+      "tagline": "NB Plaza • snapshot harga kedai",
+      "category": "performance",
+      "resolution": "1440p",
+      "price": 6099,
+      "priceMin": 6099,
+      "priceMax": 6099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceType": "official",
+      "badge": "NB Plaza",
+      "accent": "blue",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 5060 8GB"
+        ],
+        [
+          "RAM",
+          "16GB"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ],
+        [
+          "OS",
+          "Windows 11"
+        ]
+      ],
+      "bestFor": [
+        "1440p gaming",
+        "AutoCAD / Revit",
+        "Creator / rendering ringan"
+      ],
+      "note": "Predator desktop RTX 5060 dengan RAM 16GB dan 1TB SSD. Harga dan stok perlu disahkan semula.",
+      "softwareFit": [
+        "AutoCAD / Revit",
+        "SketchUp",
+        "Premiere Pro",
+        "Blender ringan"
+      ],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "Acer Predator Orion RTX 5060 - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true,
+      "priceVerified": true,
+      "origin": "retailer",
+      "storeId": "nb-plaza",
+      "storeName": "NB Plaza"
+    },
+    {
+      "id": "nbp-hp-omnidesk-r7",
+      "tier": "Office",
+      "name": "HP OmniDesk Slim Ryzen 7 Desktop",
+      "tagline": "NB Plaza • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 3099,
+      "priceMin": 3099,
+      "priceMax": 3099,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/12-hp-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceType": "official",
+      "badge": "NB Plaza",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "AMD Ryzen 7 7445HS"
+        ],
+        [
+          "GPU",
+          "Integrated Radeon"
+        ],
+        [
+          "RAM",
+          "8GB"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ],
+        [
+          "OS",
+          "Windows 11"
+        ]
+      ],
+      "bestFor": [
+        "Office / accounting",
+        "AutoCAD 2D ringan",
+        "Study & web apps"
+      ],
+      "note": "Slim desktop untuk kerja pejabat dan penggunaan harian. Harga dan stok perlu disahkan semula.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "QGIS asas",
+        "Browser / accounting"
+      ],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "HP OmniDesk Ryzen 7 desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan",
+      "segment": "office",
+      "cpuBrand": "amd",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Radeon",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true,
+      "priceVerified": true,
+      "origin": "retailer",
+      "storeId": "nb-plaza",
+      "storeName": "NB Plaza"
+    },
+    {
+      "id": "nbp-hp-omen-5060ti",
+      "tier": "High-End",
+      "name": "HP OMEN 35L RTX 5060 Ti 16GB Desktop",
+      "tagline": "NB Plaza • snapshot harga kedai",
+      "category": "highend",
+      "resolution": "1440p / 4K",
+      "price": 10979,
+      "priceMin": 10979,
+      "priceMax": 10979,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/20-desktop?q=Categories-HP%2FRAM+Upgradable-Yes%2FOperating+System+-Windows+11",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceType": "official",
+      "badge": "NB Plaza",
+      "accent": "purple",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 7 270K"
+        ],
+        [
+          "GPU",
+          "RTX 5060 Ti 16GB"
+        ],
+        [
+          "RAM",
+          "16GB"
+        ],
+        [
+          "Storage",
+          "1TB SSD"
+        ],
+        [
+          "OS",
+          "Windows 11"
+        ]
+      ],
+      "bestFor": [
+        "1440p high refresh gaming",
+        "Creator / video editing",
+        "3D / rendering"
+      ],
+      "note": "High-end branded desktop dengan RTX 5060 Ti 16GB. Harga dan stok perlu disahkan semula.",
+      "softwareFit": [
+        "AutoCAD / Revit",
+        "Premiere / Resolve",
+        "Blender",
+        "Agisoft Metashape"
+      ],
+      "image": "./images/highend-rx.webp",
+      "imageAlt": "HP OMEN RTX 5060 Ti desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 Ti 16GB",
+      "resolutionTags": [
+        "1440p",
+        "4k"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true,
+      "priceVerified": true,
+      "origin": "retailer",
+      "storeId": "nb-plaza",
+      "storeName": "NB Plaza"
+    },
+    {
+      "id": "nbp-joi-5060-msi",
+      "tier": "Performance",
+      "name": "JOI Gaming Core Ultra 5 / RTX 5060 8GB",
+      "tagline": "NB Plaza • snapshot harga kedai",
+      "category": "gaming",
+      "resolution": "1080p / 1440p",
+      "price": 5199,
+      "priceMin": 5199,
+      "priceMax": 5199,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/msi-x-nvidia/15146-geforce-rtx-5060-8gb-joi-gaming-powered-by-msi.html",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceType": "official",
+      "badge": "NB Plaza",
+      "accent": "orange",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225F"
+        ],
+        [
+          "GPU",
+          "GeForce RTX 5060 8GB"
+        ],
+        [
+          "RAM",
+          "16GB DDR5"
+        ],
+        [
+          "Storage",
+          "500GB Gen4 NVMe"
+        ],
+        [
+          "PSU",
+          "650W 80+ Bronze"
+        ]
+      ],
+      "bestFor": [
+        "1080p / 1440p gaming",
+        "CAD / creator",
+        "General performance"
+      ],
+      "note": "Custom gaming desktop dengan 16GB DDR5 dan RTX 5060. Harga dan stok perlu disahkan semula.",
+      "softwareFit": [
+        "AutoCAD",
+        "SketchUp",
+        "Photoshop / Premiere",
+        "Blender ringan"
+      ],
+      "image": "./images/performance-rtx.webp",
+      "imageAlt": "JOI RTX 5060 gaming PC - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan",
+      "segment": "package",
+      "cpuBrand": "intel",
+      "gpuBrand": "nvidia",
+      "gpuModel": "RTX 5060 8GB",
+      "resolutionTags": [
+        "1080p",
+        "1440p"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true,
+      "priceVerified": true,
+      "origin": "retailer",
+      "storeId": "nb-plaza",
+      "storeName": "NB Plaza"
+    },
+    {
+      "id": "nbp-acer-veriton-u5",
+      "tier": "Office",
+      "name": "Acer Veriton Core Ultra 5 Commercial Desktop",
+      "tagline": "NB Plaza • snapshot harga kedai",
+      "category": "office",
+      "resolution": "Office",
+      "price": 2839,
+      "priceMin": 2839,
+      "priceMax": 2839,
+      "priceType": "Harga kedai / snapshot sumber",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/24-acer-desktop",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceType": "official",
+      "badge": "NB Plaza",
+      "accent": "green",
+      "parts": [
+        [
+          "CPU",
+          "Intel Core Ultra 5 225"
+        ],
+        [
+          "GPU",
+          "Integrated Intel"
+        ],
+        [
+          "RAM",
+          "8GB"
+        ],
+        [
+          "Storage",
+          "512GB SSD"
+        ],
+        [
+          "OS",
+          "DOS"
+        ]
+      ],
+      "bestFor": [
+        "Office / business",
+        "POS / counter system",
+        "AutoCAD 2D ringan"
+      ],
+      "note": "Commercial desktop untuk pejabat. OS dan konfigurasi akhir perlu disemak.",
+      "softwareFit": [
+        "Microsoft Office",
+        "AutoCAD 2D ringan",
+        "QGIS asas",
+        "Accounting / POS"
+      ],
+      "image": "./images/essential-office.webp",
+      "imageAlt": "Acer Veriton commercial desktop - visual rujukan AZOBSS",
+      "imageNote": "Visual rujukan",
+      "segment": "office",
+      "cpuBrand": "intel",
+      "gpuBrand": "integrated",
+      "gpuModel": "Integrated Intel",
+      "resolutionTags": [
+        "office"
+      ],
+      "availability": "available",
+      "quoteRequired": false,
+      "retailerSnapshot": true,
+      "priceVerified": true,
+      "origin": "retailer",
+      "storeId": "nb-plaza",
+      "storeName": "NB Plaza"
+    }
+  ]
+}

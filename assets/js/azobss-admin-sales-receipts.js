@@ -682,13 +682,19 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const status=normalizeStatus(x.status||x.paymentStatus,x.paid===true);
   const gross=clampMoney(extractAmount(x));
   const paBmSalesItems=jupemSalesItems(x,gross);
-  const category=paBmSalesItems.length?'pabm':detectCategory(x);
+  const genericItems=!paBmSalesItems.length&&Array.isArray(x.items)?x.items.map(item=>({category:String(item?.category||'computer-it'),name:String(item?.name||item?.productName||'PC / Hardware'),qty:Math.max(1,num(item?.qty||item?.quantity||1)||1),unitPrice:clampMoney(item?.unitPrice||item?.price||0),unitCost:clampMoney(item?.unitCost||item?.cost||0),serialNumber:String(item?.serialNumber||'').trim(),warrantyUntil:String(item?.warrantyUntil||'').slice(0,10)})).filter(item=>item.name):[];
+  const items=paBmSalesItems.length?paBmSalesItems:(genericItems.length?genericItems:[{category:detectCategory(x),name:productName(x),qty:1,unitPrice:gross,unitCost:0}]);
+  const categories=[...new Set(items.map(i=>i.category||'other'))];
+  const category=paBmSalesItems.length?'pabm':(categories.length===1?categories[0]:detectCategory(x));
   const explicitFee=extractCost(x,['paymentFee','gatewayFee','transactionFee','toyyibPayFee','processingFee']);
   const method=String(x.paymentMethod||x.paymentSource||x.gateway||'ToyyibPay');
   const paymentFee=explicitFee>0?explicitFee:(status==='paid'&&/toyyib|online|gateway/i.test(method)?1:0);
   const commission=extractCost(x,['commission','commissionAmount','staffCommission','affiliateCommission']);
-  const otherCost=extractCost(x,['otherCost','cost']);
-  const totalCost=paymentFee+commission+otherCost;
+  const productCost=items.reduce((sum,item)=>sum+num(item.qty)*num(item.unitCost),0);
+  const shippingCost=extractCost(x,['shippingCost','courierCost','deliveryCost']);
+  const otherCost=extractCost(x,['otherCost']);
+  const totalCost=productCost+shippingCost+paymentFee+commission+otherCost;
+  const subtotal=items.reduce((sum,item)=>sum+num(item.qty)*num(item.unitPrice),0)||gross;
   const baseNo=automaticReceiptNo(x,id);
   const row={
     ...x,id:`${sourceName}:${id}`,docId:id,source:'website',sourceName,editable:true,autoEditable:true,
@@ -696,8 +702,8 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
     invoiceNo:String(x.invoiceNo||deriveInvoiceNo(baseNo)),receiptNo:String(x.receiptNo||deriveReceiptNo(baseNo)),
     documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),
     customerName:customerName(x),customerPhone:customerPhone(x),customerEmail:customerEmail(x),customerAddress:customerAddress(x),status,paymentMethod:method,
-    saleDateMs:rowDateMs(x),items:paBmSalesItems.length?paBmSalesItems:[{category,name:productName(x),qty:1,unitPrice:gross,unitCost:0}],categories:[category],category,
-    subtotal:paBmSalesItems.length?paBmSalesItems.reduce((sum,item)=>sum+num(item.qty)*num(item.unitPrice),0):gross,discount:0,productCost:0,shippingCost:0,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
+    saleDateMs:rowDateMs(x),items,categories,category,
+    subtotal,discount:clampMoney(x.discount||0),productCost,shippingCost,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
   };
   row.documentNo=currentDocumentNo(row);row.depositPercent=depositPercent(row);row.depositAmount=depositAmount(row);row.paidGross=receivedAmount(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=outstandingAmount(row);return row;
 }
