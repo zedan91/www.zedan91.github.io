@@ -1,4 +1,4 @@
-/* AZOBSS v1478 Long Session Stability + Active Modal Pointer Fix
+/* AZOBSS v1480 Long Session Stability + Active Modal Pointer Fix
  * Firefox/Chromium long-idle self-heal:
  * - pauses/throttles AZOBSS polling while hidden/idle
  * - refreshes auth token after a long background sleep

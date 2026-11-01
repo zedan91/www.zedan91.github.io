@@ -1,5 +1,5 @@
 {
-  "version": "1472",
+  "version": "1480",
   "checkedAt": "2026-11-01",
   "stores": [
     {
@@ -36,23 +36,6 @@
       "productCount": 13
     },
     {
-      "id": "tmt",
-      "name": "TMT / Thunder Match",
-      "url": "https://www.tmt.my/",
-      "scope": "tmt.my",
-      "categories": [
-        "pc",
-        "parts",
-        "laptop",
-        "accessories"
-      ],
-      "description": "Desktop, custom PC, laptop dan perkakasan.",
-      "source": "https://www.tmt.my/",
-      "catalogFile": "./retailers/tmt.json",
-      "catalogStatus": "quote",
-      "productCount": 1
-    },
-    {
       "id": "viewnet",
       "name": "Viewnet",
       "url": "https://viewnet.com.my/",
@@ -67,23 +50,6 @@
       "catalogFile": "./retailers/viewnet.json",
       "catalogStatus": "active",
       "productCount": 15
-    },
-    {
-      "id": "pc-image",
-      "name": "PC Image",
-      "url": "https://pcimage.com.my/",
-      "scope": "pcimage.com.my",
-      "categories": [
-        "pc",
-        "parts",
-        "laptop",
-        "accessories"
-      ],
-      "description": "Rangkaian kedai komputer dan perkakasan.",
-      "source": "https://pcimage.com.my/consumer/",
-      "catalogFile": "./retailers/pc-image.json",
-      "catalogStatus": "quote",
-      "productCount": 1
     },
     {
       "id": "techhypermart",
@@ -118,21 +84,6 @@
       "catalogFile": "./retailers/dotatech.json",
       "catalogStatus": "active",
       "productCount": 14
-    },
-    {
-      "id": "rextech",
-      "name": "REXTECH PC",
-      "url": "https://rextechpc.com.my/",
-      "scope": "rextechpc.com.my",
-      "categories": [
-        "pc",
-        "workstation"
-      ],
-      "description": "Custom PC gaming dan konfigurasi kerja.",
-      "source": "https://rextechpc.com.my/",
-      "catalogFile": "./retailers/rextech.json",
-      "catalogStatus": "quote",
-      "productCount": 1
     },
     {
       "id": "emarque",
@@ -182,22 +133,6 @@
       "productCount": 10
     },
     {
-      "id": "netstore",
-      "name": "NETSTORE",
-      "url": "https://netstore.com.my/",
-      "scope": "netstore.com.my",
-      "categories": [
-        "pc",
-        "parts",
-        "accessories"
-      ],
-      "description": "Perkakasan komputer dan pilihan custom PC.",
-      "source": "https://netstore.com.my/index.php",
-      "catalogFile": "./retailers/netstore.json",
-      "catalogStatus": "quote",
-      "productCount": 1
-    },
-    {
       "id": "jayacom",
       "name": "Jayacom",
       "url": "https://www.jayacom.com.my/",
@@ -211,39 +146,6 @@
       "catalogFile": "./retailers/jayacom.json",
       "catalogStatus": "active",
       "productCount": 6
-    },
-    {
-      "id": "sri-computers",
-      "name": "Sri Computers",
-      "url": "https://shopee.com.my/sri_computers",
-      "scope": "shopee.com.my/sri_computers",
-      "categories": [
-        "parts",
-        "laptop",
-        "accessories"
-      ],
-      "description": "Komponen, laptop dan aksesori melalui kedai Shopee.",
-      "linkLabel": "Buka kedai Shopee",
-      "source": "https://images-cdn.lowyat.net/pricelist/sri1.pdf",
-      "catalogFile": "./retailers/sri-computers.json",
-      "catalogStatus": "quote",
-      "productCount": 1
-    },
-    {
-      "id": "c-zone",
-      "name": "C-Zone / Compuzone",
-      "url": "https://www.facebook.com/compuzone/",
-      "scope": "facebook.com/compuzone",
-      "categories": [
-        "parts",
-        "accessories"
-      ],
-      "description": "Rujukan perkakasan dan promosi melalui Facebook kedai.",
-      "linkLabel": "Buka Facebook kedai",
-      "source": "https://assets.hardwarezone.com/retailer_pricelist/145/C-Zone%20Price%20List.pdf",
-      "catalogFile": "./retailers/c-zone.json",
-      "catalogStatus": "quote",
-      "productCount": 1
     },
     {
       "id": "nb-plaza",
@@ -263,5 +165,5 @@
       "productCount": 6
     }
   ],
-  "pricePolicy": "Public PC Build memaparkan nombor harga hanya untuk snapshot retailer yang ditanda priceVerified=true. Tiada harga anggaran untuk rekod quote/unverified atau Build Sendiri."
+  "pricePolicy": "Customer hanya melihat produk dengan harga sumber disahkan dan snapshot tidak lebih 14 hari. Sumber tanpa harga/quote-only tidak termasuk katalog aktif."
 }

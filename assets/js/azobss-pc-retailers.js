@@ -1,4 +1,4 @@
-/* AZOBSS v1435: 15-store internal retailer catalog integration + verified-price-only public policy. Retailer directory panel remains admin-only. */
+/* AZOBSS v1480: active verified-price retailer directory. Quote-only/no-price stores are excluded; integrated panel listens only to coalesced main-filter updates. */
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
@@ -76,7 +76,7 @@
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
     storeLoadPromise=(async()=>{
       try{
-        const response=await fetch('/PC-Build/pc-retailers.json?v=1435',{signal:controller.signal,cache:'no-store'});
+        const response=await fetch('/PC-Build/pc-retailers.json?v=1480',{signal:controller.signal,cache:'no-store'});
         if(!response.ok)throw Error('Directory unavailable');
         const data=await response.json();
         storeCache=(data.stores||[]).filter(validStore);
@@ -172,8 +172,8 @@
       form.addEventListener('submit',event=>{event.preventDefault();document.querySelector('#grid')?.scrollIntoView({behavior:'smooth',block:'start'});});
     }
     if(integrated){
-      const controls=['#search','#retailerStore','#segment','#cpuBrand','#resolution','#gpuBrand','#gpuModel','#category','#budget'];
-      for(const selector of controls){const el=document.querySelector(selector);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',()=>{expanded=false;render();});}
+      // v1480: main PC catalog coalesces filter changes into one event. Avoid a second
+      // listener on every filter control because that duplicated work on "Semua sumber".
       globalThis.addEventListener('azobss-pc-main-filter-change',()=>{expanded=false;render();});
     }
     more?.addEventListener('click',()=>{expanded=!expanded;render();});

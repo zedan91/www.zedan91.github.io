@@ -1,0 +1,10 @@
+AZOBSS FULL WEBSITE PACKAGE v1479
+================================
+This archive is a complete root-ready website package.
+It does NOT require a separate v1478 archive or manual merge.
+
+Baseline lineage:
+v1477 full package -> verified v1478 Render runtime alignment -> v1479 deferred invoice / courier address / duplicate-order fix.
+
+Deploy/extract the CONTENTS of this archive directly at repository root.
+Important root files/folders include index.html, deploy-server.js, backend/, lib/, assets/, PC-Build/, admin/.

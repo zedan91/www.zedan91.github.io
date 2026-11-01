@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1472",
+  "version": "1480",
   "checkedAt": "2026-11-01",
   "catalogs": [
     {
@@ -18,25 +18,11 @@
       "catalogStatus": "active"
     },
     {
-      "id": "tmt",
-      "name": "TMT / Thunder Match",
-      "file": "./retailers/tmt.json",
-      "count": 1,
-      "catalogStatus": "quote"
-    },
-    {
       "id": "viewnet",
       "name": "Viewnet",
       "file": "./retailers/viewnet.json",
       "count": 15,
       "catalogStatus": "active"
-    },
-    {
-      "id": "pc-image",
-      "name": "PC Image",
-      "file": "./retailers/pc-image.json",
-      "count": 1,
-      "catalogStatus": "quote"
     },
     {
       "id": "techhypermart",
@@ -51,13 +37,6 @@
       "file": "./retailers/dotatech.json",
       "count": 14,
       "catalogStatus": "active"
-    },
-    {
-      "id": "rextech",
-      "name": "REXTECH PC",
-      "file": "./retailers/rextech.json",
-      "count": 1,
-      "catalogStatus": "quote"
     },
     {
       "id": "emarque",
@@ -81,32 +60,11 @@
       "catalogStatus": "active"
     },
     {
-      "id": "netstore",
-      "name": "NETSTORE",
-      "file": "./retailers/netstore.json",
-      "count": 1,
-      "catalogStatus": "quote"
-    },
-    {
       "id": "jayacom",
       "name": "Jayacom",
       "file": "./retailers/jayacom.json",
       "count": 6,
       "catalogStatus": "active"
-    },
-    {
-      "id": "sri-computers",
-      "name": "Sri Computers",
-      "file": "./retailers/sri-computers.json",
-      "count": 1,
-      "catalogStatus": "quote"
-    },
-    {
-      "id": "c-zone",
-      "name": "C-Zone / Compuzone",
-      "file": "./retailers/c-zone.json",
-      "count": 1,
-      "catalogStatus": "quote"
     },
     {
       "id": "nb-plaza",
@@ -116,5 +74,5 @@
       "catalogStatus": "active"
     }
   ],
-  "pricePolicy": "Hanya produk dengan priceVerified=true dan snapshot sumber lengkap boleh memaparkan nombor harga. Quote/unverified tidak memaparkan harga anggaran."
+  "pricePolicy": "Customer hanya melihat produk dengan harga sumber disahkan dan snapshot tidak lebih 14 hari. Sumber tanpa harga/quote-only tidak termasuk katalog aktif."
 }

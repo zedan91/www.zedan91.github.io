@@ -1,0 +1,44 @@
+{
+  "version": "1480",
+  "baseline": "1479 full",
+  "date": "2026-11-01",
+  "pcBuilds": {
+    "pageSize": 12,
+    "searchDebounceMs": 180,
+    "retailerFreshnessDays": 14,
+    "activeRetailerCatalogs": 10,
+    "verifiedRetailerProducts": 121,
+    "unverifiedCustomerCards": 0
+  },
+  "hardwareShop": {
+    "catalogFile": "PC-Build/pc-shop-products-v1480.json",
+    "activeProducts": 4,
+    "liveOnly": true,
+    "hideUnavailable": true,
+    "snapshotFallbackPublic": false
+  },
+  "preserved": [
+    "v1479 deferred invoice",
+    "courier address required",
+    "duplicate order guard",
+    "premature invoice repair",
+    "Maybank-only"
+  ],
+  "syntaxChecks": [
+    "deploy-server.js",
+    "backend/server.js",
+    "lib/azobss-pc-shop-runtime.js",
+    "azobss-pc-shop-v1480.js",
+    "azobss-pc-retailers.js",
+    "azobss-admin-pc-shop-orders-v1480.js",
+    "PC-Build inline JS",
+    "Build-Sendiri inline JS"
+  ],
+  "tests": {
+    "dataPolicy": "pass",
+    "runtimeLiveCatalog4": "pass",
+    "runtimeOutOfStockHides1": "pass",
+    "customerWording": "pass",
+    "criticalReferences": "pass"
+  }
+}
