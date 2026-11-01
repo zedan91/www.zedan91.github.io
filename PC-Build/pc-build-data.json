@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": "1482",
   "market": "Malaysia",
   "currency": "MYR",
   "priceChecked": "2026-10-01",
@@ -100,7 +100,7 @@
     {
       "id": "office-amd-standard",
       "tier": "Low",
-      "name": "AZOBSS Office AMD",
+      "name": "Office AMD",
       "tagline": "Office / POS / Study",
       "category": "office",
       "resolution": "Office",
@@ -153,7 +153,7 @@
         "Browser / accounting / POS"
       ],
       "image": "./images/essential-office.webp",
-      "imageAlt": "AZOBSS Office AMD compact office PC with integrated graphics",
+      "imageAlt": "Office AMD compact office PC with integrated graphics",
       "imageNote": "Visual rujukan: office • iGPU • mATX",
       "segment": "office",
       "cpuBrand": "amd",
@@ -167,7 +167,7 @@
     {
       "id": "essential-office",
       "tier": "Low",
-      "name": "AZOBSS Essential",
+      "name": "Essential",
       "tagline": "Office / Study / Daily Use",
       "category": "office",
       "resolution": "Office & light creative",
@@ -222,7 +222,7 @@
         "PDF / Canva / Photoshop ringan"
       ],
       "image": "./images/essential-office.webp",
-      "imageAlt": "AZOBSS Essential mATX office build with integrated graphics and airflow case",
+      "imageAlt": "Essential mATX office build with integrated graphics and airflow case",
       "imageNote": "Visual rujukan ikut konfigurasi: mATX • iGPU • airflow",
       "segment": "office",
       "cpuBrand": "amd",
@@ -236,7 +236,7 @@
     {
       "id": "office-intel-standard",
       "tier": "Low",
-      "name": "AZOBSS Office Intel",
+      "name": "Office Intel",
       "tagline": "Office / Business / Multi-task",
       "category": "office",
       "resolution": "Office",
@@ -289,7 +289,7 @@
         "Photoshop ringan"
       ],
       "image": "./images/essential-office.webp",
-      "imageAlt": "AZOBSS Office Intel compact business PC",
+      "imageAlt": "Office Intel compact business PC",
       "imageNote": "Visual rujukan: office • Intel iGPU • mATX",
       "segment": "office",
       "cpuBrand": "intel",
@@ -303,7 +303,7 @@
     {
       "id": "starter-rtx3050",
       "tier": "Low-Mid",
-      "name": "AZOBSS Starter RTX",
+      "name": "Starter RTX",
       "tagline": "1080p Entry / CAD GPU",
       "category": "gaming",
       "resolution": "1080p",
@@ -357,7 +357,7 @@
         "Blender ringan"
       ],
       "image": "./images/entry-rtx.webp",
-      "imageAlt": "AZOBSS Starter RTX build with entry NVIDIA GPU",
+      "imageAlt": "Starter RTX build with entry NVIDIA GPU",
       "imageNote": "Visual rujukan: RTX entry • mATX • airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -371,7 +371,7 @@
     {
       "id": "value-rx9050",
       "tier": "Low-Mid",
-      "name": "AZOBSS Value RX",
+      "name": "Value RX",
       "tagline": "1080p Gaming / Value",
       "category": "gaming",
       "resolution": "1080p",
@@ -424,7 +424,7 @@
         "DaVinci Resolve ringan"
       ],
       "image": "./images/mainstream-rx.webp",
-      "imageAlt": "AZOBSS Value RX build with Radeon GPU",
+      "imageAlt": "Value RX build with Radeon GPU",
       "imageNote": "Visual rujukan: Radeon entry • airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -438,7 +438,7 @@
     {
       "id": "rush-rtx5060",
       "tier": "Mid",
-      "name": "AZOBSS Rush RTX",
+      "name": "Rush RTX",
       "tagline": "1080p Ultra / RTX Value",
       "category": "gaming",
       "resolution": "1080p / 1440p",
@@ -492,7 +492,7 @@
         "Blender CUDA"
       ],
       "image": "./images/entry-rtx.webp",
-      "imageAlt": "AZOBSS Rush RTX build with RTX 5060 class GPU",
+      "imageAlt": "Rush RTX build with RTX 5060 class GPU",
       "imageNote": "Visual rujukan: RTX 5060 • DDR4 value • airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -507,7 +507,7 @@
     {
       "id": "entry-rtx",
       "tier": "Low-Mid",
-      "name": "AZOBSS Entry RTX",
+      "name": "Entry RTX",
       "tagline": "1080p Gaming / General Creator",
       "category": "gaming",
       "resolution": "1080p High",
@@ -563,7 +563,7 @@
         "Blender CUDA entry-level"
       ],
       "image": "./images/entry-rtx.webp",
-      "imageAlt": "AZOBSS Entry RTX mATX gaming build with RTX-class GPU and three-fan airflow case",
+      "imageAlt": "Entry RTX mATX gaming build with RTX-class GPU and three-fan airflow case",
       "imageNote": "Visual rujukan ikut konfigurasi: mATX • RTX • 3-fan airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -577,7 +577,7 @@
     {
       "id": "creator-rtx5060ti",
       "tier": "Mid-High",
-      "name": "AZOBSS Creator RTX",
+      "name": "Creator RTX",
       "tagline": "1440p / Creator / BIM",
       "category": "performance",
       "resolution": "1440p",
@@ -635,7 +635,7 @@
         "Agisoft Metashape"
       ],
       "image": "./images/performance-rtx.webp",
-      "imageAlt": "AZOBSS Creator RTX build with RTX 5060 Ti class GPU",
+      "imageAlt": "Creator RTX build with RTX 5060 Ti class GPU",
       "imageNote": "Visual rujukan: RTX 5060 Ti • 32GB • creator",
       "segment": "package",
       "cpuBrand": "amd",
@@ -649,7 +649,7 @@
     {
       "id": "mainstream-rx",
       "tier": "Mid",
-      "name": "AZOBSS Mainstream RX",
+      "name": "Mainstream RX",
       "tagline": "1080p Ultra / 1440p Gaming",
       "category": "gaming",
       "resolution": "1440p",
@@ -709,7 +709,7 @@
         "DaVinci Resolve"
       ],
       "image": "./images/mainstream-rx.webp",
-      "imageAlt": "AZOBSS Mainstream RX AM5 gaming build with Radeon GPU and AIO cooling",
+      "imageAlt": "Mainstream RX AM5 gaming build with Radeon GPU and AIO cooling",
       "imageNote": "Visual rujukan ikut konfigurasi: Radeon • AIO • airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -724,7 +724,7 @@
     {
       "id": "performance-rtx",
       "tier": "Mid-High",
-      "name": "AZOBSS Performance RTX",
+      "name": "Performance RTX",
       "tagline": "1440p High Refresh / Creator",
       "category": "performance",
       "resolution": "1440p High Refresh",
@@ -786,7 +786,7 @@
         "Agisoft Metashape sederhana"
       ],
       "image": "./images/performance-rtx.webp",
-      "imageAlt": "AZOBSS Performance RTX build with RTX-class GPU, tower air cooler and ARGB airflow case",
+      "imageAlt": "Performance RTX build with RTX-class GPU, tower air cooler and ARGB airflow case",
       "imageNote": "Visual rujukan ikut konfigurasi: RTX • tower air • ARGB",
       "segment": "package",
       "cpuBrand": "amd",
@@ -801,7 +801,7 @@
     {
       "id": "highend-rx",
       "tier": "High",
-      "name": "AZOBSS High-End RX",
+      "name": "High-End RX",
       "tagline": "1440p Ultra / 4K Gaming",
       "category": "highend",
       "resolution": "4K capable",
@@ -863,7 +863,7 @@
         "Agisoft Metashape"
       ],
       "image": "./images/highend-rx.webp",
-      "imageAlt": "AZOBSS High-End RX build with large Radeon GPU, liquid cooling and premium airflow",
+      "imageAlt": "High-End RX build with large Radeon GPU, liquid cooling and premium airflow",
       "imageNote": "Visual rujukan ikut konfigurasi: Radeon • AIO • premium airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -878,7 +878,7 @@
     {
       "id": "workstation-creator",
       "tier": "Workstation",
-      "name": "AZOBSS Creator Workstation",
+      "name": "Creator Workstation",
       "tagline": "CAD / BIM / 3D / Creator",
       "category": "workstation",
       "resolution": "Workstation",
@@ -936,7 +936,7 @@
         "Agisoft Metashape"
       ],
       "image": "./images/performance-rtx.webp",
-      "imageAlt": "AZOBSS Creator Workstation with RTX 5060 Ti class GPU",
+      "imageAlt": "Creator Workstation with RTX 5060 Ti class GPU",
       "imageNote": "Visual rujukan: workstation • 32GB • RTX 5060 Ti",
       "segment": "workstation",
       "cpuBrand": "intel",
@@ -951,7 +951,7 @@
     {
       "id": "pro-rtx5070ti",
       "tier": "High",
-      "name": "AZOBSS Pro RTX",
+      "name": "Pro RTX",
       "tagline": "1440p Ultra / 4K / Pro Creator",
       "category": "highend",
       "resolution": "1440p Ultra / 4K",
@@ -1010,7 +1010,7 @@
         "Agisoft Metashape"
       ],
       "image": "./images/flagship-rtx.webp",
-      "imageAlt": "AZOBSS Pro RTX build with RTX 5070 Ti class GPU",
+      "imageAlt": "Pro RTX build with RTX 5070 Ti class GPU",
       "imageNote": "Visual rujukan: RTX 5070 Ti • AIO • premium airflow",
       "segment": "package",
       "cpuBrand": "amd",
@@ -1025,7 +1025,7 @@
     {
       "id": "workstation-adept",
       "tier": "Workstation",
-      "name": "AZOBSS Adept Workstation",
+      "name": "Adept Workstation",
       "tagline": "Heavy BIM / Rendering / Simulation",
       "category": "workstation",
       "resolution": "Workstation",
@@ -1084,7 +1084,7 @@
         "ArcGIS Pro"
       ],
       "image": "./images/flagship-rtx.webp",
-      "imageAlt": "AZOBSS Adept Workstation with RTX 5070 Ti class GPU",
+      "imageAlt": "Adept Workstation with RTX 5070 Ti class GPU",
       "imageNote": "Visual rujukan: workstation • RTX 5070 Ti • 32GB",
       "segment": "workstation",
       "cpuBrand": "intel",
@@ -1099,7 +1099,7 @@
     {
       "id": "flagship-rtx",
       "tier": "Very High",
-      "name": "AZOBSS 4K RTX",
+      "name": "4K RTX",
       "tagline": "4K Ultra / AI / Professional Creator",
       "category": "flagship",
       "resolution": "4K Ultra",
@@ -1162,7 +1162,7 @@
         "Local AI / CUDA workloads"
       ],
       "image": "./images/flagship-rtx.webp",
-      "imageAlt": "AZOBSS 4K RTX flagship build with large RTX 5080-class GPU, liquid cooling and high-airflow ARGB case",
+      "imageAlt": "4K RTX flagship build with large RTX 5080-class GPU, liquid cooling and high-airflow ARGB case",
       "imageNote": "Visual rujukan ikut konfigurasi: RTX 5080-class • high-airflow • AIO",
       "segment": "package",
       "cpuBrand": "amd",
@@ -1177,7 +1177,7 @@
     {
       "id": "workstation-anvil",
       "tier": "AI Workstation",
-      "name": "AZOBSS Anvil AI Workstation",
+      "name": "Anvil AI Workstation",
       "tagline": "Professional AI / 3D / Engineering",
       "category": "workstation",
       "resolution": "AI Workstation",
@@ -1236,7 +1236,7 @@
         "Adobe Pro workflows"
       ],
       "image": "./images/flagship-rtx.webp",
-      "imageAlt": "AZOBSS Anvil AI Workstation with RTX PRO GPU",
+      "imageAlt": "Anvil AI Workstation with RTX PRO GPU",
       "imageNote": "Visual rujukan: RTX PRO • AI workstation • professional airflow",
       "segment": "workstation",
       "cpuBrand": "intel",
@@ -1251,7 +1251,7 @@
     {
       "id": "workstation-artisan",
       "tier": "AI Workstation",
-      "name": "AZOBSS Artisan AI Workstation",
+      "name": "Artisan AI Workstation",
       "tagline": "High VRAM AI / Pro Visualization",
       "category": "workstation",
       "resolution": "AI Workstation",
@@ -1310,7 +1310,7 @@
         "Scientific compute"
       ],
       "image": "./images/flagship-rtx.webp",
-      "imageAlt": "AZOBSS Artisan AI Workstation with high VRAM RTX PRO GPU",
+      "imageAlt": "Artisan AI Workstation with high VRAM RTX PRO GPU",
       "imageNote": "Visual rujukan: RTX PRO 32GB • AI workstation • full-size",
       "segment": "workstation",
       "cpuBrand": "intel",
@@ -1325,7 +1325,7 @@
     {
       "id": "ultimate-rtx5090",
       "tier": "Ultra",
-      "name": "AZOBSS Ultimate RTX",
+      "name": "Ultimate RTX",
       "tagline": "4K Ultra / AI / Extreme Creator",
       "category": "flagship",
       "resolution": "4K Ultra / AI",
@@ -1384,7 +1384,7 @@
         "AI / machine learning"
       ],
       "image": "./images/flagship-rtx.webp",
-      "imageAlt": "AZOBSS Ultimate RTX build with RTX 5090 class GPU",
+      "imageAlt": "Ultimate RTX build with RTX 5090 class GPU",
       "imageNote": "Visual rujukan: RTX 5090 • 360 AIO • flagship airflow",
       "segment": "package",
       "cpuBrand": "amd",

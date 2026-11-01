@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 2,
+  "version": "1482",
+  "checkedAt": "2026-11-01",
+  "market": "Malaysia",
+  "pricePolicy": "Customer Hardware Shop contains only currently verifiable, single-price products. Out-of-stock, ambiguous multi-capacity pricing, stale/unverified and desktop/laptop entries are excluded.",
+  "products": [
+    {
+      "id": "nb-msi-rtx5070-ventus-12g",
+      "type": "hardware",
+      "category": "GPU",
+      "name": "MSI GeForce RTX 5070 12G VENTUS 2X OC",
+      "price": 2989,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": false,
+      "stock": "source-in-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/msi-rtx50-series-graphics-card/13900-msi-geforce-rtx-5070-12g-ventus-2x-oc-graphics-card.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "12GB GDDR7",
+        "NVIDIA GeForce RTX 5070",
+        "PCIe Gen 5",
+        "3-year MSI Malaysia warranty",
+        "Source verified in stock"
+      ],
+      "image": "https://zortexcomputer.com/cdn/shop/files/MSI_GeForce_RTX_5070_12G_VENTUS_2X_OC1.jpg?v=1776430061",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/gpu.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "MSI GeForce RTX 5070",
+        "RTX 5070 12GB"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 2989
+    },
+    {
+      "id": "nb-msi-b860m-mortar-wifi",
+      "type": "hardware",
+      "category": "Motherboard",
+      "name": "MSI MAG B860M Mortar WiFi",
+      "price": 969,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": false,
+      "stock": "source-in-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/motherboard/14914-msi-mag-b860m-mortar-wifi-gaming-motherboard.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Intel B860",
+        "LGA1851",
+        "4× DDR5 UDIMM",
+        "Wi-Fi 7",
+        "3-year MSI Malaysia warranty",
+        "Source verified in stock"
+      ],
+      "image": "https://cdn.nbplaza.com.my/img/p/6/4/6/3/9/64639-home_default.jpg",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/storage.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "MSI MAG B860M Mortar WiFi",
+        "B860M Mortar WiFi"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 969
+    },
+    {
+      "id": "nb-hyte-y40-white",
+      "type": "hardware",
+      "category": "Case",
+      "name": "HYTE Y40 ATX Case - White",
+      "price": 669,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": false,
+      "stock": "source-in-stock",
+      "sourceName": "NB Plaza",
+      "sourceUrl": "https://www.nbplaza.com.my/pc-components/11649-hyte-y40-atx-case-white-cs-hyte-y40-bw.html",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "ATX Mid Tower",
+        "ITX / mATX / ATX support",
+        "White",
+        "Source verified in stock"
+      ],
+      "image": "https://computerorbit.com/cdn/shop/files/8a100eb0ae0f5c558f9cf35dd6fa8277_700x700.webp?v=1700309973",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "HYTE Y40",
+        "Y40 ATX Case"
+      ],
+      "sourceProvider": "html",
+      "snapshotPrice": 669
+    },
+    {
+      "id": "emarque-phanteks-xt-m3-black",
+      "type": "hardware",
+      "category": "Case",
+      "name": "Phanteks XT M3 mATX Case - Black",
+      "price": 279,
+      "priceMode": "source-snapshot",
+      "requiresConfirmation": false,
+      "stock": "source-live",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/products/phanteks-xt-m3-tg-micro-atx-argb-chassis",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "Micro-ATX / Mini-ITX chassis",
+        "Tempered glass",
+        "D-RGB",
+        "Black variant / source price live"
+      ],
+      "image": "https://phanteks.com/wp-content/uploads/2025/05/XT-M3_Black_00.webp",
+      "imageFallback": "/Upgrade-Parts/assets/hardware/cooling.svg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Phanteks XT M3",
+        "XT M3 mATX"
+      ],
+      "sourceProvider": "shopify",
+      "snapshotPrice": 279
+    }
+  ],
+  "removedFromPublicCatalog": [
+    {
+      "id": "nb-msi-rtx5060-inspire-8g",
+      "reason": "source-out-of-stock"
+    },
+    {
+      "id": "nb-samsung-990-pro",
+      "reason": "multi-capacity-price-ambiguous"
+    },
+    {
+      "id": "nb-kingston-nv3-gen4",
+      "reason": "multi-capacity-price-ambiguous"
+    },
+    {
+      "id": "nb-ddr5-5600-sodimm",
+      "reason": "multi-capacity-price-ambiguous"
+    },
+    {
+      "id": "emarque-nzxt-h3-flow-white",
+      "reason": "source-shows-sold-out"
+    }
+  ],
+  "note": "v1482 strict verified-price Hardware Shop. Desktop/laptop/PC build products live in the PC Builds section instead of this catalog."
+}

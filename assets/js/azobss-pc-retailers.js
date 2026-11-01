@@ -1,4 +1,4 @@
-/* AZOBSS v1480: active verified-price retailer directory. Quote-only/no-price stores are excluded; integrated panel listens only to coalesced main-filter updates. */
+/* AZOBSS v1483: active verified-price retailer directory. Quote-only/no-price stores are excluded; integrated panel listens only to coalesced main-filter updates. */
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
@@ -76,7 +76,7 @@
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
     storeLoadPromise=(async()=>{
       try{
-        const response=await fetch('/PC-Build/pc-retailers.json?v=1480',{signal:controller.signal,cache:'no-store'});
+        const response=await fetch('/PC-Build/pc-retailers.json?v=1483',{signal:controller.signal,cache:'no-store'});
         if(!response.ok)throw Error('Directory unavailable');
         const data=await response.json();
         storeCache=(data.stores||[]).filter(validStore);
@@ -91,9 +91,8 @@
     const keep=select.value||'all';
     select.replaceChildren();
     const all=document.createElement('option');all.value='all';all.textContent='Semua sumber';select.append(all);
-    const az=document.createElement('option');az.value='azobss';az.textContent='AZOBSS';select.append(az);
     for(const item of stores){const option=document.createElement('option');option.value=item.id;option.textContent=item.name;select.append(option);}
-    select.value=(keep==='all'||keep==='azobss'||stores.some(s=>s.id===keep))?keep:'all';
+    select.value=(keep==='all'||stores.some(s=>s.id===keep))?keep:'all';
   }
   function setControl(document,id,value){const el=document.querySelector(id);if(!el)return;el.value=value;el.dispatchEvent(new Event(el.tagName==='INPUT'?'input':'change',{bubbles:true}));}
   function openBuildSearch(build){
@@ -127,7 +126,7 @@
     function render(){
       if(!stores.length)return;
       const state=currentState();
-      const selected=filter(stores,state.category,state.storeId==='azobss'?'all':state.storeId);grid.replaceChildren();
+      const selected=filter(stores,state.category,state.storeId);grid.replaceChildren();
       count.textContent=stores.length+' kedai';
       const totalProducts=selected.reduce((n,s)=>n+(Number(s.productCount)||0),0);
       status.textContent=selected.length?`${selected.length} kedai • ${totalProducts} rekod dalam JSON AZOBSS`:'Tiada kedai sepadan.';
@@ -172,7 +171,7 @@
       form.addEventListener('submit',event=>{event.preventDefault();document.querySelector('#grid')?.scrollIntoView({behavior:'smooth',block:'start'});});
     }
     if(integrated){
-      // v1480: main PC catalog coalesces filter changes into one event. Avoid a second
+      // v1482: main PC catalog coalesces filter changes into one event. Avoid a second
       // listener on every filter control because that duplicated work on "Semua sumber".
       globalThis.addEventListener('azobss-pc-main-filter-change',()=>{expanded=false;render();});
     }

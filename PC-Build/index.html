@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ms">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1481"></script>
+<script src="/assets/js/azobss-long-session-stability.js?v=1483"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
@@ -51,6 +51,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   display:none!important;visibility:hidden!important;pointer-events:none!important
 }
 .market-nav>a,.market-nav>.az-more-nav,.market-nav>.az-repair-nav{flex-shrink:0!important}
+
 </style>
 <script id="azobss-navbar-prepaint-1066">
 (function(){
@@ -131,10 +132,21 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 @media(max-width:650px){.custom-builder-head{padding:18px 15px;flex-direction:column}.builder-controls,.builder-summary{padding:15px}.builder-groups{grid-template-columns:1fr}.builder-price{font-size:34px}.builder-actions{grid-template-columns:1fr}.builder-actions .wide{grid-column:auto}.hero-actions{display:grid;grid-template-columns:1fr}.hero-build-btn{justify-content:center}}
 
 </style>
+<style id="azobss-pc-exact-media-v1483">
+/* v1483: exact source photo only. Crop focuses on the PC and trims store/header artwork without editing source pixels. */
+.build-media{cursor:zoom-in!important;aspect-ratio:4/3!important;background:#08131f!important;overflow:hidden!important}
+.build-media::after,.build-media-note{display:none!important}
+.build-media img{object-fit:cover!important;object-position:center 60%!important;transform:scale(1.12)!important;transition:transform .28s ease,filter .28s ease!important}
+.build-media.pc-focus img{object-position:center 62%!important;transform:scale(1.20)!important}
+@media(hover:hover) and (pointer:fine){
+  .card:hover .build-media img,.build-media:hover img{transform:scale(1.46)!important;filter:brightness(1.05)!important}
+}
+@media(prefers-reduced-motion:reduce){.build-media img{transition:none!important}}
+</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"PC Build Malaysia | AZOBSS","url":"https://www.azobss.com/PC-Build/","description":"Cadangan PC build dari low ke high untuk Office, AutoCAD, CAD/Survey, gaming dan workstation dengan harga rujukan Malaysia yang dikemas kini secara live."}</script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-retailers.css?v=1435">
-<link rel="stylesheet" href="/assets/css/azobss-pc-shop-v1477.css?v=1477">
-<script defer src="/assets/js/azobss-pc-retailers.js?v=1435"></script>
+<link rel="stylesheet" href="/assets/css/azobss-pc-shop-v1483.css?v=1483">
+<script defer src="/assets/js/azobss-pc-retailers.js?v=1483"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -194,10 +206,10 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
   </div>
 </section>
 
-<section class="pc-build-catalog-head" id="pc-builds" aria-label="PC Builds"><div><div class="eyebrow">🖥️ PC BUILDS</div><h2>PC Builds — Harga Disahkan Sahaja</h2><p>AZOBSS + kedai aktif. Produk tanpa harga yang boleh disahkan disembunyikan daripada katalog customer.</p></div><div class="pc-build-result-meta" id="pcBuildResultMeta">Memuatkan produk berharga…</div></section>
+<section class="pc-build-catalog-head" id="pc-builds" aria-label="PC Builds"><div><div class="eyebrow">🖥️ PC BUILDS</div><h2>PC Builds — Harga, Gambar & Spec Disahkan</h2><p>Hanya produk yang harga, stok, gambar dan spesifikasinya dipadankan dengan halaman produk rasmi yang sama dipaparkan.</p></div><div class="pc-build-result-meta" id="pcBuildResultMeta">Memuatkan produk berharga…</div></section>
 <section class="toolbar" aria-label="PC build filters">
 <input class="control search" id="search" type="search" placeholder="Cari CPU, GPU, AutoCAD, Civil 3D, Revit, AI, software atau kegunaan…"/>
-<select class="control" id="retailerStore" aria-label="Sumber PC" data-admin-retailer-filter hidden disabled><option value="all">Semua sumber</option><option value="azobss">AZOBSS</option></select>
+<select class="control" id="retailerStore" aria-label="Sumber PC" data-admin-retailer-filter hidden disabled><option value="all">Semua sumber</option></select>
 <select class="control" id="segment"><option value="all">Semua PC</option><option value="office">Office PC</option><option value="package">Package / Gaming PC</option><option value="workstation">Workstation / AI</option></select>
 <select class="control" id="cpuBrand"><option value="all">Semua CPU</option><option value="amd">AMD</option><option value="intel">Intel</option></select>
 <select class="control" id="resolution"><option value="all">Semua Resolusi/Kelas</option><option value="office">Office</option><option value="1080p">1080p</option><option value="1440p">1440p</option><option value="4k">4K</option><option value="workstation">Workstation</option><option value="ai">AI</option></select>
@@ -263,32 +275,47 @@ function variedRetailPrice(base,key){base=Number(base)||0;const endings=[0,20,40
 function sellingPriceFor(cost,key=''){cost=Number(cost)||0;const rate=markupRateFor(cost);const markup=Math.max(cost*rate,250);const base=cost+markup;const price=variedRetailPrice(base,key||String(Math.round(cost)));return{cost,rate,markup,price}}
 function applyMarketPrice(b,cost,live=false){const p=sellingPriceFor(cost,b?.id||b?.name||'azobss');b.marketPrice=p.cost;b.markupRate=p.rate;b.markupAmount=p.markup;b.price=p.price;b.livePrice=!!live;return b}
 function isRetailerBuild(b){return !!(b?.retailerSnapshot||b?.origin==='retailer')}
+const RETAILER_NAME_ALIASES={
+  'all-it':['ALL IT Hypermarket','ALL IT','ALLIT HYPERMARKET','ALLIT'],
+  'ideal-tech':['Ideal Tech','IDEALTECH','IDEAL TECH'],
+  'viewnet':['Viewnet','VIEWNET'],
+  'techhypermart':['Tech Hypermart','TECH HYPERMART','TECHHYPERMART'],
+  'dotatech':['DOTATECH','DOTA TECH'],
+  'emarque':['EMARQUE','E-MARQUE'],
+  'illegear':['ILLEGEAR'],
+  'brightstar':['Brightstar Computer','BRIGHTSTAR COMPUTER','BRIGHTSTAR'],
+  'jayacom':['Jayacom','JAYACOM'],
+  'nb-plaza':['NB Plaza','NB PLAZA']
+};
 function publicRetailerText(value,b,fallback=''){
-  let out=String(value||'');
+  let out=String(value||'').trim();
   const names=[];
-  for(const raw of [b?.storeName,b?.sourceName]){
+  for(const raw of [b?.storeName,b?.sourceName,...(RETAILER_NAME_ALIASES[String(b?.storeId||'')]||[])]){
     const full=String(raw||'').trim();if(!full)continue;
-    names.push(full,...full.split(/\s*[/|]\s*/g).map(x=>x.trim()).filter(x=>x.length>2));
+    names.push(full);
+    const compact=full.replace(/\s+/g,'');if(compact.length>2)names.push(compact);
   }
   for(const name of [...new Set(names)].sort((a,b)=>b.length-a.length)){
     const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    try{out=out.replace(new RegExp(escaped,'gi'),' ')}catch(_e){}
+    try{out=out.replace(new RegExp('^\\s*'+escaped+'(?=\\s|[-–—:|/]|$)\\s*[-–—:|/]*\\s*','i'),'')}catch(_e){}
   }
-  out=out.replace(/\s*[•|]\s*/g,' ').replace(/^\s*[-–—:|•/]+\s*|\s*[-–—:|•/]+\s*$/g,'').replace(/\s{2,}/g,' ').trim();
+  out=out.replace(/^\s*[-–—:|•/]+\s*|\s*[-–—:|•/]+\s*$/g,'').replace(/\s{2,}/g,' ').trim();
   return out||fallback;
 }
-function publicBuildName(b,admin){return isRetailerBuild(b)&&!admin?publicRetailerText(b?.name,b,'PC Build'):String(b?.name||'PC Build')}
+function publicBuildName(b,admin){return isRetailerBuild(b)?publicRetailerText(b?.name,b,'PC Build'):String(b?.name||'PC Build')}
 function publicBuildTagline(b,admin){return isRetailerBuild(b)&&!admin?'Harga jual AZOBSS berdasarkan harga sumber disahkan':String(b?.tagline||'')}
 function publicBuildBadge(b,admin){return isRetailerBuild(b)&&!admin?'PC BUILD':String(b?.badge||'PC BUILD')}
-function publicBuildImageNote(b,admin){return isRetailerBuild(b)&&!admin?'Visual rujukan':String(b?.imageNote||'Gambar rujukan')}
+function publicBuildImageNote(b,admin){return isRetailerBuild(b)&&b?.mediaVerified===true?'Gambar produk sebenar':String(b?.imageNote||'')}
 function publicBuildImageAlt(b,admin){return isRetailerBuild(b)&&!admin?publicRetailerText(b?.imageAlt,b,publicBuildName(b,false)):String(b?.imageAlt||b?.name||'PC Build')}
 function publicBuildNote(b,admin){if(isRetailerBuild(b)&&!admin){const raw=String(b?.sourceCheckedAt||'').trim(),dt=raw?new Date(raw):null,date=dt&&Number.isFinite(dt.getTime())?dt.toLocaleDateString('ms-MY',{day:'2-digit',month:'2-digit',year:'numeric'}):'';return date?`Harga sumber disahkan pada ${date}.`:'Harga sumber telah disahkan.'}return String(b?.note||'')}
 const RETAILER_MAX_PRICE_AGE_MS=14*24*60*60*1000;
 function retailerPriceVerified(b){
-  if(!isRetailerBuild(b)||b?.quoteRequired||b?.priceVerified!==true)return false;
-  const n=Number(b?.price),checked=String(b?.sourceCheckedAt||'').trim(),url=String(b?.sourceUrl||'').trim(),type=String(b?.priceType||'').toLowerCase(),checkedMs=Date.parse(checked);
+  if(!isRetailerBuild(b)||b?.quoteRequired||b?.priceVerified!==true||b?.mediaVerified!==true||b?.specVerified!==true||b?.availabilityVerified!==true||String(b?.availability||'').toLowerCase()!=='available')return false;
+  const n=Number(b?.price),checked=String(b?.sourceCheckedAt||'').trim(),url=String(b?.sourceUrl||'').trim(),img=String(b?.image||'').trim(),checkedMs=Date.parse(checked),parts=Array.isArray(b?.parts)?b.parts:[];
   const fresh=Number.isFinite(checkedMs)&&Date.now()-checkedMs<=RETAILER_MAX_PRICE_AGE_MS;
-  return Number.isFinite(n)&&n>0&&fresh&&!!url&&(type.includes('snapshot')||type.includes('harga kedai'));
+  const exactProduct=/\/products\//i.test(url)||/\/[^/]+\/\d+[-/]/i.test(url);
+  const exactImage=/^https:\/\//i.test(img)&&!/\/PC-Build\/images\//i.test(img)&&!/^\.\//.test(img);
+  return Number.isFinite(n)&&n>0&&fresh&&exactProduct&&exactImage&&parts.length>=7;
 }
 function buildPriceNumber(b){
   if(!b)return null;
@@ -338,8 +365,7 @@ function render(){
   let list=[...(DATA.builds||[])].filter(sellableBuild);
   const admin=isAdminViewer();
   const q=els.search.value.trim().toLowerCase(),qTokens=q.split(/\s+/).filter(Boolean),storeId=isAdminViewer()?(els.retailerStore?.value||'all'):'all',seg=els.segment.value,cpu=els.cpuBrand.value,res=els.resolution.value,gpu=els.gpuBrand.value,gpuModel=els.gpuModel.value,cat=els.category.value,max=Number(els.budget.value||0);
-  if(storeId==='azobss')list=list.filter(b=>!isRetailerBuild(b));
-  else if(storeId!=='all')list=list.filter(b=>isRetailerBuild(b)&&b.storeId===storeId);
+  if(storeId!=='all')list=list.filter(b=>isRetailerBuild(b)&&b.storeId===storeId);
   if(qTokens.length)list=list.filter(b=>{const hay=JSON.stringify(b).toLowerCase();return qTokens.every(t=>hay.includes(t))});
   if(seg!=='all')list=list.filter(b=>b.segment===seg);
   if(cpu!=='all')list=list.filter(b=>b.cpuBrand===cpu);
@@ -364,7 +390,7 @@ function render(){
       :`<div class="ref admin-price-source">Sumber live: <a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener">${esc(b.sourceName)}</a><br>Kos rujukan: ${fmt(b.marketPrice)} · Markup ${Math.round((b.markupRate||0)*100)}% · disahkan ${esc(b.liveFetchedAt||'semasa')}</div>`):'';
     const customize=retailer?'':`<a class="btn customize" href="/PC-Build/Build-Sendiri/?preset=${encodeURIComponent(b.id)}">🧩 Ubah / Build Sendiri</a>`;
     const retailerMeta=retailer&&admin?`<span>${esc(storeName)}</span>`:'';
-    return `<article class="card pc-build-card${retailer?' retailer-build-card':''}${SHARED_PC_ID===b.id?' is-shared':''}${SHARED_PC_ID===b.id&&Date.now()<sharedPcEffectUntil?' shared-arrival':''}" data-product-id="${esc(b.id)}" data-pc-build="1" data-retailer="${retailer?'1':'0'}" data-live-price="${!retailer&&b.livePrice?'1':'0'}" data-category="PC Build" data-price="${esc(buildPriceNumber(b)||'')}" data-image="${esc(b.image||'')}" style="--accent:${({green:'#22c55e',cyan:'#22d3ee',blue:'#60a5fa',purple:'#c084fc',orange:'#fb923c',red:'#fb7185'})[b.accent]||'#22d3ee'}">${SHARED_PC_ID===b.id?'<div class="shared-glow-frame" aria-hidden="true"></div><div class="shared-link-badge">🔗 PC dari link share</div>':''}${b.image?`<div class="build-media"><img src="${esc(b.image)}" alt="${esc(displayImageAlt)}" loading="lazy" decoding="async"/><span class="build-media-note">${esc(displayImageNote)}</span></div>`:''}<div class="card-head"><div class="row"><div class="tier">${esc(b.tier)}</div><div class="badge">${esc(displayBadge)}</div></div><h2>${esc(displayName)}</h2><div class="tagline">${esc(displayTagline)}</div><div class="build-meta">${retailerMeta}<span>${esc(buildSegmentLabel(b.segment))}</span><span>${esc(buildCpuLabel(b.cpuBrand))}</span><span>${esc(b.gpuModel||'GPU')}</span><span>${esc(b.resolution||'')}</span></div><div class="price"><strong>${esc(priceText)}</strong><span>${priceLabel}</span></div>${sourceAdmin}</div><div class="specs">${(b.parts||[]).map(p=>`<div class="spec"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('')}</div><div class="fit"><div class="fit-title">Sesuai untuk</div><ul>${(b.bestFor||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>${b.softwareFit?.length?`<div class="fit"><div class="fit-title">Software sesuai</div><div class="software-list">${b.softwareFit.map(x=>`<span class="software-chip">${esc(x)}</span>`).join('')}</div></div>`:''}<div class="note">${esc(displayNote)}</div><div class="actions">${customize}<button class="btn" data-copy="${esc(b.id)}" type="button">Salin Spec</button><button class="btn share" data-share="${esc(b.id)}" type="button">🔗 Share</button><a class="btn primary order" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya / Tempah</a></div></article>`;
+    return `<article class="card pc-build-card${retailer?' retailer-build-card':''}${SHARED_PC_ID===b.id?' is-shared':''}${SHARED_PC_ID===b.id&&Date.now()<sharedPcEffectUntil?' shared-arrival':''}" data-product-id="${esc(b.id)}" data-pc-build="1" data-retailer="${retailer?'1':'0'}" data-live-price="${!retailer&&b.livePrice?'1':'0'}" data-category="PC Build" data-price="${esc(buildPriceNumber(b)||'')}" data-image="${esc(b.image||'')}" style="--accent:${({green:'#22c55e',cyan:'#22d3ee',blue:'#60a5fa',purple:'#c084fc',orange:'#fb923c',red:'#fb7185'})[b.accent]||'#22d3ee'}">${SHARED_PC_ID===b.id?'<div class="shared-glow-frame" aria-hidden="true"></div><div class="shared-link-badge">🔗 PC dari link share</div>':''}${b.image?`<div class="build-media ${esc(b.imageCrop||'product-focus')}"><img src="${esc(b.image)}" alt="${esc(displayImageAlt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="var c=this.closest('article');if(c)c.remove()"/></div>`:''}<div class="card-head"><div class="row"><div class="tier">${esc(b.tier)}</div><div class="badge">${esc(displayBadge)}</div></div><h2>${esc(displayName)}</h2><div class="tagline">${esc(displayTagline)}</div><div class="build-meta">${retailerMeta}<span>${esc(buildSegmentLabel(b.segment))}</span><span>${esc(buildCpuLabel(b.cpuBrand))}</span><span>${esc(b.gpuModel||'GPU')}</span><span>${esc(b.resolution||'')}</span></div><div class="price"><strong>${esc(priceText)}</strong><span>${priceLabel}</span></div>${sourceAdmin}</div><div class="specs">${(b.parts||[]).map(p=>`<div class="spec"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('')}</div>${b.bestFor?.length?`<div class="fit"><div class="fit-title">Sesuai untuk</div><ul>${(b.bestFor||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${b.softwareFit?.length?`<div class="fit"><div class="fit-title">Software sesuai</div><div class="software-list">${b.softwareFit.map(x=>`<span class="software-chip">${esc(x)}</span>`).join('')}</div></div>`:''}<div class="note">${esc(displayNote)}</div><div class="actions">${customize}<button class="btn" data-copy="${esc(b.id)}" type="button">Salin Spec</button><button class="btn share" data-share="${esc(b.id)}" type="button">🔗 Share</button><a class="btn primary order" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya / Tempah</a></div></article>`;
   }).join('');
   document.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>copyBuild(DATA.builds.find(b=>b.id===btn.dataset.copy)));
   document.querySelectorAll('[data-share]').forEach(btn=>btn.onclick=()=>shareBuild(DATA.builds.find(b=>b.id===btn.dataset.share),btn));
@@ -401,22 +427,22 @@ async function loadLivePrices(attempt=0){
     const r=await fetch(LIVE_PRICE_API+'?t='+Date.now(),{cache:'no-store',signal:ctrl.signal});if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json(),map=new Map((d.prices||[]).filter(x=>x&&x.ok&&x.available!==false&&Number(x.price)>0).map(x=>[x.id,x]));let updated=0;
     base.forEach(b=>{b.priceVerified=false;b.livePrice=false;b.available=false;const p=map.get(b.id);if(!p)return;applyMarketPrice(b,Number(p.price),true);b.priceVerified=true;b.available=true;b.liveFetchedAt=p.fetchedAt||d.fetchedAt||'';if(p.sourceName)b.sourceName=p.sourceName;if(p.sourceUrl)b.sourceUrl=p.sourceUrl;updated++});
-    DATA.builds=[...base.filter(sellableBuild),...(DATA.retailerBuilds||[]).filter(sellableBuild)];populateGpuModels();schedulePcRender(false);renderCustomBuilder();
+    DATA.builds=[...(DATA.retailerBuilds||[]).filter(sellableBuild)];populateGpuModels();schedulePcRender(false);renderCustomBuilder();
     const when=new Date(d.fetchedAt||Date.now()).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});
-    if(updated===base.length)setLiveStatus(`Harga live AZOBSS: ${updated}/${base.length} • ${when}`,'live-ok');
-    else if(updated>0)setLiveStatus(`Harga live AZOBSS: ${updated}/${base.length} • yang gagal disembunyikan`,'live-ok');
-    else setLiveStatus('Tiada harga live AZOBSS disahkan • produk AZOBSS disembunyikan','live-bad');
+    if(updated===base.length)setLiveStatus(`Harga asas Build Sendiri: ${updated}/${base.length} sumber live • ${when}`,'live-ok');
+    else if(updated>0)setLiveStatus(`Harga asas Build Sendiri: ${updated}/${base.length} sumber live`,'live-ok');
+    else setLiveStatus('Harga asas Build Sendiri belum dapat disahkan','live-bad');
   }catch(e){console.warn('AZOBSS live PC pricing:',e);DATA.builds=[...(DATA.retailerBuilds||[]).filter(sellableBuild)];schedulePcRender(false);if(attempt<1){setLiveStatus('Harga live belum dapat • cuba semula…');setTimeout(()=>loadLivePrices(1),12000)}else setLiveStatus('Harga live gagal • produk tanpa pengesahan disembunyikan','live-bad')}
   finally{clearTimeout(timer)}
 }
 
 async function loadRetailerCatalogBuilds(){
   try{
-    const manifestRes=await fetch('./retailers/index.json?v=1480',{cache:'no-store'});if(!manifestRes.ok)throw new Error('Retailer manifest HTTP '+manifestRes.status);
-    const manifest=await manifestRes.json(),catalogs=Array.isArray(manifest.catalogs)?manifest.catalogs:[];
-    const settled=await Promise.allSettled(catalogs.map(async c=>{const r=await fetch(c.file+'?v=1480',{cache:'no-store'});if(!r.ok)throw new Error(`${c.id} HTTP ${r.status}`);return r.json()}));
+    const manifestRes=await fetch('./retailers/index.json?v=1483',{cache:'no-store'});if(!manifestRes.ok)throw new Error('Retailer manifest HTTP '+manifestRes.status);
+    const manifest=await manifestRes.json(),catalogs=(Array.isArray(manifest.catalogs)?manifest.catalogs:[]).filter(c=>c?.catalogStatus==='active');
+    const settled=await Promise.allSettled(catalogs.map(async c=>{const r=await fetch(c.file+'?v=1483',{cache:'no-store'});if(!r.ok)throw new Error(`${c.id} HTTP ${r.status}`);return r.json()}));
     const products=[];
-    settled.forEach((result,i)=>{if(result.status!=='fulfilled'){console.warn('Retailer catalog gagal:',catalogs[i]?.id,result.reason);return}const cat=result.value;for(const raw of (cat.products||[])){if(!raw||!raw.id)continue;products.push({...raw,origin:'retailer',retailerSnapshot:true,storeId:raw.storeId||cat.storeId,storeName:raw.storeName||cat.storeName,sourceCheckedAt:raw.sourceCheckedAt||cat.checkedAt})}});
+    settled.forEach((result,i)=>{if(result.status!=='fulfilled'){console.warn('Retailer catalog gagal:',catalogs[i]?.id,result.reason);return}const cat=result.value;for(const raw of (cat.products||[])){if(!raw||!raw.id)continue;products.push({...raw,name:publicRetailerText(raw.name,{...raw,storeId:raw.storeId||cat.storeId,storeName:raw.storeName||cat.storeName,sourceName:raw.sourceName},raw.name||'PC Build'),origin:'retailer',retailerSnapshot:true,storeId:raw.storeId||cat.storeId,storeName:raw.storeName||cat.storeName,sourceCheckedAt:raw.sourceCheckedAt||cat.checkedAt})}});
     return products;
   }catch(e){console.warn('AZOBSS retailer catalogs:',e);return []}
 }
@@ -435,8 +461,8 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1481" type="module"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1481.js?v=1481"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1483" type="module"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1483.js?v=1483"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

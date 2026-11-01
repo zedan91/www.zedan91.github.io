@@ -1,41 +1,41 @@
 {
   "schemaVersion": 1,
-  "version": "1480",
-  "checkedAt": "2026-11-01",
+  "version": "1483",
+  "checkedAt": "2026-11-02",
   "catalogs": [
     {
       "id": "all-it",
       "name": "ALL IT Hypermarket",
       "file": "./retailers/all-it.json",
       "count": 10,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "ideal-tech",
       "name": "Ideal Tech",
       "file": "./retailers/ideal-tech.json",
       "count": 13,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "viewnet",
       "name": "Viewnet",
       "file": "./retailers/viewnet.json",
       "count": 15,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "techhypermart",
       "name": "Tech Hypermart",
       "file": "./retailers/techhypermart.json",
       "count": 9,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "dotatech",
       "name": "DOTATECH",
       "file": "./retailers/dotatech.json",
-      "count": 14,
+      "count": 1,
       "catalogStatus": "active"
     },
     {
@@ -43,36 +43,36 @@
       "name": "EMARQUE",
       "file": "./retailers/emarque.json",
       "count": 18,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "illegear",
       "name": "ILLEGEAR",
       "file": "./retailers/illegear.json",
       "count": 20,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "brightstar",
       "name": "Brightstar Computer",
       "file": "./retailers/brightstar.json",
       "count": 10,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "jayacom",
       "name": "Jayacom",
       "file": "./retailers/jayacom.json",
       "count": 6,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     },
     {
       "id": "nb-plaza",
       "name": "NB Plaza",
       "file": "./retailers/nb-plaza.json",
       "count": 6,
-      "catalogStatus": "active"
+      "catalogStatus": "verification-required"
     }
   ],
-  "pricePolicy": "Customer hanya melihat produk dengan harga sumber disahkan dan snapshot tidak lebih 14 hari. Sumber tanpa harga/quote-only tidak termasuk katalog aktif."
+  "pricePolicy": "v1483: customer-visible PC Builds require current verified price + availability + exact product-page image + detailed matching specifications. Generic/reference images and unverified rows are hidden."
 }
