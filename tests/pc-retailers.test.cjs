@@ -6,10 +6,10 @@ const main=fs.readFileSync(path.join(root,'PC-Build/index.html'),'utf8');
 const builder=fs.readFileSync(path.join(root,'PC-Build/Build-Sendiri/index.html'),'utf8');
 
 test('retailer catalogs remain price-private while current candidates come from exact product mappings',()=>{
- assert.equal(String(manifest.version),'1485');assert.ok(manifest.catalogs.length>=1);
+ assert.equal(String(manifest.version),'1486');assert.ok(manifest.catalogs.length>=1);
  assert.match(runtime,/const base=readJson\(buildFile,\{builds:\[\]\}\)/);
  assert.ok(runtime.includes('product|products'));
- assert.match(runtime,/sourceIdentityMatches/);assert.match(runtime,/availability==='available'/);
+ assert.match(runtime,/buildUrlIdentityMatches/);assert.match(runtime,/availability==='available'/);
  assert.match(runtime,/mediaOk/);assert.match(runtime,/specOk/);
 });
 
@@ -21,7 +21,7 @@ test('main PC-Build has one retailer data owner and fetches live builds from bac
 });
 
 test('public builder/catalog files contain no pricing secrets',()=>{
- for(const rel of ['PC-Build/pc-build-data.json','PC-Build/pc-custom-builder-data.json','PC-Build/pc-full-builder-fallback.json','PC-Build/pc-shop-products-v1485.json']){
+ for(const rel of ['PC-Build/pc-build-data.json','PC-Build/pc-custom-builder-data.json','PC-Build/pc-full-builder-fallback.json','PC-Build/pc-shop-products-v1486.json']){
   const text=fs.readFileSync(path.join(root,rel),'utf8');
   assert.doesNotMatch(text,/"(?:marketPrice|snapshotPrice|unitCost|markupRate|markupAmount|marketDelta|liveMarketDelta|cost|price)"\s*:/,rel);
  }

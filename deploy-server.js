@@ -18719,7 +18719,7 @@ async function azobssPcBuildFetch(url, asJson = false) {
         signal: controller.signal,
         redirect: "follow",
         headers: {
-          "User-Agent": reader ? "Mozilla/5.0 AZOBSSReaderFallback/1.0" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSSPriceBot/1.0",
+          "User-Agent": reader ? "Mozilla/5.0 AZOBSSReaderFallback/1.0" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
           "Accept": asJson ? "application/json,text/javascript,*/*;q=0.8" : "text/html,application/xhtml+xml,text/plain,application/json;q=0.9,*/*;q=0.8",
           "Accept-Language": "en-MY,en;q=0.9,ms-MY;q=0.8",
           "Cache-Control": "no-cache",
@@ -18765,10 +18765,31 @@ async function azobssPcBuildReadShopify(source) {
   const product = await azobssPcBuildFetch(azobssPcBuildShopifyJsUrl(source.sourceUrl), true);
   const variants = Array.isArray(product?.variants) ? product.variants : [];
   const requiredKeywords = Array.isArray(source.variantKeywords) ? source.variantKeywords.filter(Boolean) : [];
-  let variant = requiredKeywords.length
-    ? variants.find((v) => azobssPcBuildVariantMatches(v?.title, requiredKeywords))
-    : (variants.length === 1 ? variants[0] : null);
-  if (!variant) throw new Error(requiredKeywords.length ? "Exact Shopify variant not found" : "Shopify variant is ambiguous");
+  let variant = null;
+  let variantSelection = '';
+  try {
+    const u = new URL(source.sourceUrl);
+    const variantId = String(u.searchParams.get('variant') || '').trim();
+    if (variantId) {
+      variant = variants.find((v) => String(v?.id || '') === variantId) || null;
+      if (variant) variantSelection = 'url-variant';
+    }
+  } catch (_) {}
+  if (!variant && requiredKeywords.length) {
+    variant = variants.find((v) => azobssPcBuildVariantMatches(v?.title, requiredKeywords)) || null;
+    if (variant) variantSelection = 'keyword-variant';
+  }
+  if (!variant && variants.length === 1) {
+    variant = variants[0];
+    variantSelection = 'single-variant';
+  }
+  // v1486: a Shopify product can have multiple exact selectable variants. When the URL does
+  // not pin one, use the first currently available variant and disclose its title on the card.
+  if (!variant && variants.length > 1) {
+    variant = variants.find((v) => v?.available === true) || variants[0] || null;
+    if (variant) variantSelection = variant?.available === true ? 'first-available-variant' : 'first-variant';
+  }
+  if (!variant) throw new Error(requiredKeywords.length ? "Exact Shopify variant not found" : "Shopify product has no variants");
   const cents = Number(variant?.price);
   const price = Number.isFinite(cents) && cents > 0 ? cents / 100 : 0;
   if (!azobssPcBuildCleanPrice(price)) throw new Error("Shopify variant price not found");
@@ -18781,7 +18802,11 @@ async function azobssPcBuildReadShopify(source) {
     availability: variant?.available === true ? "available" : "unavailable",
     productTitle: String(product?.title || "").trim(),
     image,
-    sourceText: `${String(product?.title || '')} ${String(product?.description || '')} ${String(product?.vendor || '')}`.trim()
+    sourceText: `${String(product?.title || '')}
+Variant: ${String(variant?.title || '')}
+${String(product?.description || '')}
+${String(product?.vendor || '')}`.trim(),
+    variantSelection
   };
 }
 

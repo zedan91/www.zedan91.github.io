@@ -5,7 +5,9 @@ const path=require('node:path');
 const {createPcShopRuntime,CAPABILITIES,RELEASE}=require('../lib/azobss-pc-shop-runtime');
 const root=path.resolve(__dirname,'..');
 
-function runtimeWith({html='<meta property="og:image" content="https://example.com/p.jpg"><meta property="og:title" content="MSI GeForce RTX 5070 12G VENTUS 2X OC"> MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989',shopify={price:3099,available:true,variant:'RX7600 8GB',productTitle:'FA-GAMING R5 Radeon RX 7600',image:'https://example.com/dota.jpg',sourceText:'AMD Ryzen 5 5500 Radeon RX 7600'}}={}){
+const buildHtml=`Title: IDEALTECH Radiance Stellar NVIDIA® GeForce RTX™ 5070 — Ideal Tech PC\n# IDEALTECH Radiance Stellar NVIDIA® GeForce RTX™ 5070\n![Selected Case](https://idealtech.com.my/wp-content/uploads/case.jpg)\nProcessor\nAMD Ryzen 5 7500F\nGPU\nNVIDIA GeForce RTX 5070 12GB\nCooler\nDEEPCOOL AG400 G2 ARGB\nMotherboard\nMSI B650M GAMING WIFI\nRAM\n16GB DDR5 6000MHz\nSSD\n500GB Gen4 NVMe M.2 SSD\nPower Supply\nANTEC CSK750 750W 80+ Bronze\nCase\nANTEC C2M ARGB\nOS\nWindows 11 Home Free Unactivated\nOrder Total RM6,299.00\nAdd to cart`;
+
+function runtimeWith({html='Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI GeForce RTX 5070 12G VENTUS 2X OC\n![GPU](https://example.com/p.jpg)\nMSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989',shopify={price:3099,available:true,variant:'RX 7600 8GB',productTitle:'FA-GAMING R5 Radeon RX 7600',image:'https://example.com/dota.jpg',sourceText:'PROCESSOR: AMD Ryzen 5 5500\nGRAPHICS CARD: Radeon RX 7600\nMOTHERBOARD: B550M\nMEMORY: 16GB DDR4\nSTORAGE: 500GB NVMe SSD\nPOWER SUPPLY: 650W Bronze\nCASE: mATX Airflow'}}={}){
   const sent=[];
   const rt=createPcShopRuntime({
     rootDir:root,
@@ -15,21 +17,21 @@ function runtimeWith({html='<meta property="og:image" content="https://example.c
     readBody:async()=>'',
     send:(res,status,body,type,headers)=>{const row={status,body,type,headers};sent.push(row);return row;},
     cleanText:(v,n=300)=>String(v||'').slice(0,n),
-    pcBuildFetch:async()=>html,
+    pcBuildFetch:async(url)=>String(url).includes('amd-rtx5070-gamingpc')?buildHtml:html,
     pcBuildReadShopify:async()=>shopify,
     pcBuildPriceFromJsonLd:()=>0,
-    pcBuildPriceFromHtml:()=>2989
+    pcBuildPriceFromHtml:(text)=>String(text).includes('6,299')?6299:2989
   });
   return {rt,sent};
 }
 
-test('v1485 advertises strict live availability, stale-cart rejection and private pricing',()=>{
-  assert.equal(RELEASE,'1485');
+test('v1486 advertises strict live availability, stale-cart rejection and private pricing',()=>{
+  assert.equal(RELEASE,'1486');
   for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy'])assert.equal(CAPABILITIES[k],true,k);
 });
 
 test('unknown hardware availability is hidden instead of assumed available',async()=>{
-  const {rt}=runtimeWith({html:'MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989'});
+  const {rt}=runtimeWith({html:'Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\nMSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989'});
   const c=await rt.getLiveCatalog(true);
   const nb=c.internalProducts.filter(x=>String(x.sourceName||'').includes('NB Plaza'));
   assert.ok(nb.length>=2);assert.ok(nb.every(x=>x.availability==='unknown'));
@@ -37,7 +39,7 @@ test('unknown hardware availability is hidden instead of assumed available',asyn
 });
 
 test('explicit out-of-stock hardware is hidden even when a price exists',async()=>{
-  const {rt}=runtimeWith({html:'MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989 OUT OF STOCK'});
+  const {rt}=runtimeWith({html:'Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\nMSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989 OUT OF STOCK'});
   const c=await rt.getLiveCatalog(true);
   const nb=c.internalProducts.filter(x=>String(x.sourceName||'').includes('NB Plaza'));
   assert.ok(nb.length>=2);assert.ok(nb.every(x=>x.available===false));
@@ -45,7 +47,7 @@ test('explicit out-of-stock hardware is hidden even when a price exists',async()
 });
 
 test('public live hardware contains selling price/spec/source but no cost or markup fields',async()=>{
-  const {rt}=runtimeWith({html:'MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989 IN STOCK ADD TO CART'});
+  const {rt}=runtimeWith({html:'Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI GeForce RTX 5070 12G VENTUS 2X OC\n![GPU](https://example.com/p.jpg)\nMSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989 IN STOCK ADD TO CART'});
   const c=await rt.getLiveCatalog(true);
   assert.ok(c.publicProducts.length>=1);
   for(const p of c.publicProducts){
@@ -54,20 +56,20 @@ test('public live hardware contains selling price/spec/source but no cost or mar
   }
 });
 
-test('retailer PC Builds are served only through backend live verification and public output hides cost',async()=>{
+test('retailer PC Builds use live page specs instead of stale static parts and hide cost',async()=>{
   const {rt,sent}=runtimeWith();
-  await rt.handle({method:'GET'}, {}, {pathname:'/api/pc-shop/builds',query:{}});
+  await rt.handle({method:'GET'}, {}, {pathname:'/api/pc-shop/builds',query:{refresh:'1'}});
   assert.equal(sent.at(-1).status,200);
   const body=JSON.parse(sent.at(-1).body);
   assert.equal(body.ok,true);assert.ok(body.builds.length>=1);
-  for(const b of body.builds){
-    assert.equal(b.priceStatus,'live');assert.equal(b.availability,'available');assert.equal(b.priceVerified,true);
-    for(const k of ['sourcePrice','unitCost','markupRate','markupAmount','cost'])assert.equal(Object.hasOwn(b,k),false,`${b.id}:${k}`);
-  }
+  const b=body.builds.find(x=>String(x.sourceUrl||'').includes('amd-rtx5070-gamingpc'))||body.builds[0];
+  assert.equal(b.priceStatus,'live');assert.equal(b.availability,'available');assert.equal(b.priceVerified,true);
+  assert.ok(b.parts.some(x=>x[0]==='CPU'&&/7500F/i.test(x[1])));assert.ok(b.parts.some(x=>x[0]==='GPU'&&/5070/i.test(x[1])));
+  for(const k of ['sourcePrice','unitCost','markupRate','markupAmount','cost'])assert.equal(Object.hasOwn(b,k),false,`${b.id}:${k}`);
 });
 
 test('client Buy Now uses single-item checkout and stale cart is sanitized against live catalog',()=>{
-  const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1485.js'),'utf8');
+  const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1486.js'),'utf8');
   assert.match(js,/if\(buyNow\)\{\s*openCheckout\('checkout',\[item\]\);\s*return\s*\}/);
   assert.match(js,/function syncCartPrices\(strict=false\)/);
   assert.match(js,/if\(!p\)\{if\(strict\)\{removed\+\+/);
@@ -77,7 +79,7 @@ test('client Buy Now uses single-item checkout and stale cart is sanitized again
 
 test('checkout revalidates live catalog before duplicate reuse and image viewer supports tap/click',()=>{
   const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'utf8');
-  const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1485.js'),'utf8');
+  const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1486.js'),'utf8');
   const revalidate=runtime.indexOf('const live = await getLiveCatalog(true)');
   const duplicate=runtime.indexOf('const duplicate = await findRecentDuplicate',revalidate);
   assert.ok(revalidate>0&&duplicate>revalidate);

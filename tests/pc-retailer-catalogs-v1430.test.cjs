@@ -3,8 +3,8 @@ const root=path.join(__dirname,'../PC-Build');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'retailers/index.json'),'utf8'));
 const sensitive=new Set(['price','marketPrice','snapshotPrice','cost','unitCost','markupRate','markupAmount','marketDelta','liveMarketDelta']);
 
-test('v1485 retailer manifest keeps curated catalogs but stores no public source/selling price',()=>{
- assert.equal(String(manifest.version),'1485');assert.equal(manifest.catalogs.length,10);
+test('v1486 retailer manifest keeps curated catalogs but stores no public source/selling price',()=>{
+ assert.equal(String(manifest.version),'1486');assert.equal(manifest.catalogs.length,10);
  const ids=new Set(),productIds=new Set();let total=0,exact=0;
  for(const row of manifest.catalogs){
   assert.ok(!ids.has(row.id),row.id);ids.add(row.id);

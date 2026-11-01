@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1485",
+  "version": 1486,
   "checkedAt": "2026-11-02",
   "market": "Malaysia",
   "products": [
@@ -42,7 +42,8 @@
         "MSI GeForce RTX 5070 12G VENTUS 2X OC",
         "Reference: 912-V532-009"
       ],
-      "sourceProvider": "html"
+      "sourceProvider": "html",
+      "sourceListUrl": "https://www.nbplaza.com.my/145-pc-components"
     },
     {
       "id": "nb-msi-b860m-mortar-wifi",
@@ -84,7 +85,8 @@
         "MSI MAG B860M Mortar WiFi Gaming Motherboard",
         "MAG B860M MORTAR WIFI"
       ],
-      "sourceProvider": "html"
+      "sourceProvider": "html",
+      "sourceListUrl": "https://www.nbplaza.com.my/147-motherboard"
     },
     {
       "id": "emarque-nzxt-h3-flow-white",
