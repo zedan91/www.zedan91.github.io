@@ -1,5 +1,5 @@
 {
-  "version": "1484",
+  "version": "1485",
   "checkedAt": "2026-11-02",
   "stores": [
     {
@@ -20,5 +20,5 @@
       "productCount": 1
     }
   ],
-  "pricePolicy": "v1484: retailer PC Builds are customer-visible only after backend live verification of current price, availability, exact product media and matching specifications; public JSON stores no selling/source price."
+  "pricePolicy": "v1485: exact product pages are verified by backend for current price, availability, media and CPU/GPU identity; no public source-cost snapshot is used."
 }

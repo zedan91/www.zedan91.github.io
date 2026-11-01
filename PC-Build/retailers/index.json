@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1484",
+  "version": "1485",
   "checkedAt": "2026-11-02",
   "catalogs": [
     {
@@ -74,5 +74,5 @@
       "catalogStatus": "verification-required"
     }
   ],
-  "pricePolicy": "v1484: backend-live-only verification. Public catalog stores no source/selling price; unavailable or unknown products are hidden."
+  "pricePolicy": "v1485 backend-live-only: current customer PC Builds come from exact live product mappings plus exact retailer records; archived snapshot catalogs never supply checkout prices."
 }

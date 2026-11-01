@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1484",
+  "version": "1485",
   "checkedAt": "2026-11-02",
   "market": "Malaysia",
   "products": [
@@ -85,7 +85,69 @@
         "MAG B860M MORTAR WIFI"
       ],
       "sourceProvider": "html"
+    },
+    {
+      "id": "emarque-nzxt-h3-flow-white",
+      "type": "hardware",
+      "category": "Case",
+      "name": "NZXT H3 Flow White mATX Case",
+      "priceMode": "backend-live-only",
+      "requiresConfirmation": true,
+      "stock": "check-live",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/products/nzxt-h3-flow-white-micro-atx-desktop-chassis",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "mATX chassis",
+        "Current configurator snapshot",
+        "Compatibility must be checked before order"
+      ],
+      "image": "https://files.ekmcdn.com/292980/resources/products/07-h3-hero2-w.jpg",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "NZXT H3 Flow",
+        "H3 Flow White"
+      ],
+      "sourceProvider": "shopify",
+      "availability": "unknown",
+      "availabilityVerified": false,
+      "sourceVerified": true,
+      "mediaVerified": true,
+      "specVerified": true,
+      "verifiedAt": "2026-11-02T00:00:00+08:00",
+      "imageCrop": "product-focus"
+    },
+    {
+      "id": "emarque-phanteks-xt-m3-black",
+      "type": "hardware",
+      "category": "Case",
+      "name": "Phanteks XT M3 mATX Case - Black",
+      "priceMode": "backend-live-only",
+      "requiresConfirmation": true,
+      "stock": "check-live",
+      "sourceName": "EMARQUE",
+      "sourceUrl": "https://emarque.co/products/phanteks-xt-m3-tg-micro-atx-argb-chassis",
+      "sourceCheckedAt": "2026-11-01",
+      "specs": [
+        "mATX chassis",
+        "Current configurator snapshot",
+        "Compatibility must be checked before order"
+      ],
+      "image": "https://phanteks.com/wp-content/uploads/2025/05/XT-M3_Black_00.webp",
+      "imageType": "real-product-photo",
+      "sourceMatch": [
+        "Phanteks XT M3",
+        "XT M3 mATX"
+      ],
+      "sourceProvider": "shopify",
+      "availability": "unknown",
+      "availabilityVerified": false,
+      "sourceVerified": true,
+      "mediaVerified": true,
+      "specVerified": true,
+      "verifiedAt": "2026-11-02T00:00:00+08:00",
+      "imageCrop": "product-focus"
     }
   ],
-  "note": "v1484 strict public metadata only. Source cost/snapshot prices are not stored in public JSON; backend live verification determines availability and final AZOBSS selling price."
+  "note": "v1485 live-only public metadata. Backend retries blocked retailer pages through a public text reader; no snapshot price is used for checkout."
 }

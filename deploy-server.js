@@ -18711,22 +18711,39 @@ function azobssPcBuildCleanPrice(value) {
 }
 
 async function azobssPcBuildFetch(url, asJson = false) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AZOBSS_PC_BUILD_PRICE_TIMEOUT_MS);
+  const doFetch = async (target, reader = false) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), AZOBSS_PC_BUILD_PRICE_TIMEOUT_MS);
+    try {
+      const response = await fetch(target, {
+        signal: controller.signal,
+        redirect: "follow",
+        headers: {
+          "User-Agent": reader ? "Mozilla/5.0 AZOBSSReaderFallback/1.0" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSSPriceBot/1.0",
+          "Accept": asJson ? "application/json,text/javascript,*/*;q=0.8" : "text/html,application/xhtml+xml,text/plain,application/json;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-MY,en;q=0.9,ms-MY;q=0.8",
+          "Cache-Control": "no-cache",
+          "Referer": reader ? "https://www.azobss.com/" : target
+        }
+      });
+      if (!response.ok) { const e=new Error(`HTTP ${response.status}`); e.status=response.status; throw e; }
+      return asJson ? await response.json() : await response.text();
+    } finally { clearTimeout(timer); }
+  };
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      redirect: "follow",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSSPriceBot/1.0",
-        "Accept": asJson ? "application/json,text/javascript,*/*;q=0.8" : "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-MY,en;q=0.9,ms-MY;q=0.8"
-      }
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return asJson ? await response.json() : await response.text();
-  } finally {
-    clearTimeout(timer);
+    const body = await doFetch(url, false);
+    if (!asJson && String(body || '').length < 300) throw new Error('source_response_too_small');
+    return body;
+  } catch (err) {
+    if (asJson) throw err;
+    // v1485: some Malaysian retailer sites return 403 to Render/datacenter requests.
+    // Retry through Jina Reader, which reads the same public product page and returns text only.
+    const readerUrl = `https://r.jina.ai/${String(url || '').trim()}`;
+    try {
+      const body = await doFetch(readerUrl, true);
+      if (!String(body || '').trim()) throw err;
+      return body;
+    } catch (_) { throw err; }
   }
 }
 
@@ -18755,12 +18772,16 @@ async function azobssPcBuildReadShopify(source) {
   const cents = Number(variant?.price);
   const price = Number.isFinite(cents) && cents > 0 ? cents / 100 : 0;
   if (!azobssPcBuildCleanPrice(price)) throw new Error("Shopify variant price not found");
+  const imageRaw = variant?.featured_image?.src || product?.featured_image || (Array.isArray(product?.images) ? product.images[0] : '') || '';
+  const image = imageRaw ? new URL(String(imageRaw), source.sourceUrl).toString() : '';
   return {
     price: Math.round(price * 100) / 100,
     variant: String(variant?.title || "").trim(),
     available: variant?.available === true,
     availability: variant?.available === true ? "available" : "unavailable",
-    productTitle: String(product?.title || "").trim()
+    productTitle: String(product?.title || "").trim(),
+    image,
+    sourceText: `${String(product?.title || '')} ${String(product?.description || '')} ${String(product?.vendor || '')}`.trim()
   };
 }
 

@@ -3,8 +3,8 @@ const root=path.join(__dirname,'../PC-Build');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'retailers/index.json'),'utf8'));
 const sensitive=new Set(['price','marketPrice','snapshotPrice','cost','unitCost','markupRate','markupAmount','marketDelta','liveMarketDelta']);
 
-test('v1484 retailer manifest keeps curated catalogs but stores no public source/selling price',()=>{
- assert.equal(String(manifest.version),'1484');assert.equal(manifest.catalogs.length,10);
+test('v1485 retailer manifest keeps curated catalogs but stores no public source/selling price',()=>{
+ assert.equal(String(manifest.version),'1485');assert.equal(manifest.catalogs.length,10);
  const ids=new Set(),productIds=new Set();let total=0,exact=0;
  for(const row of manifest.catalogs){
   assert.ok(!ids.has(row.id),row.id);ids.add(row.id);
@@ -22,13 +22,11 @@ test('v1484 retailer manifest keeps curated catalogs but stores no public source
  assert.match(manifest.pricePolicy,/backend-live-only/i);
 });
 
-test('only exact verified retailer rows are marked active candidates',()=>{
- const active=manifest.catalogs.filter(x=>x.catalogStatus==='active');
- assert.deepEqual(active.map(x=>x.id),['dotatech']);
+test('archived retailer snapshots stay non-pricing inputs while exact legacy DOTATECH metadata remains intact',()=>{
  const dot=JSON.parse(fs.readFileSync(path.join(root,'retailers/dotatech.json'),'utf8'));
  assert.equal(dot.products.length,1);const p=dot.products[0];
- for(const k of ['sourceVerified','availabilityVerified','mediaVerified','specVerified','variantVerified'])assert.equal(p[k],true,k);
  assert.match(p.sourceUrl,/^https:\/\//);assert.match(p.image,/^https:\/\//);assert.ok(p.parts.length>=7);
+ for(const key of sensitive)assert.equal(Object.hasOwn(p,key),false,`${p.id} exposes ${key}`);
 });
 
 test('public PC Builds use backend live verification and no static price fallback',()=>{

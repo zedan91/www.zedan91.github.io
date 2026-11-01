@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ms">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1484"></script>
+<script src="/assets/js/azobss-long-session-stability.js?v=1485"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
@@ -132,8 +132,8 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 @media(max-width:650px){.custom-builder-head{padding:18px 15px;flex-direction:column}.builder-controls,.builder-summary{padding:15px}.builder-groups{grid-template-columns:1fr}.builder-price{font-size:34px}.builder-actions{grid-template-columns:1fr}.builder-actions .wide{grid-column:auto}.hero-actions{display:grid;grid-template-columns:1fr}.hero-build-btn{justify-content:center}}
 
 </style>
-<style id="azobss-pc-exact-media-v1484">
-/* v1484: exact source photo only. Crop focuses on the PC and trims store/header artwork without editing source pixels. */
+<style id="azobss-pc-exact-media-v1485">
+/* v1485: exact source photo only. Crop focuses on the PC and trims store/header artwork without editing source pixels. */
 .build-media{cursor:zoom-in!important;aspect-ratio:4/3!important;background:#08131f!important;overflow:hidden!important}
 .build-media::after,.build-media-note{display:none!important}
 .build-media img{object-fit:cover!important;object-position:center 60%!important;transform:scale(1.12)!important;transition:transform .28s ease,filter .28s ease!important}
@@ -145,7 +145,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"PC Build Malaysia | AZOBSS","url":"https://www.azobss.com/PC-Build/","description":"Cadangan PC build dari low ke high untuk Office, AutoCAD, CAD/Survey, gaming dan workstation dengan harga rujukan Malaysia yang dikemas kini secara live."}</script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-retailers.css?v=1435">
-<link rel="stylesheet" href="/assets/css/azobss-pc-shop-v1484.css?v=1484">
+<link rel="stylesheet" href="/assets/css/azobss-pc-shop-v1485.css?v=1485">
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -399,7 +399,7 @@ function setLiveStatus(text,state=''){els.liveStatus.textContent=text;els.livePi
 function populateRetailerStores(){if(!els.retailerStore)return;const current=els.retailerStore.value||'all';const stores=[...new Map((DATA.builds||[]).map(b=>[b.storeId||b.sourceName,{id:b.storeId||b.sourceName,label:b.storeName||b.sourceName||'Kedai'}])).values()];els.retailerStore.innerHTML='<option value="all">Semua sumber</option>'+stores.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');if(stores.some(x=>x.id===current))els.retailerStore.value=current;syncRetailerStoreAccess()}
 async function loadRetailerLiveBuilds(attempt=0){setLiveStatus(attempt?'PC Builds live: cuba semula…':'PC Builds live: menyemak…');try{const ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),30000);let r;try{r=await fetch(BUILD_API+'?t='+Date.now(),{cache:'no-store',signal:ctrl.signal})}finally{clearTimeout(tm)}if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();if(!d.ok||!Array.isArray(d.builds))throw new Error(d.error||'Build API invalid');DATA.retailerBuilds=d.builds.filter(retailerPriceVerified);DATA.builds=[...DATA.retailerBuilds];populateRetailerStores();populateGpuModels();schedulePcRender(false);const hidden=Number(d.stats?.hidden||0),when=new Date(d.fetchedAt||Date.now()).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});setLiveStatus(`PC Builds live: ${DATA.builds.length} disahkan${hidden?' • '+hidden+' disembunyikan':''} • ${when}`,DATA.builds.length?'live-ok':'live-bad')}catch(e){console.warn('AZOBSS live retailer builds:',e);DATA.retailerBuilds=[];DATA.builds=[];populateRetailerStores();schedulePcRender(false);if(attempt<1){setLiveStatus('PC Builds live belum dapat • cuba semula…');setTimeout(()=>loadRetailerLiveBuilds(1),10000)}else setLiveStatus('PC Builds live gagal • tiada snapshot dipaparkan','live-bad')}}
 Promise.all([
-  fetch('./pc-build-data.json?v=1484',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Builder data gagal dimuat');return r.json()}),
+  fetch('./pc-build-data.json?v=1485',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Builder data gagal dimuat');return r.json()}),
   loadCustomBuilder()
 ]).then(([d])=>{DATA.builderBases=d.builds||[];loadRetailerLiveBuilds();if(typeof window.azobssLongSessionInterval==='function')window.azobssLongSessionInterval(loadRetailerLiveBuilds,10*60*1000);else setInterval(loadRetailerLiveBuilds,10*60*1000)}).catch(e=>{els.grid.innerHTML='<div class="empty">Data PC Build tidak dapat dimuat. Sila refresh halaman.</div>';setLiveStatus('Data PC Build gagal dimuat','live-bad');console.error(e)});
 els.search?.addEventListener('input',schedulePcSearch);
@@ -408,8 +408,8 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1484" type="module"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1484.js?v=1484"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1485" type="module"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1485.js?v=1485"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

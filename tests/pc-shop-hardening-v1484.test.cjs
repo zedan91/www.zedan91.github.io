@@ -5,7 +5,7 @@ const path=require('node:path');
 const {createPcShopRuntime,CAPABILITIES,RELEASE}=require('../lib/azobss-pc-shop-runtime');
 const root=path.resolve(__dirname,'..');
 
-function runtimeWith({html='RM 2989',shopify={price:3099,available:true,variant:'RX7600 8GB'}}={}){
+function runtimeWith({html='<meta property="og:image" content="https://example.com/p.jpg"><meta property="og:title" content="MSI GeForce RTX 5070 12G VENTUS 2X OC"> MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989',shopify={price:3099,available:true,variant:'RX7600 8GB',productTitle:'FA-GAMING R5 Radeon RX 7600',image:'https://example.com/dota.jpg',sourceText:'AMD Ryzen 5 5500 Radeon RX 7600'}}={}){
   const sent=[];
   const rt=createPcShopRuntime({
     rootDir:root,
@@ -23,23 +23,25 @@ function runtimeWith({html='RM 2989',shopify={price:3099,available:true,variant:
   return {rt,sent};
 }
 
-test('v1484 advertises strict live availability, stale-cart rejection and private pricing',()=>{
-  assert.equal(RELEASE,'1484');
+test('v1485 advertises strict live availability, stale-cart rejection and private pricing',()=>{
+  assert.equal(RELEASE,'1485');
   for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy'])assert.equal(CAPABILITIES[k],true,k);
 });
 
 test('unknown hardware availability is hidden instead of assumed available',async()=>{
   const {rt}=runtimeWith({html:'MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989'});
   const c=await rt.getLiveCatalog(true);
-  assert.equal(c.publicProducts.length,0);
-  assert.ok(c.internalProducts.every(x=>x.availability==='unknown'));
+  const nb=c.internalProducts.filter(x=>String(x.sourceName||'').includes('NB Plaza'));
+  assert.ok(nb.length>=2);assert.ok(nb.every(x=>x.availability==='unknown'));
+  assert.ok(c.publicProducts.every(x=>!String(x.sourceName||'').includes('NB Plaza')));
 });
 
 test('explicit out-of-stock hardware is hidden even when a price exists',async()=>{
   const {rt}=runtimeWith({html:'MSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989 OUT OF STOCK'});
   const c=await rt.getLiveCatalog(true);
-  assert.equal(c.publicProducts.length,0);
-  assert.ok(c.internalProducts.every(x=>x.available===false));
+  const nb=c.internalProducts.filter(x=>String(x.sourceName||'').includes('NB Plaza'));
+  assert.ok(nb.length>=2);assert.ok(nb.every(x=>x.available===false));
+  assert.ok(c.publicProducts.every(x=>!String(x.sourceName||'').includes('NB Plaza')));
 });
 
 test('public live hardware contains selling price/spec/source but no cost or markup fields',async()=>{
@@ -65,7 +67,7 @@ test('retailer PC Builds are served only through backend live verification and p
 });
 
 test('client Buy Now uses single-item checkout and stale cart is sanitized against live catalog',()=>{
-  const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1484.js'),'utf8');
+  const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1485.js'),'utf8');
   assert.match(js,/if\(buyNow\)\{\s*openCheckout\('checkout',\[item\]\);\s*return\s*\}/);
   assert.match(js,/function syncCartPrices\(strict=false\)/);
   assert.match(js,/if\(!p\)\{if\(strict\)\{removed\+\+/);
@@ -75,7 +77,7 @@ test('client Buy Now uses single-item checkout and stale cart is sanitized again
 
 test('checkout revalidates live catalog before duplicate reuse and image viewer supports tap/click',()=>{
   const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'utf8');
-  const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1484.js'),'utf8');
+  const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1485.js'),'utf8');
   const revalidate=runtime.indexOf('const live = await getLiveCatalog(true)');
   const duplicate=runtime.indexOf('const duplicate = await findRecentDuplicate',revalidate);
   assert.ok(revalidate>0&&duplicate>revalidate);
