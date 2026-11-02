@@ -1,4 +1,4 @@
-/* AZOBSS v1347: Ebook Generator added to More dropdown; keeps existing More/Repair behavior. */
+/* AZOBSS v1492: AZOBSSTV removed; More menu keeps only current AZOBSS tools and services. */
 (function () {
   'use strict';
 
@@ -18,20 +18,18 @@
     var toolsPath = normalisePath(new URL(href, window.location.href).pathname);
     var isToolsPage = currentPath === toolsPath || currentPath.indexOf(toolsPath + '/') === 0;
     var foodPath = normalisePath('/Tempahan-Makanan/');
+    var promoPath = normalisePath('/Promosi-Bisnes/');
     var soundPath = normalisePath('/Sound-Effects/');
     var isSoundSection = currentPath === soundPath || currentPath.indexOf(soundPath + '/') === 0;
-    var isFoodSection = currentPath === foodPath || currentPath.indexOf(foodPath + '/') === 0 || (currentPath === '/' && currentHash === '#tempahan-makanan');
+    var isFoodSection = currentPath === foodPath || currentPath.indexOf(foodPath + '/') === 0 || currentPath === promoPath || currentPath.indexOf(promoPath + '/') === 0 || (currentPath === '/' && currentHash === '#tempahan-makanan');
     var websitePath = normalisePath('/Tempah-Website/');
     var isWebsiteSection = currentPath === websitePath || currentPath.indexOf(websitePath + '/') === 0;
-    var tvPath = normalisePath('/AZOBSSTV/');
-    var isTvSection = currentPath === tvPath || currentPath.indexOf(tvPath + '/') === 0;
     var webPicksPath = normalisePath('/Web-Pilihan/');
     var isWebPicksSection = currentPath === webPicksPath || currentPath.indexOf(webPicksPath + '/') === 0;
     var makanPath = normalisePath('/Makan-Malaysia/');
     var isMakanSection = currentPath === makanPath || currentPath.indexOf(makanPath + '/') === 0;
     var webPicksSourceLink = nav.querySelector('a[data-az-web-pilihan-link="1"], a[href="/Web-Pilihan/"], a[href="/Web-Pilihan"]');
     var websiteSourceLink = nav.querySelector('a[data-az-website-order-link="1"], a[href="/Tempah-Website/"], a[href="/Tempah-Website"]');
-    var tvSourceLink = nav.querySelector('a[data-azobsstv-link="1"], a[href="/AZOBSSTV/"], a[href="/AZOBSSTV"]');
     var inheritedActive = link.classList.contains('is-active') ||
       link.classList.contains('is-current') ||
       link.classList.contains('market-nav-active');
@@ -47,7 +45,7 @@
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azMoreDropdown' + index);
     trigger.setAttribute('aria-label', 'More menu');
-    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isTvSection || isWebPicksSection || isMakanSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
+    if (isToolsPage || isSoundSection || isWebsiteSection || isFoodSection || isWebPicksSection || isMakanSection || inheritedActive) trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     trigger.innerHTML = '' +
       '<svg class="az-more-icon" aria-hidden="true" viewBox="0 0 24 24">' +
         '<circle cx="5" cy="12" r="1.8"></circle>' +
@@ -61,24 +59,6 @@
     dropdown.className = 'az-more-dropdown';
     dropdown.id = 'azMoreDropdown' + index;
     dropdown.setAttribute('role', 'menu');
-
-    var tvLink = document.createElement('a');
-    tvLink.href = tvSourceLink ? (tvSourceLink.getAttribute('href') || '/AZOBSSTV/') : '/AZOBSSTV/';
-    tvLink.setAttribute('role', 'menuitem');
-    tvLink.dataset.azobsstvLink = '1';
-    tvLink.title = 'AZOBSSTV';
-    if (isTvSection || (tvSourceLink && (tvSourceLink.classList.contains('is-active') || tvSourceLink.classList.contains('is-current') || tvSourceLink.classList.contains('market-nav-active')))) {
-      tvLink.classList.add('is-active');
-      tvLink.setAttribute('aria-current', 'page');
-    }
-    tvLink.innerHTML = '' +
-      '<svg class="az-more-item-icon" aria-hidden="true" viewBox="0 0 24 24">' +
-        '<rect x="3" y="5" width="18" height="13" rx="2"></rect>' +
-        '<path d="M9 21h6"></path>' +
-        '<path d="M12 18v3"></path>' +
-        '<path d="m10 9 5 3-5 3z"></path>' +
-      '</svg>' +
-      '<span>AZOBSSTV</span>';
 
     var toolsLink = document.createElement('a');
     toolsLink.href = href;
@@ -173,24 +153,22 @@
       '<span>Bina Website</span>';
 
     var foodLink = document.createElement('a');
-    foodLink.href = '/Tempahan-Makanan/';
+    foodLink.href = '/Promosi-Bisnes/';
     foodLink.setAttribute('role', 'menuitem');
-    foodLink.dataset.azFoodOrderLink = '1';
-    foodLink.title = 'Food - Brownies';
+    foodLink.dataset.azPromoBusinessLink = '1';
+    foodLink.title = 'Promosi Bisnes';
     if (isFoodSection) {
       foodLink.classList.add('is-active');
       foodLink.setAttribute('aria-current', 'location');
     }
     foodLink.innerHTML = '' +
-      '<svg class="az-more-item-icon az-more-food-icon" aria-hidden="true" viewBox="0 0 24 24">' +
-        '<path d="M4 14h16"></path>' +
-        '<path d="M6 14a6 6 0 0 1 12 0"></path>' +
-        '<path d="M12 6V4"></path>' +
-        '<path d="M3 18h18"></path>' +
+      '<svg class="az-more-item-icon az-more-promo-icon" aria-hidden="true" viewBox="0 0 24 24">' +
+        '<path d="M4 10v4h4l7 4V6l-7 4H4z"></path>' +
+        '<path d="M8 14l1.5 5"></path>' +
+        '<path d="M18 9c1.3 1.5 1.3 4.5 0 6"></path>' +
       '</svg>' +
-      '<span>Food - Brownies</span>';
+      '<span>Promosi Bisnes</span>';
 
-    dropdown.appendChild(tvLink);
     dropdown.appendChild(toolsLink);
     dropdown.appendChild(webPicksLink);
     dropdown.appendChild(makanLink);
@@ -204,7 +182,6 @@
     link.replaceWith(wrap);
     if (websiteSourceLink && websiteSourceLink.isConnected) websiteSourceLink.remove();
     if (webPicksSourceLink && webPicksSourceLink.isConnected) webPicksSourceLink.remove();
-    if (tvSourceLink && tvSourceLink.isConnected) tvSourceLink.remove();
     nav.classList.add('az-more-enabled');
 
     function isMobileStickybar() {
@@ -299,10 +276,6 @@
         event.preventDefault();
         items[items.length - 1].focus();
       }
-    });
-
-    tvLink.addEventListener('click', function () {
-      setOpen(false);
     });
 
     webPicksLink.addEventListener('click', function () {

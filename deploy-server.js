@@ -9765,7 +9765,7 @@ function azSecurityHeaders(extra = {}) {
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": azCorsOrigin(),
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, HEAD, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, x-azobsstv-admin-token, X-AZOBSS-Filename, X-AZOBSS-Document-No",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, X-AZOBSS-Filename, X-AZOBSS-Document-No",
     "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, Content-Type, X-AZOBSS-Browser-Fallback, X-AZOBSS-Open-Url, X-AZOBSS-Filename, Retry-After",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
@@ -18217,22 +18217,7 @@ async function azSoundUpdateRecentlyAdded(maxPages = 3) {
 }
 
 
-// AZOBSS PATCH 963: AZOBSSTV backend behavior integration.
-// Uses the existing native Node HTTP server + Firebase Admin identity instead of adding Express.
-let azobsstvApiHandler = null;
-try {
-  const { createAZOBSSTVHandler } = require("./azobsstv-backend/handler");
-  azobsstvApiHandler = createAZOBSSTVHandler({
-    getDb: getAzobssBackendDb,
-    authorizeAdmin: azAdminIdentityFromRequest,
-    authorizeUser: azCommissionIdentityFromRequest,
-    send,
-    rateLimitOrSend: azRateLimitOrSend
-  });
-  console.log("AZOBSSTV API handler ready: /api/azobsstv/*");
-} catch (error) {
-  console.warn("AZOBSSTV API handler unavailable:", error && (error.stack || error.message || error));
-}
+// AZOBSS v1492: media/TV backend removed. Legacy API paths return 410 Gone below.
 
 // AZOBSS v1129: paid Membership packages + referral invite credit.
 // Membership benefits are restricted to Software/CAD discounts and NEVER grant PA/BM access.
@@ -20538,11 +20523,9 @@ async function handler(req, res) {
         return send(res,200,JSON.stringify({ok:true,items:nodes,runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});
       }catch(err){return send(res,Number(err?.statusCode||500),JSON.stringify({ok:false,error:'shopee_affiliate_offers_failed',message:String(err?.message||err||'Shopee Affiliate Product Offer API failed'),runtime:'deploy-server.js',patch:1300}),"application/json",{"Cache-Control":"no-store"});}
     }
-
-    // AZOBSS PATCH 963: route AZOBSSTV requests through its isolated handler.
-    if (azobsstvApiHandler && pathname.startsWith("/api/azobsstv")) {
-      const handled = await azobsstvApiHandler(req, res, parsed);
-      if (handled) return;
+    // AZOBSS v1492: AZOBSSTV/media streaming service permanently retired.
+    if (pathname.startsWith("/api/azobsstv")) {
+      return send(res, 410, JSON.stringify({ok:false,error:"service_retired",message:"This media service has been permanently retired by AZOBSS."}), "application/json", {"Cache-Control":"no-store"});
     }
 
     // AZOBSS sensitive endpoint rate limits. These protect payment, receipt, download and commission APIs
@@ -26528,7 +26511,6 @@ server.listen(SERVER_PORT, HOST, () => {
   console.log("STRIPE_DIGITAL_HEALTH:", `/api/stripe/digital-checkout-health`);
   console.log("STRIPE_WEBHOOK:", `/api/stripe/webhook`);
   console.log("STRIPE_WEBHOOK_HEALTH:", `/api/stripe/webhook-health`);
-  console.log("AZOBSSTV_HEALTH:", `/api/azobsstv/health`);
   console.log("================================");
   console.log("");
 

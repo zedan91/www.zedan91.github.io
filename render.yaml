@@ -17,7 +17,6 @@ services:
         - package.json
         - .npmrc
         - deploy-server.js
-        - azobsstv-backend/**
         - lib/**
         - assets/js/azobss-azdm-offer-model.js
         - scripts/**

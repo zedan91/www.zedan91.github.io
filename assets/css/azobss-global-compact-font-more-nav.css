@@ -222,22 +222,25 @@ body{
 }
 
 
-/* AZOBSS 623: second More item for food orders. */
+/* AZOBSS v1491: Promosi Bisnes item in More menu. */
 .market-nav .az-more-dropdown a + a{
   margin-top:4px!important;
   border-top:1px solid rgba(148,163,184,.18)!important;
   border-radius:6px 6px 8px 8px!important;
 }
+.market-nav .az-more-dropdown a[data-az-promo-business-link="1"]:hover,
+.market-nav .az-more-dropdown a[data-az-promo-business-link="1"]:focus-visible,
 .market-nav .az-more-dropdown a[data-az-food-order-link="1"]:hover,
 .market-nav .az-more-dropdown a[data-az-food-order-link="1"]:focus-visible{
-  background:rgba(249,115,22,.15)!important;
-  color:#fdba74!important;
+  background:rgba(34,211,238,.12)!important;
+  color:#a5f3fc!important;
 }
+.market-nav .az-more-dropdown a[data-az-promo-business-link="1"].is-active,
 .market-nav .az-more-dropdown a[data-az-food-order-link="1"].is-active{
-  background:rgba(249,115,22,.16)!important;
-  color:#fed7aa!important;
+  background:rgba(34,211,238,.14)!important;
+  color:#cffafe!important;
 }
-.az-more-food-icon{color:#fb923c}
+.az-more-promo-icon{color:#22d3ee}
 
 /* AZOBSS 636: mobile stickybar horizontal swipe + unclipped More dropdown. */
 @media(max-width:760px){
