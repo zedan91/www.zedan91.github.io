@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "azobss-retailer-sources-v1",
+  "release": "1496",
+  "generatedFor": "AZOBSS PC Build & Hardware",
+  "policy": {
+    "officialSourcePreferred": true,
+    "noAssumedImages": true,
+    "exactProductUrlPreferred": true,
+    "listingOnlyImagesDisabled": true,
+    "rangePriceAllowedOnlyWithVariants": true,
+    "unknownAvailabilityIsNotBuyable": true
+  },
+  "sources": [
+    {
+      "id": "dotatech",
+      "name": "DOTATECH",
+      "official": true,
+      "platform": "shopify",
+      "baseUrl": "https://www.dotatech.com.my",
+      "collections": [
+        {"type":"pc-build","url":"https://www.dotatech.com.my/collections/pre-build-pc-package"}
+      ]
+    },
+    {
+      "id": "emarque",
+      "name": "EMARQUE",
+      "official": true,
+      "platform": "shopify",
+      "baseUrl": "https://emarque.co",
+      "collections": [
+        {"type":"pc-build","url":"https://emarque.co/collections/gaming-pc"},
+        {"type":"hardware","url":"https://emarque.co/collections/all"}
+      ]
+    },
+    {
+      "id": "all-it",
+      "name": "ALL IT Hypermarket",
+      "official": true,
+      "platform": "shopify",
+      "baseUrl": "https://www.allithypermarket.com.my",
+      "collections": [
+        {"type":"pc-build","url":"https://www.allithypermarket.com.my/collections/deals-to-steal-pc-package"},
+        {"type":"hardware","url":"https://www.allithypermarket.com.my/collections/pc-computer-parts"}
+      ]
+    },
+    {
+      "id": "brightstar",
+      "name": "Brightstar Computer",
+      "official": true,
+      "platform": "shopify",
+      "baseUrl": "https://brightstarcomp.com",
+      "collections": [
+        {"type":"pc-build","url":"https://brightstarcomp.com/collections/desktop"},
+        {"type":"pc-build","url":"https://brightstarcomp.com/collections/monthly-pc-set"}
+      ]
+    },
+    {
+      "id": "ideal-tech",
+      "name": "Ideal Tech",
+      "official": true,
+      "platform": "woocommerce",
+      "baseUrl": "https://idealtech.com.my",
+      "storeApi": "https://idealtech.com.my/wp-json/wc/store/v1/products",
+      "collections": [
+        {"type":"pc-build","url":"https://idealtech.com.my/desktop-pcs/"},
+        {"type":"pc-build","url":"https://idealtech.com.my/nvidia-gaming-pcs/"}
+      ]
+    },
+    {
+      "id": "illegear",
+      "name": "ILLEGEAR",
+      "official": true,
+      "platform": "prestashop-html",
+      "baseUrl": "https://www.illegear.com",
+      "collections": [
+        {"type":"pc-build","url":"https://www.illegear.com/shop/11-illegear-desktop-pc"}
+      ]
+    },
+    {
+      "id": "nb-plaza",
+      "name": "NB Plaza",
+      "official": true,
+      "platform": "prestashop-html",
+      "baseUrl": "https://www.nbplaza.com.my",
+      "collections": [
+        {"type":"pc-build","url":"https://www.nbplaza.com.my/20-desktop"},
+        {"type":"hardware","url":"https://www.nbplaza.com.my/13-pc-components"}
+      ]
+    },
+    {
+      "id": "techhypermart",
+      "name": "Tech Hypermart",
+      "official": true,
+      "platform": "html",
+      "baseUrl": "https://www.techhypermart.com",
+      "collections": [
+        {"type":"pc-build","url":"https://www.techhypermart.com/computers"}
+      ]
+    },
+    {
+      "id": "viewnet",
+      "name": "Viewnet",
+      "official": true,
+      "platform": "html",
+      "baseUrl": "https://www.viewnet.com.my",
+      "collections": [
+        {"type":"pc-build","url":"https://www.viewnet.com.my/prebuild"}
+      ],
+      "notes": "Current official prebuild page may return no products. Do not revive stale third-party listings as verified."
+    },
+    {
+      "id": "jayacom",
+      "name": "Jayacom",
+      "official": false,
+      "platform": "third-party-disabled",
+      "baseUrl": "https://jayacom.com.my",
+      "collections": [],
+      "notes": "Existing snapshot came from a third-party listing. Keep it out of verified live catalog until an official product source is available."
+    }
+  ]
+}

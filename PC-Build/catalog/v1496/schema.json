@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.azobss.com/PC-Build/catalog/v1496/schema.json",
+  "title": "AZOBSS Retailer Catalog v1496",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "products", "sources"],
+  "properties": {
+    "schemaVersion": {"const": "azobss-retailer-catalog-v1"},
+    "release": {"type":"string"},
+    "generatedAt": {"type":"string"},
+    "currency": {"const":"MYR"},
+    "sources": {"type":"array"},
+    "products": {
+      "type":"array",
+      "items": {
+        "type":"object",
+        "required":["id","storeId","storeName","dataLevel","productUrl","rawName","name","price","availability","imageUrl","specs","variants","checkedAt"],
+        "properties": {
+          "id":{"type":"string"},
+          "storeId":{"type":"string"},
+          "storeName":{"type":"string"},
+          "sourceType":{"type":"string"},
+          "dataLevel":{"enum":["exact","listing","snapshot"]},
+          "productUrl":{"type":"string"},
+          "sourceCollectionUrl":{"type":"string"},
+          "rawName":{"type":"string"},
+          "name":{"type":"string"},
+          "brand":{"type":"string"},
+          "model":{"type":"string"},
+          "sku":{"type":"string"},
+          "category":{"type":"string"},
+          "itemType":{"enum":["pc-build","hardware","unknown"]},
+          "price":{"type":["number","null"]},
+          "originalPrice":{"type":["number","null"]},
+          "priceMin":{"type":["number","null"]},
+          "priceMax":{"type":["number","null"]},
+          "priceType":{"enum":["single","range","variant","unknown"]},
+          "currency":{"const":"MYR"},
+          "availability":{"enum":["available","unavailable","unknown"]},
+          "stockText":{"type":"string"},
+          "imageUrl":{"type":"string"},
+          "imageUrls":{"type":"array","items":{"type":"string"}},
+          "imageVerified":{"type":"boolean"},
+          "specs":{"type":"object"},
+          "attributes":{"type":"object"},
+          "variants":{"type":"array"},
+          "checkedAt":{"type":"string"}
+        }
+      }
+    }
+  }
+}

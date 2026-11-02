@@ -1,7 +1,7 @@
 {
   "name": "azobss-docs",
   "description": "AZOBSS documentation, PC services, PA downloader, digital tools, and AutoCAD LISP.",
-  "version": "1.0.1495",
+  "version": "1.0.1496",
   "private": true,
   "homepage": ".",
   "keywords": [
@@ -19,7 +19,8 @@
     "test:azdm": "node --test tests/azdm-bridge.test.cjs tests/azdm-admin.test.cjs tests/software-packages.test.cjs tests/azdm-worker-v1215.test.cjs tests/azdm-worker-v1218.test.cjs",
     "test": "node --test tests/*.test.cjs",
     "test:pabm": "node --test tests/pabm-v1250-guard.test.cjs tests/runtime-ownership-v1272.test.cjs",
-    "verify": "npm run check && npm test"
+    "verify": "npm run check && npm test",
+    "catalog:refresh": "node scripts/refresh-retailer-catalog.js"
   },
   "dependencies": {
     "selfsigned": "^5.5.0",

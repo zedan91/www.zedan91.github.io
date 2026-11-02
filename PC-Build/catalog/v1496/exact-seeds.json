@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "azobss-retailer-exact-seeds-v1",
+  "release": "1496",
+  "seeds": [
+    {
+      "seedId": "office-amd-standard",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-officepc/",
+      "expectedName": "Office AMD",
+      "expectedCpu": "AMD Ryzen 5 5600G",
+      "expectedGpu": "AMD Radeon Graphics (Integrated)"
+    },
+    {
+      "seedId": "essential-office",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "productUrl": "https://www.allithypermarket.com.my/products/office-plus-pre-built-custom-pc-rtx-3050-oc-amd-ryzen-5-3400g",
+      "expectedName": "Essential",
+      "expectedCpu": "AMD Ryzen 5 5500GT",
+      "expectedGpu": "AMD Radeon Graphics (Integrated)"
+    },
+    {
+      "seedId": "office-intel-standard",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/intel-officepc/",
+      "expectedName": "Office Intel",
+      "expectedCpu": "Intel Core i5-12400",
+      "expectedGpu": "Intel UHD Graphics"
+    },
+    {
+      "seedId": "starter-rtx3050",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx3050-packagepc/",
+      "expectedName": "Starter RTX",
+      "expectedCpu": "AMD Ryzen 5 5600",
+      "expectedGpu": "NVIDIA GeForce RTX 3050"
+    },
+    {
+      "seedId": "value-rx9050",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/rx9050-gamingpcs/",
+      "expectedName": "Value RX",
+      "expectedCpu": "AMD Ryzen 5 5600",
+      "expectedGpu": "AMD Radeon RX 9050"
+    },
+    {
+      "seedId": "rush-rtx5060",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx5060-d4-gamingpc/",
+      "expectedName": "Rush RTX",
+      "expectedCpu": "AMD Ryzen 5 5600",
+      "expectedGpu": "NVIDIA GeForce RTX 5060 8GB"
+    },
+    {
+      "seedId": "entry-rtx",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "productUrl": "https://www.allithypermarket.com.my/products/aura-gaming-pre-built-custom-pc-rtx-5060-8gb-oc-amd-ryzen-5-5500",
+      "expectedName": "Entry RTX",
+      "expectedCpu": "AMD Ryzen 5 5500",
+      "expectedGpu": "NVIDIA GeForce RTX 5060 8GB"
+    },
+    {
+      "seedId": "creator-rtx5060ti",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx5060ti-gamingpc/",
+      "expectedName": "Creator RTX",
+      "expectedCpu": "AMD Ryzen 5 7500F",
+      "expectedGpu": "NVIDIA GeForce RTX 5060 Ti 16GB"
+    },
+    {
+      "seedId": "mainstream-rx",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "productUrl": "https://www.allithypermarket.com.my/products/nova-gaming-pre-built-custom-pc-rx-9060-xt-16gb-oc-amd-ryzen-5-7",
+      "expectedName": "Mainstream RX",
+      "expectedCpu": "AMD Ryzen 5 7500F",
+      "expectedGpu": "AMD Radeon RX 9060 XT 16GB"
+    },
+    {
+      "seedId": "performance-rtx",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx5070-gamingpc/",
+      "expectedName": "Performance RTX",
+      "expectedCpu": "AMD Ryzen 5 7500F",
+      "expectedGpu": "NVIDIA GeForce RTX 5070 12GB"
+    },
+    {
+      "seedId": "highend-rx",
+      "storeId": "all-it",
+      "storeName": "ALL IT Hypermarket",
+      "productUrl": "https://www.allithypermarket.com.my/products/phantom-gaming-pre-built-custom-pc-rx-9070-xt-16gb-oc-amd-ryzen?variant=49856424706276",
+      "expectedName": "High-End RX",
+      "expectedCpu": "AMD Ryzen 7 7800X3D",
+      "expectedGpu": "AMD Radeon RX 9070 XT 16GB"
+    },
+    {
+      "seedId": "workstation-creator",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/rtx5060ti-workstation/",
+      "expectedName": "Creator Workstation",
+      "expectedCpu": "Intel Core Ultra 5 225F",
+      "expectedGpu": "NVIDIA GeForce RTX 5060 Ti 16GB"
+    },
+    {
+      "seedId": "pro-rtx5070ti",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx5070ti-gamingpc/",
+      "expectedName": "Pro RTX",
+      "expectedCpu": "AMD Ryzen 7 7700",
+      "expectedGpu": "NVIDIA GeForce RTX 5070 Ti 16GB"
+    },
+    {
+      "seedId": "workstation-adept",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/rtx5070ti-workstation/",
+      "expectedName": "Adept Workstation",
+      "expectedCpu": "Intel Core Ultra 5 225F",
+      "expectedGpu": "NVIDIA GeForce RTX 5070 Ti 16GB"
+    },
+    {
+      "seedId": "flagship-rtx",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx5080-gamingpc/",
+      "expectedName": "4K RTX",
+      "expectedCpu": "AMD Ryzen 5 7500F",
+      "expectedGpu": "NVIDIA GeForce RTX 5080 16GB"
+    },
+    {
+      "seedId": "workstation-anvil",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/rtx-pro-4000-blackwell-ai-workstation/",
+      "expectedName": "Anvil AI Workstation",
+      "expectedCpu": "Intel Core Ultra 5 225F",
+      "expectedGpu": "NVIDIA RTX PRO 4000 Blackwell 24GB"
+    },
+    {
+      "seedId": "workstation-artisan",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/rtx-pro-4500-blackwell-ai-workstation/",
+      "expectedName": "Artisan AI Workstation",
+      "expectedCpu": "Intel Core Ultra 5 225F",
+      "expectedGpu": "NVIDIA RTX PRO 4500 Blackwell 32GB"
+    },
+    {
+      "seedId": "ultimate-rtx5090",
+      "storeId": "ideal-tech",
+      "storeName": "Ideal Tech",
+      "productUrl": "https://idealtech.com.my/product/amd-rtx5090-gamingpc/",
+      "expectedName": "Ultimate RTX",
+      "expectedCpu": "AMD Ryzen 9 9950X3D-class",
+      "expectedGpu": "NVIDIA GeForce RTX 5090 32GB"
+    }
+  ]
+}
