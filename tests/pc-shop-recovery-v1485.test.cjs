@@ -22,7 +22,7 @@ test('v1487 reader fallback still parses Markdown title/image and Shopify can se
   assert.match(runtime,/sourceListUrl/);assert.match(runtime,/availability==='available'/);
 });
 
-test('v1487 hardware candidates carry clear snapshot prices for display fallback but checkout remains live-only',()=>{
+test('v1493 clear snapshot prices remain displayable and route checkout into Price Confirmation when not live',()=>{
   const d=JSON.parse(fs.readFileSync(path.join(root,'PC-Build/pc-shop-products-v1487.json'),'utf8'));
   assert.ok(d.products.length>=4);
   for(const p of d.products){
@@ -30,6 +30,6 @@ test('v1487 hardware candidates carry clear snapshot prices for display fallback
     assert.ok(Number(p.snapshotPrice)>0,p.id);assert.equal(p.snapshotPriceClear,true,p.id);
   }
   const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'utf8');
-  assert.match(runtime,/product\.available !== true/);assert.match(runtime,/priceStatus \|\| ''\) !== 'live'/);
+  assert.match(runtime,/snapshotCheckoutToPriceConfirmation: true/);assert.match(runtime,/priceConfirmationRequired = intent === 'quote' \|\| items\.some/);assert.match(runtime,/resolveBuildItem/);
   assert.ok(d.products.some(p=>p.sourceListUrl),'NB Plaza listing fallback missing');
 });

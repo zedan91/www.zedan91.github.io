@@ -26,7 +26,7 @@ function runtimeWith({html='Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI 
 }
 
 test('v1487 keeps checkout hardening while adding clear-price snapshot fallback for display',()=>{
-  assert.equal(RELEASE,'1490');
+  assert.equal(RELEASE,'1494');
   for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy','clearPriceSnapshotFallback','singlePriceRetailerCatalog'])assert.equal(CAPABILITIES[k],true,k);
 });
 
@@ -69,13 +69,13 @@ test('retailer PC Builds use live page specs instead of stale static parts and h
   for(const k of ['sourcePrice','unitCost','markupRate','markupAmount','cost'])assert.equal(Object.hasOwn(b,k),false,`${b.id}:${k}`);
 });
 
-test('client Buy Now uses single-item checkout and stale cart is sanitized against live catalog',()=>{
+test('client Buy Now uses single-item checkout while clear-price snapshot items stay eligible for Price Confirmation',()=>{
   const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1487.js'),'utf8');
-  assert.match(js,/if\(buyNow\)\{\s*openCheckout\('checkout',\[item\]\);\s*return\s*\}/);
-  assert.match(js,/function syncCartPrices\(strict=false\)/);
-  assert.match(js,/if\(!p\)\{if\(strict\)\{removed\+\+/);
-  assert.match(js,/next\.priceStatus!=='live'/);
-  assert.match(js,/removed\+\+/);
+  assert.match(js,/if\(buyNow\)\{openCheckout\('checkout',\[item\]\);return\}/);
+  assert.match(js,/window\.azobssPcShopAddExternalItem/);
+  assert.match(js,/externalBuildsLoaded/);
+  assert.match(js,/requiresConfirmation:raw\?\.requiresConfirmation===true\|\|String\(raw\?\.priceStatus/);
+  assert.match(js,/String\(p\.availability\|\|''\)==='unavailable'/);
 });
 
 test('checkout revalidates live catalog before duplicate reuse and image viewer supports tap/click',()=>{
