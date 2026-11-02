@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ms">
 <head>
-<script src="/assets/js/azobss-long-session-stability.js?v=1494"></script>
+<script src="/assets/js/azobss-long-session-stability.js?v=1495"></script>
 
 <style id="azobss-navbar-prepaint-style-1066">
 /* AZOBSS 1089: lock AZOBSS logo geometry before first paint to prevent brief grow/blink. */
@@ -114,7 +114,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <meta name="theme-color" content="#07111f"/>
 <link rel="icon" href="/favicon-96x96.png"/>
 <link href="/assets/css/azobss-global-compact-font-more-nav.css?v=1183" rel="stylesheet"/>
-<script defer src="/assets/js/azobss-more-nav.js?v=1494"></script>
+<script defer src="/assets/js/azobss-more-nav.js?v=1495"></script>
 <link href="/assets/css/azobss-home-stickybar-exact-sync.css?v=636" rel="stylesheet"/>
 <style>
 :root{--bg:#07111f;--panel:#0d1b2d;--line:#243650;--text:#edf6ff;--muted:#9fb0c4;--cyan:#22d3ee;--blue:#3b82f6;--green:#22c55e;--yellow:#facc15;--shadow:0 18px 55px rgba(0,0,0,.28)}
@@ -137,7 +137,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 .build-media{cursor:zoom-in!important;aspect-ratio:4/3!important;background:#08131f!important;overflow:hidden!important}
 .build-media::after,.build-media-note{display:none!important}
 .build-media img{object-fit:cover!important;object-position:center 60%!important;transform:scale(1.12)!important;transition:transform .28s ease,filter .28s ease!important}
-.build-media.pc-focus img{object-position:center 62%!important;transform:scale(1.20)!important}
+.build-media.pc-focus img{object-position:center!important;object-fit:contain!important;transform:none!important}
 @media(hover:hover) and (pointer:fine){
   .card:hover .build-media img,.build-media:hover img{transform:scale(1.46)!important;filter:brightness(1.05)!important}
 }
@@ -145,16 +145,17 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"PC Build Malaysia | AZOBSS","url":"https://www.azobss.com/PC-Build/","description":"Cadangan PC build dari low ke high untuk Office, AutoCAD, CAD/Survey, gaming dan workstation dengan harga rujukan Malaysia yang dikemas kini secara live."}</script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-retailers.css?v=1435">
-<link rel="stylesheet" href="/assets/css/azobss-pc-shop-v1487.css?v=1494">
+<link rel="stylesheet" href="/assets/css/azobss-pc-shop-v1487.css?v=1495">
 <style id="azobss-pc-clear-price-v1487">
 .build-media-unavailable{min-height:88px;display:grid;place-items:center;padding:20px;background:#071522;border-bottom:1px solid #315272;color:#8fa8bf;font-size:13px;text-align:center}.spec.spec-more span{color:#91a8bd;font-style:italic}
 </style>
 
 
-<style id="azobss-v1494-clean-image-style">
-.build-media.pc-clean-crop img{object-fit:cover;transform:scale(1.16);transform-origin:50% 52%}.card:hover .build-media.pc-clean-crop img{transform:scale(1.20)}
-.build-media.pc-clean-crop-strong img{object-fit:cover;transform:scale(1.28);transform-origin:50% 52%}.card:hover .build-media.pc-clean-crop-strong img{transform:scale(1.33)}
-.build-media.pc-clean-crop::after,.build-media.pc-clean-crop-strong::after{height:18%;background:linear-gradient(to top,rgba(8,21,35,.56),transparent)}
+<style id="azobss-v1495-clean-image-style">
+/* v1495: never crop product media. Retailer text/price removal is handled by the backend image proxy. */
+.build-media.pc-clean-crop img,.build-media.pc-clean-crop-strong img,.build-media.pc-focus img{object-fit:contain!important;object-position:center!important;transform:none!important}
+.card:hover .build-media.pc-clean-crop img,.card:hover .build-media.pc-clean-crop-strong img,.card:hover .build-media.pc-focus img{transform:none!important}
+.build-media.pc-clean-crop::after,.build-media.pc-clean-crop-strong::after{display:none!important}
 </style>
 </head>
 <body>
@@ -439,7 +440,7 @@ function setLiveStatus(text,state=''){els.liveStatus.textContent=text;els.livePi
 function populateRetailerStores(){if(!els.retailerStore)return;const current=els.retailerStore.value||'all';const stores=[...new Map((DATA.builds||[]).map(b=>[b.storeId||b.sourceName,{id:b.storeId||b.sourceName,label:b.storeName||b.sourceName||'Kedai'}])).values()];els.retailerStore.innerHTML='<option value="all">Semua sumber</option>'+stores.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');if(stores.some(x=>x.id===current))els.retailerStore.value=current;syncRetailerStoreAccess()}
 async function loadRetailerLiveBuilds(attempt=0){setLiveStatus(attempt?'PC Builds live: cuba semula…':'PC Builds live: menyemak…');try{const ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),30000);let r;try{r=await fetch(BUILD_API+'?t='+Date.now(),{cache:'no-store',signal:ctrl.signal})}finally{clearTimeout(tm)}if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();if(!d.ok||!Array.isArray(d.builds))throw new Error(d.error||'Build API invalid');DATA.retailerBuilds=d.builds.filter(retailerPriceVerified);DATA.builds=[...DATA.retailerBuilds];publishBuildCatalog();populateRetailerStores();populateGpuModels();schedulePcRender(false);const hidden=Number(d.stats?.hidden||0),total=Number(d.stats?.total||0),when=new Date(d.fetchedAt||Date.now()).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});const liveN=Number(d.stats?.live||0),snapN=Number(d.stats?.snapshot||0),removed=Number(d.stats?.removedUnclear||0);setLiveStatus(`PC Builds: ${DATA.builds.length} pilihan • ${liveN} live • ${snapN} harga jelas${removed?' • '+removed+' harga range dibuang':''} • ${when}`,DATA.builds.length?'live-ok':'live-bad');if(DATA.builds.length===0&&total>0&&attempt<1){setLiveStatus('PC Builds live belum dapat • cuba semula automatik…','live-bad');setTimeout(()=>loadRetailerLiveBuilds(attempt+1),11000)}}catch(e){console.warn('AZOBSS live retailer builds:',e);DATA.retailerBuilds=[];DATA.builds=[];publishBuildCatalog();populateRetailerStores();schedulePcRender(false);if(attempt<1){setLiveStatus('PC Builds live belum dapat • cuba semula…');setTimeout(()=>loadRetailerLiveBuilds(1),11000)}else setLiveStatus('Sync live gagal sementara • pilihan harga jelas dikekalkan jika tersedia','live-bad')}}
 Promise.all([
-  fetch('./pc-build-data.json?v=1494',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Builder data gagal dimuat');return r.json()}),
+  fetch('./pc-build-data.json?v=1495',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Builder data gagal dimuat');return r.json()}),
   loadCustomBuilder()
 ]).then(([d])=>{DATA.builderBases=d.builds||[];loadRetailerLiveBuilds();if(typeof window.azobssLongSessionInterval==='function')window.azobssLongSessionInterval(loadRetailerLiveBuilds,10*60*1000);else setInterval(loadRetailerLiveBuilds,10*60*1000)}).catch(e=>{els.grid.innerHTML='<div class="empty">Data PC Build tidak dapat dimuat. Sila refresh halaman.</div>';setLiveStatus('Data PC Build gagal dimuat','live-bad');console.error(e)});
 els.search?.addEventListener('input',schedulePcSearch);
@@ -448,8 +449,8 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1494" type="module"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1494"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1495" type="module"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1495"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>
