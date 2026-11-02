@@ -9,7 +9,7 @@ test('v1495 preserves complete image canvas and cleans retailer edge text server
   const runtime=read('lib/azobss-pc-shop-runtime.js');
   const html=read('PC-Build/index.html');
   const css=read('assets/css/azobss-pc-shop-v1487.css');
-  assert.match(runtime,/const RELEASE = '1496'/);
+  assert.match(runtime,/const RELEASE = '1497'/);
   assert.match(runtime,/retailerImageRedactionProfile/);
   assert.match(runtime,/redactRetailerTextOnly/);
   assert.match(runtime,/No resize, crop or content scaling/);
