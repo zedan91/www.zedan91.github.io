@@ -1,0 +1,968 @@
+{
+  "version": "1498",
+  "generatedFrom": "v1498",
+  "expectedImages": 64,
+  "description": "Exact source product-image download manifest. Run PREPARE-LOCAL-PC-IMAGES.bat once before deployment.",
+  "images": [
+    {
+      "index": 1,
+      "sourceUrl": "https://cdn.nbplaza.com.my/img/p/5/6/8/7/7/56877-home_default.jpg",
+      "filename": "001-56877-home-default-13fb2665.jpg",
+      "localPath": "/PC-Build/images/products/001-56877-home-default-13fb2665.jpg",
+      "ids": [
+        "nb-msi-rtx5070-ventus-12g"
+      ],
+      "names": [
+        "MSI GeForce RTX 5070 12G VENTUS 2X OC"
+      ],
+      "jsonFiles": [
+        "PC-Build/pc-shop-products-v1487.json"
+      ]
+    },
+    {
+      "index": 2,
+      "sourceUrl": "https://cdn.nbplaza.com.my/img/p/6/4/6/3/9/64639-home_default.jpg",
+      "filename": "002-64639-home-default-7dc5139e.jpg",
+      "localPath": "/PC-Build/images/products/002-64639-home-default-7dc5139e.jpg",
+      "ids": [
+        "nb-msi-b860m-mortar-wifi"
+      ],
+      "names": [
+        "MSI MAG B860M MORTAR WIFI"
+      ],
+      "jsonFiles": [
+        "PC-Build/pc-shop-products-v1487.json"
+      ]
+    },
+    {
+      "index": 3,
+      "sourceUrl": "https://files.ekmcdn.com/292980/resources/products/07-h3-hero2-w.jpg",
+      "filename": "003-07-h3-hero2-w-a5341023.jpg",
+      "localPath": "/PC-Build/images/products/003-07-h3-hero2-w-a5341023.jpg",
+      "ids": [
+        "emarque-nzxt-h3-flow-white"
+      ],
+      "names": [
+        "NZXT H3 Flow White mATX Case"
+      ],
+      "jsonFiles": [
+        "PC-Build/pc-shop-products-v1487.json"
+      ]
+    },
+    {
+      "index": 4,
+      "sourceUrl": "https://phanteks.com/wp-content/uploads/2025/05/XT-M3_Black_00.webp",
+      "filename": "004-XT-M3-Black-00-709563b4.webp",
+      "localPath": "/PC-Build/images/products/004-XT-M3-Black-00-709563b4.webp",
+      "ids": [
+        "emarque-phanteks-xt-m3-black"
+      ],
+      "names": [
+        "Phanteks XT M3 mATX Case - Black"
+      ],
+      "jsonFiles": [
+        "PC-Build/pc-shop-products-v1487.json"
+      ]
+    },
+    {
+      "index": 5,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/FA_GAMING_R5_RTXRADEON_3_0-01.jpg?v=1780914680&width=1206",
+      "filename": "005-FA-GAMING-R5-RTXRADEON-3-0-01-537a1392.jpg",
+      "localPath": "/PC-Build/images/products/005-FA-GAMING-R5-RTXRADEON-3-0-01-537a1392.jpg",
+      "ids": [],
+      "names": [
+        "FA-GAMING R5/RTXRADEON 3.0 PC GAMING PACKAGE"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/live-seed-current.json"
+      ]
+    },
+    {
+      "index": 6,
+      "sourceUrl": "https://idealtech.com.my/wp-content/uploads/2024/07/2608_4099_RAD_TURBO-300x300.webp",
+      "filename": "006-2608-4099-RAD-TURBO-300x300-176affb3.webp",
+      "localPath": "/PC-Build/images/products/006-2608-4099-RAD-TURBO-300x300-176affb3.webp",
+      "ids": [],
+      "names": [
+        "Radiance Turbo RTX 5060 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/live-seed-current.json"
+      ]
+    },
+    {
+      "index": 7,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/FH6_R5_RTXRADEON_4_2-01.jpg?v=1783397089",
+      "filename": "007-FH6-R5-RTXRADEON-4-2-01-6a8f7c4e.jpg",
+      "localPath": "/PC-Build/images/products/007-FH6-R5-RTXRADEON-4-2-01-6a8f7c4e.jpg",
+      "ids": [
+        "dotatech-f9535a3289ce"
+      ],
+      "names": [
+        "FH6-R5/RTXRADEON 4.2 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R5 8400F + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 8,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820lb-mpouou3k54we7d.jpg?v=1782102276",
+      "filename": "008-my-11134207-820lb-mpouou3k54we7d-7c6cab7f.jpg",
+      "localPath": "/PC-Build/images/products/008-my-11134207-820lb-mpouou3k54we7d-7c6cab7f.jpg",
+      "ids": [
+        "dotatech-31688a650083"
+      ],
+      "names": [
+        "AMDxROGxHatsuneMiku 25.8 PC GAMING PACKAGE / 48GB DDR5 / 2TB SSD / RTX 5080 16GB + CPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 9,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/L_GA7X3D_RTXRADEON_7_3-01.jpg?v=1782375558",
+      "filename": "009-L-GA7X3D-RTXRADEON-7-3-01-f4a9c71f.jpg",
+      "localPath": "/PC-Build/images/products/009-L-GA7X3D-RTXRADEON-7-3-01-f4a9c71f.jpg",
+      "ids": [
+        "dotatech-f4e7d12ef5aa"
+      ],
+      "names": [
+        "L-GA7X3D/RTXRADEON 7.3 PC GAMING PACKAGE / 32GB DDR5 / 1TB SSD / R7 7800X3D + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 10,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/DC_GAMING_AM5_RTXRADEON_4_5-01.jpg?v=1780656978",
+      "filename": "010-DC-GAMING-AM5-RTXRADEON-4-5-01-ce10b79e.jpg",
+      "localPath": "/PC-Build/images/products/010-DC-GAMING-AM5-RTXRADEON-4-5-01-ce10b79e.jpg",
+      "ids": [
+        "dotatech-34929c4bf4c1"
+      ],
+      "names": [
+        "DC-GAMING AM5/RTXRADEON 4.5 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R5 8400F + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 11,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/AMDxROGxEdition20868-01.jpg?v=1782383999",
+      "filename": "011-AMDxROGxEdition20868-01-6a22c871.jpg",
+      "localPath": "/PC-Build/images/products/011-AMDxROGxEdition20868-01-6a22c871.jpg",
+      "ids": [
+        "dotatech-ceb8d5ba0733"
+      ],
+      "names": [
+        "AMDxROGxEdition20 86.8 Gaming PC Package W/ Monitor Keyboard Mouse 48GB DDR5 / RTX5090"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 12,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/FH6_IU7_RTXRADEON_6_3-01_44bb0838-dcc9-46d8-bc98-0dea5dd65fbd.jpg?v=1782968172",
+      "filename": "012-FH6-IU7-RTXRADEON-6-3-01-44bb0838-dcc9-46d8-bc98-0dea5d-6481dd10.jpg",
+      "localPath": "/PC-Build/images/products/012-FH6-IU7-RTXRADEON-6-3-01-44bb0838-dcc9-46d8-bc98-0dea5d-6481dd10.jpg",
+      "ids": [
+        "dotatech-4180a52e26df"
+      ],
+      "names": [
+        "FH6-IU7/RTXRADEON 6.3 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / U7 265F + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 13,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820li-mpotzm7kkumkb4.jpg?v=1782100262",
+      "filename": "013-my-11134207-820li-mpotzm7kkumkb4-5ca3ac08.jpg",
+      "localPath": "/PC-Build/images/products/013-my-11134207-820li-mpotzm7kkumkb4-5ca3ac08.jpg",
+      "ids": [
+        "dotatech-beb8c028fb65"
+      ],
+      "names": [
+        "WOOD-AG 79X3D/RTX5080 19.6 PC GAMING PACKAGE / 48GB DDR5 / 2TB NVME / CPU OPTION(S) + RTX 5080 16GB GDDR7"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 14,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/OGG_79X3D_RTX5080_14_5-01.jpg?v=1782965408",
+      "filename": "014-OGG-79X3D-RTX5080-14-5-01-da6a31d3.jpg",
+      "localPath": "/PC-Build/images/products/014-OGG-79X3D-RTX5080-14-5-01-da6a31d3.jpg",
+      "ids": [
+        "dotatech-24d087d8f15a"
+      ],
+      "names": [
+        "OG-G 79X3D/RTX5080 14.5 PC GAMING PACKAGE / 48GB DDR5 / 2TB SSD / RTX 5080 16GB + CPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 15,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/FA_GAMING_R5_RTXRADEON_3_0-01.jpg?v=1780914680",
+      "filename": "015-FA-GAMING-R5-RTXRADEON-3-0-01-15a555ee.jpg",
+      "localPath": "/PC-Build/images/products/015-FA-GAMING-R5-RTXRADEON-3-0-01-15a555ee.jpg",
+      "ids": [
+        "dotatech-f89aad846e1a"
+      ],
+      "names": [
+        "FA-GAMING R5/RTXRADEON 3.0 PC GAMING PACKAGE / 8GB DDR4 / 500GB SSD / R5 5500 + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 16,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/fine_tuned_gaming_pc_intel_final_1.png?v=1779161339",
+      "filename": "016-fine-tuned-gaming-pc-intel-final-1-0b2ed5a0.png",
+      "localPath": "/PC-Build/images/products/016-fine-tuned-gaming-pc-intel-final-1-0b2ed5a0.png",
+      "ids": [
+        "dotatech-962fe40fa175"
+      ],
+      "names": [
+        "FH6-IU5/RTXRADEON 4.3 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / U5 225F + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 17,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820lf-mpoxflf0lkoycf.jpg?v=1782105290",
+      "filename": "017-my-11134207-820lf-mpoxflf0lkoycf-98b28bb5.jpg",
+      "localPath": "/PC-Build/images/products/017-my-11134207-820lf-mpoxflf0lkoycf-98b28bb5.jpg",
+      "ids": [
+        "dotatech-aee35be795cc"
+      ],
+      "names": [
+        "FH6-R7/RTXRADEON 5.6 CUSTOM PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R7 8700F + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 18,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/TGAMING_R5_RTXRADEON_4_1-01.jpg?v=1782295452",
+      "filename": "018-TGAMING-R5-RTXRADEON-4-1-01-b1f2f8c4.jpg",
+      "localPath": "/PC-Build/images/products/018-TGAMING-R5-RTXRADEON-4-1-01-b1f2f8c4.jpg",
+      "ids": [
+        "dotatech-31b76188ab8a"
+      ],
+      "names": [
+        "T-GAMING R5/RTXRADEON 4.1 PC GAMING PACKAGE / 16GB DDR5 / 500GB SSD / R5 8400F + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 19,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/DC_i7_RTXRADEON_5_3-01_9d539dff-bc61-4c2a-a7f2-ef0ea2acd660.jpg?v=1780652321",
+      "filename": "019-DC-i7-RTXRADEON-5-3-01-9d539dff-bc61-4c2a-a7f2-ef0ea2ac-397e03ae.jpg",
+      "localPath": "/PC-Build/images/products/019-DC-i7-RTXRADEON-5-3-01-9d539dff-bc61-4c2a-a7f2-ef0ea2ac-397e03ae.jpg",
+      "ids": [
+        "dotatech-b718b95e4445"
+      ],
+      "names": [
+        "DC-i7/RTXRADEON 5.3 PC GAMING PACKAGE 16GB DDR5 / 1TB Nvme / CPU i7-14700F With GPU Options"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 20,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/AMDxROGxEdition20_74.3-01.jpg?v=1782542334",
+      "filename": "020-AMDxROGxEdition20-74-3-01-d1f20667.jpg",
+      "localPath": "/PC-Build/images/products/020-AMDxROGxEdition20-74-3-01-d1f20667.jpg",
+      "ids": [
+        "dotatech-84c738fcdae1"
+      ],
+      "names": [
+        "AMDxROGxEdition20 74.3 Gaming PC Package W/ Monitor Keyboard Mouse 48GB DDR5 / RTX5090"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 21,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820lf-mpow1aavmtxnc5.jpg?v=1782104061",
+      "filename": "021-my-11134207-820lf-mpow1aavmtxnc5-97b34b0b.jpg",
+      "localPath": "/PC-Build/images/products/021-my-11134207-820lf-mpow1aavmtxnc5-97b34b0b.jpg",
+      "ids": [
+        "dotatech-3799b935a9af"
+      ],
+      "names": [
+        "FRIEREN U579/RTX5070Ti 10.0 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD RTX 5070 Ti 16GB + CPU Options"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 22,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820li-mpovb23wl824e0.jpg?v=1782103230",
+      "filename": "022-my-11134207-820li-mpovb23wl824e0-f1f05437.jpg",
+      "localPath": "/PC-Build/images/products/022-my-11134207-820li-mpovb23wl824e0-f1f05437.jpg",
+      "ids": [
+        "dotatech-250ef651417c"
+      ],
+      "names": [
+        "FRIEREN Ryzen/RTX5070Ti 9.9 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD RTX 5070 Ti 16GB + CPU Options"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 23,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/FRIERENiNTELRTX5070Ti139-01_1.jpg?v=1781927661",
+      "filename": "023-FRIERENiNTELRTX5070Ti139-01-1-93ec7fb0.jpg",
+      "localPath": "/PC-Build/images/products/023-FRIERENiNTELRTX5070Ti139-01-1-93ec7fb0.jpg",
+      "ids": [
+        "dotatech-d89a4e177103"
+      ],
+      "names": [
+        "FRIEREN iNTEL/RTX5070Ti 13.9 PC GAMING PACKAGE / 32GB DDR5 / 1TB SSD RTX 5070 Ti 16GB + CPU Option(s)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 24,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/ChatGPTImageJun12_2026_07_25_58PM_2.png?v=1781340687",
+      "filename": "024-ChatGPTImageJun12-2026-07-25-58PM-2-e54a144a.png",
+      "localPath": "/PC-Build/images/products/024-ChatGPTImageJun12-2026-07-25-58PM-2-e54a144a.png",
+      "ids": [
+        "dotatech-bebad4273075"
+      ],
+      "names": [
+        "VXT2M AMDX3D/RTXRADEON 4.3 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R5 8400F + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 25,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820l4-mpafjl142jnmf5.jpg?v=1781084832",
+      "filename": "025-my-11134207-820l4-mpafjl142jnmf5-94ce1aa0.jpg",
+      "localPath": "/PC-Build/images/products/025-my-11134207-820l4-mpafjl142jnmf5-94ce1aa0.jpg",
+      "ids": [
+        "dotatech-c558beb85f8d"
+      ],
+      "names": [
+        "Z-GAMING AMD/RTXON 3.3 PC GAMING PACKAGE / 16GB DDR4 / 500GB SSD / R5 5500 + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 26,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820l9-mpaedypv8l590d.jpg?v=1781083911",
+      "filename": "026-my-11134207-820l9-mpaedypv8l590d-32666a4d.jpg",
+      "localPath": "/PC-Build/images/products/026-my-11134207-820l9-mpaedypv8l590d-32666a4d.jpg",
+      "ids": [
+        "dotatech-e362e8bfecab"
+      ],
+      "names": [
+        "Z-GAMING RYZEN/RTXON 4.6 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R5 8400F + GPU OPTION (S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 27,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820lf-mporaozf321722.jpg?v=1782099194",
+      "filename": "027-my-11134207-820lf-mporaozf321722-c7bd90e7.jpg",
+      "localPath": "/PC-Build/images/products/027-my-11134207-820lf-mporaozf321722-c7bd90e7.jpg",
+      "ids": [
+        "dotatech-ee8fe1c6675a"
+      ],
+      "names": [
+        "WOOD-FD 79X3D/RTX5080 19.2 PC GAMING PACKAGE / 48GB DDR5 / 2TB SSD / CPU OPTION(S) + RTX 5080 16GB GDDR7"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 28,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/Z_GAMING_iULTRA_RTXON_4_6-01.jpg?v=1780659478",
+      "filename": "028-Z-GAMING-iULTRA-RTXON-4-6-01-cf38237d.jpg",
+      "localPath": "/PC-Build/images/products/028-Z-GAMING-iULTRA-RTXON-4-6-01-cf38237d.jpg",
+      "ids": [
+        "dotatech-eedf5dc4fb3f"
+      ],
+      "names": [
+        "Z-GAMING iULTRA/RTXOSN 4.6 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / U5 225F + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 29,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/S_G9X3D_RTXRADEON_9_3-01.jpg?v=1781930705",
+      "filename": "029-S-G9X3D-RTXRADEON-9-3-01-ac050609.jpg",
+      "localPath": "/PC-Build/images/products/029-S-G9X3D-RTXRADEON-9-3-01-ac050609.jpg",
+      "ids": [
+        "dotatech-9a3d619b2cac"
+      ],
+      "names": [
+        "S-G9X3D/RTXRADEON 9.3 PC GAMING PACKAGE / 32GB DDR5 / 1TB SSD / R7 9800X3D + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 30,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/DC_i5_RTXRADEON_4_0-01_53ce6393-65fc-44e0-8e3d-4ebc2fd24e7b.jpg?v=1780653954",
+      "filename": "030-DC-i5-RTXRADEON-4-0-01-53ce6393-65fc-44e0-8e3d-4ebc2fd2-df711a8f.jpg",
+      "localPath": "/PC-Build/images/products/030-DC-i5-RTXRADEON-4-0-01-53ce6393-65fc-44e0-8e3d-4ebc2fd2-df711a8f.jpg",
+      "ids": [
+        "dotatech-af63065f9c48"
+      ],
+      "names": [
+        "DC-i5/RTXRADEON 4.0 PC GAMING PACKAGE / 16GB DDR4 / 1TB SSD / i5 14400F + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 31,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820lb-mpoxmbk8qosr23.jpg?v=1782106150",
+      "filename": "031-my-11134207-820lb-mpoxmbk8qosr23-3dbff8ff.jpg",
+      "localPath": "/PC-Build/images/products/031-my-11134207-820lb-mpoxmbk8qosr23-3dbff8ff.jpg",
+      "ids": [
+        "dotatech-c6af46e57a41"
+      ],
+      "names": [
+        "FH6 X3D/RTXRADEON 7.2 PC GAMING PACKAGE / 24GB DDR5 / 1TB SSD / R7 7800X3D + GPU OPTIONS"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 32,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/my-11134207-820lh-mpoxrcmuc1e515.jpg?v=1782106595",
+      "filename": "032-my-11134207-820lh-mpoxrcmuc1e515-1ba090fa.jpg",
+      "localPath": "/PC-Build/images/products/032-my-11134207-820lh-mpoxrcmuc1e515-1ba090fa.jpg",
+      "ids": [
+        "dotatech-774df2177926"
+      ],
+      "names": [
+        "D-GAMING 5X3D-M/NVRADEON126G 5.7 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R5 7500X3D + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 33,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/MEOWX_GAMING_R5X3D_RTX5060_6_9-01.jpg?v=1782371071",
+      "filename": "033-MEOWX-GAMING-R5X3D-RTX5060-6-9-01-c6296084.jpg",
+      "localPath": "/PC-Build/images/products/033-MEOWX-GAMING-R5X3D-RTX5060-6-9-01-c6296084.jpg",
+      "ids": [
+        "dotatech-c99fca83f1ca"
+      ],
+      "names": [
+        "MEOWX-GAMING R5X3D/RTX5060 6.9 CUSTOM PC GAMING PACKAGE / Ryzen 5 8400F / 7500X3D + GPU Option(s)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 34,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/MEOWX_GAMING_i57_RTX5060_7_2-01.jpg?v=1782383396",
+      "filename": "034-MEOWX-GAMING-i57-RTX5060-7-2-01-a2868e44.jpg",
+      "localPath": "/PC-Build/images/products/034-MEOWX-GAMING-i57-RTX5060-7-2-01-a2868e44.jpg",
+      "ids": [
+        "dotatech-f5ba37fcee71"
+      ],
+      "names": [
+        "MEOWX-GAMING i57/RTX5060 7.2 CUSTOM PC GAMING PACKAGE / Intel Core i5-14400F + GPU Option(s)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 35,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/CM_GAMING_R5X3D_RTXRADEON_4_2-01_1.jpg?v=1781495913",
+      "filename": "035-CM-GAMING-R5X3D-RTXRADEON-4-2-01-1-f3690b90.jpg",
+      "localPath": "/PC-Build/images/products/035-CM-GAMING-R5X3D-RTXRADEON-4-2-01-1-f3690b90.jpg",
+      "ids": [
+        "dotatech-8d1242975bb7"
+      ],
+      "names": [
+        "CM-GAMING R5X3D/RTXRADEON 4.2 PC GAMING PACKAGE / 16GB DDR5 / 500GB SSD / R5 7500X3D + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 36,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/AG_GAMING_R5_RTXRADEON_4_5-01.jpg?v=1781598543",
+      "filename": "036-AG-GAMING-R5-RTXRADEON-4-5-01-45a38cbe.jpg",
+      "localPath": "/PC-Build/images/products/036-AG-GAMING-R5-RTXRADEON-4-5-01-45a38cbe.jpg",
+      "ids": [
+        "dotatech-41d5013744f8"
+      ],
+      "names": [
+        "AG-GAMING R5/RTXRADEON 4.5 PC GAMING PACKAGE / 16GB DDR5 / 1TB SSD / R5 8400F + GPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 37,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/OG_G_79X3D_RTX5090_26_3-01.jpg?v=1781935007",
+      "filename": "037-OG-G-79X3D-RTX5090-26-3-01-9b525f51.jpg",
+      "localPath": "/PC-Build/images/products/037-OG-G-79X3D-RTX5090-26-3-01-9b525f51.jpg",
+      "ids": [
+        "dotatech-59bd79e75009"
+      ],
+      "names": [
+        "OG-G 79X3D/RTX5090 26.3 PC GAMING PACKAGE / 64GB DDR5 / 2TB SSD / RTX 5090 32GB + CPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 38,
+      "sourceUrl": "https://www.dotatech.com.my/cdn/shop/files/FRIEREN_AMD_RTX5070Ti_1_3_8-01.jpg?v=1781926493",
+      "filename": "038-FRIEREN-AMD-RTX5070Ti-1-3-8-01-9dc420c9.jpg",
+      "localPath": "/PC-Build/images/products/038-FRIEREN-AMD-RTX5070Ti-1-3-8-01-9dc420c9.jpg",
+      "ids": [
+        "dotatech-c9e719326bbf"
+      ],
+      "names": [
+        "FRIEREN AMD/RTX5070Ti 13.8 PC GAMING PACKAGE / 32GB DDR5 / 1TB SSD / RTX 5070 Ti + CPU OPTION(S)"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 39,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/CORE_6.jpg?v=1778732216&width=533",
+      "filename": "039-CORE-6-d4cd2df1.jpg",
+      "localPath": "/PC-Build/images/products/039-CORE-6-d4cd2df1.jpg",
+      "ids": [
+        "emarque-3b1ce0bcfb7e"
+      ],
+      "names": [
+        "CORE 3050 - AMD Ryzen 5 5500 / GeForce RTX 3050 Creator PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 40,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/NEOGEFORCE_cad4ccce-b154-49b1-b063-28aa43a063f0.jpg?v=1784975611&width=533",
+      "filename": "040-NEOGEFORCE-cad4ccce-b154-49b1-b063-28aa43a063f0-774322ec.jpg",
+      "localPath": "/PC-Build/images/products/040-NEOGEFORCE-cad4ccce-b154-49b1-b063-28aa43a063f0-774322ec.jpg",
+      "ids": [
+        "emarque-3346c89b2399"
+      ],
+      "names": [
+        "NEO - AMD Ryzen 5 5500 / GeForce RTX 5050 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 41,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_31c57b6f-9bb7-4d9f-8737-96ceb57d2dc0.jpg?v=1778730640&width=533",
+      "filename": "041-INFINITYGEFORCE-31c57b6f-9bb7-4d9f-8737-96ceb57d2dc0-ff24df26.jpg",
+      "localPath": "/PC-Build/images/products/041-INFINITYGEFORCE-31c57b6f-9bb7-4d9f-8737-96ceb57d2dc0-ff24df26.jpg",
+      "ids": [
+        "emarque-89f70f88b86b",
+        "emarque-3ebc9073ede9",
+        "emarque-0a0d14a80272"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 5500 / GeForce RTX 5060 Gaming PC",
+        "INFINITY - AMD Ryzen 5 5500 / GeForce RTX 5060 Ti Gaming PC",
+        "INFINITY - AMD Ryzen 5 7500F / GeForce RTX 5070 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 42,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_2_65ff8d43-9175-4faa-acb2-428f56ba6c1a.jpg?v=1778730423&width=533",
+      "filename": "042-INFINITYGEFORCE-2-65ff8d43-9175-4faa-acb2-428f56ba6c1a-a6152db4.jpg",
+      "localPath": "/PC-Build/images/products/042-INFINITYGEFORCE-2-65ff8d43-9175-4faa-acb2-428f56ba6c1a-a6152db4.jpg",
+      "ids": [
+        "emarque-c53beaa250e8"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 5500 / Radeon RX 9060 XT 16GB Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 43,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_d537a689-3921-4035-9ba4-36a7bf9200c8.jpg?v=1778730434&width=533",
+      "filename": "043-INFINITYGEFORCE-d537a689-3921-4035-9ba4-36a7bf9200c8-08a8bfb4.jpg",
+      "localPath": "/PC-Build/images/products/043-INFINITYGEFORCE-d537a689-3921-4035-9ba4-36a7bf9200c8-08a8bfb4.jpg",
+      "ids": [
+        "emarque-96c396504f53"
+      ],
+      "names": [
+        "INFINITY - Intel Core i5 14400F / GeForce RTX 5060 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 44,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_7c99b1f1-6099-43c4-9f95-647851df96be.jpg?v=1778730430&width=533",
+      "filename": "044-INFINITYGEFORCE-7c99b1f1-6099-43c4-9f95-647851df96be-e3a539b4.jpg",
+      "localPath": "/PC-Build/images/products/044-INFINITYGEFORCE-7c99b1f1-6099-43c4-9f95-647851df96be-e3a539b4.jpg",
+      "ids": [
+        "emarque-53a4de6c1c69"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500F / GeForce RTX 5060 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 45,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_ed81e8ad-6713-4674-9a5b-a7c518066f78.jpg?v=1778730463&width=533",
+      "filename": "045-INFINITYGEFORCE-ed81e8ad-6713-4674-9a5b-a7c518066f78-d017f4a7.jpg",
+      "localPath": "/PC-Build/images/products/045-INFINITYGEFORCE-ed81e8ad-6713-4674-9a5b-a7c518066f78-d017f4a7.jpg",
+      "ids": [
+        "emarque-7f119607fc1e"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500F / GeForce RTX 5060 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 46,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_df5c078a-1693-4e15-9321-70e30fa85441.jpg?v=1778730454&width=533",
+      "filename": "046-INFINITYGEFORCE-df5c078a-1693-4e15-9321-70e30fa85441-7d4e20fa.jpg",
+      "localPath": "/PC-Build/images/products/046-INFINITYGEFORCE-df5c078a-1693-4e15-9321-70e30fa85441-7d4e20fa.jpg",
+      "ids": [
+        "emarque-3bc42e1fdd81"
+      ],
+      "names": [
+        "INFINITY - Intel Core i5 14400F / GeForce RTX 5060 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 47,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_2_c7922a15-db71-424a-89ae-497e82cf0f00.jpg?v=1778730467&width=533",
+      "filename": "047-INFINITYGEFORCE-2-c7922a15-db71-424a-89ae-497e82cf0f00-a936471e.jpg",
+      "localPath": "/PC-Build/images/products/047-INFINITYGEFORCE-2-c7922a15-db71-424a-89ae-497e82cf0f00-a936471e.jpg",
+      "ids": [
+        "emarque-83119d8d40cc"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500F / Radeon RX 9060 XT 16GB Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 48,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_9ddf774d-9761-474e-9487-bed4a5022597.jpg?v=1778730473&width=533",
+      "filename": "048-INFINITYGEFORCE-9ddf774d-9761-474e-9487-bed4a5022597-2747e65d.jpg",
+      "localPath": "/PC-Build/images/products/048-INFINITYGEFORCE-9ddf774d-9761-474e-9487-bed4a5022597-2747e65d.jpg",
+      "ids": [
+        "emarque-dbb5cdec5369"
+      ],
+      "names": [
+        "INFINITY - Intel Core Ultra 5 225F / GeForce RTX 5060 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 49,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_5a063d3c-d019-4008-a678-2b792eb8a8d8.jpg?v=1778730477&width=533",
+      "filename": "049-INFINITYGEFORCE-5a063d3c-d019-4008-a678-2b792eb8a8d8-dfc56d8a.jpg",
+      "localPath": "/PC-Build/images/products/049-INFINITYGEFORCE-5a063d3c-d019-4008-a678-2b792eb8a8d8-dfc56d8a.jpg",
+      "ids": [
+        "emarque-fde01c4852dc"
+      ],
+      "names": [
+        "INFINITY - Intel Core i5 14400F / GeForce RTX 5070 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 50,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_ace219f6-d4bc-4702-8152-73a6c9cea8f8.jpg?v=1778730596&width=533",
+      "filename": "050-INFINITYGEFORCE-ace219f6-d4bc-4702-8152-73a6c9cea8f8-cae2367e.jpg",
+      "localPath": "/PC-Build/images/products/050-INFINITYGEFORCE-ace219f6-d4bc-4702-8152-73a6c9cea8f8-cae2367e.jpg",
+      "ids": [
+        "emarque-2e8b399b1a61"
+      ],
+      "names": [
+        "INFINITY - Intel Core Ultra 5 225F / GeForce RTX 5070 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 51,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_2_af3ede5b-a498-4817-9914-86d50da1f121.jpg?v=1778730601&width=533",
+      "filename": "051-INFINITYGEFORCE-2-af3ede5b-a498-4817-9914-86d50da1f121-af637eb1.jpg",
+      "localPath": "/PC-Build/images/products/051-INFINITYGEFORCE-2-af3ede5b-a498-4817-9914-86d50da1f121-af637eb1.jpg",
+      "ids": [
+        "emarque-20d51c5e8a57"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500F / Radeon RX 9070 XT Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 52,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_9.jpg?v=1778731978&width=533",
+      "filename": "052-INFINITYGEFORCE-9-baaa05fe.jpg",
+      "localPath": "/PC-Build/images/products/052-INFINITYGEFORCE-9-baaa05fe.jpg",
+      "ids": [
+        "emarque-b9ab8d30caeb"
+      ],
+      "names": [
+        "CIRCLE X50 - AMD Ryzen 5 7500F / GeForce RTX 5070 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 53,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_6c6ba9d1-82b7-41db-a492-ad859bccd5e1.jpg?v=1778731193&width=533",
+      "filename": "053-INFINITYGEFORCE-6c6ba9d1-82b7-41db-a492-ad859bccd5e1-f8f7ae58.jpg",
+      "localPath": "/PC-Build/images/products/053-INFINITYGEFORCE-6c6ba9d1-82b7-41db-a492-ad859bccd5e1-f8f7ae58.jpg",
+      "ids": [
+        "emarque-c7c2e009c071"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500X3D / GeForce RTX 5070 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 54,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_c504c4bd-7a96-44ba-a1c7-dd827c4c7b3e.jpg?v=1778731442&width=533",
+      "filename": "054-INFINITYGEFORCE-c504c4bd-7a96-44ba-a1c7-dd827c4c7b3e-57dae14f.jpg",
+      "localPath": "/PC-Build/images/products/054-INFINITYGEFORCE-c504c4bd-7a96-44ba-a1c7-dd827c4c7b3e-57dae14f.jpg",
+      "ids": [
+        "emarque-d8f101dd6a16"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500F / GeForce RTX 5070 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 55,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_2_554e859b-71a7-4f28-8e57-a64e89c4ec5f.jpg?v=1778731436&width=533",
+      "filename": "055-INFINITYGEFORCE-2-554e859b-71a7-4f28-8e57-a64e89c4ec5f-662614eb.jpg",
+      "localPath": "/PC-Build/images/products/055-INFINITYGEFORCE-2-554e859b-71a7-4f28-8e57-a64e89c4ec5f-662614eb.jpg",
+      "ids": [
+        "emarque-c1116c1f2107"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 7 7800X3D / Radeon RX 9070 XT Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 56,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_4f0a04aa-d848-4456-9768-edb3736ad376.jpg?v=1778731439&width=533",
+      "filename": "056-INFINITYGEFORCE-4f0a04aa-d848-4456-9768-edb3736ad376-b3283208.jpg",
+      "localPath": "/PC-Build/images/products/056-INFINITYGEFORCE-4f0a04aa-d848-4456-9768-edb3736ad376-b3283208.jpg",
+      "ids": [
+        "emarque-397f44e89427"
+      ],
+      "names": [
+        "INFINITY - Intel Core Ultra 5 225F / GeForce RTX 5070 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 57,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_2_ae4f190b-cc6c-4c0e-b0d9-4717f26305c7.jpg?v=1778731423&width=533",
+      "filename": "057-INFINITYGEFORCE-2-ae4f190b-cc6c-4c0e-b0d9-4717f26305c7-f07584b5.jpg",
+      "localPath": "/PC-Build/images/products/057-INFINITYGEFORCE-2-ae4f190b-cc6c-4c0e-b0d9-4717f26305c7-f07584b5.jpg",
+      "ids": [
+        "emarque-f25927674120"
+      ],
+      "names": [
+        "XR - AMD Ryzen 7 9800X3D / Radeon RX 9070 XT Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 58,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_173d15ee-998a-4e31-80e8-c3e03b6aaad6.jpg?v=1778731433&width=533",
+      "filename": "058-INFINITYGEFORCE-173d15ee-998a-4e31-80e8-c3e03b6aaad6-ae5c18e0.jpg",
+      "localPath": "/PC-Build/images/products/058-INFINITYGEFORCE-173d15ee-998a-4e31-80e8-c3e03b6aaad6-ae5c18e0.jpg",
+      "ids": [
+        "emarque-99527b2aee65"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 7 7800X3D / GeForce RTX 5070 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 59,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_509444ed-c6c4-4861-a1f9-f7acc5bc5f0d.jpg?v=1778731427&width=533",
+      "filename": "059-INFINITYGEFORCE-509444ed-c6c4-4861-a1f9-f7acc5bc5f0d-f7cd384c.jpg",
+      "localPath": "/PC-Build/images/products/059-INFINITYGEFORCE-509444ed-c6c4-4861-a1f9-f7acc5bc5f0d-f7cd384c.jpg",
+      "ids": [
+        "emarque-0dcb4abbc0b4"
+      ],
+      "names": [
+        "INFINITY - AMD Ryzen 5 7500F / GeForce RTX 5080 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 60,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_026d5587-135f-4235-acee-05ad78935339.jpg?v=1778731431&width=533",
+      "filename": "060-INFINITYGEFORCE-026d5587-135f-4235-acee-05ad78935339-884d0eda.jpg",
+      "localPath": "/PC-Build/images/products/060-INFINITYGEFORCE-026d5587-135f-4235-acee-05ad78935339-884d0eda.jpg",
+      "ids": [
+        "emarque-e54e90b4e00b"
+      ],
+      "names": [
+        "XR - AMD Ryzen 7 9800X3D / GeForce RTX 5070 Ti Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 61,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_4_3072e240-0a7d-4c36-94c3-eb784c971c33.jpg?v=1778731157&width=533",
+      "filename": "061-INFINITYGEFORCE-4-3072e240-0a7d-4c36-94c3-eb784c971c33-14700867.jpg",
+      "localPath": "/PC-Build/images/products/061-INFINITYGEFORCE-4-3072e240-0a7d-4c36-94c3-eb784c971c33-14700867.jpg",
+      "ids": [
+        "emarque-ce70f881e79f"
+      ],
+      "names": [
+        "FLOW - AMD Ryzen 7 9800X3D / GeForce RTX 5080 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 62,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/CLOUD_82316ed5-4606-4ea0-ab56-09ed80579791.jpg?v=1778732118&width=533",
+      "filename": "062-CLOUD-82316ed5-4606-4ea0-ab56-09ed80579791-349ebb6f.jpg",
+      "localPath": "/PC-Build/images/products/062-CLOUD-82316ed5-4606-4ea0-ab56-09ed80579791-349ebb6f.jpg",
+      "ids": [
+        "emarque-8628baa9d854"
+      ],
+      "names": [
+        "CLOUD - AMD Ryzen 7 9800X3D / GeForce RTX 5080 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 63,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_4_b736b9c0-da56-4aae-87c8-b9dfd2ea20c4.jpg?v=1778731168&width=533",
+      "filename": "063-INFINITYGEFORCE-4-b736b9c0-da56-4aae-87c8-b9dfd2ea20c4-23a37862.jpg",
+      "localPath": "/PC-Build/images/products/063-INFINITYGEFORCE-4-b736b9c0-da56-4aae-87c8-b9dfd2ea20c4-23a37862.jpg",
+      "ids": [
+        "emarque-8d0c5bed8a33"
+      ],
+      "names": [
+        "FLOW ULTRA - NVIDIA GeForce RTX 5090 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    },
+    {
+      "index": 64,
+      "sourceUrl": "https://emarque.co/cdn/shop/files/INFINITYGEFORCE_4_1d06c9c9-bd4a-477e-8516-495d5343a09f.jpg?v=1778731178&width=533",
+      "filename": "064-INFINITYGEFORCE-4-1d06c9c9-bd4a-477e-8516-495d5343a09f-5418834d.jpg",
+      "localPath": "/PC-Build/images/products/064-INFINITYGEFORCE-4-1d06c9c9-bd4a-477e-8516-495d5343a09f-5418834d.jpg",
+      "ids": [
+        "emarque-de395b9813d8"
+      ],
+      "names": [
+        "FLOW ULTIMATE - AMD Ryzen 7 9800X3D / GeForce RTX 5090 Gaming PC"
+      ],
+      "jsonFiles": [
+        "PC-Build/catalog/v1496/web-enriched-current.json"
+      ]
+    }
+  ]
+}

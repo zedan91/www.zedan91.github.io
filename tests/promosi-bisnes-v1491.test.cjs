@@ -10,7 +10,7 @@ const hub=fs.readFileSync(path.join(root,'Promosi-Bisnes','index.html'),'utf8');
 const seller=fs.readFileSync(path.join(root,'Tempahan-Makanan','index.html'),'utf8');
 
 test('v1491 package exposes Promosi Bisnes instead of Food Brownies in More menu',()=>{
-  assert.equal(pkg.version,'1.0.1497');
+  assert.equal(pkg.version,'1.0.1498');
   assert.match(nav,/foodLink\.href = '\/Promosi-Bisnes\/'/);
   assert.match(nav,/<span>Promosi Bisnes<\/span>/);
   assert.doesNotMatch(nav,/Food - Brownies/);
