@@ -25,17 +25,18 @@ function runtimeWith({html='Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI 
   return {rt,sent};
 }
 
-test('v1486 advertises strict live availability, stale-cart rejection and private pricing',()=>{
-  assert.equal(RELEASE,'1486');
-  for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy'])assert.equal(CAPABILITIES[k],true,k);
+test('v1487 keeps checkout hardening while adding clear-price snapshot fallback for display',()=>{
+  assert.equal(RELEASE,'1488');
+  for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy','clearPriceSnapshotFallback','singlePriceRetailerCatalog'])assert.equal(CAPABILITIES[k],true,k);
 });
 
-test('unknown hardware availability is hidden instead of assumed available',async()=>{
+test('unknown hardware availability may use a fresh clear snapshot for display but is not checkout-ready',async()=>{
   const {rt}=runtimeWith({html:'Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\nMSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989'});
   const c=await rt.getLiveCatalog(true);
   const nb=c.internalProducts.filter(x=>String(x.sourceName||'').includes('NB Plaza'));
-  assert.ok(nb.length>=2);assert.ok(nb.every(x=>x.availability==='unknown'));
-  assert.ok(c.publicProducts.every(x=>!String(x.sourceName||'').includes('NB Plaza')));
+  assert.ok(nb.length>=2);assert.ok(nb.some(x=>x.priceStatus==='snapshot'));
+  assert.ok(nb.filter(x=>x.priceStatus==='snapshot').every(x=>x.available===false&&x.requiresConfirmation===true));
+  assert.ok(c.publicProducts.some(x=>String(x.sourceName||'').includes('NB Plaza')&&x.priceStatus==='snapshot'));
 });
 
 test('explicit out-of-stock hardware is hidden even when a price exists',async()=>{
@@ -43,15 +44,15 @@ test('explicit out-of-stock hardware is hidden even when a price exists',async()
   const c=await rt.getLiveCatalog(true);
   const nb=c.internalProducts.filter(x=>String(x.sourceName||'').includes('NB Plaza'));
   assert.ok(nb.length>=2);assert.ok(nb.every(x=>x.available===false));
-  assert.ok(c.publicProducts.every(x=>!String(x.sourceName||'').includes('NB Plaza')));
+  assert.ok(c.publicProducts.every(x=>String(x.id)!=='nb-msi-rtx5070-ventus-12g'));
 });
 
-test('public live hardware contains selling price/spec/source but no cost or markup fields',async()=>{
+test('public hardware contains selling price/spec/source but no cost or markup fields',async()=>{
   const {rt}=runtimeWith({html:'Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI GeForce RTX 5070 12G VENTUS 2X OC\n![GPU](https://example.com/p.jpg)\nMSI GeForce RTX 5070 12G VENTUS 2X OC RM 2989 IN STOCK ADD TO CART'});
   const c=await rt.getLiveCatalog(true);
   assert.ok(c.publicProducts.length>=1);
   for(const p of c.publicProducts){
-    assert.equal(p.priceStatus,'live');assert.equal(p.availability,'available');assert.ok(p.price>0);assert.ok(p.sourceName);assert.ok(p.specs.length);
+    assert.ok(['live','snapshot'].includes(p.priceStatus));assert.ok(p.price>0);assert.ok(p.sourceName);assert.ok(p.specs.length);
     for(const k of ['sourcePrice','unitCost','markupRate','markupAmount','cost'])assert.equal(Object.hasOwn(p,k),false,`${p.id}:${k}`);
   }
 });
@@ -69,7 +70,7 @@ test('retailer PC Builds use live page specs instead of stale static parts and h
 });
 
 test('client Buy Now uses single-item checkout and stale cart is sanitized against live catalog',()=>{
-  const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1486.js'),'utf8');
+  const js=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1487.js'),'utf8');
   assert.match(js,/if\(buyNow\)\{\s*openCheckout\('checkout',\[item\]\);\s*return\s*\}/);
   assert.match(js,/function syncCartPrices\(strict=false\)/);
   assert.match(js,/if\(!p\)\{if\(strict\)\{removed\+\+/);
@@ -79,7 +80,7 @@ test('client Buy Now uses single-item checkout and stale cart is sanitized again
 
 test('checkout revalidates live catalog before duplicate reuse and image viewer supports tap/click',()=>{
   const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'utf8');
-  const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1486.js'),'utf8');
+  const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1487.js'),'utf8');
   const revalidate=runtime.indexOf('const live = await getLiveCatalog(true)');
   const duplicate=runtime.indexOf('const duplicate = await findRecentDuplicate',revalidate);
   assert.ok(revalidate>0&&duplicate>revalidate);

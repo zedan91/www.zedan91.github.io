@@ -1,41 +1,41 @@
 {
   "schemaVersion": 1,
-  "version": 1486,
+  "version": "1487",
   "checkedAt": "2026-11-02",
   "catalogs": [
     {
       "id": "all-it",
       "name": "ALL IT Hypermarket",
       "file": "./retailers/all-it.json",
-      "count": 10,
-      "catalogStatus": "verification-required"
+      "count": 0,
+      "catalogStatus": "live-only"
     },
     {
       "id": "ideal-tech",
       "name": "Ideal Tech",
       "file": "./retailers/ideal-tech.json",
       "count": 13,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "viewnet",
       "name": "Viewnet",
       "file": "./retailers/viewnet.json",
       "count": 15,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "techhypermart",
       "name": "Tech Hypermart",
       "file": "./retailers/techhypermart.json",
       "count": 9,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "dotatech",
       "name": "DOTATECH",
       "file": "./retailers/dotatech.json",
-      "count": 1,
+      "count": 14,
       "catalogStatus": "active"
     },
     {
@@ -43,36 +43,38 @@
       "name": "EMARQUE",
       "file": "./retailers/emarque.json",
       "count": 18,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "illegear",
       "name": "ILLEGEAR",
       "file": "./retailers/illegear.json",
       "count": 20,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "brightstar",
       "name": "Brightstar Computer",
       "file": "./retailers/brightstar.json",
       "count": 10,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "jayacom",
       "name": "Jayacom",
       "file": "./retailers/jayacom.json",
       "count": 6,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     },
     {
       "id": "nb-plaza",
       "name": "NB Plaza",
       "file": "./retailers/nb-plaza.json",
       "count": 6,
-      "catalogStatus": "verification-required"
+      "catalogStatus": "active"
     }
   ],
-  "pricePolicy": "v1485 backend-live-only: current customer PC Builds come from exact live product mappings plus exact retailer records; archived snapshot catalogs never supply checkout prices."
+  "pricePolicy": "single-clear-price-only; 10 range-price records removed; live exact price may restore them",
+  "catalogPolicy": "Keep clear numeric prices even if live sync temporarily fails; confirmed OOS is hidden.",
+  "totalProducts": 111
 }

@@ -5,29 +5,23 @@ const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'u
 const main=fs.readFileSync(path.join(root,'PC-Build/index.html'),'utf8');
 const builder=fs.readFileSync(path.join(root,'PC-Build/Build-Sendiri/index.html'),'utf8');
 
-test('retailer catalogs remain price-private while current candidates come from exact product mappings',()=>{
- assert.equal(String(manifest.version),'1486');assert.ok(manifest.catalogs.length>=1);
- assert.match(runtime,/const base=readJson\(buildFile,\{builds:\[\]\}\)/);
- assert.ok(runtime.includes('product|products'));
- assert.match(runtime,/buildUrlIdentityMatches/);assert.match(runtime,/availability==='available'/);
- assert.match(runtime,/mediaOk/);assert.match(runtime,/specOk/);
+test('retailer catalog keeps 111 clear-price choices and uses exact live mappings only as enhancement',()=>{
+ assert.equal(String(manifest.version),'1487');assert.equal(manifest.totalProducts,111);
+ assert.match(runtime,/clearSnapshotBuilds/);assert.match(runtime,/retailerBuildCandidates/);
+ assert.match(runtime,/snapshotBuildPublic/);assert.match(runtime,/matchSnapshotBuild/);
+ assert.match(runtime,/confirmed OOS|availability==='unavailable'/i);
 });
 
-test('main PC-Build has one retailer data owner and fetches live builds from backend',()=>{
+test('main PC-Build has one retailer data owner and fetches combined clear-price/live builds from backend',()=>{
  assert.match(main,/const BUILD_API='https:\/\/azobss-backend\.onrender\.com\/api\/pc-shop\/builds'/);
  assert.match(main,/loadRetailerLiveBuilds/);
+ assert.match(main,/harga sumber jelas/i);
  assert.doesNotMatch(main,/azobss-pc-retailers\.js/);
  assert.doesNotMatch(builder,/azobss-pc-retailers\.js/);
 });
 
-test('public builder/catalog files contain no pricing secrets',()=>{
- for(const rel of ['PC-Build/pc-build-data.json','PC-Build/pc-custom-builder-data.json','PC-Build/pc-full-builder-fallback.json','PC-Build/pc-shop-products-v1486.json']){
-  const text=fs.readFileSync(path.join(root,rel),'utf8');
-  assert.doesNotMatch(text,/"(?:marketPrice|snapshotPrice|unitCost|markupRate|markupAmount|marketDelta|liveMarketDelta|cost|price)"\s*:/,rel);
- }
-});
-
-test('Build Sendiri is quote-only in browser and strips accidental pricing fields',()=>{
+test('public builder files remain quote-only and sensitive markup is not rendered into PC Build HTML',()=>{
  assert.match(builder,/Minta Sebut Harga/);assert.match(builder,/function publicOption/);
  assert.doesNotMatch(builder,/function currentSell|function lineRetail|\[ADMIN DALAMAN\] Kos/);
+ assert.doesNotMatch(main,/Kos rujukan:|markupRate|markupAmount/);
 });

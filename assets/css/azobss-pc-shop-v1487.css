@@ -47,3 +47,6 @@ body.az-pc-shop-modal-open{overflow:hidden!important}
 .az-pc-product-media:focus-visible{outline:2px solid #22d3ee;outline-offset:-3px}
 .az-pc-product-source-label{margin-top:10px;color:#9fb5c9;font-size:11px;line-height:1.4}
 .az-pc-image-viewer{display:grid;gap:10px;place-items:center}.az-pc-image-viewer img{display:block;max-width:min(100%,980px);max-height:76vh;width:auto;height:auto;object-fit:contain;border-radius:14px;background:#07111f;border:1px solid #284661}
+
+/* v1487: clear-price fallback cards never use a fake/generic product image. */
+.az-pc-product-media.az-pc-no-image{display:grid;place-items:center;min-height:180px;padding:20px;background:#071522;color:#8fa8bf;text-align:center;font-size:13px;border-bottom:1px solid #315272}

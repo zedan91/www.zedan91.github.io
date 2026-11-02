@@ -3,7 +3,7 @@
   "storeId": "techhypermart",
   "storeName": "Tech Hypermart",
   "checkedAt": "2026-10-26",
-  "catalogStatus": "verification-required",
+  "catalogStatus": "active",
   "source": "https://www.techhypermart.com/computers-desktop-pc",
   "notes": "",
   "products": [
@@ -17,6 +17,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
+      "price": 3839,
+      "priceMin": 3839,
+      "priceMax": 3839,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
@@ -55,9 +58,9 @@
         "MapInfo / QGIS asas",
         "Browser / accounting / POS"
       ],
-      "image": "./images/essential-office.webp",
-      "imageAlt": "Acer Aspire C24B 23.8\" AIO - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "office",
       "cpuBrand": "intel",
       "platform": "",
@@ -66,14 +69,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-acer-c27",
@@ -85,6 +88,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
+      "price": 4799,
+      "priceMin": 4799,
+      "priceMax": 4799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
@@ -123,9 +129,9 @@
         "MapInfo / QGIS asas",
         "Browser / accounting / POS"
       ],
-      "image": "./images/essential-office.webp",
-      "imageAlt": "Acer Aspire C27B 27\" AIO - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "office",
       "cpuBrand": "intel",
       "platform": "",
@@ -134,14 +140,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-acer-tc1860",
@@ -153,6 +159,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "office",
       "resolution": "Office",
+      "price": 3429,
+      "priceMin": 3429,
+      "priceMax": 3429,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc",
@@ -191,9 +200,9 @@
         "MapInfo / QGIS asas",
         "Browser / accounting / POS"
       ],
-      "image": "./images/essential-office.webp",
-      "imageAlt": "Acer Aspire TC-1860 Desktop - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "office",
       "cpuBrand": "intel",
       "platform": "",
@@ -202,14 +211,14 @@
       "resolutionTags": [
         "office"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-acer-orion5000",
@@ -221,6 +230,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
+      "price": 13799,
+      "priceMin": 13799,
+      "priceMax": 13799,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -259,9 +271,9 @@
         "Premiere Pro / After Effects",
         "Blender / Agisoft Metashape"
       ],
-      "image": "./images/flagship-rtx.webp",
-      "imageAlt": "Acer Predator Orion 5000 - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "package",
       "cpuBrand": "intel",
       "platform": "",
@@ -270,14 +282,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-acer-orion7000",
@@ -289,6 +301,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
+      "price": 17999,
+      "priceMin": 17999,
+      "priceMax": 17999,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -327,9 +342,9 @@
         "Premiere Pro / After Effects",
         "Blender / Agisoft Metashape"
       ],
-      "image": "./images/flagship-rtx.webp",
-      "imageAlt": "Acer Predator Orion 7000 - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "package",
       "cpuBrand": "intel",
       "platform": "",
@@ -338,14 +353,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-asus-rnuc15",
@@ -357,6 +372,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "flagship",
       "resolution": "4K / High-End",
+      "price": 20359,
+      "priceMin": 20359,
+      "priceMax": 20359,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -395,9 +413,9 @@
         "Premiere Pro / After Effects",
         "Blender / Agisoft Metashape"
       ],
-      "image": "./images/flagship-rtx.webp",
-      "imageAlt": "ASUS RNUC15 Mini Desktop PC - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "package",
       "cpuBrand": "intel",
       "platform": "",
@@ -406,14 +424,14 @@
       "resolutionTags": [
         "4k"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-thinkstation-p3",
@@ -425,6 +443,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
+      "price": 13549,
+      "priceMin": 13549,
+      "priceMax": 13549,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers-desktop-pc?order=DESC&sort=p.price",
@@ -463,9 +484,9 @@
         "SketchUp / 3ds Max",
         "Adobe / Blender"
       ],
-      "image": "./images/performance-rtx.webp",
-      "imageAlt": "Lenovo ThinkStation P3 Gen 2 - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "workstation",
       "cpuBrand": "intel",
       "platform": "",
@@ -475,14 +496,14 @@
         "workstation",
         "ai"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-hp-z2",
@@ -494,6 +515,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
+      "price": 15599,
+      "priceMin": 15599,
+      "priceMax": 15599,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers?order=DESC&sort=p.price",
@@ -532,9 +556,9 @@
         "SketchUp / 3ds Max",
         "Adobe / Blender"
       ],
-      "image": "./images/performance-rtx.webp",
-      "imageAlt": "HP Z2 G1i Tower AI Workstation - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "workstation",
       "cpuBrand": "intel",
       "platform": "",
@@ -544,14 +568,14 @@
         "workstation",
         "ai"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     },
     {
       "id": "techhypermart-dell-pro-max-gb10",
@@ -563,6 +587,9 @@
       "tagline": "Tech Hypermart • snapshot harga kedai",
       "category": "workstation",
       "resolution": "Workstation / AI",
+      "price": 25199,
+      "priceMin": 25199,
+      "priceMax": 25199,
       "priceType": "Harga kedai / snapshot sumber",
       "sourceName": "Tech Hypermart",
       "sourceUrl": "https://www.techhypermart.com/computers?order=DESC&sort=p.price",
@@ -601,9 +628,9 @@
         "Agisoft Metashape",
         "Blender / CUDA / AI tools"
       ],
-      "image": "./images/performance-rtx.webp",
-      "imageAlt": "Dell Pro Max GB10 AI Supercomputing - visual rujukan AZOBSS",
-      "imageNote": "Visual rujukan • data Tech Hypermart",
+      "image": "",
+      "imageAlt": "",
+      "imageNote": "",
       "segment": "workstation",
       "cpuBrand": "all",
       "platform": "",
@@ -613,15 +640,17 @@
         "workstation",
         "ai"
       ],
-      "availability": "unknown",
+      "availability": "available",
       "quoteRequired": false,
       "retailerSnapshot": true,
-      "priceVerified": false,
-      "sourceVerified": false,
-      "availabilityVerified": false,
-      "variantVerified": false,
-      "priceMode": "verification-required"
+      "priceVerified": true,
+      "mediaVerified": false,
+      "snapshotPriceClear": true,
+      "priceStatus": "snapshot",
+      "catalogDisplayEligible": true
     }
   ],
-  "version": 1486
+  "version": "1482",
+  "catalogPolicy": "single-clear-price-only; live source may override or hide confirmed OOS",
+  "productCount": 9
 }

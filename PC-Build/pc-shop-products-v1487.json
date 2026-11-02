@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 1486,
+  "version": "1487",
   "checkedAt": "2026-11-02",
   "market": "Malaysia",
   "products": [
@@ -9,7 +9,7 @@
       "type": "hardware",
       "category": "GPU",
       "name": "MSI GeForce RTX 5070 12G VENTUS 2X OC",
-      "priceMode": "backend-live-only",
+      "priceMode": "live-with-clear-snapshot-fallback",
       "requiresConfirmation": true,
       "stock": "in-stock",
       "availability": "available",
@@ -43,14 +43,17 @@
         "Reference: 912-V532-009"
       ],
       "sourceProvider": "html",
-      "sourceListUrl": "https://www.nbplaza.com.my/145-pc-components"
+      "sourceListUrl": "https://www.nbplaza.com.my/145-pc-components",
+      "snapshotPrice": 3299,
+      "snapshotCheckedAt": "2026-11-01",
+      "snapshotPriceClear": true
     },
     {
       "id": "nb-msi-b860m-mortar-wifi",
       "type": "hardware",
       "category": "Motherboard",
       "name": "MSI MAG B860M MORTAR WIFI",
-      "priceMode": "backend-live-only",
+      "priceMode": "live-with-clear-snapshot-fallback",
       "requiresConfirmation": true,
       "stock": "in-stock",
       "availability": "available",
@@ -86,14 +89,17 @@
         "MAG B860M MORTAR WIFI"
       ],
       "sourceProvider": "html",
-      "sourceListUrl": "https://www.nbplaza.com.my/147-motherboard"
+      "sourceListUrl": "https://www.nbplaza.com.my/147-motherboard",
+      "snapshotPrice": 969,
+      "snapshotCheckedAt": "2026-11-01",
+      "snapshotPriceClear": true
     },
     {
       "id": "emarque-nzxt-h3-flow-white",
       "type": "hardware",
       "category": "Case",
       "name": "NZXT H3 Flow White mATX Case",
-      "priceMode": "backend-live-only",
+      "priceMode": "live-with-clear-snapshot-fallback",
       "requiresConfirmation": true,
       "stock": "check-live",
       "sourceName": "EMARQUE",
@@ -117,14 +123,17 @@
       "mediaVerified": true,
       "specVerified": true,
       "verifiedAt": "2026-11-02T00:00:00+08:00",
-      "imageCrop": "product-focus"
+      "imageCrop": "product-focus",
+      "snapshotPrice": 239,
+      "snapshotCheckedAt": "2026-11-01",
+      "snapshotPriceClear": true
     },
     {
       "id": "emarque-phanteks-xt-m3-black",
       "type": "hardware",
       "category": "Case",
       "name": "Phanteks XT M3 mATX Case - Black",
-      "priceMode": "backend-live-only",
+      "priceMode": "live-with-clear-snapshot-fallback",
       "requiresConfirmation": true,
       "stock": "check-live",
       "sourceName": "EMARQUE",
@@ -148,8 +157,12 @@
       "mediaVerified": true,
       "specVerified": true,
       "verifiedAt": "2026-11-02T00:00:00+08:00",
-      "imageCrop": "product-focus"
+      "imageCrop": "product-focus",
+      "snapshotPrice": 279,
+      "snapshotCheckedAt": "2026-11-01",
+      "snapshotPriceClear": true
     }
   ],
-  "note": "v1485 live-only public metadata. Backend retries blocked retailer pages through a public text reader; no snapshot price is used for checkout."
+  "note": "v1485 live-only public metadata. Backend retries blocked retailer pages through a public text reader; no snapshot price is used for checkout.",
+  "pricePolicy": "Show clear single-price hardware even when live sync temporarily fails; direct cart/checkout remains live-only. Confirmed OOS is hidden."
 }
