@@ -1,0 +1,1 @@
+window.AZOBSS_PC_LOCAL_HARDWARE_IMAGES={"version":"1504","policy":"hardware-exact-local-only-powershell-prepared","ready":false,"complete":false,"expected":14,"downloaded":0,"missing":14,"byId":{},"byName":{}};

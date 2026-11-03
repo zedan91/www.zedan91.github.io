@@ -2,20 +2,16 @@
 setlocal
 cd /d "%~dp0"
 echo ============================================================
-echo AZOBSS v1503 - PREPARE FINAL LOCAL IMAGES
-echo G1 PC Builds dikekalkan. G2 Hardware Shop: 14 gambar exact.
+echo AZOBSS v1504 - PREPARE FINAL HARDWARE IMAGES (WINDOWS NATIVE)
+echo G1 PC Builds kekal. G2 Hardware Shop: 14 gambar exact lokal.
+echo Tidak memerlukan Node.js.
 echo ============================================================
-where node >nul 2>nul
-if errorlevel 1 (
-  echo [ERROR] Node.js tidak dijumpai. Install Node.js 18+ dahulu.
-  pause
-  exit /b 1
-)
-node "tools\prepare-hardware-images-v1503.cjs"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\prepare-hardware-images-v1504.ps1"
 set ERR=%ERRORLEVEL%
 if not "%ERR%"=="0" (
   echo.
-  echo [BELUM SIAP] Semak internet dan jalankan BAT ini sekali lagi.
+  echo [BELUM SIAP] Gambar hardware belum berjaya disediakan.
+  echo Semak mesej di atas kemudian jalankan BAT ini semula.
   pause
   exit /b %ERR%
 )
