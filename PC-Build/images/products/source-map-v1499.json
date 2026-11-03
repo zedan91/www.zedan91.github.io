@@ -1,8 +1,8 @@
 {
-  "version": "1498",
+  "version": "1499",
   "generatedFrom": "v1498",
   "expectedImages": 64,
-  "description": "Exact source product-image download manifest. Run PREPARE-LOCAL-PC-IMAGES.bat once before deployment.",
+  "description": "Exact source product-image download manifest for v1499 unified local resolver. Run PREPARE-LOCAL-PC-IMAGES.bat once before deployment.",
   "images": [
     {
       "index": 1,

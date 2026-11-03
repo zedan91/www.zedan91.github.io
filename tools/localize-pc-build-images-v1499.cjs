@@ -6,9 +6,9 @@ const zlib=require('zlib');
 const {spawnSync}=require('child_process');
 const ROOT=path.resolve(__dirname,'..');
 const PRODUCT_DIR=path.join(ROOT,'PC-Build','images','products');
-const MANIFEST_PATH=path.join(PRODUCT_DIR,'source-map-v1498.json');
-const MAP_JS=path.join(PRODUCT_DIR,'local-image-map-v1498.js');
-const READY_JSON=path.join(PRODUCT_DIR,'local-images-ready-v1498.json');
+const MANIFEST_PATH=path.join(PRODUCT_DIR,'source-map-v1499.json');
+const MAP_JS=path.join(PRODUCT_DIR,'local-image-map-v1499.js');
+const READY_JSON=path.join(PRODUCT_DIR,'local-images-ready-v1499.json');
 const manifest=JSON.parse(fs.readFileSync(MANIFEST_PATH,'utf8'));
 const items=manifest.images||[];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -58,10 +58,20 @@ async function pool(list,limit,fn){let next=0;const out=new Array(list.length);a
 function walkJsonFiles(dir,out=[]){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,ent.name);if(ent.isDirectory())walkJsonFiles(p,out);else if(ent.isFile()&&ent.name.endsWith('.json')&&p!==MANIFEST_PATH&&p!==READY_JSON)out.push(p)}return out;}
 function replaceDeep(v,map){if(Array.isArray(v))return v.map(x=>replaceDeep(x,map));if(v&&typeof v==='object'){for(const k of Object.keys(v))v[k]=replaceDeep(v[k],map);return v;}if(typeof v==='string'&&map.has(v))return map.get(v);return v;}
 function patchJsons(urlMap){let changed=0;for(const p of walkJsonFiles(path.join(ROOT,'PC-Build'))){let d;try{d=JSON.parse(fs.readFileSync(p,'utf8'))}catch{continue}const before=JSON.stringify(d);replaceDeep(d,urlMap);const after=JSON.stringify(d);if(after!==before){fs.writeFileSync(p,JSON.stringify(d,null,2)+'\n','utf8');changed++;}}return changed;}
-function writeMap(){const byUrl={},byId={};for(const it of items){byUrl[it.sourceUrl]=it.localPath;for(const id of (it.ids||[])){byId[id]=it.localPath;byId['json-'+id]=it.localPath;}}
-  const obj={version:'1498',ready:true,expected:items.length,downloaded:items.length,byId,byUrl};fs.writeFileSync(MAP_JS,'window.AZOBSS_PC_LOCAL_IMAGES='+JSON.stringify(obj)+';\n','utf8');return obj;}
+function normName(v){return String(v||'').toLowerCase().replace(/&amp;/g,'&').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();}
+function writeMap(){
+  const byUrl={},byId={},byName={};
+  for(const it of items){
+    byUrl[it.sourceUrl]=it.localPath;
+    try{const u=new URL(it.sourceUrl);u.search='';u.hash='';byUrl[u.toString()]=it.localPath;}catch{}
+    for(const id of (it.ids||[])){if(!id)continue;byId[id]=it.localPath;byId['json-'+id]=it.localPath;}
+    for(const name of (it.names||[])){const k=normName(name);if(k)byName[k]=it.localPath;}
+  }
+  const obj={version:'1499',ready:true,enforceLocal:true,expected:items.length,downloaded:items.length,byId,byUrl,byName};
+  fs.writeFileSync(MAP_JS,'window.AZOBSS_PC_LOCAL_IMAGES='+JSON.stringify(obj)+';\n','utf8');return obj;
+}
 function buildZip(){
-  const parent=path.dirname(ROOT); const out=path.join(parent,'(1498)-AZOBSS-FULL-WEBSITE-LOCAL-PC-IMAGES-SELF-CONTAINED_20261103.zip');
+  const parent=path.dirname(ROOT); const out=path.join(parent,'(1499)-AZOBSS-FULL-WEBSITE-LOCAL-IMAGE-RUNTIME-HARDENING_20261103.zip');
   try{if(fs.existsSync(out))fs.unlinkSync(out)}catch{}
   if(process.platform==='win32'){
     const esc=s=>s.replace(/'/g,"''");
@@ -73,13 +83,13 @@ function buildZip(){
   return out;
 }
 (async()=>{
-  console.log('AZOBSS v1498 — download exact PC Build images locally');
+  console.log('AZOBSS v1499 — download exact PC / Hardware images locally');
   console.log('Target:',PRODUCT_DIR); console.log('Images:',items.length);
   const results=await pool(items,4,async(it,i)=>{const r=await downloadOne(it);console.log(`[${String(i+1).padStart(2,'0')}/${items.length}] ${r.ok?'OK':'FAIL'} ${it.filename}${r.ok?' ('+r.size+' bytes)':' — '+r.error}`);return r;});
   const failures=results.map((r,i)=>!r.ok?{item:items[i],error:r.error}:null).filter(Boolean);
   if(failures.length){console.error('\nFAILED:',failures.length,'image(s). No deployment ZIP was created. Run this BAT again; successful images are kept.');for(const f of failures)console.error('-',f.item.filename,':',f.error);process.exit(2);}
   const urlMap=new Map(items.map(x=>[x.sourceUrl,x.localPath])); const changed=patchJsons(urlMap); const localMap=writeMap();
-  fs.writeFileSync(READY_JSON,JSON.stringify({ok:true,version:'1498',downloaded:items.length,expected:items.length,preparedAt:new Date().toISOString(),jsonFilesLocalized:changed},null,2)+'\n');
+  fs.writeFileSync(READY_JSON,JSON.stringify({ok:true,version:'1499',downloaded:items.length,expected:items.length,preparedAt:new Date().toISOString(),jsonFilesLocalized:changed},null,2)+'\n');
   console.log('\nAll',items.length,'images downloaded and validated.');console.log('JSON files localized:',changed);console.log('External image hotlinks are no longer used for mapped PC Build products.');
   try{const z=buildZip();console.log('\nREADY DEPLOY ZIP:',z);}catch(e){console.error('Images are ready, but ZIP creation failed:',e.message);process.exit(3)}
 })().catch(e=>{console.error(e);process.exit(1)});
