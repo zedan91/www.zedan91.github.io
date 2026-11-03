@@ -1,4 +1,4 @@
-name: AZOBSS v1505 - Vendor exact hardware images
+name: AZOBSS v1506 - Vendor exact hardware images (resilient)
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Download and verify all 14 exact hardware images
+      - name: Download and verify exact hardware images (partial-safe)
         run: python tools/vendor-hardware-images-v1505.py
 
       - name: Commit local images and ready map
@@ -39,5 +39,5 @@ jobs:
             echo 'No image changes to commit.'
             exit 0
           fi
-          git commit -m 'AZOBSS v1505: vendor 14 exact Hardware Shop images locally'
+          git commit -m 'AZOBSS v1506: vendor verified exact Hardware Shop images locally'
           git push origin "HEAD:${GITHUB_REF_NAME}"

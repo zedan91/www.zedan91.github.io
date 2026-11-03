@@ -7,7 +7,7 @@ PROD=ROOT/'PC-Build/images/products'
 MANIFEST=PROD/'hardware-exact-v1505.json'
 MAP=PROD/'local-hardware-map-v1505.js'
 REPORT=PROD/'hardware-vendor-report-v1505.json'
-UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSS-v1505'
+UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142 Safari/537.36 AZOBSS-v1506'
 
 def key(v):
     return re.sub(r'\s+',' ',re.sub(r'[^a-z0-9]+',' ',str(v or '').lower())).strip()
@@ -105,10 +105,11 @@ def main():
     if len(items)!=expected:
         raise SystemExit(f'Manifest count mismatch: {len(items)} != {expected}')
     PROD.mkdir(parents=True,exist_ok=True)
-    tmpdir=Path(tempfile.mkdtemp(prefix='azobss-v1505-'))
+    tmpdir=Path(tempfile.mkdtemp(prefix='azobss-v1506-'))
     rows=[]; staged=[]
     try:
         for i,item in enumerate(items,1):
+            errs=[]
             dst=PROD/item['filename']
             # Existing valid exact file is accepted.
             if magic_ok(dst):
@@ -120,6 +121,8 @@ def main():
                 ok=bool(used and magic_ok(tmp))
                 if ok: staged.append((tmp,dst))
             row={'id':item['id'],'name':item['name'],'filename':item['filename'],'ok':ok,'sourceUsed':used if ok else ''}
+            if not ok:
+                row['attemptErrors']=errs[-8:]
             if ok:
                 src=dst if dst.exists() and magic_ok(dst) else tmp
                 row['bytes']=src.stat().st_size
@@ -130,23 +133,26 @@ def main():
                 print(f'[{i:02d}/{expected}] FAIL {item["name"]}')
             rows.append(row)
         good=[r for r in rows if r['ok']]
-        # v1505 is strict: do not publish a ready map unless every exact file is present.
-        if len(good)!=expected:
-            REPORT.write_text(json.dumps({'version':'1505','complete':False,'expected':expected,'downloaded':len(good),'items':rows},indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
-            print(f'ERROR: exact hardware images {len(good)}/{expected}; repository map left NOT READY.')
-            return 2
+        # v1506: publish every verified local image. One failed CDN must not hide all good images.
         for src,dst in staged:
             dst.parent.mkdir(parents=True,exist_ok=True); shutil.copy2(src,dst)
+        good_ids={r['id'] for r in good}
         byid={}; byname={}
         for item in items:
+            if item['id'] not in good_ids:
+                continue
             local='/PC-Build/images/products/'+item['filename']
             byid[item['id']]=local
             byname[key(item['name'])]=local
-        obj={'version':'1505','policy':'hardware-exact-local-only-github-vendored','ready':True,'complete':True,'expected':expected,'downloaded':expected,'missing':0,'byId':byid,'byName':byname}
+        downloaded=len(good); missing=max(0,expected-downloaded); complete=(downloaded==expected)
+        obj={'version':'1506','policy':'hardware-exact-local-only-github-vendored-resilient','ready':downloaded>0,'complete':complete,'expected':expected,'downloaded':downloaded,'missing':missing,'byId':byid,'byName':byname}
         MAP.write_text('window.AZOBSS_PC_LOCAL_HARDWARE_IMAGES='+json.dumps(obj,separators=(',',':'),ensure_ascii=False)+';\n',encoding='utf-8')
-        REPORT.write_text(json.dumps({'version':'1505','complete':True,'expected':expected,'downloaded':expected,'items':rows},indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
-        print(f'AZOBSS v1505 READY: {expected}/{expected} exact hardware images vendored locally.')
-        return 0
+        REPORT.write_text(json.dumps({'version':'1506','complete':complete,'expected':expected,'downloaded':downloaded,'missing':missing,'items':rows},indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+        if complete:
+            print(f'AZOBSS v1506 READY: {downloaded}/{expected} exact hardware images vendored locally.')
+        else:
+            print(f'AZOBSS v1506 PARTIAL READY: {downloaded}/{expected}; {missing} item(s) remain placeholder, verified images are published.')
+        return 0 if downloaded>0 else 2
     finally:
         shutil.rmtree(tmpdir,ignore_errors=True)
 

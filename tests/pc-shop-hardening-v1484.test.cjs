@@ -26,7 +26,7 @@ function runtimeWith({html='Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI 
 }
 
 test('v1487 keeps checkout hardening while adding clear-price snapshot fallback for display',()=>{
-  assert.equal(RELEASE,'1505');
+  assert.equal(RELEASE,'1506');
   for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy','clearPriceSnapshotFallback','singlePriceRetailerCatalog'])assert.equal(CAPABILITIES[k],true,k);
 });
 

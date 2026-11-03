@@ -1,8 +1,8 @@
 {
-  "version": "1505",
+  "version": "1506",
   "policy": "hardware-exact-local-only-github-vendored",
   "expectedHardwareImages": 14,
-  "description": "AZOBSS v1505: GitHub automatically vendors 14 exact Hardware Shop images into the repository. Customer-facing pages use local files only; no BAT and no retailer hotlink at runtime.",
+  "description": "AZOBSS v1506: GitHub vendors exact Hardware Shop images locally. Partial success is published safely; Gigabyte B860M EAGLE WIFI6 has verified exact-model fallbacks.",
   "items": [
     {
       "id": "nb-msi-rtx5070-ventus-12g",
@@ -75,9 +75,12 @@
       "name": "Gigabyte B860M EAGLE WIFI 6",
       "filename": "allit-gigabyte-b860m-eagle-wifi6.png",
       "urls": [
-        "https://www.gigabyte.com/FileUpload/Global/KeyFeature/3819/innergigabyte/images/product/rgb/cover.png"
+        "https://www.gigabyte.com/FileUpload/Global/KeyFeature/3819/innergigabyte/images/product/rgb/cover.png",
+        "https://www.pbtech.com/pacific/imgprod/M/B/MBDGBM62410__2.jpg",
+        "https://computerlounge.co.nz/cdn/shop/files/150ada4d28930ac317af738488f299eb1bfcf7e1_GIGABYTE_B860M_EAGLE_WIFI6_mATX_3.jpg?v=1737328161&width=1214"
       ],
-      "sourceUrl": "https://www.allithypermarket.com.my/products/gigabyte-b860m-eagle-wifi-6-micro-atx-matx-intel-lga1851-gaming-motherboard"
+      "sourceUrl": "https://www.allithypermarket.com.my/products/gigabyte-b860m-eagle-wifi-6-micro-atx-matx-intel-lga1851-gaming-motherboard",
+      "note": "v1506: added verified exact-model fallback images after Gigabyte source/CDN failure on GitHub Actions."
     },
     {
       "id": "allit-asus-prime-b860m-a-wifi",
