@@ -1,0 +1,14 @@
+AZOBSS v1503 - G2 HARDWARE SHOP IMAGE FIX
+
+1. Extract ZIP PREPARER / merge patch ke folder website v1502 dan pilih Replace/Overwrite.
+2. JANGAN padam folder PC-Build\images.
+3. Double-click: PREPARE-LOCAL-PC-IMAGES.bat
+4. Tunggu laporan "Hardware images ready: x/14".
+5. BAT akan bina:
+   (1503)-AZOBSS-FULL-WEBSITE-HARDWARE-EXACT-LOCAL-FINAL_20261103.zip
+6. Upload ZIP FINAL itu ke GitHub. JANGAN upload ZIP PREPARER terus.
+7. Redeploy Render kerana release package/backend dinaikkan ke 1503.
+
+G1 PC Builds tidak diubah daripada behavior v1502 yang sudah betul.
+G2 Hardware Shop menggunakan map khas 14 gambar exact lokal.
+Jika satu gambar gagal, produk itu sahaja guna placeholder; gambar hardware lain kekal muncul.
