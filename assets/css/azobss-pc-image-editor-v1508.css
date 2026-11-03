@@ -1,0 +1,45 @@
+/* AZOBSS v1508: admin-only inline PC Shop image editor. No backend upload. */
+body.az-photo-editor-active{overflow:hidden!important}
+.az-photo-editor-backdrop{position:fixed;inset:0;background:rgba(0,5,14,.95);z-index:2147483400;display:flex;align-items:center;justify-content:center;padding:10px;backdrop-filter:blur(8px)}
+.az-photo-editor-dialog{display:flex;flex-direction:column;width:min(98vw,1650px);height:min(96vh,1050px);min-height:0;background:#081829;border:1px solid #44627f;border-radius:16px;color:#e3f3ff;box-shadow:0 30px 100px #000c;overflow:hidden;font:14px/1.45 system-ui,Arial,sans-serif}
+.az-photo-editor-dialog *{box-sizing:border-box}
+.az-photo-editor-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;background:#102841;border-bottom:1px solid #35516b}
+.az-photo-editor-head b{display:block;font-size:20px;color:#fff}
+.az-photo-editor-head small{display:block;font-size:12px;color:#b5d0e7;overflow-wrap:anywhere}
+.az-photo-editor-close{border:1px solid #64829b!important;color:#fff!important;background:#102234!important;border-radius:50%!important;min-width:44px!important;height:44px!important;font-size:26px!important;cursor:pointer;z-index:10;flex:0 0 auto}
+.az-photo-editor-toolbar{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:7px;padding:10px 12px;max-height:245px;overflow:auto;background:#092037;border-bottom:1px solid #37536f;align-content:flex-start}
+.az-photo-editor-group{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:5px 8px;border:1px solid #33506b;border-radius:9px;min-width:0}
+.az-photo-editor-group label{display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;color:#bcd4ed}
+.az-photo-editor-dialog button:not(.az-photo-editor-download){padding:7px 10px;min-height:35px;white-space:nowrap;color:#dceeff;background:#132e49;border:1px solid #426282;border-radius:8px;cursor:pointer;font-weight:600}
+.az-photo-editor-dialog button:hover{border-color:#41baff;background:#194568}
+.az-photo-editor-dialog button.is-selected{background:#116880;color:#fff;border-color:#23d9fa}
+.az-photo-editor-dialog button:disabled{opacity:.48;cursor:not-allowed}
+.az-photo-editor-dialog input[type=range]{width:86px;accent-color:#32c9ff;cursor:pointer}
+.az-photo-editor-dialog input[type=color]{height:33px;width:34px;padding:0;cursor:pointer;background:transparent;border:0}
+.az-photo-editor-dialog input[type=text],.az-photo-editor-dialog select{background:#071625;border:1px solid #456583;border-radius:6px;color:#e2f3ff;padding:7px;min-width:0;font-size:14px}
+.az-photo-editor-text-field input{width:150px}
+.az-photo-editor-upload{cursor:pointer;border:1px solid #547592;border-radius:8px;background:#17334e;padding:8px;color:#fff!important}
+.az-photo-editor-filters{gap:12px}
+.az-photo-editor-filters label{gap:5px}
+.az-photo-editor-filters output{min-width:33px;text-align:right}
+.az-photo-editor-workspace{flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1fr) 255px;min-height:0;min-width:0}
+.az-photo-editor-viewport{min-width:0;min-height:160px;display:flex;align-items:flex-start;justify-content:safe center;overflow:auto;background:repeating-conic-gradient(#17283a 0% 25%,#0d1d2f 0% 50%) 0 0 / 20px 20px;padding:17px;position:relative}
+.az-photo-editor-canvas-wrap{position:relative;flex:0 0 auto;margin:auto}
+.az-photo-editor-canvas-wrap canvas{display:block;position:absolute;left:0;top:0;max-width:none;max-height:none;touch-action:none}
+.az-photo-editor-canvas-wrap canvas[data-photo-canvas]{z-index:1;background:transparent}
+.az-photo-editor-canvas-wrap canvas[data-photo-overlay]{z-index:2;cursor:crosshair;outline:1px solid #33516c;touch-action:none}
+.az-photo-editor-side{background:#0b2238;border-left:1px solid #35516b;padding:16px 13px;display:flex;flex-direction:column;gap:10px;overflow:auto;min-width:0}
+.az-photo-editor-side>b{font-size:16px;color:#f6fbff}
+.az-photo-editor-side p{margin:0;color:#9bcbea}
+.az-photo-editor-side label{display:flex;flex-direction:column;align-items:stretch;gap:4px;color:#c9e2f5;font-size:13px}
+.az-photo-editor-side input[type=range]{width:100%}
+.az-photo-editor-side output{font-size:12px}
+.az-photo-editor-dialog .az-photo-editor-download{min-height:45px;background:linear-gradient(110deg,#08a1d9,#157df1);color:#fff;border:1px solid #71c6ff;border-radius:8px;font-weight:800;cursor:pointer;padding:9px;white-space:normal}
+.az-photo-editor-warn{display:block;line-height:1.55;border:1px solid #805b24;border-radius:8px;padding:10px;color:#ffddaa;background:#332817}
+.az-photo-editor-source{font-size:10px;white-space:normal;overflow-wrap:anywhere;color:#76b6e9;border:1px solid #274966;border-radius:6px;padding:7px}
+.az-photo-editor-foot{flex:0 0 auto;padding:8px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #33516f;background:#0a1e32}
+.az-photo-editor-foot [data-photo-status]{font-size:12px;color:#b5d2ea;overflow-wrap:anywhere}
+.az-pc-image-edit{position:absolute;top:13px;right:67px;z-index:2147483646;pointer-events:auto!important;display:flex;align-items:center;justify-content:center;min-height:42px;padding:8px 14px;border:1px solid #23c9d5;border-radius:12px;background:#063e58;color:#fff;font-weight:800;cursor:pointer;touch-action:manipulation}
+.az-pc-image-edit:hover{background:#007f97}
+@media(max-width:950px){.az-photo-editor-toolbar{max-height:285px}.az-photo-editor-workspace{grid-template-columns:minmax(0,1fr) 210px}.az-photo-editor-side{padding:9px}}
+@media(max-width:650px){.az-photo-editor-backdrop{padding:3px}.az-photo-editor-dialog{height:98vh;width:100%;border-radius:8px}.az-photo-editor-head{padding:8px 11px}.az-photo-editor-head b{font-size:17px}.az-photo-editor-toolbar{max-height:32vh;padding:7px;gap:5px}.az-photo-editor-group{padding:4px;gap:4px}.az-photo-editor-dialog button:not(.az-photo-editor-download){font-size:12px;min-height:39px;padding:5px 8px}.az-photo-editor-workspace{display:flex;flex-direction:column}.az-photo-editor-viewport{flex:1 1 auto;min-height:190px}.az-photo-editor-side{flex:0 0 auto;max-height:185px;border-left:0;border-top:1px solid #426381;display:grid;grid-template-columns:1fr 1fr;gap:8px}.az-photo-editor-side>b,.az-photo-editor-side p{grid-column:1/-1}.az-photo-editor-warn,.az-photo-editor-source{grid-column:1/-1}.az-photo-editor-foot{padding:6px 9px}.az-pc-image-edit{top:13px;right:64px;padding:6px 9px}}

@@ -1,0 +1,31 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname,'..');
+const read = file => fs.readFileSync(path.join(root,file),'utf8');
+test('v1508 editor is loaded only on PC Build page and launched by administrator',()=>{
+  const html = read('PC-Build/index.html');
+  const viewer = read('assets/js/azobss-pc-shop-v1487.js');
+  const editor = read('assets/js/azobss-pc-image-editor-v1508.js');
+  assert.match(html,/azobss-pc-image-editor-v1508\.css\?v=1508/);
+  assert.match(html,/azobss-pc-image-editor-v1508\.js\?v=1508/);
+  assert.match(html,/azobss-pc-shop-v1487\.js\?v=1508/);
+  assert.match(viewer,/data-pc-image-edit/);
+  assert.match(viewer,/window\.azobssPcImageEditor\?\.isAdministrator/);
+  assert.match(viewer,/returnFocus=imageViewerLastFocus/);
+  assert.match(editor,/window\.azobssPcImageEditor=\{open,isAdministrator:looksLikeAdmin\}/);
+  assert.match(editor,/if\(!looksLikeAdmin\(\)\)/);
+});
+test('v1508 editor supports major editing tools and explicit local export only',()=>{
+  const js=read('assets/js/azobss-pc-image-editor-v1508.js');
+  const css=read('assets/css/azobss-pc-image-editor-v1508.css');
+  for(const tool of ['crop','brush','erase','text','rect','circle','line'])assert.match(js,new RegExp('data-photo-tool="'+tool+'"'));
+  for(const thing of ['data-photo-undo','data-photo-redo','data-photo-reset','data-photo-flip','data-photo-rotate','data-photo-filter','data-photo-upload','data-photo-download','data-photo-ratio'])assert.ok(js.includes(thing),thing);
+  assert.match(js,/URL\.createObjectURL\(blob\)/);
+  assert.match(js,/\.toBlob\(finish,mime/);
+  assert.match(js,/s\.original/);
+  assert.match(js,/MAX_PIXELS/);
+  assert.match(css,/az-photo-editor-viewport/);
+  assert.doesNotMatch(js,/fetch\s*\(|XMLHttpRequest|firebase-admin|writeBatch|uploadBytes|api\/pc-shop\/upload/);
+});

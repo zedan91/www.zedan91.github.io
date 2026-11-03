@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__azobssPcShop1507)return;window.__azobssPcShop1507=true;
+if(window.__azobssPcShop1508)return;window.__azobssPcShop1508=true;
 const CATALOG_API='https://azobss-backend.onrender.com/api/pc-shop/catalog';
 const HEALTH_API='https://azobss-backend.onrender.com/api/pc-shop/health';
 const BACKEND='https://azobss-backend.onrender.com';
@@ -54,7 +54,35 @@ function watchPcCards(){/* intentionally no-op in v1480 */}
 
 let imageViewerKeyHandler=null,imageViewerAbort=null,imageViewerLastFocus=null;
 function closeDedicatedImageViewer(restoreFocus=true){try{imageViewerAbort?.abort()}catch(_e){}imageViewerAbort=null;document.querySelectorAll('.az-pc-image-backdrop').forEach(x=>{x.classList.remove('is-open');x.setAttribute('aria-hidden','true');x.style.setProperty('pointer-events','none','important');x.remove()});document.body.classList.remove('az-pc-image-modal-open');if(imageViewerKeyHandler){document.removeEventListener('keydown',imageViewerKeyHandler,true);imageViewerKeyHandler=null}const focusTarget=imageViewerLastFocus;imageViewerLastFocus=null;if(restoreFocus&&focusTarget?.isConnected){requestAnimationFrame(()=>{try{focusTarget.focus({preventScroll:true})}catch(_e){}})}}
-function dedicatedImageViewer(title,url,source,crop='product-focus'){if(!url)return;closeDedicatedImageViewer(false);imageViewerLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;imageViewerAbort=new AbortController();const sig=imageViewerAbort.signal;const root=document.createElement('div');root.className='az-pc-image-backdrop is-open';root.setAttribute('aria-hidden','false');root.setAttribute('data-azobss-image-viewer','1507');root.innerHTML=`<section class="az-pc-image-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title||'Product Image')}"><button class="az-pc-image-close" data-pc-image-close type="button" aria-label="Tutup gambar">×</button><div class="az-pc-image-stage ${esc(crop||'product-focus')}"><img src="${esc(url)}" alt="${esc(title||'Product')}" referrerpolicy="no-referrer"></div><div class="az-pc-image-caption"><strong>${esc(title||'Product Image')}</strong><span>Gambar sumber • saiz penuh dikekalkan; teks/harga retailer dibersihkan tanpa crop</span><small>${esc(source||'sumber rasmi')} • klik/tap gambar untuk zoom lagi</small></div></section>`;document.body.appendChild(root);document.body.classList.add('az-pc-image-modal-open');const stage=root.querySelector('.az-pc-image-stage'),closeBtn=root.querySelector('[data-pc-image-close]');const closeFromUi=e=>{if(e){e.preventDefault();e.stopPropagation();if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation()}stage?.classList.remove('is-zoomed');closeDedicatedImageViewer()};const isCloseTarget=e=>{const t=e?.target;return t instanceof Element&&!!t.closest('[data-pc-image-close]')};root.addEventListener('pointerup',e=>{if(isCloseTarget(e))closeFromUi(e)},{capture:true,signal:sig});root.addEventListener('click',e=>{if(isCloseTarget(e)){closeFromUi(e);return}if(e.target===root)closeFromUi(e)},{capture:true,signal:sig});stage?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();stage.classList.toggle('is-zoomed')},{signal:sig});imageViewerKeyHandler=e=>{if(e.key==='Escape'){e.preventDefault();closeFromUi(e)}};document.addEventListener('keydown',imageViewerKeyHandler,{capture:true,signal:sig});requestAnimationFrame(()=>{try{closeBtn?.focus({preventScroll:true})}catch(_e){}})}
+function dedicatedImageViewer(title,url,source,crop='product-focus'){
+  if(!url)return;
+  closeDedicatedImageViewer(false);
+  imageViewerLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  imageViewerAbort=new AbortController();
+  const sig=imageViewerAbort.signal,root=document.createElement('div');
+  root.className='az-pc-image-backdrop is-open';root.setAttribute('aria-hidden','false');
+  root.setAttribute('data-azobss-image-viewer','1508');
+  const canEdit=window.azobssPcImageEditor?.isAdministrator?.()===true;
+  root.innerHTML=`<section class="az-pc-image-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title||'Product Image')}"><button class="az-pc-image-close" data-pc-image-close type="button" aria-label="Tutup gambar">×</button>${canEdit?'<button class="az-pc-image-edit" data-pc-image-edit type="button" aria-label="Edit gambar (Administrator)">🎨 Edit Gambar</button>':''}<div class="az-pc-image-stage ${esc(crop||'product-focus')}"><img src="${esc(url)}" alt="${esc(title||'Product')}" referrerpolicy="no-referrer"></div><div class="az-pc-image-caption"><strong>${esc(title||'Product Image')}</strong><span>Gambar sumber • saiz penuh dikekalkan; teks/harga retailer dibersihkan tanpa crop</span><small>${esc(source||'sumber rasmi')} • klik/tap gambar untuk zoom lagi</small></div></section>`;
+  document.body.appendChild(root);document.body.classList.add('az-pc-image-modal-open');
+  const stage=root.querySelector('.az-pc-image-stage'),closeBtn=root.querySelector('[data-pc-image-close]');
+  const closeFromUi=e=>{if(e){e.preventDefault();e.stopPropagation();if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation()}stage?.classList.remove('is-zoomed');closeDedicatedImageViewer()};
+  const isCloseTarget=e=>{const t=e?.target;return t instanceof Element&&!!t.closest('[data-pc-image-close]')};
+  root.addEventListener('pointerup',e=>{if(isCloseTarget(e))closeFromUi(e)},{capture:true,signal:sig});
+  root.addEventListener('click',e=>{if(isCloseTarget(e)){closeFromUi(e);return}if(e.target===root)closeFromUi(e)},{capture:true,signal:sig});
+  stage?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();stage.classList.toggle('is-zoomed')},{signal:sig});
+  root.querySelector('[data-pc-image-edit]')?.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    if(!window.azobssPcImageEditor?.isAdministrator?.())return;
+    const returnFocus=imageViewerLastFocus;
+    stage?.classList.remove('is-zoomed');
+    closeDedicatedImageViewer(false);
+    window.azobssPcImageEditor.open({title:title||'Product Image',url,source,returnFocus}).catch(err=>console.warn('AZOBSS Photo Editor:',err));
+  },{signal:sig});
+  imageViewerKeyHandler=e=>{if(e.key==='Escape'){e.preventDefault();closeFromUi(e)}};
+  document.addEventListener('keydown',imageViewerKeyHandler,{capture:true,signal:sig});
+  requestAnimationFrame(()=>{try{closeBtn?.focus({preventScroll:true})}catch(_e){}});
+}
 function openImageViewer(p){if(!p?.image)return;dedicatedImageViewer(p.name||'Product Image',p.image,p.sourceName||'sumber rasmi',p.imageCrop||'product-focus')}
 window.azobssOpenPcProductImage=function(title,url,source,crop){if(!url)return;dedicatedImageViewer(title||'Product Image',url,source||'sumber rasmi',crop||'pc-focus')};
 function cleanupPcShopModalState(reason='watchdog'){const overlays=[...document.querySelectorAll('.az-pc-shop-backdrop')];let active=overlays.filter(x=>x.classList.contains('is-open')&&x.getAttribute('aria-hidden')!=='true'&&x.querySelector('.az-pc-shop-modal'));if(active.length>1){active.slice(0,-1).forEach(x=>x.remove());active=active.slice(-1)}for(const x of overlays){if(!x.isConnected)continue;const valid=x.classList.contains('is-open')&&x.getAttribute('aria-hidden')!=='true'&&!!x.querySelector('.az-pc-shop-modal');if(!valid){x.remove();continue}if(x.style.pointerEvents==='none'||x.dataset.azobssOrphanOverlayRecovered){x.style.removeProperty('pointer-events');delete x.dataset.azobssOrphanOverlayRecovered}x.style.setProperty('pointer-events','auto','important')}const live=document.querySelector('.az-pc-shop-backdrop.is-open[aria-hidden="false"] .az-pc-shop-modal');document.body.classList.toggle('az-pc-shop-modal-open',!!live);return !!live}
