@@ -1,0 +1,20 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const ROOT=path.resolve(__dirname,'..');
+const read=p=>fs.readFileSync(path.join(ROOT,p),'utf8');
+test('v1507 product image viewer closes reliably after zoom',()=>{
+  const js=read('assets/js/azobss-pc-shop-v1487.js');
+  const css=read('assets/css/azobss-pc-shop-v1487.css');
+  const html=read('PC-Build/index.html');
+  assert.match(js,/data-pc-image-close/);
+  assert.match(js,/pointerup/);
+  assert.match(js,/capture:true/);
+  assert.match(js,/stage\?\.classList\.remove\('is-zoomed'\)/);
+  assert.match(js,/closeDedicatedImageViewer\(restoreFocus=true\)/);
+  assert.match(css,/z-index:2147483647;pointer-events:auto!important/);
+  assert.match(css,/isolation:isolate/);
+  assert.match(html,/azobss-pc-shop-v1487\.js\?v=1507/);
+  assert.match(html,/azobss-pc-shop-v1487\.css\?v=1507/);
+});
