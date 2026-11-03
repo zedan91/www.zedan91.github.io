@@ -43,3 +43,9 @@ body.az-photo-editor-active{overflow:hidden!important}
 .az-pc-image-edit:hover{background:#007f97}
 @media(max-width:950px){.az-photo-editor-toolbar{max-height:285px}.az-photo-editor-workspace{grid-template-columns:minmax(0,1fr) 210px}.az-photo-editor-side{padding:9px}}
 @media(max-width:650px){.az-photo-editor-backdrop{padding:3px}.az-photo-editor-dialog{height:98vh;width:100%;border-radius:8px}.az-photo-editor-head{padding:8px 11px}.az-photo-editor-head b{font-size:17px}.az-photo-editor-toolbar{max-height:32vh;padding:7px;gap:5px}.az-photo-editor-group{padding:4px;gap:4px}.az-photo-editor-dialog button:not(.az-photo-editor-download){font-size:12px;min-height:39px;padding:5px 8px}.az-photo-editor-workspace{display:flex;flex-direction:column}.az-photo-editor-viewport{flex:1 1 auto;min-height:190px}.az-photo-editor-side{flex:0 0 auto;max-height:185px;border-left:0;border-top:1px solid #426381;display:grid;grid-template-columns:1fr 1fr;gap:8px}.az-photo-editor-side>b,.az-photo-editor-side p{grid-column:1/-1}.az-photo-editor-warn,.az-photo-editor-source{grid-column:1/-1}.az-photo-editor-foot{padding:6px 9px}.az-pc-image-edit{top:13px;right:64px;padding:6px 9px}}
+
+/* v1509 - first-class publish action and readable status. */
+.az-photo-editor-dialog .az-photo-editor-publish{display:block;width:100%;min-height:45px;padding:9px 12px;margin:4px 0 10px;border:1px solid #47f2b8;border-radius:8px;background:linear-gradient(110deg,#087f69,#075f86);color:#fff;font-size:13px;font-weight:900;cursor:pointer}
+.az-photo-editor-dialog .az-photo-editor-publish:disabled{opacity:.55;cursor:not-allowed}
+.az-photo-editor-dialog [data-photo-publish-result]{font-size:11px;line-height:1.45;color:#98fcd7;overflow-wrap:anywhere;margin-top:9px}
+.az-photo-editor-dialog [data-photo-publish-result] a{color:#70c8ff;text-decoration:underline}

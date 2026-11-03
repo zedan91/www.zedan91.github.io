@@ -8,6 +8,13 @@ services:
     envVars:
       - key: ADMIN_KEY
         sync: false
+      # v1509: GitHub auto-publish edited PC/Hardware images. Set token in Render Dashboard only.
+      - key: AZOBSS_GITHUB_TOKEN
+        sync: false
+      - key: AZOBSS_GITHUB_REPO
+        value: zedan91/www.zedan91.github.io
+      - key: AZOBSS_GITHUB_BRANCH
+        value: main
       - key: AZOBSS_DOWNLOAD_HASH_SECRET
         sync: false
       - key: AZOBSS_DOWNLOAD_SESSION_TTL_MS

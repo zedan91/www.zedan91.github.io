@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__azobssPcShop1508)return;window.__azobssPcShop1508=true;
+if(window.__azobssPcShop1509)return;window.__azobssPcShop1509=true;
 const CATALOG_API='https://azobss-backend.onrender.com/api/pc-shop/catalog';
 const HEALTH_API='https://azobss-backend.onrender.com/api/pc-shop/health';
 const BACKEND='https://azobss-backend.onrender.com';
@@ -54,14 +54,14 @@ function watchPcCards(){/* intentionally no-op in v1480 */}
 
 let imageViewerKeyHandler=null,imageViewerAbort=null,imageViewerLastFocus=null;
 function closeDedicatedImageViewer(restoreFocus=true){try{imageViewerAbort?.abort()}catch(_e){}imageViewerAbort=null;document.querySelectorAll('.az-pc-image-backdrop').forEach(x=>{x.classList.remove('is-open');x.setAttribute('aria-hidden','true');x.style.setProperty('pointer-events','none','important');x.remove()});document.body.classList.remove('az-pc-image-modal-open');if(imageViewerKeyHandler){document.removeEventListener('keydown',imageViewerKeyHandler,true);imageViewerKeyHandler=null}const focusTarget=imageViewerLastFocus;imageViewerLastFocus=null;if(restoreFocus&&focusTarget?.isConnected){requestAnimationFrame(()=>{try{focusTarget.focus({preventScroll:true})}catch(_e){}})}}
-function dedicatedImageViewer(title,url,source,crop='product-focus'){
+function dedicatedImageViewer(title,url,source,crop='product-focus',productKind='',productId=''){
   if(!url)return;
   closeDedicatedImageViewer(false);
   imageViewerLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
   imageViewerAbort=new AbortController();
   const sig=imageViewerAbort.signal,root=document.createElement('div');
   root.className='az-pc-image-backdrop is-open';root.setAttribute('aria-hidden','false');
-  root.setAttribute('data-azobss-image-viewer','1508');
+  root.setAttribute('data-azobss-image-viewer','1509');
   const canEdit=window.azobssPcImageEditor?.isAdministrator?.()===true;
   root.innerHTML=`<section class="az-pc-image-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title||'Product Image')}"><button class="az-pc-image-close" data-pc-image-close type="button" aria-label="Tutup gambar">×</button>${canEdit?'<button class="az-pc-image-edit" data-pc-image-edit type="button" aria-label="Edit gambar (Administrator)">🎨 Edit Gambar</button>':''}<div class="az-pc-image-stage ${esc(crop||'product-focus')}"><img src="${esc(url)}" alt="${esc(title||'Product')}" referrerpolicy="no-referrer"></div><div class="az-pc-image-caption"><strong>${esc(title||'Product Image')}</strong><span>Gambar sumber • saiz penuh dikekalkan; teks/harga retailer dibersihkan tanpa crop</span><small>${esc(source||'sumber rasmi')} • klik/tap gambar untuk zoom lagi</small></div></section>`;
   document.body.appendChild(root);document.body.classList.add('az-pc-image-modal-open');
@@ -77,14 +77,14 @@ function dedicatedImageViewer(title,url,source,crop='product-focus'){
     const returnFocus=imageViewerLastFocus;
     stage?.classList.remove('is-zoomed');
     closeDedicatedImageViewer(false);
-    window.azobssPcImageEditor.open({title:title||'Product Image',url,source,returnFocus}).catch(err=>console.warn('AZOBSS Photo Editor:',err));
+    window.azobssPcImageEditor.open({title:title||'Product Image',url,source,returnFocus,productKind,productId}).catch(err=>console.warn('AZOBSS Photo Editor:',err));
   },{signal:sig});
   imageViewerKeyHandler=e=>{if(e.key==='Escape'){e.preventDefault();closeFromUi(e)}};
   document.addEventListener('keydown',imageViewerKeyHandler,{capture:true,signal:sig});
   requestAnimationFrame(()=>{try{closeBtn?.focus({preventScroll:true})}catch(_e){}});
 }
-function openImageViewer(p){if(!p?.image)return;dedicatedImageViewer(p.name||'Product Image',p.image,p.sourceName||'sumber rasmi',p.imageCrop||'product-focus')}
-window.azobssOpenPcProductImage=function(title,url,source,crop){if(!url)return;dedicatedImageViewer(title||'Product Image',url,source||'sumber rasmi',crop||'pc-focus')};
+function openImageViewer(p){if(!p?.image)return;dedicatedImageViewer(p.name||'Product Image',p.image,p.sourceName||'sumber rasmi',p.imageCrop||'product-focus','hardware',String(p.id||p.productId||''))}
+window.azobssOpenPcProductImage=function(title,url,source,crop,productId){if(!url)return;dedicatedImageViewer(title||'Product Image',url,source||'sumber rasmi',crop||'pc-focus','build',String(productId||''))};
 function cleanupPcShopModalState(reason='watchdog'){const overlays=[...document.querySelectorAll('.az-pc-shop-backdrop')];let active=overlays.filter(x=>x.classList.contains('is-open')&&x.getAttribute('aria-hidden')!=='true'&&x.querySelector('.az-pc-shop-modal'));if(active.length>1){active.slice(0,-1).forEach(x=>x.remove());active=active.slice(-1)}for(const x of overlays){if(!x.isConnected)continue;const valid=x.classList.contains('is-open')&&x.getAttribute('aria-hidden')!=='true'&&!!x.querySelector('.az-pc-shop-modal');if(!valid){x.remove();continue}if(x.style.pointerEvents==='none'||x.dataset.azobssOrphanOverlayRecovered){x.style.removeProperty('pointer-events');delete x.dataset.azobssOrphanOverlayRecovered}x.style.setProperty('pointer-events','auto','important')}const live=document.querySelector('.az-pc-shop-backdrop.is-open[aria-hidden="false"] .az-pc-shop-modal');document.body.classList.toggle('az-pc-shop-modal-open',!!live);return !!live}
 function modal(title,body){closeModal(false);cleanupPcShopModalState('before-open');modalLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;modalAbort=new AbortController();const root=document.createElement('div');root.className='az-pc-shop-backdrop is-open';root.id='azPcShopModal';root.setAttribute('aria-hidden','false');root.setAttribute('data-azobss-overlay','pc-shop');root.dataset.azPcModalOwner='1507';root.innerHTML=`<section class="az-pc-shop-modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="az-pc-shop-modal-head"><h3>${esc(title)}</h3><button class="az-pc-shop-close" type="button" aria-label="Close">×</button></div><div class="az-pc-shop-modal-body">${body}</div></section>`;document.body.appendChild(root);document.body.classList.add('az-pc-shop-modal-open');const sig=modalAbort.signal;root.querySelector('.az-pc-shop-close').addEventListener('click',()=>closeModal(),{signal:sig});root.addEventListener('click',e=>{if(e.target===root)closeModal()},{signal:sig});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.az-pc-shop-backdrop.is-open')){e.preventDefault();closeModal()}},{signal:sig});queueMicrotask(()=>cleanupPcShopModalState('after-open'));setTimeout(()=>{cleanupPcShopModalState('focus');root.querySelector('.az-pc-shop-close')?.focus()},0);return root}
 function closeModal(restoreFocus=true){try{modalAbort?.abort()}catch(_){}modalAbort=null;document.querySelectorAll('.az-pc-shop-backdrop').forEach(x=>{x.classList.remove('is-open');x.setAttribute('aria-hidden','true');x.style.setProperty('pointer-events','none','important');x.remove()});document.body.classList.remove('az-pc-shop-modal-open');cleanupPcShopModalState('close');if(restoreFocus&&modalLastFocus?.isConnected){try{modalLastFocus.focus({preventScroll:true})}catch(_){}}modalLastFocus=null}

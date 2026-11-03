@@ -20,7 +20,7 @@ test('v1496 bootstrap loads web-enriched data after legacy fallback and package 
   assert.match(src,/web-enriched-current\.json/);
   assert.match(src,/if\(Array\.isArray\(web\?\.products\)\)products\.push/);
   const pkg=JSON.parse(fs.readFileSync(path.join(root,'backend/package.json'),'utf8'));
-  assert.equal(pkg.version,'1.0.1507');
+  assert.equal(pkg.version,'1.0.1509');
 });
 
 test('PC Build frontend loads canonical JSON first and a live-sync failure does not erase it',()=>{

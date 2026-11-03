@@ -12,6 +12,7 @@ import nodemailer from "nodemailer";
 import sharp from "sharp";
 import PDFDocument from "pdfkit";
 import admin from "firebase-admin";
+import { registerPcShopGithubImagePublisher } from "./pc-shop-github-image-publisher.js";
 import { Readable } from "stream";
 import {validateSettings,malaysiaMonth,scheduledAt,nextScheduledAt,publicEntry,publicWinner} from "./lucky-draw-model.js";
 import {createSettingsStore,createDrawRunner,problem} from "./lucky-draw-settings.js";
@@ -6104,6 +6105,9 @@ async function azPcShopGetLiveCatalog(force=false){
 }
 app.get('/api/pc-shop/health', async (_req,res)=>{const total=azPcShopCatalog().length;const catalogStatus=azobssPcShopLiveCache.fetchedAtMs?{...azobssPcShopLiveCache.stats,cachedAtMs:azobssPcShopLiveCache.fetchedAtMs}:{live:0,snapshot:total,total,cachedAtMs:0};return res.json({ok:true,release:'1506',version:'1506',apiVersion:'pc-shop-v1',capabilities:{catalog:true,orders:true,adminOrders:true,livePricing:true,markup:true,maybankOnly:true,salesReceiptSync:true,verifiedPriceOnly:true,hardwareCatalogOnly:true,deferredInvoice:true,courierAddressRequired:true,duplicateGuard:true,prematureInvoiceRepair:true,localImageLock:true,liveImageMutation:false,publicRetailerHotlink:false},runtime:'backend/server.js',firestore:!!getAzobssBackendDb(),catalog:catalogStatus});});
 app.get('/api/pc-shop/catalog', async (_req,res)=>{try{const c=await azPcShopGetLiveCatalog(false);return res.json({ok:true,release:'1506',version:'1506',apiVersion:'pc-shop-v1',capabilities:{catalog:true,orders:true,adminOrders:true,livePricing:true,markup:true,maybankOnly:true,salesReceiptSync:true,verifiedPriceOnly:true,hardwareCatalogOnly:true,deferredInvoice:true,courierAddressRequired:true,duplicateGuard:true,prematureInvoiceRepair:true,localImageLock:true,liveImageMutation:false,publicRetailerHotlink:false},currency:'MYR',cached:Date.now()-c.fetchedAtMs<AZOBSS_PC_SHOP_PRICE_CACHE_MS,fetchedAt:new Date(c.fetchedAtMs).toISOString(),cacheSeconds:Math.round(AZOBSS_PC_SHOP_PRICE_CACHE_MS/1000),stats:c.stats,products:c.publicProducts})}catch(err){return res.status(502).json({ok:false,error:'catalog_sync_failed',message:azPcShopText(err?.message||err,180)})}});
+// v1509: authenticated, server-only GitHub publication of edited product assets.
+registerPcShopGithubImagePublisher(app, {multer, getFirebaseAdminIdentity, azBackendTrustedAdminIdentity});
+
 app.get('/api/admin/pc-shop/catalog', requireAdmin, async (req,res)=>{try{const c=await azPcShopGetLiveCatalog(String(req.query.refresh||'')==='1');return res.json({ok:true,release:'1506',version:'1506',apiVersion:'pc-shop-v1',capabilities:{catalog:true,orders:true,adminOrders:true,livePricing:true,markup:true,maybankOnly:true,salesReceiptSync:true,verifiedPriceOnly:true,hardwareCatalogOnly:true,deferredInvoice:true,courierAddressRequired:true,duplicateGuard:true,prematureInvoiceRepair:true,localImageLock:true,liveImageMutation:false,publicRetailerHotlink:false},fetchedAt:new Date(c.fetchedAtMs).toISOString(),stats:c.stats,products:c.internalProducts})}catch(err){return res.status(502).json({ok:false,error:'catalog_sync_failed',message:azPcShopText(err?.message||err,180)})}});
 function azPcShopResolveItem(raw={},liveProducts=[]){
   const productId=azPcShopText(raw.productId||raw.id,160);const qty=Math.max(1,Math.min(20,Math.round(Number(raw.qty||raw.quantity||1)||1)));

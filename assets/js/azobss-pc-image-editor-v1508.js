@@ -1,6 +1,6 @@
-/* AZOBSS v1508 - client-side PC Build / Hardware photo editor.
- * Admin-only UI; no upload, no backend writes, no mutation of catalog image mappings.
- * Edited binary is exported explicitly by the administrator for GitHub asset replacement.
+/* AZOBSS v1509 - PC Build / Hardware photo editor with secure admin publishing.
+ * Edited images can be downloaded or sent to Render for atomic GitHub asset + map commit.
+ * GitHub credentials live ONLY in Render environment variables.
  */
 (function () {
   'use strict';
@@ -22,7 +22,7 @@
   const getPath = url => { try { const u = new URL(String(url), location.href); return u.origin === location.origin ? u.pathname : ''; } catch (_) { return ''; } };
   let active = null;
 
-  function editorHtml(title, url) {
+  function editorHtml(title, url, opts = {}) {
     const sourcePath = /^https?:/i.test(url) ? getPath(url) : '';
     const file = sourcePath.split('/').pop() || 'azobss-product-image.webp';
     const mime = formatFromFile(file);
@@ -38,7 +38,7 @@
         <div class="az-photo-editor-group"><button type="button" data-photo-undo disabled>↶ Undo</button><button type="button" data-photo-redo disabled>↷ Redo</button><button type="button" data-photo-reset>⟲ Reset Asal</button><label class="az-photo-editor-upload">📁 Tukar Gambar<input data-photo-upload type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" hidden></label></div>
         <div class="az-photo-editor-group az-photo-editor-filters"><label>Cerah <input data-photo-filter="brightness" type="range" min="50" max="160" value="100"><output data-photo-filter-label="brightness">100%</output></label><label>Kontras <input data-photo-filter="contrast" type="range" min="50" max="160" value="100"><output data-photo-filter-label="contrast">100%</output></label><label>Warna <input data-photo-filter="saturate" type="range" min="0" max="180" value="100"><output data-photo-filter-label="saturate">100%</output></label><label>Kelabu <input data-photo-filter="grayscale" type="range" min="0" max="100" value="0"><output data-photo-filter-label="grayscale">0%</output></label></div>
       </div>
-      <div class="az-photo-editor-workspace"><div class="az-photo-editor-viewport" data-photo-viewport><div class="az-photo-editor-canvas-wrap" data-photo-wrap><canvas data-photo-canvas aria-label="Kanvas gambar boleh diedit"></canvas><canvas data-photo-overlay aria-label="Kawasan memilih crop" ></canvas></div></div><aside class="az-photo-editor-side"><b>Fail & Eksport</b><p data-photo-size-info>Memuatkan gambar…</p><label>Zoom paparan <input data-photo-zoom type="range" min="50" max="200" value="100"><output data-photo-zoom-label>100%</output></label><label>Format <select data-photo-format><option value="image/webp" ${mime === 'image/webp' ? 'selected' : ''}>WebP</option><option value="image/png" ${mime === 'image/png' ? 'selected' : ''}>PNG</option><option value="image/jpeg" ${mime === 'image/jpeg' ? 'selected' : ''}>JPEG</option></select></label><label>Nama fail <input data-photo-name type="text" value="${h(baseName(file))}" maxlength="90" autocapitalize="off" spellcheck="false"></label><button class="az-photo-editor-download" type="button" data-photo-download disabled>⬇ Muat Turun Gambar Siap</button><small class="az-photo-editor-warn"><b>Belum diterbitkan ke website.</b> Edit dan muat turun berlaku dalam browser sahaja. Untuk pelanggan nampak hasil, ganti fail gambar di GitHub dengan fail ini.</small>${sourcePath ? `<code class="az-photo-editor-source">${h(sourcePath)}</code>` : '<small>Sumber ini bukan aset lokal website; fail eksport perlu dipadankan sendiri.</small>'}</aside></div>
+      <div class="az-photo-editor-workspace"><div class="az-photo-editor-viewport" data-photo-viewport><div class="az-photo-editor-canvas-wrap" data-photo-wrap><canvas data-photo-canvas aria-label="Kanvas gambar boleh diedit"></canvas><canvas data-photo-overlay aria-label="Kawasan memilih crop" ></canvas></div></div><aside class="az-photo-editor-side"><b>Fail & Eksport</b><p data-photo-size-info>Memuatkan gambar…</p><label>Zoom paparan <input data-photo-zoom type="range" min="50" max="200" value="100"><output data-photo-zoom-label>100%</output></label><label>Format <select data-photo-format><option value="image/webp" ${mime === 'image/webp' ? 'selected' : ''}>WebP</option><option value="image/png" ${mime === 'image/png' ? 'selected' : ''}>PNG</option><option value="image/jpeg" ${mime === 'image/jpeg' ? 'selected' : ''}>JPEG</option></select></label><label>Nama fail download <input data-photo-name type="text" value="${h(baseName(file))}" maxlength="90" autocapitalize="off" spellcheck="false"></label><button class="az-photo-editor-publish" type="button" data-photo-publish disabled>☁ Simpan & Terbitkan (WebP)</button><button class="az-photo-editor-download" type="button" data-photo-download disabled>⬇ Muat Turun Gambar Siap</button><small class="az-photo-editor-warn"><b>Penerbitan automatik (WebP):</b> Simpan & Terbitkan menghantar gambar ke backend Render (akaun Administrator) lalu GitHub mengemaskini gambar lokal + map secara serentak. GitHub Pages mungkin mengambil masa sebelum perubahan kelihatan.</small><div data-photo-publish-result aria-live="polite"></div>${sourcePath ? `<code class="az-photo-editor-source">${h(sourcePath)}</code>` : '<small>Imej ini berasal daripada sumber luar. Butang Simpan & Terbitkan akan mencipta aset WebP lokal yang dipadankan secara automatik menggunakan ID produk.</small>'}</aside></div>
       <footer class="az-photo-editor-foot"><div data-photo-status role="status" aria-live="polite">Memuatkan imej asal…</div><button data-photo-close type="button">Tutup Editor</button></footer>
     </section>`;
   }
@@ -66,7 +66,8 @@
     node(s, '[data-photo-undo]').disabled = s.locked || s.historyIndex <= 0;
     node(s, '[data-photo-redo]').disabled = s.locked || s.historyIndex >= s.history.length - 1;
     node(s, '[data-photo-crop-apply]').disabled = !s.crop || s.crop.w < 5 || s.crop.h < 5 || s.tool !== 'crop';
-    node(s, '[data-photo-download]').disabled = s.locked;
+    node(s, '[data-photo-download]').disabled = s.locked || s.publishing;
+    node(s, '[data-photo-publish]').disabled = s.locked || s.publishing || !s.productId;
     s.canvas.style.filter = filters(s);
   }
   function setTool(s, tool) {
@@ -89,6 +90,7 @@
       s.historyIndex = s.history.length - 1;
       s.dirty = s.historyIndex > 0;
       s.exported = false;
+      s.published = false;
       updateState(s);
     } catch (_) { status(s, 'Tidak dapat menyimpan sejarah edit. Jika gambar luar, cuba Tukar Gambar (fail lokal).'); }
   }
@@ -272,6 +274,63 @@
     ctx.drawImage(src,0,0);ctx.restore();
     drawImageData(src,temp,temp.width,temp.height);s.crop=null;fitViewport(s);snapshot(s);
   }
+  function exportBlob(s, mime = 'image/webp') {
+    return new Promise((resolve, reject) => {
+      if (s.locked || !s.canvas.width) return reject(new Error('Gambar belum boleh disimpan.'));
+      try {
+        const out = document.createElement('canvas');
+        out.width = s.canvas.width; out.height = s.canvas.height;
+        const ctx = out.getContext('2d');
+        if (mime === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0,0,out.width,out.height); }
+        ctx.filter = filters(s); ctx.drawImage(s.canvas,0,0);
+        out.toBlob(blob => blob ? resolve(blob) : reject(new Error('Browser gagal menjana gambar.')), mime, .91);
+      } catch (e) { reject(new Error('Gagal eksport imej. Cuba gunakan Tukar Gambar.')); }
+    });
+  }
+  async function publish(s) {
+    if (s.locked || s.publishing || !s.canvas.width) return;
+    if (!s.productId || !['hardware','build'].includes(s.productKind)) { status(s,'Produk tidak dikenali. Guna Download dahulu.'); return; }
+    if (typeof window.azobssGetFirebaseAuthHeaders !== 'function') { status(s,'Sistem login Firebase belum tersedia. Login sebagai Administrator dan refresh.'); return; }
+    if (!window.confirm(`Terbitkan gambar ${s.productTitle} ke GitHub AZOBSS?\n\nGambar lokal produk ini akan digantikan. Perubahan dapat dilihat pelanggan selepas GitHub Pages siap deploy.`)) return;
+    s.publishing = true;
+    updateState(s);
+    const btn = node(s,'[data-photo-publish]'); btn.textContent = '⏳ Sedang simpan ke GitHub…';
+    const result = node(s,'[data-photo-publish-result]'); result.textContent = '';
+    status(s,'Menyemak identiti Administrator dan menyiarkan gambar…');
+    try {
+      const headers = await window.azobssGetFirebaseAuthHeaders(true);
+      if (!headers?.Authorization || !/^Bearer /i.test(headers.Authorization)) throw new Error('Sila login semula sebagai Administrator AZOBSS.');
+      const blob = await exportBlob({...s, locked:false},'image/webp');
+      if (blob.size > 7 * 1024 * 1024) throw new Error('Fail melebihi 7MB. Cuba crop atau kecilkan gambar.');
+      const form = new FormData();
+      form.append('image',blob,`azobss-${s.productId}.webp`);
+      form.append('productKind',s.productKind);
+      form.append('productId',s.productId);
+      form.append('productName',s.productTitle);
+      const ctrl = new AbortController(); const timer = setTimeout(()=>ctrl.abort(),110000);
+      let response;
+      try {
+        response = await fetch('https://azobss-backend.onrender.com/api/admin/pc-shop/image-publish',{
+          method:'POST',headers:{Authorization:headers.Authorization},body:form,signal:ctrl.signal,cache:'no-store'
+        });
+      } finally {clearTimeout(timer);}
+      const data = await response.json().catch(()=>({}));
+      if (!response.ok || !data.ok) throw new Error(data.message || `Penerbitan gagal (HTTP ${response.status}).`);
+      s.published = true; s.exported = true;
+      status(s,`✅ Berjaya commit ke GitHub (${String(data.commit||'').slice(0,9)}). GitHub Pages akan terbit secara automatik.`);
+      const a = document.createElement('a');a.href=String(data.commitUrl||'');a.target='_blank';a.rel='noopener noreferrer';a.textContent='🔗 Lihat commit GitHub';
+      result.replaceChildren(document.createTextNode(`Aset: ${data.imagePath} • `),a);
+      // Keep browser map in memory current for this session. Published HTML map has a revisioned URL.
+      const map = s.productKind==='hardware' ? window.AZOBSS_PC_LOCAL_HARDWARE_IMAGES : window.AZOBSS_PC_LOCAL_IMAGES;
+      if (map && typeof map==='object') {map.ready=true;map.byId=map.byId||{};map.byId[s.productId]=data.imageUrl;}
+    } catch (error) {
+      const message = error?.name==='AbortError'?'Timeout menunggu server/GitHub. Semak GitHub sebelum ulang simpan.':(error.message||'Gagal menerbitkan gambar.');
+      status(s,'❌ '+message);
+      result.textContent = 'Tiada pengesahan commit. Gambar asal di website tidak diubah oleh editor.';
+    } finally {
+      s.publishing=false; btn.textContent='☁ Simpan & Terbitkan (WebP)';updateState(s);
+    }
+  }
   function download(s) {
     if(s.locked||!s.canvas.width)return;
     const mime=node(s,'[data-photo-format]').value;
@@ -292,6 +351,7 @@
   }
   function close(s, force=false) {
     if(!s||!s.root.isConnected)return;
+    if(s.publishing && !force){status(s,'Proses GitHub masih berjalan.');return;}
     if(!force && s.dirty && !s.exported && !window.confirm('Suntingan belum dimuat turun. Tutup dan buang perubahan?'))return;
     s.controller.abort();if(s.observer)try{s.observer.disconnect()}catch(_){}
     s.root.remove();document.body.classList.remove('az-photo-editor-active');active=null;
@@ -324,6 +384,7 @@
     });
     node(s,'[data-photo-zoom]').addEventListener('input',e=>{s.zoom=clamp(e.target.value,50,200)/100;node(s,'[data-photo-zoom-label]').textContent=e.target.value+'%';fitViewport(s);},{signal});
     node(s,'[data-photo-download]').addEventListener('click',()=>download(s),{signal});
+    node(s,'[data-photo-publish]').addEventListener('click',()=>publish(s),{signal});
     node(s,'[data-photo-upload]').addEventListener('change',async e=>{
       const file=e.target.files?.[0];if(!file)return;
       if(!/^image\/(png|jpeg|webp|gif|avif)$/.test(file.type)||file.size>25*1024*1024){status(s,'Pilih gambar PNG/JPEG/WebP/GIF/AVIF sehingga 25 MB.');return;}
@@ -340,9 +401,9 @@
     const url=String(options?.url||'');if(!url)return false;
     if(active)close(active,true);
     const title=String(options?.title||'Gambar Produk');
-    const root=document.createElement('div');root.className='az-photo-editor-backdrop';root.setAttribute('data-azobss-photo-editor','1508');
-    root.innerHTML=editorHtml(title,url);document.body.appendChild(root);document.body.classList.add('az-photo-editor-active');
-    const s={root,controller:new AbortController(),returnFocus:options?.returnFocus||document.activeElement,canvas:root.querySelector('[data-photo-canvas]'),overlay:root.querySelector('[data-photo-overlay]'),tool:'crop',zoom:1,history:[],historyIndex:-1,filters:{brightness:100,contrast:100,saturate:100,grayscale:0},crop:null,drag:null,locked:true,dirty:false,exported:false};
+    const root=document.createElement('div');root.className='az-photo-editor-backdrop';root.setAttribute('data-azobss-photo-editor','1509');
+    root.innerHTML=editorHtml(title,url,options);document.body.appendChild(root);document.body.classList.add('az-photo-editor-active');
+    const s={root,controller:new AbortController(),returnFocus:options?.returnFocus||document.activeElement,canvas:root.querySelector('[data-photo-canvas]'),overlay:root.querySelector('[data-photo-overlay]'),tool:'crop',zoom:1,productKind:String(options?.productKind||''),productId:String(options?.productId||''),productTitle:title,publishing:false,published:false,history:[],historyIndex:-1,filters:{brightness:100,contrast:100,saturate:100,grayscale:0},crop:null,drag:null,locked:true,dirty:false,exported:false};
     active=s;bind(s);setTool(s,'crop');
     node(s,'[data-photo-close]')?.focus({preventScroll:true});
     await initializeImage(s,url,true);
