@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 echo ============================================================
-echo AZOBSS v1501 - PREPARE LOCAL PC BUILD IMAGES
+echo AZOBSS v1502 - PREPARE LOCAL PC BUILD IMAGES
 ECHO ============================================================
 where node >nul 2>nul
 if errorlevel 1 (
@@ -10,7 +10,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node "tools\localize-pc-build-images-v1501.cjs"
+node "tools\localize-pc-build-images-v1502.cjs"
 set ERR=%ERRORLEVEL%
 if not "%ERR%"=="0" (
   echo.
@@ -20,6 +20,6 @@ if not "%ERR%"=="0" (
 )
 echo.
 echo SIAP. Semua gambar PC Build sudah berada dalam folder website.
-echo ZIP deployment v1501 telah dihasilkan satu folder di atas folder website ini.
+echo ZIP deployment v1502 telah dihasilkan satu folder di atas folder website ini.
 pause
 endlocal

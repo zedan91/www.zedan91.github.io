@@ -18,5 +18,5 @@ test('v1501 local preparer discovers missing exact Shopify images by product id'
 });
 test('v1501 frontend loads the v1501 local image map',()=>{
   const s=fs.readFileSync(path.join(ROOT,'PC-Build','index.html'),'utf8');
-  assert.match(s,/local-image-map-v1501\.js\?v=1501/);
+  assert.match(s,/local-image-map-v1502\.js\?v=1502/);
 });
