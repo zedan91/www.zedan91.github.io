@@ -247,14 +247,12 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • PC Build Malaysia • Hanya produk dengan harga sumber yang disahkan dipaparkan.</div></footer>
 <script src="/PC-Build/images/products/local-image-map-v1500.js?v=1500"></script>
+<script src="/PC-Build/images/products/local-image-map-v1501.js?v=1501"></script>
 <script>
 const BUILD_API='https://azobss-backend.onrender.com/api/pc-shop/builds';
 const RETAILER_JSON_API='https://azobss-backend.onrender.com/api/pc-shop/retailer-catalog';
 window.retryBuildImage=function(img){
   if(!img)return;
-  const fallback=String(img.dataset.fallbackImage||'').trim();
-  const current=String(img.currentSrc||img.getAttribute('src')||'');
-  if(fallback&&img.dataset.azFallbackTried!=='1'&&fallback!==current){img.dataset.azFallbackTried='1';img.src=fallback;return;}
   const media=img.closest('.build-media');
   if(media){const repl=document.createElement('div');repl.className='build-media-unavailable';repl.textContent='Gambar produk belum tersedia';media.replaceWith(repl);}
 };
@@ -325,7 +323,7 @@ function retailerPriceVerified(b){
   const n=Number(b?.price),url=String(b?.sourceUrl||''),parts=Array.isArray(b?.parts)?b.parts:[],status=String(b?.priceStatus||'');
   if(!Number.isFinite(n)||n<=0||!/^https:\/\//i.test(url)||parts.length<2||String(b?.availability||'')==='unavailable')return false;
   if(status==='snapshot')return b?.snapshotPriceClear===true;
-  if(status==='live')return b?.sourceVerified===true&&b?.mediaVerified===true&&b?.specVerified===true&&b?.availabilityVerified===true&&b?.variantVerified===true&&String(b?.availability||'')==='available';
+  if(status==='live')return b?.sourceVerified===true&&b?.specVerified===true&&b?.availabilityVerified===true&&b?.variantVerified===true&&String(b?.availability||'')==='available';
   return false;
 }
 function buildPriceNumber(b){if(!b||!retailerPriceVerified(b))return null;const n=Number(b.price);return Number.isFinite(n)&&n>0?n:null;}
@@ -341,13 +339,17 @@ function normalizeLocalImageName(v){return String(v||'').toLowerCase().replace(/
 function normalizeLocalImageUrl(v){try{const u=new URL(String(v||''),location.origin);u.search='';u.hash='';return u.toString()}catch(_e){return String(v||'')}}
 function applyLocalBuildImage(b){
   if(!b)return b;
-  const m=window.AZOBSS_PC_LOCAL_IMAGES;if(!m?.ready)return b;
-  const ids=[String(b.id||''),String(b.id||'').replace(/^json-/,'')];
-  let local='';for(const id of ids){if(id&&m.byId?.[id]){local=m.byId[id];break}}
-  if(!local){for(const u of [b.imageFallback,b.sourceImage,b.imageUrl,b.image]){const raw=String(u||'');if(!raw)continue;local=m.byUrl?.[raw]||m.byUrl?.[normalizeLocalImageUrl(raw)]||'';if(local)break}}
-  if(!local){const n=normalizeLocalImageName(b.name);if(n)local=m.byName?.[n]||'';}
-  if(local){b.image=local;b.imageFallback='';b.imageUrl=local;b.sourceImage=local;b.mediaVerified=true;b.imageType='exact-source-product-image-local';}
-  else if(m.enforceLocal===true){b.image='';b.imageFallback='';b.imageUrl='';b.sourceImage='';b.mediaVerified=false;}
+  const m=window.AZOBSS_PC_LOCAL_IMAGES||{},strict=m.policy==='local-locked'||m.enforceLocal===true;
+  const ids=[String(b.id||''),String(b.id||'').replace(/^json-/,''),String(b.productId||'')].filter(Boolean);
+  let local='';
+  if(m.ready===true){
+    for(const id of ids){if(m.byId?.[id]){local=m.byId[id];break}}
+    if(!local){const n=normalizeLocalImageName(b.name);if(n)local=m.byName?.[n]||'';}
+    // URL matching exists only for migration from older snapshots; it never permits a remote URL to reach the customer card.
+    if(!local){for(const u of [b.image,b.imageUrl,b.imageFallback,b.sourceImage]){const raw=String(u||'');if(!raw)continue;local=m.byUrl?.[raw]||m.byUrl?.[normalizeLocalImageUrl(raw)]||'';if(local)break}}
+  }
+  if(local){b.image=local;b.imageFallback='';b.imageUrl=local;b.sourceImage=local;b.mediaVerified=true;b.localImageLocked=true;b.imageType='exact-source-product-image-local';}
+  else if(strict){b.image='';b.imageFallback='';b.imageUrl='';b.sourceImage='';b.mediaVerified=false;b.localImageLocked=true;b.imageType='local-image-pending';}
   return b;
 }
 function publishBuildCatalog(){for(const b of (DATA.builds||[]))applyLocalBuildImage(b);window.__azobssPcBuildCatalog=[...(DATA.builds||[])];if(typeof window.azobssPcShopRegisterBuildCatalog==='function')window.azobssPcShopRegisterBuildCatalog(window.__azobssPcBuildCatalog)}
@@ -410,7 +412,7 @@ function render(){
     const sourceAdmin=b.sourceUrl?`<div class="ref">Sumber kedai: <b>${esc(storeName)}</b> • <a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener">Lihat produk asal ↗</a>${b.priceCheckedAt?`<br>${String(b.priceStatus||'')==='live'?'Disahkan live':'Harga sumber direkod'}: ${esc(new Date(b.priceCheckedAt).toLocaleString('ms-MY'))}`:''}</div>`:'';
     const customize=retailer?'':`<a class="btn customize" href="/PC-Build/Build-Sendiri/?preset=${encodeURIComponent(b.id)}">🧩 Ubah / Build Sendiri</a>`;
     const retailerMeta=retailer?`<span>Sumber: ${esc(storeName)}</span>`:'';
-    return `<article class="card pc-build-card${retailer?' retailer-build-card':''}${SHARED_PC_ID===b.id?' is-shared':''}${SHARED_PC_ID===b.id&&Date.now()<sharedPcEffectUntil?' shared-arrival':''}" data-product-id="${esc(b.id)}" data-pc-build="1" data-retailer="${retailer?'1':'0'}" data-live-price="${String(b.priceStatus||'')==='live'?'1':'0'}" data-category="PC Build" data-price="${esc(buildPriceNumber(b)||'')}" data-image="${esc(b.image||'')}" style="--accent:${({green:'#22c55e',cyan:'#22d3ee',blue:'#60a5fa',purple:'#c084fc',orange:'#fb923c',red:'#fb7185'})[b.accent]||'#22d3ee'}">${SHARED_PC_ID===b.id?'<div class="shared-glow-frame" aria-hidden="true"></div><div class="shared-link-badge">🔗 PC dari link share</div>':''}${b.image?`<button class="build-media ${esc(b.imageCrop||'product-focus')}" data-build-image="${esc(b.id)}" type="button" aria-label="Lihat gambar ${esc(displayName)} lebih besar"><img src="${esc(b.image)}" alt="${esc(displayImageAlt)}" data-fallback-image="${esc(b.imageFallback||'')}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="retryBuildImage(this)"/></button>`:`<div class="build-media-unavailable">Gambar produk belum disahkan</div>`}<div class="card-head"><div class="row"><div class="tier">${esc(b.tier)}</div><div class="badge">${esc(displayBadge)}</div></div><h2>${esc(displayName)}</h2><div class="tagline">${esc(displayTagline)}</div><div class="build-meta">${retailerMeta}<span>${esc(buildSegmentLabel(b.segment))}</span><span>${esc(buildCpuLabel(b.cpuBrand))}</span><span>${esc(b.gpuModel||'GPU')}</span><span>${esc(b.resolution||'')}</span></div><div class="price"><strong>${esc(priceText)}</strong><span>${priceLabel}</span></div>${sourceAdmin}</div><div class="specs">${(b.parts||[]).map(p=>`<div class="spec"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('')}${(b.parts||[]).length<7?'<div class="spec spec-more"><b>Info</b><span>Spesifikasi lain belum dinyatakan dengan jelas oleh sumber.</span></div>':''}</div>${b.bestFor?.length?`<div class="fit"><div class="fit-title">Sesuai untuk</div><ul>${(b.bestFor||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${b.softwareFit?.length?`<div class="fit"><div class="fit-title">Software sesuai</div><div class="software-list">${b.softwareFit.map(x=>`<span class="software-chip">${esc(x)}</span>`).join('')}</div></div>`:''}<div class="note">${esc(displayNote)}</div><div class="actions">${customize}<button class="btn" data-copy="${esc(b.id)}" type="button">Salin Spec</button><button class="btn share" data-share="${esc(b.id)}" type="button">🔗 Share</button><button class="btn build-cart" data-build-add="${esc(b.id)}" type="button">Add to Cart</button><button class="btn primary build-buy" data-build-buy="${esc(b.id)}" type="button">Buy Now</button><a class="btn order" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya / Tempah</a></div></article>`;
+    return `<article class="card pc-build-card${retailer?' retailer-build-card':''}${SHARED_PC_ID===b.id?' is-shared':''}${SHARED_PC_ID===b.id&&Date.now()<sharedPcEffectUntil?' shared-arrival':''}" data-product-id="${esc(b.id)}" data-pc-build="1" data-retailer="${retailer?'1':'0'}" data-live-price="${String(b.priceStatus||'')==='live'?'1':'0'}" data-category="PC Build" data-price="${esc(buildPriceNumber(b)||'')}" data-image="${esc(b.image||'')}" style="--accent:${({green:'#22c55e',cyan:'#22d3ee',blue:'#60a5fa',purple:'#c084fc',orange:'#fb923c',red:'#fb7185'})[b.accent]||'#22d3ee'}">${SHARED_PC_ID===b.id?'<div class="shared-glow-frame" aria-hidden="true"></div><div class="shared-link-badge">🔗 PC dari link share</div>':''}${b.image?`<button class="build-media ${esc(b.imageCrop||'product-focus')}" data-build-image="${esc(b.id)}" type="button" aria-label="Lihat gambar ${esc(displayName)} lebih besar"><img src="${esc(b.image)}" alt="${esc(displayImageAlt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="retryBuildImage(this)"/></button>`:`<div class="build-media-unavailable">Gambar produk belum tersedia</div>`}<div class="card-head"><div class="row"><div class="tier">${esc(b.tier)}</div><div class="badge">${esc(displayBadge)}</div></div><h2>${esc(displayName)}</h2><div class="tagline">${esc(displayTagline)}</div><div class="build-meta">${retailerMeta}<span>${esc(buildSegmentLabel(b.segment))}</span><span>${esc(buildCpuLabel(b.cpuBrand))}</span><span>${esc(b.gpuModel||'GPU')}</span><span>${esc(b.resolution||'')}</span></div><div class="price"><strong>${esc(priceText)}</strong><span>${priceLabel}</span></div>${sourceAdmin}</div><div class="specs">${(b.parts||[]).map(p=>`<div class="spec"><b>${esc(p[0])}</b><span>${esc(p[1])}</span></div>`).join('')}${(b.parts||[]).length<7?'<div class="spec spec-more"><b>Info</b><span>Spesifikasi lain belum dinyatakan dengan jelas oleh sumber.</span></div>':''}</div>${b.bestFor?.length?`<div class="fit"><div class="fit-title">Sesuai untuk</div><ul>${(b.bestFor||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${b.softwareFit?.length?`<div class="fit"><div class="fit-title">Software sesuai</div><div class="software-list">${b.softwareFit.map(x=>`<span class="software-chip">${esc(x)}</span>`).join('')}</div></div>`:''}<div class="note">${esc(displayNote)}</div><div class="actions">${customize}<button class="btn" data-copy="${esc(b.id)}" type="button">Salin Spec</button><button class="btn share" data-share="${esc(b.id)}" type="button">🔗 Share</button><button class="btn build-cart" data-build-add="${esc(b.id)}" type="button">Add to Cart</button><button class="btn primary build-buy" data-build-buy="${esc(b.id)}" type="button">Buy Now</button><a class="btn order" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya / Tempah</a></div></article>`;
   }).join('');
   document.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>copyBuild(DATA.builds.find(b=>b.id===btn.dataset.copy)));
   document.querySelectorAll('[data-share]').forEach(btn=>btn.onclick=()=>shareBuild(DATA.builds.find(b=>b.id===btn.dataset.share),btn));
@@ -448,12 +450,12 @@ function canonicalSpecRows(specs){
 function canonicalBuildRows(p){
   if(!p||p.itemType!=='pc-build'||p.dataLevel!=='exact'||!/^https:\/\//i.test(String(p.productUrl||'')))return [];
   const parts=canonicalSpecRows(p.specs||{});if(parts.length<2)return [];
-  const base={origin:'retailer',retailerSnapshot:false,storeId:String(p.storeId||''),storeName:String(p.storeName||''),sourceName:String(p.storeName||''),sourceUrl:String(p.productUrl||''),tier:'',name:String(p.name||'PC Build'),tagline:[p.specs?.cpu,p.specs?.gpu].filter(Boolean).join(' • '),category:String(p.category||'gaming'),resolution:'',badge:'PC BUILD',accent:'cyan',parts,bestFor:[],softwareFit:[],image:String(p.imageUrl||''),imageFallback:String(p.imageUrl||''),imageAlt:String(p.name||'PC Build'),imageType:p.imageVerified?'exact-source-product-image':'',imageCrop:'full-image',segment:'package',availability:String(p.availability||'unknown'),sourceVerified:true,mediaVerified:p.imageVerified===true,specVerified:true,availabilityVerified:String(p.availability||'unknown')!=='unknown',variantVerified:true,priceVerified:true,snapshotPriceClear:true,priceCheckedAt:String(p.checkedAt||''),sourceCheckedAt:String(p.checkedAt||''),note:'Data produk disusun daripada JSON sumber rasmi retailer.'};
+  const base={origin:'retailer',retailerSnapshot:false,storeId:String(p.storeId||''),storeName:String(p.storeName||''),sourceName:String(p.storeName||''),sourceUrl:String(p.productUrl||''),tier:'',name:String(p.name||'PC Build'),tagline:[p.specs?.cpu,p.specs?.gpu].filter(Boolean).join(' • '),category:String(p.category||'gaming'),resolution:'',badge:'PC BUILD',accent:'cyan',parts,bestFor:[],softwareFit:[],image:'',imageFallback:'',imageAlt:String(p.name||'PC Build'),imageType:'local-image-locked',imageCrop:'full-image',segment:'package',availability:String(p.availability||'unknown'),sourceVerified:true,mediaVerified:false,specVerified:true,availabilityVerified:String(p.availability||'unknown')!=='unknown',variantVerified:true,priceVerified:true,snapshotPriceClear:true,priceCheckedAt:String(p.checkedAt||''),sourceCheckedAt:String(p.checkedAt||''),note:'Data produk disusun daripada JSON sumber rasmi retailer.'};
   const out=[];
   const direct=Number(p.price||0);
-  if(Number.isFinite(direct)&&direct>0){const live=base.availability==='available'&&base.mediaVerified;out.push({...base,id:'json-'+String(p.id||''),price:direct,priceStatus:live?'live':'snapshot',retailerJson:true})}
+  if(Number.isFinite(direct)&&direct>0){const live=base.availability==='available';out.push({...base,id:'json-'+String(p.id||''),price:direct,priceStatus:live?'live':'snapshot',retailerJson:true})}
   const variants=Array.isArray(p.variants)?p.variants:[];
-  if(!out.length&&variants.length){for(const v of variants.slice(0,24)){const price=Number(v?.price||0);if(!Number.isFinite(price)||price<=0)continue;const vt=String(v?.title||'').trim();const live=v?.available===true&&base.mediaVerified;out.push({...base,id:'json-'+String(p.id||'')+'-'+String(v?.id||out.length),name:vt&&!/^default/i.test(vt)?`${base.name} — ${vt}`:base.name,price,priceStatus:live?'live':'snapshot',availability:v?.available===true?'available':base.availability,availabilityVerified:v?.available===true||base.availabilityVerified,retailerJson:true,variantTitle:vt})}}
+  if(!out.length&&variants.length){for(const v of variants.slice(0,24)){const price=Number(v?.price||0);if(!Number.isFinite(price)||price<=0)continue;const vt=String(v?.title||'').trim();const live=v?.available===true;out.push({...base,id:'json-'+String(p.id||'')+'-'+String(v?.id||out.length),name:vt&&!/^default/i.test(vt)?`${base.name} — ${vt}`:base.name,price,priceStatus:live?'live':'snapshot',availability:v?.available===true?'available':base.availability,availabilityVerified:v?.available===true||base.availabilityVerified,retailerJson:true,variantTitle:vt})}}
   return out;
 }
 function canonicalMergeKey(b){return `${String(b?.storeId||b?.storeName||'').toLowerCase()}|${String(b?.name||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}`}
@@ -464,7 +466,7 @@ async function loadCanonicalRetailerJson(){
     const exact=[];for(const p of d.products)exact.push(...canonicalBuildRows(p));if(!exact.length)return;
     const map=new Map((DATA.retailerBuilds||[]).map(b=>[canonicalMergeKey(b),b]));for(const b of exact)map.set(canonicalMergeKey(b),b);
     DATA.retailerBuilds=[...map.values()].map(applyLocalBuildImage).filter(retailerPriceVerified);DATA.builds=[...DATA.retailerBuilds];publishBuildCatalog();populateRetailerStores();populateGpuModels();schedulePcRender(false);
-    const exactImages=exact.filter(x=>x.mediaVerified).length;setLiveStatus(`PC Builds: ${DATA.builds.length} pilihan • JSON rasmi ${exact.length} exact • ${exactImages} bergambar`,DATA.builds.length?'live-ok':'live-bad');
+    const exactImages=DATA.retailerBuilds.filter(x=>x.mediaVerified===true).length;setLiveStatus(`PC Builds: ${DATA.builds.length} pilihan • JSON rasmi ${exact.length} exact • ${exactImages} bergambar`,DATA.builds.length?'live-ok':'live-bad');
   }catch(e){console.warn('AZOBSS retailer JSON:',e)}
 }
 function setLiveStatus(text,state=''){els.liveStatus.textContent=text;els.livePill.classList.remove('live-ok','live-bad');if(state)els.livePill.classList.add(state)}
@@ -480,8 +482,8 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1500" type="module"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1499"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1501" type="module"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1501"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

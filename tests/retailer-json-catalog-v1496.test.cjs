@@ -36,7 +36,7 @@ test('v1496 public PC Build page consumes canonical retailer JSON in addition to
   assert.match(html,/canonicalBuildRows/);
   assert.match(runtime,/\/api\/pc-shop\/retailer-catalog/);
   assert.match(runtime,/\/api\/admin\/pc-shop\/retailer-catalog\/refresh/);
-  assert.match(runtime,/\/api\/pc-shop\/retailer-image\//);
+  assert.match(runtime,/imagePolicy:'local-locked'/);assert.match(runtime,/publicRetailerHotlink: false/);
 });
 
 test('v1496 raw catalog is not committed as a public static source-price database',()=>{
