@@ -1,8 +1,8 @@
 {
-  "version": "1499",
-  "generatedFrom": "v1498",
+  "version": "1500",
+  "generatedFrom": "v1499",
   "expectedImages": 64,
-  "description": "Exact source product-image download manifest for v1499 unified local resolver. Run PREPARE-LOCAL-PC-IMAGES.bat once before deployment.",
+  "description": "Exact source product-image download manifest for v1500. Missing exact Shopify product images are discovered from each exact /products/... .js endpoint before deployment.",
   "images": [
     {
       "index": 1,

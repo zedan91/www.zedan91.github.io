@@ -4,13 +4,14 @@ const https=require('https');
 const http=require('http');
 const zlib=require('zlib');
 const {spawnSync}=require('child_process');
+const crypto=require('crypto');
 const ROOT=path.resolve(__dirname,'..');
 const PRODUCT_DIR=path.join(ROOT,'PC-Build','images','products');
-const MANIFEST_PATH=path.join(PRODUCT_DIR,'source-map-v1499.json');
-const MAP_JS=path.join(PRODUCT_DIR,'local-image-map-v1499.js');
-const READY_JSON=path.join(PRODUCT_DIR,'local-images-ready-v1499.json');
+const MANIFEST_PATH=path.join(PRODUCT_DIR,'source-map-v1500.json');
+const MAP_JS=path.join(PRODUCT_DIR,'local-image-map-v1500.js');
+const READY_JSON=path.join(PRODUCT_DIR,'local-images-ready-v1500.json');
 const manifest=JSON.parse(fs.readFileSync(MANIFEST_PATH,'utf8'));
-const items=manifest.images||[];
+let items=manifest.images||[];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function refererFor(u){try{return new URL(u).origin+'/';}catch{return 'https://www.google.com/';}}
 function requestOnce(url,redirects=0){return new Promise((resolve,reject)=>{
@@ -55,6 +56,40 @@ async function downloadOne(it){
   return {ok:false,error:last};
 }
 async function pool(list,limit,fn){let next=0;const out=new Array(list.length);async function worker(){while(true){const i=next++;if(i>=list.length)return;out[i]=await fn(list[i],i)}}await Promise.all(Array.from({length:Math.min(limit,list.length)},worker));return out;}
+
+function absoluteUrl(raw,base){try{let x=String(raw||'').trim();if(!x)return'';if(x.startsWith('//'))x='https:'+x;return new URL(x,base).toString()}catch{return''}}
+function shopifyJsUrl(sourceUrl){try{const u=new URL(String(sourceUrl||''));u.search='';u.hash='';u.pathname=u.pathname.replace(/\/$/,'');if(!/\.js$/i.test(u.pathname))u.pathname+='.js';return u.toString()}catch{return''}}
+function extFromImageUrl(url){try{const m=new URL(url).pathname.match(/\.(jpe?g|png|webp|gif|avif)$/i);return m?m[1].toLowerCase().replace('jpeg','jpg'):'jpg'}catch{return'jpg'}}
+function fileSlug(v){return String(v||'product').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,70)||'product'}
+async function discoverMissingShopifyImages(){
+  const catPath=path.join(ROOT,'PC-Build','pc-shop-products-v1487.json');
+  let products=[];try{products=JSON.parse(fs.readFileSync(catPath,'utf8')).products||[]}catch{return}
+  const known=new Set();for(const it of items)for(const id of (it.ids||[]))known.add(String(id));
+  let nextIndex=items.reduce((m,x)=>Math.max(m,Number(x.index)||0),0)+1;
+  let added=0;
+  for(const p of products){
+    const id=String(p?.id||'');if(!id||known.has(id))continue;
+    const src=String(p?.sourceUrl||'');const provider=String(p?.sourceProvider||'').toLowerCase();
+    if(provider!=='shopify'||!/\/products\//i.test(src))continue;
+    const js=shopifyJsUrl(src);if(!js)continue;
+    try{
+      const r=await requestOnce(js);const d=JSON.parse(r.body.toString('utf8'));
+      const vars=Array.isArray(d?.variants)?d.variants:[];
+      let variant=null;const kws=Array.isArray(p?.variantKeywords)?p.variantKeywords.filter(Boolean).map(x=>String(x).toLowerCase()):[];
+      if(kws.length)variant=vars.find(v=>kws.every(k=>String(v?.title||'').toLowerCase().includes(k)))||null;
+      if(!variant)variant=vars.find(v=>v?.available!==false)||vars[0]||null;
+      const raw=variant?.featured_image?.src||variant?.featured_image||d?.featured_image||(Array.isArray(d?.images)?(d.images[0]?.src||d.images[0]):'')||'';
+      const imageUrl=absoluteUrl(raw,src);if(!/^https?:\/\//i.test(imageUrl))throw new Error('Shopify product JSON has no image');
+      const hash=crypto.createHash('sha1').update(imageUrl).digest('hex').slice(0,10);
+      const ext=extFromImageUrl(imageUrl);const filename=`${String(nextIndex).padStart(3,'0')}-${fileSlug(id)}-${hash}.${ext}`;
+      items.push({index:nextIndex,sourceUrl:imageUrl,filename,localPath:'/PC-Build/images/products/'+filename,ids:[id],names:[String(p?.name||'').trim()].filter(Boolean),jsonFiles:['PC-Build/pc-shop-products-v1487.json'],discoveredFrom:js});
+      known.add(id);nextIndex++;added++;console.log(`[DISCOVER] ${id} -> exact Shopify featured image`);
+    }catch(e){console.warn(`[DISCOVER FAIL] ${id}: ${e.message}`)}
+  }
+  manifest.version='1500';manifest.expectedImages=items.length;manifest.images=items;manifest.discoveredExactShopifyImages=added;manifest.updatedAt=new Date().toISOString();
+  fs.writeFileSync(MANIFEST_PATH,JSON.stringify(manifest,null,2)+'\n','utf8');
+}
+
 function walkJsonFiles(dir,out=[]){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,ent.name);if(ent.isDirectory())walkJsonFiles(p,out);else if(ent.isFile()&&ent.name.endsWith('.json')&&p!==MANIFEST_PATH&&p!==READY_JSON)out.push(p)}return out;}
 function replaceDeep(v,map){if(Array.isArray(v))return v.map(x=>replaceDeep(x,map));if(v&&typeof v==='object'){for(const k of Object.keys(v))v[k]=replaceDeep(v[k],map);return v;}if(typeof v==='string'&&map.has(v))return map.get(v);return v;}
 function patchJsons(urlMap){let changed=0;for(const p of walkJsonFiles(path.join(ROOT,'PC-Build'))){let d;try{d=JSON.parse(fs.readFileSync(p,'utf8'))}catch{continue}const before=JSON.stringify(d);replaceDeep(d,urlMap);const after=JSON.stringify(d);if(after!==before){fs.writeFileSync(p,JSON.stringify(d,null,2)+'\n','utf8');changed++;}}return changed;}
@@ -67,11 +102,11 @@ function writeMap(){
     for(const id of (it.ids||[])){if(!id)continue;byId[id]=it.localPath;byId['json-'+id]=it.localPath;}
     for(const name of (it.names||[])){const k=normName(name);if(k)byName[k]=it.localPath;}
   }
-  const obj={version:'1499',ready:true,enforceLocal:true,expected:items.length,downloaded:items.length,byId,byUrl,byName};
+  const obj={version:'1500',ready:true,enforceLocal:true,expected:items.length,downloaded:items.length,byId,byUrl,byName};
   fs.writeFileSync(MAP_JS,'window.AZOBSS_PC_LOCAL_IMAGES='+JSON.stringify(obj)+';\n','utf8');return obj;
 }
 function buildZip(){
-  const parent=path.dirname(ROOT); const out=path.join(parent,'(1499)-AZOBSS-FULL-WEBSITE-LOCAL-IMAGE-RUNTIME-HARDENING_20261103.zip');
+  const parent=path.dirname(ROOT); const out=path.join(parent,'(1500)-AZOBSS-FULL-WEBSITE-EXACT-SHOPIFY-LOCAL-IMAGES_20261103.zip');
   try{if(fs.existsSync(out))fs.unlinkSync(out)}catch{}
   if(process.platform==='win32'){
     const esc=s=>s.replace(/'/g,"''");
@@ -83,13 +118,14 @@ function buildZip(){
   return out;
 }
 (async()=>{
-  console.log('AZOBSS v1499 — download exact PC / Hardware images locally');
+  console.log('AZOBSS v1500 — download exact PC / Hardware images locally');
+  await discoverMissingShopifyImages();
   console.log('Target:',PRODUCT_DIR); console.log('Images:',items.length);
   const results=await pool(items,4,async(it,i)=>{const r=await downloadOne(it);console.log(`[${String(i+1).padStart(2,'0')}/${items.length}] ${r.ok?'OK':'FAIL'} ${it.filename}${r.ok?' ('+r.size+' bytes)':' — '+r.error}`);return r;});
   const failures=results.map((r,i)=>!r.ok?{item:items[i],error:r.error}:null).filter(Boolean);
   if(failures.length){console.error('\nFAILED:',failures.length,'image(s). No deployment ZIP was created. Run this BAT again; successful images are kept.');for(const f of failures)console.error('-',f.item.filename,':',f.error);process.exit(2);}
   const urlMap=new Map(items.map(x=>[x.sourceUrl,x.localPath])); const changed=patchJsons(urlMap); const localMap=writeMap();
-  fs.writeFileSync(READY_JSON,JSON.stringify({ok:true,version:'1499',downloaded:items.length,expected:items.length,preparedAt:new Date().toISOString(),jsonFilesLocalized:changed},null,2)+'\n');
+  fs.writeFileSync(READY_JSON,JSON.stringify({ok:true,version:'1500',downloaded:items.length,expected:items.length,preparedAt:new Date().toISOString(),jsonFilesLocalized:changed},null,2)+'\n');
   console.log('\nAll',items.length,'images downloaded and validated.');console.log('JSON files localized:',changed);console.log('External image hotlinks are no longer used for mapped PC Build products.');
   try{const z=buildZip();console.log('\nREADY DEPLOY ZIP:',z);}catch(e){console.error('Images are ready, but ZIP creation failed:',e.message);process.exit(3)}
 })().catch(e=>{console.error(e);process.exit(1)});

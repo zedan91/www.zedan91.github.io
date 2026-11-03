@@ -246,7 +246,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 <nav class="pc-build-pagination" id="pcBuildPaginationBottom" aria-label="Pagination PC Builds"></nav>
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • PC Build Malaysia • Hanya produk dengan harga sumber yang disahkan dipaparkan.</div></footer>
-<script src="/PC-Build/images/products/local-image-map-v1499.js?v=1499"></script>
+<script src="/PC-Build/images/products/local-image-map-v1500.js?v=1500"></script>
 <script>
 const BUILD_API='https://azobss-backend.onrender.com/api/pc-shop/builds';
 const RETAILER_JSON_API='https://azobss-backend.onrender.com/api/pc-shop/retailer-catalog';
@@ -480,7 +480,7 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1499" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1500" type="module"></script>
 <script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1499"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>

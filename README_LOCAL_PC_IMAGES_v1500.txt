@@ -1,4 +1,4 @@
-AZOBSS v1499 — LOCAL IMAGE RUNTIME HARDENING
+AZOBSS v1500 — LOCAL IMAGE RUNTIME HARDENING
 
 Punca v1498:
 1. PC Builds menggunakan local-image map, tetapi Hardware Shop masih terus menggunakan URL imej daripada live API.
@@ -6,7 +6,7 @@ Punca v1498:
 3. Retry lama menukar gambar gagal kepada teks “Gambar produk sedang dimuat semula” walaupun tiada upload sebenar sedang berlaku.
 4. Produk yang memang tiada gambar disahkan boleh memaparkan broken-image/alt text sementara.
 
-v1499:
+v1500:
 - Satu resolver lokal digunakan oleh PC Builds dan Hardware Shop.
 - Padanan dibuat melalui ID, URL imej dan nama produk exact yang telah dimanifestkan.
 - Selepas PREPARE selesai, enforceLocal=true: URL imej luar tidak digunakan lagi untuk katalog PC/Hardware.

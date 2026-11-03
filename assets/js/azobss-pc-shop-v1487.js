@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__azobssPcShop1499)return;window.__azobssPcShop1499=true;
+if(window.__azobssPcShop1500)return;window.__azobssPcShop1500=true;
 const CATALOG_API='https://azobss-backend.onrender.com/api/pc-shop/catalog';
 const HEALTH_API='https://azobss-backend.onrender.com/api/pc-shop/health';
 const BACKEND='https://azobss-backend.onrender.com';

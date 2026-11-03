@@ -1,5 +1,8 @@
-AZOBSS PC / Hardware local product images v1499
+AZOBSS v1500 LOCAL PRODUCT IMAGES
 
-Run ../../../PREPARE-LOCAL-PC-IMAGES.bat from the extracted website root.
-The script downloads and validates all exact source images, rewrites mapped image fields to local paths, enables one local resolver for both PC Builds and Hardware Shop, and creates a self-contained deploy ZIP.
-When the local map is ready, external image hotlinks are blocked; unmapped products use a stable placeholder instead of a broken/retrying image.
+Run PREPARE-LOCAL-PC-IMAGES.bat from the website root before deployment.
+The preparer keeps existing valid local images, then discovers missing exact Shopify product images from each exact /products/<handle>.js endpoint (including ALL IT hardware whose catalog image field is blank).
+It downloads and validates the exact product/variant image, maps it by product ID/name, enables strict local-image mode for PC Builds + Hardware Shop, and creates the v1500 self-contained deployment ZIP.
+
+Do not replace an unknown exact product image with a generic banner or generated image.
+If an exact product image cannot be obtained, the product image remains unavailable rather than showing a wrong image.

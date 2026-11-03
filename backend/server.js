@@ -5906,11 +5906,16 @@ async function azobssPcBuildReadShopify(source) {
   const cents = Number(variant?.price);
   const price = Number.isFinite(cents) && cents > 0 ? cents / 100 : 0;
   if (!azobssPcBuildCleanPrice(price)) throw new Error("Shopify variant price not found");
+  const imageRaw = variant?.featured_image?.src || variant?.featured_image || product?.featured_image || (Array.isArray(product?.images) ? (product.images[0]?.src || product.images[0]) : "") || "";
+  let image = "";
+  try { if (imageRaw) image = new URL(String(imageRaw), source.sourceUrl).toString(); } catch { image = ""; }
   return {
     price: Math.round(price * 100) / 100,
     variant: String(variant?.title || "").trim(),
     available: variant?.available !== false,
-    productTitle: String(product?.title || "").trim()
+    productTitle: String(product?.title || "").trim(),
+    image,
+    sourceText: `${String(product?.title || "")} ${String(variant?.title || "")}`.trim()
   };
 }
 
