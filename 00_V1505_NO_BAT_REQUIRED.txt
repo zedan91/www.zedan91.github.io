@@ -1,0 +1,1 @@
+v1505 tidak memerlukan BAT. Push package ke GitHub dan biarkan GitHub Action vendor 14 gambar exact ke repository.

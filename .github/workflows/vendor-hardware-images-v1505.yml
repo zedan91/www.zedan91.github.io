@@ -1,0 +1,43 @@
+name: AZOBSS v1505 - Vendor exact hardware images
+
+on:
+  push:
+    paths:
+      - '.github/workflows/vendor-hardware-images-v1505.yml'
+      - 'tools/vendor-hardware-images-v1505.py'
+      - 'PC-Build/images/products/hardware-exact-v1505.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-hardware-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download and verify all 14 exact hardware images
+        run: python tools/vendor-hardware-images-v1505.py
+
+      - name: Commit local images and ready map
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add PC-Build/images/products/
+          if git diff --cached --quiet; then
+            echo 'No image changes to commit.'
+            exit 0
+          fi
+          git commit -m 'AZOBSS v1505: vendor 14 exact Hardware Shop images locally'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
