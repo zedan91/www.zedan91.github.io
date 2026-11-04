@@ -102,7 +102,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <script src="/assets/js/azobss-mobile-view-switcher.js?v=1470"></script>
-<title>PC Build Malaysia | AZOBSS</title>
+<title>PC, Laptop &amp; Komponen Malaysia | AZOBSS</title>
 <meta name="description" content="PC Build Malaysia dari Office hingga RTX 5090, Workstation/AI dan Build Sendiri untuk AutoCAD, CAD/Survey, gaming, creator dan profesional dengan harga rujukan live."/>
 <link rel="canonical" href="https://www.azobss.com/PC-Build/"/>
 <meta property="og:type" content="website"/>
@@ -193,7 +193,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 </div>
 </header>
 <main class="wrap">
-<section class="hero"><div class="eyebrow">🖥️ AZOBSS PC BUILD • MALAYSIA</div><h1>Pilih PC Build dari <span>Low → High</span></h1><p>Pilih Office, gaming, creator, Workstation/AI atau bina sendiri. Hanya PC dengan harga jelas dipaparkan; item tanpa harga, harga range atau yang disahkan tiada stok disembunyikan.</p><div class="status"><span class="pill">Pasaran: <strong>Malaysia</strong></span><span class="pill" id="livePricePill"><span class="live-dot"></span><span id="livePriceStatus">Harga live: memuat…</span></span><span class="pill">Build dipaparkan: <strong id="count">0</strong></span></div><div class="hero-actions"><a class="hero-build-btn" href="/PC-Build/Build-Sendiri/">🧩 Build Sendiri Lengkap</a><a class="hero-build-btn secondary" href="#pc-builds">Lihat PC Builds</a></div></section>
+<section class="hero"><div class="eyebrow">🖥️ AZOBSS PC BUILD • MALAYSIA</div><h1>Kedai PC, Laptop <span>&amp; Komponen</span></h1><p>Pilih laptop, PC siap dan komponen dalam satu troli. Setiap pilihan varian mempunyai harga jual AZOBSS; stok dan harga disahkan sebelum pesanan diproses.</p><div class="status"><span class="pill">Pasaran: <strong>Malaysia</strong></span><span class="pill">Pilihan produk: <strong id="azStoreHeroCount">Memuat…</strong></span><span class="pill" id="livePricePill"><span class="live-dot"></span><span id="livePriceStatus">Harga live: memuat…</span></span><span class="pill">Build dipaparkan: <strong id="count">0</strong></span></div><div class="hero-actions"><a class="hero-build-btn" href="/PC-Build/Build-Sendiri/">🧩 Build Sendiri Lengkap</a><a class="hero-build-btn secondary" href="#az-pc-hardware-shop">Beli PC &amp; Komponen</a></div></section>
 
 
 <section class="custom-builder-section" id="build-sendiri" aria-label="Build PC sendiri" hidden style="display:none!important">
@@ -217,6 +217,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
   </div>
 </section>
 
+<details class="az-store-legacy" id="azLegacyBuilds"><summary>Pilihan pakej PC tambahan &amp; konfigurasi</summary>
 <section class="pc-build-catalog-head" id="pc-builds" aria-label="PC Builds"><div><div class="eyebrow">🖥️ PC BUILDS</div><h2>PC Builds — Pilihan Harga Jelas</h2><p>Produk dengan satu harga jelas dikekalkan. Live sync mengemas kini harga, stok dan spesifikasi. Gambar menggunakan aset lokal AZOBSS; jika tiada gambar exact, PC Build menggunakan gambar rujukan lokal yang dilabel dengan jelas.</p></div><div class="pc-build-result-meta" id="pcBuildResultMeta">Memuatkan produk berharga…</div></section>
 <section class="toolbar" aria-label="PC build filters">
 <input class="control search" id="search" type="search" placeholder="Cari CPU, GPU, AutoCAD, Civil 3D, Revit, AI, software atau kegunaan…"/>
@@ -245,12 +246,14 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 <nav class="pc-build-pagination" id="pcBuildPaginationTop" aria-label="Pagination PC Builds"></nav>
 <section class="grid" id="grid" aria-live="polite"></section>
 <nav class="pc-build-pagination" id="pcBuildPaginationBottom" aria-label="Pagination PC Builds"></nav>
+</details>
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • PC Build Malaysia • Hanya produk dengan harga sumber yang disahkan dipaparkan.</div></footer>
 <script src="/PC-Build/images/products/local-image-map-v1500.js?v=1500"></script>
 <script src="/PC-Build/images/products/local-image-map-v1501.js?v=1505"></script>
 <script src="/PC-Build/images/products/local-image-map-v1502.js?v=1505"></script>
-<script src="/PC-Build/images/products/local-hardware-map-v1505.js?v=1506"></script>
+<script src="/PC-Build/images/products/local-hardware-map-v1505.js?v=1512"></script>
+<script src="/assets/js/azobss-pc-build-images-v1512.js?v=1512"></script>
 <script>
 const BUILD_API='https://azobss-backend.onrender.com/api/pc-shop/builds';
 const RETAILER_JSON_API='https://azobss-backend.onrender.com/api/pc-shop/retailer-catalog';
@@ -497,9 +500,11 @@ els.clearFilters?.addEventListener('click',()=>{els.search.value='';if(els.retai
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1511" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1512" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1509"></script>
+<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1512">
+<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1512"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1512"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

@@ -18752,14 +18752,17 @@ async function azobssPcBuildReadShopify(source) {
   const requiredKeywords = Array.isArray(source.variantKeywords) ? source.variantKeywords.filter(Boolean) : [];
   let variant = null;
   let variantSelection = '';
+  let pinnedVariantId = '';
   try {
     const u = new URL(source.sourceUrl);
     const variantId = String(u.searchParams.get('variant') || '').trim();
+    pinnedVariantId = variantId;
     if (variantId) {
       variant = variants.find((v) => String(v?.id || '') === variantId) || null;
       if (variant) variantSelection = 'url-variant';
     }
   } catch (_) {}
+  if (pinnedVariantId && !variant) throw new Error("Selected Shopify variant is no longer available");
   if (!variant && requiredKeywords.length) {
     variant = variants.find((v) => azobssPcBuildVariantMatches(v?.title, requiredKeywords)) || null;
     if (variant) variantSelection = 'keyword-variant';

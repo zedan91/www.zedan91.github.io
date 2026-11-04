@@ -10,7 +10,7 @@ test('v1508 editor is loaded only on PC Build page and launched by administrator
   const editor = read('assets/js/azobss-pc-image-editor-v1508.js');
   assert.match(html,/azobss-pc-image-editor-v1508\.css\?v=1509/);
   assert.match(html,/azobss-pc-image-editor-v1508\.js\?v=1509/);
-  assert.match(html,/azobss-pc-shop-v1487\.js\?v=1509/);
+  assert.match(html,/azobss-pc-shop-v1487\.js\?v=1512/);
   assert.match(viewer,/data-pc-image-edit/);
   assert.match(viewer,/window\.azobssPcImageEditor\?\.isAdministrator/);
   assert.match(viewer,/returnFocus=imageViewerLastFocus/);

@@ -26,7 +26,7 @@ function runtimeWith({html='Title: MSI GeForce RTX 5070 12G VENTUS 2X OC\n# MSI 
 }
 
 test('v1487 keeps checkout hardening while adding clear-price snapshot fallback for display',()=>{
-  assert.equal(RELEASE,'1506');
+  assert.equal(RELEASE,'1512');
   for(const k of ['strictAvailability','staleCartReject','retailerBuildLiveVerification','privatePricing','imageProxy','clearPriceSnapshotFallback','singlePriceRetailerCatalog'])assert.equal(CAPABILITIES[k],true,k);
 });
 
@@ -81,7 +81,7 @@ test('client Buy Now uses single-item checkout while clear-price snapshot items 
 test('checkout revalidates live catalog before duplicate reuse and image viewer supports tap/click',()=>{
   const runtime=fs.readFileSync(path.join(root,'lib/azobss-pc-shop-runtime.js'),'utf8');
   const client=fs.readFileSync(path.join(root,'assets/js/azobss-pc-shop-v1487.js'),'utf8');
-  const revalidate=runtime.indexOf('const live = await getLiveCatalog(true)');
+  const revalidate=runtime.indexOf('const live = await getLiveCatalog(true,selectedIds)');
   const duplicate=runtime.indexOf('const duplicate = await findRecentDuplicate',revalidate);
   assert.ok(revalidate>0&&duplicate>revalidate);
   assert.match(client,/function openImageViewer\(p\)/);

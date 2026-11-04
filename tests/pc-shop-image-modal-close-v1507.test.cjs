@@ -15,6 +15,6 @@ test('v1507 product image viewer closes reliably after zoom',()=>{
   assert.match(js,/closeDedicatedImageViewer\(restoreFocus=true\)/);
   assert.match(css,/z-index:2147483647;pointer-events:auto!important/);
   assert.match(css,/isolation:isolate/);
-  assert.match(html,/azobss-pc-shop-v1487\.js\?v=1509/);
+  assert.match(html,/azobss-pc-shop-v1487\.js\?v=1512/);
   assert.match(html,/azobss-pc-shop-v1487\.css\?v=1507/);
 });
