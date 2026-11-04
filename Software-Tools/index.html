@@ -5550,7 +5550,7 @@ function normalizeItem(item){
     const isSolatTime = azIsSolatTimeCatalogItem(item);
     const displayName = isSolatTime ? 'Liyabudun' : item.name;
     const isPremium = item.type === 'premium' || item.type === 'ebook';
-    const freeDownloadFileLink = String(item.freeDownloadFileLink || (!isPremium ? (item.downloadLink || item.link || '') : '')).trim();
+    const freeDownloadFileLink = isSolatTime ? 'https://files.azobss.com/liyabudun/releases/Latest/Liyabudun_Setup.exe' : String(item.freeDownloadFileLink || (!isPremium ? (item.downloadLink || item.link || '') : '')).trim();
     const secondaryActionHtml = isPremium && freeDownloadFileLink
       ? `<a class="az-card-cart-btn az-software-free-download-icon" data-free-download-file-link="${esc(freeDownloadFileLink)}" href="${esc(freeDownloadFileLink)}" aria-label="Free download / trial" title="Free download / trial"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></a>`
       : `<button type="button" class="az-card-cart-btn" data-az-stable-cart-placeholder="1" aria-label="Add to cart"><span class="az-card-cart-icon">🛒</span></button>`;
@@ -5597,7 +5597,7 @@ function normalizeItem(item){
     const promoFreeActionBtnHtml = `<button type="button" class="download-btn az-promo-free-download-btn" data-azobss-premium-buy="0" data-azobss-promo-free="1" data-product-id="${esc(item.productId || item.id)}" data-product-name="${esc(item.name)}" data-product-price="FREE" data-original-price="${esc(azPromoOriginalPrice(item) || item.price || '')}" data-promo-free-key="${esc(promoFreeInfo.key)}" data-promo-free-limit="${esc(promoFreeInfo.limit)}" data-promo-free-remaining="${esc(promoFreeInfo.remaining)}" data-promo-free-batch-id="${esc(promoFreeInfo.batchId)}" aria-label="Claim free promotional download after login"><span class="download-text">🎁 Free Promo Download</span></button>`;
     const actionBtnHtml = promoFreeInfo.active ? promoFreeActionBtnHtml : normalActionBtnHtml;
     const subscriptionHtml = isPremium && !promoFreeInfo.active ? azSubscriptionPlanButtonsHtml(item) : '';
-    const azdmInstallerUrl = 'https://files.azobss.com/AZDM-Setup.exe';
+    const azdmInstallerUrl = 'https://files.azobss.com/azdm/releases/Latest/AZDM-Setup.exe';
     const azdmInstallerBtnHtml = item.softwarePackages?.enabled && item.softwarePackages.fulfilment === 'azdm'
       ? `<a class="download-btn azdm-setup-download-btn" data-azobss-premium-buy="0" data-product-id="${esc(item.productId||item.id)}" data-product-name="${esc(item.name)}" data-download-link="${esc(azdmInstallerUrl)}" href="${esc(azdmInstallerUrl)}" target="_blank" rel="noopener" title="Download AZDM Setup" aria-label="Download AZDM Setup">Download</a>`
       : '';
@@ -7006,7 +7006,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1509" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1510" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
