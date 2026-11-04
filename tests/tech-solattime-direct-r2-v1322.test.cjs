@@ -19,12 +19,13 @@ test('SolatTime points to the exact existing private R2 object supplied by admin
   assert.doesNotMatch(server,/software\/Azobss_SolatTime_Setup_v1_0_2\.exe/);
 });
 
-test('Tech Vault issues a signed direct R2 download for SolatTime without requiring Tech Vault metadata registration',()=>{
+test('legacy private route stays compatible while Tech Vault links directly to Liyabudun Latest',()=>{
   assert.match(server,/pathname === "\/api\/tech-vault\/solattime-download"/);
   assert.match(server,/azSolatTimeR2DownloadUrl\(\)/);
   assert.match(server,/azTechVaultSignPayload\(\{/);
   assert.match(server,/`\$\{azR2DownloadBaseUrl\(\)\}\/dl\/\$\{encodeURIComponent\(token\)\}`/);
-  assert.match(tech,/api\('\/api\/tech-vault\/solattime-download',\{method:'POST'\}\)/);
+  assert.match(tech,/<a[^>]+id="solatTimeDownloadBtn"[^>]+href="https:\/\/files\.azobss\.com\/liyabudun\/releases\/Latest\/Liyabudun_Setup\.exe"[^>]+data-state="ready"/);
+  assert.doesNotMatch(tech,/updateSolatTimeShortcut|solatTimeInfo|api\('\/api\/tech-vault\/solattime-download'/);
 });
 
 test('direct SolatTime route remains protected by Tech Vault session',()=>{
