@@ -72,7 +72,9 @@ if __name__=='__main__':
             r=direct.get(url,timeout=25);r.raise_for_status();d=BeautifulSoup(r.text,'html.parser')
             price_node=d.select_one('meta[property="product:price:amount"],[itemprop="price"][content]');title=d.select_one('h1');img=d.select_one('meta[property="og:image"]')
             if not price_node or not title or not img:return None
-            price=float(price_node.get('content'));pid=re.search(r'/(\d+)-[^/]+\.html',url)[1];name='ILLEGEAR '+title.get_text(' ',strip=True)
+            price=float(price_node.get('content'))
+            if not 20<=price<=100000:return None
+            pid=re.search(r'/(\d+)-[^/]+\.html',url)[1];name='ILLEGEAR '+title.get_text(' ',strip=True)
             cat,kind=category(name,'laptop' if 'laptop' in url else 'Desktop PC' if 'desktop' in url else '')
             if not kind:return None
             gallery=[img.get('content')]+[x.get('data-image-large-src') or x.get('src') for x in d.select('.images-container img,.product-cover img')]

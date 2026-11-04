@@ -8,7 +8,7 @@ def selling(cost,kind):
     rate=.15 if cost<=2500 else .12 if cost<=4000 else .10 if cost<=6000 else .09 if cost<=8000 else .08 if cost<=10000 else .07
     return math.ceil((cost+max(cost*rate,250 if kind in ('laptop','desktop','pc-build') else 150))/10)*10
 def brand(name):
-    matches=[(m.start(),b) for b in ['ASUS','MSI','GIGABYTE','ASROCK','AMD','INTEL','CORSAIR','KINGSTON','LOGITECH','ACER','LENOVO','HP','DELL','APPLE','SAMSUNG','SEAGATE','WESTERN DIGITAL','TP-LINK','D-LINK','RAZER','STEELSERIES','THERMALTAKE','COOLER MASTER','NZXT','LIAN LI','FRACTAL','DEEPCOOL','FSP','SILVERSTONE','EDIFIER','SONY','HYPERX','ADATA','XPG','LEXAR','CRUCIAL','SANDISK','AOC','PHILIPS','BENQ','LG','VIEWSONIC','ZOTAC','PALIT','PNY','COLORFUL','SAPPHIRE','POWER COLOR','ILLEGEAR'] if (m:=re.search(r'\b'+re.escape(b)+r'\b',name,re.I))]
+    matches=[(m.start(),b) for b in ['AVITA','HONOR','HUAWEI','CHUWI','ASUS','MSI','GIGABYTE','ASROCK','AMD','INTEL','CORSAIR','KINGSTON','LOGITECH','ACER','LENOVO','HP','DELL','APPLE','SAMSUNG','SEAGATE','WESTERN DIGITAL','TP-LINK','D-LINK','RAZER','STEELSERIES','THERMALTAKE','COOLER MASTER','NZXT','LIAN LI','FRACTAL','DEEPCOOL','FSP','SILVERSTONE','EDIFIER','SONY','HYPERX','ADATA','XPG','LEXAR','CRUCIAL','SANDISK','AOC','PHILIPS','BENQ','LG','VIEWSONIC','ZOTAC','PALIT','PNY','COLORFUL','SAPPHIRE','POWER COLOR','ILLEGEAR'] if (m:=re.search(r'\b'+re.escape(b)+r'\b',name,re.I))]
     if matches:return min(matches)[1]
     return 'LAIN-LAIN'
 public=[]

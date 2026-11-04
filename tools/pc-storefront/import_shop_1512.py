@@ -8,16 +8,44 @@ ROOT=Path(__file__).resolve().parents[2];WORK=Path(os.environ.get('AZOBSS_CATALO
 SOURCES=[('dotatech','DOTATECH','https://www.dotatech.com.my'),('emarque','EMARQUE','https://emarque.co'),('all-it','ALL IT Hypermarket','https://www.allithypermarket.com.my'),('brightstar','Brightstar Computer','https://brightstarcomp.com')]
 NOW=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).isoformat()
 def category(title,kind):
-    h=(title+' '+kind).lower()
-    accessory=bool(re.search(r'\b(bag|backpack|sleeve|stand|holder|bracket|mount|docking|dock|adapter|charger|battery|cooling pad|laptop cooler)\b',h))
-    accessory=accessory or bool(re.search(r'(?:laptop|notebook)\s+(?:ram|memory|stand|cooler|adapter|charger)|(?:memory module|ssd|hdd|hard drive|hard disk|cable).{0,100}\b(?:for|compatible).{0,35}\b(?:laptop|notebook|desktop)|\b(?:external|internal|portable)\b.{0,35}\b(?:ssd|hdd|hard drive|hard disk)\b|\b(?:usb.?c?|charging|hdmi|ethernet)\b.{0,30}\bcable\b',h))
-    if accessory and re.search(r'\b(bag|backpack|sleeve|stand|holder|bracket|mount|dock|docking|battery|charger)\b',title,re.I):return 'Accessories','hardware'
-    if not accessory and re.search(r'\b(laptop|notebook|macbook|vivobook|zenbook|ideapad|thinkpad|probook|elitebook|chromebook)\b',h):return 'Laptop','laptop'
-    if not accessory and re.search(r'\b(desktop|gaming pc|pc gaming package|mini pc|all.in.one pc|prebuilt|pre.build|workstation|pc package|pc set|custom pc|barebone)\b',h):return 'Desktop PC','desktop'
-    if re.search(r'casing fan|chassis fan|case fan',h):return 'Cooling','hardware'
-    for pattern,cat in [(r'motherboard|mainboard','Motherboard'),(r'graphics card|\bgpu\b|geforce|radeon|\brtx\s*\d{4}|\brx\s*\d{3,4}','GPU'),(r'\bprocessor\b|\bcpu\b','CPU'),(r'\bram\b|desktop memory|sodimm|memory module|ddr[345]','RAM'),(r'\bssd\b|\bnvme\b|solid state','SSD'),(r'\bhdd\b|hard drive|hard disk','Hard Drive'),(r'power supply|\bpsu\b','Power Supply'),(r'\bcasing\b|chassis|pc case|tower case','Casing'),(r'cooler|cooling|case fan','Cooling'),(r'monitor|display','Monitor'),(r'keyboard','Keyboard'),(r'\bmouse\b|mice|mousepad','Mouse & Mousepad'),(r'router|network|ethernet|wifi|wi-fi|switch|access point','Networking'),(r'headset|headphone|microphone|speaker|soundbar','Audio'),(r'webcam|capture card','Webcam & Capture'),(r'usb hub|docking|\badapter\b|\bcable\b','Adapter & Cable')]:
-        if re.search(pattern,h):return cat,'hardware'
-    return ('Accessories','hardware') if accessory else ('','')
+    def component(label):
+        h=label.lower().strip()
+        groups=[
+            (r'cooler|cooling|case fan|casing fan|chassis fan','Cooling'),
+            (r'motherboard|mainboard','Motherboard'),
+            (r'graphics? card|\bgpu\b|\bvga\b|geforce|radeon|\brtx\s*\d{4}|\brx\s*\d{3,4}','GPU'),
+            (r'\bram\b|memory|so[- ]?dimm|sodimm|u-dimm|ddr[345]','RAM'),
+            (r'\bssd\b|\bnvme\b|solid state','SSD'),
+            (r'\bhdd\b|hard drive|hard disk','Hard Drive'),
+            (r'power supply|\bpsu\b','Power Supply'),
+            (r'\bcasing\b|chassis|\bcase\b','Casing'),
+            (r'monitor|\blcd\b|display','Monitor'),
+            (r'keyboard|keybo','Keyboard'),
+            (r'\bmouse\b|mice|mousepad','Mouse & Mousepad'),
+            (r'headset|headphone|microphone|speaker|soundbar|heads|speak|earph|earbud','Audio'),
+            (r'webcam|capture card','Webcam & Capture'),
+            (r'router|network|ethernet|wifi|wi-fi|switch|access point|netca','Networking'),
+            (r'usb hub|docking|\badapter\b|\bcable\b','Adapter & Cable'),
+            (r'bag|backpack|sleeve|stand|holder|bracket|mount|charger|battery|power bank|powerbank|clamp|air purifier|accessor','Accessories'),
+            (r'\bprocessor|\bcpu\b','CPU')]
+        return next((cat for pattern,cat in groups if re.search(pattern,h)),None)
+    # Prefer the supplier's specific department, e.g. Desktop Chassis is a case,
+    # not a complete computer. CPU Cooler precedes CPU; Laptop RAM precedes Laptop.
+    specific=component(kind)
+    if specific:return specific,'hardware'
+    h=title.lower()
+    accessory=bool(re.search(r'\b(bag|backpack|sleeve|stand|holder|bracket|mount|docking|dock|adapter|charger|battery|power bank|powerbank|cooling pad|laptop cooler)\b|so[- ]?dimm|(?:laptop|notebook)\s+(?:ram|memory)|(?:ram|memory|ssd|hdd|hard drive|hard disk|cable).{0,100}\b(?:for|compatible).{0,35}\b(?:laptop|notebook|desktop)|\b(?:external|internal|portable)\b.{0,35}\b(?:ssd|hdd|hard drive|hard disk)\b',h))
+    if accessory:return component(title) or 'Accessories','hardware'
+    if re.search(r'\b(laptop|notebook|noteb|macbook|vivobook|zenbook|ideapad|thinkpad|probook|elitebook|chromebook)\b',h+' '+kind.lower()):return 'Laptop','laptop'
+    if re.search(r'gaming pc|pc gaming package|mini pc|all.in.one pc|prebuilt|pre.build|pc package|pc set|custom pc|barebone (?:mini )?pc',h):return 'Desktop PC','desktop'
+    title_component=component(title)
+    if title_component and re.search(r'\b(keyboard|mouse|speaker|chassis|case|clamp|air purifier|desktop memory|desktop cpu|desktop processor)\b',h):return title_component,'hardware'
+    if re.search(r'\b(desktop|workstation|computer system)\b',kind,re.I):return 'Desktop PC','desktop'
+    specific=component(title)
+    if specific:return specific,'hardware'
+    if re.search(r'\b(desktop|workstation)\b',h):return 'Desktop PC','desktop'
+    return '',''
+
 def clean_name(s):
     s=re.sub(r'\[(?:ALL IT EXCLUSIVE|READY STOCK|PRE.?ORDER|PROMO)[^]]*\]','',s,flags=re.I)
     s=re.sub(r'\b(?:DOTATECH|EMARQUE|BRIGHTSTAR COMPUTER|ALL IT HYPERMARKET)\b','',s,flags=re.I)
