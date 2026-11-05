@@ -10,8 +10,9 @@ function adminSourceMetadata(p){
  try{const u=new URL(String(p.sourceUrl||''));if(u.protocol==='https:')url=u.href}catch(_){}
  const d=new Date(p.priceCheckedAt||p.sourceCheckedAt||'');
  const date=Number.isFinite(d.getTime())?d.toLocaleString('ms-MY'):'';
- if(!source&&!url&&!date)return '';
- return `<div class="az-store-source" data-pc-admin-source>${source?`<div>Sumber kedai: <b>${esc(source)}</b></div>`:''}${url?`<a href="${esc(url)}" target="_blank" rel="noopener">Lihat produk asal ↗</a>`:''}${date?`<div>Harga sumber direkod: ${esc(date)}</div>`:''}</div>`;
+ const audit=window.AZOBSSSourcePrices?.panel(p)||'';
+ if(!source&&!url&&!date)return audit;
+ return `<div class="az-store-source" data-pc-admin-source>${source?`<div>Sumber kedai: <b>${esc(source)}</b></div>`:''}${url?`<a href="${esc(url)}" target="_blank" rel="noopener">Lihat produk asal ↗</a>`:''}${date?`<div>Harga sumber direkod: ${esc(date)}</div>`:''}</div>${audit}`;
 }
 function title(p){return String(p.displayName||p.name||'');}
 function facts(p){
@@ -80,5 +81,6 @@ function draw(){
  const nav=`<button type="button" data-store-page="${page-1}" ${page<=1?'disabled':''}>← Sebelum</button><span>Halaman ${page} / ${pages}</span><button type="button" data-store-page="${page+1}" ${page>=pages?'disabled':''}>Seterusnya →</button>`;
  for(const id of ['azStorePageTop','azStorePageBottom'])document.getElementById(id).innerHTML=nav;
 }
+window.addEventListener?.('azobss:source-prices-change',()=>{if(rows.length)draw();});
 window.AZOBSSPcStorefront={render};
 })();
