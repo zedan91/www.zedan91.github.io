@@ -16,7 +16,7 @@ for row in rows:
     assert row['localImageVerified'] and re.fullmatch(r'/PC-Build/images/shop/[a-f0-9]{24}\.webp',row['image'])
     assert (SRC/row['image'].lstrip('/')).is_file()
     row['brand']=brand(row['name']);row['requiresSupplierConfirmation']=True
-    public.append(dict(id=row['id'],type=row['type'],category=row['category'],brand=row['brand'],name=row['name'],
+    public.append(dict(id=row['id'],type=row['type'],category=row['category'],brand=row['brand'],name=row['name'],displayName=row.get('displayName',row['name']),
         price=selling(float(row['snapshotPrice']),row['type']),priceStatus='snapshot',priceCheckedAt=row['snapshotCheckedAt'],
         specs=row['specs'],image=row['image'],localImageVerified=True,imagePolicy='local-locked',imageCrop='full-image',
         available=False,availability='unknown',requiresConfirmation=True))

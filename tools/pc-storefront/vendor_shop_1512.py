@@ -12,6 +12,11 @@ CACHE=WORK/'image-audit';CACHE.mkdir(exist_ok=True)
 lock=threading.Lock();url_locks={};guard=threading.Lock();counts={'done':0,'clean':0,'rejected':0}
 def store_photo_allowed(photo,store):
     if not photo.get('ok'):return False
+    if store=='emarque':
+        image=Image.open(ROOT/photo['local'].lstrip('/')).convert('RGB').resize((40,40))
+        edge=[image.getpixel((x,y)) for y in range(40) for x in range(40) if x<5 or x>34 or y<5 or y>34]
+        # Reject the known dark/grey retailer-logo frame; never erase its mark.
+        return sum(min(pixel)>239 for pixel in edge)/len(edge)>.965
     if store!='all-it':return True
     # ALL IT uses a pale-cyan frame with a small stylised retailer logo that
     # OCR can miss. Conservatively choose another gallery photo, never crop it.

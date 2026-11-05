@@ -16,7 +16,7 @@ function fixture({available=true,ageDays=0}={}){
  const db={collection,runTransaction:fn=>fn({get:r=>r.get(),set:(r,v,o)=>r.set(v,o)})};let response;
  const runtime=createPcShopRuntime({rootDir:root,getDb:()=>db,getUserIdentity:async()=>({uid:'LOCAL-FIXTURE',email:'buyer@example.invalid'}),getAdminIdentity:async()=>null,readBody:async req=>req.body,
   send:(res,status,body)=>response={status,body:JSON.parse(body)},pcBuildReadShopify:async({sourceUrl})=>{calls.push(sourceUrl);const p=products.find(p=>p.sourceUrl===sourceUrl);return {price:p.snapshotPrice+200,available,productTitle:p.name,sourceText:p.name};}});
- return {runtime,products,calls,saved,response:()=>response,close:()=>fs.rmSync(root,{recursive:true,force:true})};
+ return {root,write,runtime,products,calls,saved,response:()=>response,close:()=>fs.rmSync(root,{recursive:true,force:true})};
 }
 test('catalog browses laptop, desktop and hardware without scraping every imported SKU; markup stays server-side',async()=>{
  const f=fixture();try{const c=await f.runtime.getLiveCatalog(false);assert.equal(f.calls.length,0);assert.equal(c.publicProducts.length,3);assert.deepEqual(c.publicProducts.map(p=>p.price),[1250,2300,250]);for(const p of c.publicProducts){assert.match(p.image,/^\/PC-Build\/images\/shop\//);for(const key of ['unitCost','sourcePrice','snapshotPrice','markupRate','markupAmount'])assert.equal(Object.hasOwn(p,key),false);}}finally{f.close();}
@@ -34,4 +34,14 @@ test('a deleted pinned Shopify variant fails instead of silently purchasing anot
  const source=fs.readFileSync(path.resolve(__dirname,'../deploy-server.js'),'utf8');const start=source.indexOf('async function azobssPcBuildReadShopify(');const end=source.indexOf('\nasync function ',start+1);const code=source.slice(start,end);
  const sandbox={URL,azobssPcBuildFetch:async()=>({variants:[{id:999,title:'Wrong model',price:10000,available:true}]}),azobssPcBuildShopifyJsUrl:x=>x};vm.createContext(sandbox);vm.runInContext(code+';this.read=azobssPcBuildReadShopify;',sandbox);
  await assert.rejects(sandbox.read({sourceUrl:'https://www.dotatech.com.my/products/example?variant=101'}),/Selected Shopify variant is no longer available/);
+});
+
+
+test('an explicit missing-photo placeholder keeps the product browseable without allowing arbitrary images or changing checkout confirmation',async()=>{
+ const f=fixture();try{
+  const p=f.products[0];p.image='/assets/images/pc-product-unavailable.svg';p.photoUnavailable=true;p.mediaVerified=false;
+  f.write('assets/images/pc-product-unavailable.svg','<svg/>');f.write('lib/data/pc-shop-catalog-v1512.json',{products:f.products});
+  const c=await f.runtime.getLiveCatalog(false);const row=c.publicProducts.find(x=>x.id==='laptop');assert.ok(row);assert.equal(row.photoUnavailable,true);assert.equal(row.requiresConfirmation,true);assert.equal(row.price,1250);assert.equal(row.mediaVerified,false);
+ }finally{f.close();}
+ const g=fixture();try{g.products[0].image='/assets/images/unapproved.svg';g.products[0].photoUnavailable=true;g.write('assets/images/unapproved.svg','<svg/>');g.write('lib/data/pc-shop-catalog-v1512.json',{products:g.products});assert.equal((await g.runtime.getLiveCatalog(false)).publicProducts.some(x=>x.id==='laptop'),false);}finally{g.close();}
 });

@@ -6,7 +6,7 @@ from winsdk.windows.storage.streams import InMemoryRandomAccessStream,DataWriter
 from winsdk.windows.graphics.imaging import BitmapDecoder,BitmapPixelFormat,BitmapAlphaMode
 
 ENGINE=OcrEngine.try_create_from_language(Language('en-US'))
-BAD=re.compile(r'\b(?:rm|myr)\s*\d[\d,.]*\b|\b\d[\d,.]*\s*(?:rm|myr)\b|\b(?:dotatech|emarque|brightstar|ideal\s*tech|illegear|jayacom|nb\s*plaza|viewnet|tech\s*hypermart|all\s*it|hypermarket)\b|0\s*%|https?://|www\.|\.com(?:\.my)?\b|\b(?:cashback|sale price|special price|promo price|instal[lm]ment|paylater|monthly|24[- ]month|[qr]m\s*\d+)\b',re.I)
+BAD=re.compile(r'\b(?:rm|myr)\s*\d[\d,.]*\b|\b\d[\d,.]*\s*(?:rm|myr)\b|\b(?:dotatech|emarque|brightstar|ideal\s*tech|illegear|jayacom|nb\s*plaza|viewnet|tech\s*hypermart|all\s*it|hypermarket)\b|build\s*to\s*win|\bpenting\b|\bimportant\b|0\s*%|https?://|www\.|\.com(?:\.my)?\b|\b(?:cashback|sale price|special price|promo price|instal[lm]ment|paylater|monthly|24[- ]month|[qr]m\s*\d+)\b',re.I)
 async def inspect_image(data):
     original=Image.open(io.BytesIO(data));original.load()
     image=ImageOps.exif_transpose(original).convert('RGB')

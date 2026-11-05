@@ -3,6 +3,7 @@ from pathlib import Path
 import concurrent.futures,datetime,hashlib,json,re,time,os,tempfile
 import requests
 from bs4 import BeautifulSoup
+from product_specs_1517 import description_specs,short_title
 
 ROOT=Path(__file__).resolve().parents[2];WORK=Path(os.environ.get('AZOBSS_CATALOG_WORK',Path(tempfile.gettempdir())/'azobss-pc-storefront-1512'));WORK.mkdir(parents=True,exist_ok=True)
 SOURCES=[('dotatech','DOTATECH','https://www.dotatech.com.my'),('emarque','EMARQUE','https://emarque.co'),('all-it','ALL IT Hypermarket','https://www.allithypermarket.com.my'),('brightstar','Brightstar Computer','https://brightstarcomp.com')]
@@ -76,9 +77,7 @@ def run(source):
         cat,kind=category(p.get('title',''),p.get('product_type',''))
         if not kind:continue
         title=clean_name(p.get('title',''));images=p.get('images') or []
-        desc=BeautifulSoup(p.get('body_html') or '', 'html.parser').get_text('\n',strip=True)
-        specs=[re.sub(r'\s+',' ',x).strip() for x in desc.splitlines()]
-        specs=[x[:240] for x in specs if 4<len(x)<250 and not re.search(r'https?://|www\.|\bRM\s*\d|warranty claim|all it|dotatech|emarque|brightstar|free gift|purchase|payment|installment|follow us|penting|important|pelanggan|rakaman|bungkusan|unboxing|warranty|notice|customer|parcel|shipping|return policy|tiktok|facebook|instagram|whatsapp|contact us|tuntutan|kerosakan|kehilangan|kerjasama|dihargai|faulty|damage claim|recording|cooperation|[\u4e00-\u9fff]|\[\s*(?:description|specifications)\s*\]',x,re.I)][:14]
+        specs=description_specs(p.get('body_html') or '')
         for variant in p.get('variants') or []:
             try:price=float(variant.get('price') or 0)
             except (TypeError,ValueError):continue
@@ -92,7 +91,7 @@ def run(source):
             urls=list(dict.fromkeys(u for u in urls if isinstance(u,str) and u.startswith('https://')))
             if not urls:continue
             ident=f'{sid}-v{vid}'
-            out.append(dict(id=ident,type=kind,category=cat,name=label[:300],productTitle=title,
+            out.append(dict(id=ident,type=kind,category=cat,name=label[:300],displayName=short_title(title,kind),productTitle=title,
                 sourceName=name,storeId=sid,sourceUrl=url,sourceProvider='shopify',sourceVerified=True,
                 specVerified=True,mediaVerified=True,sourceMatch=[p.get('title','')],specs=[f'Model: {title}',*([f'Pilihan: {vtitle}'] if vtitle.lower() not in ('','default title') else []),*specs],
                 snapshotPrice=price,snapshotPriceClear=True,snapshotCheckedAt=NOW,sourceCheckedAt=NOW,

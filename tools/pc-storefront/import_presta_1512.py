@@ -4,6 +4,7 @@ from urllib.parse import urljoin,urlparse
 import concurrent.futures,datetime,json,re,time
 import requests
 from bs4 import BeautifulSoup
+from product_specs_1517 import short_title,title_specs
 from import_shop_1512 import ROOT,WORK,NOW,category
 
 def source(sid,name,base,entries):
@@ -38,9 +39,9 @@ def source(sid,name,base,entries):
                 candidates=[image.get('data-full-size-image-url'),image.get('data-src'),image.get('src')]
                 candidates=list(dict.fromkeys(urljoin(base,x) for x in candidates if x and not x.startswith('data:')))
                 if not candidates:continue
-                products[pid]=dict(id=f'{sid}-p{pid}',variantId=pid,type=kind,category=cat,name=title[:300],productTitle=title,
+                products[pid]=dict(id=f'{sid}-p{pid}',variantId=pid,type=kind,category=cat,name=title[:300],displayName=short_title(title,kind),productTitle=title,
                     sourceName=name,storeId=sid,sourceUrl=product_url,sourceProvider='html',sourceVerified=True,specVerified=True,mediaVerified=True,
-                    sourceMatch=[title],specs=[f'Model: {title}','Spesifikasi dan konfigurasi tepat disahkan sebelum pesanan.'],snapshotPrice=price,snapshotPriceClear=True,
+                    sourceMatch=[title],specs=[f'Model: {title}',*title_specs(title)],snapshotPrice=price,snapshotPriceClear=True,
                     snapshotCheckedAt=NOW,sourceCheckedAt=NOW,importedCatalog=True,imageCandidates=candidates,image='',stock='check',availability='unknown',requiresConfirmation=True)
             for a in soup.select('.pagination a[href]'):
                 target=urljoin(base,a['href'])
