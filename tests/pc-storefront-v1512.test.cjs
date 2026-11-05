@@ -19,7 +19,31 @@ function fixture({available=true,ageDays=0}={}){
  return {root,write,runtime,products,calls,saved,response:()=>response,close:()=>fs.rmSync(root,{recursive:true,force:true})};
 }
 test('catalog browses laptop, desktop and hardware without scraping every imported SKU; markup stays server-side',async()=>{
- const f=fixture();try{const c=await f.runtime.getLiveCatalog(false);assert.equal(f.calls.length,0);assert.equal(c.publicProducts.length,3);assert.deepEqual(c.publicProducts.map(p=>p.price),[1250,2300,250]);for(const p of c.publicProducts){assert.match(p.image,/^\/PC-Build\/images\/shop\//);for(const key of ['unitCost','sourcePrice','snapshotPrice','markupRate','markupAmount'])assert.equal(Object.hasOwn(p,key),false);}}finally{f.close();}
+ const f=fixture();try{const c=await f.runtime.getLiveCatalog(false);assert.equal(f.calls.length,0);assert.equal(c.publicProducts.length,3);assert.deepEqual(c.publicProducts.map(p=>p.price),[1250,2300,150]);for(const p of c.publicProducts){assert.match(p.image,/^\/PC-Build\/images\/shop\//);for(const key of ['unitCost','sourcePrice','snapshotPrice','markupRate','markupAmount'])assert.equal(Object.hasOwn(p,key),false);}}finally{f.close();}
+});
+
+test('1518 component tiers apply at every boundary while system margins remain unchanged',async()=>{
+ const f=fixture();try{
+  const cases=[[20,50],[50,80],[50.01,105],[120,170],[150,200],[150.01,225],[259,330],[499.99,570],[500,590],[700,790],[700.01,810],[1000,1150],[5000,5750]];
+  const base=f.products[2];const rows=cases.map(([cost],i)=>({...base,id:'component-'+i,snapshotPrice:cost}));
+  rows.push({...f.products[0],snapshotPrice:5000},{...f.products[1],snapshotPrice:1000});
+  rows.push({...base,id:'misclassified-system',name:'WORK 5 - CPU GPU Workstation PC',productTitle:'WORK 5 - CPU GPU Workstation PC',category:'GPU',snapshotPrice:5000});
+  rows.push({...base,id:'actual-pc-memory',name:'Desktop Gaming PC Memory DIMM RAM',snapshotPrice:1000});
+  f.write('lib/data/pc-shop-catalog-v1512.json',{products:rows});const c=await f.runtime.getLiveCatalog(false);
+  for(let i=0;i<cases.length;i++)assert.equal(c.publicProducts.find(p=>p.id==='component-'+i)?.price,cases[i][1],String(cases[i][0]));
+  assert.equal(c.publicProducts.find(p=>p.id==='laptop').price,5500);assert.equal(c.publicProducts.find(p=>p.id==='desktop').price,1250);
+  assert.equal(c.publicProducts.find(p=>p.id==='misclassified-system').price,5500);assert.equal(c.publicProducts.find(p=>p.id==='actual-pc-memory').price,1150);
+ }finally{f.close();}
+});
+
+test('1518 checkout reprices a component from verified cost, rejects client price and preserves history',async()=>{
+ const f=fixture();try{
+  f.saved.set('pcShopOrders/historical',{items:[{productId:'hardware',qty:1,unitPrice:250}],referenceSubtotal:250});
+  const history=JSON.stringify([...f.saved]);
+  await f.runtime.handle({method:'POST',body:{items:[{productId:'hardware',qty:2,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});
+  const r=f.response();assert.equal(r.status,201);assert.equal(r.body.order.items[0].unitPrice,370);assert.equal(r.body.order.referenceSubtotal,740);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.priceConfirmationRequired,true);
+  assert.equal(JSON.stringify([['pcShopOrders/historical',f.saved.get('pcShopOrders/historical')]]),history);
+ }finally{f.close();}
 });
 test('checkout rechecks only selected exact variant and ignores client price; supplier confirmation prevents premature invoice',async()=>{
  const f=fixture();try{await f.runtime.getLiveCatalog(false);await f.runtime.handle({method:'POST',body:{items:[{productId:'laptop',qty:2,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});const r=f.response();assert.equal(r.status,201);assert.equal(f.calls.length,1);assert.match(f.calls[0],/variant=101$/);assert.equal(r.body.order.items[0].unitPrice,1450);assert.equal(r.body.order.referenceSubtotal,2900);assert.equal(r.body.order.priceConfirmationRequired,true);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.status,'price-confirmation');}finally{f.close();}

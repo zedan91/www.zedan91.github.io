@@ -4,7 +4,10 @@ import collections,datetime,hashlib,json,math,re
 from import_shop_1512 import ROOT,WORK
 SRC=ROOT
 data=json.loads((WORK/'prepared.json').read_text(encoding='utf-8'));rows=data['products']
-def selling(cost,kind):
+def selling(cost,kind,name=''):
+    if kind not in ('laptop','desktop','pc-build') and not re.search(r'Mini Desktop PC.*Barebone$|Workstation PC$',name,re.I):
+        extra=30 if cost<=50 else 50 if cost<=150 else 70 if cost<500 else 90 if cost<=700 else cost*.15
+        return math.ceil(round(cost+extra,8)/5)*5
     rate=.15 if cost<=2500 else .12 if cost<=4000 else .10 if cost<=6000 else .09 if cost<=8000 else .08 if cost<=10000 else .07
     return math.ceil((cost+max(cost*rate,250 if kind in ('laptop','desktop','pc-build') else 150))/10)*10
 def brand(name):
@@ -17,7 +20,7 @@ for row in rows:
     assert (SRC/row['image'].lstrip('/')).is_file()
     row['brand']=brand(row['name']);row['requiresSupplierConfirmation']=True
     public.append(dict(id=row['id'],type=row['type'],category=row['category'],brand=row['brand'],name=row['name'],displayName=row.get('displayName',row['name']),
-        price=selling(float(row['snapshotPrice']),row['type']),priceStatus='snapshot',priceCheckedAt=row['snapshotCheckedAt'],
+        price=selling(float(row['snapshotPrice']),row['type'],row.get('productTitle',row['name'])),priceStatus='snapshot',priceCheckedAt=row['snapshotCheckedAt'],
         specs=row['specs'],image=row['image'],localImageVerified=True,imagePolicy='local-locked',imageCrop='full-image',
         available=False,availability='unknown',requiresConfirmation=True))
 report=dict(version=1512,checkedAt=data['checkedAt'],products=rows,sources=data['sources'],
