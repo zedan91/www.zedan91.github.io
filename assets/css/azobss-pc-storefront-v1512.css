@@ -5,3 +5,6 @@
 .az-store-quantity{display:flex;gap:12px;align-items:center;font-size:13px;color:#c9d6e4;margin-top:15px}.az-store-quantity input{width:80px;padding:10px;border:1px solid #36516d;border-radius:8px;background:#11263b;color:white;font:inherit}.az-store-photo{aspect-ratio:4/3}.az-store-photo img{max-height:210px}
 
 #livePricePill,.status .pill:has(#count){display:none}.az-store-legacy{margin:25px 0;border:1px solid #29435e;border-radius:14px;background:#0a1a2b;padding:0 16px}.az-store-legacy>summary{padding:18px 2px;cursor:pointer;color:#9fc8ec;font-size:14px;font-weight:700}.az-store-legacy[open]>summary{margin-bottom:10px;border-bottom:1px solid #29435e}
+
+/* Supplier references are rendered only for the existing administrator role. */
+.az-store-source{margin:9px 0;padding:9px 10px;border:1px dashed #31516a;border-radius:9px;color:#9fb9cf;font-size:12px;line-height:1.55;overflow-wrap:anywhere}.az-store-source a{color:#62d9ee}

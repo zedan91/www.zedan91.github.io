@@ -3,14 +3,22 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(n)||0);
 const PAGE_SIZE=24;let page=1,lastFilter='',rows=[],actions={},bound=false;
-function dateLabel(value){const d=new Date(value||'');return Number.isFinite(d.getTime())?d.toLocaleDateString('ms-MY',{day:'2-digit',month:'short'}):'';}
 function brand(p){return String(p.brand||p.name?.split(/\s+/)[0]||'Lain-lain').replace(/[^\w.-]/g,'').toUpperCase();}
+function adminSourceMetadata(p){
+ if(actions.isAdmin?.()!==true)return '';
+ const source=String(p.sourceName||p.storeName||'');let url='';
+ try{const u=new URL(String(p.sourceUrl||''));if(u.protocol==='https:')url=u.href}catch(_){}
+ const d=new Date(p.priceCheckedAt||p.sourceCheckedAt||'');
+ const date=Number.isFinite(d.getTime())?d.toLocaleString('ms-MY'):'';
+ if(!source&&!url&&!date)return '';
+ return `<div class="az-store-source" data-pc-admin-source>${source?`<div>Sumber kedai: <b>${esc(source)}</b></div>`:''}${url?`<a href="${esc(url)}" target="_blank" rel="noopener">Lihat produk asal ↗</a>`:''}${date?`<div>Harga sumber direkod: ${esc(date)}</div>`:''}</div>`;
+}
 function card(p){
  const status=p.priceStatus==='live'&&p.available===true?'Stok disahkan':'Stok disemak semasa checkout';
- return `<article class="az-store-product" data-store-product="${esc(p.id)}"><button class="az-store-photo" type="button" data-store-image="${esc(p.id)}" aria-label="Besarkan gambar ${esc(p.name)}"><img src="${esc(p.image)}" alt="${esc(p.name)}" width="640" height="640" loading="lazy" decoding="async"></button><div class="az-store-product-copy"><div class="az-store-category">${esc(p.category)} <span>${esc(brand(p))}</span></div><h3>${esc(p.name)}</h3><ul>${(p.specs||[]).slice(1,4).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><div class="az-store-price">${money(p.price)}<small>Harga AZOBSS</small></div><div class="az-store-stock">${esc(status)}${p.priceCheckedAt?' · '+esc(dateLabel(p.priceCheckedAt)):''}</div><div class="az-store-actions"><button type="button" data-store-add="${esc(p.id)}">＋ Add to Cart</button><button type="button" class="primary" data-store-buy="${esc(p.id)}">Buy Now</button></div><button type="button" class="az-store-details" data-store-details="${esc(p.id)}">Spesifikasi &amp; butiran ↗</button></div></article>`;
+ return `<article class="az-store-product" data-store-product="${esc(p.id)}"><button class="az-store-photo" type="button" data-store-image="${esc(p.id)}" aria-label="Besarkan gambar ${esc(p.name)}"><img src="${esc(p.image)}" alt="${esc(p.name)}" width="640" height="640" loading="lazy" decoding="async"></button><div class="az-store-product-copy"><div class="az-store-category">${esc(p.category)} <span>${esc(brand(p))}</span></div><h3>${esc(p.name)}</h3><ul>${(p.specs||[]).slice(1,4).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><div class="az-store-price">${money(p.price)}<small>Harga AZOBSS</small></div><div class="az-store-stock">${esc(status)}</div>${adminSourceMetadata(p)}<div class="az-store-actions"><button type="button" data-store-add="${esc(p.id)}">＋ Add to Cart</button><button type="button" class="primary" data-store-buy="${esc(p.id)}">Buy Now</button></div><button type="button" class="az-store-details" data-store-details="${esc(p.id)}">Spesifikasi &amp; butiran ↗</button></div></article>`;
 }
 function details(p){
- const root=actions.modal(p.name,`<div class="az-store-detail"><img src="${esc(p.image)}" alt="${esc(p.name)}"><div><span class="az-store-category">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="az-store-price">${money(p.price)}</div><p>Harga jual AZOBSS. Harga dan stok varian ini disemak semula sebelum pengesahan pesanan.</p><ul>${(p.specs||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="az-store-actions"><button type="button" data-detail-add>＋ Add to Cart</button><button type="button" class="primary" data-detail-buy>Buy Now</button></div></div></div>`);
+ const root=actions.modal(p.name,`<div class="az-store-detail"><img src="${esc(p.image)}" alt="${esc(p.name)}"><div><span class="az-store-category">${esc(p.category)}</span><h3>${esc(p.name)}</h3><div class="az-store-price">${money(p.price)}</div>${adminSourceMetadata(p)}<p>Harga jual AZOBSS. Harga dan stok varian ini disemak semula sebelum pengesahan pesanan.</p><ul>${(p.specs||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="az-store-actions"><button type="button" data-detail-add>＋ Add to Cart</button><button type="button" class="primary" data-detail-buy>Buy Now</button></div></div></div>`);
  const buttons=root.querySelector('.az-store-actions');buttons?.insertAdjacentHTML('beforebegin','<label class="az-store-quantity">Bilangan <input type="number" min="1" max="20" value="1" data-detail-qty></label>');
  const selected=()=>({...p,qty:Math.max(1,Math.min(20,Math.floor(Number(root.querySelector('[data-detail-qty]')?.value)||1)))});
  root.querySelector('[data-detail-add]')?.addEventListener('click',()=>actions.add(selected(),false));
