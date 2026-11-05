@@ -10,8 +10,8 @@ test('old catalogue entries render Liyabudun copy without rewriting stored produ
  const other={name:'Other software',desc:'A SolatTime tutorial'};assert.equal(scope.match(other),false);assert.equal(scope.describe(other),other.desc);
 });
 test('brand page keeps canonical checkout, download identity and publisher attribution',()=>{
- const html=fs.readFileSync(require.resolve('../solattime/index.html'),'utf8');
+ const html=fs.readFileSync(require.resolve('../liyabudun/index.html'),'utf8');
  assert.match(html,/<title>Liyabudun/);assert.doesNotMatch(html,/Dahulu AZOBSS SolatTime/);
- assert.match(html,/p=AZSW-372165/);assert.match(html,/liyabudun\/releases\/1\.0\.\d+\/Liyabudun_Setup\.exe/);
+ assert.match(html,/p=AZSW-372165/);assert.match(html,/liyabudun\/releases\/Latest\/Liyabudun_Setup\.exe/);
  assert.match(html,/oleh AZOBSS/);assert.doesNotMatch(html,/zero competition|terjamin.*carian/i);
 });

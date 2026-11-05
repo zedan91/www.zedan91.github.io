@@ -25,5 +25,5 @@ test('website direct download buttons use the same fixed paths',()=>{
  const html=fs.readFileSync(path.join(root,'Software-Tools/index.html'),'utf8');
  assert.ok(html.includes(expected.azdm));
  assert.equal(DOWNLOAD,expected.liyabudun);
- assert.ok(fs.readFileSync(path.join(root,'solattime/index.html'),'utf8').includes(expected.liyabudun));
+ assert.ok(fs.readFileSync(path.join(root,'liyabudun/index.html'),'utf8').includes(expected.liyabudun));
 });

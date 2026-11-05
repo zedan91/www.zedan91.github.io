@@ -7006,7 +7006,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1515" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1516" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -10590,7 +10590,7 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
 (function(){
  if(window.__azobssSoftwareDescInlineMore097)return;window.__azobssSoftwareDescInlineMore097=true;
  function modal(){var m=document.getElementById('azobssSwDescModal097');if(m)return m;m=document.createElement('div');m.id='azobssSwDescModal097';m.className='azobss-sw-desc-modal-097';m.innerHTML='<div class="azobss-sw-desc-box-097"><div class="azobss-sw-desc-head-097"><div class="azobss-sw-desc-title-097"></div><button type="button" class="azobss-sw-desc-close-097">×</button></div><div class="azobss-sw-desc-text-097"></div></div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('is-open')});m.querySelector('.azobss-sw-desc-close-097').onclick=function(){m.classList.remove('is-open')};document.addEventListener('keydown',function(e){if(e.key==='Escape')m.classList.remove('is-open')});return m}
- function openM(t,x){var m=modal();m.querySelector('.azobss-sw-desc-title-097').textContent=t||'Software Description';var body=m.querySelector('.azobss-sw-desc-text-097');body.textContent=x||'';if(/\b(?:solattime|liyabudun)\b/i.test(t||'')){var link=document.createElement('a');link.href='/solattime/';link.textContent='Kenali Liyabudun: ciri, trial 30 hari & cara mula →';link.style.cssText='display:block;margin-top:20px;color:#67e8c5;text-decoration:underline';body.appendChild(link);}m.classList.add('is-open')}
+ function openM(t,x){var m=modal();m.querySelector('.azobss-sw-desc-title-097').textContent=t||'Software Description';var body=m.querySelector('.azobss-sw-desc-text-097');body.textContent=x||'';if(/\b(?:solattime|liyabudun)\b/i.test(t||'')){var link=document.createElement('a');link.href='/liyabudun/';link.textContent='Kenali Liyabudun: ciri, trial 30 hari & cara mula →';link.style.cssText='display:block;margin-top:20px;color:#67e8c5;text-decoration:underline';body.appendChild(link);}m.classList.add('is-open')}
  function title(c){var h=c.querySelector('h1,h2,h3,h4,.software-title,.tool-title,.card-title,.title');return h?(h.textContent||'').trim():'Software Description'}
  function isDesc(e){var t=(e.textContent||'').replace(/\bMore\b$/,'').trim(),c=String(e.className||'');return t.length>55&&(/desc|description|software-desc|tool-description|card-description/i.test(c)||(e.tagName&&e.tagName.toLowerCase()==='p'&&/software|tool|windows|download|archive|browser|utility|manager|remote|recovery|editor|player|prayer|daily|office|shop|display/i.test(t)))}
  function desc(c){return Array.from(c.querySelectorAll('.software-description,.software-desc,.card-description,.tool-description,.description,.desc,p')).find(isDesc)}
