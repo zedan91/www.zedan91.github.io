@@ -22,7 +22,7 @@ test('v1495 preserves complete image canvas and cleans retailer edge text server
 test('v1495 fullscreen viewer keeps full image and still supports click zoom',()=>{
   const client=read('assets/js/azobss-pc-shop-v1487.js');
   const css=read('assets/css/azobss-pc-shop-v1487.css');
-  assert.match(client,/saiz penuh dikekalkan; teks\/harga retailer dibersihkan tanpa crop/);
+  assert.doesNotMatch(client,/Gambar sumber|klik\/tap gambar untuk zoom lagi/);
   assert.match(client,/stage\.classList\.toggle\('is-zoomed'\)/);
   assert.match(css,/width:min\(98vw,1600px\)/);
   assert.match(css,/is-zoomed img\{transform:scale\(1\.55\)!important/);
