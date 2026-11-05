@@ -4,7 +4,7 @@ const backend='https://azobss-backend.onrender.com/api/admin/pc-shop/';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'RM'+Number(n).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
 const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>0;
-let records=new Map(),errors=new Set(),pending=new Set(),controllers=new Set(),generation=0,active=false,pdfUrl='';
+let records=new Map(),errors=new Map(),pending=new Set(),controllers=new Set(),generation=0,active=false,pdfUrl='';
 const scopes=location.pathname.toLowerCase().startsWith('/upgrade-parts')?['upgrade']:['pc','builds'];
 function isAdmin(){
  try{
@@ -24,6 +24,13 @@ function dateLabel(value){
  const d=new Date(value||'');return Number.isFinite(d.getTime())?d.toLocaleString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'}):'Tarikh tidak tersedia';
 }
 function safeUrl(value){try{const u=new URL(value);return u.protocol==='https:'?u.href:''}catch(_){return '';}}
+function failureMessage(code){
+ if(code==='login_required')return 'Sesi login admin belum tersedia. Log masuk semula jika sesi telah tamat.';
+ if(code==='admin_required')return 'Server belum mengesahkan akses admin. Sila semak sesi login anda.';
+ if(['source_price_key_unavailable','source_price_decryption_failed','source_price_data_missing'].includes(code))return 'Data pricelist asal belum tersedia pada server. Ini masalah pemuatan data, bukan pengesahan harga produk.';
+ if(code==='timeout')return 'Sambungan ke server mengambil masa terlalu lama. Cuba semula.';
+ return 'Harga asal gagal dimuatkan daripada server. Cuba semula selepas sambungan pulih.';
+}
 function panel(product){
  if(!isAdmin())return '';
  const publicProduct={id:String(product.id),options:product.options||[{label:'Seunit',price:Number(product.price)}]};
@@ -32,7 +39,8 @@ function panel(product){
 function panelContent(product){
  if(!isAdmin())return '';
  const id=String(product.id),r=records.get(id),scope=scopeFor(id),options=product.options||[{label:'Seunit',price:Number(product.price)}];
- const unavailable=`<aside class="az-source-price" data-pc-admin-source><b>Harga asal · Admin</b><p>${pending.has(scope)||(!active&&!errors.has(scope))?'Memuatkan harga asal…':'Harga asal belum dapat disahkan untuk item ini.'}</p><button type="button" data-source-price-retry>Cuba semula</button></aside>`;
+ const waiting=pending.has(scope)||(!active&&!errors.has(scope));
+ const unavailable=`<aside class="az-source-price" data-pc-admin-source><b>Harga asal · Admin</b><p>${esc(waiting?'Memuatkan harga asal…':errors.has(scope)?failureMessage(errors.get(scope)):'Rekod harga asal belum tersedia untuk item ini.')}</p>${waiting?'':'<button type="button" data-source-price-retry>Cuba semula</button>'}</aside>`;
  if(!r)return unavailable;
  const exact=r.options?.length===options.length&&r.options.every((o,i)=>scope!=='upgrade'||o.label===options[i].label);
  if(!exact)return '<aside class="az-source-price" data-pc-admin-source><b>Semakan diperlukan</b><p>Varian pricelist tidak sepadan. Rujuk model dan kapasiti asal.</p></aside>';
@@ -45,13 +53,31 @@ function panelContent(product){
   return `<tr><th>${esc(o.label==='Harga'?'Seunit':o.label)}</th><td>${valid(original.cost)?money(original.cost):'Belum disahkan'}</td><td>${money(o.price)}</td><td>${difference===null?'—':(difference>=0?'+':'−')+money(Math.abs(difference))}</td></tr>${valid(original.expectedPrice)&&Math.abs(o.price-original.expectedPrice)>=0.005?`<tr class="az-source-price-warning"><td colspan="4">Harga jual mengikut rekod: ${money(original.expectedPrice)} · Perbezaan: ${money(Math.abs(o.price-original.expectedPrice))}</td></tr>`:''}`;
  }).join('')}</tbody></table></div><p>${esc(r.sourceName||'Sumber asal')} · ${esc(dateLabel(r.sourceDate))}${r.sourcePage?' · Muka surat '+esc(r.sourcePage):''}</p><p class="az-source-price-note">${r.priceStatus==='live'&&r.available?'Harga sumber disemak oleh server pada masa di atas.':'Harga asal ialah rekod bertarikh. Belum disemak semula dengan sumber terkini; bukan sync automatik.'} Beza ialah tambahan harga jual.</p>${sourceUrl?`<a href="${esc(sourceUrl)}" target="_blank" rel="noopener">Bandingkan produk asal ↗</a>`:''}${scope==='upgrade'?`<button type="button" data-source-price-pdf="${Number(r.sourcePage)||1}">Buka pricelist asal · m/s ${Number(r.sourcePage)||1} ↗</button>`:''}${r.sourceLine?`<details><summary>Baris asal dalam pricelist</summary><p>${esc(r.sourceLine)}</p></details>`:''}</aside>`;
 }
+async function authHeaders(force,signal){
+ let headers={...await window.azobssGetFirebaseAuthHeaders?.(force)};
+ if(!headers.Authorization&&typeof window.azobssWaitForFirebaseAuthToken==='function'){
+  const token=await window.azobssWaitForFirebaseAuthToken(force,12000);
+  if(token)headers.Authorization='Bearer '+token;
+ }
+ // Reuse only the administrator's already-configured fallback, just like the
+ // existing order dashboard; the server still verifies this credential.
+ try{const key=window.sessionStorage?.getItem('azobssAdminApiKey')||window.localStorage?.getItem('azobssAdminApiKey')||window.localStorage?.getItem('azobssLuckyDrawAdminKey');if(key)headers['x-admin-key']=key;}catch(_){}
+ if(signal.aborted||!isAdmin())throw Error('admin_required');
+ if(!headers.Authorization&&!headers['x-admin-key'])throw Error('login_required');
+ return headers;
+}
 async function request(path,signal){
  if(!isAdmin())throw Error('admin_required');
- const headers=await window.azobssGetFirebaseAuthHeaders?.(false);
- if(!headers?.Authorization)throw Error('login_required');
- if(!isAdmin()||signal.aborted)throw Error('admin_required');
- const response=await fetch(backend+path,{headers,cache:'no-store',signal});
- if(!response.ok)throw Error('source_unavailable');return response;
+ let response;
+ for(let attempt=0;attempt<2;attempt++){
+  const headers=await authHeaders(attempt===1,signal);
+  response=await fetch(backend+path,{headers,cache:'no-store',signal});
+  if(response.ok)return response;
+  if((response.status===401||response.status===403)&&attempt===0)continue;
+  const data=await response.json().catch(()=>({}));
+  throw Error(response.status===401?'login_required':response.status===403?'admin_required':data.error||'source_unavailable');
+ }
+ throw Error('admin_required');
 }
 async function load(scope){
  const token=generation,controller=new AbortController();controllers.add(controller);pending.add(scope);errors.delete(scope);
@@ -61,7 +87,7 @@ async function load(scope){
   if(!data.ok||!Array.isArray(data.records))throw Error('invalid_source_prices');
   if(token!==generation||!isAdmin())return;
   for(const row of data.records)records.set(String(row.id),{...row,scope});
- }catch(_){if(token===generation&&isAdmin())errors.add(scope);}
+ }catch(e){if(token===generation&&isAdmin())errors.set(scope,controller.signal.aborted?'timeout':e.message);}
  finally{clearTimeout(timer);controllers.delete(controller);if(token===generation){pending.delete(scope);if(isAdmin())notify();}}
 }
 function sync(force=false){
@@ -92,6 +118,7 @@ function init(){
  new MutationObserver(()=>sync()).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});
  window.addEventListener('azobss:pc-admin-view-change',()=>sync());
  window.addEventListener('storage',()=>sync());
+ for(const name of ['azobss:auth-state-ready','azobss:global-auth-ready','azobss-auth-changed'])window.addEventListener(name,()=>{if(isAdmin()&&!pending.size&&(!active||errors.size||!records.size))sync(true);else sync();});
  document.addEventListener('click',e=>{const retry=e.target.closest('[data-source-price-retry]');if(retry){sync(true);return;}const button=e.target.closest('[data-source-price-pdf]');if(button&&isAdmin())openPdf(button);});
  sync();
 }

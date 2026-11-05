@@ -30,13 +30,13 @@ test('authenticated audit preserves every option label, original cost, PDF page 
 test('wrong key or tampered encrypted data fail closed and never return plaintext costs',async()=>{
  const f=fixture();try{f.setAdmin(true);const p=path.join(f.root,'lib/data/upgrade-source-v1520.enc');const e=JSON.parse(fs.readFileSync(p));assert.throws(()=>openEnvelope(JSON.stringify(e),'wrong-secret'));e.tag=Buffer.alloc(16).toString('base64');fs.writeFileSync(p,JSON.stringify(e));await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-prices',query:{scope:'upgrade'}});assert.equal(f.response().status,503);assert.equal(JSON.stringify(f.response().body).includes('259'),false);}finally{f.close();}
 });
-function frontend(){
+function frontend(options={}){
  const listeners={},elements=[];let admin=false,requestCount=0,resolveRequest;
- const window={addEventListener:(name,fn)=>{listeners[name]=fn;},dispatchEvent:()=>{},isAdminViewer:()=>admin,azobssGetFirebaseAuthHeaders:async()=>({Authorization:'Bearer local-fixture'})};
+ const window={addEventListener:(name,fn)=>{listeners[name]=fn;},dispatchEvent:()=>{},isAdminViewer:()=>admin,azobssGetFirebaseAuthHeaders:options.headers|| (async()=>({Authorization:'Bearer local-fixture'})),azobssWaitForFirebaseAuthToken:options.waitForToken,sessionStorage:options.sessionStorage};
  const document={readyState:'complete',body:{},querySelectorAll:()=>elements,addEventListener:()=>{}};
- const context={window,document,location:{pathname:'/Upgrade-Parts/'},URL,Date,Number,Map,Set,Event,AbortController,setTimeout,clearTimeout,MutationObserver:class{observe(){}},fetch:async()=>{requestCount++;return await new Promise(resolve=>{resolveRequest=resolve;});}};
+ const context={window,document,location:{pathname:'/Upgrade-Parts/'},URL,Date,Number,Map,Set,Event,AbortController,setTimeout,clearTimeout,MutationObserver:class{observe(){}},fetch:async(...args)=>{requestCount++;if(options.fetch)return options.fetch(...args);return await new Promise(resolve=>{resolveRequest=resolve;});}};
  vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(source,'assets/js/azobss-source-prices-v1520.js'),'utf8'),context);
- return {app:window.AZOBSSSourcePrices,setAdmin:v=>{admin=v;},requests:()=>requestCount,resolve:records=>resolveRequest({ok:true,json:async()=>({ok:true,records})}),elements};
+ return {app:window.AZOBSSSourcePrices,setAdmin:v=>{admin=v;},requests:()=>requestCount,resolve:records=>resolveRequest({ok:true,json:async()=>({ok:true,records})}),elements,event:name=>listeners[name]?.()};
 }
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 test('admin sees recorded costs, markup and mismatch; snapshots never claim current supplier sync',async()=>{
@@ -50,4 +50,19 @@ test('admin sees recorded costs, markup and mismatch; snapshots never claim curr
 });
 test('an admin response arriving after sign-out cannot repopulate privileged pricing',async()=>{
  const f=frontend();f.setAdmin(true);f.app.refresh();await tick();f.setAdmin(false);f.app.refresh();f.resolve([{id:'VNP-test',options:[{label:'8GB',cost:259,expectedPrice:330}]}]);await tick();assert.equal(f.app.panel({id:'VNP-test',options:[{label:'8GB',price:330}]}),'');
+});
+test('a restored admin view waits for Firebase hydration before requesting protected prices',async()=>{
+ let restore;const f=frontend({headers:async()=>({}),waitForToken:()=>new Promise(resolve=>{restore=resolve;})});f.setAdmin(true);f.app.refresh();await tick();assert.equal(f.requests(),0);assert.match(f.app.panel({id:'VNP-test',price:330}),/Memuatkan/);restore('local-restored-id-token');await tick();assert.equal(f.requests(),1);f.resolve([{id:'VNP-test',priceStatus:'snapshot',options:[{label:'Seunit',cost:259,expectedPrice:330}]}]);await tick();assert.match(f.app.panel({id:'VNP-test',price:330}),/RM259.00/);
+});
+test('auth-ready automatically recovers a login-race error without a manual retry click',async()=>{
+ let ready=false;const f=frontend({headers:async()=>ready?{Authorization:'Bearer local-fixture'}:{}});f.setAdmin(true);f.app.refresh();await tick();assert.equal(f.requests(),0);assert.match(f.app.panel({id:'VNP-test',price:330}),/Sesi login admin belum tersedia/);ready=true;f.event('azobss:auth-state-ready');await tick();assert.equal(f.requests(),1);f.resolve([{id:'VNP-test',options:[{label:'Seunit',cost:259,expectedPrice:330}]}]);await tick();assert.match(f.app.panel({id:'VNP-test',price:330}),/RM259.00/);
+});
+test('expired tokens are refreshed once; server errors are not described as an unverified product price',async()=>{
+ const refreshes=[];let attempts=0;const f=frontend({headers:async force=>{refreshes.push(force);return {Authorization:'Bearer local-fixture'};},fetch:async()=>{attempts++;return attempts===1?{ok:false,status:401}:{ok:false,status:503,json:async()=>({error:'source_price_decryption_failed'})};}});f.setAdmin(true);f.app.refresh();await tick();await tick();assert.deepEqual(refreshes,[false,true]);assert.equal(attempts,2);const html=f.app.panel({id:'VNP-test',price:330});assert.match(html,/masalah pemuatan data/);assert.doesNotMatch(html,/Harga asal belum dapat disahkan/);
+});
+test('the existing configured admin-key fallback is accepted without weakening server verification',async()=>{
+ let seen;const f=frontend({headers:async()=>({}),sessionStorage:{getItem:key=>key==='azobssAdminApiKey'?'local-fixture-key':null},fetch:async(url,opts)=>{seen=opts.headers;return {ok:true,json:async()=>({ok:true,records:[]})};}});f.setAdmin(true);f.app.refresh();await tick();assert.equal(seen['x-admin-key'],'local-fixture-key');assert.equal(f.requests(),1);f.setAdmin(false);f.app.refresh();assert.equal(f.app.panel({id:'VNP-test',price:330}),'');
+});
+test('price source readiness reports decryptability without exposing original data or keys',()=>{
+ const f=fixture();try{const status=f.api.status();assert.deepEqual(status,{ready:true,records:1,pdfReady:true});assert.doesNotMatch(JSON.stringify(status),/259|fixture-key|Private supplier/);}finally{f.close();}
 });
