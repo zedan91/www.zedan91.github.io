@@ -18,7 +18,8 @@ const notify=()=>{
  }
  window.dispatchEvent(new Event('azobss:source-prices-change'));
 };
-const scopeFor=id=>String(id).startsWith('VNP-')?'upgrade':records.get(String(id))?.scope||'pc';
+const isPricelistVariant=id=>/^VNP-[a-zA-Z0-9-]+--\d+$/.test(String(id));
+const scopeFor=id=>records.get(String(id))?.scope||(String(id).startsWith('VNP-')&&!isPricelistVariant(id)?'upgrade':'pc');
 function dateLabel(value){
  if(/^\d{4}-\d{2}-\d{2}$/.test(value||''))return value.split('-').reverse().join('/');
  const d=new Date(value||'');return Number.isFinite(d.getTime())?d.toLocaleString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'}):'Tarikh tidak tersedia';
@@ -33,7 +34,7 @@ function failureMessage(code){
 }
 function panel(product){
  if(!isAdmin())return '';
- const publicProduct={id:String(product.id),options:product.options||[{label:'Seunit',price:Number(product.price)}]};
+ const publicProduct={id:String(product.id),options:product.options||[{label:product.optionLabel||'Seunit',price:Number(product.price)}]};
  return `<div data-pc-admin-source data-source-price-product="${esc(JSON.stringify(publicProduct))}">${panelContent(publicProduct)}</div>`;
 }
 function panelContent(product){
@@ -42,7 +43,7 @@ function panelContent(product){
  const waiting=pending.has(scope)||(!active&&!errors.has(scope));
  const unavailable=`<aside class="az-source-price" data-pc-admin-source><b>Harga asal · Admin</b><p>${esc(waiting?'Memuatkan harga asal…':errors.has(scope)?failureMessage(errors.get(scope)):'Rekod harga asal belum tersedia untuk item ini.')}</p>${waiting?'':'<button type="button" data-source-price-retry>Cuba semula</button>'}</aside>`;
  if(!r)return unavailable;
- const exact=r.options?.length===options.length&&r.options.every((o,i)=>scope!=='upgrade'||o.label===options[i].label);
+ const exact=r.options?.length===options.length&&r.options.every((o,i)=>(scope!=='upgrade'&&!isPricelistVariant(id))||o.label===options[i].label);
  if(!exact)return '<aside class="az-source-price" data-pc-admin-source><b>Semakan diperlukan</b><p>Varian pricelist tidak sepadan. Rujuk model dan kapasiti asal.</p></aside>';
  const complete=r.options.every(o=>valid(o.cost)&&valid(o.expectedPrice));
  const matching=complete&&options.every((o,i)=>Math.abs(o.price-r.options[i].expectedPrice)<0.005);
@@ -51,7 +52,7 @@ function panelContent(product){
  return `<aside class="az-source-price" data-pc-admin-source><div class="az-source-price-heading"><b>Harga asal · Admin</b><span class="${matching?'is-match':'is-warning'}">${esc(label)}</span></div><div class="az-source-price-scroll"><table><thead><tr><th>Pilihan</th><th>Asal</th><th>Jual</th><th>Beza</th></tr></thead><tbody>${options.map((o,i)=>{
   const original=r.options[i],difference=valid(original.cost)?o.price-original.cost:null;
   return `<tr><th>${esc(o.label==='Harga'?'Seunit':o.label)}</th><td>${valid(original.cost)?money(original.cost):'Belum disahkan'}</td><td>${money(o.price)}</td><td>${difference===null?'—':(difference>=0?'+':'−')+money(Math.abs(difference))}</td></tr>${valid(original.expectedPrice)&&Math.abs(o.price-original.expectedPrice)>=0.005?`<tr class="az-source-price-warning"><td colspan="4">Harga jual mengikut rekod: ${money(original.expectedPrice)} · Perbezaan: ${money(Math.abs(o.price-original.expectedPrice))}</td></tr>`:''}`;
- }).join('')}</tbody></table></div><p>${esc(r.sourceName||'Sumber asal')} · ${esc(dateLabel(r.sourceDate))}${r.sourcePage?' · Muka surat '+esc(r.sourcePage):''}</p><p class="az-source-price-note">${r.priceStatus==='live'&&r.available?'Harga sumber disemak oleh server pada masa di atas.':'Harga asal ialah rekod bertarikh. Belum disemak semula dengan sumber terkini; bukan sync automatik.'} Beza ialah tambahan harga jual.</p>${sourceUrl?`<a href="${esc(sourceUrl)}" target="_blank" rel="noopener">Bandingkan produk asal ↗</a>`:''}${scope==='upgrade'?`<button type="button" data-source-price-pdf="${Number(r.sourcePage)||1}">Buka pricelist asal · m/s ${Number(r.sourcePage)||1} ↗</button>`:''}${r.sourceLine?`<details><summary>Baris asal dalam pricelist</summary><p>${esc(r.sourceLine)}</p></details>`:''}</aside>`;
+ }).join('')}</tbody></table></div><p>${esc(r.sourceName||'Sumber asal')} · ${esc(dateLabel(r.sourceDate))}${r.sourcePage?' · Muka surat '+esc(r.sourcePage):''}</p><p class="az-source-price-note">${r.priceStatus==='live'&&r.available?'Harga sumber disemak oleh server pada masa di atas.':'Harga asal ialah rekod bertarikh. Belum disemak semula dengan sumber terkini; bukan sync automatik.'} Beza ialah tambahan harga jual.</p>${sourceUrl?`<a href="${esc(sourceUrl)}" target="_blank" rel="noopener">Bandingkan produk asal ↗</a>`:''}${scope==='upgrade'||r.sourceRecordId?`<button type="button" data-source-price-pdf="${Number(r.sourcePage)||1}">Buka pricelist asal · m/s ${Number(r.sourcePage)||1} ↗</button>`:''}${r.sourceLine?`<details><summary>Baris asal dalam pricelist</summary><p>${esc(r.sourceLine)}</p></details>`:''}</aside>`;
 }
 async function authHeaders(force,signal){
  let headers={...await window.azobssGetFirebaseAuthHeaders?.(force)};

@@ -15,6 +15,7 @@ test('illustrations do not expose a product-photo button or open a model viewer'
 test('all products shown in G1 plus the i5-12400F in G2 use inspected model photos',()=>{
  const names=['MINIX NUC PC NR660 LP R5 6600H 16GB 512GB W11P','MS WINDOW 11 HOME OEM','MS WINDOW 11 PRO OEM','WINDOW SERVER ESSENTIALS 2016','MS OFFICE 365 PERSONAL ESD','MS OFFICE 365 HOME/FAMILY (6-DEVICES) ESD','MS OFFICE 365 BUSINESS STANDARD','MS OFFICE HOME 2024 ESD (WIN & MAC)','Intel I5 12400F'];
  for(const name of names){const p=catalog.products.find(p=>p.name===name);assert.ok(p,name);assert.equal(p.imageKind,'model',name);assert.match(p.image,/^\/Upgrade-Parts\/assets\/models\//);assert.equal(p.imageModel,name);}
- const html=read('Upgrade-Parts/index.html'),viewer=html.slice(html.indexOf('<dialog class="vnp-viewer"'),html.indexOf('</dialog>',html.indexOf('<dialog class="vnp-viewer"')));
- assert.match(viewer,/<h2 id="vnpImageTitle"><\/h2>/);assert.doesNotMatch(viewer,/<p[ >]/);assert.doesNotMatch(read('assets/js/azobss-upgrade-catalog-v1518.js'),/viewer\.querySelector\('p'\)/);
+ const html=read('Upgrade-Parts/index.html');assert.match(html,/location\.replace\(next\.href\)/);assert.match(html,/new URL\('\/PC-Build\/'/);
+ assert.doesNotMatch(read('assets/js/azobss-pc-storefront-v1512.js'),/Foto contoh kategori, bukan gambar model ini/);
+ assert.doesNotMatch(read('assets/js/azobss-upgrade-catalog-v1518.js'),/viewer\.querySelector\('p'\)/);
 });

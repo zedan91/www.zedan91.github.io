@@ -363,18 +363,15 @@
       'Semua PC &amp; IT Services', 'Semua servis build, repair, upgrade &amp; parts', isOverviewLanding);
     var buildLink = makeLink('/PC-Build/', 'azPcitBuildLink', 'az-pcit-build-icon',
       '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path>',
-      'PC Build &amp; Hardware', 'Build siap + Build Sendiri dengan harga Malaysia', isBuildPage);
+      'PC &amp; Hardware', 'Prebuilt PCs, laptops, components &amp; accessories', isBuildPage);
     var physicalLink = makeLink('/Tempah-Servis-IT/', 'azRepairPhysicalLink', 'az-repair-physical-icon',
       '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>',
       'Servis PC &amp; Laptop', 'Repair, format, cleaning, LCD dan keyboard', isPhysicalPage);
-    var upgradeLink = makeLink('/Upgrade-Parts/', 'azPcitUpgradeLink', 'az-pcit-upgrade-icon',
-      '<path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle>',
-      'Upgrade &amp; Parts', 'RAM, SSD, GPU, PSU, bateri &amp; adapter', isUpgradePage);
     var onlineLink = makeLink('/Troubleshoot-PC-Online/', 'azRepairOnlineLink', 'az-repair-online-icon',
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
 
-    [overviewLink, buildLink, physicalLink, upgradeLink, onlineLink].forEach(function (item) {
+    [overviewLink, buildLink, physicalLink, onlineLink].forEach(function (item) {
       dropdown.appendChild(item);
     });
     wrap.appendChild(trigger);

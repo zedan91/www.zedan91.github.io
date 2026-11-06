@@ -81,3 +81,9 @@ test('PC Build independently loads component and complete-build source prices',a
  const scopes=[];const f=frontend({pathname:'/PC-Build/',fetch:async url=>{const scope=new URL(url).searchParams.get('scope');scopes.push(scope);return {ok:true,json:async()=>({ok:true,records:[{id:scope==='pc'?'part-fixture':'build-fixture',sourceName:'Fixture',priceStatus:'snapshot',options:[{label:'Seunit',cost:scope==='pc'?399:2000,expectedPrice:scope==='pc'?470:2300}]}]})};}});
  f.setAdmin(true);f.app.refresh();await tick();assert.deepEqual(scopes.sort(),['builds','pc']);assert.match(f.app.panel({id:'part-fixture',price:470}),/RM399.00/);assert.match(f.app.panel({id:'build-fixture',price:2300}),/RM2,000.00/);
 });
+
+test('unified pricelist variants show their selected source cost and original PDF through PC scope without mixing capacity labels',async()=>{
+ const id='VNP-fixture--1',scopes=[];const f=frontend({pathname:'/PC-Build/',fetch:async url=>{const scope=new URL(url).searchParams.get('scope');scopes.push(scope);return {ok:true,json:async()=>({ok:true,records:scope==='pc'?[{id,sourceRecordId:'VNP-fixture',sourceName:'Viewnet pricelist',sourcePage:2,sourceLine:'Fixture original line',priceStatus:'snapshot',options:[{label:'32GB',cost:399,expectedPrice:470}]}]:[]})};}});
+ f.setAdmin(true);f.app.refresh();await tick();const p={id,price:470,optionLabel:'32GB'};const html=f.app.panel(p);assert.match(html,/RM399.00/);assert.match(html,/Harga jual sepadan/);assert.match(html,/data-source-price-pdf="2"/);assert.match(html,/Fixture original line/);assert.doesNotMatch(html,/Semakan diperlukan/);assert.deepEqual(scopes.sort(),['builds','pc']);
+ assert.match(f.app.panel({...p,optionLabel:'16GB'}),/Varian pricelist tidak sepadan/);f.setAdmin(false);assert.equal(f.app.panel(p),'');
+});
