@@ -47,7 +47,7 @@ function details(p){
  root.querySelector('[data-detail-buy]')?.addEventListener('click',()=>actions.add(selected(),true));
 }
 function render(next,callbacks){
- rows=next;actions=callbacks;syncHubNav();
+ rows=next.map(p=>({...p,category:window.AZOBSSPcModel?.category(p)||p.category,storeId:window.AZOBSSPcModel?.storeKey(p)||p.storeId}));actions=callbacks;window.AZOBSSPcVisibility?.setRows(rows,actions.isAdmin?.());syncHubNav();
  const grid=document.querySelector('#azPcShopGrid');if(!grid)return;
  const toolbar=document.querySelector('.az-pc-shop-toolbar');
  if(!document.querySelector('#azPcShopBrand')){
@@ -86,9 +86,9 @@ function draw(){
   select.value=values.includes(current)?current:'all';if(id==='azPcShopCategory')cat=select.value;else b=select.value;
  }
  const filter=JSON.stringify([q,cat,b,sort,hubGroup,priceList,model]);if(filter!==lastFilter){page=1;lastFilter=filter;}
- let result=rows.filter(p=>(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId)&&(!model||p.sourceRecordId===model||p.id===model)&&(cat==='all'||p.category===cat)&&(b==='all'||brand(p)===b)&&matchesSearch(p,q));
+ let result=rows.filter(p=>(!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()))&&(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId)&&(!model||p.sourceRecordId===model||p.id===model)&&(cat==='all'||p.category===cat)&&(b==='all'||brand(p)===b)&&matchesSearch(p,q));
  const priority={laptop:0,desktop:1,hardware:2};
- const categoryRank=p=>{const c=p.category;return /CPU/.test(c)?0:/Motherboard/.test(c)?1:/Memory|RAM/.test(c)?2:/Graphics|GPU/.test(c)?3:/SSD|Drive/.test(c)?4:/Power/.test(c)?5:/Cool/.test(c)?6:/Case|Casing/.test(c)?7:8;};
+ const categoryRank=p=>window.AZOBSSPcModel?.rank(p)??8;
  result.sort(sort==='recommended'?(a,b)=>(priority[a.type]??2)-(priority[b.type]??2)||(hubGroup==='components'?categoryRank(a)-categoryRank(b):0)||a.price-b.price:sort==='price-desc'?(a,b)=>b.price-a.price:sort==='name'?(a,b)=>a.name.localeCompare(b.name):(a,b)=>a.price-b.price);
  const pages=Math.max(1,Math.ceil(result.length/PAGE_SIZE));page=Math.max(1,Math.min(page,pages));
  const start=(page-1)*PAGE_SIZE,shown=result.slice(start,start+PAGE_SIZE);
@@ -97,7 +97,9 @@ function draw(){
  document.querySelector('#azStoreResults').textContent=result.length?`${start+1}–${Math.min(start+PAGE_SIZE,result.length)} of ${result.length.toLocaleString('ms-MY')} options`:'0 options';
  const nav=`<button type="button" data-store-page="${page-1}" ${page<=1?'disabled':''}>← Previous</button><span>Page ${page} / ${pages}</span><button type="button" data-store-page="${page+1}" ${page>=pages?'disabled':''}>Next →</button>`;
  for(const id of ['azStorePageTop','azStorePageBottom'])document.getElementById(id).innerHTML=nav;
+ window.dispatchEvent?.(new CustomEvent('azobss:pc-catalog-render'));
 }
+window.addEventListener?.('azobss:pc-visibility-change',()=>{if(rows.length)draw();});
 window.addEventListener?.('azobss:source-prices-change',()=>{if(rows.length)draw();});
 window.AZOBSSPcStorefront={render};Object.assign(window.AZOBSSPcStorefront,{productGroup,setHubGroup});
 })();

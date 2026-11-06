@@ -9812,7 +9812,7 @@ function azSecurityHeaders(extra = {}) {
   return Object.assign({
     "Cache-Control": "no-store",
     "Access-Control-Allow-Origin": azCorsOrigin(),
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, HEAD, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Range, x-admin-key, x-api-key, x-azobss-api-key, X-AZOBSS-Filename, X-AZOBSS-Document-No",
     "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, Content-Type, X-AZOBSS-Browser-Fallback, X-AZOBSS-Open-Url, X-AZOBSS-Filename, Retry-After",
     "Access-Control-Max-Age": "600",
@@ -20385,8 +20385,11 @@ async function azShopeeResolveMetadataAuto(affiliateUrl,{force=false}={}){
 
 // AZOBSS v1478+: PC Build & Hardware Shop API lives in deploy-server.js because this is the Render runtime entrypoint.
 const {createPcShopRuntime}=require('./lib/azobss-pc-shop-runtime');
+const {createPcCatalogVisibility}=require('./lib/azobss-pc-catalog-visibility-v1537');
+const pcCatalogVisibility=createPcCatalogVisibility({store:createSoftwareR2Store({baseUrl:azR2DownloadBaseUrl,secret:azR2TokenSecret,purpose:'azobss-pc-catalog-v1537',route:'/pc-catalog-admin'}),getAdminIdentity:azAdminIdentityFromRequest,readBody,send});
 const azPcShopRuntime=createPcShopRuntime({
   rootDir:__dirname,
+  visibility:pcCatalogVisibility,
   getDb:getAzobssBackendDb,
   getUserIdentity:azCommissionIdentityFromRequest,
   getAdminIdentity:azAdminIdentityFromRequest,
@@ -20598,6 +20601,7 @@ async function handler(req, res) {
     if (pathname==='/api/software-availability'&&azRateLimitOrSend(req,res,'software-availability-read',240,60000))return;
     if (pathname==='/api/admin/software-availability'&&azRateLimitOrSend(req,res,'software-availability-admin',80,60000))return;
     if (await softwareAvailability.handle(req,res,parsed)) return;
+    if (await pcCatalogVisibility.handle(req,res,parsed)) return;
     if (await handleSoftwarePackages(req,res,parsed)) return;
     if (await handleAzdmAdmin(req,res,parsed)) return;
     if (await solatTimeCommerce.handle(req,res,parsed)) return;

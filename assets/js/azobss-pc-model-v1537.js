@@ -1,0 +1,10 @@
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.AZOBSSPcModel=api;})(typeof window!=='undefined'?window:globalThis,function(){
+ 'use strict';
+ const stores={'all-it':'ALL IT','dotatech':'DOTATECH','brightstar':'BRIGHTSTAR','emarque':'EMARQUE','illegear':'ILLEGEAR','nb-plaza':'NB PLAZA','viewnet':'VIEWNET'};
+ function storeKey(p={}){const id=String(p.id||p.productId||'').toLowerCase(),raw=String(p.storeId||p.storeName||p.sourceName||'').toLowerCase();if(/^vnp-/.test(id)||/viewnet/.test(raw))return 'viewnet';if(/^(?:allit|all-it|allithypermarket)[-]/.test(id)||/all.?it/.test(raw))return 'all-it';if(/^nb-plaza[-]/.test(id)||/nb.?plaza/.test(raw))return 'nb-plaza';for(const key of ['dotatech','brightstar','emarque','illegear'])if(id.startsWith(key+'-')||raw.includes(key))return key;return raw.replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'other';}
+ function category(p={}){const original=String(p.category||'Accessories'),name=String(p.name||p.displayName||'').replace(/^\[[^\]]+\]\s*/,''),processor=/^(?:AMD\s+)?(?:Ryzen|Threadripper|Athlon)\b|^Intel\s+(?:Core|Pentium|Celeron|Xeon)\b|^Core\s+i[3579]\b/i.test(name);if(/CPU|Processor/i.test(original)&&!processor&&/cooler|cooling|heatsink|water.?block|liquid|thermal|\bAIO\b/i.test(name))return 'Cooling';return original==='Case'?'Casing':original;}
+ function rank(p){const c=category(p);return /^(?:CPU|Intel CPUs|AMD CPUs)$/i.test(c)?0:/Motherboard/i.test(c)?1:/Memory|RAM/i.test(c)?2:/Graphics|GPU/i.test(c)?3:/SSD|Drive/i.test(c)?4:/Power/i.test(c)?5:/Cool/i.test(c)?6:/Case|Casing/i.test(c)?7:8;}
+ function productUrl(p={}){const id=String(p.productId||p.id||'');return id?'/PC-Build/?section=all&model='+encodeURIComponent(id):'/PC-Build/';}
+ function gallery(p={}){return [...new Set([p.image,...(Array.isArray(p.images)?p.images:[])].filter(x=>typeof x==='string'&&(/^\/PC-Build\/images\//.test(x)||/^https:\/\//.test(x))))];}
+ return {stores,storeKey,category,rank,productUrl,gallery};
+});
