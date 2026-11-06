@@ -48,11 +48,11 @@ function details(p){
 }
 function render(next,callbacks){
  rows=next;actions=callbacks;syncHubNav();
- const grid=document.querySelector('#azPcShopGrid');if(!grid)return;const heroCount=document.querySelector('#azStoreHeroCount');if(heroCount)heroCount.textContent=rows.length.toLocaleString('ms-MY');
+ const grid=document.querySelector('#azPcShopGrid');if(!grid)return;
  const toolbar=document.querySelector('.az-pc-shop-toolbar');
  if(!document.querySelector('#azPcShopBrand')){
   toolbar?.insertAdjacentHTML('beforeend','<select class="az-pc-shop-control" id="azPcShopBrand" aria-label="Brand"><option value="all">All brands</option></select>');
-  grid.insertAdjacentHTML('beforebegin','<div class="az-store-categories" id="azStoreCategories" aria-label="Product categories"></div><div class="az-store-results" role="status" aria-live="polite" id="azStoreResults"></div><nav class="az-store-pagination" id="azStorePageTop" aria-label="Product pages"></nav>');
+  grid.insertAdjacentHTML('beforebegin','<div class="az-store-results" role="status" aria-live="polite" id="azStoreResults"></div><nav class="az-store-pagination" id="azStorePageTop" aria-label="Product pages"></nav>');
   grid.insertAdjacentHTML('afterend','<nav class="az-store-pagination" id="azStorePageBottom" aria-label="Product pages"></nav>');
  }
  const brands=document.querySelector('#azPcShopBrand'),previous=brands.value;
@@ -65,7 +65,6 @@ function render(next,callbacks){
   window.addEventListener('popstate',()=>{const g=new URL(location.href).searchParams.get('section')||'prebuilt';if(HUB_GROUPS.has(g)){hubGroup=g;page=1;syncHubNav();draw();}});
   document.querySelector('#az-pc-hardware-shop').addEventListener('click',e=>{
    const button=e.target.closest('button');if(!button)return;
-   if(button.dataset.storeCategory!==undefined){document.querySelector('#azPcShopCategory').value=button.dataset.storeCategory;page=1;draw();return;}
    if(button.dataset.storePage){page=Number(button.dataset.storePage);draw();document.querySelector('#azStoreResults').scrollIntoView({block:'nearest'});return;}
    for(const [key,fn] of [['storeAdd',p=>actions.add(p,false)],['storeBuy',p=>actions.add(p,true)],['storeImage',p=>actions.image(p)],['storeDetails',details]]){
     if(button.dataset[key]){const p=rows.find(x=>String(x.id)===button.dataset[key]);if(p)fn(p);return;}
@@ -96,8 +95,6 @@ function draw(){
  grid.classList.add('az-store-grid');
  grid.innerHTML=shown.length?shown.map(card).join(''):'<div class="az-pc-shop-empty">No matching products. Try another category or search.</div>';
  document.querySelector('#azStoreResults').textContent=result.length?`${start+1}–${Math.min(start+PAGE_SIZE,result.length)} of ${result.length.toLocaleString('ms-MY')} options`:'0 options';
- const cats=[...new Set(groupRows.map(p=>p.category))].sort();
- document.querySelector('#azStoreCategories').innerHTML=['all',...cats].map(c=>`<button type="button" data-store-category="${esc(c)}" aria-pressed="${c===cat}">${c==='all'?'All categories':esc(c)} <span>${c==='all'?groupRows.length:groupRows.filter(p=>p.category===c).length}</span></button>`).join('');
  const nav=`<button type="button" data-store-page="${page-1}" ${page<=1?'disabled':''}>← Previous</button><span>Page ${page} / ${pages}</span><button type="button" data-store-page="${page+1}" ${page>=pages?'disabled':''}>Next →</button>`;
  for(const id of ['azStorePageTop','azStorePageBottom'])document.getElementById(id).innerHTML=nav;
 }
