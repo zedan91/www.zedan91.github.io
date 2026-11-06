@@ -1,5 +1,6 @@
 html.az-sw-pending1534 #softwareDownloadsGrid,html.az-sw-pending1534 #softwareGrid{visibility:hidden}
 html.az-sw-pending1534 body.az-software-full-admin #softwareDownloadsGrid,html.az-sw-pending1534 body.az-software-full-admin #softwareGrid{visibility:visible}
+body:not(.az-software-full-admin) #softwareDownloadsGrid .download-card[data-software-paused="1"],body:not(.az-software-full-admin) #softwareGrid .download-card[data-software-paused="1"]{display:none!important}
 .az-sw-paused1534{border-color:#fbbf24!important}
 .az-sw-pause-label1534{color:#fcd34d!important;font-size:12px!important;margin:8px!important}
 .az-sw-pause-button1534{border:1px solid #a78bfa!important;background:#252043!important;color:#ede9fe!important;border-radius:50%!important;padding:0!important;width:34px!important;height:34px!important;font-size:16px!important;line-height:1!important;display:grid!important;place-items:center!important;cursor:pointer}
