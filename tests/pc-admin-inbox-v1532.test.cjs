@@ -1,0 +1,44 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const {listInbox,inboxCounts}=require('../lib/azobss-pc-admin-inbox-v1532');
+const {createPcShopRuntime}=require('../lib/azobss-pc-shop-runtime');
+function memoryDb(rows=[]){
+ const saved=new Map(rows.map(r=>['pcShopOrders/'+r.orderId,structuredClone(r)])),reads={documents:0,aggregates:0};
+ const snapshot=(key,value)=>({id:key.split('/').pop(),key,exists:value!==undefined,data:()=>value===undefined?undefined:structuredClone(value)});
+ function collection(name,state={filters:[],sort:'desc',after:null,limit:Infinity}){
+  const filtered=()=>[...saved].filter(([key,row])=>key.startsWith(name+'/')&&state.filters.every(([field,op,value])=>op==='in'?value.includes(row[field]):row[field]===value)).map(([key,row])=>snapshot(key,row));
+  return {doc(id){const key=name+'/'+id;return {key,async get(){reads.documents++;return snapshot(key,saved.get(key));},async set(value,options={}){saved.set(key,options.merge?{...saved.get(key),...structuredClone(value)}:structuredClone(value));},async delete(){saved.delete(key);}};},where(field,op,value){return collection(name,{...state,filters:[...state.filters,[field,op,value]]});},orderBy(_field,sort){return collection(name,{...state,sort});},startAfter(after){return collection(name,{...state,after});},limit(limit){return collection(name,{...state,limit});},count(){return {get:async()=>{reads.aggregates++;return {data:()=>({count:filtered().length})};}};},async get(){const direction=state.sort==='asc'?1:-1,compare=(a,b)=>((Number(a.data().createdAtMs)-Number(b.data().createdAtMs))||a.id.localeCompare(b.id))*direction;let docs=filtered().sort(compare);if(state.after)docs=docs.filter(d=>compare(d,state.after)>0);docs=docs.slice(0,state.limit);reads.documents+=docs.length;return {docs,forEach:fn=>docs.forEach(fn)};}};
+ }
+ let chain=Promise.resolve();const db={collection,runTransaction(fn){const work=chain.then(async()=>{const writes=[];const result=await fn({get:ref=>ref.get(),set:(ref,value,options)=>writes.push([ref,value,options])});for(const [ref,value,options] of writes)await ref.set(value,options);return result;});chain=work.catch(()=>{});return work;}};
+ return {db,saved,reads};
+}
+function records(count){const base=Date.parse('2026-11-01T12:00:00+08:00');return Array.from({length:count},(_,i)=>({orderId:'AZO-2026-'+String(i+1).padStart(6,'0'),quoteNo:'AZQ-2026-'+String(i+1).padStart(6,'0'),uid:'customer-'+(i%13),customerName:'Customer '+i,customerPhone:'+60 12-345 '+String(i).padStart(4,'0'),customerEmail:'fixture'+i+'@example.invalid',status:['quote-requested','quote-ready','quote-accepted','awaiting-payment','completed'][i%5],createdAtMs:base-Math.floor(i/3)*60000,referenceSubtotal:100+i,requestOnly:true,workflowVersion:1530,unitCost:80,customerAddress:'Private fixture address',adminNote:'Private fixture note',items:[{productId:'fixture-'+i,name:'Model '+i,qty:2,unitCost:80,specs:['Fixture specification']}]}));}
+test('cursor pages reach all 623 records, including dates tied across boundaries, without duplicates or the old250 cutoff',async()=>{
+ const f=memoryDb(records(623)),ids=[];let cursor='';do{const result=await listInbox(f.db,{pageSize:25,cursor});assert.ok(result.orders.length<=25);ids.push(...result.orders.map(o=>o.orderId));cursor=result.nextCursor;if(!result.hasMore)break;}while(cursor);assert.equal(ids.length,623);assert.equal(new Set(ids).size,623);assert.equal(ids[0],'AZO-2026-000003');assert.ok(ids.includes('AZO-2026-000623'));assert.ok(f.reads.documents<1400);
+});
+test('model, reference and normalized phone search find older records beyond250; summary payload omits heavy/private detail fields',async()=>{
+ const rows=records(600),f=memoryDb(rows);for(const q of ['Model599','AZQ-2026-000600','60123450599']){const result=await listInbox(f.db,{q});assert.equal(result.orders.length,1);const row=result.orders[0];assert.equal(row.orderId,rows[599].orderId);for(const key of ['unitCost','customerAddress','adminNote','notes'])assert.equal(Object.hasOwn(row,key),false);assert.equal(Object.hasOwn(row.items[0],'unitCost'),false);assert.equal(Object.hasOwn(row.items[0],'specs'),false);}
+});
+test('workflow, exact status, customer, oldest-first and Malaysian date filters compose without extra index requirements',async()=>{
+ const f=memoryDb(records(600));const result=await listInbox(f.db,{customer:'customer-2',stage:'review',sort:'oldest',pageSize:100,from:'2026-11-01',to:'2026-11-01'});assert.ok(result.orders.length>0);assert.ok(result.orders.every(o=>o.uid==='customer-2'&&o.status==='quote-requested'));assert.ok(result.orders[0].createdAtMs<=result.orders.at(-1).createdAtMs);const empty=await listInbox(f.db,{from:'2026-11-02'});assert.equal(empty.orders.length,0);assert.equal(empty.hasMore,false);
+});
+test('a sparse search is bounded per request and its continuation reaches matches in older batches',async()=>{
+ const f=memoryDb(records(1205));let result=await listInbox(f.db,{q:'Model1204'});assert.equal(result.orders.length,0);assert.equal(result.hasMore,true);assert.ok(f.reads.documents<=1000);result=await listInbox(f.db,{q:'Model1204',cursor:result.nextCursor});assert.equal(result.orders[0].orderId,'AZO-2026-001205');assert.equal(result.hasMore,false);
+});
+test('invalid filters/cursors fail clearly, changed filters cannot reuse a cursor and removed cursor records cannot silently restart',async()=>{
+ const f=memoryDb(records(100));const first=await listInbox(f.db,{});await assert.rejects(listInbox(f.db,{stage:'forged'}),e=>e.code==='invalid_stage');await assert.rejects(listInbox(f.db,{cursor:'garbage'}),e=>e.code==='invalid_cursor');await assert.rejects(listInbox(f.db,{cursor:first.nextCursor,q:'changed'}),e=>e.code==='invalid_cursor');await assert.rejects(listInbox(f.db,{from:'2026-12-01',to:'2026-11-01'}),e=>e.code==='invalid_date_range');const id=JSON.parse(Buffer.from(first.nextCursor,'base64url')).id;f.saved.delete('pcShopOrders/'+id);await assert.rejects(listInbox(f.db,{cursor:first.nextCursor}),e=>e.code==='cursor_expired');
+});
+test('overview counts cover the entire collection independently of list pages and failures do not fabricate zero totals',async()=>{
+ const f=memoryDb(records(600)),counts=await inboxCounts(f.db);assert.equal(counts.all,600);assert.equal(counts.review,120);assert.equal(counts.customer,120);assert.equal(counts.approved,120);assert.equal(counts.payment,120);assert.equal(counts.closed,120);const broken={collection:()=>({where(){return this;},count(){throw Error('aggregation unavailable');}})};const unknown=await inboxCounts(broken);assert.equal(unknown.all,null);assert.equal(unknown.review,null);
+});
+test('inbox summaries and full detail are administrator-only while legacy list consumers retain their response',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'azobss-admin-inbox-1532-')),f=memoryDb(records(600));
+ try{for(const [name,value] of [['PC-Build/pc-shop-products-v1487.json',{products:[]}],['PC-Build/pc-build-data.json',{builds:[]}],['PC-Build/catalog/v1496/sources.json',{sources:[]}],['Upgrade-Parts/catalog-v1518.json',{products:[]}]]){const file=path.join(dir,name);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(value));}
+  const runtime=createPcShopRuntime({rootDir:dir,getDb:()=>f.db,getUserIdentity:async()=>null,getAdminIdentity:async req=>req.admin?{isAdmin:true}:null,readBody:async req=>req.body,send:(res,status,body)=>Object.assign(res,{status,body:JSON.parse(body)})});
+  const call=async(pathname,query={},admin=false)=>{const res={};await runtime.handle({method:'GET',admin},res,{pathname,query});return res;};
+  const before=f.reads.documents;assert.equal((await call('/api/admin/pc-shop/orders',{view:'inbox'})).status,403);assert.equal((await call('/api/admin/pc-shop/orders/AZO-2026-000001')).status,403);assert.equal(f.reads.documents,before);
+  const inbox=await call('/api/admin/pc-shop/orders',{view:'inbox',stats:'1'},true);assert.equal(inbox.status,200);assert.equal(inbox.body.orders.length,25);assert.equal(inbox.body.counts.all,600);assert.ok(inbox.body.nextCursor);assert.equal(inbox.body.orders[0].customerAddress,undefined);
+  const detail=await call('/api/admin/pc-shop/orders/AZO-2026-000001',{},true);assert.equal(detail.status,200);assert.equal(detail.body.order.customerAddress,'Private fixture address');assert.equal(detail.body.order.items[0].unitCost,80);
+  const legacy=await call('/api/admin/pc-shop/orders',{},true);assert.equal(legacy.body.orders.length,250);assert.equal(legacy.body.orders[0].items[0].unitCost,80);
+ }finally{assert.ok(path.resolve(dir).startsWith(path.resolve(os.tmpdir())+path.sep));fs.rmSync(dir,{recursive:true,force:true});}
+});
