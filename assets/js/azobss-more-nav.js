@@ -330,19 +330,19 @@
     trigger.setAttribute('aria-haspopup', 'true');
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-controls', 'azRepairDropdown' + index);
-    trigger.setAttribute('aria-label', 'Menu PC & IT Services');
+    trigger.setAttribute('aria-label', 'Menu Tech & Services');
     if (isOverviewPage || isBuildPage || isPhysicalPage || isUpgradePage || isOnlinePage || inheritedActive) {
       trigger.classList.add('market-nav-active', 'is-active', 'is-current');
     }
     trigger.innerHTML = '' +
-      '<span>PC &amp; IT Services</span>' +
+      '<span>Tech &amp; Services</span>' +
       '<span class="az-more-chevron" aria-hidden="true">▾</span>';
 
     var dropdown = document.createElement('div');
     dropdown.className = 'az-more-dropdown az-repair-dropdown';
     dropdown.id = 'azRepairDropdown' + index;
     dropdown.setAttribute('role', 'menu');
-    dropdown.setAttribute('aria-label', 'Pilihan PC & IT Services');
+    dropdown.setAttribute('aria-label', 'Pilihan Tech & Services');
 
     function makeLink(href, dataName, iconClass, iconSvg, title, note, active) {
       var item = document.createElement('a');
@@ -360,13 +360,13 @@
 
     var buildLink = makeLink('/PC-Build/', 'azPcitBuildLink', 'az-pcit-build-icon',
       '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path>',
-      'PC &amp; Hardware', 'Prebuilt PCs, laptops, components &amp; accessories', isBuildPage);
+      'Tech Products', 'Computers, networking, components, accessories &amp; more', isBuildPage);
     var physicalLink = makeLink('/Tempah-Servis-IT/', 'azRepairPhysicalLink', 'az-repair-physical-icon',
       '<path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 8.3-8.3a4 4 0 0 0-.6-5.4z"></path>',
       'Servis PC &amp; Laptop', 'Repair, format, cleaning, LCD dan keyboard', isPhysicalPage);
     var onlineLink = makeLink('/Troubleshoot-PC-Online/', 'azRepairOnlineLink', 'az-repair-online-icon',
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
-      'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
+      'Troubleshoot PC Online', 'Remote Windows diagnostics &amp; repair', isOnlinePage);
 
     [buildLink, physicalLink, onlineLink].forEach(function (item) {
       dropdown.appendChild(item);
@@ -855,7 +855,7 @@
       if (existingLink) {
         existingLink.dataset.azRepairServiceLink = '1';
         existingLink.href = '/PC-IT-Services/';
-        existingLink.textContent = 'PC & IT Services';
+        existingLink.textContent = 'Tech & Services';
         existingLink.title = 'PC Build, Repair, Upgrade & IT Services';
         if (isRepairSection) {
           existingLink.classList.add('market-nav-active', 'is-active', 'is-current');
@@ -878,9 +878,9 @@
 
       var repairLink = document.createElement('a');
       repairLink.href = '/PC-IT-Services/';
-      repairLink.textContent = 'PC & IT Services';
+      repairLink.textContent = 'Tech & Services';
       repairLink.title = 'PC Build, Repair, Upgrade & IT Services';
-      repairLink.setAttribute('aria-label', 'PC & IT Services');
+      repairLink.setAttribute('aria-label', 'Tech & Services');
       repairLink.dataset.azRepairServiceLink = '1';
       repairLink.className = 'az-repair-service-link';
 
