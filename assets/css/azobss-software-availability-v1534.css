@@ -1,0 +1,9 @@
+html.az-sw-pending1534 #softwareDownloadsGrid,html.az-sw-pending1534 #softwareGrid{visibility:hidden}
+html.az-sw-pending1534 body.az-software-full-admin #softwareDownloadsGrid,html.az-sw-pending1534 body.az-software-full-admin #softwareGrid{visibility:visible}
+.az-sw-paused1534{border-color:#fbbf24!important}
+.az-sw-pause-label1534{color:#fcd34d!important;font-size:12px!important;margin:8px!important}
+.az-sw-pause-button1534{border:1px solid #a78bfa!important;background:#252043!important;color:#ede9fe!important;border-radius:50%!important;padding:0!important;width:34px!important;height:34px!important;font-size:16px!important;line-height:1!important;display:grid!important;place-items:center!important;cursor:pointer}
+.az-sw-filter1534{display:flex;align-items:center;gap:8px;font-size:12px}.az-sw-filter1534[hidden]{display:none!important}
+.az-sw-filter1534 select{background:#0b1426;color:#e2e8f0;border:1px solid #456079;border-radius:8px;padding:8px;max-width:180px}
+#azSwPauseDialog1534{color:#e2e8f0;background:#0d1b2a;border:1px solid #456079;border-radius:14px;padding:22px;width:min(460px,calc(100vw - 32px));max-height:85dvh;box-sizing:border-box}
+#azSwPauseDialog1534::backdrop{background:#000a}#azSwPauseDialog1534 h2{font-size:20px;margin:0 0 10px}#azSwPauseDialog1534 p{font-size:14px;line-height:1.5}#azSwPauseDialog1534 label{display:block;font-size:13px}#azSwPauseDialog1534 textarea{box-sizing:border-box;width:100%;margin-top:8px;color:#e2e8f0;background:#08121e;border:1px solid #456079;border-radius:8px;padding:10px}#azSwPauseDialog1534 form>div{display:flex;justify-content:flex-end;gap:8px}#azSwPauseDialog1534 button{background:#263d55;color:white;border:1px solid #547591;border-radius:8px;padding:10px 14px;cursor:pointer}#azSwPauseDialog1534 [data-sw-save]{background:#6750b8}#azSwPauseDialog1534 button:disabled{opacity:.5}

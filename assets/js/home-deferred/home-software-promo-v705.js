@@ -19,6 +19,7 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
     messagingSenderId:'159277716405',
     appId:'1:159277716405:web:17d8924b6b6380e2b77ffc'
   };
+  const pausedIds=new Set();let availabilityReady=false;
   let promos=[];
   let index=0;
   let timer=0;
@@ -237,12 +238,14 @@ import { collection, doc, getDoc, getDocs, getFirestore } from 'https://www.gsta
       return Array.isArray(data)?data:(Array.isArray(data.items)?data.items:[]);
     }catch(e){return [];}
   }
+  async function availability(){try{const r=await fetch('https://azobss-backend.onrender.com/api/software-availability',{cache:'no-store',signal:AbortSignal.timeout(15000)}),d=await r.json();if(!r.ok||!d.ok||!Array.isArray(d.pausedIds))throw Error();pausedIds.clear();d.pausedIds.forEach(id=>pausedIds.add(String(id).toLowerCase()));availabilityReady=true;}catch{availabilityReady=false;}}
+  function available(items){return availabilityReady?items.filter(x=>!pausedIds.has(safeProductId(x).toLowerCase())):[];}
   async function start(){
-    const [remote,statsResult]=await Promise.all([fromFirestore(),fromSoftwareStats()]);
+    const [remote,statsResult]=await Promise.all([fromFirestore(),fromSoftwareStats(),availability()]);
     promoStats=statsResult?.items||{};
     promoStatsLoaded=!!statsResult?.ok;
-    promos=normalize(remote);
-    if(!promos.length){promos=normalize(await fromBundled());}
+    promos=normalize(available(remote));
+    if(!promos.length){promos=normalize(available(await fromBundled()));}
     if(!promos.length){root.hidden=true;return;}
     render(0,false);
     restart();

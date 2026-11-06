@@ -12,7 +12,7 @@ test('universal packages support arbitrary names, duration, fixed PC bundles and
 test('actual premium resolver prices generic packages from trusted catalogue and keeps ordinary product checkout intact',async()=>{
  const source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8'),fn=source.slice(source.indexOf('async function azResolveTrustedPremiumProduct('),source.indexOf('\nfunction azRequestHasCommissionSecret'));
  let identity={uid:'real-buyer'},trusted={productId:'OTHER-SOFTWARE',name:'Software lain',type:'premium',price:'RM999',secureDownloadLink:'https://files.azobss.com/test.exe',softwarePackages:bundle()};
- const sandbox={azSoftwarePackageModel:model,getPremiumUser:()=>({}),azProductIdFromAny:p=>p.productId,cleanPremiumText:x=>String(x||''),cleanPremiumUrl:x=>x||'',azSafeR2ObjectKey:x=>x||'',azFindFirestoreProduct:async()=>trusted,azFindLocalSoftwareProduct:()=>null,azIsAdminTestPurchase:()=>false,azProductIsPremium:()=>true,azdmVerifiedAccount:async()=>identity,azSubscriptionSelectedPlan:()=>null,parseAmountToSen:x=>Math.round(Number(String(x).replace(/[^\d.]/g,''))*100)};
+ const sandbox={softwareAvailability:{assertAvailable:async()=>{}},azSoftwarePackageModel:model,getPremiumUser:()=>({}),azProductIdFromAny:p=>p.productId,cleanPremiumText:x=>String(x||''),cleanPremiumUrl:x=>x||'',azSafeR2ObjectKey:x=>x||'',azFindFirestoreProduct:async()=>trusted,azFindLocalSoftwareProduct:()=>null,azIsAdminTestPurchase:()=>false,azProductIsPremium:()=>true,azdmVerifiedAccount:async()=>identity,azSubscriptionSelectedPlan:()=>null,parseAmountToSen:x=>Math.round(Number(String(x).replace(/[^\d.]/g,''))*100)};
  sandbox.azIsSolatTimeProduct=require('../lib/azobss-solattime-commerce').isProduct;
  vm.runInNewContext(fn+';globalThis.resolve=azResolveTrustedPremiumProduct;',sandbox);
  const data={product:{productId:'OTHER-SOFTWARE',price:'RM0.01',downloadLink:'https://attacker.invalid'},softwarePackageId:'three',packageQuantity:3,amount:1};
@@ -22,10 +22,10 @@ test('actual premium resolver prices generic packages from trusted catalogue and
  trusted={...trusted,status:'active',softwarePackages:null,price:'RM20'};assert.equal((await sandbox.resolve({product:{productId:'OTHER-SOFTWARE'}},{})).amountSen,2000);
 });
 test('package catalogue uses bounded SKU lookups and rejects disabled or unpublished software',async()=>{
- const source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8'),fn=source.slice(source.indexOf('async function azSoftwarePackageProduct('),source.indexOf('\nconst handleSoftwarePackages='));let product=null,stored=null,reads=0;
+ const source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8'),fn=source.slice(source.indexOf('async function azSoftwarePackageProduct('),source.indexOf('\nconst {createSoftwareAvailability}'));let product=null,stored=null,reads=0;
  const items={doc:id=>({get:async()=>{reads++;return {exists:false};}}),where:()=>({limit:()=>({get:async()=>{reads++;return {empty:!product,docs:product?[{id:'doc',data:()=>product}]:[]};}})})};
  const db={collection:name=>name==='softwareTools'?items:{doc:()=>({get:async()=>{reads++;return {data:()=>({items:{AZDM:stored}})};}})}};
- const sandbox={getAzobssBackendDb:()=>db,azNormalizeTrustedProduct:x=>x,azSoftwarePackageModel:model};vm.runInNewContext(fn+';globalThis.catalogue=azSoftwarePackageOffer',sandbox);
+ const sandbox={softwareAvailability:{assertAvailable:async()=>{}},getAzobssBackendDb:()=>db,azNormalizeTrustedProduct:x=>x,azSoftwarePackageModel:model};vm.runInNewContext(fn+';globalThis.catalogue=azSoftwarePackageOffer',sandbox);
  assert.equal((await sandbox.catalogue('AZDM')).product_id,'AZDM');assert.equal(reads,3,'starter catalogue needs at most three document/query reads');
  product={name:'Software lain',status:'draft',softwarePackages:bundle()};await assert.rejects(sandbox.catalogue('OTHER-SOFTWARE'));
  product={...product,status:'active',softwarePackages:null};await assert.rejects(sandbox.catalogue('OTHER-SOFTWARE'));
@@ -33,7 +33,7 @@ test('package catalogue uses bounded SKU lookups and rejects disabled or unpubli
 });
 test('equal-price packages with different quantity or terms do not reuse another checkout; ordinary fingerprints stay unchanged',()=>{
  const crypto=require('node:crypto'),source=fs.readFileSync(require.resolve('../deploy-server.js'),'utf8'),fn=source.slice(source.indexOf('function azAutomaticCheckoutFingerprint('),source.indexOf('\nfunction azAutomaticCheckoutKindForOrder'));
- const sandbox={crypto,cleanPremiumText:x=>String(x||''),azAutoCheckoutUserKey:()=> 'buyer',azAutoCheckoutItemKey:()=>''};vm.runInNewContext(fn+';globalThis.fingerprint=azAutomaticCheckoutFingerprint;',sandbox);
+ const sandbox={softwareAvailability:{assertAvailable:async()=>{}},crypto,cleanPremiumText:x=>String(x||''),azAutoCheckoutUserKey:()=> 'buyer',azAutoCheckoutItemKey:()=>''};vm.runInNewContext(fn+';globalThis.fingerprint=azAutomaticCheckoutFingerprint;',sandbox);
  const base={user:{uid:'buyer'},amountSen:10000,productId:'S'};const regular=sandbox.fingerprint('digital',base),pack={...base,softwarePackageId:'bundle',packageQuantity:3,softwarePackageDays:90};
  assert.equal(regular,crypto.createHash('sha256').update(['azobss-auto-checkout-v1050','digital','buyer','10000','s','',''].join('|')).digest('hex'));
  assert.notEqual(sandbox.fingerprint('digital',pack),regular);assert.notEqual(sandbox.fingerprint('digital',pack),sandbox.fingerprint('digital',{...pack,packageQuantity:2}));assert.notEqual(sandbox.fingerprint('digital',pack),sandbox.fingerprint('digital',{...pack,softwarePackageDays:365}));

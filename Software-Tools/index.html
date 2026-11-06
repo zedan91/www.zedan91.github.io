@@ -2,6 +2,8 @@
 
 <html>
 <head>
+<link rel="stylesheet" href="/assets/css/azobss-software-availability-v1534.css?v=1534">
+<script src="/assets/js/azobss-software-availability-v1534.js?v=1534"></script>
 <script id="azebook-direct-boot-1373">
 (function(){
   try{
@@ -3666,7 +3668,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
           <select id="softwareAdminStatus">
             <option value="active">Active - publish now</option>
             <option value="draft">Draft - admin only</option>
-            <option value="hidden"> - hide from public</option>
+            <option value="hidden">Hidden - unpublished</option>
           </select>
         </label>
       </div>
@@ -5680,7 +5682,7 @@ function normalizeItem(item){
         String(sortSelect?.value || 'newest') === 'newest';
       if(!isDefaultBrowse) return;
       const cards = Array.from(grid.querySelectorAll(':scope > .download-card'))
-        .filter(card => String(card.dataset.status || 'active').toLowerCase() !== 'draft')
+        .filter(card => String(card.dataset.status || 'active').toLowerCase() === 'active' && !window.azSoftwareAvailability?.isPaused(card.dataset.productId))
         .slice(0, 8)
         .map(card => {
           const clone = card.cloneNode(true);
@@ -5965,7 +5967,7 @@ function normalizeItem(item){
       softwareDedupedItems482 = dedupeSoftwareItems([...softwareDynamicItems]);
       softwareDedupedRevision482 = softwareDynamicDataRevision482;
     }
-    let dynamic = softwareDedupedItems482.filter(item => isAdmin() || (item.status || 'active') === 'active');
+    let dynamic = softwareDedupedItems482.filter(item => (isAdmin() || (item.status || 'active') === 'active') && window.azSoftwareAvailability?.visible(item,azIsFullSoftwareAdmin()));
     if(softwareDynamicPoolRevision482 !== softwareDynamicDataRevision482){
       rebuildSoftwareDynamicCardPool482(dynamic);
     }
@@ -6017,6 +6019,8 @@ function normalizeItem(item){
         if(!azSharedSoftwareCardMatch530(card,sharedTarget530)) card.style.display='none';
       });
     }
+
+    staticCards.forEach(card=>{if(!window.azSoftwareAvailability?.visible({productId:staticProductId(card)},azIsFullSoftwareAdmin()))card.style.display='none';});
 
     const typeRank = item => String(item.type || '').toLowerCase() === 'premium' ? 1 : 0;
     dynamic.sort((a,b) => {
@@ -6982,6 +6986,7 @@ function normalizeItem(item){
     await loadItems();
   });
 
+  document.addEventListener('az-software-availability-change',()=>{applySoftwareFilters();});
   window.azobssLongSessionInterval(refreshAdminState, 1500);
   refreshAdminState();
   loadItems();
@@ -7006,7 +7011,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1533" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1534" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->

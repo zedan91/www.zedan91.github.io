@@ -138,6 +138,7 @@ function azEnglishAzdmOffer(offer = {}) {
 async function azSoftwarePackageOffer(productId){
   if(!/^[A-Za-z0-9_-]{1,100}$/.test(productId))throw Error('Invalid product');
   const trusted=await azSoftwarePackageProduct(productId);
+  await softwareAvailability.assertAvailable(trusted||productId);
   if(trusted&&trusted.status&&trusted.status!=='active')throw Error('Software is not published');
   if(trusted&&!trusted.softwarePackages?.enabled)throw Error('Packages are not enabled');
   if(trusted?.softwarePackages?.enabled&&trusted.softwarePackages.fulfilment==='download')
@@ -150,6 +151,16 @@ async function azSoftwarePackageOffer(productId){
   if(productId==='AZDM')return azSoftwarePackageModel.normalize(azEnglishAzdmOffer(azSoftwarePackageModel.defaults()));
   throw Error('Offer not found');
 }
+const {createSoftwareAvailability}=require('./lib/azobss-software-availability-v1534');
+async function azFindAvailabilitySoftware(productId){
+  const withObject=product=>product?{...product,r2ObjectKey:azResolvePremiumR2Object({...product,product})?.key||product.r2ObjectKey||''}:null;
+  const remote=await azSoftwarePackageProduct(productId);if(remote)return withObject(remote);
+  const exported=azFindLocalSoftwareProduct(productId);if(exported)return withObject(exported);
+  if(String(productId).toUpperCase()==='AZDM')return {productId:'AZDM',name:'AZDM'};
+  try{const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'Software-Tools/software-directory.json'),'utf8')),rows=Array.isArray(raw)?raw:raw.items||[];return withObject(rows.find(x=>[x.productId,x.id,x.sku].some(v=>String(v||'').trim().toLowerCase()===String(productId).trim().toLowerCase())));}catch{return null;}
+}
+const softwareAvailability=createSoftwareAvailability({getDb:getAzobssBackendDb,getAdminIdentity:azAdminIdentityFromRequest,findProduct:azFindAvailabilitySoftware,readBody,send});
+
 const handleSoftwarePackages=createOfferHandler({getIdentity:azdmAdminIdentity,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend,
   saveOffer:async(offer,owner)=>{
     const db=getAzobssBackendDb();if(!db)throw Error('Catalogue unavailable');
@@ -886,6 +897,9 @@ async function azResolveTrustedPremiumProduct(data = {}, req = null) {
     if (!trusted && realId) trusted = azFindLocalSoftwareProduct(realId);
   }
   if (!trusted) trusted = azFindLocalSoftwareProduct(productId);
+
+  await softwareAvailability.assertAvailable(trusted||productId);
+  if(trusted&&/software/i.test(String(trusted.source||''))&&trusted.status&&trusted.status!=='active')throw Object.assign(Error('Software is not published.'),{statusCode:423});
 
   // Liyabudun uses the trusted catalog price and verified account, never the
   // browser's licence/price/email flags. Each purchased PC receives a distinct permanent licence.
@@ -8718,6 +8732,7 @@ function azStartR2Preflight(session = {}) {
 }
 
 async function azCreatePremiumDownloadSession(req, token, saved = {}) {
+  await softwareAvailability.assertAvailable(saved);
   const now = Date.now();
   const clientKey = azPremiumClientKey(req);
   const activeSessionId = cleanPremiumText(saved.activeDownloadSessionId || "", 140);
@@ -8907,6 +8922,7 @@ async function azHandlePremiumDownloadSession(req, res, sessionId) {
   const now = Date.now();
   let session = await azFindPremiumSessionDeep(cleanSessionId);
   if (!session) return send(res, 404, "Download session not found.");
+  try{await softwareAvailability.assertAvailable(session);}catch(e){return send(res,e.statusCode||503,e.message);}
   const sessionStatus = String(session.status || "active");
   if (!["active", "completed"].includes(sessionStatus) || Number(session.expiresAt || 0) <= now) {
     updatePremiumDownloadSession(cleanSessionId, { status: Number(session.expiresAt || 0) <= now ? "expired" : session.status || "closed", expiredAt: new Date(now).toISOString(), expiredAtMs: now });
@@ -20575,6 +20591,9 @@ async function handler(req, res) {
     if (pathname === "/api/toyyib/create-public-pa-bill" && req.method === "POST" && azRateLimitOrSend(req, res, "create-public-pa-bill", 8, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-pa-bm-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-pa-bm-payment", 12, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/test-public-pa-payment" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-test-public-pa-payment", 12, 10 * 60 * 1000)) return;
+    if (pathname==='/api/software-availability'&&azRateLimitOrSend(req,res,'software-availability-read',240,60000))return;
+    if (pathname==='/api/admin/software-availability'&&azRateLimitOrSend(req,res,'software-availability-admin',80,60000))return;
+    if (await softwareAvailability.handle(req,res,parsed)) return;
     if (await handleSoftwarePackages(req,res,parsed)) return;
     if (await handleAzdmAdmin(req,res,parsed)) return;
     if (await solatTimeCommerce.handle(req,res,parsed)) return;
@@ -26235,6 +26254,8 @@ const filePath =
         return send(res, 403, "Download link expired or already used too many times.");
       }
 
+      try{await softwareAvailability.assertAvailable(saved);}catch(e){return send(res,e.statusCode||503,e.message);}
+
       // Email scanners/prefetchers use GET. GET now always shows a safe gate and never consumes quota.
       // The real download only starts after a human presses the POST form button.
       const order = findPremiumOrderByAny({ orderId: saved.orderId }) || {}; // Patch 707: never wait for Firestore just to render the confirmation label.
@@ -26258,6 +26279,7 @@ const filePath =
       if (!saved) {
         return send(res, 404, JSON.stringify({ ok:false, error:"TOKEN_NOT_FOUND" }), "application/json");
       }
+      try{await softwareAvailability.assertAvailable(saved);}catch(e){return send(res,e.statusCode||503,JSON.stringify({ok:false,error:e.message,code:e.code}),"application/json");}
       const now = Date.now();
       const used = Math.max(0, Number(saved.usedCount || saved.downloadCount || saved.downloadsUsed || 0) || 0);
       const max = Math.max(1, Number(saved.maxDownload || saved.maxDownloads || saved.downloadLimit || 1) || 1);
