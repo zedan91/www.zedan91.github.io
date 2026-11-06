@@ -103,11 +103,13 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   async function pullCloud(user){
     currentUid = user?.uid || '';
     if(!currentUid) return;
+    const expectedUid1538=currentUid,expectedKey1538=CART_KEY;
     cloudPulling = true;
     cloudReady = false;
     try{
       const ref = doc(db, COLLECTION, currentUid);
       const snap = await getDoc(ref);
+      if(currentUid!==expectedUid1538||CART_KEY!==expectedKey1538||(window.azobssGetCurrentFirebaseUid&&window.azobssGetCurrentFirebaseUid()!==expectedUid1538))return;
       const localItems = readCart();
       const localTime = localUpdatedAt();
       if(snap.exists()){
@@ -144,8 +146,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     }catch(err){
       console.warn('AZOBSS cart Firestore load skipped:', err);
     }finally{
-      loadingFromCloud = false;
-      cloudPulling = false;
+      if(currentUid===expectedUid1538&&CART_KEY===expectedKey1538){loadingFromCloud = false;cloudPulling = false;}
     }
   }
 

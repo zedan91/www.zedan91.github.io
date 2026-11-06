@@ -1,3 +1,8 @@
+// Shared customer cart and personal quote bell on pages using only global auth.
+if(!window.AZOBSSCustomerHub1538){
+ if(!document.querySelector('link[href*="azobss-customer-hub-v1538.css"]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/css/azobss-customer-hub-v1538.css?v=1538';document.head.append(css);}
+ if(!document.querySelector('script[src*="azobss-customer-hub-v1538.js"]')){const runtime=document.createElement('script');runtime.src='/assets/js/azobss-customer-hub-v1538.js?v=1538';document.head.append(runtime);}
+}
 /* AZOBSS core stability fix 036 */
 
 // v1355: enforce one production origin so Firebase local persistence is not split
@@ -9558,7 +9563,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1537';
+  var VERSION_TEXT = 'v1538';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 

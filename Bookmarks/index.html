@@ -799,6 +799,8 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1496">
 <script defer src="/assets/js/azobss-more-nav.js?v=1531"></script>
+<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1538">
+<script src="/assets/js/azobss-customer-hub-v1538.js?v=1538"></script>
 </head>
 <body>
   <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -881,7 +883,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     </div>
     <div id="azobssLikesList"><div class="az-like-empty">Loading bookmarks...</div></div>
   </main>
-  <script type="module" src="/assets/js/azobss-global-auth.js?v=1537"></script>
+  <script type="module" src="/assets/js/azobss-global-auth.js?v=1538"></script>
   <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script>document.addEventListener("click",e=>{if(e.target.closest('.az-like-unlike-btn,.az-bookmark-add-cart-btn,[data-bookmark-add-cart]'))return; const c=e.target.closest(".liked-item,.like-card,.product-card"); if(!c)return; const url=c.dataset.url||c.getAttribute("data-link")||''; const cat=(c.dataset.type||'').toLowerCase(); if(url){window.location=url;return;} if(cat.includes('cad')) window.location='/CAD-Tools-&-Resources/'; else if(cat.includes('pcbuild')) window.location='/PC-Build/';});</script><script id="azobss-shop-cart-js">
 (function(){
@@ -1062,11 +1064,13 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   async function pullCloud(user){
     currentUid = user?.uid || '';
     if(!currentUid) return;
+    const expectedUid1538=currentUid,expectedKey1538=CART_KEY;
     cloudPulling = true;
     cloudReady = false;
     try{
       const ref = doc(db, COLLECTION, currentUid);
       const snap = await getDoc(ref);
+      if(currentUid!==expectedUid1538||CART_KEY!==expectedKey1538||(window.azobssGetCurrentFirebaseUid&&window.azobssGetCurrentFirebaseUid()!==expectedUid1538))return;
       const localItems = readCart();
       const localTime = localUpdatedAt();
       if(snap.exists()){
@@ -1102,8 +1106,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     }catch(err){
       console.warn('AZOBSS cart Firestore load skipped:', err);
     }finally{
-      loadingFromCloud = false;
-      cloudPulling = false;
+      if(currentUid===expectedUid1538&&CART_KEY===expectedKey1538){loadingFromCloud = false;cloudPulling = false;}
     }
   }
 

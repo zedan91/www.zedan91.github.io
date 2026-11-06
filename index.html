@@ -9782,6 +9782,8 @@ body.az-home-banner-admin-editing .az-home-software-promo-arrow{
 </style>
 
 <script src="/assets/js/azobss-azdm-support.js?v=1207" defer></script>
+<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1538">
+<script src="/assets/js/azobss-customer-hub-v1538.js?v=1538"></script>
 </head>
 <body id="top">
 <nav class="azobss-topbar azobss-topbar-carousel" hidden="" id="azobssTopbar">
@@ -13878,7 +13880,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1537" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
+<script src="/assets/js/azobss-global-auth.js?v=1538" type="module"></script><script type="module" src="/assets/js/azobss-home-likes-lite.js?v=704"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><style>
 /* AZOBSS FINAL FIX: keep purchase rows compact but make Show + Reset fully visible */
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList,
 body.pa-bm-page.pabm-owner-admin #purchaseSummaryList *{
@@ -15038,11 +15040,13 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
   async function pullCloud(user){
     currentUid = user?.uid || '';
     if(!currentUid) return;
+    const expectedUid1538=currentUid,expectedKey1538=CART_KEY;
     cloudPulling = true;
     cloudReady = false;
     try{
       const ref = doc(db, COLLECTION, currentUid);
       const snap = await getDoc(ref);
+      if(currentUid!==expectedUid1538||CART_KEY!==expectedKey1538||(window.azobssGetCurrentFirebaseUid&&window.azobssGetCurrentFirebaseUid()!==expectedUid1538))return;
       const localItems = readCart();
       const localTime = localUpdatedAt();
       if(snap.exists()){
@@ -15079,8 +15083,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     }catch(err){
       console.warn('AZOBSS cart Firestore load skipped:', err);
     }finally{
-      loadingFromCloud = false;
-      cloudPulling = false;
+      if(currentUid===expectedUid1538&&CART_KEY===expectedKey1538){loadingFromCloud = false;cloudPulling = false;}
     }
   }
 
