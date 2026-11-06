@@ -1,6 +1,6 @@
 import { getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=1129';
+import { applyPriceAdjustment, getCachedPriceAdjustment, waitForPriceAdjustment } from './azobss-user-price-adjustment.js?v=1525';
 
 const CART_PREFIX = 'azobss_pabm_store_cart_v1_';
 const PAYMENT_CART_BACKUP_PREFIX = 'azobss_pabm_payment_cart_backup_v1_';
@@ -66,15 +66,16 @@ const JUPEM_STATE_CODES = {
 };
 
 let auth = null;
-let priceAdjustmentPercents = {
-  paBm: Number(getCachedPriceAdjustment('paBm').percent || 0),
-  lotKadaster: Number(getCachedPriceAdjustment('lotKadaster').percent || 0)
-};
-
-function priceCategoryForType(type) {
-  const normalized = String(type || '').trim().toUpperCase();
-  return normalized === 'NDCDB' || normalized === 'NDCDB_C3' ? 'lotKadaster' : 'paBm';
+const JUPEM_PRICE_KEYS = ['pa','bmSbm','syitPiawai','paBm','lotKadaster'];
+let priceAdjustmentPercents = Object.fromEntries(JUPEM_PRICE_KEYS.map(key=>[key,Number(getCachedPriceAdjustment(key).percent || 0)]));
+function jupemPricePercents(adjustment) {
+  const map = adjustment?.percentByCategory || {};
+  return Object.fromEntries(JUPEM_PRICE_KEYS.map(key=>[key,Number(map[key] ?? map.paBm ?? 0)]));
 }
+function priceCategoryForType(type) {
+  return ({PA:'pa',BM:'bmSbm',SBM:'bmSbm',SYIT_PIAWAI:'syitPiawai',NDCDB:'lotKadaster',NDCDB_C3:'lotKadaster',GPS:'paBm'})[String(type || '').trim().toUpperCase()] || 'paBm';
+}
+
 function pricePercentForType(type) {
   return Number(priceAdjustmentPercents[priceCategoryForType(type)] || 0);
 }
@@ -1457,7 +1458,7 @@ async function init() {
       if (restored.length) setCartSyncStatus(`Pembayaran belum selesai. ${restored.length} item dipulihkan semula ke Troli Anda.`);
     } catch (_) {}
   });
-  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercents = { paBm:Number(event.detail?.percentByCategory?.paBm || 0), lotKadaster:Number(event.detail?.percentByCategory?.lotKadaster ?? event.detail?.percentByCategory?.paBm ?? 0) }; const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
+  window.addEventListener('azobss:price-adjustment-change', (event) => { priceAdjustmentPercents = jupemPricePercents(event.detail); const rows=readCart(); localStorage.setItem(cartKey(), JSON.stringify(rows)); document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice); renderCart(); });
   watchPaymentTotal();
   renderCart();
   const initialCartRows = readCart();
@@ -1467,10 +1468,7 @@ async function init() {
   // state-picker rendering or Add to Cart. The cached value above remains usable
   // until this resolves (or the existing price-adjustment event updates it).
   waitForPriceAdjustment().then((adjustment) => {
-    priceAdjustmentPercents = {
-      paBm: Number(adjustment?.percentByCategory?.paBm || 0),
-      lotKadaster: Number(adjustment?.percentByCategory?.lotKadaster ?? adjustment?.percentByCategory?.paBm ?? 0)
-    };
+    priceAdjustmentPercents = jupemPricePercents(adjustment);
     const rows = readCart();
     try { localStorage.setItem(cartKey(), JSON.stringify(rows)); } catch (_) {}
     document.querySelectorAll('[data-pabm-product-add]').forEach(updateConfiguredPrice);

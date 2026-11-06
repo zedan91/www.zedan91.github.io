@@ -13,8 +13,8 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const PRICE_CATEGORIES = Object.freeze(['paBm','lotKadaster','publicPa','software','cadTools']);
-const emptyPercents = () => ({ paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 });
+const PRICE_CATEGORIES = Object.freeze(['pa','bmSbm','syitPiawai','paBm','lotKadaster','publicPa','software','cadTools']);
+const emptyPercents = () => ({ pa:0, bmSbm:0, syitPiawai:0, paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 });
 const state = { ready:false, percent:0, percentByCategory:emptyPercents(), uid:'', username:'', profileDocId:'', source:'default' };
 let readyResolve;
 let readyPromise = new Promise(resolve => { readyResolve = resolve; });
@@ -27,7 +27,10 @@ function normalisePercent(value){
 function categoryKey(value){
   const key = String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
   if(['lot','lotkadaster','lotkadasterberdigit','ndcdb','ndcdbc3'].includes(key)) return 'lotKadaster';
-  if(['pabm','jupem'].includes(key)) return 'paBm';
+  if(key === 'pa') return 'pa';
+  if(['bm','sbm','bmsbm'].includes(key)) return 'bmSbm';
+  if(['syit','syitpiawai'].includes(key)) return 'syitPiawai';
+  if(['pabm','jupem','gps'].includes(key)) return 'paBm';
   if(['publicpa','paawam','pelanakui','pelanakuiawam'].includes(key)) return 'publicPa';
   if(['cad','cadtools','cadtool'].includes(key)) return 'cadTools';
   if(['software','softwaretools','subscription','activation'].includes(key)) return 'software';
@@ -43,6 +46,9 @@ function profilePercents(profile){
     ? profile.priceAdjustmentByCategory : null;
   const map = managed ? (managedMap || publicMap) : (publicMap || managedMap);
   const direct = {
+    pa: managed ? (profile.adminPaPriceAdjustmentPercent ?? profile.paPriceAdjustmentPercent) : (profile.paPriceAdjustmentPercent ?? profile.adminPaPriceAdjustmentPercent),
+    bmSbm: managed ? (profile.adminBmSbmPriceAdjustmentPercent ?? profile.bmSbmPriceAdjustmentPercent) : (profile.bmSbmPriceAdjustmentPercent ?? profile.adminBmSbmPriceAdjustmentPercent),
+    syitPiawai: managed ? (profile.adminSyitPiawaiPriceAdjustmentPercent ?? profile.syitPiawaiPriceAdjustmentPercent) : (profile.syitPiawaiPriceAdjustmentPercent ?? profile.adminSyitPiawaiPriceAdjustmentPercent),
     paBm: managed ? (profile.adminPaBmPriceAdjustmentPercent ?? profile.paBmPriceAdjustmentPercent) : (profile.paBmPriceAdjustmentPercent ?? profile.adminPaBmPriceAdjustmentPercent),
     lotKadaster: managed ? (profile.adminLotKadasterPriceAdjustmentPercent ?? profile.lotKadasterPriceAdjustmentPercent) : (profile.lotKadasterPriceAdjustmentPercent ?? profile.adminLotKadasterPriceAdjustmentPercent),
     publicPa: managed ? (profile.adminPublicPaPriceAdjustmentPercent ?? profile.publicPaPriceAdjustmentPercent) : (profile.publicPaPriceAdjustmentPercent ?? profile.adminPublicPaPriceAdjustmentPercent),
@@ -53,8 +59,8 @@ function profilePercents(profile){
   if(hasSpecific){
     for(const key of PRICE_CATEGORIES){
       let raw = map && Object.prototype.hasOwnProperty.call(map,key) ? map[key] : direct[key];
-      // Migration from version 592: Lot Kadaster previously followed PA/BM.
-      if(key === 'lotKadaster' && (raw === undefined || raw === null || raw === '')){
+      // Unset document categories retain their pre-split PA/BM rate; explicit 0 stays 0.
+      if(['pa','bmSbm','syitPiawai','lotKadaster'].includes(key) && (raw === undefined || raw === null || raw === '')){
         raw = map && Object.prototype.hasOwnProperty.call(map,'paBm') ? map.paBm : direct.paBm;
       }
       const baseAdjustment = normalisePercent(raw ?? 0);

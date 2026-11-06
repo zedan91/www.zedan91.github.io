@@ -87,7 +87,7 @@
       id:[type,code,state,variant].filter(Boolean).join('|'),
       productType:type,itemCode:code,negeri:state,variant:variant,
       baseAmount:base,amount:amount,
-      priceAdjustmentCategory:(type==='NDCDB'||type==='NDCDB_C3')?'lotKadaster':'paBm',
+      priceAdjustmentCategory:({PA:'pa',BM:'bmSbm',SBM:'bmSbm',SYIT_PIAWAI:'syitPiawai',NDCDB:'lotKadaster',NDCDB_C3:'lotKadaster',GPS:'paBm'})[type],
       priceAdjustmentPercent:Number(payload.priceAdjustmentPercent||0),
       productId:String(payload.productId||payload.id||'').trim(),
       stationNo:String(payload.stationNo||payload.stesen||'').trim().toUpperCase(),

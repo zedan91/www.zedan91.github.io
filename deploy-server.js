@@ -1180,6 +1180,12 @@ async function azCommissionIdentityFromRequest(req) {
           identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
           identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
           identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
+          identity.adminPaPriceAdjustmentPercent = x.adminPaPriceAdjustmentPercent;
+          identity.paPriceAdjustmentPercent = x.paPriceAdjustmentPercent;
+          identity.adminBmSbmPriceAdjustmentPercent = x.adminBmSbmPriceAdjustmentPercent;
+          identity.bmSbmPriceAdjustmentPercent = x.bmSbmPriceAdjustmentPercent;
+          identity.adminSyitPiawaiPriceAdjustmentPercent = x.adminSyitPiawaiPriceAdjustmentPercent;
+          identity.syitPiawaiPriceAdjustmentPercent = x.syitPiawaiPriceAdjustmentPercent;
           identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
           identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
           identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
@@ -1246,6 +1252,12 @@ async function azHydrateIdentityFromUsernameHint(identity = {}, usernameHint = "
       identity.priceAdjustmentPercent = azNormalizeUserPriceAdjustment(x.priceAdjustmentPercent ?? x.adminPriceAdjustmentPercent ?? 0);
       identity.adminPriceAdjustmentByCategory = x.adminPriceAdjustmentByCategory && typeof x.adminPriceAdjustmentByCategory === "object" ? { ...x.adminPriceAdjustmentByCategory } : null;
       identity.priceAdjustmentByCategory = x.priceAdjustmentByCategory && typeof x.priceAdjustmentByCategory === "object" ? { ...x.priceAdjustmentByCategory } : null;
+      identity.adminPaPriceAdjustmentPercent = x.adminPaPriceAdjustmentPercent;
+      identity.paPriceAdjustmentPercent = x.paPriceAdjustmentPercent;
+      identity.adminBmSbmPriceAdjustmentPercent = x.adminBmSbmPriceAdjustmentPercent;
+      identity.bmSbmPriceAdjustmentPercent = x.bmSbmPriceAdjustmentPercent;
+      identity.adminSyitPiawaiPriceAdjustmentPercent = x.adminSyitPiawaiPriceAdjustmentPercent;
+      identity.syitPiawaiPriceAdjustmentPercent = x.syitPiawaiPriceAdjustmentPercent;
       identity.adminPaBmPriceAdjustmentPercent = x.adminPaBmPriceAdjustmentPercent;
       identity.paBmPriceAdjustmentPercent = x.paBmPriceAdjustmentPercent;
       identity.adminLotKadasterPriceAdjustmentPercent = x.adminLotKadasterPriceAdjustmentPercent;
@@ -5520,19 +5532,32 @@ function azNormalizeUserPriceAdjustment(value) {
 function azPriceAdjustmentCategory(value = "software") {
   const key = String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
   if (["lot","lotkadaster","lotkadasterberdigit","ndcdb","ndcdbc3"].includes(key)) return "lotKadaster";
-  if (["pabm","jupem"].includes(key)) return "paBm";
+  if (key === "pa") return "pa";
+  if (["bm","sbm","bmsbm"].includes(key)) return "bmSbm";
+  if (["syit","syitpiawai"].includes(key)) return "syitPiawai";
+  if (["pabm","jupem","gps"].includes(key)) return "paBm";
   if (["publicpa","paawam","pelanakui","pelanakuiawam"].includes(key)) return "publicPa";
   if (["cad","cadtools","cadtool"].includes(key)) return "cadTools";
   return "software";
 }
+function azJupemPriceCategory(productType) {
+  const type = String(productType || '').trim().toUpperCase();
+  if (type === 'PA') return 'pa';
+  if (type === 'BM' || type === 'SBM') return 'bmSbm';
+  if (type === 'SYIT_PIAWAI') return 'syitPiawai';
+  return type === 'NDCDB' || type === 'NDCDB_C3' ? 'lotKadaster' : 'paBm';
+}
 function azIdentityPriceAdjustments(identity = {}) {
-  const keys = ["paBm","lotKadaster","publicPa","software","cadTools"];
-  const out = { paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 };
+  const keys = ["pa","bmSbm","syitPiawai","paBm","lotKadaster","publicPa","software","cadTools"];
+  const out = { pa:0, bmSbm:0, syitPiawai:0, paBm:0, lotKadaster:0, publicPa:0, software:0, cadTools:0 };
   const managed = identity.adminPriceAdjustmentOverride === true || String(identity.priceAdjustmentManagedBy || '').toLowerCase() === 'admin';
   const managedMap = identity.adminPriceAdjustmentByCategory && typeof identity.adminPriceAdjustmentByCategory === "object" ? identity.adminPriceAdjustmentByCategory : null;
   const publicMap = identity.priceAdjustmentByCategory && typeof identity.priceAdjustmentByCategory === "object" ? identity.priceAdjustmentByCategory : null;
   const map = managed ? (managedMap || publicMap) : (publicMap || managedMap);
   const direct = {
+    pa: managed ? (identity.adminPaPriceAdjustmentPercent ?? identity.paPriceAdjustmentPercent) : (identity.paPriceAdjustmentPercent ?? identity.adminPaPriceAdjustmentPercent),
+    bmSbm: managed ? (identity.adminBmSbmPriceAdjustmentPercent ?? identity.bmSbmPriceAdjustmentPercent) : (identity.bmSbmPriceAdjustmentPercent ?? identity.adminBmSbmPriceAdjustmentPercent),
+    syitPiawai: managed ? (identity.adminSyitPiawaiPriceAdjustmentPercent ?? identity.syitPiawaiPriceAdjustmentPercent) : (identity.syitPiawaiPriceAdjustmentPercent ?? identity.adminSyitPiawaiPriceAdjustmentPercent),
     paBm: managed ? (identity.adminPaBmPriceAdjustmentPercent ?? identity.paBmPriceAdjustmentPercent) : (identity.paBmPriceAdjustmentPercent ?? identity.adminPaBmPriceAdjustmentPercent),
     lotKadaster: managed ? (identity.adminLotKadasterPriceAdjustmentPercent ?? identity.lotKadasterPriceAdjustmentPercent) : (identity.lotKadasterPriceAdjustmentPercent ?? identity.adminLotKadasterPriceAdjustmentPercent),
     publicPa: managed ? (identity.adminPublicPaPriceAdjustmentPercent ?? identity.publicPaPriceAdjustmentPercent) : (identity.publicPaPriceAdjustmentPercent ?? identity.adminPublicPaPriceAdjustmentPercent),
@@ -5548,7 +5573,7 @@ function azIdentityPriceAdjustments(identity = {}) {
   if (hasSpecific) {
     for (const key of keys) {
       let raw = map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : direct[key];
-      if (key === "lotKadaster" && (raw === undefined || raw === null || raw === "")) raw = map && Object.prototype.hasOwnProperty.call(map, "paBm") ? map.paBm : direct.paBm;
+      if (["pa","bmSbm","syitPiawai","lotKadaster"].includes(key) && (raw === undefined || raw === null || raw === "")) raw = map && Object.prototype.hasOwnProperty.call(map, "paBm") ? map.paBm : direct.paBm;
       out[key] = azNormalizeUserPriceAdjustment((raw ?? 0) - membershipDiscount(key));
     }
     return out;
@@ -5603,6 +5628,9 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
   const seenItems = new Set();
   const items = [];
   const priceAdjustmentByCategory = {
+    pa: azIdentityPriceAdjustment(identity, "pa"),
+    bmSbm: azIdentityPriceAdjustment(identity, "bmSbm"),
+    syitPiawai: azIdentityPriceAdjustment(identity, "syitPiawai"),
     paBm: azIdentityPriceAdjustment(identity, "paBm"),
     lotKadaster: azIdentityPriceAdjustment(identity, "lotKadaster")
   };
@@ -5633,7 +5661,7 @@ function azBuildAdminPaBmTestCheckout(data = {}, identity = {}) {
     else if (productType === "GPS") baseAmount = 9;
     else if (productType === "SYIT_PIAWAI") baseAmount = 7;
     else if (areaProductTypes.has(productType)) baseAmount = verifiedLot.amount;
-    const priceAdjustmentCategory = areaProductTypes.has(productType) ? "lotKadaster" : "paBm";
+    const priceAdjustmentCategory = azJupemPriceCategory(productType);
     const priceAdjustmentPercent = priceAdjustmentByCategory[priceAdjustmentCategory] || 0;
     const amount = azApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory);
     const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
@@ -21516,6 +21544,9 @@ async function handler(req, res) {
         const seenItems = new Set();
         const items = [];
         const priceAdjustmentByCategory = {
+          pa: azIdentityPriceAdjustment(identity, "pa"),
+          bmSbm: azIdentityPriceAdjustment(identity, "bmSbm"),
+          syitPiawai: azIdentityPriceAdjustment(identity, "syitPiawai"),
           paBm: azIdentityPriceAdjustment(identity, "paBm"),
           lotKadaster: azIdentityPriceAdjustment(identity, "lotKadaster")
         };
@@ -21554,7 +21585,7 @@ async function handler(req, res) {
           else if (productType === "SYIT_PIAWAI") amount = 7;
           else if (areaProductTypes.has(productType)) amount = verifiedLot.amount;
           const baseAmount = amount;
-          const priceAdjustmentCategory = areaProductTypes.has(productType) ? "lotKadaster" : "paBm";
+          const priceAdjustmentCategory = azJupemPriceCategory(productType);
           const priceAdjustmentPercent = priceAdjustmentByCategory[priceAdjustmentCategory] || 0;
           amount = azApplyUserPriceAdjustment(baseAmount, identity, priceAdjustmentCategory);
           const uniqueKey = `${productType}|${itemCode}|${negeri}|${variant}`;
