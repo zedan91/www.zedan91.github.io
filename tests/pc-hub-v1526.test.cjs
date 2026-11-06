@@ -39,6 +39,14 @@ test('pricelist variants checkout at trusted prices, never fetch an unrelated pa
  }finally{f.close();}
 });
 test('an unknown variant cannot create an order',async()=>{const f=fixture();try{await f.runtime.handle({method:'POST',body:{items:[{productId:'VNP-fixture--99',qty:1,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});assert.equal(f.result().status,400);assert.equal(f.result().body.error,'unknown_product');assert.equal(f.saved.size,0);}finally{f.close();}});
+test('trusted sealed Viewnet costs below RM20 stay available to the admin audit while public prices and confirmation remain correct',async()=>{
+ const f=fixture(),previous=process.env.PC_SOURCE_PRICE_KEY;try{
+  const secret='LOCAL-LOW-COST-FIXTURE',iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',deriveKey(secret),iv);
+  const raw={date:new Date().toISOString().slice(0,10),products:[{id:'VNP-fixture',category:'USB flash drive',name:'Fixture USB Drive',imageKind:'illustration',options:[{label:'16GB',price:40}],specs:['Connection: USB']}]};f.write('Upgrade-Parts/catalog-v1518.json',raw);
+  const costs={products:[{id:'VNP-fixture',sourcePage:2,sourceLine:'Fixture low-cost record',options:[{label:'16GB',cost:10}]}]};const data=Buffer.concat([cipher.update(JSON.stringify(costs)),cipher.final()]);f.write('lib/data/upgrade-source-v1520.enc',{iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')});process.env.PC_SOURCE_PRICE_KEY=secret;
+  const c=await f.runtime.getLiveCatalog(false);assert.equal(c.internalProducts[0].sourcePrice,10);assert.equal(c.internalProducts[0].unitCost,10);assert.equal(c.publicProducts[0].price,40);assert.equal(c.publicProducts[0].requiresConfirmation,true);assert.equal(Object.hasOwn(c.publicProducts[0],'sourcePrice'),false);assert.equal(Object.hasOwn(c.publicProducts[0],'unitCost'),false);
+ }finally{if(previous===undefined)delete process.env.PC_SOURCE_PRICE_KEY;else process.env.PC_SOURCE_PRICE_KEY=previous;f.close();}
+});
 test('legacy model links stay within the canonical hub and retain their model, search and filter state',()=>{
  const html=fs.readFileSync(path.join(root,'Upgrade-Parts/index.html'),'utf8');const code=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).find(s=>s.includes('location.replace(next.href)'));
  const anchor={};let redirected='';const loc=new URL('https://www.azobss.com/Upgrade-Parts/?q=14100#VNP-fixture');loc.replace=u=>redirected=u;
