@@ -79,6 +79,7 @@ function draw(){
  const q=(document.querySelector('#azPcShopSearch')?.value||'').trim().toLowerCase();
  let cat=document.querySelector('#azPcShopCategory')?.value||'all',b=document.querySelector('#azPcShopBrand')?.value||'all';const sort=document.querySelector('#azPcShopSort')?.value||'recommended';
  const u=new URL(location.href),priceList=u.searchParams.get('catalog')==='pricelist',model=u.searchParams.get('model')||(/^#VNP-/.test(u.hash)?u.hash.slice(1):'');
+ if(model){const target=rows.find(p=>p.sourceRecordId===model||p.id===model);if(target){const group=productGroup(target);if(hubGroup!==group){hubGroup=group;page=1;syncHubNav();u.searchParams.set('section',group);history.replaceState(null,'',u);}}}
  const groupRows=rows.filter(p=>(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId));
  for(const [id,values,label,current] of [['azPcShopCategory',[...new Set(groupRows.map(p=>p.category))].sort(),'All categories',cat],['azPcShopBrand',[...new Set(groupRows.map(brand))].sort(),'All brands',b]]){
   const select=document.getElementById(id);if(!select)continue;
