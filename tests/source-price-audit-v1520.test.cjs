@@ -19,6 +19,17 @@ test('visitor, customer and staff cannot read source costs or original PDF; auth
   assert.equal(f.reads(),0);
  }finally{f.close();}
 });
+test('browser preflight reaches the outer CORS handler without an admin token or private data read',async()=>{
+ const f=fixture();try{
+  fs.rmSync(path.join(f.root,'lib'),{recursive:true,force:true});
+  for(const route of ['source-prices','source-pricelist.pdf']){
+   const handled=await f.api.handle({method:'OPTIONS',headers:{origin:'https://www.azobss.com','access-control-request-method':'GET','access-control-request-headers':'authorization'}},{},{pathname:'/api/admin/pc-shop/'+route,query:{scope:'upgrade'}});
+   assert.equal(handled,false);assert.equal(f.response(),undefined);
+  }
+  assert.equal(f.reads(),0);
+  await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-prices',query:{scope:'upgrade'}});assert.equal(f.response().status,403);
+ }finally{f.close();}
+});
 test('authenticated audit preserves every option label, original cost, PDF page and source evidence',async()=>{
  const f=fixture();try{f.setAdmin(true);await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-prices',query:{scope:'upgrade'}});
   const r=f.response();assert.equal(r.status,200);assert.equal(r.headers['Cache-Control'],'private, no-store');assert.equal(r.body.records[0].sourcePage,2);
@@ -34,7 +45,7 @@ function frontend(options={}){
  const listeners={},elements=[];let admin=false,requestCount=0,resolveRequest;
  const window={addEventListener:(name,fn)=>{listeners[name]=fn;},dispatchEvent:()=>{},isAdminViewer:()=>admin,azobssGetFirebaseAuthHeaders:options.headers|| (async()=>({Authorization:'Bearer local-fixture'})),azobssWaitForFirebaseAuthToken:options.waitForToken,sessionStorage:options.sessionStorage};
  const document={readyState:'complete',body:{},querySelectorAll:()=>elements,addEventListener:()=>{}};
- const context={window,document,location:{pathname:'/Upgrade-Parts/'},URL,Date,Number,Map,Set,Event,AbortController,setTimeout,clearTimeout,MutationObserver:class{observe(){}},fetch:async(...args)=>{requestCount++;if(options.fetch)return options.fetch(...args);return await new Promise(resolve=>{resolveRequest=resolve;});}};
+ const context={window,document,location:{pathname:options.pathname||'/Upgrade-Parts/'},URL,Date,Number,Map,Set,Event,AbortController,setTimeout,clearTimeout,MutationObserver:class{observe(){}},fetch:async(...args)=>{requestCount++;if(options.fetch)return options.fetch(...args);return await new Promise(resolve=>{resolveRequest=resolve;});}};
  vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(source,'assets/js/azobss-source-prices-v1520.js'),'utf8'),context);
  return {app:window.AZOBSSSourcePrices,setAdmin:v=>{admin=v;},requests:()=>requestCount,resolve:records=>resolveRequest({ok:true,json:async()=>({ok:true,records})}),elements,event:name=>listeners[name]?.()};
 }
@@ -65,4 +76,8 @@ test('the existing configured admin-key fallback is accepted without weakening s
 });
 test('price source readiness reports decryptability without exposing original data or keys',()=>{
  const f=fixture();try{const status=f.api.status();assert.deepEqual(status,{ready:true,records:1,pdfReady:true});assert.doesNotMatch(JSON.stringify(status),/259|fixture-key|Private supplier/);}finally{f.close();}
+});
+test('PC Build independently loads component and complete-build source prices',async()=>{
+ const scopes=[];const f=frontend({pathname:'/PC-Build/',fetch:async url=>{const scope=new URL(url).searchParams.get('scope');scopes.push(scope);return {ok:true,json:async()=>({ok:true,records:[{id:scope==='pc'?'part-fixture':'build-fixture',sourceName:'Fixture',priceStatus:'snapshot',options:[{label:'Seunit',cost:scope==='pc'?399:2000,expectedPrice:scope==='pc'?470:2300}]}]})};}});
+ f.setAdmin(true);f.app.refresh();await tick();assert.deepEqual(scopes.sort(),['builds','pc']);assert.match(f.app.panel({id:'part-fixture',price:470}),/RM399.00/);assert.match(f.app.panel({id:'build-fixture',price:2300}),/RM2,000.00/);
 });
