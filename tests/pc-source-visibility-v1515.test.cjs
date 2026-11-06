@@ -25,7 +25,7 @@ test('supplier references and recorded time fail closed for visitors and disappe
  admin=false;
  const publicCard=app.testCard(product);
  assert.doesNotMatch(publicCard,/SUPPLIER FIXTURE|supplier\.example|data-pc-admin-source|Harga sumber direkod/);
- assert.match(publicCard,/Buy Now/);assert.match(publicCard,/Add to Cart/);assert.match(publicCard,/2,500/);
+ assert.match(publicCard,/Request Quote/);assert.match(publicCard,/Add to List/);assert.match(publicCard,/2,500/);
 });
 test('admin source markup escapes supplier text and rejects non-HTTPS links',()=>{
  const app=renderer();app.testSetActions({isAdmin:()=>true});

@@ -36,21 +36,23 @@ test('1518 component tiers apply at every boundary while system margins remain u
  }finally{f.close();}
 });
 
-test('1518 checkout reprices a component from verified cost, rejects client price and preserves history',async()=>{
+test('request reference prices come from trusted stored costs, reject client prices and preserve history',async()=>{
  const f=fixture();try{
   f.saved.set('pcShopOrders/historical',{items:[{productId:'hardware',qty:1,unitPrice:250}],referenceSubtotal:250});
   const history=JSON.stringify([...f.saved]);
   await f.runtime.handle({method:'POST',body:{items:[{productId:'hardware',qty:2,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});
-  const r=f.response();assert.equal(r.status,201);assert.equal(r.body.order.items[0].unitPrice,370);assert.equal(r.body.order.referenceSubtotal,740);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.priceConfirmationRequired,true);
+  const r=f.response();assert.equal(r.status,201);assert.equal(r.body.order.items[0].unitPrice,150);assert.equal(r.body.order.referenceSubtotal,300);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.priceConfirmationRequired,true);
   assert.equal(JSON.stringify([['pcShopOrders/historical',f.saved.get('pcShopOrders/historical')]]),history);
  }finally{f.close();}
 });
-test('checkout rechecks only selected exact variant and ignores client price; supplier confirmation prevents premature invoice',async()=>{
- const f=fixture();try{await f.runtime.getLiveCatalog(false);await f.runtime.handle({method:'POST',body:{items:[{productId:'laptop',qty:2,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});const r=f.response();assert.equal(r.status,201);assert.equal(f.calls.length,1);assert.match(f.calls[0],/variant=101$/);assert.equal(r.body.order.items[0].unitPrice,1450);assert.equal(r.body.order.referenceSubtotal,2900);assert.equal(r.body.order.priceConfirmationRequired,true);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.status,'price-confirmation');}finally{f.close();}
+test('requests retain exact variants without supplier scraping and cannot create an invoice from displayed prices',async()=>{
+ const f=fixture();try{await f.runtime.getLiveCatalog(false);await f.runtime.handle({method:'POST',body:{items:[{productId:'laptop',qty:2,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});const r=f.response();assert.equal(r.status,201);assert.equal(f.calls.length,0);assert.equal(r.body.order.items[0].productId,'laptop');assert.equal(r.body.order.items[0].unitPrice,1250);assert.equal(r.body.order.referenceSubtotal,2500);assert.equal(r.body.order.priceConfirmationRequired,true);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.status,'quote-requested');assert.equal(r.body.order.requestOnly,true);}finally{f.close();}
 });
-test('selected out-of-stock product cannot create an order even with a recent displayed snapshot',async()=>{
- const f=fixture({available:false});try{await f.runtime.handle({method:'POST',body:{items:[{productId:'laptop',qty:1}],shippingMethod:'Pickup at AZOBSS'}},{},{pathname:'/api/pc-shop/orders'});assert.equal(f.response().status,409);assert.equal(f.response().body.error,'product_unavailable');assert.equal(f.saved.size,0);}finally{f.close();}
+
+test('a known model may be requested for a manual supplier check but never becomes payable automatically',async()=>{
+ const f=fixture({available:false});try{await f.runtime.handle({method:'POST',body:{items:[{productId:'laptop',qty:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});const r=f.response();assert.equal(r.status,201);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.paymentStatus,'not-ready');assert.equal(r.body.order.stockConfirmed,false);assert.equal(r.body.order.status,'quote-requested');assert.equal(f.calls.length,0);}finally{f.close();}
 });
+
 test('expired imported snapshots are hidden instead of advertised as current stock',async()=>{
  const f=fixture({ageDays:15});try{assert.equal((await f.runtime.getLiveCatalog(false)).publicProducts.length,0);}finally{f.close();}
 });

@@ -31,11 +31,11 @@ test('sealed source costs are verified independently, stay private and cannot si
   assert.equal(loadViewnetProducts({rootDir:f.dir,env:{PC_SOURCE_PRICE_KEY:'WRONG'}})[0].snapshotPrice,0);
  }finally{f.close();}
 });
-test('pricelist variants checkout at trusted prices, never fetch an unrelated page, and require confirmation before an invoice',async()=>{
+test('pricelist variant requests retain trusted reference prices without supplier fetches or an invoice',async()=>{
  const f=fixture();try{
   const c=await f.runtime.getLiveCatalog(false);assert.equal(c.publicProducts.length,3);
   await f.runtime.handle({method:'POST',body:{items:[{productId:'VNP-fixture--1',qty:2,unitPrice:1,sourcePrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});
-  const r=f.result();assert.equal(r.status,201);assert.equal(r.body.order.items[0].unitPrice,270);assert.equal(r.body.order.referenceSubtotal,540);assert.equal(r.body.order.priceConfirmationRequired,true);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.status,'price-confirmation');assert.equal(f.calls.length,0);
+  const r=f.result();assert.equal(r.status,201);assert.equal(r.body.order.items[0].unitPrice,270);assert.equal(r.body.order.referenceSubtotal,540);assert.equal(r.body.order.priceConfirmationRequired,true);assert.equal(r.body.order.invoiceIssued,false);assert.equal(r.body.order.status,'quote-requested');assert.equal(r.body.order.requestOnly,true);assert.equal(f.calls.length,0);
  }finally{f.close();}
 });
 test('an unknown variant cannot create an order',async()=>{const f=fixture();try{await f.runtime.handle({method:'POST',body:{items:[{productId:'VNP-fixture--99',qty:1,unitPrice:1}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture',customerPhone:'0100000000'}},{},{pathname:'/api/pc-shop/orders'});assert.equal(f.result().status,400);assert.equal(f.result().body.error,'unknown_product');assert.equal(f.saved.size,0);}finally{f.close();}});

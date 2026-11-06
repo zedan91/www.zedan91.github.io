@@ -358,9 +358,6 @@
       return item;
     }
 
-    var overviewLink = makeLink('/PC-IT-Services/', 'azPcitOverviewLink', 'az-pcit-overview-icon',
-      '<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path>',
-      'Semua PC &amp; IT Services', 'Semua servis build, repair, upgrade &amp; parts', isOverviewLanding);
     var buildLink = makeLink('/PC-Build/', 'azPcitBuildLink', 'az-pcit-build-icon',
       '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4M8 9h8M12 6v6"></path>',
       'PC &amp; Hardware', 'Prebuilt PCs, laptops, components &amp; accessories', isBuildPage);
@@ -371,7 +368,7 @@
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Pemeriksaan dan pembaikan Windows dari jauh', isOnlinePage);
 
-    [overviewLink, buildLink, physicalLink, onlineLink].forEach(function (item) {
+    [buildLink, physicalLink, onlineLink].forEach(function (item) {
       dropdown.appendChild(item);
     });
     wrap.appendChild(trigger);
@@ -523,6 +520,7 @@
   }
 
   function syncRepairMenuActive(wrap) {
+    wrap?.querySelectorAll('[data-az-pcit-overview-link]').forEach(function(item){item.remove();});
     if (!wrap || !wrap.classList || !wrap.classList.contains('az-repair-nav')) return;
     var trigger = wrap.querySelector(':scope > .az-repair-trigger');
     var currentPath = normalisePath(window.location.pathname).toLowerCase();
