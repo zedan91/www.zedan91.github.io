@@ -152,14 +152,18 @@ async function azSoftwarePackageOffer(productId){
   throw Error('Offer not found');
 }
 const {createSoftwareAvailability}=require('./lib/azobss-software-availability-v1534');
-async function azFindAvailabilitySoftware(productId){
-  const withObject=product=>product?{...product,r2ObjectKey:azResolvePremiumR2Object({...product,product})?.key||product.r2ObjectKey||''}:null;
-  const remote=await azSoftwarePackageProduct(productId);if(remote)return withObject(remote);
-  const exported=azFindLocalSoftwareProduct(productId);if(exported)return withObject(exported);
-  if(String(productId).toUpperCase()==='AZDM')return {productId:'AZDM',name:'AZDM'};
-  try{const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'Software-Tools/software-directory.json'),'utf8')),rows=Array.isArray(raw)?raw:raw.items||[];return withObject(rows.find(x=>[x.productId,x.id,x.sku].some(v=>String(v||'').trim().toLowerCase()===String(productId).trim().toLowerCase())));}catch{return null;}
+async function azFindAvailabilitySoftware(productId,metadata={}){
+  // Only a verified administrator reaches this control. It can deny an existing
+  // cached SKU without Firestore; these labels/keys never authorize fulfilment.
+  let local=azFindLocalSoftwareProduct(productId);
+  if(!local)try{const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'Software-Tools/software-directory.json'),'utf8')),rows=Array.isArray(raw)?raw:raw.items||[];local=rows.find(x=>[x.productId,x.id,x.sku].some(v=>String(v||'').trim().toLowerCase()===String(productId).trim().toLowerCase()));}catch{}
+  const currentKey=/^software\/[A-Za-z0-9_./ ()-]{1,580}$/.test(String(metadata.r2ObjectKey||''))&&!String(metadata.r2ObjectKey).includes('..')?metadata.r2ObjectKey:'';
+  const product={...(local||{}),productId,name:String(local?.name||metadata.productName||productId).slice(0,180)};
+  const mapped=azResolvePremiumR2Object({...product,product})?.key||product.r2ObjectKey||'';
+  return {...product,r2ObjectKey:currentKey||mapped,additionalObjectKeys:[mapped,currentKey].filter(Boolean)};
 }
-const softwareAvailability=createSoftwareAvailability({getDb:getAzobssBackendDb,getAdminIdentity:azAdminIdentityFromRequest,findProduct:azFindAvailabilitySoftware,readBody,send});
+const {createSoftwareR2Store}=require('./lib/azobss-software-r2-store-v1536');
+const softwareAvailability=createSoftwareAvailability({store:createSoftwareR2Store({baseUrl:azR2DownloadBaseUrl,secret:azR2TokenSecret}),getAdminIdentity:azAdminIdentityFromRequest,findProduct:azFindAvailabilitySoftware,readBody,send});
 
 const handleSoftwarePackages=createOfferHandler({getIdentity:azdmAdminIdentity,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend,
   saveOffer:async(offer,owner)=>{

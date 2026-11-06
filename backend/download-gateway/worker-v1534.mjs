@@ -21,6 +21,8 @@ export default {
         return new Response(null, { status: 204, headers: corsHeaders() });
       }
 
+      if(url.pathname==='/software-availability-admin')return await controlAvailability1536(request,env);
+      if(url.pathname==='/software-availability'&&request.method==='GET')return json(await publicAvailability1536(env));
       if (url.pathname === "/health") {
         return json({
           ok: true,
@@ -29,6 +31,7 @@ export default {
           tokenSecretConfigured: Boolean(env.AZOBSS_R2_TOKEN_SECRET),
           directGate: true,
           softwarePause1534: true,
+          softwareAvailabilityR2Store1536: true,
           rangeSupported: true,
           techVaultUpload: true,
           techVaultDelete: true,
@@ -186,21 +189,41 @@ async function handleVaultUpload(request, env, url) {
   return json({ ok:true, key:payload.key, name, size:storedSize || expectedSize, etag:stored?.httpEtag || "", patch:"719" }, 200, corsHeaders());
 }
 
-async function softwarePauseGuard1534(payload) {
-  // Software maintenance is authoritative at every gate/session request,
-  // including previously issued tokens that only contain the object key.
-  if (!String(payload.key || '').toLowerCase().startsWith('software/')) return;
-  let policy;
-  try {
-    const response = await fetch('https://azobss-backend.onrender.com/api/software-availability', { cache:'no-store', redirect:'error', signal:AbortSignal.timeout(15000) });
-    policy = await response.json();
-    if (!response.ok || policy.ok !== true || !Array.isArray(policy.pausedIds) || !Array.isArray(policy.pausedObjectHashes)) throw Error('Invalid policy');
-  } catch {
-    throw httpError(503, 'Software availability could not be checked. Please try again shortly.');
-  }
-  const id = String(payload.pid || '').trim().toLowerCase();
-  const hash = await sha256Hex(String(payload.key));
-  if ((id && policy.pausedIds.includes(id)) || policy.pausedObjectHashes.includes(hash)) throw httpError(423, 'This software is temporarily unavailable while it is being updated. Please try again later.');
+const AVAILABILITY_KEY1536='__azobss_software_availability/policy-v1536.json';
+async function readAvailability1536(env) {
+  const object=await env.AZOBSS_FILES.get(AVAILABILITY_KEY1536);
+  if(!object)return {state:{items:{},revision:0},object:null};
+  const state=await object.json();
+  if(!state||typeof state.items!=='object'||!Number.isSafeInteger(state.revision))throw httpError(503,'Software availability is temporarily unavailable.');
+  return {state,object};
+}
+async function publicAvailability1536(env) {
+  const {state}=await readAvailability1536(env),paused=Object.entries(state.items).filter(([,x])=>x.paused===true);
+  return {ok:true,pausedIds:paused.map(([id])=>id),pausedObjectHashes:[...new Set(await Promise.all(paused.flatMap(([,x])=>x.objectKeys||[]).map(sha256Hex)))],revision:state.revision};
+}
+async function controlAvailability1536(request,env) {
+  ensureConfigured(env);
+  if(request.method!=='POST')throw httpError(405,'Method not allowed.');
+  const raw=await request.text();if(raw.length>900000)throw httpError(413,'Policy too large.');
+  const signature=request.headers.get('x-azobss-availability-signature')||'',expected=await hmacBase64Url('azobss-availability-v1536\n'+raw,env.AZOBSS_R2_TOKEN_SECRET);
+  if(!timingSafeEqual(signature,expected))throw httpError(403,'Administrator gateway authorization required.');
+  let data;try{data=JSON.parse(raw);}catch{throw httpError(400,'Invalid JSON.');}
+  if(!Number.isFinite(data.atMs)||Math.abs(Date.now()-data.atMs)>60000)throw httpError(403,'Gateway request expired.');
+  const {state,object}=await readAvailability1536(env);
+  if(data.action==='read')return json({ok:true,state});
+  if(data.action!=='write'||!Number.isSafeInteger(data.expectedRevision)||!data.state?.items||Object.keys(data.state.items).length>2000||data.state.revision!==data.expectedRevision+1)throw httpError(400,'Invalid availability update.');
+  for(const [id,row] of Object.entries(data.state.items))if(!/^[a-z0-9][a-z0-9_. -]{0,179}$/.test(id)||typeof row.paused!=='boolean'||String(row.reason||'').length>240||!Array.isArray(row.objectKeys)||row.objectKeys.length>4||row.objectKeys.some(k=>typeof k!=='string'||k.length>600||k.includes('..')))throw httpError(400,'Invalid policy entry.');
+  if(state.revision!==data.expectedRevision)throw httpError(409,'Availability changed. Retry the update.');
+  const onlyIf=new Headers(object?{'If-Match':object.httpEtag}:{'If-None-Match':'*'});
+  const saved=await env.AZOBSS_FILES.put(AVAILABILITY_KEY1536,JSON.stringify(data.state),{onlyIf,httpMetadata:{contentType:'application/json',cacheControl:'no-store'},customMetadata:{purpose:'software-availability-v1536'}});
+  if(!saved)throw httpError(409,'Availability changed. Retry the update.');
+  return json({ok:true,state:data.state});
+}
+async function softwarePauseGuard1534(payload,env) {
+  if(!String(payload.key||'').toLowerCase().startsWith('software/'))return;
+  let policy;try{policy=await publicAvailability1536(env);}catch{throw httpError(503,'Software availability could not be checked. Please try again shortly.');}
+  const id=String(payload.pid||'').trim().toLowerCase(),hash=await sha256Hex(String(payload.key));
+  if((id&&policy.pausedIds.includes(id))||policy.pausedObjectHashes.includes(hash))throw httpError(423,'This software is temporarily unavailable while it is being updated. Please try again later.');
 }
 
 async function handleGate(request, env, ctx, url) {
@@ -209,7 +232,7 @@ async function handleGate(request, env, ctx, url) {
   const payload = await verifySignedToken(signed, env.AZOBSS_R2_TOKEN_SECRET);
   if (payload.mode !== "gate") throw httpError(403, "Invalid confirmation token.");
   validateObjectKey(payload.key);
-  await softwarePauseGuard1534(payload);
+  await softwarePauseGuard1534(payload,env);
 
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isInteger(payload.exp) || payload.exp <= now) throw httpError(410, "This download link has expired.");
@@ -287,7 +310,7 @@ async function handleDownload(request, env, url) {
   const signed = decodeURIComponent(url.pathname.slice("/dl/".length));
   const payload = await verifySignedToken(signed, env.AZOBSS_R2_TOKEN_SECRET);
   validateObjectKey(payload.key);
-  await softwarePauseGuard1534(payload);
+  await softwarePauseGuard1534(payload,env);
 
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isInteger(payload.exp) || payload.exp <= now) throw httpError(410, "Temporary download link expired.");
