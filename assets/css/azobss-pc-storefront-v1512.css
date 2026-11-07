@@ -11,3 +11,5 @@
 
 /* v1517: model titles and technical facts have separate readable space. */
 .az-store-product h3{font-size:15px;min-height:45px;-webkit-line-clamp:2}.az-store-product ul{max-height:none;min-height:88px;font-size:12px;line-height:1.65}.az-store-product ul li{overflow-wrap:anywhere}.az-store-detail h4{font-size:15px;margin:19px 0 9px;color:#d9f4ee}.az-store-detail ul{padding-left:18px}.az-store-detail li{margin-bottom:7px}.az-store-price{padding-top:5px}@media(max-width:480px){.az-store-product ul{min-height:0}.az-store-product h3{min-height:0}}
+
+.az-store-product .az-store-details{align-self:flex-start;text-align:left;font-size:12px;padding:6px 0;text-decoration:underline;text-underline-offset:3px}.az-store-product ul li{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
