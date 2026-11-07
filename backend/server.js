@@ -18,6 +18,7 @@ import {validateSettings,malaysiaMonth,scheduledAt,nextScheduledAt,publicEntry,p
 import {createSettingsStore,createDrawRunner,problem} from "./lucky-draw-settings.js";
 import {savePrizeGallery} from "./lucky-draw-gallery.js";
 import {createPrizeStore} from "./lucky-draw-prize-store.js";
+import {createPurchaseChecker,PURCHASE_POLICY} from "./lucky-draw-purchase.js";
 
 dotenv.config();
 
@@ -1981,7 +1982,7 @@ async function azVerifyFirebaseIdTokenViaIdentityToolkit(token) {
     const row = data.users[0] || {};
     const uid = String(row.localId || "").trim();
     if (!uid) return null;
-    return { uid, email: String(row.email || "").trim().toLowerCase() };
+    return { uid, email: String(row.email || "").trim().toLowerCase(),emailVerified:row.emailVerified===true };
   } catch (err) {
     console.warn("Firebase Identity Toolkit token fallback failed:", err && (err.message || err));
     return null;
@@ -2010,13 +2011,14 @@ async function getFirebaseAdminIdentity(req) {
     if (!decoded) {
       const verified = await azVerifyFirebaseIdTokenViaIdentityToolkit(token);
       if (!verified) return null;
-      decoded = { uid: verified.uid, email: verified.email };
+      decoded = { uid: verified.uid, email: verified.email,email_verified:verified.emailVerified===true };
     }
     const authEmail = String(decoded.email || "").toLowerCase();
     const identity = {
       uid: String(decoded.uid || ""),
       email: authEmail,
       authEmail,
+      emailVerified:decoded.email_verified===true,
       profileEmail: "",
       username: "",
       role: "",
@@ -3212,7 +3214,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, service: "AZOBSS Lucky Draw Backend", time: new Date().toISOString() });
+  res.json({ ok: true, service: "AZOBSS Lucky Draw Backend", release:"1550", purchasePolicy:PURCHASE_POLICY, time: new Date().toISOString() });
 });
 
 
@@ -4337,7 +4339,7 @@ app.get("/api/lucky-draw/share-status", async (req, res) => {
     if(sameUser){blockCode="ALREADY_JOINED";blockReason="Akaun ini sudah join Lucky Draw bulan ini.";}
     else if(sameDevice){blockCode="DUPLICATE_DEVICE";blockReason="Device ini sudah digunakan untuk join Lucky Draw bulan ini.";}
     else if(sameIp){blockCode="DUPLICATE_IP";blockReason="IP address ini sudah digunakan untuk join Lucky Draw bulan ini.";}
-    return res.json({ok:true,storage:useLuckyDrawFirestore()?"firestore":"json",monthKey:key,ref,count,valid:count>=1,eligible:count>=1&&!blockCode,blockCode,blockReason});
+    return res.json({ok:true,storage:useLuckyDrawFirestore()?"firestore":"json",monthKey:key,ref,count,valid:false,eligible:false,purchaseRequired:true,purchasePolicy:PURCHASE_POLICY,blockCode,blockReason});
   }catch(err){return res.status(500).json({ok:false,error:err?.message||"Share status failed"});}
 });
 app.post("/api/lucky-draw/share-action", async (req, res) => {
@@ -4363,7 +4365,7 @@ app.post("/api/lucky-draw/share-action", async (req, res) => {
       const file=getProductShareActionFile(key);const rows=readJson(file,[]);const existing=rows.find(r=>!r.deleted&&r.monthKey===key&&r.ref===ref&&r.productId===productId);duplicate=!!existing;if(!existing){rows.push({id:`${key}_${ref}_${productId}_${Date.now()}`,...row});writeJson(file,rows);}
     }
     const count=useLuckyDrawFirestore()?await luckyDrawCountShareActionsFirestore(key,ref):countProductShareActions(key,ref);
-    return res.json({ok:true,storage:useLuckyDrawFirestore()?"firestore":"json",duplicate,ref,productId,count,unlocked:true});
+    return res.json({ok:true,storage:useLuckyDrawFirestore()?"firestore":"json",duplicate,ref,productId,count,unlocked:false,purchaseRequired:true,purchasePolicy:PURCHASE_POLICY});
   }catch(err){return res.status(500).json({ok:false,error:err?.message||"Share record failed"});}
 });
 
@@ -4593,7 +4595,9 @@ async function luckyDrawWriteParticipantFirestore(key, entry){
     const [existing,winner,month,configSnap,participants]=await Promise.all([tx.get(ref),tx.get(luckyDrawWinnerRef(key)),tx.get(mref),tx.get(luckySettings.reference()),tx.get(luckyDrawParticipantsRef(key).where("deleted","==",false))]);
     const config=validateSettings(configSnap.exists?configSnap.data().config:{});
     if(winner.exists||!config.registrationOpen||(scheduledAt(config,key)!==null&&Date.now()>=scheduledAt(config,key)))throw problem(403,"Penyertaan telah ditutup atau dijeda.");
-    if(config.shareRequired&&entry.productShareCount<config.minShares)throw problem(403,"Syarat share belum lengkap.");
+    const purchase=await luckyPurchase({uid:entry.uid},tx);
+    if(!purchase)throw problem(403,"Pembelian Liyabudun dengan bayaran disahkan diperlukan.");
+    entry.purchasePolicy=PURCHASE_POLICY;entry.purchaseOrderId=purchase.orderId;
     if(existing.exists&&!existing.data().deleted)throw problem(409,"Akaun ini sudah join bulan ini.");
     for(const doc of participants.docs){const row=doc.data();if(row.uid===entry.uid||row.deviceFingerprint===entry.deviceFingerprint||(entry.ipAddress&&row.ipAddress===entry.ipAddress))throw problem(409,"Akaun, peranti atau IP ini sudah digunakan untuk join bulan ini.");}
     tx.set(ref,entry);tx.set(mref,{participantCount:luckyDrawFieldValue.increment(1),updatedAtMs:Date.now(),updatedAt:new Date().toISOString()},{merge:true});
@@ -4656,9 +4660,20 @@ async function luckyDrawWinnerHistoryFirestore(limit = 24){
 }
 
 const luckySettings = createSettingsStore({db:luckyDrawDb,file:path.join(DATA_DIR,"lucky-draw-settings.json"),readJson});
-const luckyRunner = createDrawRunner({db:luckyDrawDb,settings:luckySettings,readJson,getWinnerFile,getEntriesFile,monthRef:luckyDrawMonthRef,participantsRef:luckyDrawParticipantsRef,winnerRef:luckyDrawWinnerRef});
+const luckyPurchase=createPurchaseChecker({getDb:getAzobssBackendDb,readOrders:readPremiumOrders});
+const luckyRunner = createDrawRunner({db:luckyDrawDb,settings:luckySettings,readJson,getWinnerFile,getEntriesFile,monthRef:luckyDrawMonthRef,participantsRef:luckyDrawParticipantsRef,winnerRef:luckyDrawWinnerRef,findPurchase:luckyPurchase});
+app.get("/api/lucky-draw/eligibility",async(req,res)=>{
+ res.setHeader("Cache-Control","no-store");
+ try{
+  const identity=await getFirebaseAdminIdentity(req);
+  if(!identity?.uid)return res.status(401).json({ok:false,code:"LOGIN_REQUIRED",purchasePolicy:PURCHASE_POLICY,error:"Login dahulu untuk semak pembelian Liyabudun."});
+  if(!identity.emailVerified)return res.status(403).json({ok:false,code:"EMAIL_VERIFICATION_REQUIRED",purchasePolicy:PURCHASE_POLICY,error:"Sahkan e-mel akaun dahulu, kemudian semak semula."});
+  const purchase=await luckyPurchase(identity);
+  return res.json({ok:true,eligible:!!purchase,purchaseVerified:!!purchase,purchasePolicy:PURCHASE_POLICY,monthKey:monthKey(),code:purchase?"PURCHASE_VERIFIED":"LIYABUDUN_PURCHASE_REQUIRED"});
+ }catch{return res.status(503).json({ok:false,code:"PURCHASE_CHECK_UNAVAILABLE",purchasePolicy:PURCHASE_POLICY,error:"Pembelian belum dapat disemak. Cuba semula; jangan buat pembelian kedua."});}
+});
 app.get("/api/lucky-draw/settings", async (req,res)=>{
-  try {const data=await luckySettings.get();res.setHeader("Cache-Control","no-store");res.json({ok:true,...data,nextDrawAt:nextScheduledAt(data.config),serverTime:Date.now(),settingsProtocol:1});}
+  try {const data=await luckySettings.get();res.setHeader("Cache-Control","no-store");res.json({ok:true,...data,nextDrawAt:nextScheduledAt(data.config),serverTime:Date.now(),settingsProtocol:1,purchasePolicy:PURCHASE_POLICY});}
   catch {res.status(503).json({ok:false,error:"Tetapan Lucky Draw belum dapat dimuatkan."});}
 });
 app.put("/api/lucky-draw/settings", requireAdmin, async (req,res)=>{
@@ -4716,14 +4731,14 @@ app.get("/api/lucky-draw/entries/export", requireAdmin, async (req, res) => {
     const winner = useLuckyDrawFirestore() ? await luckyDrawGetWinnerFirestore(key) : readJson(getWinnerFile(key), null);
     const winnerUsername = winner && winner.usernameKey ? String(winner.usernameKey).toLowerCase() : "";
     const headers = ["No","Month","Name","Username","Email","Phone","Referral Valid Count","Joined Date MY","Joined At ISO","Device Hash","IP Hash","Eligible Status","Winner"];
-    const rows = [headers].concat(entries.map((entry, index) => {
+    const rows = [headers].concat(await Promise.all(entries.map(async(entry, index) => {
       const username = String(entry.usernameKey || "").toLowerCase();
       const referralCount = Number(entry.referralCount || entry.productShareCount || 0);
-      const eligible = referralCount >= 1 && !entry.deleted ? "ELIGIBLE" : "NOT_ELIGIBLE";
+      const eligible = !entry.deleted && await luckyPurchase({uid:entry.uid}) ? "ELIGIBLE" : "NOT_ELIGIBLE";
       const joinedDate = entry.joinedAt ? new Date(entry.joinedAt).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" }) : "";
       const short = (v, n) => String(v || "").length > n ? String(v || "").slice(0, n) + "..." : String(v || "");
       return [index + 1, entry.monthKey || key, entry.name || "", entry.usernameKey || "", entry.contactEmail || "", entry.phone || "", referralCount, joinedDate, entry.joinedAt || "", short(entry.deviceFingerprint, 16), short(entry.ipAddress, 10), eligible, winnerUsername && username === winnerUsername ? "YES" : "NO"];
-    }));
+    })));
     const csv = rows.map((row) => row.map((value) => '"' + String(value ?? "").replace(/"/g, '""') + '"').join(",")).join("\n");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="AZOBSS-Lucky-Draw-Participants-${key}.csv"`);
@@ -4742,6 +4757,7 @@ app.post("/api/lucky-draw/entries", async (req, res) => {
   if(scheduledAt(drawConfig,key)!==null&&Date.now()>=scheduledAt(drawConfig,key))return res.status(403).json({ok:false,code:"DRAW_CLOSED",error:"Tempoh penyertaan bulan ini telah tamat."});
   const identity = await getFirebaseAdminIdentity(req);
   if (!identity || !identity.uid) return res.status(401).json({ ok:false, error:"Login required before joining Lucky Draw." });
+  if(!identity.emailVerified)return res.status(403).json({ok:false,code:"EMAIL_VERIFICATION_REQUIRED",error:"Sahkan e-mel akaun sebelum menyertai Lucky Draw."});
   const usernameKey = cleanShareUsername(identity.username || req.body.usernameKey);
   if (!usernameKey) return res.status(400).json({ ok:false, error:"Registered username required" });
   const requestedUsername = cleanShareUsername(req.body.usernameKey);
@@ -4751,11 +4767,10 @@ app.post("/api/lucky-draw/entries", async (req, res) => {
   const deviceFingerprint = cleanText(req.body.deviceFingerprint, 160);
   const ipAddress = getClientIp(req);
 
-  const productShareCount = useLuckyDrawFirestore() ? await luckyDrawCountShareActionsFirestore(key, usernameKey) : countProductShareActions(key, usernameKey);
-  const referralCount = productShareCount;
-  if (drawConfig.shareRequired && productShareCount < drawConfig.minShares) {
-    return res.status(403).json({ ok: false, code: "PRODUCT_SHARE_REQUIRED", error: "Share sekurang-kurangnya satu produk Software atau CAD Tools dahulu untuk unlock Lucky Draw.", referralCount, productShareCount });
-  }
+  let purchase;
+  try{purchase=await luckyPurchase(identity);}catch{return res.status(503).json({ok:false,code:"PURCHASE_CHECK_UNAVAILABLE",error:"Pembelian belum dapat disemak. Cuba semula."});}
+  if(!purchase)return res.status(403).json({ok:false,code:"LIYABUDUN_PURCHASE_REQUIRED",error:"Beli Liyabudun pada akaun ini dan tunggu bayaran disahkan sebelum menyertai."});
+  const productShareCount=0,referralCount=0;
 
   if (!deviceFingerprint) {
     return res.status(400).json({ ok: false, error: "Device fingerprint required" });
@@ -4839,6 +4854,8 @@ app.post("/api/lucky-draw/entries", async (req, res) => {
       referralCount,
       productShareCount,
       productShareRequired: drawConfig.shareRequired,
+      purchasePolicy:PURCHASE_POLICY,
+      purchaseOrderId:purchase.orderId,
       deviceFingerprint,
       ipAddress,
       userAgent: cleanText(req.get("user-agent"), 300),
@@ -4870,9 +4887,11 @@ app.post("/api/lucky-draw/entries", async (req, res) => {
 
 app.patch("/api/lucky-draw/entries/:id", requireAdmin, async (req, res) => {
   const key = req.body.monthKey || req.query.monthKey || monthKey();
+  if(Object.keys(req.body).some(name=>!['monthKey','name','phone','contactEmail'].includes(name)))return res.status(400).json({ok:false,error:"Identiti, bukti pembelian dan status penyertaan tidak boleh diubah melalui editor."});
+  const patch=Object.fromEntries(['name','phone','contactEmail'].filter(name=>Object.hasOwn(req.body,name)).map(name=>[name,cleanText(req.body[name],name==='phone'?60:180)]));
   try {
     if (useLuckyDrawFirestore()) {
-      const entry = await luckyDrawPatchParticipantFirestore(key, req.params.id, req.body);
+      const entry = await luckyDrawPatchParticipantFirestore(key, req.params.id, patch);
       if (!entry) return res.status(404).json({ ok: false, error: "Entry not found" });
       return res.json({ ok: true, storage: "firestore", entry });
     }
@@ -4880,7 +4899,7 @@ app.patch("/api/lucky-draw/entries/:id", requireAdmin, async (req, res) => {
     const entries = readJson(file, []);
     const index = entries.findIndex((e) => e.id === req.params.id || `${e.monthKey}_${e.usernameKey}` === req.params.id);
     if (index < 0) return res.status(404).json({ ok: false, error: "Entry not found" });
-    entries[index] = { ...entries[index], ...req.body, editedAt: new Date().toISOString() };
+    entries[index] = { ...entries[index], ...patch, editedAt: new Date().toISOString() };
     writeJson(file, entries);
     res.json({ ok: true, storage: "json", entry: entries[index] });
   } catch (err) { res.status(500).json({ ok: false, error: err.message || "Patch failed" }); }
@@ -4938,15 +4957,7 @@ app.post("/api/lucky-draw/winner/spin",requireAdmin,async(req,res)=>{
 });
 
 app.delete("/api/lucky-draw/winner", requireAdmin, async (req, res) => {
-  const key = req.query.monthKey || monthKey();
-  try {
-    if (useLuckyDrawFirestore()) await luckyDrawResetWinnerFirestore(key);
-    else {
-      const file = getWinnerFile(key);
-      if (fs.existsSync(file)) fs.unlinkSync(file);
-    }
-    res.json({ ok: true, storage: useLuckyDrawFirestore() ? "firestore" : "json", reset: true, monthKey: key });
-  } catch (err) { res.status(500).json({ ok: false, error: err.message || "Reset winner failed" }); }
+  return res.status(409).json({ok:false,code:"OFFICIAL_RESULT_LOCKED",error:"Keputusan cabutan rasmi dikunci. Pemenang tidak boleh dipadam atau dicabut semula."});
 });
 
 // Best effort while this service is awake; a free Render service can sleep.

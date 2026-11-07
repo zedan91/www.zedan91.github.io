@@ -1,4 +1,4 @@
-/* AZOBSS Lucky Draw Studio 1406 — scoped to this page. */
+/* AZOBSS Lucky Draw Studio — scoped to this page. */
 body:has(.ld-page){--ld-accent:#e8c878;--ld-glow:#174e45;--ld-bg:#090f14;background:radial-gradient(ellipse at 80% 8%,#12372f80,transparent 40%),#090f14;font-family:Inter,"Segoe UI",Arial,sans-serif;color:#f4f6f4}
 body[data-ld-theme="royal"]{--ld-glow:#47315e;background:radial-gradient(ellipse at 80% 8%,#43275380,transparent 40%),#100d18}
 body[data-ld-theme="midnight"]{--ld-glow:#1b3e6a;background:radial-gradient(ellipse at 80% 8%,#153a6280,transparent 40%),#090f18}

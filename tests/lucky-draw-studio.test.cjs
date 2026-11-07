@@ -31,7 +31,7 @@ test('JSON draw enforces minimum, persists one cryptographic selection and ignor
  const settings=createSettingsStore({file:path.join(dir,'settings.json'),readJson,now});await settings.save({minParticipants:2},0,'admin');
  const getWinnerFile=key=>path.join(dir,key+'-winner.json'),getEntriesFile=key=>path.join(dir,key+'-entries.json');
  const rows=[{usernameKey:'a',uid:'a',monthKey:'2026-10'},{usernameKey:'b',uid:'b',monthKey:'2026-10'}];let calls=0;
- const runner=createDrawRunner({settings,readJson,getWinnerFile,getEntriesFile,now,randomInt:size=>{calls++;assert.equal(size,2);return 1;}});
+ const runner=createDrawRunner({settings,readJson,getWinnerFile,getEntriesFile,now,findPurchase:async({uid})=>uid?{orderId:'synthetic-paid-order'}:null,randomInt:size=>{calls++;assert.equal(size,2);return 1;}});
  await assert.rejects(()=>runner.run('2026-10'),error=>error.status===409);atomicJson(getEntriesFile('2026-10'),rows);
  await assert.rejects(()=>runner.run('2026-10','schedule'),error=>error.status===409);
  const results=await Promise.all(Array.from({length:10},()=>runner.run('2026-10')));assert.equal(calls,1);assert.equal(results[0].winner.usernameKey,'b');assert.ok(results.every(result=>result.winner.drawId===results[0].winner.drawId));assert.equal(results[0].winner.method,'crypto.randomInt');
@@ -46,8 +46,8 @@ class Firestore{
 test('Firestore transaction serializes concurrent draws and keeps one immutable winner',async()=>{
  const {createSettingsStore,createDrawRunner}=await service,db=new Firestore(),now=()=>Date.parse('2026-10-24T12:00:00+08:00');
  const settings=createSettingsStore({db,now});await settings.save({minParticipants:2,scheduleMode:'manual'},0,'admin');
- const rows=[{usernameKey:'a',monthKey:'2026-10'},{usernameKey:'b',monthKey:'2026-10'}];let calls=0;
- const runner=createDrawRunner({db,settings,now,monthRef:key=>({key:'month/'+key}),winnerRef:key=>({key:'winner/'+key}),participantsRef:()=>({where:()=>({query:true,rows:()=>rows})}),randomInt:()=>{calls++;return 0;}});
+ const rows=[{usernameKey:'a',uid:'synthetic-a',monthKey:'2026-10'},{usernameKey:'b',uid:'synthetic-b',monthKey:'2026-10'}];let calls=0;
+ const runner=createDrawRunner({db,settings,now,findPurchase:async({uid})=>uid?{orderId:'synthetic-paid-order'}:null,monthRef:key=>({key:'month/'+key}),winnerRef:key=>({key:'winner/'+key}),participantsRef:()=>({where:()=>({query:true,rows:()=>rows})}),randomInt:()=>{calls++;return 0;}});
  const results=await Promise.all(Array.from({length:12},()=>runner.run('2026-10')));assert.equal(calls,1);assert.equal(new Set(results.map(result=>result.winner.drawId)).size,1);assert.equal(db.values.get('month/2026-10').drawStatus,'closed');
 });
 test('concurrent Firestore settings edits accept one revision and reject a stale admin edit',async()=>{

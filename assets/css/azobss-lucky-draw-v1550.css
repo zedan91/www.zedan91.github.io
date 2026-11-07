@@ -1,0 +1,51 @@
+/* Customer purchase campaign: readable controls, responsive cards, no external fonts. */
+body:has(.ld-page){background:radial-gradient(ellipse at 15% 4%,#244a3c66,transparent 36%),radial-gradient(ellipse at 90% 20%,#8c6b2530,transparent 40%),#090f14}
+@media(max-width:760px){body:has(.ld-page){padding-top:112px!important}}
+.ld-page .ld-hero{gap:42px;padding:36px 0 30px;align-items:center}
+.ld-page .ld-hero-copy{min-width:0}
+.ld-page #ld-title{font-size:clamp(36px,4.3vw,58px);max-width:12em;letter-spacing:-1.8px;line-height:1.08}
+.ld-page .ld-intro{margin-bottom:20px}
+.ld-product-pass{display:flex;align-items:center;gap:14px;max-width:440px;margin:22px 0;color:#eff8f3;text-decoration:none;padding:14px 16px;border:1px solid #e8c87845;border-radius:16px;background:linear-gradient(115deg,#e8c87813,#3baf8710);box-shadow:inset 0 1px #ffffff0b}
+.ld-product-pass img{width:48px;height:48px;object-fit:contain;flex-shrink:0;border-radius:12px}
+.ld-product-pass>span{display:grid;gap:2px;min-width:0}
+.ld-product-pass small{font-size:10px;letter-spacing:1.2px;color:var(--ld-accent)}
+.ld-product-pass strong{font-size:20px;line-height:1.3;letter-spacing:-.3px}
+.ld-product-pass span span{font-size:12px;color:#bad2c7;line-height:1.5}
+.ld-product-pass b{margin-left:auto;font-size:23px;color:var(--ld-accent)}
+.ld-product-pass:hover{border-color:var(--ld-accent);background:#e8c87818}
+.ld-page .ld-stage{background:radial-gradient(ellipse at 50% 40%,var(--ld-glow),#0e1918 78%);border:1px solid #e8c8784d;box-shadow:0 22px 75px #0004,inset 0 1px #ffffff13;border-radius:28px;overflow:hidden;min-width:0}
+.ld-page .ld-wheel-wrap{max-width:370px;margin:20px auto 16px}
+.ld-page .ld-trust>span{border:1px solid #ffffff20;border-radius:30px;padding:5px 10px;background:#ffffff04;font-size:12px}
+.ld-page .ld-trust>span::before{color:var(--ld-accent)}
+.ld-page .ld-metrics{border-color:#e8c8782b;background:linear-gradient(100deg,#ffffff04,#ffffff01);border-radius:18px;overflow:hidden}
+.ld-fairness{margin:35px 0 42px;border:1px solid #ffffff17;border-radius:22px;padding:26px;background:linear-gradient(140deg,#14231f,#0e191b)}
+.ld-fair-heading h2{margin:8px 0!important;font-size:clamp(24px,2.4vw,31px)!important;letter-spacing:-.7px}
+.ld-fair-heading>p{color:#adc4b9;line-height:1.65;font-size:15px;margin:0 0 22px}
+.ld-fair-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.ld-fair-grid article{padding:20px;border:1px solid #ffffff14;border-radius:15px;background:#ffffff03}
+.ld-assurance-icon{display:inline-grid;place-items:center;min-width:36px;height:36px;border:1px solid #e8c87845;border-radius:11px;color:var(--ld-accent);font-size:13px;font-weight:800;background:#e8c8780b}
+.ld-fair-grid h3{font-size:17px;line-height:1.45;margin:14px 0 8px;color:#f1f7ef}
+.ld-fair-grid p,.ld-fair-limit p{font-size:14px;line-height:1.8;color:#b8cfc2;margin:0}
+.ld-fair-limit{margin-top:18px;padding-top:16px;border-top:1px solid #ffffff14}
+.ld-fair-limit summary{cursor:pointer;color:#e4d6af;font-size:14px;line-height:1.6}
+.ld-fair-limit p{margin-top:12px;max-width:950px}
+.ld-page .ld-join-panel{border:1px solid #e8c8783a!important;background:linear-gradient(155deg,#1b2c23,#0e1b1c)!important;border-radius:20px!important}
+.ld-page .ld-join-panel .rules{display:none}
+.ld-page .product-share-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ld-page .product-share-actions #joinLuckyDrawButton{grid-column:1/-1;order:4;min-height:50px!important;box-shadow:0 5px 22px #2de0ab14}
+.ld-page .product-share-actions #confirmShareButton{grid-column:1/-1;order:3;background:#e8c87812;border-color:#e8c87866;color:#f5dea6}
+.ld-page .product-share-actions #luckyDrawAuthButton{grid-column:1/-1;order:5}
+.ld-page .product-share-actions #copyInviteButton{background:var(--ld-accent);border-color:var(--ld-accent);color:#17251a}
+.ld-page .product-share-actions #shareInviteButton{background:#ffffff04;border-color:#ffffff28;color:#d4e6dd}
+.ld-page .mini-status-grid{border-radius:12px;background:#07141244;padding:12px}
+.ld-page .lucky-join-checklist{gap:8px!important}
+.ld-page .lucky-join-step{padding:12px 10px!important;border-radius:12px!important;min-width:0;overflow-wrap:anywhere}
+.ld-page .lucky-join-step strong{font-size:14px!important}
+.ld-page .lucky-join-step small{font-size:12px!important}
+.ld-page .referral-info-note{background:transparent!important;border:0!important;border-top:1px solid #ffffff1b!important;padding:15px 0 0!important;border-radius:0!important;font-size:14px!important}
+.ld-page .referral-info-note li{margin:6px 0}
+.ld-page #joinStatus{border:1px solid #ffffff1c;background:#07141266;border-radius:10px;padding:12px}
+.ld-page .prize-panel{border-radius:20px!important;border-color:#ffffff24!important}
+.ld-settings #resetWinnerButton{cursor:not-allowed}
+@media(max-width:1000px){.ld-page .ld-hero{gap:25px}.ld-fair-grid{gap:10px}.ld-fair-grid article{padding:15px}.ld-fairness{padding:22px}}
+@media(max-width:760px){.ld-page .ld-hero{padding:26px 0;gap:22px}.ld-page #ld-title{font-size:39px!important;max-width:14em}.ld-page .ld-hero-links{gap:14px}.ld-page .ld-wheel-wrap{max-width:300px}.ld-product-pass{max-width:none}.ld-page .ld-trust{gap:8px}.ld-fairness{padding:20px 16px;margin:25px 0 30px;border-radius:18px}.ld-fair-grid{grid-template-columns:1fr;gap:10px}.ld-fair-grid article{display:grid;grid-template-columns:36px 1fr;column-gap:13px;padding:15px}.ld-fair-grid h3{margin:3px 0 7px}.ld-fair-grid p{grid-column:2;font-size:14px}.ld-assurance-icon{grid-row:1/3}.ld-page .ld-join-panel{padding:20px 16px!important}.ld-page .product-share-actions .btn{font-size:14px!important;padding:10px!important}.ld-page .lucky-join-step strong{font-size:13px!important}.ld-page .lucky-join-step small{font-size:12px!important}.ld-page .mini-status strong{font-size:14px!important}}

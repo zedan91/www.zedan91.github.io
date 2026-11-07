@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {DEFAULTS,validateSettings,scheduledAt,eligibleEntries,malaysiaMonth} from './lucky-draw-model.js';
+import {purchasedEntries} from './lucky-draw-purchase.js';
 export const problem=(status,message)=>Object.assign(new Error(message),{status});
 export function atomicJson(file,value){fs.mkdirSync(path.dirname(file),{recursive:true});const temp=file+'.'+crypto.randomUUID()+'.tmp';try{fs.writeFileSync(temp,JSON.stringify(value,null,2));fs.renameSync(temp,file);}finally{if(fs.existsSync(temp))fs.unlinkSync(temp);}}
 export function createSettingsStore({db,file,readJson,now=Date.now}){
@@ -16,7 +17,8 @@ export function createSettingsStore({db,file,readJson,now=Date.now}){
  }
  return {get,save,reference,defaults:DEFAULTS};
 }
-export function createDrawRunner({db,settings,readJson,getWinnerFile,getEntriesFile,monthRef,participantsRef,winnerRef,now=Date.now,randomInt=crypto.randomInt}){
+export function createDrawRunner({db,settings,readJson,getWinnerFile,getEntriesFile,monthRef,participantsRef,winnerRef,findPurchase=async()=>null,now=Date.now,randomInt=crypto.randomInt}){
+ const pending=new Map();
  function select(key,rows,config,source){
   const pool=eligibleEntries(rows,key);if(pool.length<config.minParticipants)throw problem(409,'Minimum '+config.minParticipants+' peserta diperlukan. Kini '+pool.length+'.');
   if(source==='schedule'&&(scheduledAt(config,key)===null||now()<scheduledAt(config,key)))throw problem(409,'Cabutan belum dijadualkan.');
@@ -27,13 +29,17 @@ export function createDrawRunner({db,settings,readJson,getWinnerFile,getEntriesF
   if(db)return db.runTransaction(async tx=>{
    const wref=winnerRef(key),mref=monthRef(key),[existing,month,configRecord,entries]=await Promise.all([tx.get(wref),tx.get(mref),tx.get(settings.reference()),tx.get(participantsRef(key).where('deleted','==',false))]);
    if(existing.exists)return {winner:existing.data(),alreadySelected:true};
-   const config=validateSettings(configRecord.exists?configRecord.data().config:{}),rows=entries.docs.map(doc=>({id:doc.id,...doc.data()})),winner=select(key,rows,config,source);
+   const config=validateSettings(configRecord.exists?configRecord.data().config:{}),rows=entries.docs.map(doc=>({id:doc.id,...doc.data()}));
+   const qualified=await purchasedEntries(eligibleEntries(rows,key),findPurchase,tx),winner=select(key,qualified,config,source);
    tx.set(wref,winner);tx.set(mref,{winnerUsername:winner.usernameKey,winnerSelectedAt:winner.selectedAt,drawStatus:'closed',updatedAtMs:now()},{merge:true});return {winner,alreadySelected:false};
   });
-  const {config}=await settings.get();
-  // No asynchronous boundary between the JSON snapshot and atomic result commit.
-  const existing=readJson(getWinnerFile(key),null);if(existing)return {winner:existing,alreadySelected:true};
-  const winner=select(key,readJson(getEntriesFile(key),[]),config,source);atomicJson(getWinnerFile(key),winner);return {winner,alreadySelected:false};
+  const task=(pending.get(key)||Promise.resolve()).catch(()=>{}).then(async()=>{
+   const {config}=await settings.get(),existing=readJson(getWinnerFile(key),null);if(existing)return {winner:existing,alreadySelected:true};
+   const rows=eligibleEntries(readJson(getEntriesFile(key),[]),key),qualified=await purchasedEntries(rows,findPurchase);
+   const winner=select(key,qualified,config,source);atomicJson(getWinnerFile(key),winner);return {winner,alreadySelected:false};
+  });
+  pending.set(key,task);
+  try{return await task;}finally{if(pending.get(key)===task)pending.delete(key);}
  }
  return {run};
 }

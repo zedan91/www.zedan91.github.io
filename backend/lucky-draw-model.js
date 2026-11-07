@@ -4,9 +4,9 @@ export const DEFAULTS=Object.freeze({
  subtitleMs:'Hadiah istimewa. Komuniti hebat. Sertai cabutan bulanan AZOBSS dan nantikan detik nama anda diumumkan.',
  subtitleEn:'Great prizes. An incredible community. Join the AZOBSS monthly draw and look forward to your winning moment.',
  badgeMs:'CABUTAN EKSKLUSIF AZOBSS',badgeEn:'THE AZOBSS GIVEAWAY',
- announcementMs:'',announcementEn:'',termsMs:'Satu penyertaan bagi setiap akaun. Pemenang akan dihubungi oleh AZOBSS. Tiada bayaran diperlukan untuk menyertai.',
- termsEn:'One entry per account. Winners will be contacted by AZOBSS. No purchase is required to enter.',
- theme:'emerald',accent:'#e8c878',registrationOpen:true,minParticipants:100,shareRequired:true,minShares:1,
+ announcementMs:'',announcementEn:'',termsMs:'Khas untuk pembeli Liyabudun dengan bayaran disahkan pada akaun yang sama. Pembelian terdahulu yang sah diterima. Satu penyertaan bagi setiap akaun setiap bulan; lesen tambahan tidak menambah peluang. Pembelian dibatalkan, dipulangkan atau ujian tidak layak. Pemenang dipilih secara rawak daripada penyertaan yang layak dan dihubungi oleh AZOBSS. Pembelian bukan jaminan menang.',
+ termsEn:'For Liyabudun customers with a verified payment on the same account. Valid previous purchases qualify. One entry per account per month; extra licences do not increase your chances. Cancelled, refunded and test purchases do not qualify. Winners are randomly selected from eligible entries and contacted by AZOBSS. A purchase does not guarantee a win.',
+ theme:'emerald',accent:'#e8c878',registrationOpen:true,minParticipants:100,shareRequired:false,minShares:1,
  scheduleMode:'monthly',drawDay:0,drawHour:22,drawMinute:0,spinSeconds:6,
  soundEnabled:false,confettiEnabled:true,showParticipants:true,showHistory:true
 });
@@ -29,6 +29,12 @@ export function validateSettings(value){
    if((key.startsWith('title')||key.startsWith('badge'))&&!text)throw Error('Tajuk/lencana diperlukan.');result[key]=text;
   }
  }
+ // Retain legacy config fields for compatibility; sharing cannot bypass purchase eligibility.
+ result.shareRequired=false;
+ const oldMs='Satu penyertaan bagi setiap akaun. Pemenang akan dihubungi oleh AZOBSS. Tiada bayaran diperlukan untuk menyertai.';
+ const oldEn='One entry per account. Winners will be contacted by AZOBSS. No purchase is required to enter.';
+ if(result.termsMs===oldMs)result.termsMs=DEFAULTS.termsMs;
+ if(result.termsEn===oldEn)result.termsEn=DEFAULTS.termsEn;
  return result;
 }
 export function malaysiaMonth(now=Date.now()){
