@@ -1754,6 +1754,7 @@ function azobssEnsurePublicPaNavButtons(){
   });
   return found;
 }
+function azobssSetBodyRoleFlag1548(name,enabled){const classes=document.body?.classList;if(classes&&classes.contains(name)!==!!enabled)classes.toggle(name,!!enabled);}
 function syncHeader(user){
   const authActions = $('siteAuthActions');
   const tools = $('marketUserTools');
@@ -1789,8 +1790,8 @@ function syncHeader(user){
   // show the Staff/Admin icon via inline display while it remained unclickable.
   // Keep body role classes and pointer-events in sync here so every page uses
   // the same behaviour, including PC & IT Services pages.
-  document.body.classList.toggle('az-role-is-admin', !!isAdminUser);
-  document.body.classList.toggle('az-role-is-staff', !!isStaffUser);
+  azobssSetBodyRoleFlag1548('az-role-is-admin', !!isAdminUser);
+  azobssSetBodyRoleFlag1548('az-role-is-staff', !!isStaffUser);
 
   adminButtons.forEach((el)=>{
     const show = !!isAdminUser;
@@ -1826,8 +1827,8 @@ function syncHeader(user){
     el.style.setProperty('display', show ? 'inline-flex' : 'none', 'important');
     el.style.setProperty('visibility', show ? 'visible' : 'hidden', 'important');
   });
-  document.body.classList.toggle('is-admin', !!isAdminUser);
-  document.body.classList.toggle('has-pa-access', !!canShowPaBm);
+  azobssSetBodyRoleFlag1548('is-admin', !!isAdminUser);
+  azobssSetBodyRoleFlag1548('has-pa-access', !!canShowPaBm);
   paBmButtons.forEach((paBm) => {
     paBm.hidden = !canShowPaBm;
     paBm.classList.toggle('is-hidden', !canShowPaBm);
@@ -1842,15 +1843,15 @@ function syncHeader(user){
     publicPa.style.setProperty('visibility', canShowPublicPa ? 'visible' : 'hidden', 'important');
     publicPa.style.setProperty('pointer-events', canShowPublicPa ? 'auto' : 'none', 'important');
   });
-  document.body.classList.toggle('can-buy-public-pa', !!canShowPublicPa);
+  azobssSetBodyRoleFlag1548('can-buy-public-pa', !!canShowPublicPa);
   if (display) {
-    document.body.classList.add('is-authenticated');
+    azobssSetBodyRoleFlag1548('is-authenticated',true);
     if (name) name.textContent = display;
     if (avatar) avatar.textContent = initials(display);
     if (authActions) authActions.style.setProperty('display','none','important');
     if (tools) tools.style.setProperty('display','flex','important');
   } else {
-    document.body.classList.remove('is-authenticated');
+    azobssSetBodyRoleFlag1548('is-authenticated',false);
     // v1066: explicit guest state. Do not fall back to page-local/default CSS.
     if (authActions) authActions.style.setProperty('display','flex','important');
     if (tools) tools.style.setProperty('display','none','important');
@@ -9564,7 +9565,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1547';
+  var VERSION_TEXT = 'v1548';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
