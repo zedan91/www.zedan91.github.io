@@ -474,6 +474,7 @@
   background:rgba(2,6,23,.78)!important;backdrop-filter:blur(8px)!important;
 }
 .az-sr-share-modal[hidden]{display:none!important}
+.az-sr-share-modal [hidden]{display:none!important}
 .az-sr-share-dialog{
   width:min(720px,100%)!important;max-height:min(760px,calc(100vh - 36px))!important;overflow:auto!important;
   border:1px solid rgba(56,189,248,.36)!important;border-radius:20px!important;

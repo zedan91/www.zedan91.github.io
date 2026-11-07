@@ -33,7 +33,7 @@ test('Firefox single-document WhatsApp/native actions use local physical-PDF bri
 
 test('Firefox extension is scoped to AZOBSS admin and WhatsApp Web',()=>{
   assert.equal(manifest.manifest_version,2);
-  assert.equal(manifest.version,'1.3.0');
+  assert.equal(manifest.version,'1.3.1');
   assert.ok(manifest.permissions.includes('https://www.azobss.com/admin/*'));
   assert.ok(manifest.permissions.includes('https://web.whatsapp.com/*'));
   const joined=manifest.content_scripts.flatMap(x=>x.matches).join('\n');

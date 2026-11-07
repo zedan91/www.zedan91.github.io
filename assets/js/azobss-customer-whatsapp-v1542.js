@@ -20,11 +20,11 @@ function action(value,{className='',iconOnly=false}={}){
  return href?'<a '+attrs+' href="'+href+'" target="_blank" rel="noopener noreferrer">'+content+'</a>':'<button '+attrs+' type="button" disabled aria-disabled="true">'+content+'</button>';
 }
 const browserWindow=typeof window!=='undefined'?window:null,pending=new Map(),inflight=new Map();
-function notice(message){
+function notice(message,{guide=false,number=""}={}){
  if(!browserWindow?.document?.body)return;
  let el=document.getElementById('azWhatsappReuseStatus1545');
  if(!el){el=document.createElement('aside');el.id='azWhatsappReuseStatus1545';el.setAttribute('role','status');el.style.cssText='position:fixed;bottom:18px;right:18px;z-index:2147483647;width:min(410px,calc(100vw - 36px));box-sizing:border-box;padding:15px;border:1px solid #3c6578;border-radius:12px;background:#10283a;color:#effaff;font:13px/1.5 Arial,sans-serif;box-shadow:0 12px 40px #0008';document.body.append(el);}
- el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p><a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Pasang / kemas kini Firefox Bridge ↗</a>';
+ el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p>'+(number?'<label>Customer number <input readonly aria-label="Customer WhatsApp number" value="+'+esc(number)+'" style="display:block;width:100%;box-sizing:border-box;padding:8px;margin-top:5px;color:inherit;background:#091a26;border:1px solid #3c6578;border-radius:6px"></label>':'')+(guide?'<a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1553" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Optional Firefox Bridge ↗</a>':'');
  el.querySelector('[data-wa-notice-close]').onclick=()=>el.remove();
 }
 function target(value){
@@ -34,13 +34,20 @@ function target(value){
   return {phone:digits,home:false};
  }catch{return null;}
 }
+function bridgeReady(){return Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1552;}
+async function manualContact(destination){
+ let copied=false;
+ if(destination.phone){try{await navigator.clipboard.writeText('+'+destination.phone);copied=true;}catch{}}
+ const message=destination.home?'Switch to your existing WhatsApp tab. No new tab was opened.':(copied?'Customer number copied. ':'')+'Switch to your existing WhatsApp tab and select New chat to find this number. No new tab was opened.';
+ notice(message,{number:destination.phone,guide:/Firefox\/\d+/i.test(navigator.userAgent||'')});
+ return false; // Prepared for manual use; never claim the customer chat was opened.
+}
 async function requestOpen(value){
  if(!browserWindow||!target(value))return false;
- const ready=()=>Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1552;
- for(let i=0;i<5&&!ready();i++)await new Promise(resolve=>setTimeout(resolve,100));
- if(!ready()){notice('Kemas kini Firefox Bridge v1552 untuk membuka dan mengesahkan nombor pelanggan. Tiada tab tambahan dibuka.');return false;}
+ const destination=target(value);
+ if(!bridgeReady())return manualContact(destination);
  notice('Sedang membuka dan mengesahkan nombor pelanggan di WhatsApp…');
- const destination=target(value),requestId='wa1545-'+(browserWindow.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2));
+ const requestId='wa1545-'+(browserWindow.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2));
  return new Promise(resolve=>{
   const timer=setTimeout(()=>{pending.delete(requestId);notice('Chat pelanggan belum dapat disahkan. Semak status/login pada tab WhatsApp sedia ada; tiada tab tambahan dibuka.');resolve(false);},120000);
   pending.set(requestId,{resolve,timer,...destination});browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST',requestId,...destination},location.origin);

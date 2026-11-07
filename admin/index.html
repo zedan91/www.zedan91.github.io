@@ -1951,7 +1951,7 @@ body[data-dashboard-page="admin"] .topbar{
 
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1496">
 <script defer src="/assets/js/azobss-more-nav.js?v=1531"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1542">
+<link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1553">
 <link rel="stylesheet" href="/assets/css/azobss-admin-business-ops-v1461.css?v=1461">
 
 <style id="az770-admin-service-bookings-style">
@@ -3708,11 +3708,13 @@ body[data-dashboard-page="admin"] .topbar{
           <div class="az-sr-share-grid">
             <button class="az-sr-share-option native" type="button" data-sr-share-action="native">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg></span>
-              <span><b id="salesReceiptShareNativeLabel">Share Actual PDF File</b><small id="salesReceiptShareNativeDesc">Prepare the real PDF when clicked. Chrome/Edge can use Windows Share. Firefox uses the AZOBSS Firefox WhatsApp PDF Bridge to attach the physical PDF in WhatsApp Web; if the bridge is missing, AZOBSS downloads the PDF for manual attachment.</small></span>
+              <span><b id="salesReceiptShareNativeLabel">Share Actual PDF File</b><small id="salesReceiptShareNativeDesc">Prepare the PDF, then choose system share or attach it manually in your existing WhatsApp tab. Firefox Bridge is optional for automatic preview preparation.</small></span>
             </button>
+            <button id="salesReceiptShareSystem" class="az-sr-share-option native" type="button" data-sr-share-action="system" hidden><span class="az-sr-share-option-icon" aria-hidden="true">↗</span><span><b id="salesReceiptShareSystemLabel">System share — no add-on</b><small>Prepare the PDF, then click again to choose an app and customer in the system share window.</small></span></button>
+            <button id="salesReceiptShareManual" class="az-sr-share-option download-option" type="button" data-sr-share-action="manual"><span class="az-sr-share-option-icon" aria-hidden="true">↓</span><span><b>Existing WhatsApp tab — no add-on</b><small>Download one PDF and copy its note. Switch to the WhatsApp tab already open, select the customer and attach the file manually.</small></span></button>
             <button class="az-sr-share-option whatsapp-option" type="button" data-sr-share-action="whatsapp">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.5 2.4 2.1 4 4.5 4.9l1.2-1.2 1.8.9c-.5 1.6-1.6 2.4-3.2 2-3.7-.9-6-3.2-6.8-6.8-.4-1.6.4-2.7 2-3.2l.9 1.8L9 8.5Z"/></svg></span>
-              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Actual PDF + Payment Link</b><small id="salesReceiptShareWhatsAppDesc">Share the actual invoice PDF together with its message and ToyyibPay payment link. Choose WhatsApp in the Share window.</small></span>
+              <span><b id="salesReceiptShareWhatsAppLabel">WhatsApp Customer</b><small id="salesReceiptShareWhatsAppDesc">Use an available bridge, or copy the customer number and switch to your existing WhatsApp tab.</small></span>
             </button>
             <button class="az-sr-share-option telegram-option" type="button" data-sr-share-action="telegram">
               <span class="az-sr-share-option-icon"><svg viewBox="0 0 24 24"><path d="m3 11 17-7-4 16-5-6-4 3 1-5 9-6-11 5Z"/></svg></span>
@@ -3735,7 +3737,9 @@ body[data-dashboard-page="admin"] .topbar{
               <span><b>Print PDF</b><small>Load the same temporary backend PDF and open Print Preview.</small></span>
             </button>
           </div>
-          <p class="az-sr-share-note"><b>PDF sharing:</b> Chrome/Edge keep the actual-file Windows Share flow. Firefox Desktop v1318 can attach the locally generated physical PDF through the included <b>AZOBSS Firefox WhatsApp PDF Bridge</b> and WhatsApp Web, without sending a temporary Render PDF link. If the bridge is not detected, AZOBSS downloads the PDF for manual attachment. Telegram and Copy Link still use temporary links.</p>
+          <section id="salesReceiptLocalShareDetails" class="az-sr-share-note" hidden><b id="salesReceiptLocalSharePhone"></b> <button type="button" class="btn gray" data-sr-share-action="copy-phone">Copy number</button><p id="salesReceiptLocalShareFile"></p><label>Document note<textarea id="salesReceiptLocalShareNote" readonly rows="5" style="display:block;width:100%;box-sizing:border-box;margin-top:6px"></textarea></label></section>
+          <p class="az-sr-share-note"><b>No extra WhatsApp tabs:</b> Without an add-on, use system share or download + copy and switch to your existing WhatsApp tab. System share cannot select a WhatsApp Web customer automatically. Firefox Bridge is optional for existing-tab routing and PDF preparation. Always check the recipient and preview before Send. Sharing does not confirm delivery.</p>
+          <a id="salesReceiptBridgeGuide" href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1553" target="_blank" rel="noopener noreferrer" hidden style="display:block;padding:0 18px 18px;color:#79efc6">Optional Firefox Bridge — installation and signing status ↗</a>
         </div>
       </div>
 
@@ -8956,7 +8960,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1552"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1553"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10515,8 +10519,8 @@ document.addEventListener('click', async function(e){
 
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1463"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
-<script src="/assets/js/azobss-customer-whatsapp-v1542.js?v=1552"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1552" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script src="/assets/js/azobss-customer-whatsapp-v1542.js?v=1553"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1553" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 <script defer src="/assets/js/azobss-admin-pc-shop-orders-v1487.js?v=1545"></script>
 <script type="module" src="/assets/js/azobss-admin-business-ops-v1461.js?v=1461"></script>
 

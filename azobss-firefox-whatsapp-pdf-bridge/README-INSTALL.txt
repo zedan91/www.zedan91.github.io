@@ -1,28 +1,9 @@
-AZOBSS WhatsApp Tab Reuse & PDF Bridge v1552 (1.3.0)
-
-PENTING: Disable/remove bridge lama dahulu untuk menghentikan queue retry lama.
-1. Dalam Firefox, buka about:debugging#/runtime/this-firefox.
-2. Klik Remove pada AZOBSS WhatsApp Bridge versi lama.
-3. Klik Load Temporary Add-on... dan pilih AZOBSS-Firefox-WhatsApp-Bridge-v1552.zip.
-4. Refresh AZOBSS Admin dan WhatsApp Web.
-
-WhatsApp Customer hanya membuka chat, tanpa teks atau PDF.
-Physical PDF menyediakan SATU lampiran dengan nota quotation/invoice/resit.
-Semak penerima, PDF dan nota di preview, kemudian tekan Send sendiri.
-Extension tidak menekan Send atau Enter dan tidak mengulang lampiran jika gagal.
-Setiap permintaan hanya boleh diambil sekali, termasuk selepas ralat/reload.
-
-Jika nota gagal dimasukkan: semak PDF yang sudah berada pada preview. Gunakan
-Copy Message di AZOBSS dan tampal sekali pada ruangan caption. Jangan ulang
-lampiran. Untuk percubaan baharu, batalkan preview lama secara manual dahulu,
-kemudian tutup dan buka semula panel Share di AZOBSS.
-
-Tab WhatsApp dalam profil/private/container yang sama digunakan semula.
-Draf, attachment atau konflik sesi tidak dipadam secara automatik.
-Kod tidak membaca nilai cookies atau menghantar chat ke backend.
-
-Pemasangan sementara hilang selepas Firefox ditutup. ZIP belum ditandatangani;
-pemasangan kekal memerlukan tandatangan Mozilla. Jangan matikan semakan tandatangan.
-https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
-
-Chat penerima mesti disahkan dahulu. Jika pautan hanya membuka halaman utama, bridge mencari nombor penuh melalui New chat. PDF dan nota hanya disediakan selepas nombor penerima disahkan pada dokumen WhatsApp yang baharu. Jika login atau semakan gagal, ralat dipaparkan dan tiada PDF dilampirkan.
+AZOBSS Firefox Bridge 1.3.1 — MOZILLA SIGNED
+Install AZOBSS-Firefox-WhatsApp-Bridge-v1553.xpi through Firefox Add-ons Manager > gear > Install Add-on From File.
+Disable/remove the old unsigned bridge first, then refresh AZOBSS Admin and WhatsApp. No temporary installation or signature preference change is required.
+Guide: https://www.azobss.com/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1553
+Signed source: https://addons.mozilla.org/firefox/downloads/file/5222161/758db4483dc349c9b5fd-1.3.1.xpi
+Version 1.3.1, protocol1552, same ID and permissions as1.3.0. Signed code matches the submission; Mozilla normalised the manifest trailing newline. Standalone installation docs have since been updated; signed XPI is kept byte-for-byte unchanged.
+Chrome/Edge no add-on: prepare PDF, then click again for system share; select customer yourself. Or use Existing WhatsApp tab — no add-on to download one PDF, copy the note, and attach manually in the already-open WhatsApp tab. AZOBSS opens no extra WhatsApp tab.
+Automatic tab/recipient/PDF preparation requires the optional Firefox Bridge. An ordinary webpage cannot control an arbitrary manually-opened cross-origin tab.
+Always verify customer, caption and PDF; press Send yourself. No automatic retry or Send. Real logged-in WhatsApp was not used for QA. User Firefox profile has not been modified.

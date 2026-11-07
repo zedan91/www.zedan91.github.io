@@ -1585,24 +1585,42 @@ async function prepareSingleActualPdf(context){
   const text=documentShareText(prepared,docType);
   return {file,title,text,row:prepared,docType};
 }
-async function tryNativeSinglePdfShare(context,button=null,{preferredApp=''}={}){
-  if(button){button.disabled=true;button.classList.add('busy')}
-  try{
-    const prepared=await prepareSingleActualPdf(context);
-    if(!nativeFileShareSupported([prepared.file]))return {ok:false,supported:false,prepared};
-    let copied=false;try{await copyPlainText(prepared.text);copied=true}catch(_e){}
-    if(preferredApp)notify(`Actual PDF is ready. Choose ${preferredApp} in the Windows/phone Share window.`);
-    try{
-      await navigator.share({files:[prepared.file],title:prepared.title,text:prepared.text});
-      const copyNote=copied?' The same message was copied in case the share target omits the caption.':'';
-      notify(`Actual PDF file shared successfully.${copyNote}`);
-      return {ok:true,supported:true,prepared};
-    }catch(error){
-      if(error&&error.name==='AbortError')return {ok:false,supported:true,cancelled:true,prepared};
-      console.warn('Native PDF share failed after actual-file capability check:',error);
-      return {ok:false,supported:true,error,prepared};
-    }
-  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+async function ensureLocalSharePdf(context){
+ if(context.localPrepared)return context.localPrepared;
+ if(!context.localPreparing)context.localPreparing=prepareSingleActualPdf(context).then(payload=>{context.localPrepared=payload;return payload;}).finally(()=>{context.localPreparing=null;});
+ return context.localPreparing;
+}
+function showLocalShareDetails(context,payload){
+ const detail=el('salesReceiptLocalShareDetails');if(!detail||sharePanelContext!==context)return;
+ detail.hidden=false;
+ const number=normalizeWhatsAppPhone(payload.row?.customerPhone);
+ setSharePanelText('salesReceiptLocalSharePhone',number?'Customer: +'+number:'Customer number unavailable — verify the recipient yourself.');
+ const note=el('salesReceiptLocalShareNote');if(note)note.value=payload.text;
+ setSharePanelText('salesReceiptLocalShareFile',payload.file.name);
+}
+async function tryNativeSinglePdfShare(context,button=null){
+ if(context.systemSharing)return {ok:false,busy:true};
+ if(button){button.disabled=true;button.classList.add('busy')}
+ try{
+  if(!context.localPrepared){
+   const prepared=await ensureLocalSharePdf(context);showLocalShareDetails(context,prepared);
+   try{await copyPlainText(prepared.text);}catch{}
+   setSharePanelText(isFirefoxDesktop()?'salesReceiptShareSystemLabel':'salesReceiptShareNativeLabel','Share prepared PDF — system');
+   notify(nativeFileShareSupported([prepared.file])?'PDF prepared. Click Share prepared PDF to open the system share window; select WhatsApp and verify the customer yourself.':'PDF prepared. System file sharing is unavailable here. Use Existing WhatsApp tab — no add-on to download and attach it manually.');
+   return {ok:false,preparedOnly:true,prepared};
+  }
+  const prepared=context.localPrepared;
+  if(!nativeFileShareSupported([prepared.file])){notify('System file sharing is unavailable. Use Existing WhatsApp tab — no add-on. No WhatsApp tab was opened.',true);return {ok:false,supported:false,prepared};}
+  context.systemSharing=true;
+  // The second physical click calls share BEFORE any await or clipboard operation.
+  const sharing=navigator.share({files:[prepared.file],title:prepared.title,text:prepared.text});
+  await sharing;
+  notify('System share window completed. Verify the recipient and delivery in WhatsApp; the receipt has not been marked sent.');
+  return {ok:true,supported:true,prepared};
+ }catch(error){
+  if(error?.name==='AbortError')return {ok:false,cancelled:true};
+  notify('Could not share PDF: '+(error?.message||error)+'. Use the no-add-on option. No WhatsApp tab was opened.',true);return {ok:false,error};
+ }finally{context.systemSharing=false;if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 function whatsappMessageUrl(row,type,text){return window.AZOBSSCustomerWhatsApp1542?.url(row?.customerPhone)||'';}
 function openDirectUrl(url){
@@ -1617,9 +1635,9 @@ async function firefoxPhysicalPdfToWhatsAppWeb(context,button=null){
     const ready=await waitForFirefoxBridgeReady(900);
     if(!ready){
       context.firefoxTransfer.phase='requires-update';
-      setSharePanelText('salesReceiptShareNativeLabel','Update Firefox Bridge v1552');
-      setSharePanelText('salesReceiptShareNativeDesc','Disable/remove the old bridge to stop its queue. Install v1551 from /azobss-firefox-whatsapp-pdf-bridge/INSTALL.html, then refresh Admin and WhatsApp. No PDF was queued.');
-      notify('Firefox Bridge v1552 diperlukan. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
+      setSharePanelText('salesReceiptShareNativeLabel','Install signed Firefox Bridge 1.3.1');
+      setSharePanelText('salesReceiptShareNativeDesc','Disable/remove the old bridge to stop its queue. Use the optional Firefox Bridge guide at /azobss-firefox-whatsapp-pdf-bridge/INSTALL.html, then refresh Admin and WhatsApp. No PDF was queued.');
+      notify('Untuk tindakan automatik ini, pasang Firefox Bridge bertandatangan 1.3.1. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
     }
     const payload=await prepareSingleActualPdf(context);
     try{await copyPlainText(payload.text);}catch(_e){notify('Nota tidak dapat disalin ke clipboard. Jika caption gagal, gunakan Copy Message.',true);}
@@ -1636,25 +1654,18 @@ async function firefoxPhysicalPdfToWhatsAppWeb(context,button=null){
   finally{if(button){button.disabled=true;button.classList.remove('busy')}}
 }
 
-async function downloadPdfAndOpenWhatsAppFallback(context,prepared=null,button=null){
-  if(button){button.disabled=true;button.classList.add('busy')}
-  try{
-    const payload=prepared||await prepareSingleActualPdf(context);
-    downloadBlobFile(payload.file,payload.file.name,{forceAttachment:isFirefoxDesktop()});
-    const whatsappUrl=whatsappMessageUrl(payload.row,payload.docType);
-    if(!whatsappUrl){notify('Customer phone unavailable or invalid.',true);return false;}
-    const opened=await window.AZOBSSCustomerWhatsApp1542.openURL(whatsappUrl);
-    if(!opened&&button){
-      button.dataset.srFallbackWhatsappUrl=whatsappUrl;
-      setSharePanelText('salesReceiptShareNativeLabel','Open WhatsApp — PDF Downloaded');
-      setSharePanelText('salesReceiptShareNativeDesc',`${payload.file.name} is already in Downloads. Click again to open WhatsApp, then attach that PDF.`);
-      notify(`PDF downloaded: ${payload.file.name}. The browser blocked the WhatsApp popup. Click Share Actual PDF File again to open WhatsApp.`,true);
-      return true;
-    }
-    notify(`This browser cannot share the PDF as a native attachment. ${payload.file.name} was downloaded and WhatsApp was opened. Attach the downloaded PDF there.`);
-    return true;
-  }catch(error){console.error(error);notify('PDF fallback failed: '+(error?.message||error),true);return false}
-  finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+async function prepareManualWhatsAppPdf(context,button=null){
+ if(context.manualPreparing)return false;
+ context.manualPreparing=true;
+ if(button){button.disabled=true;button.classList.add('busy')}
+ try{
+  const payload=await ensureLocalSharePdf(context);showLocalShareDetails(context,payload);
+  if(!context.manualDownloaded){downloadBlobFile(payload.file,payload.file.name,{forceAttachment:isFirefoxDesktop()});context.manualDownloaded=true;}
+  let copied=false;try{await copyPlainText(payload.text);copied=true;}catch{}
+  notify((copied?'Document note copied. ':'Copy the note shown below. ')+'Switch to your existing WhatsApp tab, find the customer number shown here, attach '+payload.file.name+' from Downloads and paste the note in its caption. Review before Send. No new tab was opened.');
+  return true;
+ }catch(error){notify('Could not prepare PDF: '+(error?.message||error),true);return false;}
+ finally{context.manualPreparing=false;if(button){button.disabled=false;button.classList.remove('busy')}}
 }
 async function shareTemporaryFile(data,title,text,button=null,{preferredApp=''}={}){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1706,17 +1717,21 @@ function openSharePanel(row,type='receipt'){
   sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
   const firefoxDesktop=isFirefoxDesktop();
-  if(firefoxDesktop){let guide=el('salesReceiptBridgeGuide');if(!guide){guide=document.createElement('a');guide.id='salesReceiptBridgeGuide';guide.href='/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1552';guide.target='_blank';guide.rel='noopener noreferrer';guide.textContent='Install / Update Firefox Bridge v1552 ↗';guide.style.cssText='display:block;margin-top:8px;color:#79efc6';el('salesReceiptSharePanel')?.appendChild(guide);}guide.hidden=firefoxWhatsAppBridgeReady();}
-  setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Firefox: Physical PDF → WhatsApp Web':'Firefox Bridge Required — Physical PDF'):'Share Actual PDF File');
-  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Open and verify this customer first, then prepare one PDF and its note. Review the preview and press Send yourself.':'Update to Firefox Bridge v1552 before using this action. Disable/remove the old bridge, install the new version, then refresh Admin and WhatsApp. Use Download PDF for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
+  const guide=el('salesReceiptBridgeGuide');if(guide){guide.hidden=!firefoxDesktop||firefoxWhatsAppBridgeReady();}
+  const system=el('salesReceiptShareSystem');if(system){system.hidden=!firefoxDesktop;system.disabled=false;}
+  const manual=el('salesReceiptShareManual');if(manual){manual.hidden=false;manual.disabled=false;}
+  const detail=el('salesReceiptLocalShareDetails');if(detail)detail.hidden=true;
+  setSharePanelText('salesReceiptShareSystemLabel','System share — no add-on');
+  setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?'Firefox Bridge — optional':'Chrome / Edge — no add-on');
+  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?'Reuse the existing WhatsApp tab, verify the customer and prepare one PDF + note. Requires Firefox Bridge. You press Send.':'Prepare the PDF first, then click again for the system share window. Select WhatsApp and the customer yourself. AZOBSS opens no WhatsApp tab.');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
   setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Customer');
-  setSharePanelText('salesReceiptShareTelegramLabel',docType==='invoice'?(isMaybankInvoice?'Telegram Invoice + Maybank':isToyyibInvoice?'Telegram Invoice + Payment Link':'Telegram Invoice Link'):'Telegram Receipt Link');
-  setSharePanelText('salesReceiptShareLinkLabel',docType==='invoice'?'Copy Invoice PDF Link':'Copy Receipt PDF Link');
-  setSharePanelText('salesReceiptShareWhatsAppDesc','Open customer chat in WhatsApp Web.');
-  setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
-  setSharePanelText('salesReceiptShareLinkDesc',docType==='invoice'?'Copy the temporary invoice PDF link.':'Copy the temporary receipt PDF link.');
+  setSharePanelText('salesReceiptShareTelegramLabel',docType==='quotation'?'Telegram Quotation Link':docType==='invoice'?(isMaybankInvoice?'Telegram Invoice + Maybank':isToyyibInvoice?'Telegram Invoice + Payment Link':'Telegram Invoice Link'):'Telegram Receipt Link');
+  setSharePanelText('salesReceiptShareLinkLabel',`Copy ${label} PDF Link`);
+  setSharePanelText('salesReceiptShareWhatsAppDesc',firefoxWhatsAppBridgeReady()?'Open and verify the customer in the existing WhatsApp tab.':'Copy customer number and switch to your existing WhatsApp tab. No add-on or new tab.');
+  setSharePanelText('salesReceiptShareTelegramDesc',docType==='quotation'?'Open Telegram with the temporary quotation PDF link.':docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
+  setSharePanelText('salesReceiptShareLinkDesc',`Copy the temporary ${label.toLowerCase()} PDF link.`);
   setSharePanelText('salesReceiptShareMessageDesc','Copy the document note and relevant payment details for pasting into WhatsApp. No temporary PDF link is needed.');
   setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
   if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;
@@ -1724,6 +1739,7 @@ function openSharePanel(row,type='receipt'){
 }
 
 function openBulkSharePanel(){
+  for(const id of ['salesReceiptShareSystem','salesReceiptShareManual','salesReceiptLocalShareDetails','salesReceiptBridgeGuide']){const node=el(id);if(node)node.hidden=true;}
   const rows=getSelectedRows();if(!rows.length)return notify('Select at least one record first.',true);
   sharePanelContext={mode:'bulk',rows,temp:null,tempPromise:null};setSharePanelText('salesReceiptShareTitle','Share Selected Documents');setSharePanelText('salesReceiptShareMeta',`${rows.length} selected document(s) in one temporary ZIP`);setSharePanelText('salesReceiptShareNativeLabel','Share Actual ZIP File');setSharePanelText('salesReceiptShareWhatsAppLabel','Open WhatsApp Web');setSharePanelText('salesReceiptShareTelegramLabel','Telegram ZIP Link');setSharePanelText('salesReceiptShareLinkLabel','Copy ZIP Link');setSharePanelText('salesReceiptShareWhatsAppDesc','Open WhatsApp Web.');setSharePanelText('salesReceiptShareTelegramDesc','Open Telegram with the temporary ZIP link.');setSharePanelText('salesReceiptShareLinkDesc','Copy the temporary ZIP link.');setSharePanelText('salesReceiptShareMessageDesc','Copy a summary and the temporary ZIP link.');setSharePanelText('salesReceiptShareDownloadLabel','Download ZIP');if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=true;const panel=el('salesReceiptSharePanel');if(panel){panel.hidden=false;panel.querySelector('[data-sr-share-action="native"]')?.focus()}
 }
@@ -1761,22 +1777,16 @@ async function runSharePanelAction(action,button=null){
     if(button){button.disabled=true;button.classList.add('busy')}
     try{let text;if(context.mode==='single')text=documentShareText(context.row,context.type);else{const data=await ensureSharePanelTemporary();text=`${bulkShareSummary(context.rows||[])}\nZIP: ${data.shareUrl}`;}await copyPlainText(text);notify('Document message copied. Paste once into WhatsApp.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;
   }
+  if(action==='manual'&&context.mode==='single')return prepareManualWhatsAppPdf(context,button);
+  if(action==='system'&&context.mode==='single')return tryNativeSinglePdfShare(context,button);
+  if(action==='copy-phone'&&context.mode==='single'){
+    const number=normalizeWhatsAppPhone(context.row?.customerPhone);if(!number)return notify('Customer phone unavailable or invalid.',true);
+    try{await copyPlainText('+'+number);notify('Customer number copied. Switch to your existing WhatsApp tab.');}catch{notify('Copy the customer number shown above manually.',true);}return;
+  }
   if(action==='native'){
     if(context.mode==='single'){
       if(isFirefoxDesktop())return firefoxPhysicalPdfToWhatsAppWeb(context,button);
-      if(button?.dataset?.srFallbackWhatsappUrl){
-        const url=button.dataset.srFallbackWhatsappUrl;
-        delete button.dataset.srFallbackWhatsappUrl;
-        const opened=await window.AZOBSSCustomerWhatsApp1542.openURL(url);
-        if(opened){setSharePanelText('salesReceiptShareNativeLabel','Share Actual PDF File');setSharePanelText('salesReceiptShareNativeDesc','AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');notify('WhatsApp opened. Attach the PDF that was already downloaded.');return true}
-        button.dataset.srFallbackWhatsappUrl=url;notify('WhatsApp popup is still blocked. Allow popups for AZOBSS and click again.',true);return false;
-      }
-      try{
-        const result=await tryNativeSinglePdfShare(context,button);
-        if(result.ok){await autoMarkSharedReceipt(context,'native-share');return true}
-        if(result.cancelled)return false;
-        return downloadPdfAndOpenWhatsAppFallback(context,result.prepared||null,button);
-      }catch(error){console.error(error);return downloadPdfAndOpenWhatsAppFallback(context,null,button)}
+      return tryNativeSinglePdfShare(context,button);
     }
     try{const data=await ensureSharePanelTemporary(button);const title=`AZOBSS ${context.rows.length} selected document(s)`;const text=bulkShareSummary(context.rows);return await shareTemporaryFile(data,title,text,button)}catch(e){notify('Could not prepare temporary share file: '+(e.message||e),true)}return;
   }
