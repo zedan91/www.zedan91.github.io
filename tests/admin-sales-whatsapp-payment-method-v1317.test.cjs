@@ -20,9 +20,9 @@ test('ToyyibPay URL is only exposed when ToyyibPay is the active payment method'
   assert.match(sales,/Pay via ToyyibPay: \$\{paymentUrl\}/);
 });
 
-test('temporary WhatsApp and Telegram text reuse payment-aware document share text',()=>{
+test('Telegram retains payment-aware document text while WhatsApp is labelled as plain customer contact',()=>{
   assert.match(sales,/function temporaryShareText\(row,type,shareUrl\)\{[\s\S]*?return documentShareText\(row,type,shareUrl\);/);
-  assert.match(sales,/isMaybankInvoice\?'WhatsApp PDF \+ Maybank'/);
+  assert.match(sales,/setSharePanelText\('salesReceiptShareWhatsAppLabel','WhatsApp Customer'\)/);
   assert.match(sales,/isMaybankInvoice\?'Telegram Invoice \+ Maybank'/);
 });
 
