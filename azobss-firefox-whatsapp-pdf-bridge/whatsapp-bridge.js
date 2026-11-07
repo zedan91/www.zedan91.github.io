@@ -2,10 +2,10 @@
 
 (() => {
   const ext = typeof browser !== 'undefined' ? browser : chrome;
-  const BRIDGE_VERSION = 1545;
-  if(window.__AZOBSS_WA_CONTENT_1545__)return;window.__AZOBSS_WA_CONTENT_1545__=true;
+  const BRIDGE_VERSION = 1551;
+  if(window.__AZOBSS_WA_CONTENT_1551__)return;window.__AZOBSS_WA_CONTENT_1551__=true;
   let busy = false;
-  let completedRequestId = '';
+  const attemptedRequests=new Set();
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
@@ -55,6 +55,8 @@
     const selectors = [
       '[aria-label="Document"]',
       '[title="Document"]',
+      '[aria-label="Dokumen"]',
+      '[title="Dokumen"]',
       '[role="button"][aria-label*="document" i]',
       '[role="menuitem"][aria-label*="document" i]'
     ];
@@ -63,7 +65,7 @@
       if (match) return match.closest('button,[role="button"],[role="menuitem"]') || match;
     }
     const textMatch = [...document.querySelectorAll('[role="button"],[role="menuitem"],button,li')]
-      .find(el => visible(el) && /^document$/i.test(String(el.innerText || el.textContent || '').trim()));
+      .find(el => visible(el) && /^(document|dokumen)$/i.test(String(el.innerText || el.textContent || '').trim()));
     return textMatch || null;
   }
 
@@ -86,26 +88,27 @@
     const transfer = new DataTransfer();
     transfer.items.add(file);
     input.files = transfer.files;
-    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
   }
 
-  function findPreviewCaptionBox() {
-    const candidates = [...document.querySelectorAll('[contenteditable="true"][role="textbox"], div[contenteditable="true"]')].filter(visible);
-    if (!candidates.length) return null;
-    const send = findSendButton();
-    if (send) {
-      const sendRect = send.getBoundingClientRect();
-      const nearby = candidates
-        .map(el => ({ el, rect: el.getBoundingClientRect() }))
-        .filter(x => Math.abs(x.rect.bottom - sendRect.bottom) < 180 || Math.abs(x.rect.top - sendRect.top) < 180)
-        .sort((a, b) => Math.abs(a.rect.left - sendRect.left) - Math.abs(b.rect.left - sendRect.left));
-      if (nearby.length) return nearby[0].el;
+  function previewScope(filename='') {
+    const valid=node=>visible(node)&&!node.querySelector('#pane-side,#main footer')&&(!filename||String(node.innerText||node.textContent||'').includes(filename))&&!!findSendButton(node);
+    const roots=[...document.querySelectorAll('[role="dialog"],[data-testid="media-editor"],[data-testid="media-preview"],[data-animate-modal-popup="true"]')];
+    for(const node of roots)if(valid(node))return node;
+    if(filename){
+      const labels=[...document.querySelectorAll('span,div,p')].filter(node=>visible(node)&&String(node.textContent||'').trim()===filename);
+      for(const label of labels){let node=label.parentElement;for(let i=0;node&&node!==document.body&&i<9;i++,node=node.parentElement)if(valid(node))return node;}
     }
-    return candidates[candidates.length - 1];
+    return null;
+  }
+  function findPreviewCaptionBox(scope) {
+    if(!scope)return null;
+    const candidates=[...scope.querySelectorAll('[contenteditable="true"],textarea,input[type="text"]')].filter(el=>visible(el)&&!el.closest('#main footer')&&!/search|cari/i.test(el.getAttribute('aria-label')||''));
+    const explicit=candidates.filter(el=>/caption|kapsyen/i.test([el.getAttribute('aria-label'),el.getAttribute('aria-placeholder'),el.getAttribute('placeholder'),el.getAttribute('data-testid')].join(' ')));
+    return explicit.length===1?explicit[0]:candidates.length===1?candidates[0]:null;
   }
 
-  function findSendButton() {
+  function findSendButton(root=document) {
     const selectors = [
       'button[aria-label="Send"]',
       '[role="button"][aria-label="Send"]',
@@ -113,30 +116,29 @@
       'span[data-icon="send-filled"]'
     ];
     for (const selector of selectors) {
-      const match = [...document.querySelectorAll(selector)].find(visible);
+      const match = [...root.querySelectorAll(selector)].find(visible);
       if (match) return match.closest('button,[role="button"]') || match;
     }
     return null;
   }
 
-  function fillCaption(box, text) {
+  const captionText=box=>String(box?.value??box?.innerText??box?.textContent??'').replace(/\r\n/g,'\n').replace(/[\u200b-\u200f\uFEFF]/g,'').trim();
+  async function fillCaption(box, text) {
     const value = String(text || '').trim();
     if (!box || !value) return false;
+    const old=captionText(box);if(old&&old!==value)return false;
+    if(old===value)return true;
     box.focus();
-    let ok = false;
-    try {
-      document.execCommand('selectAll', false, null);
-      ok = document.execCommand('insertText', false, value);
-    } catch (_) {}
-    if (!ok || !String(box.innerText || box.textContent || '').trim()) {
-      box.textContent = value;
-      try {
-        box.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true, inputType: 'insertText', data: value }));
-      } catch (_) {
-        box.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-      }
+    if(box.matches('textarea,input')){
+      const prototype=box.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype,'value').set.call(box,value);
+      box.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,inputType:'insertText',data:value}));
+    }else{
+      const range=document.createRange(),selection=window.getSelection();range.selectNodeContents(box);selection.removeAllRanges();selection.addRange(range);
+      try{if(!document.execCommand('insertText',false,value))return false;}catch{return false;}
     }
-    return true;
+    await sleep(180);box.blur();await sleep(180);
+    return box.isConnected&&captionText(box)===value;
   }
 
   async function waitForChatReady(timeoutMs = 90000) {
@@ -150,12 +152,16 @@
   }
 
   async function attachPayload(payload) {
-    if (busy || !payload?.requestId || completedRequestId === payload.requestId) return;
+    if (busy || !payload?.requestId || attemptedRequests.has(payload.requestId)) return;
+    attemptedRequests.add(payload.requestId);
     busy = true;
+    let fileDispatched=false;
     try {
       showBadge(`AZOBSS: menyediakan ${payload.filename} sebagai fail PDF sebenar…`);
       const chatReady = await waitForChatReady();
       if (!chatReady) throw new Error('WhatsApp Web belum siap selepas 90 saat. Pastikan kamu sudah login dan chat customer boleh dibuka.');
+      const composer=document.querySelector('#main footer [contenteditable="true"][role="textbox"]');
+      if((composer&&captionText(composer))||previewScope())throw new Error('Ada draf atau attachment sedia ada. Selesaikannya dahulu; tiada PDF baharu dilampirkan.');
 
       const file = dataUrlToFile(payload.dataUrl, payload.filename, payload.mimeType);
       const attach = findAttachButton();
@@ -177,34 +183,33 @@
       }
       if (!input) throw new Error('Input Document WhatsApp tidak ditemui. WhatsApp Web mungkin sudah mengubah UI.');
       setInputFile(input, file);
+      fileDispatched=true;
 
-      let send = null;
-      let filenameVisible = false;
+      let scope=null;
       for (let i = 0; i < 55; i++) {
         await sleep(220);
-        filenameVisible = String(document.body?.innerText || '').includes(payload.filename);
-        send = filenameVisible ? findSendButton() : null;
-        if (send && filenameVisible) break;
+        scope=previewScope(payload.filename);
+        if(scope)break;
       }
-      if (!filenameVisible || !send) throw new Error('Preview PDF WhatsApp tidak muncul selepas attachment dipilih.');
+      if (!scope) throw new Error('Preview PDF belum dapat disahkan. Semak WhatsApp; fail tidak akan dilampirkan semula secara automatik.');
 
-      const caption = findPreviewCaptionBox();
-      if (caption && payload.caption) fillCaption(caption, payload.caption);
+      let caption=null;
+      for(let i=0;i<20&&!caption;i++){caption=findPreviewCaptionBox(scope);if(!caption)await sleep(150);}
+      if(!caption||!payload.caption||!await fillCaption(caption,payload.caption))throw new Error('Nota belum dapat diisi atau disahkan. PDF mungkin sudah berada di preview. Tampal nota yang disalin sekali sahaja; jangan ulang lampiran.');
 
-      completedRequestId = payload.requestId;
-      showBadge(`AZOBSS: ${payload.filename} sudah dilampirkan ✅\nSemak preview dan tekan Send.`, 'good');
+      showBadge(`AZOBSS: ${payload.filename} dan nota sudah disediakan sekali ✅\nSemak preview dan tekan Send.`, 'good');
       await ext.runtime.sendMessage({
         type: 'AZOBSS_FIREFOX_WA_PDF_WHATSAPP_STATUS',
         requestId: payload.requestId,
         status: 'attached',
-        message: `${payload.filename} sudah dilampirkan sebagai physical PDF. Semak preview dan tekan Send.`
+        message: `${payload.filename} dan nota sudah disediakan sekali. Semak preview dan tekan Send.`
       }).catch(() => {});
     } catch (error) {
       showBadge(`AZOBSS PDF gagal dilampirkan:\n${error?.message || error}`, 'error');
       await ext.runtime.sendMessage({
         type: 'AZOBSS_FIREFOX_WA_PDF_WHATSAPP_STATUS',
         requestId: payload?.requestId,
-        status: 'error',
+        status: fileDispatched?'needs-caption':'error',
         message: error?.message || String(error)
       }).catch(() => {});
     } finally {
@@ -215,7 +220,7 @@
   async function pump() {
     if (busy) return;
     try {
-      const response = await ext.runtime.sendMessage({ type: 'AZOBSS_FIREFOX_WA_PDF_CLAIM' });
+      const response = await ext.runtime.sendMessage({ type: 'AZOBSS_FIREFOX_WA_PDF_CLAIM',bridgeVersion:BRIDGE_VERSION });
       if (response?.ok && response.pending) attachPayload(response);
     } catch (_) {}
   }

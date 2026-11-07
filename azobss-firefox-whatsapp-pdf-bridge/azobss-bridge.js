@@ -2,7 +2,7 @@
 
 (() => {
   const ext = typeof browser !== 'undefined' ? browser : chrome;
-  const BRIDGE_VERSION = 1545;
+  const BRIDGE_VERSION = 1551;
   const READY_ATTR = 'data-azobss-firefox-whatsapp-pdf-bridge';
 
   async function announceReady() {

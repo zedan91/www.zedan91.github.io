@@ -33,7 +33,7 @@ test('Firefox single-document WhatsApp/native actions use local physical-PDF bri
 
 test('Firefox extension is scoped to AZOBSS admin and WhatsApp Web',()=>{
   assert.equal(manifest.manifest_version,2);
-  assert.equal(manifest.version,'1.1.0');
+  assert.equal(manifest.version,'1.2.0');
   assert.ok(manifest.permissions.includes('https://www.azobss.com/admin/*'));
   assert.ok(manifest.permissions.includes('https://web.whatsapp.com/*'));
   const joined=manifest.content_scripts.flatMap(x=>x.matches).join('\n');
@@ -57,5 +57,5 @@ test('WhatsApp bridge stops at preview and asks admin to press Send manually',()
   assert.match(wa,/Semak preview dan tekan Send/);
   assert.doesNotMatch(wa,/send\.click\(\)/);
   assert.match(wa,/findPreviewCaptionBox/);
-  assert.match(wa,/fillCaption\(caption, payload\.caption\)/);
+  assert.match(wa,/fillCaption\(caption,\s*payload\.caption\)/);
 });

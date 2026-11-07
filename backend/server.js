@@ -3214,7 +3214,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, service: "AZOBSS Lucky Draw Backend", release:"1550", purchasePolicy:PURCHASE_POLICY, time: new Date().toISOString() });
+  res.json({ ok: true, service: "AZOBSS Lucky Draw Backend", release:"1551", purchasePolicy:PURCHASE_POLICY, time: new Date().toISOString() });
 });
 
 

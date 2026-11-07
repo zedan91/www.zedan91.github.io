@@ -1,24 +1,26 @@
-AZOBSS WhatsApp Tab Reuse & PDF Bridge v1545 (1.1.0)
+AZOBSS WhatsApp Tab Reuse & PDF Bridge v1551 (1.2.0)
 
-Pasang dalam Firefox yang sama dengan WhatsApp Web:
-1. Buka about:debugging#/runtime/this-firefox
-2. Klik Load Temporary Add-on...
-3. Pilih AZOBSS-Firefox-WhatsApp-Bridge-v1545.zip (manifest.json berada di root ZIP).
-4. Refresh tab AZOBSS Admin dan WhatsApp Web sekali.
-5. Klik WhatsApp Customer. Tab WhatsApp sedia ada digunakan semula.
+PENTING: Disable/remove bridge lama dahulu untuk menghentikan queue retry lama.
+1. Dalam Firefox, buka about:debugging#/runtime/this-firefox.
+2. Klik Remove pada AZOBSS WhatsApp Bridge versi lama.
+3. Klik Load Temporary Add-on... dan pilih AZOBSS-Firefox-WhatsApp-Bridge-v1551.zip.
+4. Refresh AZOBSS Admin dan WhatsApp Web.
 
-Jika tiada tab WhatsApp dalam private/container yang sama, satu tab dicipta.
-Klik berulang tidak mencipta tab tambahan. Tab di browser/profil lain tidak
-boleh digunakan semula. Tiada teks ditambah dan tiada Send ditekan automatik.
-Jika WhatsApp menunjukkan konflik sesi atau ada draf/attachment belum selesai,
-selesaikan keadaan itu dalam tab WhatsApp; extension tidak menutup tab anda.
+WhatsApp Customer hanya membuka chat, tanpa teks atau PDF.
+Physical PDF menyediakan SATU lampiran dengan nota quotation/invoice/resit.
+Semak penerima, PDF dan nota di preview, kemudian tekan Send sendiri.
+Extension tidak menekan Send atau Enter dan tidak mengulang lampiran jika gagal.
+Setiap permintaan hanya boleh diambil sekali, termasuk selepas ralat/reload.
 
-Kebenaran tabs dan cookies digunakan untuk metadata tab/container. Kod tidak
-membaca nilai cookies atau menghantar kandungan chat ke AZOBSS/backend.
-Akses halaman hanya AZOBSS Admin dan WhatsApp Web.
-PDF lama kekal berhenti pada preview; admin sendiri menekan Send.
+Jika nota gagal dimasukkan: semak PDF yang sudah berada pada preview. Gunakan
+Copy Message di AZOBSS dan tampal sekali pada ruangan caption. Jangan ulang
+lampiran. Untuk percubaan baharu, batalkan preview lama secara manual dahulu,
+kemudian tutup dan buka semula panel Share di AZOBSS.
 
-Pemasangan sementara hilang apabila Firefox ditutup. Untuk pemasangan kekal
-dalam Firefox biasa, extension perlu ditandatangani oleh Mozilla. Jangan ubah
-atau matikan semakan tandatangan Firefox. ZIP ini belum ditandatangani.
-Panduan: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
+Tab WhatsApp dalam profil/private/container yang sama digunakan semula.
+Draf, attachment atau konflik sesi tidak dipadam secara automatik.
+Kod tidak membaca nilai cookies atau menghantar chat ke backend.
+
+Pemasangan sementara hilang selepas Firefox ditutup. ZIP belum ditandatangani;
+pemasangan kekal memerlukan tandatangan Mozilla. Jangan matikan semakan tandatangan.
+https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/

@@ -1388,7 +1388,7 @@ async function deleteRow(id,button=null){
 function documentType(value){const v=String(value||'').toLowerCase();return v==='quotation'?'quotation':(v==='invoice'?'invoice':'receipt')}
 function documentNo(row,type){
   const api=pdfApi();if(api?.documentNumber)return api.documentNumber(row,type);
-  return documentType(type)==='invoice'?invoiceNoForRow(row):receiptNoForRow(row);
+  return documentType(type)==='quotation'?quotationNoForRow(row):documentType(type)==='invoice'?invoiceNoForRow(row):receiptNoForRow(row);
 }
 function customerDocumentHtml(row,type='receipt'){
   const docType=documentType(type);const isInvoice=docType==='invoice';const title=isInvoice?'INVOICE':'RECEIPT';const docNo=documentNo(row,docType);
@@ -1429,10 +1429,10 @@ function toyyibPayPaymentUrl(row,type='invoice'){
   return String(row?.paymentUrl||row?.toyyibPaymentUrl||'').trim();
 }
 function documentShareText(row,type,fileName=''){
-  const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
+  const docType=documentType(type);const label=docType==='quotation'?'Quotation':docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
   const maybankText=docType==='invoice'?pendingMaybankPaymentText(row):'';
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${statusDisplayLabel(row)}`,paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName||'Customer'}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${statusDisplayLabel(row)}`,docType==='quotation'?'Quotation only — no payment is requested.':'',docType==='quotation'&&row.quotationValidUntil?`Valid until: ${row.quotationValidUntil}`:'',paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,row.notes?`Notes:\n${String(row.notes).trim()}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
 async function downloadDocumentPdf(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1516,8 +1516,9 @@ function isFirefoxDesktop(){
   const ua=String(navigator.userAgent||'');
   return /Firefox\/\d+/i.test(ua)&&!/Android|Mobile|Tablet/i.test(ua);
 }
-const AZ_SR_FIREFOX_WA_BRIDGE_VERSION=1545;
+const AZ_SR_FIREFOX_WA_BRIDGE_VERSION=1551;
 const azSrFirefoxBridgeWaiters=new Map();
+const azSrFirefoxBridgeTransfers=new Map();
 function firefoxWhatsAppBridgeVersion(){
   const raw=document.documentElement?.getAttribute('data-azobss-firefox-whatsapp-pdf-bridge')||'';
   const n=Number(raw);return Number.isFinite(n)?n:0;
@@ -1531,7 +1532,13 @@ window.addEventListener('message',event=>{
   const data=event.data;if(!data||data.type!=='AZOBSS_FIREFOX_WA_PDF_BRIDGE_STATUS')return;
   const requestId=String(data.requestId||'');const status=String(data.status||'');
   const waiter=azSrFirefoxBridgeWaiters.get(requestId);if(waiter&&['accepted','error'].includes(status))waiter.resolve({ok:status==='accepted',...data});
+  const transfer=azSrFirefoxBridgeTransfers.get(requestId);
+  if(transfer&&['attached','needs-caption','error','closed'].includes(status)){
+    transfer.context.firefoxTransfer.phase=status;azSrFirefoxBridgeTransfers.delete(requestId);
+    if(sharePanelContext===transfer.context&&transfer.button){transfer.button.disabled=true;transfer.button.classList.remove('busy');setSharePanelText('salesReceiptShareNativeLabel',status==='attached'?'PDF + note prepared — review WhatsApp':status==='needs-caption'?'Review preview / Copy Message':'Stopped — no automatic retry');}
+  }
   if(status==='attached')notify(data.message||'Physical PDF sudah dilampirkan dalam WhatsApp Web. Semak preview dan tekan Send.');
+  else if(status==='needs-caption')notify((data.message||'Nota belum dapat diisi.')+' Gunakan Copy Message dan tampal nota pada preview. PDF tidak akan dilampirkan semula.',true);
   else if(status==='error'&&!waiter)notify('Firefox WhatsApp PDF Bridge: '+(data.message||'attachment gagal.'),true);
 });
 function downloadBlobFile(blob,name,{forceAttachment=false}={}){
@@ -1568,13 +1575,13 @@ function nativeFileShareSupported(files){
   if(!navigator.share)return false;try{return !navigator.canShare||navigator.canShare({files})}catch(_e){return false}
 }
 async function prepareSingleActualPdf(context){
-  if(!context||context.mode!=='single')throw new Error('A single invoice or receipt is required.');
+  if(!context||context.mode!=='single')throw new Error('A single quotation, invoice or receipt is required.');
   const docType=documentType(context.type);
   const api=pdfApi();if(!api)throw new Error('PDF generator is unavailable. Refresh this page and try again.');
   const prepared=await prepareRowForPdf(context.row,docType);
   const file=api.createFile(prepared,docType);
   if(!(file instanceof File)||!file.size)throw new Error('Generated PDF file is empty.');
-  const title=`AZOBSS ${docType==='invoice'?'Invoice':'Receipt'} ${documentNo(prepared,docType)}`;
+  const title=`AZOBSS ${docType==='quotation'?'Quotation':docType==='invoice'?'Invoice':'Receipt'} ${documentNo(prepared,docType)}`;
   const text=documentShareText(prepared,docType);
   return {file,title,text,row:prepared,docType};
 }
@@ -1603,41 +1610,30 @@ function openDirectUrl(url){
   return false;
 }
 async function firefoxPhysicalPdfToWhatsAppWeb(context,button=null){
+  if(context.firefoxTransfer){notify('PDF ini sudah diproses atau dihentikan. Semak preview WhatsApp dahulu; tiada lampiran semula automatik.',true);return false;}
+  context.firefoxTransfer={phase:'preparing'};
   if(button){button.disabled=true;button.classList.add('busy')}
   try{
-    const payload=await prepareSingleActualPdf(context);payload.text='';
     const ready=await waitForFirefoxBridgeReady(900);
     if(!ready){
-      downloadBlobFile(payload.file,payload.file.name,{forceAttachment:true});
-      const phone=normalizeWhatsAppPhone(payload.row?.customerPhone);
-      const fallbackUrl=whatsappMessageUrl(payload.row,payload.docType)||'https://web.whatsapp.com/';
-      await window.AZOBSSCustomerWhatsApp1542.openURL(fallbackUrl);
-      notify(`AZOBSS Firefox WhatsApp PDF Bridge v${AZ_SR_FIREFOX_WA_BRIDGE_VERSION} belum dikesan. ${payload.file.name} sudah dimuat turun dan Pasang / aktifkan Firefox Bridge v1545, kemudian attach PDF itu secara manual.`,true);
-      return false;
+      context.firefoxTransfer.phase='requires-update';
+      setSharePanelText('salesReceiptShareNativeLabel','Update Firefox Bridge v1551');
+      setSharePanelText('salesReceiptShareNativeDesc','Disable/remove the old bridge to stop its queue. Install v1551 from /azobss-firefox-whatsapp-pdf-bridge/INSTALL.html, then refresh Admin and WhatsApp. No PDF was queued.');
+      notify('Firefox Bridge v1551 diperlukan. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
     }
+    const payload=await prepareSingleActualPdf(context);
+    try{await copyPlainText(payload.text);}catch(_e){notify('Nota tidak dapat disalin ke clipboard. Jika caption gagal, gunakan Copy Message.',true);}
     const dataUrl=await blobToDataUrl(payload.file);
     const requestId=`azsr-wa-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+    context.firefoxTransfer={phase:'queued',requestId};
+    azSrFirefoxBridgeTransfers.set(requestId,{context,button});
     const acceptance=waitForFirefoxBridgeAcceptance(requestId);
-    window.postMessage({
-      type:'AZOBSS_FIREFOX_WA_PDF_SHARE_REQUEST',
-      bridgeVersion:AZ_SR_FIREFOX_WA_BRIDGE_VERSION,
-      requestId,
-      filename:payload.file.name,
-      dataUrl,
-      caption:payload.text,
-      phone:normalizeWhatsAppPhone(payload.row?.customerPhone)
-    },location.origin);
+    window.postMessage({type:'AZOBSS_FIREFOX_WA_PDF_SHARE_REQUEST',bridgeVersion:AZ_SR_FIREFOX_WA_BRIDGE_VERSION,requestId,filename:payload.file.name,dataUrl,caption:payload.text,phone:normalizeWhatsAppPhone(payload.row?.customerPhone)},location.origin);
     const response=await acceptance;
-    if(!response?.ok){
-      downloadBlobFile(payload.file,payload.file.name,{forceAttachment:true});
-      notify(`Firefox bridge tidak dapat menerima PDF (${response?.message||response?.status||'unknown error'}). Physical PDF sudah dimuat turun sebagai fallback.`,true);
-      return false;
-    }
-    notify(`Firefox bridge v${AZ_SR_FIREFOX_WA_BRIDGE_VERSION} menerima ${payload.file.name}. WhatsApp Web sedang dibuka dan PDF akan dilampirkan sebagai fail sebenar.`);
-    return true;
-  }catch(error){
-    console.error(error);notify('Firefox physical PDF share failed: '+(error?.message||error),true);return false;
-  }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
+    if(!response?.ok){context.firefoxTransfer.phase='error';azSrFirefoxBridgeTransfers.delete(requestId);notify(`Bridge belum mengesahkan permintaan (${response?.message||response?.status||'unknown error'}). Semak WhatsApp dahulu. Tiada retry atau fallback penghantaran automatik.`,true);return false;}
+    notify(`${payload.file.name} dan nota diminta sekali sahaja. Semak preview WhatsApp sebelum menekan Send.`);return true;
+  }catch(error){context.firefoxTransfer.phase='error';notify('Persediaan PDF dihentikan: '+(error?.message||error)+'. Semak WhatsApp; tiada retry automatik.',true);return false;}
+  finally{if(button){button.disabled=true;button.classList.remove('busy')}}
 }
 
 async function downloadPdfAndOpenWhatsAppFallback(context,prepared=null,button=null){
@@ -1706,12 +1702,13 @@ async function shareDocumentPdf(row,type,button=null){
 function closeSharePanel(){const panel=el('salesReceiptSharePanel');if(panel)panel.hidden=true;sharePanelContext=null}
 function setSharePanelText(id,value){const node=el(id);if(node)node.textContent=value}
 function openSharePanel(row,type='receipt'){
-  if(!row)return;const docType=documentType(type);const label=docType==='invoice'?'Invoice':'Receipt';
+  if(!row)return;const docType=documentType(type);const label=docType==='quotation'?'Quotation':docType==='invoice'?'Invoice':'Receipt';
   sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
   const firefoxDesktop=isFirefoxDesktop();
+  if(firefoxDesktop){let guide=el('salesReceiptBridgeGuide');if(!guide){guide=document.createElement('a');guide.id='salesReceiptBridgeGuide';guide.href='/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1551';guide.target='_blank';guide.rel='noopener noreferrer';guide.textContent='Install / Update Firefox Bridge v1551 ↗';guide.style.cssText='display:block;margin-top:8px;color:#79efc6';el('salesReceiptSharePanel')?.appendChild(guide);}guide.hidden=firefoxWhatsAppBridgeReady();}
   setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Firefox: Physical PDF → WhatsApp Web':'Firefox Bridge Required — Physical PDF'):'Share Actual PDF File');
-  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'AZOBSS Firefox Bridge is ready. The browser-generated PDF will be attached as a real file in WhatsApp Web; no temporary Render PDF link is used.':'Install/load the included AZOBSS Firefox WhatsApp PDF Bridge v1545. Until detected, AZOBSS downloads the physical PDF and opens WhatsApp Web for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
+  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Prepare one PDF with its document note in WhatsApp Web. Review both, then press Send yourself. No automatic retry or Send.':'Update to Firefox Bridge v1551 before using this action. Disable/remove the old bridge, install the new version, then refresh Admin and WhatsApp. Use Download PDF for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
   setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Customer');
@@ -1720,7 +1717,7 @@ function openSharePanel(row,type='receipt'){
   setSharePanelText('salesReceiptShareWhatsAppDesc','Open customer chat in WhatsApp Web.');
   setSharePanelText('salesReceiptShareTelegramDesc',docType==='invoice'?(isToyyibInvoice?'Open Telegram with the temporary invoice PDF link and ToyyibPay payment link.':isMaybankInvoice?'Open Telegram with the temporary invoice PDF link and Maybank payment details.':'Open Telegram with the temporary invoice PDF link.'):'Open Telegram with the temporary receipt PDF link.');
   setSharePanelText('salesReceiptShareLinkDesc',docType==='invoice'?'Copy the temporary invoice PDF link.':'Copy the temporary receipt PDF link.');
-  setSharePanelText('salesReceiptShareMessageDesc',docType==='invoice'?(isToyyibInvoice?'Copy invoice details, PDF link and ToyyibPay payment link.':isMaybankInvoice?'Copy invoice details, PDF link and Maybank account details.':'Copy invoice details and PDF link.'):'Copy receipt details and temporary PDF link.');
+  setSharePanelText('salesReceiptShareMessageDesc','Copy the document note and relevant payment details for pasting into WhatsApp. No temporary PDF link is needed.');
   setSharePanelText('salesReceiptShareDownloadLabel','Download PDF');
   if(el('salesReceiptSharePrint'))el('salesReceiptSharePrint').hidden=false;
   const panel=el('salesReceiptSharePanel');if(panel){const nativeButton=panel.querySelector('[data-sr-share-action="native"]');if(nativeButton){nativeButton.disabled=false;nativeButton.title='Prepare and test the actual PDF file when clicked.';delete nativeButton.dataset.srFallbackWhatsappUrl}panel.hidden=false;nativeButton?.focus()}
@@ -1762,8 +1759,7 @@ async function runSharePanelAction(action,button=null){
   }
   if(action==='message'){
     if(button){button.disabled=true;button.classList.add('busy')}
-    try{const data=await ensureSharePanelTemporary();const text=context.mode==='single'?temporaryShareText(context.row,context.type,data.shareUrl):`${bulkShareSummary(context.rows||[])}
-ZIP: ${data.shareUrl}`;await copyPlainText(text);notify('Message with temporary document link copied.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;
+    try{let text;if(context.mode==='single')text=documentShareText(context.row,context.type);else{const data=await ensureSharePanelTemporary();text=`${bulkShareSummary(context.rows||[])}\nZIP: ${data.shareUrl}`;}await copyPlainText(text);notify('Document message copied. Paste once into WhatsApp.')}catch(e){notify('Could not copy message: '+(e.message||e),true)}finally{if(button){button.disabled=false;button.classList.remove('busy')}}return;
   }
   if(action==='native'){
     if(context.mode==='single'){
