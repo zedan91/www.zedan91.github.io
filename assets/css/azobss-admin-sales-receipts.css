@@ -782,3 +782,6 @@
 @media(max-width:980px){
   .az-sr-actions{grid-template-columns:repeat(4,28px)!important;grid-auto-rows:28px!important;max-width:127px!important}
 }
+
+/* Direct customer contact shares no files and changes no receipt status. */
+.az-sr-actions a.az-sr-icon-btn.wa{display:inline-flex!important;text-decoration:none!important;box-sizing:border-box;align-items:center;justify-content:center}.az-sr-icon-btn.wa[data-customer-whatsapp]:disabled{cursor:not-allowed!important;opacity:.4!important}

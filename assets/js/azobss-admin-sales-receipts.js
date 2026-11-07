@@ -922,7 +922,7 @@ function renderTable(){
     }
     actions.push(
       iconActionButton(docType,`Download ${label} PDF`,`data-sr-doc-download="${docType}" data-sr-row="${rowId}"`),
-      iconActionButton('copylink',`Copy ${label} PDF link`,`data-sr-doc-copy="${docType}" data-sr-row="${rowId}"`),
+      window.AZOBSSCustomerWhatsApp1542?.action(r.customerPhone,{className:'az-sr-icon-btn wa',iconOnly:true})||iconActionButton('whatsapp','Customer contact unavailable — refresh this page','disabled data-customer-whatsapp'),
       iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
