@@ -163,8 +163,8 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 .build-media.pc-clean-crop::after,.build-media.pc-clean-crop-strong::after{display:none!important}
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-pc-hub-v1526.css?v=1529">
-<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1539">
-<script src="/assets/js/azobss-customer-hub-v1538.js?v=1539"></script>
+<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1540">
+<script src="/assets/js/azobss-customer-hub-v1538.js?v=1540"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -512,7 +512,7 @@ window.addEventListener('azobss:source-prices-change',()=>schedulePcRender(false
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;window.dispatchEvent(new Event('azobss:pc-admin-view-change'));schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1539" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1540" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1529">
 <link rel="stylesheet" href="/assets/css/azobss-source-prices-v1520.css?v=1520">
