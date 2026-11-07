@@ -2,7 +2,8 @@
 
 (() => {
   const ext = typeof browser !== 'undefined' ? browser : chrome;
-  const BRIDGE_VERSION = 1318;
+  const BRIDGE_VERSION = 1545;
+  if(window.__AZOBSS_WA_CONTENT_1545__)return;window.__AZOBSS_WA_CONTENT_1545__=true;
   let busy = false;
   let completedRequestId = '';
 
@@ -219,6 +220,14 @@
     } catch (_) {}
   }
 
+  ext.runtime.onMessage.addListener(message=>{
+    if(message?.type!=='AZOBSS_WA_TAB_STATUS_1545')return;
+    const dialogs=[...document.querySelectorAll('[role="dialog"],[role="alertdialog"],[data-animate-modal-popup]')].filter(visible);
+    const locked=dialogs.some(el=>/WhatsApp is open in another window|WhatsApp.*(?:tetingkap|window).*lain/i.test(el.textContent||''));
+    const composer=document.querySelector('#main footer [contenteditable="true"][role="textbox"]');
+    const preview=!!document.querySelector('[data-testid="media-editor"],[data-testid="media-preview"]')||(!composer&&!!findSendButton());
+    return Promise.resolve({bridgeVersion:BRIDGE_VERSION,locked,busy:busy||preview,draft:!!(composer&&String(composer.textContent||'').replace(/[\u200b-\u200f\uFEFF]/g,'').trim()),ready:!locked&&!!document.querySelector('#pane-side,#main,[data-testid="chat-list"]')});
+  });
   pump();
   setInterval(pump, 1300);
   console.log(`[AZOBSS] Firefox WhatsApp PDF Bridge v${BRIDGE_VERSION} WhatsApp content ready`);

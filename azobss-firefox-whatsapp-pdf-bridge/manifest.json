@@ -1,17 +1,21 @@
 {
   "manifest_version": 2,
-  "name": "AZOBSS Firefox WhatsApp PDF Bridge",
-  "version": "1.0.0",
-  "description": "Attach AZOBSS invoice/receipt PDFs as real files in WhatsApp Web when sharing from Firefox.",
+  "name": "AZOBSS WhatsApp Tab Reuse & PDF Bridge",
+  "version": "1.1.0",
+  "description": "Reuse an existing WhatsApp Web tab for AZOBSS customer chats, without sending messages.",
   "permissions": [
     "tabs",
     "storage",
+    "cookies",
     "https://azobss.com/admin/*",
     "https://www.azobss.com/admin/*",
     "https://web.whatsapp.com/*"
   ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "tab-router.js",
+      "background.js"
+    ],
     "persistent": true
   },
   "content_scripts": [
@@ -20,12 +24,18 @@
         "https://azobss.com/admin/*",
         "https://www.azobss.com/admin/*"
       ],
-      "js": ["azobss-bridge.js"],
+      "js": [
+        "azobss-bridge.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://web.whatsapp.com/*"],
-      "js": ["whatsapp-bridge.js"],
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "whatsapp-bridge.js"
+      ],
       "run_at": "document_idle"
     }
   ],

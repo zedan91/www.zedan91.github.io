@@ -1,31 +1,24 @@
-AZOBSS Firefox WhatsApp PDF Bridge v1318
-========================================
+AZOBSS WhatsApp Tab Reuse & PDF Bridge v1545 (1.1.0)
 
-Tujuan
-------
-Membolehkan Firefox menghantar invoice/receipt AZOBSS sebagai PHYSICAL PDF melalui WhatsApp Web.
-PDF dijana terus di browser AZOBSS dan dihantar secara lokal kepada extension. Customer tidak menerima temporary Render link.
+Pasang dalam Firefox yang sama dengan WhatsApp Web:
+1. Buka about:debugging#/runtime/this-firefox
+2. Klik Load Temporary Add-on...
+3. Pilih AZOBSS-Firefox-WhatsApp-Bridge-v1545.zip (manifest.json berada di root ZIP).
+4. Refresh tab AZOBSS Admin dan WhatsApp Web sekali.
+5. Klik WhatsApp Customer. Tab WhatsApp sedia ada digunakan semula.
 
-Cara test/install dalam Firefox
--------------------------------
-1. Buka Firefox dan taip: about:debugging#/runtime/this-firefox
-2. Klik "Load Temporary Add-on..."
-3. Pilih fail manifest.json di folder:
-   azobss-firefox-whatsapp-pdf-bridge
-   ATAU pilih fail AZOBSS-Firefox-WhatsApp-PDF-Bridge-v1318.xpi jika disediakan.
-4. Buka semula https://www.azobss.com/admin/
-5. Share Invoice/Receipt.
-6. Dalam Firefox, butang akan menunjukkan "Firefox: Physical PDF -> WhatsApp Web" apabila bridge dikesan.
-7. Klik butang itu. WhatsApp Web akan dibuka, PDF sebenar dilampirkan, caption diisi, kemudian SEMAK PREVIEW dan tekan Send.
+Jika tiada tab WhatsApp dalam private/container yang sama, satu tab dicipta.
+Klik berulang tidak mencipta tab tambahan. Tab di browser/profil lain tidak
+boleh digunakan semula. Tiada teks ditambah dan tiada Send ditekan automatik.
+Jika WhatsApp menunjukkan konflik sesi atau ada draf/attachment belum selesai,
+selesaikan keadaan itu dalam tab WhatsApp; extension tidak menutup tab anda.
 
-Penting
--------
-- Kamu mesti sudah login ke https://web.whatsapp.com/ dalam Firefox.
-- Firefox "Temporary Add-on" akan hilang selepas Firefox ditutup/restart. Untuk pemasangan kekal di Firefox release, extension perlu ditandatangani (signed) oleh Mozilla atau dipasang melalui polisi enterprise yang sesuai.
-- Extension tidak memuat naik PDF ke Render untuk flow Firefox ini.
-- Extension hanya aktif pada AZOBSS Admin dan WhatsApp Web.
-- Extension TIDAK auto tekan Send. Ia berhenti pada preview supaya kamu boleh semak customer, PDF dan caption dahulu.
+Kebenaran tabs dan cookies digunakan untuk metadata tab/container. Kod tidak
+membaca nilai cookies atau menghantar kandungan chat ke AZOBSS/backend.
+Akses halaman hanya AZOBSS Admin dan WhatsApp Web.
+PDF lama kekal berhenti pada preview; admin sendiri menekan Send.
 
-Jika WhatsApp mengubah UI
---------------------------
-Jika attachment gagal selepas update WhatsApp Web, AZOBSS akan tunjuk mesej error. Kamu masih boleh guna Download PDF sebagai fallback sementara selector extension dikemas kini.
+Pemasangan sementara hilang apabila Firefox ditutup. Untuk pemasangan kekal
+dalam Firefox biasa, extension perlu ditandatangani oleh Mozilla. Jangan ubah
+atau matikan semakan tandatangan Firefox. ZIP ini belum ditandatangani.
+Panduan: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/

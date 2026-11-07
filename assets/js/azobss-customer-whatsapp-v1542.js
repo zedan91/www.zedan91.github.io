@@ -19,5 +19,44 @@ function action(value,{className='',iconOnly=false}={}){
  const attrs='class="'+esc(className)+'" data-customer-whatsapp title="'+esc(title)+'" aria-label="'+esc(title)+'"';
  return href?'<a '+attrs+' href="'+href+'" target="_blank" rel="noopener noreferrer">'+content+'</a>':'<button '+attrs+' type="button" disabled aria-disabled="true">'+content+'</button>';
 }
-return Object.freeze({phone,url,action});
+const browserWindow=typeof window!=='undefined'?window:null,pending=new Map(),inflight=new Map();
+function notice(message){
+ if(!browserWindow?.document?.body)return;
+ let el=document.getElementById('azWhatsappReuseStatus1545');
+ if(!el){el=document.createElement('aside');el.id='azWhatsappReuseStatus1545';el.setAttribute('role','status');el.style.cssText='position:fixed;bottom:18px;right:18px;z-index:2147483647;width:min(410px,calc(100vw - 36px));box-sizing:border-box;padding:15px;border:1px solid #3c6578;border-radius:12px;background:#10283a;color:#effaff;font:13px/1.5 Arial,sans-serif;box-shadow:0 12px 40px #0008';document.body.append(el);}
+ el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p><a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Pasang / kemas kini Firefox Bridge ↗</a>';
+ el.querySelector('[data-wa-notice-close]').onclick=()=>el.remove();
+}
+function target(value){
+ try{const u=new URL(value);if(u.origin!=='https://web.whatsapp.com'||u.hash||u.username||u.password)return null;
+  if(u.pathname==='/'&&!u.search)return {phone:'',home:true};
+  const digits=u.searchParams.get('phone');if(u.pathname!=='/send'||u.searchParams.size!==1||!digits||phone(digits)!==digits)return null;
+  return {phone:digits,home:false};
+ }catch{return null;}
+}
+async function requestOpen(value){
+ if(!browserWindow||!target(value))return false;
+ const ready=()=>Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1545;
+ for(let i=0;i<5&&!ready();i++)await new Promise(resolve=>setTimeout(resolve,100));
+ if(!ready()){notice('Aktifkan Firefox Bridge v1545 untuk menggunakan tab WhatsApp yang sudah terbuka. Tiada tab WhatsApp baharu dibuka.');return false;}
+ const destination=target(value),requestId='wa1545-'+(browserWindow.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2));
+ return new Promise(resolve=>{
+  const timer=setTimeout(()=>{pending.delete(requestId);notice('Status pembukaan WhatsApp belum dapat disahkan. Semak tab WhatsApp sedia ada sebelum cuba lagi.');resolve(false);},10000);
+  pending.set(requestId,{resolve,timer});browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST',requestId,...destination},location.origin);
+ });
+}
+function openURL(value){
+ if(inflight.has(value))return inflight.get(value);
+ const task=requestOpen(value).finally(()=>inflight.delete(value));inflight.set(value,task);return task;
+}
+if(browserWindow?.document){
+ browserWindow.addEventListener('message',event=>{
+  if(event.source!==browserWindow||event.origin!==location.origin||event.data?.type!=='AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS')return;
+  const item=pending.get(event.data.requestId);if(!item)return;pending.delete(event.data.requestId);clearTimeout(item.timer);
+  if(event.data.ok)document.getElementById('azWhatsappReuseStatus1545')?.remove();else notice(event.data.error||'WhatsApp belum dapat dibuka. Semak extension dan cuba lagi.');item.resolve(event.data.ok===true);
+ });
+ const click=event=>{const a=event.target?.closest?.('a[data-customer-whatsapp]');if(!a)return;event.preventDefault();event.stopImmediatePropagation();openURL(a.href);};
+ browserWindow.addEventListener('click',click,{capture:true});browserWindow.addEventListener('auxclick',click,{capture:true});
+}
+return Object.freeze({phone,url,action,openURL});
 });

@@ -1516,7 +1516,7 @@ function isFirefoxDesktop(){
   const ua=String(navigator.userAgent||'');
   return /Firefox\/\d+/i.test(ua)&&!/Android|Mobile|Tablet/i.test(ua);
 }
-const AZ_SR_FIREFOX_WA_BRIDGE_VERSION=1318;
+const AZ_SR_FIREFOX_WA_BRIDGE_VERSION=1545;
 const azSrFirefoxBridgeWaiters=new Map();
 function firefoxWhatsAppBridgeVersion(){
   const raw=document.documentElement?.getAttribute('data-azobss-firefox-whatsapp-pdf-bridge')||'';
@@ -1611,8 +1611,8 @@ async function firefoxPhysicalPdfToWhatsAppWeb(context,button=null){
       downloadBlobFile(payload.file,payload.file.name,{forceAttachment:true});
       const phone=normalizeWhatsAppPhone(payload.row?.customerPhone);
       const fallbackUrl=whatsappMessageUrl(payload.row,payload.docType)||'https://web.whatsapp.com/';
-      openDirectUrl(fallbackUrl);
-      notify(`AZOBSS Firefox WhatsApp PDF Bridge v${AZ_SR_FIREFOX_WA_BRIDGE_VERSION} belum dikesan. ${payload.file.name} sudah dimuat turun dan WhatsApp Web dibuka; attach PDF itu secara manual.`,true);
+      await window.AZOBSSCustomerWhatsApp1542.openURL(fallbackUrl);
+      notify(`AZOBSS Firefox WhatsApp PDF Bridge v${AZ_SR_FIREFOX_WA_BRIDGE_VERSION} belum dikesan. ${payload.file.name} sudah dimuat turun dan Pasang / aktifkan Firefox Bridge v1545, kemudian attach PDF itu secara manual.`,true);
       return false;
     }
     const dataUrl=await blobToDataUrl(payload.file);
@@ -1647,7 +1647,7 @@ async function downloadPdfAndOpenWhatsAppFallback(context,prepared=null,button=n
     downloadBlobFile(payload.file,payload.file.name,{forceAttachment:isFirefoxDesktop()});
     const whatsappUrl=whatsappMessageUrl(payload.row,payload.docType);
     if(!whatsappUrl){notify('Customer phone unavailable or invalid.',true);return false;}
-    const opened=openDirectUrl(whatsappUrl);
+    const opened=await window.AZOBSSCustomerWhatsApp1542.openURL(whatsappUrl);
     if(!opened&&button){
       button.dataset.srFallbackWhatsappUrl=whatsappUrl;
       setSharePanelText('salesReceiptShareNativeLabel','Open WhatsApp — PDF Downloaded');
@@ -1711,7 +1711,7 @@ function openSharePanel(row,type='receipt'){
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
   const firefoxDesktop=isFirefoxDesktop();
   setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Firefox: Physical PDF → WhatsApp Web':'Firefox Bridge Required — Physical PDF'):'Share Actual PDF File');
-  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'AZOBSS Firefox Bridge is ready. The browser-generated PDF will be attached as a real file in WhatsApp Web; no temporary Render PDF link is used.':'Install/load the included AZOBSS Firefox WhatsApp PDF Bridge v1318. Until detected, AZOBSS downloads the physical PDF and opens WhatsApp Web for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
+  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'AZOBSS Firefox Bridge is ready. The browser-generated PDF will be attached as a real file in WhatsApp Web; no temporary Render PDF link is used.':'Install/load the included AZOBSS Firefox WhatsApp PDF Bridge v1545. Until detected, AZOBSS downloads the physical PDF and opens WhatsApp Web for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
   setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Customer');
@@ -1753,7 +1753,7 @@ async function runSharePanelAction(action,button=null){
     const recipients=[...new Set(rows.map(row=>window.AZOBSSCustomerWhatsApp1542?.url(row.customerPhone)||'').filter(Boolean))];
     const url=rows.length&&recipients.length===1&&rows.every(row=>window.AZOBSSCustomerWhatsApp1542?.url(row.customerPhone)===recipients[0])?recipients[0]:context.mode==='bulk'?'https://web.whatsapp.com/':'';
     if(!url){notify('Customer phone unavailable or invalid.',true);return false;}
-    return openDirectUrl(url);
+    return window.AZOBSSCustomerWhatsApp1542.openURL(url);
   }
   if(action==='telegram')return openTemporaryApp('telegram',context,button);
   if(action==='link'){
@@ -1771,7 +1771,7 @@ ZIP: ${data.shareUrl}`;await copyPlainText(text);notify('Message with temporary 
       if(button?.dataset?.srFallbackWhatsappUrl){
         const url=button.dataset.srFallbackWhatsappUrl;
         delete button.dataset.srFallbackWhatsappUrl;
-        const opened=openDirectUrl(url);
+        const opened=await window.AZOBSSCustomerWhatsApp1542.openURL(url);
         if(opened){setSharePanelText('salesReceiptShareNativeLabel','Share Actual PDF File');setSharePanelText('salesReceiptShareNativeDesc','AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');notify('WhatsApp opened. Attach the PDF that was already downloaded.');return true}
         button.dataset.srFallbackWhatsappUrl=url;notify('WhatsApp popup is still blocked. Allow popups for AZOBSS and click again.',true);return false;
       }

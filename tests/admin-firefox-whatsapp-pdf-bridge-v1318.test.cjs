@@ -33,7 +33,7 @@ test('Firefox single-document WhatsApp/native actions use local physical-PDF bri
 
 test('Firefox extension is scoped to AZOBSS admin and WhatsApp Web',()=>{
   assert.equal(manifest.manifest_version,2);
-  assert.equal(manifest.version,'1.0.0');
+  assert.equal(manifest.version,'1.1.0');
   assert.ok(manifest.permissions.includes('https://www.azobss.com/admin/*'));
   assert.ok(manifest.permissions.includes('https://web.whatsapp.com/*'));
   const joined=manifest.content_scripts.flatMap(x=>x.matches).join('\n');
@@ -43,7 +43,7 @@ test('Firefox extension is scoped to AZOBSS admin and WhatsApp Web',()=>{
 });
 
 test('bridge opens WhatsApp Web and transfers the generated PDF payload locally',()=>{
-  assert.match(bg,/https:\/\/web\.whatsapp\.com\/send\?phone=/);
+  assert.match(bg,/router\.route\(sender/);
   assert.match(bg,/pendingByWhatsappTab\.set\(tab\.id, entry\)/);
   assert.match(siteBridge,/AZOBSS_FIREFOX_WA_PDF_SHARE_REQUEST/);
   assert.match(siteBridge,/AZOBSS_FIREFOX_WA_PDF_SHARE/);
