@@ -5,3 +5,5 @@
 
 /* Shared panels own their visible state independently of legacy navbar rules. */
 .az-customer-panel1538:not([hidden]){display:block!important;pointer-events:auto!important}
+
+.az-hub-notice-action1541{margin-top:8px!important;font-weight:700;color:#80e6d7}

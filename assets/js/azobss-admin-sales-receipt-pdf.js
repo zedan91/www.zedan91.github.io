@@ -288,7 +288,7 @@
   }
   function normalizedItems(row){
     const items=Array.isArray(row.items)?row.items:[];
-    if(items.length) return items.map(item=>{const extras=[clean(item.serialNumber)?`Serial: ${clean(item.serialNumber)}`:'',clean(item.warrantyUntil)?`Warranty: ${clean(item.warrantyUntil)}`:''].filter(Boolean);const base=clean(item.name||item.product||'Item');return {name:extras.length?`${base} | ${extras.join(' | ')}`:base,category:clean(item.category||'other'),qty:number(item.qty)||1,unitPrice:number(item.unitPrice||item.price),amount:(number(item.qty)||1)*number(item.unitPrice||item.price)}});
+    if(items.length) return items.map(item=>{const extras=[clean(item.serialNumber)?`Serial: ${clean(item.serialNumber)}`:'',clean(item.warrantyUntil)?`Warranty: ${clean(item.warrantyUntil)}`:''].filter(Boolean);const base=clean(item.name||item.product||'Item');return {name:extras.length?`${base} | ${extras.join(' | ')}`:base,includedInBundle:item.includedInBundle===true,category:clean(item.category||'other'),qty:number(item.qty)||1,unitPrice:number(item.unitPrice||item.price),amount:(number(item.qty)||1)*number(item.unitPrice||item.price)}});
     return [{name:clean(row.notes||documentShortLabel(row.documentType)||'Document'),category:clean(row.category||'other'),qty:1,unitPrice:number(row.gross),amount:number(row.gross)}];
   }
   function itemRowHeight(item){ const lines=wrapText(item.name,TABLE.widths[1]-18,8.9,true); return Math.max(40,18+(lines.length*11.5)); }
@@ -308,8 +308,8 @@
     drawLeftLines(commands,wrapText(item.name,TABLE.widths[1]-18,8.9,true),tableX(1),y,h,8.9,true,[55,65,81]);
     text(commands,categoryLabel(item.category),tableX(2)+(TABLE.widths[2]/2),centeredBaseline(y,h,7.8),{size:7.8,align:'center',color:[51,65,85]});
     text(commands,formatQty(item.qty),tableX(3)+(TABLE.widths[3]/2),centeredBaseline(y,h,8.8),{size:8.8,bold:true,align:'center'});
-    text(commands,money(item.unitPrice),tableX(4)+TABLE.widths[4]-7,centeredBaseline(y,h,8.1),{size:8.1,align:'right'});
-    text(commands,money(item.amount),tableX(5)+TABLE.widths[5]-7,centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'right',color:[15,23,42]});
+    text(commands,item.includedInBundle?'Included':money(item.unitPrice),tableX(4)+TABLE.widths[4]-7,centeredBaseline(y,h,8.1),{size:8.1,align:'right'});
+    text(commands,item.includedInBundle?'Included':money(item.amount),tableX(5)+TABLE.widths[5]-7,centeredBaseline(y,h,8.7),{size:8.7,bold:true,align:'right',color:[15,23,42]});
     return y+h;
   }
   function totalLines(row,type){
