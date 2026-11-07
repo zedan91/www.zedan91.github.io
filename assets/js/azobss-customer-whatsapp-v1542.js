@@ -36,13 +36,14 @@ function target(value){
 }
 async function requestOpen(value){
  if(!browserWindow||!target(value))return false;
- const ready=()=>Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1545;
+ const ready=()=>Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1552;
  for(let i=0;i<5&&!ready();i++)await new Promise(resolve=>setTimeout(resolve,100));
- if(!ready()){notice('Aktifkan Firefox Bridge v1545 untuk menggunakan tab WhatsApp yang sudah terbuka. Tiada tab WhatsApp baharu dibuka.');return false;}
+ if(!ready()){notice('Kemas kini Firefox Bridge v1552 untuk membuka dan mengesahkan nombor pelanggan. Tiada tab tambahan dibuka.');return false;}
+ notice('Sedang membuka dan mengesahkan nombor pelanggan di WhatsApp…');
  const destination=target(value),requestId='wa1545-'+(browserWindow.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2));
  return new Promise(resolve=>{
-  const timer=setTimeout(()=>{pending.delete(requestId);notice('Status pembukaan WhatsApp belum dapat disahkan. Semak tab WhatsApp sedia ada sebelum cuba lagi.');resolve(false);},10000);
-  pending.set(requestId,{resolve,timer});browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST',requestId,...destination},location.origin);
+  const timer=setTimeout(()=>{pending.delete(requestId);notice('Chat pelanggan belum dapat disahkan. Semak status/login pada tab WhatsApp sedia ada; tiada tab tambahan dibuka.');resolve(false);},120000);
+  pending.set(requestId,{resolve,timer,...destination});browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST',requestId,...destination},location.origin);
  });
 }
 function openURL(value){
@@ -53,7 +54,8 @@ if(browserWindow?.document){
  browserWindow.addEventListener('message',event=>{
   if(event.source!==browserWindow||event.origin!==location.origin||event.data?.type!=='AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS')return;
   const item=pending.get(event.data.requestId);if(!item)return;pending.delete(event.data.requestId);clearTimeout(item.timer);
-  if(event.data.ok)document.getElementById('azWhatsappReuseStatus1545')?.remove();else notice(event.data.error||'WhatsApp belum dapat dibuka. Semak extension dan cuba lagi.');item.resolve(event.data.ok===true);
+  const confirmed=event.data.ok===true&&(item.home||event.data.phoneVerified===true&&event.data.phone===item.phone);
+  if(confirmed)document.getElementById('azWhatsappReuseStatus1545')?.remove();else notice(event.data.error||'Tab WhatsApp terbuka tetapi nombor penerima belum disahkan. PDF dan nota tidak dihantar.');item.resolve(confirmed);
  });
  const click=event=>{const a=event.target?.closest?.('a[data-customer-whatsapp]');if(!a)return;event.preventDefault();event.stopImmediatePropagation();openURL(a.href);};
  browserWindow.addEventListener('click',click,{capture:true});browserWindow.addEventListener('auxclick',click,{capture:true});

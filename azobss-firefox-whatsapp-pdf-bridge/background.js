@@ -1,7 +1,7 @@
 'use strict';
 
 const ext = typeof browser !== 'undefined' ? browser : chrome;
-const BRIDGE_VERSION = 1551;
+const BRIDGE_VERSION = 1552;
 const pendingByWhatsappTab = new Map();
 const pdfRequests=new Map();
 const router=createAzobssWhatsappTabRouter1545(ext,{pendingTabs:pendingByWhatsappTab});
@@ -75,11 +75,14 @@ ext.runtime.onMessage.addListener((message, sender) => {
       let entry={requestId,sourceTabId:sender.tab.id,filename,mimeType:'application/pdf',dataUrl,caption,phone,createdAt:now,phase:'opening'};
       pdfRequests.set(key,entry);
       const result=await router.route(sender,{phone,home:!phone,requestId,beforeNavigate:async tab=>{
-        entry.whatsappTabId=tab.id;entry.phase='queued';
+        entry.whatsappTabId=tab.id;entry.phase='opening';
         pendingByWhatsappTab.set(tab.id, entry);
       }}).catch(error=>{if(entry){entry.phase='error';entry.dataUrl='';entry.caption='';pendingByWhatsappTab.delete(entry.whatsappTabId);}throw error;});
       const tab={id:result.whatsappTabId};
-      await forwardStatus(entry, 'opened', 'WhatsApp Web dibuka. AZOBSS sedang menyediakan PDF sebenar untuk dilampirkan.');
+      if(!result.phoneVerified||result.phone!==phone||!result.instanceId){entry.phase='error';entry.dataUrl='';entry.caption='';pendingByWhatsappTab.delete(tab.id);throw new Error('Penerima WhatsApp belum disahkan. PDF tidak dilampirkan.');}
+      entry.instanceId=result.instanceId;entry.phase='queued';
+      await forwardStatus(entry, 'opened', 'Chat pelanggan disahkan. PDF dan nota sedang disediakan sekali sahaja.');
+      await ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_PDF_WAKE_1552'}).catch(()=>{});
       return { ok: true, bridgeVersion: BRIDGE_VERSION, whatsappTabId: tab.id };
     })().catch(error => ({ ok: false, error: error?.message || String(error) }));
   }
@@ -89,6 +92,7 @@ ext.runtime.onMessage.addListener((message, sender) => {
     const tabId = sender.tab?.id;
     const entry = pendingByWhatsappTab.get(tabId);
     if (!entry) return Promise.resolve({ ok: false, pending: false });
+    if(message.instanceId!==entry.instanceId||message.phone!==entry.phone)return Promise.resolve({ok:false,pending:false});
     if(entry.phase!=='queued')return Promise.resolve({ok:true,pending:false});
     if (Date.now() - entry.createdAt > 10 * 60 * 1000) {
       pendingByWhatsappTab.delete(tabId);

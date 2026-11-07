@@ -2,8 +2,10 @@
 
 (() => {
   const ext = typeof browser !== 'undefined' ? browser : chrome;
-  const BRIDGE_VERSION = 1551;
-  if(window.__AZOBSS_WA_CONTENT_1551__)return;window.__AZOBSS_WA_CONTENT_1551__=true;
+  const BRIDGE_VERSION = 1552;
+  if(window.__AZOBSS_WA_CONTENT_1552__)return;window.__AZOBSS_WA_CONTENT_1552__=true;
+  const instanceId=crypto.randomUUID();
+  let verifiedPhone='';
   let busy = false;
   const attemptedRequests=new Set();
 
@@ -123,6 +125,7 @@
   }
 
   const captionText=box=>String(box?.value??box?.innerText??box?.textContent??'').replace(/\r\n/g,'\n').replace(/[\u200b-\u200f\uFEFF]/g,'').trim();
+  function hasPreview(){return !!previewScope()||[...document.querySelectorAll('button[aria-label="Send"],[role="button"][aria-label="Send"],span[data-icon="send"],span[data-icon="send-filled"]')].some(el=>visible(el)&&!el.closest('#main footer'));}
   async function fillCaption(box, text) {
     const value = String(text || '').trim();
     if (!box || !value) return false;
@@ -160,8 +163,9 @@
       showBadge(`AZOBSS: menyediakan ${payload.filename} sebagai fail PDF sebenar…`);
       const chatReady = await waitForChatReady();
       if (!chatReady) throw new Error('WhatsApp Web belum siap selepas 90 saat. Pastikan kamu sudah login dan chat customer boleh dibuka.');
-      const composer=document.querySelector('#main footer [contenteditable="true"][role="textbox"]');
-      if((composer&&captionText(composer))||previewScope())throw new Error('Ada draf atau attachment sedia ada. Selesaikannya dahulu; tiada PDF baharu dilampirkan.');
+      if(verifiedPhone!==payload.phone||!window.AZOBSSWhatsappTarget1552?.current(payload.phone))throw new Error('Chat penerima berubah atau belum disahkan. PDF tidak dilampirkan.');
+      const composer=document.querySelector('#main footer [contenteditable="true"],#main footer textarea');
+      if((composer&&captionText(composer))||hasPreview())throw new Error('Ada draf atau attachment sedia ada. Selesaikannya dahulu; tiada PDF baharu dilampirkan.');
 
       const file = dataUrlToFile(payload.dataUrl, payload.filename, payload.mimeType);
       const attach = findAttachButton();
@@ -220,18 +224,26 @@
   async function pump() {
     if (busy) return;
     try {
-      const response = await ext.runtime.sendMessage({ type: 'AZOBSS_FIREFOX_WA_PDF_CLAIM',bridgeVersion:BRIDGE_VERSION });
+      const response = await ext.runtime.sendMessage({ type: 'AZOBSS_FIREFOX_WA_PDF_CLAIM',bridgeVersion:BRIDGE_VERSION,instanceId,phone:verifiedPhone });
       if (response?.ok && response.pending) attachPayload(response);
     } catch (_) {}
   }
 
   ext.runtime.onMessage.addListener(message=>{
+    if(message?.type==='AZOBSS_WA_ENSURE_CHAT_1552'){
+      if(message.instanceId!==instanceId)return Promise.resolve({ok:false,code:'stale_document',instanceId});
+      if(!window.AZOBSSWhatsappTarget1552)return Promise.resolve({ok:false,code:'bridge_update_required',error:'Refresh WhatsApp untuk mengaktifkan semakan penerima.'});
+      showBadge('AZOBSS: membuka dan mengesahkan chat +'+message.phone+'…');
+      return window.AZOBSSWhatsappTarget1552.ensure(message.phone).then(()=>{verifiedPhone=message.phone;showBadge('Chat +'+verifiedPhone+' disahkan. Semak penerima sebelum menghantar mesej.','good');return {ok:true,phone:verifiedPhone,instanceId};}).catch(error=>{showBadge('AZOBSS: '+error.message,'error');return {ok:false,instanceId,code:error.code||'recipient_unverified',error:error.message};});
+    }
+    if(message?.type==='AZOBSS_WA_PDF_WAKE_1552'){pump();return Promise.resolve({ok:true});}
     if(message?.type!=='AZOBSS_WA_TAB_STATUS_1545')return;
     const dialogs=[...document.querySelectorAll('[role="dialog"],[role="alertdialog"],[data-animate-modal-popup]')].filter(visible);
     const locked=dialogs.some(el=>/WhatsApp is open in another window|WhatsApp.*(?:tetingkap|window).*lain/i.test(el.textContent||''));
-    const composer=document.querySelector('#main footer [contenteditable="true"][role="textbox"]');
-    const preview=!!document.querySelector('[data-testid="media-editor"],[data-testid="media-preview"]')||(!composer&&!!findSendButton());
-    return Promise.resolve({bridgeVersion:BRIDGE_VERSION,locked,busy:busy||preview,draft:!!(composer&&String(composer.textContent||'').replace(/[\u200b-\u200f\uFEFF]/g,'').trim()),ready:!locked&&!!document.querySelector('#pane-side,#main,[data-testid="chat-list"]')});
+    const composer=document.querySelector('#main footer [contenteditable="true"],#main footer textarea');
+    const preview=hasPreview();
+    const loginRequired=!!document.querySelector('[data-testid="qrcode"]')||[...document.querySelectorAll('h1,h2,[role="heading"]')].some(el=>visible(el)&&/log (?:in|into) (?:to )?WhatsApp|log masuk.*WhatsApp|use WhatsApp on your computer/i.test(el.textContent||''));
+    return Promise.resolve({bridgeVersion:BRIDGE_VERSION,instanceId,loginRequired,locked,busy:busy||preview,draft:!!(composer&&String(composer.textContent||'').replace(/[\u200b-\u200f\uFEFF]/g,'').trim()),ready:!locked&&!!document.querySelector('#pane-side,#main,[data-testid="chat-list"],[aria-label="New chat"],[title="New chat"]')});
   });
   pump();
   setInterval(pump, 1300);

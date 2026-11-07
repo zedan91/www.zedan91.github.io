@@ -1459,7 +1459,7 @@ async function downloadDocumentPdf(row,type='receipt',button=null){
     }
   }finally{if(button){button.disabled=false;button.classList.remove('busy')}}
 }
-function normalizeWhatsAppPhone(value){let phone=String(value||'').replace(/\D/g,'');if(phone.startsWith('0'))phone='60'+phone.slice(1);return phone}
+function normalizeWhatsAppPhone(value){if(window.AZOBSSCustomerWhatsApp1542?.phone)return window.AZOBSSCustomerWhatsApp1542.phone(value);let phone=String(value||'').replace(/\D/g,'');if(phone.startsWith('0'))phone='60'+phone.slice(1);return /^[1-9]\d{7,14}$/.test(phone)?phone:''}
 async function copyPlainText(value){
   const text=String(value||'');if(!text)throw new Error('Nothing to copy.');
   if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return}
@@ -1516,7 +1516,7 @@ function isFirefoxDesktop(){
   const ua=String(navigator.userAgent||'');
   return /Firefox\/\d+/i.test(ua)&&!/Android|Mobile|Tablet/i.test(ua);
 }
-const AZ_SR_FIREFOX_WA_BRIDGE_VERSION=1551;
+const AZ_SR_FIREFOX_WA_BRIDGE_VERSION=1552;
 const azSrFirefoxBridgeWaiters=new Map();
 const azSrFirefoxBridgeTransfers=new Map();
 function firefoxWhatsAppBridgeVersion(){
@@ -1526,7 +1526,7 @@ function firefoxWhatsAppBridgeVersion(){
 function firefoxWhatsAppBridgeReady(){return firefoxWhatsAppBridgeVersion()>=AZ_SR_FIREFOX_WA_BRIDGE_VERSION}
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('Could not read PDF bytes.'));reader.readAsDataURL(blob)})}
 function waitForFirefoxBridgeReady(timeoutMs=1000){return new Promise(resolve=>{const started=Date.now();const tick=()=>{if(firefoxWhatsAppBridgeReady())return resolve(true);if(Date.now()-started>=timeoutMs)return resolve(false);setTimeout(tick,80)};tick()})}
-function waitForFirefoxBridgeAcceptance(requestId,timeoutMs=6500){return new Promise(resolve=>{const timer=setTimeout(()=>{azSrFirefoxBridgeWaiters.delete(requestId);resolve({ok:false,status:'timeout',message:'Firefox bridge tidak memberi respons.'})},timeoutMs);azSrFirefoxBridgeWaiters.set(requestId,{resolve:data=>{clearTimeout(timer);azSrFirefoxBridgeWaiters.delete(requestId);resolve(data)}})})}
+function waitForFirefoxBridgeAcceptance(requestId,timeoutMs=120000){return new Promise(resolve=>{const timer=setTimeout(()=>{azSrFirefoxBridgeWaiters.delete(requestId);resolve({ok:false,status:'timeout',message:'Chat pelanggan belum dapat disahkan oleh Firefox bridge.'})},timeoutMs);azSrFirefoxBridgeWaiters.set(requestId,{resolve:data=>{clearTimeout(timer);azSrFirefoxBridgeWaiters.delete(requestId);resolve(data)}})})}
 window.addEventListener('message',event=>{
   if(event.source!==window||event.origin!==location.origin)return;
   const data=event.data;if(!data||data.type!=='AZOBSS_FIREFOX_WA_PDF_BRIDGE_STATUS')return;
@@ -1617,9 +1617,9 @@ async function firefoxPhysicalPdfToWhatsAppWeb(context,button=null){
     const ready=await waitForFirefoxBridgeReady(900);
     if(!ready){
       context.firefoxTransfer.phase='requires-update';
-      setSharePanelText('salesReceiptShareNativeLabel','Update Firefox Bridge v1551');
+      setSharePanelText('salesReceiptShareNativeLabel','Update Firefox Bridge v1552');
       setSharePanelText('salesReceiptShareNativeDesc','Disable/remove the old bridge to stop its queue. Install v1551 from /azobss-firefox-whatsapp-pdf-bridge/INSTALL.html, then refresh Admin and WhatsApp. No PDF was queued.');
-      notify('Firefox Bridge v1551 diperlukan. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
+      notify('Firefox Bridge v1552 diperlukan. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
     }
     const payload=await prepareSingleActualPdf(context);
     try{await copyPlainText(payload.text);}catch(_e){notify('Nota tidak dapat disalin ke clipboard. Jika caption gagal, gunakan Copy Message.',true);}
@@ -1706,9 +1706,9 @@ function openSharePanel(row,type='receipt'){
   sharePanelContext={mode:'single',row,type:docType,temp:null,tempPromise:null};
   setSharePanelText('salesReceiptShareTitle',`Share ${label}`);setSharePanelText('salesReceiptShareMeta',`${documentNo(row,docType)} • ${row.customerName||'Customer'} • ${money(row.gross)}`);
   const firefoxDesktop=isFirefoxDesktop();
-  if(firefoxDesktop){let guide=el('salesReceiptBridgeGuide');if(!guide){guide=document.createElement('a');guide.id='salesReceiptBridgeGuide';guide.href='/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1551';guide.target='_blank';guide.rel='noopener noreferrer';guide.textContent='Install / Update Firefox Bridge v1551 ↗';guide.style.cssText='display:block;margin-top:8px;color:#79efc6';el('salesReceiptSharePanel')?.appendChild(guide);}guide.hidden=firefoxWhatsAppBridgeReady();}
+  if(firefoxDesktop){let guide=el('salesReceiptBridgeGuide');if(!guide){guide=document.createElement('a');guide.id='salesReceiptBridgeGuide';guide.href='/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1552';guide.target='_blank';guide.rel='noopener noreferrer';guide.textContent='Install / Update Firefox Bridge v1552 ↗';guide.style.cssText='display:block;margin-top:8px;color:#79efc6';el('salesReceiptSharePanel')?.appendChild(guide);}guide.hidden=firefoxWhatsAppBridgeReady();}
   setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Firefox: Physical PDF → WhatsApp Web':'Firefox Bridge Required — Physical PDF'):'Share Actual PDF File');
-  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Prepare one PDF with its document note in WhatsApp Web. Review both, then press Send yourself. No automatic retry or Send.':'Update to Firefox Bridge v1551 before using this action. Disable/remove the old bridge, install the new version, then refresh Admin and WhatsApp. Use Download PDF for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
+  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?(firefoxWhatsAppBridgeReady()?'Open and verify this customer first, then prepare one PDF and its note. Review the preview and press Send yourself.':'Update to Firefox Bridge v1552 before using this action. Disable/remove the old bridge, install the new version, then refresh Admin and WhatsApp. Use Download PDF for manual attachment.'):'AZOBSS prepares the real PDF when clicked and checks that exact file. If native file sharing is unavailable, the PDF is downloaded and WhatsApp opens for manual attachment.');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
   setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Customer');

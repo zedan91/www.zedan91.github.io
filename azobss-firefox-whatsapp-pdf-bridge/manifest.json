@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "AZOBSS WhatsApp Tab Reuse & PDF Bridge",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Prepare one PDF with document notes in WhatsApp Web, reuse tabs and leave Send to the admin.",
   "permissions": [
     "tabs",
@@ -34,6 +34,7 @@
         "https://web.whatsapp.com/*"
       ],
       "js": [
+        "chat-target.js",
         "whatsapp-bridge.js"
       ],
       "run_at": "document_idle"

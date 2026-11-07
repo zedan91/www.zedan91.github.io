@@ -1,9 +1,9 @@
-AZOBSS WhatsApp Tab Reuse & PDF Bridge v1551 (1.2.0)
+AZOBSS WhatsApp Tab Reuse & PDF Bridge v1552 (1.3.0)
 
 PENTING: Disable/remove bridge lama dahulu untuk menghentikan queue retry lama.
 1. Dalam Firefox, buka about:debugging#/runtime/this-firefox.
 2. Klik Remove pada AZOBSS WhatsApp Bridge versi lama.
-3. Klik Load Temporary Add-on... dan pilih AZOBSS-Firefox-WhatsApp-Bridge-v1551.zip.
+3. Klik Load Temporary Add-on... dan pilih AZOBSS-Firefox-WhatsApp-Bridge-v1552.zip.
 4. Refresh AZOBSS Admin dan WhatsApp Web.
 
 WhatsApp Customer hanya membuka chat, tanpa teks atau PDF.
@@ -24,3 +24,5 @@ Kod tidak membaca nilai cookies atau menghantar chat ke backend.
 Pemasangan sementara hilang selepas Firefox ditutup. ZIP belum ditandatangani;
 pemasangan kekal memerlukan tandatangan Mozilla. Jangan matikan semakan tandatangan.
 https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
+
+Chat penerima mesti disahkan dahulu. Jika pautan hanya membuka halaman utama, bridge mencari nombor penuh melalui New chat. PDF dan nota hanya disediakan selepas nombor penerima disahkan pada dokumen WhatsApp yang baharu. Jika login atau semakan gagal, ralat dipaparkan dan tiada PDF dilampirkan.

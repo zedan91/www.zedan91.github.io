@@ -2,7 +2,7 @@
 
 (() => {
   const ext = typeof browser !== 'undefined' ? browser : chrome;
-  const BRIDGE_VERSION = 1551;
+  const BRIDGE_VERSION = 1552;
   const READY_ATTR = 'data-azobss-firefox-whatsapp-pdf-bridge';
 
   async function announceReady() {
@@ -21,7 +21,7 @@
     const data = event.data;
     if(data?.type==='AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST'){
       ext.runtime.sendMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT',requestId:String(data.requestId||''),phone:data.phone,home:data.home===true}).then(response=>{
-        window.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS',requestId:data.requestId,ok:response?.ok===true,error:response?.error||'',reused:response?.reused===true,bridgeVersion:BRIDGE_VERSION},location.origin);
+        window.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS',requestId:data.requestId,ok:response?.ok===true,error:response?.error||'',phoneVerified:response?.phoneVerified===true,phone:response?.phone||'',reused:response?.reused===true,bridgeVersion:BRIDGE_VERSION},location.origin);
       }).catch(error=>window.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS',requestId:data.requestId,ok:false,error:String(error?.message||error),bridgeVersion:BRIDGE_VERSION},location.origin));return;
     }
     if (!data || data.type !== 'AZOBSS_FIREFOX_WA_PDF_SHARE_REQUEST') return;
