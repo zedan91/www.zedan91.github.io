@@ -9,6 +9,7 @@
     try{const response=await ext.runtime.sendMessage({type:'AZOBSS_FIREFOX_WA_CONTACT_PING'});if(!response?.ok||!response.tabReuse)return;document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-tab-reuse',String(BRIDGE_VERSION));}catch{return;}
     try {
       document.documentElement?.setAttribute(READY_ATTR, String(BRIDGE_VERSION));
+      document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-extension-version',ext.runtime.getManifest().version);
       window.postMessage({
         type: 'AZOBSS_FIREFOX_WA_PDF_BRIDGE_READY',
         bridgeVersion: BRIDGE_VERSION

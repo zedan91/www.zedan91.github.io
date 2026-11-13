@@ -24,7 +24,7 @@ function notice(message,{guide=false,number=""}={}){
  if(!browserWindow?.document?.body)return;
  let el=document.getElementById('azWhatsappReuseStatus1545');
  if(!el){el=document.createElement('aside');el.id='azWhatsappReuseStatus1545';el.setAttribute('role','status');el.style.cssText='position:fixed;bottom:18px;right:18px;z-index:2147483647;width:min(410px,calc(100vw - 36px));box-sizing:border-box;padding:15px;border:1px solid #3c6578;border-radius:12px;background:#10283a;color:#effaff;font:13px/1.5 Arial,sans-serif;box-shadow:0 12px 40px #0008';document.body.append(el);}
- el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p>'+(number?'<label>Customer number <input readonly aria-label="Customer WhatsApp number" value="+'+esc(number)+'" style="display:block;width:100%;box-sizing:border-box;padding:8px;margin-top:5px;color:inherit;background:#091a26;border:1px solid #3c6578;border-radius:6px"></label>':'')+(guide?'<a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1553" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Optional Firefox Bridge ↗</a>':'');
+ el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p>'+(number?'<label>Customer number <input readonly aria-label="Customer WhatsApp number" value="+'+esc(number)+'" style="display:block;width:100%;box-sizing:border-box;padding:8px;margin-top:5px;color:inherit;background:#091a26;border:1px solid #3c6578;border-radius:6px"></label>':'')+(guide?'<a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1554" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Optional Firefox Bridge ↗</a>':'');
  el.querySelector('[data-wa-notice-close]').onclick=()=>el.remove();
 }
 function target(value){
@@ -34,7 +34,11 @@ function target(value){
   return {phone:digits,home:false};
  }catch{return null;}
 }
-function bridgeReady(){return Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1552;}
+function bridgeReady(){
+ if(!browserWindow)return false;
+ const version=String(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-extension-version')||'').match(/^(\d+)\.(\d+)\.(\d+)$/);
+ return Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-tab-reuse'))>=1552&&!!version&&(Number(version[1])>1||Number(version[1])===1&&(Number(version[2])>3||Number(version[2])===3&&Number(version[3])>=2));
+}
 async function manualContact(destination){
  let copied=false;
  if(destination.phone){try{await navigator.clipboard.writeText('+'+destination.phone);copied=true;}catch{}}
@@ -67,5 +71,5 @@ if(browserWindow?.document){
  const click=event=>{const a=event.target?.closest?.('a[data-customer-whatsapp]');if(!a)return;event.preventDefault();event.stopImmediatePropagation();openURL(a.href);};
  browserWindow.addEventListener('click',click,{capture:true});browserWindow.addEventListener('auxclick',click,{capture:true});
 }
-return Object.freeze({phone,url,action,openURL});
+return Object.freeze({phone,url,action,openURL,bridgeReady});
 });

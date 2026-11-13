@@ -1,6 +1,6 @@
 {
   "name": "azobss-lucky-draw-backend",
-  "version": "1.0.1553",
+  "version": "1.0.1554",
   "type": "module",
   "scripts": {
     "start": "node server.js",

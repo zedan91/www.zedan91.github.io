@@ -7,22 +7,27 @@
   const instanceId=crypto.randomUUID();
   let verifiedPhone='';
   let busy = false;
+  let activePreviewContext=null;
+  let badgeTimer=null;
   const attemptedRequests=new Set();
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
 
   function showBadge(text, tone = 'info') {
-    let node = document.getElementById('azobss-firefox-wa-pdf-status');
-    if (!node) {
-      node = document.createElement('div');
-      node.id = 'azobss-firefox-wa-pdf-status';
-      node.style.cssText = 'position:fixed;z-index:2147483647;right:18px;bottom:18px;max-width:430px;padding:13px 15px;border-radius:12px;color:#fff;font:600 14px/1.4 Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.38);white-space:pre-wrap;';
-      document.documentElement.appendChild(node);
+    clearTimeout(badgeTimer);
+    let node=document.getElementById('azobss-firefox-wa-pdf-status');
+    if(!node){
+      node=document.createElement('aside');node.id='azobss-firefox-wa-pdf-status';node.setAttribute('role','status');node.setAttribute('aria-live','polite');
+      // Keep the composer free and allow clicks/typing through the notice.
+      node.style.cssText='position:fixed;z-index:2147483647;right:14px;top:12px;bottom:auto;max-width:min(390px,calc(100vw - 28px));box-sizing:border-box;padding:10px 38px 10px 12px;border-radius:10px;color:#fff;font:500 12px/1.4 Arial,sans-serif;box-shadow:0 5px 18px #0004;white-space:pre-wrap;pointer-events:none;';
+      const message=document.createElement('span');message.dataset.azobssStatusText='';node.append(message);
+      const close=document.createElement('button');close.type='button';close.setAttribute('aria-label','Close AZOBSS status');close.textContent='×';close.style.cssText='position:absolute;right:5px;top:4px;pointer-events:auto;background:transparent;border:0;color:inherit;font-size:20px;cursor:pointer;padding:3px 6px;';
+      close.onclick=()=>{clearTimeout(badgeTimer);node.remove();};node.append(close);document.documentElement.appendChild(node);
     }
-    const bg = tone === 'good' ? '#15803d' : tone === 'error' ? '#b91c1c' : '#075985';
-    node.style.background = bg;
-    node.textContent = text;
+    node.style.background=tone==='good'?'#166344':tone==='error'?'#8e2929':'#164b64';
+    node.querySelector('[data-azobss-status-text]').textContent=text;
+    badgeTimer=setTimeout(()=>node.remove(),tone==='good'?3500:tone==='error'?8500:6500);
   }
 
   function dataUrlToFile(dataUrl, filename, mimeType) {
@@ -36,19 +41,14 @@
   }
 
   function findAttachButton() {
-    const selectors = [
-      'button[aria-label="Attach"]',
-      '[role="button"][aria-label="Attach"]',
-      'button[title="Attach"]',
-      '[role="button"][title="Attach"]',
-      'span[data-icon="plus-rounded"]',
-      'span[data-icon="plus"]',
-      'span[data-icon="clip"]'
-    ];
-    for (const selector of selectors) {
-      const match = [...document.querySelectorAll(selector)].find(visible);
-      if (!match) continue;
-      return match.closest('button,[role="button"]') || match;
+    const main=document.querySelector('#main');if(!main)return null;
+    const footer=main.querySelector('footer');
+    const named=['button[aria-label="Attach"]','[role="button"][aria-label="Attach"]','button[title="Attach"]','[role="button"][title="Attach"]','button[aria-label="Lampirkan"]','[role="button"][aria-label="Lampirkan"]'];
+    const icons=['span[data-icon="plus-rounded"]','span[data-icon="plus"]','span[data-icon="clip"]','span[data-icon="attach-menu-plus"]'];
+    // A sidebar/header plus button must never be mistaken for chat attachment.
+    for(const [scope,selectors] of [[footer,[...named,...icons]],[main,named]]){
+      if(!scope)continue;
+      for(const selector of selectors){const match=[...scope.querySelectorAll(selector)].find(el=>visible(el)&&!el.closest('header'));if(match)return match.closest('button,[role="button"]')||match;}
     }
     return null;
   }
@@ -71,19 +71,23 @@
     return textMatch || null;
   }
 
-  function chooseDocumentInput() {
-    const inputs = [...document.querySelectorAll('input[type="file"]')];
-    if (!inputs.length) return null;
-    const scored = inputs.map(input => {
-      const accept = String(input.getAttribute('accept') || '').toLowerCase();
-      let score = 0;
-      if (!accept || accept === '*' || accept === '*/*') score += 8;
-      if (/application\/pdf|\.pdf|application\/\*/.test(accept)) score += 10;
-      if (/image|video/.test(accept) && !/application|pdf/.test(accept)) score -= 12;
-      if (input.multiple) score += 1;
-      return { input, score };
-    }).sort((a, b) => b.score - a.score);
-    return scored[0]?.score >= 0 ? scored[0].input : null;
+  function chooseDocumentInput(before=new Set(),documentButton=null,beforeDocumentClick=null) {
+    const associated=input=>{
+      if(!documentButton)return false;
+      if(documentButton.contains(input))return true;
+      const label=input.closest('label');if(label&&(label===documentButton||label.contains(documentButton)))return true;
+      return !!(input.id&&documentButton.getAttribute('for')===input.id);
+    };
+    const scored=[...document.querySelectorAll('input[type="file"]')].filter(input=>input.isConnected&&!input.disabled).map(input=>{
+      const accept=String(input.getAttribute('accept')||'').toLowerCase(),pdf=/application\/pdf|\.pdf|application\/\*/.test(accept),generic=!accept||accept==='*'||accept==='*/*';
+      if(!pdf&&!generic)return null;
+      const owned=associated(input),fresh=!before.has(input),afterDocument=beforeDocumentClick&&!beforeDocumentClick.has(input);
+      if(!owned&&!fresh&&!afterDocument&&!pdf)return null;
+      return {input,score:(owned?300:0)+(afterDocument?200:fresh?100:0)+(pdf?40:5)};
+    }).filter(Boolean).sort((a,b)=>b.score-a.score);
+    // Ties are ambiguous: wait for the Document control rather than pick an old
+    // unrelated generic input (profile/status/contact upload inputs can coexist).
+    return scored.length&&(!scored[1]||scored[0].score>scored[1].score)?scored[0].input:null;
   }
 
   function setInputFile(input, file) {
@@ -93,55 +97,85 @@
     input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
   }
 
-  function previewScope(filename='') {
-    const valid=node=>visible(node)&&!node.querySelector('#pane-side,#main footer')&&(!filename||String(node.innerText||node.textContent||'').includes(filename))&&!!findSendButton(node);
-    const roots=[...document.querySelectorAll('[role="dialog"],[data-testid="media-editor"],[data-testid="media-preview"],[data-animate-modal-popup="true"]')];
-    for(const node of roots)if(valid(node))return node;
-    if(filename){
-      const labels=[...document.querySelectorAll('span,div,p')].filter(node=>visible(node)&&String(node.textContent||'').trim()===filename);
-      for(const label of labels){let node=label.parentElement;for(let i=0;node&&node!==document.body&&i<9;i++,node=node.parentElement)if(valid(node))return node;}
+  const editableSelector='[contenteditable="true"],[contenteditable="plaintext-only"],textarea,input[type="text"]';
+  const messageSelector='[data-message-id],[data-testid="msg-container"],[data-testid="message-container"],[data-id^="true_"],[data-id^="false_"]';
+  function sendButtons(root=document){
+    const nodes=[...root.querySelectorAll('button[aria-label="Send"],[role="button"][aria-label="Send"],button[aria-label="Hantar"],[role="button"][aria-label="Hantar"],span[data-icon="send"],span[data-icon="send-filled"]')];
+    return [...new Set(nodes.map(el=>el.closest('button,[role="button"]')||el))].filter(visible);
+  }
+  function captionHint(el,scope){
+    for(let node=el,depth=0;node&&depth<4;node=node.parentElement,depth++){
+      if(/caption|kapsyen/i.test(['aria-label','aria-placeholder','placeholder','data-testid'].map(attr=>node.getAttribute(attr)||'').join(' ')))return true;
+      if(node===scope)break;
     }
-    return null;
+    return false;
+  }
+  function filenameLabels(filename){
+    if(!filename)return [];
+    return [...document.querySelectorAll('span,div,p,[title],[aria-label],[data-filename]')].filter(node=>visible(node)&&!node.closest(messageSelector)&&(String(node.textContent||'').trim()===filename||['title','aria-label','data-filename'].some(attr=>node.getAttribute(attr)===filename)));
   }
   function findPreviewCaptionBox(scope) {
     if(!scope)return null;
-    const candidates=[...scope.querySelectorAll('[contenteditable="true"],textarea,input[type="text"]')].filter(el=>visible(el)&&!el.closest('#main footer')&&!/search|cari/i.test(el.getAttribute('aria-label')||''));
-    const explicit=candidates.filter(el=>/caption|kapsyen/i.test([el.getAttribute('aria-label'),el.getAttribute('aria-placeholder'),el.getAttribute('placeholder'),el.getAttribute('data-testid')].join(' ')));
-    return explicit.length===1?explicit[0]:candidates.length===1?candidates[0]:null;
+    const context=activePreviewContext;
+    const candidates=[...scope.querySelectorAll(editableSelector)].filter(el=>visible(el)&&!el.closest(messageSelector)&&!el.closest('[role="search"]')&&!/search|cari/i.test(['aria-label','aria-placeholder','placeholder'].map(attr=>el.getAttribute(attr)||'').join(' '))&&(!(el===context?.composer||context?.oldEditors?.has(el)||el.closest('[data-testid="conversation-compose-box-input"]')||!context&&el.closest('#main footer'))||captionHint(el,scope)));
+    const explicit=candidates.filter(el=>captionHint(el,scope));
+    return explicit.length===1?explicit[0]:explicit.length?null:candidates.length===1?candidates[0]:null;
   }
-
-  function findSendButton(root=document) {
-    const selectors = [
-      'button[aria-label="Send"]',
-      '[role="button"][aria-label="Send"]',
-      'span[data-icon="send"]',
-      'span[data-icon="send-filled"]'
-    ];
-    for (const selector of selectors) {
-      const match = [...root.querySelectorAll(selector)].find(visible);
-      if (match) return match.closest('button,[role="button"]') || match;
-    }
-    return null;
+  function previewScope(filename='',context=activePreviewContext) {
+    const wanted=filename||context?.filename||'',labels=filenameLabels(wanted).filter(el=>!context?.oldLabels.has(el)),sends=sendButtons().filter(el=>!context?.oldSend.has(el));
+    const valid=node=>{
+      if(!visible(node)||node===document.body||node===document.documentElement||node.id==='pane-side'||node.querySelector('#pane-side')||node.closest(messageSelector))return false;
+      if(context?.composer&&visible(context.composer)&&node.contains(context.composer)&&!captionHint(context.composer,node))return false;
+      if(!context&&node.id==='main')return false;
+      return (!wanted||labels.some(label=>node===label||node.contains(label)))&&sends.some(send=>node.contains(send));
+    };
+    const scopes=[],add=node=>{if(node&&!scopes.includes(node)&&valid(node))scopes.push(node);};
+    for(const node of document.querySelectorAll('[role="dialog"],[data-testid="media-editor"],[data-testid="media-preview"],[data-testid*="document-preview"],[data-animate-modal-popup="true"]'))add(node);
+    if(wanted)for(const label of labels){let node=label.parentElement;for(let i=0;node&&node!==document.body&&i<14;i++,node=node.parentElement)add(node);}
+    // Modern WhatsApp can mount its document preview INSIDE #main with its own
+    // footer. The old blanket '#main footer' exclusion rejected that real caption.
+    return scopes.find(node=>findPreviewCaptionBox(node))||scopes[0]||null;
   }
+  function findSendButton(root=document){return sendButtons(root)[0]||null;}
 
   const captionText=box=>String(box?.value??box?.innerText??box?.textContent??'').replace(/\r\n/g,'\n').replace(/[\u200b-\u200f\uFEFF]/g,'').trim();
-  function hasPreview(){return !!previewScope()||[...document.querySelectorAll('button[aria-label="Send"],[role="button"][aria-label="Send"],span[data-icon="send"],span[data-icon="send-filled"]')].some(el=>visible(el)&&!el.closest('#main footer'));}
+  function hasPreview(){return !!previewScope()||sendButtons().some(el=>!el.closest('#main footer')||[...el.closest('footer').querySelectorAll(editableSelector)].some(input=>visible(input)&&captionHint(input,el.closest('footer'))));}
   async function fillCaption(box, text) {
-    const value = String(text || '').trim();
-    if (!box || !value) return false;
-    const old=captionText(box);if(old&&old!==value)return false;
-    if(old===value)return true;
-    box.focus();
-    if(box.matches('textarea,input')){
-      const prototype=box.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
-      Object.getOwnPropertyDescriptor(prototype,'value').set.call(box,value);
-      box.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,inputType:'insertText',data:value}));
-    }else{
-      const range=document.createRange(),selection=window.getSelection();range.selectNodeContents(box);selection.removeAllRanges();selection.addRange(range);
-      try{if(!document.execCommand('insertText',false,value))return false;}catch{return false;}
-    }
-    await sleep(180);box.blur();await sleep(180);
-    return box.isConnected&&captionText(box)===value;
+    const value=String(text||'').trim();if(!box||!value)return false;
+    const old=captionText(box);if(old&&old!==value)return false;if(old===value)return true;
+    let userEditing=false;
+    const interaction=event=>{if(event.isTrusted)userEditing=true;};
+    document.addEventListener('keydown',interaction,true);document.addEventListener('pointerdown',interaction,true);
+    const resolve=()=>findPreviewCaptionBox(previewScope(activePreviewContext?.filename)||box.closest('[role="dialog"]'));
+    try{
+      box.focus();
+      if(box.matches('textarea,input')){
+        const prototype=box.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+        Object.getOwnPropertyDescriptor(prototype,'value').set.call(box,value);
+        box.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,inputType:'insertText',data:value}));
+      }else{
+        const range=document.createRange(),selection=window.getSelection();range.selectNodeContents(box);selection.removeAllRanges();selection.addRange(range);
+        // The DOM may accept the edit even when execCommand returns false.
+        try{document.execCommand('insertText',false,value);}catch{}
+      }
+      await sleep(180);if(userEditing)return false;
+      let current=resolve()||box;
+      if(!current.isConnected)return false;
+      if(!captionText(current)&&!current.matches('textarea,input')){
+        // One caption-only paste fallback for editors that reject insertText.
+        // Never redispatch the file or fall back to the conversation composer.
+        current.focus();const data=new DataTransfer();data.setData('text/plain',value);
+        const paste=new ClipboardEvent('paste',{bubbles:true,cancelable:true,composed:true,clipboardData:data});
+        // Firefox may construct an empty clipboardData despite the init value.
+        // Populate this synthetic event only; never read the user's clipboard.
+        if(paste.clipboardData?.getData('text/plain')!==value)Object.defineProperty(paste,'clipboardData',{value:data});
+        current.dispatchEvent(paste);
+        await sleep(180);if(userEditing)return false;current=resolve()||current;
+      }
+      if(!current.isConnected||captionText(current)!==value)return false;
+      current.blur();await sleep(180);current=resolve()||current;
+      return !userEditing&&current.isConnected&&captionText(current)===value;
+    }finally{document.removeEventListener('keydown',interaction,true);document.removeEventListener('pointerdown',interaction,true);}
   }
 
   async function waitForChatReady(timeoutMs = 90000) {
@@ -168,24 +202,29 @@
       if((composer&&captionText(composer))||hasPreview())throw new Error('Ada draf atau attachment sedia ada. Selesaikannya dahulu; tiada PDF baharu dilampirkan.');
 
       const file = dataUrlToFile(payload.dataUrl, payload.filename, payload.mimeType);
+      const beforeInputs=new Set(document.querySelectorAll('input[type="file"]'));
+      activePreviewContext={filename:payload.filename,composer,oldEditors:new Set([...document.querySelectorAll(editableSelector)].filter(visible)),oldLabels:new Set(filenameLabels(payload.filename)),oldSend:new Set(sendButtons())};
       const attach = findAttachButton();
       if (!attach) throw new Error('Butang attachment WhatsApp tidak ditemui.');
       attach.click();
 
       let input = null;
       let documentMenuClicked = false;
+      let beforeDocumentClick=null;
       for (let i = 0; i < 35 && !input; i++) {
         await sleep(180);
-        input = chooseDocumentInput();
-        if (!input && !documentMenuClicked && i >= 5) {
-          const documentButton = findDocumentMenuButton();
+        const documentButton=findDocumentMenuButton();
+        input = chooseDocumentInput(beforeInputs,documentButton,beforeDocumentClick);
+        if (!input && !documentMenuClicked && i >= 3) {
           if (documentButton) {
             documentMenuClicked = true;
+            beforeDocumentClick=new Set(document.querySelectorAll('input[type="file"]'));
             documentButton.click();
           }
         }
       }
       if (!input) throw new Error('Input Document WhatsApp tidak ditemui. WhatsApp Web mungkin sudah mengubah UI.');
+      if(verifiedPhone!==payload.phone||!window.AZOBSSWhatsappTarget1552?.current(payload.phone))throw new Error('Chat penerima berubah sebelum lampiran. Proses dihentikan.');
       setInputFile(input, file);
       fileDispatched=true;
 
@@ -217,6 +256,7 @@
         message: error?.message || String(error)
       }).catch(() => {});
     } finally {
+      activePreviewContext=null;
       busy = false;
     }
   }
