@@ -37,7 +37,7 @@
         label('name','Nama paparan',l.name)+label('address','Alamat penuh termasuk Tingkat 1',l.address)+
         label('latitude','Latitud',l.latitude,'number')+label('longitude','Longitud',l.longitude,'number')+
         label('phone','Telefon (+60)',l.phone)+label('website','Website',l.website,'url')+
-        label('hours','Waktu',l.hours)+label('instructions','Arahan pengambilan',l.instructions)+
+        label('mapsListingUrl','Pautan profil Google Maps disahkan',l.mapsListingUrl,'url')+label('hours','Waktu',l.hours)+label('instructions','Arahan pengambilan',l.instructions)+
         '<h4>Penghantaran</h4>'+check('pickup','Ambil sendiri',s.pickup)+check('delivery','Penghantaran ke alamat',s.delivery)+
         check('manual','Benarkan quotation manual',s.manual)+check('subsidyEnabled','Aktifkan subsidi',s.subsidyEnabled)+
         label('maxKm','Had perjalanan (km)',s.maxKm,'number')+label('marginReserve','Margin minimum disimpan (RM)',s.marginReserve,'number')+
@@ -54,7 +54,7 @@
       form.oninput=()=>{preview.hidden=true;preview.replaceChildren();};
       form.onsubmit=e=>{
         e.preventDefault();const f=form.elements;
-        const cfg={location:Object.fromEntries(Object.keys(l).map(key=>[key,f.namedItem(key).value])),
+        const cfg={location:Object.fromEntries(['name','address','latitude','longitude','phone','website','mapsListingUrl','hours','instructions'].map(key=>[key,f.namedItem(key).value])),
           ...Object.fromEntries(['pickup','delivery','manual','subsidyEnabled'].map(key=>[key,f[key].checked])),
           ...Object.fromEntries(['maxKm','marginReserve','marginShare','minCharge','maxCharge'].map(key=>[key,f[key].value])),
           categories:f.categories.value.split(',').map(x=>x.trim()).filter(Boolean),
@@ -62,7 +62,7 @@
         preview.hidden=false;
         preview.innerHTML='<p>'+esc(cfg.location.name)+' · '+esc(cfg.location.address||'Tingkat 1, Batu Caves / Gombak')+
           '<br>'+esc(cfg.location.latitude)+', '+esc(cfg.location.longitude)+' · '+esc(cfg.location.phone)+
-          '<br>'+esc(cfg.location.hours)+'<br>'+esc(cfg.location.instructions)+'</p><p>'+
+          '<br>'+esc(cfg.location.hours)+'<br>'+esc(cfg.location.instructions)+(cfg.location.mapsListingUrl?'<br>'+esc(cfg.location.mapsListingUrl):'')+'</p><p>'+
           [cfg.pickup?'Ambil sendiri':'',cfg.delivery?'Penghantaran':'',cfg.manual?'Quotation manual':''].filter(Boolean).join(' · ')+
           '<br>Subsidi '+(cfg.subsidyEnabled?'aktif':'belum aktif')+' · '+esc(cfg.maxKm)+' km · margin minimum RM'+esc(cfg.marginReserve)+' · had '+esc(cfg.marginShare)+'%'+
           '<br>Julat caj RM'+esc(cfg.minCharge)+'–'+(Number(cfg.maxCharge)?'RM'+esc(cfg.maxCharge):'tiada had')+

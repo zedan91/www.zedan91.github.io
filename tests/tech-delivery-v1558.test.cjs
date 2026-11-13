@@ -65,3 +65,17 @@ test('carrier webhook validates market account, path, signed data and time windo
   assert.equal(api.webhook('/unrelated',event,now),false);
   assert.equal(api.webhook(path,event,now+86400001),false);
 });
+
+test('pickup proposals stay in Malaysia local time, never add delivery fees, and expose only approved profile URL formats',()=>{
+  const {createTechDelivery}=require('../lib/azobss-tech-delivery-routes');
+  const route=createTechDelivery({});
+  const cfg=D.normalizeSettings({location:{address:'',mapsListingUrl:'https://maps.app.goo.gl/Example123'}});
+  const row=route.validateRequest(cfg,D.PICKUP,{customerAddress:'ignore this',pickupRequestedSlot:'2026-12-12T14:00'});
+  assert.equal(row.customerAddress,'');
+  assert.equal(row.delivery.charge,0);
+  assert.match(row.pickupLocation.address,/Tingkat 1, 30-1B/);
+  assert.equal(D.customerDelivery({...row,shippingMethod:D.PICKUP}).pickupRequestedSlot,'2026-12-12T14:00');
+  assert.equal(D.customerDelivery({...row,shippingMethod:D.PICKUP,pickupConfirmedSlot:'2026-12-12T15:00'}).pickupConfirmedSlot,'2026-12-12T15:00');
+  assert.throws(()=>route.validateRequest(cfg,D.PICKUP,{pickupRequestedSlot:'2026-02-30T14:00'}),{code:'pickup_slot'});
+  assert.throws(()=>D.normalizeSettings({location:{mapsListingUrl:'https://example.com/maps'}}),{code:'pickup_listing'});
+});

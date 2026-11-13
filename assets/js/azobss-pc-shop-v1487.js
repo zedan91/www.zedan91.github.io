@@ -152,7 +152,12 @@ async function submitOrder(intent,root,itemsOverride,isSingle=false){
   await requireBackendReady(false);const headers=Object.assign({'Content-Type':'application/json'},await requireLogin());
   const c=Array.isArray(itemsOverride)&&itemsOverride.length?itemsOverride:readCart();
   const payload={intent:'quote',items:c.map(x=>({productId:x.productId,qty:x.qty})),customerName:root.querySelector('#azPcCustomerName').value.trim(),customerPhone:root.querySelector('#azPcCustomerPhone').value.trim(),customerEmail:root.querySelector('#azPcCustomerEmail').value.trim(),customerAddress:root.querySelector('#azPcCustomerAddress').value.trim(),shippingMethod:root.querySelector('input[name="azPcShipping"]:checked')?.value||'Arrange with AZOBSS',notes:root.querySelector('#azPcNotes').value.trim()};
-  if(payload.shippingMethod==='Pickup at AZOBSS')payload.customerAddress='';
+  if(payload.shippingMethod==='Pickup at AZOBSS'){
+   payload.customerAddress='';
+   const slot=root.querySelector('#azTechPickupSlot');
+   if(slot&&!slot.value){slot.focus();throw new Error('Pilih cadangan waktu pengambilan.');}
+   if(slot)payload.pickupRequestedSlot=slot.value;
+  }
   if(payload.shippingMethod==='Courier')payload.deliveryPin=window.AZOBSSTechDelivery?.pin(root)||null;
   if(!payload.customerName||!payload.customerPhone)throw new Error('Nama dan nombor telefon diperlukan.');
   if(payload.shippingMethod==='Courier'&&!payload.customerAddress){root.querySelector('#azPcCustomerAddress')?.focus();throw new Error('Masukkan alamat untuk semakan caj Courier.')}

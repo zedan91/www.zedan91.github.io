@@ -25,8 +25,7 @@
 .az-tech-pin-row input{flex:1 1 220px;min-width:0}
 .az-tech-pin-row .az-pc-shop-btn,#azTechAddressResults button{white-space:normal}
 .az-tech-pin-row a.az-pc-shop-btn{display:inline-flex;align-items:center;box-sizing:border-box;text-decoration:none}
-#azTechAddressResults:empty,#azTechShippingNotice:empty,#azTechMapFrame[hidden],#azTechSavedPin[hidden]{display:none}
+#azTechAddressResults:empty,#azTechShippingNotice:empty,#azTechSavedPin[hidden]{display:none}
 #azTechSavedPin{margin-top:10px}
-.az-tech-map-panel{position:relative;margin:8px 0;border:1px solid #446581;border-radius:8px;overflow:hidden}
-#azTechMap{height:240px}
-.az-tech-map-panel>span{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);font-size:28px;pointer-events:none}
+.az-tech-pickup-slot{margin-top:12px}
+#azTechPickup>small{display:block;margin-top:5px;color:#a9c0d4}

@@ -1,8 +1,8 @@
 // Shared customer cart and personal quote bell on pages using only global auth.
 if(!window.AZOBSSCustomerSession1546&&!document.querySelector('script[src*="azobss-customer-session-v1546.js"]')){const session=document.createElement('script');session.src='/assets/js/azobss-customer-session-v1546.js?v=1546';session.async=false;document.head.append(session);}
 if(!window.AZOBSSCustomerHub1538){
- if(!document.querySelector('link[href*="azobss-customer-hub-v1538.css"]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/css/azobss-customer-hub-v1538.css?v=1560';document.head.append(css);}
- if(!document.querySelector('script[src*="azobss-customer-hub-v1538.js"]')){const runtime=document.createElement('script');runtime.src='/assets/js/azobss-customer-hub-v1538.js?v=1560';runtime.async=false;document.head.append(runtime);}
+ if(!document.querySelector('link[href*="azobss-customer-hub-v1538.css"]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/css/azobss-customer-hub-v1538.css?v=1561';document.head.append(css);}
+ if(!document.querySelector('script[src*="azobss-customer-hub-v1538.js"]')){const runtime=document.createElement('script');runtime.src='/assets/js/azobss-customer-hub-v1538.js?v=1561';runtime.async=false;document.head.append(runtime);}
 }
 /* AZOBSS core stability fix 036 */
 
@@ -9565,7 +9565,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1560';
+  var VERSION_TEXT = 'v1561';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
