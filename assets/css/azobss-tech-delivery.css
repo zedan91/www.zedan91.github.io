@@ -16,3 +16,17 @@
 #azPcAddressField[hidden],#azTechPickup[hidden],#azTechDelivery[hidden],#azTechAddressSearch[hidden]{display:none}
 #azTechAddressResults{display:grid;gap:5px;margin:8px 0}
 @media(max-width:540px){.az-tech-admin-grid{grid-template-columns:1fr}.az-tech-location iframe{height:190px}}
+
+#azTechPinPicker{margin-top:10px}
+#azTechPinPicker summary{margin-bottom:8px;font-weight:700}
+#azTechPinPicker summary small{font-weight:400}
+#azTechPinPicker label{display:block;margin:6px 0 4px}
+.az-tech-pin-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.az-tech-pin-row input{flex:1 1 220px;min-width:0}
+.az-tech-pin-row .az-pc-shop-btn,#azTechAddressResults button{white-space:normal}
+.az-tech-pin-row a.az-pc-shop-btn{display:inline-flex;align-items:center;box-sizing:border-box;text-decoration:none}
+#azTechAddressResults:empty,#azTechShippingNotice:empty,#azTechMapFrame[hidden],#azTechSavedPin[hidden]{display:none}
+#azTechSavedPin{margin-top:10px}
+.az-tech-map-panel{position:relative;margin:8px 0;border:1px solid #446581;border-radius:8px;overflow:hidden}
+#azTechMap{height:240px}
+.az-tech-map-panel>span{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);font-size:28px;pointer-events:none}

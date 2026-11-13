@@ -22,16 +22,55 @@
       link('https://wa.me/'+phone.replace(/^\+/,''),'WhatsApp')+link(location.website,'Website')+'</div>'+
       (embed?'<iframe title="Lokasi AZOBSS di Google Maps" loading="lazy" referrerpolicy="no-referrer" src="https://maps.google.com/maps?q='+point+'&amp;z=17&amp;output=embed"></iframe>':'')+'</section>';
   }
+  const mapsSearch=query=>query?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query):'https://www.google.com/maps/';
+  const mapLink=p=>mapsSearch(p.latitude+','+p.longitude);
+  function validPin(p){
+    return p&&p.latitude!==''&&p.longitude!==''&&p.latitude!=null&&p.longitude!=null&&
+      Math.abs(Number(p.latitude))<=90&&Math.abs(Number(p.longitude))<=180
+      ?{latitude:Number(p.latitude),longitude:Number(p.longitude)}:null;
+  }
+  let mapLoader;
+  function loadMap(key){
+    if(window.google?.maps?.Map)return Promise.resolve(window.google.maps);
+    if(!mapLoader)mapLoader=new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      const timer=setTimeout(()=>finish(false),9000);
+      function finish(ok){
+        clearTimeout(timer);delete window.azTechMapsReady;
+        if(ok&&window.google?.maps?.Map)resolve(window.google.maps);
+        else {script.remove();reject(Error('Peta dalam borang tidak tersedia. Gunakan Google Maps di bawah.'));}
+      }
+      window.azTechMapsReady=()=>finish(true);
+      script.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&loading=async&language=ms&region=MY&callback=azTechMapsReady';
+      script.referrerPolicy='strict-origin-when-cross-origin';
+      script.async=true;script.onerror=()=>finish(false);document.head.append(script);
+    }).catch(error=>{mapLoader=null;throw error;});
+    return mapLoader;
+  }
   const checkout='<div id="azTechPickup" class="span-2" hidden></div><div id="azTechDelivery" class="span-2 az-tech-location" hidden>'+
-    '<p>Semakan caj penghantaran dibuat sebelum invois dikeluarkan.</p><button class="az-pc-shop-btn" id="azTechAddressSearch" type="button" hidden>Cari alamat di Google Maps</button>'+
-    '<div id="azTechAddressResults"></div><p id="azTechShippingNotice" role="status"></p>'+
-    '<details><summary>Pin penghantaran (pilihan)</summary><div class="az-tech-actions">'+
-    '<label>Latitud<input id="azTechLatitude" type="number" min="-90" max="90" step="any"></label>'+
-    '<label>Longitud<input id="azTechLongitude" type="number" min="-180" max="180" step="any"></label></div></details></div>';
+    '<p>Semakan caj penghantaran dibuat sebelum invois dikeluarkan.</p>'+
+    '<details id="azTechPinPicker"><summary>Pin penghantaran <small>(pilihan)</small></summary>'+
+    '<label for="azTechMapQuery">Cari lokasi</label><div class="az-tech-pin-row">'+
+    '<input id="azTechMapQuery" type="search" maxlength="160" placeholder="Nama tempat, jalan atau poskod" autocomplete="off">'+
+    '<button class="az-pc-shop-btn" id="azTechAddressSearch" type="button" hidden>Cari dalam borang</button>'+
+    '<a class="az-pc-shop-btn" id="azTechMapsOpen" href="https://www.google.com/maps/" target="_blank" rel="noopener noreferrer">Cari di Google Maps ↗</a></div>'+
+    '<div id="azTechAddressResults"></div>'+
+    '<div id="azTechMapFrame" hidden><div class="az-tech-map-panel"><div id="azTechMap" aria-label="Peta Google untuk pin penghantaran"></div><span aria-hidden="true">📍</span></div>'+
+    '<button class="az-pc-shop-btn" id="azTechSaveCenter" type="button">Guna lokasi pin ini</button></div>'+
+    '<p>Pilih tempat atau letak pin di Google Maps. Tekan <strong>Kongsi → Salin pautan</strong>, kemudian tampal di sini.</p>'+
+    '<label for="azTechMapLink">Pautan Google Maps</label><div class="az-tech-pin-row">'+
+    '<input id="azTechMapLink" type="text" inputmode="url" maxlength="2048" placeholder="Tampal pautan Google Maps" autocomplete="off">'+
+    '<button class="az-pc-shop-btn" id="azTechImportPin" type="button">Simpan pin</button></div>'+
+    '<p id="azTechShippingNotice" role="status"></p></details>'+
+    '<div class="az-tech-actions" id="azTechSavedPin" hidden><a id="azTechViewPin" target="_blank" rel="noopener noreferrer">Lihat pin disimpan ↗</a>'+
+    '<button class="az-pc-shop-btn" id="azTechClearPin" type="button">Buang pin</button></div></div>';
+  const savedPins=new WeakMap();
   function draftKey(uid){return uid?'azobss-tech-receiving:'+uid:'';}
   function attachCheckout(root,uid,headers,update){
-    const pickup=root.querySelector('#azTechPickup'),delivery=root.querySelector('#azTechDelivery');
-    const address=root.querySelector('#azPcCustomerAddress'),lat=root.querySelector('#azTechLatitude'),lng=root.querySelector('#azTechLongitude');
+    const get=id=>root.querySelector('#'+id),pickup=get('azTechPickup'),delivery=get('azTechDelivery');
+    const address=get('azPcCustomerAddress'),picker=get('azTechPinPicker'),query=get('azTechMapQuery'),open=get('azTechMapsOpen');
+    const search=get('azTechAddressSearch'),results=get('azTechAddressResults'),notice=get('azTechShippingNotice');
+    const link=get('azTechMapLink'),importPin=get('azTechImportPin'),mapFrame=get('azTechMapFrame');
     const radios=[...root.querySelectorAll('input[name="azPcShipping"]')],key=draftKey(uid);
     const read=()=>{try{return key?JSON.parse(localStorage.getItem(key)||'null'):null;}catch{return null;}};
     const draft=read();
@@ -39,59 +78,129 @@
       const match=radios.find(r=>r.value===draft.method);
       if(match)match.checked=true;
       if(typeof draft.address==='string')address.value=draft.address;
-      lat.value=draft.latitude??'';lng.value=draft.longitude??'';
+      savedPins.set(root,validPin(draft));
     }
-    const save=()=>{if(!key)return;try{localStorage.setItem(key,JSON.stringify({method:radios.find(r=>r.checked)?.value,address:address.value,latitude:lat.value,longitude:lng.value}));}catch{}};
-    const search=root.querySelector('#azTechAddressSearch');
-    root.addEventListener('input',e=>{
-      if(e.target===address){
-        lat.value='';lng.value='';
-        root.querySelector('#azTechAddressResults').replaceChildren();
-        root.querySelector('#azTechShippingNotice').textContent='';
-      }
-      if([address,lat,lng].includes(e.target))save();
+    const save=()=>{if(!key)return;try{localStorage.setItem(key,JSON.stringify({method:radios.find(r=>r.checked)?.value,address:address.value,...savedPins.get(root)}));}catch{}};
+    const showPin=()=>{
+      const value=pin(root),view=get('azTechViewPin');
+      get('azTechSavedPin').hidden=!value;
+      if(value)view.href=mapLink(value);else view.removeAttribute('href');
+    };
+    const setPin=(value,message)=>{
+      value=validPin(value);
+      savedPins.set(root,value);showPin();save();notice.textContent=message;
+    };
+    const refreshSearch=()=>{open.href=mapsSearch((query.value.trim()||address.value.trim()).slice(0,160));};
+    const post=async(path,body,timeout)=>{
+      const response=await fetch(api+'/pc-shop/'+path,{method:'POST',headers:{...await headers(),'Content-Type':'application/json'},
+        body:JSON.stringify(body),signal:AbortSignal.timeout(timeout)});
+      const data=await response.json();
+      if(!response.ok||data.ok===false)throw Error(data.message||(response.status===401?'Sesi tamat. Log masuk semula untuk menyimpan pin.':'Perkhidmatan belum tersedia.'));
+      return data;
+    };
+    let addressVersion=0,action=0,cfg,map,mapPending=false;
+    const method=()=>radios.find(r=>r.checked)?.value;
+    const pan=value=>{if(map&&value){map.setCenter({lat:value.latitude,lng:value.longitude});map.setZoom(17);}};
+    async function showMap(){
+      if(!cfg?.mapBrowserKey||!picker.open||map||mapPending)return;
+      mapPending=true;
+      try{
+        const maps=await loadMap(cfg.mapBrowserKey);
+        if(!root.isConnected||!picker.open||method()!=='Courier')return;
+        mapFrame.hidden=false;
+        const start=pin(root)||validPin(cfg.location);
+        map=new maps.Map(get('azTechMap'),{center:{lat:start.latitude,lng:start.longitude},zoom:pin(root)?17:12,
+          gestureHandling:'cooperative',mapTypeControl:false,streetViewControl:false,fullscreenControl:false,clickableIcons:false});
+        map.addListener('click',event=>{if(event.latLng)map.panTo(event.latLng);});
+        get('azTechSaveCenter').onclick=()=>{
+          const center=map.getCenter();if(!center)return;
+          action++;results.replaceChildren();link.value='';
+          setPin({latitude:center.lat(),longitude:center.lng()},'Pin penghantaran disimpan.');
+        };
+      }catch{
+        mapFrame.hidden=true;
+      }finally{mapPending=false;}
+    }
+    showPin();refreshSearch();
+    address.addEventListener('input',()=>{
+      addressVersion++;action++;results.replaceChildren();link.value='';
+      setPin(null,pin(root)?'Alamat berubah. Pilih pin baharu jika perlu.':'');
+      refreshSearch();
     });
-    radios.forEach(r=>r.addEventListener('change',()=>{update();save();}));
+    query.addEventListener('input',()=>{action++;results.replaceChildren();notice.textContent='';refreshSearch();});
+    query.addEventListener('keydown',event=>{
+      if(event.key!=='Enter')return;
+      event.preventDefault();
+      if(!search.hidden){if(!search.disabled)search.click();}else open.click();
+    });
+    link.addEventListener('input',()=>{action++;notice.textContent='';});
+    link.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){event.preventDefault();if(!importPin.disabled)importPin.click();}
+    });
+    get('azTechClearPin').onclick=()=>{
+      action++;results.replaceChildren();link.value='';setPin(null,'Pin dibuang.');picker.querySelector('summary').focus();
+    };
+    picker.addEventListener('toggle',showMap);
+    radios.forEach(r=>r.addEventListener('change',()=>{action++;update();save();if(method()==='Courier')showMap();}));
     config=null;
-    getConfig().then(cfg=>{
+    getConfig().then(value=>{
       if(!root.isConnected)return;
-      pickup.innerHTML=locationCard(cfg.location,true);
-      for(const [method,enabled] of [['Pickup at AZOBSS',cfg.pickup],['Courier',cfg.delivery]]){
-        const radio=radios.find(r=>r.value===method);
+      cfg=value;pickup.innerHTML=locationCard(cfg.location,true);
+      for(const [kind,enabled] of [['Pickup at AZOBSS',cfg.pickup],['Courier',cfg.delivery]]){
+        const radio=radios.find(r=>r.value===kind);
         if(radio&&!enabled){radio.disabled=true;radio.closest('label').hidden=true;}
       }
       if(radios.some(r=>r.checked&&r.disabled))radios.find(r=>!r.disabled).checked=true;
       search.hidden=!cfg.places;
       if(cfg.subsidyEnabled)delivery.querySelector('p').textContent='Penghantaran Percuma untuk kawasan dan pesanan terpilih. Kelayakan dan caj akhir disahkan dalam sebut harga.';
-      update();
+      update();showMap();
     });
     search.onclick=async()=>{
-      const notice=root.querySelector('#azTechShippingNotice'),results=root.querySelector('#azTechAddressResults');
-      const query=address.value.trim();
+      const term=(query.value.trim()||address.value.trim()).slice(0,160),id=++action,version=addressVersion;
       results.replaceChildren();
-      if(query.length<5){notice.textContent='Masukkan sekurang-kurangnya 5 aksara alamat.';return;}
-      search.disabled=true;
+      if(term.length<5){notice.textContent='Masukkan sekurang-kurangnya 5 aksara lokasi.';return;}
+      search.disabled=true;notice.textContent='Mencari lokasi…';
       try{
-        const response=await fetch(api+'/pc-shop/shipping-addresses',{method:'POST',headers:{...await headers(),'Content-Type':'application/json'},
-          body:JSON.stringify({query}),signal:AbortSignal.timeout(12000)});
-        const data=await response.json();
-        if(!response.ok)throw Error(data.message||'Carian tidak tersedia.');
-        if(address.value.trim()!==query)return;
-        notice.textContent=data.places.length?'Pilih alamat penghantaran.':'Tiada padanan. Masukkan alamat penuh secara manual.';
-        for(const place of data.places){
+        const data=await post('shipping-addresses',{query:term},12000);
+        if(id!==action||!root.isConnected)return;
+        const places=Array.isArray(data.places)?data.places.filter(place=>validPin(place.pin)):[];
+        notice.textContent=places.length?'Pilih hasil carian.':'Tiada padanan. Cuba cari di Google Maps.';
+        for(const place of places){
           const button=document.createElement('button');button.type='button';button.className='az-pc-shop-btn';button.textContent=place.address;
-          button.onclick=()=>{address.value=place.address;lat.value=place.pin.latitude;lng.value=place.pin.longitude;results.replaceChildren();notice.textContent='Pin penghantaran disimpan.';save();};
+          button.onclick=()=>{
+            if(addressVersion!==version)return;
+            action++;results.replaceChildren();link.value='';
+            if(!address.value.trim())address.value=place.address;
+            setPin(place.pin,'Pin penghantaran disimpan.');pan(place.pin);refreshSearch();
+          };
           results.append(button);
         }
-      }catch(err){notice.textContent=err.message;}
+      }catch{if(id===action)notice.textContent='Carian dalam borang belum tersedia. Cuba cari di Google Maps.';}
       finally{search.disabled=false;}
     };
+    importPin.onclick=async()=>{
+      const url=link.value.trim(),id=++action;
+      if(!url){notice.textContent='Tampal pautan yang disalin daripada Google Maps.';return;}
+      importPin.disabled=true;notice.textContent='Menyemak pautan pin…';
+      try{
+        const data=await post('shipping-map-pin',{url},11000);
+        if(id!==action||!root.isConnected)return;
+        if(!validPin(data.pin))throw Error('Pin tidak dapat disahkan. Sila salin pautan pin yang baharu.');
+        results.replaceChildren();link.value='';
+        setPin(data.pin,'Pin penghantaran disimpan.');pan(data.pin);
+      }catch(error){if(id===action)notice.textContent=error instanceof TypeError||error.name==='TimeoutError'?'Pin belum dapat disemak. Cuba lagi.':error.message;}
+      finally{importPin.disabled=false;}
+    };
   }
-  function pin(root){
-    const latitude=root.querySelector('#azTechLatitude'),longitude=root.querySelector('#azTechLongitude');
-    if(!latitude?.value&&!longitude?.value)return null;
-    if(!latitude.value||!longitude.value||!latitude.validity.valid||!longitude.validity.valid)throw Error('Masukkan latitud dan longitud yang sah.');
-    return {latitude:Number(latitude.value),longitude:Number(longitude.value)};
+  function pin(root){return savedPins.get(root)||null;}
+  function checkoutPin(root){
+    const link=root.querySelector('#azTechMapLink');
+    if(link?.value.trim()){
+      root.querySelector('#azTechPinPicker').open=true;
+      link.focus();
+      throw Error('Tekan Simpan pin dahulu, atau kosongkan pautan untuk teruskan tanpa pin.');
+    }
+    return pin(root);
   }
   function orderDelivery(order){
     const d=order.delivery;
@@ -107,6 +216,6 @@
       (d.carrierStatus?'<p>Status Lalamove '+esc(d.carrierStatus)+'</p>':'')+
       (d.trackingUrl?'<a class="az-pc-shop-btn" href="'+esc(d.trackingUrl)+'" target="_blank" rel="noopener noreferrer">Jejak penghantaran</a>':'')+'</div>';
   }
-  window.AZOBSSTechDelivery={checkout,attachCheckout,pin,orderDelivery};
+  window.AZOBSSTechDelivery={checkout,attachCheckout,pin:checkoutPin,orderDelivery};
   document.querySelectorAll('[data-tech-location]').forEach(el=>getConfig().then(cfg=>{el.innerHTML=locationCard(cfg.location,true);}));
 }());

@@ -5,6 +5,7 @@ Dalam Admin, buka **Sales & Receipts → Requests & Orders → Filters & tools �
 Rekod ukuran menggunakan Product ID dan ukuran selepas pembungkusan. Masukkan berat, panjang, lebar, tinggi, jenis, fragile, arahan pengendalian dan kelayakan subsidi. Jika ukuran SKU belum lengkap, ukur bungkusan pesanan sebenar dalam dialog quotation. Kenderaan ditapis mengikut berat dan dimensi. Untuk bungkusan yang belum diukur bersama, sistem menggunakan tapak maksimum dan jumlah tinggi setiap kotak yang diletakkan rata. Untuk pesanan rapuh atau pengendalian khas, motosikal dikecualikan.
 
 1. Pelanggan pilih penghantaran atau pickup dalam permintaan sedia ada. Pickup percuma dan tanpa alamat penghantaran.
+   Buka **Pin penghantaran → Cari di Google Maps**, pilih lokasi, kemudian gunakan **Kongsi → Salin pautan** dan **Simpan pin** dalam borang. Alamat penuh tetap diperlukan, termasuk nombor unit jika ada. Admin boleh buka pin daripada dialog quotation penghantaran.
 2. Untuk penghantaran, buka rekod dan pilih **Semak quotation penghantaran**. Masukkan harga item selepas diskaun. Dalam mod manual, semak kos semasa, tol dan surcaj dengan pembekal. Jika Google Routes tiada, masukkan jarak perjalanan yang anda sahkan melalui peta. Tanpa jarak sah, subsidi tidak digunakan.
 3. Terbitkan sebut harga selepas mengesahkan stok. Pelanggan menerima jumlah dan caj dalam My Requests. Sebarang perubahan harga pelanggan memerlukan sebut harga baharu. Invois memerlukan kelulusan pelanggan dan semakan stok serta kadar.
 4. Selepas bayaran disahkan melalui aliran Tech Products sedia ada, tandakan pickup sebagai **Ready for Pickup** apabila barang tersedia. Bagi penghantaran manual, rekod kurier dan nombor penjejakan melalui pesanan.
@@ -16,6 +17,7 @@ Cadangan motosikal RM500/RM15, kereta RM500/RM25 dan van RM2,000/RM50 disimpan s
 
 | Pemboleh ubah | Kegunaan |
 |---|---|
+| `PC_SHIPPING_GOOGLE_MAPS_BROWSER_KEY` | Pilihan: untuk Google Maps interaktif dalam borang. Gunakan kunci berasingan, hadkan kepada Maps JavaScript API dan referrer `https://www.azobss.com/*` serta `https://azobss.com/*`. Nilai ini dihantar kepada pelayar. Carian di Google Maps dan pautan Kongsi berfungsi tanpa kunci ini. |
 | `PC_SHIPPING_GOOGLE_MAPS_KEY` | Kunci pelayan untuk Places API (New) dan Routes API. Hadkan kunci kepada API tersebut dan tetapkan kuota. |
 | `PC_SHIPPING_LALAMOVE_MODE` | `sandbox` atau `production`. Kos sandbox tidak diterbitkan kepada pelanggan. |
 | `PC_SHIPPING_LALAMOVE_KEY`, `PC_SHIPPING_LALAMOVE_SECRET` | Ambil daripada Partner Portal untuk persekitaran yang dipilih. |

@@ -95,7 +95,7 @@
   async function quote(api,headers,order,card){
     const call=request(api,headers),{dialog,body,notice}=pane('Semak quotation penghantaran');
     const saved=order.deliveryRate||{};
-    body.innerHTML='<p>'+esc(order.customerAddress)+(order.deliveryPin?' · '+esc(order.deliveryPin.latitude)+', '+esc(order.deliveryPin.longitude):'')+'</p>'+
+    body.innerHTML='<p>'+esc(order.customerAddress)+(order.deliveryPin?' · <a href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(order.deliveryPin.latitude+','+order.deliveryPin.longitude)+'" target="_blank" rel="noopener noreferrer">Lihat pin penghantaran ↗</a>':'')+'</p>'+
       '<form class="az-tech-admin-grid"><label>Kenderaan<select name="vehicle">'+vehicleOptions+'</select></label>'+
       '<label>Sumber<select name="source"><option value="manual">Quotation manual</option><option value="lalamove">Lalamove produksi</option></select></label>'+
       label('cost','Kos sebenar termasuk caj tambahan (RM)',saved.cost,'number')+
