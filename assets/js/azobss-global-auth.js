@@ -348,7 +348,7 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 #siteSignUpForm .request-error:not(:empty){display:block;}
 #siteSignUpForm .auth-primary-cta{margin-top:1px;}
 #siteSignUpForm .auth-google-password-link{background:#31435f;color:#dcecff;box-shadow:none;border:1px solid rgba(147,197,253,.24);padding:11px 14px;}
-.az-google-quick-card{position:fixed;right:18px;top:18px;z-index:2147483590;width:min(350px,calc(100vw - 28px));padding:15px 15px 14px;border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#171a20;color:#fff;box-shadow:0 18px 60px rgba(0,0,0,.42);display:none;opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .18s ease;}
+.az-google-quick-card{position:fixed;right:18px;top:var(--az-google-quick-top,18px);z-index:2147483590;width:min(350px,calc(100vw - 28px));padding:15px 15px 14px;border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#171a20;color:#fff;box-shadow:0 18px 60px rgba(0,0,0,.42);display:none;opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .18s ease;}
 .az-google-quick-card.is-visible{display:block;opacity:1;transform:translateY(0);}
 .az-google-quick-head{display:flex;align-items:flex-start;gap:11px;padding-right:34px;}
 .az-google-quick-logo{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#4285f4;font:900 22px/1 Arial,sans-serif;}
@@ -362,7 +362,7 @@ body:not(.is-authenticated) .market-user-tools{display:none!important;}
 .az-google-quick-continue:disabled{opacity:.65;cursor:wait;}
 body.is-authenticated .az-google-quick-card{display:none!important;}
 #siteAuthModal.is-open ~ .az-google-quick-card{display:none!important;}
-@media(max-width:720px){.az-google-quick-card{right:12px;left:12px;top:12px;width:auto;}.az-google-quick-sub{display:none;}}
+@media(max-width:720px){.az-google-quick-card{right:12px;left:12px;top:var(--az-google-quick-top,12px);width:auto;}.az-google-quick-sub{display:none;}}
 .google-profile-copy{margin:-4px 0 4px;color:#b7c5d9;font-size:13px;line-height:1.5;}
 .google-profile-identity{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(203,213,225,.18);border-radius:10px;background:rgba(8,19,38,.58);}
 .google-profile-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#0d1628;border:1px solid rgba(203,213,225,.25);}
@@ -513,6 +513,22 @@ function injectGoogleQuickSignInPrompt(){
   </aside>`;
   document.body.appendChild(wrap.firstElementChild);
 }
+let googleQuickNavObserver;
+function positionGoogleQuickPrompt(card){
+  const anchors = Array.from(document.querySelectorAll('.market-sticky-bar, .site-auth-actions'));
+  const navbarBottom = Math.max(0, ...anchors
+    .filter(anchor => anchor.getClientRects().length)
+    .map(anchor => anchor.getBoundingClientRect().bottom));
+  if(navbarBottom > 0){
+    card.style.setProperty('--az-google-quick-top', Math.ceil(navbarBottom + 10) + 'px');
+  }else{
+    card.style.removeProperty('--az-google-quick-top');
+  }
+  if(typeof ResizeObserver === 'function'){
+    if(!googleQuickNavObserver) googleQuickNavObserver = new ResizeObserver(() => positionGoogleQuickPrompt(card));
+    anchors.forEach(anchor => googleQuickNavObserver.observe(anchor));
+  }
+}
 function azobssHideGoogleQuickPrompt(remindThisSession=false){
   const card=document.getElementById('azGoogleQuickSignIn');
   if(card){card.classList.remove('is-visible');card.setAttribute('aria-hidden','true');}
@@ -523,6 +539,7 @@ function azobssMaybeShowGoogleQuickPrompt(){
   if(!card||document.body.classList.contains('is-authenticated')) return;
   try{if(sessionStorage.getItem('azobssGoogleQuickDismissed')==='1') return;}catch(_){}
   if(document.getElementById('siteAuthModal')?.classList.contains('is-open')) return;
+  positionGoogleQuickPrompt(card);
   card.classList.add('is-visible');card.setAttribute('aria-hidden','false');
 }
 
@@ -9565,7 +9582,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1566';
+  var VERSION_TEXT = 'v1567';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
