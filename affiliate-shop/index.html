@@ -1150,9 +1150,9 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 .admin-shopee-manual-row{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:10px}.admin-shopee-manual-row input{min-height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#101827;color:#fff;padding:0 12px}.admin-shopee-manual-use{min-height:44px;border:0;border-radius:10px;background:#22c55e;color:#06130b;font-weight:900;padding:0 16px;cursor:pointer}.admin-shopee-manual-use:disabled{opacity:.55;cursor:not-allowed}.admin-shopee-api-label{font-weight:900;color:#dce8f8;margin:4px 0 8px}.admin-shopee-api-disabled{opacity:.58}.admin-shopee-manual-open{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;min-height:42px;border:1px solid rgba(255,115,55,.55);border-radius:10px;padding:0 14px;color:#ffd3c5;background:rgba(238,77,45,.1);text-decoration:none;font-weight:900}
 @media(max-width:800px){.admin-shopee-searchbar{grid-template-columns:1fr}.admin-shopee-results{grid-template-columns:1fr}.admin-shopee-offer-card{grid-template-columns:82px 1fr}.admin-shopee-offer-card img{width:82px;height:82px}.admin-shopee-manual-row{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1541">
+<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1560">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
-<script src="/assets/js/azobss-customer-hub-v1538.js?v=1546"></script>
+<script src="/assets/js/azobss-customer-hub-v1538.js?v=1560"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -1190,7 +1190,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <a aria-label="Bookmarks" title="Bookmarks" class="market-icon-btn" href="/Bookmarks/">
 <svg class="az-market-bookmark-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg>
 </a>
-<a aria-label="Cart" class="market-icon-btn" href="#" data-az-shop-cart-toggle>
+<a aria-label="Cart" class="market-icon-btn" href="/cart/" data-az-shop-cart-toggle>
 <span class="az-shop-cart-badge" data-az-shop-cart-badge>0</span>
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg>
 </a>
@@ -3127,7 +3127,7 @@ function esc(value){
     refreshAdminState();
     loadProducts();
   </script>
-<script src="/assets/js/azobss-global-auth.js?v=1559" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1333"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
+<script src="/assets/js/azobss-global-auth.js?v=1560" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1333"></script><script src="/assets/js/azobss-pro-ui.js" defer></script><script id="azobss-shop-cart-js">
 (function(){
   if(window.__azobssShopCartReady) return; window.__azobssShopCartReady=true;
   const getKey=()=>window.__azobssCurrentCartKey||'azobss_shop_cart_guest_v1';

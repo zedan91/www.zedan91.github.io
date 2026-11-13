@@ -106,12 +106,18 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.
     const expectedUid1538=currentUid,expectedKey1538=CART_KEY;
     cloudPulling = true;
     cloudReady = false;
+    const initialCart = localStorage.getItem(CART_KEY);
     try{
       const ref = doc(db, COLLECTION, currentUid);
       const snap = await getDoc(ref);
       if(currentUid!==expectedUid1538||CART_KEY!==expectedKey1538||(window.azobssGetCurrentFirebaseUid&&window.azobssGetCurrentFirebaseUid()!==expectedUid1538))return;
       const localItems = readCart();
-      const localTime = localUpdatedAt();
+      if(localStorage.getItem(CART_KEY)!==initialCart){
+        cloudPulling = false;
+        cloudReady = true;
+        await pushCloud();
+        return;
+      }
       if(snap.exists()){
         const data = snap.data() || {};
         const now = Date.now();

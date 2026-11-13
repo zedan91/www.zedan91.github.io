@@ -129,9 +129,9 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 </style>
 <link rel="stylesheet" href="/assets/css/azobss-pc-retailers.css?v=1435">
 <link rel="stylesheet" href="/assets/css/azobss-pc-hub-v1526.css?v=1529">
-<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1541">
+<link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1560">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
-<script src="/assets/js/azobss-customer-hub-v1538.js?v=1546"></script>
+<script src="/assets/js/azobss-customer-hub-v1538.js?v=1560"></script>
 </head><body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
@@ -157,7 +157,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <button class="user-dropdown-item" id="logoutButton" role="menuitem" type="button"><span aria-hidden="true" class="az-user-menu-icon" style="width:20px;height:20px;flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:16px">🚪</span><span class="az-user-menu-label">Log Out</span></button>
 </div></div>
 <a aria-label="Bookmarks" class="market-icon-btn" href="/Bookmarks/" title="Bookmarks"><svg aria-hidden="true" class="az-market-bookmark-icon" viewbox="0 0 24 24"><path d="M6 4.5C6 3.7 6.7 3 7.5 3h9c.8 0 1.5.7 1.5 1.5V21l-6-3.4L6 21V4.5Z"></path></svg></a>
-<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="#"><span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg></a>
+<a aria-label="Cart" class="market-icon-btn" data-az-shop-cart-toggle="" href="/cart/"><span class="az-shop-cart-badge" data-az-shop-cart-badge="">0</span><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3 4h2l2.5 11h10.8l2-8H7"></path><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"></path></svg></a>
 <a aria-label="Notifications" class="market-icon-btn" href="/PA-BM/"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg></a>
 <a aria-label="Chat" class="market-icon-btn" href="https://alvo.chat/6nZ2" rel="noopener" target="_blank"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-4.3A8.2 8.2 0 0 1 3 11.5a8.5 8.5 0 1 1 18 0Z"></path></svg></a>
 </div>
@@ -289,6 +289,6 @@ async function load(){
 }
 $('#modalClose').onclick=()=>$('#productModal').classList.remove('open');$('#productModal').onclick=e=>{if(e.target===$('#productModal'))$('#productModal').classList.remove('open')};let pickerSearchTimer;$('#modalSearch').addEventListener('input',()=>{clearTimeout(pickerSearchTimer);pickerSearchTimer=setTimeout(()=>{MODAL.page=1;renderProductList();},120);});$('#quoteClose').onclick=()=>$('#quoteModal').classList.remove('open');$('#quoteModal').onclick=e=>{if(e.target===$('#quoteModal'))$('#quoteModal').classList.remove('open')};$('#resetBtn').onclick=()=>{if(confirm('Reset semua pilihan build?')){STATE.lines={};ensureState();history.replaceState(null,'',location.pathname);render()}};$('#nextBtn').onclick=showQuote;$('#copyBtn').onclick=copySpec;$('#shareBtn').onclick=async()=>{const u=new URL(location.href);u.hash='b='+shareCode();try{await navigator.clipboard.writeText(u.toString());$('#shareBtn').textContent='Link disalin ✓';setTimeout(()=>$('#shareBtn').textContent='Share Build',1300)}catch(_e){prompt('Copy link:',u.toString())}};$('#waBtn').onclick=saveBuildList;$('#globalSearch').addEventListener('focus',openGlobalSearch);document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();openGlobalSearch()}if(e.key==='Escape'){$('#productModal').classList.remove('open');$('#quoteModal').classList.remove('open')}});load();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1559" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1560" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>
