@@ -125,10 +125,62 @@ function bindCart(root){root.querySelectorAll('[data-cart-minus]').forEach(b=>b.
 function mutateQty(i,d){const c=readCart();if(!c[i])return;c[i].qty=Math.max(1,Math.min(20,Number(c[i].qty||1)+d));saveCart(c);closeModal();openCart(false)}
 function profileDefaults(){const u=getSavedUser();return{name:u.displayName||u.name||u.username||'',phone:u.phone||u.phoneNumber||'',email:u.email||u.authEmail||'',address:u.address||u.fullAddress||u.customerAddress||''}}
 function choiceCards(name,items,selected){return `<div class="az-pc-choice-group">${items.map(x=>`<label class="az-pc-choice"><input type="radio" name="${name}" value="${esc(x.value)}" ${x.value===selected?'checked':''}><span><b>${esc(x.label)}</b>${x.sub?`<small>${esc(x.sub)}</small>`:''}</span></label>`).join('')}</div>`}
-function checkoutHtml(intent,itemsOverride){
- const u=profileDefaults(),c=Array.isArray(itemsOverride)&&itemsOverride.length?itemsOverride:readCart(),subtotal=cartTotals(c);
- const shipping=choiceCards('azPcShipping',[{value:'Courier',label:'Penghantaran ke Alamat',sub:'Caj disahkan dalam sebut harga'},{value:'Pickup at AZOBSS',label:'Ambil Sendiri',sub:'Percuma · Tiada minimum'},{value:'Arrange with AZOBSS',label:'Arrange',sub:'Atur dengan AZOBSS'}],'Arrange with AZOBSS');
- return `<div class="az-pc-shop-note">Request only · No payment. Pilihan model dan kuantiti akan disimpan dalam My Requests. Admin akan semak stok pembekal serta harga akhir. Pelanggan perlu setuju dengan sebut harga sebelum invois dikeluarkan.</div><div class="az-pc-order-items">${c.map(x=>`${esc(x.name)} × ${Number(x.qty||1)} · ${x.unitPrice?money(x.unitPrice*x.qty):'Semak harga'}`).join('<br>')}</div><p class="az-pc-cart-meta">Tempoh pemprosesan dan penghantaran tertakluk kepada ketersediaan stok. Masa perjalanan disahkan berasingan.</p><div id="azPcBackendStatus" class="az-pc-cart-meta" style="margin:8px 2px 0">Server request: menyemak…</div><div class="az-pc-checkout-grid" style="margin-top:12px"><label>Customer Name<input id="azPcCustomerName" value="${esc(u.name)}" maxlength="140"></label><label>Phone<input id="azPcCustomerPhone" value="${esc(u.phone)}" maxlength="60" placeholder="01X-XXXX XXXX"></label><label class="span-2">Email<input id="azPcCustomerEmail" type="email" value="${esc(u.email)}" maxlength="180"></label><label class="span-2" id="azPcAddressField"><span id="azPcAddressLabel">Delivery Address</span><textarea id="azPcCustomerAddress" rows="2" maxlength="500">${esc(u.address)}</textarea></label><div class="span-2 az-pc-choice-section"><div class="az-pc-choice-title">Kaedah penerimaan</div>${shipping}</div>${window.AZOBSSTechDelivery?.checkout||''}<label class="span-2">Notes<textarea id="azPcNotes" rows="2" maxlength="800" placeholder="Compatibility, preferred brand, delivery notes…"></textarea></label></div><div class="az-pc-cart-summary"><div class="az-pc-cart-summary-row"><span>${c.reduce((s,x)=>s+x.qty,0)} item(s) · reference prices</span><b>${money(subtotal)}</b></div><div class="az-pc-cart-summary-row"><span>Shipping</span><b id="azPcShippingSummary">To be confirmed</b></div><div class="az-pc-cart-summary-row total"><span>Reference subtotal</span><b id="azPcCheckoutTotal">${money(subtotal)}</b></div></div><div class="az-pc-cart-actions"><button class="az-pc-shop-btn" data-checkout-back type="button">Back to List</button><button class="az-pc-shop-btn primary" data-submit-order type="button">Send Quote Request</button></div>`
+function quoteSummary(items,total,label){
+ return '<aside class="az-pc-checkout-summary"><h4>Order summary</h4><ul>'+items.map(item=>
+   '<li><strong>'+esc(item.name)+'</strong> × '+Number(item.qty||1)+(item.optionLabel?' · '+esc(item.optionLabel):'')+'</li>'
+ ).join('')+'</ul><div class="az-pc-cart-summary-row total"><span>'+label+'</span><b>'+money(total)+'</b></div></aside>';
+}
+function checkoutHtml(items){
+ return '<div class="az-pc-checkout-layout"><div><p>AZOBSS will check stock and item prices. Choose delivery or self pickup when you’re ready to proceed.</p>'+
+   '<label>Notes (optional)<textarea id="azPcNotes" rows="3" maxlength="800" placeholder="Anything we should know about your request?"></textarea></label>'+
+   '<p id="azPcBackendStatus" role="status"></p><div class="az-pc-cart-actions"><button class="az-pc-shop-btn" data-checkout-back type="button">Back</button>'+
+   '<button class="az-pc-shop-btn primary" data-submit-order type="button">Send Quote Request</button></div></div>'+
+   quoteSummary(items,cartTotals(items),'Reference subtotal')+'</div>';
+}
+function deliveryCheckoutHtml(order){
+ const profile=profileDefaults();
+ const shipping=choiceCards('azPcShipping',[{value:'Courier',label:'Penghantaran ke Alamat',sub:'Caj disahkan dalam sebut harga'},{value:'Pickup at AZOBSS',label:'Ambil Sendiri',sub:'Percuma · Tiada minimum'}],'Courier');
+ return '<div class="az-pc-checkout-layout"><form data-delivery-checkout><h4>Contact &amp; delivery</h4>'+
+   '<div class="az-pc-checkout-grid"><label class="span-2">Phone<input id="azPcCustomerPhone" type="tel" autocomplete="tel" required maxlength="60" value="'+esc(profile.phone)+'"></label>'+
+   '<div class="span-2 az-pc-choice-section"><div class="az-pc-choice-title">Kaedah penerimaan</div>'+shipping+'</div>'+
+   '<label id="azPcAddressField" class="span-2"><span id="azPcAddressLabel">Delivery address</span><textarea id="azPcCustomerAddress" autocomplete="street-address" rows="3" maxlength="500">'+esc(profile.address)+'</textarea></label>'+
+   (window.AZOBSSTechDelivery?.checkout||'')+'</div><p role="status" data-delivery-message></p>'+
+   '<div class="az-pc-cart-actions"><button class="az-pc-shop-btn" type="button" data-back-to-quote>Back to quote</button>'+
+   '<button class="az-pc-shop-btn primary" type="submit" disabled>Save &amp; continue</button></div></form>'+
+   quoteSummary(order.items||[],order.confirmedItemTotal,'Quoted items')+'</div>';
+}
+function openDeliveryCheckout(order){
+ const root=modal('Checkout · Delivery or Pickup',deliveryCheckoutHtml(order));
+ root.dataset.pcCustomerOwner=currentCustomerUid();
+ const form=root.querySelector('form'),button=form.querySelector('[type=submit]'),message=form.querySelector('[data-delivery-message]');
+ const sync=()=>{
+   syncCheckoutShipping(root,order.items||[]);
+   const pickup=root.querySelector('input[name="azPcShipping"]:checked')?.value==='Pickup at AZOBSS';
+   const slot=root.querySelector('#azTechPickupSlot');
+   if(slot){slot.required=pickup;slot.disabled=!pickup;}
+   message.textContent=pickup?'Self pickup is free. AZOBSS will confirm the time and issue your invoice after checking stock.':'AZOBSS will confirm the delivery charge and send a final quote for your approval.';
+ };
+ sync();
+ const module=window.AZOBSSTechDelivery;
+ if(module)module.attachCheckout(root,currentCustomerUid(),requireLogin,()=>{sync();button.disabled=!root.querySelector('input[name="azPcShipping"]:checked:not(:disabled)');});
+ else message.textContent='Delivery options could not load. Reload the page and try again.';
+ root.querySelector('[data-back-to-quote]').onclick=()=>openOrders(order.orderId,'quote');
+ form.onsubmit=async event=>{
+   event.preventDefault();button.disabled=true;
+   try{
+     const shippingMethod=root.querySelector('input[name="azPcShipping"]:checked')?.value;
+     const payload={action:'delivery-details',quoteVersion:order.quoteVersion,shippingMethod,customerPhone:root.querySelector('#azPcCustomerPhone').value.trim()};
+     if(shippingMethod==='Courier'){
+       payload.customerAddress=root.querySelector('#azPcCustomerAddress').value.trim();
+       payload.deliveryPin=module.pin(root);
+     }else payload.pickupRequestedSlot=root.querySelector('#azTechPickupSlot').value;
+     const headers={...await requireLogin(),'Content-Type':'application/json'};
+     const response=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders/'+encodeURIComponent(order.orderId)+'/decision',{method:'POST',headers,body:JSON.stringify(payload)},25000,'Delivery details');
+     const result=await response.json();
+     if(!response.ok||!result.ok)throw Error(orderErrorMessage(response,result));
+     if(root.isConnected)await openOrders(order.orderId,shippingMethod==='Courier'?'order':'quote');
+   }catch(error){message.textContent=error.message||'Unable to save details.';button.disabled=false;}
+ };
 }
 function syncCheckoutShipping(root,items){const ship=root.querySelector('input[name="azPcShipping"]:checked')?.value||'Courier',needs=items.some(x=>x.requiresConfirmation||!Number(x.unitPrice)),subtotal=cartTotals(items),s=root.querySelector('#azPcShippingSummary'),t=root.querySelector('#azPcCheckoutTotal'),addr=root.querySelector('#azPcCustomerAddress'),label=root.querySelector('#azPcAddressLabel'),courier=ship==='Courier';const pickup=ship==='Pickup at AZOBSS';const field=root.querySelector('#azPcAddressField'),pickupBox=root.querySelector('#azTechPickup'),deliveryBox=root.querySelector('#azTechDelivery');if(field)field.hidden=pickup;if(pickupBox)pickupBox.hidden=!pickup;if(deliveryBox)deliveryBox.hidden=!courier;if(addr){addr.required=courier;addr.setAttribute('aria-required',courier?'true':'false');addr.placeholder=ship==='Pickup at AZOBSS'?'Alamat tidak diperlukan untuk pickup':(courier?'Masukkan alamat penghantaran (wajib untuk Courier)':'Alamat jika diperlukan untuk urusan penghantaran')}if(label)label.textContent=courier?'Delivery Address *':'Delivery Address';if(s)s.textContent=ship==='Pickup at AZOBSS'?'PERCUMA':(courier?'Dikira selepas alamat':'Akan diatur dengan AZOBSS');if(t)t.textContent=needs?'Semakan diperlukan':money(subtotal)}
 async function checkBackend(force=false){const now=Date.now();if(!force&&backendState.checkedAt&&now-backendState.checkedAt<60000)return backendState;try{const r=await fetchWithTimeout(HEALTH_API+'?t='+now,{cache:'no-store'},12000,'Backend PC Shop');const d=await r.json().catch(()=>({}));const caps=d&&typeof d.capabilities==='object'?d.capabilities:{};const ready=!!(r.ok&&d.ok&&String(d.apiVersion||'')==='pc-shop-v1'&&caps.catalog===true&&caps.orders===true&&caps.requestOnly===true&&caps.customerQuoteApproval===true&&caps.strictAvailability===true&&caps.staleCartReject===true);backendState={checkedAt:Date.now(),ready,release:String(d.release||d.version||''),apiVersion:String(d.apiVersion||''),capabilities:caps,message:ready?'Server PC Shop sedia.':(r.status===404||r.status===405?'Backend PC Shop API belum dipasang pada runtime Render. Deploy backend terbaru.':(d.message||d.error||`Backend PC Shop tidak serasi (HTTP ${r.status}).`))}}catch(e){backendState={checkedAt:Date.now(),ready:false,release:'',apiVersion:'',capabilities:{},message:e?.message||'Backend PC Shop tidak dapat dicapai.'}}return backendState}
@@ -137,36 +189,31 @@ async function requireBackendReady(force=false){const st=await checkBackend(forc
 async function openCheckout(intent='quote',itemsOverride=null){
  const items=Array.isArray(itemsOverride)&&itemsOverride.length?itemsOverride:readCart();if(!items.length)return;
  try{await requireLogin()}catch(_){return}
- const root=modal('Request Quote · No Payment',checkoutHtml('quote',items));
- root.querySelectorAll('input[name="azPcShipping"]').forEach(r=>r.addEventListener('change',()=>syncCheckoutShipping(root,items)));syncCheckoutShipping(root,items);
+ const root=modal('Request Quote',checkoutHtml(items));
  root.dataset.pcCustomerOwner=currentCustomerUid();
- window.AZOBSSTechDelivery?.attachCheckout(root,currentCustomerUid(),requireLogin,()=>syncCheckoutShipping(root,items));
- root.querySelector('[data-checkout-back]').onclick=()=>{closeModal();openCart(false)};
- root.querySelector('[data-submit-order]').onclick=()=>submitOrder('quote',root,items,!!itemsOverride);refreshCheckoutBackendStatus(root,false)
+ root.querySelector('[data-checkout-back]').onclick=()=>closeModal();
+ root.querySelector('[data-submit-order]').onclick=()=>submitOrder(root,items);
+ refreshCheckoutBackendStatus(root,false)
 }
 function orderErrorMessage(r,d){if(r.status===404||r.status===405)return'Backend PC Shop API belum deploy pada runtime Render. Deploy backend terbaru kemudian cuba semula.';if(r.status===401)return'Sesi login tidak sah. Sign out dan login semula.';if(r.status===503)return'Backend / Firestore belum tersedia. Cuba semula selepas Render aktif.';return d?.message||d?.error||`Order gagal dibuat (HTTP ${r.status})`}
-async function submitOrder(intent,root,itemsOverride,isSingle=false){
+async function submitOrder(root,items){
  const btn=root.querySelector('[data-submit-order]');btn.disabled=true;btn.textContent='Sending…';
  const slow=setTimeout(()=>{if(btn?.isConnected)btn.textContent='Server sedang aktif…'},8000);
  try{
   await requireBackendReady(false);const headers=Object.assign({'Content-Type':'application/json'},await requireLogin());
-  const c=Array.isArray(itemsOverride)&&itemsOverride.length?itemsOverride:readCart();
-  const payload={intent:'quote',items:c.map(x=>({productId:x.productId,qty:x.qty})),customerName:root.querySelector('#azPcCustomerName').value.trim(),customerPhone:root.querySelector('#azPcCustomerPhone').value.trim(),customerEmail:root.querySelector('#azPcCustomerEmail').value.trim(),customerAddress:root.querySelector('#azPcCustomerAddress').value.trim(),shippingMethod:root.querySelector('input[name="azPcShipping"]:checked')?.value||'Arrange with AZOBSS',notes:root.querySelector('#azPcNotes').value.trim()};
-  if(payload.shippingMethod==='Pickup at AZOBSS'){
-   payload.customerAddress='';
-   const slot=root.querySelector('#azTechPickupSlot');
-   if(slot&&!slot.value){slot.focus();throw new Error('Pilih cadangan waktu pengambilan.');}
-   if(slot)payload.pickupRequestedSlot=slot.value;
-  }
-  if(payload.shippingMethod==='Courier')payload.deliveryPin=window.AZOBSSTechDelivery?.pin(root)||null;
-  if(!payload.customerName||!payload.customerPhone)throw new Error('Nama dan nombor telefon diperlukan.');
-  if(payload.shippingMethod==='Courier'&&!payload.customerAddress){root.querySelector('#azPcCustomerAddress')?.focus();throw new Error('Masukkan alamat untuk semakan caj Courier.')}
+  const owner=root.dataset.pcCustomerOwner;
+  if(owner!==currentCustomerUid())throw Error('Your account changed. Open My Cart and try again.');
+  const profile=profileDefaults();
+  const payload={intent:'quote',deferDelivery:true,items:items.map(x=>({productId:x.productId,qty:x.qty})),
+    customerName:profile.name,customerPhone:profile.phone,customerEmail:profile.email,notes:root.querySelector('#azPcNotes').value.trim()};
   const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders',{method:'POST',headers,body:JSON.stringify(payload)},75000,'Request server');const d=await r.json().catch(()=>({}));
   if(!r.ok||!d.ok)throw new Error(orderErrorMessage(r,d));
-  if(d.order?.requestOnly!==true||d.order.invoiceIssued)throw new Error('Server request belum serasi. Senarai pilihan masih disimpan.');
-  const remaining=readCart().map(x=>{const sent=c.find(y=>y.productId===x.productId);return sent?{...x,qty:Math.max(0,Number(x.qty||1)-Number(sent.qty||1))}:x}).filter(x=>x.qty>0);saveCart(remaining);
+  if(d.order?.requestOnly!==true||d.order.invoiceIssued||d.order.deliveryDetailsPending!==true)throw new Error('Server request belum serasi. Senarai pilihan masih disimpan.');
+  if(owner!==currentCustomerUid())return;
+  const remaining=readCart().map(x=>{const sent=items.find(y=>y.productId===x.productId);return sent?{...x,qty:Math.max(0,Number(x.qty||1)-Number(sent.qty||1))}:x}).filter(x=>x.qty>0);saveCart(remaining);
+  if(!root.isConnected)return;
   const note=d.duplicate?'Permintaan yang sama sudah disimpan. Rekod sedia ada digunakan untuk mengelakkan pendua.':'Model dan kuantiti telah disimpan dalam akaun. Admin akan semak stok pembekal, spesifikasi dan harga akhir. Tiada invois atau bayaran dibuat.';
-  modal('Request Saved',`<div class="az-pc-order-card" data-customer-order="${esc(d.order.orderId)}"><div class="az-pc-order-id">${esc(d.order.quoteNo||d.order.orderId)}</div><div class="az-pc-shop-note">${esc(note)} Semak dan setujui sebut harga nanti melalui My Requests.</div><div class="az-pc-cart-actions"><button class="az-pc-shop-btn primary" data-view-orders type="button">View My Requests & Orders</button></div></div>`).querySelector('[data-view-orders]').onclick=openOrders;
+  modal('Request Saved',`<div class="az-pc-order-card" data-customer-order="${esc(d.order.orderId)}"><div class="az-pc-order-id">${esc(d.order.quoteNo||d.order.orderId)}</div><div class="az-pc-shop-note">${esc(note)} Buka My Requests apabila sebut harga tersedia.</div><div class="az-pc-cart-actions"><button class="az-pc-shop-btn primary" data-view-orders type="button">View My Requests & Orders</button></div></div>`).querySelector('[data-view-orders]').onclick=openOrders;
  }catch(e){toast(e.message||String(e));if(root?.isConnected){btn.disabled=false;btn.textContent='Send Quote Request';refreshCheckoutBackendStatus(root,true)}}finally{clearTimeout(slow)}
 }
 async function requestSingleQuote(raw){addCart(raw,true)}
@@ -177,9 +224,9 @@ function requestOrderCard(o){
  if(!o.requestOnly)return legacyOrderCard(o);
  const expired=Number(o.quoteExpiresAtMs)>0&&Number(o.quoteExpiresAtMs)<=Date.now(),offered=o.status==='quote-ready'&&!expired;
  const notes={'quote-requested':'Permintaan disimpan. Admin sedang menyemak stok pembekal dan harga akhir.','quote-ready':'Semak jumlah akhir dan penghantaran sebelum bersetuju. Persetujuan ini belum mengenakan bayaran.','quote-accepted':'Anda telah setuju. Admin akan semak stok sekali lagi sebelum mengeluarkan invois.','quote-declined':'Sebutharga ditolak. Admin boleh menyemak semula pilihan atau harga.','awaiting-payment':'Invois telah dikeluarkan selepas persetujuan anda. Ikut arahan bayaran AZOBSS.'};
- const note=expired&&!o.invoiceNo?'Sebutharga tamat. Minta admin semak stok dan harga semula.':notes[o.status]||statusLabel(o.status);
- const buttons=!o.invoiceNo&&!['cancelled','refunded'].includes(o.status)?`<div class="az-pc-cart-actions">${offered?`<button type="button" class="az-pc-shop-btn primary" data-request-action="accept" data-request-id="${esc(o.orderId)}" data-quote-version="${Number(o.quoteVersion)}" data-quote-total="${Number(o.confirmedTotal)}">Accept Quote</button><button type="button" class="az-pc-shop-btn" data-request-action="decline" data-request-id="${esc(o.orderId)}" data-quote-version="${Number(o.quoteVersion)}">Decline</button>`:''}<button type="button" class="az-pc-shop-btn" data-request-action="cancel" data-request-id="${esc(o.orderId)}" data-quote-version="${Number(o.quoteVersion)}">Cancel Request</button></div>`:'';
- return `<div class="az-pc-order-card" data-customer-order="${esc(o.orderId)}"><div class="az-pc-order-top"><div><div class="az-pc-order-id">${esc(o.quoteNo||o.orderId)}</div><div class="az-pc-cart-meta">${esc(o.orderId)} · ${new Date(o.createdAtMs).toLocaleString('en-MY')}</div></div><span class="az-pc-order-state">${esc(statusLabel(o.status))}</span></div><div class="az-pc-order-items">${(o.items||[]).map(x=>`${esc(x.name)}${x.optionLabel?` · ${esc(x.optionLabel)}`:''} × ${Number(x.qty)}`).join('<br>')}</div><div class="az-pc-cart-summary"><div class="az-pc-cart-summary-row"><span>Reference subtotal</span><b>${money(o.referenceSubtotal)}</b></div>${o.priceConfirmed?`<div class="az-pc-cart-summary-row"><span>Quoted items</span><b>${money(o.confirmedItemTotal)}</b></div><div class="az-pc-cart-summary-row"><span>Delivery</span><b>${money(o.shippingCharge)}</b></div><div class="az-pc-cart-summary-row total"><span>Final quote</span><b>${money(o.confirmedTotal)}</b></div>`:''}</div><div class="az-pc-shop-note">${esc(note)}${o.quoteExpiresAtMs&&!o.invoiceNo?`<br>Quote valid until: ${new Date(o.quoteExpiresAtMs).toLocaleString('en-MY')}. Stok belum ditempah.`:''}${o.invoiceNo?`<br>Invoice: ${esc(o.invoiceNo)} · ${esc(statusLabel(o.paymentStatus))}`:''}</div>${buttons}</div>`
+ const note=o.deliveryDetailsPending&&offered?'Harga item tersedia. Teruskan ke checkout untuk pilih penghantaran atau ambil sendiri.':expired&&!o.invoiceNo?'Sebutharga tamat. Minta admin semak stok dan harga semula.':notes[o.status]||statusLabel(o.status);
+ const buttons=!o.invoiceNo&&!['cancelled','refunded'].includes(o.status)?`<div class="az-pc-cart-actions">${offered?`<button type="button" class="az-pc-shop-btn primary" data-request-action="${o.deliveryDetailsPending?'delivery':'accept'}" data-request-id="${esc(o.orderId)}" data-quote-version="${Number(o.quoteVersion)}" data-quote-total="${Number(o.confirmedTotal)}">${o.deliveryDetailsPending?'Continue to Checkout':'Accept Quote'}</button><button type="button" class="az-pc-shop-btn" data-request-action="decline" data-request-id="${esc(o.orderId)}" data-quote-version="${Number(o.quoteVersion)}">Decline</button>`:''}<button type="button" class="az-pc-shop-btn" data-request-action="cancel" data-request-id="${esc(o.orderId)}" data-quote-version="${Number(o.quoteVersion)}">Cancel Request</button></div>`:'';
+ return `<div class="az-pc-order-card" data-customer-order="${esc(o.orderId)}"><div class="az-pc-order-top"><div><div class="az-pc-order-id">${esc(o.quoteNo||o.orderId)}</div><div class="az-pc-cart-meta">${esc(o.orderId)} · ${new Date(o.createdAtMs).toLocaleString('en-MY')}</div></div><span class="az-pc-order-state">${esc(statusLabel(o.status))}</span></div><div class="az-pc-order-items">${(o.items||[]).map(x=>`${esc(x.name)}${x.optionLabel?` · ${esc(x.optionLabel)}`:''} × ${Number(x.qty)}`).join('<br>')}</div><div class="az-pc-cart-summary"><div class="az-pc-cart-summary-row"><span>Reference subtotal</span><b>${money(o.referenceSubtotal)}</b></div>${o.priceConfirmed?`<div class="az-pc-cart-summary-row"><span>Quoted items</span><b>${money(o.confirmedItemTotal)}</b></div><div class="az-pc-cart-summary-row"><span>Delivery</span><b>${o.deliveryDetailsPending?'To be confirmed':money(o.shippingCharge)}</b></div><div class="az-pc-cart-summary-row total"><span>${o.deliveryDetailsPending?'Items subtotal':'Final quote'}</span><b>${money(o.confirmedTotal)}</b></div>`:''}</div><div class="az-pc-shop-note">${esc(note)}${o.quoteExpiresAtMs&&!o.invoiceNo?`<br>Quote valid until: ${new Date(o.quoteExpiresAtMs).toLocaleString('en-MY')}. Stok belum ditempah.`:''}${o.invoiceNo?`<br>Invoice: ${esc(o.invoiceNo)} · ${esc(statusLabel(o.paymentStatus))}`:''}</div>${buttons}</div>`
 }
 async function requestDecision(button){
  const action=button.dataset.requestAction,id=button.dataset.requestId,quoteVersion=Number(button.dataset.quoteVersion);
@@ -198,7 +245,7 @@ async function openOrders(selectedOrderId,selectedDocument=''){
   const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders'+(focused?'/'+encodeURIComponent(focused):''),{headers:h,cache:'no-store'},22000,'Requests server'),d=await r.json().catch(()=>({}));if(!live())return;if(!r.ok||!d.ok)throw new Error(orderErrorMessage(r,d));
   const orders=focused?[d.order]:d.orders||[],body=root.querySelector('.az-pc-shop-modal-body');
   body.innerHTML='<div class="az-pc-cart-actions"><button type="button" class="az-pc-shop-btn" data-open-pc-list>← My Cart</button><button type="button" class="az-pc-shop-btn" data-all-requests>All Requests & Orders</button><button type="button" class="az-pc-shop-btn" data-refresh-requests>Refresh</button></div>'+(orders.length?'<div class="az-pc-orders-list">'+orders.map(o=>focused?'<div class="az-pc-order-card az-pc-request-focused1538" data-customer-order="'+esc(o.orderId)+'" tabindex="-1">'+(window.AZOBSSPcDocuments1541?.details(o,kind)||orderCard(o))+(kind==='quote'||!o.invoiceNo?requestOrderCard(o):'')+(window.AZOBSSTechDelivery?.orderDelivery(o)||'')+'</div>':orderCard(o)).join('')+'</div>':'<div class="az-pc-shop-empty">No requests yet. Add products to My Cart, then Request Quote.</div>');
-  body.querySelectorAll('[data-request-action]').forEach(b=>b.onclick=()=>requestDecision(b));
+  body.querySelectorAll('[data-request-action]').forEach(b=>b.onclick=()=>b.dataset.requestAction==='delivery'?openDeliveryCheckout(orders.find(o=>o.orderId===b.dataset.requestId)):requestDecision(b));
   body.querySelectorAll('[data-open-document]').forEach(b=>b.onclick=()=>openOrders(b.dataset.documentOrder,b.dataset.openDocument));
   body.querySelectorAll('[data-download-document]').forEach(b=>b.onclick=async()=>{const message=body.querySelector('[data-document-message]');b.disabled=true;try{const h=await requireLogin();if(!live())return;const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders/'+encodeURIComponent(b.dataset.documentOrder)+'/documents/'+b.dataset.downloadDocument,{headers:h,cache:'no-store'},22000,'Document server'),d=await r.json();if(!live())return;if(!r.ok||!d.ok)throw Error(d.message||'Document unavailable. Refresh this order.');const pdf=await window.AZOBSSPcDocuments1541.pdf();if(live())pdf.download(d.document.pdf,d.document.kind==='quote'?'quotation':d.document.kind);}catch(e){if(live()&&message)message.textContent=e.message||'Download failed. Please retry.';}finally{b.disabled=false;}});
   body.querySelector('[data-payment-report]')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,b=form.querySelector('button'),message=body.querySelector('[data-document-message]');b.disabled=true;try{const h=await requireLogin();if(!live())return;const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders/'+encodeURIComponent(focused)+'/payment-report',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({reference:form.elements.reference.value})},22000,'Payment reference'),d=await r.json();if(!live())return;if(!r.ok||!d.ok)throw Error(d.message||'Unable to submit reference.');await openOrders(focused,'invoice');}catch(e){if(live()&&message)message.textContent=e.message||'Unable to submit reference.';b.disabled=false;}});
@@ -213,7 +260,14 @@ window.addEventListener('azobss:auth-state-ready',()=>{const root=document.query
 window.azobssPcRequestQuote=()=>openCheckout('quote');window.addEventListener('azobss-pc-list-updated',updateCartFab);window.azobssOpenPcCart=()=>openCart(false);window.azobssOpenPcRequests=openOrders;
 
 async function preflight(){const st=await checkBackend(true);if(!st.ready)console.warn('AZOBSS PC Shop backend not ready:',st.message);else if(st.release&&st.release!=='1506')console.info('AZOBSS PC Shop compatible backend release:',st.release)}
-function init(){ensureShell();document.addEventListener('click',e=>{const b=e.target.closest?.('[data-az-shop-cart-toggle],#cartBtn,[data-action="cart"],#cartBtnGlobal,#btnCartGlobal,button[aria-label="Cart"],a[aria-label="Cart"]');if(b){e.preventDefault();e.stopImmediatePropagation();openCart(false);}},{capture:true});const entry=new URL(location.href).searchParams;if(entry.get('requests')==='1')openOrders();else if(entry.get('quote')==='1'){
+function init(){if(/^\/cart\/?$/i.test(location.pathname)){
+ const entry=new URL(location.href);
+ if(entry.searchParams.get('quote')==='1'){
+  const url=new URL(location.href);url.searchParams.delete('quote');history.replaceState(null,'',url);openCheckout();
+ }
+ if(entry.searchParams.get('requests')==='1')openOrders();
+ return;
+ }ensureShell();document.addEventListener('click',e=>{const b=e.target.closest?.('[data-az-shop-cart-toggle],#cartBtn,[data-action="cart"],#cartBtnGlobal,#btnCartGlobal,button[aria-label="Cart"],a[aria-label="Cart"]');if(b){e.preventDefault();e.stopImmediatePropagation();openCart(false);}},{capture:true});const entry=new URL(location.href).searchParams;if(entry.get('requests')==='1')openOrders();else if(entry.get('quote')==='1'){
  let openingQuote=false;
  const consumeQuote=async()=>{
    if(openingQuote)return;

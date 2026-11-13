@@ -68,3 +68,12 @@ body.az-pc-image-modal-open{overflow:hidden!important}
 
 /* Status toasts must never intercept document or payment controls. */
 .az-pc-shop-toast{pointer-events:none!important}
+
+.az-pc-checkout-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:clamp(16px,3vw,32px);align-items:start}
+.az-pc-checkout-layout h4{margin:0 0 12px;font-size:17px}
+.az-pc-checkout-layout label{display:grid;gap:5px}
+.az-pc-checkout-layout textarea,.az-pc-checkout-layout input[type=tel]{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid #35516f;border-radius:9px;background:#0a192a;color:#fff;font:inherit}
+.az-pc-checkout-layout [role=status]{font-size:13px;color:#bad3e6}
+.az-pc-checkout-summary{background:#102337;border:1px solid #2b435f;border-radius:13px;padding:16px}
+.az-pc-checkout-summary ul{padding-left:18px;overflow-wrap:anywhere}
+@media(max-width:700px){.az-pc-checkout-layout{grid-template-columns:1fr}.az-pc-checkout-summary{grid-row:1}}

@@ -115,7 +115,7 @@
         const radio=radios.find(r=>r.value===kind);
         if(radio&&!enabled){radio.disabled=true;radio.closest('label').hidden=true;}
       }
-      if(radios.some(r=>r.checked&&r.disabled))radios.find(r=>!r.disabled).checked=true;
+      if(radios.some(r=>r.checked&&r.disabled)){const enabled=radios.find(r=>!r.disabled);if(enabled)enabled.checked=true;}
       search.hidden=!cfg.places;
       if(cfg.subsidyEnabled)delivery.querySelector('p').textContent='Penghantaran Percuma untuk kawasan dan pesanan terpilih. Kelayakan dan caj akhir disahkan dalam sebut harga.';
       update();

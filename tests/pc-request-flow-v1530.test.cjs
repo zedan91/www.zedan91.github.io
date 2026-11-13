@@ -150,3 +150,44 @@ test('an admin-cancelled approved request cannot be converted into a payable inv
 test('historical paid orders keep their original invoice, receipt, total and workflow',async()=>{
  const f=fixture();try{const id='AZO-2025-000001';f.saved.set('pcShopOrders/'+id,{orderId:id,uid:'customer-1',intent:'checkout',status:'payment-received',paymentStatus:'paid',fulfillmentStatus:'order-received',priceConfirmed:true,shippingConfirmationRequired:false,shippingMethod:'Pickup at AZOBSS',confirmedItemTotal:120,confirmedTotal:120,referenceSubtotal:120,invoiceNo:'AZI-2025-000001',receiptNo:'AZR-2025-000001',items:[],createdAtMs:1});const r=await f.patch(id,{fulfillmentStatus:'packed'});assert.equal(r.status,200);assert.equal(r.body.order.requestOnly,false);assert.equal(r.body.order.invoiceNo,'AZI-2025-000001');assert.equal(r.body.order.receiptNo,'AZR-2025-000001');assert.equal(r.body.order.confirmedTotal,120);assert.equal(r.body.order.status,'packed');}finally{f.close();}
 });
+test('cart requests defer address and payment until an item quote, then require approval of the delivery total',async()=>{
+ const f=fixture();try{
+  const created=await f.create({deferDelivery:true,customerAddress:'must not be stored',customerPhone:''});
+  const id=created.body.order.orderId;
+  assert.equal(created.body.order.deliveryDetailsPending,true);
+  assert.equal(f.row(id).customerAddress,'');
+  assert.equal((await f.decision(id,{action:'delivery-details',quoteVersion:0,shippingMethod:'Courier'})).status,409);
+  const quote=(await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:300,shippingCharge:90})).body.order;
+  assert.equal(quote.confirmedTotal,300);
+  assert.equal(quote.canPay,false);
+  assert.equal((await f.decision(id,{action:'accept',quoteVersion:quote.quoteVersion})).body.error,'delivery_details_required');
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).body.error,'delivery_details_required');
+  const delivery={action:'delivery-details',quoteVersion:quote.quoteVersion,shippingMethod:'Courier',customerPhone:'0123456789',customerAddress:'12 Jalan Fixture, Batu Caves',deliveryPin:{latitude:3,longitude:101}};
+  assert.equal((await f.decision(id,{...delivery,customerAddress:'short'})).status,400);
+  assert.equal((await f.decision(id,delivery)).status,200);
+  assert.equal((await f.decision(id,delivery)).status,200);
+  assert.equal(f.row(id).priceConfirmed,false);
+  assert.equal(f.row(id).shippingConfirmationRequired,true);
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).status,409);
+  assert.equal((await f.call('POST','/api/admin/pc-shop/shipping-quotes/'+id,{source:'manual',vehicle:'car',confirmed:true,itemTotal:300,cost:30,roadKm:8,measured:{kg:2,length:25,width:20,height:10}},{admin:true})).status,200);
+  const final=(await f.publish(id)).body.order;
+  assert.equal(final.confirmedTotal,330);
+  assert.equal((await f.decision(id,{action:'accept',quoteVersion:quote.quoteVersion})).status,409);
+  assert.equal((await f.decision(id,{action:'accept',quoteVersion:final.quoteVersion})).status,200);
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).body.order.canPay,true);
+ }finally{f.close();}
+});
+test('a customer can proceed from an item quote with free self pickup',async()=>{
+ const f=fixture();try{
+  const id=(await f.create({deferDelivery:true})).body.order.orderId;
+  const quote=(await f.publish(id)).body.order;
+  const details={action:'delivery-details',quoteVersion:quote.quoteVersion,shippingMethod:'Pickup at AZOBSS',customerPhone:'0123456789',pickupRequestedSlot:'2026-12-12T14:30'};
+  assert.equal((await f.decision(id,{...details,pickupRequestedSlot:''})).status,400);
+  const accepted=(await f.decision(id,details)).body.order;
+  assert.equal(accepted.status,'quote-accepted');
+  assert.equal(accepted.delivery.charge,0);
+  assert.equal(accepted.delivery.pickupRequestedSlot,details.pickupRequestedSlot);
+  assert.equal(accepted.canPay,false);
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).body.order.canPay,true);
+ }finally{f.close();}
+});
