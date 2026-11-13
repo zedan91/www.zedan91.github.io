@@ -1527,7 +1527,7 @@ function firefoxWhatsAppBridgeReady(){
   const version=document.documentElement?.getAttribute('data-azobss-firefox-whatsapp-extension-version')||'';
   return firefoxWhatsAppBridgeVersion()>=AZ_SR_FIREFOX_WA_BRIDGE_VERSION &&
     window.AZOBSSCustomerWhatsApp1542?.bridgeReady?.()===true &&
-    /^\d+\.\d+\.\d+$/.test(version) && version.localeCompare('1.3.3',undefined,{numeric:true})>=0;
+    /^\d+\.\d+\.\d+$/.test(version) && version.localeCompare('1.3.4',undefined,{numeric:true})>=0;
 }
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('Could not read PDF bytes.'));reader.readAsDataURL(blob)})}
 function waitForFirefoxBridgeReady(timeoutMs=1000){return new Promise(resolve=>{const started=Date.now();const tick=()=>{if(firefoxWhatsAppBridgeReady())return resolve(true);if(Date.now()-started>=timeoutMs)return resolve(false);setTimeout(tick,80)};tick()})}
@@ -1640,9 +1640,9 @@ async function firefoxPhysicalPdfToWhatsAppWeb(context,button=null){
     const ready=await waitForFirefoxBridgeReady(900);
     if(!ready){
       context.firefoxTransfer.phase='requires-update';
-      setSharePanelText('salesReceiptShareNativeLabel','Install signed Firefox Bridge 1.3.3');
+      setSharePanelText('salesReceiptShareNativeLabel','Install signed Firefox Bridge 1.3.4');
       setSharePanelText('salesReceiptShareNativeDesc','Disable/remove the old bridge to stop its queue. Use the optional Firefox Bridge guide at /azobss-firefox-whatsapp-pdf-bridge/INSTALL.html, then refresh Admin and WhatsApp. No PDF was queued.');
-      notify('Untuk tindakan automatik ini, pasang Firefox Bridge bertandatangan 1.3.3. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
+      notify('Untuk tindakan automatik ini, pasang Firefox Bridge bertandatangan 1.3.4. Disable/remove bridge lama dahulu untuk menghentikan queue lama. Pasang versi baharu melalui panduan Firefox Bridge; kemudian refresh Admin dan WhatsApp. Tiada PDF dihantar.',true);return false;
     }
     const payload=await prepareSingleActualPdf(context);
     try{await copyPlainText(payload.text);}catch(_e){notify('Nota tidak dapat disalin ke clipboard. Jika caption gagal, gunakan Copy Message.',true);}
@@ -1728,7 +1728,7 @@ function openSharePanel(row,type='receipt'){
   const detail=el('salesReceiptLocalShareDetails');if(detail)detail.hidden=true;
   setSharePanelText('salesReceiptShareSystemLabel','System share — no add-on');
   setSharePanelText('salesReceiptShareNativeLabel',firefoxDesktop?'Firefox Bridge — optional':'Chrome / Edge — no add-on');
-  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?'Reuse the existing WhatsApp tab, verify the customer and prepare one PDF + note. Requires signed Firefox Bridge 1.3.3. You press Send.':'Prepare the PDF first, then click again for the system share window. Select WhatsApp and the customer yourself. AZOBSS opens no WhatsApp tab.');
+  setSharePanelText('salesReceiptShareNativeDesc',firefoxDesktop?'Reuse the existing WhatsApp tab, verify the customer and prepare one PDF + note. Requires signed Firefox Bridge 1.3.4. You press Send.':'Prepare the PDF first, then click again for the system share window. Select WhatsApp and the customer yourself. AZOBSS opens no WhatsApp tab.');
   const isMaybankInvoice=docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(row.status))&&rowUsesMaybank(row);
   const isToyyibInvoice=docType==='invoice'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row);
   setSharePanelText('salesReceiptShareWhatsAppLabel','WhatsApp Customer');

@@ -99,8 +99,10 @@
 
   const editableSelector='[contenteditable="true"],[contenteditable="plaintext-only"],textarea,input[type="text"]';
   const messageSelector='[data-message-id],[data-testid="msg-container"],[data-testid="message-container"],[data-id^="true_"],[data-id^="false_"]';
+  const previewSelector='[role="dialog"],[data-testid="media-editor"],[data-testid="media-preview"],[data-testid*="document-preview"],[data-animate-modal-popup="true"]';
+  const outsidePreviewSelector=messageSelector+',#pane-side,#azobss-firefox-wa-pdf-status';
   function sendButtons(root=document){
-    const nodes=[...root.querySelectorAll('button[aria-label="Send"],[role="button"][aria-label="Send"],button[aria-label="Hantar"],[role="button"][aria-label="Hantar"],span[data-icon="send"],span[data-icon="send-filled"]')];
+    const nodes=[...root.querySelectorAll('button[aria-label="Send"],[role="button"][aria-label="Send"],button[aria-label="Hantar"],[role="button"][aria-label="Hantar"],[title="Send"],[title="Hantar"],[data-icon="send"],[data-icon="send-filled"],[data-icon="wds-ic-send"],[data-icon="wds-ic-send-filled"]')];
     return [...new Set(nodes.map(el=>el.closest('button,[role="button"]')||el))].filter(visible);
   }
   function captionHint(el,scope){
@@ -112,31 +114,45 @@
   }
   function filenameLabels(filename){
     if(!filename)return [];
-    return [...document.querySelectorAll('span,div,p,[title],[aria-label],[data-filename]')].filter(node=>visible(node)&&!node.closest(messageSelector)&&(String(node.textContent||'').trim()===filename||['title','aria-label','data-filename'].some(attr=>node.getAttribute(attr)===filename)));
+    return [...document.querySelectorAll('span,div,p,h1,h2,h3,strong,[role="heading"],[title],[aria-label],[data-filename]')].filter(node=>{
+      if(!visible(node)||node.closest(outsidePreviewSelector))return false;
+      if(['title','aria-label','data-filename'].some(attr=>node.getAttribute(attr)===filename))return true;
+      const directText=[...node.childNodes].filter(child=>child.nodeType===Node.TEXT_NODE).map(child=>child.textContent).join('').trim();
+      return directText===filename||String(node.textContent||'').trim()===filename;
+    });
   }
   function findPreviewCaptionBox(scope) {
     if(!scope)return null;
     const context=activePreviewContext;
-    const candidates=[...scope.querySelectorAll(editableSelector)].filter(el=>visible(el)&&!el.closest(messageSelector)&&!el.closest('[role="search"]')&&!/search|cari/i.test(['aria-label','aria-placeholder','placeholder'].map(attr=>el.getAttribute(attr)||'').join(' '))&&(!(el===context?.composer||context?.oldEditors?.has(el)||el.closest('[data-testid="conversation-compose-box-input"]')||!context&&el.closest('#main footer'))||captionHint(el,scope)));
+    const candidates=[...scope.querySelectorAll(editableSelector)].filter(el=>visible(el)&&!el.closest(outsidePreviewSelector+',header,[role="search"],[inert],[aria-hidden="true"]')&&!/search|cari/i.test(['aria-label','aria-placeholder','placeholder'].map(attr=>el.getAttribute(attr)||'').join(' '))&&el!==context?.composer&&!context?.oldEditors.has(el)&&(!(el.closest('[data-testid="conversation-compose-box-input"]')||!context&&el.closest('#main footer'))||captionHint(el,scope)));
     const explicit=candidates.filter(el=>captionHint(el,scope));
     return explicit.length===1?explicit[0]:explicit.length?null:candidates.length===1?candidates[0]:null;
   }
   function previewScope(filename='',context=activePreviewContext) {
     const wanted=filename||context?.filename||'',labels=filenameLabels(wanted).filter(el=>!context?.oldLabels.has(el)),sends=sendButtons().filter(el=>!context?.oldSend.has(el));
-    const valid=node=>{
-      if(!visible(node)||node===document.body||node===document.documentElement||node.id==='pane-side'||node.querySelector('#pane-side')||node.closest(messageSelector))return false;
-      if(context?.composer&&visible(context.composer)&&node.contains(context.composer)&&!captionHint(context.composer,node))return false;
-      if(!context&&node.id==='main')return false;
-      return (!wanted||labels.some(label=>node===label||node.contains(label)))&&sends.some(send=>node.contains(send));
-    };
-    const scopes=[],add=node=>{if(node&&!scopes.includes(node)&&valid(node))scopes.push(node);};
-    for(const node of document.querySelectorAll('[role="dialog"],[data-testid="media-editor"],[data-testid="media-preview"],[data-testid*="document-preview"],[data-animate-modal-popup="true"]'))add(node);
-    if(wanted)for(const label of labels){let node=label.parentElement;for(let i=0;node&&node!==document.body&&i<14;i++,node=node.parentElement)add(node);}
-    // Modern WhatsApp can mount its document preview INSIDE #main with its own
-    // footer. The old blanket '#main footer' exclusion rejected that real caption.
-    return scopes.find(node=>findPreviewCaptionBox(node))||scopes[0]||null;
+    const scopes=new Set(document.querySelectorAll(previewSelector));
+    if(wanted)for(const label of labels){
+      for(let node=label.parentElement;node&&node!==document.body;node=node.parentElement)scopes.add(node);
+    }
+    let pending=null;
+    for(const scope of scopes){
+      if(!visible(scope)||scope===document.body||scope===document.documentElement||scope.closest(outsidePreviewSelector)||scope.querySelector('#pane-side'))continue;
+      if(wanted&&!labels.some(label=>scope.contains(label)))continue;
+      const editor=findPreviewCaptionBox(scope);
+      const sharesComposer=!!(visible(context?.composer)&&scope.contains(context.composer));
+      const hasSend=sends.some(send=>scope.contains(send)&&!send.closest(outsidePreviewSelector));
+      if(hasSend&&!sharesComposer){
+        if(editor)return scope;
+        pending??=scope;
+      }
+      // The PDF viewer has its own caption field and can render alongside the
+      // original composer. Its footer need not expose a recognizable Send icon.
+      if(wanted&&editor&&[...scope.querySelectorAll('span,div,p,a')].some(node=>
+        visible(node)&&!node.closest(outsidePreviewSelector)&&/^Powered by Adobe Acrobat$/i.test(node.textContent.trim())
+      ))return scope;
+    }
+    return pending;
   }
-  function findSendButton(root=document){return sendButtons(root)[0]||null;}
 
   const captionText=box=>String(box?.value??box?.innerText??box?.textContent??'').replace(/\r\n/g,'\n').replace(/[\u200b-\u200f\uFEFF]/g,'').trim();
   function hasPreview(){return !!previewScope()||sendButtons().some(el=>!el.closest('#main footer')||[...el.closest('footer').querySelectorAll(editableSelector)].some(input=>visible(input)&&captionHint(input,el.closest('footer'))));}
@@ -295,7 +311,8 @@
         message: `${payload.filename} dan nota sudah disediakan sekali. Semak preview dan tekan Send.`
       }).catch(() => {});
     } catch (error) {
-      showBadge(`AZOBSS PDF gagal dilampirkan:\n${error?.message || error}`, 'error');
+      const title=fileDispatched?'AZOBSS: semak preview PDF dan nota':'AZOBSS: PDF gagal dilampirkan';
+      showBadge(`${title}\n${error?.message || error}`, 'error');
       await ext.runtime.sendMessage({
         type: 'AZOBSS_FIREFOX_WA_PDF_WHATSAPP_STATUS',
         requestId: payload?.requestId,
