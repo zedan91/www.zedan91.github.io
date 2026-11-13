@@ -191,3 +191,49 @@ test('a customer can proceed from an item quote with free self pickup',async()=>
   assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).body.order.canPay,true);
  }finally{f.close();}
 });
+test('fixed car rate lets a customer see the quote, accept once and receive an invoice after the final stock check',async()=>{
+ const f=fixture();
+ try{
+  const id=(await f.create({deferDelivery:true})).body.order.orderId;
+  const first=await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:300,deliveryVehicle:'car',shippingCharge:1,expectedQuoteVersion:0});
+  assert.equal(first.status,200,JSON.stringify(first.body));
+  const quote=first.body.order;
+  assert.deepEqual(quote.fixedDeliveryOffer,{vehicle:'car',charge:25});
+  assert.equal(quote.canPay,false);
+  const doc=await f.call('GET','/api/pc-shop/orders/'+id+'/documents/quote');
+  assert.equal(doc.status,200);
+  assert.match(doc.body.document.pdf.notes,/RM25\.00/);
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).body.error,'delivery_details_required');
+  const details={action:'delivery-details',quoteVersion:quote.quoteVersion,shippingMethod:'Courier',customerPhone:'0123456789',customerAddress:'12 Jalan Fixture, Batu Caves'};
+  assert.equal((await f.decision(id,{...details,acceptedTotal:301})).body.error,'delivery_total_changed');
+  const accepted=(await f.decision(id,{...details,acceptedTotal:325})).body.order;
+  assert.equal(accepted.status,'quote-accepted');
+  assert.equal(accepted.confirmedTotal,325);
+  assert.equal(accepted.shippingCharge,25);
+  assert.equal(accepted.canPay,false);
+  assert.equal((await f.decision(id,{...details,acceptedTotal:325})).status,200);
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true,expectedQuoteVersion:quote.quoteVersion-1})).body.error,'quote_changed');
+  const invoice=await f.patch(id,{issueInvoice:true,stockConfirmed:true,shippingCharge:5,expectedQuoteVersion:quote.quoteVersion});
+  assert.equal(invoice.status,200,JSON.stringify(invoice.body));
+  assert.equal(invoice.body.order.confirmedTotal,325);
+  assert.equal(invoice.body.order.canPay,true);
+ }finally{f.close();}
+});
+test('fixed rates use server settings and block a motor when a known parcel needs a larger vehicle',async()=>{
+ const f=fixture();
+ try{
+  const id=(await f.create({deferDelivery:true})).body.order.orderId;
+  const sku=f.row(id).items[0].productId;
+  f.saved.set('pcShopPackages/'+sku,{kg:5,length:45,width:30,height:10});
+  assert.equal((await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:300,deliveryVehicle:'motorcycle'})).body.error,'packing_required');
+  f.saved.set('settings/pcShopDelivery',{fixedDelivery:{motorcycle:999,car:32,van:72}});
+  const van=(await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:300,deliveryVehicle:'van'})).body.order;
+  assert.deepEqual(van.fixedDeliveryOffer,{vehicle:'van',charge:72});
+  f.saved.delete('pcShopPackages/'+sku);
+  const motor=(await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:300,deliveryVehicle:'motorcycle'})).body.order;
+  assert.deepEqual(motor.fixedDeliveryOffer,{vehicle:'motorcycle',charge:10});
+  const pickup=(await f.decision(id,{action:'delivery-details',quoteVersion:motor.quoteVersion,shippingMethod:'Pickup at AZOBSS',customerPhone:'0123456789',pickupRequestedSlot:'2026-12-12T14:30'})).body.order;
+  assert.equal(pickup.confirmedTotal,300);
+  assert.equal(pickup.delivery.charge,0);
+ }finally{f.close();}
+});

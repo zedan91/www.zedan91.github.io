@@ -38,7 +38,7 @@
         label('latitude','Latitud',l.latitude,'number')+label('longitude','Longitud',l.longitude,'number')+
         label('phone','Telefon (+60)',l.phone)+label('website','Website',l.website,'url')+
         label('mapsListingUrl','Pautan profil Google Maps disahkan',l.mapsListingUrl,'url')+label('hours','Waktu',l.hours)+label('instructions','Arahan pengambilan',l.instructions)+
-        '<h4>Penghantaran</h4>'+check('pickup','Ambil sendiri',s.pickup)+check('delivery','Penghantaran ke alamat',s.delivery)+
+        '<h4>Kadar tetap pelanggan</h4><p>Motor RM10</p>'+label('fixedCar','Kereta (RM)',s.fixedDelivery?.car??25,'number')+label('fixedVan','Van (RM)',s.fixedDelivery?.van??60,'number')+'<h4>Tetapan penghantaran lain</h4>'+check('pickup','Ambil sendiri',s.pickup)+check('delivery','Penghantaran ke alamat',s.delivery)+
         check('manual','Benarkan quotation manual',s.manual)+check('subsidyEnabled','Aktifkan subsidi',s.subsidyEnabled)+
         label('maxKm','Had perjalanan (km)',s.maxKm,'number')+label('marginReserve','Margin minimum disimpan (RM)',s.marginReserve,'number')+
         label('marginShare','Had subsidi daripada margin (%)',s.marginShare,'number')+
@@ -57,6 +57,7 @@
         const cfg={location:Object.fromEntries(['name','address','latitude','longitude','phone','website','mapsListingUrl','hours','instructions'].map(key=>[key,f.namedItem(key).value])),
           ...Object.fromEntries(['pickup','delivery','manual','subsidyEnabled'].map(key=>[key,f[key].checked])),
           ...Object.fromEntries(['maxKm','marginReserve','marginShare','minCharge','maxCharge'].map(key=>[key,f[key].value])),
+          fixedDelivery:{car:f.fixedCar.value,van:f.fixedVan.value},
           categories:f.categories.value.split(',').map(x=>x.trim()).filter(Boolean),
           vehicles:Object.fromEntries(Object.keys(vehicles).map(key=>[key,{min:f[key+'Min'].value,cap:f[key+'Cap'].value}]))};
         preview.hidden=false;
@@ -64,6 +65,7 @@
           '<br>'+esc(cfg.location.latitude)+', '+esc(cfg.location.longitude)+' · '+esc(cfg.location.phone)+
           '<br>'+esc(cfg.location.hours)+'<br>'+esc(cfg.location.instructions)+(cfg.location.mapsListingUrl?'<br>'+esc(cfg.location.mapsListingUrl):'')+'</p><p>'+
           [cfg.pickup?'Ambil sendiri':'',cfg.delivery?'Penghantaran':'',cfg.manual?'Quotation manual':''].filter(Boolean).join(' · ')+
+          '<br>Kadar tetap: motor RM10 · kereta RM'+esc(cfg.fixedDelivery.car)+' · van RM'+esc(cfg.fixedDelivery.van)+
           '<br>Subsidi '+(cfg.subsidyEnabled?'aktif':'belum aktif')+' · '+esc(cfg.maxKm)+' km · margin minimum RM'+esc(cfg.marginReserve)+' · had '+esc(cfg.marginShare)+'%'+
           '<br>Julat caj RM'+esc(cfg.minCharge)+'–'+(Number(cfg.maxCharge)?'RM'+esc(cfg.maxCharge):'tiada had')+
           '<br>Kategori '+esc(cfg.categories.join(', ')||'Tiada')+'</p><ul>'+
