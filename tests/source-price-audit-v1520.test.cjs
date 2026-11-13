@@ -9,6 +9,7 @@ function fixture(){
  function seal(name,bytes){const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',deriveKey(secret),iv);const data=Buffer.concat([cipher.update(bytes),cipher.final()]);fs.mkdirSync(path.join(root,'lib/data'),{recursive:true});fs.writeFileSync(path.join(root,'lib/data',name),JSON.stringify({iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')}));}
  seal('upgrade-source-v1520.enc',Buffer.from(JSON.stringify({source:'Private supplier',date:'2026-11-05',sourceSha256:'fixture',products:[{id:'VNP-test',category:'RAM',sourcePage:2,sourceLine:'model 8GB 259 / 16GB 500',options:[{label:'8GB',cost:259},{label:'16GB',cost:500}]}]})));
  seal('upgrade-source-pdf-v1520.enc',Buffer.from('%PDF-1.7 local fixture'));
+ seal('upgrade-source-pdf-v1564.enc',Buffer.from('%PDF-1.7 latest fixture'));
  const api=createSourcePriceAudit({rootDir:root,env:{PC_SOURCE_PRICE_KEY:secret},getAdminIdentity:async()=>({isAdmin:admin}),getHardware:async()=>{reads++;return {internalProducts:[{id:'pc',sourcePrice:259,price:330,sourceName:'Fixture',priceStatus:'snapshot',snapshotCheckedAt:'2026-11-05'}]};},getBuilds:async()=>({internalBuilds:[]}),sellingPrice:cost=>({price:cost===259?330:590}),send:(res,status,body,type,headers)=>{response={status,body:type==='application/json'?JSON.parse(body):body,type,headers};}});
  return {root,api,seal,setAdmin:v=>{admin=v;},response:()=>response,reads:()=>reads,close:()=>fs.rmSync(root,{recursive:true,force:true})};
 }
@@ -35,6 +36,8 @@ test('authenticated audit preserves every option label, original cost, PDF page 
   const r=f.response();assert.equal(r.status,200);assert.equal(r.headers['Cache-Control'],'private, no-store');assert.equal(r.body.records[0].sourcePage,2);
   assert.deepEqual(r.body.records[0].options,[{label:'8GB',cost:259,expectedPrice:330},{label:'16GB',cost:500,expectedPrice:590}]);
   await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-pricelist.pdf'});assert.equal(f.response().type,'application/pdf');assert.equal(f.response().body.toString(),'%PDF-1.7 local fixture');
+  await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-pricelist.pdf',query:{date:'2026-11-13'}});assert.equal(f.response().body.toString(),'%PDF-1.7 latest fixture');
+  await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-pricelist.pdf',query:{date:'unknown'}});assert.equal(f.response().status,400);
   await f.api.handle({method:'GET'},{},{pathname:'/api/admin/pc-shop/source-prices',query:{scope:'pc'}});assert.equal(f.response().body.records[0].options[0].cost,259);assert.equal(f.response().body.records[0].sourceDate,'2026-11-05');
  }finally{f.close();}
 });

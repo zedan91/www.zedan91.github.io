@@ -457,21 +457,27 @@
   }
   function buildPages(row,type){
     const docType=normalizeDocumentType(type); const pages=[]; let commands=createPage(); pages.push(commands);
-    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType); let y=drawTableHeader(commands,229);
-    normalizedItems(row).forEach((item,index)=>{
+    drawHeader(commands,row,false,docType); drawInfoBox(commands,row,docType);
+    const items=normalizedItems(row);
+    const summaryHeight=paymentSummaryHeight(row,docType);
+    const itemHeight=items.reduce((height,item)=>height+itemRowHeight(item),0);
+    const showPaymentFirst=docType==='invoice'&&(hasMaybankQr(row,docType)||hasToyyibPayQr(row,docType))&&229+24+itemHeight+8+summaryHeight>BOTTOM_LIMIT;
+    let y=drawTableHeader(commands,showPaymentFirst?drawPaymentSummary(commands,row,229,docType)+14:229);
+    items.forEach((item,index)=>{
       const h=itemRowHeight(item);
       if(y+h>BOTTOM_LIMIT){ commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=drawTableHeader(commands,120); }
       y=drawItemRow(commands,item,index,y);
     });
     // Keep the payment summary close to the bottom of the item table.
     // Do not push it down to fill unused page space.
-    y+=8; const summaryHeight=paymentSummaryHeight(row,docType);
+    y+=8;
     const preparedDepositTerms=depositTermsLayout(row,docType),depositTermsHeight=preparedDepositTerms?preparedDepositTerms.height:0;
     const preparedNotes=notesLayout(row),noteHeight=preparedNotes?preparedNotes.height:0;
-    if(y+summaryHeight+(preparedDepositTerms?8+depositTermsHeight:0)>BOTTOM_LIMIT){
+    if((!showPaymentFirst||preparedDepositTerms)&&y+(showPaymentFirst?0:summaryHeight)+(preparedDepositTerms?8+depositTermsHeight:0)>BOTTOM_LIMIT){
       commands=createPage(); pages.push(commands); drawHeader(commands,row,true,docType); y=120;
     }
-    y=drawPaymentSummary(commands,row,y,docType); y+=8;
+    if(!showPaymentFirst)y=drawPaymentSummary(commands,row,y,docType);
+    y+=8;
     if(preparedDepositTerms){y=drawDepositTerms(commands,row,y,docType,preparedDepositTerms);y+=8}
     if(preparedNotes){
       let notesOnNewPage=false;

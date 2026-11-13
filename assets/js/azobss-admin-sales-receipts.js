@@ -676,7 +676,11 @@ function normalizeManual(id,x={}){
   row.documentNo=currentDocumentNo(row);row.depositPercent=depositPercent(row);row.depositAmount=depositAmount(row);row.paidGross=receivedAmount(row);row.recognizedTotalCost=recognizedCosts(row);row.recognizedProfit=recognizedProfit(row);row.amountDue=outstandingAmount(row);return row;
 }
 function isInternalAutoCheckoutAttempt(x={}){
-  return x.hiddenFromSalesReceipts===true || x.autoDuplicateSuperseded===true || String(x.cancelReason||'').toLowerCase()==='duplicate-auto-checkout-paid' || x.checkoutCreateFailed===true;
+  const publicPa=x.publicPaPurchase===true||/^public-pa-rm\d+$/i.test(String(x.productId||''))||
+    /^public-pa(?:-|$)/i.test(String(x.source||x.paymentSource||''));
+  const status=normalizeStatus(x.status||x.paymentStatus,x.paid===true);
+  const unverifiedPublicPa=publicPa&&!isRecognizedPayment(status)&&status!=='refunded';
+  return unverifiedPublicPa|| x.hiddenFromSalesReceipts===true || x.autoDuplicateSuperseded===true || String(x.cancelReason||'').toLowerCase()==='duplicate-auto-checkout-paid' || x.checkoutCreateFailed===true;
 }
 function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const status=normalizeStatus(x.status||x.paymentStatus,x.paid===true);

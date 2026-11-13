@@ -52,7 +52,7 @@ function panelContent(product){
  return `<aside class="az-source-price is-compact" data-pc-admin-source><div class="az-source-price-heading"><b>Harga asal · Admin</b><span class="${matching?'is-match':'is-warning'}" title="${esc(label)}">${!complete?'Belum disahkan':matching?'Sepadan':'Semak harga'}</span></div><div class="az-source-price-scroll"><table><thead><tr>${options.length>1?'<th>Pilihan</th>':''}<th>Asal</th><th>Jual</th><th>Tambahan</th></tr></thead><tbody>${options.map((o,i)=>{
   const original=r.options[i],difference=valid(original.cost)?o.price-original.cost:null;
   return `<tr>${options.length>1?`<th>${esc(o.label)}</th>`:''}<td>${valid(original.cost)?money(original.cost):'—'}</td><td>${money(o.price)}</td><td>${difference===null?'—':(difference>=0?'+':'−')+money(Math.abs(difference))}</td></tr>${valid(original.expectedPrice)&&Math.abs(o.price-original.expectedPrice)>=0.005?`<tr class="az-source-price-warning"><td colspan="${options.length>1?4:3}">Rekod jual: ${money(original.expectedPrice)} · Perbezaan: ${money(Math.abs(o.price-original.expectedPrice))}</td></tr>`:''}`;
- }).join('')}</tbody></table></div><div class="az-source-price-links">${sourceUrl?`<a href="${esc(sourceUrl)}" target="_blank" rel="noopener">${esc(r.sourceName||'Produk asal')} ↗</a>`:`<span>${esc(r.sourceName||'Sumber asal')}</span>`}${scope==='upgrade'||r.sourceRecordId?`<button type="button" data-source-price-pdf="${Number(r.sourcePage)||1}">Pricelist · m/s ${Number(r.sourcePage)||1} ↗</button>`:''}</div><details><summary>Butiran rekod</summary><p>${esc(dateLabel(r.sourceDate))} · ${r.priceStatus==='live'&&r.available?'Semakan server':'Rekod bertarikh · belum disemak semula; bukan sync automatik'}</p>${r.sourceLine?`<p>${esc(r.sourceLine)}</p>`:''}</details></aside>`;
+ }).join('')}</tbody></table></div><div class="az-source-price-links">${sourceUrl?`<a href="${esc(sourceUrl)}" target="_blank" rel="noopener">${esc(r.sourceName||'Produk asal')} ↗</a>`:`<span>${esc(r.sourceName||'Sumber asal')}</span>`}${scope==='upgrade'||r.sourceRecordId?`<button type="button" data-source-price-pdf="${Number(r.sourcePage)||1}" data-source-price-date="${esc(String(r.sourceDate||'').slice(0,10))}">Pricelist · m/s ${Number(r.sourcePage)||1} ↗</button>`:''}</div><details><summary>Butiran rekod</summary><p>${esc(dateLabel(r.sourceDate))} · ${r.priceStatus==='live'&&r.available?'Semakan server':'Rekod bertarikh · belum disemak semula; bukan sync automatik'}</p>${r.sourceLine?`<p>${esc(r.sourceLine)}</p>`:''}</details></aside>`;
 }
 async function authHeaders(force,signal){
  let headers={...await window.azobssGetFirebaseAuthHeaders?.(force)};
@@ -105,7 +105,7 @@ async function openPdf(button){
  const controller=new AbortController(),token=generation;controllers.add(controller);button.disabled=true;
  const timer=setTimeout(()=>controller.abort(),45000);
  try{
-  const response=await request('source-pricelist.pdf',controller.signal),blob=await response.blob();
+  const response=await request('source-pricelist.pdf'+(button.dataset.sourcePriceDate==='2026-11-13'?'?date=2026-11-13':''),controller.signal),blob=await response.blob();
   if(token!==generation||!isAdmin())return;
   if(pdfUrl)URL.revokeObjectURL(pdfUrl);pdfUrl=URL.createObjectURL(blob);
   // An ordinary visible link works even when a browser blocks delayed popups.
@@ -114,7 +114,7 @@ async function openPdf(button){
  }catch(_){if(token===generation&&isAdmin()){button.disabled=false;button.textContent='PDF asal gagal dimuatkan · Cuba lagi';}}
  finally{clearTimeout(timer);controllers.delete(controller);}
 }
-window.AZOBSSSourcePrices={panel,isAdmin,refresh:()=>sync(true)};
+window.AZOBSSSourcePrices={panel,isAdmin,quote:(id,optionLabel)=>{if(!isAdmin())return null;const r=records.get(String(id)),o=r?.options?.[0];return valid(o?.cost)&&(!isPricelistVariant(id)||o.label===optionLabel)?{cost:o.cost,date:r.sourceDate}:null;},refresh:()=>sync(true)};
 function init(){
  new MutationObserver(()=>sync()).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});
  window.addEventListener('azobss:pc-admin-view-change',()=>sync());

@@ -13,3 +13,27 @@
 .az-store-product h3{font-size:15px;min-height:45px;-webkit-line-clamp:2}.az-store-product ul{max-height:none;min-height:88px;font-size:12px;line-height:1.65}.az-store-product ul li{overflow-wrap:anywhere}.az-store-detail h4{font-size:15px;margin:19px 0 9px;color:#d9f4ee}.az-store-detail ul{padding-left:18px}.az-store-detail li{margin-bottom:7px}.az-store-price{padding-top:5px}@media(max-width:480px){.az-store-product ul{min-height:0}.az-store-product h3{min-height:0}}
 
 .az-store-product .az-store-details{align-self:flex-start;text-align:left;font-size:12px;padding:6px 0;text-decoration:underline;text-underline-offset:3px}.az-store-product ul li{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+
+#az-pc-hardware-shop{overflow:visible}
+#az-pc-hardware-shop .az-pc-shop-toolbar{position:sticky;top:var(--az-store-header,60px);z-index:15;display:grid;grid-template-columns:minmax(180px,2fr) repeat(6,minmax(105px,1fr));background:#102137;border-bottom:1px solid #35516c;border-radius:10px}
+#az-pc-hardware-shop .az-pc-shop-toolbar select{min-width:0;width:100%;color-scheme:dark}
+.az-store-name{display:flex;align-items:start;justify-content:space-between;gap:8px}
+.az-store-share{display:inline-grid;place-items:center;flex:0 0 36px;height:36px;border-radius:8px;border:1px solid #426482;background:#132a40;color:#a5eaff;cursor:pointer}
+.az-store-supplier{color:#adc4da}
+.az-store-shared{outline:3px solid #67e8f9;outline-offset:-3px;scroll-margin-top:180px;box-shadow:0 0 16px #67e8f955}
+.az-store-grid[data-layout=large]{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.az-store-grid[data-layout=large] .az-store-photo{height:clamp(200px,25vw,310px)}
+.az-store-grid[data-layout=list]{grid-template-columns:1fr}
+.az-store-grid[data-layout=list] .az-store-product{display:grid;grid-template-columns:clamp(86px,15vw,160px) minmax(0,1fr);align-items:start}
+.az-store-grid[data-layout=list] .az-store-photo{height:100%;min-height:100px;max-height:170px}
+.az-store-grid[data-layout=list] .az-store-product-copy{display:grid;grid-template-columns:minmax(0,2fr) minmax(140px,1fr);gap:5px 16px}
+.az-store-grid[data-layout=list] .az-store-name,.az-store-grid[data-layout=list] .az-store-category,.az-store-grid[data-layout=list] ul{grid-column:1/-1}
+.az-store-facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px}
+.az-store-facts dd{margin:0;overflow-wrap:anywhere}
+.az-store-compare-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px;padding:12px;border:1px solid #35516c;border-radius:8px}
+.az-store-compare-row [data-pc-admin-source]{grid-column:1/-1}
+[data-pc-store-state]{padding:5px 9px;border-radius:8px;background:#192b3e;font-weight:700}
+[data-pc-store-state][data-state=hidden]{color:#fecaca;background:#50242b}
+[data-pc-store-state][data-state=visible]{color:#bbf7d0;background:#123b31}
+@media(max-width:1050px){#az-pc-hardware-shop .az-pc-shop-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}#azPcShopSearch{grid-column:1/-1}}
+@media(max-width:550px){#az-pc-hardware-shop .az-pc-shop-toolbar{padding:6px;gap:4px}#az-pc-hardware-shop .az-pc-shop-toolbar select{font-size:11px;padding:4px;min-height:30px}.az-store-grid[data-layout=list] .az-store-product-copy{display:block}}
