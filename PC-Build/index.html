@@ -261,6 +261,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 <section class="grid" id="grid" aria-live="polite"></section>
 <nav class="pc-build-pagination" id="pcBuildPaginationBottom" aria-label="Pagination PC Builds"></nav>
 </details>
+<details class="az-tech-store"><summary>Lokasi dan pengambilan di AZOBSS</summary><div data-tech-location></div></details>
 </main>
 <footer class="footer"><div class="wrap">© AZOBSS • Tech Products • Prebuilt PCs, Laptops, Components &amp; Accessories.</div></footer>
 <script src="/PC-Build/images/products/local-image-map-v1500.js?v=1500"></script>
@@ -513,7 +514,7 @@ window.addEventListener('azobss:source-prices-change',()=>schedulePcRender(false
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;window.dispatchEvent(new Event('azobss:pc-admin-view-change'));schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1557" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1558" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1546">
 <link rel="stylesheet" href="/assets/css/azobss-source-prices-v1520.css?v=1546">
@@ -521,7 +522,9 @@ try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver
 <script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1546"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-documents-v1541.css?v=1541">
 <script defer src="/assets/js/azobss-pc-documents-v1541.js?v=1541"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1546"></script>
+<link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1558">
+<script defer src="/assets/js/azobss-tech-delivery.js?v=1558"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1558"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>

@@ -3,6 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {createPcShopRuntime}=require('../lib/azobss-pc-shop-runtime');
 const {adminRequestPatch,customerDecisionPatch}=require('../lib/azobss-pc-requests-v1530');
 function fixture(){
+ const deliveryProvider=arguments[0];
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'azobss-requests-1530-')),saved=new Map(),fetches=[];let chain=Promise.resolve();
  const write=(n,v)=>{const p=path.join(dir,n);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,JSON.stringify(v));};
  write('PC-Build/pc-shop-products-v1487.json',{products:[{id:'fixture-hardware',type:'hardware',name:'Trusted Fixture RAM',category:'RAM',snapshotPrice:100,snapshotPriceClear:true,snapshotCheckedAt:new Date().toISOString(),sourceVerified:true,specVerified:true,mediaVerified:true,specs:['DDR5 16GB'],sourceName:'Fixture Supplier'}]});
@@ -11,7 +12,7 @@ function fixture(){
  const clone=x=>x===undefined?undefined:structuredClone(x);
  const collection=name=>({filters:[],doc(id){return {key:name+'/'+id,async get(){const x=saved.get(this.key);return {exists:x!==undefined,data:()=>clone(x)};},async set(v,o={}){saved.set(this.key,o.merge?{...saved.get(this.key),...clone(v)}:clone(v));},async delete(){saved.delete(this.key);}};},where(k,_op,v){this.filters.push([k,v]);return this;},orderBy(){return this;},limit(){return this;},async get(){return {forEach:fn=>{for(const [key,value] of saved)if(key.startsWith(name+'/')&&this.filters.every(([k,v])=>value[k]===v))fn({id:key.split('/')[1],data:()=>clone(value)});}};}});
  const db={collection,runTransaction(fn){const work=chain.then(async()=>{const writes=[];const value=await fn({get:r=>r.get(),set:(r,v,o)=>writes.push([r,v,o])});for(const [r,v,o] of writes)await r.set(v,o);return value;});chain=work.catch(()=>{});return work;}};
- const runtime=createPcShopRuntime({rootDir:dir,getDb:()=>db,getUserIdentity:async req=>Object.hasOwn(req,'identity')?req.identity:{uid:'customer-1',username:'Fixture Customer',email:'fixture@example.invalid'},getAdminIdentity:async req=>req.admin?{isAdmin:true}:null,readBody:async req=>req.body,send:(res,status,body)=>Object.assign(res,{status,body:JSON.parse(body)}),pcBuildFetch:async url=>{fetches.push(url);throw Error('Supplier network not permitted in fixture');}});
+ const runtime=createPcShopRuntime({rootDir:dir,deliveryProvider,getDb:()=>db,getUserIdentity:async req=>Object.hasOwn(req,'identity')?req.identity:{uid:'customer-1',username:'Fixture Customer',email:'fixture@example.invalid'},getAdminIdentity:async req=>req.admin?{isAdmin:true}:null,readBody:async req=>req.body,send:(res,status,body)=>Object.assign(res,{status,body:JSON.parse(body)}),pcBuildFetch:async url=>{fetches.push(url);throw Error('Supplier network not permitted in fixture');}});
  const call=async(method,pathname,body={},extra={})=>{const res={};await runtime.handle({method,body,...extra},res,{pathname});return res;};
  const create=(extra={})=>call('POST','/api/pc-shop/orders',{items:[{productId:'fixture-hardware',qty:2}],shippingMethod:'Pickup at AZOBSS',customerName:'Fixture Customer',customerPhone:'0100000000',...extra});
  const patch=(id,body)=>call('PATCH','/api/admin/pc-shop/orders/'+id,body,{admin:true});
@@ -37,8 +38,93 @@ test('catalogue refresh retains selected models and quantities even if supplier 
  const context={catalog:[{id:'out-of-stock',name:'Saved other model',price:0,availability:'unavailable'}],externalBuilds:new Map(),readCart:()=>list,saveCart:x=>{list=x;}};
  vm.runInNewContext(source.split('\n').filter(l=>/^function (syncCartPrices|normalizedItem)\(/.test(l)).join('\n'),context);assert.equal(context.syncCartPrices(true),0);assert.equal(list.length,2);assert.equal(list[0].qty,3);assert.equal(list[1].qty,2);assert.equal(list[0].requiresConfirmation,true);assert.equal(list[1].unitPrice,150);
 });
-test('admin must explicitly verify supplier stock and delivery before publishing; free courier can be confirmed',async()=>{
- const f=fixture();try{const id=(await f.create({shippingMethod:'Courier',customerAddress:'Fixture address'})).body.order.orderId;assert.equal((await f.patch(id,{publishQuote:true,confirmedItemTotal:300})).body.error,'supplier_stock_required');assert.equal((await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:300,shippingCharge:0})).body.error,'shipping_confirmation_required');const r=await f.publish(id);assert.equal(r.status,200);assert.equal(r.body.order.status,'quote-ready');assert.equal(r.body.order.shippingCharge,0);assert.equal(r.body.order.shippingConfirmationRequired,false);assert.equal(r.body.order.invoiceNo,'');assert.equal(r.body.order.paymentStatus,'not-ready');assert.ok(r.body.order.quoteExpiresAtMs>Date.now());}finally{f.close();}
+test('verified manual delivery is priced server-side before quote and carried through receipt',async()=>{
+ const f=fixture();try{
+  const c=await f.create({shippingMethod:'Courier',customerAddress:'Fixture address',deliveryPin:{latitude:3,longitude:101},shippingCharge:1});
+  const id=c.body.order.orderId;
+  assert.equal(c.body.order.delivery.charge,null);
+  assert.equal((await f.patch(id,{publishQuote:true,confirmedItemTotal:300})).body.error,'supplier_stock_required');
+  assert.equal((await f.publish(id)).body.error,'shipping_quote_expired');
+  const route='/api/admin/pc-shop/shipping-quotes/'+id;
+  const input={source:'manual',vehicle:'car',confirmed:true,itemTotal:300,cost:30,roadKm:8,measured:{kg:2,length:25,width:20,height:10}};
+  assert.equal((await f.call('POST',route,input)).status,403);
+  const q=await f.call('POST',route,input,{admin:true});
+  assert.equal(q.status,200);
+  const rate=f.row(id).deliveryRate;
+  f.saved.set('pcShopOrders/'+id,{...f.row(id),deliveryRate:{...rate,expiresAtMs:1}});
+  assert.equal((await f.publish(id)).body.error,'shipping_quote_expired');
+  f.saved.set('pcShopOrders/'+id,{...f.row(id),deliveryRate:rate});
+  assert.equal((await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:301})).body.error,'shipping_quote_changed');
+  const published=await f.publish(id);
+  assert.equal(published.status,200);
+  assert.equal(published.body.order.shippingCharge,30);
+  assert.equal(published.body.order.delivery.cost,undefined);
+  assert.equal(published.body.order.delivery.measured,undefined);
+  await f.decision(id,{action:'accept',quoteVersion:published.body.order.quoteVersion});
+  const invoice=await f.patch(id,{issueInvoice:true,stockConfirmed:true});
+  assert.equal(invoice.body.order.confirmedTotal,330);
+  assert.equal((await f.patch(id,{paymentStatus:'paid'})).status,200);
+  const receipt=await f.call('GET','/api/pc-shop/orders/'+id+'/documents/receipt');
+  assert.equal(receipt.body.document.pdf.customerAddress,'Fixture address');
+  assert.equal(receipt.body.document.total,330);
+ }finally{f.close();}
+});
+test('pickup stays free and requires paid ready status before completion',async()=>{
+ const f=fixture();try{
+  const [a,b]=await Promise.all([f.create({customerAddress:'discard me'}),f.create()]);
+  const id=a.body.order.orderId;
+  assert.equal(b.body.order.orderId,id);
+  assert.equal(f.row(id).customerAddress,'');
+  assert.equal(a.body.order.delivery.pickupLocation.latitude,3.255498);
+  const q=await f.patch(id,{publishQuote:true,stockConfirmed:true,confirmedItemTotal:25,shippingCharge:70});
+  assert.equal(q.body.order.confirmedTotal,25);
+  await f.decision(id,{action:'accept',quoteVersion:q.body.order.quoteVersion});
+  await f.patch(id,{issueInvoice:true,stockConfirmed:true});
+  assert.equal((await f.patch(id,{fulfillmentStatus:'ready-for-pickup'})).body.error,'payment_required');
+  await f.patch(id,{paymentStatus:'paid'});
+  assert.equal((await f.patch(id,{fulfillmentStatus:'completed'})).body.error,'pickup_not_ready');
+  assert.equal((await f.patch(id,{fulfillmentStatus:'ready-for-pickup'})).body.order.status,'ready-for-pickup');
+  assert.equal((await f.patch(id,{fulfillmentStatus:'completed'})).body.order.status,'completed');
+ }finally{f.close();}
+});
+test('delivery rejects incomplete addresses and invalid coordinates and protects admin configuration',async()=>{
+ const f=fixture();try{
+  assert.equal((await f.create({shippingMethod:'Courier',customerAddress:'abc'})).status,400);
+  assert.equal((await f.create({shippingMethod:'Courier',customerAddress:'Fixture address',deliveryPin:{latitude:91,longitude:101}})).status,400);
+  const url='/api/admin/pc-shop/shipping-settings';
+  const settings={location:{address:'Tingkat 1, Fixture premises'},pickup:false};
+  assert.equal((await f.call('PUT',url,{settings})).status,403);
+  assert.equal((await f.call('PUT',url,{settings},{admin:true})).status,200);
+  assert.equal((await f.call('GET',url,{}, {admin:true})).body.settings.pickup,false);
+  assert.equal((await f.create()).status,409);
+  const view=(await f.call('GET','/api/pc-shop/shipping-settings')).body;
+  assert.equal(view.location.name,'AZOBSS');
+  assert.equal(view.vehicles,undefined);
+  assert.equal(view.marginShare,undefined);
+ }finally{f.close();}
+});
+test('carrier booking is explicitly approved, requires payment and has a single dispatch',async()=>{
+ let dispatches=0;
+ const provider={booking:true,lalamove:'production',maps:false,roadKm:async()=>7,
+  quotation:async()=>({id:'provider-quote',cost:30,expiresAtMs:Date.now()+60000,km:7,source:'lalamove',stopIds:['stop-a','stop-b']}),
+  book:async()=>{dispatches++;return {id:'carrier-01',status:'ASSIGNING_DRIVER',link:''};}};
+ const f=fixture(provider);try{
+  await f.call('PUT','/api/admin/pc-shop/shipping-settings',{settings:{location:{address:'Tingkat 1, Fixture premises'}}},{admin:true});
+  const id=(await f.create({shippingMethod:'Courier',customerAddress:'Fixture address',deliveryPin:{latitude:3,longitude:101}})).body.order.orderId;
+  const url='/api/admin/pc-shop/shipping-bookings/'+id;
+  assert.equal((await f.call('POST',url,{approved:true},{admin:true})).body.error,'carrier_payment_required');
+  const q=await f.call('POST','/api/admin/pc-shop/shipping-quotes/'+id,{source:'lalamove',itemTotal:300,measured:{kg:2,length:10,width:10,height:10}},{admin:true});
+  assert.equal(q.status,200);
+  const o=(await f.publish(id)).body.order;
+  await f.decision(id,{action:'accept',quoteVersion:o.quoteVersion});
+  await f.patch(id,{issueInvoice:true,stockConfirmed:true});
+  await f.patch(id,{paymentStatus:'paid'});
+  assert.equal((await f.call('POST',url,{},{admin:true})).body.error,'carrier_approval_required');
+  await Promise.all([f.call('POST',url,{approved:true},{admin:true}),f.call('POST',url,{approved:true},{admin:true})]);
+  assert.equal(dispatches,1);
+  assert.equal((await f.call('POST',url,{approved:true},{admin:true})).body.booking.id,'carrier-01');
+  assert.equal(dispatches,1);
+ }finally{f.close();}
 });
 test('only the owning customer can approve the current quote and approval does not issue an invoice',async()=>{
  const f=fixture();try{const id=(await f.create()).body.order.orderId;assert.equal((await f.decision(id,{action:'accept',quoteVersion:0})).body.error,'quote_not_ready');const o=(await f.publish(id)).body.order;assert.equal((await f.decision(id,{action:'accept',quoteVersion:o.quoteVersion},{identity:{uid:'other'}})).status,404);assert.equal((await f.decision(id,{action:'accept',quoteVersion:o.quoteVersion-1})).body.error,'quote_changed');assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true,customerApproval:'accepted'})).body.error,'customer_approval_required');const accepted=await f.decision(id,{action:'accept',quoteVersion:o.quoteVersion,confirmedTotal:1});assert.equal(accepted.status,200);assert.equal(accepted.body.order.status,'quote-accepted');assert.equal(accepted.body.order.confirmedTotal,300);assert.equal(accepted.body.order.invoiceNo,'');assert.equal(accepted.body.order.paymentStatus,'not-ready');assert.equal((await f.call('GET','/api/pc-shop/orders',{}, {identity:{uid:'other'}})).body.orders.length,0);}finally{f.close();}

@@ -1,0 +1,18 @@
+.az-tech-location,.az-tech-store{padding:12px;border:1px solid #2e506a;border-radius:10px}
+.az-tech-location p{margin:8px 0;line-height:1.55}
+.az-tech-location iframe{display:block;width:100%;height:240px;border:0;border-radius:8px;margin-top:10px;background:#102032}
+.az-tech-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.az-tech-store{margin:16px auto;max-width:1200px}
+.az-tech-store summary,.az-tech-location summary{cursor:pointer}
+.az-tech-store [data-tech-location]{margin-top:10px}
+.az-tech-admin-dialog{max-width:min(680px,calc(100% - 20px));max-height:85vh;overflow:auto;color:#e5f0ff;background:#102033;border:1px solid #446581;border-radius:12px;padding:16px}
+.az-tech-admin-dialog::backdrop{background:#030a15bf}
+.az-tech-admin-dialog h3{margin:0 auto 0 0}
+.az-tech-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.az-tech-admin-grid h4,.az-tech-admin-grid [data-preview]{grid-column:1/-1}
+.az-tech-admin-grid label{display:grid;gap:4px}
+.az-tech-admin-grid label.az-tech-check{display:flex;align-items:center}
+.az-tech-admin-grid input:not([type=checkbox]),.az-tech-admin-grid select{width:100%;min-width:0;padding:7px;border:1px solid #466882;border-radius:6px;color:inherit;background:#081626}
+#azPcAddressField[hidden],#azTechPickup[hidden],#azTechDelivery[hidden],#azTechAddressSearch[hidden]{display:none}
+#azTechAddressResults{display:grid;gap:5px;margin:8px 0}
+@media(max-width:540px){.az-tech-admin-grid{grid-template-columns:1fr}.az-tech-location iframe{height:190px}}
