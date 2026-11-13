@@ -140,42 +140,91 @@
 
   const captionText=box=>String(box?.value??box?.innerText??box?.textContent??'').replace(/\r\n/g,'\n').replace(/[\u200b-\u200f\uFEFF]/g,'').trim();
   function hasPreview(){return !!previewScope()||sendButtons().some(el=>!el.closest('#main footer')||[...el.closest('footer').querySelectorAll(editableSelector)].some(input=>visible(input)&&captionHint(input,el.closest('footer'))));}
-  async function fillCaption(box, text) {
-    const value=String(text||'').trim();if(!box||!value)return false;
-    const old=captionText(box);if(old&&old!==value)return false;if(old===value)return true;
+  function captionLines(value) {
+    return value.replace(/\u00a0/g,' ').split('\n').map(line=>line.trim()).filter(Boolean).join('\n');
+  }
+
+  function placeCaptionCaret(box) {
+    box.focus();
+    if (document.activeElement !== box) return false;
+    const selection=window.getSelection();
+    if (!selection) return false;
+    const range=document.createRange();
+    range.selectNodeContents(box);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
+  function pasteCaption(box,value) {
+    if (!placeCaptionCaret(box)) return;
+    const data=new DataTransfer();
+    data.setData('text/plain',value);
+    const paste=new ClipboardEvent('paste',{bubbles:true,cancelable:true,composed:true,clipboardData:data});
+    if (paste.clipboardData?.getData('text/plain')!==value) {
+      Object.defineProperty(paste,'clipboardData',{value:data});
+    }
+    box.dispatchEvent(paste);
+  }
+
+  async function fillCaption(filename,text) {
+    const value=String(text||'').replace(/\r\n?/g,'\n').trim();
+    if (!value) return false;
+    const resolve=()=>findPreviewCaptionBox(previewScope(filename));
     let userEditing=false;
     const interaction=event=>{if(event.isTrusted)userEditing=true;};
-    document.addEventListener('keydown',interaction,true);document.addEventListener('pointerdown',interaction,true);
-    const resolve=()=>findPreviewCaptionBox(previewScope(activePreviewContext?.filename)||box.closest('[role="dialog"]'));
-    try{
-      box.focus();
-      if(box.matches('textarea,input')){
-        const prototype=box.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
-        Object.getOwnPropertyDescriptor(prototype,'value').set.call(box,value);
-        box.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,inputType:'insertText',data:value}));
-      }else{
-        const range=document.createRange(),selection=window.getSelection();range.selectNodeContents(box);selection.removeAllRanges();selection.addRange(range);
-        // The DOM may accept the edit even when execCommand returns false.
-        try{document.execCommand('insertText',false,value);}catch{}
+    document.addEventListener('keydown',interaction,true);
+    document.addEventListener('pointerdown',interaction,true);
+    try {
+      // The preview and its editor can mount or be replaced independently.
+      let box;
+      for (let attempt=0;attempt<25&&!userEditing;attempt++) {
+        box=resolve();
+        if (box) break;
+        await sleep(160);
       }
-      await sleep(180);if(userEditing)return false;
-      let current=resolve()||box;
-      if(!current.isConnected)return false;
-      if(!captionText(current)&&!current.matches('textarea,input')){
-        // One caption-only paste fallback for editors that reject insertText.
-        // Never redispatch the file or fall back to the conversation composer.
-        current.focus();const data=new DataTransfer();data.setData('text/plain',value);
-        const paste=new ClipboardEvent('paste',{bubbles:true,cancelable:true,composed:true,clipboardData:data});
-        // Firefox may construct an empty clipboardData despite the init value.
-        // Populate this synthetic event only; never read the user's clipboard.
-        if(paste.clipboardData?.getData('text/plain')!==value)Object.defineProperty(paste,'clipboardData',{value:data});
-        current.dispatchEvent(paste);
-        await sleep(180);if(userEditing)return false;current=resolve()||current;
+      if (!box||userEditing) return false;
+      const matches=editor=>captionLines(captionText(editor))===captionLines(value);
+      if (captionText(box)) return matches(box);
+
+      const plainField=box.matches('textarea,input');
+      // Let the rich editor handle the entire multiline paste as one edit.
+      // Fall back to browser text insertion only if the verified editor stays empty.
+      for (let attempt=0;attempt<(plainField?1:2);attempt++) {
+        box=resolve();
+        if (!box||userEditing||captionText(box)) return false;
+        if (plainField) {
+          if (!box.matches('textarea,input')) return false;
+          const prototype=box.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+          box.focus();
+          Object.getOwnPropertyDescriptor(prototype,'value').set.call(box,value);
+          box.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,inputType:'insertText',data:value}));
+        } else if (box.matches('textarea,input')) {
+          return false;
+        } else if (attempt===0) {
+          pasteCaption(box,value);
+        } else if (placeCaptionCaret(box)) {
+          try { document.execCommand('insertText',false,value); } catch (_) {}
+        }
+
+        await sleep(220);
+        box=resolve();
+        if (!box||userEditing) return false;
+        if (matches(box)) {
+          box.blur();
+          await sleep(260);
+          box=resolve();
+          if (!box||userEditing) return false;
+          if (matches(box)) return true;
+        }
+        if (captionText(box)) return false;
       }
-      if(!current.isConnected||captionText(current)!==value)return false;
-      current.blur();await sleep(180);current=resolve()||current;
-      return !userEditing&&current.isConnected&&captionText(current)===value;
-    }finally{document.removeEventListener('keydown',interaction,true);document.removeEventListener('pointerdown',interaction,true);}
+      return false;
+    } finally {
+      document.removeEventListener('keydown',interaction,true);
+      document.removeEventListener('pointerdown',interaction,true);
+    }
   }
 
   async function waitForChatReady(timeoutMs = 90000) {
@@ -236,9 +285,7 @@
       }
       if (!scope) throw new Error('Preview PDF belum dapat disahkan. Semak WhatsApp; fail tidak akan dilampirkan semula secara automatik.');
 
-      let caption=null;
-      for(let i=0;i<20&&!caption;i++){caption=findPreviewCaptionBox(scope);if(!caption)await sleep(150);}
-      if(!caption||!payload.caption||!await fillCaption(caption,payload.caption))throw new Error('Nota belum dapat diisi atau disahkan. PDF mungkin sudah berada di preview. Tampal nota yang disalin sekali sahaja; jangan ulang lampiran.');
+      if(!await fillCaption(payload.filename,payload.caption))throw new Error('Nota belum dapat diisi atau disahkan. PDF mungkin sudah berada di preview. Tampal nota yang disalin sekali sahaja; jangan ulang lampiran.');
 
       showBadge(`AZOBSS: ${payload.filename} dan nota sudah disediakan sekali ✅\nSemak preview dan tekan Send.`, 'good');
       await ext.runtime.sendMessage({
