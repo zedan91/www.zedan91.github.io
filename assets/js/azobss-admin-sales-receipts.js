@@ -1432,7 +1432,11 @@ function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='quotation'?'Quotation':docType==='invoice'?'Invoice':'Receipt';
   const paymentUrl=toyyibPayPaymentUrl(row,docType);
   const maybankText=docType==='invoice'?pendingMaybankPaymentText(row):'';
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName||'Customer'}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${statusDisplayLabel(row)}`,docType==='quotation'?'Quotation only — no payment is requested.':'',docType==='quotation'&&row.quotationValidUntil?`Valid until: ${row.quotationValidUntil}`:'',paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,row.notes?`Notes:\n${String(row.notes).trim()}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
+  const status=statusDisplayLabel(row);
+  const shareStatus=docType==='invoice'&&/^PENDING(?: · MANUAL OVERRIDE)?$/.test(status)
+    ?'Awaiting payment'
+    :status;
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName||'Customer'}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${shareStatus}`,docType==='quotation'?'Quotation only — no payment is requested.':'',docType==='quotation'&&row.quotationValidUntil?`Valid until: ${row.quotationValidUntil}`:'',paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,row.notes?`Notes:\n${String(row.notes).trim()}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
 async function downloadDocumentPdf(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
