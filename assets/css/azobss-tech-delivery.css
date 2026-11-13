@@ -29,3 +29,12 @@
 #azTechSavedPin{margin-top:10px}
 .az-tech-pickup-slot{margin-top:12px}
 #azTechPickup>small{display:block;margin-top:5px;color:#a9c0d4}
+
+.az-tech-pin-heading{display:flex;gap:8px;align-items:baseline;margin-top:14px}
+.az-tech-pin-heading small,.az-tech-pin-help{color:#b6cadd;font-size:13px}
+.az-tech-use-location{font-size:13px;min-height:44px;background:#174158;border-color:#4b8198}
+#azTechUseLocation[hidden],#azTechLocationNotice:empty{display:none}
+#azTechLocationNotice{font-size:13px}
+#azTechSavedPin strong{color:#83e8bb}
+#azTechSavedPin a{color:#9ee6f5}
+#azTechPinPicker summary{font-size:13px;color:#c2d8ea}
