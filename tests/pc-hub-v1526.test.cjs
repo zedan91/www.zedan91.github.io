@@ -63,4 +63,17 @@ test('the four hub sections filter the same products and restore all brands/cate
  location.href='https://www.azobss.com/PC-Build/?section=components&catalog=pricelist#VNP-keyboard';app.render(rows,{});assert.match(el('azPcShopGrid').innerHTML,/>Keyboard</);assert.doesNotMatch(el('azPcShopGrid').innerHTML,/Exact CPU/);assert.equal(location.searchParams.get('section'),'accessories');
  app.setHubGroup('accessories');assert.equal(location.searchParams.has('catalog'),false);assert.equal(location.searchParams.has('model'),false);assert.match(el('azPcShopGrid').innerHTML,/>Keyboard</);assert.doesNotMatch(el('azPcShopGrid').innerHTML,/Exact CPU/);assert.match(el('azPcShopCategory').innerHTML,/Keyboards/);assert.doesNotMatch(el('azPcShopCategory').innerHTML,/Intel CPUs/);
  app.setHubGroup('components');assert.match(el('azPcShopGrid').innerHTML,/Exact CPU/);assert.match(el('azPcShopGrid').innerHTML,/>Memory</);app.setHubGroup('prebuilt');assert.match(el('azPcShopGrid').innerHTML,/>Laptop</);app.setHubGroup('all');assert.match(el('azStoreResults').textContent,/4/);
+ const mislabeled=[
+  {...p('surface','Microsoft Surface Pro with Intel Arc','prebuilt','Laptop'),brand:'INTEL'},
+  {...p('joi','RTX 5060 JOI Gaming PC Powered by ASUS','prebuilt','Desktop PC'),type:'desktop',brand:'ASUS'},
+  {...p('joi-office','JOI IDEA Desktop PC','prebuilt','Desktop PC'),type:'desktop',brand:'LAIN-LAIN'},
+  {...p('gpu','ASUS RTX 5060 Gaming GPU','components','GPU'),brand:'ASUS'}
+ ];
+ app.render(mislabeled,{});app.setHubGroup('prebuilt');
+ assert.deepEqual(el('azPcShopBrand').options.map(o=>o.value),['all','JOI','MICROSOFT']);
+ el('azPcShopBrand').value='JOI';el('azPcShopBrand').listeners.change();
+ assert.match(el('azPcShopGrid').innerHTML,/JOI Gaming PC/);assert.match(el('azPcShopGrid').innerHTML,/JOI IDEA/);
+ assert.doesNotMatch(el('azPcShopGrid').innerHTML,/Microsoft Surface|Gaming GPU/);
+ el('azPcShopBrand').value='MICROSOFT';el('azPcShopBrand').listeners.change();
+ assert.match(el('azPcShopGrid').innerHTML,/Microsoft Surface/);assert.doesNotMatch(el('azPcShopGrid').innerHTML,/JOI IDEA/);
 });

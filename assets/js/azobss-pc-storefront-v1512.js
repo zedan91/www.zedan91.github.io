@@ -18,7 +18,14 @@ function syncHubNav(){document.querySelectorAll('[data-pc-hub-group]').forEach(a
 function setHubGroup(group){if(!HUB_GROUPS.has(group))return;hubGroup=group;page=1;const u=new URL(location.href);u.searchParams.set('section',group);u.searchParams.delete('model');u.searchParams.delete('catalog');u.searchParams.delete('q');u.hash='';history.replaceState(null,'',u);for(const id of ['azPcShopCategory','azPcShopBrand','azPcShopStore','azPcShopUse']){const e=document.getElementById(id);if(e)e.value='all';}const q=document.getElementById('azPcShopSearch');if(q)q.value='';syncHubNav();draw();}
 function manufacturerLink(p){try{const u=new URL(p.specSourceUrl||'');if(u.protocol==='https:'&&/(?:^|\.)(?:intel\.com|amd\.com|asus\.com|gigabyte\.com|msi\.com|tp-link\.com|logitech\.com|epson\.com(?:\.(?:my|sg|br|ph|mt))?|brother\.com\.my|canon|dlink\.com|totolink\.tw|sony\.com|sony\.co\.jp|sony\.jp|audio-technica\.co\.jp|creative\.com|razer\.com|logitechg\.com|netgear\.com|dji\.com|synology\.com|synologydownload\.com|ugreen\.com|kingston\.com|samsung\.com|seagate\.com|westerndigital\.com|coolermaster\.com|deepcool\.com|arctic\.de|corsair\.com|nzxt\.com|tryxzone\.com|tcomastech\.com|invasion\.com\.my)$/.test(u.hostname))return `<a class="az-store-spec-source" href="${esc(u.href)}" target="_blank" rel="noopener">Manufacturer specifications ↗</a>`;}catch(_){}return '';}
 function matchesSearch(p,q){if(!q)return true;const clean=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');const hay=clean([p.name,p.displayName,p.category,brand(p),...(actions.isAdmin?.()===true?[storeName(p)]:[]),...(p.specs||[])].join(' '));return q.split(/\s+/).filter(Boolean).every(s=>hay.includes(clean(s)));}
-function brand(p){return String(p.brand||p.name?.split(/\s+/)[0]||'Lain-lain').replace(/[^\w.-]/g,'').toUpperCase();}
+function brand(p){
+ const title=String(p.name||p.displayName||'');
+ if(productGroup(p)==='prebuilt'){
+  if(/\bMicrosoft\s+Surface\b/i.test(title))return 'MICROSOFT';
+  if(/\bJOI\s+(?:IDEA|GAMING\s+PC)\b/i.test(title))return 'JOI';
+ }
+ return String(p.brand||title.split(/\s+/)[0]||'Lain-lain').replace(/[^\w.-]/g,'').toUpperCase();
+}
 function adminSourceMetadata(p){
  if(actions.isAdmin?.()!==true)return '';
  const audit=window.AZOBSSSourcePrices?.panel?.(p);if(audit)return audit;
