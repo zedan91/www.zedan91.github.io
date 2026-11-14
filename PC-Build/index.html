@@ -515,12 +515,12 @@ window.addEventListener('azobss:source-prices-change',()=>schedulePcRender(false
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;window.dispatchEvent(new Event('azobss:pc-admin-view-change'));schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1578" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1579" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
-<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1578">
+<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1579">
 <link rel="stylesheet" href="/assets/css/azobss-source-prices-v1520.css?v=1546">
 <script defer src="/assets/js/azobss-source-prices-v1520.js?v=1564"></script>
-<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1578"></script>
+<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1579"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-documents-v1541.css?v=1562">
 <script defer src="/assets/js/azobss-pc-documents-v1541.js?v=1564"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">

@@ -21,15 +21,22 @@ body.az-tech-products-page{overflow-x:clip!important;overflow-y:visible}
 #azStoreControls{position:sticky;top:var(--az-store-header,60px);z-index:15;background:#0b1725;border-radius:10px}
 .az-store-page-row{display:flex;align-items:center;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;padding:3px 10px}
 .az-store-page-row .az-store-results{padding:0;font-size:11px}
-.az-store-page-row .az-store-pagination{margin:0 0 0 auto;padding:0}
+.az-store-page-row .az-store-pagination{flex:1 1 260px;min-width:0;margin:0;padding:0}
 .az-store-page-row .az-store-pagination:empty{display:none}
 .az-store-page-row:has(.az-store-results:empty):has(.az-store-pagination[hidden]){display:none}
-.az-store-pagination{gap:6px;padding:4px 10px;font-size:11px}
-.az-store-pagination button{min-height:26px;padding:3px 8px;font-size:11px;line-height:1.25}
+.az-store-pagination{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:4px 10px;font-size:11px}
+.az-store-page-numbers{display:flex;justify-content:center;gap:3px}
+.az-store-pagination button{min-width:28px;min-height:28px;padding:3px 7px;border:1px solid transparent;border-radius:5px;background:transparent;font-size:11px;font-weight:750;line-height:1.25}
+.az-store-pagination button[aria-current=page]{background:#665a48;color:#fff}
+.az-store-pagination button:not(:disabled):hover{border-color:#6987a0}
+.az-store-pagination .az-store-page-step{display:flex;align-items:center;justify-content:center;gap:5px;border-color:#3d5368;white-space:nowrap}
+.az-store-page-step:first-child{justify-self:start}
+.az-store-page-step:last-child{justify-self:end}
+.az-store-page-step span{font-size:15px;line-height:.8}
 @media(max-width:550px){
  .az-store-page-row{gap:3px 5px;padding-inline:6px}
  .az-store-pagination{gap:4px;font-size:10px}
- .az-store-pagination button{padding-inline:5px;font-size:10px}
+ .az-store-pagination button{min-width:26px;padding-inline:4px;font-size:10px}
 }
 #az-pc-hardware-shop .az-pc-shop-toolbar{display:grid;grid-template-columns:minmax(180px,2fr) repeat(5,minmax(105px,1fr));background:#102137;border-bottom:1px solid #35516c;border-radius:10px}
 #az-pc-hardware-shop .az-pc-shop-toolbar #azPcShopStore[hidden]{display:none!important}

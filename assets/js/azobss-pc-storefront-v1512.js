@@ -121,7 +121,7 @@ function render(next,callbacks){
   }else{
    grid.insertAdjacentHTML('beforebegin',controlsMarkup);
   }
-  grid.insertAdjacentHTML('afterend','<nav class="az-store-pagination" id="azStorePageBottom" aria-label="Product pages"></nav>');
+  grid.insertAdjacentHTML('afterend','<nav class="az-store-pagination" id="azStorePageBottom" aria-label="Product pages below results"></nav>');
  }
  const brands=document.querySelector('#azPcShopBrand'),previous=brands.value;
  brands.innerHTML='<option value="all">All brands</option>'+[...new Set(rows.map(brand))].sort().map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
@@ -164,9 +164,14 @@ function render(next,callbacks){
   document.querySelector('#az-pc-hardware-shop').addEventListener('click',e=>{
    const button=e.target.closest('button');if(!button)return;
    if(button.dataset.storePage){
+    if(button.getAttribute('aria-current')==='page')return;
+    const pager=button.closest('.az-store-pagination'),step=button.dataset.storeStep;
+    const fromTop=controls?.contains(button);
     page=Number(button.dataset.storePage);
     draw();
-    if(hardware&&(!controls.contains(button)||controls.getBoundingClientRect().top>hardware.getBoundingClientRect().top+1)){
+    const nextFocus=step&&pager?.querySelector('[data-store-step="'+step+'"]:not(:disabled)');
+    (nextFocus||pager?.querySelector('[aria-current="page"]'))?.focus({preventScroll:true});
+    if(hardware&&(!fromTop||controls.getBoundingClientRect().top>hardware.getBoundingClientRect().top+1)){
      hardware.scrollIntoView({block:'start',behavior:'instant'});
     }else if(!hardware){
      document.querySelector('#azStoreResults').scrollIntoView({block:'nearest'});
@@ -179,6 +184,16 @@ function render(next,callbacks){
   });
  }
  draw();
+}
+function paginationMarkup(page,pages){
+ const first=Math.max(1,Math.min(page-2,pages-4));
+ const numbers=Array.from({length:Math.min(5,pages)},(_,index)=>{
+  const number=first+index;
+  return `<button type="button" data-store-page="${number}" aria-label="Page ${number}" ${number===page?'aria-current="page"':''}>${number}</button>`;
+ }).join('');
+ return `<button class="az-store-page-step" type="button" data-store-step="prev" data-store-page="${page-1}" aria-label="Previous page" ${page===1?'disabled':''}><span aria-hidden="true">‹</span> PREV</button>
+ <div class="az-store-page-numbers">${numbers}</div>
+ <button class="az-store-page-step" type="button" data-store-step="next" data-store-page="${page+1}" aria-label="Next page" ${page===pages?'disabled':''}>NEXT <span aria-hidden="true">›</span></button>`;
 }
 function draw(){
  const grid=document.querySelector('#azPcShopGrid');if(!grid)return;
@@ -242,7 +257,7 @@ function draw(){
  grid.innerHTML=shown.length?(actions.catalogMode==='unavailable'?'<div class="az-pc-shop-empty">Memaparkan harga rujukan. <button class="az-pc-shop-btn" type="button" data-store-retry>Cuba Lagi</button></div>':'')+shown.map(layout==='list'?listRow:card).join(''):'<div class="az-pc-shop-empty">No matching products. Try another category or search.</div>';
  grid.querySelector?.('[data-store-retry]')?.addEventListener('click',()=>actions.retry?.());
  document.querySelector('#azStoreResults').textContent=result.length?`${start+1}–${Math.min(start+PAGE_SIZE,result.length)} of ${result.length.toLocaleString('ms-MY')} options`:'0 options';
- const nav=`<button type="button" data-store-page="${page-1}" ${page<=1?'disabled':''}>← Previous</button><span>Page ${page} / ${pages}</span><button type="button" data-store-page="${page+1}" ${page>=pages?'disabled':''}>Next →</button>`;
+ const nav=paginationMarkup(page,pages);
  for(const id of ['azStorePageTop','azStorePageBottom'])document.getElementById(id).innerHTML=nav;
  const target=model&&[...(grid.querySelectorAll?.('[data-store-product]')||[])].find(el=>el.dataset.storeProduct===model||shown.find(p=>p.id===el.dataset.storeProduct)?.sourceRecordId===model);
  if(target){target.classList.add('az-store-shared');if(sharedFocused!==model){sharedFocused=model;requestAnimationFrame(()=>grid.querySelector('.az-store-shared')?.scrollIntoView({block:'center'}));}}
