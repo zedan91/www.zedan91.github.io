@@ -15,7 +15,12 @@
 .az-store-product .az-store-details{align-self:flex-start;text-align:left;font-size:12px;padding:6px 0;text-decoration:underline;text-underline-offset:3px}.az-store-product ul li{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 
 #az-pc-hardware-shop{overflow:visible}
-#az-pc-hardware-shop .az-pc-shop-toolbar{position:sticky;top:var(--az-store-header,60px);z-index:15;display:grid;grid-template-columns:minmax(180px,2fr) repeat(5,minmax(105px,1fr));background:#102137;border-bottom:1px solid #35516c;border-radius:10px}
+/* Horizontal clipping must not create a scroll container around the sticky catalogue controls. */
+body.az-tech-products-page{overflow-x:clip!important;overflow-y:visible}
+#azPcShopHardware{scroll-margin-top:var(--az-store-header,60px)}
+#azStoreControls{position:sticky;top:var(--az-store-header,60px);z-index:15;background:#0b1725;border-radius:10px}
+#azStoreControls .az-store-pagination{margin:0;padding:0 10px 8px}
+#az-pc-hardware-shop .az-pc-shop-toolbar{display:grid;grid-template-columns:minmax(180px,2fr) repeat(5,minmax(105px,1fr));background:#102137;border-bottom:1px solid #35516c;border-radius:10px}
 #az-pc-hardware-shop .az-pc-shop-toolbar #azPcShopStore[hidden]{display:none!important}
 @media(min-width:1051px){#az-pc-hardware-shop .az-pc-shop-toolbar:has(#azPcShopStore:not([hidden])){grid-template-columns:minmax(180px,2fr) repeat(6,minmax(105px,1fr))}}
 #az-pc-hardware-shop .az-pc-shop-toolbar select{min-width:0;width:100%;color-scheme:dark}

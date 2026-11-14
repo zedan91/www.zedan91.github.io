@@ -108,7 +108,15 @@ function render(next,callbacks){
  const toolbar=document.querySelector('.az-pc-shop-toolbar');
  if(!document.querySelector('#azPcShopBrand')){
   toolbar?.insertAdjacentHTML('beforeend','<select class="az-pc-shop-control" id="azPcShopBrand" aria-label="Brand"><option value="all">All brands</option></select><select class="az-pc-shop-control" id="azPcShopStore" aria-label="Supplier" hidden disabled></select><select class="az-pc-shop-control" id="azPcShopUse" aria-label="Use"></select><select class="az-pc-shop-control" id="azPcShopLayout" aria-label="View switcher"><option value="medium">Grid · Medium</option><option value="large">Grid · Large</option><option value="list">List · Details</option></select>');
-  grid.insertAdjacentHTML('beforebegin','<div class="az-store-results" role="status" aria-live="polite" id="azStoreResults"></div><nav class="az-store-pagination" id="azStorePageTop" aria-label="Product pages"></nav>');
+  const controlsMarkup='<div class="az-store-results" role="status" aria-live="polite" id="azStoreResults"></div><nav class="az-store-pagination" id="azStorePageTop" aria-label="Product pages"></nav>';
+  if(toolbar){
+   toolbar.insertAdjacentHTML('beforebegin','<div id="azStoreControls"></div>');
+   const controls=toolbar.previousElementSibling;
+   controls.append(toolbar);
+   controls.insertAdjacentHTML('beforeend',controlsMarkup);
+  }else{
+   grid.insertAdjacentHTML('beforebegin',controlsMarkup);
+  }
   grid.insertAdjacentHTML('afterend','<nav class="az-store-pagination" id="azStorePageBottom" aria-label="Product pages"></nav>');
  }
  const brands=document.querySelector('#azPcShopBrand'),previous=brands.value;
@@ -124,13 +132,28 @@ function render(next,callbacks){
   layout.onchange=()=>{try{localStorage.setItem('azobss-pc-catalog-layout',layout.value);}catch{}draw();};
   for(const id of ['azPcShopStore','azPcShopUse'])document.getElementById(id).onchange=draw;
   const header=document.querySelector('.market-sticky-bar');
-  if(header&&toolbar){const size=()=>toolbar.style?.setProperty('--az-store-header',header.getBoundingClientRect().height+'px');size();if(typeof ResizeObserver==='function')new ResizeObserver(size).observe(header);}
+  const controls=document.getElementById('azStoreControls');
+  const hardware=controls?.parentElement;
+  if(header&&hardware){
+   const size=()=>hardware.style.setProperty('--az-store-header',header.getBoundingClientRect().bottom+'px');
+   size();
+   if(typeof ResizeObserver==='function')new ResizeObserver(size).observe(header);
+  }
 
   document.addEventListener('click',e=>{const a=e.target.closest('[data-pc-hub-group]');if(a){e.preventDefault();setHubGroup(a.dataset.pcHubGroup);}});
   window.addEventListener('popstate',()=>{const g=new URL(location.href).searchParams.get('section')||'prebuilt';if(HUB_GROUPS.has(g)){hubGroup=g;page=1;syncHubNav();draw();}});
   document.querySelector('#az-pc-hardware-shop').addEventListener('click',e=>{
    const button=e.target.closest('button');if(!button)return;
-   if(button.dataset.storePage){page=Number(button.dataset.storePage);draw();document.querySelector('#azStoreResults').scrollIntoView({block:'nearest'});return;}
+   if(button.dataset.storePage){
+    page=Number(button.dataset.storePage);
+    draw();
+    if(hardware&&(!controls.contains(button)||controls.getBoundingClientRect().top>hardware.getBoundingClientRect().top+1)){
+     hardware.scrollIntoView({block:'start',behavior:'instant'});
+    }else if(!hardware){
+     document.querySelector('#azStoreResults').scrollIntoView({block:'nearest'});
+    }
+    return;
+   }
    for(const [key,fn] of [['storeAdd',p=>actions.add(p,false)],['storeBuy',p=>actions.add(p,true)],['storeImage',p=>actions.image(p)],['storeDetails',details],['storeShare',p=>shareProduct(p,button)],['storeCompare',compareProduct]]){
     if(button.dataset[key]){const p=rows.find(x=>String(x.id)===button.dataset[key]);if(p)fn(p);return;}
    }

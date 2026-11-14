@@ -167,7 +167,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1562"></script>
 </head>
-<body>
+<body class="az-tech-products-page">
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
@@ -514,12 +514,12 @@ window.addEventListener('azobss:source-prices-change',()=>schedulePcRender(false
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;window.dispatchEvent(new Event('azobss:pc-admin-view-change'));schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1569" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1570" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
-<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1568">
+<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1570">
 <link rel="stylesheet" href="/assets/css/azobss-source-prices-v1520.css?v=1546">
 <script defer src="/assets/js/azobss-source-prices-v1520.js?v=1564"></script>
-<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1569"></script>
+<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1570"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-documents-v1541.css?v=1562">
 <script defer src="/assets/js/azobss-pc-documents-v1541.js?v=1564"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">
