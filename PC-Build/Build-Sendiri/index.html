@@ -229,7 +229,7 @@ body.az-pc-builder-page{overflow-x:clip!important;overflow-y:visible}
 <div class="modal" id="productModal"><div class="modal-card"><div class="modal-head"><h3 id="modalTitle">Pilih produk</h3><input class="modal-search" id="modalSearch" placeholder="Cari produk…"/><button class="modal-close" id="modalClose">×</button></div><div class="product-list" id="productList"></div><div id="builderPhotoPreview" aria-hidden="true" hidden><img alt=""></div></div></div>
 <div class="modal quote-modal" id="quoteModal"><div class="modal-card"><div class="modal-head"><h3>Ringkasan Build</h3><div style="flex:1"></div><button class="modal-close" id="quoteClose">×</button></div><div class="quote-body" id="quoteBody"></div></div></div>
 <footer class="footer"><div class="wrap">AZOBSS PC Build • Build PC ialah aliran sebut harga. Tiada nombor anggaran dipaparkan kepada pelanggan. Harga kos, markup dan harga sumber tidak dihantar ke browser pelanggan.</div></footer>
-<script src="/PC-Build/pc-media-v1537.js?v=1569"></script>
+<script src="/PC-Build/pc-media-v1537.js?v=1574"></script>
 <script src="/assets/js/azobss-pc-builder-v1546.js?v=1572"></script>
 <script>
 const API='https://azobss-backend.onrender.com/api/pc-shop/catalog?store=viewnet';
@@ -379,6 +379,6 @@ pickerList.addEventListener('focusout',()=>{preview.hidden=true;});
 pickerList.addEventListener('error',e=>{if(e.target.matches?.('img')&&!e.target.src.includes('pc-product-unavailable.svg'))e.target.src='/assets/images/pc-product-unavailable.svg';},true);
 $('#modalClose').onclick=()=>$('#productModal').classList.remove('open');$('#productModal').onclick=e=>{if(e.target===$('#productModal'))$('#productModal').classList.remove('open')};let pickerSearchTimer;$('#modalSearch').addEventListener('input',()=>{clearTimeout(pickerSearchTimer);pickerSearchTimer=setTimeout(()=>{MODAL.page=1;renderProductList();},120);});$('#quoteClose').onclick=()=>$('#quoteModal').classList.remove('open');$('#quoteModal').onclick=e=>{if(e.target===$('#quoteModal'))$('#quoteModal').classList.remove('open')};$('#resetBtn').onclick=()=>{if(confirm('Reset semua pilihan build?')){STATE.lines={};ensureState();history.replaceState(null,'',location.pathname);render()}};$('#nextBtn').onclick=showQuote;$('#copyBtn').onclick=copySpec;$('#shareBtn').onclick=async()=>{const u=new URL(location.pathname,location.origin),code=shareCode();if(!code){alert('Choose your components first.');return;}u.hash='s='+code;try{await navigator.clipboard.writeText(u.toString());$('#shareBtn').textContent='Link disalin ✓';setTimeout(()=>$('#shareBtn').textContent='Share Build',1300)}catch(_e){prompt('Copy link:',u.toString())}};$('#waBtn').onclick=saveBuildList;$('#globalSearch').addEventListener('focus',openGlobalSearch);document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();openGlobalSearch()}if(e.key==='Escape'){$('#productModal').classList.remove('open');$('#quoteModal').classList.remove('open')}});load();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1573" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1574" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>
