@@ -134,8 +134,17 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1562"></script>
 
 <style>
+/* Keep the document as the vertical scroll container for both sticky sections. */
+body.az-pc-builder-page{overflow-x:clip!important;overflow-y:visible}
+.builder-top{top:var(--builder-nav-height,49px)}
 .builder-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,330px);gap:16px;align-items:start}
-.builder-columns .summary{display:flex;flex-direction:column;position:sticky;top:84px;align-self:start;margin:0;max-height:calc(100dvh - 96px);overflow:auto}
+.builder-columns .summary{display:flex;flex-direction:column;position:sticky;top:var(--builder-summary-top,125px);align-self:start;margin:0;max-height:calc(100dvh - var(--builder-summary-top,125px) - 12px);overflow:auto}
+.builder-mobile-summary{display:none}
+.builder-summary-dialog{width:min(440px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:0;overflow:auto;border:1px solid #29435f;border-radius:16px;background:#0a1828;color:var(--text)}
+.builder-summary-dialog::backdrop{background:rgba(0,0,0,.68)}
+.builder-summary-dialog .summary{display:flex;flex-direction:column;margin:0;padding:12px}
+.builder-summary-dialog form{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0a1828;border-bottom:1px solid #29435f;z-index:1}
+.builder-summary-dialog .modal-close{width:auto;padding:0 12px;font-size:13px}
 .builder-selected{list-style:none;margin:10px 0;padding:0}
 .builder-selected li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid #31465a;font-size:12px}
 .builder-selected strong{white-space:nowrap}
@@ -146,10 +155,15 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 .product-option.incompatible{opacity:1}
 #builderPhotoPreview{position:fixed;right:18px;top:15vh;z-index:220;pointer-events:none;background:#f5f7fb;border:1px solid #7094ac;border-radius:14px;padding:8px;box-shadow:0 12px 38px #0009}
 #builderPhotoPreview img{width:min(30vw,330px);height:min(35vh,330px);object-fit:contain;display:block}
-@media(max-width:900px){.builder-columns{grid-template-columns:minmax(0,1fr)}.builder-columns .summary{position:static;max-height:none;overflow:visible}}
+@media(max-width:900px){
+ .builder-columns{grid-template-columns:minmax(0,1fr)}
+ .builder-columns .summary{position:static;max-height:none;overflow:visible}
+ .builder-mobile-summary{display:inline-block;margin-top:3px;padding:4px 7px;border:1px solid #365574;border-radius:6px;background:#10243a;color:#eaf4ff;font:inherit;cursor:pointer}
+ .builder-top .global-search{min-width:0;width:100%}
+}
 @media(max-width:570px){.product-option.product-with-image{grid-template-columns:38px minmax(0,1fr)}.product-option .builder-price{grid-column:2}.product-option .builder-thumb{width:38px}}
 </style>
-</head><body>
+</head><body class="az-pc-builder-page">
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
 <div class="market-bar-inner">
 <div class="market-main-row">
@@ -206,11 +220,12 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
   </div>
 </details>
 
-<div class="builder-top"><button class="top-btn" id="resetBtn">Reset</button><input class="global-search" id="globalSearch" placeholder="Cari semua produk… (Ctrl + K)" readonly/><div class="top-total"><span>Reference total</span><strong id="topTotal">Semak</strong></div><button class="top-btn primary" id="nextBtn">Next</button></div>
+<div class="builder-top"><button class="top-btn" id="resetBtn">Reset</button><input class="global-search" id="globalSearch" placeholder="Cari semua produk… (Ctrl + K)" readonly/><div class="top-total"><span>Reference total</span><strong id="topTotal">Semak</strong><button type="button" class="builder-mobile-summary" id="openBuilderSummary" aria-haspopup="dialog">Lihat ringkasan</button></div><button class="top-btn primary" id="nextBtn">Next</button></div>
 <div class="builder-columns"><div><section class="builder" aria-label="AZOBSS full PC builder"><div class="builder-head"><span>Add</span><span>Products</span><span>Quantity</span><span>Total</span></div><div id="categoryRows"></div></section>
 <p>Tempoh pemasangan dan penyediaan: Anggaran 3–6 hari bekerja, tertakluk kepada stok dan pengesahan pesanan.</p>
-</div><aside class="summary" aria-label="Ringkasan pilihan"><div class="summary-card"><h3>Semakan keserasian</h3><div class="compat" id="compatBox"></div></div><div class="summary-card"><div class="price-note">Harga konfigurasi</div><div class="price-big" id="summaryTotal">Minta Sebut Harga</div><div class="price-note">Viewnet products at AZOBSS reference selling prices. Supplier stock and final quote must be confirmed before payment.</div><ul id="builderSelected" class="builder-selected"></ul><div class="admin-box" id="adminBox" hidden></div><div class="summary-actions"><button id="copyBtn">Salin Spec</button><button id="shareBtn">Share Build</button><button class="primary wide" id="waBtn">Request Quote</button></div></div></aside></div>
+</div><aside class="summary" id="builderSummary" aria-label="Ringkasan pilihan"><div class="summary-card"><h3>Semakan keserasian</h3><div class="compat" id="compatBox"></div></div><div class="summary-card"><div class="price-note">Harga konfigurasi</div><div class="price-big" id="summaryTotal">Minta Sebut Harga</div><div class="price-note">Viewnet products at AZOBSS reference selling prices. Supplier stock and final quote must be confirmed before payment.</div><ul id="builderSelected" class="builder-selected"></ul><div class="admin-box" id="adminBox" hidden></div><div class="summary-actions"><button id="copyBtn">Salin Spec</button><button id="shareBtn">Share Build</button><button class="primary wide" id="waBtn">Request Quote</button></div></div></aside></div>
 </main>
+<dialog class="builder-summary-dialog" id="builderSummaryDialog" aria-labelledby="builderSummaryTitle"><form method="dialog"><strong id="builderSummaryTitle">Ringkasan Build</strong><button class="modal-close" autofocus>Tutup</button></form></dialog>
 <div class="modal" id="productModal"><div class="modal-card"><div class="modal-head"><h3 id="modalTitle">Pilih produk</h3><input class="modal-search" id="modalSearch" placeholder="Cari produk…"/><button class="modal-close" id="modalClose">×</button></div><div class="product-list" id="productList"></div><div id="builderPhotoPreview" aria-hidden="true" hidden><img alt=""></div></div></div>
 <div class="modal quote-modal" id="quoteModal"><div class="modal-card"><div class="modal-head"><h3>Ringkasan Build</h3><div style="flex:1"></div><button class="modal-close" id="quoteClose">×</button></div><div class="quote-body" id="quoteBody"></div></div></div>
 <footer class="footer"><div class="wrap">AZOBSS PC Build • Build PC ialah aliran sebut harga. Tiada nombor anggaran dipaparkan kepada pelanggan. Harga kos, markup dan harga sumber tidak dihantar ke browser pelanggan.</div></footer>
@@ -332,6 +347,29 @@ async function load(){
   const next=window.AZOBSSPcBuilder1546.catalog(live.products.map(p=>({...p,...(window.AZOBSS_PC_MEDIA_1537?.byId?.[p.id]||{})})),BUILDER_TEMPLATES);CATALOG=next;normalizeCatalog();let removed=0;for(const c of CATALOG.categories)for(const l of STATE.lines[c.id]||[])if(l.productId&&!product(c.id,l.productId)){l.productId='';removed++;}ensureState();$('#catalogStatus').textContent='Ready · '+SEARCH_INDEX.length+' Viewnet products';$('#catalogStatus').classList.add('ok');$('#updatedStatus').textContent=removed?'Some selected products are no longer available. Please choose replacements.':'Reference selling prices · Stock and final quote require confirmation';render();if($('#productModal').classList.contains('open'))renderProductList();
  }catch(e){$('#catalogStatus').textContent='Ready · '+SEARCH_INDEX.length+' saved Viewnet products';}finally{clearTimeout(timer);}
 }
+const builderHeader=$('.market-sticky-bar'),builderToolbar=$('.builder-top');
+function sizeBuilderStickySections(){
+ const headerHeight=builderHeader.getBoundingClientRect().height;
+ const toolbarHeight=builderToolbar.getBoundingClientRect().height;
+ document.body.style.setProperty('--builder-nav-height',headerHeight+'px');
+ document.body.style.setProperty('--builder-summary-top',(headerHeight+toolbarHeight+10)+'px');
+}
+sizeBuilderStickySections();
+if(typeof ResizeObserver==='function'){
+ const builderSizes=new ResizeObserver(sizeBuilderStickySections);
+ builderSizes.observe(builderHeader);
+ builderSizes.observe(builderToolbar);
+}
+const builderSummary=$('#builderSummary'),summaryColumn=builderSummary.parentElement,summaryDialog=$('#builderSummaryDialog');
+$('#openBuilderSummary').onclick=()=>{
+ if(summaryDialog.open)return;
+ summaryDialog.append(builderSummary);
+ summaryDialog.showModal();
+};
+summaryDialog.addEventListener('close',()=>summaryColumn.append(builderSummary));
+matchMedia('(max-width:900px)').addEventListener('change',event=>{
+ if(!event.matches&&summaryDialog.open)summaryDialog.close();
+});
 const preview=$('#builderPhotoPreview'),pickerList=$('#productList');
 function showBuilderPhoto(image){if(!image?.classList.contains('builder-thumb')||image.src.includes('pc-product-unavailable.svg'))return;preview.querySelector('img').src=image.currentSrc||image.src;preview.hidden=false;}
 pickerList.addEventListener('pointerover',e=>{if(e.pointerType==='mouse')showBuilderPhoto(e.target.closest('.product-option')?.querySelector('img'));});
@@ -341,6 +379,6 @@ pickerList.addEventListener('focusout',()=>{preview.hidden=true;});
 pickerList.addEventListener('error',e=>{if(e.target.matches?.('img')&&!e.target.src.includes('pc-product-unavailable.svg'))e.target.src='/assets/images/pc-product-unavailable.svg';},true);
 $('#modalClose').onclick=()=>$('#productModal').classList.remove('open');$('#productModal').onclick=e=>{if(e.target===$('#productModal'))$('#productModal').classList.remove('open')};let pickerSearchTimer;$('#modalSearch').addEventListener('input',()=>{clearTimeout(pickerSearchTimer);pickerSearchTimer=setTimeout(()=>{MODAL.page=1;renderProductList();},120);});$('#quoteClose').onclick=()=>$('#quoteModal').classList.remove('open');$('#quoteModal').onclick=e=>{if(e.target===$('#quoteModal'))$('#quoteModal').classList.remove('open')};$('#resetBtn').onclick=()=>{if(confirm('Reset semua pilihan build?')){STATE.lines={};ensureState();history.replaceState(null,'',location.pathname);render()}};$('#nextBtn').onclick=showQuote;$('#copyBtn').onclick=copySpec;$('#shareBtn').onclick=async()=>{const u=new URL(location.pathname,location.origin),code=shareCode();if(!code){alert('Choose your components first.');return;}u.hash='s='+code;try{await navigator.clipboard.writeText(u.toString());$('#shareBtn').textContent='Link disalin ✓';setTimeout(()=>$('#shareBtn').textContent='Share Build',1300)}catch(_e){prompt('Copy link:',u.toString())}};$('#waBtn').onclick=saveBuildList;$('#globalSearch').addEventListener('focus',openGlobalSearch);document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();openGlobalSearch()}if(e.key==='Escape'){$('#productModal').classList.remove('open');$('#quoteModal').classList.remove('open')}});load();
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1572" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1573" type="module"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>
