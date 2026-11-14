@@ -2,7 +2,24 @@
  'use strict';
  const categoryMap={'Intel CPUs':'intel-cpu','AMD CPUs':'amd-cpu','Intel Motherboards':'intel-mobo','AMD Motherboards':'amd-mobo','Desktop Memory':'ram','CPU Coolers':'cooler','Cooling':'cooler','Casing':'case','Liquid Cooling':'cooler','Graphics Cards':'gpu','Workstation Graphics':'gpu','Power Supplies':'psu','Cases':'case','SATA SSDs':'ssd','NVMe SSDs':'ssd','Hard Drives':'hdd','Monitor':'monitor','Keyboards':'keyboard','Mice':'mouse','Keyboard & Mouse Combos':'combo','Headsets & Earphones':'headset','Speaker':'speaker','Case Fans':'fans','Routers':'wifi-router','Optical Drives':'optical','Microsoft Software':'software','Security Software':'software','Microphone':'streaming','Wireless Microphones':'streaming','Sound Cards':'streaming'};
  const clean=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
- function matches(option,query){const fields=[option.label,option.brand,option.section,option._catId,option._catLabel].map(v=>String(v||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));const terms=String(query||'').trim().split(/\s+/).map(clean).filter(Boolean);return terms.every(term=>fields.some(words=>words.some((_,i)=>words.slice(i).join('').startsWith(term))));}
+ function searchWords(value){
+  // Split model codes at letter/number boundaries without matching inside ordinary words.
+  return (String(value||'').toLowerCase().match(/[a-z]+|[0-9]+/g)||[]);
+ }
+ function matchTerm(words,term){
+  const fullModelNumber=/[0-9]{3}$/.test(term);
+  return words.some((_,start)=>{
+   let prefix='';
+   for(let i=start;i<words.length&&prefix.length<term.length;i++)prefix+=words[i];
+   return prefix.startsWith(term)&&!(fullModelNumber&&/[0-9]/.test(prefix.charAt(term.length)));
+  });
+ }
+ function matches(option,query){
+  const terms=String(query||'').trim().split(/\s+/).map(clean).filter(Boolean);
+  if(!terms.length)return true;
+  const fields=[option.label,option.brand,option.section,option._catId,option._catLabel].map(searchWords);
+  return terms.every(term=>fields.some(words=>matchTerm(words,term)));
+ }
  function productLabel(p){
   const original=String(p.displayName||p.name||'').trim(),source=String(p.name||'').trim();
   const brand=String(p.brand||'').trim(),type=/^(?:SATA|NVMe) SSDs$/.test(p.category)?p.category.replace(/SSDs$/,'SSD'):'';

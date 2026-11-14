@@ -13,4 +13,22 @@ test('ID-COOLING brand queries cannot match the suffix of Liquid Cooling or cros
 test('public API category normalization retains every Viewnet builder SKU, including all three ID-COOLING models',()=>{const model=require('../assets/js/azobss-pc-model-v1537'),raw=builder.catalog(viewnet,templates).categories.flatMap(c=>c.options),normalized=builder.catalog(viewnet.map(p=>({...p,category:model.category(p)})),templates).categories.flatMap(c=>c.options);assert.deepEqual(new Set(normalized.map(p=>p.id)),new Set(raw.map(p=>p.id)));for(const id of ['VNP-e46c2f24d636--0','VNP-91003f7e4202--0','VNP-8646a625bb85--0'])assert.ok(normalized.some(p=>p.id===id),id);});
 test('every builder option retains the exact Viewnet SKU and existing marked-up public selling price',()=>{const c=builder.catalog(viewnet,templates);const options=c.categories.flatMap(c=>c.options),by=new Map(viewnet.map(p=>[p.id,p]));assert.ok(options.length>900);for(const p of options){assert.equal(p.price,by.get(p.id).price);assert.equal(p.sourceRecordId,by.get(p.id).sourceRecordId);assert.equal(p.requiresConfirmation,true);for(const k of ['unitCost','sourcePrice','snapshotPrice','markupRate','cost'])assert.equal(k in p,false);}});
 test('CPU search handles spaces, hyphens, punctuation and reordered terms; coolers stay out of CPU categories',()=>{const c=builder.catalog(viewnet,templates),cpu=c.categories.find(c=>c.id==='intel-cpu');for(const q of ['i5 12400','intel i5-12400','12400 i5'])assert.ok(cpu.options.some(p=>builder.matches(p,q)),q);assert.ok(cpu.options.every(p=>!p.section.includes('Cool')));assert.ok(c.categories.find(c=>c.id==='cooler').options.length>20);assert.ok(!builder.matches({label:'Intel Core i5 12400F'},'ryzen 7600'));});
+test('component search finds joined model codes by number, spacing, suffix and reordered brand',()=>{
+ const gpu=builder.catalog(viewnet,templates).categories.find(c=>c.id==='gpu').options;
+ const base=gpu.find(p=>p.id==='VNP-57c0c23ab430--0');
+ const ti=gpu.find(p=>p.id==='VNP-dc91fcd031ee--0');
+ for(const query of ['5060','RTX5060','rtx 5060','RTX-5060','5060 zotac','ZOTAC rtx5060']){
+  assert.ok(builder.matches(base,query),query);
+  assert.ok(builder.matches(ti,query),query);
+ }
+ for(const query of ['5060ti','5060 ti','RTX 5060 Ti','5060 16 GB']){
+  assert.equal(builder.matches(base,query),false,query);
+  assert.ok(builder.matches(ti,query),query);
+ }
+ assert.equal(builder.matches({label:'RTX50600'},'5060'),false);
+ assert.equal(builder.matches({label:'RTX4060'},'5060'),false);
+ assert.ok(builder.matches({label:'ASUS B650M-K'},'650m asus'));
+ assert.ok(builder.matches({label:'MSI PRO Z790-P DDR5'},'z 790 ddr 5'));
+ assert.ok(builder.matches({label:'Kingston NV2 1TB NVMe SSD'},'1 tb nvme'));
+});
 test('builder accepts only known Viewnet categories with positive public prices',()=>{const rows=[{id:'supplier-other',sourceRecordId:'VNP-a',category:'Intel CPUs',price:1},{id:'VNP-b--0',category:'Intel CPUs',price:2},{id:'VNP-c--0',sourceRecordId:'VNP-c',category:'CPU Coolers',price:0},{id:'VNP-d--0',sourceRecordId:'VNP-d',category:'Intel CPUs',price:500,hidden:true},{id:'VNP-e--0',sourceRecordId:'VNP-e',category:'Laptop Memory',price:100}];assert.equal(builder.catalog(rows,templates).categories.flatMap(c=>c.options).length,0);});
