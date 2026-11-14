@@ -368,9 +368,9 @@
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Remote Windows diagnostics &amp; repair', isOnlinePage);
 
-    var rentalLink = makeLink('/Troubleshoot-PC-Online/#sewa-laptop', 'azLaptopRentalLink', 'az-repair-online-icon',
+    var rentalLink = makeLink('/Sewaan/', 'azLaptopRentalLink', 'az-repair-online-icon',
       '<rect x="5" y="4" width="14" height="12" rx="2"></rect><path d="M3 19h18"></path>',
-      'Sewa Laptop', 'Pakej harian, mingguan dan bulanan', false);
+      'Sewaan', 'Laptop dan pertanyaan peralatan', currentPath === '/sewaan');
     [buildLink, physicalLink, onlineLink, rentalLink].forEach(function (item) {
       dropdown.appendChild(item);
     });
@@ -543,7 +543,8 @@
       ['[data-az-pcit-build-link="1"]', inSection(buildPath), 'page'],
       ['[data-az-repair-physical-link="1"]', inSection(physicalPath), 'page'],
       ['[data-az-pcit-upgrade-link="1"]', upgrade, 'page'],
-      ['[data-az-repair-online-link="1"]', inSection(onlinePath), 'page']
+      ['[data-az-repair-online-link="1"]', inSection(onlinePath), 'page'],
+      ['[data-az-laptop-rental], [data-az-laptop-rental-link]', currentPath === '/sewaan', 'page']
     ];
     var anyActive = false;
     states.forEach(function (entry) {
