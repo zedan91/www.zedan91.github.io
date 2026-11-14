@@ -17,7 +17,7 @@ test('component search finds joined model codes by number, spacing, suffix and r
  const gpu=builder.catalog(viewnet,templates).categories.find(c=>c.id==='gpu').options;
  const base=gpu.find(p=>p.id==='VNP-57c0c23ab430--0');
  const ti=gpu.find(p=>p.id==='VNP-dc91fcd031ee--0');
- for(const query of ['5060','RTX5060','rtx 5060','RTX-5060','5060 zotac','ZOTAC rtx5060']){
+ for(const query of ['506','RTX506','RTX 506','RTX-506','506 zotac','5060','RTX5060','rtx 5060','RTX-5060','5060 zotac','ZOTAC rtx5060']){
   assert.ok(builder.matches(base,query),query);
   assert.ok(builder.matches(ti,query),query);
  }
@@ -25,7 +25,8 @@ test('component search finds joined model codes by number, spacing, suffix and r
   assert.equal(builder.matches(base,query),false,query);
   assert.ok(builder.matches(ti,query),query);
  }
- assert.equal(builder.matches({label:'RTX50600'},'5060'),false);
+ assert.equal(builder.matches({label:'RTX4060'},'506'),false);
+ assert.ok(builder.matches({label:'MSI PRO Z790-P DDR5'},'Z79'));
  assert.equal(builder.matches({label:'RTX4060'},'5060'),false);
  assert.ok(builder.matches({label:'ASUS B650M-K'},'650m asus'));
  assert.ok(builder.matches({label:'MSI PRO Z790-P DDR5'},'z 790 ddr 5'));

@@ -7,11 +7,10 @@
   return (String(value||'').toLowerCase().match(/[a-z]+|[0-9]+/g)||[]);
  }
  function matchTerm(words,term){
-  const fullModelNumber=/[0-9]{3}$/.test(term);
   return words.some((_,start)=>{
    let prefix='';
    for(let i=start;i<words.length&&prefix.length<term.length;i++)prefix+=words[i];
-   return prefix.startsWith(term)&&!(fullModelNumber&&/[0-9]/.test(prefix.charAt(term.length)));
+   return prefix.startsWith(term);
   });
  }
  function matches(option,query){
