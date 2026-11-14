@@ -163,6 +163,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 .rental-packages dt{font-size:11px;color:#b9cee0}
 .rental-packages dd{margin:4px 0 0;font-size:14px;font-weight:800;color:#aff6e2}
 .rental-fields{gap:8px}
+.rental-fields [hidden]{display:none}
 .rental-fields label{display:grid;gap:4px;min-width:0;font-size:12px}
 .rental-fields input,.rental-fields select{min-width:0;width:100%;font:inherit;color:#eef7ff;background:#0f2336;border:1px solid #466580;border-radius:7px;padding:7px;color-scheme:dark}
 #azEquipmentRentalForm button{margin-top:12px;padding:9px 11px;border:1px solid #59dfa0;border-radius:8px;color:#fff;background:#156844;font-size:13px;font-weight:800;cursor:pointer}
@@ -217,7 +218,7 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 <section class="uv-laptop-rental" id="azRentalOptions" aria-labelledby="azRentalTitle">
   <header class="rental-header">
     <h1 id="azRentalTitle">Sewaan Peralatan</h1>
-    <p>Pilih laptop atau desktop untuk tempoh 1 hingga 30 hari. Ambil sendiri di Batu Caves atau pilih penghantaran di Sri Gombak.</p>
+    <p>Pilih pakej laptop atau desktop, atau tetapkan tarikh sewaan sendiri. Ambil sendiri di Batu Caves atau pilih penghantaran di Sri Gombak.</p>
   </header>
   <nav class="rental-types" aria-label="Jenis peralatan">
     <a class="rental-type" data-rental-type="laptop" href="#laptop" aria-current="true">
@@ -266,7 +267,8 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
         <label>Nama penuh<input name="customer" autocomplete="name" required maxlength="100"></label>
         <label>No. telefon<input type="tel" name="phone" autocomplete="tel" inputmode="tel" required maxlength="24"></label>
         <label>Tarikh mula<input type="date" name="start" required></label>
-        <label>Tempoh<select name="period" required><option value="">Pilih tempoh</option><option>1 hari</option><option>7 hari</option><option>14 hari</option><option value="30 hari">30 hari (sebulan)</option></select></label>
+        <label>Tempoh<select name="period" required><option value="">Pilih tempoh</option><option>1 hari</option><option>7 hari</option><option>14 hari</option><option value="30 hari">30 hari (sebulan)</option><option value="flex">Tempoh fleksibel</option></select></label>
+        <label id="azRentalEndField" hidden>Tarikh pulang<input type="date" name="end" disabled></label>
         <label>Spesifikasi<select name="tier" required><option value="">Pilih pakej</option><option>Asas</option><option>Prestasi</option></select></label>
         <label>Cara penerimaan<select name="method" required><option value="">Pilih cara penerimaan</option><option>Ambil sendiri</option><option>Penghantaran Sri Gombak (RM20 sehala)</option></select></label>
       </div>
@@ -279,6 +281,8 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 (function(){
  const form=document.getElementById('azEquipmentRentalForm');
  const start=form.elements.namedItem('start');
+ const end=form.elements.namedItem('end');
+ const endField=document.getElementById('azRentalEndField');
  const tier=form.elements.namedItem('tier');
  const period=form.elements.namedItem('period');
  const method=form.elements.namedItem('method');
@@ -288,10 +292,25 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
  let selected,packages;
  start.min=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 
+ function rentalDetails(){
+  if(period.value!=='flex')return {price:packages.get(tier.value)?.[period.selectedIndex-1],period:period.value};
+  const days=(end.valueAsNumber-start.valueAsNumber)/86400000;
+  return {days,period:days>0?days+' hari (fleksibel)':'Tempoh fleksibel',price:'Kadar disahkan oleh AZOBSS'};
+ }
+
  function updateCost(){
-  const price=packages.get(tier.value)?.[period.selectedIndex-1];
-  cost.textContent=price
-    ? 'Sewa '+price+(method.selectedIndex===2?' + penghantaran RM20 sehala':'')+' · Deposit berasingan'
+  const flexible=period.value==='flex';
+  endField.hidden=!flexible;
+  end.disabled=!flexible;
+  end.required=flexible;
+  const minReturn=Number.isFinite(start.valueAsNumber)?start.valueAsNumber+86400000:Date.parse(start.min)+86400000;
+  end.min=new Date(minReturn).toISOString().slice(0,10);
+  const details=rentalDetails();
+  const summary=flexible
+    ? (details.days>0?details.period+' · ':'')+details.price
+    : details.price?'Sewa '+details.price:'';
+  cost.textContent=summary
+    ? summary+(method.selectedIndex===2?' + penghantaran RM20 sehala':'')+' · Deposit berasingan'
     : '';
  }
 
@@ -326,11 +345,13 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
  form.addEventListener('submit',event=>{
   event.preventDefault();
   const values=new FormData(form);
+  const details=rentalDetails();
   const note=['Salam AZOBSS, saya ingin semak ketersediaan sewaan.',
     'Peralatan: '+document.getElementById('azRentalSelected').textContent,
     'Nama: '+values.get('customer'),'Telefon: '+values.get('phone'),'Tarikh mula: '+values.get('start'),
-    'Tempoh: '+values.get('period'),'Pakej: '+values.get('tier'),
-    'Kadar sewa: '+packages.get(tier.value)[period.selectedIndex-1],
+    ...(period.value==='flex'?['Tarikh pulang: '+values.get('end')]:[]),
+    'Tempoh: '+details.period,'Pakej: '+values.get('tier'),
+    'Kadar sewa: '+details.price,
     'Penerimaan: '+values.get('method')].join('\n');
   const link=new URL('https://wa.me/601135600723');
   link.searchParams.set('text',note);
@@ -341,6 +362,6 @@ html:not([data-azobss-nav-synced="1"])[data-azobss-pre-publicpa="0"] body .marke
 </main><script src="/assets/js/azobss-long-session-stability.js?v=1487"></script>
 <script src="/assets/js/azobss-mobile-view-switcher.js?v=1470"></script>
 <script defer="" src="/assets/js/azobss-more-nav.js?v=1585"></script>
-<script src="/assets/js/azobss-global-auth.js?v=1586" type="module"></script>
-<script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script><script>(function(){function measure(){const h=document.querySelector('#marketHomeTopbar,header'),bottom=h?Math.max(48,Math.min(160,h.getBoundingClientRect().bottom)):72;document.documentElement.style.setProperty('--support-nav-height',bottom+'px');}window.addEventListener('resize',measure);document.addEventListener('DOMContentLoaded',measure);new MutationObserver(measure).observe(document.body,{childList:true});[0,300,1000,2500].forEach(t=>setTimeout(measure,t));})();</script><a class="az-tech-whatsapp-fab" href="https://wa.me/601135600723" target="_blank" rel="noopener noreferrer" aria-label="Hubungi AZOBSS di WhatsApp"><svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 2a9.5 9.5 0 0 0-8.2 14.3L2 22l5.8-1.5A9.5 9.5 0 1 0 12 2zm0 17.2a7.7 7.7 0 0 1-3.9-1.1l-.3-.2-3.1.8.8-3-.2-.3A7.7 7.7 0 1 1 12 19.2zm4.2-5.8c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.8c-.1.2-.3.2-.5.1-1.3-.6-2.2-1.4-2.8-2.5-.1-.2 0-.4.1-.5.2-.2.4-.4.5-.6.1-.2.1-.3.1-.5l-.7-1.6c-.1-.4-.3-.4-.5-.4h-.4c-.2 0-.4.1-.6.3-.4.4-.7.9-.7 1.7s.6 1.8.7 1.9c.1.2 1.8 2.8 4.3 3.8.6.3 1.1.4 1.5.5.6.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z"/></svg></a>
+<script src="/assets/js/azobss-global-auth.js?v=1587" type="module"></script>
+<script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script><script>(function(){function measure(){const h=document.querySelector('#marketHomeTopbar,header'),bottom=h?Math.max(48,Math.min(160,h.getBoundingClientRect().bottom)):72;document.documentElement.style.setProperty('--support-nav-height',bottom+'px');}window.addEventListener('resize',measure);document.addEventListener('DOMContentLoaded',measure);new MutationObserver(measure).observe(document.body,{childList:true});[0,300,1000,2500].forEach(t=>setTimeout(measure,t));})();</script><a class="az-tech-whatsapp-fab" href="https://wa.me/601135600723" target="_blank" rel="noopener noreferrer" aria-label="Hubungi AZOBSS di WhatsApp"><img src="/assets/images/whatsapp-bootstrap.svg" alt="" width="26" height="26"></a>
 </body></html>
