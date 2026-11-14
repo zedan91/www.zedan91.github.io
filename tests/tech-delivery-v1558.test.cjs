@@ -79,3 +79,22 @@ test('pickup proposals stay in Malaysia local time, never add delivery fees, and
   assert.throws(()=>route.validateRequest(cfg,D.PICKUP,{pickupRequestedSlot:'2026-02-30T14:00'}),{code:'pickup_slot'});
   assert.throws(()=>D.normalizeSettings({location:{mapsListingUrl:'https://example.com/maps'}}),{code:'pickup_listing'});
 });
+
+test('dedicated checkout validates courier address and saves customer contact before invoicing',async()=>{
+  const {createTechDelivery}=require('../lib/azobss-tech-delivery-routes');
+  const route=createTechDelivery({});
+  const db={collection:()=>({doc:()=>({})})},tx={get:async()=>({exists:false})};
+  const order={uid:'u1',status:'quote-ready',deliveryDetailsPending:true,quoteVersion:1,confirmedItemTotal:500,fixedDeliveryOffer:{charge:10,vehicle:'motorcycle'}};
+  const data={quoteVersion:1,shippingMethod:D.COURIER,customerPhone:'+60123456789',customerAddress:'12 Jalan Ujian',acceptedTotal:510,checkoutContact:{firstName:'Nur',lastName:'Ali',email:'nur@example.com',company:'Example',city:'Batu Caves',state:'Selangor',postcode:'68100'}};
+  const decide=()=>({status:'quote-accepted'});
+  const next=await route.submitDeliveryDetails(db,tx,order,'u1',data,decide);
+  assert.equal(next.customerAddress,'12 Jalan Ujian, 68100 Batu Caves, Selangor, Malaysia');
+  assert.equal(next.customerName,'Nur Ali');
+  assert.equal(next.customerEmail,'nur@example.com');
+  assert.equal(next.customerCompany,'Example');
+  assert.equal(next.confirmedTotal,510);
+  assert.equal(next.invoiceNo,undefined);
+  await assert.rejects(route.submitDeliveryDetails(db,tx,order,'u1',{...data,checkoutContact:{...data.checkoutContact,postcode:'681001'}},decide),{code:'checkout_address'});
+  await assert.rejects(route.submitDeliveryDetails(db,tx,order,'u1',{...data,checkoutContact:{...data.checkoutContact,email:'fake@azobss.local'}},decide),{code:'checkout_contact'});
+  await assert.rejects(route.submitDeliveryDetails(db,tx,order,'wrong',data,decide),{code:'order_not_found'});
+});

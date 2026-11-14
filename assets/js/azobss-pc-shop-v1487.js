@@ -111,7 +111,15 @@ function dedicatedImageViewer(title,url,source,crop='product-focus',productKind=
 function openImageViewer(p){if(!p?.image)return;dedicatedImageViewer(p.name||'Product Image',p.image,p.sourceName||'sumber rasmi',p.imageCrop||'product-focus','hardware',String(p.id||p.productId||''),window.AZOBSSPcModel?.gallery(p)||p.images||[])}
 window.azobssOpenPcProductImage=function(title,url,source,crop,productId){if(!url)return;dedicatedImageViewer(title||'Product Image',url,source||'sumber rasmi',crop||'pc-focus','build',String(productId||''),window.AZOBSS_PC_MEDIA_1537?.byId?.[String(productId||'')]?.images||[])};
 function cleanupPcShopModalState(reason='watchdog'){const overlays=[...document.querySelectorAll('.az-pc-shop-backdrop')];let active=overlays.filter(x=>x.classList.contains('is-open')&&x.getAttribute('aria-hidden')!=='true'&&x.querySelector('.az-pc-shop-modal'));if(active.length>1){active.slice(0,-1).forEach(x=>x.remove());active=active.slice(-1)}for(const x of overlays){if(!x.isConnected)continue;const valid=x.classList.contains('is-open')&&x.getAttribute('aria-hidden')!=='true'&&!!x.querySelector('.az-pc-shop-modal');if(!valid){x.remove();continue}if(x.style.pointerEvents==='none'||x.dataset.azobssOrphanOverlayRecovered){x.style.removeProperty('pointer-events');delete x.dataset.azobssOrphanOverlayRecovered}x.style.setProperty('pointer-events','auto','important')}const live=document.querySelector('.az-pc-shop-backdrop.is-open[aria-hidden="false"] .az-pc-shop-modal');document.body.classList.toggle('az-pc-shop-modal-open',!!live);return !!live}
-function modal(title,body){closeModal(false);cleanupPcShopModalState('before-open');modalLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;modalAbort=new AbortController();const root=document.createElement('div');root.className='az-pc-shop-backdrop is-open';root.id='azPcShopModal';root.setAttribute('aria-hidden','false');root.setAttribute('data-azobss-overlay','pc-shop');root.dataset.azPcModalOwner='1507';root.innerHTML=`<section class="az-pc-shop-modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="az-pc-shop-modal-head"><h3>${esc(title)}</h3><button class="az-pc-shop-close" type="button" aria-label="Close">×</button></div><div class="az-pc-shop-modal-body">${body}</div></section>`;document.body.appendChild(root);document.body.classList.add('az-pc-shop-modal-open');const sig=modalAbort.signal;root.querySelector('.az-pc-shop-close').addEventListener('click',()=>closeModal(),{signal:sig});root.addEventListener('click',e=>{if(e.target===root)closeModal()},{signal:sig});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.az-pc-shop-backdrop.is-open')){e.preventDefault();closeModal()}},{signal:sig});queueMicrotask(()=>cleanupPcShopModalState('after-open'));setTimeout(()=>{cleanupPcShopModalState('focus');root.querySelector('.az-pc-shop-close')?.focus()},0);return root}
+function modal(title,body){
+ const checkout=document.getElementById('azCheckoutStage');
+ if(checkout){
+  modalAbort?.abort();modalAbort=new AbortController();
+  checkout.innerHTML='<h2 tabindex="-1">'+esc(title)+'</h2><div class="az-pc-shop-modal-body">'+body+'</div>';
+  checkout.firstElementChild.focus();
+  return checkout;
+ }
+ closeModal(false);cleanupPcShopModalState('before-open');modalLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;modalAbort=new AbortController();const root=document.createElement('div');root.className='az-pc-shop-backdrop is-open';root.id='azPcShopModal';root.setAttribute('aria-hidden','false');root.setAttribute('data-azobss-overlay','pc-shop');root.dataset.azPcModalOwner='1507';root.innerHTML=`<section class="az-pc-shop-modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="az-pc-shop-modal-head"><h3>${esc(title)}</h3><button class="az-pc-shop-close" type="button" aria-label="Close">×</button></div><div class="az-pc-shop-modal-body">${body}</div></section>`;document.body.appendChild(root);document.body.classList.add('az-pc-shop-modal-open');const sig=modalAbort.signal;root.querySelector('.az-pc-shop-close').addEventListener('click',()=>closeModal(),{signal:sig});root.addEventListener('click',e=>{if(e.target===root)closeModal()},{signal:sig});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.az-pc-shop-backdrop.is-open')){e.preventDefault();closeModal()}},{signal:sig});queueMicrotask(()=>cleanupPcShopModalState('after-open'));setTimeout(()=>{cleanupPcShopModalState('focus');root.querySelector('.az-pc-shop-close')?.focus()},0);return root}
 function closeModal(restoreFocus=true){try{modalAbort?.abort()}catch(_){}modalAbort=null;document.querySelectorAll('.az-pc-shop-backdrop').forEach(x=>{x.classList.remove('is-open');x.setAttribute('aria-hidden','true');x.style.setProperty('pointer-events','none','important');x.remove()});document.body.classList.remove('az-pc-shop-modal-open');cleanupPcShopModalState('close');if(restoreFocus&&modalLastFocus?.isConnected){try{modalLastFocus.focus({preventScroll:true})}catch(_){}}modalLastFocus=null}
 function cartTotals(c){return c.reduce((s,x)=>s+Number(x.unitPrice||0)*Number(x.qty||1),0)}
 function cartRows(c){return c.map((x,i)=>`<div class="az-pc-cart-row"><div class="az-pc-cart-thumb">${x.image?`<img src="${esc(x.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`:'🖥️'}</div><div><div class="az-pc-cart-title">${esc(x.name)}</div><div class="az-pc-cart-meta">${esc(x.category)} • reference price</div></div><div><div class="az-pc-cart-price">${x.unitPrice?money(x.unitPrice*x.qty):'Quote'}</div><div class="az-pc-cart-qty"><button data-cart-minus="${i}" type="button">−</button><span>${Number(x.qty||1)}</span><button data-cart-plus="${i}" type="button">+</button></div></div><button class="az-pc-cart-remove" data-cart-remove="${i}" type="button">×</button></div>`).join('')}
@@ -123,7 +131,7 @@ function openCart(goCheckout=false){if(window.AZOBSSCustomerHub1538){window.AZOB
 
 function bindCart(root){root.querySelectorAll('[data-cart-minus]').forEach(b=>b.onclick=()=>mutateQty(Number(b.dataset.cartMinus),-1));root.querySelectorAll('[data-cart-plus]').forEach(b=>b.onclick=()=>mutateQty(Number(b.dataset.cartPlus),1));root.querySelectorAll('[data-cart-remove]').forEach(b=>b.onclick=()=>{const c=readCart();c.splice(Number(b.dataset.cartRemove),1);saveCart(c);closeModal();openCart(false)});root.querySelector('[data-cart-quote]')?.addEventListener('click',()=>openCheckout('quote'));}
 function mutateQty(i,d){const c=readCart();if(!c[i])return;c[i].qty=Math.max(1,Math.min(20,Number(c[i].qty||1)+d));saveCart(c);closeModal();openCart(false)}
-function profileDefaults(){const u=getSavedUser();return{name:u.displayName||u.name||u.username||'',phone:u.phone||u.phoneNumber||'',email:u.email||u.authEmail||'',address:u.address||u.fullAddress||u.customerAddress||''}}
+function profileDefaults(){const u=getSavedUser();return{name:u.displayName||u.name||u.username||'',phone:u.phone||u.phoneNumber||'',email:u.email||u.authEmail||'',address:u.address||u.fullAddress||u.customerAddress||'',firstName:u.firstName||'',lastName:u.lastName||'',company:u.company||'',city:u.city||'',state:u.state||'',postcode:u.postcode||u.postalCode||''}}
 function choiceCards(name,items,selected){return `<div class="az-pc-choice-group">${items.map(x=>`<label class="az-pc-choice"><input type="radio" name="${name}" value="${esc(x.value)}" ${x.value===selected?'checked':''}><span><b>${esc(x.label)}</b>${x.sub?`<small>${esc(x.sub)}</small>`:''}</span></label>`).join('')}</div>`}
 function quoteSummary(items,total,label){
  return '<aside class="az-pc-checkout-summary"><h4>Order summary</h4><ul>'+items.map(item=>
@@ -137,13 +145,26 @@ function checkoutHtml(items){
    '<button class="az-pc-shop-btn primary" data-submit-order type="button">Send Quote Request</button></div></div>'+
    quoteSummary(items,cartTotals(items),'Reference subtotal')+'</div>';
 }
+function checkoutFields(profile,order){
+ const name=String(order.customerName||profile.name||'').trim().split(/\s+/);
+ const [first,...last]=name;
+ const input=(field,label,auto,value='',extra='')=>'<label>'+label+'<input name="'+field+'" autocomplete="'+auto+'" value="'+esc(value)+'" maxlength="100" '+extra+'></label>';
+ return '<div class="az-pc-checkout-grid">'+
+  input('firstName','First name *','given-name',profile.firstName||first,'required')+
+  input('lastName','Last name','family-name',profile.lastName||last.join(' '))+
+  input('company','Company','organization',profile.company)+
+  input('email','Email *','email',String(order.customerEmail||profile.email||'').endsWith('@azobss.local')?'':(order.customerEmail||profile.email),'type="email" required')+
+  '</div>';
+}
 function deliveryCheckoutHtml(order){
  const profile=profileDefaults();
+ const dedicated=!!document.getElementById('azCheckoutStage');
  const shipping=choiceCards('azPcShipping',[{value:'Courier',label:'Penghantaran ke Alamat',sub:order.fixedDeliveryOffer?money(order.fixedDeliveryOffer.charge)+' · kadar tetap':'Caj disahkan dalam sebut harga'},{value:'Pickup at AZOBSS',label:'Ambil Sendiri',sub:'Percuma · Tiada minimum'}],'Courier');
- return '<div class="az-pc-checkout-layout"><form data-delivery-checkout><h4>Contact &amp; delivery</h4>'+
-   '<div class="az-pc-checkout-grid"><label class="span-2">Phone<input id="azPcCustomerPhone" type="tel" autocomplete="tel" required maxlength="60" value="'+esc(profile.phone)+'"></label>'+
+ return '<div class="az-pc-checkout-layout"><form data-delivery-checkout><h4>Contact &amp; delivery</h4>'+(dedicated?checkoutFields(profile,order):'')+
+   '<div class="az-pc-checkout-grid"><label class="span-2">Phone<input id="azPcCustomerPhone" type="tel" autocomplete="tel" required maxlength="60" value="'+esc(order.customerPhone||profile.phone)+'"></label>'+
    '<div class="span-2 az-pc-choice-section"><div class="az-pc-choice-title">Kaedah penerimaan</div>'+shipping+'</div>'+
    '<label id="azPcAddressField" class="span-2"><span id="azPcAddressLabel">Delivery address</span><textarea id="azPcCustomerAddress" autocomplete="street-address" rows="3" maxlength="500">'+esc(profile.address)+'</textarea></label>'+
+   (dedicated?'<div class="span-2 az-checkout-address" data-checkout-address><label>Town / City *<input name="city" autocomplete="address-level2" maxlength="80" value="'+esc(profile.city)+'"></label><label>State / Federal territory *<select name="state" autocomplete="address-level1"><option value="">Select state</option>'+['Johor','Kedah','Kelantan','Melaka','Negeri Sembilan','Pahang','Perak','Perlis','Pulau Pinang','Sabah','Sarawak','Selangor','Terengganu','Kuala Lumpur','Labuan','Putrajaya'].map(state=>'<option'+(state===profile.state?' selected':'')+'>'+state+'</option>').join('')+'</select></label><label>Postcode *<input name="postcode" autocomplete="postal-code" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" value="'+esc(profile.postcode)+'"></label><div>Country / Region<br><strong>Malaysia</strong></div></div>':'')+
    (window.AZOBSSTechDelivery?.checkout||'')+'</div><p role="status" data-delivery-message></p>'+
    '<div class="az-pc-cart-actions"><button class="az-pc-shop-btn" type="button" data-back-to-quote>Back to quote</button>'+
    '<button class="az-pc-shop-btn primary" type="submit" disabled>Save &amp; continue</button></div></form>'+
@@ -157,6 +178,11 @@ function openDeliveryCheckout(order){
    syncCheckoutShipping(root,order.items||[]);
    const shippingSummary=root.querySelector('#azPcShippingSummary'),totalSummary=root.querySelector('#azPcCheckoutTotal');
    const pickup=root.querySelector('input[name="azPcShipping"]:checked')?.value==='Pickup at AZOBSS';
+   const addressFields=form.querySelector('[data-checkout-address]');
+   if(addressFields){
+     addressFields.hidden=pickup;
+     for(const field of addressFields.querySelectorAll('input,select')){field.disabled=pickup;field.required=!pickup;}
+   }
    const slot=root.querySelector('#azTechPickupSlot');
    if(slot){slot.required=pickup;slot.disabled=!pickup;}
    if(pickup||order.fixedDeliveryOffer){
@@ -181,7 +207,11 @@ function openDeliveryCheckout(order){
    try{
      const shippingMethod=root.querySelector('input[name="azPcShipping"]:checked')?.value;
      const payload={action:'delivery-details',quoteVersion:order.quoteVersion,shippingMethod,customerPhone:root.querySelector('#azPcCustomerPhone').value.trim()};
+     if(form.elements.firstName){
+       payload.checkoutContact={firstName:form.elements.firstName.value,lastName:form.elements.lastName.value,company:form.elements.company.value,email:form.elements.email.value};
+     }
      if(shippingMethod==='Courier'){
+       if(form.elements.city)Object.assign(payload.checkoutContact,{city:form.elements.city.value,state:form.elements.state.value,postcode:form.elements.postcode.value});
        if(order.fixedDeliveryOffer)payload.acceptedTotal=Math.round((Number(order.confirmedItemTotal)+Number(order.fixedDeliveryOffer.charge))*100)/100;
        payload.customerAddress=root.querySelector('#azPcCustomerAddress').value.trim();
        payload.deliveryPin=module.pin(root);
@@ -203,7 +233,7 @@ async function openCheckout(intent='quote',itemsOverride=null){
  try{await requireLogin()}catch(_){return}
  const root=modal('Request Quote',checkoutHtml(items));
  root.dataset.pcCustomerOwner=currentCustomerUid();
- root.querySelector('[data-checkout-back]').onclick=()=>closeModal();
+ root.querySelector('[data-checkout-back]').onclick=()=>{if(root.id==='azCheckoutStage')location.href='/cart/';else closeModal();};
  root.querySelector('[data-submit-order]').onclick=()=>submitOrder(root,items);
  refreshCheckoutBackendStatus(root,false)
 }
@@ -257,8 +287,15 @@ async function openOrders(selectedOrderId,selectedDocument=''){
   const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders'+(focused?'/'+encodeURIComponent(focused):''),{headers:h,cache:'no-store'},22000,'Requests server'),d=await r.json().catch(()=>({}));if(!live())return;if(!r.ok||!d.ok)throw new Error(orderErrorMessage(r,d));
   const orders=focused?[d.order]:d.orders||[],body=root.querySelector('.az-pc-shop-modal-body');
   body.innerHTML='<div class="az-pc-cart-actions"><button type="button" class="az-pc-shop-btn" data-open-pc-list>← My Cart</button><button type="button" class="az-pc-shop-btn" data-all-requests>All Requests & Orders</button><button type="button" class="az-pc-shop-btn" data-refresh-requests>Refresh</button></div>'+(orders.length?'<div class="az-pc-orders-list">'+orders.map(o=>focused?'<div class="az-pc-order-card az-pc-request-focused1538" data-customer-order="'+esc(o.orderId)+'" tabindex="-1">'+(window.AZOBSSPcDocuments1541?.details(o,kind)||orderCard(o))+(kind==='quote'||!o.invoiceNo?requestOrderCard(o):'')+(window.AZOBSSTechDelivery?.orderDelivery(o)||'')+'</div>':orderCard(o)).join('')+'</div>':'<div class="az-pc-shop-empty">No requests yet. Add products to My Cart, then Request Quote.</div>');
-  body.querySelectorAll('[data-request-action]').forEach(b=>b.onclick=()=>b.dataset.requestAction==='delivery'?openDeliveryCheckout(orders.find(o=>o.orderId===b.dataset.requestId)):requestDecision(b));
-  body.querySelectorAll('[data-open-document]').forEach(b=>b.onclick=()=>openOrders(b.dataset.documentOrder,b.dataset.openDocument));
+  body.querySelectorAll('[data-request-action]').forEach(b=>b.onclick=()=>{
+   if(b.dataset.requestAction!=='delivery')return requestDecision(b);
+   if(root.id==='azCheckoutStage')return openDeliveryCheckout(orders.find(o=>o.orderId===b.dataset.requestId));
+   location.href='/checkout/?order='+encodeURIComponent(b.dataset.requestId)+'&document=quote';
+  });
+  body.querySelectorAll('[data-open-document]').forEach(b=>b.onclick=()=>{
+   if(b.dataset.openDocument==='invoice'&&root.id!=='azCheckoutStage'){location.href='/checkout/?order='+encodeURIComponent(b.dataset.documentOrder)+'&document=invoice';return;}
+   openOrders(b.dataset.documentOrder,b.dataset.openDocument);
+  });
   body.querySelectorAll('[data-download-document]').forEach(b=>b.onclick=async()=>{const message=body.querySelector('[data-document-message]');b.disabled=true;try{const h=await requireLogin();if(!live())return;const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders/'+encodeURIComponent(b.dataset.documentOrder)+'/documents/'+b.dataset.downloadDocument,{headers:h,cache:'no-store'},22000,'Document server'),d=await r.json();if(!live())return;if(!r.ok||!d.ok)throw Error(d.message||'Document unavailable. Refresh this order.');const pdf=await window.AZOBSSPcDocuments1541.pdf();if(live())pdf.download(d.document.pdf,d.document.kind==='quote'?'quotation':d.document.kind);}catch(e){if(live()&&message)message.textContent=e.message||'Download failed. Please retry.';}finally{b.disabled=false;}});
   body.querySelector('[data-payment-report]')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,b=form.querySelector('button'),message=body.querySelector('[data-document-message]');b.disabled=true;try{const h=await requireLogin();if(!live())return;const r=await fetchWithTimeout(BACKEND+'/api/pc-shop/orders/'+encodeURIComponent(focused)+'/payment-report',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({reference:form.elements.reference.value})},22000,'Payment reference'),d=await r.json();if(!live())return;if(!r.ok||!d.ok)throw Error(d.message||'Unable to submit reference.');await openOrders(focused,'invoice');}catch(e){if(live()&&message)message.textContent=e.message||'Unable to submit reference.';b.disabled=false;}});
   body.querySelector('[data-open-pc-list]').onclick=()=>openCart(false);
@@ -268,11 +305,11 @@ async function openOrders(selectedOrderId,selectedDocument=''){
   if(focused)body.querySelector('[data-customer-order]')?.focus({preventScroll:true});
  }catch(e){if(!root.isConnected||generation!==customerViewGeneration)return;const body=root.querySelector('.az-pc-shop-modal-body');if(body)body.innerHTML='<div class="az-pc-shop-empty">'+esc(e.message||e)+'<div class="az-pc-cart-actions"><button class="az-pc-shop-btn primary" data-orders-retry type="button">Try again</button><a class="az-pc-shop-btn" href="/?next='+encodeURIComponent('/PC-Build/?requests=1')+'#login">Sign in</a></div></div>';body?.querySelector('[data-orders-retry]')?.addEventListener('click',()=>openOrders(focused,kind),{once:true});}
 }
-window.addEventListener('azobss:auth-state-ready',()=>{const root=document.querySelector('[data-pc-customer-owner]');if(root&&root.dataset.pcCustomerOwner!==currentCustomerUid()){customerViewGeneration++;closeModal(false);}});
+window.addEventListener('azobss:auth-state-ready',()=>{const root=document.querySelector('[data-pc-customer-owner]');if(root&&root.dataset.pcCustomerOwner!==currentCustomerUid()){customerViewGeneration++;if(root.id==='azCheckoutStage'){delete root.dataset.pcCustomerOwner;root.replaceChildren();window.dispatchEvent(new Event('azobss:checkout-account-change'));}else closeModal(false);}});
 window.azobssPcRequestQuote=()=>openCheckout('quote');window.addEventListener('azobss-pc-list-updated',updateCartFab);window.azobssOpenPcCart=()=>openCart(false);window.azobssOpenPcRequests=openOrders;
 
 async function preflight(){const st=await checkBackend(true);if(!st.ready)console.warn('AZOBSS PC Shop backend not ready:',st.message);else if(st.release&&st.release!=='1506')console.info('AZOBSS PC Shop compatible backend release:',st.release)}
-function init(){if(/^\/cart\/?$/i.test(location.pathname)){
+function init(){if(document.getElementById('azCheckoutStage'))return;if(/^\/cart\/?$/i.test(location.pathname)){
  const entry=new URL(location.href);
  if(entry.searchParams.get('quote')==='1'){
   const url=new URL(location.href);url.searchParams.delete('quote');history.replaceState(null,'',url);openCheckout();

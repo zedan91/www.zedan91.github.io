@@ -1,0 +1,10 @@
+.az-checkout-main .az-pc-shop-modal-body{max-height:none;overflow:visible;padding:0}
+.az-checkout-main .az-pc-checkout-layout{align-items:start}
+.az-checkout-main .az-pc-checkout-grid label{min-width:0}
+.az-checkout-address{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.az-checkout-section{padding:18px 0;border-top:1px solid #34485f}
+.az-checkout-items{padding:0;list-style:none}
+.az-checkout-items li{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid #34485f}
+.az-checkout-items strong{white-space:nowrap}
+.az-checkout-digital{display:flex;flex-wrap:wrap;gap:10px}
+@media(max-width:520px){.az-checkout-address{grid-template-columns:1fr}}
