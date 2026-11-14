@@ -368,7 +368,10 @@
       '<rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path>',
       'Troubleshoot PC Online', 'Remote Windows diagnostics &amp; repair', isOnlinePage);
 
-    [buildLink, physicalLink, onlineLink].forEach(function (item) {
+    var rentalLink = makeLink('/Troubleshoot-PC-Online/#sewa-laptop', 'azLaptopRentalLink', 'az-repair-online-icon',
+      '<rect x="5" y="4" width="14" height="12" rx="2"></rect><path d="M3 19h18"></path>',
+      'Sewa Laptop', 'Pakej harian, mingguan dan bulanan', false);
+    [buildLink, physicalLink, onlineLink, rentalLink].forEach(function (item) {
       dropdown.appendChild(item);
     });
     wrap.appendChild(trigger);

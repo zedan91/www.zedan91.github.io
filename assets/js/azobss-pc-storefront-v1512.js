@@ -18,6 +18,23 @@ function syncHubNav(){document.querySelectorAll('[data-pc-hub-group]').forEach(a
 function setHubGroup(group){if(!HUB_GROUPS.has(group))return;hubGroup=group;page=1;const u=new URL(location.href);u.searchParams.set('section',group);u.searchParams.delete('model');u.searchParams.delete('catalog');u.searchParams.delete('q');u.hash='';history.replaceState(null,'',u);for(const id of ['azPcShopCategory','azPcShopBrand','azPcShopStore','azPcShopUse']){const e=document.getElementById(id);if(e)e.value='all';}const q=document.getElementById('azPcShopSearch');if(q)q.value='';syncHubNav();draw();}
 function manufacturerLink(p){try{const u=new URL(p.specSourceUrl||'');if(u.protocol==='https:'&&/(?:^|\.)(?:intel\.com|amd\.com|asus\.com|gigabyte\.com|msi\.com|tp-link\.com|logitech\.com|epson\.com(?:\.(?:my|sg|br|ph|mt))?|brother\.com\.my|canon|dlink\.com|totolink\.tw|sony\.com|sony\.co\.jp|sony\.jp|audio-technica\.co\.jp|creative\.com|razer\.com|logitechg\.com|netgear\.com|dji\.com|synology\.com|synologydownload\.com|ugreen\.com|kingston\.com|samsung\.com|seagate\.com|westerndigital\.com|coolermaster\.com|deepcool\.com|arctic\.de|corsair\.com|nzxt\.com|tryxzone\.com|tcomastech\.com|invasion\.com\.my)$/.test(u.hostname))return `<a class="az-store-spec-source" href="${esc(u.href)}" target="_blank" rel="noopener">Manufacturer specifications ↗</a>`;}catch(_){}return '';}
 function matchesSearch(p,q){if(!q)return true;const clean=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');const hay=clean([p.name,p.displayName,p.category,brand(p),...(actions.isAdmin?.()===true?[storeName(p)]:[]),...(p.specs||[])].join(' '));return q.split(/\s+/).filter(Boolean).every(s=>hay.includes(clean(s)));}
+const prebuiltCategories=['Laptop','2-in-1 / Convertible','Desktop PC','All-in-One PC','Mini PC'];
+const prebuiltUses={office:'Office & Productivity',creator:'Creator',workstation:'Workstation',gaming:'Gaming'};
+function prebuiltCategory(p){
+ const name=String(p.name||p.displayName||'');
+ if(p.type==='laptop'||p.category==='Laptop')return /\b(?:2[ -]in[ -]1|convertible|Surface Pro|x360|[a-z0-9]+\s+Flip)\b/i.test(name)?prebuiltCategories[1]:prebuiltCategories[0];
+ if(/\b(?:all[ -]in[ -]one|AIO)\b/i.test(name))return prebuiltCategories[3];
+ if(/^Mini PCs?$/i.test(p.category)||/\bmini PC\b/i.test(name))return prebuiltCategories[4];
+ return prebuiltCategories[2];
+}
+function matchesPrebuiltUse(p,use){
+ const name=String(p.name||p.displayName||'');
+ const group=window.AZOBSSPcModel?.useGroup(p);
+ if(use==='gaming')return Boolean(group?.startsWith('gaming-')||/\bgaming\b/i.test(name));
+ if(use==='creator')return /\b(?:ProArt|Creator|Content Creation)\b/i.test(name);
+ if(use==='workstation')return group==='workstation'||/\bworkstation\b/i.test(name);
+ return group==='office'||p.category==='Office PCs'||/\b(?:office|business|productivity|JOI IDEA)\b/i.test(name);
+}
 function brand(p){
  const title=String(p.name||p.displayName||'');
  if(productGroup(p)==='prebuilt'){
@@ -224,8 +241,10 @@ function draw(){
  let cat=document.querySelector('#azPcShopCategory')?.value||'all',b=document.querySelector('#azPcShopBrand')?.value||'all';const sort=document.querySelector('#azPcShopSort')?.value||'recommended';
  const u=new URL(location.href),priceList=u.searchParams.get('catalog')==='pricelist',model=u.searchParams.get('model')||(/^#VNP-/.test(u.hash)?u.hash.slice(1):'');
  if(model){const target=rows.find(p=>p.sourceRecordId===model||p.id===model);if(target){const group=productGroup(target);if(hubGroup!==group){hubGroup=group;page=1;syncHubNav();u.searchParams.set('section',group);history.replaceState(null,'',u);}}}
+ const isPrebuilt=hubGroup==='prebuilt';
+ const categoryFor=p=>isPrebuilt?prebuiltCategory(p):p.category;
  const groupRows=rows.filter(p=>(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId));
- for(const [id,values,label,current] of [['azPcShopCategory',[...new Set(groupRows.map(p=>p.category))].sort(),'All categories',cat],['azPcShopBrand',[...new Set(groupRows.map(brand))].sort(),'All brands',b]]){
+ for(const [id,values,label,current] of [['azPcShopCategory',(isPrebuilt?prebuiltCategories.filter(category=>groupRows.some(p=>categoryFor(p)===category)):[...new Set(groupRows.map(categoryFor))].sort()),'All categories',cat],['azPcShopBrand',[...new Set(groupRows.map(brand))].sort(),'All brands',b]]){
   const select=document.getElementById(id);if(!select)continue;
   select.innerHTML=`<option value="all">${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
   select.value=values.includes(current)?current:'all';if(id==='azPcShopCategory')cat=select.value;else b=select.value;
@@ -251,9 +270,11 @@ function draw(){
    storeSelect.innerHTML='';
   }
  }
- const use=populate(useSelect,Object.entries(useGroups).filter(([id])=>groupKeys.has(id)||id==='drone'&&['accessories','all'].includes(hubGroup)),'All uses');
+ const uses=isPrebuilt?Object.entries(prebuiltUses).filter(([id])=>eligible.some(p=>matchesPrebuiltUse(p,id))):
+  Object.entries(useGroups).filter(([id])=>groupKeys.has(id)||id==='drone'&&['accessories','all'].includes(hubGroup));
+ const use=populate(useSelect,uses,'All uses');
  const filter=JSON.stringify([q,cat,b,sort,hubGroup,priceList,model,store,use]);if(filter!==lastFilter){page=1;lastFilter=filter;}
- let result=rows.filter(p=>(!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()))&&(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId)&&(!model||p.sourceRecordId===model||p.id===model)&&(model||(cat==='all'||p.category===cat)&&(b==='all'||brand(p)===b))&&(model||(store==='all'||p.storeId===store)&&(use==='all'||window.AZOBSSPcModel?.useGroup(p)===use))&&(model||matchesSearch(p,q)));
+ let result=rows.filter(p=>(!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()))&&(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId)&&(!model||p.sourceRecordId===model||p.id===model)&&(model||(cat==='all'||categoryFor(p)===cat)&&(b==='all'||brand(p)===b))&&(model||(store==='all'||p.storeId===store)&&(use==='all'||(isPrebuilt?matchesPrebuiltUse(p,use):window.AZOBSSPcModel?.useGroup(p)===use)))&&(model||matchesSearch(p,q)));
  const priority={laptop:0,desktop:1,hardware:2};
  const categoryRank=p=>window.AZOBSSPcModel?.rank(p)??8;
  result.sort(sort==='recommended'?(a,b)=>(priority[a.type]??2)-(priority[b.type]??2)||(hubGroup==='components'?categoryRank(a)-categoryRank(b):0)||a.price-b.price:sort==='price-desc'?(a,b)=>b.price-a.price:sort==='name'?(a,b)=>a.name.localeCompare(b.name):(a,b)=>a.price-b.price);
