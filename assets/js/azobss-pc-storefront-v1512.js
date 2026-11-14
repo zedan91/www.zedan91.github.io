@@ -163,6 +163,22 @@ function render(next,callbacks){
 }
 function draw(){
  const grid=document.querySelector('#azPcShopGrid');if(!grid)return;
+ const policy=window.AZOBSSPcVisibility?.status?.()||'ready';
+ const loading=policy==='loading'||actions.catalogMode==='loading';
+ const blocked=policy!=='ready'||(!rows.length&&actions.catalogMode==='unavailable');
+ for(const id of ['azStorePageTop','azStorePageBottom']){
+  const pagination=document.getElementById(id);if(pagination)pagination.hidden=loading||blocked;
+ }
+ if(loading||blocked){
+  document.querySelector('#azStoreResults').textContent='';
+  grid.innerHTML=loading?'<div class="az-pc-shop-empty" role="status">Memuatkan katalog…</div>':'<div class="az-pc-shop-empty" role="status">Katalog belum dapat dimuatkan. <button class="az-pc-shop-btn" type="button" data-store-retry>Cuba Lagi</button></div>';
+  grid.querySelector?.('[data-store-retry]')?.addEventListener('click',event=>{
+   event.currentTarget.disabled=true;
+   event.currentTarget.textContent='Memuatkan…';
+   actions.retry?.();
+  });
+  return;
+ }
  const q=(document.querySelector('#azPcShopSearch')?.value||'').trim().toLowerCase();
  let cat=document.querySelector('#azPcShopCategory')?.value||'all',b=document.querySelector('#azPcShopBrand')?.value||'all';const sort=document.querySelector('#azPcShopSort')?.value||'recommended';
  const u=new URL(location.href),priceList=u.searchParams.get('catalog')==='pricelist',model=u.searchParams.get('model')||(/^#VNP-/.test(u.hash)?u.hash.slice(1):'');
@@ -204,7 +220,8 @@ function draw(){
  const start=(page-1)*PAGE_SIZE,shown=result.slice(start,start+PAGE_SIZE);
  const layout=document.getElementById('azPcShopLayout')?.value||'medium';
  grid.classList.add('az-store-grid');if(grid.dataset)grid.dataset.layout=layout;
- grid.innerHTML=shown.length?shown.map(layout==='list'?listRow:card).join(''):'<div class="az-pc-shop-empty">No matching products. Try another category or search.</div>';
+ grid.innerHTML=shown.length?(actions.catalogMode==='unavailable'?'<div class="az-pc-shop-empty">Memaparkan harga rujukan. <button class="az-pc-shop-btn" type="button" data-store-retry>Cuba Lagi</button></div>':'')+shown.map(layout==='list'?listRow:card).join(''):'<div class="az-pc-shop-empty">No matching products. Try another category or search.</div>';
+ grid.querySelector?.('[data-store-retry]')?.addEventListener('click',()=>actions.retry?.());
  document.querySelector('#azStoreResults').textContent=result.length?`${start+1}–${Math.min(start+PAGE_SIZE,result.length)} of ${result.length.toLocaleString('ms-MY')} options`:'0 options';
  const nav=`<button type="button" data-store-page="${page-1}" ${page<=1?'disabled':''}>← Previous</button><span>Page ${page} / ${pages}</span><button type="button" data-store-page="${page+1}" ${page>=pages?'disabled':''}>Next →</button>`;
  for(const id of ['azStorePageTop','azStorePageBottom'])document.getElementById(id).innerHTML=nav;
@@ -213,7 +230,7 @@ function draw(){
  else if(!model)sharedFocused='';
  window.dispatchEvent?.(new CustomEvent('azobss:pc-catalog-render'));
 }
-window.addEventListener?.('azobss:pc-visibility-change',()=>{if(rows.length)draw();});
+window.addEventListener?.('azobss:pc-visibility-change',draw);
 window.addEventListener?.('azobss:source-prices-change',()=>{if(rows.length)draw();});
 window.AZOBSSPcStorefront={render};Object.assign(window.AZOBSSPcStorefront,{productGroup,setHubGroup});
 })();
