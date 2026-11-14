@@ -112,8 +112,11 @@
       e.preventDefault();const button=e.submitter;button.disabled=true;
       try{
         const measured=readPacking(f),some=Object.values(measured).some(Boolean);
+        const subtotal=card.querySelector('[data-f="confirmedItemTotal"]');
+        const itemTotal=subtotal?Number(subtotal.value):Number(order.confirmedItemTotal);
+        if(!Number.isFinite(itemTotal)||itemTotal<=0)throw Error('Semak harga setiap barang sebelum mengira caj penghantaran.');
         const input={vehicle:f.vehicle.value,source:f.source.value,cost:f.cost.value,roadKm:f.roadKm.value,confirmed:f.confirmed.checked,
-          itemTotal:card.querySelector('[data-f="confirmedItemTotal"]').value,
+          itemTotal,
           ...(some?{measured:{...measured,fragile:f.fragile.checked,handling:f.handling.value}}:{})};
         const {rate}=await call('shipping-quotes/'+encodeURIComponent(order.orderId),'POST',input);
         card.querySelector('[data-f="shippingCharge"]').value=rate.charge;

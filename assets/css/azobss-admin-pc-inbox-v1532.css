@@ -18,3 +18,5 @@
 .az-pc-quote-quick [role=status]{color:#fecaca}
 .az-pc-admin-extra{margin-top:12px}
 .az-pc-admin-extra summary{cursor:pointer;color:#9ed9f8;padding:8px 0}
+
+.az-pc-item-prices{display:grid;gap:10px;margin-bottom:12px}.az-pc-item-price{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.az-pc-item-price label{display:grid;gap:4px;min-width:0}.az-pc-item-price label span{font-size:11px;color:#a7bcd0}.az-pc-item-price input{width:min(100%,180px);padding:7px;border:1px solid #38516c;border-radius:8px;background:#071421;color:#fff}.az-pc-item-price output{padding:7px 0;font-weight:700;white-space:nowrap}

@@ -26,3 +26,43 @@ test('legacy verified receipts can be recovered read-only without migrating or c
 test('an older unpaid invoice can be renewed only after stock confirmation and paid without losing its original number or amount',async()=>{
  const f=fixture();try{const id='AZO-2025-000002';f.saved.set('pcShopOrders/'+id,{orderId:id,uid:'customer-1',intent:'checkout',status:'awaiting-payment',paymentStatus:'pending',fulfillmentStatus:'order-received',priceConfirmed:true,shippingConfirmationRequired:false,shippingMethod:'Pickup at AZOBSS',confirmedItemTotal:120,confirmedTotal:120,referenceSubtotal:120,invoiceNo:'AZI-2025-000002',receiptNo:'',items:[],createdAtMs:1});assert.equal(documentState(f.row(id)).canPay,false);assert.equal((await f.patch(id,{reconfirmInvoice:true})).body.error,'supplier_stock_required');const renewed=await f.patch(id,{reconfirmInvoice:true,stockConfirmed:true});assert.equal(renewed.status,200);assert.equal(renewed.body.order.canPay,true);assert.equal(renewed.body.order.invoiceNo,'AZI-2025-000002');assert.equal(renewed.body.order.confirmedTotal,120);const paid=await f.patch(id,{paymentStatus:'paid'});assert.equal(paid.body.order.receiptAvailable,true);assert.equal((await f.call('GET','/api/pc-shop/notifications')).body.items[0].kind,'receipt');assert.equal((await f.patch(id,{paymentStatus:'pending'})).body.error,'payment_already_verified');}finally{f.close();}
 });
+
+test('confirmed line prices use trusted quantities and stay identical across quotation, invoice and receipt',async()=>{
+ const f=fixture();
+ try{
+  const id=(await f.create()).body.order.orderId,key='pcShopOrders/'+id,row=f.row(id);
+  row.items.push({...row.items[0],productId:'fixture-second',name:'Second Fixture',qty:3});
+  f.saved.set(key,row);
+  const base={publishQuote:true,stockConfirmed:true,shippingConfirmed:true};
+  const first={productId:'fixture-hardware',unitPrice:'100.10'},second={productId:'fixture-second',unitPrice:'33.27'};
+  for(const prices of [[first],[second,first],[{...first,unitPrice:''},second],[{...first,unitPrice:'100.101'},second]]){
+   assert.equal((await f.patch(id,{...base,itemPrices:prices})).status,400);
+  }
+  assert.equal((await f.patch(id,{...base,itemPrices:[first,second],confirmedItemTotal:300})).body.error,'item_total_mismatch');
+  const published=await f.patch(id,{...base,itemPrices:[{...first,qty:99},second]});
+  assert.equal(published.status,200);
+  const quoteVersion=published.body.order.quoteVersion;
+  assert.equal(published.body.order.confirmedItemTotal,300.01);
+  const path='/api/pc-shop/orders/'+id+'/documents/';
+  const quote=(await f.call('GET',path+'quote')).body.document;
+  assert.deepEqual(quote.pdf.items.map(item=>[item.qty,item.unitPrice,item.amount]),[[2,100.1,200.2],[3,33.27,99.81]]);
+  assert.equal(quote.pdf.items.length,2);
+  await f.decision(id,{action:'accept',quoteVersion});
+  const revised=await f.patch(id,{...base,itemPrices:[{...first,unitPrice:'100.13'},{...second,unitPrice:'33.25'}]});
+  assert.equal(revised.body.order.confirmedItemTotal,300.01);
+  assert.equal((await f.decision(id,{action:'accept',quoteVersion})).body.error,'quote_changed');
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).body.error,'customer_approval_required');
+  assert.equal((await f.decision(id,{action:'accept',quoteVersion:revised.body.order.quoteVersion})).status,200);
+  assert.equal((await f.patch(id,{issueInvoice:true,stockConfirmed:true})).status,200);
+  assert.equal((await f.patch(id,{...base,itemPrices:[first,second]})).body.error,'invoice_locked');
+  assert.equal((await f.patch(id,{paymentStatus:'paid'})).status,200);
+  const docs=await Promise.all(['quote','invoice','receipt'].map(async kind=>(await f.call('GET',path+kind)).body.document));
+  for(const d of docs){
+   assert.deepEqual(d.pdf.items.map(item=>[item.qty,item.unitPrice,item.amount]),[[2,100.13,200.26],[3,33.25,99.75]]);
+   assert.equal(d.pdf.gross,300.01);
+   assert.ok(!JSON.stringify(d).includes('unitCost'));
+  }
+  const sale=[...f.saved].find(([id])=>id.startsWith('purchaseLogs/'))[1];
+  assert.deepEqual(sale.items.map(item=>item.unitPrice),[100.13,33.25]);
+ }finally{f.close();}
+});

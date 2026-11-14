@@ -8,7 +8,7 @@ async function fetchWithTimeout(url,options={},ms=25000,label='Server'){const ct
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const money=n=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(n)||0);
 async function headers(){const h={'Content-Type':'application/json'};try{if(typeof window.azobssGetFirebaseAuthHeaders==='function')Object.assign(h,await window.azobssGetFirebaseAuthHeaders(true))}catch(_){}try{const key=sessionStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssAdminApiKey')||localStorage.getItem('azobssLuckyDrawAdminKey')||'';if(key)h['x-admin-key']=key}catch(_){}return h}
-function style(){legacyStyle();let css=document.querySelector('#azPcAdminInbox1532Css');if(!css){document.head.insertAdjacentHTML('beforeend','<link id="azPcAdminInbox1532Css" rel="stylesheet" href="/assets/css/azobss-admin-pc-inbox-v1532.css?v=1566">');}else document.head.appendChild(css);}
+function style(){legacyStyle();let css=document.querySelector('#azPcAdminInbox1532Css');if(!css){document.head.insertAdjacentHTML('beforeend','<link id="azPcAdminInbox1532Css" rel="stylesheet" href="/assets/css/azobss-admin-pc-inbox-v1532.css?v=1577">');}else document.head.appendChild(css);}
 function legacyStyle(){if(document.querySelector('#azPcAdmin1487Style'))return;document.head.insertAdjacentHTML('beforeend',`<style id="azPcAdmin1487Style">.az-pc-admin-modal{position:fixed;inset:0;z-index:2147483000;background:rgba(2,6,23,.75);backdrop-filter:none;display:flex;align-items:center;justify-content:center;padding:16px}.az-pc-admin-card{width:min(1180px,calc(100vw - 24px));max-height:92vh;overflow:auto;border:1px solid #334155;border-radius:20px;background:#07111f;color:#fff;box-shadow:0 30px 90px rgba(0,0,0,.55)}.az-pc-admin-head{position:sticky;top:0;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;background:#0b1728;border-bottom:1px solid #26384e}.az-pc-admin-head h3{margin:0}.az-pc-admin-close{width:36px;height:36px;border:0;border-radius:10px;background:#1e293b;color:#fff;font-size:20px;cursor:pointer}.az-pc-admin-tools{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid #21354d}.az-pc-admin-tools input,.az-pc-admin-tools select{height:38px;border:1px solid #38516c;border-radius:9px;background:#0a192a;color:#fff;padding:0 10px}.az-pc-admin-list{display:grid;gap:10px;padding:14px}.az-pc-admin-order{border:1px solid #2b435f;border-radius:14px;background:#0a192a;padding:12px}.az-pc-admin-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.az-pc-admin-id{font-weight:950}.az-pc-admin-meta{font-size:10px;color:#93a8bd;margin-top:3px}.az-pc-admin-doc{display:inline-flex;align-items:center;gap:6px;margin-top:5px;padding:4px 7px;border:1px solid #334155;border-radius:999px;font-size:10px;color:#cbd5e1}.az-pc-admin-doc.ready{border-color:#166534;color:#86efac}.az-pc-admin-items{font-size:11px;color:#c8d7e5;line-height:1.45;margin-top:8px}.az-pc-admin-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-top:10px}.az-pc-admin-grid label{display:grid;gap:4px;font-size:9px;color:#93a8bd;text-transform:uppercase;font-weight:900}.az-pc-admin-grid input,.az-pc-admin-grid select{width:100%;box-sizing:border-box;height:36px;border:1px solid #36516f;border-radius:8px;background:#071522;color:#fff;padding:0 8px;font-size:11px}.az-pc-admin-grid .wide{grid-column:span 2}.az-pc-admin-stock{display:flex;align-items:center;gap:6px;font-size:12px}.az-pc-admin-stock input{width:18px;height:18px}.az-pc-admin-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px}.az-pc-admin-btn{border:1px solid #36516f;border-radius:9px;background:#102239;color:#fff;padding:8px 11px;font-weight:850;cursor:pointer}.az-pc-admin-btn:disabled{opacity:.55;cursor:wait}.az-pc-admin-btn.primary{background:#16a34a;border-color:#16a34a}.az-pc-admin-btn.convert{background:#4338ca;border-color:#4f46e5}.az-pc-admin-btn.warn{background:#713f12;border-color:#a16207}.az-pc-admin-empty{padding:30px;text-align:center;color:#94a3b8}@media(max-width:900px){.az-pc-admin-grid{grid-template-columns:1fr 1fr}.az-pc-admin-grid .wide{grid-column:1/-1}}body.az-pc-admin-modal-open{overflow:hidden!important}</style>`)}
 function label(v){return String(v||'').replace(/-/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
 function itemTotalFor(o){const confirmed=Number(o.confirmedItemTotal||0);if(confirmed>0)return confirmed;const grand=Number(o.confirmedTotal||0),ship=Number(o.shippingCharge||0);if(grand>0)return Math.max(0,grand-ship);return Number(o.referenceSubtotal||0)}
@@ -37,9 +37,18 @@ function fixedDeliverySelect(o){
   (!o.fixedDeliveryOffer?'<option value="manual">Semak caj ikut alamat / Lalamove</option>':'')+
   '</select></label><p class="az-pc-admin-meta">Semak cadangan ikut saiz dan jumlah bungkusan.</p>';
 }
+function itemPriceFields(o){
+ const items=o.items||[],legacyQuote=o.quoteSentAtMs&&!items.every(item=>Number.isFinite(item.confirmedUnitPrice));
+ return '<div class="az-pc-item-prices">'+items.map((item,index)=>{
+  const price=Number.isFinite(item.confirmedUnitPrice)?item.confirmedUnitPrice:legacyQuote?'':item.unitPrice;
+  const label=item.name+(item.optionLabel?' · '+item.optionLabel:'')+' × '+item.qty;
+  return '<div class="az-pc-item-price"><label>'+esc(label)+'<span>Harga jualan seunit (RM)</span><input data-item-price="'+index+'" type="number" step="0.01" min="0" max="10000000" required value="'+esc(price??'')+'"></label><output data-item-amount="'+index+'"></output></div>';
+ }).join('')+(legacyQuote?'<p class="az-pc-admin-meta">Sebut harga lama menggunakan harga pakej. Isi harga jualan sebenar untuk menerbitkan pecahan baharu.</p>':'')+'</div>';
+}
 function requestRowHtml(o,{revise=false}={}){
  const issued=!!o.invoiceNo,accepted=o.customerApproval==='accepted'&&o.customerApprovedQuoteVersion===o.quoteVersion,expired=Number(o.quoteExpiresAtMs)>0&&Number(o.quoteExpiresAtMs)<=Date.now();
- const itemText=requestItemsHtml(o.items);
+ const itemText=requestItemsHtml(o.items)+(issued&&o.items?.some(item=>Number.isFinite(item.confirmedUnitPrice))?
+  '<p class="az-pc-admin-meta">Harga seunit yang dipersetujui</p><ul>'+o.items.map(item=>'<li>'+esc(item.name)+' × '+Number(item.qty)+' · '+money(item.confirmedUnitPrice)+' seunit</li>').join('')+'</ul>':'');
  const pickup=!!o.delivery?.pickupLocation;
  const pickupFields=pickup?`<label class="wide">Waktu cadangan pelanggan (MYT)<input value="${esc(o.delivery.pickupRequestedSlot?.replace('T',' ')||'–')}" readonly></label><label class="wide">Sahkan waktu pengambilan (MYT)<input data-f="pickupConfirmedSlot" type="datetime-local" value="${esc(o.delivery.pickupConfirmedSlot||'')}"></label>`:'';
  const fulfillment=pickup?['order-received','processing','packed','ready-for-pickup','completed','cancelled']:['order-received','processing','packed','shipped','in-transit','delivered','completed','cancelled'];
@@ -51,7 +60,7 @@ function requestRowHtml(o,{revise=false}={}){
  const stock='<label class="az-pc-admin-stock"><input type="checkbox" data-f="stockConfirmed"> '+(canInvoice?'Saya semak semula stok pembekal':'Saya sudah semak stok pembekal')+'</label>';
  const actions=issued?issuedActions1541(o):closed?'':canInvoice
   ? stock+'<button class="az-pc-admin-btn primary" data-issue-invoice type="button">Keluarkan Invois</button><button class="az-pc-admin-btn" data-revise-quote type="button">Ubah Sebut Harga</button>'
-  : '<div class="az-pc-admin-grid"><label>Harga akhir barang<input data-f="confirmedItemTotal" type="number" min="0.01" step="0.01" value="'+itemTotalFor(o)+'"></label>'+fixedDeliverySelect(o)+'</div>'+
+  : itemPriceFields(o)+'<div class="az-pc-admin-grid"><label>Subtotal barang (RM)<input data-f="confirmedItemTotal" type="number" step="0.01" value="" readonly></label>'+fixedDeliverySelect(o)+'</div>'+
     '<p class="az-pc-admin-meta" data-fixed-delivery-summary></p>'+stock+
     '<button class="az-pc-admin-btn primary" data-publish-quote type="button">'+(waiting?'Kemas Kini Sebut Harga':'Terbitkan Sebut Harga')+'</button>';
  const quick=!issued&&!closed?'<section class="az-pc-quote-quick" aria-label="Tindakan sebut harga">'+actions+'<p role="status" data-quote-result></p></section>':'';
@@ -61,7 +70,7 @@ function requestRowHtml(o,{revise=false}={}){
 async function saveRequest(card,mode){
  const current=currentOrder(card.dataset.order)||{},selector=mode==='publish'?'[data-publish-quote]':mode==='invoice'?'[data-issue-invoice]':mode==='renew'?'[data-renew-invoice]':mode==='payment'?'[data-confirm-payment]':'[data-save]',button=card.querySelector(selector);if(!button)return;
  const val=n=>card.querySelector(`[data-f="${n}"]`)?.value||'',checked=n=>card.querySelector(`[data-f="${n}"]`)?.checked===true;
- const payload=!current.requestOnly&&['renew','payment'].includes(mode)?{}:{confirmedItemTotal:Number(val('confirmedItemTotal')||itemTotalFor(current)),shippingCharge:Number(val('shippingCharge')),shippingCost:Number(val('shippingCost')),fulfillmentStatus:val('fulfillmentStatus'),courier:val('courier'),trackingNumber:val('trackingNumber'),adminNote:val('adminNote')};
+ const payload=!current.requestOnly&&['renew','payment'].includes(mode)?{}:{shippingCharge:Number(val('shippingCharge')),shippingCost:Number(val('shippingCost')),fulfillmentStatus:val('fulfillmentStatus'),courier:val('courier'),trackingNumber:val('trackingNumber'),adminNote:val('adminNote')};
  if(current.delivery?.pickupLocation)payload.pickupConfirmedSlot=val('pickupConfirmedSlot');
  if(current.invoiceNo||val('paymentStatus')==='cancelled')payload.paymentStatus=val('paymentStatus');
  if(mode==='payment'){if(!checked('paymentVerified')){alert('Verify the money received in the bank and tick the payment checkbox first.');return;}Object.assign(payload,{paymentStatus:'paid'});}
@@ -69,6 +78,15 @@ async function saveRequest(card,mode){
  if(mode==='save'&&payload.paymentStatus==='paid'&&current.paymentStatus!=='paid'&&!checked('paymentVerified')){alert('Use Confirm Payment & Issue Receipt after verifying the bank payment.');return;}
  const result=card.querySelector('[data-quote-result]');
  const report=message=>{if(result)result.textContent=message;else alert(message);};
+ if(mode==='publish'){
+  const inputs=[...card.querySelectorAll('[data-item-price]')];
+  const invalid=inputs.find(input=>!input.checkValidity());
+  if(invalid||!inputs.length||Number(val('confirmedItemTotal'))<=0){
+   report('Sahkan harga seunit setiap barang. Subtotal mesti melebihi RM0.');invalid?.reportValidity();return;
+  }
+  payload.confirmedItemTotal=Number(val('confirmedItemTotal'));
+  payload.itemPrices=inputs.map(input=>({productId:current.items[Number(input.dataset.itemPrice)].productId,unitPrice:input.value}));
+ }
  if(mode==='publish'||mode==='invoice'){
   if(!checked('stockConfirmed')){report('Tandakan pengesahan stok pembekal dahulu.');return;}
   const vehicle=val('deliveryVehicle');
@@ -150,15 +168,28 @@ function bindDetail(){const box=document.querySelector('#azPcInboxDetail');if(!b
   bindDetail();
  });
  const vehicle=box.querySelector('[data-f="deliveryVehicle"]'),summary=box.querySelector('[data-fixed-delivery-summary]');
- if(vehicle&&summary){
-  const price=box.querySelector('[data-f="confirmedItemTotal"]');
-  const showCharge=()=>{
-   const fee=currentOrder(selectedId)?.fixedDeliveryRates?.[vehicle.value];
-   summary.textContent=fee!=null?'Penghantaran '+money(fee)+' · Jumlah '+money(Number(price?.value||0)+fee)+' · Ambil sendiri RM0':vehicle.value==='manual'?'Caj khas disahkan selepas alamat tersedia.':'';
+ const subtotal=box.querySelector('.az-pc-quote-quick [data-f="confirmedItemTotal"]');
+ if(subtotal){
+  const inputs=[...box.querySelectorAll('[data-item-price]')];
+  const items=currentOrder(selectedId)?.items||[];
+  const updatePrices=()=>{
+   let cents=0,complete=inputs.length>0;
+   for(const input of inputs){
+    const index=Number(input.dataset.itemPrice),output=box.querySelector('[data-item-amount="'+index+'"]');
+    const valid=input.checkValidity(),line=valid?Math.round(Number(input.value)*100)*Number(items[index]?.qty||1):0;
+    if(!valid)complete=false;
+    cents+=line;
+    output.value=valid?money(line/100):'—';
+   }
+   subtotal.value=complete?(cents/100).toFixed(2):'';
+   if(vehicle&&summary){
+    const fee=currentOrder(selectedId)?.fixedDeliveryRates?.[vehicle.value];
+    summary.textContent=fee!=null?'Penghantaran '+money(fee)+(complete?' · Jumlah '+money(cents/100+fee):'')+' · Ambil sendiri RM0':vehicle.value==='manual'?'Caj khas disahkan selepas alamat tersedia.':'';
+   }
   };
-  vehicle.addEventListener('change',showCharge);
-  price?.addEventListener('input',showCharge);
-  showCharge();
+  inputs.forEach(input=>input.addEventListener('input',updatePrices));
+  vehicle?.addEventListener('change',updatePrices);
+  updatePrices();
  }const rate=box.querySelector('[data-delivery-rate]');if(rate)rate.onclick=()=>{const card=rate.closest('[data-order]');window.AZOBSSTechDeliveryAdmin?.quote(BACKEND,headers,currentOrder(card.dataset.order),card);};const booking=box.querySelector('[data-carrier-booking]');if(booking)booking.onclick=async()=>{const order=currentOrder(booking.closest('[data-order]').dataset.order);if(await window.AZOBSSTechDeliveryAdmin?.booking(BACKEND,headers,order,booking))await reloadAfterSave();};box.querySelectorAll('input:not([readonly]),select,textarea').forEach(e=>{e.addEventListener('input',()=>{formDirty=true;});e.addEventListener('change',()=>{formDirty=true;});});box.querySelectorAll('[data-publish-quote]').forEach(b=>b.onclick=()=>saveRequest(b.closest('[data-order]'),'publish'));box.querySelectorAll('[data-issue-invoice]').forEach(b=>b.onclick=()=>saveRequest(b.closest('[data-order]'),'invoice'));box.querySelectorAll('[data-renew-invoice]').forEach(b=>b.onclick=()=>saveRequest(b.closest('[data-order]'),'renew'));box.querySelectorAll('[data-confirm-payment]').forEach(b=>b.onclick=()=>saveRequest(b.closest('[data-order]'),'payment'));box.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>save(b.closest('[data-order]'),'save'));box.querySelectorAll('[data-confirm-price]').forEach(b=>b.onclick=()=>save(b.closest('[data-order]'),'confirm'));box.querySelectorAll('[data-convert]').forEach(b=>b.onclick=()=>save(b.closest('[data-order]'),'convert'));box.querySelector('[data-close-detail]')?.addEventListener('click',()=>closeDetail());box.querySelector('[data-customer-history]')?.addEventListener('click',()=>{const uid=selectedRecord.uid,name=selectedRecord.customerName;if(closeDetail())filterCustomer(uid,name);});}
 async function openDetail(id,{force=false,focus=true}={}){
  if(!force&&formDirty&&!confirm('Discard unsaved changes and open another request?'))return;
