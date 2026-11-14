@@ -258,7 +258,12 @@ function draw(){
  grid.querySelector?.('[data-store-retry]')?.addEventListener('click',()=>actions.retry?.());
  document.querySelector('#azStoreResults').textContent=result.length?`${start+1}–${Math.min(start+PAGE_SIZE,result.length)} of ${result.length.toLocaleString('ms-MY')} options`:'0 options';
  const nav=paginationMarkup(page,pages);
- for(const id of ['azStorePageTop','azStorePageBottom'])document.getElementById(id).innerHTML=nav;
+ for(const id of ['azStorePageTop','azStorePageBottom']){
+  const pager=document.getElementById(id),key=page+'/'+pages;
+  if(pager.dataset?.pagination===key)continue;
+  pager.innerHTML=nav;
+  if(pager.dataset)pager.dataset.pagination=key;
+ }
  const target=model&&[...(grid.querySelectorAll?.('[data-store-product]')||[])].find(el=>el.dataset.storeProduct===model||shown.find(p=>p.id===el.dataset.storeProduct)?.sourceRecordId===model);
  if(target){target.classList.add('az-store-shared');if(sharedFocused!==model){sharedFocused=model;requestAnimationFrame(()=>grid.querySelector('.az-store-shared')?.scrollIntoView({block:'center'}));}}
  else if(!model)sharedFocused='';
