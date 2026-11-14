@@ -6,8 +6,12 @@ const useGroups={office:'Office',drone:'Drones',nas:'NAS & Servers',workstation:
 const storeName=p=>window.AZOBSSPcModel?.stores?.[p.storeId]||p.storeName||p.storeId||'Other';
 let sharedFocused='';
 const PAGE_SIZE=24;let page=1,lastFilter='',rows=[],actions={},bound=false;
-const HUB_GROUPS=new Set(['prebuilt','components','accessories','all']);
-let hubGroup=new URL(window.location?.href||'https://www.azobss.com/PC-Build/').searchParams.get('section')||'prebuilt';if(!HUB_GROUPS.has(hubGroup))hubGroup='prebuilt';
+const HUB_GROUPS=new Set(['all','prebuilt','components','accessories']);
+function hubGroupFromUrl(href){
+ const section=new URL(href).searchParams.get('section');
+ return HUB_GROUPS.has(section)?section:'all';
+}
+let hubGroup=hubGroupFromUrl(window.location?.href||'https://www.azobss.com/PC-Build/');
 const COMPONENT_CATEGORIES=new Set(['CPU','Motherboard','RAM','SSD','Hard Drive','Power Supply','Cooling','Casing','Case','GPU','Intel CPUs','AMD CPUs','Desktop Memory','Laptop Memory','Sound Cards','Optical Drives','CPU Coolers','Liquid Cooling','Cases','Case Fans','SATA SSDs','NVMe SSDs','External SSDs','Hard Drives','Portable Hard Drives','Desktop External Drives','Power Supplies','Intel Motherboards','AMD Motherboards','Graphics Cards','Workstation Graphics','NAS & Servers','NAS Enclosures']);
 function productGroup(p){if(window.AZOBSSPcModel?.category(p)==='NAS & Servers')return 'components';if(['prebuilt','components','accessories'].includes(p.catalogGroup))return p.catalogGroup;if(p.type==='laptop'||p.type==='desktop'||/WORKSTATION PC PACKAGE/i.test(p.name||''))return 'prebuilt';return COMPONENT_CATEGORIES.has(p.category)?'components':'accessories';}
 function syncHubNav(){document.querySelectorAll('[data-pc-hub-group]').forEach(a=>{if(a.dataset.pcHubGroup===hubGroup)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});}
@@ -108,7 +112,7 @@ function render(next,callbacks){
  const toolbar=document.querySelector('.az-pc-shop-toolbar');
  if(!document.querySelector('#azPcShopBrand')){
   toolbar?.insertAdjacentHTML('beforeend','<select class="az-pc-shop-control" id="azPcShopBrand" aria-label="Brand"><option value="all">All brands</option></select><select class="az-pc-shop-control" id="azPcShopStore" aria-label="Supplier" hidden disabled></select><select class="az-pc-shop-control" id="azPcShopUse" aria-label="Use"></select><select class="az-pc-shop-control" id="azPcShopLayout" aria-label="View switcher"><option value="medium">Grid · Medium</option><option value="large">Grid · Large</option><option value="list">List · Details</option></select>');
-  const controlsMarkup='<div class="az-store-results" role="status" aria-live="polite" id="azStoreResults"></div><nav class="az-store-pagination" id="azStorePageTop" aria-label="Product pages"></nav>';
+  const controlsMarkup='<div class="az-store-page-row"><div class="az-store-results" role="status" aria-live="polite" id="azStoreResults"></div><nav class="az-store-pagination" id="azStorePageTop" aria-label="Product pages"></nav></div>';
   if(toolbar){
    toolbar.insertAdjacentHTML('beforebegin','<div id="azStoreControls"></div>');
    const controls=toolbar.previousElementSibling;
@@ -134,14 +138,29 @@ function render(next,callbacks){
   const header=document.querySelector('.market-sticky-bar');
   const controls=document.getElementById('azStoreControls');
   const hardware=controls?.parentElement;
-  if(header&&hardware){
-   const size=()=>hardware.style.setProperty('--az-store-header',header.getBoundingClientRect().bottom+'px');
+  const hub=document.querySelector('.az-pc-hub-nav');
+  if(header&&hardware&&hub){
+   const size=()=>{
+    hub.style.setProperty('--az-pc-nav-top',header.getBoundingClientRect().bottom+'px');
+    hardware.style.setProperty('--az-store-header',(header.getBoundingClientRect().bottom+hub.getBoundingClientRect().height)+'px');
+   };
    size();
-   if(typeof ResizeObserver==='function')new ResizeObserver(size).observe(header);
+   if(typeof ResizeObserver==='function'){
+    const observer=new ResizeObserver(size);
+    observer.observe(header);
+    observer.observe(hub);
+   }
   }
 
-  document.addEventListener('click',e=>{const a=e.target.closest('[data-pc-hub-group]');if(a){e.preventDefault();setHubGroup(a.dataset.pcHubGroup);}});
-  window.addEventListener('popstate',()=>{const g=new URL(location.href).searchParams.get('section')||'prebuilt';if(HUB_GROUPS.has(g)){hubGroup=g;page=1;syncHubNav();draw();}});
+  document.addEventListener('click',e=>{
+   const a=e.target.closest('[data-pc-hub-group]');
+   if(!a||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+   e.preventDefault();
+   setHubGroup(a.dataset.pcHubGroup);
+   if(hardware&&controls.getBoundingClientRect().top>hardware.getBoundingClientRect().top+1)
+    hardware.scrollIntoView({block:'start',behavior:'instant'});
+  });
+  window.addEventListener('popstate',()=>{hubGroup=hubGroupFromUrl(location.href);page=1;syncHubNav();draw();});
   document.querySelector('#az-pc-hardware-shop').addEventListener('click',e=>{
    const button=e.target.closest('button');if(!button)return;
    if(button.dataset.storePage){

@@ -162,7 +162,7 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 .card:hover .build-media.pc-clean-crop img,.card:hover .build-media.pc-clean-crop-strong img,.card:hover .build-media.pc-focus img{transform:none!important}
 .build-media.pc-clean-crop::after,.build-media.pc-clean-crop-strong::after{display:none!important}
 </style>
-<link rel="stylesheet" href="/assets/css/azobss-pc-hub-v1526.css?v=1529">
+<link rel="stylesheet" href="/assets/css/azobss-pc-hub-v1526.css?v=1578">
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
@@ -203,10 +203,11 @@ a{color:inherit}.wrap{width:min(1220px,calc(100% - 28px));margin:auto}
 <main class="wrap">
 <h1 class="az-pc-sr-only">Tech Products</h1>
 <nav class="az-pc-hub-nav" aria-label="Tech Products">
+<a href="/PC-Build/?section=all" data-pc-hub-group="all">All</a>
 <a href="/PC-Build/?section=prebuilt" data-pc-hub-group="prebuilt">Prebuilt PCs &amp; Laptops</a>
-<a href="/PC-Build/Build-Sendiri/" data-pc-hub-build>Build PC</a>
 <a href="/PC-Build/?section=components" data-pc-hub-group="components">Components</a>
 <a href="/PC-Build/?section=accessories" data-pc-hub-group="accessories">Accessories</a>
+<a href="/PC-Build/Build-Sendiri/" data-pc-hub-build>Build PC</a>
 </nav>
 
 
@@ -514,17 +515,17 @@ window.addEventListener('azobss:source-prices-change',()=>schedulePcRender(false
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;window.dispatchEvent(new Event('azobss:pc-admin-view-change'));schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1577" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1578" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
-<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1570">
+<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1578">
 <link rel="stylesheet" href="/assets/css/azobss-source-prices-v1520.css?v=1546">
 <script defer src="/assets/js/azobss-source-prices-v1520.js?v=1564"></script>
-<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1576"></script>
+<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1578"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-documents-v1541.css?v=1562">
 <script defer src="/assets/js/azobss-pc-documents-v1541.js?v=1564"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">
 <script defer src="/assets/js/azobss-tech-delivery.js?v=1563"></script>
-<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1577"></script>
+<script defer src="/assets/js/azobss-pc-shop-v1487.js?v=1578"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
 </body></html>
