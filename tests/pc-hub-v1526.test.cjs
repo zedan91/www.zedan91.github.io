@@ -81,6 +81,7 @@ test('the four hub sections filter the same products and restore all brands/cate
  const devices=[
   p('gpu-a','GeForce fixture','components','GPU'),
   p('gpu-b','Radeon fixture','components','Graphics Cards'),
+  p('gpu-accessory','Cooler Master GPU Brace','components','GPU'),
   p('lcd','27 inch IPS fixture','accessories','Monitor'),
   p('oled','QD-OLED fixture','accessories','Monitor'),
   p('display-charger','Divoom Dipow charger with LCD display','accessories','Monitor')
@@ -90,7 +91,9 @@ test('the four hub sections filter the same products and restore all brands/cate
  assert.ok(!category.options.some(o=>['GPU','Monitor'].includes(o.value)));
  category.value='Graphics Cards';app.render(devices,{});
  let result=el('azPcShopGrid').innerHTML;
- assert.match(result,/GeForce fixture/);assert.match(result,/Radeon fixture/);assert.doesNotMatch(result,/data-store-product="lcd"/);
+ assert.match(result,/GeForce fixture/);assert.match(result,/Radeon fixture/);assert.doesNotMatch(result,/data-store-product="(?:lcd|gpu-accessory)"/);
+ category.value='GPU Accessories';app.render(devices,{});
+ assert.match(el('azPcShopGrid').innerHTML,/data-store-product="gpu-accessory"/);
  category.value='LCD Monitors';app.render(devices,{});
  result=el('azPcShopGrid').innerHTML;
  assert.match(result,/data-store-product="lcd"/);assert.doesNotMatch(result,/data-store-product="(?:oled|display-charger)"/);

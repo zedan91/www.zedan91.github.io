@@ -7,6 +7,7 @@
    ['cpu', 'CPUs'], ['intel cpus', 'CPUs'], ['amd cpus', 'CPUs'],
    ['motherboard', 'Motherboards'], ['intel motherboards', 'Motherboards'], ['amd motherboards', 'Motherboards'],
    ['gpu', 'Graphics Cards'], ['graphic card', 'Graphics Cards'], ['graphics card', 'Graphics Cards'],
+   ['graphic cards', 'Graphics Cards'], ['graphics cards', 'Graphics Cards'],
    ['workstation graphics', 'Graphics Cards'],
    ['case', 'PC Cases'], ['cases', 'PC Cases'], ['casing', 'PC Cases'],
    ['power supply', 'Power Supplies'], ['keyboard', 'Keyboards'], ['mouse', 'Mice'],
@@ -14,6 +15,7 @@
  function storefrontCategory(p={}){
    const original=category(p).trim(), key=original.toLowerCase();
    const name=[p.name,p.displayName].filter(Boolean).join(' ');
+   if(storefrontAliases.get(key)==='Graphics Cards'&&/\b(?:gpu|graphics?\s+card)\s+(?:support\s+)?(?:holder|brace|bracket)\b/i.test(name))return 'GPU Accessories';
    if(/^(?:lcd |oled )?monitors?$/.test(key)){
      if(/\b(?:charger|wireless display receiver|smart (?:wi-fi )?plug)\b/i.test(name))return 'Accessories';
      if(/\bDivoom\s+Times\s+(?:Gate|Frame)\b/i.test(name))return 'Smart Displays';
