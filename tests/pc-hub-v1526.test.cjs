@@ -76,4 +76,25 @@ test('the four hub sections filter the same products and restore all brands/cate
  assert.doesNotMatch(el('azPcShopGrid').innerHTML,/Microsoft Surface|Gaming GPU/);
  el('azPcShopBrand').value='MICROSOFT';el('azPcShopBrand').listeners.change();
  assert.match(el('azPcShopGrid').innerHTML,/Microsoft Surface/);assert.doesNotMatch(el('azPcShopGrid').innerHTML,/JOI IDEA/);
+
+ context.window.AZOBSSPcModel=require('../assets/js/azobss-pc-model-v1537');
+ const devices=[
+  p('gpu-a','GeForce fixture','components','GPU'),
+  p('gpu-b','Radeon fixture','components','Graphics Cards'),
+  p('lcd','27 inch IPS fixture','accessories','Monitor'),
+  p('oled','QD-OLED fixture','accessories','Monitor'),
+  p('display-charger','Divoom Dipow charger with LCD display','accessories','Monitor')
+ ];
+ app.render(devices,{});app.setHubGroup('all');
+ const category=el('azPcShopCategory');
+ assert.ok(!category.options.some(o=>['GPU','Monitor'].includes(o.value)));
+ category.value='Graphics Cards';app.render(devices,{});
+ let result=el('azPcShopGrid').innerHTML;
+ assert.match(result,/GeForce fixture/);assert.match(result,/Radeon fixture/);assert.doesNotMatch(result,/data-store-product="lcd"/);
+ category.value='LCD Monitors';app.render(devices,{});
+ result=el('azPcShopGrid').innerHTML;
+ assert.match(result,/data-store-product="lcd"/);assert.doesNotMatch(result,/data-store-product="(?:oled|display-charger)"/);
+ app.setHubGroup('accessories');
+ assert.ok(category.options.some(o=>o.value==='LCD Monitors'));
+ assert.ok(!category.options.some(o=>o.value==='Graphics Cards'));
 });

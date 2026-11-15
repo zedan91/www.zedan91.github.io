@@ -1,6 +1,24 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
 const model=require('../assets/js/azobss-pc-model-v1537'),{createSoftwareR2Store}=require('../lib/azobss-software-r2-store-v1536'),{createPcCatalogVisibility}=require('../lib/azobss-pc-catalog-visibility-v1537');
+test('storefront categories merge supplier aliases and retain distinct memory, storage and display types',()=>{
+ const cases=[
+  ['AMD CPUs','Ryzen 7 8700F','CPUs'],['Intel CPUs','Core i7','CPUs'],
+  ['Motherboard','ROG Strix B650','Motherboards'],['Intel Motherboards','MSI Z890','Motherboards'],
+  ['Case','ATX case','PC Cases'],['Cases','ITX case','PC Cases'],
+  ['Power Supply','650W Gold','Power Supplies'],['Keyboard','Wireless keyboard','Keyboards'],
+  ['RAM','ADATA Laptop SO-DIMM','Laptop Memory'],['RAM','Kingston DDR5 Desktop','Desktop Memory'],
+  ['Hard Drive','ADATA external SSD','External SSDs'],['SSD','MSI M570 NVMe','NVMe SSDs'],
+  ['Mouse & Mousepad','Wireless Mouse','Mice'],['Mouse & Mousepad','Gaming Mousepad','Mouse Pads'],
+  ['Monitor','LCD vendor fixture','LCD Monitors'],['Monitor','ASUS QD-OLED','OLED Monitors'],
+  ['Monitor','Smart plug with energy monitoring','Accessories'],
+  ['Monitor','Divoom Times Gate LCD desk display','Smart Displays'],
+  ['Interactive Displays','75 inch LCD conference board','Interactive Displays']
+ ];
+ for(const [category,name,expected] of cases)assert.equal(model.storefrontCategory({category,name}),expected,name);
+ assert.equal(model.storefrontCategory({category:'Monitor',name:'Samsung Model 24',specs:['Panel: IPS']}),'LCD Monitors');
+ assert.equal(model.storefrontCategory({category:'Monitor',name:'Samsung Model 24'}),'Monitors (Panel Unspecified)');
+});
 function fixture(){const objects=new Map(),secret=crypto.randomBytes(32).toString('hex');let admin={uid:'fixture-owner',isAdmin:true},reads=0;const bucket={get:async key=>{reads++;const v=objects.get(key);return v?{json:async()=>JSON.parse(v.text),httpEtag:v.etag}:null;},put:async(key,text,opts)=>{const old=objects.get(key),h=opts.onlyIf;if(h.get('If-None-Match')==='*'&&old||h.get('If-Match')&&h.get('If-Match')!==old?.etag)return null;const v={text,etag:'"'+crypto.createHash('sha256').update(text).digest('hex')+'"'};objects.set(key,v);return {httpEtag:v.etag};}};
  const ctx={TextEncoder,TextDecoder,Uint8Array,Headers,Response,Request,URL,AbortSignal,setTimeout,clearTimeout,crypto:crypto.webcrypto,btoa,atob,fetch:async()=>{throw Error('External network blocked');}};vm.runInNewContext(fs.readFileSync(require.resolve('../backend/download-gateway/worker-v1534.mjs'),'utf8').replace('export default {','globalThis.worker={'),ctx);
  const fetchImpl=(u,o={})=>ctx.worker.fetch(new Request(u,o),{AZOBSS_FILES:bucket,AZOBSS_R2_TOKEN_SECRET:secret},{waitUntil(){}}),base={baseUrl:()=> 'https://fixture.invalid',secret:()=>secret,fetchImpl},store=createSoftwareR2Store({...base,purpose:'azobss-pc-catalog-v1537',route:'/pc-catalog-admin'}),software=createSoftwareR2Store(base);

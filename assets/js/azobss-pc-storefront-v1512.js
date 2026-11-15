@@ -17,7 +17,7 @@ function productGroup(p){if(window.AZOBSSPcModel?.category(p)==='NAS & Servers')
 function syncHubNav(){document.querySelectorAll('[data-pc-hub-group]').forEach(a=>{if(a.dataset.pcHubGroup===hubGroup)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});}
 function setHubGroup(group){if(!HUB_GROUPS.has(group))return;hubGroup=group;page=1;const u=new URL(location.href);u.searchParams.set('section',group);u.searchParams.delete('model');u.searchParams.delete('catalog');u.searchParams.delete('q');u.hash='';history.replaceState(null,'',u);for(const id of ['azPcShopCategory','azPcShopBrand','azPcShopStore','azPcShopUse']){const e=document.getElementById(id);if(e)e.value='all';}const q=document.getElementById('azPcShopSearch');if(q)q.value='';syncHubNav();draw();}
 function manufacturerLink(p){try{const u=new URL(p.specSourceUrl||'');if(u.protocol==='https:'&&/(?:^|\.)(?:intel\.com|amd\.com|asus\.com|gigabyte\.com|msi\.com|tp-link\.com|logitech\.com|epson\.com(?:\.(?:my|sg|br|ph|mt))?|brother\.com\.my|canon|dlink\.com|totolink\.tw|sony\.com|sony\.co\.jp|sony\.jp|audio-technica\.co\.jp|creative\.com|razer\.com|logitechg\.com|netgear\.com|dji\.com|synology\.com|synologydownload\.com|ugreen\.com|kingston\.com|samsung\.com|seagate\.com|westerndigital\.com|coolermaster\.com|deepcool\.com|arctic\.de|corsair\.com|nzxt\.com|tryxzone\.com|tcomastech\.com|invasion\.com\.my)$/.test(u.hostname))return `<a class="az-store-spec-source" href="${esc(u.href)}" target="_blank" rel="noopener">Manufacturer specifications ↗</a>`;}catch(_){}return '';}
-function matchesSearch(p,q){if(!q)return true;const clean=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');const hay=clean([p.name,p.displayName,p.category,brand(p),...(actions.isAdmin?.()===true?[storeName(p)]:[]),...(p.specs||[])].join(' '));return q.split(/\s+/).filter(Boolean).every(s=>hay.includes(clean(s)));}
+function matchesSearch(p,q){if(!q)return true;const clean=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');const category=displayCategory(p);const hay=clean([p.name,p.displayName,p.category,category,category==='Graphics Cards'?'GPU':'',brand(p),...(actions.isAdmin?.()===true?[storeName(p)]:[]),...(p.specs||[])].join(' '));return q.split(/\s+/).filter(Boolean).every(s=>hay.includes(clean(s)));}
 const prebuiltCategories=['Laptop','2-in-1 / Convertible','Desktop PC','All-in-One PC','Mini PC'];
 const prebuiltUses={office:'Office & Productivity',creator:'Creator',workstation:'Workstation',gaming:'Gaming'};
 function prebuiltCategory(p){
@@ -26,6 +26,9 @@ function prebuiltCategory(p){
  if(/\b(?:all[ -]in[ -]one|AIO)\b/i.test(name))return prebuiltCategories[3];
  if(/^Mini PCs?$/i.test(p.category)||/\bmini PC\b/i.test(name))return prebuiltCategories[4];
  return prebuiltCategories[2];
+}
+function displayCategory(p){
+ return productGroup(p)==='prebuilt'?prebuiltCategory(p):window.AZOBSSPcModel?.storefrontCategory?.(p)||p.category;
 }
 function matchesPrebuiltUse(p,use){
  const name=String(p.name||p.displayName||'');
@@ -69,7 +72,7 @@ function card(p){
  const share='<button class="az-store-share" type="button" title="Share product" aria-label="Share '+esc(title(p))+'" data-store-share="'+esc(p.id)+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 12l8-5m-8 5 8 5"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>';
  const compare=actions.isAdmin?.()===true?'<button type="button" class="az-store-details" data-store-compare="'+esc(p.id)+'">Compare suppliers</button>':'';
 
- return `<article class="az-store-product" data-store-product="${esc(p.id)}">${p.photoUnavailable?'<div class="az-store-photo is-unavailable">':`<button class="az-store-photo" type="button" data-store-image="${esc(p.id)}" aria-label="Enlarge photo of ${esc(title(p))}">`}<img src="${esc(p.image)}" alt="${p.photoUnavailable?'Model photo pending':esc(title(p))}" width="640" height="640" loading="lazy" decoding="async">${p.photoUnavailable?'<span class="az-store-photo-note">Photo pending</span></div>':(p.imageKind==='series'?'<span class="az-store-photo-note">Series photo</span></button>':'</button>')}<div class="az-store-product-copy"><div class="az-store-category">${esc(p.category)} <span>${esc(brand(p))}</span></div><div class="az-store-name"><h3>${esc(title(p))}</h3>${share}</div>${actions.isAdmin?.()===true?`<small class="az-store-supplier">${esc(storeName(p))}</small>`:''}<ul>${specs.slice(0,4).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><button type="button" class="az-store-details" data-store-details="${esc(p.id)}">Specifications &amp; details ↗</button>${compare}<div class="az-store-price">${money(p.price)}</div><div class="az-store-stock">${esc(status)}</div>${adminSourceMetadata(p)}<div class="az-store-actions"><button type="button" data-store-add="${esc(p.id)}">＋ Add to List</button><button type="button" class="primary" data-store-buy="${esc(p.id)}">Request Quote</button></div></div></article>`;
+ return `<article class="az-store-product" data-store-product="${esc(p.id)}">${p.photoUnavailable?'<div class="az-store-photo is-unavailable">':`<button class="az-store-photo" type="button" data-store-image="${esc(p.id)}" aria-label="Enlarge photo of ${esc(title(p))}">`}<img src="${esc(p.image)}" alt="${p.photoUnavailable?'Model photo pending':esc(title(p))}" width="640" height="640" loading="lazy" decoding="async">${p.photoUnavailable?'<span class="az-store-photo-note">Photo pending</span></div>':(p.imageKind==='series'?'<span class="az-store-photo-note">Series photo</span></button>':'</button>')}<div class="az-store-product-copy"><div class="az-store-category">${esc(displayCategory(p))} <span>${esc(brand(p))}</span></div><div class="az-store-name"><h3>${esc(title(p))}</h3>${share}</div>${actions.isAdmin?.()===true?`<small class="az-store-supplier">${esc(storeName(p))}</small>`:''}<ul>${specs.slice(0,4).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><button type="button" class="az-store-details" data-store-details="${esc(p.id)}">Specifications &amp; details ↗</button>${compare}<div class="az-store-price">${money(p.price)}</div><div class="az-store-stock">${esc(status)}</div>${adminSourceMetadata(p)}<div class="az-store-actions"><button type="button" data-store-add="${esc(p.id)}">＋ Add to List</button><button type="button" class="primary" data-store-buy="${esc(p.id)}">Request Quote</button></div></div></article>`;
 }
 function listRow(p){
  const id=esc(p.id),name=esc(title(p));
@@ -78,7 +81,7 @@ function listRow(p){
   ? '<div class="az-store-list-photo">'+img+'</div>'
   : '<button class="az-store-list-photo" type="button" data-store-image="'+id+'" aria-label="Enlarge photo of '+name+'">'+img+'</button>';
  return '<article class="az-store-product az-store-list-row" data-store-product="'+id+'">'+photo+
-  '<div class="az-store-list-identity"><span class="az-store-category">'+esc(p.category)+'</span><h3>'+name+'</h3></div>'+
+  '<div class="az-store-list-identity"><span class="az-store-category">'+esc(displayCategory(p))+'</span><h3>'+name+'</h3></div>'+
   '<div class="az-store-price">'+money(p.price)+'</div><button type="button" class="az-store-details" data-store-details="'+id+'">Specifications &amp; details ↗</button></article>';
 }
 async function shareProduct(p,button){
@@ -242,15 +245,15 @@ function draw(){
  const u=new URL(location.href),priceList=u.searchParams.get('catalog')==='pricelist',model=u.searchParams.get('model')||(/^#VNP-/.test(u.hash)?u.hash.slice(1):'');
  if(model){const target=rows.find(p=>p.sourceRecordId===model||p.id===model);if(target){const group=productGroup(target);if(hubGroup!==group){hubGroup=group;page=1;syncHubNav();u.searchParams.set('section',group);history.replaceState(null,'',u);}}}
  const isPrebuilt=hubGroup==='prebuilt';
- const categoryFor=p=>isPrebuilt?prebuiltCategory(p):p.category;
  const groupRows=rows.filter(p=>(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId));
- for(const [id,values,label,current] of [['azPcShopCategory',(isPrebuilt?prebuiltCategories.filter(category=>groupRows.some(p=>categoryFor(p)===category)):[...new Set(groupRows.map(categoryFor))].sort()),'All categories',cat],['azPcShopBrand',[...new Set(groupRows.map(brand))].sort(),'All brands',b]]){
+ const eligible=groupRows.filter(p=>!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()));
+ const categories=new Set(eligible.map(displayCategory).filter(Boolean));
+ for(const [id,values,label,current] of [['azPcShopCategory',(isPrebuilt?prebuiltCategories.filter(category=>categories.has(category)):[...categories].sort()),'All categories',cat],['azPcShopBrand',[...new Set(eligible.map(brand))].sort(),'All brands',b]]){
   const select=document.getElementById(id);if(!select)continue;
   select.innerHTML=`<option value="all">${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
   select.value=values.includes(current)?current:'all';if(id==='azPcShopCategory')cat=select.value;else b=select.value;
  }
  const storeSelect=document.getElementById('azPcShopStore'),useSelect=document.getElementById('azPcShopUse');
- const eligible=groupRows.filter(p=>!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()));
  const isAdmin=actions.isAdmin?.()===true;
  const suppliers=isAdmin?new Map(eligible.map(p=>[p.storeId,storeName(p)])):new Map();
  const groupKeys=new Set(eligible.map(p=>window.AZOBSSPcModel?.useGroup(p)));
@@ -274,7 +277,7 @@ function draw(){
   Object.entries(useGroups).filter(([id])=>groupKeys.has(id)||id==='drone'&&['accessories','all'].includes(hubGroup));
  const use=populate(useSelect,uses,'All uses');
  const filter=JSON.stringify([q,cat,b,sort,hubGroup,priceList,model,store,use]);if(filter!==lastFilter){page=1;lastFilter=filter;}
- let result=rows.filter(p=>(!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()))&&(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId)&&(!model||p.sourceRecordId===model||p.id===model)&&(model||(cat==='all'||categoryFor(p)===cat)&&(b==='all'||brand(p)===b))&&(model||(store==='all'||p.storeId===store)&&(use==='all'||(isPrebuilt?matchesPrebuiltUse(p,use):window.AZOBSSPcModel?.useGroup(p)===use)))&&(model||matchesSearch(p,q)));
+ let result=eligible.filter(p=>(!model||p.sourceRecordId===model||p.id===model)&&(model||(cat==='all'||displayCategory(p)===cat)&&(b==='all'||brand(p)===b))&&(model||(store==='all'||p.storeId===store)&&(use==='all'||(isPrebuilt?matchesPrebuiltUse(p,use):window.AZOBSSPcModel?.useGroup(p)===use)))&&(model||matchesSearch(p,q)));
  const priority={laptop:0,desktop:1,hardware:2};
  const categoryRank=p=>window.AZOBSSPcModel?.rank(p)??8;
  result.sort(sort==='recommended'?(a,b)=>(priority[a.type]??2)-(priority[b.type]??2)||(hubGroup==='components'?categoryRank(a)-categoryRank(b):0)||a.price-b.price:sort==='price-desc'?(a,b)=>b.price-a.price:sort==='name'?(a,b)=>a.name.localeCompare(b.name):(a,b)=>a.price-b.price);
