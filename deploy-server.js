@@ -163,6 +163,8 @@ async function azFindAvailabilitySoftware(productId,metadata={}){
   return {...product,r2ObjectKey:currentKey||mapped,additionalObjectKeys:[mapped,currentKey].filter(Boolean)};
 }
 const {createSoftwareR2Store}=require('./lib/azobss-software-r2-store-v1536');
+const pcDiagnostics = require('./lib/azobss-pc-diagnostics');
+const pcDiagnosticStore = pcDiagnostics.createDiagnosticStore({baseUrl:azR2DownloadBaseUrl,secret:azR2TokenSecret});
 const softwareAvailability=createSoftwareAvailability({store:createSoftwareR2Store({baseUrl:azR2DownloadBaseUrl,secret:azR2TokenSecret}),getAdminIdentity:azAdminIdentityFromRequest,findProduct:azFindAvailabilitySoftware,readBody,send});
 
 const handleSoftwarePackages=createOfferHandler({getIdentity:azdmAdminIdentity,getOffer:azSoftwarePackageOffer,readBody,send,rateLimit:azRateLimitOrSend,
@@ -21058,6 +21060,40 @@ async function handler(req, res) {
     }
 
     // =========================
+
+    if (pathname === '/api/pc-diagnostics' && req.method === 'POST') {
+      if (azRateLimitOrSend(req,res,'pc-diagnostic-upload',10,60*60*1000)) return;
+      try {
+        const raw = await readBinaryBody(req, 800000);
+        const row = pcDiagnostics.normalizeReport(JSON.parse(raw.toString('utf8')));
+        await pcDiagnosticStore({action:'write',row});
+        return send(res,201,JSON.stringify({ok:true,id:row.id}),'application/json',{'Cache-Control':'no-store'});
+      } catch (error) {
+        return send(res,error.statusCode || error.status || 400,JSON.stringify({ok:false,error:error.message}),'application/json',{'Cache-Control':'no-store'});
+      }
+    }
+    if (pathname === '/api/admin/pc-diagnostics' || pathname.startsWith('/api/admin/pc-diagnostics/')) {
+      const identity = await azAdminIdentityFromRequest(req,parsed);
+      if (!identity?.isAdmin) return send(res,403,JSON.stringify({ok:false,error:'Admin authorization required.'}),'application/json');
+      if (req.method !== 'GET') return send(res,405,'Method not allowed');
+      if (azRateLimitOrSend(req,res,'pc-diagnostic-admin',120,60*1000)) return;
+      try {
+        if (pathname === '/api/admin/pc-diagnostics') {
+          const page = await pcDiagnosticStore({action:'list',cursor:parsed.query.cursor || ''});
+          return send(res,200,JSON.stringify(page),'application/json',{'Cache-Control':'no-store'});
+        }
+        const id = pathname.slice('/api/admin/pc-diagnostics/'.length);
+        if (!/^[a-f0-9-]{36}$/.test(id)) return send(res,400,'Invalid report ID.');
+        const {row} = await pcDiagnosticStore({action:'read',id});
+        if (parsed.query.download === '1') {
+          return send(res,200,row.report,'text/plain; charset=utf-8',{'Cache-Control':'no-store','Content-Disposition':'attachment; filename="AZOBSS_PC_Report_' + id + '.txt"'});
+        }
+        return send(res,200,JSON.stringify({ok:true,row:{...row,dealerMessage:pcDiagnostics.dealerMessage(row)}}),'application/json',{'Cache-Control':'no-store'});
+      } catch (error) {
+        return send(res,error.statusCode || 502,JSON.stringify({ok:false,error:error.message}),'application/json',{'Cache-Control':'no-store'});
+      }
+    }
+
     // AZOBSS TECH VAULT 720 — R2 ONLY
     // =========================
     if (pathname === "/api/tech-vault/health" && req.method === "GET") {

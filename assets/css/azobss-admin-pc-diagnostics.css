@@ -1,0 +1,67 @@
+#pcDiagList {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.pc-diag-row {
+  padding: 16px;
+  border: 1px solid #334155;
+  background: #0b1929;
+  border-radius: 12px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+}
+.pc-diag-row p {
+  margin: 6px 0;
+  color: #bad0e6;
+  overflow-wrap: anywhere;
+}
+.pc-diag-row small { color: #94a3b8; }
+.pc-diag-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+#pcDiagDialog {
+  color: #e2e8f0;
+  background: #0b1929;
+  border: 1px solid #475569;
+  border-radius: 16px;
+  width: min(900px, 90vw);
+  max-height: 85vh;
+  padding: 18px;
+}
+#pcDiagDialog::backdrop { background: #0009; }
+#pcDiagDialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#pcDiagReportText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 55vh;
+  overflow: auto;
+  padding: 12px;
+  background: #07111f;
+}
+#pcDiagDealerPhone {
+  display: block;
+  box-sizing: border-box;
+  margin: 8px 0;
+  padding: 10px;
+  width: 100%;
+  background: #07111f;
+  color: #fff;
+  border: 1px solid #475569;
+  border-radius: 8px;
+}
+#pcDiagPhoneError { color: #fca5a5; }
+@media (max-width: 800px) {
+  .pc-diag-row { display: block; }
+  .pc-diag-buttons { margin-top: 12px; }
+}

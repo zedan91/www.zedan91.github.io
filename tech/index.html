@@ -74,6 +74,10 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
           <a class="btn featured-download" id="solatTimeDownloadBtn" href="https://files.azobss.com/liyabudun/releases/Latest/Liyabudun_Setup.exe" data-state="ready" style="text-decoration:none">⬇ Download Liyabudun</a>
         </div>
       </div>
+      <div class="featured-card">
+        <div class="featured-info"><h3>PC_Spec sender.bat</h3><p>Laporan spesifikasi, model, nombor siri dan bateri. Pengguna boleh bersetuju sebelum laporan penuh dimuat naik secara automatik ke Cloudflare AZOBSS untuk admin. WhatsApp 01135600723 adalah pilihan.</p></div>
+        <a class="btn btn-primary" href="/tech/downloads/PC_Spec%20sender.bat" download="PC_Spec sender.bat">Download PC Spec Sender</a>
+      </div>
       <div class="toolbar"><h2>Available tools <span class="count-badge" id="fileCount">—</span></h2><input class="search" id="searchInput" type="search" placeholder="Search files"><select class="sort" id="sortSelect" aria-label="Sort files"><option value="az">Name A–Z</option><option value="za">Name Z–A</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select><button class="btn btn-ghost" id="refreshBtn">↻ Refresh</button></div>
       <div class="bulkbar"><label class="select-all"><input class="check" id="selectAll" type="checkbox"> Select all R2 files shown</label><span class="bulk-count" id="selectedCount">0 selected</span><button class="btn btn-danger" id="deleteSelectedBtn" disabled>🗑 Delete Selected</button></div>
       <div id="deleteMessage"></div>
@@ -224,11 +228,12 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
     const row=files.find(f=>String(f.id||'')===String(id||''));
     const old=button.textContent;button.disabled=true;button.textContent='Preparing…';
     try{
-      const data=await api('/api/tech-vault/download-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+      const pcSpec=/^pc_spec\s+sender\.bat$/i.test(String(row&&(row.filename||row.name)||''));
+      const data=pcSpec ? {downloadUrl:new URL('/tech/downloads/PC_Spec%20sender.bat',location.origin).href,filename:'PC_Spec sender.bat'} : await api('/api/tech-vault/download-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
       if(!data.downloadUrl)throw new Error('Secure R2 share link was not returned.');
       shareData={id:String(id),filename:String(data.filename||(row&&(row.filename||row.name))||'AZOBSS Tech Vault file'),downloadUrl:String(data.downloadUrl),expiresIn:Number(data.expiresIn||3600)};
       $('shareFileName').textContent=shareData.filename;
-      $('shareNote').textContent=`Secure R2 link prepared. Link is temporary and is expected to remain valid for about ${Math.max(1,Math.round(shareData.expiresIn/60))} minutes.`;
+      $('shareNote').textContent=pcSpec ? 'Latest PC diagnostic download. Upload consent is requested when the BAT starts.' : `Secure R2 link prepared. Link is temporary and is expected to remain valid for about ${Math.max(1,Math.round(shareData.expiresIn/60))} minutes.`;
       $('shareModal').classList.remove('hidden');
     }catch(err){alert(err.message);}
     finally{button.disabled=false;button.textContent=old;}
@@ -262,6 +267,8 @@ button,input{font:inherit}.hidden{display:none!important}.shell{width:min(1120px
   $('shareEmailBtn').addEventListener('click',()=>{if(shareData)location.href=`mailto:?subject=${encodeURIComponent('AZOBSS Tech Vault - '+shareData.filename)}&body=${encodeURIComponent(shareText())}`;});
 
   async function downloadFile(id,button){
+    const row=files.find(f=>String(f.id||'')===String(id||''));
+    if(/^pc_spec\s+sender\.bat$/i.test(String(row&&(row.filename||row.name)||''))){location.href='/tech/downloads/PC_Spec%20sender.bat';return;}
     const old=button.textContent; button.disabled=true; button.textContent='Preparing…';
     try{
       const data=await api('/api/tech-vault/download-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});

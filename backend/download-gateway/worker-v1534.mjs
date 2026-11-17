@@ -21,6 +21,7 @@ export default {
         return new Response(null, { status: 204, headers: corsHeaders() });
       }
 
+      if(url.pathname==='/pc-diagnostics-storage')return await controlPcDiagnostics1590(request,env);
       if(url.pathname==='/pc-catalog-admin')return await controlPcCatalogue1537(request,env);
       if(url.pathname==='/software-availability-admin')return await controlAvailability1536(request,env);
       if(url.pathname==='/software-availability'&&request.method==='GET')return json(await publicAvailability1536(env));
@@ -535,4 +536,58 @@ function httpError(status, message) {
   const error = new Error(message);
   error.status = status;
   return error;
+}
+
+
+async function controlPcDiagnostics1590(request, env) {
+  ensureConfigured(env);
+  if (request.method !== 'POST') throw httpError(405, 'Method not allowed.');
+  const raw = await request.text();
+  if (encoder.encode(raw).length > 800000) throw httpError(413, 'Report too large.');
+  const signature = request.headers.get('x-azobss-diagnostic-signature') || '';
+  const expected = await hmacBase64Url('azobss-pc-diagnostics-v1590\n' + raw, env.AZOBSS_R2_TOKEN_SECRET);
+  if (!timingSafeEqual(signature, expected)) throw httpError(403, 'Gateway authorization required.');
+  let data;
+  try { data = JSON.parse(raw); } catch { throw httpError(400, 'Invalid JSON.'); }
+  if (!Number.isFinite(data.atMs) || Math.abs(Date.now() - data.atMs) > 60000) throw httpError(403, 'Request expired.');
+  const prefix = '__azobss_pc_diagnostics/';
+  const validId = id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id);
+  if (data.action === 'list') {
+    if (data.cursor && (typeof data.cursor !== 'string' || data.cursor.length > 2048)) throw httpError(400, 'Invalid cursor.');
+    const page = await env.AZOBSS_FILES.list({prefix,limit:25,include:['customMetadata'],...(data.cursor ? {cursor:data.cursor} : {})});
+    return json({ok:true,reports:page.objects.map(item => {
+      let summary = {};
+      try { summary = JSON.parse(item.customMetadata?.summary || '{}'); } catch {}
+      return {...summary,id:item.key.slice(prefix.length,-5)};
+    }),nextCursor:page.truncated ? page.cursor : ''});
+  }
+  const row = data.row;
+  const id = data.id || row?.id;
+  if (!validId(id)) throw httpError(400, 'Invalid report ID.');
+  const key = prefix + id + '.json';
+  if (data.action === 'read') {
+    const object = await env.AZOBSS_FILES.get(key);
+    if (!object) throw httpError(404, 'PC report not found.');
+    return json({ok:true,row:await object.json()});
+  }
+  if (data.action !== 'write' || typeof row?.report !== 'string' || !row.report.includes('AZOBSS CUSTOMER PC DIAGNOSTIC') ||
+      encoder.encode(row.report).length > 262144 || row.report.includes('\0')) throw httpError(400, 'Invalid PC report.');
+  const short = value => String(value || '').slice(0,180);
+  const stored = {id,report:row.report,manufacturer:short(row.manufacturer),model:short(row.model),serial:short(row.serial),
+    batteries:Array.isArray(row.batteries) ? row.batteries.slice(0,8).map(x=>({name:short(x?.name),manufacturer:short(x?.manufacturer),serial:short(x?.serial)})) : [],
+    receivedAt:new Date().toISOString(),source:'customer-pc-diagnostic'};
+  const hash = await sha256Hex(JSON.stringify({id:stored.id,report:stored.report,manufacturer:stored.manufacturer,model:stored.model,serial:stored.serial,batteries:stored.batteries}));
+  const {report,...summary} = stored;
+  summary.batteries = stored.batteries.slice(0,4).map(x=>({name:x.name.slice(0,30)}));
+  for (const field of ['manufacturer','model','serial']) summary[field] = stored[field].slice(0,60);
+  const saved = await env.AZOBSS_FILES.put(key,JSON.stringify(stored),{
+    onlyIf:new Headers({'If-None-Match':'*'}),
+    httpMetadata:{contentType:'application/json',cacheControl:'no-store'},
+    customMetadata:{summary:JSON.stringify(summary),sha256:hash}
+  });
+  if (!saved) {
+    const old = await env.AZOBSS_FILES.head(key);
+    if (!old || old.customMetadata?.sha256 !== hash) throw httpError(409, 'Report ID already belongs to different content.');
+  }
+  return json({ok:true,id});
 }

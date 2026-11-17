@@ -2548,6 +2548,7 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
+<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1590">
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -2964,6 +2965,7 @@ body[data-dashboard-page="admin"] .topbar{
       <div class="nav-group">Support &amp; Sales</div>
       <button data-tab="support">💬 Support Inbox</button>
       <button data-tab="servicebookings">🛠️ Service Bookings <span id="serviceBookingNavBadge" class="az-nav-badge" hidden>0</span></button>
+      <button data-tab="pcdiagnostics">PC Diagnostic Reports</button>
       <button data-tab="notifications">🔔 Notifications</button>
       <button data-tab="commissions">💸 Commission Manager</button>
       <button data-tab="subscriptions">🔑 Subscription Codes</button>
@@ -2990,6 +2992,24 @@ body[data-dashboard-page="admin"] .topbar{
     </div>
 
     <div id="adminQueryAlert" class="az-admin-query-alert" aria-live="polite"></div>
+
+    <section id="pcdiagnostics" class="section">
+      <h2>PC Diagnostic Reports</h2>
+      <p>Laporan PC pelanggan disimpan secara peribadi dalam Cloudflare. Maklumat perkakasan bergantung pada bacaan Windows.</p>
+      <button type="button" class="btn" id="pcDiagRefresh">Refresh</button>
+      <p id="pcDiagStatus" role="status">Pilih Refresh untuk memuatkan laporan.</p>
+      <div id="pcDiagList"></div>
+      <button type="button" class="btn" id="pcDiagMore" hidden>Muatkan lagi</button>
+      <dialog id="pcDiagDialog" aria-labelledby="pcDiagTitle">
+        <header><h3 id="pcDiagTitle">PC Diagnostic</h3><button type="button" class="btn" id="pcDiagClose">Tutup</button></header>
+        <pre id="pcDiagReportText"></pre>
+        <div id="pcDiagDealerControls" hidden>
+          <label>Nombor WhatsApp dealer (pilihan)<input id="pcDiagDealerPhone" type="tel" placeholder="Contoh +60123456789"></label>
+          <p id="pcDiagPhoneError" role="status"></p>
+          <button type="button" class="btn" id="pcDiagOpenWhatsApp">Buka WhatsApp Web</button>
+        </div>
+      </dialog>
+    </section>
 
     <section id="overview" class="section">
       <div class="az-admin-hero">
@@ -8452,7 +8472,8 @@ function printWebsiteReport(){
     pre{font-family:Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
   </style>
 </head>
-<body><pre>${reportText}</pre></body>
+<body><pre>${reportText}</pre><script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1590"></script>
+</body>
 </html>`;
 
   w.document.open();
@@ -8960,7 +8981,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1589"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1590"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
