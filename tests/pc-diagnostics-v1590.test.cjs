@@ -1,9 +1,24 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const {spawnSync} = require('node:child_process');
 const {normalizeReport,dealerMessage,createDiagnosticStore} = require('../lib/azobss-pc-diagnostics');
 const id = crypto.randomUUID();
 const fixture = {id,report:'AZOBSS CUSTOMER PC DIAGNOSTIC\nCPU: test',manufacturer:'Example',model:'Laptop X 15',serial:'TEST123',batteries:[{name:'BIF0_9'}]};
+
+test('Admin diagnostic script loads outside inline templates and all inline scripts parse',()=>{
+  const html = fs.readFileSync(path.join(__dirname,'../admin/index.html'),'utf8');
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)];
+  const diagnostic = scripts.filter(item => item[1].includes('/assets/js/azobss-admin-pc-diagnostics.js'));
+  assert.equal(diagnostic.length,1,'The diagnostic script must be a top-level HTML script');
+  for (const [,attributes,source] of scripts) {
+    if (!source.trim() || /application\/ld\+json|application\/json/.test(attributes)) continue;
+    const result = spawnSync(process.execPath,['--input-type=module','--check'],{input:source,encoding:'utf8'});
+    assert.equal(result.status,0,result.stderr);
+  }
+});
 test('PC report validates identifiers, size, plain text and battery metadata',()=>{
   const row = normalizeReport(fixture);
   assert.equal(row.batteries[0].name,'BIF0_9');

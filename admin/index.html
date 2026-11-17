@@ -2548,7 +2548,7 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1590">
+<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1591">
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -8472,8 +8472,7 @@ function printWebsiteReport(){
     pre{font-family:Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
   </style>
 </head>
-<body><pre>${reportText}</pre><script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1590"></script>
-</body>
+<body><pre>${reportText}</pre></body>
 </html>`;
 
   w.document.open();
@@ -8957,7 +8956,7 @@ onAuthStateChanged(auth, async user => {
     let az1192Target='salesreceipts';
     try{
       const requested=String(new URL(location.href).searchParams.get('tab')||'').trim().toLowerCase();
-      const allowed=new Set(['salesreceipts','users','overview','support','servicebookings','notifications','commissions','salesstaffapps','subscriptions','membership','softwarekeys','activity','exports','systemhealth','maintenance','settings','online','staffroles','auditlogs','payments','purchases','adminalerts','frontendcheck','sitereport']);
+      const allowed=new Set(['salesreceipts','users','overview','support','servicebookings','pcdiagnostics','notifications','commissions','salesstaffapps','subscriptions','membership','softwarekeys','activity','exports','systemhealth','maintenance','settings','online','staffroles','auditlogs','payments','purchases','adminalerts','frontendcheck','sitereport']);
       if(allowed.has(requested)) az1192Target=requested;
     }catch(_e){}
     const targetBtn=[...document.querySelectorAll('[data-tab="'+az1192Target+'"]')][0];
@@ -8981,7 +8980,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1590"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1591"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10919,5 +10918,6 @@ document.addEventListener('click', async function(e){
 </script>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
+  <script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1591"></script>
 </body>
 </html>
