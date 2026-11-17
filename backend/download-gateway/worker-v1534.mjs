@@ -550,6 +550,37 @@ async function controlPcDiagnostics1590(request, env) {
   let data;
   try { data = JSON.parse(raw); } catch { throw httpError(400, 'Invalid JSON.'); }
   if (!Number.isFinite(data.atMs) || Math.abs(Date.now() - data.atMs) > 60000) throw httpError(403, 'Request expired.');
+  const dealerPrefix = '__azobss_pc_diagnostic_dealers/';
+  if (data.action === 'dealer-list') {
+    const dealers = [];
+    let cursor;
+    do {
+      const page = await env.AZOBSS_FILES.list({prefix:dealerPrefix,limit:1000,include:['customMetadata'],...(cursor ? {cursor} : {})});
+      for (const object of page.objects) {
+        const {name,phone} = object.customMetadata || {};
+        if (name && /^[1-9][0-9]{6,14}$/.test(phone)) dealers.push({name,phone});
+      }
+      cursor = page.truncated ? page.cursor : '';
+    } while (cursor);
+    return json({ok:true,dealers});
+  }
+  if (data.action === 'dealer-add') {
+    const {name,phone} = data.dealer || {};
+    if (typeof name !== 'string' || !name.trim() || name.length > 120 || /[\x00-\x1f\x7f]/.test(name) ||
+        typeof phone !== 'string' || !/^[1-9][0-9]{6,14}$/.test(phone)) throw httpError(400,'Invalid dealer.');
+    const key = dealerPrefix + phone + '.json';
+    const dealer = {name,phone};
+    const saved = await env.AZOBSS_FILES.put(key,JSON.stringify(dealer),{
+      onlyIf:new Headers({'If-None-Match':'*'}),
+      httpMetadata:{contentType:'application/json',cacheControl:'no-store'},
+      customMetadata:dealer
+    });
+    if (!saved) {
+      const existing = await env.AZOBSS_FILES.head(key);
+      if (existing?.customMetadata?.name !== name) throw httpError(409,'Nombor ini sudah ada dalam senarai dealer.');
+    }
+    return json({ok:true,dealer});
+  }
   const prefix = '__azobss_pc_diagnostics/';
   const validId = id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id);
   if (data.action === 'list') {

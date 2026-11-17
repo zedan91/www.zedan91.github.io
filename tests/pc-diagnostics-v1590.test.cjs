@@ -4,7 +4,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const {spawnSync} = require('node:child_process');
-const {normalizeReport,dealerMessage,createDiagnosticStore} = require('../lib/azobss-pc-diagnostics');
+const {normalizeReport,dealerMessage,normalizeDealer,dealerList,createDiagnosticStore} = require('../lib/azobss-pc-diagnostics');
 const id = crypto.randomUUID();
 const fixture = {id,report:'AZOBSS CUSTOMER PC DIAGNOSTIC\nCPU: test',manufacturer:'Example',model:'Laptop X 15',serial:'TEST123',batteries:[{name:'BIF0_9'}]};
 
@@ -40,6 +40,15 @@ test('PC report storage signs all requests and surfaces errors',async()=>{
   const hash=crypto.createHmac('sha256','test-secret').update('azobss-pc-diagnostics-v1590\n'+last.body).digest('base64url');
   assert.equal(last.headers['x-azobss-diagnostic-signature'],hash);
 });
+
+test('Dealers normalize Malaysian numbers and retain the owner dealer without duplicates',()=>{
+  assert.deepEqual(normalizeDealer({name:' DS Notebook Kepong ',phone:'+60 18-249 1182'}),{name:'DS Notebook Kepong',phone:'60182491182'});
+  assert.equal(normalizeDealer({name:'Dealer',phone:'018-249 1182'}).phone,'60182491182');
+  assert.throws(()=>normalizeDealer({name:'',phone:'60182491182'}));
+  assert.throws(()=>normalizeDealer({name:'Dealer',phone:'6018abc2491182'}));
+  assert.throws(()=>normalizeDealer({name:'X'.repeat(121),phone:'60182491182'}));
+  assert.deepEqual(dealerList([{name:'Duplicate',phone:'60182491182'}]),[{name:'DS Notebook Kepong',phone:'60182491182'}]);
+});
 test('Cloudflare PC report endpoint is authenticated, private and retry-idempotent',async()=>{
   const {default:worker}=await import('../backend/download-gateway/worker-v1534.mjs');
   const objects=new Map();
@@ -51,7 +60,7 @@ test('Cloudflare PC report endpoint is authenticated, private and retry-idempote
       objects.set(key,{body,meta:{customMetadata:options.customMetadata}});
       return {};
     },
-    list:async()=>({objects:[...objects].map(([key,value])=>({key,customMetadata:value.meta.customMetadata})),truncated:false})
+    list:async({prefix})=>({objects:[...objects].filter(([key])=>key.startsWith(prefix)).map(([key,value])=>({key,customMetadata:value.meta.customMetadata})),truncated:false})
   }};
   async function send(payload,signed=true) {
     const body=JSON.stringify({...payload,atMs:Date.now()});
@@ -68,4 +77,12 @@ test('Cloudflare PC report endpoint is authenticated, private and retry-idempote
   assert.equal(list.reports[0].report,undefined);
   const data=await (await send({action:'read',id})).json();
   assert.equal(data.row.report,fixture.report);
+  const dealer={name:'Synthetic Dealer',phone:'60111111111'};
+  assert.equal((await send({action:'dealer-add',dealer},false)).status,403);
+  assert.equal((await send({action:'dealer-add',dealer})).status,200);
+  assert.equal((await send({action:'dealer-add',dealer})).status,200);
+  assert.equal((await send({action:'dealer-add',dealer:{...dealer,name:'Different'}})).status,409);
+  assert.equal((await send({action:'dealer-add',dealer:{...dealer,phone:'../private'}})).status,400);
+  assert.deepEqual((await (await send({action:'dealer-list'})).json()).dealers,[dealer]);
+  assert.equal((await (await send({action:'list'})).json()).reports.length,1);
 });

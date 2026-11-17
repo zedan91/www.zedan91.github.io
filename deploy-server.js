@@ -21075,6 +21075,26 @@ async function handler(req, res) {
     if (pathname === '/api/admin/pc-diagnostics' || pathname.startsWith('/api/admin/pc-diagnostics/')) {
       const identity = await azAdminIdentityFromRequest(req,parsed);
       if (!identity?.isAdmin) return send(res,403,JSON.stringify({ok:false,error:'Admin authorization required.'}),'application/json');
+      if (pathname === '/api/admin/pc-diagnostics/dealers') {
+        if (!['GET','POST'].includes(req.method)) return send(res,405,'Method not allowed');
+        if (azRateLimitOrSend(req,res,'pc-diagnostic-dealers',120,60*1000)) return;
+        try {
+          if (req.method === 'GET') {
+            const result = await pcDiagnosticStore({action:'dealer-list'});
+            return send(res,200,JSON.stringify({ok:true,dealers:pcDiagnostics.dealerList(result.dealers)}),'application/json',{'Cache-Control':'no-store'});
+          }
+          const raw = await readBinaryBody(req,4000);
+          const dealer = pcDiagnostics.normalizeDealer(JSON.parse(raw.toString('utf8')));
+          const defaultDealer = pcDiagnostics.dealerList([]).find(row => row.phone === dealer.phone);
+          if (defaultDealer && defaultDealer.name !== dealer.name) {
+            return send(res,409,JSON.stringify({ok:false,error:'Nombor ini sudah ada dalam senarai dealer.'}),'application/json',{'Cache-Control':'no-store'});
+          }
+          const result = await pcDiagnosticStore({action:'dealer-add',dealer});
+          return send(res,201,JSON.stringify(result),'application/json',{'Cache-Control':'no-store'});
+        } catch (error) {
+          return send(res,error.statusCode || 400,JSON.stringify({ok:false,error:error.message}),'application/json',{'Cache-Control':'no-store'});
+        }
+      }
       if (req.method !== 'GET') return send(res,405,'Method not allowed');
       if (azRateLimitOrSend(req,res,'pc-diagnostic-admin',120,60*1000)) return;
       try {

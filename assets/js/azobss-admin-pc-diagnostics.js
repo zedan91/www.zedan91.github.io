@@ -5,11 +5,24 @@
   const section = el('pcdiagnostics');
   if (!section) return;
   let cursor = '', busy = false, requestNumber = 0;
+  let dealers = [], selectedDealer = '60182491182';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function notice(message) { el('pcDiagStatus').textContent = message; }
-  async function api(url) {
+  async function api(url,options={}) {
     if (typeof window.azAdminFetchJson !== 'function') throw Error('Sila log masuk sebagai admin dahulu.');
-    return window.azAdminFetchJson(url,{cache:'no-store'});
+    return window.azAdminFetchJson(url,{cache:'no-store',...options});
+  }
+  function renderDealers() {
+    const select = el('pcDiagDealerSelect');
+    select.replaceChildren(new Option('Nombor lain',''));
+    for (const dealer of dealers) select.add(new Option(dealer.name + ' · +' + dealer.phone,dealer.phone));
+    select.value = selectedDealer;
+    el('pcDiagDealerPhone').value = select.value;
+  }
+  async function loadDealers() {
+    const result = await api(base + '/dealers');
+    dealers = result.dealers || [];
+    renderDealers();
   }
   async function load(reset) {
     if (busy) return;
@@ -64,10 +77,46 @@
       el('pcDiagDealerControls').hidden = kind !== 'dealer';
       el('pcDiagDealerPhone').value = '';
       el('pcDiagPhoneError').textContent = '';
+      el('pcDiagDealerForm').hidden = true;
       el('pcDiagDialog').showModal();
+      if (kind === 'dealer') {
+        el('pcDiagOpenWhatsApp').disabled = true;
+        try { await loadDealers(); }
+        catch (error) { el('pcDiagPhoneError').textContent = error.message; }
+        finally { el('pcDiagOpenWhatsApp').disabled = false; }
+      }
     } catch (error) { notice(error.message); }
     finally { button.disabled = false; }
   }
+  el('pcDiagDealerSelect').addEventListener('change',event => {
+    selectedDealer = event.target.value;
+    el('pcDiagDealerPhone').value = selectedDealer;
+    el('pcDiagPhoneError').textContent = '';
+  });
+  el('pcDiagAddDealer').addEventListener('click',() => {
+    el('pcDiagDealerForm').hidden = false;
+    el('pcDiagDealerName').value = '';
+    el('pcDiagNewDealerPhone').value = '';
+    el('pcDiagDealerSaveStatus').textContent = '';
+    el('pcDiagDealerName').focus();
+  });
+  el('pcDiagCancelDealer').addEventListener('click',() => { el('pcDiagDealerForm').hidden = true; });
+  el('pcDiagSaveDealer').addEventListener('click',async () => {
+    const button = el('pcDiagSaveDealer');
+    button.disabled = true;
+    el('pcDiagDealerSaveStatus').textContent = 'Menyimpan dealer…';
+    try {
+      const result = await api(base + '/dealers',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:el('pcDiagDealerName').value.trim(),phone:el('pcDiagNewDealerPhone').value.trim()})
+      });
+      selectedDealer = result.dealer.phone;
+      await loadDealers();
+      el('pcDiagDealerForm').hidden = true;
+      el('pcDiagPhoneError').textContent = 'Dealer disimpan.';
+    } catch (error) { el('pcDiagDealerSaveStatus').textContent = error.message; }
+    finally { button.disabled = false; }
+  });
   el('pcDiagOpenWhatsApp').addEventListener('click', () => {
     const raw = el('pcDiagDealerPhone').value.trim();
     let phone = raw.replace(/[\s()+-]/g,'');

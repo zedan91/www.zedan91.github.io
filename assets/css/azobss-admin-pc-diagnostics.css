@@ -49,7 +49,9 @@
   padding: 12px;
   background: #07111f;
 }
-#pcDiagDealerPhone {
+#pcDiagDealerPhone,
+#pcDiagDealerSelect,
+#pcDiagDealerForm input {
   display: block;
   box-sizing: border-box;
   margin: 8px 0;
@@ -60,6 +62,20 @@
   border: 1px solid #475569;
   border-radius: 8px;
 }
+.pc-diag-dealer-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#pcDiagDealerSelect { flex: 1; min-width: 0; }
+#pcDiagAddDealer { flex-shrink: 0; }
+#pcDiagDealerForm {
+  padding: 14px;
+  margin: 10px 0 16px;
+  border: 1px solid #475569;
+  border-radius: 10px;
+}
+#pcDiagDealerSaveStatus { color: #fca5a5; }
 #pcDiagPhoneError { color: #fca5a5; }
 @media (max-width: 800px) {
   .pc-diag-row { display: block; }

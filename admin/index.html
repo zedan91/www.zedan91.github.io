@@ -2548,7 +2548,7 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1591">
+<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1592">
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -3004,7 +3004,21 @@ body[data-dashboard-page="admin"] .topbar{
         <header><h3 id="pcDiagTitle">PC Diagnostic</h3><button type="button" class="btn" id="pcDiagClose">Tutup</button></header>
         <pre id="pcDiagReportText"></pre>
         <div id="pcDiagDealerControls" hidden>
-          <label>Nombor WhatsApp dealer (pilihan)<input id="pcDiagDealerPhone" type="tel" placeholder="Contoh +60123456789"></label>
+          <label for="pcDiagDealerSelect">Dealer</label>
+          <div class="pc-diag-dealer-picker">
+            <select id="pcDiagDealerSelect"><option value="">Nombor lain</option></select>
+            <button type="button" class="btn" id="pcDiagAddDealer">+ Add</button>
+          </div>
+          <div id="pcDiagDealerForm" hidden>
+            <label>Nama dealer<input id="pcDiagDealerName" maxlength="120" autocomplete="organization" placeholder="Nama kedai / dealer"></label>
+            <label>Nombor WhatsApp<input id="pcDiagNewDealerPhone" type="tel" autocomplete="tel" placeholder="Contoh +60123456789"></label>
+            <div class="pc-diag-buttons">
+              <button type="button" class="btn" id="pcDiagSaveDealer">Simpan Dealer</button>
+              <button type="button" class="btn" id="pcDiagCancelDealer">Batal</button>
+            </div>
+            <p id="pcDiagDealerSaveStatus" role="status"></p>
+          </div>
+          <label>Nombor WhatsApp dealer<input id="pcDiagDealerPhone" type="tel" placeholder="Contoh +60123456789"></label>
           <p id="pcDiagPhoneError" role="status"></p>
           <button type="button" class="btn" id="pcDiagOpenWhatsApp">Buka WhatsApp Web</button>
         </div>
@@ -8980,7 +8994,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1591"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1592"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10918,6 +10932,6 @@ document.addEventListener('click', async function(e){
 </script>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
-  <script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1591"></script>
+  <script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1592"></script>
 </body>
 </html>
