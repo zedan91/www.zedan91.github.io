@@ -47,7 +47,37 @@
    return storefrontAliases.get(key)||original;
  }
  function rank(p){const c=category(p);return /^(?:CPU|Intel CPUs|AMD CPUs)$/i.test(c)?0:/Motherboard/i.test(c)?1:/Memory|RAM/i.test(c)?2:/Graphics|GPU/i.test(c)?3:/SSD|Drive/i.test(c)?4:/Power/i.test(c)?5:/Cool/i.test(c)?6:/Case|Casing/i.test(c)?7:8;}
- function productUrl(p={}){const id=String(p.productId||p.id||'');return id?'/PC-Build/?section=all&model='+encodeURIComponent(id):'/PC-Build/';}
+ const brandNames=['ACER','ADATA','AMD','ANKER','AOC','APACER','APC','APPLE','ARCTIC','ARMAGGEDDON','ARUBA','ASROCK','ASUS','AUDIO-TECHNICA','AVAST','AVITA','BENQ','BOYA','CANON','COLORFUL','COOLER MASTER','CORSAIR','CREATIVE','D-LINK','DEEPCOOL','DELL','DJI','DIVOOM','DYMO','EDIFIER','EPSON','EZVIZ','F-SECURE','FANXIANG','FRACTAL DESIGN','FSP','GIGABYTE','GSMAR','HARMAN KARDON','HEADSET','HISENSE','HOLLYLAND','HP','HUAWEI','HYPERX','ID-COOLING','ILLEGEAR','IMOU','INSTA360','INTEL','INVASION','JBL','JOI','KASPERSKY','KINGSTON','KOSS','LEADTEK','LENOVO','LEXAR','LIAN LI','LOGITECH','MERCUSYS','MICROSOFT','MINIX','MSI','NZXT','PALIT','PHILIPS','PNY','QNAP','QUBE','RAZER','RIGHTPOWER','RODE','SAMSUNG','SANDISK','SAPPHIRE','SEAGATE','SENSONIC','SILVERSTONE','SKULLCANDY','SONICGEAR','SONY','STEELSERIES','SUDOKOO','SYNOLOGY','TAPO','TCOMAS','TEAM','THERMALTAKE','TOSHIBA','TOTOLINK','TP-LINK','TRANSCEND','TRYX','UGREEN','VALKYRIE','VIEWSONIC','VINNFIER','WESTERN DIGITAL','XPG','XPRINTER','YESTON','ZOTAC'];
+ const brandKey=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ const canonicalBrands=new Map(brandNames.map(value=>[brandKey(value),value]));
+ for(const [alias,name] of [['COOLERMASTER','COOLER MASTER'],['LIANLI','LIAN LI'],['WD','WESTERN DIGITAL'],['MICROSTARINTERNATIONAL','MSI'],['ASUSTEK','ASUS'],['HEWLETTPACKARD','HP'],['TEAMGROUP','TEAM']])canonicalBrands.set(alias,name);
+ // Match a manufacturer at the start, never a component mentioned later in a PC name.
+ const leadingBrands=[...brandNames,'Coolermaster','LianLi','WD','Micro-Star International','ASUSTeK','Hewlett-Packard','TeamGroup'].filter(value=>value!=='HEADSET').sort((a,b)=>b.length-a.length);
+ function brand(p={}){
+  const name=String(p.displayName||p.name||'').replace(/^\[[^\]]+\]\s*/,'').trim();
+  if(/\bMicrosoft\s+Surface\b/i.test(name))return 'MICROSOFT';
+  if(/\bJOI\s+(?:IDEA|GAMING\s+PC)\b/i.test(name))return 'JOI';
+  const upper=name.toUpperCase();
+  for(const candidate of leadingBrands){const c=candidate.toUpperCase();if(upper.startsWith(c)&&(!upper[c.length]||!/[A-Z0-9]/.test(upper[c.length])))return canonicalBrands.get(brandKey(candidate))||'Others';}
+  const raw=brandKey(p.brand);
+  return raw==='HEADSET'?'Others':canonicalBrands.get(raw)||'Others';
+ }
+ const publicIds=new Map();
+ function publicProductId(value){
+  const id=String(typeof value==='object'&&value!==null?(value.productId||value.id||''):value||'');
+  if(!id||/^azp-[0-9a-f]{16}$/.test(id))return id;
+  if(publicIds.has(id))return publicIds.get(id);
+  // Stable opaque display identifier; internal supplier IDs and permissions stay unchanged.
+  let hash=0xcbf29ce484222325n;
+  for(const char of id){hash^=BigInt(char.codePointAt(0));hash=BigInt.asUintN(64,hash*0x100000001b3n);}
+  const code='azp-'+hash.toString(16).padStart(16,'0');publicIds.set(id,code);return code;
+ }
+ function matchesProduct(p={},query){
+  if(!query)return false;
+  const value=String(query);
+  return [p.productId,p.id,p.sourceRecordId].filter(Boolean).some(id=>String(id)===value||publicProductId(String(id))===value);
+ }
+ function productUrl(p={}){const id=publicProductId(p);return id?'/PC-Build/?model='+encodeURIComponent(id):'/PC-Build/';}
  function gallery(p={}){return [...new Set([p.image,...(Array.isArray(p.images)?p.images:[])].filter(x=>typeof x==='string'&&(/^\/PC-Build\/images\//.test(x)||/^https:\/\//.test(x))))];}
  function useGroup(p={}){
    const c=category(p),name=String(p.displayName||p.name||''),t=name.toUpperCase();
@@ -74,5 +104,5 @@
    }
    return keys;
  }
- return {stores,storeKey,category,storefrontCategory,rank,productUrl,gallery,useGroup,comparisonKeys};
+ return {stores,storeKey,category,storefrontCategory,rank,brand,publicProductId,matchesProduct,productUrl,gallery,useGroup,comparisonKeys};
 });

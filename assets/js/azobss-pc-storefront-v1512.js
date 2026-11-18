@@ -44,8 +44,9 @@ function brand(p){
   if(/\bMicrosoft\s+Surface\b/i.test(title))return 'MICROSOFT';
   if(/\bJOI\s+(?:IDEA|GAMING\s+PC)\b/i.test(title))return 'JOI';
  }
- return String(p.brand||title.split(/\s+/)[0]||'Lain-lain').replace(/[^\w.-]/g,'').toUpperCase();
+ return window.AZOBSSPcModel?.brand(p)||'Others';
 }
+function matchesProduct(p,query){return window.AZOBSSPcModel?.matchesProduct?window.AZOBSSPcModel.matchesProduct(p,query):p.id===query||p.sourceRecordId===query;}
 function adminSourceMetadata(p){
  if(actions.isAdmin?.()!==true)return '';
  const audit=window.AZOBSSSourcePrices?.panel?.(p);if(audit)return audit;
@@ -148,7 +149,7 @@ function render(next,callbacks){
   grid.insertAdjacentHTML('afterend','<nav class="az-store-pagination" id="azStorePageBottom" aria-label="Product pages below results"></nav>');
  }
  const brands=document.querySelector('#azPcShopBrand'),previous=brands.value;
- brands.innerHTML='<option value="all">All brands</option>'+[...new Set(rows.map(brand))].sort().map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+ brands.innerHTML='<option value="all">All brands</option>'+[...new Set(rows.map(brand))].sort((a,b)=>a==='Others'?1:b==='Others'?-1:a.localeCompare(b)).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
  if([...brands.options].some(x=>x.value===previous))brands.value=previous;
  if(!bound){
   const initialQuery=new URL(location.href).searchParams.get('q');if(initialQuery){const search=document.getElementById('azPcShopSearch');if(search)search.value=initialQuery;}
@@ -240,12 +241,12 @@ function draw(){
  const q=(document.querySelector('#azPcShopSearch')?.value||'').trim().toLowerCase();
  let cat=document.querySelector('#azPcShopCategory')?.value||'all',b=document.querySelector('#azPcShopBrand')?.value||'all';const sort=document.querySelector('#azPcShopSort')?.value||'recommended';
  const u=new URL(location.href),priceList=u.searchParams.get('catalog')==='pricelist',model=u.searchParams.get('model')||(/^#VNP-/.test(u.hash)?u.hash.slice(1):'');
- if(model){const target=rows.find(p=>p.sourceRecordId===model||p.id===model);if(target){const group=productGroup(target);if(hubGroup!==group){hubGroup=group;page=1;syncHubNav();u.searchParams.set('section',group);history.replaceState(null,'',u);}}}
+ if(model){const target=rows.find(p=>matchesProduct(p,model));if(target){const group=productGroup(target);if(hubGroup!==group){hubGroup=group;page=1;syncHubNav();u.searchParams.set('section',group);history.replaceState(null,'',u);}}}
  const isPrebuilt=hubGroup==='prebuilt';
  const groupRows=rows.filter(p=>(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId));
  const eligible=groupRows.filter(p=>!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()));
  const categories=new Set(eligible.map(displayCategory).filter(Boolean));
- for(const [id,values,label,current] of [['azPcShopCategory',(isPrebuilt?prebuiltCategories.filter(category=>categories.has(category)):[...categories].sort()),'All categories',cat],['azPcShopBrand',[...new Set(eligible.map(brand))].sort(),'All brands',b]]){
+ for(const [id,values,label,current] of [['azPcShopCategory',(isPrebuilt?prebuiltCategories.filter(category=>categories.has(category)):[...categories].sort()),'All categories',cat],['azPcShopBrand',[...new Set(eligible.map(brand))].sort((a,b)=>a==='Others'?1:b==='Others'?-1:a.localeCompare(b)),'All brands',b]]){
   const select=document.getElementById(id);if(!select)continue;
   select.innerHTML=`<option value="all">${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
   select.value=values.includes(current)?current:'all';if(id==='azPcShopCategory')cat=select.value;else b=select.value;
@@ -274,7 +275,7 @@ function draw(){
   Object.entries(useGroups).filter(([id])=>groupKeys.has(id)||id==='drone'&&['accessories','all'].includes(hubGroup));
  const use=populate(useSelect,uses,'All uses');
  const filter=JSON.stringify([q,cat,b,sort,hubGroup,priceList,model,store,use]);if(filter!==lastFilter){page=1;lastFilter=filter;}
- let result=eligible.filter(p=>(!model||p.sourceRecordId===model||p.id===model)&&(model||(cat==='all'||displayCategory(p)===cat)&&(b==='all'||brand(p)===b))&&(model||(store==='all'||p.storeId===store)&&(use==='all'||(isPrebuilt?matchesPrebuiltUse(p,use):window.AZOBSSPcModel?.useGroup(p)===use)))&&(model||matchesSearch(p,q)));
+ let result=eligible.filter(p=>(!model||matchesProduct(p,model))&&(model||(cat==='all'||displayCategory(p)===cat)&&(b==='all'||brand(p)===b))&&(model||(store==='all'||p.storeId===store)&&(use==='all'||(isPrebuilt?matchesPrebuiltUse(p,use):window.AZOBSSPcModel?.useGroup(p)===use)))&&(model||matchesSearch(p,q)));
  const priority={laptop:0,desktop:1,hardware:2};
  const categoryRank=p=>window.AZOBSSPcModel?.rank(p)??8;
  result.sort(sort==='recommended'?(a,b)=>(priority[a.type]??2)-(priority[b.type]??2)||(hubGroup==='components'?categoryRank(a)-categoryRank(b):0)||a.price-b.price:sort==='price-desc'?(a,b)=>b.price-a.price:sort==='name'?(a,b)=>a.name.localeCompare(b.name):(a,b)=>a.price-b.price);
@@ -292,7 +293,7 @@ function draw(){
   pager.innerHTML=nav;
   if(pager.dataset)pager.dataset.pagination=key;
  }
- const target=model&&[...(grid.querySelectorAll?.('[data-store-product]')||[])].find(el=>el.dataset.storeProduct===model||shown.find(p=>p.id===el.dataset.storeProduct)?.sourceRecordId===model);
+ const target=model&&[...(grid.querySelectorAll?.('[data-store-product]')||[])].find(el=>{const p=shown.find(p=>p.id===el.dataset.storeProduct);return p&&matchesProduct(p,model);});
  if(target){target.classList.add('az-store-shared');if(sharedFocused!==model){sharedFocused=model;requestAnimationFrame(()=>grid.querySelector('.az-store-shared')?.scrollIntoView({block:'center'}));}}
  else if(!model)sharedFocused='';
  window.dispatchEvent?.(new CustomEvent('azobss:pc-catalog-render'));
