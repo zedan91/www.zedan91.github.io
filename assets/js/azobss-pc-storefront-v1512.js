@@ -84,12 +84,9 @@ function listRow(p){
   '<div class="az-store-list-identity"><span class="az-store-category">'+esc(displayCategory(p))+'</span><h3>'+name+'</h3></div>'+
   '<div class="az-store-price">'+money(p.price)+'</div><button type="button" class="az-store-details" data-store-details="'+id+'">Specifications &amp; details ↗</button></article>';
 }
-async function shareProduct(p,button){
+function shareProduct(p,button){
  const url=new URL(window.AZOBSSPcModel.productUrl(p),location.origin).href;
- try{
-   if(navigator.share)await navigator.share({title:title(p),url});
-   else {await navigator.clipboard.writeText(url);button.title='Link copied';}
- }catch(error){if(error.name!=='AbortError')prompt('Copy product link',url);}
+ window.AZOBSSPcShare.open({title:title(p),text:title(p)+' - '+money(p.price),url},button);
 }
 function compareProduct(p){
  if(actions.isAdmin?.()!==true)return;

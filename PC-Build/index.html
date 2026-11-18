@@ -414,9 +414,7 @@ async function shareBuild(b,btn){
   const url=pcShareUrl(b),old=btn?.textContent||'🔗 Share';
   const admin=isAdminViewer(),price=buildPriceText(b),displayName=publicBuildName(b,admin),store=isRetailerBuild(b)&&admin?` • ${b.storeName||b.sourceName||'Kedai'}`:'';
   const payload={title:`${displayName} | AZOBSS PC Build`,text:`${displayName} — ${price}${store}. Lihat spesifikasi PC ini di AZOBSS.`,url};
-  try{if(navigator.share){await navigator.share(payload);if(btn)btn.textContent='✓ Shared'}else{await navigator.clipboard.writeText(url);if(btn)btn.textContent='✓ Link disalin'}}
-  catch(err){if(err?.name==='AbortError')return;try{await navigator.clipboard.writeText(url);if(btn)btn.textContent='✓ Link disalin'}catch(_e){prompt('Copy link PC:',url)}}
-  finally{if(btn)setTimeout(()=>btn.textContent=old,1400)}
+  window.AZOBSSPcShare.open(payload,btn);
 }
 function sharedPcSelector(){try{return `.pc-build-card[data-product-id="${CSS.escape(SHARED_PC_ID)}"]`}catch(_e){return `.pc-build-card[data-product-id="${SHARED_PC_ID.replace(/["\\]/g,'')}"]`}}
 function startSharedPcEffect(){if(!SHARED_PC_ID)return;const card=document.querySelector(sharedPcSelector());if(!card)return;sharedPcEffectUntil=Date.now()+6200;card.classList.add('is-shared');card.classList.remove('shared-arrival');void card.offsetWidth;card.classList.add('shared-arrival');clearTimeout(sharedPcEffectTimer);sharedPcEffectTimer=setTimeout(()=>{sharedPcEffectUntil=0;document.querySelector(sharedPcSelector())?.classList.remove('shared-arrival')},6300)}
@@ -521,12 +519,14 @@ window.addEventListener('azobss:source-prices-change',()=>schedulePcRender(false
 try{let lastAdmin=isAdminViewer();syncRetailerStoreAccess();new MutationObserver(()=>{const now=isAdminViewer();syncRetailerStoreAccess();if(now!==lastAdmin){lastAdmin=now;window.dispatchEvent(new Event('azobss:pc-admin-view-change'));schedulePcRender(false);renderCustomBuilder()}}).observe(document.body,{attributes:true,attributeFilter:['class','data-role']});window.addEventListener('storage',()=>{syncRetailerStoreAccess();schedulePcRender(false)});setTimeout(syncRetailerStoreAccess,250);setTimeout(syncRetailerStoreAccess,1200)}catch(_e){}
 
 </script>
-<script src="/assets/js/azobss-global-auth.js?v=1598" type="module"></script>
+<script src="/assets/js/azobss-global-auth.js?v=1599" type="module"></script>
 <script defer src="/assets/js/azobss-pc-image-editor-v1508.js?v=1509"></script>
-<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1582">
+<link rel="stylesheet" href="/assets/css/azobss-pc-storefront-v1512.css?v=1599">
 <link rel="stylesheet" href="/assets/css/azobss-source-prices-v1520.css?v=1546">
 <script defer src="/assets/js/azobss-source-prices-v1520.js?v=1564"></script>
-<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1589"></script>
+<link rel="stylesheet" href="/assets/css/azobss-pc-share.css?v=1599">
+<script src="/assets/js/azobss-pc-share.js?v=1599"></script>
+<script defer src="/assets/js/azobss-pc-storefront-v1512.js?v=1599"></script>
 <link rel="stylesheet" href="/assets/css/azobss-pc-documents-v1541.css?v=1562">
 <script defer src="/assets/js/azobss-pc-documents-v1541.js?v=1564"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">
