@@ -67,10 +67,17 @@ function facts(p){
  }
  return [...['CPU','RAM','Storage','Graphics','OS'].filter(k=>groups.has(k)).map(k=>groups.get(k)),...other.filter((s,i,a)=>a.indexOf(s)===i)];
 }
+function productShareNotice(p){
+ const visibility=window.AZOBSSPcVisibility;
+ if(visibility?.status&&visibility.status()!=='ready')return 'Semakan paparan produk belum selesai. Cuba sebentar lagi.';
+ if(visibility?.hidden?.(p))return 'Produk ini disembunyikan daripada pelanggan. Tukar kepada Show dahulu jika mahu berkongsi pautan kepada pelanggan.';
+ return '';
+}
 function card(p){
  const status='Reference price · Supplier stock confirmation required';
  const specs=facts(p);
- const share='<button class="az-store-share" type="button" title="Share product" aria-label="Share '+esc(title(p))+'" data-store-share="'+esc(p.id)+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 12l8-5m-8 5 8 5"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>';
+ const shareNotice=productShareNotice(p);
+ const share='<button class="az-store-share" type="button" '+(shareNotice?'disabled ':'')+'title="'+esc(shareNotice||'Share product')+'" aria-label="Share '+esc(title(p))+'" data-store-share="'+esc(p.id)+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 12l8-5m-8 5 8 5"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>';
  const compare=actions.isAdmin?.()===true?'<button type="button" class="az-store-details" data-store-compare="'+esc(p.id)+'">Compare suppliers</button>':'';
 
  return `<article class="az-store-product" data-store-product="${esc(p.id)}">${p.photoUnavailable?'<div class="az-store-photo is-unavailable">':`<button class="az-store-photo" type="button" data-store-image="${esc(p.id)}" aria-label="Enlarge photo of ${esc(title(p))}">`}<img src="${esc(p.image)}" alt="${p.photoUnavailable?'Model photo pending':esc(title(p))}" width="640" height="640" loading="lazy" decoding="async">${p.photoUnavailable?'<span class="az-store-photo-note">Photo pending</span></div>':(p.imageKind==='series'?'<span class="az-store-photo-note">Series photo</span></button>':'</button>')}<div class="az-store-product-copy"><div class="az-store-category">${esc(displayCategory(p))} <span>${esc(brand(p))}</span></div><div class="az-store-name"><h3>${esc(title(p))}</h3>${share}</div>${actions.isAdmin?.()===true?`<small class="az-store-supplier">${esc(storeName(p))}</small>`:''}<ul>${specs.slice(0,4).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><button type="button" class="az-store-details" data-store-details="${esc(p.id)}">Specifications &amp; details ↗</button>${compare}<div class="az-store-price">${money(p.price)}</div><div class="az-store-stock">${esc(status)}</div>${adminSourceMetadata(p)}<div class="az-store-actions"><button type="button" data-store-add="${esc(p.id)}">＋ Add to List</button><button type="button" class="primary" data-store-buy="${esc(p.id)}">Request Quote</button></div></div></article>`;
@@ -86,6 +93,9 @@ function listRow(p){
   '<div class="az-store-price">'+money(p.price)+'</div><button type="button" class="az-store-details" data-store-details="'+id+'">Specifications &amp; details ↗</button></article>';
 }
 function shareProduct(p,button){
+ const notice=productShareNotice(p);
+ if(notice){actions.modal?.('Perkongsian produk belum tersedia','<p role="status">'+esc(notice)+'</p>');return;}
+
  const url=new URL(window.AZOBSSPcModel.productUrl(p),location.origin).href;
  window.AZOBSSPcShare.open({title:title(p),text:title(p)+' - '+money(p.price),url},button);
 }
@@ -116,7 +126,7 @@ function details(p){
  const extra=document.createElement('div');
  extra.className='az-store-detail-actions';
  const share=document.createElement('button');
- share.type='button';share.className='az-store-details';share.textContent='Share product';
+ share.type='button';share.className='az-store-details';share.textContent='Share product';share.disabled=!!productShareNotice(p);share.title=productShareNotice(p);
  share.onclick=()=>shareProduct(p,share);
  extra.append(share);
  if(actions.isAdmin?.()===true){
@@ -283,8 +293,9 @@ function draw(){
  const start=(page-1)*PAGE_SIZE,shown=result.slice(start,start+PAGE_SIZE);
  const layout=document.getElementById('azPcShopLayout')?.value||'medium';
  grid.classList.add('az-store-grid');if(grid.dataset)grid.dataset.layout=layout;
- grid.innerHTML=shown.length?(actions.catalogMode==='unavailable'?'<div class="az-pc-shop-empty">Memaparkan harga rujukan. <button class="az-pc-shop-btn" type="button" data-store-retry>Cuba Lagi</button></div>':'')+shown.map(layout==='list'?listRow:card).join(''):'<div class="az-pc-shop-empty">No matching products. Try another category or search.</div>';
+ grid.innerHTML=shown.length?(actions.catalogMode==='unavailable'?'<div class="az-pc-shop-empty">Memaparkan harga rujukan. <button class="az-pc-shop-btn" type="button" data-store-retry>Cuba Lagi</button></div>':'')+shown.map(layout==='list'?listRow:card).join(''):(model?'<div class="az-pc-shop-empty" role="status"><h3>'+(actions.adminCatalogPending?'Memuatkan katalog admin...':'Produk belum tersedia')+'</h3><p>'+(actions.adminCatalogPending?'Sesi admin sedang disahkan. Katalog penuh akan dimuatkan semula selepas login tersedia.':actions.isAdmin?.()===true?'Produk mungkin disembunyikan, tiada dalam paparan dipilih atau tidak lagi tersedia. Semak All cards dan tetapan Hide/Show.':'Produk ini tidak tersedia atau telah disembunyikan daripada katalog pelanggan.')+'</p><button class="az-pc-shop-btn" type="button" data-store-browse>Lihat semua produk</button> <button class="az-pc-shop-btn" type="button" data-store-retry>Cuba Lagi</button></div>':'<div class="az-pc-shop-empty">No matching products. Try another category or search.</div>');
  grid.querySelector?.('[data-store-retry]')?.addEventListener('click',()=>actions.retry?.());
+ grid.querySelector?.('[data-store-browse]')?.addEventListener('click',()=>setHubGroup('all'));
  document.querySelector('#azStoreResults').textContent=result.length?`${start+1}–${Math.min(start+PAGE_SIZE,result.length)} of ${result.length.toLocaleString('ms-MY')} options`:'0 options';
  const nav=paginationMarkup(page,pages);
  for(const id of ['azStorePageTop','azStorePageBottom']){

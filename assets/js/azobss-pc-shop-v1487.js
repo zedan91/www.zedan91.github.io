@@ -5,7 +5,7 @@ const CATALOG_API='https://azobss-backend.onrender.com/api/pc-shop/catalog';
 const HEALTH_API='https://azobss-backend.onrender.com/api/pc-shop/health';
 const BACKEND='https://azobss-backend.onrender.com';
 const CART_KEY='azobss_pc_hardware_cart_v1473';
-let catalogRequest=null,catalogRetry;let shownRequestedBuild1537=false;let storefrontSnapshot=[];let presentationById=new Map();let blockedProductImages=new Set();let catalog=[];let externalBuilds=new Map();let externalBuildsLoaded=false;let currentView='hardware';let modalAbort=null;let modalLastFocus=null;let catalogMeta={mode:'loading',fetchedAt:'',stats:{}};let backendState={checkedAt:0,ready:false,message:'Belum disemak',release:'',apiVersion:'',capabilities:{}};
+let catalogRequest=null,catalogRetry;let catalogAuthRevision=0,adminCatalogReload=null,adminCatalogReloadAgain=false;let shownRequestedBuild1537=false;let storefrontSnapshot=[];let presentationById=new Map();let blockedProductImages=new Set();let catalog=[];let externalBuilds=new Map();let externalBuildsLoaded=false;let currentView='hardware';let modalAbort=null;let modalLastFocus=null;let catalogMeta={mode:'loading',fetchedAt:'',stats:{}};let backendState={checkedAt:0,ready:false,message:'Belum disemak',release:'',apiVersion:'',capabilities:{}};
 function timeoutError(label='Request'){const e=new Error(label+' mengambil masa terlalu lama. Cuba lagi.');e.code='AZOBSS_TIMEOUT';return e}
 function withTimeout(promise,ms,label='Request'){let t;return Promise.race([Promise.resolve(promise),new Promise((_,reject)=>{t=setTimeout(()=>reject(timeoutError(label)),ms)})]).finally(()=>clearTimeout(t))}
 async function fetchWithTimeout(url,options={},ms=22000,label='Server'){const ctrl=new AbortController();const external=options.signal;let externalAbort=null;if(external){if(external.aborted)ctrl.abort(external.reason);else{externalAbort=()=>ctrl.abort(external.reason);external.addEventListener('abort',externalAbort,{once:true})}}const timer=setTimeout(()=>ctrl.abort('timeout'),ms);try{return await fetch(url,{...options,signal:ctrl.signal})}catch(e){if(ctrl.signal.aborted&&!external?.aborted)throw timeoutError(label);throw e}finally{clearTimeout(timer);if(external&&externalAbort)external.removeEventListener('abort',externalAbort)}}
@@ -63,7 +63,7 @@ window.retryProductImage=function(img){if(!img)return;const media=img.closest('.
 function ageLabel(v){if(!v)return'';const t=Date.parse(v);if(!Number.isFinite(t))return'';const mins=Math.max(0,Math.round((Date.now()-t)/60000));if(mins<2)return'baru dikemas kini';if(mins<60)return`${mins} min lalu`;const h=Math.round(mins/60);if(h<24)return`${h} jam lalu`;return`${Math.round(h/24)} hari lalu`}
 function pcShopIsAdmin(){try{return typeof window.isAdminViewer==='function'&&window.isAdminViewer()===true}catch(_){return false}}
 function productCard(p){const stock=String(p.stock||'check').replace(/-/g,' '),img=esc(p.image||''),status=String(p.priceStatus||''),live=status==='live'&&p.available===true&&String(p.availability||'')==='available'&&p.requiresConfirmation!==true,source=pcShopIsAdmin()&&p.sourceUrl?`<div class="az-pc-product-source-label" data-pc-admin-source>Sumber kedai: <b>${esc(p.sourceName||'Produk rasmi')}</b></div><a class="az-pc-product-source" data-pc-admin-source href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">Lihat produk asal ↗</a>`:'',media=img?`<button class="az-pc-product-media ${esc(p.imageCrop||'product-focus')}" data-shop-image="${esc(p.id)}" type="button" aria-label="Lihat gambar ${esc(p.name)} lebih besar"><img src="${img}" alt="${esc(p.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="retryProductImage(this)"></button>`:`<div class="az-pc-product-media az-pc-no-image">Gambar produk belum tersedia</div>`,actions=Number(p.price)>0?`<button class="az-pc-shop-btn" data-shop-add="${esc(p.id)}" type="button">Add to List</button><button class="az-pc-shop-btn primary" data-shop-buy="${esc(p.id)}" type="button">Request Quote</button><a class="az-pc-shop-btn quote" href="https://alvo.chat/6nZ2" target="_blank" rel="noopener">Tanya / Tempah</a>`:'';return `<article class="az-pc-product" data-shop-product="${esc(p.id)}">${media}<div class="az-pc-product-body"><div class="az-pc-product-cat">${esc(p.category)}</div><h3>${esc(p.name)}</h3><div class="az-pc-product-price">${money(p.price)}</div><ul class="az-pc-product-specs">${(p.specs||[]).slice(0,14).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>${source}${pcShopIsAdmin()?(window.AZOBSSSourcePrices?.panel(p)||''):''}<div class="az-pc-product-stock">Status: ${esc('Reference price · Stok pembekal perlu disahkan')}</div><div class="az-pc-product-actions">${actions}</div></div></article>`}
-function renderHardware(){if(window.AZOBSSPcStorefront){window.AZOBSSPcStorefront.render(catalog.filter(p=>p.image),{add:addCart,image:openImageViewer,modal,isAdmin:pcShopIsAdmin,catalogMode:catalogMeta.mode,retry:retryCatalogue});return;}const q=String(document.querySelector('#azPcShopSearch')?.value||'').trim().toLowerCase(),cat=document.querySelector('#azPcShopCategory')?.value||'all',sort=document.querySelector('#azPcShopSort')?.value||'price-asc';let list=catalog.filter(p=>(cat==='all'||p.category===cat)&&(!q||JSON.stringify(p).toLowerCase().includes(q)));if(sort==='price-desc')list.sort((a,b)=>Number(b.price)-Number(a.price));else if(sort==='name')list.sort((a,b)=>String(a.name).localeCompare(String(b.name)));else list.sort((a,b)=>Number(a.price)-Number(b.price));const box=document.querySelector('#azPcShopGrid');if(!box)return;box.innerHTML=list.length?list.map(productCard).join(''):'<div class="az-pc-shop-empty">Tiada hardware yang lulus semakan live buat masa ini.<div style="margin-top:12px"><button class="az-pc-shop-btn primary" data-shop-retry type="button">Cuba Semula</button></div></div>';box.querySelectorAll('[data-shop-add]').forEach(b=>b.addEventListener('click',()=>addCart(catalog.find(x=>x.id===b.dataset.shopAdd))));box.querySelectorAll('[data-shop-buy]').forEach(b=>b.addEventListener('click',()=>addCart(catalog.find(x=>x.id===b.dataset.shopBuy),true)));box.querySelectorAll('[data-shop-image]').forEach(b=>b.addEventListener('click',()=>openImageViewer(catalog.find(x=>x.id===b.dataset.shopImage))));box.querySelector('[data-shop-retry]')?.addEventListener('click',()=>loadCatalog(1),{once:true})}
+function renderHardware(){if(window.AZOBSSPcStorefront){window.AZOBSSPcStorefront.render(catalog.filter(p=>p.image),{add:addCart,image:openImageViewer,modal,isAdmin:pcShopIsAdmin,catalogMode:catalogMeta.mode,adminCatalogPending:pcShopIsAdmin()&&catalogMeta.includesHidden!==true,retry:retryCatalogue});return;}const q=String(document.querySelector('#azPcShopSearch')?.value||'').trim().toLowerCase(),cat=document.querySelector('#azPcShopCategory')?.value||'all',sort=document.querySelector('#azPcShopSort')?.value||'price-asc';let list=catalog.filter(p=>(cat==='all'||p.category===cat)&&(!q||JSON.stringify(p).toLowerCase().includes(q)));if(sort==='price-desc')list.sort((a,b)=>Number(b.price)-Number(a.price));else if(sort==='name')list.sort((a,b)=>String(a.name).localeCompare(String(b.name)));else list.sort((a,b)=>Number(a.price)-Number(b.price));const box=document.querySelector('#azPcShopGrid');if(!box)return;box.innerHTML=list.length?list.map(productCard).join(''):'<div class="az-pc-shop-empty">Tiada hardware yang lulus semakan live buat masa ini.<div style="margin-top:12px"><button class="az-pc-shop-btn primary" data-shop-retry type="button">Cuba Semula</button></div></div>';box.querySelectorAll('[data-shop-add]').forEach(b=>b.addEventListener('click',()=>addCart(catalog.find(x=>x.id===b.dataset.shopAdd))));box.querySelectorAll('[data-shop-buy]').forEach(b=>b.addEventListener('click',()=>addCart(catalog.find(x=>x.id===b.dataset.shopBuy),true)));box.querySelectorAll('[data-shop-image]').forEach(b=>b.addEventListener('click',()=>openImageViewer(catalog.find(x=>x.id===b.dataset.shopImage))));box.querySelector('[data-shop-retry]')?.addEventListener('click',()=>loadCatalog(1),{once:true})}
 function setSyncStatus(){
  const el=document.querySelector('#azPcPriceSync');if(!el)return;
  const shown=catalog.filter(p=>p.image&&(!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,pcShopIsAdmin()))).length;
@@ -76,9 +76,21 @@ function retryCatalogue(){
  window.AZOBSSPcVisibility?.refresh();
  loadCatalog();
 }
-async function reloadAdminCatalogue(){
- if(catalogRequest)await catalogRequest;
- return loadCatalog();
+function onCatalogAuthReady(){
+ catalogAuthRevision++;
+ return reloadAdminCatalogue();
+}
+function reloadAdminCatalogue(){
+ adminCatalogReloadAgain=true;
+ if(adminCatalogReload)return adminCatalogReload;
+ adminCatalogReload=(async()=>{
+  do{
+   adminCatalogReloadAgain=false;
+   if(catalogRequest)await catalogRequest;
+   await loadCatalog();
+  }while(adminCatalogReloadAgain);
+ })().finally(()=>{adminCatalogReload=null;});
+ return adminCatalogReload;
 }
 function loadCatalog(attempt=0){
  if(catalogRequest)return catalogRequest;
@@ -87,19 +99,22 @@ function loadCatalog(attempt=0){
  return catalogRequest;
 }
 async function updateCatalog(attempt){
+ const revision=catalogAuthRevision;
  let shouldRetry=false;
  try{
   const h=pcShopIsAdmin()?await authHeaders(true):{},includeHidden=pcShopIsAdmin()&&!!h.Authorization;
   const r=await fetch(CATALOG_API+(includeHidden?'?includeHidden=1':''),{cache:'no-store',headers:h,signal:AbortSignal.timeout(12000)});
   const d=await r.json();
+  if(revision!==catalogAuthRevision)return;
   if(!r.ok||!d.ok||!Array.isArray(d.products))throw new Error(d.message||d.error||'Catalog unavailable');
   const rows=d.capabilities?.expandedCatalog1512===true?d.products:[...storefrontSnapshot,...d.products];
   if(d.capabilities?.unifiedPcHardware1526!==true)rows.push(...storefrontSnapshot.filter(p=>p.sourceRecordId));
   catalog=[...new Map(rows.map(p=>[String(p.id),p])).values()].filter(p=>['hardware','laptop','desktop'].includes(String(p.type||'').toLowerCase())&&Number(p.price)>0&&String(p.priceStatus||'')!=='unavailable').map(applyLocalProductImage);
-  catalogMeta={mode:'live',hasLiveCatalogue:true,fetchedAt:d.fetchedAt||'',stats:d.stats||{total:catalog.length}};
+  catalogMeta={mode:'live',hasLiveCatalogue:true,includesHidden:includeHidden,fetchedAt:d.fetchedAt||'',stats:d.stats||{total:catalog.length}};
   window.AZOBSSPcVisibility?.accept(d.visibility);
   shouldRetry=!catalog.length&&Number(catalogMeta.stats?.total||0)>0&&attempt<1;
  }catch(e){
+  if(revision!==catalogAuthRevision)return;
   console.warn('AZOBSS hardware catalog unavailable:',e);
   if(!catalogMeta.hasLiveCatalogue)catalog=storefrontSnapshot.map(applyLocalProductImage);
   catalogMeta={...catalogMeta,mode:'unavailable'};
@@ -404,6 +419,6 @@ function init(){if(document.getElementById('azCheckoutStage'))return;if(/^\/cart
  window.addEventListener('azobss:auth-state-ready',()=>{
    if(new URL(location.href).searchParams.get('quote')==='1'&&currentCustomerUid()&&!document.querySelector('[data-submit-order]'))consumeQuote();
  });
-}else if(entry.get('list')==='1')openCart(false);window.addEventListener('azobss:pc-admin-view-change',()=>{document.querySelectorAll('[data-pc-admin-source]').forEach(el=>el.remove());renderHardware();reloadAdminCatalogue()});try{cleanupPcShopModalState('init')}catch(e){console.warn('AZOBSS modal cleanup init:',e)}window.addEventListener('azobss:pc-visibility-change',setSyncStatus);renderHardware();loadCatalog();loadStorefrontSnapshot();watchPcCards();preflight();window.addEventListener('storage',e=>{if(e.key===CART_KEY){if(catalogMeta.mode==='live')syncCartPrices(true);updateCartFab()}});window.addEventListener('focus',()=>{try{cleanupPcShopModalState('focus')}catch(_){}});window.addEventListener('pageshow',()=>{try{cleanupPcShopModalState('pageshow')}catch(_){}});document.addEventListener('visibilitychange',()=>{if(!document.hidden)try{cleanupPcShopModalState('visible')}catch(_){}});document.addEventListener('azobss:session-resume',()=>{try{cleanupPcShopModalState('session-resume')}catch(_){}});setInterval(()=>{try{if(document.querySelector('.az-pc-shop-backdrop')||document.body.classList.contains('az-pc-shop-modal-open'))cleanupPcShopModalState('interval')}catch(_){}},2500);if(typeof window.azobssLongSessionInterval==='function')window.azobssLongSessionInterval(loadCatalog,10*60*1000);else setInterval(loadCatalog,10*60*1000)}
+}else if(entry.get('list')==='1')openCart(false);window.addEventListener('azobss:auth-state-ready',onCatalogAuthReady);window.addEventListener('azobss:pc-admin-view-change',()=>{document.querySelectorAll('[data-pc-admin-source]').forEach(el=>el.remove());renderHardware();reloadAdminCatalogue()});try{cleanupPcShopModalState('init')}catch(e){console.warn('AZOBSS modal cleanup init:',e)}window.addEventListener('azobss:pc-visibility-change',setSyncStatus);renderHardware();loadCatalog();loadStorefrontSnapshot();watchPcCards();preflight();window.addEventListener('storage',e=>{if(e.key===CART_KEY){if(catalogMeta.mode==='live')syncCartPrices(true);updateCartFab()}});window.addEventListener('focus',()=>{try{cleanupPcShopModalState('focus')}catch(_){}});window.addEventListener('pageshow',()=>{try{cleanupPcShopModalState('pageshow')}catch(_){}});document.addEventListener('visibilitychange',()=>{if(!document.hidden)try{cleanupPcShopModalState('visible')}catch(_){}});document.addEventListener('azobss:session-resume',()=>{try{cleanupPcShopModalState('session-resume')}catch(_){}});setInterval(()=>{try{if(document.querySelector('.az-pc-shop-backdrop')||document.body.classList.contains('az-pc-shop-modal-open'))cleanupPcShopModalState('interval')}catch(_){}},2500);if(typeof window.azobssLongSessionInterval==='function')window.azobssLongSessionInterval(loadCatalog,10*60*1000);else setInterval(loadCatalog,10*60*1000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
