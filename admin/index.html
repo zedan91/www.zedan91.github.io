@@ -2280,7 +2280,7 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-license-admin-compact.css?v=1404">
 <script src="/assets/js/azobss-ebook-access-admin.js?v=1360" defer></script>
 <script src="/assets/js/azobss-solattime-admin.js?v=1421" defer></script>
-<script src="/assets/js/azobss-azdm-admin.js?v=1397" defer></script>
+<script src="/assets/js/azobss-azdm-admin.js?v=1598" defer></script>
 
 <style id="azobss-admin-debt-loan-v1314">
 .az-debt-section{--az-debt-border:#2d506f;--az-debt-soft:#0f1b2d;--az-debt-card:#162337}
@@ -3253,8 +3253,8 @@ body[data-dashboard-page="admin"] .topbar{
     <section id="softwarekeys" class="section">
       <h2>🗝️ Software Key / Digital Access</h2>
       <div class="azdm-key-tabs" role="tablist" aria-label="Pilih software">
-        <button id="softwareKeyAzdmTab" type="button" role="tab" aria-controls="azdmAdminPanel" aria-selected="true" data-software-key-product="azdm"><img class="azdm-key-tab-logo azdm-key-tab-logo-azdm" src="/assets/images/azdm-logo.png" alt="" aria-hidden="true"><span>AZDM</span></button>
-        <button id="softwareKeySolattimeTab" type="button" role="tab" aria-controls="solattimeAdminPanel" aria-selected="false" tabindex="-1" data-software-key-product="solattime"><img class="azdm-key-tab-logo" src="/assets/images/solattime-logo.png" alt="" aria-hidden="true"><span>Liyabudun</span></button>
+        <button id="softwareKeySolattimeTab" type="button" role="tab" aria-controls="solattimeAdminPanel" aria-selected="true" data-software-key-product="solattime"><img class="azdm-key-tab-logo" src="/assets/images/solattime-logo.png" alt="" aria-hidden="true"><span>Liyabudun</span></button>
+        <button id="softwareKeyAzdmTab" type="button" role="tab" aria-controls="azdmAdminPanel" aria-selected="false" tabindex="-1" data-software-key-product="azdm"><img class="azdm-key-tab-logo azdm-key-tab-logo-azdm" src="/assets/images/azdm-logo.png" alt="" aria-hidden="true"><span>AZDM</span></button>
         <button id="softwareKeySurveycadTab" type="button" role="tab" aria-controls="surveycadKeyPanel" aria-selected="false" tabindex="-1" data-software-key-product="surveycad"><img class="azdm-key-tab-logo azdm-key-tab-logo-surveycad" src="/assets/images/surveycad-logo.png" alt="" aria-hidden="true"><span>SurveyCAD</span></button>
         <button id="softwareKeyEbookTab" type="button" role="tab" aria-controls="ebookAccessAdminPanel" aria-selected="false" tabindex="-1" data-software-key-product="ebook"><svg class="azdm-key-tab-logo azdm-key-tab-logo-ebook" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"></path></svg><span>Ebook Access</span></button>
       </div>
@@ -3296,7 +3296,7 @@ body[data-dashboard-page="admin"] .topbar{
       <nav id="softwareKeyPager" class="az894-software-key-pager" aria-label="Halaman Software Key" hidden></nav>
 
       </div>
-<div id="solattimeAdminPanel" role="tabpanel" aria-labelledby="softwareKeySolattimeTab" hidden>
+<div id="solattimeAdminPanel" role="tabpanel" aria-labelledby="softwareKeySolattimeTab">
   <header class="solat-heading"><img src="/assets/images/solattime-logo.png" alt="" width="40" height="40"><div><h3>Liyabudun — Pengurusan lesen</h3><p>Urus serial kekal dan pendaftaran lesen lama untuk pelanggan Liyabudun.</p></div><a href="https://solattime-license.zedan9107.workers.dev/admin" target="_blank" rel="noopener noreferrer">Buka panel asal Liyabudun ↗</a></header>
   <div id="solat-notice" class="solat-notice" role="status" aria-live="polite" hidden></div>
   <div class="solat-stats">
@@ -3346,7 +3346,7 @@ body[data-dashboard-page="admin"] .topbar{
   <dialog id="solat-attach-dialog" aria-labelledby="solat-attach-title"><h3 id="solat-attach-title">Pautkan serial asal</h3><p id="solat-attach-customer"></p><p class="solat-muted">Masukkan salinan serial asal daripada e-mel atau backup. Sistem menyemak padanan lesen sebelum menyimpannya secara tersulit. PC dan serial tidak ditukar.</p><form id="solat-attach-form"><label>Serial Liyabudun<input id="solat-attach-serial" maxlength="80" required autocomplete="off" spellcheck="false"></label><div class="solat-actions"><button type="button" data-solat-close="attach-dialog">Batal</button><button type="submit" class="solat-primary">Semak &amp; simpan</button></div><p id="solat-attach-status" role="status" aria-live="polite"></p></form></dialog>
   <dialog id="solat-confirm-dialog" aria-labelledby="solat-confirm-title"><h3 id="solat-confirm-title"></h3><p id="solat-confirm-customer"></p><p id="solat-confirm-detail" class="solat-muted"></p><div class="solat-actions"><button type="button" data-solat-close="confirm-dialog">Batal</button><button id="solat-confirm-action" type="button">Sahkan</button></div></dialog>
 </div>
-<div id="azdmAdminPanel" role="tabpanel" aria-labelledby="softwareKeyAzdmTab">
+<div id="azdmAdminPanel" role="tabpanel" aria-labelledby="softwareKeyAzdmTab" hidden>
   <div class="azdm-admin-heading"><img src="/assets/images/azdm-logo.png" alt="" width="44" height="44"><div><h3>AZDM — Pengurusan lesen</h3><p>Serial, penggunaan PC dan pesanan customer dalam admin AZOBSS.</p></div><a class="azdm-admin-source" href="https://azdm-license.zedan9107.workers.dev/admin" target="_blank" rel="noopener">Buka panel asal AZDM ↗</a></div>
   <div id="azdm-notice" class="azdm-admin-notice" role="status" aria-live="polite" hidden></div>
   <div class="azdm-admin-stats"><div class="azdm-admin-stat"><strong>1 PC</strong><small>Bagi setiap serial · Reset untuk pindah PC</small></div><div class="azdm-admin-stat"><strong>6 jam</strong><small>Jadual semakan online</small></div><div class="azdm-admin-stat"><strong>30 hari</strong><small>Offline maksimum, terhad kepada tamat lesen</small></div></div>
@@ -9022,7 +9022,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1597"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1598"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 

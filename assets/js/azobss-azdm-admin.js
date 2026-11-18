@@ -4,7 +4,7 @@
   if(!root)return;
   const $=id=>root.querySelector('#azdm-'+id);
   const tabs=[...document.querySelectorAll('[data-software-key-product]')];
-  let product='azdm',loaded=false,loading=null,page=0,cursors=[null],next=null,search='',sort='created-desc',activeWorkspace='licenses',licenseCache=[];
+  let product='solattime',loaded=false,loading=null,page=0,cursors=[null],next=null,search='',sort='created-desc',activeWorkspace='licenses',licenseCache=[];
   let orderPage=0,orderCursors=[null],orderNext=null,orderSearch='',orderCache=[],serialRecord=null,editing=null,pending=null,generation=0,currentOrder=null,previousBodyOverflow='';
   const apiBase='https://azobss-backend.onrender.com/api/azdm/admin/';
   const date=seconds=>seconds?new Date(seconds*1000).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur',day:'2-digit',month:'short',year:'numeric'}):'Lifetime';
@@ -128,7 +128,7 @@
     return loading;
   }
   function selectProduct(value,focus=false){
-    product=['azdm','solattime','surveycad','ebook'].includes(value)?value:'azdm';
+    product=['azdm','solattime','surveycad','ebook'].includes(value)?value:'solattime';
     const solatPanel=document.getElementById('solattimeAdminPanel');if(solatPanel)solatPanel.hidden=product!=='solattime';
     document.getElementById('surveycadKeyPanel').hidden=product!=='surveycad';
     document.getElementById('ebookAccessAdminPanel').hidden=product!=='ebook';
@@ -204,5 +204,5 @@
   $('audit-previous').addEventListener('click',()=>action(async()=>{const old=orderPage;orderPage--;try{await loadOrders(false);}catch(error){orderPage=old;throw error;}}));
   window.addEventListener('azobss-auth-changed',()=>{generation++;loaded=false;serialRecord=null;licenseCache=[];orderCache=[];$('rows').replaceChildren();$('order-rows').replaceChildren();$('audit-rows').replaceChildren();$('serial-value').value='';root.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());closeOrderAudit();});
   window.addEventListener('pagehide',()=>{serialRecord=null;$('serial-value').value='';});
-  selectProduct('azdm');setWorkspace('licenses');updatePages();
+  selectProduct('solattime');setWorkspace('licenses');updatePages();
 })();
