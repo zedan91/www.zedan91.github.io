@@ -10,6 +10,7 @@
     try {
       document.documentElement?.setAttribute(READY_ATTR, String(BRIDGE_VERSION));
       document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-extension-version',ext.runtime.getManifest().version);
+      document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-text-draft','1593');
       window.postMessage({
         type: 'AZOBSS_FIREFOX_WA_PDF_BRIDGE_READY',
         bridgeVersion: BRIDGE_VERSION
@@ -20,6 +21,11 @@
   window.addEventListener('message', event => {
     if (event.source !== window || event.origin !== location.origin) return;
     const data = event.data;
+    if(data?.type==='AZOBSS_FIREFOX_WA_TEXT_REQUEST'){
+      ext.runtime.sendMessage({type:'AZOBSS_FIREFOX_WA_PREPARE_TEXT',requestId:String(data.requestId||''),phone:data.phone,text:data.text}).then(response=>{
+        window.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_STATUS',requestId:data.requestId,ok:response?.ok===true,error:response?.error||'',phoneVerified:response?.phoneVerified===true,draftVerified:response?.draftVerified===true,phone:response?.phone||'',reused:response?.reused===true},location.origin);
+      }).catch(error=>window.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_STATUS',requestId:data.requestId,ok:false,error:String(error?.message||error)},location.origin));return;
+    }
     if(data?.type==='AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST'){
       ext.runtime.sendMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT',requestId:String(data.requestId||''),phone:data.phone,home:data.home===true}).then(response=>{
         window.postMessage({type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS',requestId:data.requestId,ok:response?.ok===true,error:response?.error||'',phoneVerified:response?.phoneVerified===true,phone:response?.phone||'',reused:response?.reused===true,bridgeVersion:BRIDGE_VERSION},location.origin);

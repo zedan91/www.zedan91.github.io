@@ -26,7 +26,7 @@ async function confirmTarget(tab,phone,requestId,oldInstance){
  throw fault('navigation_unconfirmed','WhatsApp belum selesai membuka chat pelanggan. Tiada PDF diambil oleh tab lama. Refresh tab WhatsApp dan cuba lagi.');
 }
 async function focus(tab){await ext.tabs.update(tab.id,{active:true});try{await ext.windows.update(tab.windowId,{focused:true});}catch{} }
-async function routeNow(sender,phone,home,beforeNavigate,requestId){
+async function routeNow(sender,phone,home,beforeNavigate,requestId,text,requireExisting){
  if(!adminUrl(sender?.url)||!Number.isInteger(sender?.tab?.id)||(sender.frameId!==undefined&&sender.frameId!==0))throw fault('untrusted_sender','Only the AZOBSS admin page can open this chat.');
  if(!(home===true&&phone==='')&&!validPhone(phone))throw fault('invalid_phone','Customer phone unavailable or invalid.');
  const source=await ext.tabs.get(sender.tab.id);
@@ -38,6 +38,7 @@ async function routeNow(sender,phone,home,beforeNavigate,requestId){
  let choice=home?states[0]:states.find(x=>!x.status.locked&&!x.status.busy&&!x.status.draft&&(x.status.known||x.tab.discarded||x.tab.status==='loading'));
  if(!choice&&states.length){const best=states[0];await focus(best.tab);throw fault(best.status.locked?'session_locked':!best.status.known?'probe_unavailable':'unfinished_draft',!best.status.known?'Refresh the existing WhatsApp tab once to activate the bridge, then try again.':best.status.locked?'WhatsApp is active in another session. Use the existing WhatsApp window to resolve its session prompt.':'Finish or cancel the draft/attachment in WhatsApp, then click the customer again.');}
  let tab=choice?.tab,reused=!!tab;
+ if(!tab&&requireExisting)throw fault('no_existing_tab','Buka WhatsApp Web dan login pada tab dalam profil Firefox yang sama, kemudian cuba lagi.');
  if(!tab)tab=await ext.tabs.create({url:'about:blank',active:true,windowId:source.windowId,cookieStoreId:source.cookieStoreId});
  if(beforeNavigate)await beforeNavigate(tab);
  const oldInstance=choice?.status?.instanceId||'';
@@ -49,17 +50,22 @@ async function routeNow(sender,phone,home,beforeNavigate,requestId){
   try{await ext.windows.update(tab.windowId,{focused:true});}catch{}
  }catch(error){throw fault('tab_update_failed','The WhatsApp tab could not be activated. Refresh and retry; no extra tab was opened.');}
  const confirmation=phone?await confirmTarget(tab,phone,requestId,oldInstance):{};
- return {ok:true,bridgeVersion:1552,whatsappTabId:tab.id,reused,...confirmation};
+ if(text){
+  const prepared=await timeout(ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_PREPARE_TEXT_1593',phone,text,requestId,instanceId:confirmation.instanceId}),30000);
+  if(!prepared?.ok||prepared.phone!==phone||prepared.draftVerified!==true)throw fault('draft_unconfirmed',prepared?.error||'Draf belum dapat disahkan. Semak WhatsApp dan gunakan teks yang disalin.');
+ }
+ return {ok:true,bridgeVersion:1552,whatsappTabId:tab.id,reused,...confirmation,...(text?{draftVerified:true}:{})};
 }
-function route(sender,{phone='',home=false,requestId='',beforeNavigate}={}){
+function route(sender,{phone='',home=false,requestId='',beforeNavigate,text='',requireExisting=false}={}){
  if(!adminUrl(sender?.url)||!Number.isInteger(sender?.tab?.id)||(sender.frameId!==undefined&&sender.frameId!==0))return Promise.reject(fault('untrusted_sender','Only the AZOBSS admin page can open this chat.'));
  if(typeof requestId!=='string'||!/^[-a-zA-Z0-9_]{1,120}$/.test(requestId))return Promise.reject(fault('invalid_request','Invalid contact request.'));
+ if(typeof text!=='string'||text.length>12000||(requireExisting&&!text.trim()))return Promise.reject(fault('invalid_text','Nota dealer kosong atau terlalu panjang.'));
  const key=String(sender?.tab?.id)+':'+requestId,now=Date.now();
  for(const [id,item] of requests)if(item.expires<=now)requests.delete(id);
- if(requests.has(key)){const item=requests.get(key);if(item.phone!==phone||item.home!==home)return Promise.reject(fault('request_changed','Contact request changed. Click again.'));return item.promise;}
+ if(requests.has(key)){const item=requests.get(key);if(item.phone!==phone||item.home!==home||item.text!==text||item.requireExisting!==requireExisting)return Promise.reject(fault('request_changed','Contact request changed. Click again.'));return item.promise;}
  if(requests.size>=256)return Promise.reject(fault('too_many_requests','Wait a moment and retry.'));
- const promise=queue.then(()=>routeNow(sender,phone,home,beforeNavigate,requestId));queue=promise.catch(()=>{});
- requests.set(key,{phone,home,promise,expires:now+120000});return promise;
+ const promise=queue.then(()=>routeNow(sender,phone,home,beforeNavigate,requestId,text,requireExisting));queue=promise.catch(()=>{});
+ requests.set(key,{phone,home,text,requireExisting,promise,expires:now+120000});return promise;
 }
 return Object.freeze({route,adminUrl,whatsappUrl});
 });

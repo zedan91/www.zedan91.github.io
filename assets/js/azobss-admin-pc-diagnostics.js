@@ -78,6 +78,7 @@
       el('pcDiagDealerPhone').value = '';
       el('pcDiagPhoneError').textContent = '';
       el('pcDiagDealerForm').hidden = true;
+      el('pcDiagBridgeHelp').hidden = window.AZOBSSCustomerWhatsApp1542?.bridgeDraftReady?.() === true;
       el('pcDiagDialog').showModal();
       if (kind === 'dealer') {
         el('pcDiagOpenWhatsApp').disabled = true;
@@ -94,6 +95,7 @@
     el('pcDiagPhoneError').textContent = '';
   });
   el('pcDiagAddDealer').addEventListener('click',() => {
+    el('pcDiagPhoneError').textContent = '';
     el('pcDiagDealerForm').hidden = false;
     el('pcDiagDealerName').value = '';
     el('pcDiagNewDealerPhone').value = '';
@@ -117,19 +119,24 @@
     } catch (error) { el('pcDiagDealerSaveStatus').textContent = error.message; }
     finally { button.disabled = false; }
   });
-  el('pcDiagOpenWhatsApp').addEventListener('click', () => {
+  el('pcDiagOpenWhatsApp').addEventListener('click', async () => {
     const raw = el('pcDiagDealerPhone').value.trim();
     let phone = raw.replace(/[\s()+-]/g,'');
     if (phone.startsWith('0')) phone = '60' + phone.slice(1);
-    if (phone && !/^[1-9][0-9]{6,14}$/.test(phone)) {
+    if (!/^[1-9][0-9]{6,14}$/.test(phone)) {
       el('pcDiagPhoneError').textContent = 'Masukkan nombor dealer yang sah, termasuk kod negara.';
       return;
     }
     el('pcDiagPhoneError').textContent = '';
-    const url = new URL('https://web.whatsapp.com/send');
-    if (phone) url.searchParams.set('phone',phone);
-    url.searchParams.set('text',el('pcDiagReportText').textContent);
-    window.open(url.href,'azobssDealerWhatsApp');
+    const button = el('pcDiagOpenWhatsApp');
+    button.disabled = true;
+    try {
+      const bridge = window.AZOBSSCustomerWhatsApp1542;
+      if (typeof bridge?.openDraft !== 'function') throw Error('Refresh Admin untuk memuatkan WhatsApp Bridge terkini.');
+      const ready = await bridge.openDraft(phone,el('pcDiagReportText').textContent);
+      el('pcDiagPhoneError').textContent = ready ? '' : 'Semak nombor dealer pada tab WhatsApp sedia ada sebelum menampal nota yang disalin. Autoisi memerlukan Bridge 1.3.5.';
+    } catch (error) { el('pcDiagPhoneError').textContent = error.message; }
+    finally { button.disabled = false; }
   });
   el('pcDiagClose').addEventListener('click',()=>{requestNumber++;el('pcDiagDialog').close();});
   el('pcDiagRefresh').addEventListener('click',()=>void load(true));

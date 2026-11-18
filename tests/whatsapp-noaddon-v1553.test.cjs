@@ -1,12 +1,12 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const code=fs.readFileSync(require.resolve('../assets/js/azobss-customer-whatsapp-v1542.js'),'utf8');
-function browser({firefox=false,version=0,addon="1.3.2",clipboardFails=false}={}){
+function browser({firefox=false,version=0,addon="1.3.2",draftVersion=0,clipboardFails=false}={}){
  const nodes=new Map(),listeners={},copies=[],posts=[];let opens=0;
- const document={documentElement:{getAttribute:name=>name==='data-azobss-firefox-whatsapp-extension-version'?addon:String(version)},body:{append:el=>nodes.set(el.id,el)},getElementById:id=>nodes.get(id),createElement:()=>({setAttribute(){},style:{},querySelector:()=>({}),remove(){nodes.delete(this.id);}})};
+ const document={documentElement:{getAttribute:name=>name==='data-azobss-firefox-whatsapp-extension-version'?addon:name==='data-azobss-firefox-whatsapp-text-draft'?String(draftVersion):String(version)},body:{append:el=>nodes.set(el.id,el)},getElementById:id=>nodes.get(id),createElement:()=>({setAttribute(){},style:{},querySelector:()=>({}),remove(){nodes.delete(this.id);}})};
  const window={document,crypto:{randomUUID:()=> 'qa-id'},open(){opens++;},addEventListener:(type,fn)=>{listeners[type]=fn;},postMessage:data=>posts.push(data)};
  const env={window,document,navigator:{userAgent:firefox?'Firefox/159.0':'Chrome/143.0',clipboard:{writeText:async text=>{if(clipboardFails)throw Error('Denied');copies.push(text);}}},location:{origin:'https://www.azobss.com'},URL,Map,setTimeout,clearTimeout,console};vm.runInNewContext(code,env);
- return {api:window.AZOBSSCustomerWhatsApp1542,nodes,copies,posts,get opens(){return opens;},reply(data){listeners.message({source:window,origin:env.location.origin,data:{type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS',requestId:'wa1545-qa-id',...data}});}};
+ return {api:window.AZOBSSCustomerWhatsApp1542,nodes,copies,posts,get opens(){return opens;},reply(data){listeners.message({source:window,origin:env.location.origin,data:{type:'AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS',requestId:'wa1545-qa-id',...data}});},replyDraft(data){listeners.message({source:window,origin:env.location.origin,data:{type:'AZOBSS_FIREFOX_WA_TEXT_STATUS',requestId:'draft1593-qa-id',...data}});}};
 }
 test('Chrome without a bridge prepares only the full customer number and never asks for Firefox',async()=>{
  const b=browser();assert.equal(await b.api.openURL(b.api.url('01100000001')),false);assert.deepEqual(b.copies,['+601100000001']);assert.equal(b.posts.length,0);assert.equal(b.opens,0);
@@ -29,4 +29,28 @@ test('invalid destinations cannot copy unrelated information or navigate',async(
 
 test('an older bundle with the same wire protocol cannot launch the old attachment/notice code',async()=>{
  const b=browser({firefox:true,version:1552,addon:'1.3.1'});assert.equal(b.api.bridgeReady(),false);assert.equal(await b.api.openURL(b.api.url('01100000001')),false);assert.equal(b.posts.length,0);assert.deepEqual(b.copies,['+601100000001']);
+});
+
+test('dealer drafts copy text and request an upgrade when the installed bridge lacks text support',async()=>{
+ const b=browser({firefox:true,version:1552,addon:'1.3.4'});
+ const result=b.api.openDraft('0182491182','Model: TEST');await new Promise(setImmediate);
+ assert.equal(b.posts[0].type,'AZOBSS_FIREFOX_WA_OPEN_CHAT_REQUEST');
+ b.reply({ok:true,phoneVerified:true,phone:'60182491182',reused:true});
+ assert.equal(await result,false);
+ assert.deepEqual(b.copies,['Model: TEST','Model: TEST']);assert.equal(b.opens,0);assert.equal(b.posts.length,1);
+ assert.match(b.nodes.get('azWhatsappReuseStatus1545').innerHTML,/1\.3\.5/);
+});
+
+test('dealer draft clicks coalesce and require exact recipient, reuse and text confirmation',async()=>{
+ const b=browser({firefox:true,version:1552,addon:'1.3.5',draftVersion:1593});
+ const a=b.api.openDraft('0182491182','Model: TEST'),same=b.api.openDraft('0182491182','Model: TEST');
+ assert.equal(a,same);await new Promise(setImmediate);assert.equal(b.posts.length,1);
+ assert.equal(b.posts[0].type,'AZOBSS_FIREFOX_WA_TEXT_REQUEST');
+ b.replyDraft({ok:true,phoneVerified:true,phone:'60182491182',draftVerified:true,reused:true});
+ assert.equal(await a,true);assert.equal(b.opens,0);
+ for(const change of [{phone:'60182491183'},{draftVerified:false},{reused:false}]){
+  const task=b.api.openDraft('0182491182','Model: TEST');await new Promise(setImmediate);
+  b.replyDraft({ok:true,phoneVerified:true,phone:'60182491182',draftVerified:true,reused:true,...change});
+  assert.equal(await task,false);
+ }
 });

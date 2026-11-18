@@ -48,3 +48,29 @@ test('a phone action navigates even if a stale send URL still names that phone',
 test('legacy PDF payload is registered before navigating the reused tab',async()=>{
  const f=fixture([wa(40)]);let registered=false;const update=f.ext.tabs.update;f.ext.tabs.update=async(id,opts)=>{if(opts.url)assert.equal(registered,true);return update(id,opts);};await f.open('601100000001',{beforeNavigate:async tab=>{assert.equal(tab.id,40);registered=true;}});assert.equal(f.calls.created.length,0);
 });
+
+test('a dealer draft is prepared inside the reused tab after recipient verification',async()=>{
+ const f=fixture([wa(40)]),send=f.ext.tabs.sendMessage,prepared=[];
+ f.ext.tabs.sendMessage=async(id,message)=>{
+  if(message.type==='AZOBSS_WA_PREPARE_TEXT_1593'){prepared.push({id,...message});return {ok:true,phone:message.phone,draftVerified:true};}
+  return send(id,message);
+ };
+ const result=await f.open('60182491182',{text:'Model: TEST\nBattery Name: BIF0_9',requireExisting:true});
+ assert.equal(result.reused,true);assert.equal(result.draftVerified,true);assert.equal(f.calls.created.length,0);
+ assert.equal(prepared.length,1);assert.equal(prepared[0].id,40);assert.equal(prepared[0].instanceId,f.tabs.get(40).instanceId);
+ assert.equal(prepared[0].text,'Model: TEST\nBattery Name: BIF0_9');
+});
+
+test('dealer actions require an existing same-container tab and preserve unfinished drafts',async()=>{
+ for(const tabs of [[],[wa(40,{state:{draft:true}})]]){
+  const f=fixture(tabs);
+  await assert.rejects(f.open('60182491182',{text:'Model: TEST',requireExisting:true}));
+  assert.equal(f.calls.created.length,0);assert.equal(f.calls.updated.filter(x=>x.url).length,0);
+ }
+});
+
+test('a dealer draft fails when the target tab cannot verify the inserted text',async()=>{
+ const f=fixture([wa(40)]),send=f.ext.tabs.sendMessage;
+ f.ext.tabs.sendMessage=async(id,message)=>message.type==='AZOBSS_WA_PREPARE_TEXT_1593'?{ok:true,phone:message.phone,draftVerified:false}:send(id,message);
+ await assert.rejects(f.open('60182491182',{text:'Model: TEST',requireExisting:true}),error=>error.code==='draft_unconfirmed');
+});

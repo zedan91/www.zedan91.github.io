@@ -184,10 +184,10 @@
     box.dispatchEvent(paste);
   }
 
-  async function fillCaption(filename,text) {
+  async function fillCaption(filename,text,resolveEditor=null) {
     const value=String(text||'').replace(/\r\n?/g,'\n').trim();
     if (!value) return false;
-    const resolve=()=>findPreviewCaptionBox(previewScope(filename));
+    const resolve=resolveEditor||(()=>findPreviewCaptionBox(previewScope(filename)));
     let userEditing=false;
     const interaction=event=>{if(event.isTrusted)userEditing=true;};
     document.addEventListener('keydown',interaction,true);
@@ -334,6 +334,19 @@
   }
 
   ext.runtime.onMessage.addListener(message=>{
+    if(message?.type==='AZOBSS_WA_PREPARE_TEXT_1593'){
+      return (async()=>{
+        if(typeof message.text!=='string'||!message.text.trim()||message.text.length>12000)throw new Error('Nota dealer tidak sah.');
+        const resolve=()=>message.instanceId===instanceId&&verifiedPhone===message.phone&&window.AZOBSSWhatsappTarget1552?.current(message.phone)&&!hasPreview()?document.querySelector('#main footer [contenteditable="true"],#main footer [contenteditable="plaintext-only"],#main footer textarea'):null;
+        if(busy||!resolve())throw new Error('Sahkan chat penerima dan selesaikan lampiran WhatsApp dahulu.');
+        busy=true;
+        try{
+          if(!await fillCaption('',message.text,resolve))throw new Error('Draf belum dapat diisi. Semak ruangan mesej WhatsApp dan gunakan teks yang disalin.');
+          if(!resolve())throw new Error('Penerima WhatsApp berubah semasa draf disediakan.');
+          return {ok:true,phone:message.phone,draftVerified:true,instanceId};
+        }finally{busy=false;}
+      })().catch(error=>({ok:false,error:error.message}));
+    }
     if(message?.type==='AZOBSS_WA_ENSURE_CHAT_1552'){
       if(message.instanceId!==instanceId)return Promise.resolve({ok:false,code:'stale_document',instanceId});
       if(!window.AZOBSSWhatsappTarget1552)return Promise.resolve({ok:false,code:'bridge_update_required',error:'Refresh WhatsApp untuk mengaktifkan semakan penerima.'});

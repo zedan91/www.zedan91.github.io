@@ -24,7 +24,7 @@ function notice(message,{guide=false,number=""}={}){
  if(!browserWindow?.document?.body)return;
  let el=document.getElementById('azWhatsappReuseStatus1545');
  if(!el){el=document.createElement('aside');el.id='azWhatsappReuseStatus1545';el.setAttribute('role','status');el.style.cssText='position:fixed;bottom:18px;right:18px;z-index:2147483647;width:min(410px,calc(100vw - 36px));box-sizing:border-box;padding:15px;border:1px solid #3c6578;border-radius:12px;background:#10283a;color:#effaff;font:13px/1.5 Arial,sans-serif;box-shadow:0 12px 40px #0008';document.body.append(el);}
- el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p>'+(number?'<label>Customer number <input readonly aria-label="Customer WhatsApp number" value="+'+esc(number)+'" style="display:block;width:100%;box-sizing:border-box;padding:8px;margin-top:5px;color:inherit;background:#091a26;border:1px solid #3c6578;border-radius:6px"></label>':'')+(guide?'<a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1554" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Optional Firefox Bridge ↗</a>':'');
+ el.innerHTML='<button type="button" data-wa-notice-close style="float:right;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer" aria-label="Close WhatsApp status">×</button><p style="margin:0 22px 10px 0">'+esc(message)+'</p>'+(number?'<label>Customer number <input readonly aria-label="Customer WhatsApp number" value="+'+esc(number)+'" style="display:block;width:100%;box-sizing:border-box;padding:8px;margin-top:5px;color:inherit;background:#091a26;border:1px solid #3c6578;border-radius:6px"></label>':'')+(guide?'<a href="/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1593" target="_blank" rel="noopener noreferrer" style="color:#83edc8">Optional Firefox Bridge ↗</a>':'');
  el.querySelector('[data-wa-notice-close]').onclick=()=>el.remove();
 }
 function target(value){
@@ -61,15 +61,39 @@ function openURL(value){
  if(inflight.has(value))return inflight.get(value);
  const task=requestOpen(value).finally(()=>inflight.delete(value));inflight.set(value,task);return task;
 }
+function bridgeDraftReady(){return bridgeReady()&&Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-text-draft'))>=1593;}
+async function requestDraft(number,text){
+ try{await navigator.clipboard.writeText(text);}catch{}
+ if(!bridgeDraftReady()){
+  if(bridgeReady())await openURL(url(number));
+  try{await navigator.clipboard.writeText(text);}catch{}
+  notice('Semak nombor dealer pada tab WhatsApp sedia ada, kemudian tampal nota dengan Ctrl+V. Autoisi teks memerlukan Firefox Bridge 1.3.5.',{guide:true,number});
+  return false;
+ }
+ notice('Sedang memilih tab WhatsApp sedia ada dan menyediakan draf dealer…');
+ const requestId='draft1593-'+(browserWindow.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2));
+ return new Promise(resolve=>{
+  const timer=setTimeout(()=>{pending.delete(requestId);notice('Draf belum dapat disahkan. Semak tab WhatsApp sedia ada dan gunakan nota yang disalin.');resolve(false);},120000);
+  pending.set(requestId,{resolve,timer,phone:number,home:false,draft:true});
+  browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_REQUEST',requestId,phone:number,text},location.origin);
+ });
+}
+function openDraft(value,text){
+ const number=phone(value),note=typeof text==='string'?text.trim():'';
+ if(!browserWindow||!number||!note||note.length>12000)return Promise.resolve(false);
+ const key=JSON.stringify([number,note]);
+ if(inflight.has(key))return inflight.get(key);
+ const task=requestDraft(number,note).finally(()=>inflight.delete(key));inflight.set(key,task);return task;
+}
 if(browserWindow?.document){
  browserWindow.addEventListener('message',event=>{
-  if(event.source!==browserWindow||event.origin!==location.origin||event.data?.type!=='AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS')return;
+  if(event.source!==browserWindow||event.origin!==location.origin||!['AZOBSS_FIREFOX_WA_OPEN_CHAT_STATUS','AZOBSS_FIREFOX_WA_TEXT_STATUS'].includes(event.data?.type))return;
   const item=pending.get(event.data.requestId);if(!item)return;pending.delete(event.data.requestId);clearTimeout(item.timer);
-  const confirmed=event.data.ok===true&&(item.home||event.data.phoneVerified===true&&event.data.phone===item.phone);
+  const confirmed=event.data.ok===true&&(item.home||event.data.phoneVerified===true&&event.data.phone===item.phone)&&(!item.draft||event.data.draftVerified===true&&event.data.reused===true);
   if(confirmed)document.getElementById('azWhatsappReuseStatus1545')?.remove();else notice(event.data.error||'Tab WhatsApp terbuka tetapi nombor penerima belum disahkan. PDF dan nota tidak dihantar.');item.resolve(confirmed);
  });
  const click=event=>{const a=event.target?.closest?.('a[data-customer-whatsapp]');if(!a)return;event.preventDefault();event.stopImmediatePropagation();openURL(a.href);};
  browserWindow.addEventListener('click',click,{capture:true});browserWindow.addEventListener('auxclick',click,{capture:true});
 }
-return Object.freeze({phone,url,action,openURL,bridgeReady});
+return Object.freeze({phone,url,action,openURL,openDraft,bridgeReady,bridgeDraftReady});
 });
