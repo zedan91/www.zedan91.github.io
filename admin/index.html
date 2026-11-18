@@ -2548,7 +2548,7 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
-<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1594">
+<link rel="stylesheet" href="/assets/css/azobss-admin-pc-diagnostics.css?v=1596">
 </head>
 
 <style id="az-admin-sidebar-narrow-1169">
@@ -2998,14 +2998,35 @@ body[data-dashboard-page="admin"] .topbar{
       <p>Laporan PC pelanggan disimpan secara peribadi dalam Cloudflare. Maklumat perkakasan bergantung pada bacaan Windows.</p>
       <button type="button" class="btn" id="pcDiagRefresh">Refresh</button>
       <p id="pcDiagStatus" role="status">Pilih Refresh untuk memuatkan laporan.</p>
+      <div class="pc-diag-filters" aria-label="Carian dan tapisan laporan">
+        <label class="pc-diag-search">Carian<div><input id="pcDiagSearch" type="search" autocomplete="off" placeholder="Jenama, model, nombor siri, bateri…"><button id="pcDiagClearSearch" type="button" aria-label="Padam carian" hidden>×</button></div></label>
+        <label>Jenama<select id="pcDiagBrand"><option value="">Semua jenama</option></select></label>
+        <label>Status hantar<select id="pcDiagSentFilter"><option value="">Semua status</option><option value="unsent">Belum hantar</option><option value="sent">Sudah hantar</option></select></label>
+        <label>Bateri<select id="pcDiagBatteryFilter"><option value="">Semua laporan</option><option value="detected">Bateri dikesan</option><option value="missing">Bateri tidak dikesan</option></select></label>
+        <label>Susun ikut<select id="pcDiagSort"><option value="newest">Terbaru dahulu</option><option value="oldest">Terlama dahulu</option><option value="brand-asc">Jenama A–Z</option><option value="brand-desc">Jenama Z–A</option><option value="model">Model A–Z</option><option value="serial">Nombor siri A–Z</option><option value="unsent-first">Belum hantar dahulu</option></select></label>
+        <button id="pcDiagResetFilters" type="button" class="btn">Reset</button>
+      </div>
+      <div class="pc-diag-overview" aria-label="Ringkasan laporan">
+        <button type="button" id="pcDiagCountAll" data-report-status="" aria-pressed="true">Semua: 0</button>
+        <button type="button" id="pcDiagCountUnsent" data-report-status="unsent" aria-pressed="false">Belum hantar: 0</button>
+        <button type="button" id="pcDiagCountSent" data-report-status="sent" aria-pressed="false">Sudah hantar: 0</button>
+      </div>
+      <p id="pcDiagResults" role="status"></p>
       <div class="pc-diag-toolbar">
-        <label><input type="checkbox" id="pcDiagSelectAll"> Tick semua dipaparkan</label>
+        <label><input type="checkbox" id="pcDiagSelectAll"> Tick semua pada halaman ini</label>
         <span id="pcDiagSelectedCount" aria-live="polite">0 dipilih</span>
         <button type="button" class="btn" id="pcDiagDeleteSelected" disabled>Delete Selected</button>
       </div>
       <p class="pc-diag-hint">Tanda “Sudah hantar ke dealer” boleh tick / untick secara manual. Bridge 1.3.6 menandanya selepas mesej dihantar di WhatsApp.</p>
       <div id="pcDiagList"></div>
-      <button type="button" class="btn" id="pcDiagMore" hidden>Muatkan lagi</button>
+      <p id="pcDiagEmpty" hidden>Tiada laporan sepadan. Cuba carian lain atau tekan Reset.</p>
+      <div class="pc-diag-pagination">
+        <button type="button" id="pcDiagPrev" class="btn" disabled>← Sebelum</button>
+        <span id="pcDiagPageInfo">Halaman 1 / 1</span>
+        <button type="button" id="pcDiagNext" class="btn" disabled>Seterusnya →</button>
+        <label>Setiap halaman<select id="pcDiagPageSize"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
+      </div>
+      <button type="button" class="btn" id="pcDiagMore" hidden>Sambung muatkan laporan</button>
       <dialog id="pcDiagDialog" aria-labelledby="pcDiagTitle">
         <header><h3 id="pcDiagTitle">PC Diagnostic</h3><button type="button" class="btn" id="pcDiagClose">Tutup</button></header>
         <pre id="pcDiagReportText"></pre>
@@ -9001,7 +9022,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1595"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1596"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10939,6 +10960,7 @@ document.addEventListener('click', async function(e){
 </script>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
   <script defer src="/assets/js/azobss-business-registration-v1455.js?v=1455"></script>
-  <script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1594"></script>
+  <script defer src="/assets/js/azobss-pc-diagnostic-filters.js?v=1596"></script>
+<script defer src="/assets/js/azobss-admin-pc-diagnostics.js?v=1596"></script>
 </body>
 </html>

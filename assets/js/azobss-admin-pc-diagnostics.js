@@ -6,7 +6,10 @@
   if (!section) return;
   let cursor = '', busy = false, requestNumber = 0;
   let dealers = [], selectedDealer = '60182491182', activeReport = null, deleting = false;
-  const reports = new Map(), selected = new Set(), statusBusy = new Set();
+  const reports = new Map(), selected = new Set(), statusBusy = new Set(), updatesWhileLoading = new Map();
+  const filters = window.AZOBSSDiagnosticFilters;
+  if(!filters){notice('Carian laporan belum dimuatkan. Sila refresh halaman Admin.');return;}
+  let visibleIds=[], currentPage=1, inputTimer;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function notice(message) { el('pcDiagStatus').textContent = message; }
   async function api(url,options={}) {
@@ -28,23 +31,25 @@
   const post = (url,data) => api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   function selection() {
     const all=el('pcDiagSelectAll'), count=selected.size;
-    all.checked=reports.size>0 && count===reports.size;
-    all.indeterminate=count>0 && count<reports.size;
-    all.disabled=deleting || busy || !reports.size;
+    all.checked=visibleIds.length>0 && count===visibleIds.length;
+    all.indeterminate=count>0 && count<visibleIds.length;
+    all.disabled=deleting || busy || !visibleIds.length;
     el('pcDiagSelectedCount').textContent=count+' dipilih';
     el('pcDiagDeleteSelected').disabled=deleting || busy || !count;
   }
-  function showStatus(id,status) {
-    const row=reports.get(id); if (!row) return;
-    row.status=status || {sent:false,manualRevision:0};
-    const card=document.querySelector('[data-report-id="'+id+'"]');
-    if (!card) return;
-    card.querySelector('[data-sent]').checked=row.status.sent===true;
-    card.classList.toggle('pc-diag-sent',row.status.sent===true);
-    card.querySelector('[data-sent-info]').textContent=row.status.sent
-      ? (row.status.source==='bridge' ? 'Disahkan WhatsApp' : 'Ditanda manual')+(row.status.dealerPhone ? ' · +'+row.status.dealerPhone : '')
-        +(row.status.sentAt ? ' · '+new Date(row.status.sentAt).toLocaleString('ms-MY') : '')
+  function paintStatus(card,row) {
+    const status=row.status||{};
+    card.querySelector('[data-sent]').checked=status.sent===true;
+    card.classList.toggle('pc-diag-sent',status.sent===true);
+    card.querySelector('[data-sent-info]').textContent=status.sent
+      ? (status.source==='bridge' ? 'Disahkan WhatsApp' : 'Ditanda manual')+(status.dealerPhone ? ' · +'+status.dealerPhone : '')
+        +(status.sentAt ? ' · '+new Date(status.sentAt).toLocaleString('ms-MY') : '')
       : 'Belum ditanda hantar';
+  }
+  function showStatus(id,status) {
+    if(busy) updatesWhileLoading.set(id,status);
+    const row=reports.get(id);if(!row)return;
+    row.status=status||{sent:false,manualRevision:0};render();
   }
   async function setSent(id,input) {
     const result=await post(base+'/'+encodeURIComponent(id)+'/sent',input);
@@ -56,17 +61,17 @@
     statusBusy.add(id); box.disabled=true;
     try {await setSent(id,{sent:box.checked});}
     catch(error) {box.checked=reports.get(id)?.status?.sent===true;notice(error.message);}
-    finally {statusBusy.delete(id);box.disabled=false;}
+    finally {statusBusy.delete(id);render();}
   }
   el('pcDiagSelectAll').addEventListener('change',event=>{
-    for (const id of reports.keys()) event.target.checked ? selected.add(id) : selected.delete(id);
+    for (const id of visibleIds) event.target.checked ? selected.add(id) : selected.delete(id);
     for (const box of el('pcDiagList').querySelectorAll('[data-select]')) box.checked=selected.has(box.closest('[data-report-id]').dataset.reportId);
     selection();
   });
   el('pcDiagDeleteSelected').addEventListener('click',async()=>{
     const ids=[...selected];
     if (deleting || busy || !ids.length || statusBusy.size || !window.confirm('Padam '+ids.length+' laporan yang dipilih secara kekal? Fail TXT turut dipadam daripada Cloudflare.')) return;
-    deleting=true; selection();
+    deleting=true; render();
     el('pcDiagRefresh').disabled=el('pcDiagMore').disabled=true;
     const failed=[];
     try {
@@ -81,7 +86,7 @@
       }
       notice(failed.length ? failed.length+' laporan gagal dipadam. Pilihannya dikekalkan untuk cuba lagi.' : ids.length+' laporan dipadam.');
     } catch(error) {notice(error.message+' Pilihan yang belum dipadam dikekalkan.');}
-    finally {deleting=false;selection();el('pcDiagRefresh').disabled=false;el('pcDiagMore').disabled=!cursor;}
+    finally {deleting=false;render();el('pcDiagRefresh').disabled=false;el('pcDiagMore').disabled=!cursor;}
   });
   // Background retains unacknowledged send confirmations when Admin is closed/offline.
   const acknowledgements=new Set();
@@ -101,52 +106,80 @@
     } finally {acknowledgements.delete(receipt.eventId);}
   });
   window.postMessage({type:'AZOBSS_PC_DEALER_SENT_READY_1594'},location.origin);
-  async function load(reset) {
-    if (busy || deleting || statusBusy.size) return;
-    busy = true;
-    selection();
-    el('pcDiagRefresh').disabled = el('pcDiagMore').disabled = true;
-    notice('Memuatkan laporan…');
-    try {
-      const page = await api(base + (reset || !cursor ? '' : '?cursor=' + encodeURIComponent(cursor)));
-      if (reset) {el('pcDiagList').replaceChildren();reports.clear();selected.clear();}
-      const fragment = document.createDocumentFragment();
-      for (const row of page.reports || []) {
-        if(reports.has(row.id)) continue;
-        reports.set(row.id,row);
-        const card = document.createElement('article');
-        card.className = 'pc-diag-row';
-        card.dataset.reportId=row.id;
-        const date = row.receivedAt ? new Date(row.receivedAt).toLocaleString('ms-MY') : '';
-        card.innerHTML = '<input type="checkbox" data-select aria-label="Pilih laporan '+esc(row.manufacturer+' '+row.model)+' untuk padam"><div class="pc-diag-content"><b>' + esc([row.manufacturer,row.model].filter(Boolean).join(' ') || 'PC Diagnostic') +
-          '</b><p>Serial ' + esc(row.serial || 'Tidak tersedia') + ' · Battery ' +
-          esc((row.batteries || []).map(x=>x.name).filter(Boolean).join(', ') || 'Tidak dikesan') +
-          '</p><small>' + esc(date) + '</small><label class="pc-diag-sent-label"><input type="checkbox" data-sent> Sudah hantar ke dealer</label><small data-sent-info></small></div><div class="pc-diag-buttons"><button class="btn" data-action="view">Lihat TXT</button><button class="btn" data-action="download">Download TXT</button><button class="btn" data-action="dealer">WhatsApp Dealer</button></div>';
-        card.querySelector('[data-select]').addEventListener('change',event=>{
-          if(deleting){event.target.checked=selected.has(row.id);return;}
-          event.target.checked ? selected.add(row.id) : selected.delete(row.id);selection();
-        });
-        card.querySelector('[data-sent]').addEventListener('change',event=>void manualSent(row.id,event.target));
-        card.addEventListener('click', event => {
-          const button = event.target.closest('[data-action]');
-          if (!button) return;
-          void action(row.id,button.dataset.action,button);
-        });
-        fragment.appendChild(card);
-      }
-      el('pcDiagList').appendChild(fragment);
-      for(const row of reports.values())showStatus(row.id,row.status);
-      selection();
-      cursor = page.nextCursor || '';
-      notice(el('pcDiagList').children.length ? 'Laporan diterima daripada PC pelanggan. Semak ketepatan sebelum bertanya stok.' : 'Belum ada laporan.');
-    } catch (error) { notice(error.message); }
-    finally {
-      busy = false;
-      selection();
-      el('pcDiagRefresh').disabled = false;
-      el('pcDiagMore').disabled = !cursor;
-      el('pcDiagMore').hidden = !cursor;
+  function render() {
+    for(const control of section.querySelectorAll('.pc-diag-filters input,.pc-diag-filters select,.pc-diag-filters button,[data-report-status],#pcDiagPageSize'))control.disabled=deleting;
+    const rows=[...reports.values()], chosen=el('pcDiagBrand').value;
+    const choices=filters.brands(rows);
+    if(chosen && !choices.some(([name])=>name===chosen))choices.push([chosen,0]);
+    el('pcDiagBrand').replaceChildren(new Option('Semua jenama',''),...choices.map(([name,count])=>new Option(name+' ('+count+')',name)));
+    el('pcDiagBrand').value=chosen;
+    const sent=rows.filter(row=>row.status?.sent===true).length;
+    el('pcDiagCountAll').textContent='Semua: '+rows.length;
+    el('pcDiagCountUnsent').textContent='Belum hantar: '+(rows.length-sent);
+    el('pcDiagCountSent').textContent='Sudah hantar: '+sent;
+    for(const button of section.querySelectorAll('[data-report-status]'))button.setAttribute('aria-pressed',String(button.dataset.reportStatus===el('pcDiagSentFilter').value));
+    const matches=filters.select(rows,{query:el('pcDiagSearch').value,brand:chosen,status:el('pcDiagSentFilter').value,battery:el('pcDiagBatteryFilter').value,sort:el('pcDiagSort').value});
+    const size=Number(el('pcDiagPageSize').value), pages=Math.max(1,Math.ceil(matches.length/size));
+    currentPage=Math.max(1,Math.min(currentPage,pages));
+    const page=matches.slice((currentPage-1)*size,currentPage*size);
+    visibleIds=page.map(row=>row.id);
+    for(const id of selected)if(!visibleIds.includes(id))selected.delete(id);
+    const active=document.activeElement, focusedId=active?.closest?.('[data-report-id]')?.dataset.reportId;
+    const focusedKind=active?.hasAttribute?.('data-sent')?'data-sent':active?.hasAttribute?.('data-select')?'data-select':'';
+    const fragment=document.createDocumentFragment();
+    for(const row of page){
+      const card=document.createElement('article');card.className='pc-diag-row';card.dataset.reportId=row.id;
+      const date=row.receivedAt?new Date(row.receivedAt).toLocaleString('ms-MY'):'';
+      card.innerHTML='<input type="checkbox" data-select aria-label="Pilih laporan '+esc(row.manufacturer+' '+row.model)+' untuk padam"><div class="pc-diag-content"><span class="pc-diag-brand">'+esc(filters.brand(row))+'</span><b>'+esc([row.manufacturer,row.model].filter(Boolean).join(' ')||'PC Diagnostic')+'</b><p>Serial '+esc(row.serial||'Tidak tersedia')+' · Battery '+esc((row.batteries||[]).map(x=>x.name).filter(Boolean).join(', ')||'Tidak dikesan')+'</p><small>'+esc(date)+'</small><label class="pc-diag-sent-label"><input type="checkbox" data-sent> Sudah hantar ke dealer</label><small data-sent-info></small></div><div class="pc-diag-buttons"><button class="btn" data-action="view">Lihat TXT</button><button class="btn" data-action="download">Download TXT</button><button class="btn" data-action="dealer">WhatsApp Dealer</button></div>';
+      const box=card.querySelector('[data-select]');box.checked=selected.has(row.id);box.disabled=busy||deleting;
+      box.addEventListener('change',event=>{if(deleting||busy)return;event.target.checked?selected.add(row.id):selected.delete(row.id);selection();});
+      const sentBox=card.querySelector('[data-sent]');sentBox.disabled=busy||deleting||statusBusy.has(row.id);
+      sentBox.addEventListener('change',event=>void manualSent(row.id,event.target));
+      card.addEventListener('click',event=>{const button=event.target.closest('[data-action]');if(button)void action(row.id,button.dataset.action,button);});
+      paintStatus(card,row);fragment.appendChild(card);
     }
+    el('pcDiagList').replaceChildren(fragment);
+    if(focusedId&&focusedKind)el('pcDiagList').querySelector('[data-report-id="'+focusedId+'"] ['+focusedKind+']')?.focus({preventScroll:true});
+    el('pcDiagClearSearch').hidden=!el('pcDiagSearch').value;
+    el('pcDiagResults').textContent=(matches.length ? ((currentPage-1)*size+1)+'–'+Math.min(currentPage*size,matches.length)+' daripada '+matches.length : '0')+' laporan sepadan · '+rows.length+' laporan dimuatkan'+(busy?' · Masih memuatkan…':cursor?' · Senarai belum lengkap; sambung muatkan laporan.':'');
+    el('pcDiagEmpty').hidden=page.length>0||busy;
+    el('pcDiagPageInfo').textContent='Halaman '+currentPage+' / '+pages;
+    el('pcDiagPrev').disabled=currentPage===1||deleting;
+    el('pcDiagNext').disabled=currentPage===pages||deleting;
+    selection();
+  }
+  function changeFilters(){currentPage=1;selected.clear();render();}
+  for(const id of ['pcDiagBrand','pcDiagSentFilter','pcDiagBatteryFilter','pcDiagSort','pcDiagPageSize'])el(id).addEventListener('change',changeFilters);
+  el('pcDiagSearch').addEventListener('input',()=>{clearTimeout(inputTimer);inputTimer=setTimeout(changeFilters,120);});
+  function clearSearch(){clearTimeout(inputTimer);el('pcDiagSearch').value='';changeFilters();el('pcDiagSearch').focus();}
+  el('pcDiagClearSearch').addEventListener('click',clearSearch);
+  el('pcDiagSearch').addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();clearSearch();}});
+  el('pcDiagResetFilters').addEventListener('click',()=>{clearTimeout(inputTimer);for(const id of ['pcDiagSearch','pcDiagBrand','pcDiagSentFilter','pcDiagBatteryFilter'])el(id).value='';el('pcDiagSort').value='newest';changeFilters();});
+  for(const button of section.querySelectorAll('[data-report-status]'))button.addEventListener('click',()=>{el('pcDiagSentFilter').value=button.dataset.reportStatus;changeFilters();});
+  el('pcDiagPrev').addEventListener('click',()=>{currentPage--;selected.clear();render();});
+  el('pcDiagNext').addEventListener('click',()=>{currentPage++;selected.clear();render();});
+  async function load(reset) {
+    if(busy||deleting||statusBusy.size)return;
+    busy=true;updatesWhileLoading.clear();render();el('pcDiagRefresh').disabled=el('pcDiagMore').disabled=true;
+    notice('Memuatkan ringkasan semua laporan…');
+    let next=reset?'':cursor, first=true;
+    const seen=new Set();
+    try {
+      do {
+        if(seen.has(next))throw Error('Halaman laporan berulang. Cuba Refresh.');seen.add(next);
+        const result=await api(base+(next?'?cursor='+encodeURIComponent(next):''));
+        if(reset&&first){reports.clear();selected.clear();currentPage=1;}first=false;
+        for(const row of result.reports||[]){
+          const update=updatesWhileLoading.get(row.id);
+          if(update && (update.manualRevision||0)>=(row.status?.manualRevision||0))row.status=update;
+          if(!reports.has(row.id))reports.set(row.id,row);
+        }
+        cursor=result.nextCursor||'';next=cursor;render();
+        notice('Memuatkan ringkasan laporan: '+reports.size+' diterima…');
+      }while(next);
+      notice(reports.size?'Senarai laporan lengkap. Semak ketepatan sebelum bertanya stok.':'Belum ada laporan.');
+    }catch(error){notice(error.message+(cursor?' Tekan Sambung muatkan laporan untuk cuba lagi.':''));}
+    finally{busy=false;render();el('pcDiagRefresh').disabled=false;el('pcDiagMore').disabled=!cursor;el('pcDiagMore').hidden=!cursor;}
   }
   async function action(id,kind,button) {
     button.disabled = true;
