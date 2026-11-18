@@ -356,6 +356,15 @@ Add-Info 'Computer Name' $env:COMPUTERNAME
 Add-Info 'Manufacturer' $cs.Manufacturer
 Add-Info 'Model' $cs.Model
 Add-Info 'System Type' $cs.SystemType
+$deviceKind = switch ([int]$cs.PCSystemType) {
+    1 { 'Desktop' }
+    2 { 'Laptop' }
+    3 { 'Desktop' }
+    4 { 'Server' }
+    5 { 'Server' }
+    default { 'Tidak diketahui' }
+}
+Add-Info 'Device Type' $deviceKind
 Add-Info 'System Serial Number' $(if ($bios.SerialNumber) { $bios.SerialNumber } else { $enclosure.SerialNumber })
 Add-Info 'Windows Edition' $os.Caption
 Add-Info 'Windows Version' $os.Version

@@ -41,10 +41,12 @@
     const status=row.status||{};
     card.querySelector('[data-sent]').checked=status.sent===true;
     card.classList.toggle('pc-diag-sent',status.sent===true);
-    card.querySelector('[data-sent-info]').textContent=status.sent
+    card.querySelector('[data-sent-info]').title=status.sent
       ? (status.source==='bridge' ? 'Disahkan WhatsApp' : 'Ditanda manual')+(status.dealerPhone ? ' · +'+status.dealerPhone : '')
         +(status.sentAt ? ' · '+new Date(status.sentAt).toLocaleString('ms-MY') : '')
       : 'Belum ditanda hantar';
+    card.querySelector('[data-sent]').setAttribute('aria-label','Sudah hantar ke dealer');
+    card.querySelector('[data-sent]').title=card.querySelector('[data-sent-info]').title;
   }
   function showStatus(id,status) {
     if(busy) updatesWhileLoading.set(id,status);
@@ -106,6 +108,16 @@
     } finally {acknowledgements.delete(receipt.eventId);}
   });
   window.postMessage({type:'AZOBSS_PC_DEALER_SENT_READY_1594'},location.origin);
+  const icons={
+    view:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v5h5M10 12h5M10 16h5"/></svg>',
+    download:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg>',
+    dealer:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z"/><path d="M8.5 8.2c.6 3 2.7 5.1 5.6 5.8l1.1-1.1 1.5.8c-.3 1.4-1.2 2-2.6 1.7-3.6-.8-6-3.2-6.8-6.8-.3-1.4.3-2.3 1.7-2.6l.8 1.5-1.3.7Z"/></svg>'
+  };
+  function actionIcon(kind,label){return '<button type="button" class="btn pc-diag-icon" data-action="'+kind+'" aria-label="'+label+'" title="'+label+'">'+icons[kind]+'</button>';}
+  function deviceTitle(row){
+    const brand=filters.brand(row), model=row.hardware?.displayModel||row.model||'';
+    return model.toLocaleLowerCase().startsWith(brand.toLocaleLowerCase()+' ')?model:[brand==='Tidak diketahui'?'':brand,model].filter(Boolean).join(' ')||'Model tidak tersedia';
+  }
   function render() {
     for(const control of section.querySelectorAll('.pc-diag-filters input,.pc-diag-filters select,.pc-diag-filters button,[data-report-status],#pcDiagPageSize'))control.disabled=deleting;
     const rows=[...reports.values()], chosen=el('pcDiagBrand').value;
@@ -130,7 +142,8 @@
     for(const row of page){
       const card=document.createElement('article');card.className='pc-diag-row';card.dataset.reportId=row.id;
       const date=row.receivedAt?new Date(row.receivedAt).toLocaleString('ms-MY'):'';
-      card.innerHTML='<input type="checkbox" data-select aria-label="Pilih laporan '+esc(row.manufacturer+' '+row.model)+' untuk padam"><div class="pc-diag-content"><span class="pc-diag-brand">'+esc(filters.brand(row))+'</span><b>'+esc([row.manufacturer,row.model].filter(Boolean).join(' ')||'PC Diagnostic')+'</b><p>Serial '+esc(row.serial||'Tidak tersedia')+' · Battery '+esc((row.batteries||[]).map(x=>x.name).filter(Boolean).join(', ')||'Tidak dikesan')+'</p><small>'+esc(date)+'</small><label class="pc-diag-sent-label"><input type="checkbox" data-sent> Sudah hantar ke dealer</label><small data-sent-info></small></div><div class="pc-diag-buttons"><button class="btn" data-action="view">Lihat TXT</button><button class="btn" data-action="download">Download TXT</button><button class="btn" data-action="dealer">WhatsApp Dealer</button></div>';
+      const kind=row.hardware?.deviceType||'Peranti';
+      card.innerHTML='<input type="checkbox" data-select aria-label="Pilih laporan '+esc(deviceTitle(row))+' untuk padam"><div class="pc-diag-content"><span class="pc-diag-device">'+esc(kind+' '+filters.brand(row))+'</span><b class="pc-diag-model">'+esc(deviceTitle(row))+'</b><p class="pc-diag-cpu">'+esc(row.hardware?.cpuSummary||'Maklumat CPU tidak tersedia')+'</p><div class="pc-diag-meta"><label class="pc-diag-sent-label"><input type="checkbox" data-sent> Sudah hantar</label><small class="pc-diag-date">'+esc(date)+'</small><small data-sent-info></small></div></div><div class="pc-diag-buttons">'+actionIcon('view','Lihat laporan TXT')+actionIcon('download','Muat turun TXT')+actionIcon('dealer','WhatsApp Dealer')+'</div>';
       const box=card.querySelector('[data-select]');box.checked=selected.has(row.id);box.disabled=busy||deleting;
       box.addEventListener('change',event=>{if(deleting||busy)return;event.target.checked?selected.add(row.id):selected.delete(row.id);selection();});
       const sentBox=card.querySelector('[data-sent]');sentBox.disabled=busy||deleting||statusBusy.has(row.id);

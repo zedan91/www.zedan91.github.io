@@ -539,6 +539,47 @@ function httpError(status, message) {
 }
 
 
+// Derive display-only hardware fields from the customer's saved Windows report.
+// Never resolve a short board code to a guessed commercial model.
+function diagnosticHardware1597(row) {
+  const text=String(row?.report||'').replace(/\r\n/g,'\n');
+  const tidy=value=>String(value||'').replace(/[\x00-\x1f\x7f]/g,' ').replace(/\s+/g,' ').trim();
+  const usable=value=>!/^$|^(?:tidak (?:tersedia|diketahui)|unknown|none|n\/?a|default string|system product name|to be filled by o\.?e\.?m\.?)$/i.test(tidy(value));
+  const field=label=>tidy(text.match(new RegExp('^'+label+'[ \\t]*:[ \\t]*(.*)$','im'))?.[1]);
+  const rawModel=tidy(row?.model)||field('Model');
+  const board=field('Motherboard Product');
+  const version=field('Motherboard Version');
+  const explicit=field('Device Type');
+  let deviceType=/^(?:Laptop|Desktop|Server)$/i.test(explicit) ? explicit[0].toUpperCase()+explicit.slice(1).toLowerCase() : '';
+  if(!deviceType){
+    if(/\b(?:laptop|notebook|thinkpad|ideapad|latitude|elitebook|probook|vivobook|zenbook|macbook|raider|katana|cyborg|stealth)\b|\b(?:GE|GF|GS|GL|GP|GT|GV)\d{2}\b/i.test(rawModel))deviceType='Laptop';
+    else if(/\b(?:desktop|tower|thinkcentre|thinkstation|optiplex|prodesk|elitedesk|veriton)\b/i.test(rawModel) || /\b(?:[BHZ][3456789]\d{2}|[AX][356789]\d{2}|TRX\d{2})[A-Z-]*\b/i.test(board))deviceType='Desktop';
+    else deviceType='Peranti';
+  }
+  let model=deviceType==='Desktop' && usable(board) ? board : rawModel;
+  if(deviceType==='Desktop' && usable(board) && usable(version) && version.length<=24){
+    const escaped=version.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    if(!new RegExp('(?:^|[\\s(:])'+escaped+'(?:$|[\\s)])','i').test(model)){
+      if(/\([^)]*MS-\w+[^)]*\)$/i.test(model))model=model.replace(/\)$/, ' '+version+')');
+      else model+=' · Rev '+version;
+    }
+  }
+  // Older uploads appended product.Version to the system model but may lack the board version label.
+  if(deviceType==='Desktop' && /\(MS-[A-Z0-9]+\)$/i.test(model)){
+    const revision=rawModel.match(/\bMS-[A-Z0-9]+\s+(\d+(?:\.\d+)+)\b/i)?.[1];
+    if(revision)model=model.replace(/\)$/, ' '+revision+')');
+  }
+  let cpu=field('CPU');
+  if(!usable(cpu)){
+    const section=text.match(/^4\. CPU\s*$([\s\S]*?)(?=^5\. |$(?![\s\S]))/im)?.[1]||'';
+    const value=label=>tidy(section.match(new RegExp('^'+label+'[ \\t]*:[ \\t]*(.*)$','im'))?.[1]);
+    const name=value('Name'), clock=value('Maximum Clock'), cores=value('Cores / Logical').match(/(\d+)\s*\/\s*(\d+)/);
+    cpu=usable(name)?[name,usable(clock)?clock:'',cores?cores[1]+'C / '+cores[2]+'T':''].filter(Boolean).join(' '):'';
+  }
+  cpu=tidy(cpu.replace(/\((?:R|TM|C)\)/gi,''));
+  return {schema:1,deviceType,displayModel:usable(model)?model.slice(0,180):'',cpuSummary:usable(cpu)?cpu.slice(0,180):''};
+}
+
 async function controlPcDiagnostics1590(request, env) {
   ensureConfigured(env);
   if (request.method !== 'POST') throw httpError(405, 'Method not allowed.');
@@ -645,7 +686,13 @@ async function controlPcDiagnostics1590(request, env) {
       let summary = {};
       try { summary = JSON.parse(item.customMetadata?.summary || '{}'); } catch {}
       const id=item.key.slice(prefix.length,-5), {state}=await readState(id);
-      return state.deletedAt ? null : {...summary,id,status:publicState(state)};
+      if(state.deletedAt)return null;
+      if(summary.hardware?.schema!==1){
+        const object=await env.AZOBSS_FILES.get(prefix+id+'.json');
+        if(!object)return null;
+        summary.hardware=diagnosticHardware1597(await object.json());
+      }
+      return {...summary,id,status:publicState(state)};
     }))).filter(Boolean),nextCursor:page.truncated ? page.cursor : ''});
   }
   const row = data.row;
@@ -657,7 +704,8 @@ async function controlPcDiagnostics1590(request, env) {
   if (data.action === 'read') {
     const object = await env.AZOBSS_FILES.get(key);
     if (!object) throw httpError(404, 'PC report not found.');
-    return json({ok:true,row:{...await object.json(),status:publicState(state)}});
+    const saved=await object.json();
+    return json({ok:true,row:{...saved,hardware:saved.hardware?.schema===1?saved.hardware:diagnosticHardware1597(saved),status:publicState(state)}});
   }
   if (data.action !== 'write' || typeof row?.report !== 'string' || !row.report.includes('AZOBSS CUSTOMER PC DIAGNOSTIC') ||
       encoder.encode(row.report).length > 262144 || row.report.includes('\0')) throw httpError(400, 'Invalid PC report.');
@@ -666,9 +714,17 @@ async function controlPcDiagnostics1590(request, env) {
     batteries:Array.isArray(row.batteries) ? row.batteries.slice(0,8).map(x=>({name:short(x?.name),manufacturer:short(x?.manufacturer),serial:short(x?.serial)})) : [],
     receivedAt:new Date().toISOString(),source:'customer-pc-diagnostic'};
   const hash = await sha256Hex(JSON.stringify({id:stored.id,report:stored.report,manufacturer:stored.manufacturer,model:stored.model,serial:stored.serial,batteries:stored.batteries}));
+  stored.hardware=diagnosticHardware1597(stored);
   const {report,...summary} = stored;
   summary.batteries = stored.batteries.slice(0,4).map(x=>({name:x.name.slice(0,30)}));
   for (const field of ['manufacturer','model','serial']) summary[field] = stored[field].slice(0,60);
+  // R2 custom metadata is capped at 2 KB. Keep the complete derived fields in the private body.
+  const byteLimit=(value,limit)=>{let out='';for(const char of String(value||'')){if(encoder.encode(out+char).length>limit)break;out+=char;}return out;};
+  summary.hardware={...stored.hardware,displayModel:byteLimit(stored.hardware.displayModel,180),cpuSummary:byteLimit(stored.hardware.cpuSummary,180)};
+  if(encoder.encode(JSON.stringify(summary)).length>1800){
+    for(const field of ['manufacturer','model','serial'])summary[field]=byteLimit(summary[field],90);
+    summary.batteries=summary.batteries.slice(0,2).map(x=>({name:byteLimit(x.name,40)}));
+  }
   const saved = await env.AZOBSS_FILES.put(key,JSON.stringify(stored),{
     onlyIf:new Headers({'If-None-Match':'*'}),
     httpMetadata:{contentType:'application/json',cacheControl:'no-store'},

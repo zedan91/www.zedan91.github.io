@@ -111,3 +111,21 @@
 #pcDiagEmpty{padding:30px 15px;text-align:center;color:#bad0e6;border:1px dashed #334e68;border-radius:10px;}
 @media(max-width:1300px){.pc-diag-filters{grid-template-columns:repeat(4,minmax(0,1fr));}.pc-diag-filters .pc-diag-search{grid-column:span 3;}.pc-diag-filters #pcDiagResetFilters{grid-column:4;grid-row:1;}}
 @media(max-width:600px){.pc-diag-filters{grid-template-columns:repeat(2,minmax(0,1fr));}.pc-diag-filters .pc-diag-search{grid-column:1/-1;}.pc-diag-filters #pcDiagResetFilters{grid-column:1/-1;grid-row:auto;}.pc-diag-pagination{gap:8px;font-size:12px;}}
+
+/* Compact diagnostic rows: primary hardware details, status and three icon actions. */
+#pcDiagList{gap:8px;}
+#pcdiagnostics .pc-diag-row{padding:10px 12px;gap:12px;border-radius:10px;}
+.pc-diag-device{display:block;color:#8cdae8;font-size:11px;line-height:1.4;margin-bottom:3px;}
+.pc-diag-model{display:block;font-size:14px;line-height:1.4;font-weight:700;}
+#pcdiagnostics .pc-diag-cpu{margin:3px 0 6px;font-size:12px;line-height:1.5;color:#bed0df;}
+.pc-diag-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+#pcdiagnostics .pc-diag-meta .pc-diag-sent-label{margin:0;font-size:11px;gap:6px;}
+#pcdiagnostics .pc-diag-meta input[type="checkbox"]{width:15px;height:15px;}
+.pc-diag-date{font-size:10px;}
+#pcdiagnostics .pc-diag-row .pc-diag-buttons{gap:6px;margin:0;align-self:center;}
+#pcdiagnostics .pc-diag-row .pc-diag-icon{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:34px;height:34px;min-width:34px;min-height:34px;padding:7px;border-radius:9px;background:#123d50;border:1px solid #36596b;color:#bfeeff;}
+#pcdiagnostics .pc-diag-icon[data-action="dealer"]{background:#0e4a35;border-color:#238a5b;color:#a8f2c9;}
+#pcdiagnostics .pc-diag-icon:hover{filter:brightness(1.25);}
+#pcdiagnostics .pc-diag-icon:focus-visible{outline:2px solid #7dd3fc;outline-offset:3px;}
+.pc-diag-icon svg{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+@media(max-width:800px){#pcdiagnostics .pc-diag-row{grid-template-columns:18px minmax(0,1fr) auto;gap:9px;}#pcdiagnostics .pc-diag-row .pc-diag-buttons{grid-column:3;flex-direction:column;gap:5px;}#pcdiagnostics .pc-diag-row .pc-diag-icon{width:32px;height:32px;min-width:32px;min-height:32px;padding:6px;}.pc-diag-model{font-size:13px;}.pc-diag-meta{gap:5px 10px;}}

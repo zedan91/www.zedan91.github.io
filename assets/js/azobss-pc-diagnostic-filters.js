@@ -12,22 +12,23 @@
   const hasBattery=row=>(row.batteries||[]).some(battery=>!missing(battery?.name));
   const collator=new Intl.Collator('ms',{numeric:true,sensitivity:'base'});
   const timestamp=row=>Date.parse(row.receivedAt)||0;
+  const model=row=>row.hardware?.displayModel||row.model||'';
   function select(rows,{query='',brand:chosenBrand='',status='',battery='',sort='newest'}={}) {
     const words=clean(query).split(/\s+/).map(compact).filter(Boolean);
     const filtered=rows.filter(row=>{
       if(chosenBrand && brand(row)!==chosenBrand)return false;
       if(status==='sent' && row.status?.sent!==true || status==='unsent' && row.status?.sent===true)return false;
       if(battery==='detected' && !hasBattery(row) || battery==='missing' && hasBattery(row))return false;
-      const text=words.length ? compact([brand(row),row.manufacturer,row.model,row.serial,row.id,row.status?.dealerPhone,...(row.batteries||[]).map(x=>x?.name)].join(' ')) : '';
+      const text=words.length ? compact([brand(row),row.manufacturer,row.model,row.hardware?.displayModel,row.hardware?.cpuSummary,row.hardware?.deviceType,row.serial,row.id,row.status?.dealerPhone,...(row.batteries||[]).map(x=>x?.name)].join(' ')) : '';
       return words.every(word=>text.includes(word));
     });
     return filtered.sort((a,b)=>{
       const newest=timestamp(b)-timestamp(a),fallback=newest||collator.compare(a.id||'',b.id||'');
       switch(sort){
         case 'oldest': return timestamp(a)-timestamp(b)||collator.compare(a.id||'',b.id||'');
-        case 'brand-asc': return collator.compare(brand(a),brand(b))||collator.compare(a.model||'',b.model||'')||fallback;
-        case 'brand-desc': return collator.compare(brand(b),brand(a))||collator.compare(a.model||'',b.model||'')||fallback;
-        case 'model': return collator.compare(a.model||'',b.model||'')||fallback;
+        case 'brand-asc': return collator.compare(brand(a),brand(b))||collator.compare(model(a),model(b))||fallback;
+        case 'brand-desc': return collator.compare(brand(b),brand(a))||collator.compare(model(a),model(b))||fallback;
+        case 'model': return collator.compare(model(a),model(b))||fallback;
         case 'serial': return collator.compare(a.serial||'',b.serial||'')||fallback;
         case 'unsent-first': return Number(a.status?.sent===true)-Number(b.status?.sent===true)||fallback;
         default:return fallback;
