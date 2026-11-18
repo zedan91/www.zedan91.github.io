@@ -40,7 +40,7 @@ test('bulk home action focuses an existing tab without changing its chat or draf
  const f=fixture([wa(40,{url:'https://web.whatsapp.com/send?phone=601100000002',state:{draft:true}})]);await f.open('',{home:true});assert.equal(f.calls.created.length,0);assert.equal(f.calls.updated.filter(x=>x.url).length,0);assert.ok(f.tabs.get(40).url.endsWith('601100000002'));
 });
 test('tabs opened before extension installation receive a scoped status probe and are reused',async()=>{
- const f=fixture([wa(40,{noReceiver:true})]),r=await f.open();assert.equal(r.whatsappTabId,40);assert.deepEqual(f.calls.injected,[40,40]);assert.equal(f.calls.created.length,0);
+ const f=fixture([wa(40,{noReceiver:true})]),r=await f.open();assert.equal(r.whatsappTabId,40);assert.deepEqual(f.calls.injected,[40,40,40]);assert.equal(f.calls.created.length,0);
 });
 test('a phone action navigates even if a stale send URL still names that phone',async()=>{
  const f=fixture([wa(40,{url:'https://web.whatsapp.com/send?phone=601100000001'})]);await f.open();assert.equal(f.calls.updated.filter(x=>x.url).length,1);

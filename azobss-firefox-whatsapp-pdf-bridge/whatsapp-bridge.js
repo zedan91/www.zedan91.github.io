@@ -333,6 +333,28 @@
     } catch (_) {}
   }
 
+  const outgoingMessages1594=()=>[...document.querySelectorAll('#main [data-id^="true_"]')].map(node=>{
+    const id=node.getAttribute('data-id')||'', match=id.match(/^true_(\d+)@(?:c\.us|s\.whatsapp\.net)_/);
+    const parts=[...node.querySelectorAll('.selectable-text')].filter(part=>!part.closest('[data-testid="quoted-message"],[data-testid="quoted-message-preview"],.quoted-mention'));
+    return {id,outgoing:true,phone:match?.[1]||'',text:parts.map(part=>part.innerText||part.textContent||'').join(' '),
+      sent:!!node.querySelector('[data-icon="msg-check"],[data-icon="msg-dblcheck"],[data-icon="msg-dblcheck-ack"],[data-icon="msg-check-ack"]')};
+  });
+  const dealerDelivery=window.createAzobssDealerDelivery1594?.({
+    messages:outgoingMessages1594,
+    composer:()=>captionText(document.querySelector('#main footer [contenteditable="true"],#main footer [contenteditable="plaintext-only"],#main footer textarea')),
+    verifyPhone:async phone=>!!await window.AZOBSSWhatsappTarget1552?.verifyCurrent?.(phone),
+    deliver:receipt=>ext.runtime.sendMessage({type:'AZOBSS_WA_DEALER_SENT_1594',requestId:dealerRequestId1594,receipt})
+  });
+  let dealerRequestId1594='';
+  document.addEventListener('click',event=>{
+    if(!event.isTrusted)return;
+    const button=event.target?.closest?.('#main footer button,#main footer [role="button"]');
+    if(button && button.querySelector('[data-icon="send"],[data-icon="wds-ic-send-filled"]'))dealerDelivery?.intent(true);
+  },true);
+  document.addEventListener('keydown',event=>{
+    if(event.isTrusted && event.key==='Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && event.target?.closest?.('#main footer'))dealerDelivery?.intent(true);
+  },true);
+  setInterval(()=>void dealerDelivery?.tick().catch(()=>{}),800);
   ext.runtime.onMessage.addListener(message=>{
     if(message?.type==='AZOBSS_WA_PREPARE_TEXT_1593'){
       return (async()=>{
@@ -343,6 +365,8 @@
         try{
           if(!await fillCaption('',message.text,resolve))throw new Error('Draf belum dapat diisi. Semak ruangan mesej WhatsApp dan gunakan teks yang disalin.');
           if(!resolve())throw new Error('Penerima WhatsApp berubah semasa draf disediakan.');
+          dealerRequestId1594=message.requestId;
+          if(message.delivery && !dealerDelivery?.arm(message))throw new Error('Kemas kini Bridge untuk tanda hantar automatik.');
           return {ok:true,phone:message.phone,draftVerified:true,instanceId};
         }finally{busy=false;}
       })().catch(error=>({ok:false,error:error.message}));

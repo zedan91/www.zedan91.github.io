@@ -1,6 +1,6 @@
-AZOBSS Firefox Bridge1.3.5 — signed XPI for permanent installation
-Install AZOBSS-Firefox-WhatsApp-Bridge-v1593.xpi via Firefox Add-ons Manager > gear > Install Add-on From File.
-Update the existing bridge and refresh BOTH Admin and WhatsApp. No security preference change or temporary installation.
-Guide: https://www.azobss.com/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1554
-1.3.5: top notice with Close/automatic expiry; click-through notice never covers composer. Document input selection ignores unrelated stale inputs/sidebar plus icons. Preview/caption handles the Acrobat PDF viewer, inline footer, truncated filenames, editor remount and verified multiline caption paste with text insertion fallback. Wire protocol1552 and existing permissions unchanged; PDF actions require bundle 1.3.5 or later.
-One file attempt, no automatic Send/retry. Preserve existing drafts; unknown/missing caption stops for manual review. Chrome/Edge no-add-on system-share/manual path remains available. User Firefox profile is not modified by QA; real logged-in customer flow not tested.
+AZOBSS Firefox Bridge 1.3.6
+Reuse the existing WhatsApp Web tab, verify its dealer phone and prepare the four-line diagnostic note. Admin presses Send.
+PC Diagnostic Reports: 1.3.6 observes a new outgoing exact-text message with a sent tick after a trusted Send/Enter action. Opening a chat or preparing a draft never marks it sent.
+The confirmation waits in extension local storage until authenticated Admin saves it. A newer manual untick wins over an older confirmation. This indicates sent, not delivered/read.
+Use the signed customer XPI linked by https://www.azobss.com/azobss-firefox-whatsapp-pdf-bridge/INSTALL.html?v=1594 after Mozilla approval. Refresh BOTH Admin and WhatsApp after updating. Same Firefox profile/container is required.
+Existing PDF, recipient checks and draft preservation remain. No automatic Send. No new permissions. Real dealer messages are not sent during QA.

@@ -583,23 +583,81 @@ async function controlPcDiagnostics1590(request, env) {
   }
   const prefix = '__azobss_pc_diagnostics/';
   const validId = id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id);
+  const statePrefix = '__azobss_pc_diagnostic_states/';
+  const stateKey = id => statePrefix + id + '.json';
+  const readState = async id => {
+    const object = await env.AZOBSS_FILES.get(stateKey(id));
+    return {object,state:object ? await object.json() : {sent:false,manualRevision:0,revision:0,receiptIds:[]}};
+  };
+  const mutate = async (id,change) => {
+    for (let attempt=0;attempt<6;attempt++) {
+      const {object,state} = await readState(id);
+      const next = change(state);
+      if (!next) return state;
+      next.revision = (state.revision || 0) + 1;
+      const saved = await env.AZOBSS_FILES.put(stateKey(id),JSON.stringify(next),{
+        onlyIf:object ? {etagMatches:object.etag} : new Headers({'If-None-Match':'*'}),
+        httpMetadata:{contentType:'application/json',cacheControl:'no-store'}
+      });
+      if (saved) return next;
+    }
+    throw httpError(409,'Status berubah. Refresh dan cuba lagi.');
+  };
+  const publicState = state => ({sent:state.sent===true,manualRevision:state.manualRevision||0,
+    sentAt:state.sentAt||'',dealerPhone:state.dealerPhone||'',source:state.source||''});
+  if (data.action === 'delete') {
+    if (!Array.isArray(data.ids) || !data.ids.length || data.ids.length>50 || !data.ids.every(validId)) throw httpError(400,'Invalid report selection.');
+    const deleted=[],failed=[];
+    for (const id of new Set(data.ids)) {
+      try {
+        await mutate(id,state=>state.deletedAt ? null : {...state,deletedAt:new Date().toISOString()});
+        await env.AZOBSS_FILES.delete(prefix+id+'.json');
+        deleted.push(id);
+      } catch { failed.push({id,error:'Gagal memadam laporan. Cuba lagi.'}); }
+    }
+    return json({ok:true,deleted,failed});
+  }
+  if (data.action === 'sent') {
+    if (!validId(data.id) || typeof data.sent !== 'boolean') throw httpError(400,'Invalid sent status.');
+    if (!await env.AZOBSS_FILES.head(prefix+data.id+'.json')) throw httpError(404,'PC report not found.');
+    if (data.automatic && (data.sent!==true || !validId(data.eventId) || !Number.isSafeInteger(data.manualRevision) || data.manualRevision<0 || !/^[1-9][0-9]{6,14}$/.test(data.phone||''))) throw httpError(400,'Invalid send confirmation.');
+    const status=await mutate(data.id,state=>{
+      if (state.deletedAt) throw httpError(410,'PC report deleted.');
+      if (data.automatic && (state.receiptIds||[]).includes(data.eventId)) return null;
+      const next={...state};
+      if (data.automatic) {
+        next.receiptIds=[...(state.receiptIds||[]),data.eventId].slice(-200);
+        // A delayed confirmation must never override a newer manual untick.
+        if ((state.manualRevision||0)!==data.manualRevision) return next;
+      } else next.manualRevision=(state.manualRevision||0)+1;
+      next.sent=data.sent;
+      next.sentAt=data.sent ? new Date().toISOString() : '';
+      next.dealerPhone=data.automatic ? data.phone : '';
+      next.source=data.automatic ? 'bridge' : 'manual';
+      return next;
+    });
+    return json({ok:true,status:publicState(status)});
+  }
   if (data.action === 'list') {
     if (data.cursor && (typeof data.cursor !== 'string' || data.cursor.length > 2048)) throw httpError(400, 'Invalid cursor.');
     const page = await env.AZOBSS_FILES.list({prefix,limit:25,include:['customMetadata'],...(data.cursor ? {cursor:data.cursor} : {})});
-    return json({ok:true,reports:page.objects.map(item => {
+    return json({ok:true,reports:(await Promise.all(page.objects.map(async item => {
       let summary = {};
       try { summary = JSON.parse(item.customMetadata?.summary || '{}'); } catch {}
-      return {...summary,id:item.key.slice(prefix.length,-5)};
-    }),nextCursor:page.truncated ? page.cursor : ''});
+      const id=item.key.slice(prefix.length,-5), {state}=await readState(id);
+      return state.deletedAt ? null : {...summary,id,status:publicState(state)};
+    }))).filter(Boolean),nextCursor:page.truncated ? page.cursor : ''});
   }
   const row = data.row;
   const id = data.id || row?.id;
   if (!validId(id)) throw httpError(400, 'Invalid report ID.');
   const key = prefix + id + '.json';
+  const {state}=await readState(id);
+  if (state.deletedAt) throw httpError(410,'PC report deleted.');
   if (data.action === 'read') {
     const object = await env.AZOBSS_FILES.get(key);
     if (!object) throw httpError(404, 'PC report not found.');
-    return json({ok:true,row:await object.json()});
+    return json({ok:true,row:{...await object.json(),status:publicState(state)}});
   }
   if (data.action !== 'write' || typeof row?.report !== 'string' || !row.report.includes('AZOBSS CUSTOMER PC DIAGNOSTIC') ||
       encoder.encode(row.report).length > 262144 || row.report.includes('\0')) throw httpError(400, 'Invalid PC report.');
@@ -619,6 +677,10 @@ async function controlPcDiagnostics1590(request, env) {
   if (!saved) {
     const old = await env.AZOBSS_FILES.head(key);
     if (!old || old.customMetadata?.sha256 !== hash) throw httpError(409, 'Report ID already belongs to different content.');
+  }
+  if ((await readState(id)).state.deletedAt) {
+    await env.AZOBSS_FILES.delete(key);
+    throw httpError(410,'PC report deleted.');
   }
   return json({ok:true,id});
 }

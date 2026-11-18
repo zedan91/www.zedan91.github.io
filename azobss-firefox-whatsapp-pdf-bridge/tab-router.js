@@ -8,7 +8,7 @@ const fault=(code,message)=>Object.assign(new Error(message),{code});
 const timeout=(work,ms)=>{let timer;return Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(fault('probe_timeout','WhatsApp tab status unavailable.')),ms);})]).finally(()=>clearTimeout(timer));};
 async function status(tab){
  if(pendingTabs.has(tab.id))return {busy:true,known:true};
- const probe=async()=>{try{return await ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_TAB_STATUS_1545'});}catch{await ext.tabs.executeScript(tab.id,{file:'chat-target.js'});await ext.tabs.executeScript(tab.id,{file:'whatsapp-bridge.js'});return ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_TAB_STATUS_1545'});}};
+ const probe=async()=>{try{return await ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_TAB_STATUS_1545'});}catch{await ext.tabs.executeScript(tab.id,{file:'chat-target.js'});await ext.tabs.executeScript(tab.id,{file:'dealer-delivery.js'});await ext.tabs.executeScript(tab.id,{file:'whatsapp-bridge.js'});return ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_TAB_STATUS_1545'});}};
  try{const s=await timeout(probe(),1500);return s?.bridgeVersion>=1545?{known:true,bridgeVersion:s.bridgeVersion,instanceId:s.instanceId||'',ready:s.ready===true,locked:s.locked===true,busy:s.busy===true,draft:s.draft===true}:{};}catch{return {};}
 }
 async function confirmTarget(tab,phone,requestId,oldInstance){
@@ -26,7 +26,7 @@ async function confirmTarget(tab,phone,requestId,oldInstance){
  throw fault('navigation_unconfirmed','WhatsApp belum selesai membuka chat pelanggan. Tiada PDF diambil oleh tab lama. Refresh tab WhatsApp dan cuba lagi.');
 }
 async function focus(tab){await ext.tabs.update(tab.id,{active:true});try{await ext.windows.update(tab.windowId,{focused:true});}catch{} }
-async function routeNow(sender,phone,home,beforeNavigate,requestId,text,requireExisting){
+async function routeNow(sender,phone,home,beforeNavigate,requestId,text,requireExisting,delivery){
  if(!adminUrl(sender?.url)||!Number.isInteger(sender?.tab?.id)||(sender.frameId!==undefined&&sender.frameId!==0))throw fault('untrusted_sender','Only the AZOBSS admin page can open this chat.');
  if(!(home===true&&phone==='')&&!validPhone(phone))throw fault('invalid_phone','Customer phone unavailable or invalid.');
  const source=await ext.tabs.get(sender.tab.id);
@@ -51,21 +51,21 @@ async function routeNow(sender,phone,home,beforeNavigate,requestId,text,requireE
  }catch(error){throw fault('tab_update_failed','The WhatsApp tab could not be activated. Refresh and retry; no extra tab was opened.');}
  const confirmation=phone?await confirmTarget(tab,phone,requestId,oldInstance):{};
  if(text){
-  const prepared=await timeout(ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_PREPARE_TEXT_1593',phone,text,requestId,instanceId:confirmation.instanceId}),30000);
+  const prepared=await timeout(ext.tabs.sendMessage(tab.id,{type:'AZOBSS_WA_PREPARE_TEXT_1593',phone,text,requestId,delivery,instanceId:confirmation.instanceId}),30000);
   if(!prepared?.ok||prepared.phone!==phone||prepared.draftVerified!==true)throw fault('draft_unconfirmed',prepared?.error||'Draf belum dapat disahkan. Semak WhatsApp dan gunakan teks yang disalin.');
  }
  return {ok:true,bridgeVersion:1552,whatsappTabId:tab.id,reused,...confirmation,...(text?{draftVerified:true}:{})};
 }
-function route(sender,{phone='',home=false,requestId='',beforeNavigate,text='',requireExisting=false}={}){
+function route(sender,{phone='',home=false,requestId='',beforeNavigate,text='',requireExisting=false,delivery=null}={}){
  if(!adminUrl(sender?.url)||!Number.isInteger(sender?.tab?.id)||(sender.frameId!==undefined&&sender.frameId!==0))return Promise.reject(fault('untrusted_sender','Only the AZOBSS admin page can open this chat.'));
  if(typeof requestId!=='string'||!/^[-a-zA-Z0-9_]{1,120}$/.test(requestId))return Promise.reject(fault('invalid_request','Invalid contact request.'));
  if(typeof text!=='string'||text.length>12000||(requireExisting&&!text.trim()))return Promise.reject(fault('invalid_text','Nota dealer kosong atau terlalu panjang.'));
  const key=String(sender?.tab?.id)+':'+requestId,now=Date.now();
  for(const [id,item] of requests)if(item.expires<=now)requests.delete(id);
- if(requests.has(key)){const item=requests.get(key);if(item.phone!==phone||item.home!==home||item.text!==text||item.requireExisting!==requireExisting)return Promise.reject(fault('request_changed','Contact request changed. Click again.'));return item.promise;}
+ if(requests.has(key)){const item=requests.get(key);if(item.phone!==phone||item.home!==home||item.text!==text||item.requireExisting!==requireExisting||JSON.stringify(item.delivery)!==JSON.stringify(delivery))return Promise.reject(fault('request_changed','Contact request changed. Click again.'));return item.promise;}
  if(requests.size>=256)return Promise.reject(fault('too_many_requests','Wait a moment and retry.'));
- const promise=queue.then(()=>routeNow(sender,phone,home,beforeNavigate,requestId,text,requireExisting));queue=promise.catch(()=>{});
- requests.set(key,{phone,home,text,requireExisting,promise,expires:now+120000});return promise;
+ const promise=queue.then(()=>routeNow(sender,phone,home,beforeNavigate,requestId,text,requireExisting,delivery));queue=promise.catch(()=>{});
+ requests.set(key,{phone,home,text,requireExisting,delivery,promise,expires:now+120000});return promise;
 }
 return Object.freeze({route,adminUrl,whatsappUrl});
 });

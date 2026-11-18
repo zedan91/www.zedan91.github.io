@@ -47,7 +47,7 @@ ext.runtime.onMessage.addListener((message, sender) => {
   const type = String(message?.type || '');
 
   if(type==='AZOBSS_FIREFOX_WA_CONTACT_PING')return Promise.resolve(validAzobssSender(sender)?{ok:true,bridgeVersion:BRIDGE_VERSION,tabReuse:true}:{ok:false});
-  if(type==='AZOBSS_FIREFOX_WA_PREPARE_TEXT')return router.route(sender,{phone:message.phone,text:message.text,requireExisting:true,requestId:message.requestId}).catch(error=>({ok:false,error:error.message,code:error.code}));
+  if(type==='AZOBSS_FIREFOX_WA_PREPARE_TEXT')return router.route(sender,{phone:message.phone,text:message.text,requireExisting:true,requestId:message.requestId,delivery:message.delivery,beforeNavigate:async tab=>dealerDelivery1594.register(tab.id,message.requestId,message.phone,message.delivery)}).catch(error=>({ok:false,error:error.message,code:error.code}));
   if(type==='AZOBSS_FIREFOX_WA_OPEN_CHAT')return router.route(sender,{phone:message.phone,home:message.home===true,requestId:message.requestId}).catch(error=>({ok:false,bridgeVersion:BRIDGE_VERSION,error:error.message,code:error.code}));
 
   if (type === 'AZOBSS_FIREFOX_WA_PDF_SHARE') {

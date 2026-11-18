@@ -84,5 +84,5 @@
    return true;
   })();task={phone,promise};try{return await promise;}finally{if(task?.promise===promise)task=null;}
  }
- window.AZOBSSWhatsappTarget1552=Object.freeze({ensure,current});
+ window.AZOBSSWhatsappTarget1552=Object.freeze({ensure,current,verifyCurrent:async phone=>current(phone)||await verifyInfo(phone)});
 })();

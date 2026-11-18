@@ -21095,6 +21095,19 @@ async function handler(req, res) {
           return send(res,error.statusCode || 400,JSON.stringify({ok:false,error:error.message}),'application/json',{'Cache-Control':'no-store'});
         }
       }
+      if (req.method === 'POST' && (pathname === '/api/admin/pc-diagnostics/delete' || /^\/api\/admin\/pc-diagnostics\/[a-f0-9-]{36}\/sent$/.test(pathname))) {
+        if (azRateLimitOrSend(req,res,'pc-diagnostic-update',120,60*1000)) return;
+        try {
+          const input=JSON.parse((await readBinaryBody(req,12000)).toString('utf8'));
+          const result=pathname.endsWith('/delete')
+            ? await pcDiagnosticStore({action:'delete',ids:input.ids})
+            : await pcDiagnosticStore({action:'sent',id:pathname.split('/')[4],sent:input.sent,
+                automatic:input.automatic===true,eventId:input.eventId,manualRevision:input.manualRevision,phone:input.phone});
+          return send(res,200,JSON.stringify(result),'application/json',{'Cache-Control':'no-store'});
+        } catch (error) {
+          return send(res,error.statusCode || 400,JSON.stringify({ok:false,error:error.message}),'application/json',{'Cache-Control':'no-store'});
+        }
+      }
       if (req.method !== 'GET') return send(res,405,'Method not allowed');
       if (azRateLimitOrSend(req,res,'pc-diagnostic-admin',120,60*1000)) return;
       try {

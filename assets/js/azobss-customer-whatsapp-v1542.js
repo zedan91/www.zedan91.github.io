@@ -62,7 +62,8 @@ function openURL(value){
  const task=requestOpen(value).finally(()=>inflight.delete(value));inflight.set(value,task);return task;
 }
 function bridgeDraftReady(){return bridgeReady()&&Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-text-draft'))>=1593;}
-async function requestDraft(number,text){
+function bridgeDeliveryReady(){return bridgeDraftReady()&&Number(document.documentElement.getAttribute('data-azobss-firefox-whatsapp-delivery'))>=1594;}
+async function requestDraft(number,text,delivery){
  try{await navigator.clipboard.writeText(text);}catch{}
  if(!bridgeDraftReady()){
   if(bridgeReady())await openURL(url(number));
@@ -75,15 +76,15 @@ async function requestDraft(number,text){
  return new Promise(resolve=>{
   const timer=setTimeout(()=>{pending.delete(requestId);notice('Draf belum dapat disahkan. Semak tab WhatsApp sedia ada dan gunakan nota yang disalin.');resolve(false);},120000);
   pending.set(requestId,{resolve,timer,phone:number,home:false,draft:true});
-  browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_REQUEST',requestId,phone:number,text},location.origin);
+  browserWindow.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_REQUEST',requestId,phone:number,text,...(bridgeDeliveryReady()&&delivery?{delivery}:{})},location.origin);
  });
 }
-function openDraft(value,text){
+function openDraft(value,text,{delivery=null}={}){
  const number=phone(value),note=typeof text==='string'?text.trim():'';
  if(!browserWindow||!number||!note||note.length>12000)return Promise.resolve(false);
- const key=JSON.stringify([number,note]);
+ const key=JSON.stringify([number,note,delivery]);
  if(inflight.has(key))return inflight.get(key);
- const task=requestDraft(number,note).finally(()=>inflight.delete(key));inflight.set(key,task);return task;
+ const task=requestDraft(number,note,delivery).finally(()=>inflight.delete(key));inflight.set(key,task);return task;
 }
 if(browserWindow?.document){
  browserWindow.addEventListener('message',event=>{
@@ -95,5 +96,5 @@ if(browserWindow?.document){
  const click=event=>{const a=event.target?.closest?.('a[data-customer-whatsapp]');if(!a)return;event.preventDefault();event.stopImmediatePropagation();openURL(a.href);};
  browserWindow.addEventListener('click',click,{capture:true});browserWindow.addEventListener('auxclick',click,{capture:true});
 }
-return Object.freeze({phone,url,action,openURL,openDraft,bridgeReady,bridgeDraftReady});
+return Object.freeze({phone,url,action,openURL,openDraft,bridgeReady,bridgeDraftReady,bridgeDeliveryReady});
 });

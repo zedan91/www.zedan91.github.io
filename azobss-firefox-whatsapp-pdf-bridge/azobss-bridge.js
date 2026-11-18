@@ -11,6 +11,8 @@
       document.documentElement?.setAttribute(READY_ATTR, String(BRIDGE_VERSION));
       document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-extension-version',ext.runtime.getManifest().version);
       document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-text-draft','1593');
+      document.documentElement?.setAttribute('data-azobss-firefox-whatsapp-delivery','1594');
+      ext.runtime.sendMessage({type:'AZOBSS_PC_DEALER_SENT_READY_1594'}).catch(()=>{});
       window.postMessage({
         type: 'AZOBSS_FIREFOX_WA_PDF_BRIDGE_READY',
         bridgeVersion: BRIDGE_VERSION
@@ -21,8 +23,11 @@
   window.addEventListener('message', event => {
     if (event.source !== window || event.origin !== location.origin) return;
     const data = event.data;
+    if(['AZOBSS_PC_DEALER_SENT_READY_1594','AZOBSS_PC_DEALER_SENT_ACK_1594'].includes(data?.type)){
+      ext.runtime.sendMessage({type:data.type,eventId:data.eventId}).catch(()=>{});return;
+    }
     if(data?.type==='AZOBSS_FIREFOX_WA_TEXT_REQUEST'){
-      ext.runtime.sendMessage({type:'AZOBSS_FIREFOX_WA_PREPARE_TEXT',requestId:String(data.requestId||''),phone:data.phone,text:data.text}).then(response=>{
+      ext.runtime.sendMessage({type:'AZOBSS_FIREFOX_WA_PREPARE_TEXT',requestId:String(data.requestId||''),phone:data.phone,text:data.text,delivery:data.delivery}).then(response=>{
         window.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_STATUS',requestId:data.requestId,ok:response?.ok===true,error:response?.error||'',phoneVerified:response?.phoneVerified===true,draftVerified:response?.draftVerified===true,phone:response?.phone||'',reused:response?.reused===true},location.origin);
       }).catch(error=>window.postMessage({type:'AZOBSS_FIREFOX_WA_TEXT_STATUS',requestId:data.requestId,ok:false,error:String(error?.message||error)},location.origin));return;
     }
@@ -63,6 +68,7 @@
   });
 
   ext.runtime.onMessage.addListener(message => {
+    if(message?.type==='AZOBSS_PC_DEALER_SENT_1594'){window.postMessage(message,location.origin);return;}
     if (message?.type !== 'AZOBSS_FIREFOX_WA_PDF_BRIDGE_STATUS') return;
     window.postMessage({
       type: 'AZOBSS_FIREFOX_WA_PDF_BRIDGE_STATUS',
