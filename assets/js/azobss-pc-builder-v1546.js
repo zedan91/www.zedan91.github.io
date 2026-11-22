@@ -30,17 +30,38 @@
   if(variant&&!/^(?:harga|seunit|default)$/i.test(variant)&&!clean(label).includes(clean(variant)))label+=' · '+variant;
   return label;
  }
+ function categoryFor(p){
+  const category=String(p.category||''),name=String(p.name||p.displayName||'');
+  if(/^(?:CPU|CPUs|Processors)$/i.test(category)&&!/cooler|cooling|heatsink/i.test(name))return /Intel|Core\s+i[3579]/i.test(name+' '+p.brand)?'intel-cpu':/AMD|Ryzen|Athlon|Threadripper/i.test(name+' '+p.brand)?'amd-cpu':'';
+  if(/^Motherboards?$/i.test(category)){const text=name+' '+(p.specs||[]).join(' ');return /\b(?:AM[45]|A320|A520|A620|B450|B550|B650|B850|X570|X670|X870|TRX50|WRX90)(?:[MI])?\b/i.test(text)?'amd-mobo':/\b(?:LGA\s*\d+|H410|H510|H610|H810|B460|B560|B660|B760|B860|Z490|Z590|Z690|Z790|Z890|W790)(?:[MI])?\b/i.test(text)?'intel-mobo':'';}
+  if(/^(?:Mice|Mouse & Mousepad)$/i.test(category)&&/mouse\s*pad|mouse\s*mat|desk\s*mat/i.test(name))return 'mousepad';
+  if(/^(?:Routers|Networking|Wireless Adapters|Wi-Fi Adapters)$/i.test(category)&&/\b(?:USB|PCIe?|PCI-E)\b/i.test(name)&&/wi-?fi|wireless|802\.11/i.test(name)&&!/router|access point/i.test(name))return 'wifi-receiver';
+  return categoryMap[category]||({'Internal Hard Drives':'hdd','External Hard Drives':'hdd','Portable Hard Drives':'hdd','Desktop External Drives':'hdd','LCD Monitors':'monitor','OLED Monitors':'monitor','Monitors (Panel Unspecified)':'monitor','Graphics Cards':'gpu','Power Supply':'psu','PC Cases':'case','Mouse Pads':'mousepad','Webcam & Capture':'streaming','Drawing Tablets':'tablet','Gaming Chairs':'chair','Gaming Desks':'desk'}[category])||'';
+ }
+ function mergeProducts(reference,live,policy){
+  if(!policy?.ok||!Array.isArray(policy.hiddenProductIds)||!Array.isArray(policy.hiddenStoreIds))return [];
+  const hiddenIds=new Set(policy.hiddenProductIds.map(v=>String(v).toLowerCase())),hiddenStores=new Set(policy.hiddenStoreIds.map(v=>String(v).toLowerCase()));
+  if(hiddenStores.has('viewnet')||hiddenStores.has('viewnet-pricelist'))return [];
+  const merged=new Map((reference||[]).map(p=>[String(p.id),{...p,requiresConfirmation:true}]));
+  for(const p of live||[]){
+   const id=String(p.id),old=merged.get(id);
+   if(p.hidden===true||p.priceStatus==='unavailable'||p.availability==='unavailable'){merged.delete(id);continue;}
+   const fresh=!old||p.priceStatus==='live'||Date.parse(p.priceCheckedAt||'')>=Date.parse(old.priceCheckedAt||'');
+   merged.set(id,{...(old||{}),...(fresh?p:{}),requiresConfirmation:true});
+  }
+  return [...merged.values()].filter(p=>!hiddenIds.has(String(p.id).toLowerCase())&&!hiddenIds.has(String(p.sourceRecordId||'').toLowerCase())&&p.hidden!==true);
+ }
  function catalog(products,templates){
   const categories=templates.map(c=>({...c,options:[]})),by=new Map(categories.map(c=>[c.id,c]));
   for(const p of products||[]){
-   const c=by.get(categoryMap[p.category]);
+   const c=by.get(categoryFor(p));
    if(!c||!p.sourceRecordId||!/^VNP-/.test(String(p.id))||!Number.isFinite(Number(p.price))||Number(p.price)<=0||p.hidden===true)continue;
    c.options.push({id:String(p.id),label:productLabel(p),brand:String(p.brand||'').trim()||'Other',section:String(p.category),
     price:Number(p.price),priceMode:'azobss-selling',sourceRecordId:String(p.sourceRecordId),sourceOptionIndex:Number(p.sourceOptionIndex)||0,
-    specs:Array.isArray(p.specs)?p.specs:[],image:String(p.image||''),requiresConfirmation:true});
+    priceCheckedAt:String(p.priceCheckedAt||''),specs:Array.isArray(p.specs)?p.specs:[],image:String(p.image||''),requiresConfirmation:true});
   }
   for(const c of categories)c.options.sort((a,b)=>a.section.localeCompare(b.section)||a.brand.localeCompare(b.brand)||a.label.localeCompare(b.label));
-  return {source:'Viewnet pricelist · AZOBSS selling prices',categories};
+  return {source:'AZOBSS reference selling prices',categories};
  }
  function compactShare(lines){
   return Object.values(lines).flat().filter(row=>/^VNP-[a-f0-9]{12}--\d+$/i.test(row.productId||''))
@@ -64,5 +85,5 @@
   }
   return sockets;
  }
- return {catalog,matches,categoryMap,compactShare,decodeShare,coolerSockets};
+ return {catalog,matches,categoryMap,categoryFor,mergeProducts,compactShare,decodeShare,coolerSockets};
 });
