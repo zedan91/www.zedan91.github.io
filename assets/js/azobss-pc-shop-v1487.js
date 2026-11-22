@@ -121,7 +121,7 @@ async function updateCatalog(attempt){
   shouldRetry=attempt<1;
  }
  const sel=document.querySelector('#azPcShopCategory');const previousCategory=sel?.value;
- if(sel){
+ if(sel&&!window.AZOBSSPcStorefront){
   sel.innerHTML='<option value="all">All categories</option>'+[...new Set(catalog.filter(p=>p.image).map(x=>x.category).filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   if([...sel.options].some(x=>x.value===previousCategory))sel.value=previousCategory;
  }
@@ -132,7 +132,7 @@ async function updateCatalog(attempt){
 async function loadStorefrontSnapshot(){
  const files=['pc-shop-storefront-v1512.json','viewnet-storefront-v1526.json'];
  const results=await Promise.allSettled(files.map(async file=>{
-  const response=await fetch('/PC-Build/'+file,{signal:AbortSignal.timeout(8000)});
+  const response=await fetch('/PC-Build/'+file+'?v=1603',{signal:AbortSignal.timeout(8000)});
   if(!response.ok)throw Error('Storefront snapshot unavailable');
   return response.json();
  }));

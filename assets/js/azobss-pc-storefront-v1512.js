@@ -158,9 +158,7 @@ function render(next,callbacks){
   }
   grid.insertAdjacentHTML('afterend','<nav class="az-store-pagination" id="azStorePageBottom" aria-label="Product pages below results"></nav>');
  }
- const brands=document.querySelector('#azPcShopBrand'),previous=brands.value;
- brands.innerHTML='<option value="all">All brands</option>'+[...new Set(rows.map(brand))].sort((a,b)=>a==='Others'?1:b==='Others'?-1:a.localeCompare(b)).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
- if([...brands.options].some(x=>x.value===previous))brands.value=previous;
+ const brands=document.querySelector('#azPcShopBrand');
  if(!bound){
   const initialQuery=new URL(location.href).searchParams.get('q');if(initialQuery){const search=document.getElementById('azPcShopSearch');if(search)search.value=initialQuery;}
   bound=true;brands.addEventListener('change',draw);
@@ -256,7 +254,13 @@ function draw(){
  const groupRows=rows.filter(p=>(hubGroup==='all'||productGroup(p)===hubGroup)&&(!priceList||!!p.sourceRecordId));
  const eligible=groupRows.filter(p=>!window.AZOBSSPcVisibility||window.AZOBSSPcVisibility.visible(p,actions.isAdmin?.()));
  const categories=new Set(eligible.map(displayCategory).filter(Boolean));
- for(const [id,values,label,current] of [['azPcShopCategory',(isPrebuilt?prebuiltCategories.filter(category=>categories.has(category)):[...categories].sort()),'All categories',cat],['azPcShopBrand',[...new Set(eligible.map(brand))].sort((a,b)=>a==='Others'?1:b==='Others'?-1:a.localeCompare(b)),'All brands',b]]){
+ // Category is the parent facet. Rebuild brands only after validating it, so
+ // unrelated manufacturers cannot leak in from another category or hub group.
+ const categoryValues=isPrebuilt?prebuiltCategories.filter(category=>categories.has(category)):[...categories].sort();
+ if(!categoryValues.includes(cat))cat='all';
+ const categoryRows=cat==='all'?eligible:eligible.filter(p=>displayCategory(p)===cat);
+ const brandValues=[...new Set(categoryRows.map(brand))].sort((a,b)=>a==='Others'?1:b==='Others'?-1:a.localeCompare(b));
+ for(const [id,values,label,current] of [['azPcShopCategory',categoryValues,'All categories',cat],['azPcShopBrand',brandValues,'All brands',b]]){
   const select=document.getElementById(id);if(!select)continue;
   select.innerHTML=`<option value="all">${label}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
   select.value=values.includes(current)?current:'all';if(id==='azPcShopCategory')cat=select.value;else b=select.value;
