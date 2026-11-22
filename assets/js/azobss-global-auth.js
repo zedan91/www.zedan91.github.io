@@ -9582,7 +9582,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1604';
+  var VERSION_TEXT = 'v1605';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
