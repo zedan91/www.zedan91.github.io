@@ -9,3 +9,7 @@ body:has(.parts-layout){overflow-x:clip!important;overflow-y:visible!important}
 
 @media(min-width:1001px){#partsList{position:fixed;top:130px;right:max(20px,calc((100vw - 1165px)/2));width:330px;box-sizing:border-box;max-height:calc(100dvh - 170px);margin:0;z-index:1000}}@media(max-width:1000px){#partsList{display:none!important}#partsList[data-drawer-open="true"][data-has-items="true"]{display:block!important}}
 /* Keep the optional quick sign-in card from covering the parts list controls. */ body:has(#partsList[data-has-items="true"]) #azGoogleQuickSignIn{display:none!important}
+
+.parts-pager{gap:6px;flex-wrap:wrap}.parts-page-numbers{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}.parts-pager .btn{min-width:36px;min-height:38px;padding:7px 10px;font-size:13px}.parts-page-numbers [aria-current="page"]{background:#147c70;border-color:#68e3cc;color:#fff}.parts-page-status{flex-basis:100%;text-align:center;font-size:12px;color:#abc2d5;margin-top:4px}@media(max-width:650px){.parts-page-numbers{order:-1;flex-basis:100%;gap:3px}.parts-pager .btn{min-width:27px;min-height:36px;padding:6px;font-size:12px}}
+
+.parts-pager .btn{width:auto!important;flex:0 0 auto}.parts-page-numbers{flex-direction:row!important}
