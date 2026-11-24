@@ -266,19 +266,24 @@
     return ACCESS_CHECK_PROMISE.finally(function(){ACCESS_CHECK_PROMISE=null});
   }
   async function buyLifetimeAccess(){
-    var btn=byId('azebookBuy1351');if(btn){btn.disabled=true;btn.textContent='Menyediakan pembayaran...'}
-    gateStatus('Menyediakan bil RM19 sekali sahaja...',false);
+    var btn=byId('azebookBuy1351');
+    if(btn)btn.disabled=true;
     try{
-      var headers=await authHeaders(true);if(!headers.Authorization){updateGate({access:false,loginRequired:true});return}
-      var res=await fetch(apiBase()+'/api/ebook-generator/create-bill',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},headers),body:JSON.stringify({source:'Software-Tools Ebook Generator'})});
-      var data=await res.json().catch(function(){return {}});
-      if(res.status===401){updateGate({access:false,loginRequired:true});return}
-      if(!res.ok||data.ok===false)throw new Error(data.error||'Tidak dapat menyediakan pembayaran');
-      if(data.accessGranted||data.alreadyOwned){await checkLifetimeAccess(true);toast('Akses Ebook Generator sudah aktif');return}
-      if(!data.paymentUrl)throw new Error('Payment URL tidak diterima');
-      setPendingPayment({orderId:data.orderId||'',billCode:data.billCode||'',paymentUrl:data.paymentUrl,createdAtMs:Date.now()});
-      gateStatus('Membuka ToyyibPay...',false);location.href=data.paymentUrl;
-    }catch(err){gateStatus('Pembayaran gagal dibuka: '+(err.message||err),true);if(btn){btn.disabled=false;btn.textContent='Cuba Lagi — RM19'}}
+      var headers=await authHeaders(true);
+      if(!headers.Authorization){updateGate({access:false,loginRequired:true});return}
+      var payments=window.AZOBSSBusinessCheckout;
+      await payments.choose('Bayar Ebook Generator', function(paymentMethod){
+        return payments.request('/api/ebook-generator/create-bill', {
+          method:'POST', headers:Object.assign({'Content-Type':'application/json'},headers),
+          body:JSON.stringify({source:'Software-Tools Ebook Generator',paymentMethod:paymentMethod})
+        });
+      }, async function(data){
+        if(data.accessGranted||data.alreadyOwned){await checkLifetimeAccess(true);toast('Akses Ebook Generator sudah aktif');return false}
+        if(data.paymentUrl)setPendingPayment({orderId:data.orderId||'',billCode:data.billCode||'',paymentUrl:data.paymentUrl,createdAtMs:Date.now()});
+        return true;
+      });
+    }catch(err){gateStatus('Pembayaran gagal dibuka: '+(err.message||err),true)}
+    finally{if(btn)btn.disabled=false;}
   }
 
   function formatDate(ts){

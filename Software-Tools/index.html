@@ -3274,7 +3274,7 @@ html body .downloads-section{
 <!-- AZOBSS v1210: universal per-software packages and support -->
 <link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1408">
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1408" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1409" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1609" defer></script>
 
 <!-- Ebook compatibility history markers for regression tests only; these legacy assets are NOT loaded:
 /assets/css/azobss-software-ebook-v1351.css?v=1351
@@ -3289,6 +3289,7 @@ html body .downloads-section{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
+<script src="/assets/js/azobss-business-checkout.js?v=1609"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3819,8 +3820,10 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     <div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
     <div class="azobss-pay-options">
-      <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer / FPX</button>
-      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe Checkout</button>
+      <button class="azobss-pay-option" data-method="chip" type="button" hidden>Bayar dengan CHIP</button>
+      <button class="azobss-pay-option" data-method="bank-transfer" type="button" hidden>DuitNow QR / Pindahan Bank</button>
+      <button class="azobss-pay-option" data-method="bank" type="button" hidden>ToyyibPay (Sandaran)</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button" hidden>Stripe (Sandaran)</button>
     </div>
     <div class="azobss-pay-steps">
       <div class="azobss-pay-step is-active">1. Open Payment</div>
@@ -3845,6 +3848,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     <div class="azobss-pay-actions">
       <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
     </div>
+    <div id="azobssBusinessBankDetails" hidden></div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
   </div>
@@ -7016,7 +7020,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1608" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1609" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -7157,7 +7161,10 @@ function normalizeItem(item){
   function updateInstruction(){
     const inst = document.getElementById('azobssPayInstruction');
     if(!inst) return;
-    if(currentMethod === 'bank'){
+    if(currentMethod === 'chip' || currentMethod === 'bank-transfer'){
+      inst.textContent = currentMethod === 'chip' ? 'Bayar melalui CHIP. Resit dihantar selepas bayaran disahkan.' : 'Dapatkan amaun dan rujukan sebelum membuat pindahan.';
+      openPaymentBtn.textContent = currentMethod === 'chip' ? 'Buka CHIP' : 'Lihat arahan pindahan';
+    }else if(currentMethod === 'bank'){
       inst.textContent = 'Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.';
       openPaymentBtn.textContent = 'Open Payment';
     }else if(currentMethod === 'toyyibpay'){
@@ -7175,6 +7182,29 @@ function normalizeItem(item){
     syncBuyerEmailField();
   }
 
+  const businessBankDetails = document.getElementById('azobssBusinessBankDetails');
+  let checkoutOptionsVersion = 0;
+  async function refreshBusinessOptions(product) {
+    const version = ++checkoutOptionsVersion;
+    const buttons = [...modal.querySelectorAll('.azobss-pay-option')];
+    businessBankDetails.hidden = true;
+    businessBankDetails.replaceChildren();
+    buttons.forEach(button => { button.hidden = true; });
+    openPaymentBtn.disabled = true;
+    try {
+      const shared = window.AZOBSSBusinessCheckout;
+      const options = await shared.options();
+      if (version !== checkoutOptionsVersion || currentProduct !== product) return;
+      const methods = shared.available(options);
+      buttons.forEach(button => { button.hidden = !methods.includes(button.dataset.method); });
+      if (!methods.length) throw Error('Kaedah bayaran belum tersedia. Cuba lagi kemudian.');
+      setActiveMethod(methods[0]);
+      openPaymentBtn.disabled = false;
+    } catch (error) {
+      if (version === checkoutOptionsVersion) errorBox.textContent = error.message;
+    }
+  }
+
   function open(product){
     currentProduct = product;
     openPaymentBtn.disabled=false;
@@ -7187,9 +7217,9 @@ function normalizeItem(item){
     modal.setAttribute('aria-hidden','false');
     const planHtml = product.subscriptionCodeEnabled ? `<div class="azobss-pay-plan-box"><b>${esc(product.subscriptionPlanLabel || 'Activation Code')}</b><br>${esc(product.subscriptionMonthlyText || '')}${product.subscriptionSaveText ? ' · '+esc(product.subscriptionSaveText) : ''}<br><small>The Pro activation code will be generated after payment is verified.</small></div>` : '';
     const quantityHtml=azIsSolatTimeCurrentProduct()?`<div class="solat-purchase-quantity"><label>Jumlah lesen (1 lesen = 1 PC)<input type="number" data-solattime-quantity min="1" max="100" step="1" inputmode="numeric" value="1"></label><small>${esc(product.price)} setiap lesen</small><p data-solattime-key-count></p></div>`:'';
-    productBox.innerHTML = `<div><b>${esc(azIsSolatTimeCurrentProduct()?'Liyabudun':product.name)}</b></div><div>Amount: <b data-solattime-total>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${quantityHtml}${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Choose Bank Transfer / FPX or Stripe Checkout. The product price is verified by AZOBSS backend.</div>`;
+    productBox.innerHTML = `<div><b>${esc(azIsSolatTimeCurrentProduct()?'Liyabudun':product.name)}</b></div><div>Amount: <b data-solattime-total>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div>${quantityHtml}${planHtml}<div style="font-size:13px;color:#bfdbfe;margin-top:6px">Select an available payment method. AZOBSS verifies the product price.</div>`;
     azUpdateSolatTimeQuantity();
-    setActiveMethod('bank');
+    refreshBusinessOptions(product);
   }
 
   window.azobssOpenPremiumPay = open;
@@ -7244,11 +7274,14 @@ function normalizeItem(item){
     const quantityInput=productBox.querySelector('[data-solattime-quantity]');
     if(quantityInput)quantityInput.disabled=true;
 
-    if(currentMethod === 'stripe'){
+    if(['stripe', 'chip', 'bank-transfer'].includes(currentMethod)){
+      const provider = currentMethod;
+      const shared = window.AZOBSSBusinessCheckout;
+      const endpoint = { stripe: '/api/stripe/digital-checkout', chip: '/api/chip/digital-checkout', 'bank-transfer': '/api/site/bank-transfer' }[provider];
       const email = buyerEmail();
       const originalText = openPaymentBtn.textContent;
       openPaymentBtn.disabled = true;
-      openPaymentBtn.textContent = 'Opening Stripe Checkout...';
+      openPaymentBtn.textContent = 'Menyediakan bayaran…';
       try{
         const returnUrl = window.location.href.split('#')[0];
         const sourcePage = location.pathname.toLowerCase().includes('cad-tools') ? 'CAD Tools' : 'Software';
@@ -7287,14 +7320,19 @@ function normalizeItem(item){
           source:sourcePage,
           sourcePage
         };
-        const res = await fetch(API_BASE + '/api/stripe/digital-checkout', {
+        const res = await fetch(API_BASE + endpoint, {
           method:'POST',
           headers:await azPremiumPaymentAuthHeaders(),
           body:JSON.stringify(payload)
         });
         const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Pembayaran tidak dapat disediakan.');
+        if (provider === 'bank-transfer') {
+          await shared.digitalBankRequest(businessBankDetails, data);
+          return;
+        }
         const paymentUrl = data.paymentUrl || data.url || data.redirectUrl || '';
-        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Stripe Checkout failed to open.');
+        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Pembayaran tidak dapat disediakan.');
         if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
         try{
           localStorage.setItem('azobss_pending_payment_checkout', JSON.stringify({
@@ -7303,14 +7341,14 @@ function normalizeItem(item){
             stripeSessionId:data.sessionId || data.id || '',
             source:sourcePage,
             productId:String(currentProduct.id || currentProduct.productId || ''),
-            provider:'stripe',
+            provider,
             createdAt:Date.now()
           }));
         }catch(_e){}
-        try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:'stripe'}); }catch(_e){}
-        window.location.href = paymentUrl;
+        try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:provider}); }catch(_e){}
+        shared.redirect(paymentUrl, provider);
       }catch(err){
-        errorBox.textContent = err && err.message ? err.message : 'Stripe Checkout failed to open.';
+        errorBox.textContent = err && err.message ? err.message : 'Pembayaran tidak dapat disediakan.';
       }finally{
         openPaymentBtn.disabled = false;
         if(quantityInput)quantityInput.disabled=false;
@@ -7377,12 +7415,7 @@ function normalizeItem(item){
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
-      const fallback = azIsSolatTimeCurrentProduct() ? '' : toAbsolute(currentProduct.paymentLink || '');
-      errorBox.textContent = (err.message || 'Failed to generate payment.') + (fallback ? ' Fallback payment link available.' : '');
-      if(fallback){
-        successBox.innerHTML = `<b>Fallback available</b><br><span>The backend is not ready or environment variables are incomplete. You may still open the manual payment link.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`;
-        successBox.classList.add('is-open');
-      }
+      errorBox.textContent = err.message || 'Bayaran belum tersedia. Pilih kaedah lain.';
     }finally{
       openPaymentBtn.disabled = false;
       if(quantityInput)quantityInput.disabled=false;
@@ -17910,12 +17943,15 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
   <div class="azdm-summary" data-azdm-summary></div><p data-azdm-saving></p>
   <p data-package-activation></p>
   <div class="azdm-payment-buttons" data-azdm-payment-buttons>
-   <button type="button" data-azdm-buy disabled>Pay via ToyyibPay</button>
-   <button type="button" data-azdm-buy-stripe hidden disabled>Pay via Stripe</button>
+   <button type="button" data-azdm-buy-chip hidden disabled>Bayar dengan CHIP</button>
+   <button type="button" data-azdm-buy-bank hidden disabled>DuitNow QR / Pindahan Bank</button>
+   <button type="button" data-azdm-buy disabled>ToyyibPay (Sandaran)</button>
+   <button type="button" data-azdm-buy-stripe hidden disabled>Stripe (Sandaran)</button>
   </div>
   <button type="button" data-azdm-signin>Sign in AZOBSS</button>
   <button type="button" data-package-support>Support</button>
-  <p data-azdm-message role="status" aria-live="polite"></p>
+  <div data-package-bank-details hidden></div>
+   <p data-azdm-message role="status" aria-live="polite"></p>
   <div data-package-order-box hidden><h3>My Orders</h3><button type="button" data-azdm-refresh>Check Order / Payment</button><div data-azdm-orders></div></div>
  </div>
 </dialog>
@@ -17926,7 +17962,7 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
 </dialog>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
 
-<script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1379"></script>
+<script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1609"></script>
 
 <!-- AZOBSS 1445: affiliate cards use the same logo-first layout as normal software cards; no disclosure row. -->
 <style id="azobss-software-affiliate-layout-v1445">

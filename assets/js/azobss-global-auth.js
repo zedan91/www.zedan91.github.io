@@ -1923,7 +1923,19 @@ async function loadAzobssMembershipPanel(){
 }
 async function buyAzobssMembership(packageId){
   const err=$('profileSettingsError');if(!auth.currentUser){if(err)err.textContent='Please login again before purchasing Membership.';return;}
-  try{if(err){err.style.color='#ffd54a';err.textContent='Creating secure Membership payment...';}const token=await auth.currentUser.getIdToken(true);const saved=getSavedUser()||{};const res=await fetch(AZOBSS_BACKEND_BASE+'/api/membership/create-bill',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({packageId,usernameKey:saved.usernameKey||saved.username||'',profileDocId:saved.profileDocId||''})});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok)throw new Error(out.error||'Unable to create Membership payment.');location.href=out.paymentUrl||out.url;}
+  try {
+    if (!window.AZOBSSBusinessCheckout) await import('/assets/js/azobss-business-checkout.js?v=1609');
+    if (err) err.textContent = '';
+    const payments = window.AZOBSSBusinessCheckout;
+    await payments.choose('Bayar keahlian AZOBSS', async paymentMethod => {
+      const token = await auth.currentUser.getIdToken(true);
+      const saved = getSavedUser() || {};
+      return payments.request('/api/membership/create-bill', {
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+        body:JSON.stringify({ packageId, paymentMethod, usernameKey:saved.usernameKey||saved.username||'', profileDocId:saved.profileDocId||'' })
+      });
+    });
+  }
   catch(e){if(err){err.style.color='';err.textContent=e?.message||'Unable to purchase Membership.';}}
 }
 async function loadAzobssReferralPanel(){
@@ -9582,7 +9594,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1608';
+  var VERSION_TEXT = 'v1609';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 

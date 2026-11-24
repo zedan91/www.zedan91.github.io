@@ -1968,6 +1968,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
+<script src="/assets/js/azobss-business-checkout.js?v=1609"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -2217,8 +2218,10 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
     <div class="azobss-pay-options">
-      <button class="azobss-pay-option is-active" data-method="bank" type="button">Bank Transfer / FPX</button>
-      <button class="azobss-pay-option" data-method="stripe" type="button">Stripe Checkout</button>
+      <button class="azobss-pay-option" data-method="chip" type="button" hidden>Bayar dengan CHIP</button>
+      <button class="azobss-pay-option" data-method="bank-transfer" type="button" hidden>DuitNow QR / Pindahan Bank</button>
+      <button class="azobss-pay-option" data-method="bank" type="button" hidden>ToyyibPay (Sandaran)</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button" hidden>Stripe (Sandaran)</button>
     </div>
     <p class="azobss-pay-note" id="azobssPayInstruction">Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab.</p>
     <label class="azobss-pay-field" id="azobssBuyerEmailField">Buyer Email Address Address <span class="azobss-pay-required">*</span>
@@ -2228,6 +2231,7 @@ body.az-role-is-staff .market-nav a[href="/admin/"]{
     <div class="azobss-pay-actions">
       <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
     </div>
+    <div id="azobssBusinessBankDetails" hidden></div>
     <div class="azobss-pay-error" id="azobssPayError"></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
   </div>
@@ -2608,7 +2612,7 @@ function normalizeItem(item){
 
 <!-- Old LISP table script removed. CAD Tools search now controls all CAD/LISP items. -->
 
-<script src="/assets/js/azobss-global-auth.js?v=1608" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1609" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -2770,11 +2774,34 @@ function normalizeItem(item){
     completeBtn.style.display=admin?'':'none';
     completeBtn.textContent=admin?'Admin Complete Purchase':'Submit Proof';
   }
-  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); refreshManualCompleteVisibility(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${azUsdBadge(product.price)}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after verified ToyyibPay or Stripe payment.</div>`; updateInstruction();}
+  const businessBankDetails = document.getElementById('azobssBusinessBankDetails');
+  let checkoutOptionsVersion = 0;
+  async function refreshBusinessOptions(product) {
+    const version = ++checkoutOptionsVersion;
+    const buttons = [...modal.querySelectorAll('.azobss-pay-option')];
+    businessBankDetails.hidden = true;
+    businessBankDetails.replaceChildren();
+    buttons.forEach(button => { button.hidden = true; });
+    openPaymentBtn.disabled = true;
+    try {
+      const shared = window.AZOBSSBusinessCheckout;
+      const options = await shared.options();
+      if (version !== checkoutOptionsVersion || currentProduct !== product) return;
+      const methods = shared.available(options);
+      buttons.forEach(button => { button.hidden = !methods.includes(button.dataset.method); });
+      if (!methods.length) throw Error('Kaedah bayaran belum tersedia. Cuba lagi kemudian.');
+      buttons.find(button => button.dataset.method === methods[0]).click();
+      openPaymentBtn.disabled = false;
+    } catch (error) {
+      if (version === checkoutOptionsVersion) errorBox.textContent = error.message;
+    }
+  }
+
+  function open(product){currentProduct=product; currentMethod='bank'; errorBox.textContent=''; successBox.classList.remove('is-open'); successBox.innerHTML=''; if(!userEmail()) refInput.value=''; syncBuyerEmailField(); refreshManualCompleteVisibility(); modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); modal.querySelectorAll('.azobss-pay-option').forEach((b,i)=>b.classList.toggle('is-active', i===0)); productBox.innerHTML=`<div><b>${esc(product.name)}</b></div><div>Amount: <b>${esc(product.price)}</b> ${(/usd|\$/i.test(String(product.price||'')) ? '<span>USD</span>' : '')}</div><div style="font-size:13px;color:#bfdbfe;margin-top:6px">A temporary download link will be generated after payment verification.</div>`; refreshBusinessOptions(product);}
   window.azobssOpenPremiumPay = open;
   function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
   function activePaymentLink(){ if(!currentProduct) return ''; if(currentMethod==='stripe') return 'dynamic-stripe'; return 'dynamic-toyyibpay'; }
-  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='stripe'){ inst.textContent='Click Open Stripe Checkout. The amount is verified by AZOBSS backend before Stripe opens. After successful payment, you will return here for verification and download delivery.'; openPaymentBtn.textContent='Open Stripe Checkout'; } else if(currentMethod==='toyyibpay') inst.textContent='Click Open Payment to pay through Bank Transfer / FPX in the same tab. After payment is completed, you will return to AZOBSS and your download will be ready once payment is verified.'; else if(currentMethod==='bank') inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; else inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
+  function updateInstruction(){const inst=document.getElementById('azobssPayInstruction'); if(!inst)return; if(currentMethod==='chip'||currentMethod==='bank-transfer'){inst.textContent=currentMethod==='chip'?'Bayar melalui CHIP. Resit dihantar selepas bayaran disahkan.':'Dapatkan amaun dan rujukan sebelum membuat pindahan.';openPaymentBtn.textContent=currentMethod==='chip'?'Buka CHIP':'Lihat arahan pindahan';}else if(currentMethod==='stripe'){ inst.textContent='Click Open Stripe Checkout. The amount is verified by AZOBSS backend before Stripe opens. After successful payment, you will return here for verification and download delivery.'; openPaymentBtn.textContent='Open Stripe Checkout'; } else if(currentMethod==='toyyibpay') inst.textContent='Click Open Payment to pay through Bank Transfer / FPX in the same tab. After payment is completed, you will return to AZOBSS and your download will be ready once payment is verified.'; else if(currentMethod==='bank') inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; else inst.textContent='Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.'; openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';}
   document.getElementById('azobssPayClose')?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal)close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>btn.addEventListener('click',()=>{currentMethod=btn.dataset.method||'bank'; modal.querySelectorAll('.azobss-pay-option').forEach(b=>b.classList.toggle('is-active', b===btn)); updateInstruction();}));
@@ -2804,11 +2831,14 @@ function normalizeItem(item){
     errorBox.textContent=''; successBox.classList.remove('is-open');
     if(!requireBuyerEmail()) return;
     if(!currentProduct){ errorBox.textContent='Product not found.'; return; }
-    if(currentMethod === 'stripe'){
+    if(['stripe', 'chip', 'bank-transfer'].includes(currentMethod)){
+      const provider = currentMethod;
+      const shared = window.AZOBSSBusinessCheckout;
+      const endpoint = { stripe: '/api/stripe/digital-checkout', chip: '/api/chip/digital-checkout', 'bank-transfer': '/api/site/bank-transfer' }[provider];
       const email = buyerEmail();
       const originalText = openPaymentBtn.textContent;
       openPaymentBtn.disabled = true;
-      openPaymentBtn.textContent = 'Opening Stripe Checkout...';
+      openPaymentBtn.textContent = 'Menyediakan bayaran…';
       try{
         const returnUrl = window.location.href.split('#')[0];
         const sourcePage = location.pathname.toLowerCase().includes('cad-tools') ? 'CAD Tools' : 'Software';
@@ -2842,14 +2872,19 @@ function normalizeItem(item){
           source:sourcePage,
           sourcePage
         };
-        const res = await fetch(API_BASE + '/api/stripe/digital-checkout', {
+        const res = await fetch(API_BASE + endpoint, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify(payload)
         });
         const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Pembayaran tidak dapat disediakan.');
+        if (provider === 'bank-transfer') {
+          await shared.digitalBankRequest(businessBankDetails, data);
+          return;
+        }
         const paymentUrl = data.paymentUrl || data.url || data.redirectUrl || '';
-        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Stripe Checkout failed to open.');
+        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Pembayaran tidak dapat disediakan.');
         if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
         try{
           localStorage.setItem('azobss_pending_payment_checkout', JSON.stringify({
@@ -2858,14 +2893,14 @@ function normalizeItem(item){
             stripeSessionId:data.sessionId || data.id || '',
             source:sourcePage,
             productId:String(currentProduct.id || currentProduct.productId || ''),
-            provider:'stripe',
+            provider,
             createdAt:Date.now()
           }));
         }catch(_e){}
-        try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:'stripe'}); }catch(_e){}
-        window.location.href = paymentUrl;
+        try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:provider}); }catch(_e){}
+        shared.redirect(paymentUrl, provider);
       }catch(err){
-        errorBox.textContent = err && err.message ? err.message : 'Stripe Checkout failed to open.';
+        errorBox.textContent = err && err.message ? err.message : 'Pembayaran tidak dapat disediakan.';
       }finally{
         openPaymentBtn.disabled = false;
         openPaymentBtn.textContent = originalText || 'Open Stripe Checkout';
@@ -2902,9 +2937,7 @@ function normalizeItem(item){
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
-      const fallback = toAbsolute(currentProduct.paymentLink || '');
-      errorBox.textContent = (err.message || 'Failed to generate payment.') + (fallback ? ' Fallback payment link available.' : '');
-      if(fallback){successBox.innerHTML=`<b>Fallback available</b><br><span>The backend is not ready or environment variables are incomplete. You may still open the manual payment link.</span><br><a href="${esc(fallback)}">Open Fallback Payment</a>`; successBox.classList.add('is-open');}
+      errorBox.textContent = err.message || 'Bayaran belum tersedia. Pilih kaedah lain.';
     }finally{openPaymentBtn.disabled=false; openPaymentBtn.textContent=originalText || 'Open Payment';}
   });
   completeBtn?.addEventListener('click', ()=>{

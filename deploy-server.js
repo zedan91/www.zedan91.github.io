@@ -3668,7 +3668,10 @@ async function azVerifyToyyibPaidTransaction(order = {}) {
       for (const tx of candidates) {
         const txBillCode = azToyyibTxBillCode(tx);
         const sameBill = !txBillCode || txBillCode === billCode;
-        if (sameBill && azToyyibTxPaid(tx)) {
+        const newBusinessCheckout = order.businessCheckout === true;
+        const exact = !newBusinessCheckout || (String(tx.billExternalReferenceNo || '') === order.orderId
+          && Math.round(Number(tx.billpaymentAmount) * 100) === order.amountSen);
+        if (sameBill && exact && azToyyibTxPaid(tx)) {
           return { paid:true, tx, paymentReference:azToyyibTxReference(tx, order.paymentReference || ""), payloadUsed:Object.keys(payload).join(",") };
         }
       }
@@ -3916,6 +3919,11 @@ async function azAzdmSendSerialEmail(order, serialRows = []) {
 }
 async function azVerifySolatTimePurchase(order,options={}){
   const method=String(order.paymentMethod||'').toLowerCase();
+  if (method === 'chip') {
+    if (options.finalize) return (await azVerifyAndFinalizeDigitalChip(order, options.req)).order || order;
+    return (await azBusinessPayments.chipAdapter().verify(order)).paid === true;
+  }
+  if (method === 'bank-transfer') return options.finalize ? order : order.status === 'paid' && Boolean(order.bankVerificationClaimedAt || order.paymentVerificationSource === 'admin-bank-transfer');
   const verification=method==='stripe'?await azVerifyDigitalStripeOrder(order):method==='toyyibpay'?await azVerifyToyyibPaidTransaction(order):null;
   if(!azSolatTimePaymentMatches(order,method,verification))return options.finalize?order:false;
   if(options.finalize)return azFinalizePaidOrderOnce(order,options.req,{verified:true,paymentMethod:method,toyyibTransaction:verification.tx,stripeSession:verification.session,paymentReference:verification.paymentReference});
@@ -3981,14 +3989,17 @@ async function azFulfillAzdmOrder(order = {}, req, options = {}) {
 }
 async function azAzdmLocalCatalog({offer}) {
   const state = azAzdmShopReadiness();
-  return {enabled:state.ready,sandbox:state.sandbox,service:'render-native-v1323',payment_methods:state.paymentMethods,stripe_mode:state.stripeMode,support:{email:'zedan9107@gmail.com',whatsapp:'601135600723'},offer};
+  const options = await azBusinessPayments.options();
+  const paymentMethods = { toyyibpay: state.paymentMethods.toyyibpay && options.toyyibpay, stripe: state.paymentMethods.stripe && options.stripe, chip: state.coreReady && options.chip, 'bank-transfer': state.coreReady && Boolean(options.bank) };
+  return {enabled:Object.values(paymentMethods).some(Boolean),sandbox:state.sandbox,service:'render-native-v1323',payment_methods:paymentMethods,stripe_mode:state.stripeMode,support:{email:'zedan9107@gmail.com',whatsapp:'601135600723'},offer};
 }
 async function azAzdmLocalCheckout({req,body,offer}) {
   const state = azAzdmShopReadiness();
-  if (!state.ready) return {statusCode:503,body:{ok:false,error:'License purchasing is not available yet. Contact AZDM Support.'}};
+  if (!state.coreReady) return {statusCode:503,body:{ok:false,error:'License purchasing is not available yet. Contact AZDM Support.'}};
   const paymentMethod = String(body.payment_method || 'toyyibpay').trim().toLowerCase();
-  if (!['toyyibpay','stripe'].includes(paymentMethod)) return {statusCode:400,body:{ok:false,error:'Unsupported payment method.'}};
-  if (!state.paymentMethods?.[paymentMethod]) return {statusCode:503,body:{ok:false,error:paymentMethod==='stripe'?'Stripe payment is not configured yet.':'ToyyibPay payment is not configured yet.'}};
+  const options = await azBusinessPayments.options();
+  const available = paymentMethod === 'bank-transfer' ? Boolean(options.bank) : options[paymentMethod] === true;
+  if (!available) return {statusCode:503,body:{ok:false,error:'This payment option is currently unavailable.'}};
   const uid = String(body.account_uid || '').trim(), email = cleanToyyibEmail(body.email || ''), requestId = String(body.request_id || '').trim();
   if (!uid || !email) return {statusCode:401,body:{ok:false,error:'Please sign in with an AZOBSS account that has a verified email address.'}};
   const quote = body.trusted_quote || {};
@@ -4004,7 +4015,11 @@ async function azAzdmLocalCheckout({req,body,offer}) {
     if (azAzdmOrderUid(existing) !== uid) return {statusCode:409,body:{ok:false,error:'This order belongs to another account.'}};
     if (String(existing.status || '').toLowerCase() === 'paid') return {statusCode:409,body:{ok:false,error:'This order has already been paid. Check your orders.'}};
     if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId || String(existing.paymentMethod || 'toyyibpay').toLowerCase()!==paymentMethod) return {statusCode:409,body:{ok:false,error:'The order has changed. Start a new checkout.'}};
-    if (existing.paymentUrl && (existing.billCode || existing.stripeCheckoutSessionId || existing.stripeSessionId)) return {ok:true,reused:true,order_id:orderId,payment_url:existing.paymentUrl,status:'pending',payment_method:paymentMethod,sandbox:state.sandbox};
+    if (existing.paymentMethod === 'bank-transfer' && existing.status === 'pending') {
+      const token = await azReplaceAzdmBankReportToken(existing.orderId, uid);
+      return {ok:true,order_id:orderId,orderId,reference:existing.invoiceNo || orderId,amountSen,reportToken:token,bank:options.bank,status:'pending',payment_method:paymentMethod};
+    }
+    if (existing.paymentUrl && (existing.billCode || existing.stripeCheckoutSessionId || existing.stripeSessionId || existing.chipPurchaseId)) return {ok:true,reused:true,order_id:orderId,payment_url:existing.paymentUrl,status:'pending',payment_method:paymentMethod,sandbox:state.sandbox};
     if (String(existing.status || '') === 'creation_failed') return {statusCode:409,body:{ok:false,error:'The previous payment bill failed. Start a new checkout and try again.'}};
     const age = Date.now() - Number(existing.createdAtMs || Date.parse(existing.createdAt || '') || Date.now());
     if (age < 120000) return {statusCode:409,body:{ok:false,error:'The payment bill is being prepared. Wait a moment and check your order.'}};
@@ -4030,6 +4045,19 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   try {
     const apiBase = publicBaseUrlFromReq(req);
     const returnBase = `${FRONTEND_BASE_URL}/Software-Tools/`;
+    if (paymentMethod === 'bank-transfer') {
+      const token = crypto.randomBytes(32).toString('base64url');
+      order = upsertPremiumOrder({ ...order, status: 'pending', bankReportHash: azBankReportHash(token) });
+      const saved = await azPersistPremiumOrder(order);
+      if (!saved.ok) throw azBusinessPaymentError('Unable to save the transfer order.', 503);
+      return {ok:true,order_id:orderId,orderId,reference:saved.invoiceNo || orderId,amountSen,reportToken:token,bank:options.bank,status:'pending',payment_method:paymentMethod};
+    }
+    if (paymentMethod === 'chip') {
+      const success = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'chip'});
+      const cancel = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'chip',payment:'cancelled'});
+      const checkout = await azStartChipPayment(order, req, success, cancel);
+      return {ok:true,order_id:orderId,payment_url:checkout.paymentUrl,status:'pending',payment_method:'chip',sandbox:false};
+    }
     if (paymentMethod === 'stripe') {
       const successUrl = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'stripe',stripe:'success',session_id:'{CHECKOUT_SESSION_ID}'});
       const cancelUrl = azStripeDigitalUrlWithQuery(returnBase,{azdm_order:orderId,azdm_software:softwareId,azdm_payment:'stripe',stripe:'cancelled'});
@@ -4084,6 +4112,9 @@ async function azAzdmLocalStatus({req,body}) {
   let order = await findPremiumOrderByAnyDeep({orderId});
   if (!order || !azIsAzdmPremiumOrder(order) || azAzdmOrderUid(order)!==uid) return {statusCode:404,body:{ok:false,error:'Order not found.'}};
   if (order.billCode && String(order.status || '').toLowerCase() !== 'paid') order = await refreshToyyibOrder(order,req);
+  if (order.paymentMethod === 'chip' && order.chipPurchaseId && order.status !== 'paid') {
+    try { order = (await azVerifyAndFinalizeDigitalChip(order, req)).order || order; } catch (_) {}
+  }
   if (String(order.paymentMethod || '').toLowerCase()==='stripe' && (order.stripeCheckoutSessionId || order.stripeSessionId) && String(order.status || '').toLowerCase() !== 'paid') {
     try {
       const verification = await azVerifyDigitalStripeOrder(order);
@@ -4520,8 +4551,10 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     const paymentReference = opts.paymentReference || (tx && (tx.billpaymentInvoiceNo || tx.transaction_id || tx.refno)) || latest.paymentReference || "";
     const requestedPaymentMethod = cleanPremiumText(opts.paymentMethod || latest.paymentMethod || (tx ? "toyyibpay" : ""), 40).toLowerCase() || "toyyibpay";
     const verifiedPayment = opts.verified === true || !!tx;
+    if (latest.source === 'pc-invoice-payment' && !verifiedPayment) throw azBusinessPaymentError('Invoice payment was not verified.', 409);
     const verifiedByToyyib = verifiedPayment && requestedPaymentMethod.includes("toyyib");
     const verifiedByStripe = verifiedPayment && requestedPaymentMethod.includes("stripe");
+    const verifiedByChip = verifiedPayment && requestedPaymentMethod === "chip";
     const stripeSession = opts.stripeSession || latest.stripeSession || null;
     latest = upsertPremiumOrder({
       ...latest,
@@ -4539,9 +4572,16 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
       paidFinalizedAt: latest.paidFinalizedAt || nowIso,
       toyyibVerifiedAt: verifiedByToyyib ? (latest.toyyibVerifiedAt || nowIso) : latest.toyyibVerifiedAt || "",
       paymentVerifiedAt: verifiedPayment ? (latest.paymentVerifiedAt || nowIso) : latest.paymentVerifiedAt || "",
-      paymentVerificationSource: verifiedByStripe ? (opts.verificationSource || "stripe-api") : (verifiedByToyyib ? "toyyibpay-api" : (latest.paymentVerificationSource || "")),
+      paymentVerificationSource: verifiedByChip ? "chip-api" : verifiedByStripe ? (opts.verificationSource || "stripe-api") : (verifiedByToyyib ? "toyyibpay-api" : (opts.verificationSource || latest.paymentVerificationSource || "")),
+      ...(verifiedByChip && Number.isSafeInteger(opts.feeSen) ? { paymentFee: opts.feeSen / 100, paymentFeeSen: opts.feeSen } : {}),
       callbackTrustBypass: opts.callbackTrustBypass || latest.callbackTrustBypass || false
     });
+    if (latest.pcOrderId && latest.source === 'pc-invoice-payment') {
+      const result = await azPcShopRuntime.recordOnlineInvoicePayment(latest, requestedPaymentMethod, paymentReference);
+      latest = upsertPremiumOrder({ ...latest, status:result.issue ? 'payment-review' : 'paid', pcPaymentReviewIssue: result.issue || '' });
+      if (!(await azPersistPremiumOrder(latest)).ok) throw azBusinessPaymentError('Invoice payment record could not be saved.', 503);
+      return latest;
+    }
     if (verifiedByStripe) {
       try { latest = await azSyncStripeFeeForPaidOrder(latest); }
       catch (stripeFeeError) { console.warn("Stripe real fee sync skipped:", stripeFeeError && (stripeFeeError.message || stripeFeeError)); }
@@ -16974,13 +17014,15 @@ async function azStripeDigitalRequest(pathname, options = {}) {
   }
   return data;
 }
-async function azCreateDigitalStripeCheckout(data = {}, req = null) {
-  if (!azStripeDigitalConfigured()) {
-    const err = new Error('STRIPE_SECRET_KEY belum dikonfigurasi pada Render.');
-    err.statusCode = 503;
-    throw err;
-  }
+const { createBusinessPayments, paymentError: azBusinessPaymentError } = require('./lib/azobss-business-payments.cjs');
+const azBusinessPayments = createBusinessPayments({
+  root: __dirname,
+  getDb: getAzobssBackendDb,
+  stripeReady: azStripeDigitalConfigured,
+  toyyibReady: () => Boolean(TOYYIB_SECRET_KEY && TOYYIB_CATEGORY_CODE)
+});
 
+async function azBuildDigitalCheckoutOrder(data, req, orderId) {
   const requestedProduct = data.product || {};
   const trustedResolved = await azResolveTrustedPremiumProduct(data, req);
   const product = trustedResolved.product || {};
@@ -17016,57 +17058,8 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   }
 
   const source = azStripeDigitalSource(data);
-  const orderId = makeId('stripe');
   const returnPage = azStripeDigitalReturnPage(data);
-  const successUrl = azStripeDigitalUrlWithQuery(returnPage, {
-    payment:'stripe_return',
-    stripe:'success',
-    orderId,
-    session_id:'{CHECKOUT_SESSION_ID}'
-  });
-  const cancelUrl = azStripeDigitalUrlWithQuery(returnPage, {
-    payment:'stripe_cancelled',
-    stripe:'cancelled',
-    orderId
-  });
-
-  const params = new URLSearchParams();
-  params.set('mode', 'payment');
-  params.set('success_url', successUrl);
-  params.set('cancel_url', cancelUrl);
-  params.set('client_reference_id', orderId);
-  // AZOBSS 697: Stripe Checkout is reserved for card payments.
-  // FPX is handled by the separate Bank Transfer / FPX flow, and forcing
-  // `fpx` here causes Checkout Session creation to fail when FPX is not
-  // activated or the Stripe account is still awaiting business verification.
-  params.append('payment_method_types[]', 'card');
-  params.set('locale', 'auto');
-  params.set('metadata[orderId]', orderId);
-  params.set('metadata[productId]', productId);
-  params.set('metadata[source]', source);
-  params.set('metadata[buyerEmail]', buyerEmail);
-  if (azValidEmailLike(buyerEmail)) params.set('customer_email', buyerEmail);
-  params.set('line_items[0][price_data][currency]', 'myr');
-  params.set('line_items[0][price_data][unit_amount]', String(amountSen));
-  params.set('line_items[0][price_data][product_data][name]', productName);
-  params.set('line_items[0][price_data][product_data][description]', `${source} premium digital purchase`);
-  params.set('line_items[0][quantity]', '1');
-
-  const stripeData = await azStripeDigitalRequest('/checkout/sessions', {
-    method:'POST',
-    headers:{
-      'Content-Type':'application/x-www-form-urlencoded',
-      'Idempotency-Key':`azobss-digital-${orderId}`
-    },
-    body:params.toString()
-  });
-  if (!stripeData || !stripeData.id || !stripeData.url) {
-    const err = new Error('Stripe Checkout gagal dicipta.');
-    err.statusCode = 502;
-    throw err;
-  }
-
-  upsertPremiumOrder({
+  return {
     ...azSolatTimeOrderFields(product,user),
     orderId,
     productId,
@@ -17080,11 +17073,7 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
     priceAdjustmentPercent,
     priceAdjustmentCategory,
     status:'pending',
-    paymentMethod:'stripe',
     paymentReference:'',
-    stripeCheckoutSessionId:stripeData.id,
-    stripeSessionId:stripeData.id,
-    paymentUrl:stripeData.url,
     returnUrl:returnPage,
     sourceUrl:data.sourceUrl || data.pageUrl || returnPage,
     pageUrl:data.pageUrl || data.sourceUrl || returnPage,
@@ -17139,6 +17128,69 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
     receiptTokenRequired:true,
     receiptTokenVersion:2,
     createdAt:new Date().toISOString()
+  };
+}
+
+async function azCreateDigitalStripeCheckout(data = {}, req = null) {
+  if (!azStripeDigitalConfigured()) throw azBusinessPaymentError('Stripe Checkout belum dikonfigurasi.', 503);
+  const orderId = makeId('stripe');
+  const order = await azBuildDigitalCheckoutOrder(data, req, orderId);
+  const { productId, productName, amountSen, baseAmount, baseAmountSen, saleAmount: adjustedAmount,
+    priceAdjustmentPercent, priceAdjustmentCategory, source, buyerEmail, returnUrl: returnPage } = order;
+  const successUrl = azStripeDigitalUrlWithQuery(returnPage, {
+    payment:'stripe_return',
+    stripe:'success',
+    orderId,
+    session_id:'{CHECKOUT_SESSION_ID}'
+  });
+  const cancelUrl = azStripeDigitalUrlWithQuery(returnPage, {
+    payment:'stripe_cancelled',
+    stripe:'cancelled',
+    orderId
+  });
+
+  const params = new URLSearchParams();
+  params.set('mode', 'payment');
+  params.set('success_url', successUrl);
+  params.set('cancel_url', cancelUrl);
+  params.set('client_reference_id', orderId);
+  // AZOBSS 697: Stripe Checkout is reserved for card payments.
+  // FPX is handled by the separate Bank Transfer / FPX flow, and forcing
+  // `fpx` here causes Checkout Session creation to fail when FPX is not
+  // activated or the Stripe account is still awaiting business verification.
+  params.append('payment_method_types[]', 'card');
+  params.set('locale', 'auto');
+  params.set('metadata[orderId]', orderId);
+  params.set('metadata[productId]', productId);
+  params.set('metadata[source]', source);
+  params.set('metadata[buyerEmail]', buyerEmail);
+  if (azValidEmailLike(buyerEmail)) params.set('customer_email', buyerEmail);
+  params.set('line_items[0][price_data][currency]', 'myr');
+  params.set('line_items[0][price_data][unit_amount]', String(amountSen));
+  params.set('line_items[0][price_data][product_data][name]', productName);
+  params.set('line_items[0][price_data][product_data][description]', `${source} premium digital purchase`);
+  params.set('line_items[0][quantity]', '1');
+
+  const stripeData = await azStripeDigitalRequest('/checkout/sessions', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/x-www-form-urlencoded',
+      'Idempotency-Key':`azobss-digital-${orderId}`
+    },
+    body:params.toString()
+  });
+  if (!stripeData || !stripeData.id || !stripeData.url) {
+    const err = new Error('Stripe Checkout gagal dicipta.');
+    err.statusCode = 502;
+    throw err;
+  }
+
+  upsertPremiumOrder({
+    ...order,
+    paymentMethod:'stripe',
+    stripeCheckoutSessionId:stripeData.id,
+    stripeSessionId:stripeData.id,
+    paymentUrl:stripeData.url
   });
 
   return {
@@ -17159,6 +17211,267 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
     mode:azStripeDigitalMode()
   };
 }
+async function azCreateDigitalChipCheckout(data, req) {
+  if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP belum tersedia. Pilih kaedah bayaran lain.', 503);
+  const orderId = makeId('chip');
+  const order = await azBuildDigitalCheckoutOrder(data, req, orderId);
+  if (!azValidEmailLike(order.buyerEmail)) throw azBusinessPaymentError('Masukkan e-mel pembeli yang sah.', 400);
+  const fingerprint = azAutomaticCheckoutFingerprintForOrder(order);
+  const release = await azAcquireAutomaticCheckoutCreateLock('chip:' + fingerprint);
+  try {
+    const recent = await azLoadRecentAutomaticOrdersForFingerprint(300);
+    const existing = recent.find(row => row.paymentMethod === 'chip' && row.chipPurchaseId && row.paymentUrl
+      && azAutomaticCheckoutPending(row) && !row.superseded && !row.autoDuplicateSuperseded
+      && Date.now() - azAutomaticCheckoutCreatedMs(row) < 30 * 60 * 1000
+      && azAutomaticCheckoutFingerprintForOrder(row) === fingerprint);
+    if (existing) return { orderId: existing.orderId, paymentUrl: existing.paymentUrl, amountSen: existing.amountSen, reused: true };
+
+    let pending = upsertPremiumOrder({ ...order, paymentMethod: 'chip', checkoutFingerprint: fingerprint, createdAtMs: Date.now() });
+    if (!(await azPersistPremiumOrder(pending)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+    const checkout = await azStartChipPayment(pending, req,
+      azStripeDigitalUrlWithQuery(order.returnUrl, { payment: 'chip_return', orderId }),
+      azStripeDigitalUrlWithQuery(order.returnUrl, { payment: 'chip_cancelled', orderId }));
+    return { orderId, paymentUrl: checkout.paymentUrl, amountSen: order.amountSen };
+  } finally {
+    release();
+  }
+}
+
+async function azStartChipPayment(order, req, successUrl, cancelUrl) {
+  if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  if (!azValidEmailLike(order.buyerEmail || order.email)) throw azBusinessPaymentError('Masukkan e-mel pembeli yang sah.', 400);
+  const checkout = await azBusinessPayments.chipAdapter().create({
+    orderId: order.orderId,
+    amountSen: order.amountSen,
+    productName: order.productName,
+    email: order.buyerEmail || order.email,
+    name: String(order.user?.username || ''),
+    successUrl,
+    cancelUrl,
+    callbackUrl: publicBaseUrlFromReq(req) + '/api/chip/payment-callback'
+  });
+  const saved = upsertPremiumOrder({ ...order, status: 'pending', paymentMethod: 'chip', chipPurchaseId: checkout.purchaseId, paymentUrl: checkout.paymentUrl });
+  if (!(await azPersistPremiumOrder(saved)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  return checkout;
+}
+
+async function azStartInvoiceStripePayment(order, successUrl, cancelUrl) {
+  const params = new URLSearchParams({ mode: 'payment', success_url: successUrl, cancel_url: cancelUrl, client_reference_id: order.orderId });
+  params.set('metadata[orderId]', order.orderId);
+  params.set('payment_method_types[]', 'card');
+  params.set('line_items[0][price_data][currency]', 'myr');
+  params.set('line_items[0][price_data][unit_amount]', String(order.amountSen));
+  params.set('line_items[0][price_data][product_data][name]', order.productName);
+  params.set('line_items[0][quantity]', '1');
+  if (azValidEmailLike(order.buyerEmail)) params.set('customer_email', order.buyerEmail);
+  const checkout = await azStripeDigitalRequest('/checkout/sessions', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Idempotency-Key': 'azobss-payment-' + order.orderId }, body: params.toString()
+  });
+  if (!checkout.id || !checkout.url) throw azBusinessPaymentError('Stripe Checkout tidak tersedia.', 502);
+  return { status: 'pending', paymentUrl: checkout.url, stripeCheckoutSessionId: checkout.id, stripeSessionId: checkout.id };
+}
+
+async function azStartInvoiceToyyibPayment(order, req, returnUrl) {
+  if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) throw azBusinessPaymentError('ToyyibPay tidak tersedia.', 503);
+  const result = await postToyyib('createBill', {
+    userSecretKey: TOYYIB_SECRET_KEY,
+    categoryCode: TOYYIB_CATEGORY_CODE,
+    billName: cleanForToyyib(order.productName, 30) || 'AZOBSS',
+    billDescription: cleanForToyyib(order.productName, 100),
+    billPriceSetting: 1,
+    billPayorInfo: 1,
+    billAmount: order.amountSen,
+    billReturnUrl: returnUrl,
+    billCallbackUrl: TOYYIB_CALLBACK_URL || publicBaseUrlFromReq(req) + '/api/toyyib-callback',
+    billExternalReferenceNo: order.orderId,
+    billTo: cleanForToyyib(order.user?.username || 'AZOBSS Customer', 30),
+    billEmail: cleanForToyyib(order.buyerEmail || '', 80),
+    billPhone: cleanToyyibPhone(order.user?.phone || '') || '01135600723',
+    billSplitPayment: 0,
+    billPaymentChannel: 0,
+    billChargeToCustomer: 1,
+    billExpiryDays: 1,
+    enableDuitNowQR: 1,
+    chargeDuitNowQR: 0
+  });
+  const billCode = azToyyibExtractBillCode(result);
+  if (!billCode) throw azBusinessPaymentError('ToyyibPay tidak tersedia.', 502);
+  return { status: 'pending', billCode, paymentUrl: TOYYIB_BASE_URL + '/' + encodeURIComponent(billCode) };
+}
+
+async function azCreatePcInvoiceCheckout(data, req, identity, pcOrderId) {
+  const { validOrderId, documentState } = require('./lib/azobss-pc-documents-v1541');
+  const provider = String(data.provider || '');
+  const db = getAzobssBackendDb();
+  if (!db) throw azBusinessPaymentError('Invoice storage unavailable.', 503);
+  if (!identity?.uid || !validOrderId(pcOrderId)) throw azBusinessPaymentError('Invoice not found.', 404);
+  if (!['chip','toyyibpay','stripe'].includes(provider)) throw azBusinessPaymentError('Invalid payment method.', 400);
+  const options = await azBusinessPayments.options();
+  if (options[provider] !== true) throw azBusinessPaymentError('This payment option is currently unavailable.', 503);
+  const release = await azAcquireAutomaticCheckoutCreateLock('invoice:' + pcOrderId);
+  try {
+    const row = (await db.collection('pcShopOrders').doc(pcOrderId).get()).data();
+    if (!row || row.uid !== identity.uid) throw azBusinessPaymentError('Invoice not found.', 404);
+    if (!documentState(row).canPay) throw azBusinessPaymentError('This invoice cannot be paid online.', 409);
+    const amountSen = Math.round(Number(row.confirmedTotal) * 100);
+    if (!Number.isSafeInteger(amountSen) || amountSen <= 0) throw azBusinessPaymentError('Invalid invoice amount.', 409);
+    const version = Number(row.invoiceVersion || 1);
+    const reusable = (await azLoadRecentAutomaticOrdersForFingerprint(250)).find(order =>
+      order.pcOrderId === pcOrderId && order.pcInvoiceVersion === version && order.paymentMethod === provider
+      && order.amountSen === amountSen && order.status === 'pending' && order.paymentUrl
+      && Date.now() - azAutomaticCheckoutCreatedMs(order) < 30 * 60 * 1000);
+    if (reusable) return { provider, paymentUrl: reusable.paymentUrl };
+    const orderId = makeId('pcpay');
+    const draft = upsertPremiumOrder({
+      orderId, amountSen, amount: azAdjustedMoneyText(amountSen / 100), status:'creating', paymentMethod:provider,
+      pcOrderId, pcInvoiceNo:row.invoiceNo, pcInvoiceVersion:version, source:'pc-invoice-payment',
+      productId:'pc-invoice-payment', productName:'AZOBSS Invoice ' + row.invoiceNo,
+      buyerEmail: cleanPremiumText(row.customerEmail || identity.authEmail || identity.email || '', 180),
+      user:{ uid: identity.uid, username: cleanPremiumText(row.customerName || identity.username, 120), phone: row.customerPhone || '' },
+      createdAtMs: Date.now(), createdAt: new Date().toISOString()
+    });
+    if (!(await azPersistPremiumOrder(draft)).ok) throw azBusinessPaymentError('Payment record could not be saved.', 503);
+    const page = azStripeDigitalUrlWithQuery(FRONTEND_BASE_URL + '/checkout/', { order: pcOrderId, document:'invoice' });
+    const checkout = await azStartBusinessOnlinePayment(draft, req, page);
+    return { provider, paymentUrl: checkout.paymentUrl };
+  } finally {
+    release();
+  }
+}
+
+async function azStartBusinessOnlinePayment(order, req, returnPage) {
+  const provider = order.paymentMethod;
+  const successUrl = azStripeDigitalUrlWithQuery(returnPage, { payment: 'return', orderId: order.orderId });
+  const cancelUrl = azStripeDigitalUrlWithQuery(returnPage, { payment: 'cancelled', orderId: order.orderId });
+  if (provider === 'chip') {
+    if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP belum tersedia.', 503);
+    return azStartChipPayment(order, req, successUrl, cancelUrl);
+  }
+  await azBusinessPayments.requireVisible(provider);
+  const fields = provider === 'stripe'
+    ? await azStartInvoiceStripePayment(order, successUrl, cancelUrl)
+    : await azStartInvoiceToyyibPayment(order, req, successUrl);
+  const saved = upsertPremiumOrder({ ...order, ...fields, businessCheckout:true });
+  if (!(await azPersistPremiumOrder(saved)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  return fields;
+}
+
+const azBankReportHash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');
+
+async function azCreateDigitalBankTransfer(data, req) {
+  const order = await azBuildDigitalCheckoutOrder(data, req, makeId('bank'));
+  return azCreateBankTransferInstructions(order);
+}
+
+async function azCreateBankTransferInstructions(order) {
+  const bank = (await azBusinessPayments.options()).bank;
+  if (!bank) throw azBusinessPaymentError('Pindahan bank belum tersedia.', 503);
+  if (!azValidEmailLike(order.buyerEmail)) throw azBusinessPaymentError('Masukkan e-mel pembeli yang sah.', 400);
+  const token = crypto.randomBytes(32).toString('base64url');
+  const pending = upsertPremiumOrder({ ...order, status:'pending', paymentMethod:'bank-transfer', bankReportHash:azBankReportHash(token) });
+  const saved = await azPersistPremiumOrder(pending);
+  if (!saved.ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  return { orderId:order.orderId, amountSen:order.amountSen, reference:saved.invoiceNo || order.orderId, reportToken:token, bank };
+}
+
+async function azCheckoutProvider(value) {
+  const method = String(value || 'toyyibpay');
+  if (!['chip','bank-transfer','toyyibpay','stripe'].includes(method)) throw azBusinessPaymentError('Kaedah pembayaran tidak sah.', 400);
+  const options = await azBusinessPayments.options();
+  if (!(method === 'bank-transfer' ? options.bank : options[method])) throw azBusinessPaymentError('Kaedah pembayaran belum tersedia.', 503);
+  return method;
+}
+
+async function azRecheckBusinessOrder(order, req) {
+  if (order.paymentMethod === 'chip') return (await azVerifyAndFinalizeDigitalChip(order, req)).order || order;
+  if (order.paymentMethod === 'stripe') {
+    const result = await azVerifyDigitalStripeOrder(order);
+    if (result.paid) return azFinalizePaidOrderOnce(order, req, { verified:true, paymentMethod:'stripe', stripeSession:result.session, paymentReference:result.paymentReference });
+    return order;
+  }
+  if (order.billCode) return refreshToyyibOrder(order, req);
+  return order;
+}
+
+async function azReplaceAzdmBankReportToken(orderId, uid) {
+  const db = getAzobssBackendDb();
+  if (!db) throw azBusinessPaymentError('Transfer order unavailable.', 503);
+  const ref = db.collection('premiumOrders').doc(orderId);
+  const token = crypto.randomBytes(32).toString('base64url');
+  await db.runTransaction(async tx => {
+    const row = (await tx.get(ref)).data();
+    if (!row || azAzdmOrderUid(row) !== uid || row.paymentMethod !== 'bank-transfer' || row.status !== 'pending' || row.bankVerificationClaimedAt) {
+      throw azBusinessPaymentError('Transfer order unavailable.', 409);
+    }
+    tx.set(ref, { bankReportHash: azBankReportHash(token) }, { merge: true });
+  });
+  return token;
+}
+
+async function azReportDigitalBankTransfer(data) {
+  const orderId = cleanPremiumText(data.orderId, 160);
+  const bankReference = cleanPremiumText(data.reference, 120);
+  if (!/^[A-Za-z0-9][A-Za-z0-9 /._-]{3,119}$/.test(bankReference)) throw azBusinessPaymentError('Masukkan nombor rujukan transaksi bank.', 400);
+  const db = getAzobssBackendDb();
+  if (!db || !/^[A-Za-z0-9_-]{8,160}$/.test(orderId)) throw azBusinessPaymentError('Pesanan tidak dijumpai.', 404);
+  const ref = db.collection('premiumOrders').doc(orderId);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const order = snap.data();
+    const hash = azBankReportHash(data.reportToken || '');
+    if (!order || order.paymentMethod !== 'bank-transfer' || !/^[a-f0-9]{64}$/.test(order.bankReportHash || '')
+      || !crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(order.bankReportHash))) {
+      throw azBusinessPaymentError('Pesanan tidak dijumpai.', 404);
+    }
+    if (!azAutomaticCheckoutPending(order) || order.bankVerificationClaimedAt) throw azBusinessPaymentError('Pesanan ini sudah dalam semakan atau ditutup.', 409);
+    tx.set(ref, { bankReference, bankReportedAtMs: Date.now() }, { merge: true });
+  });
+}
+
+async function azReviewDigitalBankTransfer(data, req, admin) {
+  const orderId = cleanPremiumText(data.orderId, 160);
+  const db = getAzobssBackendDb();
+  if (!db || !/^[A-Za-z0-9_-]{8,160}$/.test(orderId)) throw azBusinessPaymentError('Pesanan tidak dijumpai.', 404);
+  const ref = db.collection('premiumOrders').doc(orderId);
+  const order = await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const pending = snap.data();
+    if (!pending || pending.paymentMethod !== 'bank-transfer' || !pending.bankReference || isPaBmPremiumOrder(pending)) {
+      throw azBusinessPaymentError('Laporan pindahan tidak dijumpai.', 404);
+    }
+    const reference = cleanPremiumText(data.reference, 120);
+    if (reference !== pending.bankReference || Number(data.amountSen) !== pending.amountSen) {
+      throw azBusinessPaymentError('Rujukan atau amaun tidak sepadan dengan pesanan.', 409);
+    }
+    const claim = db.collection('businessBankPaymentReferences').doc(azBankReportHash(reference.toUpperCase().replace(/[^A-Z0-9]/g, '')));
+    const used = (await tx.get(claim)).data();
+    if (used && used.orderId !== orderId) throw azBusinessPaymentError('Rujukan bank sudah digunakan untuk pesanan lain.', 409);
+    if (!azAutomaticCheckoutPending(pending) && !(pending.status === 'paid' && used?.orderId === orderId)) {
+      throw azBusinessPaymentError('Pesanan ini sudah ditutup.', 409);
+    }
+    tx.set(claim, { orderId, adminId: admin.uid, verifiedAtMs: Date.now() }, { merge: true });
+    tx.set(ref, { bankVerificationClaimedAt: Date.now() }, { merge: true });
+    return pending;
+  });
+  return azFinalizePaidOrderOnce(order, req, {
+    verified: true, paymentMethod: 'bank-transfer', paymentReference: order.bankReference, verificationSource: 'admin-bank-transfer'
+  });
+}
+
+async function azVerifyAndFinalizeDigitalChip(order, req) {
+  if (!order || order.paymentMethod !== 'chip' || isPaBmPremiumOrder(order)) return { paid: false };
+  const result = await azBusinessPayments.chipAdapter().verify(order);
+  if (!result.paid) return result;
+  const saved = await azFinalizePaidOrderOnce(order, req, {
+    verified: true,
+    paymentMethod: 'chip',
+    verificationSource: result.verificationSource,
+    paymentReference: result.paymentReference,
+    feeSen: result.feeSen
+  });
+  return { ...result, order: saved };
+}
+
 // AZOBSS v1357 — sync the real Stripe processing fee from the Balance Transaction.
 // Never hard-code a percentage here: international cards / FX can produce a different fee.
 function azStripeMinorMoney(value = 0) {
@@ -17223,7 +17536,9 @@ async function azVerifyDigitalStripeOrder(order = {}) {
   const sessionId = cleanPremiumText(order.stripeCheckoutSessionId || order.stripeSessionId || '', 220);
   if (!sessionId) return { paid:false, reason:'stripe_session_missing' };
   const session = await azStripeDigitalRequest(`/checkout/sessions/${encodeURIComponent(sessionId)}`, { method:'GET' });
-  const paid = String(session.payment_status || '').toLowerCase() === 'paid';
+  const matches = order.businessCheckout !== true || (session.id === sessionId && session.client_reference_id === order.orderId
+    && session.currency === 'myr' && session.amount_total === order.amountSen && session.livemode === (azStripeDigitalMode() === 'live'));
+  const paid = matches && String(session.payment_status || '').toLowerCase() === 'paid';
   return {
     paid,
     session,
@@ -20765,8 +21080,8 @@ async function handler(req, res) {
     }
     if (pathname === "/api/membership/create-bill" && req.method === "POST") {
       try {
-        if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) return send(res,500,JSON.stringify({ok:false,error:"Payment gateway is not configured."}),"application/json");
         const body=parseRequestBody(await readBody(req));
+        const provider=await azCheckoutProvider(body.paymentMethod);
         let identity=await azCommissionIdentityFromRequest(req); if(!identity?.uid)return send(res,401,JSON.stringify({ok:false,error:"Login required before purchasing Membership."}),"application/json");
         identity=await azHydrateIdentityFromUsernameHint(identity,body.usernameKey||"",body.profileDocId||"");
         const userDocId=cleanPremiumText(identity.userDocId||identity.username||"",160).trim(); if(!userDocId)return send(res,400,JSON.stringify({ok:false,error:"User profile not found."}),"application/json");
@@ -20775,15 +21090,16 @@ async function handler(req, res) {
         const pkg=azMembershipPublic({packageId,...pkgSnap.data()}); if(!pkg.active)return send(res,400,JSON.stringify({ok:false,error:"This Membership package is currently unavailable."}),"application/json");
         const amount=Number(pkg.packagePriceRM||0); const amountSen=Math.round(amount*100); if(amountSen<=0)return send(res,400,JSON.stringify({ok:false,error:"Invalid Membership package price."}),"application/json");
         const profileSnap=await db.collection("users").doc(userDocId).get(); const profile=profileSnap.exists?(profileSnap.data()||{}):{};
-        const orderId=makeId("mem"); const apiBase=publicBaseUrlFromReq(req); const returnUrl=`${FRONTEND_BASE_URL}/?membership=return&orderId=${encodeURIComponent(orderId)}`; const callbackUrl=TOYYIB_CALLBACK_URL||`${apiBase}/api/toyyib-callback`;
+        const orderId=makeId("mem"); const apiBase=publicBaseUrlFromReq(req); const returnUrl=`${FRONTEND_BASE_URL}/?membership=return&orderId=${encodeURIComponent(orderId)}`;
         const buyerEmail=cleanPremiumText(profile.contactEmail||profile.email||identity.profileEmail||identity.authEmail||"customer@azobss.com",160); const buyerPhone=cleanPremiumText(profile.phone||profile.phoneNumber||"01135600723",40); const buyerName=cleanPremiumText(profile.usernameKey||profile.username||identity.username||"AZOBSS Member",80);
-        const billPayload={userSecretKey:TOYYIB_SECRET_KEY,categoryCode:TOYYIB_CATEGORY_CODE,billName:cleanForToyyib(pkg.packageName,30)||"AZOBSS Membership",billDescription:cleanForToyyib(`AZOBSS Membership ${pkg.packageName} - ${pkg.durationMonths} month(s)`,100),billPriceSetting:1,billPayorInfo:1,billAmount:amountSen,billReturnUrl:returnUrl,billCallbackUrl:callbackUrl,billExternalReferenceNo:orderId,billTo:cleanForToyyib(buyerName,30),billEmail:cleanForToyyib(buyerEmail,80),billPhone:cleanForToyyib(buyerPhone,20),billSplitPayment:0,billSplitPaymentArgs:"",billPaymentChannel:0,billContentEmail:`Thank you for purchasing AZOBSS Membership ${cleanForToyyib(pkg.packageName,50)}.`,billChargeToCustomer:1,billExpiryDays:3,enableDuitNowQR:1,chargeDuitNowQR:0};
-        const apiResult=await postToyyib("createBill",billPayload); const billCode=Array.isArray(apiResult)?(apiResult[0]&&(apiResult[0].BillCode||apiResult[0].billCode)):(apiResult&&apiResult.BillCode); if(!billCode)return send(res,502,JSON.stringify({ok:false,error:"Payment gateway did not return a bill code.",raw:apiResult}),"application/json");
-        const paymentUrl=`${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-        const order=upsertPremiumOrder({orderId,billCode,paymentUrl,returnUrl,status:"pending",paymentMethod:"toyyibpay",amount:azAdjustedMoneyText(amount),amountSen,saleAmount:amount,saleAmountText:azAdjustedMoneyText(amount),baseAmount:amount,baseAmountSen:amountSen,membershipPurchase:true,membershipPackageId:packageId,membershipPackageSnapshot:pkg,membershipUserDocId:userDocId,automaticCheckoutKind:"membership",productId:`membership-${packageId}`,productName:pkg.packageName,product:{id:`membership-${packageId}`,productId:`membership-${packageId}`,name:pkg.packageName,type:"membership",category:"membership",price:azAdjustedMoneyText(amount)},user:{uid:identity.uid,username:buyerName,usernameKey:buyerName,email:buyerEmail,phone:buyerPhone,profileDocId:userDocId},email:buyerEmail,buyerEmail,createdAt:new Date().toISOString(),createdAtMs:Date.now()});
-        try{await azPersistPremiumOrder(order);}catch(e){console.warn("Membership pending order persist failed:",e&&e.message||e);}
-        return send(res,200,JSON.stringify({ok:true,success:true,orderId,billCode,paymentUrl,url:paymentUrl,redirectUrl:paymentUrl,status:"pending",package:pkg},null,2),"application/json");
-      } catch(err){console.error("Membership create bill failed:",err&&err.stack||err);return send(res,500,JSON.stringify({ok:false,error:err?.message||"Unable to create Membership payment."},null,2),"application/json");}
+        const order=upsertPremiumOrder({orderId,returnUrl,status:"creating",paymentMethod:provider,amount:azAdjustedMoneyText(amount),amountSen,saleAmount:amount,saleAmountText:azAdjustedMoneyText(amount),baseAmount:amount,baseAmountSen:amountSen,membershipPurchase:true,membershipPackageId:packageId,membershipPackageSnapshot:pkg,membershipUserDocId:userDocId,automaticCheckoutKind:"membership",productId:`membership-${packageId}`,productName:pkg.packageName,product:{id:`membership-${packageId}`,productId:`membership-${packageId}`,name:pkg.packageName,type:"membership",category:"membership",price:azAdjustedMoneyText(amount)},user:{uid:identity.uid,username:buyerName,usernameKey:buyerName,email:buyerEmail,phone:buyerPhone,profileDocId:userDocId},email:buyerEmail,buyerEmail,createdAt:new Date().toISOString(),createdAtMs:Date.now()});
+        if (provider === 'bank-transfer') {
+          return send(res, 200, JSON.stringify({ok:true, ...await azCreateBankTransferInstructions(order)}), 'application/json', { 'Cache-Control':'no-store' });
+        }
+        if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+        const checkout = await azStartBusinessOnlinePayment(order, req, returnUrl);
+        return send(res, 200, JSON.stringify({ok:true,orderId,paymentUrl:checkout.paymentUrl,billCode:checkout.billCode,status:'pending',package:pkg}), 'application/json', { 'Cache-Control':'no-store' });
+      } catch(err){console.error("Membership create bill failed:",err&&err.stack||err);return send(res,err.statusCode||500,JSON.stringify({ok:false,error:err?.message||"Unable to create Membership payment."},null,2),"application/json");}
     }
 
     // AZOBSS v1129 Referral Invite Code. Successful new-account referral gives configurable one-off credit to the sharer; never PA/BM access.
@@ -21295,9 +21611,110 @@ async function handler(req, res) {
       }
     }
 
+    const invoicePayment = pathname.match(/^\/api\/pc-shop\/orders\/([A-Za-z0-9_-]+)\/online-payment$/);
+    if (invoicePayment && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'pc-online-payment', 10, 5 * 60 * 1000)) return;
+      try {
+        const identity = await azCommissionIdentityFromRequest(req);
+        if (!identity?.uid) return send(res, 401, JSON.stringify({ ok:false, error:'Sign in to pay this invoice.' }), 'application/json');
+        const checkout = await azCreatePcInvoiceCheckout(parseRequestBody(await readBody(req)), req, identity, invoicePayment[1]);
+        return send(res, 200, JSON.stringify({ ok:true, ...checkout }), 'application/json', { 'Cache-Control':'no-store' });
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ ok:false, error: error.statusCode < 500 ? error.message : 'Invoice payment is unavailable.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/site/checkout-options' && req.method === 'GET') {
+      try {
+        return send(res, 200, JSON.stringify({ ok: true, ...await azBusinessPayments.options() }), 'application/json', { 'Cache-Control': 'no-store' });
+      } catch (_) {
+        return send(res, 503, JSON.stringify({ ok: false, error: 'Payment options unavailable.' }), 'application/json', { 'Cache-Control': 'no-store' });
+      }
+    }
+
+    if (pathname === '/api/admin/site/checkout-options' && ['GET', 'POST'].includes(req.method)) {
+      const admin = await azAdminIdentityFromRequest(req, parsed);
+      if (!admin?.isAdmin) return send(res, 403, JSON.stringify({ ok: false, error: 'Admin access required.' }), 'application/json');
+      try {
+        const backup = req.method === 'POST'
+          ? await azBusinessPayments.saveBackups(parseRequestBody(await readBody(req)))
+          : await azBusinessPayments.readBackups();
+        return send(res, 200, JSON.stringify({ ok: true, backup, chip: await azBusinessPayments.chipReady() }), 'application/json', { 'Cache-Control': 'no-store' });
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: 'Payment options could not be saved or loaded.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/chip/digital-checkout' && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'chip-digital-checkout', 12, 5 * 60 * 1000)) return;
+      try {
+        const order = await azCreateDigitalChipCheckout(parseRequestBody(await readBody(req)), req);
+        return send(res, 200, JSON.stringify({ ok: true, ...order }), 'application/json', { 'Cache-Control': 'no-store' });
+      } catch (error) {
+        const status = Number(error.statusCode) || 502;
+        return send(res, status, JSON.stringify({ ok: false, error: status < 500 ? error.message : 'CHIP belum tersedia. Pilih kaedah bayaran lain.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/site/bank-transfer' && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'business-bank-checkout', 12, 5 * 60 * 1000)) return;
+      try {
+        const order = await azCreateDigitalBankTransfer(parseRequestBody(await readBody(req)), req);
+        return send(res, 200, JSON.stringify({ ok: true, ...order }), 'application/json', { 'Cache-Control': 'no-store' });
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Pindahan bank belum tersedia.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/site/bank-transfer/report' && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'business-bank-report', 20, 5 * 60 * 1000)) return;
+      try {
+        await azReportDigitalBankTransfer(parseRequestBody(await readBody(req)));
+        return send(res, 200, JSON.stringify({ ok: true }), 'application/json', { 'Cache-Control': 'no-store' });
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Laporan pindahan tidak dapat disimpan.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/admin/site/bank-transfer' && ['GET','POST'].includes(req.method)) {
+      const admin = await azAdminIdentityFromRequest(req, parsed);
+      if (!admin?.isAdmin) return send(res, 403, JSON.stringify({ ok: false, error: 'Admin access required.' }), 'application/json');
+      try {
+        if (req.method === 'POST') {
+          const order = await azReviewDigitalBankTransfer(parseRequestBody(await readBody(req)), req, admin);
+          return send(res, 200, JSON.stringify({ ok: order.status === 'paid', orderId: order.orderId }), 'application/json', { 'Cache-Control': 'no-store' });
+        }
+        const db = getAzobssBackendDb();
+        if (!db) throw azBusinessPaymentError('Payment storage unavailable.', 503);
+        const snap = await db.collection('premiumOrders').where('paymentMethod', '==', 'bank-transfer').where('status', '==', 'pending').limit(100).get();
+        const orders = snap.docs.map(doc => doc.data()).filter(row => row.bankReference && !isPaBmPremiumOrder(row))
+          .map(({ orderId, invoiceNo, productName, amountSen, bankReference, bankReportedAtMs }) => ({ orderId, invoiceNo, productName, amountSen, bankReference, bankReportedAtMs }));
+        return send(res, 200, JSON.stringify({ ok: true, orders }), 'application/json', { 'Cache-Control': 'no-store' });
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Unable to review bank transfers.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/chip/payment-callback' && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'chip-payment-callback', 120, 60 * 1000)) return;
+      try {
+        const event = await azBusinessPayments.readSignedCallback(req);
+        const orderId = cleanPremiumText(event.reference, 160);
+        const order = orderId && await findPremiumOrderByAnyDeep({ orderId });
+        if (!order || order.paymentMethod !== 'chip' || order.chipPurchaseId !== event.id) {
+          return send(res, 404, JSON.stringify({ ok: false, error: 'Order not found.' }), 'application/json');
+        }
+        const result = await azVerifyAndFinalizeDigitalChip(order, req);
+        return send(res, result.paid ? 200 : 409, JSON.stringify({ ok: result.paid }), 'application/json');
+      } catch (error) {
+        return send(res, error.statusCode || 502, JSON.stringify({ ok: false, error: 'CHIP callback could not be verified.' }), 'application/json');
+      }
+    }
+
     if (pathname === "/api/stripe/digital-checkout" && req.method === "POST") {
       try {
         const data = parseRequestBody(await readBody(req));
+        await azBusinessPayments.requireVisible('stripe');
         const checkout = await azCreateDigitalStripeCheckout(data, req);
         return send(res, 200, JSON.stringify({ ok:true, success:true, ...checkout }, null, 2), 'application/json', { 'Cache-Control':'no-store' });
       } catch (error) {
@@ -21855,6 +22272,7 @@ async function handler(req, res) {
       catch (e) { return send(res, 400, JSON.stringify({ ok:false, success:false, error:"Invalid request body" }), "application/json"); }
 
       try {
+        await azBusinessPayments.requireVisible('toyyibpay');
         if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) {
           return send(res, 500, JSON.stringify({ ok:false, success:false, error:"ToyyibPay env belum lengkap. Set TOYYIB_SECRET_KEY dan TOYYIB_CATEGORY_CODE di Render." }, null, 2), "application/json");
         }
@@ -21942,7 +22360,7 @@ async function handler(req, res) {
         }
       } catch (e) {
         console.error("Create ToyyibPay bill failed:", e.message);
-        return send(res, 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");
+        return send(res, Number(e.statusCode) || 500, JSON.stringify({ ok:false, success:false, error:e.message || "Failed create ToyyibPay bill" }, null, 2), "application/json");
       }
     }
 
@@ -22034,7 +22452,7 @@ async function handler(req, res) {
         if (pendingBillCode) {
           let pendingOrder = await findPremiumOrderByAnyDeep({ billCode:pendingBillCode });
           if (pendingOrder && azIsEbookGeneratorAccessOrder(pendingOrder) && azEbookOrderBelongsToIdentity(pendingOrder, identity) && String(pendingOrder.status || "").toLowerCase() !== "paid") {
-            pendingOrder = await refreshToyyibOrder(pendingOrder, req);
+            pendingOrder = await azRecheckBusinessOrder(pendingOrder, req);
           }
         }
         const state = await azEbookGeneratorAccessStatus(identity);
@@ -22056,12 +22474,12 @@ async function handler(req, res) {
           // and create two ToyyibPay bills before either request saved its BillCode.
           const accessState = await azEbookGeneratorAccessStatus(identity);
           if (accessState.access) return send(res, 200, JSON.stringify({ ok:true, accessGranted:true, lifetime:true, alreadyOwned:true, priceRM:19 }, null, 2), "application/json");
-          if (!TOYYIB_SECRET_KEY || !TOYYIB_CATEGORY_CODE) return send(res, 503, JSON.stringify({ ok:false, error:"ToyyibPay is not configured." }, null, 2), "application/json");
+          const body = parseRequestBody(await readBody(req));
+          const provider = await azCheckoutProvider(body.paymentMethod);
           const existing = await azFindEbookGeneratorOrderForIdentity(identity, { pending:true });
-          if (existing && existing.paymentUrl && existing.billCode) {
+          if (existing?.paymentMethod === provider && existing.paymentUrl) {
             return send(res, 200, JSON.stringify({ ok:true, reused:true, orderId:existing.orderId, billCode:existing.billCode, paymentUrl:existing.paymentUrl, status:"pending", amount:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, lifetime:true, checkoutVersion:1354 }, null, 2), "application/json");
           }
-          const body = parseRequestBody(await readBody(req));
           const orderId = makeId("ebook");
           const nowMs = Date.now();
           const apiBase = publicBaseUrlFromReq(req);
@@ -22084,7 +22502,7 @@ async function handler(req, res) {
             saleAmount:19,
             saleAmountText:"RM19.00",
             status:"creating",
-            paymentMethod:"toyyibpay",
+            paymentMethod:provider,
             paymentReference:"",
             ebookGeneratorLifetimeAccess:true,
             lifetimeAccess:true,
@@ -22102,38 +22520,13 @@ async function handler(req, res) {
             createdAt:new Date(nowMs).toISOString(),
             createdAtMs:nowMs
           });
-          try { await azPersistPremiumOrder(order); } catch (err) { console.warn("Ebook creating order Firestore persist warning:", err && (err.message || err)); }
-          const billPayload = {
-            userSecretKey:TOYYIB_SECRET_KEY,
-            categoryCode:TOYYIB_CATEGORY_CODE,
-            billName:"AZOBSS Ebook Generator",
-            billDescription:"AZOBSS Ebook Generator lifetime access",
-            billPriceSetting:1,
-            billPayorInfo:1,
-            billAmount:AZOBSS_EBOOK_GENERATOR_PRICE_SEN,
-            billReturnUrl:returnUrl,
-            billCallbackUrl:TOYYIB_CALLBACK_URL || `${apiBase}/api/toyyib-callback`,
-            billExternalReferenceNo:orderId,
-            billTo:cleanForToyyib(username || "AZOBSS Customer",30) || "AZOBSS Customer",
-            billEmail:email,
-            billPhone:cleanToyyibPhone(body.phone || "") || "01135600723",
-            billSplitPayment:0,
-            billSplitPaymentArgs:"",
-            billPaymentChannel:0,
-            billContentEmail:"Thank you for purchasing AZOBSS Ebook Generator lifetime access. Access is unlocked after payment verification.",
-            billChargeToCustomer:1,
-            billExpiryDays:3,
-            enableDuitNowQR:1,
-            chargeDuitNowQR:0
-          };
           try {
-            const apiResult = await postToyyib("createBill", billPayload);
-            const billCode = azToyyibExtractBillCode(apiResult);
-            if (!billCode) throw new Error(azToyyibApiMessage(apiResult, "ToyyibPay did not return a BillCode."));
-            const paymentUrl = `${TOYYIB_BASE_URL}/${encodeURIComponent(billCode)}`;
-            order = upsertPremiumOrder({ ...order, status:"pending", billCode, paymentUrl, returnUrl, fulfillmentState:"awaiting-payment" });
-            try { await azPersistPremiumOrder(order); } catch (err) { console.warn("Ebook pending order Firestore persist warning:", err && (err.message || err)); }
-            return send(res, 200, JSON.stringify({ ok:true, orderId, billCode, paymentUrl, status:"pending", amount:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, lifetime:true, priceLabel:"RM19 sekali sahaja", checkoutVersion:1354 }, null, 2), "application/json");
+            if (provider === 'bank-transfer') {
+              return send(res, 200, JSON.stringify({ok:true,...await azCreateBankTransferInstructions(order)}), 'application/json', { 'Cache-Control':'no-store' });
+            }
+            if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+            const checkout = await azStartBusinessOnlinePayment(order, req, returnUrl);
+            return send(res, 200, JSON.stringify({ ok:true, orderId, billCode:checkout.billCode, paymentUrl:checkout.paymentUrl, status:"pending", amount:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, lifetime:true, priceLabel:"RM19 sekali sahaja", checkoutVersion:1354 }, null, 2), "application/json");
           } catch (billErr) {
             // Failed bill creation is an internal attempt, not a customer cancellation.
             // Keep it out of normal sales flow and allow a clean retry.
@@ -22144,7 +22537,7 @@ async function handler(req, res) {
         });
       } catch (err) {
         console.error("Ebook Generator checkout failed:", err && (err.stack || err.message || err));
-        return send(res, 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : "Could not create Ebook Generator payment." }, null, 2), "application/json");
+        return send(res, err.statusCode || 500, JSON.stringify({ ok:false, error:err && err.message ? err.message : "Could not create Ebook Generator payment." }, null, 2), "application/json");
       }
     }
 
@@ -22159,7 +22552,12 @@ async function handler(req, res) {
       let verified = false;
       let verifyResult = null;
 
-      if (isToyyibOrder) {
+      if (order.paymentMethod === 'chip' && !isPaBmPremiumOrder(order)) {
+        try {
+          verifyResult = await azVerifyAndFinalizeDigitalChip(order, req);
+          if (verifyResult.paid) { verified = true; order = verifyResult.order; }
+        } catch (_) {}
+      } else if (isToyyibOrder) {
         verifyResult = await azVerifyToyyibPaidTransaction({ ...order, billCode: order.billCode || billCode });
         if (verifyResult && verifyResult.paid) {
           verified = true;
@@ -22231,6 +22629,10 @@ async function handler(req, res) {
         verified = true;
       }
 
+      if (order.source === 'pc-invoice-payment') {
+        const paid = verified && order.status === 'paid';
+        return send(res, 200, JSON.stringify({ ok:true, paid, verified, status:order.status }), 'application/json', { 'Cache-Control':'no-store' });
+      }
       if (String(order.status || "").toLowerCase() === "paid" && verified) {
         if (isPaBmPremiumOrder(order)) {
           if (isPublicPaPremiumOrder(order)) {
@@ -22310,7 +22712,7 @@ async function handler(req, res) {
           return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false, verification:"pending" }), "application/json");
         }
 
-        if (String(process.env.AZOBSS_ALLOW_UNVERIFIED_TOYYIB_CALLBACK || "0") !== "1") {
+        if (order.businessCheckout === true || String(process.env.AZOBSS_ALLOW_UNVERIFIED_TOYYIB_CALLBACK || "0") !== "1") {
           console.warn("ToyyibPay callback claimed paid but strict verification is required; not finalizing without API verification:", JSON.stringify({ orderId: order.orderId, billCode: order.billCode }).slice(0, 500));
           return send(res, 200, JSON.stringify({ ok:true, status:"received", paid:false, verified:false, verification:"required" }), "application/json");
         }

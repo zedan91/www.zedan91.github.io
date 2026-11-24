@@ -4554,6 +4554,22 @@ Special member-only promotion" style="width:100%;box-sizing:border-box;min-heigh
         </div>
         <div id="adminApiKeyStatus" class="tabs-note">Admin auth status: checking...</div>
       </div>
+      <div class="card" id="businessCheckoutSettings">
+        <h2>Bayaran Luar PA/BM</h2>
+        <p class="tabs-note">CHIP diutamakan apabila tersedia. Tetapan di bawah mengawal butang sandaran untuk checkout luar PA/BM.</p>
+        <button class="btn" type="button" data-load-payment-settings>Muatkan tetapan</button>
+        <form>
+          <fieldset class="toolbar" disabled>
+            <label><input type="checkbox" name="toyyibpay"> Paparkan ToyyibPay</label>
+            <label><input type="checkbox" name="stripe"> Paparkan Stripe</label>
+            <button class="btn green" type="submit">Simpan</button>
+          </fieldset>
+        </form>
+        <p class="tabs-note" data-payment-settings-status role="status"></p>
+        <h3>Semakan Pindahan Bank Digital</h3>
+        <button class="btn" type="button" data-load-transfer-list>Muatkan rujukan pindahan</button>
+        <div data-transfer-list aria-live="polite"></div>
+      </div>
       <div class="card">
         <h2>Referral / Invite Code Reward</h2>
         <p class="tabs-note">User kongsi invite link. Bila akaun baru berjaya register dan redeem/auto-redeem code, pemilik link menerima kredit one-off untuk pendaftaran itu. Referral TIDAK memberi akses PA/BM.</p>
@@ -9022,7 +9038,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1608"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1609"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10579,10 +10595,11 @@ document.addEventListener('click', async function(e){
 })();
 </script>
 
-<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1564"></script>
+<script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1609"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script src="/assets/js/azobss-customer-whatsapp-v1542.js?v=1595"></script>
-<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1564" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
+<script defer src="/assets/js/azobss-admin-business-checkout.js?v=1609"></script>
+<script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1609" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">
 <script defer src="/assets/js/azobss-admin-tech-delivery.js?v=1577"></script>
 <script defer src="/assets/js/azobss-admin-pc-shop-orders-v1487.js?v=1577"></script>

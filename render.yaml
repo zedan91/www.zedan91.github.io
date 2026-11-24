@@ -17,6 +17,7 @@ services:
         - package.json
         - .npmrc
         - deploy-server.js
+        - assets/images/azobss-enterprise-duitnow-qr.jpg
         - lib/**
         - assets/js/azobss-azdm-offer-model.js
         - scripts/**
@@ -37,6 +38,12 @@ services:
         - Sound-Effects/catalog-7210.json
       ignoredPaths: []
     envVars:
+      - key: CHIP_CHECKOUT_ENABLED
+        sync: false
+      - key: CHIP_API_KEY
+        sync: false
+      - key: CHIP_BRAND_ID
+        sync: false
       - key: SOLATTIME_ADMIN_TOKEN
         sync: false
       - key: SOLATTIME_ORDER_CIPHER_KEY

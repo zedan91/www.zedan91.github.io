@@ -11,13 +11,16 @@ const html=fs.readFileSync(path.join(root,'Software-Tools','index.html'),'utf8')
 const frontend=fs.readFileSync(path.join(root,'assets','js','azobss-software-packages.js'),'utf8');
 const backend=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 
-test('v1323 exposes ToyyibPay and Stripe choices in AZDM plan dialog',()=>{
+test('AZDM plan dialog exposes CHIP, bank transfer and the configurable legacy choices',()=>{
   assert.ok(Number(String(pkg.version||'').split('.').pop()) >= 1323);
-  assert.match(html,/data-azdm-buy[^>]*>Pay via ToyyibPay</);
-  assert.match(html,/data-azdm-buy-stripe[^>]*>Pay via Stripe</);
+  assert.match(html,/data-azdm-buy-chip[^>]*>Bayar dengan CHIP</);
+  assert.match(html,/data-azdm-buy-bank[^>]*>DuitNow QR/);
+  assert.match(html,/data-azdm-buy[^>]*>ToyyibPay \(Sandaran\)</);
+  assert.match(html,/data-azdm-buy-stripe[^>]*>Stripe \(Sandaran\)</);
   assert.match(html,/azobss-software-packages\.js\?v=\d+/);
   assert.match(frontend,/payment_method:paymentMethod/);
-  assert.match(frontend,/startCheckout\('stripe',buyStripe\)/);
+  assert.match(frontend,/startCheckout\(provider,button\)/);
+  assert.match(frontend,/button.hidden=!paymentMethods\[provider\]/);
   assert.match(frontend,/checkout\.stripe\.com/);
 });
 

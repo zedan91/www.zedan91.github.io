@@ -3,7 +3,9 @@
  const model=window.azdmOfferModel,dialog=document.getElementById('softwarePackageDialog'),root=document.getElementById('azdm-license');
  if(!model||!dialog||!root)return;
  const $=s=>root.querySelector(s),plan=$('[name="azdm-plan"]'),quantity=$('[name="azdm-quantity"]'),buyToyyib=$('[data-azdm-buy]'),buyStripe=$('[data-azdm-buy-stripe]'),message=$('[data-azdm-message]');
- const paymentButtons=[buyToyyib,buyStripe].filter(Boolean);
+ const buyChip=$('[data-azdm-buy-chip]'),buyBank=$('[data-azdm-buy-bank]'),bankDetails=$('[data-package-bank-details]');
+ const providerButtons={chip:buyChip,'bank-transfer':buyBank,toyyibpay:buyToyyib,stripe:buyStripe};
+ const paymentButtons=Object.values(providerButtons).filter(Boolean);
  const base='https://azobss-backend.onrender.com',money=v=>'RM'+(v/100).toFixed(2);
  function cleanRef(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);}
  function parse(v){try{return v?JSON.parse(v):null}catch(_e){return null}}
@@ -90,8 +92,7 @@
    $('[data-azdm-summary]').textContent=q.fixed?`${q.quantity} ${pcs} = ${money(q.total_cents)}`:`${q.quantity} ${pcs} × ${money(q.unit_cents)} = ${money(q.total_cents)}`;
    $('[data-azdm-saving]').textContent=p.min_quantity?`Minimum ${p.min_quantity} PCs · ${money(q.unit_cents)} per PC.`:q.discount?'Bulk purchase discount applied.':!p.quantity&&p.days===0&&offer.bulk_minimum?`Buy ${offer.bulk_minimum} PCs or more in one purchase: ${money(offer.bulk_unit_cents)} per PC.`:'';
    if(offer.fulfilment==='azdm')$('[data-package-activation]').textContent=`After payment is verified, you receive ${q.quantity} unique serial ${q.quantity===1?'key':'keys'} via your AZOBSS account email. One key activates one PC.`;
-   if(buyToyyib)buyToyyib.disabled=!available||!paymentMethods.toyyibpay;
-   if(buyStripe)buyStripe.disabled=!available||!paymentMethods.stripe;
+   for(const [provider,button] of Object.entries(providerButtons)) if(button)button.disabled=!available||!paymentMethods[provider];
   }catch(e){$('[data-azdm-summary]').textContent=`Enter a whole number of PCs between ${quantity.min} and ${offer.max_quantity}.`;$('[data-azdm-saving]').textContent='';if(offer.fulfilment==='azdm')$('[data-package-activation]').textContent='Each PC receives a separate serial key after payment is verified.';paymentButtons.forEach(b=>b.disabled=true);}
  }
  function selectPlan(){const p=offer?.plans.find(x=>x.id===plan.value);if(p)quantity.value=p.quantity||Math.max(p.min_quantity||1,Math.min(offer.max_quantity,Number(quantity.value)||1));calculate();}
@@ -102,14 +103,16 @@
  }
  async function open(productId,name='',mode='download'){
   const current=++generation;offer=null;available=false;paymentMethods={toyyibpay:false,stripe:false};stripeMode='';plan.replaceChildren();message.textContent='Loading plan options…';$('[data-azdm-summary]').textContent='';paymentButtons.forEach(b=>b.disabled=true);
-  if(buyToyyib)buyToyyib.hidden=false;if(buyStripe)buyStripe.hidden=true;
+  paymentButtons.forEach(button=>{button.hidden=true;});bankDetails.hidden=true;bankDetails.replaceChildren();
   document.getElementById('softwarePackageTitle').textContent=name?name+' · Choose Plan':'Choose Plan';if(!dialog.open)dialog.showModal();
   try{const d=await call((mode==='azdm'?'/api/azdm/catalog':'/api/software-packages/catalog')+'?product_id='+encodeURIComponent(productId));if(current!==generation)return;
    offer=model.normalize(d.offer);available=d.enabled===true;
-   if(offer.fulfilment==='azdm'){paymentMethods={toyyibpay:d.payment_methods?.toyyibpay===true,stripe:d.payment_methods?.stripe===true};stripeMode=String(d.stripe_mode||'');}
-   else paymentMethods={toyyibpay:true,stripe:false};
-   if(buyToyyib)buyToyyib.hidden=offer.fulfilment==='azdm'&&!paymentMethods.toyyibpay;
-   if(buyStripe)buyStripe.hidden=offer.fulfilment!=='azdm'||!paymentMethods.stripe;
+   if(offer.fulfilment==='azdm'){paymentMethods=d.payment_methods||{};stripeMode=String(d.stripe_mode||'');}
+   else {
+    const settings=await window.AZOBSSBusinessCheckout.options();if(current!==generation)return;
+    paymentMethods={chip:settings.chip,'bank-transfer':Boolean(settings.bank),toyyibpay:settings.toyyibpay,stripe:settings.stripe};
+   }
+   for(const [provider,button] of Object.entries(providerButtons)) if(button)button.hidden=!paymentMethods[provider];
    // Group AZDM terms together, then show single-PC before multi-PC choices.
    const plans=offer.fulfilment==='azdm'?[...offer.plans].sort((a,b)=>(a.days===0?Infinity:a.days)-(b.days===0?Infinity:b.days)||(a.quantity||a.min_quantity||1)-(b.quantity||b.min_quantity||1)):offer.plans;
    for(const p of plans){const o=document.createElement('option');o.value=p.id;o.textContent=p.label+(p.quantity?' · '+p.quantity+(p.quantity===1?' PC':' PCs'):p.min_quantity?' · '+p.min_quantity+'+ PCs':'')+' · '+money(p.amount_cents)+(p.quantity?'':' / PC');plan.append(o);}
@@ -128,27 +131,32 @@
  root.querySelector('[data-package-close]').addEventListener('click',()=>dialog.close());document.querySelector('[data-support-close]').addEventListener('click',()=>document.getElementById('softwareSupportDialog').close());
  $('[data-package-support]').addEventListener('click',()=>support(offer?.name||'Software'));$('[data-azdm-signin]').addEventListener('click',signIn);plan.addEventListener('change',selectPlan);quantity.addEventListener('input',calculate);
  const states={paid:'Payment verified.',pending:'Payment not yet verified.',creating:'Payment bill is being prepared.',creation_failed:'Payment bill could not be created.'};
- async function refreshOrders(){try{const d=await call('/api/azdm/orders',{headers:await headers(true)}),out=$('[data-azdm-orders]');out.replaceChildren();for(const r of d.orders){const p=document.createElement('p');const method=String(r.payment_method||'').toLowerCase()==='stripe'?'Stripe':'ToyyibPay';p.textContent=r.product_name+' · '+r.quantity+' PC · '+money(r.amount_cents)+' · '+method+' — '+(states[r.status]||r.status);out.append(p);}if(!d.orders.length)out.textContent='No orders yet.';}catch(e){$('[data-azdm-orders]').textContent=e.message;}}
+ async function refreshOrders(){try{const d=await call('/api/azdm/orders',{headers:await headers(true)}),out=$('[data-azdm-orders]');out.replaceChildren();for(const r of d.orders){const p=document.createElement('p');const method={stripe:'Stripe',chip:'CHIP','bank-transfer':'Pindahan Bank',toyyibpay:'ToyyibPay'}[String(r.payment_method||'').toLowerCase()]||'Pembayaran';p.textContent=r.product_name+' · '+r.quantity+' PC · '+money(r.amount_cents)+' · '+method+' — '+(states[r.status]||r.status);out.append(p);}if(!d.orders.length)out.textContent='No orders yet.';}catch(e){$('[data-azdm-orders]').textContent=e.message;}}
  async function checkStatus(id){clearTimeout(pollTimer);try{const d=await call('/api/azdm/status?azdm_order='+encodeURIComponent(id),{headers:await headers(true)});message.textContent=(states[d.status]||d.status)+' Order ID: '+id;if(d.status==='paid'){requestId='';await refreshOrders();}else if(d.status==='pending'&&pollCount++<12)pollTimer=setTimeout(()=>checkStatus(id),5000);}catch(e){message.textContent=e.message;}}
  $('[data-azdm-refresh]').addEventListener('click',refreshOrders);
  function paymentUrlAllowed(url,method){
   if(url.protocol!=='https:')return false;const host=url.hostname.toLowerCase();
+  if(method==='chip')return host==='gate.chip-in.asia'&&!url.username&&!url.password&&!url.port;
   if(method==='stripe')return host==='checkout.stripe.com'||host.endsWith('.stripe.com');
   return ['toyyibpay.com','dev.toyyibpay.com'].includes(host);
  }
  async function startCheckout(paymentMethod,button){
   if(!offer||!available||!button||button.disabled)return;paymentButtons.forEach(b=>b.disabled=true);
-  try{const h=await headers(true),q=model.quote(offer,plan.value,Number(quantity.value));message.textContent=paymentMethod==='stripe'?'Preparing Stripe payment…':'Preparing ToyyibPay payment…';let result;
+  try{const h=await headers(true),q=model.quote(offer,plan.value,Number(quantity.value));message.textContent='Menyediakan bayaran…';let result;
    if(offer.fulfilment==='azdm'){
     const selection=JSON.stringify([offer,plan.value,q.quantity,paymentMethod]);if(!requestId||requestSelection!==selection){requestId=crypto.randomUUID();requestSelection=selection;}
     try{const old=JSON.parse(sessionStorage.getItem('azdm-package-request')||'null');if(old?.selection===selection&&Date.now()-old.created<3*86400000)requestId=old.id;sessionStorage.setItem('azdm-package-request',JSON.stringify({id:requestId,selection,created:Date.now()}));}catch{}
     result=await call('/api/azdm/checkout',{method:'POST',headers:h,body:JSON.stringify({software_id:offer.product_id,plan:plan.value,quantity:q.quantity,request_id:requestId,payment_method:paymentMethod,staff_referral:staffReferral(offer.product_id)})});
-   }else{const ref=staffReferral(offer.product_id);result=await call('/api/create-payment',{method:'POST',headers:h,body:JSON.stringify({product:{productId:offer.product_id,staffReferral:ref},productId:offer.product_id,softwarePackageId:plan.value,packageQuantity:q.quantity,staffReferral:ref,returnUrl:location.href.split('#')[0]})});paymentMethod='toyyibpay';}
+    }else{
+    const ref=staffReferral(offer.product_id);
+    const endpoint={chip:'/api/chip/digital-checkout','bank-transfer':'/api/site/bank-transfer',stripe:'/api/stripe/digital-checkout',toyyibpay:'/api/create-payment'}[paymentMethod];
+    result=await call(endpoint,{method:'POST',headers:h,body:JSON.stringify({product:{productId:offer.product_id,staffReferral:ref},productId:offer.product_id,softwarePackageId:plan.value,packageQuantity:q.quantity,staffReferral:ref,returnUrl:location.href.split('#')[0]})});
+   }
+   if(paymentMethod==='bank-transfer'){await window.AZOBSSBusinessCheckout.digitalBankRequest(bankDetails,result);calculate();return;}
    const url=new URL(result.payment_url||result.paymentUrl||result.url);if(!paymentUrlAllowed(url,paymentMethod))throw Error('Invalid payment link.');location.assign(url.href);
   }catch(e){message.textContent=e.message;if(/sign in/i.test(e.message))signIn();if(/order has changed|already been paid|previous payment|previous bill/i.test(e.message)){requestId='';requestSelection='';try{sessionStorage.removeItem('azdm-package-request');}catch{}}calculate();}
  }
- if(buyToyyib)buyToyyib.addEventListener('click',()=>startCheckout('toyyibpay',buyToyyib));
- if(buyStripe)buyStripe.addEventListener('click',()=>startCheckout('stripe',buyStripe));
+ for(const [provider,button] of Object.entries(providerButtons)) button?.addEventListener('click',()=>startCheckout(provider,button));
  async function syncAccount(){try{await headers();$('[data-azdm-signin]').hidden=true;}catch{$('[data-azdm-signin]').hidden=false;$('[data-azdm-orders]').replaceChildren();clearTimeout(pollTimer);requestId='';}}
  window.addEventListener('azobss-auth-changed',()=>{generation++;clearTimeout(pollTimer);$('[data-azdm-orders]').replaceChildren();message.textContent='';requestId='';syncAccount();});dialog.addEventListener('close',()=>{generation++;clearTimeout(pollTimer);});
  const query=new URLSearchParams(location.search);if(query.get('azdm_order'))open(query.get('azdm_software')||'AZDM','AZDM','azdm').then(()=>checkStatus(query.get('azdm_order')));
