@@ -298,6 +298,7 @@ try { nodemailer = require("nodemailer"); } catch (e) { nodemailer = null; }
 let sharp = null;
 let PDFDocument = null;
 let QRCode = null;
+const AZOBSS_PA_KUALA_LUMPUR = "WILAYAH PERSEKUTUAN KUALA LUMPUR";
 
 function azobssLoadBackendModule(moduleName) {
   const candidates = [
@@ -333,7 +334,7 @@ function azobssEnsurePdfDependencies() {
     const childProcess = require("child_process");
     console.warn("AZOBSS PDF deps missing. Running one-time runtime install for sharp/pdfkit...");
     childProcess.execSync(
-      "npm install --no-audit --no-fund --include=optional sharp@0.32.6 pdfkit@0.15.0",
+      "npm install --no-audit --no-fund --include=optional sharp@0.34.5 pdfkit@0.15.0",
       { cwd: __dirname, stdio: "inherit", env: Object.assign({}, process.env, { npm_config_registry: "https://registry.npmjs.org/" }) }
     );
   } catch (installErr) {
@@ -354,18 +355,23 @@ console.log("PDF converter dependencies:", {
   nodeVersion: process.version
 });
 
-async function convertTifBufferToPdfBuffer(tifBuffer, safeName) {
+async function convertTifBufferToPdfBuffer(tifBuffer, safeName, negeri = "") {
   if (!sharp || !PDFDocument) {
     const missing = !sharp && !PDFDocument ? "sharp and pdfkit" : (!sharp ? "sharp" : "pdfkit");
     throw new Error("PDF converter dependency missing: " + missing);
   }
 
+  // Some Kuala Lumpur PA TIFFs use Group 3 strips that omit the first EOL marker.
+  // The updated decoder can read these strips with a warning. Keep decode errors fatal.
+  const kualaLumpurTiff = azobssBufferIsTiff(tifBuffer)
+    && azobssCanonicalStateName(negeri) === AZOBSS_PA_KUALA_LUMPUR;
+  const readOptions = kualaLumpurTiff ? { failOn: "error" } : {};
   const pages = [];
-  const meta = await sharp(tifBuffer, { pages: -1 }).metadata();
+  const meta = await sharp(tifBuffer, { ...readOptions, pages: -1 }).metadata();
   const pageCount = Math.max(1, Number(meta.pages || 1));
 
   for (let i = 0; i < pageCount; i++) {
-    const imageBuffer = await sharp(tifBuffer, { page: i, limitInputPixels: false })
+    const imageBuffer = await sharp(tifBuffer, { ...readOptions, page: i, limitInputPixels: false })
       .rotate()
       .png()
       .toBuffer();
@@ -16167,6 +16173,10 @@ async function azobssRacePaPriorityCandidates(candidates, cookie = '') {
   }
 }
 async function fetchPelanAkuiCandidates(noPA, negeri) {
+  // Older paid records can retain the display name. JUPEM needs the full state name.
+  if (azobssCanonicalStateName(negeri) === AZOBSS_PA_KUALA_LUMPUR) {
+    negeri = AZOBSS_PA_KUALA_LUMPUR;
+  }
   const cached = azobssGetPaSourceCache(noPA, negeri);
   if (cached) return cached;
 
@@ -25612,7 +25622,7 @@ if (pathname === "/api/pa-bm-download" && req.method === "GET") {
     let pdfBuffer = paSourceIsPdf ? paResult.buffer : null;
     if (!pdfBuffer) {
       try {
-        pdfBuffer = await convertTifBufferToPdfBuffer(paResult.buffer, safeName);
+        pdfBuffer = await convertTifBufferToPdfBuffer(paResult.buffer, safeName, negeri);
       } catch (convertError) {
         console.error("PA controlled PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
         return azobssPaBmDownloadError(res, 500, "PA PDF conversion failed. Your download quota was not used.");
@@ -26016,7 +26026,7 @@ if (
       return send(res, 502, JSON.stringify({ ok:false, error:"PA source returned an unsupported file format." }), "application/json");
     }
     try {
-      pdfBuffer = await convertTifBufferToPdfBuffer(sourceBuffer, safeName);
+      pdfBuffer = await convertTifBufferToPdfBuffer(sourceBuffer, safeName, negeri);
     } catch (convertError) {
       console.error("PA PDF conversion failed:", convertError && (convertError.stack || convertError.message || convertError));
       return send(
