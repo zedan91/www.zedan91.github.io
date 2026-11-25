@@ -3821,7 +3821,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
     <div class="azobss-pay-options">
       <button class="azobss-pay-option" data-method="chip" type="button" hidden>Pay with CHIP</button>
-      <button class="azobss-pay-option" data-method="bank-transfer" type="button" hidden>DuitNow QR / Bank Transfer</button>
+      <button class="azobss-pay-option" data-method="bank-transfer" type="button" aria-controls="azobssBusinessBankDetails" hidden>DuitNow QR / Bank Transfer</button>
       <button class="azobss-pay-option" data-method="bank" type="button" hidden>ToyyibPay (Backup)</button>
       <button class="azobss-pay-option" data-method="stripe" type="button" hidden>Stripe (Backup)</button>
     </div>
@@ -3848,8 +3848,8 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     <div class="azobss-pay-actions">
       <button class="azobss-pay-btn azobss-pay-muted" id="azobssPayOpenPayment" type="button">Open Payment</button>
     </div>
-    <div id="azobssBusinessBankDetails" hidden></div>
-    <div class="azobss-pay-error" id="azobssPayError"></div>
+    <div class="azobss-pay-error" id="azobssPayError" role="alert"></div>
+    <div id="azobssBusinessBankDetails" tabindex="-1" aria-label="DuitNow payment details" hidden></div>
     <div class="azobss-pay-success" id="azobssPaySuccess"></div>
   </div>
 </div>
@@ -7020,7 +7020,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1611" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1612" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -7075,7 +7075,11 @@ function normalizeItem(item){
     const info=productBox.querySelector('[data-solattime-key-count]');if(info)info.textContent=quantity+' lesen kekal · '+quantity+' serial berasingan · Setiap serial untuk 1 PC.';
     return true;
   }
-  productBox.addEventListener('input',event=>{if(event.target.matches('[data-solattime-quantity]'))azUpdateSolatTimeQuantity();});
+  productBox.addEventListener('input', event => {
+    if (!event.target.matches('[data-solattime-quantity]')) return;
+    clearBankDetails();
+    azUpdateSolatTimeQuantity();
+  });
 
   function esc(v){return String(v||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function toAbsolute(url){if(!url)return ''; if(/^https?:\/\//i.test(url))return url; if(url.startsWith('/'))return location.origin+url; return url;}
@@ -7122,11 +7126,15 @@ function normalizeItem(item){
   }
   function requireBuyerEmail(){
     const field=document.getElementById('azobssBuyerEmailField');
-    if(azIsSolatTimeCurrentProduct()&&!solatTimeSignedIn()){if(errorBox)errorBox.textContent='Sila daftar atau log masuk ke akaun AZOBSS sebelum membeli Liyabudun.';return false;}
+    if(azIsSolatTimeCurrentProduct()){
+      if(solatTimeSignedIn()) return true;
+      errorBox.textContent='Sign in to your AZOBSS account to buy a Liyabudun licence.';
+      return false;
+    }
     if(isLoggedIn()) return true;
     if(validEmail(refInput?.value)) return true;
     if(field) field.classList.add('is-invalid');
-    if(errorBox) errorBox.textContent = 'Please enter a valid buyer email address before Open Payment.';
+    if(errorBox) errorBox.textContent = 'Enter a valid buyer email address to continue.';
     refInput?.focus();
     refInput?.scrollIntoView({behavior:'smooth',block:'center'});
     return false;
@@ -7144,6 +7152,8 @@ function normalizeItem(item){
 
   function setActiveMethod(method){
     currentMethod = method || 'bank';
+    errorBox.textContent = '';
+    businessBankDetails.hidden = currentMethod !== 'bank-transfer' || !preparedBankKey;
     modal.querySelectorAll('.azobss-pay-option').forEach(btn=>{
       btn.classList.toggle('is-active', btn.dataset.method === currentMethod);
     });
@@ -7162,8 +7172,8 @@ function normalizeItem(item){
     const inst = document.getElementById('azobssPayInstruction');
     if(!inst) return;
     if(currentMethod === 'chip' || currentMethod === 'bank-transfer'){
-      inst.textContent = currentMethod === 'chip' ? 'Bayar melalui CHIP. Resit dihantar selepas bayaran disahkan.' : 'Dapatkan amaun dan rujukan sebelum membuat pindahan.';
-      openPaymentBtn.textContent = currentMethod === 'chip' ? 'Buka CHIP' : 'Lihat arahan pindahan';
+      inst.textContent = currentMethod === 'chip' ? 'Pay with CHIP. Your receipt will be sent after payment is verified.' : 'Open the QR to see the amount and your payment reference.';
+      openPaymentBtn.textContent = currentMethod === 'chip' ? 'Open CHIP' : 'Show DuitNow QR';
     }else if(currentMethod === 'bank'){
       inst.textContent = 'Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.';
       openPaymentBtn.textContent = 'Open Payment';
@@ -7177,18 +7187,39 @@ function normalizeItem(item){
       inst.textContent = 'Guest buyers must enter their email address first. Click Open Payment and complete the payment in the same tab. Your download link will be sent to your email after payment verification.';
       openPaymentBtn.textContent = 'Open Payment';
     }
-    if(azIsSolatTimeCurrentProduct())inst.textContent='Log masuk menggunakan akaun dengan e-mel yang disahkan. Selepas bayaran disahkan, setiap lesen mendapat serial berasingan untuk 1 PC melalui e-mel dan Lesen & Pembelian Saya.';
+    if(azIsSolatTimeCurrentProduct())inst.textContent=currentMethod==='bank-transfer' ? 'Open the QR to see the exact amount and payment reference. Each licence is for one PC. Your serials are sent after AZOBSS verifies the payment.' : 'Sign in with a verified email. Each licence is for one PC. Your serials are sent after payment is verified.';
     openPaymentBtn.style.display = activePaymentLink() ? '' : 'none';
     syncBuyerEmailField();
   }
 
   const businessBankDetails = document.getElementById('azobssBusinessBankDetails');
   let checkoutOptionsVersion = 0;
+  let checkoutOptionsReady = false;
+  let preparedBankKey = '';
+
+  function clearBankDetails() {
+    preparedBankKey = '';
+    businessBankDetails.hidden = true;
+    businessBankDetails.replaceChildren();
+  }
+
+  function bankDetailsKey() {
+    return JSON.stringify([buyerEmail(), window.azobssGetCurrentFirebaseUid?.() || '', currentProduct?.solattimeQuantity || 1]);
+  }
+
+  function revealBankDetails() {
+    businessBankDetails.hidden = false;
+    businessBankDetails.focus({preventScroll:true});
+    businessBankDetails.scrollIntoView({block:'nearest'});
+  }
+
+  refInput?.addEventListener('input', clearBankDetails);
+
   async function refreshBusinessOptions(product) {
     const version = ++checkoutOptionsVersion;
     const buttons = [...modal.querySelectorAll('.azobss-pay-option')];
-    businessBankDetails.hidden = true;
-    businessBankDetails.replaceChildren();
+    checkoutOptionsReady = false;
+    clearBankDetails();
     buttons.forEach(button => { button.hidden = true; });
     openPaymentBtn.disabled = true;
     try {
@@ -7197,7 +7228,8 @@ function normalizeItem(item){
       if (version !== checkoutOptionsVersion || currentProduct !== product) return;
       const methods = shared.available(options);
       buttons.forEach(button => { button.hidden = !methods.includes(button.dataset.method); });
-      if (!methods.length) throw Error('Kaedah bayaran belum tersedia. Cuba lagi kemudian.');
+      if (!methods.length) throw Error('No payment methods are currently available. Please try again later.');
+      checkoutOptionsReady = true;
       setActiveMethod(methods[0]);
       openPaymentBtn.disabled = false;
     } catch (error) {
@@ -7223,12 +7255,22 @@ function normalizeItem(item){
   }
 
   window.azobssOpenPremiumPay = open;
-  function close(){modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true');}
+  function close(){
+    checkoutOptionsVersion++;
+    checkoutOptionsReady = false;
+    clearBankDetails();
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden','true');
+  }
 
   closeBtn?.addEventListener('click', close);
   modal.addEventListener('click', e=>{if(e.target===modal) close();});
   modal.querySelectorAll('.azobss-pay-option').forEach(btn=>{
-    btn.addEventListener('click',()=>setActiveMethod(btn.dataset.method));
+    btn.addEventListener('click', () => {
+      if (!checkoutOptionsReady || openPaymentBtn.disabled) return;
+      setActiveMethod(btn.dataset.method);
+      if (currentMethod === 'bank-transfer') openPaymentBtn.click();
+    });
   });
 
 
@@ -7261,27 +7303,34 @@ function normalizeItem(item){
 
   async function azPremiumPaymentAuthHeaders(){
     const h=typeof window.azobssGetFirebaseAuthHeaders==='function'?await window.azobssGetFirebaseAuthHeaders(false)||{}:{};
-    const name=String(currentProduct?.name||currentProduct?.productName||'').trim().toLowerCase();
-    if((azIsSolatTimeCurrentProduct())&&!h.Authorization)throw Error('Sila log masuk ke akaun AZOBSS sebelum membeli Liyabudun.');
+    if(azIsSolatTimeCurrentProduct()&&!h.Authorization)throw Error('Your AZOBSS session could not be verified. Sign in again and retry.');
     return {...h,'Content-Type':'application/json'};
   }
   openPaymentBtn?.addEventListener('click', async ()=>{
+    if (!checkoutOptionsReady || openPaymentBtn.disabled) return;
     errorBox.textContent = '';
     successBox.classList.remove('is-open');
     if(!requireBuyerEmail()) return;
     if(!currentProduct){ errorBox.textContent = 'Product not found.'; return; }
     if(!azUpdateSolatTimeQuantity())return;
     const quantityInput=productBox.querySelector('[data-solattime-quantity]');
-    if(quantityInput)quantityInput.disabled=true;
 
     if(['stripe', 'chip', 'bank-transfer'].includes(currentMethod)){
       const provider = currentMethod;
       const shared = window.AZOBSSBusinessCheckout;
       const endpoint = { stripe: '/api/stripe/digital-checkout', chip: '/api/chip/digital-checkout', 'bank-transfer': '/api/site/bank-transfer' }[provider];
       const email = buyerEmail();
+      const bankKey = bankDetailsKey();
+      if (provider === 'bank-transfer' && preparedBankKey === bankKey) {
+        revealBankDetails();
+        return;
+      }
+      if (provider === 'bank-transfer') clearBankDetails();
+      const version = checkoutOptionsVersion;
       const originalText = openPaymentBtn.textContent;
       openPaymentBtn.disabled = true;
-      openPaymentBtn.textContent = 'Menyediakan bayaran…';
+      if(quantityInput)quantityInput.disabled=true;
+      openPaymentBtn.textContent = provider === 'bank-transfer' ? 'Preparing DuitNow QR…' : 'Preparing payment…';
       try{
         const returnUrl = window.location.href.split('#')[0];
         const sourcePage = location.pathname.toLowerCase().includes('cad-tools') ? 'CAD Tools' : 'Software';
@@ -7322,13 +7371,18 @@ function normalizeItem(item){
         };
         const res = await fetch(API_BASE + endpoint, {
           method:'POST',
+          signal:AbortSignal.timeout(45000),
           headers:await azPremiumPaymentAuthHeaders(),
           body:JSON.stringify(payload)
         });
         const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
         if (!res.ok || !data.ok) throw new Error(data.error || 'The payment could not be started.');
+        if (version !== checkoutOptionsVersion) return;
         if (provider === 'bank-transfer') {
+          if (bankKey !== bankDetailsKey()) return;
           await shared.digitalBankRequest(businessBankDetails, data);
+          preparedBankKey = bankKey;
+          revealBankDetails();
           return;
         }
         const paymentUrl = data.paymentUrl || data.url || data.redirectUrl || '';
@@ -7348,11 +7402,17 @@ function normalizeItem(item){
         try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:provider}); }catch(_e){}
         shared.redirect(paymentUrl, provider);
       }catch(err){
-        errorBox.textContent = err && err.message ? err.message : 'The payment could not be started.';
+        if (version === checkoutOptionsVersion) {
+          errorBox.textContent = err?.name === 'TimeoutError' ? 'Payment details took too long to load. Please try again.' :
+            err?.message || 'The payment could not be started.';
+          errorBox.scrollIntoView({block:'nearest'});
+        }
       }finally{
-        openPaymentBtn.disabled = false;
-        if(quantityInput)quantityInput.disabled=false;
-        openPaymentBtn.textContent = originalText || 'Open Stripe Checkout';
+        if (version === checkoutOptionsVersion) {
+          openPaymentBtn.disabled = false;
+          if(quantityInput)quantityInput.disabled=false;
+          openPaymentBtn.textContent = originalText || 'Open Stripe Checkout';
+        }
       }
       return;
     }
@@ -7360,6 +7420,7 @@ function normalizeItem(item){
     const email = buyerEmail();
     const originalText = openPaymentBtn.textContent;
     openPaymentBtn.disabled = true;
+    if(quantityInput)quantityInput.disabled=true;
     openPaymentBtn.textContent = 'Generating Payment...';
     try{
       const returnUrl = window.location.href.split('#')[0];
