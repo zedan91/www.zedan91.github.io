@@ -401,6 +401,9 @@
       .az-lot-reference-resize-icon.is-vertical span{width:7px;height:24px}
       .az-lot-reference-resize-icon.is-horizontal{cursor:ns-resize!important}
       .az-lot-reference-resize-icon.is-horizontal span{width:24px;height:7px}
+      .az-lot-reference-vertex{display:grid!important;place-items:center;cursor:move!important}
+      .az-lot-reference-vertex span{width:11px;height:11px;border-radius:50%;background:#e0f2fe;border:2px solid #0284c7;box-shadow:0 1px 5px rgba(15,23,42,.55)}
+      .az-lot-reference-vertex:hover span,.az-lot-reference-vertex.leaflet-drag-target span{background:#fde68a}
       /* v1018: finalized Petak uses an SVG capture layer so move works on preferCanvas maps. */
       /* v1018: dedicated SVG capture path sits above the Canvas lot/shape layer. */
       .az-lot-reference-movable,.az-lot-reference-move-capture{cursor:grab!important;pointer-events:auto!important}
@@ -757,6 +760,8 @@
       let referenceSelectionEnabled = true;
       let referenceRectangleBounds = null;
       let referenceResizeHandles = [];
+      let referenceVertices = null;
+      let referenceVertexHandles = [];
       let referenceGuideLayers = [];
       let referenceGuideFrame = 0;
       let referenceMoveCleanup = null;
@@ -813,6 +818,7 @@
         if (!radiusReferenceCenter) return [];
         const size = Math.max(0.5, Number(sizeMeters) || 0.5);
         if (referenceShape === 'square') {
+          if (referenceVertices) return referenceVertices;
           const bounds = referenceRectangleBounds || squareBoundsFromCenterSize(radiusReferenceCenter, size);
           if (!bounds || !bounds.isValid()) return [];
           const north = bounds.getNorth();
@@ -839,6 +845,17 @@
         return { rings: [ring], spatialReference: { wkid: 4326 } };
       }
 
+      function signedReferenceArea(points) {
+        const rad = Math.PI / 180;
+        const base = 2 * Math.sin(points[0].lat * rad);
+        let area = 0;
+        for (let i = 0; i < points.length; i++) {
+          const a = points[i], b = points[(i + 1) % points.length];
+          area += (b.lng - a.lng) * rad * (Math.sin(a.lat * rad) + Math.sin(b.lat * rad) - base);
+        }
+        return area * 6378137 ** 2 / 2;
+      }
+
       function referenceMetrics(sizeMeters) {
         const size = Math.max(0, Number(sizeMeters) || 0);
         if (referenceShape === 'square') {
@@ -850,7 +867,7 @@
             widthMeters = map.distance(window.L.latLng(center.lat, bounds.getWest()), window.L.latLng(center.lat, bounds.getEast()));
             heightMeters = map.distance(window.L.latLng(bounds.getSouth(), center.lng), window.L.latLng(bounds.getNorth(), center.lng));
           }
-          const areaM2 = Math.max(0, widthMeters * heightMeters);
+          const areaM2 = referenceVertices ? Math.abs(signedReferenceArea(referenceVertices)) : widthMeters * heightMeters;
           return { size: Math.max(widthMeters, heightMeters) / 2, diameterOrSide: widthMeters, widthMeters, heightMeters, areaM2, hectares: areaM2 / 10000, acres: areaM2 / 4046.8564224 };
         }
         const areaM2 = Math.PI * size * size;
@@ -867,9 +884,9 @@
         const metrics = referenceMetrics(sizeMeters);
         radiusReadout.hidden = false;
         if (referenceShape === 'square') {
-          radiusPrimaryLabel.textContent = 'Lebar';
-          radiusSecondaryLabel.textContent = 'Panjang';
-          radiusAreaLabel.textContent = 'Luas petak';
+          radiusPrimaryLabel.textContent = referenceVertices ? 'Rentang timur–barat' : 'Lebar';
+          radiusSecondaryLabel.textContent = referenceVertices ? 'Rentang utara–selatan' : 'Panjang';
+          radiusAreaLabel.textContent = referenceVertices ? 'Luas bentuk' : 'Luas petak';
           radiusValueNode.textContent = formatReferenceDistance(metrics.widthMeters);
           diameterValueNode.textContent = formatReferenceDistance(metrics.heightMeters);
         } else {
@@ -883,7 +900,7 @@
         radiusLandAreaNode.textContent = `${formatNumber(metrics.hectares, metrics.hectares >= 10 ? 1 : 2)} ha / ${formatNumber(metrics.acres, metrics.acres >= 10 ? 1 : 2)} ekar`;
         radiusNoteNode.classList.add('is-selecting');
         radiusNoteNode.textContent = referenceShape === 'square' && radiusReferenceFinalized
-          ? 'Lot dipilih automatik. Seret dalam petak untuk alihkan seluruh kotak. Seret pemegang tepi kiri, kanan, atas atau bawah untuk laras saiz.'
+          ? 'Seret bucu untuk ubah bentuk. Tahan Ctrl dan klik garisan tepi untuk tambah bucu. Seret dalam kawasan untuk alihkan semuanya.'
           : `Lot dipilih automatik — lot yang berada dalam atau benar-benar dilintasi ${referenceShape === 'square' ? 'petak' : 'bulatan'} akan dikira. Sentuhan bucu/sempadan sahaja tidak dikira.`;
       }
 
@@ -963,7 +980,7 @@
         removeReferenceGuideLayers();
         // v1016: dimensions are useful while sizing too. Do not wait for the
         // second click/finalization; render against the latest preview bounds.
-        if (!map || !radiusReferenceCenter) return;
+        if (!map || !radiusReferenceCenter || referenceVertices) return;
         const lineOptions = { color: '#0369a1', weight: 2, opacity: 0.9, dashArray: '5 4', interactive: false };
         if (referenceShape === 'square' && referenceRectangleBounds && referenceRectangleBounds.isValid()) {
           const bounds = referenceRectangleBounds;
@@ -1033,8 +1050,10 @@
         radiusReferenceFinalized = false;
         radiusReferenceSizeMeters = 0;
         referenceRectangleBounds = null;
+        referenceVertices = null;
         disableReferenceRectangleMove();
         removeReferenceResizeHandles();
+        removeReferenceVertexHandles();
         removeReferenceGuideLayers();
         if (map && radiusReferenceShapeLayer) { try { map.removeLayer(radiusReferenceShapeLayer); } catch (_) {} }
         if (map && radiusReferenceCenterMarker) { try { map.removeLayer(radiusReferenceCenterMarker); } catch (_) {} }
@@ -1071,12 +1090,7 @@
         if (!radiusReferenceFinalized) return;
         const geometry = referenceGeometry();
         if (!geometry) return;
-        setStatus(status, `Memilih lot dalam ${referenceShape === 'square' ? 'petak' : 'bulatan'}...`, 'loading');
         await estimateGeometry(geometry, 'reference');
-        if (estimate) {
-          const resizeHint = referenceShape === 'square' ? ' Seret dalam petak untuk alihkan atau seret pemegang tepi untuk laras saiz.' : '';
-          setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot dipilih menggunakan ${referenceShape === 'square' ? 'petak' : 'bulatan'}.${resizeHint}`, 'success');
-        }
       }
 
       function startRadiusReference() {
@@ -1089,7 +1103,7 @@
         updateReferenceShapeButtons();
         setReferenceDrawingCursor(true);
         setStatus(status, referenceShape === 'square'
-          ? 'Petak aktif. Klik titik pusat, kemudian klik titik tepi untuk saiz awal. Selepas siap, seret dalam petak untuk alihkan; seret pemegang tepi untuk laras saiz.'
+          ? 'Petak aktif. Klik titik pusat, kemudian klik titik tepi untuk saiz awal. Selepas itu bucu boleh diseret.'
           : 'Bulatan aktif. Klik titik pusat, kemudian klik titik tepi bulatan.', '');
       }
 
@@ -1105,14 +1119,18 @@
       function refreshReferenceRectangleVisual(skipHandleSide = '', deferGuide = false) {
         if (!map || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
         radiusReferenceCenter = referenceRectangleBounds.getCenter();
-        if (radiusReferenceShapeLayer && typeof radiusReferenceShapeLayer.setBounds === 'function') radiusReferenceShapeLayer.setBounds(referenceRectangleBounds);
-        if (referenceMoveCaptureLayer && typeof referenceMoveCaptureLayer.setBounds === 'function') referenceMoveCaptureLayer.setBounds(referenceRectangleBounds);
+        const points = referenceLatLngs(radiusReferenceSizeMeters);
+        radiusReferenceShapeLayer?.setLatLngs(points);
+        referenceMoveCaptureLayer?.setLatLngs(points);
         if (radiusReferenceCenterMarker && typeof radiusReferenceCenterMarker.setLatLng === 'function') radiusReferenceCenterMarker.setLatLng(radiusReferenceCenter);
         referenceResizeHandles.forEach((marker) => {
           const side = marker && marker.options ? marker.options.azReferenceSide : '';
           if (!side || side === skipHandleSide) return;
           const target = referenceRectangleHandleLatLng(side);
           if (target) marker.setLatLng(target);
+        });
+        referenceVertexHandles.forEach((marker, index) => {
+          if (!marker.getLatLng().equals(points[index], 0)) marker.setLatLng(points[index]);
         });
         const center = referenceRectangleBounds.getCenter();
         radiusReferenceSizeMeters = map.distance(center, window.L.latLng(center.lat, referenceRectangleBounds.getEast()));
@@ -1128,7 +1146,7 @@
 
         // v1018 root-cause fix: the map uses preferCanvas:true, so the visible
         // Leaflet rectangle has no DOM/SVG element for pointerdown listeners.
-        // Create a transparent SVG rectangle in its own pane above Canvas lots,
+        // Create a transparent SVG polygon in its own pane above Canvas lots,
         // but below marker resize handles, and use that as the drag hit-area.
         const paneName = 'azLotReferenceMovePane';
         let movePane = map.getPane(paneName);
@@ -1137,7 +1155,7 @@
           movePane.style.zIndex = '590';
         }
         if (!referenceMoveRenderer) referenceMoveRenderer = window.L.svg({ pane: paneName, padding: 0.5 });
-        referenceMoveCaptureLayer = window.L.rectangle(referenceRectangleBounds, {
+        referenceMoveCaptureLayer = window.L.polygon(referenceLatLngs(radiusReferenceSizeMeters), {
           pane: paneName,
           renderer: referenceMoveRenderer,
           color: 'transparent',
@@ -1164,6 +1182,8 @@
         let pointerId = null;
         let startLatLng = null;
         let startBounds = null;
+        let startVertices = null;
+        let moved = false;
         let mapDraggingWasEnabled = false;
 
         const finish = (cancelled = false) => {
@@ -1182,9 +1202,10 @@
               window.L.latLng(startBounds.south, startBounds.west),
               window.L.latLng(startBounds.north, startBounds.east)
             );
+            referenceVertices = startVertices;
           }
           refreshReferenceRectangleVisual('');
-          if (!cancelled) {
+          if (moved) {
             setStatus(status, 'Petak dialihkan. Mengemas kini pilihan lot...', 'loading');
             void applyReferenceSelection();
           }
@@ -1197,6 +1218,12 @@
           try { current = map.mouseEventToLatLng(event); } catch (_) { return; }
           const dLat = Number(current.lat) - Number(startLatLng.lat);
           const dLng = Number(current.lng) - Number(startLatLng.lng);
+          if (!moved) {
+            if (map.latLngToContainerPoint(current).distanceTo(map.latLngToContainerPoint(startLatLng)) < 2) return;
+            moved = true;
+            clearSummary();
+          }
+          if (startVertices) referenceVertices = startVertices.map(({lat, lng}) => window.L.latLng(lat + dLat, lng + dLng));
           referenceRectangleBounds = window.L.latLngBounds(
             window.L.latLng(startBounds.south + dLat, startBounds.west + dLng),
             window.L.latLng(startBounds.north + dLat, startBounds.east + dLng)
@@ -1215,7 +1242,7 @@
         };
 
         const onPointerDown = (event) => {
-          if (!radiusReferenceFinalized || referenceShape !== 'square') return;
+          if (!radiusReferenceFinalized || referenceShape !== 'square' || operationController || event.ctrlKey) return;
           if (event.pointerType !== 'touch' && event.pointerType !== 'pen' && Number(event.button) !== 0) return;
           let latlng;
           try { latlng = map.mouseEventToLatLng(event); } catch (_) { return; }
@@ -1225,6 +1252,8 @@
           pointerId = event.pointerId;
           startLatLng = latlng;
           startBounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
+          startVertices = referenceVertices;
+          moved = false;
           element.classList.add('is-moving');
           try { if (element.setPointerCapture && pointerId != null) element.setPointerCapture(pointerId); } catch (_) {}
           try { mapDraggingWasEnabled = Boolean(map.dragging && map.dragging.enabled()); } catch (_) { mapDraggingWasEnabled = false; }
@@ -1266,6 +1295,121 @@
         refreshReferenceRectangleVisual(side);
       }
 
+      function removeReferenceVertexHandles() {
+        referenceVertexHandles.forEach((marker) => map.removeLayer(marker));
+        referenceVertexHandles = [];
+      }
+
+      function setReferenceVertices(points) {
+        if (!referenceVertices) {
+          removeReferenceResizeHandles();
+          if (radiusReferenceCenterMarker) map.removeLayer(radiusReferenceCenterMarker);
+          radiusReferenceCenterMarker = null;
+        }
+        referenceVertices = points;
+        referenceRectangleBounds = window.L.latLngBounds(points);
+        refreshReferenceRectangleVisual('', true);
+      }
+
+      function vertexOrientation(a, b, c) {
+        const area = (b.lng - a.lng) * (c.lat - a.lat) - (b.lat - a.lat) * (c.lng - a.lng);
+        return Math.abs(area) < 1e-14 ? 0 : Math.sign(area);
+      }
+
+      function referenceEdgesIntersect(a, b, c, d) {
+        const separated = (key) => Math.max(a[key], b[key]) < Math.min(c[key], d[key])
+          || Math.max(c[key], d[key]) < Math.min(a[key], b[key]);
+        return !separated('lng') && !separated('lat')
+          && vertexOrientation(a, b, c) * vertexOrientation(a, b, d) <= 0
+          && vertexOrientation(c, d, a) * vertexOrientation(c, d, b) <= 0;
+      }
+
+      function isValidReferenceVertex(points, index) {
+        const count = points.length;
+        const previous = (index + count - 1) % count;
+        const next = (index + 1) % count;
+        if (map.distance(points[previous], points[index]) < 0.02
+          || map.distance(points[index], points[next]) < 0.02
+          || signedReferenceArea(points) < 0.01) return false;
+
+        for (const pivot of [previous, index, next]) {
+          const a = points[(pivot + count - 1) % count], b = points[pivot], c = points[(pivot + 1) % count];
+          if (!vertexOrientation(a, b, c) && (a.lng - b.lng) * (c.lng - b.lng) + (a.lat - b.lat) * (c.lat - b.lat) > 0) {
+            return false;
+          }
+        }
+        for (const [from, to] of [[previous, index], [index, next]]) {
+          for (let edge = 0; edge < count; edge++) {
+            const end = (edge + 1) % count;
+            if (edge === from || edge === to || end === from || end === to) continue;
+            if (referenceEdgesIntersect(points[from], points[to], points[edge], points[end])) return false;
+          }
+        }
+        return true;
+      }
+
+      function createReferenceVertexHandles() {
+        removeReferenceVertexHandles();
+        const icon = window.L.divIcon({
+          className: 'az-lot-reference-resize-icon az-lot-reference-vertex',
+          html: '<span aria-hidden="true"></span>', iconSize: [22, 22], iconAnchor: [11, 11]
+        });
+        referenceLatLngs(radiusReferenceSizeMeters).forEach((point, index) => {
+          const marker = window.L.marker(point, {
+            icon, draggable: true, keyboard: false, autoPan: false, zIndexOffset: 50,
+            bubblingMouseEvents: false, title: `Seret bucu ${index + 1} untuk ubah bentuk`
+          }).addTo(map);
+          marker.on('dragstart', clearSummary);
+          marker.on('drag', () => {
+            const original = referenceLatLngs(radiusReferenceSizeMeters);
+            const next = original.slice();
+            next[index] = marker.getLatLng();
+            if (isValidReferenceVertex(next, index)) setReferenceVertices(next);
+            else marker.setLatLng(original[index]);
+          });
+          marker.on('dragend', () => void applyReferenceSelection());
+          referenceVertexHandles.push(marker);
+        });
+      }
+
+      function insertReferenceVertex(event) {
+        if (!event.ctrlKey || event.button !== 0 || !radiusReferenceFinalized || referenceShape !== 'square'
+          || activeDrawType || operationController || event.target.closest('.leaflet-control, .az-lot-reference-vertex')) return;
+        const points = referenceLatLngs(radiusReferenceSizeMeters);
+        const click = map.mouseEventToContainerPoint(event);
+        const screen = points.map((point) => map.latLngToContainerPoint(point));
+        let closest = null;
+        let hitDistance = 14;
+        for (let i = 0; i < screen.length; i++) {
+          const a = screen[i], b = screen[(i + 1) % screen.length];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const length = Math.hypot(dx, dy);
+          if (length < 16) continue;
+          const fraction = ((click.x - a.x) * dx + (click.y - a.y) * dy) / length ** 2;
+          if (fraction * length < 8 || (1 - fraction) * length < 8) continue;
+          const distance = Math.hypot(click.x - a.x - fraction * dx, click.y - a.y - fraction * dy);
+          if (distance >= hitDistance) continue;
+          hitDistance = distance;
+          closest = { index: i, fraction };
+        }
+        if (!closest) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (points.length >= 999) {
+          setStatus(status, 'Kawasan sudah mencapai had 999 bucu.', 'error');
+          return;
+        }
+        const { index, fraction } = closest;
+        const a = points[index], b = points[(index + 1) % points.length];
+        const next = points.slice();
+        next.splice(index + 1, 0, window.L.latLng(a.lat + fraction * (b.lat - a.lat), a.lng + fraction * (b.lng - a.lng)));
+        // Clear the old handles before redrawing: their indices change after insertion.
+        removeReferenceVertexHandles();
+        setReferenceVertices(next);
+        createReferenceVertexHandles();
+        void applyReferenceSelection();
+      }
+
       function createReferenceResizeHandles() {
         removeReferenceResizeHandles();
         if (!map || referenceShape !== 'square' || !referenceRectangleBounds || !referenceRectangleBounds.isValid()) return;
@@ -1275,6 +1419,7 @@
           const vertical = side === 'west' || side === 'east';
           const icon = window.L.divIcon({ className: `az-lot-reference-resize-icon ${vertical ? 'is-vertical' : 'is-horizontal'}`, html: '<span aria-hidden="true"></span>', iconSize: vertical ? [10, 28] : [28, 10], iconAnchor: vertical ? [5, 14] : [14, 5] });
           const marker = window.L.marker(point, { icon, draggable: true, keyboard: false, bubblingMouseEvents: false, riseOnHover: true, azReferenceSide: side, title: vertical ? 'Seret kiri/kanan untuk laras petak' : 'Seret atas/bawah untuk laras petak' }).addTo(map);
+          marker.on('dragstart', clearSummary);
           marker.on('drag', (event) => {
             updateRectangleEdgeFromDrag(side, event.target.getLatLng());
             const snap = referenceRectangleHandleLatLng(side);
@@ -1295,8 +1440,9 @@
         const shapeOptions = { color: '#0284c7', weight: 2, dashArray: '7 5', fillColor: '#38bdf8', fillOpacity: 0.10, interactive: referenceShape === 'square', bubblingMouseEvents: true, className: referenceShape === 'square' ? 'az-lot-reference-shape' : '' };
         if (referenceShape === 'square') {
           referenceRectangleBounds = squareBoundsFromCenterSize(radiusReferenceCenter, radiusReferenceSizeMeters);
-          if (!radiusReferenceShapeLayer) radiusReferenceShapeLayer = window.L.rectangle(referenceRectangleBounds, shapeOptions).addTo(map);
-          else if (typeof radiusReferenceShapeLayer.setBounds === 'function') radiusReferenceShapeLayer.setBounds(referenceRectangleBounds);
+          const points = referenceLatLngs(radiusReferenceSizeMeters);
+          if (!radiusReferenceShapeLayer) radiusReferenceShapeLayer = window.L.polygon(points, shapeOptions).addTo(map);
+          else radiusReferenceShapeLayer.setLatLngs(points);
         } else if (!radiusReferenceShapeLayer) {
           radiusReferenceShapeLayer = window.L.circle(radiusReferenceCenter, { ...shapeOptions, radius: Math.max(1, radiusReferenceSizeMeters) }).addTo(map);
         } else {
@@ -1310,6 +1456,7 @@
           setReferenceDrawingCursor(false);
           if (referenceShape === 'square') {
             createReferenceResizeHandles();
+            createReferenceVertexHandles();
             enableReferenceRectangleMove();
           }
           updateRadiusReferenceReadout(radiusReferenceSizeMeters);
@@ -1888,7 +2035,7 @@
         const controller = new AbortController();
         estimateController = controller;
         setStatus(status, 'Menyemak lot dan keluasan syit dalam kawasan pilihan...', 'loading');
-        const payload = { productCode, stateCode: activeStateCode, geometry, selectionMode: source === 'reference' ? 'reference' : 'manual' };
+        const payload = { productCode, stateCode: activeStateCode, geometry, selectionMode: source === 'reference' && !referenceVertices ? 'reference' : 'manual' };
         const requestEstimate = () => postJson('/api/jupem-lot-selection/estimate', payload, '', controller.signal);
         try {
           let result;
@@ -2330,6 +2477,7 @@
         setStatus(status, 'Offset diubah. Tekan Pilih Lot Laluan untuk mengira semula.', '');
       }));
       routeApplyButton.addEventListener('click', applyLotRoute);
+      canvas.addEventListener('click', insertReferenceVertex, true);
       [circleShapeButton, squareShapeButton].forEach((button) => {
         if (!button) return;
         button.addEventListener('click', () => {
@@ -2366,8 +2514,10 @@
         if (!selectedGeometry || !estimate || addButton.disabled) return;
         const preparedGeometry = selectedGeometry;
         const preparedStateCode = activeStateCode;
-        const preparedMode = selectionSource === 'reference' ? 'reference' : 'manual';
+        const preparedMode = selectionSource === 'reference' && !referenceVertices ? 'reference' : 'manual';
         routeTools.disabled = true;
+        const referenceHandles = [...referenceResizeHandles, ...referenceVertexHandles];
+        referenceHandles.forEach((marker) => marker.dragging.disable());
         addButton.disabled = true;
         addButton.classList.remove('is-cart-success');
         addButton.textContent = 'Mendapatkan lot pilihan...';
@@ -2487,6 +2637,9 @@
         } finally {
           operationController = null;
           routeTools.disabled = false;
+          if (!settled) referenceHandles.forEach((marker) => {
+            if (map.hasLayer(marker)) marker.dragging.enable();
+          });
         }
       });
     });
