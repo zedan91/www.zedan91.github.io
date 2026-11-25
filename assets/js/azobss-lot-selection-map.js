@@ -11,6 +11,7 @@
   const LEAFLET_DRAW_JS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js';
   const LEAFLET_DRAW_CSS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css';
   const CORRIDOR_MODULE = '/assets/js/azobss-lot-corridor.js?v=1620';
+  const ESTIMATE_RETRY_DELAYS_MS = [1200, 2400];
   let libraryPromise = null;
   let lotFocusOpenSerial = 0;
   let lotFocusPrefetchController = null;
@@ -1891,16 +1892,18 @@
         const requestEstimate = () => postJson('/api/jupem-lot-selection/estimate', payload, '', controller.signal);
         try {
           let result;
-          try {
-            result = await requestEstimate();
-          } catch (error) {
-            if (controller.signal.aborted || (!error.retryable && error.name !== 'TypeError')) throw error;
-            setStatus(status, 'Sambungan peta terputus. Sedang cuba semula kiraan lot...', 'loading');
-            await new Promise((resolve) => window.setTimeout(resolve, 1200));
-            if (controller.signal.aborted) return;
-            result = await requestEstimate();
+          for (let attempt = 0; !controller.signal.aborted; attempt += 1) {
+            try {
+              result = await requestEstimate();
+              break;
+            } catch (error) {
+              const delay = ESTIMATE_RETRY_DELAYS_MS[attempt];
+              if (controller.signal.aborted || delay === undefined || (!error.retryable && error.name !== 'TypeError')) throw error;
+              setStatus(status, `Sambungan peta terputus. Sedang cuba semula kiraan lot (${attempt + 1}/${ESTIMATE_RETRY_DELAYS_MS.length})...`, 'loading');
+              await new Promise((resolve) => window.setTimeout(resolve, delay));
+            }
           }
-          if (estimateController !== controller) return;
+          if (!result || estimateController !== controller) return;
           estimate = result;
           const previousStateCode = activeStateCode;
           activeStateCode = String(estimate.stateCode || activeStateCode).padStart(2, '0');
