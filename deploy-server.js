@@ -12425,10 +12425,47 @@ async function azobssJupemArcGisJson(serviceUrl, params, auth, timeoutMs = 30000
       "Referer": "https://ebiz.jupem.gov.my/PetaInteraktif"
     })
   }));
-  if (!response.ok) throw new Error(`JUPEM ArcGIS returned HTTP ${response.status}.`);
+  if (!response.ok) {
+    throw Object.assign(new Error(`JUPEM ArcGIS returned HTTP ${response.status}.`), { httpStatus: response.status });
+  }
   const payload = await response.json();
-  if (payload && payload.error) throw new Error(payload.error.message || `JUPEM ArcGIS error ${payload.error.code || ""}.`);
+  if (payload && payload.error) {
+    throw Object.assign(new Error(payload.error.message || `JUPEM ArcGIS error ${payload.error.code || ""}.`), {
+      arcgisCode: Number(payload.error.code)
+    });
+  }
   return payload;
+}
+
+const AZOBSS_JUPEM_LOT_READ_RETRY_MS = [600, 1500];
+
+function azobssLotReadRetryable(error) {
+  return error?.name === "TimeoutError"
+    || [408, 429, 500, 502, 503, 504].includes(error?.httpStatus)
+    || [408, 429, 502, 503, 504].includes(error?.arcgisCode)
+    || azobssIsTransientJupemError(error);
+}
+
+async function azobssReadLotDataWithRetry(read, step, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await read(Math.max(1, deadline - Date.now()));
+    } catch (error) {
+      const delay = AZOBSS_JUPEM_LOT_READ_RETRY_MS[attempt];
+      if (!azobssLotReadRetryable(error) || delay === undefined || Date.now() + delay >= deadline) throw error;
+      console.warn("JUPEM cadastral read will retry:", step, attempt + 1, error.cause?.code || error.message);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+function azobssQueryLotData(layerUrl, params, auth, step, timeoutMs = 30000) {
+  return azobssReadLotDataWithRetry(
+    (remainingMs) => azobssJupemArcGisJson(`${layerUrl}/query`, params, auth, remainingMs),
+    step,
+    timeoutMs
+  );
 }
 
 async function azobssQueryLotObjectIds(config, geometry, auth) {
@@ -12444,19 +12481,20 @@ async function azobssQueryLotObjectIds(config, geometry, auth) {
   // ArcGIS MapServer query supports esriSpatialRelRelation + relationParam;
   // retain Intersects as a compatibility fallback and verify again locally.
   try {
-    return await azobssJupemArcGisJson(`${layerUrl}/query`, {
+    return await azobssQueryLotData(layerUrl, {
       ...common,
       spatialRel: "esriSpatialRelRelation",
       relationParam: "T********",
       returnIdsOnly: "true"
-    }, auth);
+    }, auth, "lot IDs");
   } catch (error) {
+    if (azobssLotReadRetryable(error)) throw error;
     console.warn("JUPEM positive-area relation query unavailable; using exact local fallback:", error && (error.message || error));
-    return await azobssJupemArcGisJson(`${layerUrl}/query`, {
+    return await azobssQueryLotData(layerUrl, {
       ...common,
       spatialRel: "esriSpatialRelIntersects",
       returnIdsOnly: "true"
-    }, auth);
+    }, auth, "lot IDs (intersects)");
   }
 }
 
@@ -12482,12 +12520,12 @@ async function azobssQueryLotFeatureSet(config, geometry, auth, knownIdResult, o
   let fields = [];
   let geometryType = "esriGeometryPolygon";
   for (let offset = 0; offset < objectIds.length; offset += 200) {
-    const batch = await azobssJupemArcGisJson(`${layerUrl}/query`, {
+    const batch = await azobssQueryLotData(layerUrl, {
       objectIds: objectIds.slice(offset, offset + 200).join(","),
       outFields: "*",
       returnGeometry: "true",
       outSR: azobssArcGisOutSpatialReference(outputSpatialReference)
-    }, auth, 45000);
+    }, auth, "lot geometry", 45000);
     if (!fields.length && Array.isArray(batch.fields)) fields = batch.fields;
     if (batch.geometryType) geometryType = batch.geometryType;
     if (Array.isArray(batch.features)) features.push(...batch.features);
@@ -12532,8 +12570,8 @@ async function azobssDetectLotMapConfig(productCode, requestedStateCode, geometr
 }
 
 async function azobssQueryLotSheets(config, geometry, auth) {
-  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.sheetLayer}/query`;
-  const result = await azobssJupemArcGisJson(layerUrl, {
+  const layerUrl = `https://ebiz.jupem.gov.my/arcgis/rest/services/Kadaster/Produk_Kadaster/MapServer/${config.sheetLayer}`;
+  const result = await azobssQueryLotData(layerUrl, {
     geometry: JSON.stringify(geometry),
     geometryType: "esriGeometryPolygon",
     inSR: "4326",
@@ -12541,7 +12579,7 @@ async function azobssQueryLotSheets(config, geometry, auth) {
     outFields: "*",
     returnGeometry: "true",
     outSR: "4326"
-  }, auth);
+  }, auth, "map sheets");
   return Array.isArray(result.features) ? result.features : [];
 }
 
@@ -12893,7 +12931,7 @@ async function azobssEstimateLotSelection(productCode, stateCode, rawGeometry, o
   const strictSelectionGeometry = selectionMode === "reference"
     ? azobssLotInsetReferenceGeometry(geometry, AZOBSS_REFERENCE_INSET_TOLERANCE_M)
     : geometry;
-  const auth = await azobssGetJupemMapAuth(false);
+  const auth = await azobssReadLotDataWithRetry((remainingMs) => azobssGetJupemMapAuth(false, remainingMs), "map session", 40000);
   let idResult = await azobssQueryLotObjectIds(config, geometry, auth);
   if (!Array.isArray(idResult.objectIds) || !idResult.objectIds.length) {
     const detected = await azobssDetectLotMapConfig(productCode, stateCode, geometry, auth);
@@ -14022,7 +14060,7 @@ function azobssVerifiedLotCheckout(rawItem, productType, negeri, itemCode) {
   return { ...payload, variant: pricing.variant, amount: pricing.amount, downloadUrl };
 }
 
-async function azobssGetJupemMapAuth(force = false) {
+async function azobssGetJupemMapAuth(force = false, timeoutMs) {
   const now = Date.now();
   if (!force && azobssJupemMapAuthCache.token && azobssJupemMapAuthCache.cookie && azobssJupemMapAuthCache.expiresAt > now) {
     return azobssJupemMapAuthCache;
@@ -14030,16 +14068,19 @@ async function azobssGetJupemMapAuth(force = false) {
   if (!force && azobssJupemMapAuthPending) return azobssJupemMapAuthPending;
 
   azobssJupemMapAuthPending = (async () => {
+    const readSignal = timeoutMs ? AbortSignal.timeout(timeoutMs) : null;
     const mapUrl = "https://ebiz.jupem.gov.my/PetaInteraktif?no=1&type=bm&c=pt";
     const pageResponse = await fetch(mapUrl, azJupemFetchOptions({
       redirect: "follow",
-      signal: AbortSignal.timeout(20000),
+      signal: readSignal || AbortSignal.timeout(20000),
       headers: azobssJupemBaseHeaders({
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Referer": "https://ebiz.jupem.gov.my/"
       })
     }));
-    if (!pageResponse.ok) throw new Error(`JUPEM map session returned HTTP ${pageResponse.status}`);
+    if (!pageResponse.ok) {
+      throw Object.assign(new Error(`JUPEM map session returned HTTP ${pageResponse.status}`), { httpStatus: pageResponse.status });
+    }
 
     const cookie = azobssExtractCookieHeader(pageResponse.headers);
     const html = await pageResponse.text();
@@ -14051,7 +14092,7 @@ async function azobssGetJupemMapAuth(force = false) {
     const tokenResponse = await fetch("https://ebiz.jupem.gov.my/PetaInteraktif/GetArcGISToken", azJupemFetchOptions({
       method: "POST",
       redirect: "follow",
-      signal: AbortSignal.timeout(20000),
+      signal: readSignal || AbortSignal.timeout(20000),
       headers: azobssJupemBaseHeaders({
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -14062,7 +14103,9 @@ async function azobssGetJupemMapAuth(force = false) {
       }),
       body: body.toString()
     }));
-    if (!tokenResponse.ok) throw new Error(`JUPEM map token returned HTTP ${tokenResponse.status}`);
+    if (!tokenResponse.ok) {
+      throw Object.assign(new Error(`JUPEM map token returned HTTP ${tokenResponse.status}`), { httpStatus: tokenResponse.status });
+    }
 
     const payload = await tokenResponse.json();
     if (!payload || !payload.success || !payload.token) throw new Error("JUPEM ArcGIS token is unavailable");
@@ -24714,6 +24757,7 @@ async function handler(req, res) {
           ok: true,
           server: "AZOBSS Backend Running",
           jupemStoreVersion: 36,
+          jupemSelectionReadRetries: AZOBSS_JUPEM_LOT_READ_RETRY_MS.length,
           jupemSelectionReady: Boolean(
             String(process.env.JUPEM_EBIZ_USERNAME || "").trim() &&
             String(process.env.JUPEM_EBIZ_PASSWORD || "")
@@ -25471,13 +25515,15 @@ async function handler(req, res) {
           filename: `${publicResult.productType}-${job.jobId}.zip`
         }), "application/json", { "Cache-Control": "no-store" });
       } catch (error) {
-        const message = error && error.name === "AbortError"
+        const retryable = azobssLotReadRetryable(error);
+        const retryButton = preparing ? "Sediakan & Tambah ke Troli" : "butang pilihan lot";
+        const message = error && (error.name === "AbortError" || error.name === "TimeoutError")
           ? "Sambungan server peta mengambil masa terlalu lama. Sila cuba lagi."
-          : (azobssIsTransientJupemError(error)
-              ? "Sambungan server peta terputus sementara selepas beberapa percubaan. Sila tekan semula Sediakan & Tambah ke Troli."
+          : (retryable
+              ? `Sambungan server peta terputus sementara. Sila tekan semula ${retryButton}.`
               : (error.message || "Pilihan Lot Kadaster tidak dapat diproses."));
         console.error("JUPEM lot selection failed:", error && (error.stack || error.message || error));
-        return send(res, /invalid|missing|outside|unsupported|tidak ditemui|tiada lot|melebihi/i.test(message) ? 400 : 502, JSON.stringify({ ok: false, error: message }), "application/json");
+        return send(res, /invalid|missing|outside|unsupported|tidak ditemui|tiada lot|melebihi/i.test(message) ? 400 : 502, JSON.stringify({ ok: false, error: message, retryable }), "application/json");
       }
     }
 

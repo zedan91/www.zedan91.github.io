@@ -546,7 +546,12 @@
       body: JSON.stringify(payload)
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok) throw new Error(data.error || 'Pilihan tidak dapat diproses.');
+    if (!response.ok || !data.ok) {
+      const legacyTransient = response.status === 502 && /^Sambungan server peta (?:terputus sementara|mengambil masa terlalu lama)/i.test(String(data.error || ''));
+      throw Object.assign(new Error(data.error || 'Pilihan tidak dapat diproses.'), {
+        retryable: data.retryable === true || legacyTransient
+      });
+    }
     return data;
   }
 
@@ -1882,13 +1887,19 @@
         const controller = new AbortController();
         estimateController = controller;
         setStatus(status, 'Menyemak lot dan keluasan syit dalam kawasan pilihan...', 'loading');
+        const payload = { productCode, stateCode: activeStateCode, geometry, selectionMode: source === 'reference' ? 'reference' : 'manual' };
+        const requestEstimate = () => postJson('/api/jupem-lot-selection/estimate', payload, '', controller.signal);
         try {
-          const result = await postJson('/api/jupem-lot-selection/estimate', {
-            productCode,
-            stateCode: activeStateCode,
-            geometry: selectedGeometry,
-            selectionMode: source === 'reference' ? 'reference' : 'manual'
-          }, '', controller.signal);
+          let result;
+          try {
+            result = await requestEstimate();
+          } catch (error) {
+            if (controller.signal.aborted || (!error.retryable && error.name !== 'TypeError')) throw error;
+            setStatus(status, 'Sambungan peta terputus. Sedang cuba semula kiraan lot...', 'loading');
+            await new Promise((resolve) => window.setTimeout(resolve, 1200));
+            if (controller.signal.aborted) return;
+            result = await requestEstimate();
+          }
           if (estimateController !== controller) return;
           estimate = result;
           const previousStateCode = activeStateCode;
@@ -1922,7 +1933,7 @@
           clearSummary();
           let message = error.message || 'Kawasan pilihan tidak dapat disemak.';
           if (source === 'corridor' || source === 'imported-area') {
-            message = message.replace(/Sila tekan semula Sediakan & Tambah ke Troli\./i, `Tekan ${routeApplyButton.textContent} untuk cuba lagi.`);
+            message = message.replace(/Sila tekan semula (?:Sediakan & Tambah ke Troli|butang pilihan lot)\./i, `Tekan ${routeApplyButton.textContent} untuk cuba lagi.`);
             if (/^failed to execute query\.?$/i.test(message.trim())) {
               message = `Pelayan kadaster gagal menyemak kawasan ini. Tekan ${routeApplyButton.textContent} untuk cuba lagi.`;
             }
