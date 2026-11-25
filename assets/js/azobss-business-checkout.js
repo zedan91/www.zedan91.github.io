@@ -2,7 +2,7 @@
   'use strict';
 
   const API = 'https://azobss-backend.onrender.com';
-  const providers = { chip: 'Pay with CHIP', 'bank-transfer': 'DuitNow QR / Bank Transfer', bank: 'ToyyibPay (Backup)', stripe: 'Stripe (Backup)' };
+  const providers = { chip: 'Pay by FPX or DuitNow QR', 'bank-transfer': 'DuitNow QR / Bank Transfer', bank: 'ToyyibPay (Backup)', stripe: 'Stripe (Backup)' };
   const checkoutHosts = { chip: 'gate.chip-in.asia', stripe: 'checkout.stripe.com', bank: 'toyyibpay.com' };
   const make = (tag, text) => {
     const element = document.createElement(tag);

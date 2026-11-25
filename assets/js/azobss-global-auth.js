@@ -1924,7 +1924,7 @@ async function loadAzobssMembershipPanel(){
 async function buyAzobssMembership(packageId){
   const err=$('profileSettingsError');if(!auth.currentUser){if(err)err.textContent='Please login again before purchasing Membership.';return;}
   try {
-    if (!window.AZOBSSBusinessCheckout) await import('/assets/js/azobss-business-checkout.js?v=1610');
+    if (!window.AZOBSSBusinessCheckout) await import('/assets/js/azobss-business-checkout.js?v=1615');
     if (err) err.textContent = '';
     const payments = window.AZOBSSBusinessCheckout;
     await payments.choose('Pay for AZOBSS Membership', async paymentMethod => {
@@ -9594,7 +9594,7 @@ try { window.dispatchEvent(new CustomEvent('azobss:global-auth-ready', { detail:
   if(window.__AZOBSS_ADMIN_VERSION_BADGE_1298__) return;
   window.__AZOBSS_ADMIN_VERSION_BADGE_1298__ = true;
 
-  var VERSION_TEXT = 'v1614';
+  var VERSION_TEXT = 'v1615';
   var BADGE_ID = 'azobssAdminVersionBadge1298';
   var STYLE_ID = 'azobssAdminVersionBadgeStyle1298';
 
