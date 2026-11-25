@@ -1,7 +1,7 @@
 {
   "name": "azobss-docs",
   "description": "AZOBSS documentation, PC services, PA downloader, digital tools, and AutoCAD LISP.",
-  "version": "1.0.1615",
+  "version": "1.0.1616",
   "private": true,
   "homepage": ".",
   "keywords": [
@@ -27,6 +27,9 @@
     "firebase-admin": "^13.0.0",
     "nodemailer": "^6.9.16",
     "pdfkit": "0.15.0",
+    "exceljs": "4.4.0",
+    "pdfjs-dist": "4.10.38",
+    "yauzl": "3.2.0",
     "sharp": "0.34.5",
     "undici": "6.21.3",
     "qrcode": "1.5.4",

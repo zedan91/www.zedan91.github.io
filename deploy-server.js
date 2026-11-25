@@ -17032,6 +17032,7 @@ async function azStripeDigitalRequest(pathname, options = {}) {
 }
 const { createBusinessPayments, paymentError: azBusinessPaymentError } = require('./lib/azobss-business-payments.cjs');
 const { CHIP_SECTIONS } = require('./lib/azobss-chip-collect.cjs');
+const { financeRoute } = require('./lib/azobss-finance-route.cjs');
 const { createChipAdminTest } = require('./lib/azobss-chip-admin-test.cjs');
 const azChipAdminTest = createChipAdminTest({
   getDb: getAzobssBackendDb,
@@ -21203,6 +21204,14 @@ async function handler(req, res) {
     if (pathname === "/api/software-stats/like" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-like", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats/rate" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-rate", 40, 10 * 60 * 1000)) return;
     if (pathname === "/api/software-stats/admin-set" && req.method === "POST" && azRateLimitOrSend(req, res, "software-stats-admin-set", 10, 10 * 60 * 1000)) return;
+    if (pathname.startsWith("/api/admin/finance/")) {
+      if (azRateLimitOrSend(req,res,"admin-finance",120,5*60*1000)) return;
+      return financeRoute(req,res,{
+        pathname,parsed,getDb:getAzobssBackendDb,adminIdentity:azAdminIdentityFromRequest,
+        readBinary:readBinaryBody,send,secureHeaders:azSecurityHeaders,PDFDocument,
+        secret:process.env.AZOBSS_FINANCE_DATA_KEY || process.env.SOLATTIME_ORDER_CIPHER_KEY
+      });
+    }
     if (pathname === "/api/admin/audit-logs" && req.method === "GET" && azRateLimitOrSend(req, res, "admin-audit-read", 60, 60 * 1000)) return;
     if (pathname === "/api/admin/audit-log" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-audit-write", 80, 10 * 60 * 1000)) return;
     if (pathname === "/api/admin/user/rename" && req.method === "POST" && azRateLimitOrSend(req, res, "admin-user-rename", 20, 10 * 60 * 1000)) return;

@@ -48,6 +48,8 @@ services:
         sync: false
       - key: CHIP_TEST_BRAND_ID
         sync: false
+      - key: AZOBSS_FINANCE_DATA_KEY
+        sync: false
       - key: SOLATTIME_ADMIN_TOKEN
         sync: false
       - key: SOLATTIME_ORDER_CIPHER_KEY

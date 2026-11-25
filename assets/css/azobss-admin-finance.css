@@ -1,0 +1,43 @@
+#businessfinance {max-width:1500px;margin-inline:auto}
+#businessfinance h2,#businessfinance h3 {margin:0 0 .45rem;color:#edf6ff}
+#businessfinance p {margin:.15rem 0 .75rem}
+#businessfinance small,#businessfinance .finance-details dt {color:#acbdd2}
+#businessfinance .finance-header,.finance-actions {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#businessfinance .finance-header {justify-content:space-between;margin-bottom:14px}
+#businessfinance .finance-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#businessfinance .finance-card {background:#142233;border:1px solid #29435e;border-radius:13px;padding:16px;min-width:0;margin-bottom:12px;color:#e1edf9}
+#businessfinance .finance-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#businessfinance label {display:grid;gap:4px;font-size:.85rem}
+#businessfinance input:not([type=checkbox]),#businessfinance select,#businessfinance textarea {box-sizing:border-box;width:100%;min-width:0;background:#0d1724;color:#ecf5ff;border:1px solid #45647e;border-radius:7px;padding:8px;color-scheme:dark}
+#businessfinance label:has(input[type=checkbox]) {display:flex;align-items:center;gap:6px}
+#businessfinance .finance-actions {margin-top:8px}
+#businessfinance .finance-actions label {min-width:125px}
+#businessfinance .finance-scroll {overflow:auto}
+#businessfinance table {width:100%;border-collapse:collapse;font-size:.86rem;text-align:left}
+#businessfinance td,#businessfinance th {padding:8px 9px;border-bottom:1px solid #2d435c;vertical-align:top;overflow-wrap:anywhere}
+#businessfinance th {white-space:nowrap;color:#b0cbe7}
+#businessfinance td[data-money] {white-space:nowrap;font-variant-numeric:tabular-nums}
+#businessfinance [data-state=review] {color:#ffda93}
+#businessfinance [data-state=reconciled] {color:#96e5ba}
+#businessfinance [data-error=true] {color:#ffbbab}
+#businessfinance .finance-details {display:grid;grid-template-columns:minmax(100px,auto) minmax(0,1fr);gap:6px 14px;font-size:.9rem}
+#businessfinance .finance-details dd {margin:0;overflow-wrap:anywhere;white-space:pre-wrap;max-height:120px;overflow:auto}
+#businessfinance details {margin:10px 0;border-bottom:1px solid #2d435c;padding-bottom:9px}
+#businessfinance summary {cursor:pointer}
+#businessfinance form .btn {margin-block:6px}
+#businessfinance .finance-list {padding-left:1em;font-size:.88rem}
+#businessfinance .finance-list li {margin:6px 0;overflow-wrap:anywhere}
+#businessfinance .finance-dialog {color:#e1edf9;background:#142233;border:1px solid #45647e;border-radius:14px;width:min(800px,calc(100vw - 32px));max-height:calc(100vh - 32px);padding:18px}
+#businessfinance .finance-dialog::backdrop {background:rgb(5 13 24 / 80%)}
+#businessfinance .finance-dialog form {border-top:1px solid #2d435c;padding-top:10px;margin-top:10px}
+#businessfinance .finance-dialog table input {min-width:88px}
+#businessfinance .finance-dialog table td:first-child input {min-width:130px}
+#businessfinance [hidden] {display:none!important}
+@media(max-width:830px) {
+  #businessfinance .finance-grid {grid-template-columns:1fr;gap:0}
+  #businessfinance .finance-card{padding:11px}
+}
+@media(max-width:500px) {
+  #businessfinance .finance-fields{grid-template-columns:1fr}
+}
+

@@ -1952,6 +1952,7 @@ body[data-dashboard-page="admin"] .topbar{
 <link rel="stylesheet" href="/assets/css/azobss-global-compact-font-more-nav.css?v=1496">
 <script defer src="/assets/js/azobss-more-nav.js?v=1585"></script>
 <link rel="stylesheet" href="/assets/css/azobss-admin-sales-receipts.css?v=1553">
+<link rel="stylesheet" href="/assets/css/azobss-admin-finance.css?v=1616">
 <link rel="stylesheet" href="/assets/css/azobss-admin-business-ops-v1461.css?v=1461">
 
 <style id="az770-admin-service-bookings-style">
@@ -2959,6 +2960,7 @@ body[data-dashboard-page="admin"] .topbar{
     <div class="brand"><div class="logo">A</div><span>AZOBSS Admin</span></div>
     <nav class="nav">
       <div class="nav-group">Main</div>
+      <button data-tab="businessfinance">Business Finance</button>
       <button data-tab="salesreceipts" class="active">🧾 Sales &amp; Receipts <span id="adminPaymentAlertBadge" class="az-nav-badge" hidden>0</span></button>
       <button data-tab="users">👥 Users</button>
       <button data-tab="overview">📊 Dashboard</button>
@@ -3680,6 +3682,147 @@ body[data-dashboard-page="admin"] .topbar{
         </div>
       </div>
     </section>
+
+    <section id="businessfinance" class="section">
+      <header class="finance-header">
+        <div>
+          <h2>Business Finance &amp; Accounting</h2>
+          <p>AZOBSS ENTERPRISE · Maybank account ending 1585 · MYR</p>
+        </div>
+        <button class="btn gray" type="button" data-tab="salesreceipts">Sales &amp; Receipts</button>
+      </header>
+      <div class="finance-grid">
+        <section class="finance-card">
+          <h3>Bank connection</h3>
+          <p>Statement import is available. Bank sync requires an approved read-only connection.</p>
+          <dl class="finance-details">
+            <dt>Last statement import</dt><dd data-finance-import-time>—</dd>
+            <dt>Last successful sync</dt><dd data-finance-sync-time>—</dd>
+          </dl>
+          <div class="finance-actions">
+            <label><input type="checkbox" disabled> Auto Sync</label>
+            <button type="button" class="btn gray" disabled>Sync Now</button>
+          </div>
+        </section>
+        <section class="finance-card">
+          <h3>Import bank statement</h3>
+          <form data-finance-import autocomplete="off">
+            <div class="finance-fields">
+              <label>Statement file<input name="file" type="file" accept=".pdf,.csv,.xlsx" required></label>
+              <label>Statement month (PDF dates without a year)<input name="month" type="month"></label>
+            </div>
+            <small>PDF with selectable text, CSV or XLSX. Up to 5 MB and 140 transactions per file.</small>
+            <div class="finance-actions">
+              <button type="submit" class="btn">Preview</button>
+              <button type="button" class="btn green" data-finance-confirm hidden>Import statement</button>
+            </div>
+          </form>
+        </section>
+      </div>
+      <p data-finance-status role="status" aria-live="polite"></p>
+      <section class="finance-card" data-finance-preview hidden>
+        <h3>Import preview</h3>
+        <p data-preview-summary></p>
+        <div class="finance-scroll"><table>
+          <thead><tr><th>Date</th><th>Time</th><th>Reference</th><th>Description</th><th>Amount</th><th>Running balance</th><th>Status</th></tr></thead>
+          <tbody data-preview-rows></tbody>
+        </table></div>
+      </section>
+      <section class="finance-card">
+        <header class="finance-header">
+          <div><h3>Bank transactions</h3><small>Review categories, match payments and keep supporting documents with the transaction.</small></div>
+          <form class="finance-actions" data-finance-period>
+            <label>Period (YYYY-MM or YYYY)<input name="period" required maxlength="7" placeholder="2026-11" pattern="[0-9]{4}(-[0-9]{2})?"></label>
+            <button type="submit" class="btn gray">Load</button>
+          </form>
+        </header>
+        <div class="finance-scroll">
+          <table>
+            <thead><tr><th>Date / time</th><th>Bank description</th><th>Recipient / reference</th><th>Money in</th><th>Money out</th><th>Status</th><th>Sales &amp; Receipts</th><th></th></tr></thead>
+            <tbody data-finance-rows></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn gray" data-finance-more hidden>Load more</button>
+      </section>
+      <div class="finance-grid">
+        <section class="finance-card">
+          <h3>Reconciliation &amp; reports</h3>
+          <form data-finance-report>
+            <label>Statement ending balance (MYR)<input name="closing" type="number" step="0.01" placeholder="Optional"></label>
+            <div class="finance-actions">
+              <button type="submit" class="btn gray">Calculate</button>
+              <button type="button" class="btn gray" data-finance-export="pdf">PDF</button>
+              <button type="button" class="btn gray" data-finance-export="csv">CSV</button>
+              <button type="button" class="btn gray" data-finance-export="xlsx">Excel</button>
+            </div>
+          </form>
+          <div data-finance-report-result></div>
+        </section>
+        <section class="finance-card">
+          <h3>Records &amp; backup</h3>
+          <details>
+            <summary>Opening balances</summary>
+            <p>Enter balances at the end of the day before the first reporting period.</p>
+            <form data-finance-opening>
+              <div class="finance-fields">
+                <label>As of<input type="date" name="asOf" required></label>
+                <label>Maybank balance<input type="number" step="0.01" name="bank"></label>
+                <label>Other bank balances<input type="number" step="0.01" name="otherBank"></label>
+                <label>Gateway clearing<input type="number" step="0.01" name="clearing"></label>
+                <label>Inventory<input type="number" step="0.01" min="0" name="inventory"></label>
+                <label>Fixed assets at cost<input type="number" step="0.01" min="0" name="fixedAssets"></label>
+                <label>Financing liabilities<input type="number" step="0.01" min="0" name="liabilities"></label>
+              </div>
+              <button type="submit" class="btn gray">Save opening balances</button>
+            </form>
+          </details>
+          <details>
+            <summary>Recent original statements</summary>
+            <ul class="finance-list" data-finance-statements></ul>
+          </details>
+          <details>
+            <summary>Audit log</summary>
+            <button type="button" class="btn gray" data-finance-audit>Load recent audit events</button>
+            <ul class="finance-list" data-finance-audit-rows></ul>
+          </details>
+          <button class="btn gray" type="button" data-finance-backup>Download encrypted backup</button>
+        </section>
+      </div>
+
+      <dialog class="finance-dialog" data-finance-dialog aria-labelledby="financeReviewTitle">
+        <header class="finance-header">
+          <h3 id="financeReviewTitle">Review transaction</h3>
+          <button type="button" class="btn gray" data-finance-close>Close</button>
+        </header>
+        <dl class="finance-details" data-finance-original></dl>
+        <form data-finance-review>
+          <div class="finance-fields">
+            <label>Accounting category<select name="category"></select></label>
+            <label>Supplier or business contact<input name="supplier" maxlength="200"></label>
+          </div>
+          <label>Notes<textarea name="notes" rows="3" maxlength="2400"></textarea></label>
+          <div class="finance-scroll">
+            <table>
+              <thead><tr><th>Item</th><th>Quantity</th><th>Unit price (MYR)</th><th>Item category</th><th></th></tr></thead>
+              <tbody data-finance-items></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn gray" data-finance-add-item>Add line item</button>
+          <label class="finance-check"><input type="checkbox" name="reconciled"> Mark as reconciled</label>
+          <div class="finance-actions">
+            <button type="submit" class="btn green">Save review</button>
+            <button type="button" class="btn gray" data-finance-match>Find matching sale</button>
+          </div>
+        </form>
+        <form data-finance-document>
+          <label>Supporting invoice, receipt or document (PDF, JPG, PNG)<input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required></label>
+          <button type="submit" class="btn gray">Upload document</button>
+          <ul class="finance-list" data-finance-files></ul>
+        </form>
+        <p data-finance-dialog-status role="status"></p>
+      </dialog>
+    </section>
+
 
     <section id="salesreceipts" class="section active">
       <div class="az-admin-subtabs" data-admin-subtabs="sales">
@@ -9047,7 +9190,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1615"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1616"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10608,6 +10751,7 @@ document.addEventListener('click', async function(e){
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script src="/assets/js/azobss-customer-whatsapp-v1542.js?v=1595"></script>
 <script defer src="/assets/js/azobss-admin-business-checkout.js?v=1614"></script>
+<script defer src="/assets/js/azobss-admin-finance.js?v=1616"></script>
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1614" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">
 <script defer src="/assets/js/azobss-admin-tech-delivery.js?v=1577"></script>
