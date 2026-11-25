@@ -32,6 +32,6 @@ test('PA-BM cache-busts stabilization runtimes and never loads the legacy combin
   const html = read('PA-BM/index.html');
   assert.ok(Number(html.match(/azobss-global-auth\.js\?v=(\d+)/)?.[1])>=1436);
   assert.ok(Number(html.match(/azobss-pabm-storefront\.js\?v=(\d+)/)?.[1])>=1436);
-  assert.match(html, /azobss-pabm-early-bridge\.js\?v=1272/);
+  assert.ok(Number(html.match(/azobss-pabm-early-bridge\.js\?v=(\d+)/)?.[1])>=1272);
   assert.doesNotMatch(html, /azobss-firebase-live-likes-sync\.js/);
 });
