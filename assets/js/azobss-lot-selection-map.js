@@ -10,7 +10,7 @@
   const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   const LEAFLET_DRAW_JS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js';
   const LEAFLET_DRAW_CSS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css';
-  const CORRIDOR_MODULE = '/assets/js/azobss-lot-corridor.js?v=1618';
+  const CORRIDOR_MODULE = '/assets/js/azobss-lot-corridor.js?v=1619';
   let libraryPromise = null;
   let lotFocusOpenSerial = 0;
   let lotFocusPrefetchController = null;
@@ -428,8 +428,10 @@
       .az-lot-corridor button:disabled{opacity:.55;cursor:default}
       .az-lot-corridor-fields{margin-top:7px}
       .az-lot-corridor-fields[hidden]{display:none}
-      .az-lot-corridor-fields label{font-size:11px;font-weight:800;color:#e0f2fe}
-      .az-lot-corridor-fields input{box-sizing:border-box;width:100%;min-height:34px;margin-top:4px;padding:4px 7px;border:1px solid #49607e;border-radius:5px;background:#081c2e;color:#fff;font:inherit;font-size:14px}
+      .az-lot-corridor label{font-size:11px;font-weight:800;color:#e0f2fe}
+      .az-lot-corridor input,.az-lot-corridor select{box-sizing:border-box;width:100%;min-height:34px;margin-top:4px;padding:4px 7px;border:1px solid #49607e;border-radius:5px;background:#081c2e;color:#fff;font:inherit;font-size:14px}
+      .az-lot-corridor .az-lot-import-picker{display:block;margin-top:8px}
+      .az-lot-corridor .az-lot-import-picker[hidden]{display:none}
       .az-lot-corridor .az-lot-corridor-apply{width:100%;margin-top:7px;border-color:#38bdf8;background:#0b3a57}
       .az-lot-corridor-note{display:block;margin-top:5px;color:#b9cde2;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
     `;
@@ -644,14 +646,19 @@
                   <div class="az-lot-corridor-row">
                     <button class="az-lot-reference-shape-btn" type="button" data-route-draw>Lukis Laluan</button>
                     <button class="az-lot-reference-shape-btn" type="button" data-route-import>Import KML/KMZ</button>
-                    <input type="file" accept=".kml,.kmz" aria-label="Fail laluan KML atau KMZ" data-route-file hidden>
+                    <input type="file" accept=".kml,.kmz" aria-label="Fail KML atau KMZ" data-route-file hidden>
                   </div>
+                  <label class="az-lot-import-picker" data-route-picker hidden>Garisan atau kawasan dalam fail
+                    <select data-route-select></select>
+                  </label>
                   <div class="az-lot-corridor-fields" data-route-fields hidden>
-                    <div class="az-lot-corridor-row">
-                      <label>Offset kiri (m)<input type="number" min="0" step="any" value="25" inputmode="decimal" data-route-left></label>
-                      <label>Offset kanan (m)<input type="number" min="0" step="any" value="25" inputmode="decimal" data-route-right></label>
+                    <div data-route-offsets>
+                      <div class="az-lot-corridor-row">
+                        <label>Offset kiri (m)<input type="number" min="0" step="any" value="25" inputmode="decimal" data-route-left></label>
+                        <label>Offset kanan (m)<input type="number" min="0" step="any" value="25" inputmode="decimal" data-route-right></label>
+                      </div>
+                      <small class="az-lot-corridor-note">Kiri dan kanan mengikut arah dari titik mula ke titik tamat setiap garisan.</small>
                     </div>
-                    <small class="az-lot-corridor-note">Kiri dan kanan mengikut arah dari titik mula ke titik tamat setiap garisan.</small>
                     <button class="az-lot-reference-shape-btn az-lot-corridor-apply" type="button" data-route-apply>Pilih Lot Laluan</button>
                   </div>
                 </fieldset>
@@ -697,7 +704,10 @@
       const routeDrawButton = routeTools.querySelector('[data-route-draw]');
       const routeImportButton = routeTools.querySelector('[data-route-import]');
       const routeFile = routeTools.querySelector('[data-route-file]');
+      const routePicker = routeTools.querySelector('[data-route-picker]');
+      const routeSelect = routeTools.querySelector('[data-route-select]');
       const routeFields = routeTools.querySelector('[data-route-fields]');
+      const routeOffsets = routeTools.querySelector('[data-route-offsets]');
       const routeLeft = routeTools.querySelector('[data-route-left]');
       const routeRight = routeTools.querySelector('[data-route-right]');
       const routeApplyButton = routeTools.querySelector('[data-route-apply]');
@@ -748,10 +758,11 @@
       let referenceMoveRenderer = null;
       let selectionSource = null;
       let activeDrawType = '';
-      let routeLines = null;
-      let routeLineLayer = null;
+      let routeSelection = null;
+      let routePreviewLayer = null;
       let routeAreaLayer = null;
       let routeRequest = 0;
+      let importedShapes = [];
 
       function formatReferenceDistance(meters) {
         const value = Math.max(0, Number(meters) || 0);
@@ -1901,7 +1912,8 @@
             : '';
           const sourceNotice = source === 'reference'
             ? ` Pemilihan menggunakan ${referenceShape === 'square' ? 'petak' : 'bulatan'} pilihan.`
-            : source === 'corridor' ? ' Pemilihan mengikut kawasan laluan.' : '';
+            : source === 'corridor' ? ' Pemilihan mengikut kawasan laluan.'
+            : source === 'imported-area' ? ' Pemilihan mengikut kawasan yang diimport.' : '';
           const processingTiming = getLotProcessingTiming(estimate.lotCount);
           const timingLabel = processingTiming.learned ? 'Purata proses berdasarkan rekod sebelum ini' : 'Anggaran awal proses';
           setStatus(status, `${formatNumber(estimate.lotCount, 0)} lot disahkan.${stateNotice}${sourceNotice} Harga berdasarkan saiz kawasan pilihan. ${timingLabel}: ${lotProcessingRangeText(processingTiming)}.`, 'success');
@@ -1909,8 +1921,8 @@
           if (estimateController !== controller || error?.name === 'AbortError') return;
           clearSummary();
           let message = error.message || 'Kawasan pilihan tidak dapat disemak.';
-          if (source === 'corridor') {
-            message = message.replace(/Sila tekan semula Sediakan & Tambah ke Troli\./i, 'Tekan Pilih Lot Laluan untuk cuba lagi.');
+          if (source === 'corridor' || source === 'imported-area') {
+            message = message.replace(/Sila tekan semula Sediakan & Tambah ke Troli\./i, `Tekan ${routeApplyButton.textContent} untuk cuba lagi.`);
           }
           setStatus(status, message, 'error');
         } finally {
@@ -1925,67 +1937,142 @@
       function clearRouteArea() {
         if (routeAreaLayer) map.removeLayer(routeAreaLayer);
         routeAreaLayer = null;
-        if (selectionSource === 'corridor') clearSummary();
+        if (selectionSource === 'corridor' || selectionSource === 'imported-area') clearSummary();
       }
 
-      function clearLotRoute() {
+      function clearRoutePreview() {
         routeRequest += 1;
         clearRouteArea();
-        if (routeLineLayer) map.removeLayer(routeLineLayer);
-        routeLineLayer = null;
-        routeLines = null;
+        if (routePreviewLayer) map.removeLayer(routePreviewLayer);
+        routePreviewLayer = null;
+        routeSelection = null;
         routeFields.hidden = true;
       }
 
-      function showLotRoute(lines, fitToRoute) {
+      function clearLotRoute() {
+        clearRoutePreview();
+        importedShapes = [];
+        routeSelect.replaceChildren();
+        routePicker.hidden = true;
+      }
+
+      function routePreview(lines) {
+        const paths = lines.map((line) => line.map(([lng, lat]) => [lat, lng]));
+        const centerline = window.L.polyline(paths, {
+          color: '#f97316', weight: 4, opacity: 0.95, interactive: false
+        });
+        const layer = window.L.featureGroup([centerline]);
+        if (paths.length === 1) {
+          const path = paths[0];
+          [[path[0], 'Mula'], [path[path.length - 1], 'Tamat']].forEach(([point, label]) => {
+            window.L.circleMarker(point, {
+              color: '#7c2d12', weight: 2, fillColor: '#fdba74', fillOpacity: 1, radius: 5, interactive: false
+            }).bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -3] }).addTo(layer);
+          });
+        }
+        return layer;
+      }
+
+      function showRouteSelection(type, coordinates, fit) {
+        clearRoutePreview();
+        clearRadiusReference(true);
+        referenceShape = '';
+        updateReferenceShapeButtons();
+        drawnItems.clearLayers();
+        clearSummary();
+        const isArea = type === 'area';
+        routeSelection = { type, coordinates };
+        routePreviewLayer = (isArea
+          ? window.L.geoJSON({ type: 'MultiPolygon', coordinates }, {
+            interactive: false, style: { color: '#f97316', weight: 2, fillOpacity: 0.12 }
+          })
+          : routePreview(coordinates)).addTo(map);
+        routeOffsets.hidden = isArea;
+        routeApplyButton.textContent = isArea ? 'Pilih Lot Kawasan' : 'Pilih Lot Laluan';
+        routeFields.hidden = false;
+        if (fit) {
+          clearCadastreFocus();
+          map.fitBounds(routePreviewLayer.getBounds(), { padding: [42, 42], maxZoom: 18, animate: false });
+        }
+        const count = formatNumber(coordinates.length, 0);
+        setStatus(status, isArea
+          ? `${count} poligon dipaparkan. Tekan Pilih Lot Kawasan untuk kira lot.`
+          : `${count} laluan dipaparkan. Tetapkan offset, kemudian tekan Pilih Lot Laluan.`, '');
+      }
+
+      function showImportedSelection() {
+        const choice = routeSelect.value;
+        if (!choice) {
+          clearRoutePreview();
+          setStatus(status, 'Pilih garisan atau poligon daripada senarai.', '');
+          return;
+        }
+        const shapes = choice === 'line' || choice === 'area'
+          ? importedShapes.filter((shape) => shape.type === choice)
+          : [importedShapes[Number(choice)]];
+        showRouteSelection(shapes[0].type, shapes.map((shape) => shape.coordinates), true);
+      }
+
+      function showImportedShapes(result) {
         clearLotRoute();
         clearRadiusReference(true);
         referenceShape = '';
         updateReferenceShapeButtons();
         drawnItems.clearLayers();
         clearSummary();
-        routeLines = lines;
-        const paths = lines.map((line) => line.map(([lng, lat]) => [lat, lng]));
-        const centerline = window.L.polyline(paths, {
-          color: '#f97316', weight: 4, opacity: 0.95, interactive: false
-        });
-        routeLineLayer = window.L.featureGroup([centerline]).addTo(map);
-        if (paths.length === 1) {
-          const path = paths[0];
-          [[path[0], 'Mula'], [path[path.length - 1], 'Tamat']].forEach(([point, label]) => {
-            window.L.circleMarker(point, {
-              color: '#7c2d12', weight: 2, fillColor: '#fdba74', fillOpacity: 1, radius: 5, interactive: false
-            }).bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -3] }).addTo(routeLineLayer);
-          });
+        importedShapes = result.shapes;
+        const groups = { line: [], area: [] };
+        importedShapes.forEach((shape, index) => groups[shape.type].push({ shape, index }));
+        const options = [new Option('Pilih garisan atau poligon', '')];
+        let initialChoice = '';
+        for (const [type, label] of [['line', 'Garisan'], ['area', 'Poligon']]) {
+          const entries = groups[type];
+          if (!entries.length) continue;
+          const points = entries.reduce((total, { shape }) => total + (type === 'line' ? shape.coordinates.length
+            : shape.coordinates.reduce((sum, ring) => sum + ring.length, 0)), 0);
+          if (entries.length > 1 && points <= 10000) options.push(new Option(`Semua ${label.toLowerCase()} (${entries.length})`, type));
+          if (!initialChoice && entries.length === 1 && points <= 10000) initialChoice = String(entries[0].index);
+          if (!initialChoice && entries.length > 1 && points <= 1000) initialChoice = type;
+          const group = document.createElement('optgroup');
+          group.label = label;
+          group.append(...entries.map(({ shape, index }, i) => new Option(
+            shape.label ? `${i + 1}. ${shape.label}` : `${label} ${i + 1}`, String(index)
+          )));
+          options.push(group);
         }
-        routeFields.hidden = false;
-        if (fitToRoute) {
-          clearCadastreFocus();
-          map.fitBounds(routeLineLayer.getBounds(), { padding: [42, 42], maxZoom: 18, animate: false });
+        routeSelect.replaceChildren(...options);
+        routeSelect.value = initialChoice;
+        routePicker.hidden = importedShapes.length === 1 && !!initialChoice;
+        showImportedSelection();
+        if (!initialChoice || result.skipped) {
+          const summary = `${formatNumber(groups.line.length, 0)} garisan dan ${formatNumber(groups.area.length, 0)} poligon ditemui.`;
+          const skipped = result.skipped ? ` ${formatNumber(result.skipped, 0)} bentuk dengan koordinat tidak sah diabaikan.` : '';
+          setStatus(status, `${summary}${skipped} ${status.textContent}`, '');
         }
-        const count = formatNumber(lines.length, 0);
-        setStatus(status, `${count} laluan dipaparkan. Tetapkan offset, kemudian tekan Pilih Lot Laluan.`, '');
       }
 
       async function applyLotRoute() {
-        if (!routeLines || operationController) return;
+        if (!routeSelection || operationController) return;
         clearRouteArea();
         const request = ++routeRequest;
         try {
-          const { buildLotCorridor } = await import(CORRIDOR_MODULE);
+          const { buildLotArea, buildLotCorridor } = await import(CORRIDOR_MODULE);
           if (settled || request !== routeRequest || operationController) return;
-          const { polygons, geometry } = buildLotCorridor(routeLines, routeLeft.valueAsNumber, routeRight.valueAsNumber);
+          const { type, coordinates } = routeSelection;
+          const isArea = type === 'area';
+          const { polygons, geometry } = isArea ? buildLotArea(coordinates)
+            : buildLotCorridor(coordinates, routeLeft.valueAsNumber, routeRight.valueAsNumber);
           routeAreaLayer = window.L.geoJSON({ type: 'MultiPolygon', coordinates: polygons }, {
             style: { color: '#0369a1', weight: 2, fillColor: '#38bdf8', fillOpacity: 0.26, interactive: false }
           }).addTo(map);
-          routeLineLayer.bringToFront();
+          if (!isArea) routePreviewLayer.bringToFront();
           if (!map.getBounds().contains(routeAreaLayer.getBounds())) {
             map.fitBounds(routeAreaLayer.getBounds(), { padding: [42, 42], maxZoom: 18, animate: false });
           }
-          await estimateGeometry(geometry, 'corridor');
+          await estimateGeometry(geometry, isArea ? 'imported-area' : 'corridor');
         } catch (error) {
           if (settled || request !== routeRequest) return;
-          setStatus(status, error.message || 'Kawasan laluan tidak dapat dibina.', 'error');
+          setStatus(status, error.message || 'Kawasan pilihan tidak dapat dibina.', 'error');
         }
       }
 
@@ -2082,6 +2169,7 @@
           if (activeDrawType === 'polyline') {
             routeDrawButton.disabled = true;
             routeImportButton.disabled = true;
+            routeSelect.disabled = true;
             routeApplyButton.disabled = true;
             if (radiusReferenceMode) clearRadiusReference(true);
             if (!operationController) setStatus(status, 'Klik titik laluan pada peta. Klik titik terakhir sekali lagi atau tekan Finish untuk tamat.', '');
@@ -2098,13 +2186,15 @@
           activeDrawType = '';
           routeDrawButton.disabled = false;
           routeImportButton.disabled = false;
+          routeSelect.disabled = false;
           routeApplyButton.disabled = false;
         });
         map.on(window.L.Draw.Event.CREATED, (event) => {
           if (event.layerType === 'polyline') {
             if (operationController) return;
             const line = event.layer.getLatLngs().map(({ lng, lat }) => [lng, lat]);
-            showLotRoute([line], false);
+            clearLotRoute();
+            showRouteSelection('line', [line], false);
             return;
           }
           clearLotRoute();
@@ -2200,6 +2290,7 @@
         if (window.matchMedia('(max-width: 760px)').matches) canvas.scrollIntoView({ block: 'start' });
       });
       routeImportButton.addEventListener('click', () => routeFile.click());
+      routeSelect.addEventListener('change', showImportedSelection);
       routeFile.addEventListener('change', async () => {
         const file = routeFile.files[0];
         routeFile.value = '';
@@ -2207,10 +2298,10 @@
         const request = ++routeRequest;
         setStatus(status, 'Membaca fail laluan...', 'loading');
         try {
-          const { importLotRoute } = await import(CORRIDOR_MODULE);
-          const lines = await importLotRoute(file);
+          const { importLotShapes } = await import(CORRIDOR_MODULE);
+          const imported = await importLotShapes(file);
           if (settled || request !== routeRequest || operationController) return;
-          showLotRoute(lines, true);
+          showImportedShapes(imported);
         } catch (error) {
           if (settled || request !== routeRequest) return;
           setStatus(status, error.message || 'Fail laluan tidak dapat dibaca.', 'error');

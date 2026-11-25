@@ -1,7 +1,9 @@
 import './vendor/polygon-clipping-0.15.7.js';
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_KML_BYTES = 8 * 1024 * 1024;
+const MAX_FILE_BYTES = 16 * 1024 * 1024;
+const MAX_KML_BYTES = 24 * 1024 * 1024;
+const MAX_IMPORT_POINTS = 300000;
+const MAX_IMPORT_SHAPES = 12000;
 const MAX_ROUTE_POINTS = 10000;
 const MAX_SELECTION_POINTS = 1000;
 const EARTH_RADIUS = 6378137;
@@ -25,31 +27,91 @@ function readCoordinate(value, separator) {
   return point;
 }
 
-function parseKml(xml) {
+function elementChildren(element, name) {
+  return Array.from(element.children).filter((node) => node.localName === name);
+}
+
+function shapeLabel(element) {
+  for (let node = element.parentElement; node; node = node.parentElement) {
+    if (node.localName !== 'Placemark') continue;
+    return (elementChildren(node, 'name')[0]?.textContent || '').trim().slice(0, 140);
+  }
+  return '';
+}
+
+function readKmlPoints(element, limits) {
+  const text = element && elementChildren(element, 'coordinates')[0]?.textContent.trim();
+  if (!text) return [];
+  const values = text.replace(/\s*,\s*/g, ',').split(/\s+/, MAX_IMPORT_POINTS + 1);
+  limits.points += values.length;
+  if (limits.points > MAX_IMPORT_POINTS) throw new Error('Fail mengandungi terlalu banyak koordinat. Bahagikan fail dan cuba lagi.');
+  return cleanPath(values.map((value) => readCoordinate(value, ',')));
+}
+
+function cleanPath(line) {
+  if (!line.every(isMalaysiaPoint)) throw new Error('Laluan mesti berada dalam kawasan Malaysia.');
+  return line.filter((point, index) => index === 0 || !samePoint(point, line[index - 1]));
+}
+
+function closeRing(points) {
+  if (points.length < 3) return [];
+  const ring = samePoint(points[0], points[points.length - 1]) ? points : [...points, points[0]];
+  return ring.length >= 4 ? ring : [];
+}
+
+function parseKml(xml, result, limits) {
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw new Error('Fail KML mengandungi deklarasi XML yang tidak disokong.');
   const document = new DOMParser().parseFromString(xml, 'application/xml');
   if (document.documentElement.localName !== 'kml' || document.getElementsByTagName('parsererror').length) {
     throw new Error('Fail KML tidak dapat dibaca. Semak format XML fail.');
   }
 
-  const lines = [];
-  let pointCount = 0;
-  function append(values, separator) {
-    pointCount += values.length;
-    if (pointCount > MAX_ROUTE_POINTS) throw new Error('Laluan melebihi 10,000 titik. Bahagikan fail kepada beberapa bahagian.');
-    lines.push(values.map((value) => readCoordinate(value, separator)));
+  function append(element, type, getCoordinates) {
+    if (++limits.shapes > MAX_IMPORT_SHAPES) throw new Error('Fail mengandungi terlalu banyak bentuk. Bahagikan fail dan cuba lagi.');
+    let coordinates;
+    try {
+      coordinates = getCoordinates();
+    } catch (error) {
+      if (limits.points > MAX_IMPORT_POINTS) throw error;
+      result.skipped += 1;
+      return;
+    }
+    if (!coordinates.length) {
+      result.skipped += 1;
+      return;
+    }
+    result.shapes.push({ type, label: shapeLabel(element), coordinates });
   }
   for (const element of document.getElementsByTagNameNS('*', 'LineString')) {
-    const coordinates = Array.from(element.children).find((node) => node.localName === 'coordinates');
-    if (!coordinates || !coordinates.textContent.trim()) continue;
-    append(coordinates.textContent.trim().split(/\s+/, MAX_ROUTE_POINTS + 1), ',');
+    append(element, 'line', () => {
+      const points = readKmlPoints(element, limits);
+      return points.length >= 2 ? points : [];
+    });
   }
-  for (const element of document.getElementsByTagNameNS('http://www.google.com/kml/ext/2.2', 'Track')) {
-    const coordinates = Array.from(element.children).filter((node) => node.localName === 'coord');
-    if (!coordinates.length) continue;
-    append(coordinates.map((node) => node.textContent), /\s+/);
+  for (const element of document.getElementsByTagNameNS('*', 'Track')) {
+    append(element, 'line', () => {
+      const values = elementChildren(element, 'coord');
+      limits.points += values.length;
+      if (limits.points > MAX_IMPORT_POINTS) throw new Error('Fail mengandungi terlalu banyak koordinat. Bahagikan fail dan cuba lagi.');
+      const points = cleanPath(values.map((node) => readCoordinate(node.textContent, /\s+/)));
+      return points.length >= 2 ? points : [];
+    });
   }
-  return lines;
+  for (const element of document.getElementsByTagNameNS('*', 'LinearRing')) {
+    if (['outerBoundaryIs', 'innerBoundaryIs'].includes(element.parentElement?.localName)) continue;
+    append(element, 'line', () => closeRing(readKmlPoints(element, limits)));
+  }
+  for (const element of document.getElementsByTagNameNS('*', 'Polygon')) {
+    append(element, 'area', () => {
+      const outer = elementChildren(element, 'outerBoundaryIs')[0];
+      if (!outer) return [];
+      const boundaries = [outer, ...elementChildren(element, 'innerBoundaryIs')];
+      const rings = boundaries.map((boundary) => closeRing(readKmlPoints(elementChildren(boundary, 'LinearRing')[0], limits)));
+      return rings.every((ring) => ring.length >= 4) ? rings : [];
+    });
+  }
+  result.points += document.getElementsByTagNameNS('*', 'Point').length;
+  result.links += document.getElementsByTagNameNS('*', 'NetworkLink').length;
 }
 
 function decodeKml(bytes) {
@@ -66,21 +128,30 @@ function decodeKml(bytes) {
 function normalizeLines(lines) {
   const count = lines.reduce((sum, line) => sum + line.length, 0);
   if (count > MAX_ROUTE_POINTS) throw new Error('Laluan melebihi 10,000 titik. Bahagikan fail kepada beberapa bahagian.');
-  const paths = lines.map((line) => {
-    if (!line.every(isMalaysiaPoint)) throw new Error('Laluan mesti berada dalam kawasan Malaysia.');
-    return line.filter((point, index) => index === 0 || !samePoint(point, line[index - 1]));
-  }).filter((line) => line.length >= 2);
+  const paths = lines.map(cleanPath).filter((line) => line.length >= 2);
   if (!paths.length) throw new Error('Tiada garisan atau poligaris yang sah ditemui.');
   return paths;
 }
 
-export async function importLotRoute(file) {
+export async function importLotShapes(file) {
   const extension = String(file.name || '').split('.').pop().toLowerCase();
   if (extension !== 'kml' && extension !== 'kmz') throw new Error('Pilih fail KML atau KMZ.');
-  if (!file.size || file.size > MAX_FILE_BYTES) throw new Error('Saiz fail KML atau KMZ mestilah antara 1 bait dan 5 MB.');
+  if (!file.size || file.size > MAX_FILE_BYTES) throw new Error('Pilih fail KML atau KMZ yang tidak kosong dan bersaiz hingga 16 MB.');
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (extension === 'kml') return normalizeLines(parseKml(decodeKml(bytes)));
+  const entries = extension === 'kmz' ? await readKmz(bytes) : [bytes];
+  const result = { shapes: [], skipped: 0, points: 0, links: 0 };
+  const limits = { points: 0, shapes: 0 };
+  for (const entry of entries) parseKml(decodeKml(entry), result, limits);
+  if (!result.shapes.length) {
+    if (result.skipped) throw new Error('Koordinat garisan atau poligon tidak lengkap atau di luar kawasan Malaysia.');
+    if (result.links) throw new Error('Fail ini hanya memautkan data peta. Eksport fail yang mengandungi garisan atau poligon itu sendiri.');
+    if (result.points) throw new Error('Fail ini hanya mengandungi pin lokasi. Pilih fail yang mengandungi garisan atau poligon.');
+    throw new Error('Tiada garisan atau poligon ditemui dalam fail ini.');
+  }
+  return result;
+}
 
+async function readKmz(bytes) {
   const { unzipSync } = await import('./vendor/fflate-0.8.2.js');
   let files;
   let totalKmlBytes = 0;
@@ -95,12 +166,12 @@ export async function importLotRoute(file) {
       return !limitExceeded;
     } });
   } catch (_) {
-    throw new Error('Fail KMZ tidak dapat dibuka. Pastikan fail ialah arkib KMZ yang sah.');
+    throw new Error('Fail KMZ tidak dapat dibuka. Pilih arkib KMZ yang sah.');
   }
-  if (limitExceeded) throw new Error('Arkib KMZ melebihi had 32 fail KML atau 8 MB selepas dinyahmampat.');
+  if (limitExceeded) throw new Error('Arkib KMZ melebihi had 32 fail KML atau 24 MB selepas dinyahmampat.');
   const entries = Object.values(files);
   if (!entries.length) throw new Error('Tiada fail KML ditemui di dalam arkib KMZ.');
-  return normalizeLines(entries.flatMap((entry) => parseKml(decodeKml(entry))));
+  return entries;
 }
 
 function bearing(from, to) {
@@ -196,16 +267,32 @@ export function buildLotCorridor(lines, leftMeters, rightMeters) {
       previousRight = rightEnd;
     }
   }
-  const polygons = globalThis.polygonClipping.union(...pieces);
+  return unionSelection(pieces);
+}
+
+export function buildLotArea(polygons) {
+  const pointCount = polygons.reduce((sum, polygon) => sum + polygon.reduce((total, ring) => total + ring.length, 0), 0);
+  if (pointCount > MAX_ROUTE_POINTS) throw new Error('Kawasan terlalu terperinci. Pilih poligon yang lebih kecil.');
+  const candidates = pointCount > MAX_SELECTION_POINTS
+    ? polygons.map((polygon) => polygon.map((ring) => {
+      const simplified = closeRing(simplifyLine(ring, 0.25));
+      return simplified.length ? simplified : ring;
+    }))
+    : polygons;
+  return unionSelection(candidates);
+}
+
+function unionSelection(pieces) {
+  const polygons = pieces.length ? globalThis.polygonClipping.union(...pieces) : [];
   // The union uses GeoJSON winding. ArcGIS expects clockwise outer rings and
   // counterclockwise holes. This also keeps the current area calculation correct.
   const rings = polygons.flatMap((polygon) => polygon.map((ring) => ring.slice().reverse()));
-  if (!rings.length) throw new Error('Kawasan laluan terlalu kecil. Besarkan offset dan cuba lagi.');
+  if (!rings.length) throw new Error('Kawasan pilihan terlalu kecil atau tidak mempunyai keluasan.');
   if (!rings.every((ring) => ring.every(isMalaysiaPoint))) {
-    throw new Error('Offset menghasilkan kawasan di luar julat peta Malaysia.');
+    throw new Error('Kawasan pilihan berada di luar julat peta Malaysia.');
   }
   if (rings.reduce((sum, ring) => sum + ring.length, 0) > MAX_SELECTION_POINTS) {
-    throw new Error('Kawasan laluan terlalu terperinci. Bahagikan kepada beberapa pilihan lot.');
+    throw new Error('Kawasan terlalu terperinci. Pilih satu bentuk atau bahagikan pilihan lot.');
   }
   return { polygons, geometry: { rings, spatialReference: { wkid: 4326 } } };
 }
