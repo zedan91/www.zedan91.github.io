@@ -18,7 +18,53 @@
     return result;
   }
 
-  function options() { return request('/api/site/checkout-options'); }
+  function options(section) {
+    return request('/api/site/checkout-options' + (section ? '?section=' + encodeURIComponent(section) : ''));
+  }
+
+  let cancelRequest;
+  function cancelReturn() {
+    if (cancelRequest) return cancelRequest;
+    const url = new URL(location.href);
+    if (url.searchParams.get('payment') !== 'chip_cancelled') return Promise.resolve(null);
+    const orderId = url.searchParams.get('orderId');
+    const cancelToken = new URLSearchParams(url.hash.slice(1)).get('chipCancel');
+    if (!orderId || !cancelToken) return Promise.resolve(null);
+    cancelRequest = (async () => {
+      const status = make('p', 'Confirming cancellation with CHIP…');
+      status.setAttribute('role','status');
+      status.style.cssText = 'max-width:720px;margin:16px auto;padding:12px;color:#fff;background:#174272;text-align:center';
+      document.body.prepend(status);
+      try {
+        const result = await request('/api/chip/digital-checkout/cancel', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({orderId,cancelToken}), signal:AbortSignal.timeout(40000)
+        });
+        if (result.status === 'cancelled') {
+          for (const key of ['azobss_pending_payment_checkout','azobssEbookGeneratorPendingV1351']) {
+            try {
+              if (JSON.parse(localStorage.getItem(key) || 'null')?.orderId === orderId) localStorage.removeItem(key);
+            } catch (_) {}
+          }
+          url.searchParams.delete('payment');
+          url.searchParams.delete('orderId');
+          status.textContent = 'CHIP confirmed cancellation. You can start a new checkout.';
+        } else if (result.status === 'paid') {
+          status.textContent = 'This payment has already been completed.';
+        } else {
+          status.textContent = 'CHIP has not confirmed cancellation. Reload to check again before starting a new checkout.';
+          return result;
+        }
+        url.hash = '';
+        history.replaceState(history.state,'',url.href);
+        return result;
+      } catch (error) {
+        status.textContent = error.message + ' Reload to try again.';
+        return null;
+      }
+    })();
+    return cancelRequest;
+  }
 
   function available(settings) {
     return Object.keys(providers).filter(key => key === 'bank-transfer' ? settings.bank : key === 'bank' ? settings.toyyibpay : settings[key]);
@@ -141,8 +187,8 @@
     }
   }
 
-  async function choose(title, createOrder, onOrder) {
-    const methods = available(await options());
+  async function choose(title, createOrder, onOrder, section) {
+    const methods = available(await options(section));
     if (!methods.length) throw Error('No payment methods are currently available.');
     const dialog = make('dialog');
     dialog.style.cssText = 'width:min(92vw,420px);max-height:85vh;padding:20px;border-radius:14px;border:1px solid #52667f;background:#101a2d;color:#f4f7ff;overflow:auto';
@@ -184,5 +230,7 @@
     dialog.showModal();
   }
 
-  global.AZOBSSBusinessCheckout = { API, request, options, available, providers, redirect, showBank, digitalBankRequest, mountInvoice, choose };
+  global.AZOBSSBusinessCheckout = { API, request, options, available, providers, redirect, showBank, digitalBankRequest, mountInvoice, choose, cancelReturn };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cancelReturn, {once:true});
+  else cancelReturn();
 })(window);

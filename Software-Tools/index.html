@@ -3274,7 +3274,7 @@ html body .downloads-section{
 <!-- AZOBSS v1210: universal per-software packages and support -->
 <link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1408">
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1408" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1610" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1614" defer></script>
 
 <!-- Ebook compatibility history markers for regression tests only; these legacy assets are NOT loaded:
 /assets/css/azobss-software-ebook-v1351.css?v=1351
@@ -3289,7 +3289,7 @@ html body .downloads-section{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
-<script src="/assets/js/azobss-business-checkout.js?v=1610"></script>
+<script src="/assets/js/azobss-business-checkout.js?v=1614"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -7020,7 +7020,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1613" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1614" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -7224,7 +7224,7 @@ function normalizeItem(item){
     openPaymentBtn.disabled = true;
     try {
       const shared = window.AZOBSSBusinessCheckout;
-      const options = await shared.options();
+      const options = await shared.options('software');
       if (version !== checkoutOptionsVersion || currentProduct !== product) return;
       const methods = shared.available(options);
       buttons.forEach(button => { button.hidden = !methods.includes(button.dataset.method); });
@@ -8345,6 +8345,8 @@ async function verifyToyyibPayment(billCode){
   async function autoVerifyAfterReturn(){
     try{
       var params = new URLSearchParams(window.location.search || '');
+      var cancellation = await window.AZOBSSBusinessCheckout?.cancelReturn();
+      if (cancellation?.status === 'cancelled') return;
       var pending = null;
       try{ pending = JSON.parse(localStorage.getItem('azobss_pending_payment_checkout') || localStorage.getItem('azobss_pending_toyyib_checkout') || 'null'); }catch(_e){ pending = null; }
       var hasReturnSignal = params.has('payment') || params.has('orderId') || params.has('order_id') || params.has('billCode') || params.has('billcode') || params.has('status_id') || params.has('billpaymentStatus');
@@ -18023,7 +18025,7 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
 </dialog>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
 
-<script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1610"></script>
+<script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1614"></script>
 
 <!-- AZOBSS 1445: affiliate cards use the same logo-first layout as normal software cards; no disclosure row. -->
 <style id="azobss-software-affiliate-layout-v1445">

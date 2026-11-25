@@ -14,6 +14,7 @@
     if (visibleText) element.textContent = visibleText;
     return element;
   };
+  const backupMethods = ['toyyibpay','stripe','digitalBank'];
   const set = (provider, value) => { form.elements.namedItem(provider).checked = value === true; };
   const chipStatuses = {
     ready: 'CHIP live checkout is available.',
@@ -88,8 +89,7 @@
 
   async function loadSettings() {
     const result = await call('/checkout-options');
-    set('toyyibpay', result.backup.toyyibpay);
-    set('stripe', result.backup.stripe);
+    for (const method of backupMethods) set(method, result.backup[method]);
     form.querySelector('fieldset').disabled = false;
     status.textContent = chipStatus(result);
     if (!testId) testStatus.textContent = testConfigurations[result.chipTestConfiguration] || '';
@@ -97,14 +97,13 @@
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    const payload = Object.fromEntries(['toyyibpay', 'stripe'].map(key => [key, form.elements.namedItem(key).checked]));
+    const payload = Object.fromEntries(backupMethods.map(key => [key, form.elements.namedItem(key).checked]));
     const fields = form.querySelector('fieldset');
     fields.disabled = true;
     status.textContent = 'Saving…';
     try {
       const result = await call('/checkout-options', post(payload));
-      set('toyyibpay', result.backup.toyyibpay);
-      set('stripe', result.backup.stripe);
+      for (const method of backupMethods) set(method, result.backup[method]);
       status.textContent = 'Settings saved. ' + chipStatus(result);
     } catch (error) {
       status.textContent = error.message;

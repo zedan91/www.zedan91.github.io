@@ -930,6 +930,10 @@ function renderTable(){
       iconActionButton('share',`Share ${label} options`,`data-sr-doc-share="panel" data-sr-doc-type="${docType}" data-sr-row="${rowId}"`),
       iconActionButton('print',`Print ${label}`,`data-sr-doc-print="${docType}" data-sr-row="${rowId}"`)
     );
+    if(r.source==='website'&&r.sourceName==='premiumOrders'&&r.paymentMethod==='chip'&&r.status==='pending'&&
+      ['software','cad'].includes(r.category)&&r.orderId){
+      actions.push('<button class="btn" type="button" data-sr-chip-cancel="'+rowId+'">Cancel CHIP</button>');
+    }
     if(r.source==='manual'&&docType==='quotation'){
       if(normalizeStatus(r.status)!=='quote-accepted')actions.push(iconActionButton('accept','Accept quotation',`data-sr-quote-accept="${rowId}"`));
       if(['quote-accepted','quote-sent','quote-draft'].includes(normalizeStatus(r.status)))actions.push(iconActionButton('convert','Convert quotation to invoice',`data-sr-quote-convert="${rowId}"`));
@@ -1959,6 +1963,26 @@ function bind(){
   el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
+  document.addEventListener('click', async e => {
+    const button = e.target.closest('[data-sr-chip-cancel]');
+    const row = button && findRow(button.dataset.srChipCancel);
+    if (!row || !confirm('Cancel the unpaid CHIP checkout for ' + row.invoiceNo + '?')) return;
+    button.disabled = true;
+    try {
+      const response = await fetch(BACKEND + '/api/admin/site/chip-cancel', {
+        method:'POST', headers:await adminBackendHeaders(), body:JSON.stringify({orderId:row.orderId}), cache:'no-store'
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'CHIP cancellation could not be verified.');
+      if (data.status === 'pending') throw new Error('CHIP has not confirmed cancellation. Check again once processing is complete.');
+      await loadData({force:true});
+      notify(data.status === 'cancelled' ? 'CHIP checkout cancelled.' : 'CHIP confirmed that this payment was already paid.');
+    } catch (error) {
+      notify(error.message, true);
+    } finally {
+      button.disabled = false;
+    }
+  });
   document.addEventListener('click', e => {
     const button = e.target.closest('[data-sr-chip-link]');
     const row = button && findRow(button.dataset.srChipLink);

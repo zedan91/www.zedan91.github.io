@@ -3989,7 +3989,7 @@ async function azFulfillAzdmOrder(order = {}, req, options = {}) {
 }
 async function azAzdmLocalCatalog({offer}) {
   const state = azAzdmShopReadiness();
-  const options = await azBusinessPayments.options();
+  const options = await azBusinessPayments.options('software');
   const paymentMethods = { toyyibpay: state.paymentMethods.toyyibpay && options.toyyibpay, stripe: state.paymentMethods.stripe && options.stripe, chip: state.coreReady && options.chip, 'bank-transfer': state.coreReady && Boolean(options.bank) };
   return {enabled:Object.values(paymentMethods).some(Boolean),sandbox:state.sandbox,service:'render-native-v1323',payment_methods:paymentMethods,stripe_mode:state.stripeMode,support:{email:'zedan9107@gmail.com',whatsapp:'601135600723'},offer};
 }
@@ -3997,7 +3997,7 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   const state = azAzdmShopReadiness();
   if (!state.coreReady) return {statusCode:503,body:{ok:false,error:'License purchasing is not available yet. Contact AZDM Support.'}};
   const paymentMethod = String(body.payment_method || 'toyyibpay').trim().toLowerCase();
-  const options = await azBusinessPayments.options();
+  const options = await azBusinessPayments.options('software');
   const available = paymentMethod === 'bank-transfer' ? Boolean(options.bank) : options[paymentMethod] === true;
   if (!available) return {statusCode:503,body:{ok:false,error:'This payment option is currently unavailable.'}};
   const uid = String(body.account_uid || '').trim(), email = cleanToyyibEmail(body.email || ''), requestId = String(body.request_id || '').trim();
@@ -4014,6 +4014,7 @@ async function azAzdmLocalCheckout({req,body,offer}) {
   if (existing) {
     if (azAzdmOrderUid(existing) !== uid) return {statusCode:409,body:{ok:false,error:'This order belongs to another account.'}};
     if (String(existing.status || '').toLowerCase() === 'paid') return {statusCode:409,body:{ok:false,error:'This order has already been paid. Check your orders.'}};
+    if (existing.status === 'cancelled') return {statusCode:409,body:{ok:false,error:'The previous payment was cancelled. Start a new checkout.'}};
     if (Number(existing.amountSen || 0)!==amountSen || Number(existing.packageQuantity || existing.azdmQuantity || 0)!==quantity || String(existing.softwarePackageId || '')!==planId || String(existing.paymentMethod || 'toyyibpay').toLowerCase()!==paymentMethod) return {statusCode:409,body:{ok:false,error:'The order has changed. Start a new checkout.'}};
     if (existing.paymentMethod === 'bank-transfer' && existing.status === 'pending') {
       const token = await azReplaceAzdmBankReportToken(existing.orderId, uid);
@@ -17246,7 +17247,19 @@ async function azCreateDigitalChipCheckout(data, req) {
       && azAutomaticCheckoutPending(row) && !row.superseded && !row.autoDuplicateSuperseded
       && Date.now() - azAutomaticCheckoutCreatedMs(row) < 30 * 60 * 1000
       && azAutomaticCheckoutFingerprintForOrder(row) === fingerprint);
-    if (existing) return { orderId: existing.orderId, paymentUrl: existing.paymentUrl, amountSen: existing.amountSen, reused: true };
+    if (existing) {
+      const result = await azBusinessPayments.chipAdapter().verify(existing);
+      const closed = await azSyncClosedDigitalChipOrder(existing, result);
+      if (closed?.status === 'paid' || result.paid) {
+        throw azBusinessPaymentError('This checkout has already been paid. Check your purchases.', 409);
+      }
+      if (!closed) {
+        if (!result.providerStatus || result.reason === 'payment_mismatch') {
+          throw azBusinessPaymentError('The previous CHIP checkout could not be verified.', 409);
+        }
+        return { orderId: existing.orderId, paymentUrl: existing.paymentUrl, amountSen: existing.amountSen, reused: true };
+      }
+    }
 
     let pending = upsertPremiumOrder({ ...order, paymentMethod: 'chip', checkoutFingerprint: fingerprint, createdAtMs: Date.now() });
     if (!(await azPersistPremiumOrder(pending)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
@@ -17264,6 +17277,15 @@ async function azStartChipPayment(order, req, successUrl, cancelUrl) {
   const section = CHIP_SECTIONS[order.chipInvoiceSection] ||
     (order.pcOrderId ? CHIP_SECTIONS.tech : order.source === 'CAD Tools' ? CHIP_SECTIONS.cad :
       azIsMembershipOrder(order) ? 'Membership' : CHIP_SECTIONS.software);
+  let failureUrl = cancelUrl;
+  if (azIsDigitalChipCheckout(order)) {
+    const token = crypto.randomBytes(32).toString('base64url');
+    order = { ...order, chipCancelHash:azBankReportHash(token) };
+    failureUrl = azStripeDigitalUrlWithQuery(cancelUrl, { payment:'chip_failed', orderId:order.orderId });
+    const returnToSite = new URL(azStripeDigitalUrlWithQuery(cancelUrl, { payment:'chip_cancelled', orderId:order.orderId }));
+    returnToSite.hash = 'chipCancel=' + token;
+    cancelUrl = returnToSite.href;
+  }
   if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
   if (!azValidEmailLike(order.buyerEmail || order.email)) throw azBusinessPaymentError('Enter a valid buyer email address.', 400);
   const checkout = await azBusinessPayments.chipAdapter().create({
@@ -17276,6 +17298,7 @@ async function azStartChipPayment(order, req, successUrl, cancelUrl) {
     name: String(order.user?.username || ''),
     successUrl,
     cancelUrl,
+    failureUrl,
     callbackUrl: publicBaseUrlFromReq(req) + '/api/chip/payment-callback'
   });
   const saved = upsertPremiumOrder({ ...order, status: 'pending', paymentMethod: 'chip', chipPurchaseId: checkout.purchaseId, paymentUrl: checkout.paymentUrl });
@@ -17520,6 +17543,7 @@ async function azStartBusinessOnlinePayment(order, req, returnPage) {
 const azBankReportHash = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');
 
 async function azCreateDigitalBankTransfer(data, req) {
+  if (!(await azBusinessPayments.readBackups()).digitalBank) throw azBusinessPaymentError('Manual bank transfer is hidden for Software and CAD Tools.', 403);
   const order = await azBuildDigitalCheckoutOrder(data, req, makeId('bank'));
   return azCreateBankTransferInstructions(order);
 }
@@ -17535,10 +17559,10 @@ async function azCreateBankTransferInstructions(order) {
   return { orderId:order.orderId, amountSen:order.amountSen, reference:saved.invoiceNo || order.orderId, reportToken:token, bank };
 }
 
-async function azCheckoutProvider(value) {
+async function azCheckoutProvider(value, section) {
   const method = String(value || 'toyyibpay');
   if (!['chip','bank-transfer','toyyibpay','stripe'].includes(method)) throw azBusinessPaymentError('Kaedah pembayaran tidak sah.', 400);
-  const options = await azBusinessPayments.options();
+  const options = await azBusinessPayments.options(section);
   if (!(method === 'bank-transfer' ? options.bank : options[method])) throw azBusinessPaymentError('Kaedah pembayaran belum tersedia.', 503);
   return method;
 }
@@ -17619,10 +17643,66 @@ async function azReviewDigitalBankTransfer(data, req, admin) {
   });
 }
 
+function azIsDigitalChipCheckout(order) {
+  return order?.paymentMethod === 'chip' && !order.pcOrderId && !azIsManualSalesInvoiceOrder(order) &&
+    !azIsMembershipOrder(order) && !isPaBmPremiumOrder(order) && !isPublicPaPremiumOrder(order) &&
+    (['Software','CAD Tools'].includes(order.source) || azIsAzdmPremiumOrder(order) || azIsEbookGeneratorAccessOrder(order));
+}
+
+async function azSyncClosedDigitalChipOrder(order, result) {
+  if (!azIsDigitalChipCheckout(order) || !['cancelled','expired'].includes(result.providerStatus)) return null;
+  return azWithOrderFinalizeLock(order, async () => {
+    const db = getAzobssBackendDb();
+    if (!db) throw azBusinessPaymentError('The cancellation could not be saved.', 503);
+    const ref = db.collection('premiumOrders').doc(order.orderId);
+    const saved = await db.runTransaction(async tx => {
+      const latest = (await tx.get(ref)).data();
+      if (!azIsDigitalChipCheckout(latest) || latest.chipPurchaseId !== order.chipPurchaseId) {
+        throw azBusinessPaymentError('CHIP order not found.', 404);
+      }
+      if (!azAutomaticCheckoutPending(latest)) return latest;
+      const now = Date.now();
+      const patch = { status:'cancelled', statusLower:'cancelled', isPaid:false, paymentUrl:'',
+        chipProviderStatus:result.providerStatus, hiddenFromSalesReceipts:true,
+        cancelReason:'chip-' + result.providerStatus, updatedAt:new Date(now).toISOString(), updatedAtMs:now };
+      tx.set(ref, patch, { merge:true });
+      return { ...latest, ...patch };
+    });
+    return upsertPremiumOrder(saved);
+  });
+}
+
+async function azCancelDigitalChipCheckout(body, req, isAdmin = false) {
+  const orderId = cleanPremiumText(body?.orderId || '', 160);
+  if (!/^[A-Za-z0-9_-]{1,160}$/.test(orderId)) throw azBusinessPaymentError('CHIP order not found.', 404);
+  const order = await findPremiumOrderByAnyDeep({ orderId });
+  if (!azIsDigitalChipCheckout(order) || !order.chipPurchaseId) throw azBusinessPaymentError('CHIP order not found.', 404);
+  if (!isAdmin) {
+    const token = body.cancelToken;
+    if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token) || !/^[a-f0-9]{64}$/.test(order.chipCancelHash || '') ||
+        !crypto.timingSafeEqual(Buffer.from(azBankReportHash(token), 'hex'), Buffer.from(order.chipCancelHash, 'hex'))) {
+      throw azBusinessPaymentError('This cancellation link is invalid.', 403);
+    }
+  }
+  if (order.status === 'cancelled' || order.status === 'paid') return { status:order.status };
+  if (!azAutomaticCheckoutPending(order)) return { status:'pending' };
+  const result = await azBusinessPayments.chipAdapter().cancel(order);
+  if (result.paid) {
+    const verified = await azVerifyAndFinalizeDigitalChip(order, req);
+    return { status: verified.order?.status === 'paid' ? 'paid' : 'pending' };
+  }
+  const closed = await azSyncClosedDigitalChipOrder(order, result);
+  if (closed?.status === 'paid') return { status:'paid' };
+  return { status:closed?.status === 'cancelled' ? 'cancelled' : 'pending' };
+}
+
 async function azVerifyAndFinalizeDigitalChip(order, req) {
   if (!order || order.paymentMethod !== 'chip' || isPaBmPremiumOrder(order) || isPublicPaPremiumOrder(order)) return { paid: false };
   const result = await azBusinessPayments.chipAdapter().verify(order);
-  if (!result.paid) return result;
+  if (!result.paid) {
+    const closed = await azSyncClosedDigitalChipOrder(order, result);
+    return closed ? { ...result, order:closed } : result;
+  }
   const saved = await azFinalizePaidOrderOnce(order, req, {
     verified: true,
     paymentMethod: 'chip',
@@ -21787,7 +21867,7 @@ async function handler(req, res) {
 
     if (pathname === '/api/site/checkout-options' && req.method === 'GET') {
       try {
-        return send(res, 200, JSON.stringify({ ok: true, ...await azBusinessPayments.options() }), 'application/json', { 'Cache-Control': 'no-store' });
+        return send(res, 200, JSON.stringify({ ok: true, ...await azBusinessPayments.options(parsed.query.section) }), 'application/json', { 'Cache-Control': 'no-store' });
       } catch (_) {
         return send(res, 503, JSON.stringify({ ok: false, error: 'Payment options unavailable.' }), 'application/json', { 'Cache-Control': 'no-store' });
       }
@@ -21830,6 +21910,22 @@ async function handler(req, res) {
         return send(res, paid ? 200 : 409, JSON.stringify({ok:paid}), 'application/json', {'Cache-Control':'no-store'});
       } catch (error) {
         return send(res, error.statusCode || 503, JSON.stringify({ok:false,error:'Unable to verify CHIP test callback.'}), 'application/json');
+      }
+    }
+
+    if (['/api/chip/digital-checkout/cancel','/api/admin/site/chip-cancel'].includes(pathname) && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'chip-digital-cancel', 20, 5 * 60 * 1000)) return;
+      const isAdmin = pathname.startsWith('/api/admin/');
+      if (isAdmin && !(await azAdminIdentityFromRequest(req, parsed))?.isAdmin) {
+        return send(res, 403, JSON.stringify({ok:false,error:'Admin access required.'}), 'application/json');
+      }
+      try {
+        const result = await azCancelDigitalChipCheckout(parseRequestBody(await readBody(req)), req, isAdmin);
+        return send(res, 200, JSON.stringify({ok:true,...result}), 'application/json', { 'Cache-Control':'no-store' });
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ok:false,
+          error:error.statusCode < 500 ? error.message : 'CHIP could not confirm cancellation. Please try again.'
+        }), 'application/json', { 'Cache-Control':'no-store' });
       }
     }
 
@@ -22681,7 +22777,7 @@ async function handler(req, res) {
           const accessState = await azEbookGeneratorAccessStatus(identity);
           if (accessState.access) return send(res, 200, JSON.stringify({ ok:true, accessGranted:true, lifetime:true, alreadyOwned:true, priceRM:19 }, null, 2), "application/json");
           const body = parseRequestBody(await readBody(req));
-          const provider = await azCheckoutProvider(body.paymentMethod);
+          const provider = await azCheckoutProvider(body.paymentMethod, 'software');
           const existing = await azFindEbookGeneratorOrderForIdentity(identity, { pending:true });
           if (existing?.paymentMethod === provider && existing.paymentUrl) {
             return send(res, 200, JSON.stringify({ ok:true, reused:true, orderId:existing.orderId, billCode:existing.billCode, paymentUrl:existing.paymentUrl, status:"pending", amount:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, lifetime:true, checkoutVersion:1354 }, null, 2), "application/json");
@@ -22761,7 +22857,8 @@ async function handler(req, res) {
       if (order.paymentMethod === 'chip' && !isPaBmPremiumOrder(order)) {
         try {
           verifyResult = await azVerifyAndFinalizeDigitalChip(order, req);
-          if (verifyResult.paid) { verified = true; order = verifyResult.order; }
+          if (verifyResult.order) order = verifyResult.order;
+          if (verifyResult.paid) verified = true;
         } catch (_) {}
       } else if (isToyyibOrder) {
         verifyResult = await azVerifyToyyibPaidTransaction({ ...order, billCode: order.billCode || billCode });

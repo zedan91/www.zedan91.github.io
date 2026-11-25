@@ -281,7 +281,7 @@
         if(data.accessGranted||data.alreadyOwned){await checkLifetimeAccess(true);toast('Akses Ebook Generator sudah aktif');return false}
         if(data.paymentUrl)setPendingPayment({orderId:data.orderId||'',billCode:data.billCode||'',paymentUrl:data.paymentUrl,createdAtMs:Date.now()});
         return true;
-      });
+      }, 'software');
     }catch(err){gateStatus('Could not start payment. '+(err.message||err),true)}
     finally{if(btn)btn.disabled=false;}
   }
@@ -992,6 +992,15 @@
   async function handleEbookPaymentReturn(info){
     if(!info||!info.isReturn)return false;
     setMainTab('ebook',false);
+    var chipCancel=location.hash.startsWith('#chipCancel=');
+    var cancellation=await window.AZOBSSBusinessCheckout?.cancelReturn();
+    if(chipCancel&&cancellation?.status!=='cancelled'&&cancellation?.status!=='paid')return false;
+    if(cancellation?.status==='cancelled'){
+      setPendingPayment(null);
+      canonicalEbookUrl();
+      await checkLifetimeAccess(true);
+      return false;
+    }
     var old=pendingPayment()||{};
     if(info.billCode||info.orderId){
       setPendingPayment(Object.assign({},old,{billCode:info.billCode||old.billCode||'',orderId:info.orderId||old.orderId||'',transactionId:info.transactionId||old.transactionId||'',returnedAtMs:Date.now()}));
