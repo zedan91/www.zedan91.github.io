@@ -21853,14 +21853,14 @@ async function handler(req, res) {
     if (pathname === '/api/chip/invoice-return' && req.method === 'GET') {
       if (azRateLimitOrSend(req, res, 'chip-invoice-return', 30, 60 * 1000)) return;
       let message = 'If your bank confirms a payment, contact AZOBSS with the invoice number to check its status.';
-      const orderId = cleanPremiumText(parsed.searchParams.get('orderId') || '', 160);
+      const orderId = cleanPremiumText(parsed.query.orderId || '', 160);
       try {
         const order = /^chip-invoice[A-Za-z0-9_-]+$/.test(orderId) && await findPremiumOrderByAnyDeep({ orderId });
         if (order?.paymentMethod === 'chip' && azIsManualSalesInvoiceOrder(order)) {
           const result = await azVerifyAndFinalizeDigitalChip(order, req);
           if (result.order?.status === 'paid') message = 'Payment confirmed. Thank you for paying your AZOBSS invoice.';
           else if (result.paid) message = 'CHIP received your payment. Contact AZOBSS with your invoice number for confirmation.';
-          else if (parsed.searchParams.get('cancelled') === '1') message = 'Payment was cancelled. Use your invoice payment link if you would like to try again.';
+          else if (parsed.query.cancelled === '1') message = 'Payment was cancelled. Use your invoice payment link if you would like to try again.';
         }
       } catch (error) {
         console.warn('CHIP invoice return verification failed:', error.message);
