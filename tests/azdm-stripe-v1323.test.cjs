@@ -13,10 +13,10 @@ const backend=fs.readFileSync(path.join(root,'deploy-server.js'),'utf8');
 
 test('AZDM plan dialog exposes CHIP, bank transfer and the configurable legacy choices',()=>{
   assert.ok(Number(String(pkg.version||'').split('.').pop()) >= 1323);
-  assert.match(html,/data-azdm-buy-chip[^>]*>Bayar dengan CHIP</);
+  assert.match(html,/data-azdm-buy-chip[^>]*>Pay with CHIP</);
   assert.match(html,/data-azdm-buy-bank[^>]*>DuitNow QR/);
-  assert.match(html,/data-azdm-buy[^>]*>ToyyibPay \(Sandaran\)</);
-  assert.match(html,/data-azdm-buy-stripe[^>]*>Stripe \(Sandaran\)</);
+  assert.match(html,/data-azdm-buy[^>]*>ToyyibPay \(Backup\)</);
+  assert.match(html,/data-azdm-buy-stripe[^>]*>Stripe \(Backup\)</);
   assert.match(html,/azobss-software-packages\.js\?v=\d+/);
   assert.match(frontend,/payment_method:paymentMethod/);
   assert.match(frontend,/startCheckout\(provider,button\)/);

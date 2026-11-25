@@ -934,6 +934,8 @@ function renderTable(){
       if(normalizeStatus(r.status)!=='quote-accepted')actions.push(iconActionButton('accept','Accept quotation',`data-sr-quote-accept="${rowId}"`));
       if(['quote-accepted','quote-sent','quote-draft'].includes(normalizeStatus(r.status)))actions.push(iconActionButton('convert','Convert quotation to invoice',`data-sr-quote-convert="${rowId}"`));
     }
+    if(r.source==='manual'&&docType==='invoice'&&['pending','deposit-paid'].includes(normalizeStatus(r.status))&&el('salesReceiptChipLinkDialog'))actions.push(
+      '<button class="btn" type="button" data-sr-chip-link="'+rowId+'">CHIP Link</button>');
     if(r.source==='manual'&&docType==='invoice'&&normalizeStatus(r.status)==='pending'&&rowUsesToyyibPay(r))actions.push(iconActionButton('pay','Open ToyyibPay payment page',`data-sr-open-payment="${rowId}"`));
     if(normalizeStatus(r.status)==='paid'){
       const nextSent=r.receiptSent===true?'0':'1';
@@ -1076,7 +1078,7 @@ function rowUsesMaybank(row={}){
 function pendingMaybankPaymentText(row={}){
   const status=normalizeStatus(row.status);
   if(documentKindForStatus(status)!=='invoice'||!['pending','deposit-paid'].includes(status)||!rowUsesMaybank(row))return '';
-  return `Pay remaining ${money(outstandingAmount(row))} via Maybank: Ahmad Zaidan Bin Omar | Account: 562405751585 | QR is included in the invoice PDF.`;
+  return `Pay remaining ${money(outstandingAmount(row))} to AZOBSS ENTERPRISE | Maybank account number: 562405751585 | QR is included in the invoice PDF.`;
 }
 function syncManualPaymentFeeDefault(){
   if(editingMode==='website')return;
@@ -1180,9 +1182,7 @@ function syncFormDocumentMode(initial=false){
   if(paymentSelect){
     paymentSelect.disabled=false;
     paymentSelect.title='';
-    // New Pending invoices default to ToyyibPay, but an existing/admin-selected
-    // Maybank value is preserved.
-    if(status==='pending'&&!String(paymentSelect.value||'').trim())paymentSelect.value='ToyyibPay';
+    if(status==='pending'&&!String(paymentSelect.value||'').trim())paymentSelect.value='Maybank';
   }
   syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();configureFormMode();
 }
@@ -1351,6 +1351,65 @@ async function ensureToyyibPayInvoice(row,{silent=false}={}){
   toyyibInvoicePromiseById.set(promiseKey,task);
   return task;
 }
+function openChipInvoiceLink(row) {
+  const dialog = el('salesReceiptChipLinkDialog');
+  const form = dialog.querySelector('form');
+  const result = dialog.querySelector('[data-chip-link-result]');
+  const status = dialog.querySelector('[data-chip-link-status]');
+  const submit = form.querySelector('[type="submit"]');
+  const copy = dialog.querySelector('[data-chip-copy-link]');
+  const close = dialog.querySelector('[data-chip-close-link]');
+  dialog.querySelector('[data-chip-invoice-number]').textContent = row.invoiceNo;
+  form.reset();
+  const existingSection = row.chipInvoiceLink?.sectionKey;
+  if (existingSection && row.chipInvoiceLink.due * 1000 > Date.now()) {
+    form.elements.namedItem('section').value = existingSection;
+  }
+  result.value = '';
+  result.hidden = true;
+  copy.hidden = true;
+  status.textContent = '';
+  close.onclick = () => dialog.close();
+  copy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(result.value);
+      status.textContent = 'Payment link copied.';
+    } catch {
+      result.select();
+      status.textContent = 'Copy the selected payment link.';
+    }
+  };
+  form.onsubmit = async event => {
+    event.preventDefault();
+    submit.disabled = true;
+    status.textContent = 'Creating payment link…';
+    result.hidden = true;
+    copy.hidden = true;
+    try {
+      const response = await fetch(BACKEND + '/api/admin/sales-invoice/chip-link', {
+        method:'POST', headers:await adminBackendHeaders(),
+        body:JSON.stringify({ receiptId:row.docId, section:form.elements.namedItem('section').value }),
+        cache:'no-store'
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'The payment link could not be created.');
+      const url = new URL(data.paymentUrl);
+      if (url.origin !== 'https://gate.chip-in.asia' || url.username || url.password) throw new Error('The payment link is invalid.');
+      row.chipInvoiceLink = { paymentUrl:url.href, due:data.due, sectionKey:form.elements.namedItem('section').value };
+      result.value = url.href;
+      result.hidden = false;
+      copy.hidden = false;
+      status.textContent = data.section + ' · ' + money(data.amountSen / 100) + ' · Expires ' +
+        new Date(data.due * 1000).toLocaleDateString('en-MY', { timeZone:'Asia/Kuala_Lumpur' });
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      submit.disabled = false;
+    }
+  };
+  dialog.showModal();
+}
+
 async function prepareRowForPdf(row,type='receipt'){
   const docType=documentType(type);
   if(docType==='invoice'&&row?.source==='manual'&&normalizeStatus(row.status)==='pending'&&rowUsesToyyibPay(row)){
@@ -1434,13 +1493,15 @@ function toyyibPayPaymentUrl(row,type='invoice'){
 }
 function documentShareText(row,type,fileName=''){
   const docType=documentType(type);const label=docType==='quotation'?'Quotation':docType==='invoice'?'Invoice':'Receipt';
-  const paymentUrl=toyyibPayPaymentUrl(row,docType);
+  const chipLink = docType === 'invoice' && ['pending','deposit-paid'].includes(normalizeStatus(row.status)) &&
+    row.chipInvoiceLink?.due * 1000 > Date.now() ? row.chipInvoiceLink.paymentUrl : '';
+  const paymentUrl = chipLink ? '' : toyyibPayPaymentUrl(row,docType);
   const maybankText=docType==='invoice'?pendingMaybankPaymentText(row):'';
   const status=statusDisplayLabel(row);
   const shareStatus=docType==='invoice'&&/^PENDING(?: · MANUAL OVERRIDE)?$/.test(status)
     ?'Awaiting payment'
     :status;
-  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName||'Customer'}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${shareStatus}`,docType==='quotation'?'Quotation only — no payment is requested.':'',docType==='quotation'&&row.quotationValidUntil?`Valid until: ${row.quotationValidUntil}`:'',paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,row.notes?`Notes:\n${String(row.notes).trim()}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
+  return [`AZOBSS ${label} ${documentNo(row,docType)}`,`Customer: ${row.customerName||'Customer'}`,`${docType==='invoice'?'Amount Due':'Total'}: ${money(docType==='invoice'?outstandingAmount(row):row.gross)}`,`Status: ${shareStatus}`,docType==='quotation'?'Quotation only — no payment is requested.':'',docType==='quotation'&&row.quotationValidUntil?`Valid until: ${row.quotationValidUntil}`:'',chipLink?`Pay with CHIP: ${chipLink}`:'',paymentUrl?`Pay via ToyyibPay: ${paymentUrl}`:'',maybankText,row.notes?`Notes:\n${String(row.notes).trim()}`:'',fileName?`PDF: ${fileName}`:''].filter(Boolean).join('\n');
 }
 async function downloadDocumentPdf(row,type='receipt',button=null){
   if(button){button.disabled=true;button.classList.add('busy')}
@@ -1898,6 +1959,11 @@ function bind(){
   el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
+  document.addEventListener('click', e => {
+    const button = e.target.closest('[data-sr-chip-link]');
+    const row = button && findRow(button.dataset.srChipLink);
+    if (row) openChipInvoiceLink(row);
+  });
   document.addEventListener('click',e=>{const quoteAccept=e.target.closest('[data-sr-quote-accept]');if(quoteAccept){updateQuotationStatus(quoteAccept.dataset.srQuoteAccept,'quote-accepted',quoteAccept);return}const quoteConvert=e.target.closest('[data-sr-quote-convert]');if(quoteConvert){convertQuotationToInvoice(quoteConvert.dataset.srQuoteConvert,quoteConvert);return}const moreBtn=e.target.closest('[data-sr-items-more]');if(moreBtn){const rowId=moreBtn.dataset.srItemsMore;const panel=document.querySelector(`[data-sr-items-more-panel="${CSS.escape(rowId)}"]`);if(panel){const open=moreBtn.getAttribute('aria-expanded')==='true';panel.hidden=open;moreBtn.setAttribute('aria-expanded',open?'false':'true');moreBtn.textContent=open?`+${panel.children.length} more ▾`:'Show less ▴';}return}const edit=e.target.closest('[data-sr-edit]');if(edit){const row=findRow(edit.dataset.srEdit);if(row)openForm(row);return}const del=e.target.closest('[data-sr-delete-row]');if(del){deleteRow(del.dataset.srDeleteRow,del);return}const dl=e.target.closest('[data-sr-doc-download]');if(dl){const row=findRow(dl.dataset.srRow);if(row)downloadDocumentPdf(row,dl.dataset.srDocDownload,dl);return}const cp=e.target.closest('[data-sr-doc-copy]');if(cp){const row=findRow(cp.dataset.srRow);if(row)copyDocumentShareLink(row,cp.dataset.srDocCopy,cp);return}const pr=e.target.closest('[data-sr-doc-print]');if(pr){const row=findRow(pr.dataset.srRow);if(row)printDocument(row,pr.dataset.srDocPrint,pr);return}const share=e.target.closest('[data-sr-doc-share]');if(share){const row=findRow(share.dataset.srRow);if(row)openSharePanel(row,share.dataset.srDocType);return}const sentToggle=e.target.closest('[data-sr-receipt-sent-toggle]');if(sentToggle){const row=findRow(sentToggle.dataset.srReceiptSentToggle);if(row)setReceiptDeliveryState(row,sentToggle.dataset.srNextSent==='1','manual-toggle',sentToggle);return}const pay=e.target.closest('[data-sr-open-payment]');if(pay){const row=findRow(pay.dataset.srOpenPayment);if(row){pay.disabled=true;ensureToyyibPayInvoice(row,{silent:true}).then(r=>{if(r.paymentUrl)window.open(r.paymentUrl,'_blank','noopener');else throw new Error('ToyyibPay payment URL is missing.')}).catch(err=>notify('Could not open ToyyibPay: '+(err.message||err),true)).finally(()=>{pay.disabled=false})}}});
 }
 function startManualReceiptPaymentWatch(){
@@ -1957,7 +2023,7 @@ function serviceBookingInvoicePrefill(booking={}){
   // back to Unix epoch (01/01/1970) when opened from Service Bookings.
   const bookingCreatedMs=num(booking.createdAtMs)||parseMs(booking.createdAt)||num(booking.updatedAtMs)||parseMs(booking.updatedAt)||Date.now();
   const notes=[device?`Peranti: ${device}`:'',booking.deviceSerial?`Serial: ${booking.deviceSerial}`:'',issueText?`Masalah: ${issueText}`:'',booking.problemDetails?`Catatan: ${booking.problemDetails}`:'',booking.extraRequests?`Permintaan tambahan: ${booking.extraRequests}`:'',`Anggaran asal: ${booking.estimateDisplay||money(booking.estimatedMinimum||0)}`,booking.serviceMethod?`Cara serahan: ${booking.serviceMethod}`:''].filter(Boolean).join('\n');
-  return {status:'pending',paymentMethod:'ToyyibPay',saleDateMs:bookingCreatedMs,invoiceDateMs:bookingCreatedMs,saleDateTime:localDateTimeInput(bookingCreatedMs),createdAtMs:bookingCreatedMs,customerName:booking.customerName||'',customerPhone:booking.customerPhone||'',customerEmail:booking.customerEmail||'',customerAddress:[booking.floorUnit,booking.fullAddress||booking.customerArea].filter(Boolean).join(', '),items,discount,shippingCharge:0,shippingCost:0,paymentFee:DEFAULT_MANUAL_TOYYIBPAY_FEE_RM,commission:0,otherCost:0,notes,sourceBookingId:bookingId,sourceBookingSnapshot:{device,estimateDisplay:booking.estimateDisplay||'',finalPrice,bookingCreatedMs}};
+  return {status:'pending',paymentMethod:'Maybank',saleDateMs:bookingCreatedMs,invoiceDateMs:bookingCreatedMs,saleDateTime:localDateTimeInput(bookingCreatedMs),createdAtMs:bookingCreatedMs,customerName:booking.customerName||'',customerPhone:booking.customerPhone||'',customerEmail:booking.customerEmail||'',customerAddress:[booking.floorUnit,booking.fullAddress||booking.customerArea].filter(Boolean).join(', '),items,discount,shippingCharge:0,shippingCost:0,paymentFee:0,commission:0,otherCost:0,notes,sourceBookingId:bookingId,sourceBookingSnapshot:{device,estimateDisplay:booking.estimateDisplay||'',finalPrice,bookingCreatedMs}};
 }
 window.azSalesReceiptsOpenFromServiceBooking=function(booking={}){bind();openForm(serviceBookingInvoicePrefill(booking));};
 window.azSalesReceiptsOpenServiceInvoice=async function(invoiceDocId=''){

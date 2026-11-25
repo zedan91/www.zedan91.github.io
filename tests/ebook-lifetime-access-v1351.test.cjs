@@ -17,7 +17,7 @@ test('v1351 gates Ebook Generator behind RM19 one-time lifetime account access',
   assert.match(js,/api\/ebook-generator\/create-bill/);
   assert.match(js,/azobssWaitForFirebaseAuthToken/);
   assert.match(js,/azebookPaidContent1351/);
-  assert.match(js,/Bayar sekali dan akses kekal/);
+  assert.match(js,/Pay once for lifetime access/);
 });
 
 test('v1351 backend fixes price server-side and grants lifetime entitlement after verified payment',()=>{

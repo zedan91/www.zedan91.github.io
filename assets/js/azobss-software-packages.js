@@ -131,7 +131,7 @@
  root.querySelector('[data-package-close]').addEventListener('click',()=>dialog.close());document.querySelector('[data-support-close]').addEventListener('click',()=>document.getElementById('softwareSupportDialog').close());
  $('[data-package-support]').addEventListener('click',()=>support(offer?.name||'Software'));$('[data-azdm-signin]').addEventListener('click',signIn);plan.addEventListener('change',selectPlan);quantity.addEventListener('input',calculate);
  const states={paid:'Payment verified.',pending:'Payment not yet verified.',creating:'Payment bill is being prepared.',creation_failed:'Payment bill could not be created.'};
- async function refreshOrders(){try{const d=await call('/api/azdm/orders',{headers:await headers(true)}),out=$('[data-azdm-orders]');out.replaceChildren();for(const r of d.orders){const p=document.createElement('p');const method={stripe:'Stripe',chip:'CHIP','bank-transfer':'Pindahan Bank',toyyibpay:'ToyyibPay'}[String(r.payment_method||'').toLowerCase()]||'Pembayaran';p.textContent=r.product_name+' · '+r.quantity+' PC · '+money(r.amount_cents)+' · '+method+' — '+(states[r.status]||r.status);out.append(p);}if(!d.orders.length)out.textContent='No orders yet.';}catch(e){$('[data-azdm-orders]').textContent=e.message;}}
+ async function refreshOrders(){try{const d=await call('/api/azdm/orders',{headers:await headers(true)}),out=$('[data-azdm-orders]');out.replaceChildren();for(const r of d.orders){const p=document.createElement('p');const method={stripe:'Stripe',chip:'CHIP','bank-transfer':'Bank Transfer',toyyibpay:'ToyyibPay'}[String(r.payment_method||'').toLowerCase()]||'Payment';p.textContent=r.product_name+' · '+r.quantity+' PC · '+money(r.amount_cents)+' · '+method+' — '+(states[r.status]||r.status);out.append(p);}if(!d.orders.length)out.textContent='No orders yet.';}catch(e){$('[data-azdm-orders]').textContent=e.message;}}
  async function checkStatus(id){clearTimeout(pollTimer);try{const d=await call('/api/azdm/status?azdm_order='+encodeURIComponent(id),{headers:await headers(true)});message.textContent=(states[d.status]||d.status)+' Order ID: '+id;if(d.status==='paid'){requestId='';await refreshOrders();}else if(d.status==='pending'&&pollCount++<12)pollTimer=setTimeout(()=>checkStatus(id),5000);}catch(e){message.textContent=e.message;}}
  $('[data-azdm-refresh]').addEventListener('click',refreshOrders);
  function paymentUrlAllowed(url,method){
@@ -142,7 +142,7 @@
  }
  async function startCheckout(paymentMethod,button){
   if(!offer||!available||!button||button.disabled)return;paymentButtons.forEach(b=>b.disabled=true);
-  try{const h=await headers(true),q=model.quote(offer,plan.value,Number(quantity.value));message.textContent='Menyediakan bayaran…';let result;
+  try{const h=await headers(true),q=model.quote(offer,plan.value,Number(quantity.value));message.textContent='Preparing payment…';let result;
    if(offer.fulfilment==='azdm'){
     const selection=JSON.stringify([offer,plan.value,q.quantity,paymentMethod]);if(!requestId||requestSelection!==selection){requestId=crypto.randomUUID();requestSelection=selection;}
     try{const old=JSON.parse(sessionStorage.getItem('azdm-package-request')||'null');if(old?.selection===selection&&Date.now()-old.created<3*86400000)requestId=old.id;sessionStorage.setItem('azdm-package-request',JSON.stringify({id:requestId,selection,created:Date.now()}));}catch{}

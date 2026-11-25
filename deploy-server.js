@@ -4624,6 +4624,11 @@ async function azFinalizePaidOrderOnce(order = {}, req, opts = {}) {
     if (azIsManualSalesInvoiceOrder(latest)) {
       try {
         const manualSync = await azSyncManualSalesInvoicePaid(latest, { paymentReference:latest.paymentReference, toyyibTransaction:tx, toyyibCallback:callbackData });
+        if (manualSync.issue) {
+          latest = upsertPremiumOrder({ ...latest, status:'payment-review', manualPaymentReviewIssue:manualSync.issue });
+          if (!(await azPersistPremiumOrder(latest)).ok) throw azBusinessPaymentError('Invoice payment review could not be saved.', 503);
+          return latest;
+        }
         latest = upsertPremiumOrder({ ...latest, manualInvoicePaidSyncedAt:new Date().toISOString(), manualReceiptNo:manualSync && manualSync.receiptNo || latest.manualReceiptNo || "" });
       } catch (manualSyncError) {
         console.error("Manual sales invoice paid sync failed:", manualSyncError && (manualSyncError.stack || manualSyncError.message || manualSyncError));
@@ -8150,7 +8155,7 @@ async function azLoadManualInvoiceReceipt(receiptId = "") {
   const snap = await ref.get();
   if (!snap.exists) throw Object.assign(new Error("Manual invoice record was not found."), { statusCode:404 });
   const data = snap.data() || {};
-  if (String(data.source || "") !== "admin-manual-sale") throw Object.assign(new Error("Only manual Sales & Receipts invoices can use this ToyyibPay bill."), { statusCode:400 });
+  if (String(data.source || "") !== "admin-manual-sale") throw Object.assign(new Error("Only manual Sales & Receipts invoices can use this payment link."), { statusCode:400 });
   return { id, ref, data };
 }
 async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {}) {
@@ -8163,6 +8168,7 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   }
   if (status !== "pending") throw Object.assign(new Error("ToyyibPay QR is available only for Pending invoices."), { statusCode:409 });
   const amount = azManualInvoicePayableAmount(invoice);
+  if (invoice.chipInvoiceLink?.due * 1000 > Date.now()) throw azBusinessPaymentError('This invoice already has an active CHIP payment link.', 409);
   if (!Number.isFinite(amount) || amount <= 0) throw Object.assign(new Error("Invoice total must be more than RM0.00 before creating a ToyyibPay bill."), { statusCode:400 });
   const invoiceNo = cleanPremiumText(invoice.invoiceNo || invoice.documentNo || `AZI-${record.id.slice(0,10).toUpperCase()}`, 180);
   const existingBillCode = cleanPremiumText(invoice.billCode || invoice.toyyibBillCode || "", 120);
@@ -8242,6 +8248,7 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
   const apiBase = publicBaseUrlFromReq(req);
   const returnUrl = `${apiBase}/payment/manual-invoice-return?orderId=${encodeURIComponent(orderId)}`;
   if (!billCode || !paymentUrl) {
+    await azBusinessPayments.requireVisible('toyyibpay');
     const itemText = Array.isArray(invoice.items)
       ? invoice.items.map(x => cleanToyyibBillText(x && x.name || "", 50)).filter(Boolean).slice(0,3).join(" ")
       : "";
@@ -8333,9 +8340,17 @@ async function azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity = {
 }
 async function azSyncManualSalesInvoicePaid(order = {}, opts = {}) {
   if (!azIsManualSalesInvoiceOrder(order)) return { ok:false, skipped:true };
-  const record = await azLoadManualInvoiceReceipt(order.manualReceiptDocId || "");
+  let record;
+  try {
+    record = await azLoadManualInvoiceReceipt(order.manualReceiptDocId || "");
+  } catch (error) {
+    if (order.paymentMethod === 'chip' && error.statusCode === 404) return { ok:false, issue:'invoice-deleted' };
+    throw error;
+  }
   const current = record.data || {};
   if (String(current.status || "").toLowerCase() === "paid" && current.toyyibPaidSyncedAt) return { ok:true, alreadyPaid:true, receiptId:record.id };
+  if (order.paymentMethod === 'chip') return azSyncManualChipInvoicePaid(record, order, opts);
+  if (current.chipPaidOrderId) return { ok:false, issue:'invoice-already-paid', receiptId:record.id };
   const currentBillCode = cleanPremiumText(current.billCode || current.toyyibBillCode || "", 120);
   const paidBillCode = cleanPremiumText(order.billCode || "", 120);
   if (currentBillCode && paidBillCode && currentBillCode !== paidBillCode) {
@@ -17015,6 +17030,7 @@ async function azStripeDigitalRequest(pathname, options = {}) {
   return data;
 }
 const { createBusinessPayments, paymentError: azBusinessPaymentError } = require('./lib/azobss-business-payments.cjs');
+const { CHIP_SECTIONS } = require('./lib/azobss-chip-collect.cjs');
 const azBusinessPayments = createBusinessPayments({
   root: __dirname,
   getDb: getAzobssBackendDb,
@@ -17212,10 +17228,10 @@ async function azCreateDigitalStripeCheckout(data = {}, req = null) {
   };
 }
 async function azCreateDigitalChipCheckout(data, req) {
-  if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP belum tersedia. Pilih kaedah bayaran lain.', 503);
+  if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP is currently unavailable. Choose another payment method.', 503);
   const orderId = makeId('chip');
   const order = await azBuildDigitalCheckoutOrder(data, req, orderId);
-  if (!azValidEmailLike(order.buyerEmail)) throw azBusinessPaymentError('Masukkan e-mel pembeli yang sah.', 400);
+  if (!azValidEmailLike(order.buyerEmail)) throw azBusinessPaymentError('Enter a valid buyer email address.', 400);
   const fingerprint = azAutomaticCheckoutFingerprintForOrder(order);
   const release = await azAcquireAutomaticCheckoutCreateLock('chip:' + fingerprint);
   try {
@@ -17227,7 +17243,7 @@ async function azCreateDigitalChipCheckout(data, req) {
     if (existing) return { orderId: existing.orderId, paymentUrl: existing.paymentUrl, amountSen: existing.amountSen, reused: true };
 
     let pending = upsertPremiumOrder({ ...order, paymentMethod: 'chip', checkoutFingerprint: fingerprint, createdAtMs: Date.now() });
-    if (!(await azPersistPremiumOrder(pending)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+    if (!(await azPersistPremiumOrder(pending)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
     const checkout = await azStartChipPayment(pending, req,
       azStripeDigitalUrlWithQuery(order.returnUrl, { payment: 'chip_return', orderId }),
       azStripeDigitalUrlWithQuery(order.returnUrl, { payment: 'chip_cancelled', orderId }));
@@ -17238,12 +17254,18 @@ async function azCreateDigitalChipCheckout(data, req) {
 }
 
 async function azStartChipPayment(order, req, successUrl, cancelUrl) {
-  if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
-  if (!azValidEmailLike(order.buyerEmail || order.email)) throw azBusinessPaymentError('Masukkan e-mel pembeli yang sah.', 400);
+  if (isPaBmPremiumOrder(order) || isPublicPaPremiumOrder(order)) throw azBusinessPaymentError('PA/BM uses ToyyibPay.', 400);
+  const section = CHIP_SECTIONS[order.chipInvoiceSection] ||
+    (order.pcOrderId ? CHIP_SECTIONS.tech : order.source === 'CAD Tools' ? CHIP_SECTIONS.cad :
+      azIsMembershipOrder(order) ? 'Membership' : CHIP_SECTIONS.software);
+  if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
+  if (!azValidEmailLike(order.buyerEmail || order.email)) throw azBusinessPaymentError('Enter a valid buyer email address.', 400);
   const checkout = await azBusinessPayments.chipAdapter().create({
     orderId: order.orderId,
     amountSen: order.amountSen,
     productName: order.productName,
+    section,
+    due: order.chipDue,
     email: order.buyerEmail || order.email,
     name: String(order.user?.username || ''),
     successUrl,
@@ -17251,8 +17273,141 @@ async function azStartChipPayment(order, req, successUrl, cancelUrl) {
     callbackUrl: publicBaseUrlFromReq(req) + '/api/chip/payment-callback'
   });
   const saved = upsertPremiumOrder({ ...order, status: 'pending', paymentMethod: 'chip', chipPurchaseId: checkout.purchaseId, paymentUrl: checkout.paymentUrl });
-  if (!(await azPersistPremiumOrder(saved)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  if (!(await azPersistPremiumOrder(saved)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
   return checkout;
+}
+
+async function azCreateManualChipInvoiceLink(req, receiptId, sectionKey) {
+  if (!/^[A-Za-z0-9_-]{1,180}$/.test(receiptId || '')) throw azBusinessPaymentError('A valid invoice record is required.', 400);
+  if (!Object.hasOwn(CHIP_SECTIONS, sectionKey)) throw azBusinessPaymentError('Select a business section.', 400);
+  if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP checkout is currently unavailable.', 503);
+  const db = getAzobssBackendDb();
+  if (!db) throw azBusinessPaymentError('Invoice storage is unavailable.', 503);
+  const { id, ref } = await azLoadManualInvoiceReceipt(receiptId);
+  const now = Date.now();
+  const orderId = makeId('chip-invoice');
+  const due = Math.floor(now / 1000) + azManualInvoiceExpiryDays() * 86400;
+
+  const reservation = await db.runTransaction(async transaction => {
+    const invoice = (await transaction.get(ref)).data();
+    if (invoice?.source !== 'admin-manual-sale' || !azManualInvoiceAcceptsChip(invoice)) {
+      throw azBusinessPaymentError('A saved pending invoice is required.', 409);
+    }
+    const invoiceNo = cleanPremiumText(invoice.invoiceNo || invoice.documentNo || '', 180);
+    const email = cleanPremiumText(invoice.customerEmail || '', 180);
+    if (!invoiceNo || !azValidEmailLike(email)) {
+      throw azBusinessPaymentError('Save an invoice number and a valid customer email first.', 400);
+    }
+    const amountSen = azManualInvoiceOutstandingSen(invoice);
+    if (!Number.isSafeInteger(amountSen) || amountSen <= 0) throw azBusinessPaymentError('The invoice must have a positive balance.', 409);
+    const previous = invoice.chipInvoiceLink;
+    if (previous?.paymentUrl && previous.due * 1000 > now) {
+      if (previous.sectionKey !== sectionKey || previous.amountSen !== amountSen || previous.email !== email || previous.invoiceNo !== invoiceNo) {
+        throw azBusinessPaymentError('This invoice already has an active CHIP link with different details.', 409);
+      }
+      return { paymentUrl:previous.paymentUrl, invoiceNo, amountSen, due:previous.due };
+    }
+    if (previous?.createdAtMs > now - 120000 && !previous.paymentUrl) {
+      throw azBusinessPaymentError('A CHIP link is already being created. Please try again shortly.', 409);
+    }
+    const legacyExpiry = Number(invoice.toyyibBillCreatedAtMs) + Number(invoice.toyyibBillExpiryDays) * 86400000;
+    if ((invoice.billCode || invoice.toyyibBillCode) && (legacyExpiry || Infinity) > now) {
+      throw azBusinessPaymentError('This invoice already has an active ToyyibPay link.', 409);
+    }
+    const link = { orderId, amountSen, invoiceNo, email, sectionKey, due, createdAtMs:now };
+    transaction.update(ref, { chipInvoiceLink:link });
+    return { link, customerName:cleanPremiumText(invoice.customerName || '', 120) };
+  });
+  if (reservation.paymentUrl) return { ...reservation, section:CHIP_SECTIONS[sectionKey] };
+
+  const { link } = reservation;
+  try {
+    const order = upsertPremiumOrder({
+      orderId, amountSen:link.amountSen, amount:azAdjustedMoneyText(link.amountSen / 100),
+      status:'creating', paymentMethod:'chip', isManualSalesInvoice:true, source:'admin-manual-invoice',
+      productId:'manual-sales-invoice', productName:'Invoice ' + link.invoiceNo, manualReceiptDocId:id,
+      manualInvoiceNo:link.invoiceNo, buyerEmail:link.email, user:{ username:reservation.customerName },
+      chipInvoiceSection:sectionKey, chipDue:due
+    });
+    const page = publicBaseUrlFromReq(req) + '/api/chip/invoice-return';
+    const payment = await azStartChipPayment(order, req,
+      azStripeDigitalUrlWithQuery(page, { orderId }), azStripeDigitalUrlWithQuery(page, { orderId, cancelled:'1' }));
+    await db.runTransaction(async transaction => {
+      const invoice = (await transaction.get(ref)).data();
+      if (!azManualInvoiceAcceptsChip(invoice) || invoice.chipInvoiceLink?.orderId !== orderId ||
+          azManualInvoiceOutstandingSen(invoice) !== link.amountSen ||
+          cleanPremiumText(invoice.customerEmail || '', 180) !== link.email ||
+          cleanPremiumText(invoice.invoiceNo || invoice.documentNo || '', 180) !== link.invoiceNo) {
+        throw azBusinessPaymentError('The invoice changed while creating the link. Reload the invoice and try again.', 409);
+      }
+      transaction.update(ref, { 'chipInvoiceLink.paymentUrl':payment.paymentUrl });
+    });
+    return { paymentUrl:payment.paymentUrl, invoiceNo:link.invoiceNo, amountSen:link.amountSen, due, section:CHIP_SECTIONS[sectionKey] };
+  } catch (error) {
+    await db.runTransaction(async transaction => {
+      const current = (await transaction.get(ref)).data()?.chipInvoiceLink;
+      if (current?.orderId === orderId && !current.paymentUrl) {
+        transaction.update(ref, { chipInvoiceLink:firebaseAdmin.firestore.FieldValue.delete() });
+      }
+    }).catch(cleanupError => console.warn('Could not clear CHIP invoice link reservation:', cleanupError.message));
+    throw error;
+  }
+}
+
+function azManualInvoiceAcceptsChip(invoice) {
+  return ['pending', 'deposit-paid'].includes(String(invoice?.status || '').trim().toLowerCase());
+}
+
+function azManualInvoiceOutstandingSen(invoice) {
+  const grossSen = Math.round(azManualInvoicePayableAmount(invoice) * 100);
+  const received = invoice.paidGross ?? invoice.partialPaymentAmount ?? invoice.depositAmount ??
+    (invoice.status === 'deposit-paid' ? grossSen / 200 : 0);
+  return grossSen - Math.max(0, Math.round(Number(received) * 100));
+}
+
+async function azSyncManualChipInvoicePaid(record, order, opts) {
+  if (order.paymentVerificationSource !== 'chip-api') return { ok:false, issue:'invoice-payment-unverified' };
+  const db = getAzobssBackendDb();
+  if (!db) throw azBusinessPaymentError('Invoice storage is unavailable.', 503);
+  return db.runTransaction(async transaction => {
+    const current = (await transaction.get(record.ref)).data();
+    if (current?.status === 'paid' && current.chipPaidOrderId === order.orderId) {
+      return { ok:true, alreadyPaid:true, receiptNo:current.receiptNo };
+    }
+    if (current?.source !== 'admin-manual-sale' || !azManualInvoiceAcceptsChip(current) ||
+        current.chipInvoiceLink?.orderId !== order.orderId || azManualInvoiceOutstandingSen(current) !== order.amountSen ||
+        cleanPremiumText(current.invoiceNo || current.documentNo || '', 180) !== order.manualInvoiceNo) {
+      return { ok:false, issue:'invoice-changed-or-already-paid' };
+    }
+    const invoiceNo = order.manualInvoiceNo;
+    const receiptNo = cleanPremiumText(current.receiptNo || azManualInvoiceReceiptNo(invoiceNo), 180);
+    const gross = azManualInvoicePayableAmount(current);
+    const paymentFee = Number(order.paymentFee || 0);
+    const totalCost = ['productCost','shippingCost','commission','otherCost']
+      .reduce((sum, key) => sum + (Number(current[key]) || 0), paymentFee);
+    const profit = gross - totalCost;
+    const now = Date.now();
+    const timestamp = firebaseAdmin.firestore.FieldValue.serverTimestamp();
+    const paymentReference = opts.paymentReference || order.paymentReference;
+    const bookingId = cleanPremiumText(current.sourceBookingId || '', 100);
+    const booking = /^[A-Za-z0-9_-]+$/.test(bookingId) ? db.collection('serviceBookings').doc(bookingId) : null;
+    const bookingData = booking ? (await transaction.get(booking)).data() : null;
+    transaction.update(record.ref, {
+      status:'paid', documentType:'receipt', documentNo:receiptNo, invoiceNo, receiptNo,
+      paymentMethod:'CHIP', paymentReference, chipPaidOrderId:order.orderId, paymentRecognized:true,
+      paidGross:gross, amountDue:0, paymentFee, totalCost, profit, recognizedTotalCost:totalCost,
+      recognizedProfit:profit, paidAt:timestamp, paidAtMs:now, updatedAt:timestamp, updatedAtMs:now
+    });
+    if (bookingData?.invoiceDocId === record.id) {
+      transaction.update(booking, {
+        status:'confirmed', documentStage:'invoice_paid', invoiceNo, receiptNo, invoiceStatus:'paid',
+        paymentStatus:'paid', finalPrice:gross, finalPriceConfirmed:true, estimateFinal:true, paymentReference,
+        paidAt:new Date(now).toISOString(), paidAtMs:now, updatedAt:new Date(now).toISOString(),
+        updatedAtMs:now, updatedBy:'chip-callback'
+      });
+    }
+    return { ok:true, receiptNo };
+  });
 }
 
 async function azStartInvoiceStripePayment(order, successUrl, cancelUrl) {
@@ -17344,7 +17499,7 @@ async function azStartBusinessOnlinePayment(order, req, returnPage) {
   const successUrl = azStripeDigitalUrlWithQuery(returnPage, { payment: 'return', orderId: order.orderId });
   const cancelUrl = azStripeDigitalUrlWithQuery(returnPage, { payment: 'cancelled', orderId: order.orderId });
   if (provider === 'chip') {
-    if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP belum tersedia.', 503);
+    if (!(await azBusinessPayments.chipReady())) throw azBusinessPaymentError('CHIP checkout is currently unavailable.', 503);
     return azStartChipPayment(order, req, successUrl, cancelUrl);
   }
   await azBusinessPayments.requireVisible(provider);
@@ -17352,7 +17507,7 @@ async function azStartBusinessOnlinePayment(order, req, returnPage) {
     ? await azStartInvoiceStripePayment(order, successUrl, cancelUrl)
     : await azStartInvoiceToyyibPayment(order, req, successUrl);
   const saved = upsertPremiumOrder({ ...order, ...fields, businessCheckout:true });
-  if (!(await azPersistPremiumOrder(saved)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  if (!(await azPersistPremiumOrder(saved)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
   return fields;
 }
 
@@ -17365,12 +17520,12 @@ async function azCreateDigitalBankTransfer(data, req) {
 
 async function azCreateBankTransferInstructions(order) {
   const bank = (await azBusinessPayments.options()).bank;
-  if (!bank) throw azBusinessPaymentError('Pindahan bank belum tersedia.', 503);
-  if (!azValidEmailLike(order.buyerEmail)) throw azBusinessPaymentError('Masukkan e-mel pembeli yang sah.', 400);
+  if (!bank) throw azBusinessPaymentError('Bank transfer is currently unavailable.', 503);
+  if (!azValidEmailLike(order.buyerEmail)) throw azBusinessPaymentError('Enter a valid buyer email address.', 400);
   const token = crypto.randomBytes(32).toString('base64url');
   const pending = upsertPremiumOrder({ ...order, status:'pending', paymentMethod:'bank-transfer', bankReportHash:azBankReportHash(token) });
   const saved = await azPersistPremiumOrder(pending);
-  if (!saved.ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+  if (!saved.ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
   return { orderId:order.orderId, amountSen:order.amountSen, reference:saved.invoiceNo || order.orderId, reportToken:token, bank };
 }
 
@@ -17459,7 +17614,7 @@ async function azReviewDigitalBankTransfer(data, req, admin) {
 }
 
 async function azVerifyAndFinalizeDigitalChip(order, req) {
-  if (!order || order.paymentMethod !== 'chip' || isPaBmPremiumOrder(order)) return { paid: false };
+  if (!order || order.paymentMethod !== 'chip' || isPaBmPremiumOrder(order) || isPublicPaPremiumOrder(order)) return { paid: false };
   const result = await azBusinessPayments.chipAdapter().verify(order);
   if (!result.paid) return result;
   const saved = await azFinalizePaidOrderOnce(order, req, {
@@ -21096,7 +21251,7 @@ async function handler(req, res) {
         if (provider === 'bank-transfer') {
           return send(res, 200, JSON.stringify({ok:true, ...await azCreateBankTransferInstructions(order)}), 'application/json', { 'Cache-Control':'no-store' });
         }
-        if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+        if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
         const checkout = await azStartBusinessOnlinePayment(order, req, returnUrl);
         return send(res, 200, JSON.stringify({ok:true,orderId,paymentUrl:checkout.paymentUrl,billCode:checkout.billCode,status:'pending',package:pkg}), 'application/json', { 'Cache-Control':'no-store' });
       } catch(err){console.error("Membership create bill failed:",err&&err.stack||err);return send(res,err.statusCode||500,JSON.stringify({ok:false,error:err?.message||"Unable to create Membership payment."},null,2),"application/json");}
@@ -21652,7 +21807,7 @@ async function handler(req, res) {
         return send(res, 200, JSON.stringify({ ok: true, ...order }), 'application/json', { 'Cache-Control': 'no-store' });
       } catch (error) {
         const status = Number(error.statusCode) || 502;
-        return send(res, status, JSON.stringify({ ok: false, error: status < 500 ? error.message : 'CHIP belum tersedia. Pilih kaedah bayaran lain.' }), 'application/json');
+        return send(res, status, JSON.stringify({ ok: false, error: status < 500 ? error.message : 'CHIP is currently unavailable. Choose another payment method.' }), 'application/json');
       }
     }
 
@@ -21662,7 +21817,7 @@ async function handler(req, res) {
         const order = await azCreateDigitalBankTransfer(parseRequestBody(await readBody(req)), req);
         return send(res, 200, JSON.stringify({ ok: true, ...order }), 'application/json', { 'Cache-Control': 'no-store' });
       } catch (error) {
-        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Pindahan bank belum tersedia.' }), 'application/json');
+        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Bank transfer is currently unavailable.' }), 'application/json');
       }
     }
 
@@ -21672,7 +21827,7 @@ async function handler(req, res) {
         await azReportDigitalBankTransfer(parseRequestBody(await readBody(req)));
         return send(res, 200, JSON.stringify({ ok: true }), 'application/json', { 'Cache-Control': 'no-store' });
       } catch (error) {
-        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Laporan pindahan tidak dapat disimpan.' }), 'application/json');
+        return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'The bank transfer reference could not be submitted.' }), 'application/json');
       }
     }
 
@@ -21693,6 +21848,24 @@ async function handler(req, res) {
       } catch (error) {
         return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: error.statusCode < 500 ? error.message : 'Unable to review bank transfers.' }), 'application/json');
       }
+    }
+
+    if (pathname === '/api/chip/invoice-return' && req.method === 'GET') {
+      if (azRateLimitOrSend(req, res, 'chip-invoice-return', 30, 60 * 1000)) return;
+      let message = 'If your bank confirms a payment, contact AZOBSS with the invoice number to check its status.';
+      const orderId = cleanPremiumText(parsed.searchParams.get('orderId') || '', 160);
+      try {
+        const order = /^chip-invoice[A-Za-z0-9_-]+$/.test(orderId) && await findPremiumOrderByAnyDeep({ orderId });
+        if (order?.paymentMethod === 'chip' && azIsManualSalesInvoiceOrder(order)) {
+          const result = await azVerifyAndFinalizeDigitalChip(order, req);
+          if (result.order?.status === 'paid') message = 'Payment confirmed. Thank you for paying your AZOBSS invoice.';
+          else if (result.paid) message = 'CHIP received your payment. Contact AZOBSS with your invoice number for confirmation.';
+          else if (parsed.searchParams.get('cancelled') === '1') message = 'Payment was cancelled. Use your invoice payment link if you would like to try again.';
+        }
+      } catch (error) {
+        console.warn('CHIP invoice return verification failed:', error.message);
+      }
+      return send(res, 200, '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AZOBSS invoice payment</title><main><h1>AZOBSS invoice payment</h1><p>' + message + '</p><p><a href="https://www.azobss.com/">Return to AZOBSS</a></p></main></html>', 'text/html', { 'Cache-Control':'no-store', 'Referrer-Policy':'no-referrer' });
     }
 
     if (pathname === '/api/chip/payment-callback' && req.method === 'POST') {
@@ -22524,7 +22697,7 @@ async function handler(req, res) {
             if (provider === 'bank-transfer') {
               return send(res, 200, JSON.stringify({ok:true,...await azCreateBankTransferInstructions(order)}), 'application/json', { 'Cache-Control':'no-store' });
             }
-            if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('Rekod pembayaran tidak dapat disimpan.', 503);
+            if (!(await azPersistPremiumOrder(order)).ok) throw azBusinessPaymentError('The payment record could not be saved.', 503);
             const checkout = await azStartBusinessOnlinePayment(order, req, returnUrl);
             return send(res, 200, JSON.stringify({ ok:true, orderId, billCode:checkout.billCode, paymentUrl:checkout.paymentUrl, status:"pending", amount:19, amountSen:AZOBSS_EBOOK_GENERATOR_PRICE_SEN, oneTime:true, recurring:false, lifetime:true, priceLabel:"RM19 sekali sahaja", checkoutVersion:1354 }, null, 2), "application/json");
           } catch (billErr) {
@@ -23279,6 +23452,28 @@ async function handler(req, res) {
       }
     }
 
+    if (pathname === '/api/admin/sales-invoice/chip-link' && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'admin-manual-invoice-chip-link', 30, 10 * 60 * 1000)) return;
+      const admin = await azAdminIdentityFromRequest(req, parsed);
+      if (!admin?.isAdmin) return send(res, 403, JSON.stringify({ ok:false, error:'Admin access required.' }), 'application/json');
+      try {
+        const body = parseRequestBody(await readBody(req));
+        const release = await azAcquireAutomaticCheckoutCreateLock('manual-invoice:' + body.receiptId);
+        let result;
+        try {
+          result = await azCreateManualChipInvoiceLink(req, body.receiptId, String(body.section || ''));
+        } finally {
+          release();
+        }
+        azFireAndForget(azWriteAdminAuditLog(req, admin, 'admin_manual_invoice_chip_link', 'receipts', body.receiptId,
+          { invoiceNo:result.invoiceNo, section:result.section, amountSen:result.amountSen }, 'success'), 'Manual invoice CHIP audit log failed');
+        return send(res, 200, JSON.stringify({ ok:true, ...result }), 'application/json', { 'Cache-Control':'no-store' });
+      } catch (error) {
+        const status = Number(error.statusCode) || 502;
+        return send(res, status, JSON.stringify({ ok:false, error:status < 500 || status === 503 ? error.message : 'The CHIP payment link could not be created.' }), 'application/json', { 'Cache-Control':'no-store' });
+      }
+    }
+
     if (pathname === "/api/admin/sales-invoice/toyyibpay-bill" && req.method === "POST") {
       try {
         const adminIdentity = await azAdminIdentityFromRequest(req, parsed);
@@ -23286,7 +23481,13 @@ async function handler(req, res) {
         let body = {};
         try { body = parseRequestBody(await readBody(req)); } catch (_) { body = {}; }
         const receiptId = cleanPremiumText(body.receiptId || body.docId || body.id || "", 180);
-        const result = await azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity);
+        const release = await azAcquireAutomaticCheckoutCreateLock('manual-invoice:' + receiptId);
+        let result;
+        try {
+          result = await azEnsureManualInvoiceToyyibBill(req, receiptId, adminIdentity);
+        } finally {
+          release();
+        }
         azFireAndForget(azWriteAdminAuditLog(req, adminIdentity, "admin_manual_invoice_toyyib_bill", "receipts", receiptId, { invoiceNo:result.invoiceNo, billCode:result.billCode, amount:result.amount }, "success"), "Manual invoice ToyyibPay audit log failed");
         return send(res, 200, JSON.stringify(result, null, 2), "application/json", { "Cache-Control":"no-store" });
       } catch (err) {

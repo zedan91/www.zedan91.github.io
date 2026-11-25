@@ -170,11 +170,11 @@
     if(reason==='payment_pending'){
       gate.innerHTML='<div class="azebook-paywall-card">'+
         '<div class="azebook-paywall-icon">📚</div><span class="azebook-paywall-kicker">AZOBSS EBOOK GENERATOR PRO</span>'+
-        '<h2>Semakan Pembayaran</h2>'+
-        '<p class="azebook-paywall-copy">Ada pembayaran yang masih menunggu pengesahan. Jika kamu sudah bayar, semak status dahulu dan jangan bayar kali kedua.</p>'+
-        '<div class="azebook-paywall-points"><span>✓ Rekod akaun dikekalkan</span><span>✓ Akses dibuka automatik selepas PAID disahkan</span></div>'+
-        '<button type="button" class="azebook-btn primary azebook-paywall-main" id="azebookRetryPayment1362">Semak Status Sekarang</button>'+
-        (pending&&pending.paymentUrl?'<button type="button" class="azebook-btn azebook-paywall-main" id="azebookContinuePayment1362">Buka Pembayaran Pending</button>':'')+
+        '<h2>Payment Status</h2>'+
+        '<p class="azebook-paywall-copy">Your payment is awaiting confirmation. If you already paid, check its status before paying again.</p>'+
+        '<div class="azebook-paywall-points"><span>✓ Your account keeps your purchase</span><span>✓ Access unlocks after payment is confirmed</span></div>'+
+        '<button type="button" class="azebook-btn primary azebook-paywall-main" id="azebookRetryPayment1362">Check payment status</button>'+
+        (pending&&pending.paymentUrl?'<button type="button" class="azebook-btn azebook-paywall-main" id="azebookContinuePayment1362">Resume checkout</button>':'')+
         '<div id="azebookPayStatus1351" class="azebook-paywall-status"></div></div>';
       var ps=byId('azebookRetryPayment1362');if(ps)ps.onclick=function(){updateGate({access:false,reason:'payment_checking'});checkLifetimeAccess(true)};
       var pc=byId('azebookContinuePayment1362');if(pc&&pending&&pending.paymentUrl)pc.onclick=function(){location.href=pending.paymentUrl};
@@ -193,11 +193,11 @@
 
     gate.innerHTML='<div class="azebook-paywall-card">'+
       '<div class="azebook-paywall-icon">📚</div><span class="azebook-paywall-kicker">AZOBSS EBOOK GENERATOR PRO</span>'+
-      '<h2>Unlock Ebook Generator</h2><div class="azebook-paywall-price">RM19 <small>sekali sahaja</small></div>'+
-      '<p class="azebook-paywall-copy">Bayar sekali dan akses kekal pada akaun AZOBSS kamu. Tiada yuran bulanan atau tahunan.</p>'+
+      '<h2>Unlock Ebook Generator</h2><div class="azebook-paywall-price">RM19 <small>one-time</small></div>'+
+      '<p class="azebook-paywall-copy">Pay once for lifetime access on your AZOBSS account.</p>'+
       '<div class="azebook-paywall-points"><span>✓ Prompt Produksi PDF terus</span><span>✓ Semua gaya ebook adaptive</span><span>✓ Prompt Tersimpan &amp; export TXT</span><span>✓ Akses seumur hidup untuk akaun ini</span></div>'+
-      '<button type="button" class="azebook-btn primary azebook-paywall-main" id="azebookBuy1351">Unlock Sekarang — RM19</button>'+
-      '<p class="azebook-paywall-note">Pembayaran melalui ToyyibPay / FPX. Selepas disahkan, generator dibuka automatik.</p>'+
+      '<button type="button" class="azebook-btn primary azebook-paywall-main" id="azebookBuy1351">Unlock now — RM19</button>'+
+      '<p class="azebook-paywall-note">Access unlocks automatically once your payment is confirmed.</p>'+
       '<div id="azebookPayStatus1351" class="azebook-paywall-status"></div></div>';
     var bb=byId('azebookBuy1351');if(bb)bb.onclick=function(){buyLifetimeAccess()};
   }
@@ -246,7 +246,7 @@
       var uid=currentFirebaseUid()||String(data&&data.entitlement&&data.entitlement.uid||'');
       if(data.access)writeAccessCache(uid);else clearAccessCache();
       updateGate(data);
-      if(!data.access&&data.reason==='payment_pending')gateStatus('Pembayaran belum disahkan. Jika baru selesai bayar, tunggu beberapa saat dan tekan semula.',false);
+      if(!data.access&&data.reason==='payment_pending')gateStatus('Payment is awaiting confirmation. If you just paid, wait a moment and check again.',false);
       return !!data.access;
     }catch(err){
       if(background&&ACCESS_GRANTED)return true;
@@ -272,7 +272,7 @@
       var headers=await authHeaders(true);
       if(!headers.Authorization){updateGate({access:false,loginRequired:true});return}
       var payments=window.AZOBSSBusinessCheckout;
-      await payments.choose('Bayar Ebook Generator', function(paymentMethod){
+      await payments.choose('Pay for Ebook Generator', function(paymentMethod){
         return payments.request('/api/ebook-generator/create-bill', {
           method:'POST', headers:Object.assign({'Content-Type':'application/json'},headers),
           body:JSON.stringify({source:'Software-Tools Ebook Generator',paymentMethod:paymentMethod})
@@ -282,7 +282,7 @@
         if(data.paymentUrl)setPendingPayment({orderId:data.orderId||'',billCode:data.billCode||'',paymentUrl:data.paymentUrl,createdAtMs:Date.now()});
         return true;
       });
-    }catch(err){gateStatus('Pembayaran gagal dibuka: '+(err.message||err),true)}
+    }catch(err){gateStatus('Could not start payment. '+(err.message||err),true)}
     finally{if(btn)btn.disabled=false;}
   }
 

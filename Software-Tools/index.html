@@ -3274,7 +3274,7 @@ html body .downloads-section{
 <!-- AZOBSS v1210: universal per-software packages and support -->
 <link rel="stylesheet" href="/assets/css/azobss-software-packages.css?v=1408">
 <script src="/assets/js/azobss-azdm-offer-model.js?v=1408" defer></script>
-<script src="/assets/js/azobss-software-packages.js?v=1609" defer></script>
+<script src="/assets/js/azobss-software-packages.js?v=1610" defer></script>
 
 <!-- Ebook compatibility history markers for regression tests only; these legacy assets are NOT loaded:
 /assets/css/azobss-software-ebook-v1351.css?v=1351
@@ -3289,7 +3289,7 @@ html body .downloads-section{
 <link rel="stylesheet" href="/assets/css/azobss-customer-hub-v1538.css?v=1575">
 <script src="/assets/js/azobss-customer-session-v1546.js?v=1546"></script>
 <script src="/assets/js/azobss-customer-hub-v1538.js?v=1575"></script>
-<script src="/assets/js/azobss-business-checkout.js?v=1609"></script>
+<script src="/assets/js/azobss-business-checkout.js?v=1610"></script>
 </head>
 <body>
 <header aria-label="Carousell style navigation" class="market-sticky-bar">
@@ -3805,7 +3805,7 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
         </label>
       </div>
       <div class="software-admin-media-preview" id="softwareAdminMediaPreview"><span>Media selected. Small files only; URL is recommended for large GIF.</span></div>
-      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. For private R2 files, use the Cloudflare R2 Private Object Key field—not the Premium Download File Link field. Premium items support Bank Transfer / FPX via ToyyibPay and Stripe Checkout. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
+      <p class="software-admin-note">Best practice: Product ID, version, platform, status, download limit and expiry are saved with each item. For private R2 files, use the Cloudflare R2 Private Object Key field—not the Premium Download File Link field. Premium items support CHIP and manual Maybank payment. Enable backup providers in Admin Settings. Subscription code products generate a Pro activation code after payment verification, and the download link/receipt are sent by email.</p>
       <div class="software-admin-actions">
         <button class="software-admin-cancel" id="softwareAdminCancel" type="button">Cancel</button>
         <button class="software-admin-save" type="submit">Save Item</button>
@@ -3820,10 +3820,10 @@ html body .download-card:has(.az-promo-price-block) > .az-card-commission-symbol
     <div class="azobss-pay-head"><h2 id="azobssPayTitle">Complete Purchase</h2><button class="azobss-pay-close" id="azobssPayClose" type="button">×</button></div>
     <div class="azobss-pay-product" id="azobssPayProduct">Loading product...</div>
     <div class="azobss-pay-options">
-      <button class="azobss-pay-option" data-method="chip" type="button" hidden>Bayar dengan CHIP</button>
-      <button class="azobss-pay-option" data-method="bank-transfer" type="button" hidden>DuitNow QR / Pindahan Bank</button>
-      <button class="azobss-pay-option" data-method="bank" type="button" hidden>ToyyibPay (Sandaran)</button>
-      <button class="azobss-pay-option" data-method="stripe" type="button" hidden>Stripe (Sandaran)</button>
+      <button class="azobss-pay-option" data-method="chip" type="button" hidden>Pay with CHIP</button>
+      <button class="azobss-pay-option" data-method="bank-transfer" type="button" hidden>DuitNow QR / Bank Transfer</button>
+      <button class="azobss-pay-option" data-method="bank" type="button" hidden>ToyyibPay (Backup)</button>
+      <button class="azobss-pay-option" data-method="stripe" type="button" hidden>Stripe (Backup)</button>
     </div>
     <div class="azobss-pay-steps">
       <div class="azobss-pay-step is-active">1. Open Payment</div>
@@ -7020,7 +7020,7 @@ function normalizeItem(item){
 .az-pin-order-admin-control-1450.is-disabled{opacity:.55}
 </style>
 
-<script src="/assets/js/azobss-global-auth.js?v=1609" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
+<script src="/assets/js/azobss-global-auth.js?v=1610" type="module"></script><script type="module" src="/assets/js/azobss-live-likes-only.js?v=1400"></script><script src="/assets/js/azobss-pro-ui.js" defer></script>
 
 
 <!-- AZOBSS FIX 374: expose expiry helper globally for Buy Now + Admin Test RM1 -->
@@ -7326,13 +7326,13 @@ function normalizeItem(item){
           body:JSON.stringify(payload)
         });
         const data = await res.json().catch(()=>({ok:false,error:'Invalid backend response'}));
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Pembayaran tidak dapat disediakan.');
+        if (!res.ok || !data.ok) throw new Error(data.error || 'The payment could not be started.');
         if (provider === 'bank-transfer') {
           await shared.digitalBankRequest(businessBankDetails, data);
           return;
         }
         const paymentUrl = data.paymentUrl || data.url || data.redirectUrl || '';
-        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'Pembayaran tidak dapat disediakan.');
+        if(!res.ok || !data.ok || !paymentUrl) throw new Error(data.error || 'The payment could not be started.');
         if(data.orderId) localStorage.setItem('azobss_last_order_id', data.orderId);
         try{
           localStorage.setItem('azobss_pending_payment_checkout', JSON.stringify({
@@ -7348,7 +7348,7 @@ function normalizeItem(item){
         try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), stripeSessionId:(data.sessionId||data.id||''), source:sourcePage, paymentMethod:provider}); }catch(_e){}
         shared.redirect(paymentUrl, provider);
       }catch(err){
-        errorBox.textContent = err && err.message ? err.message : 'Pembayaran tidak dapat disediakan.';
+        errorBox.textContent = err && err.message ? err.message : 'The payment could not be started.';
       }finally{
         openPaymentBtn.disabled = false;
         if(quantityInput)quantityInput.disabled=false;
@@ -7415,7 +7415,7 @@ function normalizeItem(item){
       try{ window.azobssRecordShopPurchase && window.azobssRecordShopPurchase({...currentProduct, orderId:(data.orderId||''), billCode:(data.billCode||''), source:(location.pathname.toLowerCase().includes('cad-tools')?'CAD Tools':'Software')}); }catch(_e){}
       window.location.href = data.paymentUrl;
     }catch(err){
-      errorBox.textContent = err.message || 'Bayaran belum tersedia. Pilih kaedah lain.';
+      errorBox.textContent = err.message || 'Payment is unavailable. Choose another method.';
     }finally{
       openPaymentBtn.disabled = false;
       if(quantityInput)quantityInput.disabled=false;
@@ -17943,10 +17943,10 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
   <div class="azdm-summary" data-azdm-summary></div><p data-azdm-saving></p>
   <p data-package-activation></p>
   <div class="azdm-payment-buttons" data-azdm-payment-buttons>
-   <button type="button" data-azdm-buy-chip hidden disabled>Bayar dengan CHIP</button>
-   <button type="button" data-azdm-buy-bank hidden disabled>DuitNow QR / Pindahan Bank</button>
-   <button type="button" data-azdm-buy disabled>ToyyibPay (Sandaran)</button>
-   <button type="button" data-azdm-buy-stripe hidden disabled>Stripe (Sandaran)</button>
+   <button type="button" data-azdm-buy-chip hidden disabled>Pay with CHIP</button>
+   <button type="button" data-azdm-buy-bank hidden disabled>DuitNow QR / Bank Transfer</button>
+   <button type="button" data-azdm-buy hidden disabled>ToyyibPay (Backup)</button>
+   <button type="button" data-azdm-buy-stripe hidden disabled>Stripe (Backup)</button>
   </div>
   <button type="button" data-azdm-signin>Sign in AZOBSS</button>
   <button type="button" data-package-support>Support</button>
@@ -17962,7 +17962,7 @@ if(!window.__AZOBSS_EBOOK_DIRECT){
 </dialog>
 <script type="module" src="/assets/js/azobss-sales-staff-application.js?v=1244"></script>
 
-<script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1609"></script>
+<script defer src="/assets/js/azobss-software-ebook-v1379.js?v=1610"></script>
 
 <!-- AZOBSS 1445: affiliate cards use the same logo-first layout as normal software cards; no disclosure row. -->
 <style id="azobss-software-affiliate-layout-v1445">

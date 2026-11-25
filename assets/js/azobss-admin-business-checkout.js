@@ -15,7 +15,7 @@
     return element;
   };
   const set = (provider, value) => { form.elements.namedItem(provider).checked = value === true; };
-  const chipStatus = ready => ready ? 'CHIP sedia untuk digunakan.' : 'CHIP belum tersedia untuk checkout.';
+  const chipStatus = ready => ready ? 'CHIP checkout is available.' : 'CHIP checkout is currently unavailable.';
 
   async function loadSettings() {
     const result = await call('/checkout-options');
@@ -30,12 +30,12 @@
     const payload = Object.fromEntries(['toyyibpay', 'stripe'].map(key => [key, form.elements.namedItem(key).checked]));
     const fields = form.querySelector('fieldset');
     fields.disabled = true;
-    status.textContent = 'Menyimpan…';
+    status.textContent = 'Saving…';
     try {
       const result = await call('/checkout-options', post(payload));
       set('toyyibpay', result.backup.toyyibpay);
       set('stripe', result.backup.stripe);
-      status.textContent = 'Tetapan disimpan. ' + chipStatus(result.chip);
+      status.textContent = 'Settings saved. ' + chipStatus(result.chip);
     } catch (error) {
       status.textContent = error.message;
     } finally {
@@ -44,21 +44,21 @@
   });
 
   async function loadTransfers() {
-    transfers.textContent = 'Memuatkan…';
+    transfers.textContent = 'Loading…';
     try {
       const result = await call('/bank-transfer');
       transfers.replaceChildren();
-      if (!result.orders.length) transfers.textContent = 'Tiada rujukan pindahan menunggu semakan.';
+      if (!result.orders.length) transfers.textContent = 'No bank transfers are awaiting review.';
       for (const order of result.orders) {
         const item = make('div');
         const value = 'RM ' + (order.amountSen / 100).toFixed(2);
         const invoice = order.invoiceNo || order.orderId;
         item.append(make('p', invoice + ' · ' + order.productName + ' · ' + value + ' · ' + order.bankReference));
-        const button = make('button', 'Sahkan wang diterima');
+        const button = make('button', 'Confirm payment received');
         button.className = 'btn green';
         button.type = 'button';
         button.addEventListener('click', async () => {
-          if (!window.confirm('Sahkan ' + value + ' sudah dikreditkan ke akaun AZOBSS ENTERPRISE dengan rujukan ' + order.bankReference + '.')) return;
+          if (!window.confirm('Confirm that ' + value + ' has been credited to the AZOBSS ENTERPRISE account with reference ' + order.bankReference + '.')) return;
           button.disabled = true;
           try {
             await call('/bank-transfer', post({ orderId: order.orderId, reference: order.bankReference, amountSen: order.amountSen }));
