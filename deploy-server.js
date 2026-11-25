@@ -17031,6 +17031,12 @@ async function azStripeDigitalRequest(pathname, options = {}) {
 }
 const { createBusinessPayments, paymentError: azBusinessPaymentError } = require('./lib/azobss-business-payments.cjs');
 const { CHIP_SECTIONS } = require('./lib/azobss-chip-collect.cjs');
+const { createChipAdminTest } = require('./lib/azobss-chip-admin-test.cjs');
+const azChipAdminTest = createChipAdminTest({
+  getDb: getAzobssBackendDb,
+  frontendBase: FRONTEND_BASE_URL,
+  callbackUrl: (PUBLIC_BASE_URL_ENV || 'https://azobss-backend.onrender.com') + '/api/chip/admin-test-callback'
+});
 const azBusinessPayments = createBusinessPayments({
   root: __dirname,
   getDb: getAzobssBackendDb,
@@ -21794,9 +21800,36 @@ async function handler(req, res) {
         const backup = req.method === 'POST'
           ? await azBusinessPayments.saveBackups(parseRequestBody(await readBody(req)))
           : await azBusinessPayments.readBackups();
-        return send(res, 200, JSON.stringify({ ok: true, backup, chip: await azBusinessPayments.chipReady() }), 'application/json', { 'Cache-Control': 'no-store' });
+        const chipState = await azBusinessPayments.chipStatus();
+        return send(res, 200, JSON.stringify({ ok: true, backup, chip:chipState === 'ready', chipState,
+          chipTestConfiguration:azChipAdminTest.configuration() }), 'application/json', { 'Cache-Control': 'no-store' });
       } catch (error) {
         return send(res, error.statusCode || 503, JSON.stringify({ ok: false, error: 'Payment options could not be saved or loaded.' }), 'application/json');
+      }
+    }
+
+    if (pathname === '/api/admin/site/chip-test-payment' && ['GET','POST'].includes(req.method)) {
+      const admin = await azAdminIdentityFromRequest(req, parsed);
+      if (!admin?.isAdmin || !admin.uid) return send(res, 403, JSON.stringify({ok:false,error:'Admin access required.'}), 'application/json');
+      if (azRateLimitOrSend(req, res, 'admin-chip-test-' + req.method, req.method === 'POST' ? 6 : 30, 60 * 1000)) return;
+      try {
+        const result = req.method === 'POST' ? await azChipAdminTest.create(admin.uid)
+          : await azChipAdminTest.status(parsed.query.testId, admin.uid);
+        return send(res, 200, JSON.stringify({ok:true,...result}), 'application/json', {'Cache-Control':'no-store'});
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ok:false,
+          error:error.statusCode ? error.message : 'CHIP test payment is currently unavailable.'
+        }), 'application/json', {'Cache-Control':'no-store'});
+      }
+    }
+
+    if (pathname === '/api/chip/admin-test-callback' && req.method === 'POST') {
+      if (azRateLimitOrSend(req, res, 'chip-admin-test-callback', 90, 60 * 1000)) return;
+      try {
+        const paid = await azChipAdminTest.callback(req);
+        return send(res, paid ? 200 : 409, JSON.stringify({ok:paid}), 'application/json', {'Cache-Control':'no-store'});
+      } catch (error) {
+        return send(res, error.statusCode || 503, JSON.stringify({ok:false,error:'Unable to verify CHIP test callback.'}), 'application/json');
       }
     }
 

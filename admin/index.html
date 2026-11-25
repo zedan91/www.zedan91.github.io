@@ -4566,6 +4566,14 @@ Special member-only promotion" style="width:100%;box-sizing:border-box;min-heigh
           </fieldset>
         </form>
         <p class="tabs-note" data-payment-settings-status role="status"></p>
+        <h3>Admin Test Payment</h3>
+        <p class="tabs-note">Run an RM 1.00 checkout in CHIP Test Mode and check its status here. Test payments do not issue sales receipts or licences.</p>
+        <div class="toolbar">
+          <button class="btn" type="button" data-chip-test-create>Create test payment</button>
+          <a class="btn" data-chip-test-open target="_blank" rel="noopener noreferrer" hidden>Open CHIP test checkout</a>
+          <button class="btn" type="button" data-chip-test-check hidden>Check test status</button>
+        </div>
+        <p class="tabs-note" data-chip-test-status role="status"></p>
         <h3>Digital Bank Transfer Review</h3>
         <button class="btn" type="button" data-load-transfer-list>Load transfer references</button>
         <div data-transfer-list aria-live="polite"></div>
@@ -9038,7 +9046,7 @@ onAuthStateChanged(auth, async user => {
 
 
 
-<script type="module" src="/assets/js/azobss-global-auth.js?v=1612"></script>
+<script type="module" src="/assets/js/azobss-global-auth.js?v=1613"></script>
 <script type="module" src="/assets/js/azobss-live-likes-only.js?v=1272"></script>
 <script src="/assets/js/azobss-pro-ui.js"></script>
 
@@ -10598,7 +10606,7 @@ document.addEventListener('click', async function(e){
 <script src="/assets/js/azobss-admin-sales-receipt-pdf.js?v=1609"></script>
 <!-- AZOBSS PATCH 760: Sales & Receipts default; Overview manual-load only -->
 <script src="/assets/js/azobss-customer-whatsapp-v1542.js?v=1595"></script>
-<script defer src="/assets/js/azobss-admin-business-checkout.js?v=1610"></script>
+<script defer src="/assets/js/azobss-admin-business-checkout.js?v=1613"></script>
 <script type="module" src="/assets/js/azobss-admin-sales-receipts.js?v=1610" onerror="(function(){var n=document.getElementById('salesReceiptResultInfo');if(n)n.textContent='Sales & Receipts script failed to load. Refresh with Ctrl + F5.';})()"></script>
 <link rel="stylesheet" href="/assets/css/azobss-tech-delivery.css?v=1563">
 <script defer src="/assets/js/azobss-admin-tech-delivery.js?v=1577"></script>

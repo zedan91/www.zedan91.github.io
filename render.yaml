@@ -44,6 +44,10 @@ services:
         sync: false
       - key: CHIP_BRAND_ID
         sync: false
+      - key: CHIP_TEST_API_KEY
+        sync: false
+      - key: CHIP_TEST_BRAND_ID
+        sync: false
       - key: SOLATTIME_ADMIN_TOKEN
         sync: false
       - key: SOLATTIME_ORDER_CIPHER_KEY

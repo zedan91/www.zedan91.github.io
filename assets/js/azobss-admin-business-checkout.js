@@ -15,14 +15,84 @@
     return element;
   };
   const set = (provider, value) => { form.elements.namedItem(provider).checked = value === true; };
-  const chipStatus = ready => ready ? 'CHIP checkout is available.' : 'CHIP checkout is currently unavailable.';
+  const chipStatuses = {
+    ready: 'CHIP live checkout is available.',
+    disabled: 'CHIP live checkout is disabled in Render.',
+    missing_credentials: 'The live CHIP API key or Brand ID is missing in Render.',
+    provider_check_failed: 'Render could not verify the live CHIP connection.'
+  };
+  const testConfigurations = {
+    configured: 'CHIP test credentials are set. Create a payment to test the connection.',
+    missing_credentials: 'Set CHIP_TEST_API_KEY and CHIP_TEST_BRAND_ID in Render to run a test.',
+    live_key_reused: 'Replace the test key with a key created in CHIP Test Mode.'
+  };
+  const chipStatus = result => chipStatuses[result.chipState] ||
+    (result.chip ? 'CHIP live checkout is available.' : 'CHIP live checkout is currently unavailable.');
+
+  const testCreate = panel.querySelector('[data-chip-test-create]');
+  const testOpen = panel.querySelector('[data-chip-test-open]');
+  const testCheck = panel.querySelector('[data-chip-test-check]');
+  const testStatus = panel.querySelector('[data-chip-test-status]');
+  const testStorageKey = 'azobss-admin-chip-test-id';
+  let testId = new URLSearchParams(location.search).get('chipTest') || '';
+  try { testId ||= sessionStorage.getItem(testStorageKey) || ''; } catch (_) {}
+  testCheck.hidden = !testId;
+
+  function updateTestStatus(result) {
+    const label = {
+      creating:'Preparing the test purchase.',
+      pending:'Awaiting payment in CHIP Test Mode.',
+      paid:'Test payment verified by CHIP.',
+      expired:'The test payment link expired.',
+      failed:'This test payment could not be created.'
+    }[result.status] || 'Test status could not be read.';
+    testStatus.textContent = label + ' ' + result.testId;
+    if (['paid','expired','failed'].includes(result.status)) testOpen.hidden = true;
+  }
+
+  testCreate.addEventListener('click', async () => {
+    testCreate.disabled = true;
+    testCheck.disabled = true;
+    testStatus.textContent = 'Creating CHIP test checkout…';
+    try {
+      const result = await call('/chip-test-payment', post({}));
+      const url = new URL(result.paymentUrl);
+      if (url.origin !== 'https://gate.chip-in.asia' || url.username || url.password) {
+        throw Error('The CHIP test checkout link is invalid.');
+      }
+      testId = result.testId;
+      try { sessionStorage.setItem(testStorageKey, testId); } catch (_) {}
+      testOpen.href = url.href;
+      testOpen.hidden = false;
+      testCheck.hidden = false;
+      updateTestStatus(result);
+    } catch (error) {
+      testStatus.textContent = error.message;
+    } finally {
+      testCreate.disabled = false;
+      testCheck.disabled = false;
+    }
+  });
+
+  testCheck.addEventListener('click', async () => {
+    testCheck.disabled = true;
+    testStatus.textContent = 'Checking CHIP test status…';
+    try {
+      updateTestStatus(await call('/chip-test-payment?testId=' + encodeURIComponent(testId)));
+    } catch (error) {
+      testStatus.textContent = error.message;
+    } finally {
+      testCheck.disabled = false;
+    }
+  });
 
   async function loadSettings() {
     const result = await call('/checkout-options');
     set('toyyibpay', result.backup.toyyibpay);
     set('stripe', result.backup.stripe);
     form.querySelector('fieldset').disabled = false;
-    status.textContent = chipStatus(result.chip);
+    status.textContent = chipStatus(result);
+    if (!testId) testStatus.textContent = testConfigurations[result.chipTestConfiguration] || '';
   }
 
   form.addEventListener('submit', async event => {
@@ -35,7 +105,7 @@
       const result = await call('/checkout-options', post(payload));
       set('toyyibpay', result.backup.toyyibpay);
       set('stripe', result.backup.stripe);
-      status.textContent = 'Settings saved. ' + chipStatus(result.chip);
+      status.textContent = 'Settings saved. ' + chipStatus(result);
     } catch (error) {
       status.textContent = error.message;
     } finally {
