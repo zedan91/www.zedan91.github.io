@@ -10,7 +10,7 @@
   const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   const LEAFLET_DRAW_JS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js';
   const LEAFLET_DRAW_CSS = 'https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css';
-  const CORRIDOR_MODULE = '/assets/js/azobss-lot-corridor.js?v=1619';
+  const CORRIDOR_MODULE = '/assets/js/azobss-lot-corridor.js?v=1620';
   let libraryPromise = null;
   let lotFocusOpenSerial = 0;
   let lotFocusPrefetchController = null;
@@ -1923,6 +1923,9 @@
           let message = error.message || 'Kawasan pilihan tidak dapat disemak.';
           if (source === 'corridor' || source === 'imported-area') {
             message = message.replace(/Sila tekan semula Sediakan & Tambah ke Troli\./i, `Tekan ${routeApplyButton.textContent} untuk cuba lagi.`);
+            if (/^failed to execute query\.?$/i.test(message.trim())) {
+              message = `Pelayan kadaster gagal menyemak kawasan ini. Tekan ${routeApplyButton.textContent} untuk cuba lagi.`;
+            }
           }
           setStatus(status, message, 'error');
         } finally {

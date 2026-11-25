@@ -259,8 +259,10 @@ export function buildLotCorridor(lines, leftMeters, rightMeters) {
       const leftEnd = offsetPoint(end, leftMeters, endBearing - Math.PI / 2);
       const rightStart = offsetPoint(start, rightMeters, startBearing + Math.PI / 2);
       const rightEnd = offsetPoint(end, rightMeters, endBearing + Math.PI / 2);
-      pieces.push(selectionPolygon([leftStart, rightStart, rightEnd, leftEnd]));
-      // Bevel joins fill gaps on bends without extending the corridor at its ends.
+      // Build each half from the centreline so the bevel and segment have the
+      // same rounded endpoints. A full-width quad leaves tiny gaps on bends.
+      if (leftMeters) pieces.push(selectionPolygon([start, end, leftEnd, leftStart]));
+      if (rightMeters) pieces.push(selectionPolygon([start, rightStart, rightEnd, end]));
       if (previousLeft && leftMeters) pieces.push(selectionPolygon([start, previousLeft, leftStart]));
       if (previousRight && rightMeters) pieces.push(selectionPolygon([start, previousRight, rightStart]));
       previousLeft = leftEnd;
