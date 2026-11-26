@@ -23,6 +23,7 @@ export default {
 
       if(url.pathname==='/pc-diagnostics-storage')return await controlPcDiagnostics1590(request,env);
       if(url.pathname==='/pc-catalog-admin')return await controlPcCatalogue1537(request,env);
+      if(url.pathname==='/pc-catalog-visibility')return await publicPcCatalogueVisibility(request,env);
       if(url.pathname==='/software-availability-admin')return await controlAvailability1536(request,env);
       if(url.pathname==='/software-availability'&&request.method==='GET')return json(await publicAvailability1536(env));
       if (url.pathname === "/health") {
@@ -35,6 +36,7 @@ export default {
           softwarePause1534: true,
           softwareAvailabilityR2Store1536: true,
           pcCatalogVisibility1537: true,
+          pcCatalogPublicVisibility: true,
           rangeSupported: true,
           techVaultUpload: true,
           techVaultDelete: true,
@@ -192,13 +194,40 @@ async function handleVaultUpload(request, env, url) {
   return json({ ok:true, key:payload.key, name, size:storedSize || expectedSize, etag:stored?.httpEtag || "", patch:"719" }, 200, corsHeaders());
 }
 
+const PC_CATALOGUE_KEY1537='__azobss_pc_catalog/policy-v1537.json';
+
+async function readPcCatalogue1537(env){
+ const object=await env.AZOBSS_FILES.get(PC_CATALOGUE_KEY1537);
+ const state=object?await object.json():{items:{},stores:{},revision:0};
+ const table=value=>value&&typeof value==='object'&&!Array.isArray(value);
+ if(!Number.isSafeInteger(state?.revision)||state.revision<0||!table(state.items)||!table(state.stores)){
+  throw httpError(503,'Catalogue visibility is temporarily unavailable.');
+ }
+ return {object,state};
+}
+
+async function publicPcCatalogueVisibility(request,env){
+ const cors=corsHeaders();
+ if(request.method!=='GET'){
+  cors.set('Allow','GET, OPTIONS');
+  return json({ok:false,error:'Method not allowed.'},405,cors);
+ }
+ try{
+  const {state}=await readPcCatalogue1537(env);
+  const pausedIds=entries=>Object.entries(entries).filter(([,entry])=>entry?.paused===true).map(([id])=>id);
+  return json({ok:true,hiddenProductIds:pausedIds(state.items),hiddenStoreIds:pausedIds(state.stores),revision:state.revision},200,cors);
+ }catch{
+  return json({ok:false,error:'Catalogue visibility is temporarily unavailable.'},503,cors);
+ }
+}
+
 async function controlPcCatalogue1537(request,env){
  ensureConfigured(env);if(request.method!=='POST')throw httpError(405,'Method not allowed.');const raw=await request.text();if(raw.length>900000)throw httpError(413,'Policy too large.');const signature=request.headers.get('x-azobss-availability-signature')||'',expected=await hmacBase64Url('azobss-pc-catalog-v1537\n'+raw,env.AZOBSS_R2_TOKEN_SECRET);if(!timingSafeEqual(signature,expected))throw httpError(403,'Gateway authorization required.');let data;try{data=JSON.parse(raw);}catch{throw httpError(400,'Invalid JSON.');}if(!Number.isFinite(data.atMs)||Math.abs(Date.now()-data.atMs)>60000)throw httpError(403,'Gateway request expired.');
- const key='__azobss_pc_catalog/policy-v1537.json',object=await env.AZOBSS_FILES.get(key),state=object?await object.json():{items:{},stores:{},revision:0};
+ const {object,state}=await readPcCatalogue1537(env);
  if(data.action==='read')return json({ok:true,state});
  if(data.action!=='write'||!Number.isSafeInteger(data.expectedRevision)||data.state?.revision!==data.expectedRevision+1||!data.state.items||!data.state.stores||Object.keys(data.state.items).length>20000)throw httpError(400,'Invalid catalogue policy.');
  for(const table of [data.state.items,data.state.stores])for(const [id,row] of Object.entries(table))if(!/^[-a-z0-9_]{1,180}$/.test(id)||typeof row.paused!=='boolean')throw httpError(400,'Invalid visibility entry.');
- if(state.revision!==data.expectedRevision)throw httpError(409,'Policy changed. Retry.');const onlyIf=new Headers(object?{'If-Match':object.httpEtag}:{'If-None-Match':'*'}),saved=await env.AZOBSS_FILES.put(key,JSON.stringify(data.state),{onlyIf,httpMetadata:{contentType:'application/json',cacheControl:'no-store'},customMetadata:{purpose:'pc-catalog-visibility-v1537'}});if(!saved)throw httpError(409,'Policy changed. Retry.');return json({ok:true,state:data.state});
+ if(state.revision!==data.expectedRevision)throw httpError(409,'Policy changed. Retry.');const onlyIf=new Headers(object?{'If-Match':object.httpEtag}:{'If-None-Match':'*'}),saved=await env.AZOBSS_FILES.put(PC_CATALOGUE_KEY1537,JSON.stringify(data.state),{onlyIf,httpMetadata:{contentType:'application/json',cacheControl:'no-store'},customMetadata:{purpose:'pc-catalog-visibility-v1537'}});if(!saved)throw httpError(409,'Policy changed. Retry.');return json({ok:true,state:data.state});
 }
 const AVAILABILITY_KEY1536='__azobss_software_availability/policy-v1536.json';
 async function readAvailability1536(env) {

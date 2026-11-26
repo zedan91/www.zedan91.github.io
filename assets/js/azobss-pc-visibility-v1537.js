@@ -1,6 +1,7 @@
 (function(){
  'use strict';
  const base='https://azobss-backend.onrender.com',selected=new Set();let state={hiddenProductIds:[],hiddenStoreIds:[]},ready=false,admin=false,mode='all',rows=[],busy=false;
+ const policyEndpoint='https://azobss-download-gateway.zedan9107.workers.dev/pc-catalog-visibility';
  const model=()=>window.AZOBSSPcModel,key=v=>String(v||'').toLowerCase();
  const hidden=p=>state.hiddenProductIds.includes(key(p.id||p.productId))||state.hiddenStoreIds.includes(model()?.storeKey(p));
  function visible(p,isAdmin=false){return ready&&(isAdmin?(mode==='hidden'?hidden(p):mode==='visible'?!hidden(p):true):!hidden(p));}
@@ -17,16 +18,18 @@
   return true;
  }
  function refresh(requiredRevision=0){
-  if(pending)return requiredRevision?pending.then(()=>refresh(requiredRevision)):pending;
+  if(pending)return requiredRevision?pending.then(()=>ready&&state.revision>=requiredRevision?true:refresh(requiredRevision)):pending;
+  if(!ready&&failed){failed=false;changed();}
   pending=(async()=>{
-   try{
-    const response=await fetch(base+'/api/pc-shop/visibility',{cache:'no-store',signal:AbortSignal.timeout(8000)});
-    if(!response.ok||!accept(await response.json(),requiredRevision))throw Error('Catalogue visibility unavailable');
-    return true;
-   }catch{
-    if(!ready&&!failed){failed=true;changed();}
-    return false;
+   for(const [url,timeout] of [[policyEndpoint,3000],[base+'/api/pc-shop/visibility',22000]]){
+    try{
+     const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(timeout)});
+     if(response.ok&&accept(await response.json(),requiredRevision))return true;
+    }catch{/* Try the other source while keeping visibility gated. */}
+    if(ready&&state.revision>=requiredRevision)return true;
    }
+   if(!ready){failed=true;changed();}
+   return false;
   })().finally(()=>{pending=null;});
   return pending;
  }
@@ -42,5 +45,5 @@
  }
  function decorate(){controls();for(const card of document.querySelectorAll('[data-store-product]')){const id=card.dataset.storeProduct,p=rows.find(x=>String(x.id)===id)||{id};card.classList.toggle('az-pc-hidden-card1537',hidden(p));let label=card.querySelector('[data-pc-select-label]');if(!admin){label?.remove();continue;}if(!label){label=document.createElement('label');label.dataset.pcSelectLabel='1';label.className='az-pc-select-card1537';const input=document.createElement('input');input.type='checkbox';input.dataset.pcSelect=id;label.append(input,document.createTextNode(' Select'));input.onchange=()=>{if(input.checked){if(selected.size>=100){input.checked=false;alert('Select up to100 cards.');return;}selected.add(id);}else selected.delete(id);decorate();};card.querySelector('.az-store-product-copy')?.prepend(label);}label.querySelector('input').checked=selected.has(id);label.querySelector('input').disabled=busy;let badge=card.querySelector('[data-pc-hidden-badge]');if(hidden(p)&&!badge){badge=document.createElement('small');badge.dataset.pcHiddenBadge='1';badge.textContent='Hidden from customers';label.after(badge);}if(!hidden(p))badge?.remove();}}
  window.AZOBSSPcVisibility={visible,hidden,refresh,accept,status,setRows(next,isAdmin){rows=next;admin=isAdmin===true;decorate();}};
- window.addEventListener('azobss:pc-catalog-render',decorate);document.addEventListener('DOMContentLoaded',decorate,{once:true});window.addEventListener('focus',refresh);setInterval(()=>{if(!document.hidden)refresh();},60000);refresh().then(ok=>{if(!ok&&!ready)retryTimer=setTimeout(refresh,1500);});
+ window.addEventListener('azobss:pc-catalog-render',decorate);document.addEventListener('DOMContentLoaded',decorate,{once:true});window.addEventListener('focus',()=>refresh());setInterval(()=>{if(!document.hidden)refresh();},60000);refresh().then(ok=>{if(!ok&&!ready)retryTimer=setTimeout(refresh,1500);});
 })();

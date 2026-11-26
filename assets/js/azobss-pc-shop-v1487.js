@@ -103,7 +103,7 @@ async function updateCatalog(attempt){
  let shouldRetry=false;
  try{
   const h=pcShopIsAdmin()?await authHeaders(true):{},includeHidden=pcShopIsAdmin()&&!!h.Authorization;
-  const r=await fetch(CATALOG_API+(includeHidden?'?includeHidden=1':''),{cache:'no-store',headers:h,signal:AbortSignal.timeout(12000)});
+  const r=await fetch(CATALOG_API+(includeHidden?'?includeHidden=1':''),{cache:'no-store',headers:h,signal:AbortSignal.timeout(22000)});
   const d=await r.json();
   if(revision!==catalogAuthRevision)return;
   if(!r.ok||!d.ok||!Array.isArray(d.products))throw new Error(d.message||d.error||'Catalog unavailable');
@@ -131,24 +131,26 @@ async function updateCatalog(attempt){
 }
 async function loadStorefrontSnapshot(){
  const files=['pc-shop-storefront-v1512.json','viewnet-storefront-v1526.json'];
- const results=await Promise.allSettled(files.map(async file=>{
+ const loaded=new Map();
+ await Promise.allSettled(files.map(async file=>{
   const response=await fetch('/PC-Build/'+file+'?v=1603',{signal:AbortSignal.timeout(8000)});
   if(!response.ok)throw Error('Storefront snapshot unavailable');
-  return response.json();
+  const data=await response.json();
+  if(!Array.isArray(data.products))throw Error('Invalid storefront snapshot');
+  loaded.set(file,data);
+  const sources=files.filter(name=>loaded.has(name)).map(name=>loaded.get(name));
+  const products=sources.flatMap(source=>source.products);
+  const presentation=products.filter(p=>p.presentationVersion===1517);
+  presentationById=new Map(presentation.map(p=>[String(p.id),p]));
+  blockedProductImages=new Set(sources.flatMap(source=>source.blockedImagePaths||[]));
+  storefrontSnapshot=products.filter(p=>Number(p.price)>0&&Date.now()-Date.parse(p.priceCheckedAt||'')<14*24*60*60*1000);
+  if(catalogMeta.hasLiveCatalogue)catalog=catalog.map(applyLocalProductImage);
+  else {
+   catalog=storefrontSnapshot.map(applyLocalProductImage);
+   if(['loading','snapshot'].includes(catalogMeta.mode)&&catalog.length)catalogMeta={mode:'snapshot',stats:{total:catalog.length}};
+  }
+  setSyncStatus();renderHardware();
  }));
- const sources=results.filter(result=>result.status==='fulfilled').map(result=>result.value);
- const products=sources.flatMap(data=>data.products||[]);
- const presentation=products.filter(p=>p.presentationVersion===1517);
- presentationById=new Map(presentation.map(p=>[String(p.id),p]));
- blockedProductImages=new Set(sources.flatMap(data=>data.blockedImagePaths||[]));
- storefrontSnapshot=products.filter(p=>Number(p.price)>0&&Date.now()-Date.parse(p.priceCheckedAt||'')<14*24*60*60*1000);
- if(catalogMeta.hasLiveCatalogue)catalog=catalog.map(applyLocalProductImage);
- else {
-  if(catalog.length)return;
-  catalog=storefrontSnapshot.map(applyLocalProductImage);
-  if(catalogMeta.mode==='loading'&&catalog.length)catalogMeta={mode:'snapshot',stats:{total:catalog.length}};
- }
- setSyncStatus();renderHardware();
 }
 function pcItemFromCard(card){const id=String(card?.dataset.productId||''),name=card?.querySelector('h2')?.textContent?.trim()||'PC Build',price=Number(card?.dataset.price||0)||0,image=card?.dataset.image||card?.querySelector('.build-media img')?.getAttribute('src')||'';return{productId:id,name,category:'PC Build',qty:1,unitPrice:price,image,priceMode:'azobss-selling',priceStatus:'live',requiresConfirmation:false,itemType:'pc-build'}}
 function enhancePcCards(){/* v1480: G2 PC Builds owns its own actions. Hardware Shop no longer injects duplicate Add to Cart / Buy Now controls into PC cards. */}
@@ -395,7 +397,6 @@ async function openOrders(selectedOrderId,selectedDocument=''){
 window.addEventListener('azobss:auth-state-ready',()=>{const root=document.querySelector('[data-pc-customer-owner]');if(root&&root.dataset.pcCustomerOwner!==currentCustomerUid()){customerViewGeneration++;if(root.id==='azCheckoutStage'){delete root.dataset.pcCustomerOwner;root.replaceChildren();window.dispatchEvent(new Event('azobss:checkout-account-change'));}else closeModal(false);}});
 window.azobssPcRequestQuote=()=>openCheckout('quote');window.addEventListener('azobss-pc-list-updated',updateCartFab);window.azobssOpenPcCart=()=>openCart(false);window.azobssOpenPcRequests=openOrders;
 
-async function preflight(){const st=await checkBackend(true);if(!st.ready)console.warn('AZOBSS PC Shop backend not ready:',st.message);else if(st.release&&st.release!=='1506')console.info('AZOBSS PC Shop compatible backend release:',st.release)}
 function init(){if(document.getElementById('azCheckoutStage'))return;if(/^\/cart\/?$/i.test(location.pathname)){
  const entry=new URL(location.href);
  if(entry.searchParams.get('quote')==='1'){
@@ -420,6 +421,6 @@ function init(){if(document.getElementById('azCheckoutStage'))return;if(/^\/cart
  window.addEventListener('azobss:auth-state-ready',()=>{
    if(new URL(location.href).searchParams.get('quote')==='1'&&currentCustomerUid()&&!document.querySelector('[data-submit-order]'))consumeQuote();
  });
-}else if(entry.get('list')==='1')openCart(false);window.addEventListener('azobss:auth-state-ready',onCatalogAuthReady);window.addEventListener('azobss:pc-admin-view-change',()=>{document.querySelectorAll('[data-pc-admin-source]').forEach(el=>el.remove());renderHardware();reloadAdminCatalogue()});try{cleanupPcShopModalState('init')}catch(e){console.warn('AZOBSS modal cleanup init:',e)}window.addEventListener('azobss:pc-visibility-change',setSyncStatus);renderHardware();loadCatalog();loadStorefrontSnapshot();watchPcCards();preflight();window.addEventListener('storage',e=>{if(e.key===CART_KEY){if(catalogMeta.mode==='live')syncCartPrices(true);updateCartFab()}});window.addEventListener('focus',()=>{try{cleanupPcShopModalState('focus')}catch(_){}});window.addEventListener('pageshow',()=>{try{cleanupPcShopModalState('pageshow')}catch(_){}});document.addEventListener('visibilitychange',()=>{if(!document.hidden)try{cleanupPcShopModalState('visible')}catch(_){}});document.addEventListener('azobss:session-resume',()=>{try{cleanupPcShopModalState('session-resume')}catch(_){}});setInterval(()=>{try{if(document.querySelector('.az-pc-shop-backdrop')||document.body.classList.contains('az-pc-shop-modal-open'))cleanupPcShopModalState('interval')}catch(_){}},2500);if(typeof window.azobssLongSessionInterval==='function')window.azobssLongSessionInterval(loadCatalog,10*60*1000);else setInterval(loadCatalog,10*60*1000)}
+}else if(entry.get('list')==='1')openCart(false);window.addEventListener('azobss:auth-state-ready',onCatalogAuthReady);window.addEventListener('azobss:pc-admin-view-change',()=>{document.querySelectorAll('[data-pc-admin-source]').forEach(el=>el.remove());renderHardware();reloadAdminCatalogue()});try{cleanupPcShopModalState('init')}catch(e){console.warn('AZOBSS modal cleanup init:',e)}window.addEventListener('azobss:pc-visibility-change',setSyncStatus);renderHardware();loadCatalog();loadStorefrontSnapshot();watchPcCards();window.addEventListener('storage',e=>{if(e.key===CART_KEY){if(catalogMeta.mode==='live')syncCartPrices(true);updateCartFab()}});window.addEventListener('focus',()=>{try{cleanupPcShopModalState('focus')}catch(_){}});window.addEventListener('pageshow',()=>{try{cleanupPcShopModalState('pageshow')}catch(_){}});document.addEventListener('visibilitychange',()=>{if(!document.hidden)try{cleanupPcShopModalState('visible')}catch(_){}});document.addEventListener('azobss:session-resume',()=>{try{cleanupPcShopModalState('session-resume')}catch(_){}});setInterval(()=>{try{if(document.querySelector('.az-pc-shop-backdrop')||document.body.classList.contains('az-pc-shop-modal-open'))cleanupPcShopModalState('interval')}catch(_){}},2500);if(typeof window.azobssLongSessionInterval==='function')window.azobssLongSessionInterval(loadCatalog,10*60*1000);else setInterval(loadCatalog,10*60*1000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
