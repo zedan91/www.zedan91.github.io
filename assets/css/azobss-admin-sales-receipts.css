@@ -105,6 +105,13 @@
   flex:1.05 1 110px!important;
   min-width:110px!important;
 }
+@media(min-width:481px){
+  .az-sr-filter-grid>label.az-sr-payment-filter{
+    flex:1.4 1 215px!important;
+    min-width:215px!important;
+  }
+}
+#salesReceiptMaybankAccountLabel[hidden]{display:none!important}
 .az-sr-filter-grid input,
 .az-sr-filter-grid select{
   height:38px!important;

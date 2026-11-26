@@ -16,6 +16,8 @@ const FIRESTORE_LIST_LIMIT=300;
 const LOAD_CACHE_MS=60*1000;
 const AUTO_PAYMENT_REFRESH_MS=5*60*1000;
 const DEFAULT_MANUAL_TOYYIBPAY_FEE_RM=1;
+const MAYBANK_PAYMENT_ACCOUNTS=new Set(['maybank-azobss','maybank-ahmad']);
+const BANK_PAYMENT_METHODS=new Set(['maybank','bank transfer','qr payment','duitnow','duitnow qr','duitnow qr bank transfer']);
 window.__azSalesReceiptsModuleVersion=1380;
 
 let manualRows=[];
@@ -295,6 +297,7 @@ function applyAutoInvoiceEdit(row={}){
   }
   const overrideMethod=String(state.paymentMethodOverride||'').trim();
   if(overrideMethod)row.paymentMethod=overrideMethod;
+  if(Object.hasOwn(state,'salesFilterMaybankAccount'))row.salesFilterMaybankAccount=MAYBANK_PAYMENT_ACCOUNTS.has(state.salesFilterMaybankAccount)?state.salesFilterMaybankAccount:'';
   row.adminStatusOverride=normalizeStatus(row.status)!==normalizeStatus(row.verifiedStatus);
   row.adminPaymentMethodOverride=String(row.paymentMethod||'').trim().toLowerCase()!==String(row.verifiedPaymentMethod||'').trim().toLowerCase();
   return row;
@@ -691,7 +694,8 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
   const categories=[...new Set(items.map(i=>i.category||'other'))];
   const category=paBmSalesItems.length?'pabm':(categories.length===1?categories[0]:detectCategory(x));
   const explicitFee=extractCost(x,['paymentFee','gatewayFee','transactionFee','toyyibPayFee','processingFee']);
-  const method=String(x.paymentMethod||x.paymentSource||x.gateway||'ToyyibPay');
+  const recordedPaymentMethod=String(x.paymentMethod||x.paymentSource||x.gateway||'');
+  const method=recordedPaymentMethod||'ToyyibPay';
   const paymentFee=explicitFee>0?explicitFee:(status==='paid'&&/toyyib|online|gateway/i.test(method)?1:0);
   const commission=extractCost(x,['commission','commissionAmount','staffCommission','affiliateCommission']);
   const productCost=items.reduce((sum,item)=>sum+num(item.qty)*num(item.unitCost),0);
@@ -705,7 +709,7 @@ function normalizeWebsite(id,x={},sourceName='purchaseLogs'){
     deleteRefs:[websiteDeleteRef(x,id,sourceName)],
     invoiceNo:String(x.invoiceNo||deriveInvoiceNo(baseNo)),receiptNo:String(x.receiptNo||deriveReceiptNo(baseNo)),
     documentType:documentKindForStatus(status),paymentRecognized:isRecognizedPayment(status),
-    customerName:customerName(x),customerPhone:customerPhone(x),customerEmail:customerEmail(x),customerAddress:customerAddress(x),status,paymentMethod:method,
+    customerName:customerName(x),customerPhone:customerPhone(x),customerEmail:customerEmail(x),customerAddress:customerAddress(x),status,paymentMethod:method,recordedPaymentMethod,
     saleDateMs:rowDateMs(x),items,categories,category,
     subtotal,discount:clampMoney(x.discount||0),productCost,shippingCost,paymentFee,commission,otherCost,gross,totalCost,profit:gross-totalCost
   };
@@ -779,6 +783,10 @@ async function loadData(options={}){
       const id=String(x.orderId||x.docId||x.id||x.billCode||('premium-'+i));const row=normalizeWebsite(id,x,'premiumOrders');const k=websiteDedupKey(row);const existing=map.get(k);
       if(!existing){map.set(k,row);return}
       existing.deleteRefs=mergeDeleteRefs(existing.deleteRefs,row.deleteRefs);
+      if(!existing.recordedPaymentMethod&&row.recordedPaymentMethod){existing.recordedPaymentMethod=row.recordedPaymentMethod;existing.paymentMethod=row.recordedPaymentMethod;}
+      for(const field of ['bankAccountNumber','bankAccountName','bankAccount']){
+        if(!existing[field]&&row[field])existing[field]=row[field];
+      }
       const exactItems=jupemSalesItems(x,row.gross);
       if(exactItems.length){
         existing.paBmItems=Array.isArray(x.paBmItems)?x.paBmItems:existing.paBmItems;
@@ -830,7 +838,30 @@ function updateKpis(rows){
   const set=(id,v)=>{if(el(id))el(id).textContent=v};
   set('srGrossSales',money(gross));set('srTotalCosts',money(costs));set('srNetProfit',money(profit));set('srPhysicalSales',money(physical));set('srSoftwareSales',money(digital));set('srPendingCount',String(pending));
 }
-function getFilters(){return {q:String(el('salesReceiptSearch')?.value||'').trim().toLowerCase(),category:el('salesReceiptCategory')?.value||'all',status:el('salesReceiptStatus')?.value||'all',source:el('salesReceiptSource')?.value||'all',sort:el('salesReceiptSort')?.value||'newest',from:el('salesReceiptFrom')?.value||'',to:el('salesReceiptTo')?.value||''}}
+function paymentFilterKey(value){
+  return String(value??'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+function paymentFilterGroup(row){
+  if(isQuotationStatus(row.status))return '';
+  const method=paymentFilterKey(row.adminPaymentMethodOverride?row.paymentMethod:row.recordedPaymentMethod??row.paymentMethod);
+  if(['chip','chip collect'].includes(method))return 'chip';
+  if(['toyyibpay','toyyib pay'].includes(method))return 'toyyibpay';
+  const containsBankMethod=BANK_PAYMENT_METHODS.has(method)||/\bmaybank\b/.test(method);
+  if(!containsBankMethod)return '';
+  if(MAYBANK_PAYMENT_ACCOUNTS.has(row.salesFilterMaybankAccount))return row.salesFilterMaybankAccount;
+  const accountName=paymentFilterKey(row.bankAccountName||row.bankAccount?.accountName);
+  const accountNumber=String(row.bankAccountNumber||row.bankAccount?.accountNumber||'').replace(/\D/g,'');
+  const business=accountNumber==='562405751585'||/\bazobss(?: enterprise)?\b/.test(method)||accountName==='azobss enterprise';
+  const personal=accountNumber==='162405194110'||/\bahmad zaidan(?: bin omar)?\b/.test(method)||['ahmad zaidan','ahmad zaidan bin omar'].includes(accountName);
+  if(business&&personal)return 'maybank-unspecified';
+  if(business)return 'maybank-azobss';
+  if(personal)return 'maybank-ahmad';
+  // The website's bank-transfer checkout points to the AZOBSS business account.
+  if(row.source==='website'&&!row.adminPaymentMethodOverride&&method==='bank transfer'
+    &&String(row.recordedPaymentMethod).trim().toLowerCase()==='bank-transfer')return 'maybank-azobss';
+  return 'maybank-unspecified';
+}
+function getFilters(){return {q:String(el('salesReceiptSearch')?.value||'').trim().toLowerCase(),category:el('salesReceiptCategory')?.value||'all',status:el('salesReceiptStatus')?.value||'all',source:el('salesReceiptSource')?.value||'all',payment:el('salesReceiptPaymentFilter')?.value||'all',sort:el('salesReceiptSort')?.value||'newest',from:el('salesReceiptFrom')?.value||'',to:el('salesReceiptTo')?.value||''}}
 function applyFilters(){
   const f=getFilters();let rows=[...manualRows,...websiteRows];
   const from=f.from?new Date(f.from+'T00:00:00').getTime():0;const to=f.to?new Date(f.to+'T23:59:59.999').getTime():0;
@@ -839,7 +870,7 @@ function applyFilters(){
     const statusMatch=f.status==='all'||(f.status==='paid-not-sent'?r.status==='paid'&&r.receiptSent!==true:r.status===f.status);
     const kind=documentKindForStatus(r.status);
     const viewMatch=salesReceiptDocView==='all'||(salesReceiptDocView==='quotation'?kind==='quotation':salesReceiptDocView==='invoice'?kind==='invoice':salesReceiptDocView==='receipt'?kind==='receipt':salesReceiptDocView==='pending'?['pending','deposit-paid'].includes(normalizeStatus(r.status)):salesReceiptDocView==='paid'?normalizeStatus(r.status)==='paid':true);
-    return viewMatch&&(!f.q||hay.includes(f.q))&&statusMatch&&(f.source==='all'||r.source===f.source)&&rowMatchesCategory(r,f.category)&&(!from||r.saleDateMs>=from)&&(!to||r.saleDateMs<=to);
+    return viewMatch&&(!f.q||hay.includes(f.q))&&statusMatch&&(f.source==='all'||r.source===f.source)&&(f.payment==='all'||paymentFilterGroup(r)===f.payment)&&rowMatchesCategory(r,f.category)&&(!from||r.saleDateMs>=from)&&(!to||r.saleDateMs<=to);
   });
   rows.sort((a,b)=>{
     if(f.sort==='oldest')return a.saleDateMs-b.saleDateMs;
@@ -1121,7 +1152,21 @@ function recalcForm(){
 function setFormControlLocked(id,locked,title=''){
   const node=el(id);if(!node)return;node.disabled=!!locked;node.title=locked?title:'';
 }
+function syncMaybankAccountField(){
+  const select=el('salesReceiptMaybankAccount');
+  if(!select)return;
+  const status=normalizeStatus(el('salesReceiptFormStatus')?.value);
+  const method=paymentFilterKey(el('salesReceiptPaymentMethod')?.value);
+  const enabled=['paid','deposit-paid','refunded'].includes(status)&&BANK_PAYMENT_METHODS.has(method);
+  select.disabled=!enabled;
+  el('salesReceiptMaybankAccountLabel').hidden=!enabled;
+}
+function selectedMaybankAccount(){
+  const select=el('salesReceiptMaybankAccount');
+  return select&&!select.disabled&&MAYBANK_PAYMENT_ACCOUNTS.has(select.value)?select.value:'';
+}
 function configureFormMode(row=null){
+  syncMaybankAccountField();
   const website=editingMode==='website';
   const lockedTitle='Automatic website purchase: document number, amount, date, quantity, price and accounting values stay locked to the original transaction.';
   ['salesReceiptSaleDate','salesReceiptDiscount','salesReceiptShippingCharge','salesReceiptShippingCost','salesReceiptPaymentFee','salesReceiptCommissionPercent','salesReceiptCommission','salesReceiptOtherCost','salesReceiptCommissionStaffSearch','salesReceiptCommissionStaffClear'].forEach(id=>setFormControlLocked(id,website,lockedTitle));
@@ -1197,7 +1242,19 @@ function openForm(row=null){
   editingAutoOverrideDocId=editingMode==='website'?String(row?.autoInvoiceEditDocId||autoInvoiceEditDocIdFromKey(editingAutoTargetKey)):'';
   editingDocId=editingMode==='manual'?(row?.docId||''):'';editingOriginalStatus=normalizeStatus(row?.status||'pending');editingQuotationNo=row?quotationNoForRow(row):'';editingInvoiceNo=row?invoiceNoForRow(row):'';editingReceiptNo=row?receiptNoForRow(row):'';
   editingSourceBookingId=editingMode==='manual'?String(row?.sourceBookingId||row?.bookingId||'').trim():'';editingSourceBookingSnapshot=editingMode==='manual'?(row?.sourceBookingSnapshot||null):null;
-  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptPaymentMethod').value=editingMode==='website'?(row?.paymentMethod||row?.verifiedPaymentMethod||'Other'):(row?.paymentMethod||'Maybank');el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
+  const paymentSelect=el('salesReceiptPaymentMethod');
+  paymentSelect.querySelector('[data-sr-existing-payment-method]')?.remove();
+  const payment=String(row?.paymentMethod||(editingMode==='website'?(row?.verifiedPaymentMethod||'Other'):'Maybank'));
+  let option=Array.from(paymentSelect.options).find(entry=>entry.value.toLowerCase()===payment.toLowerCase());
+  if(!option){
+    option=new Option(payment,payment);
+    option.dataset.srExistingPaymentMethod='';
+    paymentSelect.add(option);
+  }
+  paymentSelect.value=option.value;
+  const accountSelect=el('salesReceiptMaybankAccount');
+  if(accountSelect)accountSelect.value=MAYBANK_PAYMENT_ACCOUNTS.has(row?.salesFilterMaybankAccount)?row.salesFilterMaybankAccount:'';
+  el('salesReceiptSaleDate').value=localDateTimeInput(row?currentDocumentDateMs(row):Date.now());el('salesReceiptFormStatus').value=row?.status||'pending';el('salesReceiptCustomerName').value=row?.customerName||'';el('salesReceiptCustomerPhone').value=row?.customerPhone||'';el('salesReceiptCustomerEmail').value=row?.customerEmail||'';el('salesReceiptCustomerAddress').value=row?.customerAddress||'';el('salesReceiptDiscount').value=num(row?.discount)||0;el('salesReceiptShippingCharge').value=num(row?.shippingCharge)||0;el('salesReceiptShippingCost').value=num(row?.shippingCost)||0;
   if(el('salesReceiptCustomerType'))el('salesReceiptCustomerType').value=row?.customerType||'individual';if(el('salesReceiptCustomerTin'))el('salesReceiptCustomerTin').value=row?.customerTin||'';if(el('salesReceiptCustomerIdType'))el('salesReceiptCustomerIdType').value=row?.customerIdType||'';if(el('salesReceiptCustomerIdNo'))el('salesReceiptCustomerIdNo').value=row?.customerIdNo||row?.customerBrn||'';if(el('salesReceiptDueDate'))el('salesReceiptDueDate').value=String(row?.dueDate||'').slice(0,10);if(el('salesReceiptPaymentTerms'))el('salesReceiptPaymentTerms').value=row?.paymentTerms||'';if(el('salesReceiptAmountReceived'))el('salesReceiptAmountReceived').value=receivedAmount(row);if(el('salesReceiptPaymentReference'))el('salesReceiptPaymentReference').value=row?.paymentReference||'';
   const paymentFeeInput=el('salesReceiptPaymentFee');if(paymentFeeInput){paymentFeeInput.value=num(row?.paymentFee)||0;delete paymentFeeInput.dataset.autoToyyibFee}
   el('salesReceiptCommission').value=num(row?.commission)||0;if(el('salesReceiptCommissionPercent'))el('salesReceiptCommissionPercent').value=num(row?.commissionPercent||row?.commissionRate)||(num(row?.gross)>0?((num(row?.commission)/num(row?.gross))*100).toFixed(2):0);el('salesReceiptOtherCost').value=num(row?.otherCost)||0;
@@ -1228,7 +1285,7 @@ async function saveWebsiteEditForm(){
   if(!['pending','paid','refunded','cancelled'].includes(desiredStatus))return notify('Choose a valid status: Pending, Paid, Refunded or Cancelled.',true);
   const statusOverride=desiredStatus!==verifiedStatus?desiredStatus:'';
   const paymentMethodOverride=desiredPaymentMethod.toLowerCase()!==verifiedPaymentMethod.toLowerCase()?desiredPaymentMethod:'';
-  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,statusOverride,paymentMethodOverride,verifiedStatusSnapshot:verifiedStatus,verifiedPaymentMethodSnapshot:verifiedPaymentMethod,overrideUpdatedAtMs:now,updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
+  const payload={uid:user.uid,source:AUTO_INVOICE_EDIT_SOURCE,targetKey,targetSourceName:String(row.sourceName||''),targetDocId:String(row.docId||''),targetOrderId:String(row.orderId||row.paymentOrderId||''),invoiceNo:invoiceNoForRow(row),receiptNo:receiptNoForRow(row),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),itemNames:items.map(i=>String(i.name||'').trim()),notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,statusOverride,paymentMethodOverride,salesFilterMaybankAccount:selectedMaybankAccount(),verifiedStatusSnapshot:verifiedStatus,verifiedPaymentMethodSnapshot:verifiedPaymentMethod,overrideUpdatedAtMs:now,updatedAt:serverTimestamp(),updatedAtMs:now,editedByUid:user.uid,editedByEmail:user.email||''};
   const btn=el('salesReceiptSave');const label=documentKindForStatus(desiredStatus)==='invoice'?'Invoice':'Receipt';btn.disabled=true;btn.textContent='Saving...';
   try{
     await setDoc(doc(db,'receipts',overrideId),payload,{merge:true});autoInvoiceEditByKey.set(targetKey.toLowerCase(),{...payload,_docId:overrideId});applyAutoInvoiceEdit(row);closeForm();
@@ -1257,6 +1314,7 @@ async function saveForm(){
   await ensureUniqueManualNumbers(kind,saleDateMs,editingDocId);if(numberInput)numberInput.value=kind==='quotation'?editingQuotationNo:(kind==='invoice'?editingInvoiceNo:editingReceiptNo);
   const documentNo=kind==='quotation'?editingQuotationNo:(kind==='invoice'?editingInvoiceNo:editingReceiptNo);
   const depositPaid=status==='deposit-paid';const depositValue=depositPaid?clampMoney(c.gross*0.5):0;const requestedReceived=clampMoney(el('salesReceiptAmountReceived')?.value||existing?.paidGross||0);const paidGross=recognized?c.gross:(depositPaid?depositValue:Math.min(c.gross,requestedReceived));const payload={uid:user.uid,source:MANUAL_SOURCE,documentType:kind,documentNo,quotationNo:editingQuotationNo||'',invoiceNo:kind==='quotation'?'':(editingInvoiceNo||''),receiptNo:editingReceiptNo||'',quotationDateMs:kind==='quotation'?(num(existing?.quotationDateMs)||saleDateMs):(num(existing?.quotationDateMs)||0),quotationValidUntil:String(el('salesReceiptQuoteValidUntil')?.value||existing?.quotationValidUntil||'').slice(0,10),paymentRecognized:recognized,depositPercent:depositPaid?50:0,depositAmount:depositValue,amountDue:recognized?0:clampMoney(Math.max(0,c.gross-paidGross)),paidGross,partialPaymentAmount:paidGross,recognizedTotalCost:recognized?c.totalCost:0,recognizedProfit:recognized?c.profit:0,invoiceDateMs:num(existing?.invoiceDateMs)||(kind==='invoice'?saleDateMs:(num(existing?.saleDateMs)||saleDateMs)),customerName:customer,customerPhone:String(el('salesReceiptCustomerPhone')?.value||'').trim(),customerEmail,customerAddress:String(el('salesReceiptCustomerAddress')?.value||'').trim(),customerType:String(el('salesReceiptCustomerType')?.value||existing?.customerType||'individual'),customerTin:String(el('salesReceiptCustomerTin')?.value||'').trim(),customerIdType:String(el('salesReceiptCustomerIdType')?.value||'').trim(),customerIdNo:String(el('salesReceiptCustomerIdNo')?.value||'').trim(),customerBrn:String(el('salesReceiptCustomerIdType')?.value||'')==='BRN'?String(el('salesReceiptCustomerIdNo')?.value||'').trim():'',dueDate:String(el('salesReceiptDueDate')?.value||'').slice(0,10),paymentTerms:String(el('salesReceiptPaymentTerms')?.value||'').trim(),paymentReference:String(el('salesReceiptPaymentReference')?.value||'').trim(),status,paymentMethod:kind==='quotation'?'Not Applicable':(String(el('salesReceiptPaymentMethod')?.value||'Maybank').trim()||'Maybank'),saleDate:dateRaw.slice(0,10),saleDateTime:dateRaw,saleDateMs,dateTimeVersion:1461,items:c.items,categories,category:categories.length===1?categories[0]:'mixed',subtotal:c.subtotal,discount:c.discount,shippingCharge:c.shippingCharge,gross:c.gross,productCost:c.productCost,shippingCost:c.shippingCost,paymentFee:c.paymentFee,commission:c.commission,commissionPercent,commissionRate:commissionPercent,commissionStaffUsername:selectedCommissionStaff?.username||'',commissionStaffUid:selectedCommissionStaff?.uid||'',commissionStaffEmail:selectedCommissionStaff?.email||'',commissionStaffRole:selectedCommissionStaff?.role||'',commissionStaffName:selectedCommissionStaff?.name||'',commissionStaffPhone:selectedCommissionStaff?.phone||'',otherCost:c.otherCost,totalCost:c.totalCost,profit:c.profit,notes:String(el('salesReceiptNotes')?.value||'').trim(),showDepositTerms:el('salesReceiptShowDepositTerms')?.checked===true,sourceBookingId:editingSourceBookingId||'',sourceBookingCollection:editingSourceBookingId?'serviceBookings':'',sourceBookingLinked:Boolean(editingSourceBookingId),sourceBookingDevice:editingSourceBookingSnapshot?.device||'',updatedAt:serverTimestamp(),updatedAtMs:Date.now(),createdByUid:user.uid,createdByEmail:user.email||''};
+  payload.salesFilterMaybankAccount=selectedMaybankAccount();
   if(recognized){payload.paidAtMs=num(existing?.paidAtMs)||(transitionedToPaid?Date.now():saleDateMs);if(transitionedToPaid||!editingDocId)payload.paidAt=serverTimestamp()}
   if(depositPaid){payload.depositPaidAtMs=num(existing?.depositPaidAtMs)||(transitionedToDeposit?Date.now():saleDateMs);if(transitionedToDeposit||!editingDocId)payload.depositPaidAt=serverTimestamp()}
   const wasEditing=Boolean(editingDocId);const editId=editingDocId;const btn=el('salesReceiptSave');const label=kind==='quotation'?'Quotation':(kind==='invoice'?'Invoice':'Receipt');btn.disabled=true;btn.textContent='Saving...';
@@ -1926,10 +1984,10 @@ function exportCsv(){
   const rows=visibleRows.map(r=>[documentKindForStatus(r.status),currentDocumentNo(r),r.invoiceNo||'',r.receiptNo||'',new Date(r.saleDateMs||0).toISOString(),r.source,r.status,r.customerName,r.customerPhone,r.customerEmail,r.customerAddress||'',categoriesForRow(r).map(categoryLabel).join(' | '),(r.items||[]).map(i=>`${i.name} x${i.qty}`).join(' | '),r.paymentMethod,num(r.gross).toFixed(2),receivedAmount(r).toFixed(2),num(r.productCost).toFixed(2),num(r.shippingCharge).toFixed(2),num(r.shippingCost).toFixed(2),num(r.paymentFee).toFixed(2),num(r.commission).toFixed(2),num(r.otherCost).toFixed(2),recognizedCosts(r).toFixed(2),recognizedProfit(r).toFixed(2)]);
   const csv='\ufeff'+[headers,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='AZOBSS-Sales-Invoices-Receipts-'+localDateInput()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);notify('CSV exported.')
 }
-function clearFilters(){salesReceiptDocView='all';document.querySelectorAll('[data-sr-doc-view]').forEach((x,i)=>x.classList.toggle('active',i===0));['salesReceiptSearch','salesReceiptFrom','salesReceiptTo'].forEach(id=>{if(el(id))el(id).value=''});if(el('salesReceiptCategory'))el('salesReceiptCategory').value='all';if(el('salesReceiptStatus'))el('salesReceiptStatus').value='all';if(el('salesReceiptSource'))el('salesReceiptSource').value='all';if(el('salesReceiptSort'))el('salesReceiptSort').value='newest';currentPage=1;applyFilters()}
+function clearFilters(){salesReceiptDocView='all';document.querySelectorAll('[data-sr-doc-view]').forEach((x,i)=>x.classList.toggle('active',i===0));['salesReceiptSearch','salesReceiptFrom','salesReceiptTo'].forEach(id=>{if(el(id))el(id).value=''});if(el('salesReceiptCategory'))el('salesReceiptCategory').value='all';if(el('salesReceiptStatus'))el('salesReceiptStatus').value='all';if(el('salesReceiptSource'))el('salesReceiptSource').value='all';if(el('salesReceiptPaymentFilter'))el('salesReceiptPaymentFilter').value='all';if(el('salesReceiptSort'))el('salesReceiptSort').value='newest';currentPage=1;applyFilters()}
 function bind(){
   if(window.__azSalesReceiptsBound)return;window.__azSalesReceiptsBound=true;
-  ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
+  ['salesReceiptSearch','salesReceiptCategory','salesReceiptStatus','salesReceiptSource','salesReceiptPaymentFilter','salesReceiptSort','salesReceiptFrom','salesReceiptTo'].forEach(id=>el(id)?.addEventListener(id==='salesReceiptSearch'?'input':'change',()=>{currentPage=1;applyFilters()}));
   el('salesReceiptNewQuotation')?.addEventListener('click',openQuotationForm);el('salesReceiptNew')?.addEventListener('click',()=>openForm());el('salesReceiptRefresh')?.addEventListener('click',()=>loadData({force:true}));el('salesReceiptExport')?.addEventListener('click',exportCsv);el('salesReceiptClearFilters')?.addEventListener('click',clearFilters);el('salesReceiptPrev')?.addEventListener('click',()=>{if(currentPage>1){currentPage--;renderTable()}});el('salesReceiptNext')?.addEventListener('click',()=>{const p=Math.ceil(visibleRows.length/PAGE_SIZE);if(currentPage<p){currentPage++;renderTable()}});
   el('salesReceiptDocViews')?.addEventListener('click',e=>{const b=e.target.closest('[data-sr-doc-view]');if(!b)return;salesReceiptDocView=b.dataset.srDocView||'all';document.querySelectorAll('[data-sr-doc-view]').forEach(x=>x.classList.toggle('active',x===b));currentPage=1;applyFilters()});
   el('salesReceiptSelectAllFiltered')?.addEventListener('change',e=>setRowsSelected(visibleRows,e.target.checked));el('salesReceiptSelectPage')?.addEventListener('change',e=>setRowsSelected(currentPageRows(),e.target.checked));
@@ -1960,7 +2018,7 @@ function bind(){
   el('salesReceiptCommissionPercent')?.addEventListener('input',()=>{syncCommissionAmountFromPercent();recalcForm()});el('salesReceiptCommission')?.addEventListener('input',()=>{syncCommissionPercentFromAmount();recalcForm()});
   el('salesReceiptPaymentFee')?.addEventListener('input',e=>{delete e.currentTarget.dataset.autoToyyibFee;recalcForm()});
   el('salesReceiptFormStatus')?.addEventListener('change',()=>syncFormDocumentMode(false));
-  el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
+  el('salesReceiptPaymentMethod')?.addEventListener('change',()=>{syncMaybankAccountField();syncManualPaymentFeeDefault();syncToyyibCustomerRequirements();recalcForm()});
   document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!el('salesReceiptSharePanel')?.hidden){closeSharePanel();return}if(!el('salesReceiptDialog')?.hidden){e.preventDefault();return}});
   document.addEventListener('change',e=>{const checkbox=e.target.closest('[data-sr-select]');if(!checkbox)return;const id=checkbox.dataset.srSelect;if(checkbox.checked)selectedRowIds.add(id);else selectedRowIds.delete(id);updateBulkUI()});
   document.addEventListener('click', async e => {
