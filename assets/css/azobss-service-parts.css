@@ -47,3 +47,25 @@ body:has(.parts-layout){overflow-x:clip!important;overflow-y:visible!important}
 .parts-pager{gap:6px;flex-wrap:wrap}.parts-page-numbers{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}.parts-pager .btn{min-width:36px;min-height:38px;padding:7px 10px;font-size:13px}.parts-page-numbers [aria-current="page"]{background:#147c70;border-color:#68e3cc;color:#fff}.parts-page-status{flex-basis:100%;text-align:center;font-size:12px;color:#abc2d5;margin-top:4px}@media(max-width:650px){.parts-page-numbers{order:-1;flex-basis:100%;gap:3px}.parts-pager .btn{min-width:27px;min-height:36px;padding:6px;font-size:12px}}
 
 .parts-pager .btn{width:auto!important;flex:0 0 auto}.parts-page-numbers{flex-direction:row!important}
+
+/* Keep the clear action inside the catalogue search field on phones. */
+@media(max-width:650px){
+  .parts-search{position:relative;min-width:0}
+  .parts-shop .parts-search input{
+    width:100%;min-height:50px;padding-inline-end:54px;appearance:none
+  }
+  .parts-search input::-webkit-search-cancel-button{display:none}
+  .parts-search input:focus-visible{
+    outline:2px solid #63ded3;outline-offset:-2px
+  }
+  .parts-search [data-parts-clear]{
+    position:absolute;inset-inline-end:3px;inset-block-start:50%;
+    transform:translateY(-50%);width:44px;min-height:44px;height:44px;
+    padding:0;border:0;border-radius:8px;background:transparent;
+    color:#b9d8e9;font-size:22px;line-height:1
+  }
+  .parts-search [data-parts-clear]:focus-visible{
+    outline:2px solid #63ded3;outline-offset:-3px
+  }
+  .parts-search input:placeholder-shown + [data-parts-clear]{visibility:hidden}
+}
